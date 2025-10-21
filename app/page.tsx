@@ -882,7 +882,7 @@ export default function TCGPage() {
   const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
   const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const CARDS_PER_PAGE = 18;
+  const CARDS_PER_PAGE = 12;
 
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
