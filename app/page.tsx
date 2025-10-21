@@ -1273,8 +1273,11 @@ export default function TCGPage() {
     setTimeout(() => {
       console.log('🎮 RESULTADO:', { playerTotal, dealerTotal });
 
+      let matchResult: 'win' | 'loss' | 'tie';
+
       if (playerTotal > dealerTotal) {
         console.log('✅ JOGADOR VENCEU!');
+        matchResult = 'win';
         setResult(t('playerWins'));
         setTimeout(() => {
           setShowWinPopup(true);
@@ -1282,6 +1285,7 @@ export default function TCGPage() {
         }, 1000);
       } else if (playerTotal < dealerTotal) {
         console.log('❌ DEALER VENCEU!');
+        matchResult = 'loss';
         setResult(t('dealerWins'));
         setTimeout(() => {
           setShowLossPopup(true);
@@ -1289,8 +1293,25 @@ export default function TCGPage() {
         }, 1000);
       } else {
         console.log('🤝 EMPATE!');
+        matchResult = 'tie';
         setResult(t('tie'));
         if (soundEnabled) AudioManager.tie();
+      }
+
+      // Record PvE match if user has profile
+      if (userProfile && address) {
+        ProfileService.recordMatch(
+          address,
+          'pve',
+          matchResult,
+          playerTotal,
+          dealerTotal,
+          selectedCards,
+          pickedDealer
+        ).then(() => {
+          // Reload match history
+          ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+        }).catch(err => console.error('Error recording match:', err));
       }
 
       setTimeout(() => {
