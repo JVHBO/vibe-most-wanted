@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/.well-known/farcaster.json",
+      "destination": "https://api.farcaster.xyz/miniapps/hosted-manifest/019a0864-e085-c261-116f-0ab22d4c3122",
+      "statusCode": 307
+    }
+  ]
+}
