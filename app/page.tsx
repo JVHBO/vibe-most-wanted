@@ -293,7 +293,14 @@ const translations = {
     usernameInUse: 'Username já está em uso',
     profileCreated: 'Perfil criado com sucesso!',
     noProfile: 'Crie um perfil para aparecer no ranking',
-    viewProfile: 'Ver Perfil'
+    viewProfile: 'Ver Perfil',
+    connectTwitter: 'Conectar Twitter',
+    shareVictory: 'Compartilhar Vitória',
+    shareDefeat: 'Compartilhar Derrota',
+    tweetVictory: 'Acabei de vencer no Vibe Most Wanted com {power} de poder! 🏆⚡\n\nJogue agora:',
+    tweetDefeat: 'Lutei bravamente no Vibe Most Wanted mas perdi desta vez! 😤💪\n\nVenha me desafiar:',
+    myInventory: 'Meu Inventário',
+    viewStats: 'Ver Estatísticas'
   },
   hi: {
     title: 'Vibe Most Wanted',
@@ -1028,6 +1035,8 @@ export default function TCGPage() {
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState<boolean>(false);
+  const [showInventoryDropdown, setShowInventoryDropdown] = useState<boolean>(false);
 
   const t = useCallback((key: string, params: Record<string, any> = {}) => {
     let text = (translations as any)[lang][key] || key;
@@ -1413,7 +1422,7 @@ export default function TCGPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 lg:p-6">
       {showWinPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100]" onClick={() => setShowWinPopup(false)}>
-          <div className="relative flex flex-col items-center gap-4">
+          <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
             <img
               src="https://pbs.twimg.com/media/G2cr8wQWMAADqE7.jpg"
               alt="Victory!"
@@ -1422,6 +1431,15 @@ export default function TCGPage() {
             <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
               {t('victoryPrize')}
             </p>
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('tweetVictory', { power: playerPower }))}&url=${encodeURIComponent(window.location.origin)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+            >
+              <span>🐦</span> {t('shareVictory')}
+            </a>
             <button
               onClick={() => setShowWinPopup(false)}
               className="absolute top-4 right-4 bg-yellow-600 hover:bg-yellow-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
@@ -2017,8 +2035,152 @@ export default function TCGPage() {
                   <p className="text-sm text-gray-300"><span className="text-cyan-400">●</span> {address.slice(0, 6)}...{address.slice(-4)}</p>
                   {filteredCount > 0 && <span className="text-xs text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-lg">🚫 {t('filtered', { count: filteredCount })}</span>}
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={loadNFTs} disabled={status === 'fetching'} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg text-sm">🔄 {t('reloadNfts')}</button>
+                <div className="flex items-center gap-2">
+                  {/* Profile Dropdown */}
+                  {userProfile ? (
+                    <div className="relative">
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setShowProfileDropdown(!showProfileDropdown);
+                          setShowInventoryDropdown(false);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 rounded-lg transition"
+                      >
+                        {userProfile.twitter ? (
+                          <img
+                            src={`https://unavatar.io/twitter/${userProfile.twitter}`}
+                            alt={userProfile.username}
+                            className="w-6 h-6 rounded-full"
+                            onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23a855f7"><circle cx="12" cy="12" r="10"/></svg>'; }}
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold">
+                            {userProfile.username[0].toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-sm font-semibold text-white">@{userProfile.username}</span>
+                        <svg className={`w-4 h-4 transition-transform ${showProfileDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+
+                      {showProfileDropdown && (
+                        <div className="absolute right-0 mt-2 w-64 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                          <div className="p-4 bg-gradient-to-r from-purple-900/50 to-pink-900/50 border-b border-gray-700">
+                            <div className="flex items-center gap-3 mb-3">
+                              {userProfile.twitter ? (
+                                <img
+                                  src={`https://unavatar.io/twitter/${userProfile.twitter}`}
+                                  alt={userProfile.username}
+                                  className="w-12 h-12 rounded-full"
+                                  onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23a855f7"><circle cx="12" cy="12" r="10"/></svg>'; }}
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl font-bold">
+                                  {userProfile.username[0].toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-bold text-white">@{userProfile.username}</p>
+                                <p className="text-xs text-gray-400">{address.slice(0, 10)}...</p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="bg-gray-800/50 p-2 rounded">
+                                <p className="text-gray-400">Cards</p>
+                                <p className="font-bold text-purple-400">{userProfile.stats.totalCards}</p>
+                              </div>
+                              <div className="bg-gray-800/50 p-2 rounded">
+                                <p className="text-gray-400">Power</p>
+                                <p className="font-bold text-yellow-400">{userProfile.stats.totalPower}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="p-2">
+                            <button
+                              onClick={() => {
+                                if (soundEnabled) AudioManager.buttonClick();
+                                setCurrentView('profile');
+                                setShowProfileDropdown(false);
+                              }}
+                              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2"
+                            >
+                              <span>📊</span> {t('viewStats')}
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (soundEnabled) AudioManager.buttonClick();
+                                setShowInventoryDropdown(!showInventoryDropdown);
+                              }}
+                              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2"
+                            >
+                              <span>🎒</span> {t('myInventory')} ({nfts.length})
+                            </button>
+                            {!userProfile.twitter && (
+                              <button
+                                onClick={() => {
+                                  if (soundEnabled) AudioManager.buttonClick();
+                                  const twitter = prompt(t('twitterHandle'));
+                                  if (twitter && address) {
+                                    ProfileService.updateTwitter(address, twitter.replace('@', ''));
+                                    setUserProfile({...userProfile, twitter: twitter.replace('@', '')});
+                                  }
+                                }}
+                                className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2 text-blue-400"
+                              >
+                                <span>🐦</span> {t('connectTwitter')}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                if (soundEnabled) AudioManager.buttonClick();
+                                setCurrentView('leaderboard');
+                                setShowProfileDropdown(false);
+                              }}
+                              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2"
+                            >
+                              <span>🏆</span> {t('leaderboard')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {showInventoryDropdown && (
+                        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4" onClick={() => setShowInventoryDropdown(false)}>
+                          <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-2xl font-bold flex items-center gap-2">
+                                <span>🎒</span> {t('myInventory')}
+                              </h3>
+                              <button onClick={() => setShowInventoryDropdown(false)} className="text-gray-400 hover:text-white text-2xl">✕</button>
+                            </div>
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                              {nfts.map((nft) => (
+                                <div key={nft.tokenId} className="relative aspect-[2/3] rounded-lg overflow-hidden border-2 border-gray-700 hover:border-purple-500 transition-all group">
+                                  <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
+                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
+                                    <p className="text-xs font-bold text-white">⚡ {nft.power}</p>
+                                    <p className="text-[10px] text-gray-400">#{nft.tokenId}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        setShowCreateProfile(true);
+                      }}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold"
+                    >
+                      {t('createProfile')}
+                    </button>
+                  )}
+
+                  <button onClick={loadNFTs} disabled={status === 'fetching'} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg text-sm">🔄</button>
                   <button onClick={disconnectWallet} className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm border border-red-600/50">{t('disconnect')}</button>
                 </div>
               </div>
