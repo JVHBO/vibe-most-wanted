@@ -1,0 +1,20 @@
+{
+  "quadro": {
+    "nome": "JOGO VIBE MOST WANTED",
+    "versão": "1",
+    "iconUrl": "https://www.vibemostwanted.xyz/icon.png",
+    "homeUrl": "https://www.vibemostwanted.xyz",
+    "imageUrl": "https://www.vibemostwanted.xyz/image.png",
+    "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
+    "splashBackgroundColor": "#6200AE",
+    "webhookUrl": "https://www.vibemostwanted.xyz/api/webhook",
+    "legenda": "JOGO DE CARTAS QUENTES",
+    "descrição": "UM JOGO MUITO MUITO GEY",
+    "categoria primária": "jogos"
+  },
+  "associação de contas": {
+    "cabeçalho": "eyJmaWQiOjIxNDc0NiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDJhOTU4NURhNDBkRTAwNGQ2RmYwZjVGMTJjZmU3MjZCRDJmOThCNTIifQ",
+    "carga útil": "eyJkb21haW4iOiJ3d3cudmliZW1vc3R3YW50ZWQueHl6In0",
+    "assinatura": "gl5wGfK7nb3pEC8oOMH9FW8jJgT+CRJEyxZ4rjtfklkd8rfLet6385USPwbAlQBzTOmoUaK8lejEC/VlFtrANxs="
+  }
+}
