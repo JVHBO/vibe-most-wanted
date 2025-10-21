@@ -37,6 +37,35 @@ export interface GameRoom {
   createdAt: number;
 }
 
+export interface UserProfile {
+  address: string;
+  username: string;
+  twitter?: string;
+  createdAt: number;
+  lastUpdated: number;
+  stats: {
+    totalCards: number;
+    totalPower: number;
+    pveWins: number;
+    pveLosses: number;
+    pvpWins: number;
+    pvpLosses: number;
+  };
+}
+
+export interface MatchHistory {
+  id: string;
+  playerAddress: string;
+  type: 'pve' | 'pvp';
+  result: 'win' | 'loss' | 'tie';
+  playerPower: number;
+  opponentPower: number;
+  opponentAddress?: string; // Para PvP
+  timestamp: number;
+  playerCards: any[];
+  opponentCards: any[];
+}
+
 export class PvPService {
   // Cria uma sala personalizada
   static async createRoom(hostAddress: string): Promise<string> {
@@ -202,5 +231,171 @@ export class PvPService {
         status: 'waiting'
       });
     }
+  }
+}
+
+export class ProfileService {
+  // Verifica se um username já existe
+  static async usernameExists(username: string): Promise<boolean> {
+    const usernamesRef = ref(database, 'usernames');
+    const snapshot = await get(usernamesRef);
+
+    if (!snapshot.exists()) return false;
+
+    const usernames = snapshot.val();
+    return Object.values(usernames).includes(username.toLowerCase());
+  }
+
+  // Cria um novo perfil
+  static async createProfile(address: string, username: string, twitter?: string): Promise<void> {
+    const normalizedUsername = username.toLowerCase();
+
+    // Verifica se username já existe
+    if (await this.usernameExists(normalizedUsername)) {
+      throw new Error('Username já está em uso');
+    }
+
+    const profile: UserProfile = {
+      address,
+      username,
+      twitter,
+      createdAt: Date.now(),
+      lastUpdated: Date.now(),
+      stats: {
+        totalCards: 0,
+        totalPower: 0,
+        pveWins: 0,
+        pveLosses: 0,
+        pvpWins: 0,
+        pvpLosses: 0
+      }
+    };
+
+    // Salva o perfil
+    await set(ref(database, `profiles/${address}`), profile);
+
+    // Reserva o username
+    await set(ref(database, `usernames/${normalizedUsername}`), address);
+  }
+
+  // Busca perfil por endereço
+  static async getProfile(address: string): Promise<UserProfile | null> {
+    const snapshot = await get(ref(database, `profiles/${address}`));
+    return snapshot.exists() ? snapshot.val() : null;
+  }
+
+  // Atualiza estatísticas do perfil
+  static async updateStats(address: string, totalCards: number, totalPower: number): Promise<void> {
+    await update(ref(database, `profiles/${address}`), {
+      'stats.totalCards': totalCards,
+      'stats.totalPower': totalPower,
+      lastUpdated: Date.now()
+    });
+  }
+
+  // Atualiza Twitter
+  static async updateTwitter(address: string, twitter: string): Promise<void> {
+    await update(ref(database, `profiles/${address}`), {
+      twitter,
+      lastUpdated: Date.now()
+    });
+  }
+
+  // Registra resultado de partida
+  static async recordMatch(
+    playerAddress: string,
+    type: 'pve' | 'pvp',
+    result: 'win' | 'loss' | 'tie',
+    playerPower: number,
+    opponentPower: number,
+    playerCards: any[],
+    opponentCards: any[],
+    opponentAddress?: string
+  ): Promise<void> {
+    const matchId = push(ref(database, 'matches')).key;
+
+    const match: MatchHistory = {
+      id: matchId!,
+      playerAddress,
+      type,
+      result,
+      playerPower,
+      opponentPower,
+      opponentAddress,
+      timestamp: Date.now(),
+      playerCards,
+      opponentCards
+    };
+
+    // Salva a partida
+    await set(ref(database, `matches/${matchId}`), match);
+
+    // Atualiza estatísticas
+    const profile = await this.getProfile(playerAddress);
+    if (profile) {
+      const statsUpdate: any = { lastUpdated: Date.now() };
+
+      if (type === 'pve') {
+        if (result === 'win') {
+          statsUpdate['stats.pveWins'] = profile.stats.pveWins + 1;
+        } else if (result === 'loss') {
+          statsUpdate['stats.pveLosses'] = profile.stats.pveLosses + 1;
+        }
+      } else {
+        if (result === 'win') {
+          statsUpdate['stats.pvpWins'] = profile.stats.pvpWins + 1;
+        } else if (result === 'loss') {
+          statsUpdate['stats.pvpLosses'] = profile.stats.pvpLosses + 1;
+        }
+      }
+
+      await update(ref(database, `profiles/${playerAddress}`), statsUpdate);
+    }
+  }
+
+  // Busca histórico de partidas
+  static async getMatchHistory(playerAddress: string, limit: number = 20): Promise<MatchHistory[]> {
+    const matchesRef = ref(database, 'matches');
+    const snapshot = await get(matchesRef);
+
+    if (!snapshot.exists()) return [];
+
+    const matches = snapshot.val();
+    const playerMatches = Object.values(matches)
+      .filter((m: any) => m.playerAddress === playerAddress)
+      .sort((a: any, b: any) => b.timestamp - a.timestamp)
+      .slice(0, limit);
+
+    return playerMatches as MatchHistory[];
+  }
+
+  // Busca leaderboard
+  static async getLeaderboard(): Promise<UserProfile[]> {
+    const profilesRef = ref(database, 'profiles');
+    const snapshot = await get(profilesRef);
+
+    if (!snapshot.exists()) return [];
+
+    const profiles = Object.values(snapshot.val()) as UserProfile[];
+
+    // Ordena por total de poder
+    return profiles.sort((a, b) => b.stats.totalPower - a.stats.totalPower);
+  }
+
+  // Escuta mudanças no leaderboard
+  static watchLeaderboard(callback: (profiles: UserProfile[]) => void): () => void {
+    const profilesRef = ref(database, 'profiles');
+
+    const listener = onValue(profilesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const profiles = Object.values(snapshot.val()) as UserProfile[];
+        const sorted = profiles.sort((a, b) => b.stats.totalPower - a.stats.totalPower);
+        callback(sorted);
+      } else {
+        callback([]);
+      }
+    });
+
+    return () => off(profilesRef, 'value', listener);
   }
 }

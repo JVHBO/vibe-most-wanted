@@ -1431,13 +1431,13 @@ export default function TCGPage() {
 
               {/* Criar Sala */}
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (soundEnabled) AudioManager.buttonClick();
+                  // Cria sala primeiro
+                  const code = await PvPService.createRoom(address || '');
+                  setRoomCode(code);
+                  // Depois muda para a tela de criar sala
                   setPvpMode('createRoom');
-                  // Cria sala automaticamente
-                  PvPService.createRoom(address || '').then((code) => {
-                    setRoomCode(code);
-                  });
                 }}
                 className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-blue-500/50 text-white rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105"
               >
