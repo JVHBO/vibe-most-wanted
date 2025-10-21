@@ -2004,6 +2004,55 @@ export default function TCGPage() {
             </div>
           </div>
 
+          {/* Navigation Tabs */}
+          <div className="mb-6">
+            <div className="bg-gray-800/50 backdrop-blur-lg rounded-xl border border-gray-700 p-2 flex gap-2">
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setCurrentView('game');
+                }}
+                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+                  currentView === 'game'
+                    ? 'bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-lg'
+                    : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                🎮 {t('title')}
+              </button>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  if (!userProfile) {
+                    setShowCreateProfile(true);
+                  } else {
+                    setCurrentView('profile');
+                  }
+                }}
+                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+                  currentView === 'profile'
+                    ? 'bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-lg'
+                    : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                👤 {t('profile')}
+              </button>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setCurrentView('leaderboard');
+                }}
+                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+                  currentView === 'leaderboard'
+                    ? 'bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-lg'
+                    : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                🏆 {t('leaderboard')}
+              </button>
+            </div>
+          </div>
+
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
               <p className="text-red-400 font-bold">❌ {t('error')}</p>
@@ -2019,6 +2068,8 @@ export default function TCGPage() {
             </div>
           )}
 
+          {/* Game View */}
+          {currentView === 'game' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="bg-gray-800/30 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
@@ -2185,6 +2236,263 @@ export default function TCGPage() {
               </div>
             </div>
           </div>
+          )}
+
+          {/* Profile View */}
+          {currentView === 'profile' && userProfile && (
+            <div className="max-w-6xl mx-auto">
+              <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 p-8 mb-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                  <div>
+                    <h1 className="text-4xl font-bold text-cyan-400 mb-2">@{userProfile.username}</h1>
+                    <p className="text-gray-400 text-sm font-mono">{address?.slice(0, 10)}...{address?.slice(-8)}</p>
+                    {userProfile.twitter && (
+                      <a href={`https://twitter.com/${userProfile.twitter}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-sm hover:underline mt-1 inline-block">
+                        🐦 @{userProfile.twitter}
+                      </a>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newTwitter = prompt(t('twitterHandle'), userProfile.twitter || '');
+                      if (newTwitter !== null && address) {
+                        ProfileService.updateTwitter(address, newTwitter.replace('@', ''));
+                        setUserProfile({...userProfile, twitter: newTwitter.replace('@', '')});
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
+                  >
+                    {t('edit')}
+                  </button>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 p-4 rounded-xl border border-purple-500/30">
+                    <p className="text-xs text-gray-400 mb-1">🃏 {t('cards')}</p>
+                    <p className="text-3xl font-bold text-purple-400">{userProfile.stats.totalCards}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/30 p-4 rounded-xl border border-yellow-500/30">
+                    <p className="text-xs text-gray-400 mb-1">⚡ {t('power')}</p>
+                    <p className="text-3xl font-bold text-yellow-400">{userProfile.stats.totalPower}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-900/30 to-cyan-900/30 p-4 rounded-xl border border-blue-500/30">
+                    <p className="text-xs text-gray-400 mb-1">🎮 {t('pveRecord')}</p>
+                    <p className="text-2xl font-bold text-blue-400">{userProfile.stats.pveWins}W / {userProfile.stats.pveLosses}L</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 p-4 rounded-xl border border-green-500/30">
+                    <p className="text-xs text-gray-400 mb-1">⚔️ {t('pvpRecord')}</p>
+                    <p className="text-2xl font-bold text-green-400">{userProfile.stats.pvpWins}W / {userProfile.stats.pvpLosses}L</p>
+                  </div>
+                </div>
+
+                {/* Match History */}
+                <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-6">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <span>📜</span> {t('recentMatches')}
+                  </h3>
+                  {matchHistory.length === 0 ? (
+                    <p className="text-gray-400 text-center py-8">{t('noMatches')}</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {matchHistory.map((match) => (
+                        <div key={match.id} className={`p-4 rounded-lg border-2 ${
+                          match.result === 'win' ? 'bg-green-900/20 border-green-500/30' :
+                          match.result === 'loss' ? 'bg-red-900/20 border-red-500/30' :
+                          'bg-gray-900/20 border-gray-500/30'
+                        }`}>
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-3">
+                              <span className={`text-2xl ${match.result === 'win' ? '🏆' : match.result === 'loss' ? '😢' : '🤝'}`}></span>
+                              <div>
+                                <p className="font-bold text-lg">
+                                  {match.result === 'win' ? t('victory') : match.result === 'loss' ? t('defeat') : t('tie')}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {match.type === 'pve' ? `${t('vs')} ${t('ai')}` : `${t('vs')} ${match.opponentAddress?.slice(0, 6)}...${match.opponentAddress?.slice(-4)}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold">{match.playerPower} - {match.opponentPower}</p>
+                              <p className="text-xs text-gray-400">{new Date(match.timestamp).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Inventory */}
+              <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 p-8">
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <span className="text-3xl">🎒</span> {t('inventory')}
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {nfts.slice(0, 12).map((nft) => (
+                    <div key={nft.tokenId} className="relative aspect-[2/3] rounded-lg overflow-hidden border-2 border-gray-700 hover:border-purple-500 transition-all group">
+                      <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
+                        <p className="text-xs font-bold text-white">⚡ {nft.power}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {nfts.length > 12 && (
+                  <p className="text-center text-gray-400 mt-4 text-sm">
+                    +{nfts.length - 12} {t('cards')}...
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Leaderboard View */}
+          {currentView === 'leaderboard' && (
+            <div className="max-w-6xl mx-auto">
+              <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 p-8">
+                <div className="flex justify-between items-center mb-6">
+                  <h1 className="text-4xl font-bold text-yellow-400 flex items-center gap-3">
+                    <span>🏆</span> {t('leaderboard')}
+                  </h1>
+                  <p className="text-xs text-gray-400">⏱️ {t('updateEvery5Min')}</p>
+                </div>
+
+                {leaderboard.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-6xl mb-4">👥</p>
+                    <p className="text-gray-400">{t('noProfile')}</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-700">
+                          <th className="text-left p-4 text-gray-400 font-semibold">{t('rank')}</th>
+                          <th className="text-left p-4 text-gray-400 font-semibold">{t('player')}</th>
+                          <th className="text-right p-4 text-gray-400 font-semibold">{t('cards')}</th>
+                          <th className="text-right p-4 text-gray-400 font-semibold">{t('power')}</th>
+                          <th className="text-right p-4 text-gray-400 font-semibold">{t('wins')}</th>
+                          <th className="text-right p-4 text-gray-400 font-semibold">{t('losses')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboard.map((profile, index) => (
+                          <tr key={profile.address} className={`border-b border-gray-800 hover:bg-gray-700/30 transition ${profile.address === address ? 'bg-purple-900/20' : ''}`}>
+                            <td className="p-4">
+                              <span className={`text-2xl font-bold ${
+                                index === 0 ? 'text-yellow-400' :
+                                index === 1 ? 'text-gray-300' :
+                                index === 2 ? 'text-orange-400' :
+                                'text-gray-500'
+                              }`}>
+                                #{index + 1}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <div>
+                                <p className="font-bold text-white">@{profile.username}</p>
+                                <p className="text-xs text-gray-400 font-mono">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
+                              </div>
+                            </td>
+                            <td className="p-4 text-right text-purple-400 font-bold">{profile.stats.totalCards}</td>
+                            <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
+                            <td className="p-4 text-right text-green-400 font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
+                            <td className="p-4 text-right text-red-400 font-semibold">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Create Profile Modal */}
+          {showCreateProfile && (
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500 max-w-md w-full p-8">
+                <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                  {t('createProfile')}
+                </h2>
+                <p className="text-center text-gray-400 mb-6 text-sm">
+                  {t('noProfile')}
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">{t('username')}</label>
+                    <input
+                      type="text"
+                      value={profileUsername}
+                      onChange={(e) => setProfileUsername(e.target.value)}
+                      placeholder={t('usernamePlaceholder')}
+                      maxLength={20}
+                      className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">{t('twitterHandle')}</label>
+                    <input
+                      type="text"
+                      value={profileTwitter}
+                      onChange={(e) => setProfileTwitter(e.target.value.replace('@', ''))}
+                      placeholder={t('twitterPlaceholder')}
+                      maxLength={15}
+                      className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+
+                  <button
+                    onClick={async () => {
+                      if (!profileUsername.trim()) {
+                        alert(t('usernameRequired'));
+                        return;
+                      }
+                      if (soundEnabled) AudioManager.buttonClick();
+                      try {
+                        await ProfileService.createProfile(
+                          address!,
+                          profileUsername.trim(),
+                          profileTwitter.trim() || undefined
+                        );
+                        const profile = await ProfileService.getProfile(address!);
+                        setUserProfile(profile);
+                        setShowCreateProfile(false);
+                        setProfileUsername('');
+                        setProfileTwitter('');
+                        setCurrentView('profile');
+                        if (soundEnabled) AudioManager.buttonSuccess();
+                        alert(t('profileCreated'));
+                      } catch (error: any) {
+                        if (soundEnabled) AudioManager.buttonError();
+                        alert(error.message || t('usernameInUse'));
+                      }
+                    }}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-purple-500/50 text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105"
+                  >
+                    {t('save')}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonNav();
+                      setShowCreateProfile(false);
+                      setProfileUsername('');
+                      setProfileTwitter('');
+                    }}
+                    className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-xl font-semibold transition"
+                  >
+                    {t('cancel')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
