@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
-import { PvPService, type GameRoom } from "../lib/firebase";
+import { PvPService, ProfileService, type GameRoom, type UserProfile, type MatchHistory } from "../lib/firebase";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -1019,6 +1019,16 @@ export default function TCGPage() {
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
+  // Profile States
+  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
+  const [profileUsername, setProfileUsername] = useState<string>('');
+  const [profileTwitter, setProfileTwitter] = useState<string>('');
+  const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
+  const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
+
   const t = useCallback((key: string, params: Record<string, any> = {}) => {
     let text = (translations as any)[lang][key] || key;
     Object.entries(params).forEach(([k, v]) => {
@@ -1338,6 +1348,45 @@ export default function TCGPage() {
       };
     }
   }, [pvpMode, roomCode]);
+
+  // Load user profile when wallet connects
+  useEffect(() => {
+    if (address) {
+      setIsLoadingProfile(true);
+      ProfileService.getProfile(address).then((profile) => {
+        setUserProfile(profile);
+        setIsLoadingProfile(false);
+
+        // Load match history
+        if (profile) {
+          ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+        }
+      });
+    } else {
+      setUserProfile(null);
+      setMatchHistory([]);
+    }
+  }, [address]);
+
+  // Update profile stats when NFTs change
+  useEffect(() => {
+    if (address && userProfile && nfts.length > 0) {
+      const totalPower = nfts.reduce((sum, nft) => sum + (nft.power || 0), 0);
+      ProfileService.updateStats(address, nfts.length, totalPower);
+    }
+  }, [address, userProfile, nfts]);
+
+  // Load leaderboard with 5-minute refresh
+  useEffect(() => {
+    const loadLeaderboard = () => {
+      ProfileService.getLeaderboard().then(setLeaderboard);
+    };
+
+    loadLeaderboard();
+    const interval = setInterval(loadLeaderboard, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 lg:p-6">
