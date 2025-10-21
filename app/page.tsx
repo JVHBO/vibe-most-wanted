@@ -247,6 +247,11 @@ const translations = {
     roomCreated: 'Sala criada!',
     shareCode: 'Compartilhe este código:',
     opponent: 'Oponente',
+    back: 'Voltar',
+    room: 'Sala',
+    ready: 'Pronto',
+    confirmCards: 'Confirmar Cartas',
+    choosePvpMode: 'Escolha como encontrar oponente',
     yourHand: 'Sua Mão',
     dealerCards: 'Cartas do Dealer',
     dealerTotalPower: 'Poder Total',
@@ -342,7 +347,12 @@ const translations = {
     cancel: 'रद्द करें',
     roomCreated: 'रूम बन गया!',
     shareCode: 'यह कोड साझा करें:',
-    opponent: 'प्रतिद्वंद्वी'
+    opponent: 'प्रतिद्वंद्वी',
+    back: 'वापस',
+    room: 'रूम',
+    ready: 'तैयार',
+    confirmCards: 'कार्ड की पुष्टि करें',
+    choosePvpMode: 'प्रतिद्वंद्वी खोजने का तरीका चुनें'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -416,6 +426,11 @@ const translations = {
     roomCreated: 'Room created!',
     shareCode: 'Share this code:',
     opponent: 'Opponent',
+    back: 'Back',
+    room: 'Room',
+    ready: 'Ready',
+    confirmCards: 'Confirm Cards',
+    choosePvpMode: 'Choose how to find opponent',
     yourHand: 'Your Hand',
     dealerCards: 'Dealer Cards',
     dealerTotalPower: 'Total Power',
@@ -511,7 +526,12 @@ const translations = {
     cancel: 'Cancelar',
     roomCreated: '¡Sala creada!',
     shareCode: 'Comparte este código:',
-    opponent: 'Oponente'
+    opponent: 'Oponente',
+    back: 'Volver',
+    room: 'Sala',
+    ready: 'Listo',
+    confirmCards: 'Confirmar Cartas',
+    choosePvpMode: 'Elige cómo encontrar oponente'
   }
 };
 
@@ -885,11 +905,18 @@ export default function TCGPage() {
     } else {
       AudioManager.stopBackgroundMusic();
     }
-    
+
     return () => {
       AudioManager.stopBackgroundMusic();
     };
   }, [musicEnabled]);
+
+  // Farcaster SDK - Informa que o app está pronto
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).sdk?.actions?.ready) {
+      (window as any).sdk.actions.ready();
+    }
+  }, []);
 
   const toggleMusic = useCallback(async () => {
     await AudioManager.init();
@@ -1158,6 +1185,32 @@ export default function TCGPage() {
     setCurrentPage(1);
   }, [sortByPower, nfts.length]);
 
+  // Firebase Room Listener - Escuta mudanças na sala em tempo real
+  useEffect(() => {
+    if (pvpMode === 'inRoom' && roomCode) {
+      const unsubscribe = PvPService.watchRoom(roomCode, (room) => {
+        if (room) {
+          setCurrentRoom(room);
+
+          // Se ambos os jogadores estiverem prontos, inicia a batalha
+          if (room.host.ready && room.guest?.ready && room.status === 'ready') {
+            // Lógica para iniciar batalha PvP será adicionada aqui
+            console.log('Ambos jogadores prontos! Iniciando batalha...');
+          }
+        } else {
+          // Sala foi deletada
+          setPvpMode('pvpMenu');
+          setRoomCode('');
+          setCurrentRoom(null);
+        }
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [pvpMode, roomCode]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 lg:p-6">
       {showWinPopup && (
@@ -1340,6 +1393,288 @@ export default function TCGPage() {
                 {t('cancel')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Menu PvP */}
+      {pvpMode === 'pvpMenu' && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500 max-w-md w-full p-8">
+            <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              {t('pvp')}
+            </h2>
+            <p className="text-center text-gray-400 mb-8 text-sm">
+              {t('choosePvpMode') || 'Choose how to find opponent'}
+            </p>
+
+            <div className="space-y-4">
+              {/* Busca Automática */}
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonSuccess();
+                  setPvpMode('autoMatch');
+                  setIsSearching(true);
+                  // Inicia busca automática
+                  PvPService.findMatch(address || '').then((code) => {
+                    if (code) {
+                      setRoomCode(code);
+                      setPvpMode('inRoom');
+                      setIsSearching(false);
+                    }
+                  });
+                }}
+                className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-green-500/50 text-white rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105"
+              >
+                🔍 {t('autoMatch')}
+              </button>
+
+              {/* Criar Sala */}
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setPvpMode('createRoom');
+                  // Cria sala automaticamente
+                  PvPService.createRoom(address || '').then((code) => {
+                    setRoomCode(code);
+                  });
+                }}
+                className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-blue-500/50 text-white rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105"
+              >
+                ➕ {t('createRoom')}
+              </button>
+
+              {/* Entrar na Sala */}
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setPvpMode('joinRoom');
+                }}
+                className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-purple-500/50 text-white rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105"
+              >
+                🚪 {t('joinRoom')}
+              </button>
+
+              {/* Voltar */}
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonNav();
+                  setPvpMode('menu');
+                  setGameMode(null);
+                }}
+                className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-xl font-semibold transition"
+              >
+                ← {t('back') || 'Back'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Busca Automática */}
+      {pvpMode === 'autoMatch' && isSearching && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-green-500 max-w-md w-full p-8">
+            <div className="text-center">
+              <div className="mb-6">
+                <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent"></div>
+              </div>
+              <h2 className="text-2xl font-bold text-green-400 mb-2">
+                {t('searching')}
+              </h2>
+              <p className="text-gray-400 mb-8">
+                {t('waitingForOpponent')}
+              </p>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonError();
+                  setIsSearching(false);
+                  setPvpMode('pvpMenu');
+                  PvPService.cancelMatchmaking(address || '');
+                }}
+                className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition"
+              >
+                {t('cancelSearch')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Criar Sala */}
+      {pvpMode === 'createRoom' && roomCode && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-blue-500 max-w-md w-full p-8">
+            <h2 className="text-2xl font-bold text-center text-blue-400 mb-2">
+              {t('roomCreated')}
+            </h2>
+            <p className="text-center text-gray-400 mb-6 text-sm">
+              {t('shareCode')}
+            </p>
+
+            <div className="bg-gray-800 rounded-xl p-6 mb-6 border-2 border-blue-500">
+              <p className="text-gray-400 text-sm mb-2 text-center">{t('roomCode')}</p>
+              <p className="text-4xl font-bold text-center text-blue-400 tracking-wider">
+                {roomCode}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                if (soundEnabled) AudioManager.buttonSuccess();
+                navigator.clipboard.writeText(roomCode);
+              }}
+              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold mb-4 transition"
+            >
+              📋 {t('copyCode')}
+            </button>
+
+            <button
+              onClick={() => {
+                if (soundEnabled) AudioManager.buttonClick();
+                setPvpMode('inRoom');
+              }}
+              className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold mb-2 transition"
+            >
+              ✓ {t('ready') || 'Ready'}
+            </button>
+
+            <button
+              onClick={() => {
+                if (soundEnabled) AudioManager.buttonNav();
+                setPvpMode('pvpMenu');
+                setRoomCode('');
+                PvPService.leaveRoom(roomCode, address || '');
+              }}
+              className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-xl font-semibold transition"
+            >
+              {t('cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Entrar na Sala */}
+      {pvpMode === 'joinRoom' && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500 max-w-md w-full p-8">
+            <h2 className="text-2xl font-bold text-center text-purple-400 mb-2">
+              {t('joinRoom')}
+            </h2>
+            <p className="text-center text-gray-400 mb-6 text-sm">
+              {t('enterRoomCode')}
+            </p>
+
+            <input
+              type="text"
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+              placeholder="ABC123"
+              maxLength={6}
+              className="w-full px-4 py-3 bg-gray-800 border-2 border-purple-500 rounded-xl text-center text-2xl font-bold text-white tracking-wider mb-6 focus:outline-none focus:border-purple-400"
+            />
+
+            <button
+              onClick={async () => {
+                if (soundEnabled) AudioManager.buttonClick();
+                try {
+                  await PvPService.joinRoom(roomCode, address || '');
+                  setPvpMode('inRoom');
+                  if (soundEnabled) AudioManager.buttonSuccess();
+                } catch (error: any) {
+                  alert(error.message);
+                  if (soundEnabled) AudioManager.buttonError();
+                }
+              }}
+              disabled={roomCode.length !== 6}
+              className="w-full px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold mb-2 transition"
+            >
+              {t('join')}
+            </button>
+
+            <button
+              onClick={() => {
+                if (soundEnabled) AudioManager.buttonNav();
+                setPvpMode('pvpMenu');
+                setRoomCode('');
+              }}
+              className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-xl font-semibold transition"
+            >
+              {t('cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Sala (Aguardando/Jogando) */}
+      {pvpMode === 'inRoom' && roomCode && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-yellow-500 max-w-2xl w-full p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-yellow-400">
+                {t('room') || 'Room'}: {roomCode}
+              </h2>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonNav();
+                  setPvpMode('pvpMenu');
+                  setRoomCode('');
+                  setCurrentRoom(null);
+                  PvPService.leaveRoom(roomCode, address || '');
+                }}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {currentRoom ? (
+              <div className="space-y-4">
+                {/* Host */}
+                <div className="bg-gray-800 rounded-xl p-4 border-2 border-blue-500">
+                  <p className="text-blue-400 font-bold mb-2">Host</p>
+                  <p className="text-white text-sm font-mono">{currentRoom.host.address.slice(0, 10)}...</p>
+                  <p className="text-gray-400 text-sm">
+                    {currentRoom.host.ready ? '✓ Ready' : '⏳ Selecting cards...'}
+                  </p>
+                </div>
+
+                {/* Guest */}
+                <div className="bg-gray-800 rounded-xl p-4 border-2 border-purple-500">
+                  <p className="text-purple-400 font-bold mb-2">{t('opponent')}</p>
+                  {currentRoom.guest ? (
+                    <>
+                      <p className="text-white text-sm font-mono">{currentRoom.guest.address.slice(0, 10)}...</p>
+                      <p className="text-gray-400 text-sm">
+                        {currentRoom.guest.ready ? '✓ Ready' : '⏳ Selecting cards...'}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-gray-400 text-sm">{t('waitingForOpponent')}</p>
+                  )}
+                </div>
+
+                {/* Botão de Confirmar Cartas */}
+                {currentRoom.guest && (
+                  <button
+                    onClick={async () => {
+                      if (soundEnabled) AudioManager.buttonSuccess();
+                      await PvPService.updateCards(roomCode, address || '', selectedCards);
+                      // Aqui você pode adicionar lógica para iniciar a batalha quando ambos estiverem prontos
+                    }}
+                    disabled={selectedCards.length !== 5}
+                    className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition"
+                  >
+                    {t('confirmCards') || 'Confirm Cards'} ({selectedCards.length}/5)
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-yellow-500 border-t-transparent mb-4"></div>
+                <p className="text-gray-400">{t('loading') || 'Loading room...'}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
