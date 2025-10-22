@@ -2080,6 +2080,16 @@ export default function TCGPage() {
                   // Só mostra grid se o jogador atual NÃO estiver pronto ainda
                   if (playerReady) return null;
 
+                  // Se não tem NFTs carregados, mostra loading
+                  if (nfts.length === 0) {
+                    return (
+                      <div className="mt-6 text-center">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent mb-4"></div>
+                        <p className="text-gray-400">Loading your cards...</p>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div className="mt-6">
                       <h3 className="text-lg font-bold text-center text-white mb-4">
