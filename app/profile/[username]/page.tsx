@@ -22,8 +22,10 @@ export default function ProfilePage() {
       try {
         await sdk.actions.ready();
         const context = await sdk.context;
-        if (context?.user?.verified_addresses?.eth_addresses?.[0]) {
-          setCurrentUserAddress(context.user.verified_addresses.eth_addresses[0].toLowerCase());
+        // @ts-ignore - SDK types may not be fully defined
+        if (context?.user?.verifications?.[0]) {
+          // @ts-ignore
+          setCurrentUserAddress(context.user.verifications[0].toLowerCase());
         }
       } catch (err) {
         console.error('Error loading current user:', err);
