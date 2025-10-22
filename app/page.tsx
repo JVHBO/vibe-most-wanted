@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
+import { sdk } from "@farcaster/frame-sdk"; // Importa o SDK do Farcaster
 import { PvPService, ProfileService, type GameRoom, type UserProfile, type MatchHistory } from "../lib/firebase";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -25,6 +26,16 @@ const getFromCache = (key: string): string | null => {
 const setCache = (key: string, value: string): void => {
   imageUrlCache.set(key, { url: value, time: Date.now() });
 };
+
+// 🎮 Componente principal
+export default function Page() {
+  useEffect(() => {
+    // 🔔 Notifica o Farcaster que o app terminou de carregar
+    sdk.actions.ready();
+  }, []);
+
+  // ...aqui continua seu código, incluindo o AudioManager logo abaixo
+}
 
 const AudioManager = {
   context: null as AudioContext | null,
