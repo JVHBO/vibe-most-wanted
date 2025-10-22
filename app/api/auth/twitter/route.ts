@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TwitterApi } from 'twitter-api-v2';
+import { nanoid } from 'nanoid';
+import { TwitterOAuthStore } from '@/lib/twitter-oauth-store';
 
 const CALLBACK_URL = process.env.NEXT_PUBLIC_APP_URL
   ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/twitter/callback`
@@ -43,26 +45,18 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ OAuth link generated');
 
-    // Create response with cookies to store codeVerifier and address
-    const response = NextResponse.json({ url });
+    // Generate a unique state ID to store in memory
+    const stateId = nanoid();
 
-    // Set cookies with the data we need (expires in 10 minutes)
-    response.cookies.set('twitter_code_verifier', codeVerifier, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 600, // 10 minutes
-    });
+    // Store codeVerifier and address with the stateId
+    TwitterOAuthStore.set(stateId, codeVerifier, address);
+    console.log('✅ Stored OAuth data with ID:', stateId);
 
-    response.cookies.set('twitter_address', address, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 600, // 10 minutes
-    });
+    // Add stateId to the OAuth URL
+    const urlWithState = `${url}&state=${stateId}`;
 
-    console.log('✅ Returning auth URL with cookies set');
-    return response;
+    console.log('✅ Returning auth URL');
+    return NextResponse.json({ url: urlWithState });
   } catch (error: any) {
     console.error('❌ Twitter OAuth init error:', error);
     console.error('Error details:', {

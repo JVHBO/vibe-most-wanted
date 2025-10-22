@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TwitterApi } from 'twitter-api-v2';
 import { ProfileService } from '@/lib/firebase';
+import { TwitterOAuthStore } from '@/lib/twitter-oauth-store';
 
 const CALLBACK_URL = process.env.NEXT_PUBLIC_APP_URL
   ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/twitter/callback`
@@ -13,25 +14,25 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
 
-    console.log('📥 Received params:', { code: code?.substring(0, 10) + '...', hasState: !!state });
+    console.log('📥 Received params:', { code: code?.substring(0, 10) + '...', state: state?.substring(0, 10) + '...' });
 
-    if (!code) {
-      console.error('❌ Missing code');
-      return NextResponse.redirect(new URL('/?error=twitter_auth_failed&reason=missing_code', request.url));
+    if (!code || !state) {
+      console.error('❌ Missing code or state');
+      return NextResponse.redirect(new URL('/?error=twitter_auth_failed&reason=missing_params', request.url));
     }
 
-    // Get codeVerifier and address from cookies
-    const codeVerifier = request.cookies.get('twitter_code_verifier')?.value;
-    const address = request.cookies.get('twitter_address')?.value;
+    // Get OAuth data from store using state ID
+    const oauthData = TwitterOAuthStore.get(state);
 
-    console.log('🍪 Cookies:', { hasCodeVerifier: !!codeVerifier, address });
+    console.log('📦 Store lookup:', { hasData: !!oauthData, state });
 
-    if (!codeVerifier || !address) {
-      console.error('❌ Missing cookies');
-      return NextResponse.redirect(new URL('/?error=twitter_auth_failed&reason=missing_cookies', request.url));
+    if (!oauthData) {
+      console.error('❌ OAuth state not found or expired');
+      return NextResponse.redirect(new URL('/?error=twitter_auth_failed&reason=state_not_found', request.url));
     }
 
-    console.log('✅ Got address from cookies:', address);
+    const { codeVerifier, address } = oauthData;
+    console.log('✅ Got address from store:', address);
 
     if (!process.env.TWITTER_CLIENT_ID || !process.env.TWITTER_CLIENT_SECRET) {
       console.error('❌ Missing Twitter credentials in env');
@@ -63,14 +64,12 @@ export async function GET(request: NextRequest) {
     await ProfileService.updateTwitter(address, userObject.username);
     console.log('✅ Saved to Firebase');
 
-    // Redirect back to app with success and clear cookies
-    const response = NextResponse.redirect(new URL(`/?twitter_connected=${userObject.username}`, request.url));
+    // Delete OAuth state from store
+    TwitterOAuthStore.delete(state);
+    console.log('✅ Cleared OAuth state');
 
-    // Clear the temporary cookies
-    response.cookies.delete('twitter_code_verifier');
-    response.cookies.delete('twitter_address');
-
-    return response;
+    // Redirect back to app with success
+    return NextResponse.redirect(new URL(`/?twitter_connected=${userObject.username}`, request.url));
   } catch (error: any) {
     console.error('❌ Twitter OAuth callback error:', error);
     console.error('Error details:', {
