@@ -54,6 +54,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Farcaster Frame Meta Tags */}
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:image" content="https://www.vibemostwanted.xyz/og-placeholder.svg" />
+        <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+        <meta property="fc:frame:button:1" content="🎮 Play Game" />
+        <meta property="fc:frame:button:1:action" content="link" />
+        <meta property="fc:frame:button:1:target" content="https://www.vibemostwanted.xyz" />
+
+        {/* OpenGraph */}
+        <meta property="og:title" content="VIBE MOST WANTED - NFT Card Game" />
+        <meta property="og:description" content="Battle with your VIBE NFT cards in PvE and PvP modes" />
+        <meta property="og:image" content="https://www.vibemostwanted.xyz/og-placeholder.svg" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="VIBE MOST WANTED - NFT Card Game" />
+        <meta name="twitter:description" content="Battle with your VIBE NFT cards in PvE and PvP modes" />
+        <meta name="twitter:image" content="https://www.vibemostwanted.xyz/og-placeholder.svg" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
