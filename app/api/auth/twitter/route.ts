@@ -6,17 +6,13 @@ const CALLBACK_URL = process.env.NEXT_PUBLIC_APP_URL
   ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/twitter/callback`
   : 'http://localhost:3000/api/auth/twitter/callback';
 
-// Encryption key from env (must be 32 bytes)
-const ENCRYPTION_KEY = process.env.TWITTER_ENCRYPTION_KEY || 'default-key-please-change-this!!';
-const ENCRYPTION_IV_LENGTH = 16;
-
-function encrypt(text: string): string {
-  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
-  const iv = crypto.randomBytes(ENCRYPTION_IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
+// Simple encoding function (base64 is enough for short-lived state)
+function encodeState(data: any): string {
+  const json = JSON.stringify(data);
+  return Buffer.from(json).toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }
 
 export async function GET(request: NextRequest) {
@@ -57,20 +53,14 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ OAuth link generated');
 
-    // Encrypt the sensitive data (codeVerifier + address)
-    const dataToEncrypt = JSON.stringify({ codeVerifier, address, timestamp: Date.now() });
-    const encryptedState = encrypt(dataToEncrypt);
+    // Encode the state data (codeVerifier + address + timestamp)
+    const stateData = { codeVerifier, address, timestamp: Date.now() };
+    const encodedState = encodeState(stateData);
 
-    // Use base64url encoding instead (URL-safe, no special chars)
-    const base64State = Buffer.from(encryptedState).toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    console.log('✅ Encoded OAuth data');
 
-    console.log('✅ Encrypted OAuth data');
-
-    // Add encrypted state to the OAuth URL
-    const urlWithState = `${url}&state=${base64State}`;
+    // Add state to the OAuth URL
+    const urlWithState = `${url}&state=${encodedState}`;
 
     console.log('✅ Returning auth URL');
     return NextResponse.json({ url: urlWithState });
