@@ -1389,11 +1389,11 @@ export default function TCGPage() {
 
               if (soundEnabled) {
                 if (playerWins) {
-                  AudioManager.gameWin();
+                  AudioManager.win();
                 } else if (isDraw) {
-                  AudioManager.buttonClick();
+                  AudioManager.tie();
                 } else {
-                  AudioManager.gameLose();
+                  AudioManager.lose();
                 }
               }
 
