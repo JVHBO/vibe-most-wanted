@@ -1911,6 +1911,13 @@ export default function TCGPage() {
                       <span>𝕏</span> {userProfile.twitter ? 'Reconnect' : 'Connect Twitter'}
                     </button>
                   </div>
+
+                  {/* Easter egg message to Vibe Market */}
+                  <div className="mt-3 pt-3 border-t border-gray-700">
+                    <p className="text-xs text-gray-500 italic text-center">
+                      🎯 Nico, me manda um DM que te mostro como adicionar esse botão
+                    </p>
+                  </div>
                 </div>
               )}
 
