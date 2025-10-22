@@ -2651,16 +2651,24 @@ export default function TCGPage() {
                   <button
                     onClick={async () => {
                       if (!profileUsername.trim()) {
-                        alert(t('usernameRequired'));
+                        if (soundEnabled) AudioManager.buttonError();
                         return;
                       }
 
                       if (soundEnabled) AudioManager.buttonClick();
 
                       try {
+                        console.log('🔐 Firebase config check:', {
+                          hasApiKey: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+                          hasDbUrl: !!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+                          address: address
+                        });
+                        
                         await ProfileService.createProfile(address!, profileUsername.trim());
+                        console.log('✅ Profile created successfully!');
 
                         const profile = await ProfileService.getProfile(address!);
+                        console.log('📊 Profile retrieved:', profile);
                         
                         setUserProfile(profile);
                         setShowCreateProfile(false);
@@ -2668,10 +2676,9 @@ export default function TCGPage() {
                         setCurrentView('profile');
 
                         if (soundEnabled) AudioManager.buttonSuccess();
-                        alert(t('profileCreated'));
                       } catch (error: any) {
                         if (soundEnabled) AudioManager.buttonError();
-                        alert(error.message || t('usernameInUse'));
+                        console.error('❌ Error creating profile:', error.code, error.message);
                       }
                     }}
                     className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-purple-500/50 text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105"
