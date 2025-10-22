@@ -1612,37 +1612,24 @@ export default function TCGPage() {
   // Auto Match Listener - Detecta quando uma sala é criada para o jogador
   useEffect(() => {
     if (pvpMode === 'autoMatch' && isSearching && address) {
-      const checkInterval = setInterval(async () => {
-        try {
-          // Verifica todas as salas para encontrar uma onde o jogador é host
-          const { ref: dbRef, get } = await import('firebase/database');
-          const { getDatabase } = await import('firebase/database');
-          const db = getDatabase();
-          const roomsRef = dbRef(db, 'rooms');
-          const snapshot = await get(roomsRef);
+      console.log('🔍 Starting matchmaking listener for:', address);
 
-          if (snapshot.exists()) {
-            const rooms = snapshot.val();
-            // Procura por uma sala onde o jogador é o host
-            for (const [code, room] of Object.entries(rooms)) {
-              const r = room as any;
-              if (r.host.address === address) {
-                // Encontrou a sala!
-                setRoomCode(code);
-                setPvpMode('inRoom');
-                setIsSearching(false);
-                clearInterval(checkInterval);
-                return;
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Erro ao verificar salas:', error);
+      const unsubscribe = PvPService.watchMatchmaking(address, (roomCode) => {
+        if (roomCode) {
+          console.log('✅ Match found! Room:', roomCode);
+          setRoomCode(roomCode);
+          setPvpMode('inRoom');
+          setIsSearching(false);
+        } else {
+          console.log('⚠️ Matchmaking cancelled or failed');
+          setIsSearching(false);
+          setPvpMode('pvpMenu');
         }
-      }, 2000); // Verifica a cada 2 segundos
+      });
 
       return () => {
-        clearInterval(checkInterval);
+        console.log('🛑 Stopping matchmaking listener');
+        unsubscribe();
       };
     }
   }, [pvpMode, isSearching, address]);

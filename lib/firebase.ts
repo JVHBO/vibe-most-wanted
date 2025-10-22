@@ -160,6 +160,43 @@ export class PvPService {
     await remove(ref(database, `matchmaking/${playerAddress}`));
   }
 
+  // Observa mudanças no matchmaking para detectar quando a sala é criada
+  static watchMatchmaking(playerAddress: string, callback: (roomCode: string | null) => void): () => void {
+    const playerRef = ref(database, `matchmaking/${playerAddress}`);
+    const roomsRef = ref(database, 'rooms');
+
+    // Escuta quando o jogador é removido do matchmaking (significa que uma sala foi criada)
+    const matchmakingListener = onValue(playerRef, async (snapshot) => {
+      if (!snapshot.exists()) {
+        // Jogador foi removido do matchmaking, procura por sala criada
+        console.log('🔍 Player removed from matchmaking, searching for room...');
+
+        // Espera um pouco para dar tempo da sala ser criada
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Procura por salas onde o jogador é guest ou host
+        const roomsSnapshot = await get(roomsRef);
+        if (roomsSnapshot.exists()) {
+          const rooms = roomsSnapshot.val();
+          for (const [code, room] of Object.entries(rooms)) {
+            const r = room as GameRoom;
+            if (r.host.address === playerAddress || r.guest?.address === playerAddress) {
+              console.log('✅ Found room:', code);
+              callback(code);
+              return;
+            }
+          }
+        }
+
+        // Se não encontrou sala, pode ter sido cancelado
+        console.log('⚠️ No room found, matchmaking may have been cancelled');
+        callback(null);
+      }
+    });
+
+    return () => off(playerRef, 'value', matchmakingListener);
+  }
+
   // Atualiza as cartas selecionadas
   static async updateCards(code: string, playerAddress: string, cards: any[]): Promise<void> {
     console.log('🎯 updateCards called:', { code, playerAddress, cardsCount: cards.length });
