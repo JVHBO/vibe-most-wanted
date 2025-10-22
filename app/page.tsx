@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
-import { sdk } from "@farcaster/frame-sdk"; // Importa o SDK do Farcaster
 import { PvPService, ProfileService, type GameRoom, type UserProfile, type MatchHistory } from "../lib/firebase";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -27,20 +26,11 @@ const setCache = (key: string, value: string): void => {
   imageUrlCache.set(key, { url: value, time: Date.now() });
 };
 
-// 🎮 Componente principal
-export default function Page() {
-  useEffect(() => {
-    // 🔔 Notifica o Farcaster que o app terminou de carregar
-    sdk.actions.ready();
-  }, []);
-
-  // ...aqui continua seu código, incluindo o AudioManager logo abaixo
-}
-
 const AudioManager = {
   context: null as AudioContext | null,
   musicGain: null as GainNode | null,
-  musicInterval: null as any,
+  backgroundMusic: null as HTMLAudioElement | null,
+  backgroundSource: null as AudioBufferSourceNode | null,
   async init() {
     if (typeof window === 'undefined') return;
     if (!this.context) {
@@ -60,7 +50,7 @@ const AudioManager = {
     if (!this.context) await this.init();
     if (!this.context) return;
     if (this.context.state === 'suspended') await this.context.resume();
-    
+
     const osc = this.context.createOscillator();
     const gain = this.context.createGain();
     osc.connect(gain);
@@ -73,45 +63,53 @@ const AudioManager = {
     osc.stop(this.context.currentTime + dur);
   },
   async startBackgroundMusic() {
-    // Música de fundo simplificada - apenas sons suaves ocasionais
-    if (!this.context) await this.init();
-    if (!this.context || !this.musicGain) return;
-    if (this.context.state === 'suspended') await this.context.resume();
+    await this.init();
+    if (!this.context) return;
+    if (this.context.state === 'suspended') {
+      await this.context.resume();
+    }
 
     this.stopBackgroundMusic();
 
-    const ambientNotes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C (acorde suave)
-    let noteIndex = 0;
+    try {
+      // Loop sem interrupções usando AudioContext
+      const response = await fetch('/jazz-background.mp3');
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
 
-    const playAmbient = () => {
-      if (!this.context || !this.musicGain) return;
+      this.backgroundSource = this.context.createBufferSource();
+      this.backgroundSource.buffer = audioBuffer;
+      this.backgroundSource.loop = true;
+      this.backgroundSource.loopStart = 0;
+      this.backgroundSource.loopEnd = audioBuffer.duration;
 
-      const freq = ambientNotes[noteIndex % ambientNotes.length];
-      const osc = this.context.createOscillator();
-      const gain = this.context.createGain();
+      // Cria ganho para controlar volume
+      const gainNode = this.context.createGain();
+      gainNode.gain.value = 0.3; // Volume baixo
 
-      osc.connect(gain);
-      gain.connect(this.musicGain);
-      osc.frequency.value = freq;
-      osc.type = 'sine';
+      // Conecta: source -> gain -> destination
+      this.backgroundSource.connect(gainNode);
+      gainNode.connect(this.context.destination);
 
-      const now = this.context.currentTime;
-      gain.gain.setValueAtTime(0.1, now); // Volume bem baixo
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 2);
-
-      osc.start(now);
-      osc.stop(now + 2);
-
-      noteIndex++;
-    };
-
-    playAmbient();
-    this.musicInterval = setInterval(playAmbient, 4000); // A cada 4 segundos
+      this.backgroundSource.start(0);
+    } catch (e) {
+      console.log('Erro ao tocar música de fundo:', e);
+    }
   },
   stopBackgroundMusic() {
-    if (this.musicInterval) {
-      clearInterval(this.musicInterval);
-      this.musicInterval = null;
+    if (this.backgroundSource) {
+      try {
+        this.backgroundSource.stop();
+      } catch (e) {
+        // Ignora erro se já estiver parado
+      }
+      this.backgroundSource.disconnect();
+      this.backgroundSource = null;
+    }
+    if (this.backgroundMusic) {
+      this.backgroundMusic.pause();
+      this.backgroundMusic.currentTime = 0;
+      this.backgroundMusic = null;
     }
   },
   async selectCard() { await this.playTone(800, 0.1, 0.2); },
@@ -1472,6 +1470,15 @@ export default function TCGPage() {
             <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
               {t('defeatPrize')}
             </p>
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('tweetDefeat', { power: playerPower }))}&url=${encodeURIComponent(window.location.origin)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+              className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+            >
+              <span>🐦</span> {t('shareDefeat')}
+            </a>
             <button
               onClick={() => setShowLossPopup(false)}
               className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"

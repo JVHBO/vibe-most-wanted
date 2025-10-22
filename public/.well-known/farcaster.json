@@ -1,15 +1,15 @@
 {
   "frame": {
-    "name": "VIBE MOST WANTED GAME",
+    "name": "VIBE MOST WANTED",
     "version": "1",
     "iconUrl": "https://www.vibemostwanted.xyz/icon.png",
     "homeUrl": "https://www.vibemostwanted.xyz",
-    "imageUrl": "https://www.vibemostwanted.xyz/image.png",
+    "imageUrl": "https://www.vibemostwanted.xyz/og-image.png",
     "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
     "splashBackgroundColor": "#6200AE",
     "webhookUrl": "https://www.vibemostwanted.xyz/api/webhook",
-    "subtitle": "HOT CARD GAME",
-    "description": "A GAME VERY VERY GEY",
+    "subtitle": "NFT Card Battle Game",
+    "description": "Battle with your VIBE NFT cards in PvE and PvP modes. Join the most wanted card game on Base!",
     "primaryCategory": "games"
   },
   "accountAssociation": {

@@ -258,7 +258,6 @@ export class ProfileService {
     const profile: UserProfile = {
       address,
       username,
-      twitter,
       createdAt: Date.now(),
       lastUpdated: Date.now(),
       stats: {
@@ -270,6 +269,11 @@ export class ProfileService {
         pvpLosses: 0
       }
     };
+
+    // Adiciona Twitter apenas se fornecido
+    if (twitter && twitter.trim()) {
+      profile.twitter = twitter.trim();
+    }
 
     // Salva o perfil
     await set(ref(database, `profiles/${address}`), profile);
@@ -295,10 +299,16 @@ export class ProfileService {
 
   // Atualiza Twitter
   static async updateTwitter(address: string, twitter: string): Promise<void> {
-    await update(ref(database, `profiles/${address}`), {
-      twitter,
+    const updateData: any = {
       lastUpdated: Date.now()
-    });
+    };
+
+    // Adiciona Twitter apenas se não estiver vazio
+    if (twitter && twitter.trim()) {
+      updateData.twitter = twitter.trim();
+    }
+
+    await update(ref(database, `profiles/${address}`), updateData);
   }
 
   // Registra resultado de partida
