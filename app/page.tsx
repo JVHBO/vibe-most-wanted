@@ -1086,16 +1086,35 @@ export default function TCGPage() {
   const connectWallet = useCallback(async () => {
     if (soundEnabled) AudioManager.buttonSuccess();
     try {
+      // Tenta usar Farcaster SDK primeiro (para mini apps)
+      if (sdk && typeof sdk.wallet !== 'undefined') {
+        try {
+          const farcasterAddress = await sdk.wallet.ethProvider.request({
+            method: "eth_requestAccounts"
+          });
+          if (farcasterAddress && farcasterAddress[0]) {
+            setAddress(farcasterAddress[0]);
+            if (soundEnabled) AudioManager.buttonSuccess();
+            console.log('✅ Conectado via Farcaster SDK:', farcasterAddress[0]);
+            return;
+          }
+        } catch (farcasterError) {
+          console.log('⚠️ Farcaster wallet não disponível, tentando MetaMask...');
+        }
+      }
+
+      // Fallback para MetaMask (para uso fora do Farcaster)
       const eth = (window as any).ethereum;
       if (!eth) {
         if (soundEnabled) AudioManager.buttonError();
-        alert("Install MetaMask!");
+        alert("Install MetaMask or open in Farcaster app!");
         return;
       }
       const accounts = await eth.request({ method: "eth_requestAccounts" });
       if (accounts[0]) {
         setAddress(accounts[0]);
         if (soundEnabled) AudioManager.buttonSuccess();
+        console.log('✅ Conectado via MetaMask:', accounts[0]);
       }
     } catch (e: any) {
       if (soundEnabled) AudioManager.buttonError();
@@ -2250,9 +2269,6 @@ export default function TCGPage() {
           </button>
           <button onClick={() => setShowTutorial(true)} className="bg-gray-800/80 backdrop-blur text-white px-4 py-3 rounded-xl hover:bg-gray-700 transition border border-gray-700 font-medium" title={t('tutorial')}>
             📖
-          </button>
-          <button onClick={() => setSoundEnabled(!soundEnabled)} className="bg-gray-800/80 backdrop-blur text-white px-4 py-3 rounded-xl hover:bg-gray-700 transition border border-gray-700 font-medium" title={soundEnabled ? t('soundOn') : t('soundOff')}>
-            {soundEnabled ? '🔊' : '🔇'}
           </button>
           <div className="relative">
             <select 
