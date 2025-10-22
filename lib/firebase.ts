@@ -300,6 +300,32 @@ export class PvPService {
   }
 }
 
+/*
+ * MIGRATION NOTE:
+ *
+ * Old structure (slow - requires full scan):
+ *   matches/
+ *     {matchId}/
+ *       playerAddress: "0x..."
+ *       ...
+ *
+ * New structure (fast - direct access):
+ *   playerMatches/
+ *     {playerAddress}/
+ *       {matchId}/
+ *         ...
+ *
+ * To migrate existing data, run this in Firebase Console:
+ *
+ * 1. Go to Firebase Realtime Database
+ * 2. Export "matches" node
+ * 3. Run migration script to reorganize by playerAddress
+ * 4. Import to "playerMatches"
+ * 5. Delete old "matches" node
+ *
+ * This optimization reduces getMatchHistory from O(n) to O(1) where n = total matches
+ */
+
 export class ProfileService {
   // Verifica se um username já existe
   static async usernameExists(username: string): Promise<boolean> {
@@ -413,7 +439,7 @@ export class ProfileService {
   ): Promise<void> {
     console.log('🎮 recordMatch called:', { playerAddress, type, result, playerPower, opponentPower });
 
-    const matchId = push(ref(database, 'matches')).key;
+    const matchId = push(ref(database, `playerMatches/${playerAddress}`)).key;
 
     const match: MatchHistory = {
       id: matchId!,
@@ -428,8 +454,9 @@ export class ProfileService {
       opponentCards
     };
 
-    // Salva a partida
-    await set(ref(database, `matches/${matchId}`), match);
+    // Salva a partida diretamente no path do jogador (evita full scan)
+    // Estrutura: playerMatches/{playerAddress}/{matchId}
+    await set(ref(database, `playerMatches/${playerAddress}/${matchId}`), match);
     console.log('✅ Match saved to Firebase:', matchId);
 
     // Atualiza estatísticas
@@ -460,24 +487,24 @@ export class ProfileService {
     }
   }
 
-  // Busca histórico de partidas
+  // Busca histórico de partidas (otimizado - busca apenas as partidas do jogador)
   static async getMatchHistory(playerAddress: string, limit: number = 20): Promise<MatchHistory[]> {
-    const matchesRef = ref(database, 'matches');
-    const snapshot = await get(matchesRef);
+    // Busca diretamente as partidas do jogador (sem full scan)
+    const playerMatchesRef = ref(database, `playerMatches/${playerAddress}`);
+    const snapshot = await get(playerMatchesRef);
 
     if (!snapshot.exists()) return [];
 
-    const matches = snapshot.val();
-    const playerMatches = Object.values(matches)
-      .filter((m: any) => m.playerAddress === playerAddress)
-      .sort((a: any, b: any) => b.timestamp - a.timestamp)
-      .slice(0, limit);
+    const matches = Object.values(snapshot.val()) as MatchHistory[];
 
-    return playerMatches as MatchHistory[];
+    // Ordena por timestamp (mais recente primeiro) e limita
+    return matches
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, limit);
   }
 
-  // Busca leaderboard
-  static async getLeaderboard(): Promise<UserProfile[]> {
+  // Busca leaderboard (otimizado - ainda faz full scan mas é necessário para ranking)
+  static async getLeaderboard(limit: number = 100): Promise<UserProfile[]> {
     const profilesRef = ref(database, 'profiles');
     const snapshot = await get(profilesRef);
 
@@ -485,18 +512,22 @@ export class ProfileService {
 
     const profiles = Object.values(snapshot.val()) as UserProfile[];
 
-    // Ordena por total de poder
-    return profiles.sort((a, b) => b.stats.totalPower - a.stats.totalPower);
+    // Ordena por total de poder e limita ao top N
+    return profiles
+      .sort((a, b) => b.stats.totalPower - a.stats.totalPower)
+      .slice(0, limit);
   }
 
-  // Escuta mudanças no leaderboard
-  static watchLeaderboard(callback: (profiles: UserProfile[]) => void): () => void {
+  // Escuta mudanças no leaderboard (otimizado - limita ao top 100)
+  static watchLeaderboard(callback: (profiles: UserProfile[]) => void, limit: number = 100): () => void {
     const profilesRef = ref(database, 'profiles');
 
     const listener = onValue(profilesRef, (snapshot) => {
       if (snapshot.exists()) {
         const profiles = Object.values(snapshot.val()) as UserProfile[];
-        const sorted = profiles.sort((a, b) => b.stats.totalPower - a.stats.totalPower);
+        const sorted = profiles
+          .sort((a, b) => b.stats.totalPower - a.stats.totalPower)
+          .slice(0, limit); // Limita ao top N para evitar processar milhares de perfis
         callback(sorted);
       } else {
         callback([]);
