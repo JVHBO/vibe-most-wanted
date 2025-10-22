@@ -2,10 +2,10 @@
   "frame": {
     "name": "VIBE MOST WANTED",
     "version": "1",
-    "iconUrl": "https://www.vibemostwanted.xyz/og-placeholder.svg",
+    "iconUrl": "https://www.vibemostwanted.xyz/icon.png",
     "homeUrl": "https://www.vibemostwanted.xyz",
-    "imageUrl": "https://www.vibemostwanted.xyz/og-placeholder.svg",
-    "splashImageUrl": "https://www.vibemostwanted.xyz/og-placeholder.svg",
+    "imageUrl": "https://www.vibemostwanted.xyz/icon.png",
+    "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
     "splashBackgroundColor": "#6200AE",
     "webhookUrl": "https://www.vibemostwanted.xyz/api/webhook",
     "subtitle": "NFT Card Battle Game",
