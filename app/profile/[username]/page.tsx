@@ -21,11 +21,15 @@ export default function ProfilePage() {
     const initSDK = async () => {
       try {
         await sdk.actions.ready();
-        const context = await sdk.context;
-        // @ts-ignore - SDK types may not be fully defined
-        if (context?.user?.verifications?.[0]) {
-          // @ts-ignore
-          setCurrentUserAddress(context.user.verifications[0].toLowerCase());
+
+        // Tenta obter o endereço do wallet conectado
+        if (sdk && typeof sdk.wallet !== 'undefined') {
+          const addresses = await sdk.wallet.ethProvider.request({
+            method: "eth_requestAccounts"
+          });
+          if (addresses && addresses[0]) {
+            setCurrentUserAddress(addresses[0].toLowerCase());
+          }
         }
       } catch (err) {
         console.error('Error loading current user:', err);
