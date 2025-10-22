@@ -2662,12 +2662,13 @@ export default function TCGPage() {
                       if (soundEnabled) AudioManager.buttonClick();
 
                       try {
-                        await ProfileService.createProfile(
-                          address!,
-                          profileUsername.trim()
-                        );
+                        console.log('🚀 Creating profile:', profileUsername);
+                        await ProfileService.createProfile(address!, profileUsername.trim());
+                        console.log('✅ Profile created!');
 
                         const profile = await ProfileService.getProfile(address!);
+                        console.log('📊 Profile loaded:', profile);
+                        
                         setUserProfile(profile);
                         setShowCreateProfile(false);
                         setProfileUsername('');
@@ -2676,8 +2677,9 @@ export default function TCGPage() {
                         if (soundEnabled) AudioManager.buttonSuccess();
                         alert(t('profileCreated'));
                       } catch (error: any) {
+                        console.error('❌ Error:', error.code, error.message);
                         if (soundEnabled) AudioManager.buttonError();
-                        alert(error.message || t('usernameInUse'));
+                        alert('Erro: ' + (error.message || t('usernameInUse')));
                       }
                     }}
                     className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-purple-500/50 text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105"
