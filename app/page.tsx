@@ -1297,23 +1297,14 @@ export default function TCGPage() {
         console.log('✅ JOGADOR VENCEU!');
         matchResult = 'win';
         setResult(t('playerWins'));
-        setTimeout(() => {
-          setShowWinPopup(true);
-          if (soundEnabled) AudioManager.win();
-        }, 1000);
       } else if (playerTotal < dealerTotal) {
         console.log('❌ DEALER VENCEU!');
         matchResult = 'loss';
         setResult(t('dealerWins'));
-        setTimeout(() => {
-          setShowLossPopup(true);
-          if (soundEnabled) AudioManager.lose();
-        }, 1000);
       } else {
         console.log('🤝 EMPATE!');
         matchResult = 'tie';
         setResult(t('tie'));
-        if (soundEnabled) AudioManager.tie();
       }
 
       // Record PvE match if user has profile
@@ -1332,11 +1323,25 @@ export default function TCGPage() {
         }).catch(err => console.error('Error recording match:', err));
       }
 
+      // Fecha a tela de batalha primeiro
       setTimeout(() => {
         setIsBattling(false);
         setShowBattleScreen(false);
         setBattlePhase('cards');
-      }, 4000);
+
+        // DEPOIS mostra o popup de resultado
+        setTimeout(() => {
+          if (matchResult === 'win') {
+            setShowWinPopup(true);
+            if (soundEnabled) AudioManager.win();
+          } else if (matchResult === 'loss') {
+            setShowLossPopup(true);
+            if (soundEnabled) AudioManager.lose();
+          } else {
+            if (soundEnabled) AudioManager.tie();
+          }
+        }, 500);
+      }, 2000);
     }, 4500);
   }, [selectedCards, nfts, t, soundEnabled, isBattling]);
 
@@ -1424,21 +1429,12 @@ export default function TCGPage() {
               if (playerWins) {
                 matchResult = 'win';
                 setResult(t('playerWins'));
-                setTimeout(() => {
-                  setShowWinPopup(true);
-                  if (soundEnabled) AudioManager.win();
-                }, 1000);
               } else if (isDraw) {
                 matchResult = 'tie';
                 setResult(t('tie'));
-                if (soundEnabled) AudioManager.tie();
               } else {
                 matchResult = 'loss';
                 setResult(t('dealerWins'));
-                setTimeout(() => {
-                  setShowLossPopup(true);
-                  if (soundEnabled) AudioManager.lose();
-                }, 1000);
               }
 
               // Record PvP match if user has profile
@@ -1456,16 +1452,34 @@ export default function TCGPage() {
                 }).catch(err => console.error('Error recording PvP match:', err));
               }
 
-              // Fecha a sala PVP e volta ao menu após um delay
+              // Fecha a tela de batalha PVP primeiro
               setTimeout(() => {
-                setPvpMode(null);
-                setGameMode(null);
-                setRoomCode('');
-                setCurrentRoom(null);
-                setSelectedCards([]);
                 setIsBattling(false);
                 setShowBattleScreen(false);
-              }, 5000);
+                setBattlePhase('cards');
+
+                // DEPOIS mostra o popup de resultado
+                setTimeout(() => {
+                  if (matchResult === 'win') {
+                    setShowWinPopup(true);
+                    if (soundEnabled) AudioManager.win();
+                  } else if (matchResult === 'loss') {
+                    setShowLossPopup(true);
+                    if (soundEnabled) AudioManager.lose();
+                  } else {
+                    if (soundEnabled) AudioManager.tie();
+                  }
+                }, 500);
+
+                // Fecha a sala PVP e volta ao menu após ver o resultado
+                setTimeout(() => {
+                  setPvpMode(null);
+                  setGameMode(null);
+                  setRoomCode('');
+                  setCurrentRoom(null);
+                  setSelectedCards([]);
+                }, 5000);
+              }, 2000);
             }, 3500);
           }
         } else {
@@ -2321,8 +2335,8 @@ export default function TCGPage() {
 
                       {showProfileDropdown && (
                         <>
-                          <div style={{position: "fixed", inset: 0, zIndex: 45}} onClick={() => setShowProfileDropdown(false)} />
-                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 50}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
+                          <div style={{position: "fixed", inset: 0, zIndex: 100}} onClick={() => setShowProfileDropdown(false)} />
+                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 110}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
                           <div className="p-5 bg-gradient-to-r from-purple-900/60 to-pink-900/60 border-b border-purple-500/30">
                             <div className="flex items-center gap-4 mb-4">
                               {userProfile.twitter ? (
