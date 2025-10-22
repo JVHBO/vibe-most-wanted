@@ -28,11 +28,16 @@ export default function ProfilePage() {
             method: "eth_requestAccounts"
           });
           if (addresses && addresses[0]) {
+            console.log('✅ Current user address loaded:', addresses[0]);
             setCurrentUserAddress(addresses[0].toLowerCase());
+          } else {
+            console.log('⚠️ No address found in wallet');
           }
+        } else {
+          console.log('⚠️ SDK wallet not available');
         }
       } catch (err) {
-        console.error('Error loading current user:', err);
+        console.error('❌ Error loading current user:', err);
       }
     };
     initSDK();
@@ -154,25 +159,34 @@ export default function ProfilePage() {
                   </a>
                 )}
                 {/* Edit Twitter button - only visible to profile owner */}
-                {currentUserAddress && currentUserAddress.toLowerCase() === profile.address.toLowerCase() && (
-                  <button
-                    onClick={async () => {
-                      const newTwitter = prompt('Enter your X/Twitter handle (without @):', profile.twitter || '');
-                      if (newTwitter !== null && newTwitter.trim()) {
-                        try {
-                          await ProfileService.updateTwitter(profile.address, newTwitter.replace('@', '').trim());
-                          setProfile({ ...profile, twitter: newTwitter.replace('@', '').trim() });
-                        } catch (err) {
-                          console.error('Error updating Twitter:', err);
-                          alert('Failed to update Twitter handle');
+                {(() => {
+                  const isOwner = currentUserAddress && currentUserAddress.toLowerCase() === profile.address.toLowerCase();
+                  console.log('🔍 Button check:', {
+                    currentUserAddress,
+                    profileAddress: profile.address,
+                    isOwner,
+                    shouldShowButton: isOwner
+                  });
+                  return isOwner ? (
+                    <button
+                      onClick={async () => {
+                        const newTwitter = prompt('Enter your X/Twitter handle (without @):', profile.twitter || '');
+                        if (newTwitter !== null && newTwitter.trim()) {
+                          try {
+                            await ProfileService.updateTwitter(profile.address, newTwitter.replace('@', '').trim());
+                            setProfile({ ...profile, twitter: newTwitter.replace('@', '').trim() });
+                          } catch (err) {
+                            console.error('Error updating Twitter:', err);
+                            alert('Failed to update Twitter handle');
+                          }
                         }
-                      }
-                    }}
-                    className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 bg-blue-900/30 rounded border border-blue-500/30 transition"
-                  >
-                    {profile.twitter ? '✏️ Edit' : '➕ Add X'}
-                  </button>
-                )}
+                      }}
+                      className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 bg-blue-900/30 rounded border border-blue-500/30 transition"
+                    >
+                      {profile.twitter ? '✏️ Edit' : '➕ Add X'}
+                    </button>
+                  ) : null;
+                })()}
               </div>
             </div>
 
