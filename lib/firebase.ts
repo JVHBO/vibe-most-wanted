@@ -291,6 +291,13 @@ export class ProfileService {
     return snapshot.exists() ? snapshot.val() : null;
   }
 
+  // Busca endereço por username
+  static async getAddressByUsername(username: string): Promise<string | null> {
+    const normalizedUsername = username.toLowerCase();
+    const snapshot = await get(ref(database, `usernames/${normalizedUsername}`));
+    return snapshot.exists() ? snapshot.val() : null;
+  }
+
   // Atualiza estatísticas do perfil
   static async updateStats(address: string, totalCards: number, totalPower: number): Promise<void> {
     await update(ref(database, `profiles/${address}`), {

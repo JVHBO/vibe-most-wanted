@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
+import Link from "next/link";
 import { PvPService, ProfileService, type GameRoom, type UserProfile, type MatchHistory } from "../lib/firebase";
 import { sdk } from "@farcaster/miniapp-sdk";
 
@@ -2417,6 +2418,16 @@ export default function TCGPage() {
                             >
                               <span>📊</span> {t('viewStats')}
                             </button>
+                            <Link
+                              href={`/profile/${userProfile.username}`}
+                              onClick={() => {
+                                if (soundEnabled) AudioManager.buttonClick();
+                                setShowProfileDropdown(false);
+                              }}
+                              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2 block"
+                            >
+                              <span>👤</span> {t('viewProfile')}
+                            </Link>
                             <button
                               onClick={() => {
                                 if (soundEnabled) AudioManager.buttonClick();
@@ -2887,10 +2898,12 @@ export default function TCGPage() {
                               </span>
                             </td>
                             <td className="p-4">
-                              <div>
-                                <p className="font-bold text-white">@{profile.username}</p>
-                                <p className="text-xs text-gray-400 font-mono">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
-                              </div>
+                              <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
+                                <div>
+                                  <p className="font-bold text-cyan-400 hover:text-cyan-300 transition-colors">@{profile.username}</p>
+                                  <p className="text-xs text-gray-400 font-mono">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
+                                </div>
+                              </Link>
                             </td>
                             <td className="p-4 text-right text-purple-400 font-bold">{profile.stats.totalCards}</td>
                             <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
