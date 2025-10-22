@@ -39,12 +39,17 @@ export async function GET(request: NextRequest) {
     let address: string;
 
     try {
+      console.log('🔍 State received:', state);
+      console.log('🔍 State length:', state.length);
+
       const stateData = decodeState(state);
-      console.log('✅ Decoded state');
+      console.log('✅ Decoded state:', stateData);
 
       codeVerifier = stateData.codeVerifier;
       address = stateData.address;
       const timestamp = stateData.timestamp;
+
+      console.log('✅ Extracted data:', { address, hasCodeVerifier: !!codeVerifier, timestamp });
 
       // Check if token is expired (older than 10 minutes)
       const age = Date.now() - timestamp;
@@ -54,8 +59,10 @@ export async function GET(request: NextRequest) {
       }
 
       console.log('✅ Got address from state:', address);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to decode state:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ State value:', state);
       return NextResponse.redirect(new URL('/?error=twitter_auth_failed&reason=invalid_state', request.url));
     }
 

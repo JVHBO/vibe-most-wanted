@@ -58,6 +58,9 @@ export async function GET(request: NextRequest) {
     const encodedState = encodeState(stateData);
 
     console.log('✅ Encoded OAuth data');
+    console.log('🔍 State data:', stateData);
+    console.log('🔍 Encoded state:', encodedState);
+    console.log('🔍 Encoded state length:', encodedState.length);
 
     // Add state to the OAuth URL
     const urlWithState = `${url}&state=${encodedState}`;
