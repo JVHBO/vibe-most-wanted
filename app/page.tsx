@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { PvPService, ProfileService, type GameRoom, type UserProfile, type MatchHistory } from "../lib/firebase";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -1518,6 +1519,20 @@ export default function TCGPage() {
       };
     }
   }, [pvpMode, isSearching, address]);
+
+  // Farcaster SDK - Call ready() when app loads
+  useEffect(() => {
+    const initFarcasterSDK = async () => {
+      try {
+        await sdk.actions.ready();
+        console.log('✅ Farcaster SDK ready called');
+      } catch (error) {
+        console.error('❌ Error calling Farcaster ready:', error);
+      }
+    };
+
+    initFarcasterSDK();
+  }, []);
 
   // Load user profile when wallet connects
   useEffect(() => {
