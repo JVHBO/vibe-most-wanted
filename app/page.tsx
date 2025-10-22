@@ -2480,7 +2480,7 @@ export default function TCGPage() {
                       {showProfileDropdown && (
                         <>
                           <div style={{position: "fixed", inset: 0, zIndex: 9999}} onClick={() => setShowProfileDropdown(false)} />
-                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 10000}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
+                          <div className="fixed top-20 right-4 w-72 z-[10000] bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
                           <div className="p-5 bg-gradient-to-r from-purple-900/60 to-pink-900/60 border-b border-purple-500/30">
                             <div className="flex items-center gap-4 mb-4">
                               {userProfile.twitter ? (
