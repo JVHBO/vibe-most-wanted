@@ -2090,7 +2090,7 @@ export default function TCGPage() {
                       {showProfileDropdown && (
                         <>
                           <div className="fixed inset-0 z-[55]" onClick={() => setShowProfileDropdown(false)} />
-                          <div className="absolute right-0 mt-2 w-72 bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl z-[60] overflow-hidden">
+                          <div className="fixed top-16 right-4 w-72 bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl z-[60] overflow-hidden">
                           <div className="p-5 bg-gradient-to-r from-purple-900/60 to-pink-900/60 border-b border-purple-500/30">
                             <div className="flex items-center gap-4 mb-4">
                               {userProfile.twitter ? (
