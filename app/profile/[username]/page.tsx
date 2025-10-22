@@ -156,47 +156,16 @@ export default function ProfilePage() {
               <p className="text-gray-400 font-mono text-sm mb-2">
                 {profile.address.slice(0, 8)}...{profile.address.slice(-8)}
               </p>
-              <div className="flex items-center gap-2">
-                {profile.twitter && (
-                  <a
-                    href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
-                  >
-                    𝕏 @{profile.twitter.replace('@', '')}
-                  </a>
-                )}
-                {/* Edit Twitter button - only visible to profile owner */}
-                {(() => {
-                  const isOwner = currentUserAddress && currentUserAddress.toLowerCase() === profile.address.toLowerCase();
-                  console.log('🔍 Button check:', {
-                    currentUserAddress,
-                    profileAddress: profile.address,
-                    isOwner,
-                    shouldShowButton: isOwner
-                  });
-                  return isOwner ? (
-                    <button
-                      onClick={async () => {
-                        const newTwitter = prompt('Enter your X/Twitter handle (without @):', profile.twitter || '');
-                        if (newTwitter !== null && newTwitter.trim()) {
-                          try {
-                            await ProfileService.updateTwitter(profile.address, newTwitter.replace('@', '').trim());
-                            setProfile({ ...profile, twitter: newTwitter.replace('@', '').trim() });
-                          } catch (err) {
-                            console.error('Error updating Twitter:', err);
-                            alert('Failed to update Twitter handle');
-                          }
-                        }
-                      }}
-                      className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 bg-blue-900/30 rounded border border-blue-500/30 transition"
-                    >
-                      {profile.twitter ? '✏️ Edit' : '➕ Add X'}
-                    </button>
-                  ) : null;
-                })()}
-              </div>
+              {profile.twitter && (
+                <a
+                  href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                >
+                  𝕏 @{profile.twitter.replace('@', '')}
+                </a>
+              )}
             </div>
 
             {/* Quick Stats */}

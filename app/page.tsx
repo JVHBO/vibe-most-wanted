@@ -1146,10 +1146,14 @@ export default function TCGPage() {
 
       if (event.data.type === 'twitter_connected') {
         console.log('✅ Twitter connected via popup:', event.data.username);
-        if (userProfile && address) {
-          // Update local state
-          setUserProfile({ ...userProfile, twitter: event.data.username });
-          alert(`✅ Twitter connected: @${event.data.username}`);
+        if (address) {
+          // Reload profile from Firebase to get the updated Twitter handle
+          ProfileService.getProfile(address).then((profile) => {
+            if (profile) {
+              setUserProfile(profile);
+              console.log('✅ Profile reloaded with Twitter:', profile.twitter);
+            }
+          });
         }
       } else if (event.data.type === 'twitter_error') {
         alert('❌ Failed to connect Twitter. Please try again.');
