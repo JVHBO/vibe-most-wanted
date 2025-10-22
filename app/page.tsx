@@ -2087,24 +2087,26 @@ export default function TCGPage() {
                       </button>
 
                       {showProfileDropdown && (
-                        <div className="absolute right-0 mt-2 w-64 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
-                          <div className="p-4 bg-gradient-to-r from-purple-900/50 to-pink-900/50 border-b border-gray-700">
-                            <div className="flex items-center gap-3 mb-3">
+                        <>
+                          <div className="fixed inset-0 z-[55]" onClick={() => setShowProfileDropdown(false)} />
+                          <div className="absolute right-0 mt-2 w-72 bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl z-[60] overflow-hidden">
+                          <div className="p-5 bg-gradient-to-r from-purple-900/60 to-pink-900/60 border-b border-purple-500/30">
+                            <div className="flex items-center gap-4 mb-4">
                               {userProfile.twitter ? (
                                 <img
                                   src={`https://unavatar.io/twitter/${userProfile.twitter}`}
                                   alt={userProfile.username}
-                                  className="w-12 h-12 rounded-full"
+                                  className="w-14 h-14 rounded-full ring-2 ring-purple-400"
                                   onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23a855f7"><circle cx="12" cy="12" r="10"/></svg>'; }}
                                 />
                               ) : (
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl font-bold">
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-bold ring-2 ring-purple-400">
                                   {userProfile.username[0].toUpperCase()}
                                 </div>
                               )}
                               <div>
-                                <p className="font-bold text-white">@{userProfile.username}</p>
-                                <p className="text-xs text-gray-400">{address.slice(0, 10)}...</p>
+                                <p className="font-bold text-lg text-white">@{userProfile.username}</p>
+                                <p className="text-xs text-purple-300">{address.slice(0, 6)}...{address.slice(-4)}</p>
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-xs">
@@ -2164,7 +2166,8 @@ export default function TCGPage() {
                               <span>🏆</span> {t('leaderboard')}
                             </button>
                           </div>
-                        </div>
+                          </div>
+                        </>
                       )}
 
                       {showInventoryDropdown && (
