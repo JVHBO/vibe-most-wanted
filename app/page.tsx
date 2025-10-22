@@ -1040,7 +1040,6 @@ export default function TCGPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
-  const [profileTwitter, setProfileTwitter] = useState<string>('');
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
