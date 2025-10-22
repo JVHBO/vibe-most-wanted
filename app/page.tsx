@@ -1435,6 +1435,44 @@ export default function TCGPage() {
     }
   }, [pvpMode, roomCode, address, soundEnabled]);
 
+  // Auto Match Listener - Detecta quando uma sala é criada para o jogador
+  useEffect(() => {
+    if (pvpMode === 'autoMatch' && isSearching && address) {
+      const checkInterval = setInterval(async () => {
+        try {
+          // Verifica todas as salas para encontrar uma onde o jogador é host
+          const { ref: dbRef, get } = await import('firebase/database');
+          const { getDatabase } = await import('firebase/database');
+          const db = getDatabase();
+          const roomsRef = dbRef(db, 'rooms');
+          const snapshot = await get(roomsRef);
+
+          if (snapshot.exists()) {
+            const rooms = snapshot.val();
+            // Procura por uma sala onde o jogador é o host
+            for (const [code, room] of Object.entries(rooms)) {
+              const r = room as any;
+              if (r.host.address === address) {
+                // Encontrou a sala!
+                setRoomCode(code);
+                setPvpMode('inRoom');
+                setIsSearching(false);
+                clearInterval(checkInterval);
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao verificar salas:', error);
+        }
+      }, 2000); // Verifica a cada 2 segundos
+
+      return () => {
+        clearInterval(checkInterval);
+      };
+    }
+  }, [pvpMode, isSearching, address]);
+
   // Load user profile when wallet connects
   useEffect(() => {
     if (address) {
@@ -1700,10 +1738,12 @@ export default function TCGPage() {
                   try {
                     const code = await PvPService.findMatch(address || '');
                     if (code) {
+                      // Encontrou uma sala imediatamente
                       setRoomCode(code);
                       setPvpMode('inRoom');
                       setIsSearching(false);
                     }
+                    // Se não encontrou (code === ''), continua em autoMatch aguardando
                   } catch (error) {
                     alert('Erro ao buscar partida: ' + error);
                     setIsSearching(false);
