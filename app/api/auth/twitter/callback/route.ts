@@ -40,11 +40,17 @@ export async function GET(request: NextRequest) {
     let address: string;
 
     try {
-      // Decode the URL-encoded state first
-      const decodedState = decodeURIComponent(state);
-      console.log('✅ Decoded state');
+      // Decode from base64url (URL-safe base64)
+      const base64 = state
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
 
-      const decryptedState = decrypt(decodedState);
+      // Add padding if needed
+      const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+      const encryptedState = Buffer.from(base64 + padding, 'base64').toString();
+      console.log('✅ Decoded base64url state');
+
+      const decryptedState = decrypt(encryptedState);
       console.log('✅ Decrypted state');
 
       const { codeVerifier: cv, address: addr, timestamp } = JSON.parse(decryptedState);

@@ -60,12 +60,17 @@ export async function GET(request: NextRequest) {
     // Encrypt the sensitive data (codeVerifier + address)
     const dataToEncrypt = JSON.stringify({ codeVerifier, address, timestamp: Date.now() });
     const encryptedState = encrypt(dataToEncrypt);
-    const encodedState = encodeURIComponent(encryptedState);
+
+    // Use base64url encoding instead (URL-safe, no special chars)
+    const base64State = Buffer.from(encryptedState).toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
 
     console.log('✅ Encrypted OAuth data');
 
     // Add encrypted state to the OAuth URL
-    const urlWithState = `${url}&state=${encodedState}`;
+    const urlWithState = `${url}&state=${base64State}`;
 
     console.log('✅ Returning auth URL');
     return NextResponse.json({ url: urlWithState });
