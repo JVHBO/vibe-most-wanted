@@ -2116,9 +2116,10 @@ export default function TCGPage() {
                               }`}
                             >
                               <img
-                                src={nft.image}
+                                src={nft.imageUrl}
                                 alt={nft.name}
                                 className="w-full h-auto"
+                                loading="lazy"
                               />
                               <div className="absolute top-1 right-1 bg-black/70 rounded-full px-2 py-0.5 text-xs font-bold text-white">
                                 {nft.power}
