@@ -1400,7 +1400,7 @@ export default function TCGPage() {
               // Atualiza estados do jogo
               setDealerCards(opponentCards);
               setDealerPower(opponentPower);
-              setTotalPower(playerPower);
+              setPlayerPower(playerPower);
               setPlayerWon(playerWins);
               setLastResult(playerWins ? 'win' : (isDraw ? 'tie' : 'loss'));
               setShowWinPopup(true);
