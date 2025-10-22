@@ -1401,9 +1401,15 @@ export default function TCGPage() {
               setDealerCards(opponentCards);
               setDealerPower(opponentPower);
               setPlayerPower(playerPower);
-              setPlayerWon(playerWins);
-              setLastResult(playerWins ? 'win' : (isDraw ? 'tie' : 'loss'));
-              setShowWinPopup(true);
+              setResult(playerWins ? 'win' : (isDraw ? 'tie' : 'loss'));
+
+              if (playerWins) {
+                setShowWinPopup(true);
+              } else if (isDraw) {
+                // Empate - não mostra popup específico, só o result
+              } else {
+                setShowLossPopup(true);
+              }
 
               // Fecha a sala PVP e volta ao menu
               setPvpMode(null);
