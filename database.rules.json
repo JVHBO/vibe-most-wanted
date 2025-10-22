@@ -3,17 +3,51 @@
     "profiles": {
       "$address": {
         ".read": true,
-        ".write": false
+        ".write": "!data.exists() || $address === newData.child('address').val()",
+        ".validate": "newData.hasChildren(['address', 'username', 'createdAt', 'stats'])",
+        "address": {
+          ".validate": "newData.val() === $address"
+        },
+        "username": {
+          ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 20"
+        },
+        "stats": {
+          ".validate": "newData.hasChildren(['totalCards', 'totalPower', 'pveWins', 'pveLosses', 'pvpWins', 'pvpLosses'])",
+          "totalCards": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "totalPower": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "pveWins": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "pveLosses": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "pvpWins": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "pvpLosses": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          }
+        }
       }
     },
     "usernames": {
       ".read": true,
-      ".write": false
+      "$username": {
+        ".write": "!data.exists()",
+        ".validate": "newData.isString()"
+      }
     },
     "playerMatches": {
       "$address": {
         ".read": true,
-        ".write": false
+        "$matchId": {
+          ".write": "$address === newData.child('playerAddress').val()",
+          ".validate": "newData.hasChildren(['playerAddress', 'type', 'result', 'timestamp'])"
+        }
       }
     },
     "rooms": {
