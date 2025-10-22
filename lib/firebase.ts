@@ -162,21 +162,50 @@ export class PvPService {
 
   // Atualiza as cartas selecionadas
   static async updateCards(code: string, playerAddress: string, cards: any[]): Promise<void> {
+    console.log('🎯 updateCards called:', { code, playerAddress, cardsCount: cards.length });
+
     const roomRef = ref(database, `rooms/${code}`);
     const snapshot = await get(roomRef);
 
-    if (!snapshot.exists()) return;
+    if (!snapshot.exists()) {
+      console.error('❌ Room not found:', code);
+      return;
+    }
 
     const room = snapshot.val() as GameRoom;
     const isHost = room.host.address === playerAddress;
     const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
 
+    console.log('📊 Player info:', { isHost, power, playerAddress });
+    console.log('📊 Current room state:', {
+      hostReady: room.host.ready,
+      guestReady: room.guest?.ready,
+      roomStatus: room.status
+    });
+
     const updatePath = isHost ? 'host' : 'guest';
-    await update(ref(database, `rooms/${code}/${updatePath}`), {
+    const updateData = {
       cards,
       power,
       ready: true
-    });
+    };
+
+    console.log('💾 Updating Firebase:', { path: `rooms/${code}/${updatePath}`, data: updateData });
+
+    await update(ref(database, `rooms/${code}/${updatePath}`), updateData);
+
+    console.log('✅ Firebase update complete');
+
+    // Verify the update worked
+    const verifySnapshot = await get(roomRef);
+    if (verifySnapshot.exists()) {
+      const updatedRoom = verifySnapshot.val() as GameRoom;
+      console.log('🔍 Verification - Updated room state:', {
+        hostReady: updatedRoom.host.ready,
+        guestReady: updatedRoom.guest?.ready,
+        roomStatus: updatedRoom.status
+      });
+    }
   }
 
   // Escuta mudanças na sala

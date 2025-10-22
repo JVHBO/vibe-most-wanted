@@ -1472,16 +1472,23 @@ export default function TCGPage() {
   // Firebase Room Listener - Escuta mudanças na sala em tempo real
   useEffect(() => {
     if (pvpMode === 'inRoom' && roomCode) {
+      console.log('🎧 Firebase listener started for room:', roomCode);
       let battleStarted = false; // Flag para evitar executar batalha múltiplas vezes
 
       const unsubscribe = PvPService.watchRoom(roomCode, (room) => {
         if (room) {
+          console.log('🔄 Room update received:', {
+            hostReady: room.host.ready,
+            guestReady: room.guest?.ready,
+            roomStatus: room.status,
+            battleStarted
+          });
           setCurrentRoom(room);
 
           // Se ambos os jogadores estiverem prontos, inicia a batalha
           if (room.host.ready && room.guest?.ready && room.status === 'ready' && !battleStarted) {
             battleStarted = true; // Marca que a batalha já iniciou
-            console.log('Ambos jogadores prontos! Iniciando batalha...');
+            console.log('✅ Ambos jogadores prontos! Iniciando batalha...');
 
             // Determina quem é o jogador local e quem é o oponente
             const isHost = room.host.address === address;
