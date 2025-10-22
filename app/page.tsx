@@ -1323,24 +1323,22 @@ export default function TCGPage() {
         }).catch(err => console.error('Error recording match:', err));
       }
 
-      // Fecha a tela de batalha primeiro
+      // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
       setTimeout(() => {
         setIsBattling(false);
         setShowBattleScreen(false);
         setBattlePhase('cards');
 
-        // DEPOIS mostra o popup de resultado
-        setTimeout(() => {
-          if (matchResult === 'win') {
-            setShowWinPopup(true);
-            if (soundEnabled) AudioManager.win();
-          } else if (matchResult === 'loss') {
-            setShowLossPopup(true);
-            if (soundEnabled) AudioManager.lose();
-          } else {
-            if (soundEnabled) AudioManager.tie();
-          }
-        }, 500);
+        // Mostra popup IMEDIATAMENTE
+        if (matchResult === 'win') {
+          setShowWinPopup(true);
+          if (soundEnabled) AudioManager.win();
+        } else if (matchResult === 'loss') {
+          setShowLossPopup(true);
+          if (soundEnabled) AudioManager.lose();
+        } else {
+          if (soundEnabled) AudioManager.tie();
+        }
       }, 2000);
     }, 4500);
   }, [selectedCards, nfts, t, soundEnabled, isBattling]);
@@ -1452,24 +1450,22 @@ export default function TCGPage() {
                 }).catch(err => console.error('Error recording PvP match:', err));
               }
 
-              // Fecha a tela de batalha PVP primeiro
+              // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
               setTimeout(() => {
                 setIsBattling(false);
                 setShowBattleScreen(false);
                 setBattlePhase('cards');
 
-                // DEPOIS mostra o popup de resultado
-                setTimeout(() => {
-                  if (matchResult === 'win') {
-                    setShowWinPopup(true);
-                    if (soundEnabled) AudioManager.win();
-                  } else if (matchResult === 'loss') {
-                    setShowLossPopup(true);
-                    if (soundEnabled) AudioManager.lose();
-                  } else {
-                    if (soundEnabled) AudioManager.tie();
-                  }
-                }, 500);
+                // Mostra popup IMEDIATAMENTE
+                if (matchResult === 'win') {
+                  setShowWinPopup(true);
+                  if (soundEnabled) AudioManager.win();
+                } else if (matchResult === 'loss') {
+                  setShowLossPopup(true);
+                  if (soundEnabled) AudioManager.lose();
+                } else {
+                  if (soundEnabled) AudioManager.tie();
+                }
 
                 // Fecha a sala PVP e volta ao menu após ver o resultado
                 setTimeout(() => {
@@ -2335,8 +2331,8 @@ export default function TCGPage() {
 
                       {showProfileDropdown && (
                         <>
-                          <div style={{position: "fixed", inset: 0, zIndex: 100}} onClick={() => setShowProfileDropdown(false)} />
-                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 110}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
+                          <div style={{position: "fixed", inset: 0, zIndex: 999}} onClick={() => setShowProfileDropdown(false)} />
+                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 1000}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
                           <div className="p-5 bg-gradient-to-r from-purple-900/60 to-pink-900/60 border-b border-purple-500/30">
                             <div className="flex items-center gap-4 mb-4">
                               {userProfile.twitter ? (
