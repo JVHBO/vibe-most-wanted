@@ -1382,44 +1382,90 @@ export default function TCGPage() {
             const playerPower = isHost ? room.host.power : room.guest.power;
             const opponentPower = isHost ? room.guest.power : room.host.power;
 
-            // Executa a batalha PvP
+            // Executa a batalha PvP com animações (igual PVE)
+            setIsBattling(true);
+            setShowBattleScreen(true);
+            setBattlePhase('cards');
+            setShowLossPopup(false);
+            setShowWinPopup(false);
+            setResult('');
+            setPlayerPower(0);
+            setDealerPower(0);
+
+            if (soundEnabled) AudioManager.playHand();
+
+            // Mostra cartas do oponente (como "dealer")
+            setTimeout(() => {
+              setDealerCards(opponentCards);
+              if (soundEnabled) AudioManager.shuffle();
+            }, 1000);
+
+            // Fase de clash - cartas batem
+            setTimeout(() => {
+              setBattlePhase('clash');
+              if (soundEnabled) AudioManager.cardBattle();
+            }, 2500);
+
+            // Mostra poderes
+            setTimeout(() => {
+              setPlayerPower(playerPower);
+              setDealerPower(opponentPower);
+              setBattlePhase('result');
+            }, 3500);
+
+            // Mostra resultado final
             setTimeout(() => {
               const playerWins = playerPower > opponentPower;
               const isDraw = playerPower === opponentPower;
 
-              if (soundEnabled) {
-                if (playerWins) {
-                  AudioManager.win();
-                } else if (isDraw) {
-                  AudioManager.tie();
-                } else {
-                  AudioManager.lose();
-                }
-              }
-
-              // Atualiza estados do jogo
-              setDealerCards(opponentCards);
-              setDealerPower(opponentPower);
-              setPlayerPower(playerPower);
-              setResult(playerWins ? 'win' : (isDraw ? 'tie' : 'loss'));
+              let matchResult: 'win' | 'loss' | 'tie';
 
               if (playerWins) {
-                setShowWinPopup(true);
+                matchResult = 'win';
+                setResult(t('playerWins'));
+                setTimeout(() => {
+                  setShowWinPopup(true);
+                  if (soundEnabled) AudioManager.win();
+                }, 1000);
               } else if (isDraw) {
-                // Empate - não mostra popup específico, só o result
+                matchResult = 'tie';
+                setResult(t('tie'));
+                if (soundEnabled) AudioManager.tie();
               } else {
-                setShowLossPopup(true);
+                matchResult = 'loss';
+                setResult(t('dealerWins'));
+                setTimeout(() => {
+                  setShowLossPopup(true);
+                  if (soundEnabled) AudioManager.lose();
+                }, 1000);
               }
 
-              // Fecha a sala PVP e volta ao menu
-              setPvpMode(null);
-              setGameMode(null);
-              setRoomCode('');
-              setCurrentRoom(null);
+              // Record PvP match if user has profile
+              if (userProfile && address) {
+                ProfileService.recordMatch(
+                  address,
+                  'pvp',
+                  matchResult,
+                  playerPower,
+                  opponentPower,
+                  playerCards,
+                  opponentCards
+                ).then(() => {
+                  ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+                }).catch(err => console.error('Error recording PvP match:', err));
+              }
 
-              // Limpa as cartas selecionadas
-              setSelectedCards([]);
-            }, 500);
+              // Fecha a sala PVP e volta ao menu após um delay
+              setTimeout(() => {
+                setPvpMode(null);
+                setGameMode(null);
+                setRoomCode('');
+                setCurrentRoom(null);
+                setSelectedCards([]);
+                setIsBattling(false);
+                setShowBattleScreen(false);
+              }, 5000);
+            }, 3500);
           }
         } else {
           // Sala foi deletada
