@@ -1392,7 +1392,7 @@ export default function TCGPage() {
     if (address) {
       setIsLoadingProfile(true);
       ProfileService.getProfile(address).then((profile) => {
-        console.log('📊 Profile loaded:', profile ? `@${profile.username}` : 'No profile found');
+
         setUserProfile(profile);
         setIsLoadingProfile(false);
 
@@ -1400,10 +1400,6 @@ export default function TCGPage() {
         if (profile) {
           ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
         }
-      }).catch((error) => {
-        console.error('❌ Error loading profile:', error);
-        setUserProfile(null);
-        setIsLoadingProfile(false);
       });
     } else {
       setUserProfile(null);
@@ -2662,12 +2658,9 @@ export default function TCGPage() {
                       if (soundEnabled) AudioManager.buttonClick();
 
                       try {
-                        console.log('🚀 Creating profile:', profileUsername);
                         await ProfileService.createProfile(address!, profileUsername.trim());
-                        console.log('✅ Profile created!');
 
                         const profile = await ProfileService.getProfile(address!);
-                        console.log('📊 Profile loaded:', profile);
                         
                         setUserProfile(profile);
                         setShowCreateProfile(false);
@@ -2677,9 +2670,8 @@ export default function TCGPage() {
                         if (soundEnabled) AudioManager.buttonSuccess();
                         alert(t('profileCreated'));
                       } catch (error: any) {
-                        console.error('❌ Error:', error.code, error.message);
                         if (soundEnabled) AudioManager.buttonError();
-                        alert('Erro: ' + (error.message || t('usernameInUse')));
+                        alert(error.message || t('usernameInUse'));
                       }
                     }}
                     className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-purple-500/50 text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105"
