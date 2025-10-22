@@ -125,7 +125,7 @@ export default function ProfilePage() {
                   rel="noopener noreferrer"
                   className="text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
                 >
-                  🐦 @{profile.twitter.replace('@', '')}
+                  𝕏 @{profile.twitter.replace('@', '')}
                 </a>
               )}
             </div>

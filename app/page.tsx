@@ -278,7 +278,7 @@ const translations = {
     matchHistory: 'Histórico',
     createProfile: 'Criar Perfil',
     username: 'Nome de Usuário',
-    twitterHandle: 'Twitter (opcional)',
+    twitterHandle: 'X/Handle (opcional)',
     twitterPlaceholder: '@seu_twitter',
     usernamePlaceholder: 'Digite seu username',
     save: 'Salvar',
@@ -305,11 +305,13 @@ const translations = {
     profileCreated: 'Perfil criado com sucesso!',
     noProfile: 'Crie um perfil para aparecer no ranking',
     viewProfile: 'Ver Perfil',
-    connectTwitter: 'Conectar Twitter',
+    connectTwitter: 'Conectar X',
     shareVictory: 'Compartilhar Vitória',
     shareDefeat: 'Compartilhar Derrota',
-    tweetVictory: 'Acabei de vencer no Vibe Most Wanted com {power} de poder! 🏆⚡\n\nJogue agora:',
-    tweetDefeat: 'Lutei bravamente no Vibe Most Wanted mas perdi desta vez! 😤💪\n\nVenha me desafiar:',
+    tweetVictory: '🏆 VITÓRIA ÉPICA no Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaram a batalha\n🔥 Estou imparável!\n\nJogue agora: @lowprofile_eth\n👉 Veja meu perfil completo:',
+    tweetDefeat: '😤 Batalha INTENSA no Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Lutei até o fim mas a sorte não estava do meu lado\n🎯 Quero revanche!\n\nJogue agora: @lowprofile_eth\n👉 Me desafie:',
+    castVictory: '🏆 VITÓRIA ÉPICA no Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaram a batalha\n🔥 Estou imparável!\n\nCriado por @jvhbo\n👉 Veja meu perfil:',
+    castDefeat: '😤 Batalha INTENSA no Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Lutei até o fim mas a sorte não estava do meu lado\n🎯 Quero revanche!\n\nCriado por @jvhbo\n👉 Me desafie:',
     myInventory: 'Meu Inventário',
     viewStats: 'Ver Estatísticas'
   },
@@ -408,7 +410,7 @@ const translations = {
     matchHistory: 'मैच इतिहास',
     createProfile: 'प्रोफ़ाइल बनाएं',
     username: 'उपयोगकर्ता नाम',
-    twitterHandle: 'Twitter (वैकल्पिक)',
+    twitterHandle: 'X/Handle (वैकल्पिक)',
     twitterPlaceholder: '@आपका_twitter',
     usernamePlaceholder: 'अपना username दर्ज करें',
     save: 'सहेजें',
@@ -434,7 +436,15 @@ const translations = {
     usernameInUse: 'Username पहले से उपयोग में है',
     profileCreated: 'प्रोफ़ाइल सफलतापूर्वक बनाई गई!',
     noProfile: 'रैंकिंग में दिखने के लिए प्रोफ़ाइल बनाएं',
-    viewProfile: 'प्रोफ़ाइल देखें'
+    viewProfile: 'प्रोफ़ाइल देखें',
+    shareVictory: 'जीत साझा करें',
+    shareDefeat: 'हार साझा करें',
+    tweetVictory: '🏆 Vibe Most Wanted में शानदार जीत!\n\n⚡ कुल शक्ति: {power}\n🎴 5 कार्डों ने युद्ध जीता\n🔥 मैं अजेय हूँ!\n\nअभी खेलें: @lowprofile_eth\n👉 मेरी पूरी प्रोफ़ाइल देखें:',
+    tweetDefeat: '😤 Vibe Most Wanted में तीव्र युद्ध!\n\n⚡ उपयोग की गई शक्ति: {power}\n💪 अंत तक लड़ा लेकिन किस्मत साथ नहीं थी\n🎯 मैं बदला चाहता हूँ!\n\nअभी खेलें: @lowprofile_eth\n👉 मुझे चुनौती दें:',
+    castVictory: '🏆 Vibe Most Wanted में शानदार जीत!\n\n⚡ कुल शक्ति: {power}\n🎴 5 कार्डों ने युद्ध जीता\n🔥 मैं अजेय हूँ!\n\n@jvhbo द्वारा बनाया गया\n👉 मेरी प्रोफ़ाइल:',
+    castDefeat: '😤 Vibe Most Wanted में तीव्र युद्ध!\n\n⚡ उपयोग की गई शक्ति: {power}\n💪 अंत तक लड़ा लेकिन किस्मत साथ नहीं थी\n🎯 मैं बदला चाहता हूँ!\n\n@jvhbo द्वारा बनाया गया\n👉 मुझे चुनौती दें:',
+    myInventory: 'मेरी सूची',
+    viewStats: 'आंकड़े देखें'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -528,8 +538,8 @@ const translations = {
     matchHistory: 'Match History',
     createProfile: 'Create Profile',
     username: 'Username',
-    twitterHandle: 'Twitter (optional)',
-    twitterPlaceholder: '@your_twitter',
+    twitterHandle: 'X/Handle (optional)',
+    twitterPlaceholder: '@your_handle',
     usernamePlaceholder: 'Enter your username',
     save: 'Save',
     edit: 'Edit',
@@ -554,7 +564,15 @@ const translations = {
     usernameInUse: 'Username is already in use',
     profileCreated: 'Profile created successfully!',
     noProfile: 'Create a profile to appear in the ranking',
-    viewProfile: 'View Profile'
+    viewProfile: 'View Profile',
+    shareVictory: 'Share Victory',
+    shareDefeat: 'Share Battle',
+    tweetVictory: '🏆 EPIC VICTORY in Vibe Most Wanted!\n\n⚡ Total Power: {power}\n🎴 5 cards dominated the battle\n🔥 I'm unstoppable!\n\nPlay now: @lowprofile_eth\n👉 Check my full profile:',
+    tweetDefeat: '😤 INTENSE BATTLE in Vibe Most Wanted!\n\n⚡ Power used: {power}\n💪 Fought till the end but luck wasn\'t on my side\n🎯 I want a rematch!\n\nPlay now: @lowprofile_eth\n👉 Challenge me:',
+    castVictory: '🏆 EPIC VICTORY in Vibe Most Wanted!\n\n⚡ Total Power: {power}\n🎴 5 cards dominated the battle\n🔥 I'm unstoppable!\n\nCreated by @jvhbo\n👉 Check my profile:',
+    castDefeat: '😤 INTENSE BATTLE in Vibe Most Wanted!\n\n⚡ Power used: {power}\n💪 Fought till the end but luck wasn\'t on my side\n🎯 I want a rematch!\n\nCreated by @jvhbo\n👉 Challenge me:',
+    myInventory: 'My Inventory',
+    viewStats: 'View Stats'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -651,8 +669,8 @@ const translations = {
     matchHistory: 'Historial',
     createProfile: 'Crear Perfil',
     username: 'Nombre de Usuario',
-    twitterHandle: 'Twitter (opcional)',
-    twitterPlaceholder: '@tu_twitter',
+    twitterHandle: 'X/Handle (opcional)',
+    twitterPlaceholder: '@tu_handle',
     usernamePlaceholder: 'Ingresa tu username',
     save: 'Guardar',
     edit: 'Editar',
@@ -677,7 +695,15 @@ const translations = {
     usernameInUse: 'El username ya está en uso',
     profileCreated: '¡Perfil creado exitosamente!',
     noProfile: 'Crea un perfil para aparecer en la clasificación',
-    viewProfile: 'Ver Perfil'
+    viewProfile: 'Ver Perfil',
+    shareVictory: 'Compartir Victoria',
+    shareDefeat: 'Compartir Batalla',
+    tweetVictory: '🏆 ¡VICTORIA ÉPICA en Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaron la batalla\n🔥 ¡Soy imparable!\n\nJuega ahora: @lowprofile_eth\n👉 Mira mi perfil completo:',
+    tweetDefeat: '😤 ¡Batalla INTENSA en Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Luché hasta el final pero la suerte no estaba de mi lado\n🎯 ¡Quiero revancha!\n\nJuega ahora: @lowprofile_eth\n👉 Desafíame:',
+    castVictory: '🏆 ¡VICTORIA ÉPICA en Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaron la batalla\n🔥 ¡Soy imparable!\n\nCreado por @jvhbo\n👉 Mira mi perfil:',
+    castDefeat: '😤 ¡Batalla INTENSA en Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Luché hasta el final pero la suerte no estaba de mi lado\n🎯 ¡Quiero revancha!\n\nCreado por @jvhbo\n👉 Desafíame:',
+    myInventory: 'Mi Inventario',
+    viewStats: 'Ver Estadísticas'
   }
 };
 
@@ -1633,15 +1659,30 @@ export default function TCGPage() {
             <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
               {t('victoryPrize')}
             </p>
-            <a
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('tweetVictory', { power: playerPower }))}&url=${encodeURIComponent(window.location.origin)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
-            >
-              <span>🐦</span> {t('shareVictory')}
-            </a>
+            <div className="flex gap-3">
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('tweetVictory', {
+                  power: playerPower
+                }))}&url=${encodeURIComponent(userProfile?.username ? `${window.location.origin}/profile/${userProfile.username}` : window.location.origin)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+              >
+                <span>𝕏</span> {t('shareVictory')}
+              </a>
+              <a
+                href={`https://warpcast.com/~/compose?text=${encodeURIComponent(t('castVictory', {
+                  power: playerPower
+                }))}&embeds[]=${encodeURIComponent(userProfile?.username ? `${window.location.origin}/profile/${userProfile.username}` : window.location.origin)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+              >
+                <span>🎯</span> Farcaster
+              </a>
+            </div>
             <button
               onClick={() => setShowWinPopup(false)}
               className="absolute top-4 right-4 bg-yellow-600 hover:bg-yellow-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
@@ -1663,15 +1704,30 @@ export default function TCGPage() {
             <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
               {t('defeatPrize')}
             </p>
-            <a
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('tweetDefeat', { power: playerPower }))}&url=${encodeURIComponent(window.location.origin)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
-              className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
-            >
-              <span>🐦</span> {t('shareDefeat')}
-            </a>
+            <div className="flex gap-3">
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('tweetDefeat', {
+                  power: playerPower
+                }))}&url=${encodeURIComponent(userProfile?.username ? `${window.location.origin}/profile/${userProfile.username}` : window.location.origin)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+                className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+              >
+                <span>𝕏</span> {t('shareDefeat')}
+              </a>
+              <a
+                href={`https://warpcast.com/~/compose?text=${encodeURIComponent(t('castDefeat', {
+                  power: playerPower
+                }))}&embeds[]=${encodeURIComponent(userProfile?.username ? `${window.location.origin}/profile/${userProfile.username}` : window.location.origin)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+              >
+                <span>🎯</span> Farcaster
+              </a>
+            </div>
             <button
               onClick={() => setShowLossPopup(false)}
               className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
