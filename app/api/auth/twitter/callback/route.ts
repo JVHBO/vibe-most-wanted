@@ -40,7 +40,11 @@ export async function GET(request: NextRequest) {
     let address: string;
 
     try {
-      const decryptedState = decrypt(state);
+      // Decode the URL-encoded state first
+      const decodedState = decodeURIComponent(state);
+      console.log('✅ Decoded state');
+
+      const decryptedState = decrypt(decodedState);
       console.log('✅ Decrypted state');
 
       const { codeVerifier: cv, address: addr, timestamp } = JSON.parse(decryptedState);
