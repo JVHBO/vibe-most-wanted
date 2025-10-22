@@ -1674,7 +1674,7 @@ export default function TCGPage() {
               <a
                 href={`https://warpcast.com/~/compose?text=${encodeURIComponent(t('castVictory', {
                   power: playerPower
-                }))}&embeds[]=${encodeURIComponent(userProfile?.username ? `${window.location.origin}/profile/${userProfile.username}` : window.location.origin)}`}
+                }))}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
@@ -1719,7 +1719,7 @@ export default function TCGPage() {
               <a
                 href={`https://warpcast.com/~/compose?text=${encodeURIComponent(t('castDefeat', {
                   power: playerPower
-                }))}&embeds[]=${encodeURIComponent(userProfile?.username ? `${window.location.origin}/profile/${userProfile.username}` : window.location.origin)}`}
+                }))}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
