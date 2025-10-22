@@ -1645,18 +1645,22 @@ export default function TCGPage() {
             <div className="space-y-4">
               {/* Busca Automática */}
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (soundEnabled) AudioManager.buttonSuccess();
                   setPvpMode('autoMatch');
                   setIsSearching(true);
-                  // Inicia busca automática
-                  PvPService.findMatch(address || '').then((code) => {
+                  try {
+                    const code = await PvPService.findMatch(address || '');
                     if (code) {
                       setRoomCode(code);
                       setPvpMode('inRoom');
                       setIsSearching(false);
                     }
-                  });
+                  } catch (error) {
+                    alert('Erro ao buscar partida: ' + error);
+                    setIsSearching(false);
+                    setPvpMode('pvpMenu');
+                  }
                 }}
                 className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-green-500/50 text-white rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105"
               >
@@ -1667,11 +1671,13 @@ export default function TCGPage() {
               <button
                 onClick={async () => {
                   if (soundEnabled) AudioManager.buttonClick();
-                  // Cria sala primeiro
-                  const code = await PvPService.createRoom(address || '');
-                  setRoomCode(code);
-                  // Depois muda para a tela de criar sala
-                  setPvpMode('createRoom');
+                  try {
+                    const code = await PvPService.createRoom(address || '');
+                    setRoomCode(code);
+                    setPvpMode('createRoom');
+                  } catch (error) {
+                    alert('Erro ao criar sala: ' + error);
+                  }
                 }}
                 className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-blue-500/50 text-white rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105"
               >
@@ -2138,9 +2144,9 @@ export default function TCGPage() {
                                 onClick={() => {
                                   if (soundEnabled) AudioManager.buttonClick();
                                   const twitter = prompt(t('twitterHandle'));
-                                  if (twitter && address) {
-                                    ProfileService.updateTwitter(address, twitter.replace('@', ''));
-                                    setUserProfile({...userProfile, twitter: twitter.replace('@', '')});
+                                  if (twitter && twitter.trim() && address) {
+                                    ProfileService.updateTwitter(address, twitter.replace('@', '').trim());
+                                    setUserProfile({...userProfile, twitter: twitter.replace('@', '').trim()});
                                   }
                                 }}
                                 className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2 text-blue-400"
@@ -2456,9 +2462,9 @@ export default function TCGPage() {
                   <button
                     onClick={() => {
                       const newTwitter = prompt(t('twitterHandle'), userProfile.twitter || '');
-                      if (newTwitter !== null && address) {
-                        ProfileService.updateTwitter(address, newTwitter.replace('@', ''));
-                        setUserProfile({...userProfile, twitter: newTwitter.replace('@', '')});
+                      if (newTwitter !== null && newTwitter.trim() && address) {
+                        ProfileService.updateTwitter(address, newTwitter.replace('@', '').trim());
+                        setUserProfile({...userProfile, twitter: newTwitter.replace('@', '').trim()});
                       }
                     }}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
@@ -2634,18 +2640,7 @@ export default function TCGPage() {
                       maxLength={20}
                       className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-purple-500"
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">{t('twitterHandle')}</label>
-                    <input
-                      type="text"
-                      value={profileTwitter}
-                      onChange={(e) => setProfileTwitter(e.target.value.replace('@', ''))}
-                      placeholder={t('twitterPlaceholder')}
-                      maxLength={15}
-                      className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-purple-500"
-                    />
+                    <p className="text-xs text-gray-500 mt-2">💡 Você pode adicionar seu Twitter depois na aba de perfil</p>
                   </div>
 
                   <button
@@ -2654,19 +2649,21 @@ export default function TCGPage() {
                         alert(t('usernameRequired'));
                         return;
                       }
+
                       if (soundEnabled) AudioManager.buttonClick();
+
                       try {
                         await ProfileService.createProfile(
                           address!,
-                          profileUsername.trim(),
-                          profileTwitter.trim() || undefined
+                          profileUsername.trim()
                         );
+
                         const profile = await ProfileService.getProfile(address!);
                         setUserProfile(profile);
                         setShowCreateProfile(false);
                         setProfileUsername('');
-                        setProfileTwitter('');
                         setCurrentView('profile');
+
                         if (soundEnabled) AudioManager.buttonSuccess();
                         alert(t('profileCreated'));
                       } catch (error: any) {
@@ -2684,7 +2681,6 @@ export default function TCGPage() {
                       if (soundEnabled) AudioManager.buttonNav();
                       setShowCreateProfile(false);
                       setProfileUsername('');
-                      setProfileTwitter('');
                     }}
                     className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-xl font-semibold transition"
                   >

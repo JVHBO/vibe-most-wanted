@@ -247,15 +247,17 @@ export class ProfileService {
   }
 
   // Cria um novo perfil
-  static async createProfile(address: string, username: string, twitter?: string): Promise<void> {
+  static async createProfile(address: string, username: string): Promise<void> {
     const normalizedUsername = username.toLowerCase();
 
     // Verifica se username já existe
-    if (await this.usernameExists(normalizedUsername)) {
+    const exists = await this.usernameExists(normalizedUsername);
+    if (exists) {
       throw new Error('Username já está em uso');
     }
 
-    const profile: UserProfile = {
+    // Cria o perfil (sem twitter - será adicionado depois)
+    const profile = {
       address,
       username,
       createdAt: Date.now(),
@@ -269,11 +271,6 @@ export class ProfileService {
         pvpLosses: 0
       }
     };
-
-    // Adiciona Twitter apenas se fornecido
-    if (twitter && twitter.trim()) {
-      profile.twitter = twitter.trim();
-    }
 
     // Salva o perfil
     await set(ref(database, `profiles/${address}`), profile);
@@ -299,16 +296,16 @@ export class ProfileService {
 
   // Atualiza Twitter
   static async updateTwitter(address: string, twitter: string): Promise<void> {
-    const updateData: any = {
-      lastUpdated: Date.now()
-    };
+    const cleanTwitter = twitter?.trim();
 
-    // Adiciona Twitter apenas se não estiver vazio
-    if (twitter && twitter.trim()) {
-      updateData.twitter = twitter.trim();
+    if (!cleanTwitter || cleanTwitter.length === 0) {
+      return; // Não atualiza se estiver vazio
     }
 
-    await update(ref(database, `profiles/${address}`), updateData);
+    await update(ref(database, `profiles/${address}`), {
+      twitter: cleanTwitter,
+      lastUpdated: Date.now()
+    });
   }
 
   // Registra resultado de partida

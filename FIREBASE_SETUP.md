@@ -34,6 +34,24 @@
         ".read": true,
         ".write": true
       }
+    },
+    "profiles": {
+      "$address": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "usernames": {
+      "$username": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "matches": {
+      "$matchId": {
+        ".read": true,
+        ".write": true
+      }
     }
   }
 }
