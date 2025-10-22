@@ -1104,6 +1104,25 @@ export default function TCGPage() {
     }
   }, []);
 
+  // Check for Twitter OAuth success
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const twitterConnected = urlParams.get('twitter_connected');
+    const error = urlParams.get('error');
+
+    if (twitterConnected && userProfile) {
+      // Update user profile with new Twitter handle
+      setUserProfile({ ...userProfile, twitter: twitterConnected });
+      // Clean up URL
+      window.history.replaceState({}, '', '/');
+      // Show success message
+      alert(`✅ Twitter connected: @${twitterConnected}`);
+    } else if (error === 'twitter_auth_failed') {
+      alert('❌ Failed to connect Twitter. Please try again.');
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
   const toggleMusic = useCallback(async () => {
     await AudioManager.init();
     if (soundEnabled) {
@@ -1807,17 +1826,42 @@ export default function TCGPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (soundEnabled) AudioManager.buttonClick();
-                        const newTwitter = prompt(t('twitterHandle'), userProfile.twitter || '');
-                        if (newTwitter !== null && newTwitter.trim() && address) {
-                          ProfileService.updateTwitter(address, newTwitter.replace('@', '').trim());
-                          setUserProfile({...userProfile, twitter: newTwitter.replace('@', '').trim()});
+
+                        if (!address) {
+                          alert('Please connect your wallet first');
+                          return;
+                        }
+
+                        try {
+                          // Call our API to get Twitter OAuth URL
+                          const response = await fetch(`/api/auth/twitter?address=${address}`);
+                          const data = await response.json();
+
+                          if (data.url) {
+                            // Open Twitter OAuth in a popup
+                            const width = 600;
+                            const height = 700;
+                            const left = (window.screen.width - width) / 2;
+                            const top = (window.screen.height - height) / 2;
+
+                            window.open(
+                              data.url,
+                              'Twitter OAuth',
+                              `width=${width},height=${height},left=${left},top=${top}`
+                            );
+                          } else {
+                            throw new Error('Failed to get OAuth URL');
+                          }
+                        } catch (error) {
+                          console.error('Twitter OAuth error:', error);
+                          alert('Failed to connect Twitter. Please try again.');
                         }
                       }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition flex items-center gap-2"
                     >
-                      {userProfile.twitter ? '✏️ Edit' : '➕ Connect'}
+                      <span>𝕏</span> {userProfile.twitter ? 'Reconnect' : 'Connect Twitter'}
                     </button>
                   </div>
                 </div>
