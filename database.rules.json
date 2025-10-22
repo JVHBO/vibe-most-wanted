@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "profiles": {
+      "$address": {
+        ".read": true,
+        ".write": false
+      }
+    },
+    "usernames": {
+      ".read": true,
+      ".write": false
+    },
+    "playerMatches": {
+      "$address": {
+        ".read": true,
+        ".write": false
+      }
+    },
+    "rooms": {
+      "$roomCode": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "matchmaking": {
+      "$address": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
