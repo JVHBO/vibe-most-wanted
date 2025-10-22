@@ -1839,28 +1839,41 @@ export default function TCGPage() {
                         }
 
                         try {
+                          console.log('🔵 Calling Twitter OAuth API...');
+
                           // Call our API to get Twitter OAuth URL
                           const response = await fetch(`/api/auth/twitter?address=${address}`);
+                          console.log('📡 Response status:', response.status);
+
                           const data = await response.json();
+                          console.log('📦 Response data:', data);
 
                           if (data.url) {
+                            console.log('✅ Got OAuth URL, opening popup...');
+                            console.log('🔗 URL:', data.url);
+
                             // Open Twitter OAuth in a popup
                             const width = 600;
                             const height = 700;
                             const left = (window.screen.width - width) / 2;
                             const top = (window.screen.height - height) / 2;
 
-                            window.open(
+                            const popup = window.open(
                               data.url,
                               'Twitter OAuth',
                               `width=${width},height=${height},left=${left},top=${top}`
                             );
+
+                            if (!popup) {
+                              alert('Popup bloqueado! Permita popups para este site.');
+                            }
                           } else {
+                            console.error('❌ No URL in response');
                             throw new Error('Failed to get OAuth URL');
                           }
                         } catch (error) {
-                          console.error('Twitter OAuth error:', error);
-                          alert('Failed to connect Twitter. Please try again.');
+                          console.error('❌ Twitter OAuth error:', error);
+                          alert('Failed to connect Twitter. Check console for details.');
                         }
                       }}
                       className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2"
