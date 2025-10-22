@@ -1110,18 +1110,51 @@ export default function TCGPage() {
     const twitterConnected = urlParams.get('twitter_connected');
     const error = urlParams.get('error');
 
-    if (twitterConnected && userProfile) {
-      // Update user profile with new Twitter handle
-      setUserProfile({ ...userProfile, twitter: twitterConnected });
-      // Clean up URL
-      window.history.replaceState({}, '', '/');
-      // Show success message
-      alert(`✅ Twitter connected: @${twitterConnected}`);
+    if (twitterConnected) {
+      // Check if this is a popup window
+      if (window.opener) {
+        // This is the popup - send message to parent and close
+        window.opener.postMessage({ type: 'twitter_connected', username: twitterConnected }, window.location.origin);
+        window.close();
+      } else if (userProfile) {
+        // This is the main window - update profile
+        setUserProfile({ ...userProfile, twitter: twitterConnected });
+        // Clean up URL
+        window.history.replaceState({}, '', '/');
+        // Show success message
+        alert(`✅ Twitter connected: @${twitterConnected}`);
+      }
     } else if (error === 'twitter_auth_failed') {
-      alert('❌ Failed to connect Twitter. Please try again.');
-      window.history.replaceState({}, '', '/');
+      if (window.opener) {
+        // This is the popup - notify parent and close
+        window.opener.postMessage({ type: 'twitter_error' }, window.location.origin);
+        window.close();
+      } else {
+        alert('❌ Failed to connect Twitter. Please try again.');
+        window.history.replaceState({}, '', '/');
+      }
     }
-  }, []);
+
+    // Listen for messages from OAuth popup
+    const handleMessage = (event: MessageEvent) => {
+      // Verify origin for security
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'twitter_connected') {
+        console.log('✅ Twitter connected via popup:', event.data.username);
+        if (userProfile && address) {
+          // Update local state
+          setUserProfile({ ...userProfile, twitter: event.data.username });
+          alert(`✅ Twitter connected: @${event.data.username}`);
+        }
+      } else if (event.data.type === 'twitter_error') {
+        alert('❌ Failed to connect Twitter. Please try again.');
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [userProfile, address]);
 
   const toggleMusic = useCallback(async () => {
     await AudioManager.init();
