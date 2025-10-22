@@ -2309,7 +2309,7 @@ export default function TCGPage() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="mb-6">
+          <div className="mb-6 relative z-[100000]">
             <div className="bg-gray-800/50 backdrop-blur-lg rounded-xl border border-gray-700 p-2 flex gap-2">
               <button
                 onClick={() => {
