@@ -1392,6 +1392,7 @@ export default function TCGPage() {
     if (address) {
       setIsLoadingProfile(true);
       ProfileService.getProfile(address).then((profile) => {
+        console.log('📊 Profile loaded:', profile ? `@${profile.username}` : 'No profile found');
         setUserProfile(profile);
         setIsLoadingProfile(false);
 
@@ -1399,6 +1400,10 @@ export default function TCGPage() {
         if (profile) {
           ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
         }
+      }).catch((error) => {
+        console.error('❌ Error loading profile:', error);
+        setUserProfile(null);
+        setIsLoadingProfile(false);
       });
     } else {
       setUserProfile(null);
@@ -2620,6 +2625,8 @@ export default function TCGPage() {
             </div>
           )}
 
+
+
           {/* Create Profile Modal */}
           {showCreateProfile && (
             <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
@@ -2692,6 +2699,7 @@ export default function TCGPage() {
               </div>
             </div>
           )}
+
         </>
       )}
     </div>
