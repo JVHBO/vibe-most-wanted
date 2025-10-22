@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TwitterApi } from 'twitter-api-v2';
-import { nanoid } from 'nanoid';
-import { TwitterOAuthStore } from '@/lib/twitter-oauth-store';
+import crypto from 'crypto';
 
 const CALLBACK_URL = process.env.NEXT_PUBLIC_APP_URL
   ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/twitter/callback`
   : 'http://localhost:3000/api/auth/twitter/callback';
+
+// Encryption key from env (must be 32 bytes)
+const ENCRYPTION_KEY = process.env.TWITTER_ENCRYPTION_KEY || 'default-key-please-change-this!!';
+const ENCRYPTION_IV_LENGTH = 16;
+
+function encrypt(text: string): string {
+  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+  const iv = crypto.randomBytes(ENCRYPTION_IV_LENGTH);
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return iv.toString('hex') + ':' + encrypted;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,15 +57,15 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ OAuth link generated');
 
-    // Generate a unique state ID to store in memory
-    const stateId = nanoid();
+    // Encrypt the sensitive data (codeVerifier + address)
+    const dataToEncrypt = JSON.stringify({ codeVerifier, address, timestamp: Date.now() });
+    const encryptedState = encrypt(dataToEncrypt);
+    const encodedState = encodeURIComponent(encryptedState);
 
-    // Store codeVerifier and address with the stateId
-    TwitterOAuthStore.set(stateId, codeVerifier, address);
-    console.log('✅ Stored OAuth data with ID:', stateId);
+    console.log('✅ Encrypted OAuth data');
 
-    // Add stateId to the OAuth URL
-    const urlWithState = `${url}&state=${stateId}`;
+    // Add encrypted state to the OAuth URL
+    const urlWithState = `${url}&state=${encodedState}`;
 
     console.log('✅ Returning auth URL');
     return NextResponse.json({ url: urlWithState });
