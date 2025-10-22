@@ -250,6 +250,12 @@ export class ProfileService {
   static async createProfile(address: string, username: string): Promise<void> {
     const normalizedUsername = username.toLowerCase();
 
+    // IMPORTANTE: Verifica se a wallet já tem um perfil
+    const existingProfile = await this.getProfile(address);
+    if (existingProfile) {
+      throw new Error('Esta wallet já possui um perfil. Use o perfil existente.');
+    }
+
     // Verifica se username já existe
     const exists = await this.usernameExists(normalizedUsername);
     if (exists) {

@@ -1404,6 +1404,7 @@ export default function TCGPage() {
             const opponentCards = isHost ? room.guest.cards : room.host.cards;
             const playerPower = isHost ? room.host.power : room.guest.power;
             const opponentPower = isHost ? room.guest.power : room.host.power;
+            const opponentAddress = isHost ? room.guest.address : room.host.address;
 
             // Executa a batalha PvP com animações (igual PVE)
             setIsBattling(true);
@@ -1463,7 +1464,8 @@ export default function TCGPage() {
                   playerPower,
                   opponentPower,
                   playerCards,
-                  opponentCards
+                  opponentCards,
+                  opponentAddress
                 ).then(() => {
                   ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
                 }).catch(err => console.error('Error recording PvP match:', err));
@@ -1587,7 +1589,21 @@ export default function TCGPage() {
   useEffect(() => {
     if (address && userProfile && nfts.length > 0) {
       const totalPower = nfts.reduce((sum, nft) => sum + (nft.power || 0), 0);
-      ProfileService.updateStats(address, nfts.length, totalPower);
+
+      // Update stats and reload profile to show updated values
+      ProfileService.updateStats(address, nfts.length, totalPower)
+        .then(() => {
+          // Reload profile to get updated stats
+          return ProfileService.getProfile(address);
+        })
+        .then((updatedProfile) => {
+          if (updatedProfile) {
+            setUserProfile(updatedProfile);
+          }
+        })
+        .catch((error) => {
+          console.error('Error updating profile stats:', error);
+        });
     }
   }, [address, userProfile, nfts]);
 
