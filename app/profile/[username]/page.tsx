@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ProfileService, UserProfile, MatchHistory } from '@/lib/firebase';
+import sdk from '@farcaster/frame-sdk';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -13,6 +14,23 @@ export default function ProfilePage() {
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentUserAddress, setCurrentUserAddress] = useState<string | null>(null);
+
+  // Load current user's address
+  useEffect(() => {
+    const initSDK = async () => {
+      try {
+        await sdk.actions.ready();
+        const context = await sdk.context;
+        if (context?.user?.verified_addresses?.eth_addresses?.[0]) {
+          setCurrentUserAddress(context.user.verified_addresses.eth_addresses[0].toLowerCase());
+        }
+      } catch (err) {
+        console.error('Error loading current user:', err);
+      }
+    };
+    initSDK();
+  }, []);
 
   useEffect(() => {
     async function loadProfile() {
@@ -118,16 +136,38 @@ export default function ProfilePage() {
               <p className="text-gray-400 font-mono text-sm mb-2">
                 {profile.address.slice(0, 8)}...{profile.address.slice(-8)}
               </p>
-              {profile.twitter && (
-                <a
-                  href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
-                >
-                  𝕏 @{profile.twitter.replace('@', '')}
-                </a>
-              )}
+              <div className="flex items-center gap-2">
+                {profile.twitter && (
+                  <a
+                    href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                  >
+                    𝕏 @{profile.twitter.replace('@', '')}
+                  </a>
+                )}
+                {/* Edit Twitter button - only visible to profile owner */}
+                {currentUserAddress && currentUserAddress.toLowerCase() === profile.address.toLowerCase() && (
+                  <button
+                    onClick={async () => {
+                      const newTwitter = prompt('Enter your X/Twitter handle (without @):', profile.twitter || '');
+                      if (newTwitter !== null && newTwitter.trim()) {
+                        try {
+                          await ProfileService.updateTwitter(profile.address, newTwitter.replace('@', '').trim());
+                          setProfile({ ...profile, twitter: newTwitter.replace('@', '').trim() });
+                        } catch (err) {
+                          console.error('Error updating Twitter:', err);
+                          alert('Failed to update Twitter handle');
+                        }
+                      }
+                    }}
+                    className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 bg-blue-900/30 rounded border border-blue-500/30 transition"
+                  >
+                    {profile.twitter ? '✏️ Edit' : '➕ Add X'}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Quick Stats */}

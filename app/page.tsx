@@ -1075,8 +1075,6 @@ export default function TCGPage() {
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState<boolean>(false);
-  const [showInventoryDropdown, setShowInventoryDropdown] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
 
   const t = useCallback((key: string, params: Record<string, any> = {}) => {
@@ -2450,151 +2448,27 @@ export default function TCGPage() {
                   {filteredCount > 0 && <span className="text-xs text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-lg">🚫 {t('filtered', { count: filteredCount })}</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* Profile Dropdown */}
+                  {/* Profile Button */}
                   {userProfile ? (
-                    <div className="relative">
-                      <button
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          setShowProfileDropdown(!showProfileDropdown);
-                          setShowInventoryDropdown(false);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 rounded-lg transition"
-                      >
-                        {userProfile.twitter ? (
-                          <img
-                            src={`https://unavatar.io/twitter/${userProfile.twitter}`}
-                            alt={userProfile.username}
-                            className="w-6 h-6 rounded-full"
-                            onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23a855f7"><circle cx="12" cy="12" r="10"/></svg>'; }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold">
-                            {userProfile.username[0].toUpperCase()}
-                          </div>
-                        )}
-                        <span className="text-sm font-semibold text-white">@{userProfile.username}</span>
-                        <svg className={`w-4 h-4 transition-transform ${showProfileDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                      </button>
-
-                      {showProfileDropdown && (
-                        <>
-                          <div style={{position: "fixed", inset: 0, zIndex: 9999}} onClick={() => setShowProfileDropdown(false)} />
-                          <div className="fixed top-20 right-4 w-72 z-[10000] bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
-                          <div className="p-5 bg-gradient-to-r from-purple-900/60 to-pink-900/60 border-b border-purple-500/30">
-                            <div className="flex items-center gap-4 mb-4">
-                              {userProfile.twitter ? (
-                                <img
-                                  src={`https://unavatar.io/twitter/${userProfile.twitter}`}
-                                  alt={userProfile.username}
-                                  className="w-14 h-14 rounded-full ring-2 ring-purple-400"
-                                  onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23a855f7"><circle cx="12" cy="12" r="10"/></svg>'; }}
-                                />
-                              ) : (
-                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-bold ring-2 ring-purple-400">
-                                  {userProfile.username[0].toUpperCase()}
-                                </div>
-                              )}
-                              <div>
-                                <p className="font-bold text-lg text-white">@{userProfile.username}</p>
-                                <p className="text-xs text-purple-300">{address.slice(0, 6)}...{address.slice(-4)}</p>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div className="bg-gray-800/50 p-2 rounded">
-                                <p className="text-gray-400">Cards</p>
-                                <p className="font-bold text-purple-400">{userProfile.stats.totalCards}</p>
-                              </div>
-                              <div className="bg-gray-800/50 p-2 rounded">
-                                <p className="text-gray-400">Power</p>
-                                <p className="font-bold text-yellow-400">{userProfile.stats.totalPower}</p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="p-2">
-                            <button
-                              onClick={() => {
-                                if (soundEnabled) AudioManager.buttonClick();
-                                setCurrentView('profile');
-                                setShowProfileDropdown(false);
-                              }}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2"
-                            >
-                              <span>📊</span> {t('viewStats')}
-                            </button>
-                            <Link
-                              href={`/profile/${userProfile.username}`}
-                              onClick={() => {
-                                if (soundEnabled) AudioManager.buttonClick();
-                                setShowProfileDropdown(false);
-                              }}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2 block"
-                            >
-                              <span>👤</span> {t('viewProfile')}
-                            </Link>
-                            <button
-                              onClick={() => {
-                                if (soundEnabled) AudioManager.buttonClick();
-                                setShowInventoryDropdown(!showInventoryDropdown);
-                              }}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2"
-                            >
-                              <span>🎒</span> {t('myInventory')} ({nfts.length})
-                            </button>
-                            {!userProfile.twitter && (
-                              <button
-                                onClick={() => {
-                                  if (soundEnabled) AudioManager.buttonClick();
-                                  const twitter = prompt(t('twitterHandle'));
-                                  if (twitter && twitter.trim() && address) {
-                                    ProfileService.updateTwitter(address, twitter.replace('@', '').trim());
-                                    setUserProfile({...userProfile, twitter: twitter.replace('@', '').trim()});
-                                  }
-                                }}
-                                className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2 text-blue-400"
-                              >
-                                <span>🐦</span> {t('connectTwitter')}
-                              </button>
-                            )}
-                            <button
-                              onClick={() => {
-                                if (soundEnabled) AudioManager.buttonClick();
-                                setCurrentView('leaderboard');
-                                setShowProfileDropdown(false);
-                              }}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm transition flex items-center gap-2"
-                            >
-                              <span>🏆</span> {t('leaderboard')}
-                            </button>
-                          </div>
-                          </div>
-                        </>
-                      )}
-
-                      {showInventoryDropdown && (
-                        <div className="fixed inset-0 bg-black/80 z-[50] flex items-center justify-center p-4" onClick={() => setShowInventoryDropdown(false)}>
-                          <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-between items-center mb-4">
-                              <h3 className="text-2xl font-bold flex items-center gap-2">
-                                <span>🎒</span> {t('myInventory')}
-                              </h3>
-                              <button onClick={() => setShowInventoryDropdown(false)} className="text-gray-400 hover:text-white text-2xl">✕</button>
-                            </div>
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                              {nfts.map((nft) => (
-                                <div key={nft.tokenId} className="relative aspect-[2/3] rounded-lg overflow-hidden border-2 border-gray-700 hover:border-purple-500 transition-all group">
-                                  <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
-                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
-                                    <p className="text-xs font-bold text-white">⚡ {nft.power}</p>
-                                    <p className="text-[10px] text-gray-400">#{nft.tokenId}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                    <Link
+                      href={`/profile/${userProfile.username}`}
+                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 rounded-lg transition"
+                    >
+                      {userProfile.twitter ? (
+                        <img
+                          src={`https://unavatar.io/twitter/${userProfile.twitter}`}
+                          alt={userProfile.username}
+                          className="w-6 h-6 rounded-full"
+                          onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23a855f7"><circle cx="12" cy="12" r="10"/></svg>'; }}
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold">
+                          {userProfile.username[0].toUpperCase()}
                         </div>
                       )}
-                    </div>
+                      <span className="text-sm font-semibold text-white">@{userProfile.username}</span>
+                    </Link>
                   ) : (
                     <button
                       onClick={() => {
@@ -2840,117 +2714,6 @@ export default function TCGPage() {
           </div>
           )}
 
-          {/* Profile View */}
-          {currentView === 'profile' && userProfile && (
-            <div className="max-w-6xl mx-auto">
-              <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 p-8 mb-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                  <div>
-                    <h1 className="text-4xl font-bold text-cyan-400 mb-2">@{userProfile.username}</h1>
-                    <p className="text-gray-400 text-sm font-mono">{address?.slice(0, 10)}...{address?.slice(-8)}</p>
-                    {userProfile.twitter && (
-                      <a href={`https://twitter.com/${userProfile.twitter}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-sm hover:underline mt-1 inline-block">
-                        🐦 @{userProfile.twitter}
-                      </a>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => {
-                      const newTwitter = prompt(t('twitterHandle'), userProfile.twitter || '');
-                      if (newTwitter !== null && newTwitter.trim() && address) {
-                        ProfileService.updateTwitter(address, newTwitter.replace('@', '').trim());
-                        setUserProfile({...userProfile, twitter: newTwitter.replace('@', '').trim()});
-                      }
-                    }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
-                  >
-                    {t('edit')}
-                  </button>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 p-4 rounded-xl border border-purple-500/30">
-                    <p className="text-xs text-gray-400 mb-1">🃏 {t('cards')}</p>
-                    <p className="text-3xl font-bold text-purple-400">{userProfile.stats.totalCards}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/30 p-4 rounded-xl border border-yellow-500/30">
-                    <p className="text-xs text-gray-400 mb-1">⚡ {t('power')}</p>
-                    <p className="text-3xl font-bold text-yellow-400">{userProfile.stats.totalPower}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-blue-900/30 to-cyan-900/30 p-4 rounded-xl border border-blue-500/30">
-                    <p className="text-xs text-gray-400 mb-1">🎮 {t('pveRecord')}</p>
-                    <p className="text-2xl font-bold text-blue-400">{userProfile.stats.pveWins}W / {userProfile.stats.pveLosses}L</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 p-4 rounded-xl border border-green-500/30">
-                    <p className="text-xs text-gray-400 mb-1">⚔️ {t('pvpRecord')}</p>
-                    <p className="text-2xl font-bold text-green-400">{userProfile.stats.pvpWins}W / {userProfile.stats.pvpLosses}L</p>
-                  </div>
-                </div>
-
-                {/* Match History */}
-                <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-6">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <span>📜</span> {t('recentMatches')}
-                  </h3>
-                  {matchHistory.length === 0 ? (
-                    <p className="text-gray-400 text-center py-8">{t('noMatches')}</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {matchHistory.map((match) => (
-                        <div key={match.id} className={`p-4 rounded-lg border-2 ${
-                          match.result === 'win' ? 'bg-green-900/20 border-green-500/30' :
-                          match.result === 'loss' ? 'bg-red-900/20 border-red-500/30' :
-                          'bg-gray-900/20 border-gray-500/30'
-                        }`}>
-                          <div className="flex justify-between items-center mb-2">
-                            <div className="flex items-center gap-3">
-                              <span className={`text-2xl ${match.result === 'win' ? '🏆' : match.result === 'loss' ? '😢' : '🤝'}`}></span>
-                              <div>
-                                <p className="font-bold text-lg">
-                                  {match.result === 'win' ? t('victory') : match.result === 'loss' ? t('defeat') : t('tie')}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                  {match.type === 'pve' ? `${t('vs')} ${t('ai')}` : `${t('vs')} ${match.opponentAddress?.slice(0, 6)}...${match.opponentAddress?.slice(-4)}`}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xl font-bold">{match.playerPower} - {match.opponentPower}</p>
-                              <p className="text-xs text-gray-400">{new Date(match.timestamp).toLocaleDateString()}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Inventory */}
-              <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 p-8">
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                  <span className="text-3xl">🎒</span> {t('inventory')}
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {nfts.slice(0, 12).map((nft) => (
-                    <div key={nft.tokenId} className="relative aspect-[2/3] rounded-lg overflow-hidden border-2 border-gray-700 hover:border-purple-500 transition-all group">
-                      <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
-                        <p className="text-xs font-bold text-white">⚡ {nft.power}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {nfts.length > 12 && (
-                  <p className="text-center text-gray-400 mt-4 text-sm">
-                    +{nfts.length - 12} {t('cards')}...
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Leaderboard View */}
           {currentView === 'leaderboard' && (
             <div className="max-w-6xl mx-auto">
@@ -3063,11 +2826,11 @@ export default function TCGPage() {
 
                         const profile = await ProfileService.getProfile(address!);
                         console.log('📊 Profile retrieved:', profile);
-                        
+
                         setUserProfile(profile);
                         setShowCreateProfile(false);
                         setProfileUsername('');
-                        setCurrentView('profile');
+                        setCurrentView('game');
 
                         if (soundEnabled) AudioManager.buttonSuccess();
                       } catch (error: any) {
