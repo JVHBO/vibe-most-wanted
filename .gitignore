@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Permitir manifesto do Farcaster
+!.well-known/
+!public/.well-known/
+!public/.well-known/farcaster.json
