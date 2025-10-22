@@ -1364,12 +1364,15 @@ export default function TCGPage() {
   // Firebase Room Listener - Escuta mudanças na sala em tempo real
   useEffect(() => {
     if (pvpMode === 'inRoom' && roomCode) {
+      let battleStarted = false; // Flag para evitar executar batalha múltiplas vezes
+
       const unsubscribe = PvPService.watchRoom(roomCode, (room) => {
         if (room) {
           setCurrentRoom(room);
 
           // Se ambos os jogadores estiverem prontos, inicia a batalha
-          if (room.host.ready && room.guest?.ready && room.status === 'ready') {
+          if (room.host.ready && room.guest?.ready && room.status === 'ready' && !battleStarted) {
+            battleStarted = true; // Marca que a batalha já iniciou
             console.log('Ambos jogadores prontos! Iniciando batalha...');
 
             // Determina quem é o jogador local e quem é o oponente
@@ -1424,7 +1427,7 @@ export default function TCGPage() {
         unsubscribe();
       };
     }
-  }, [pvpMode, roomCode]);
+  }, [pvpMode, roomCode, address, soundEnabled]);
 
   // Load user profile when wallet connects
   useEffect(() => {
@@ -1934,74 +1937,102 @@ export default function TCGPage() {
                 </div>
 
                 {/* Grid de Seleção de Cartas */}
-                {currentRoom.guest && !currentRoom.host.ready && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-bold text-center text-white mb-4">
-                      {t('selectYourCards') || 'Select Your Cards'} ({selectedCards.length}/5)
-                    </h3>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto p-2">
-                      {nfts.map((nft, index) => {
-                        const isSelected = selectedCards.some((c: any) => c.tokenId === nft.tokenId);
-                        return (
-                          <div
-                            key={index}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedCards(selectedCards.filter((c: any) => c.tokenId !== nft.tokenId));
-                              } else if (selectedCards.length < 5) {
-                                setSelectedCards([...selectedCards, nft]);
-                              }
-                              if (soundEnabled) AudioManager.buttonClick();
-                            }}
-                            className={`relative cursor-pointer rounded-lg overflow-hidden transition-all ${
-                              isSelected
-                                ? 'ring-4 ring-green-500 scale-95'
-                                : 'hover:scale-105 opacity-70 hover:opacity-100'
-                            }`}
-                          >
-                            <img
-                              src={nft.image}
-                              alt={nft.name}
-                              className="w-full h-auto"
-                            />
-                            <div className="absolute top-1 right-1 bg-black/70 rounded-full px-2 py-0.5 text-xs font-bold text-white">
-                              {nft.power}
-                            </div>
-                            {isSelected && (
-                              <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
-                                <span className="text-4xl">✓</span>
+                {currentRoom.guest && (() => {
+                  const isHost = currentRoom.host.address === address;
+                  const playerReady = isHost ? currentRoom.host.ready : currentRoom.guest.ready;
+
+                  // Só mostra grid se o jogador atual NÃO estiver pronto ainda
+                  if (playerReady) return null;
+
+                  return (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-bold text-center text-white mb-4">
+                        {t('selectYourCards') || 'Select Your Cards'} ({selectedCards.length}/5)
+                      </h3>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto p-2">
+                        {nfts.map((nft, index) => {
+                          const isSelected = selectedCards.some((c: any) => c.tokenId === nft.tokenId);
+                          return (
+                            <div
+                              key={index}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedCards(selectedCards.filter((c: any) => c.tokenId !== nft.tokenId));
+                                } else if (selectedCards.length < 5) {
+                                  setSelectedCards([...selectedCards, nft]);
+                                }
+                                if (soundEnabled) AudioManager.buttonClick();
+                              }}
+                              className={`relative cursor-pointer rounded-lg overflow-hidden transition-all ${
+                                isSelected
+                                  ? 'ring-4 ring-green-500 scale-95'
+                                  : 'hover:scale-105 opacity-70 hover:opacity-100'
+                              }`}
+                            >
+                              <img
+                                src={nft.image}
+                                alt={nft.name}
+                                className="w-full h-auto"
+                              />
+                              <div className="absolute top-1 right-1 bg-black/70 rounded-full px-2 py-0.5 text-xs font-bold text-white">
+                                {nft.power}
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                              {isSelected && (
+                                <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+                                  <span className="text-4xl">✓</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Botão de Confirmar Cartas */}
-                {currentRoom.guest && !currentRoom.host.ready && !currentRoom.guest.ready && (
-                  <button
-                    onClick={async () => {
-                      if (soundEnabled) AudioManager.buttonSuccess();
-                      await PvPService.updateCards(roomCode, address || '', selectedCards);
-                    }}
-                    disabled={selectedCards.length !== 5}
-                    className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition mt-4"
-                  >
-                    {t('confirmCards') || 'Confirm Cards'} ({selectedCards.length}/5)
-                  </button>
-                )}
+                {currentRoom.guest && (() => {
+                  const isHost = currentRoom.host.address === address;
+                  const playerReady = isHost ? currentRoom.host.ready : currentRoom.guest.ready;
+
+                  // Só mostra botão se o jogador atual NÃO estiver pronto ainda
+                  if (playerReady) return null;
+
+                  return (
+                    <button
+                      onClick={async () => {
+                        if (soundEnabled) AudioManager.buttonSuccess();
+                        await PvPService.updateCards(roomCode, address || '', selectedCards);
+                      }}
+                      disabled={selectedCards.length !== 5}
+                      className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition mt-4"
+                    >
+                      {t('confirmCards') || 'Confirm Cards'} ({selectedCards.length}/5)
+                    </button>
+                  );
+                })()}
 
                 {/* Mensagem de aguardo */}
-                {currentRoom.guest && (currentRoom.host.ready || currentRoom.guest.ready) && (
-                  <div className="mt-4 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent mb-2"></div>
-                    <p className="text-yellow-400 font-semibold">
-                      {t('waitingForBothPlayers') || 'Waiting for both players to be ready...'}
-                    </p>
-                  </div>
-                )}
+                {currentRoom.guest && (() => {
+                  const isHost = currentRoom.host.address === address;
+                  const playerReady = isHost ? currentRoom.host.ready : currentRoom.guest.ready;
+                  const opponentReady = isHost ? currentRoom.guest.ready : currentRoom.host.ready;
+
+                  // Mostra loading se pelo menos um jogador confirmou
+                  if (!playerReady && !opponentReady) return null;
+
+                  return (
+                    <div className="mt-4 text-center">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent mb-2"></div>
+                      <p className="text-yellow-400 font-semibold">
+                        {playerReady && !opponentReady
+                          ? (t('waitingForOpponent') || 'Waiting for opponent...')
+                          : (t('waitingForBothPlayers') || 'Starting battle...')
+                        }
+                      </p>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="text-center py-8">
