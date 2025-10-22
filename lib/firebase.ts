@@ -447,9 +447,13 @@ export class ProfileService {
   static async updateStats(address: string, totalCards: number, totalPower: number): Promise<void> {
     console.log('📊 updateStats called:', { address, totalCards, totalPower });
 
+    // Atualiza o objeto stats diretamente no path correto
+    await update(ref(database, `profiles/${address}/stats`), {
+      totalCards,
+      totalPower
+    });
+
     await update(ref(database, `profiles/${address}`), {
-      'stats.totalCards': totalCards,
-      'stats.totalPower': totalPower,
       lastUpdated: Date.now()
     });
 
@@ -516,25 +520,45 @@ export class ProfileService {
     const profile = await this.getProfile(playerAddress);
     console.log('📝 Current profile:', profile);
     if (profile) {
-      const statsUpdate: any = { lastUpdated: Date.now() };
+      // Prepara update do objeto stats
+      const statsUpdate: any = {};
 
       if (type === 'pve') {
         if (result === 'win') {
-          statsUpdate['stats.pveWins'] = profile.stats.pveWins + 1;
+          statsUpdate.pveWins = profile.stats.pveWins + 1;
         } else if (result === 'loss') {
-          statsUpdate['stats.pveLosses'] = profile.stats.pveLosses + 1;
+          statsUpdate.pveLosses = profile.stats.pveLosses + 1;
         }
       } else {
         if (result === 'win') {
-          statsUpdate['stats.pvpWins'] = profile.stats.pvpWins + 1;
+          statsUpdate.pvpWins = profile.stats.pvpWins + 1;
         } else if (result === 'loss') {
-          statsUpdate['stats.pvpLosses'] = profile.stats.pvpLosses + 1;
+          statsUpdate.pvpLosses = profile.stats.pvpLosses + 1;
         }
       }
 
       console.log('💾 Updating profile stats:', statsUpdate);
-      await update(ref(database, `profiles/${playerAddress}`), statsUpdate);
+
+      // Atualiza stats no path correto
+      await update(ref(database, `profiles/${playerAddress}/stats`), statsUpdate);
+
+      // Atualiza lastUpdated no perfil
+      await update(ref(database, `profiles/${playerAddress}`), {
+        lastUpdated: Date.now()
+      });
+
       console.log('✅ Profile stats updated after match');
+
+      // Verifica a atualização
+      const updatedProfile = await this.getProfile(playerAddress);
+      if (updatedProfile) {
+        console.log('🔍 Verified updated stats:', {
+          pveWins: updatedProfile.stats.pveWins,
+          pveLosses: updatedProfile.stats.pveLosses,
+          pvpWins: updatedProfile.stats.pvpWins,
+          pvpLosses: updatedProfile.stats.pvpLosses
+        });
+      }
     } else {
       console.warn('⚠️ No profile found for player:', playerAddress);
     }
