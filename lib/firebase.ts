@@ -329,11 +329,24 @@ export class ProfileService {
 
   // Atualiza estatísticas do perfil
   static async updateStats(address: string, totalCards: number, totalPower: number): Promise<void> {
+    console.log('📊 updateStats called:', { address, totalCards, totalPower });
+
     await update(ref(database, `profiles/${address}`), {
       'stats.totalCards': totalCards,
       'stats.totalPower': totalPower,
       lastUpdated: Date.now()
     });
+
+    console.log('✅ Profile stats updated successfully');
+
+    // Verify the update
+    const profile = await this.getProfile(address);
+    if (profile) {
+      console.log('🔍 Verified profile stats:', {
+        totalCards: profile.stats.totalCards,
+        totalPower: profile.stats.totalPower
+      });
+    }
   }
 
   // Atualiza Twitter
@@ -361,6 +374,8 @@ export class ProfileService {
     opponentCards: any[],
     opponentAddress?: string
   ): Promise<void> {
+    console.log('🎮 recordMatch called:', { playerAddress, type, result, playerPower, opponentPower });
+
     const matchId = push(ref(database, 'matches')).key;
 
     const match: MatchHistory = {
@@ -378,9 +393,11 @@ export class ProfileService {
 
     // Salva a partida
     await set(ref(database, `matches/${matchId}`), match);
+    console.log('✅ Match saved to Firebase:', matchId);
 
     // Atualiza estatísticas
     const profile = await this.getProfile(playerAddress);
+    console.log('📝 Current profile:', profile);
     if (profile) {
       const statsUpdate: any = { lastUpdated: Date.now() };
 
@@ -398,7 +415,11 @@ export class ProfileService {
         }
       }
 
+      console.log('💾 Updating profile stats:', statsUpdate);
       await update(ref(database, `profiles/${playerAddress}`), statsUpdate);
+      console.log('✅ Profile stats updated after match');
+    } else {
+      console.warn('⚠️ No profile found for player:', playerAddress);
     }
   }
 
