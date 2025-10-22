@@ -1370,8 +1370,47 @@ export default function TCGPage() {
 
           // Se ambos os jogadores estiverem prontos, inicia a batalha
           if (room.host.ready && room.guest?.ready && room.status === 'ready') {
-            // Lógica para iniciar batalha PvP será adicionada aqui
             console.log('Ambos jogadores prontos! Iniciando batalha...');
+
+            // Determina quem é o jogador local e quem é o oponente
+            const isHost = room.host.address === address;
+            const playerCards = isHost ? room.host.cards : room.guest.cards;
+            const opponentCards = isHost ? room.guest.cards : room.host.cards;
+            const playerPower = isHost ? room.host.power : room.guest.power;
+            const opponentPower = isHost ? room.guest.power : room.host.power;
+
+            // Executa a batalha PvP
+            setTimeout(() => {
+              const playerWins = playerPower > opponentPower;
+              const isDraw = playerPower === opponentPower;
+
+              if (soundEnabled) {
+                if (playerWins) {
+                  AudioManager.gameWin();
+                } else if (isDraw) {
+                  AudioManager.buttonClick();
+                } else {
+                  AudioManager.gameLose();
+                }
+              }
+
+              // Atualiza estados do jogo
+              setDealerCards(opponentCards);
+              setDealerPower(opponentPower);
+              setTotalPower(playerPower);
+              setPlayerWon(playerWins);
+              setLastResult(playerWins ? 'win' : (isDraw ? 'tie' : 'loss'));
+              setShowWinPopup(true);
+
+              // Fecha a sala PVP e volta ao menu
+              setPvpMode(null);
+              setGameMode(null);
+              setRoomCode('');
+              setCurrentRoom(null);
+
+              // Limpa as cartas selecionadas
+              setSelectedCards([]);
+            }, 500);
           }
         } else {
           // Sala foi deletada
@@ -1894,19 +1933,74 @@ export default function TCGPage() {
                   )}
                 </div>
 
+                {/* Grid de Seleção de Cartas */}
+                {currentRoom.guest && !currentRoom.host.ready && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-bold text-center text-white mb-4">
+                      {t('selectYourCards') || 'Select Your Cards'} ({selectedCards.length}/5)
+                    </h3>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto p-2">
+                      {nfts.map((nft, index) => {
+                        const isSelected = selectedCards.some((c: any) => c.tokenId === nft.tokenId);
+                        return (
+                          <div
+                            key={index}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedCards(selectedCards.filter((c: any) => c.tokenId !== nft.tokenId));
+                              } else if (selectedCards.length < 5) {
+                                setSelectedCards([...selectedCards, nft]);
+                              }
+                              if (soundEnabled) AudioManager.buttonClick();
+                            }}
+                            className={`relative cursor-pointer rounded-lg overflow-hidden transition-all ${
+                              isSelected
+                                ? 'ring-4 ring-green-500 scale-95'
+                                : 'hover:scale-105 opacity-70 hover:opacity-100'
+                            }`}
+                          >
+                            <img
+                              src={nft.image}
+                              alt={nft.name}
+                              className="w-full h-auto"
+                            />
+                            <div className="absolute top-1 right-1 bg-black/70 rounded-full px-2 py-0.5 text-xs font-bold text-white">
+                              {nft.power}
+                            </div>
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+                                <span className="text-4xl">✓</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Botão de Confirmar Cartas */}
-                {currentRoom.guest && (
+                {currentRoom.guest && !currentRoom.host.ready && !currentRoom.guest.ready && (
                   <button
                     onClick={async () => {
                       if (soundEnabled) AudioManager.buttonSuccess();
                       await PvPService.updateCards(roomCode, address || '', selectedCards);
-                      // Aqui você pode adicionar lógica para iniciar a batalha quando ambos estiverem prontos
                     }}
                     disabled={selectedCards.length !== 5}
-                    className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition"
+                    className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition mt-4"
                   >
                     {t('confirmCards') || 'Confirm Cards'} ({selectedCards.length}/5)
                   </button>
+                )}
+
+                {/* Mensagem de aguardo */}
+                {currentRoom.guest && (currentRoom.host.ready || currentRoom.guest.ready) && (
+                  <div className="mt-4 text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent mb-2"></div>
+                    <p className="text-yellow-400 font-semibold">
+                      {t('waitingForBothPlayers') || 'Waiting for both players to be ready...'}
+                    </p>
+                  </div>
                 )}
               </div>
             ) : (
