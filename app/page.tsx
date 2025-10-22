@@ -308,12 +308,13 @@ const translations = {
     connectTwitter: 'Conectar X',
     shareVictory: 'Compartilhar Vitória',
     shareDefeat: 'Compartilhar Derrota',
-    tweetVictory: '🏆 VITÓRIA ÉPICA no Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaram a batalha\n🔥 Estou imparável!\n\nJogue agora: @lowprofile_eth\n👉 Veja meu perfil completo:',
-    tweetDefeat: '😤 Batalha INTENSA no Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Lutei até o fim mas a sorte não estava do meu lado\n🎯 Quero revanche!\n\nJogue agora: @lowprofile_eth\n👉 Me desafie:',
-    castVictory: '🏆 VITÓRIA ÉPICA no Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaram a batalha\n🔥 Estou imparável!\n\nCriado por @jvhbo\n👉 Veja meu perfil:',
-    castDefeat: '😤 Batalha INTENSA no Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Lutei até o fim mas a sorte não estava do meu lado\n🎯 Quero revanche!\n\nCriado por @jvhbo\n👉 Me desafie:',
+    tweetVictory: '🏆 VITÓRIA ÉPICA no Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaram a batalha\n🔥 Estou imparável!\n\nJogue agora: @lowprofile_eth\n🛒 Compre cartas: @vibedotmarket\n👉 Veja meu perfil:',
+    tweetDefeat: '😤 Batalha INTENSA no Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Lutei até o fim mas a sorte não estava do meu lado\n🎯 Quero revanche!\n\nJogue agora: @lowprofile_eth\n🛒 Compre cartas: @vibedotmarket\n👉 Me desafie:',
+    castVictory: '🏆 VITÓRIA ÉPICA no Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaram a batalha\n🔥 Estou imparável!\n\nCriado por @jvhbo\n🛒 Compre suas cartas: @vibemarket\n👉 Veja meu perfil:',
+    castDefeat: '😤 Batalha INTENSA no Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Lutei até o fim mas a sorte não estava do meu lado\n🎯 Quero revanche!\n\nCriado por @jvhbo\n🛒 Compre suas cartas: @vibemarket\n👉 Me desafie:',
     myInventory: 'Meu Inventário',
-    viewStats: 'Ver Estatísticas'
+    viewStats: 'Ver Estatísticas',
+    settings: 'Configurações'
   },
   hi: {
     title: 'Vibe Most Wanted',
@@ -439,12 +440,13 @@ const translations = {
     viewProfile: 'प्रोफ़ाइल देखें',
     shareVictory: 'जीत साझा करें',
     shareDefeat: 'हार साझा करें',
-    tweetVictory: '🏆 Vibe Most Wanted में शानदार जीत!\n\n⚡ कुल शक्ति: {power}\n🎴 5 कार्डों ने युद्ध जीता\n🔥 मैं अजेय हूँ!\n\nअभी खेलें: @lowprofile_eth\n👉 मेरी पूरी प्रोफ़ाइल देखें:',
-    tweetDefeat: '😤 Vibe Most Wanted में तीव्र युद्ध!\n\n⚡ उपयोग की गई शक्ति: {power}\n💪 अंत तक लड़ा लेकिन किस्मत साथ नहीं थी\n🎯 मैं बदला चाहता हूँ!\n\nअभी खेलें: @lowprofile_eth\n👉 मुझे चुनौती दें:',
-    castVictory: '🏆 Vibe Most Wanted में शानदार जीत!\n\n⚡ कुल शक्ति: {power}\n🎴 5 कार्डों ने युद्ध जीता\n🔥 मैं अजेय हूँ!\n\n@jvhbo द्वारा बनाया गया\n👉 मेरी प्रोफ़ाइल:',
-    castDefeat: '😤 Vibe Most Wanted में तीव्र युद्ध!\n\n⚡ उपयोग की गई शक्ति: {power}\n💪 अंत तक लड़ा लेकिन किस्मत साथ नहीं थी\n🎯 मैं बदला चाहता हूँ!\n\n@jvhbo द्वारा बनाया गया\n👉 मुझे चुनौती दें:',
+    tweetVictory: '🏆 Vibe Most Wanted में शानदार जीत!\n\n⚡ कुल शक्ति: {power}\n🎴 5 कार्डों ने युद्ध जीता\n🔥 मैं अजेय हूँ!\n\nअभी खेलें: @lowprofile_eth\n🛒 कार्ड खरीदें: @vibedotmarket\n👉 मेरी पूरी प्रोफ़ाइल देखें:',
+    tweetDefeat: '😤 Vibe Most Wanted में तीव्र युद्ध!\n\n⚡ उपयोग की गई शक्ति: {power}\n💪 अंत तक लड़ा लेकिन किस्मत साथ नहीं थी\n🎯 मैं बदला चाहता हूँ!\n\nअभी खेलें: @lowprofile_eth\n🛒 कार्ड खरीदें: @vibedotmarket\n👉 मुझे चुनौती दें:',
+    castVictory: '🏆 Vibe Most Wanted में शानदार जीत!\n\n⚡ कुल शक्ति: {power}\n🎴 5 कार्डों ने युद्ध जीता\n🔥 मैं अजेय हूँ!\n\n@jvhbo द्वारा बनाया गया\n🛒 अपने कार्ड खरीदें: @vibemarket\n👉 मेरी प्रोफ़ाइल:',
+    castDefeat: '😤 Vibe Most Wanted में तीव्र युद्ध!\n\n⚡ उपयोग की गई शक्ति: {power}\n💪 अंत तक लड़ा लेकिन किस्मत साथ नहीं थी\n🎯 मैं बदला चाहता हूँ!\n\n@jvhbo द्वारा बनाया गया\n🛒 अपने कार्ड खरीदें: @vibemarket\n👉 मुझे चुनौती दें:',
     myInventory: 'मेरी सूची',
-    viewStats: 'आंकड़े देखें'
+    viewStats: 'आंकड़े देखें',
+    settings: 'सेटिंग्स'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -567,12 +569,13 @@ const translations = {
     viewProfile: 'View Profile',
     shareVictory: 'Share Victory',
     shareDefeat: 'Share Battle',
-    tweetVictory: '🏆 EPIC VICTORY in Vibe Most Wanted!\n\n⚡ Total Power: {power}\n🎴 5 cards dominated the battle\n🔥 I am unstoppable!\n\nPlay now: @lowprofile_eth\n👉 Check my full profile:',
-    tweetDefeat: '😤 INTENSE BATTLE in Vibe Most Wanted!\n\n⚡ Power used: {power}\n💪 Fought till the end but luck was not on my side\n🎯 I want a rematch!\n\nPlay now: @lowprofile_eth\n👉 Challenge me:',
-    castVictory: '🏆 EPIC VICTORY in Vibe Most Wanted!\n\n⚡ Total Power: {power}\n🎴 5 cards dominated the battle\n🔥 I am unstoppable!\n\nCreated by @jvhbo\n👉 Check my profile:',
-    castDefeat: '😤 INTENSE BATTLE in Vibe Most Wanted!\n\n⚡ Power used: {power}\n💪 Fought till the end but luck was not on my side\n🎯 I want a rematch!\n\nCreated by @jvhbo\n👉 Challenge me:',
+    tweetVictory: '🏆 EPIC VICTORY in Vibe Most Wanted!\n\n⚡ Total Power: {power}\n🎴 5 cards dominated the battle\n🔥 I am unstoppable!\n\nPlay now: @lowprofile_eth\n🛒 Buy cards: @vibedotmarket\n👉 Check my profile:',
+    tweetDefeat: '😤 INTENSE BATTLE in Vibe Most Wanted!\n\n⚡ Power used: {power}\n💪 Fought till the end but luck was not on my side\n🎯 I want a rematch!\n\nPlay now: @lowprofile_eth\n🛒 Buy cards: @vibedotmarket\n👉 Challenge me:',
+    castVictory: '🏆 EPIC VICTORY in Vibe Most Wanted!\n\n⚡ Total Power: {power}\n🎴 5 cards dominated the battle\n🔥 I am unstoppable!\n\nCreated by @jvhbo\n🛒 Buy your cards: @vibemarket\n👉 Check my profile:',
+    castDefeat: '😤 INTENSE BATTLE in Vibe Most Wanted!\n\n⚡ Power used: {power}\n💪 Fought till the end but luck was not on my side\n🎯 I want a rematch!\n\nCreated by @jvhbo\n🛒 Buy your cards: @vibemarket\n👉 Challenge me:',
     myInventory: 'My Inventory',
-    viewStats: 'View Stats'
+    viewStats: 'View Stats',
+    settings: 'Settings'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -698,12 +701,13 @@ const translations = {
     viewProfile: 'Ver Perfil',
     shareVictory: 'Compartir Victoria',
     shareDefeat: 'Compartir Batalla',
-    tweetVictory: '🏆 ¡VICTORIA ÉPICA en Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaron la batalla\n🔥 ¡Soy imparable!\n\nJuega ahora: @lowprofile_eth\n👉 Mira mi perfil completo:',
-    tweetDefeat: '😤 ¡Batalla INTENSA en Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Luché hasta el final pero la suerte no estaba de mi lado\n🎯 ¡Quiero revancha!\n\nJuega ahora: @lowprofile_eth\n👉 Desafíame:',
-    castVictory: '🏆 ¡VICTORIA ÉPICA en Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaron la batalla\n🔥 ¡Soy imparable!\n\nCreado por @jvhbo\n👉 Mira mi perfil:',
-    castDefeat: '😤 ¡Batalla INTENSA en Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Luché hasta el final pero la suerte no estaba de mi lado\n🎯 ¡Quiero revancha!\n\nCreado por @jvhbo\n👉 Desafíame:',
+    tweetVictory: '🏆 ¡VICTORIA ÉPICA en Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaron la batalla\n🔥 ¡Soy imparable!\n\nJuega ahora: @lowprofile_eth\n🛒 Compra cartas: @vibedotmarket\n👉 Mira mi perfil:',
+    tweetDefeat: '😤 ¡Batalla INTENSA en Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Luché hasta el final pero la suerte no estaba de mi lado\n🎯 ¡Quiero revancha!\n\nJuega ahora: @lowprofile_eth\n🛒 Compra cartas: @vibedotmarket\n👉 Desafíame:',
+    castVictory: '🏆 ¡VICTORIA ÉPICA en Vibe Most Wanted!\n\n⚡ Poder Total: {power}\n🎴 5 cartas dominaron la batalla\n🔥 ¡Soy imparable!\n\nCreado por @jvhbo\n🛒 Compra tus cartas: @vibemarket\n👉 Mira mi perfil:',
+    castDefeat: '😤 ¡Batalla INTENSA en Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Luché hasta el final pero la suerte no estaba de mi lado\n🎯 ¡Quiero revancha!\n\nCreado por @jvhbo\n🛒 Compra tus cartas: @vibemarket\n👉 Desafíame:',
     myInventory: 'Mi Inventario',
-    viewStats: 'Ver Estadísticas'
+    viewStats: 'Ver Estadísticas',
+    settings: 'Configuración'
   }
 };
 
@@ -1073,6 +1077,7 @@ export default function TCGPage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState<boolean>(false);
   const [showInventoryDropdown, setShowInventoryDropdown] = useState<boolean>(false);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   const t = useCallback((key: string, params: Record<string, any> = {}) => {
     let text = (translations as any)[lang][key] || key;
@@ -1738,6 +1743,67 @@ export default function TCGPage() {
         </div>
       )}
 
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[250] p-4" onClick={() => setShowSettings(false)}>
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500/50 p-8 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-bold text-cyan-400 flex items-center gap-2">
+                <span>⚙️</span> {t('settings')}
+              </h2>
+              <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-white text-2xl transition">✕</button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Music Toggle */}
+              <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">🎵</span>
+                    <div>
+                      <p className="font-bold text-white">Music</p>
+                      <p className="text-xs text-gray-400">{musicEnabled ? t('musicOn') : t('musicOff')}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={toggleMusic}
+                    className={`relative w-16 h-8 rounded-full transition-all ${musicEnabled ? 'bg-purple-600' : 'bg-gray-600'}`}
+                  >
+                    <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${musicEnabled ? 'translate-x-8' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Language Selector */}
+              <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-3xl">🌐</span>
+                  <p className="font-bold text-white">{t('language')}</p>
+                </div>
+                <select
+                  onChange={(e) => setLang(e.target.value)}
+                  value={lang}
+                  className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 hover:bg-gray-600 transition cursor-pointer font-medium"
+                >
+                  <option value="en">🇺🇸 English</option>
+                  <option value="pt-BR">🇧🇷 Português</option>
+                  <option value="es">🇪🇸 Español</option>
+                  <option value="hi">🇮🇳 हिन्दी</option>
+                </select>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowSettings(false)}
+                className="w-full px-6 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
+              >
+                {t('understood')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showBattleScreen && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300]">
           <div className="w-full max-w-6xl p-8">
@@ -2348,27 +2414,9 @@ export default function TCGPage() {
           <p className="text-sm text-gray-400 mt-1">{t('cardBattle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={toggleMusic} className={`backdrop-blur text-white px-4 py-3 rounded-xl transition border font-medium ${musicEnabled ? 'bg-purple-600 border-purple-500' : 'bg-gray-800/80 border-gray-700 hover:bg-gray-700'}`} title={musicEnabled ? t('musicOn') : t('musicOff')}>
-            {musicEnabled ? '🎵' : '🎵'}
-          </button>
           <button onClick={() => setShowTutorial(true)} className="bg-gray-800/80 backdrop-blur text-white px-4 py-3 rounded-xl hover:bg-gray-700 transition border border-gray-700 font-medium" title={t('tutorial')}>
             📖
           </button>
-          <div className="relative">
-            <select 
-              onChange={(e) => setLang(e.target.value)} 
-              value={lang} 
-              className="bg-gray-800/80 backdrop-blur text-white px-4 py-3 pr-10 rounded-xl text-sm border border-gray-700 hover:bg-gray-700 transition appearance-none cursor-pointer font-medium"
-            >
-              <option value="en">🇺🇸 English</option>
-              <option value="pt-BR">🇧🇷 Português</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="hi">🇮🇳 हिन्दी</option>
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -2431,8 +2479,8 @@ export default function TCGPage() {
 
                       {showProfileDropdown && (
                         <>
-                          <div style={{position: "fixed", inset: 0, zIndex: 999}} onClick={() => setShowProfileDropdown(false)} />
-                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 1000}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
+                          <div style={{position: "fixed", inset: 0, zIndex: 9999}} onClick={() => setShowProfileDropdown(false)} />
+                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 10000}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
                           <div className="p-5 bg-gradient-to-r from-purple-900/60 to-pink-900/60 border-b border-purple-500/30">
                             <div className="flex items-center gap-4 mb-4">
                               {userProfile.twitter ? (
@@ -2585,19 +2633,11 @@ export default function TCGPage() {
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
-                  if (!userProfile) {
-                    setShowCreateProfile(true);
-                  } else {
-                    setCurrentView('profile');
-                  }
+                  setShowSettings(true);
                 }}
-                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
-                  currentView === 'profile'
-                    ? 'bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-lg'
-                    : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
-                }`}
+                className="flex-1 px-6 py-3 rounded-lg font-semibold transition-all bg-gray-700/50 text-gray-300 hover:bg-gray-700"
               >
-                👤 {t('profile')}
+                ⚙️ {t('settings')}
               </button>
               <button
                 onClick={() => {
