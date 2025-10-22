@@ -1815,7 +1815,7 @@ export default function TCGPage() {
               {/* Twitter/X Connection */}
               {userProfile && (
                 <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">𝕏</span>
                       <div>
@@ -1825,6 +1825,10 @@ export default function TCGPage() {
                         </p>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {/* OAuth Button */}
                     <button
                       onClick={async () => {
                         if (soundEnabled) AudioManager.buttonClick();
@@ -1859,9 +1863,24 @@ export default function TCGPage() {
                           alert('Failed to connect Twitter. Please try again.');
                         }
                       }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition flex items-center gap-2"
+                      className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2"
                     >
-                      <span>𝕏</span> {userProfile.twitter ? 'Reconnect' : 'Connect Twitter'}
+                      <span>𝕏</span> {userProfile.twitter ? 'OAuth' : 'Connect'}
+                    </button>
+
+                    {/* Manual Input Button */}
+                    <button
+                      onClick={() => {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        const twitter = prompt('Enter your X/Twitter handle (without @):', userProfile.twitter || '');
+                        if (twitter !== null && twitter.trim() && address) {
+                          ProfileService.updateTwitter(address, twitter.replace('@', '').trim());
+                          setUserProfile({...userProfile, twitter: twitter.replace('@', '').trim()});
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2"
+                    >
+                      <span>✏️</span> {userProfile.twitter ? 'Edit' : 'Manual'}
                     </button>
                   </div>
                 </div>
