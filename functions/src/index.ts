@@ -34,11 +34,12 @@ interface UpdateTwitterRequest {
 }
 
 // Helper: Verify wallet signature (placeholder - implement if needed)
-function verifyWalletOwnership(address: string, signature?: string): boolean {
-  // TODO: Implement signature verification if you want extra security
-  // For now, we trust the client (better than nothing)
-  return true;
-}
+// Commented out for now - uncomment when implementing signature verification
+// function verifyWalletOwnership(address: string, signature?: string): boolean {
+//   // TODO: Implement signature verification if you want extra security
+//   // For now, we trust the client (better than nothing)
+//   return true;
+// }
 
 // 1. Create Profile
 export const createProfile = functions.https.onCall(async (data: CreateProfileRequest, context) => {
