@@ -1,9 +1,11 @@
 {
-  "redirects": [
+  "headers": [
     {
       "source": "/.well-known/farcaster.json",
-      "destination": "https://api.farcaster.xyz/miniapps/hosted-manifest/019a0910-e4a5-34d3-1773-7b6f0b4991b3",
-      "permanent": false
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
     }
   ]
 }
