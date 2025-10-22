@@ -13,17 +13,25 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
 
-    console.log('📥 Received params:', { code: code?.substring(0, 10) + '...', state: state?.substring(0, 20) + '...' });
+    console.log('📥 Received params:', { code: code?.substring(0, 10) + '...', hasState: !!state });
 
-    if (!code || !state) {
-      console.error('❌ Missing code or state');
-      return NextResponse.redirect(new URL('/?error=twitter_auth_failed&reason=missing_params', request.url));
+    if (!code) {
+      console.error('❌ Missing code');
+      return NextResponse.redirect(new URL('/?error=twitter_auth_failed&reason=missing_code', request.url));
     }
 
-    // Decode state to get address and codeVerifier
-    const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
-    const { address, codeVerifier } = stateData;
-    console.log('✅ Decoded state for address:', address);
+    // Get codeVerifier and address from cookies
+    const codeVerifier = request.cookies.get('twitter_code_verifier')?.value;
+    const address = request.cookies.get('twitter_address')?.value;
+
+    console.log('🍪 Cookies:', { hasCodeVerifier: !!codeVerifier, address });
+
+    if (!codeVerifier || !address) {
+      console.error('❌ Missing cookies');
+      return NextResponse.redirect(new URL('/?error=twitter_auth_failed&reason=missing_cookies', request.url));
+    }
+
+    console.log('✅ Got address from cookies:', address);
 
     if (!process.env.TWITTER_CLIENT_ID || !process.env.TWITTER_CLIENT_SECRET) {
       console.error('❌ Missing Twitter credentials in env');
@@ -55,8 +63,14 @@ export async function GET(request: NextRequest) {
     await ProfileService.updateTwitter(address, userObject.username);
     console.log('✅ Saved to Firebase');
 
-    // Redirect back to app with success
-    return NextResponse.redirect(new URL(`/?twitter_connected=${userObject.username}`, request.url));
+    // Redirect back to app with success and clear cookies
+    const response = NextResponse.redirect(new URL(`/?twitter_connected=${userObject.username}`, request.url));
+
+    // Clear the temporary cookies
+    response.cookies.delete('twitter_code_verifier');
+    response.cookies.delete('twitter_address');
+
+    return response;
   } catch (error: any) {
     console.error('❌ Twitter OAuth callback error:', error);
     console.error('Error details:', {

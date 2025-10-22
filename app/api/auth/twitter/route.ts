@@ -43,15 +43,26 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ OAuth link generated');
 
-    // Store codeVerifier and address in a temporary store (you'd use Redis in production)
-    // For now, we'll pass it through the state parameter (not ideal for production)
-    const stateData = JSON.stringify({ address, codeVerifier, originalState: state });
-    const encodedState = Buffer.from(stateData).toString('base64');
+    // Create response with cookies to store codeVerifier and address
+    const response = NextResponse.json({ url });
 
-    const authUrl = url.replace(`state=${state}`, `state=${encodedState}`);
+    // Set cookies with the data we need (expires in 10 minutes)
+    response.cookies.set('twitter_code_verifier', codeVerifier, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 600, // 10 minutes
+    });
 
-    console.log('✅ Returning auth URL');
-    return NextResponse.json({ url: authUrl });
+    response.cookies.set('twitter_address', address, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 600, // 10 minutes
+    });
+
+    console.log('✅ Returning auth URL with cookies set');
+    return response;
   } catch (error: any) {
     console.error('❌ Twitter OAuth init error:', error);
     console.error('Error details:', {
