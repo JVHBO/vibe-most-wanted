@@ -20,6 +20,15 @@ export default function ProfilePage() {
   useEffect(() => {
     const initSDK = async () => {
       try {
+        // Primeiro tenta pegar do localStorage (mais rápido e confiável)
+        const savedAddress = localStorage.getItem('connectedAddress');
+        if (savedAddress) {
+          console.log('✅ Current user address from localStorage:', savedAddress);
+          setCurrentUserAddress(savedAddress.toLowerCase());
+          return;
+        }
+
+        // Se não tiver no localStorage, tenta SDK
         await sdk.actions.ready();
 
         // Tenta obter o endereço do wallet conectado
@@ -28,7 +37,7 @@ export default function ProfilePage() {
             method: "eth_requestAccounts"
           });
           if (addresses && addresses[0]) {
-            console.log('✅ Current user address loaded:', addresses[0]);
+            console.log('✅ Current user address loaded from SDK:', addresses[0]);
             setCurrentUserAddress(addresses[0].toLowerCase());
           } else {
             console.log('⚠️ No address found in wallet');

@@ -1124,6 +1124,7 @@ export default function TCGPage() {
           });
           if (farcasterAddress && farcasterAddress[0]) {
             setAddress(farcasterAddress[0]);
+            localStorage.setItem('connectedAddress', farcasterAddress[0].toLowerCase());
             if (soundEnabled) AudioManager.buttonSuccess();
             console.log('✅ Conectado via Farcaster SDK:', farcasterAddress[0]);
             return;
@@ -1143,6 +1144,7 @@ export default function TCGPage() {
       const accounts = await eth.request({ method: "eth_requestAccounts" });
       if (accounts[0]) {
         setAddress(accounts[0]);
+        localStorage.setItem('connectedAddress', accounts[0].toLowerCase());
         if (soundEnabled) AudioManager.buttonSuccess();
         console.log('✅ Conectado via MetaMask:', accounts[0]);
       }
@@ -1155,6 +1157,7 @@ export default function TCGPage() {
   const disconnectWallet = useCallback(() => {
     if (soundEnabled) AudioManager.buttonNav();
     setAddress(null);
+    localStorage.removeItem('connectedAddress');
     setNfts([]);
     setSelectedCards([]);
     setFilteredCount(0);
