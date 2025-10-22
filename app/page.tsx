@@ -314,7 +314,8 @@ const translations = {
     castDefeat: '😤 Batalha INTENSA no Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Lutei até o fim mas a sorte não estava do meu lado\n🎯 Quero revanche!\n\nCriado por @jvhbo\n🛒 Compre suas cartas: @vibemarket\n👉 Me desafie:',
     myInventory: 'Meu Inventário',
     viewStats: 'Ver Estatísticas',
-    settings: 'Configurações'
+    settings: 'Configurações',
+    vibeMarketEasterEgg: '🎯 Nico, me manda um DM que te mostro como adicionar esse botão'
   },
   hi: {
     title: 'Vibe Most Wanted',
@@ -446,7 +447,8 @@ const translations = {
     castDefeat: '😤 Vibe Most Wanted में तीव्र युद्ध!\n\n⚡ उपयोग की गई शक्ति: {power}\n💪 अंत तक लड़ा लेकिन किस्मत साथ नहीं थी\n🎯 मैं बदला चाहता हूँ!\n\n@jvhbo द्वारा बनाया गया\n🛒 अपने कार्ड खरीदें: @vibemarket\n👉 मुझे चुनौती दें:',
     myInventory: 'मेरी सूची',
     viewStats: 'आंकड़े देखें',
-    settings: 'सेटिंग्स'
+    settings: 'सेटिंग्स',
+    vibeMarketEasterEgg: '🎯 Nico, DM me and I will show you how to add this button'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -575,7 +577,8 @@ const translations = {
     castDefeat: '😤 INTENSE BATTLE in Vibe Most Wanted!\n\n⚡ Power used: {power}\n💪 Fought till the end but luck was not on my side\n🎯 I want a rematch!\n\nCreated by @jvhbo\n🛒 Buy your cards: @vibemarket\n👉 Challenge me:',
     myInventory: 'My Inventory',
     viewStats: 'View Stats',
-    settings: 'Settings'
+    settings: 'Settings',
+    vibeMarketEasterEgg: '🎯 Nico, DM me and I will show you how to add this button'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -707,7 +710,8 @@ const translations = {
     castDefeat: '😤 ¡Batalla INTENSA en Vibe Most Wanted!\n\n⚡ Poder usado: {power}\n💪 Luché hasta el final pero la suerte no estaba de mi lado\n🎯 ¡Quiero revancha!\n\nCreado por @jvhbo\n🛒 Compra tus cartas: @vibemarket\n👉 Desafíame:',
     myInventory: 'Mi Inventario',
     viewStats: 'Ver Estadísticas',
-    settings: 'Configuración'
+    settings: 'Configuración',
+    vibeMarketEasterEgg: '🎯 Nico, envíame un DM y te mostraré cómo agregar este botón'
   }
 };
 
@@ -1922,7 +1926,7 @@ export default function TCGPage() {
                   {/* Easter egg message to Vibe Market */}
                   <div className="mt-3 pt-3 border-t border-gray-700">
                     <p className="text-xs text-gray-500 italic text-center">
-                      🎯 Nico, me manda um DM que te mostro como adicionar esse botão
+                      {t('vibeMarketEasterEgg')}
                     </p>
                   </div>
                 </div>
