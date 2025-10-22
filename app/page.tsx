@@ -1577,7 +1577,7 @@ export default function TCGPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 lg:p-6">
       {showWinPopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100]" onClick={() => setShowWinPopup(false)}>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]" onClick={() => setShowWinPopup(false)}>
           <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
             <img
               src="https://pbs.twimg.com/media/G2cr8wQWMAADqE7.jpg"
@@ -1607,7 +1607,7 @@ export default function TCGPage() {
       )}
 
       {showLossPopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100]" onClick={() => setShowLossPopup(false)}>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]" onClick={() => setShowLossPopup(false)}>
           <div className="relative flex flex-col items-center gap-4">
             <img
               src="https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26"
@@ -1637,7 +1637,7 @@ export default function TCGPage() {
       )}
 
       {showBattleScreen && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300]">
           <div className="w-full max-w-6xl p-8">
             <style>{`
               @keyframes slideInLeft {
@@ -1727,7 +1727,7 @@ export default function TCGPage() {
 
       {/* Modal de Seleção de Modo de Jogo */}
       {pvpMode === 'menu' && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500 max-w-md w-full p-8">
             <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
               {t('selectMode') || 'Select Mode'}
@@ -1780,7 +1780,7 @@ export default function TCGPage() {
 
       {/* Modal de Menu PvP */}
       {pvpMode === 'pvpMenu' && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500 max-w-md w-full p-8">
             <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               {t('pvp')}
@@ -1862,7 +1862,7 @@ export default function TCGPage() {
 
       {/* Modal de Busca Automática */}
       {pvpMode === 'autoMatch' && isSearching && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-green-500 max-w-md w-full p-8">
             <div className="text-center">
               <div className="mb-6">
@@ -1892,7 +1892,7 @@ export default function TCGPage() {
 
       {/* Modal de Criar Sala */}
       {pvpMode === 'createRoom' && roomCode && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-blue-500 max-w-md w-full p-8">
             <h2 className="text-2xl font-bold text-center text-blue-400 mb-2">
               {t('roomCreated')}
@@ -1945,7 +1945,7 @@ export default function TCGPage() {
 
       {/* Modal de Entrar na Sala */}
       {pvpMode === 'joinRoom' && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500 max-w-md w-full p-8">
             <h2 className="text-2xl font-bold text-center text-purple-400 mb-2">
               {t('joinRoom')}
@@ -1997,7 +1997,7 @@ export default function TCGPage() {
 
       {/* Modal de Sala (Aguardando/Jogando) */}
       {pvpMode === 'inRoom' && roomCode && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-yellow-500 max-w-2xl w-full p-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-yellow-400">
@@ -2321,8 +2321,8 @@ export default function TCGPage() {
 
                       {showProfileDropdown && (
                         <>
-                          <div style={{position: "fixed", inset: 0, zIndex: 50}} onClick={() => setShowProfileDropdown(false)} />
-                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 60}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
+                          <div style={{position: "fixed", inset: 0, zIndex: 45}} onClick={() => setShowProfileDropdown(false)} />
+                          <div style={{position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "18rem", zIndex: 50}} className="bg-gray-900 border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
                           <div className="p-5 bg-gradient-to-r from-purple-900/60 to-pink-900/60 border-b border-purple-500/30">
                             <div className="flex items-center gap-4 mb-4">
                               {userProfile.twitter ? (
@@ -2404,7 +2404,7 @@ export default function TCGPage() {
                       )}
 
                       {showInventoryDropdown && (
-                        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4" onClick={() => setShowInventoryDropdown(false)}>
+                        <div className="fixed inset-0 bg-black/80 z-[50] flex items-center justify-center p-4" onClick={() => setShowInventoryDropdown(false)}>
                           <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-between items-center mb-4">
                               <h3 className="text-2xl font-bold flex items-center gap-2">
@@ -2447,7 +2447,7 @@ export default function TCGPage() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="mb-6 relative z-[100000]">
+          <div className="mb-6 relative z-40">
             <div className="bg-gray-800/50 backdrop-blur-lg rounded-xl border border-gray-700 p-2 flex gap-2">
               <button
                 onClick={() => {
@@ -2857,7 +2857,7 @@ export default function TCGPage() {
 
           {/* Create Profile Modal */}
           {showCreateProfile && (
-            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
               <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500 max-w-md w-full p-8">
                 <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                   {t('createProfile')}
