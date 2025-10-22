@@ -123,17 +123,36 @@ export class PvPService {
 
   // Busca automática de oponente
   static async findMatch(playerAddress: string): Promise<string> {
+    console.log('🔍 findMatch called for:', playerAddress);
+
     const matchmakingRef = ref(database, 'matchmaking');
     const snapshot = await get(matchmakingRef);
 
     if (snapshot.exists()) {
       const players = snapshot.val();
+      const now = Date.now();
+
+      // Filtra jogadores válidos (não é o próprio jogador e está online há menos de 30 segundos)
       const waitingPlayers = Object.entries(players).filter(
-        ([addr, data]: [string, any]) => addr !== playerAddress && Date.now() - data.timestamp < 60000
+        ([addr, data]: [string, any]) => {
+          const age = now - data.timestamp;
+          const isValid = addr !== playerAddress && age < 30000; // Reduzido para 30s
+
+          if (!isValid && addr !== playerAddress) {
+            console.log('⚠️ Removing stale matchmaking entry:', addr, 'age:', age / 1000, 'seconds');
+            // Remove entrada antiga
+            remove(ref(database, `matchmaking/${addr}`)).catch(console.error);
+          }
+
+          return isValid;
+        }
       );
+
+      console.log('📊 Found', waitingPlayers.length, 'waiting players');
 
       if (waitingPlayers.length > 0) {
         const [opponentAddress] = waitingPlayers[0];
+        console.log('✅ Matched with:', opponentAddress);
 
         // Remove ambos do matchmaking
         await remove(ref(database, `matchmaking/${opponentAddress}`));
@@ -143,11 +162,13 @@ export class PvPService {
         const code = await this.createRoom(playerAddress);
         await this.joinRoom(code, opponentAddress);
 
+        console.log('🎮 Room created:', code);
         return code;
       }
     }
 
-    // Adiciona à fila de matchmaking
+    // Adiciona à fila de matchmaking com timestamp
+    console.log('⏳ Added to matchmaking queue');
     await set(ref(database, `matchmaking/${playerAddress}`), {
       timestamp: Date.now()
     });
@@ -260,20 +281,52 @@ export class PvPService {
     return () => off(roomRef, 'value', listener);
   }
 
-  // Limpa salas antigas (> 1 hora)
+  // Limpa salas antigas (> 5 minutos) e entradas antigas de matchmaking
   static async cleanupOldRooms(): Promise<void> {
-    const roomsRef = ref(database, 'rooms');
-    const snapshot = await get(roomsRef);
+    console.log('🧹 Cleaning up old rooms and matchmaking entries...');
 
-    if (snapshot.exists()) {
-      const rooms = snapshot.val();
-      const oneHourAgo = Date.now() - 3600000;
+    const roomsRef = ref(database, 'rooms');
+    const roomsSnapshot = await get(roomsRef);
+
+    if (roomsSnapshot.exists()) {
+      const rooms = roomsSnapshot.val();
+      const fiveMinutesAgo = Date.now() - 300000; // 5 minutos
+      let roomsDeleted = 0;
 
       for (const [code, room] of Object.entries(rooms)) {
         const r = room as GameRoom;
-        if (r.createdAt < oneHourAgo) {
+        if (r.createdAt < fiveMinutesAgo) {
+          console.log('🗑️ Deleting old room:', code, 'age:', (Date.now() - r.createdAt) / 60000, 'minutes');
           await remove(ref(database, `rooms/${code}`));
+          roomsDeleted++;
         }
+      }
+
+      if (roomsDeleted > 0) {
+        console.log('✅ Deleted', roomsDeleted, 'old rooms');
+      }
+    }
+
+    // Também limpa entradas antigas do matchmaking
+    const matchmakingRef = ref(database, 'matchmaking');
+    const matchmakingSnapshot = await get(matchmakingRef);
+
+    if (matchmakingSnapshot.exists()) {
+      const players = matchmakingSnapshot.val();
+      const oneMinuteAgo = Date.now() - 60000; // 1 minuto
+      let entriesDeleted = 0;
+
+      for (const [addr, data] of Object.entries(players)) {
+        const d = data as any;
+        if (d.timestamp < oneMinuteAgo) {
+          console.log('🗑️ Deleting stale matchmaking entry:', addr);
+          await remove(ref(database, `matchmaking/${addr}`));
+          entriesDeleted++;
+        }
+      }
+
+      if (entriesDeleted > 0) {
+        console.log('✅ Deleted', entriesDeleted, 'stale matchmaking entries');
       }
     }
   }

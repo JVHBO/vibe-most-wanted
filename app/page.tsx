@@ -1627,9 +1627,25 @@ export default function TCGPage() {
         }
       });
 
+      // Heartbeat - atualiza timestamp a cada 10 segundos para manter entrada ativa
+      const heartbeatInterval = setInterval(async () => {
+        try {
+          const { ref: dbRef, set } = await import('firebase/database');
+          const { getDatabase } = await import('firebase/database');
+          const db = getDatabase();
+          await set(dbRef(db, `matchmaking/${address}`), {
+            timestamp: Date.now()
+          });
+          console.log('💓 Matchmaking heartbeat sent');
+        } catch (err) {
+          console.error('❌ Heartbeat error:', err);
+        }
+      }, 10000); // A cada 10 segundos
+
       return () => {
-        console.log('🛑 Stopping matchmaking listener');
+        console.log('🛑 Stopping matchmaking listener and heartbeat');
         unsubscribe();
+        clearInterval(heartbeatInterval);
       };
     }
   }, [pvpMode, isSearching, address]);
@@ -1700,6 +1716,19 @@ export default function TCGPage() {
     const interval = setInterval(loadLeaderboard, 5 * 60 * 1000); // 5 minutes
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Cleanup old rooms and matchmaking entries periodically
+  useEffect(() => {
+    // Run cleanup immediately on mount
+    PvPService.cleanupOldRooms().catch(err => console.error('Cleanup error:', err));
+
+    // Run cleanup every 2 minutes
+    const cleanupInterval = setInterval(() => {
+      PvPService.cleanupOldRooms().catch(err => console.error('Cleanup error:', err));
+    }, 2 * 60 * 1000);
+
+    return () => clearInterval(cleanupInterval);
   }, []);
 
   return (
