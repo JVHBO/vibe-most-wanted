@@ -1790,6 +1790,36 @@ export default function TCGPage() {
                 </select>
               </div>
 
+              {/* Twitter/X Connection */}
+              {userProfile && (
+                <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">𝕏</span>
+                      <div>
+                        <p className="font-bold text-white">X / Twitter</p>
+                        <p className="text-xs text-gray-400">
+                          {userProfile.twitter ? `@${userProfile.twitter}` : 'Not connected'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        const newTwitter = prompt(t('twitterHandle'), userProfile.twitter || '');
+                        if (newTwitter !== null && newTwitter.trim() && address) {
+                          ProfileService.updateTwitter(address, newTwitter.replace('@', '').trim());
+                          setUserProfile({...userProfile, twitter: newTwitter.replace('@', '').trim()});
+                        }
+                      }}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition"
+                    >
+                      {userProfile.twitter ? '✏️ Edit' : '➕ Connect'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Close Button */}
               <button
                 onClick={() => setShowSettings(false)}
