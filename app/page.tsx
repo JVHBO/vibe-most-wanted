@@ -940,6 +940,11 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
   const foilEffect = getFoilEffect(nft.foil || '');
   const isPrizeFoil = (nft.foil || '').toLowerCase().includes('prize');
 
+  // Debug: log foil value
+  if (nft.foil) {
+    console.log(`Card #${nft.tokenId} - Foil: "${nft.foil}", Effect: ${foilEffect}, isPrize: ${isPrizeFoil}`);
+  }
+
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
