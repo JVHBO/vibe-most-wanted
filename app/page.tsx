@@ -1042,29 +1042,47 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           75% { transform: rotate(3deg); }
         }
 
-        @keyframes rainbowMove {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        @keyframes rainbowShine {
+          0% {
+            background-position: -200% center;
+          }
+          100% {
+            background-position: 200% center;
+          }
         }
 
         .prize-foil {
-          background: linear-gradient(
-            110deg,
-            rgba(255, 0, 128, 0.6) 0%,
-            rgba(255, 140, 0, 0.6) 14%,
-            rgba(255, 215, 0, 0.6) 28%,
-            rgba(0, 255, 0, 0.6) 42%,
-            rgba(0, 255, 255, 0.6) 56%,
-            rgba(0, 128, 255, 0.6) 70%,
-            rgba(128, 0, 255, 0.6) 84%,
-            rgba(255, 0, 128, 0.6) 100%
-          );
-          background-size: 200% 200%;
-          animation: rainbowMove 4s ease-in-out infinite;
-          mix-blend-mode: hard-light;
+          background:
+            linear-gradient(
+              90deg,
+              transparent 0%,
+              rgba(255, 255, 255, 0.4) 45%,
+              rgba(255, 255, 255, 0.6) 50%,
+              rgba(255, 255, 255, 0.4) 55%,
+              transparent 100%
+            ),
+            linear-gradient(
+              45deg,
+              #ff0080 0%,
+              #ff3366 8%,
+              #ff8c00 16%,
+              #ffb84d 24%,
+              #ffd700 32%,
+              #80ff00 40%,
+              #00ff80 48%,
+              #00ffff 56%,
+              #0080ff 64%,
+              #4d4dff 72%,
+              #8000ff 80%,
+              #cc00ff 88%,
+              #ff00ff 96%,
+              #ff0080 100%
+            );
+          background-size: 300% 100%, 600% 600%;
+          animation: holographic 8s ease-in-out infinite, rainbowShine 6s ease-in-out infinite;
+          mix-blend-mode: overlay;
           pointer-events: none;
-          filter: brightness(1.3) saturate(1.6);
+          opacity: 0.7;
         }
         
         .standard-foil {
