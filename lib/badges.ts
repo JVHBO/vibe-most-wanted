@@ -33,8 +33,8 @@ export const BADGES: Record<BadgeType, Badge> = {
     label: 'DEV',
     description: '',
     icon: '',
-    color: 'bg-vintage-gold/20',
-    borderColor: 'border-vintage-gold/40',
+    color: 'bg-gradient-to-r from-vintage-gold/30 to-vintage-burnt-gold/30',
+    borderColor: 'border-vintage-gold',
     textColor: 'text-vintage-gold',
   },
   early_tester: {
@@ -42,8 +42,8 @@ export const BADGES: Record<BadgeType, Badge> = {
     label: 'EARLY',
     description: '',
     icon: '',
-    color: 'bg-vintage-neon-blue/20',
-    borderColor: 'border-vintage-neon-blue/40',
+    color: 'bg-gradient-to-r from-vintage-neon-blue/30 to-blue-400/30',
+    borderColor: 'border-vintage-neon-blue',
     textColor: 'text-vintage-neon-blue',
   },
 };
