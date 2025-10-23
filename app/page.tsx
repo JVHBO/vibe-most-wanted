@@ -1237,6 +1237,11 @@ export default function TCGPage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
+
+  // Defense Deck States
+  const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
+  const [showPveCardSelection, setShowPveCardSelection] = useState<boolean>(false);
+  const [pveSelectedCards, setPveSelectedCards] = useState<any[]>([]);
   const [newUsername, setNewUsername] = useState<string>('');
   const [isChangingUsername, setIsChangingUsername] = useState<boolean>(false);
 
@@ -1637,6 +1642,32 @@ export default function TCGPage() {
       }, 2000);
     }, 4500);
   }, [selectedCards, nfts, t, soundEnabled, isBattling]);
+
+  const saveDefenseDeck = useCallback(async () => {
+    if (!address || !userProfile || selectedCards.length !== HAND_SIZE_CONST) return;
+
+    try {
+      const tokenIds = selectedCards.map(card => card.tokenId);
+      await ProfileService.saveDefenseDeck(address, tokenIds);
+
+      if (soundEnabled) AudioManager.buttonSuccess();
+      setShowDefenseDeckSaved(true);
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowDefenseDeckSaved(false);
+      }, 3000);
+
+      // Reload profile to get updated defense deck
+      const updatedProfile = await ProfileService.getProfile(address);
+      if (updatedProfile) {
+        setUserProfile(updatedProfile);
+      }
+    } catch (error) {
+      console.error('Error saving defense deck:', error);
+      alert('Error saving defense deck. Please try again.');
+    }
+  }, [address, userProfile, selectedCards, soundEnabled]);
 
   const totalPower = useMemo(() =>
     selectedCards.reduce((sum, c) => sum + (c.power || 0), 0),
@@ -2385,6 +2416,115 @@ export default function TCGPage() {
                 💥 💥 💥
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* PvE Card Selection Modal */}
+      {showPveCardSelection && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-8 shadow-neon my-8">
+            <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-neon-blue">
+              SELECT YOUR CARDS
+            </h2>
+            <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
+              Choose {HAND_SIZE_CONST} cards to battle vs AI ({pveSelectedCards.length}/{HAND_SIZE_CONST} selected)
+            </p>
+
+            {/* Selected Cards Display */}
+            <div className="mb-6 p-4 bg-vintage-black/50 rounded-xl border border-vintage-neon-blue/50">
+              <div className="grid grid-cols-5 gap-2">
+                {pveSelectedCards.map((card, i) => (
+                  <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-neon-blue shadow-lg">
+                    <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-0 left-0 bg-vintage-neon-blue text-vintage-black text-xs px-1 rounded-br font-bold">{card.power}</div>
+                  </div>
+                ))}
+                {Array(HAND_SIZE_CONST - pveSelectedCards.length).fill(0).map((_, i) => (
+                  <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-neon-blue/40 flex items-center justify-center text-vintage-neon-blue/50 bg-vintage-felt-green/30">
+                    <span className="text-2xl font-bold">+</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 text-center">
+                <p className="text-xs text-vintage-burnt-gold">Total Power</p>
+                <p className="text-2xl font-bold text-vintage-neon-blue">
+                  {pveSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0)}
+                </p>
+              </div>
+            </div>
+
+            {/* Available Cards Grid */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto p-2">
+              {nfts.map((nft) => {
+                const isSelected = pveSelectedCards.find(c => c.tokenId === nft.tokenId);
+                return (
+                  <div
+                    key={nft.tokenId}
+                    onClick={() => {
+                      if (isSelected) {
+                        setPveSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
+                        if (soundEnabled) AudioManager.deselectCard();
+                      } else if (pveSelectedCards.length < HAND_SIZE_CONST) {
+                        setPveSelectedCards(prev => [...prev, nft]);
+                        if (soundEnabled) AudioManager.selectCard();
+                      }
+                    }}
+                    className={`relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer transition-all ${
+                      isSelected
+                        ? 'ring-4 ring-vintage-neon-blue scale-95'
+                        : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50'
+                    }`}
+                  >
+                    <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
+                      {nft.power}
+                    </div>
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-vintage-neon-blue/20 flex items-center justify-center">
+                        <div className="bg-vintage-neon-blue text-vintage-black rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                          ✓
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  if (pveSelectedCards.length === HAND_SIZE_CONST) {
+                    setSelectedCards(pveSelectedCards);
+                    setShowPveCardSelection(false);
+                    setGameMode('ai');
+                    setPvpMode(null);
+                    playHand();
+                  }
+                }}
+                disabled={pveSelectedCards.length !== HAND_SIZE_CONST}
+                className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
+                  pveSelectedCards.length === HAND_SIZE_CONST
+                    ? 'bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black shadow-neon hover:scale-105'
+                    : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                }`}
+              >
+                Battle! ({pveSelectedCards.length}/{HAND_SIZE_CONST})
+              </button>
+
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonNav();
+                  setShowPveCardSelection(false);
+                  setPveSelectedCards([]);
+                }}
+                className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -3194,30 +3334,69 @@ export default function TCGPage() {
                   </div>
                 </div>
 
-                {/* Illuminated Casino Panel for Play Hand Button */}
+                {/* Illuminated Casino Panel for Defense Deck Button */}
                 <div className="relative p-1 rounded-xl mb-4" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(255, 215, 0, 0.3)'}}>
                   <div className="bg-vintage-black/90 p-4 rounded-lg">
                     <button
-                      id="battle-button"
-                      onClick={() => {
-                        if (soundEnabled) AudioManager.buttonClick();
-                        setGameMode(null);
-                        setPvpMode('menu');
-                      }}
-                      disabled={selectedCards.length !== HAND_SIZE_CONST || isBattling}
+                      id="defense-deck-button"
+                      onClick={saveDefenseDeck}
+                      disabled={selectedCards.length !== HAND_SIZE_CONST || !userProfile}
                       className={`w-full px-6 py-4 rounded-xl shadow-lg text-lg font-display font-bold transition-all uppercase tracking-wide ${
-                        selectedCards.length === HAND_SIZE_CONST && !isBattling
+                        selectedCards.length === HAND_SIZE_CONST && userProfile
                           ? 'text-vintage-black hover:shadow-gold-lg'
                           : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                       }`}
-                      style={selectedCards.length === HAND_SIZE_CONST && !isBattling ? {
+                      style={selectedCards.length === HAND_SIZE_CONST && userProfile ? {
                         background: 'linear-gradient(145deg, #FFD700, #C9A227)',
                         boxShadow: '0 0 20px rgba(255, 215, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)'
                       } : {}}
                     >
-                      {t('playHand')} ({selectedCards.length}/{HAND_SIZE_CONST})
+                      Save Defense Deck ({selectedCards.length}/{HAND_SIZE_CONST})
                     </button>
+                    {showDefenseDeckSaved && (
+                      <div className="mt-2 text-center text-green-400 font-modern font-semibold animate-pulse">
+                        ✓ Defense Deck Saved!
+                      </div>
+                    )}
                   </div>
+                </div>
+
+                {/* Battle vs AI Button */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      setShowPveCardSelection(true);
+                      setPveSelectedCards([]);
+                    }}
+                    disabled={!userProfile}
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                      userProfile
+                        ? 'bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black shadow-neon hover:scale-105'
+                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                    }`}
+                  >
+                    Battle vs AI
+                  </button>
+                </div>
+
+                {/* Battle vs Player Button */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      setGameMode(null);
+                      setPvpMode('menu');
+                    }}
+                    disabled={!userProfile}
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                      userProfile
+                        ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
+                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                    }`}
+                  >
+                    Battle vs Player
+                  </button>
                 </div>
 
                 <div className="mt-6 space-y-4">
