@@ -3321,14 +3321,14 @@ export default function TCGPage() {
                                 <div>
                                   <div className="flex items-center gap-2 mb-1">
                                     <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors">{profile.username}</p>
-                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="sm" />
+                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
                                   </div>
                                   <p className="text-xs text-vintage-burnt-gold font-mono">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
                                 </div>
                               </Link>
                             </td>
                             <td className="p-4 text-right text-green-400 font-bold">{profile.stats.openedCards || 0}</td>
-                            <td className="p-4 text-right text-vintage-gold font-bold">{profile.stats.totalCards || 0}</td>
+                            <td className="p-4 text-right text-vintage-gold font-bold">{profile.stats.unopenedCards || 0}</td>
                             <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
                             <td className="p-4 text-right text-vintage-neon-blue font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
                             <td className="p-4 text-right text-red-400 font-semibold">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
