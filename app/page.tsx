@@ -2422,6 +2422,8 @@ export default function TCGPage() {
                 onClick={async () => {
                   if (soundEnabled) AudioManager.buttonClick();
                   try {
+                    // Remove do matchmaking antes de criar sala manual
+                    await PvPService.cancelMatchmaking(address || '');
                     const code = await PvPService.createRoom(address || '');
                     setRoomCode(code);
                     setPvpMode('createRoom');
@@ -2568,6 +2570,8 @@ export default function TCGPage() {
               onClick={async () => {
                 if (soundEnabled) AudioManager.buttonClick();
                 try {
+                  // Remove do matchmaking antes de entrar em sala manual
+                  await PvPService.cancelMatchmaking(address || '');
                   await PvPService.joinRoom(roomCode, address || '');
                   setPvpMode('inRoom');
                   if (soundEnabled) AudioManager.buttonSuccess();
