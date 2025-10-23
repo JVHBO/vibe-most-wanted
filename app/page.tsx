@@ -2678,104 +2678,132 @@ export default function TCGPage() {
             {/* Action Buttons */}
             <div className="space-y-3">
               <button
-                onClick={async () => {
-                  if (attackSelectedCards.length !== HAND_SIZE_CONST || !address || !userProfile) return;
+                onClick={() => {
+                  if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer) return;
 
-                  try {
-                    // Get defender's deck and NFT data
-                    const defenderDeck = targetPlayer.defenseDeck || [];
+                  // Create defender card objects (placeholder images/data)
+                  const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => ({
+                    tokenId: tokenId,
+                    imageUrl: '/icon.png', // Placeholder - defender's cards are hidden
+                    power: 20, // Placeholder power
+                    name: `Card #${tokenId}`
+                  }));
 
-                    // Calculate powers
-                    const attackPower = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
-                    const defensePower = defenderDeck.reduce((sum, tokenId) => {
-                      // For simplicity, we'll need to fetch the actual power later
-                      // For now, assume average power or fetch from profile stats
-                      return sum + 20; // Placeholder
-                    }, 0);
+                  // Set up battle
+                  setSelectedCards(attackSelectedCards);
+                  setDealerCards(defenderCards);
+                  setShowAttackCardSelection(false);
+                  setIsBattling(true);
+                  setShowBattleScreen(true);
+                  setBattlePhase('cards');
+                  setGameMode('pvp'); // Mark as PvP-style battle
 
+                  if (soundEnabled) AudioManager.playHand();
+
+                  const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                  const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+
+                  // Animate battle
+                  setTimeout(() => {
+                    setBattlePhase('clash');
+                    if (soundEnabled) AudioManager.cardBattle();
+                  }, 2500);
+
+                  setTimeout(() => {
+                    setPlayerPower(playerTotal);
+                    setDealerPower(dealerTotal);
+                    setBattlePhase('result');
+                  }, 3500);
+
+                  setTimeout(async () => {
                     let matchResult: 'win' | 'loss' | 'tie';
-                    if (attackPower > defensePower) {
+                    if (playerTotal > dealerTotal) {
                       matchResult = 'win';
-                    } else if (attackPower < defensePower) {
+                    } else if (playerTotal < dealerTotal) {
                       matchResult = 'loss';
                     } else {
                       matchResult = 'tie';
                     }
 
-                    // Update attacker's stats
-                    const todayUTC = new Date().toISOString().split('T')[0];
-                    await ProfileService.updateProfile(address, {
-                      attacksToday: (userProfile.attacksToday || 0) + 1,
-                      lastAttackDate: todayUTC,
-                      'stats.attackWins': (userProfile.stats.attackWins || 0) + (matchResult === 'win' ? 1 : 0),
-                      'stats.attackLosses': (userProfile.stats.attackLosses || 0) + (matchResult === 'loss' ? 1 : 0),
-                    });
+                    // Update stats and record matches
+                    if (address && userProfile) {
+                      try {
+                        const todayUTC = new Date().toISOString().split('T')[0];
+                        await ProfileService.updateProfile(address, {
+                          attacksToday: (userProfile.attacksToday || 0) + 1,
+                          lastAttackDate: todayUTC,
+                          'stats.attackWins': (userProfile.stats.attackWins || 0) + (matchResult === 'win' ? 1 : 0),
+                          'stats.attackLosses': (userProfile.stats.attackLosses || 0) + (matchResult === 'loss' ? 1 : 0),
+                        });
 
-                    // Update defender's stats
-                    await ProfileService.updateProfile(targetPlayer.address, {
-                      'stats.defenseWins': (targetPlayer.stats.defenseWins || 0) + (matchResult === 'loss' ? 1 : 0),
-                      'stats.defenseLosses': (targetPlayer.stats.defenseLosses || 0) + (matchResult === 'win' ? 1 : 0),
-                    });
+                        await ProfileService.updateProfile(targetPlayer.address, {
+                          'stats.defenseWins': (targetPlayer.stats.defenseWins || 0) + (matchResult === 'loss' ? 1 : 0),
+                          'stats.defenseLosses': (targetPlayer.stats.defenseLosses || 0) + (matchResult === 'win' ? 1 : 0),
+                        });
 
-                    // Record attack in match history for both players
-                    await ProfileService.recordMatch(
-                      address,
-                      'attack',
-                      matchResult,
-                      attackPower,
-                      defensePower,
-                      attackSelectedCards,
-                      [], // We'll use defender's deck token IDs
-                      targetPlayer.address,
-                      targetPlayer.username
-                    );
+                        await ProfileService.recordMatch(
+                          address,
+                          'attack',
+                          matchResult,
+                          playerTotal,
+                          dealerTotal,
+                          attackSelectedCards,
+                          defenderCards,
+                          targetPlayer.address,
+                          targetPlayer.username
+                        );
 
-                    await ProfileService.recordMatch(
-                      targetPlayer.address,
-                      'defense',
-                      matchResult === 'win' ? 'loss' : matchResult === 'loss' ? 'win' : 'tie',
-                      defensePower,
-                      attackPower,
-                      [], // Defender's cards
-                      attackSelectedCards,
-                      address,
-                      userProfile.username
-                    );
+                        await ProfileService.recordMatch(
+                          targetPlayer.address,
+                          'defense',
+                          matchResult === 'win' ? 'loss' : matchResult === 'loss' ? 'win' : 'tie',
+                          dealerTotal,
+                          playerTotal,
+                          defenderCards,
+                          attackSelectedCards,
+                          address,
+                          userProfile.username
+                        );
 
-                    // Reload profile and show result
-                    const updatedProfile = await ProfileService.getProfile(address);
-                    if (updatedProfile) {
-                      setUserProfile(updatedProfile);
+                        const updatedProfile = await ProfileService.getProfile(address);
+                        if (updatedProfile) {
+                          setUserProfile(updatedProfile);
+                        }
+                      } catch (error) {
+                        console.error('Attack error:', error);
+                      }
                     }
 
-                    setShowAttackCardSelection(false);
-                    setAttackSelectedCards([]);
+                    // Close battle and show result
+                    setTimeout(() => {
+                      setIsBattling(false);
+                      setShowBattleScreen(false);
+                      setBattlePhase('cards');
+                      setAttackSelectedCards([]);
 
-                    // Set last battle result for sharing
-                    setLastBattleResult({
-                      result: matchResult,
-                      playerPower: attackPower,
-                      opponentPower: defensePower,
-                      opponentName: targetPlayer.username,
-                      opponentTwitter: targetPlayer.twitter,
-                      type: 'attack'
-                    });
+                      // Set last battle result for sharing
+                      setLastBattleResult({
+                        result: matchResult,
+                        playerPower: playerTotal,
+                        opponentPower: dealerTotal,
+                        opponentName: targetPlayer.username,
+                        opponentTwitter: targetPlayer.twitter,
+                        type: 'attack'
+                      });
 
-                    setTargetPlayer(null);
+                      setTargetPlayer(null);
 
-                    if (matchResult === 'win') {
-                      setShowWinPopup(true);
-                      if (soundEnabled) AudioManager.win();
-                    } else if (matchResult === 'loss') {
-                      setShowLossPopup(true);
-                      if (soundEnabled) AudioManager.lose();
-                    } else {
-                      if (soundEnabled) AudioManager.tie();
-                    }
-                  } catch (error) {
-                    console.error('Attack error:', error);
-                    alert('Error processing attack. Please try again.');
-                  }
+                      if (matchResult === 'win') {
+                        setShowWinPopup(true);
+                        if (soundEnabled) AudioManager.win();
+                      } else if (matchResult === 'loss') {
+                        setShowLossPopup(true);
+                        if (soundEnabled) AudioManager.lose();
+                      } else {
+                        if (soundEnabled) AudioManager.tie();
+                      }
+                    }, 2000);
+                  }, 4500);
                 }}
                 disabled={attackSelectedCards.length !== HAND_SIZE_CONST}
                 className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
