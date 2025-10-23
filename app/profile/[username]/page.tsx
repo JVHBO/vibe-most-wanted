@@ -195,14 +195,21 @@ export default function ProfilePage() {
     }
   };
 
-  // Helper function para encontrar atributo
+  // Helper function para encontrar atributo (mesma lógica da página principal)
   const findAttr = (nft: any, trait: string): string => {
-    const attrs = nft?.raw?.metadata?.attributes || nft?.metadata?.attributes || nft?.raw?.metadata?.traits || nft?.metadata?.traits || [];
-    const found = attrs.find((a: any) => {
-      const key = a.trait_type || a.traitType || a.name || '';
-      return key.toLowerCase() === trait.toLowerCase();
-    });
-    return found?.value || found?.trait_value || '';
+    const locs = [nft?.raw?.metadata?.attributes, nft?.metadata?.attributes, nft?.metadata?.traits, nft?.raw?.metadata?.traits];
+    for (const attrs of locs) {
+      if (!Array.isArray(attrs)) continue;
+      const found = attrs.find((a: any) => {
+        const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
+        const searchTrait = trait.toLowerCase().trim();
+        return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
+      });
+      if (found) {
+        return String(found?.value || found?.trait_value || found?.displayType || '').trim();
+      }
+    }
+    return '';
   };
 
   // Helper function para verificar se a carta está revelada (mesma lógica da página principal)
@@ -464,8 +471,8 @@ export default function ProfilePage() {
                 .slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE)
                 .map((nft) => {
                   const tokenId = nft.tokenId;
-                  const power = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Power')?.value || 0;
-                  const rarity = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Rarity')?.value || 'Common';
+                  const power = findAttr(nft, 'Power') || 0;
+                  const rarity = findAttr(nft, 'Rarity') || 'Common';
                   const imageUrl = nft.image?.cachedUrl || nft.image?.thumbnailUrl || nft.raw?.metadata?.image || '';
 
                   // OpenSea URL (Base chain)
