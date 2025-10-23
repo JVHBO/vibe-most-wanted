@@ -261,12 +261,13 @@ export class PvPService {
           await this.joinRoom(code, opponentAddress);
 
           // Atualiza matchmaking entries com roomCode (em vez de remover)
+          // IMPORTANTE: Atualiza opponent PRIMEIRO para garantir que ele receba antes do cleanup
           console.log('🔗 Updating matchmaking with room code...');
-          await set(ref(database, `matchmaking/${playerAddress}`), {
+          await set(ref(database, `matchmaking/${opponentAddress}`), {
             timestamp: Date.now(),
             roomCode: code
           });
-          await set(ref(database, `matchmaking/${opponentAddress}`), {
+          await set(ref(database, `matchmaking/${playerAddress}`), {
             timestamp: Date.now(),
             roomCode: code
           });
