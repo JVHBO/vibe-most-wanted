@@ -937,12 +937,18 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
   }, [nft, tid]);
 
   const currentSrc = fallbacks[imgError] || fallbacks[fallbacks.length - 1];
-  const foilEffect = getFoilEffect(nft.foil || '');
-  const isPrizeFoil = (nft.foil || '').toLowerCase().includes('prize');
+  const foilValue = (nft.foil || '').trim();
+  const foilEffect = getFoilEffect(foilValue);
+  const isPrizeFoil = foilValue.toLowerCase().includes('prize');
 
-  // Debug: log foil value
-  if (nft.foil) {
-    console.log(`Card #${nft.tokenId} - Foil: "${nft.foil}", Effect: ${foilEffect}, isPrize: ${isPrizeFoil}`);
+  // Debug Prize Foil
+  if (foilValue && foilValue.toLowerCase().includes('prize')) {
+    console.log(`🌟 Prize Foil Card #${nft.tokenId}:`, {
+      foilValue,
+      foilEffect,
+      isPrizeFoil,
+      hasEffect: !!foilEffect
+    });
   }
 
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -1003,47 +1009,34 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
 
         .prize-foil {
-          position: relative;
-          background: linear-gradient(
-            45deg,
-            #ff0080 0%,
-            #ff8c00 10%,
-            #ffd700 20%,
-            #00ff00 30%,
-            #00ffff 40%,
-            #0080ff 50%,
-            #8000ff 60%,
-            #ff00ff 70%,
-            #ff0080 80%,
-            #ff8c00 90%,
-            #ffd700 100%
-          );
-          background-size: 400% 400%;
-          animation: holographic 4s linear infinite;
+          background:
+            linear-gradient(
+              90deg,
+              transparent 0%,
+              rgba(255, 255, 255, 0.6) 45%,
+              rgba(255, 255, 255, 0.8) 50%,
+              rgba(255, 255, 255, 0.6) 55%,
+              transparent 100%
+            ),
+            linear-gradient(
+              45deg,
+              #ff0080 0%,
+              #ff8c00 10%,
+              #ffd700 20%,
+              #00ff00 30%,
+              #00ffff 40%,
+              #0080ff 50%,
+              #8000ff 60%,
+              #ff00ff 70%,
+              #ff0080 80%,
+              #ff8c00 90%,
+              #ffd700 100%
+            );
+          background-size: 200% 100%, 400% 400%;
+          animation: holographic 4s linear infinite, rainbowShine 3s linear infinite;
           mix-blend-mode: screen;
           pointer-events: none;
           opacity: 0.85;
-        }
-
-        .prize-foil::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(
-            90deg,
-            transparent 0%,
-            rgba(255, 255, 255, 0.8) 45%,
-            rgba(255, 255, 255, 0.9) 50%,
-            rgba(255, 255, 255, 0.8) 55%,
-            transparent 100%
-          );
-          background-size: 200% 100%;
-          animation: rainbowShine 3s linear infinite;
-          mix-blend-mode: overlay;
-          opacity: 0.6;
         }
         
         .standard-foil {
