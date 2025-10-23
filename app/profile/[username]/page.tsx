@@ -305,12 +305,43 @@ export default function ProfilePage() {
           const playerNFTs = await fetchNFTs(address);
           console.log('✅ NFTs loaded:', playerNFTs.length);
 
-          // Enrich NFTs with image URLs and attributes (like main page)
+          // Step 1: Refresh metadata from tokenUri (get fresh attributes, not cached!)
+          const METADATA_BATCH_SIZE = 50;
+          const metadataEnriched = [];
+
+          console.log('🔄 Refreshing metadata from tokenUri...');
+          for (let i = 0; i < playerNFTs.length; i += METADATA_BATCH_SIZE) {
+            const batch = playerNFTs.slice(i, i + METADATA_BATCH_SIZE);
+            const batchResults = await Promise.all(
+              batch.map(async (nft) => {
+                const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
+                if (!tokenUri) return nft;
+                try {
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 2000);
+                  const res = await fetch(tokenUri, { signal: controller.signal });
+                  clearTimeout(timeoutId);
+                  if (res.ok) {
+                    const json = await res.json();
+                    // Merge fresh metadata
+                    return { ...nft, raw: { ...nft.raw, metadata: json } };
+                  }
+                } catch {}
+                return nft;
+              })
+            );
+            metadataEnriched.push(...batchResults);
+          }
+
+          console.log('✅ Metadata refreshed:', metadataEnriched.length);
+
+          // Step 2: Enrich with image URLs and extract attributes
           const IMAGE_BATCH_SIZE = 50;
           const enriched = [];
 
-          for (let i = 0; i < playerNFTs.length; i += IMAGE_BATCH_SIZE) {
-            const batch = playerNFTs.slice(i, i + IMAGE_BATCH_SIZE);
+          console.log('🔄 Enriching with images...');
+          for (let i = 0; i < metadataEnriched.length; i += IMAGE_BATCH_SIZE) {
+            const batch = metadataEnriched.slice(i, i + IMAGE_BATCH_SIZE);
             const batchEnriched = await Promise.all(
               batch.map(async (nft) => {
                 const imageUrl = await getImage(nft);
@@ -328,7 +359,7 @@ export default function ProfilePage() {
             enriched.push(...batchEnriched);
           }
 
-          console.log('✅ NFTs enriched with images:', enriched.length);
+          console.log('✅ NFTs fully enriched:', enriched.length);
           setNfts(enriched);
         } catch (err: any) {
           console.error('❌ Error loading NFTs:', err.message || err);
