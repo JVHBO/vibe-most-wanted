@@ -745,6 +745,36 @@ export class ProfileService {
     return profile?.defenseDeck || null;
   }
 
+  // Update specific fields in profile
+  static async updateProfile(address: string, updates: Record<string, any>): Promise<void> {
+    const normalizedAddress = address.toLowerCase();
+    const profileRef = ref(database, `profiles/${normalizedAddress}`);
+
+    // Handle nested updates (e.g., 'stats.attackWins')
+    const updateData: Record<string, any> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      if (key.includes('.')) {
+        // Nested path like 'stats.attackWins'
+        const parts = key.split('.');
+        const current = await get(profileRef);
+        if (current.exists()) {
+          const data = current.val();
+          let obj = data;
+          for (let i = 0; i < parts.length - 1; i++) {
+            obj = obj[parts[i]] || {};
+          }
+          obj[parts[parts.length - 1]] = value;
+          updateData[parts[0]] = data[parts[0]];
+        }
+      } else {
+        updateData[key] = value;
+      }
+    }
+
+    updateData.lastUpdated = Date.now();
+    await update(profileRef, updateData);
+  }
+
   // Atualiza Username
   static async updateUsername(address: string, newUsername: string): Promise<void> {
     const normalizedAddress = address.toLowerCase();
@@ -831,13 +861,14 @@ export class ProfileService {
   // Registra resultado de partida
   static async recordMatch(
     playerAddress: string,
-    type: 'pve' | 'pvp',
+    type: 'pve' | 'pvp' | 'attack' | 'defense',
     result: 'win' | 'loss' | 'tie',
     playerPower: number,
     opponentPower: number,
     playerCards: any[],
     opponentCards: any[],
-    opponentAddress?: string
+    opponentAddress?: string,
+    opponentUsername?: string
   ): Promise<void> {
     const normalizedPlayerAddress = playerAddress.toLowerCase();
     const normalizedOpponentAddress = opponentAddress?.toLowerCase();
@@ -853,6 +884,7 @@ export class ProfileService {
       playerPower,
       opponentPower,
       opponentAddress: normalizedOpponentAddress,
+      opponentUsername,
       timestamp: Date.now(),
       playerCards,
       opponentCards

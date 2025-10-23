@@ -1245,6 +1245,12 @@ export default function TCGPage() {
   const [newUsername, setNewUsername] = useState<string>('');
   const [isChangingUsername, setIsChangingUsername] = useState<boolean>(false);
 
+  // Attack States
+  const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
+  const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
+  const [targetPlayer, setTargetPlayer] = useState<UserProfile | null>(null);
+  const [attacksRemaining, setAttacksRemaining] = useState<number>(3);
+
   const t = useCallback((key: string, params: Record<string, any> = {}) => {
     let text = (translations as any)[lang][key] || key;
     Object.entries(params).forEach(([k, v]) => {
@@ -1974,6 +1980,27 @@ export default function TCGPage() {
     return () => clearInterval(cleanupInterval);
   }, []);
 
+  // Calculate attacks remaining based on UTC date
+  useEffect(() => {
+    if (!userProfile) {
+      setAttacksRemaining(0);
+      return;
+    }
+
+    const now = new Date();
+    const todayUTC = now.toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+    const lastAttackDate = userProfile.lastAttackDate || '';
+    const attacksToday = userProfile.attacksToday || 0;
+
+    if (lastAttackDate === todayUTC) {
+      // Same day, use existing count
+      setAttacksRemaining(Math.max(0, 3 - attacksToday));
+    } else {
+      // New day, reset to 3
+      setAttacksRemaining(3);
+    }
+  }, [userProfile]);
+
   return (
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6">
       {showWinPopup && (
@@ -2519,6 +2546,196 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonNav();
                   setShowPveCardSelection(false);
                   setPveSelectedCards([]);
+                }}
+                className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attack Card Selection Modal */}
+      {showAttackCardSelection && targetPlayer && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-8 shadow-lg shadow-red-600/50 my-8">
+            <h2 className="text-3xl font-display font-bold text-center mb-2 text-red-500">
+              ⚔️ ATTACK {targetPlayer.username.toUpperCase()}
+            </h2>
+            <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
+              Choose {HAND_SIZE_CONST} cards to attack with ({attackSelectedCards.length}/{HAND_SIZE_CONST} selected)
+            </p>
+
+            {/* Selected Cards Display */}
+            <div className="mb-6 p-4 bg-vintage-black/50 rounded-xl border border-red-600/50">
+              <div className="grid grid-cols-5 gap-2">
+                {attackSelectedCards.map((card, i) => (
+                  <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-600 shadow-lg">
+                    <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-0 left-0 bg-red-600 text-white text-xs px-1 rounded-br font-bold">{card.power}</div>
+                  </div>
+                ))}
+                {Array(HAND_SIZE_CONST - attackSelectedCards.length).fill(0).map((_, i) => (
+                  <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-red-600/40 flex items-center justify-center text-red-600/50 bg-vintage-felt-green/30">
+                    <span className="text-2xl font-bold">+</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 text-center">
+                <p className="text-xs text-vintage-burnt-gold">Your Attack Power</p>
+                <p className="text-2xl font-bold text-red-500">
+                  {attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0)}
+                </p>
+              </div>
+            </div>
+
+            {/* Available Cards Grid */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto p-2">
+              {nfts.map((nft) => {
+                const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
+                return (
+                  <div
+                    key={nft.tokenId}
+                    onClick={() => {
+                      if (isSelected) {
+                        setAttackSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
+                        if (soundEnabled) AudioManager.deselectCard();
+                      } else if (attackSelectedCards.length < HAND_SIZE_CONST) {
+                        setAttackSelectedCards(prev => [...prev, nft]);
+                        if (soundEnabled) AudioManager.selectCard();
+                      }
+                    }}
+                    className={`relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer transition-all ${
+                      isSelected
+                        ? 'ring-4 ring-red-600 scale-95'
+                        : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50'
+                    }`}
+                  >
+                    <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
+                      {nft.power}
+                    </div>
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-red-600/20 flex items-center justify-center">
+                        <div className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                          ✓
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={async () => {
+                  if (attackSelectedCards.length !== HAND_SIZE_CONST || !address || !userProfile) return;
+
+                  try {
+                    // Get defender's deck and NFT data
+                    const defenderDeck = targetPlayer.defenseDeck || [];
+
+                    // Calculate powers
+                    const attackPower = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                    const defensePower = defenderDeck.reduce((sum, tokenId) => {
+                      // For simplicity, we'll need to fetch the actual power later
+                      // For now, assume average power or fetch from profile stats
+                      return sum + 20; // Placeholder
+                    }, 0);
+
+                    let matchResult: 'win' | 'loss' | 'tie';
+                    if (attackPower > defensePower) {
+                      matchResult = 'win';
+                    } else if (attackPower < defensePower) {
+                      matchResult = 'loss';
+                    } else {
+                      matchResult = 'tie';
+                    }
+
+                    // Update attacker's stats
+                    const todayUTC = new Date().toISOString().split('T')[0];
+                    await ProfileService.updateProfile(address, {
+                      attacksToday: (userProfile.attacksToday || 0) + 1,
+                      lastAttackDate: todayUTC,
+                      'stats.attackWins': (userProfile.stats.attackWins || 0) + (matchResult === 'win' ? 1 : 0),
+                      'stats.attackLosses': (userProfile.stats.attackLosses || 0) + (matchResult === 'loss' ? 1 : 0),
+                    });
+
+                    // Update defender's stats
+                    await ProfileService.updateProfile(targetPlayer.address, {
+                      'stats.defenseWins': (targetPlayer.stats.defenseWins || 0) + (matchResult === 'loss' ? 1 : 0),
+                      'stats.defenseLosses': (targetPlayer.stats.defenseLosses || 0) + (matchResult === 'win' ? 1 : 0),
+                    });
+
+                    // Record attack in match history for both players
+                    await ProfileService.recordMatch(
+                      address,
+                      'attack',
+                      matchResult,
+                      attackPower,
+                      defensePower,
+                      attackSelectedCards,
+                      [], // We'll use defender's deck token IDs
+                      targetPlayer.address,
+                      targetPlayer.username
+                    );
+
+                    await ProfileService.recordMatch(
+                      targetPlayer.address,
+                      'defense',
+                      matchResult === 'win' ? 'loss' : matchResult === 'loss' ? 'win' : 'tie',
+                      defensePower,
+                      attackPower,
+                      [], // Defender's cards
+                      attackSelectedCards,
+                      address,
+                      userProfile.username
+                    );
+
+                    // Reload profile and show result
+                    const updatedProfile = await ProfileService.getProfile(address);
+                    if (updatedProfile) {
+                      setUserProfile(updatedProfile);
+                    }
+
+                    setShowAttackCardSelection(false);
+                    setAttackSelectedCards([]);
+                    setTargetPlayer(null);
+
+                    if (matchResult === 'win') {
+                      alert(`Victory! You defeated ${targetPlayer.username}! (${attackPower} vs ${defensePower})`);
+                      if (soundEnabled) AudioManager.win();
+                    } else if (matchResult === 'loss') {
+                      alert(`Defeat! ${targetPlayer.username}'s defense was too strong! (${attackPower} vs ${defensePower})`);
+                      if (soundEnabled) AudioManager.lose();
+                    } else {
+                      alert(`Draw! You tied with ${targetPlayer.username}! (${attackPower} vs ${defensePower})`);
+                      if (soundEnabled) AudioManager.tie();
+                    }
+                  } catch (error) {
+                    console.error('Attack error:', error);
+                    alert('Error processing attack. Please try again.');
+                  }
+                }}
+                disabled={attackSelectedCards.length !== HAND_SIZE_CONST}
+                className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
+                  attackSelectedCards.length === HAND_SIZE_CONST
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/50 hover:scale-105'
+                    : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                }`}
+              >
+                ⚔️ Attack! ({attackSelectedCards.length}/{HAND_SIZE_CONST})
+              </button>
+
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonNav();
+                  setShowAttackCardSelection(false);
+                  setAttackSelectedCards([]);
+                  setTargetPlayer(null);
                 }}
                 className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
               >
@@ -3472,7 +3689,14 @@ export default function TCGPage() {
                   <h1 className="text-4xl font-bold text-yellow-400 flex items-center gap-3">
                     <span>🏆</span> {t('leaderboard')}
                   </h1>
-                  <p className="text-xs text-vintage-burnt-gold">⏱️ {t('updateEvery5Min')}</p>
+                  <div className="text-right">
+                    {userProfile && (
+                      <p className="text-sm font-modern font-semibold text-vintage-gold mb-1">
+                        ⚔️ Attacks Remaining: <span className="text-vintage-neon-blue">{attacksRemaining}/3</span>
+                      </p>
+                    )}
+                    <p className="text-xs text-vintage-burnt-gold">⏱️ {t('updateEvery5Min')}</p>
+                  </div>
                 </div>
 
                 {leaderboard.length === 0 ? (
@@ -3492,6 +3716,7 @@ export default function TCGPage() {
                           <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('power')}</th>
                           <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('wins')}</th>
                           <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('losses')}</th>
+                          <th className="text-center p-4 text-vintage-burnt-gold font-semibold">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -3523,6 +3748,48 @@ export default function TCGPage() {
                             <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
                             <td className="p-4 text-right text-vintage-neon-blue font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
                             <td className="p-4 text-right text-red-400 font-semibold">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
+                            <td className="p-4 text-center">
+                              {profile.address.toLowerCase() !== address?.toLowerCase() && (
+                                <button
+                                  onClick={() => {
+                                    // Check if target has defense deck
+                                    if (!profile.defenseDeck || profile.defenseDeck.length !== 5) {
+                                      alert('This player has not set up their defense deck yet.');
+                                      if (soundEnabled) AudioManager.buttonError();
+                                      return;
+                                    }
+                                    // Check if you have defense deck
+                                    if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== 5) {
+                                      alert('You must set your Defense Deck first!');
+                                      if (soundEnabled) AudioManager.buttonError();
+                                      return;
+                                    }
+                                    // Check attack limit
+                                    if (attacksRemaining <= 0) {
+                                      alert('You have used all 3 attacks for today. Attacks reset at midnight UTC.');
+                                      if (soundEnabled) AudioManager.buttonError();
+                                      return;
+                                    }
+                                    // Open attack card selection
+                                    if (soundEnabled) AudioManager.buttonClick();
+                                    setTargetPlayer(profile);
+                                    setShowAttackCardSelection(true);
+                                    setAttackSelectedCards([]);
+                                  }}
+                                  disabled={!userProfile || attacksRemaining <= 0 || !profile.defenseDeck}
+                                  className={`px-3 py-1.5 rounded-lg font-modern font-semibold text-sm transition-all ${
+                                    userProfile && attacksRemaining > 0 && profile.defenseDeck
+                                      ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
+                                      : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
+                                  }`}
+                                >
+                                  ⚔️ Attack
+                                </button>
+                              )}
+                              {profile.address.toLowerCase() === address?.toLowerCase() && (
+                                <span className="text-xs text-vintage-burnt-gold">(You)</span>
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
