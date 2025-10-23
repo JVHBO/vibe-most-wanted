@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cinzel_Decorative, Playfair_Display_SC, Rajdhani } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -10,6 +10,24 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const cinzel = Cinzel_Decorative({
+  variable: "--font-vintage",
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+});
+
+const playfair = Playfair_Display_SC({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+});
+
+const rajdhani = Rajdhani({
+  variable: "--font-modern",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -75,7 +93,7 @@ export default function RootLayout({
         <meta name="twitter:image" content="https://www.vibemostwanted.xyz/og-placeholder.svg" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased`}
       >
         {children}
       </body>
