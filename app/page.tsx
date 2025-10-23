@@ -2568,9 +2568,9 @@ export default function TCGPage() {
               {t('shareCode')}
             </p>
 
-            <div className="bg-gray-800 rounded-xl p-6 mb-6 border-2 border-vintage-neon-blue">
-              <p className="text-vintage-burnt-gold text-sm mb-2 text-center">{t('roomCode')}</p>
-              <p className="text-4xl font-bold text-center text-blue-400 tracking-wider">
+            <div className="bg-vintage-charcoal rounded-xl p-6 mb-6 border-2 border-vintage-gold shadow-gold">
+              <p className="text-vintage-burnt-gold text-sm mb-2 text-center font-modern">{t('roomCode')}</p>
+              <p className="text-4xl font-bold text-center text-vintage-neon-blue tracking-wider font-display">
                 {roomCode}
               </p>
             </div>
@@ -2627,7 +2627,7 @@ export default function TCGPage() {
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               placeholder="ABC123"
               maxLength={6}
-              className="w-full px-4 py-3 bg-gray-800 border-2 border-vintage-gold rounded-xl text-center text-2xl font-bold text-white tracking-wider mb-6 focus:outline-none focus:border-purple-400"
+              className="w-full px-4 py-3 bg-vintage-charcoal border-2 border-vintage-gold rounded-xl text-center text-2xl font-bold text-vintage-neon-blue tracking-wider mb-6 focus:outline-none focus:ring-2 focus:ring-vintage-gold font-display shadow-gold"
             />
 
             <button
@@ -2689,8 +2689,8 @@ export default function TCGPage() {
             {currentRoom ? (
               <div className="space-y-4">
                 {/* Host */}
-                <div className="bg-gray-800 rounded-xl p-4 border-2 border-vintage-neon-blue">
-                  <p className="text-blue-400 font-bold mb-2">Host</p>
+                <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-neon-blue/50">
+                  <p className="text-vintage-neon-blue font-bold mb-2 font-modern">Host</p>
                   <p className="text-white text-sm font-mono">{currentRoom.host.address.slice(0, 10)}...</p>
                   <p className="text-vintage-burnt-gold text-sm">
                     {currentRoom.host.ready ? '✓ Ready' : '⏳ Selecting cards...'}
@@ -2698,8 +2698,8 @@ export default function TCGPage() {
                 </div>
 
                 {/* Guest */}
-                <div className="bg-gray-800 rounded-xl p-4 border-2 border-vintage-gold">
-                  <p className="text-vintage-gold font-bold mb-2">{t('opponent')}</p>
+                <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-gold/50">
+                  <p className="text-vintage-gold font-bold mb-2 font-modern">{t('opponent')}</p>
                   {currentRoom.guest ? (
                     <>
                       <p className="text-white text-sm font-mono">{currentRoom.guest.address.slice(0, 10)}...</p>
@@ -2971,7 +2971,7 @@ export default function TCGPage() {
       ) : (
         <>
           <div className="mb-6">
-            <div className="bg-gray-800/50 backdrop-blur-lg p-4 rounded-xl border border-gray-700">
+            <div className="bg-vintage-charcoal/80 backdrop-blur-lg p-4 rounded-xl border-2 border-vintage-gold/30 shadow-gold">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <p className="text-sm text-gray-300"><span className="text-vintage-neon-blue">●</span> {address.slice(0, 6)}...{address.slice(-4)}</p>
@@ -3071,7 +3071,7 @@ export default function TCGPage() {
           )}
 
           {status === 'fetching' && (
-            <div className="flex items-center justify-center gap-3 text-vintage-neon-blue mb-6 bg-gray-800/30 p-6 rounded-xl">
+            <div className="flex items-center justify-center gap-3 text-vintage-neon-blue mb-6 bg-vintage-charcoal/50 p-6 rounded-xl border border-vintage-gold/30">
               <div className="animate-spin h-8 w-8 border-4 border-cyan-400 border-t-transparent rounded-full" />
               <p className="font-medium text-lg">{t('loading')}</p>
             </div>
@@ -3126,7 +3126,7 @@ export default function TCGPage() {
                     <button
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg transition"
+                      className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg transition font-modern"
                     >
                       ←
                     </button>
@@ -3136,7 +3136,7 @@ export default function TCGPage() {
                     <button
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg transition"
+                      className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg transition font-modern"
                     >
                       →
                     </button>
@@ -3227,14 +3227,16 @@ export default function TCGPage() {
                     </div>
                   )}
                   
-                  <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur p-4 rounded-xl border border-vintage-neon-blue/30">
-                    <p className="text-xs font-semibold text-vintage-burnt-gold mb-2">💪 {t('totalPower')}</p>
-                    <p className="text-3xl font-bold text-vintage-neon-blue">{totalPower}</p>
+                  <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold shadow-gold">
+                    <p className="text-xs font-semibold text-vintage-burnt-gold mb-2 font-modern flex items-center gap-2">
+                      <span className="text-lg">💪</span> {t('totalPower')}
+                    </p>
+                    <p className="text-5xl font-bold text-vintage-neon-blue font-display">{totalPower}</p>
                   </div>
                   
                   {playerPower > 0 && (
-                    <div className="bg-gray-900/50 backdrop-blur p-4 rounded-xl border border-gray-700 space-y-3">
-                      <p className="text-xs font-semibold text-vintage-burnt-gold">📊 {t('lastResult')}</p>
+                    <div className="bg-vintage-charcoal/80 backdrop-blur p-4 rounded-xl border-2 border-vintage-gold/30 space-y-3">
+                      <p className="text-xs font-semibold text-vintage-burnt-gold font-modern">📊 {t('lastResult')}</p>
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-xs text-vintage-burnt-gold">{t('you')}</p>
@@ -3247,7 +3249,7 @@ export default function TCGPage() {
                         </div>
                       </div>
                       {result && (
-                        <div className="text-center pt-3 border-t border-gray-700">
+                        <div className="text-center pt-3 border-t border-vintage-gold/30">
                           <p className="text-xl font-bold text-yellow-300 animate-pulse">{result}</p>
                         </div>
                       )}
@@ -3262,7 +3264,7 @@ export default function TCGPage() {
           {/* Leaderboard View */}
           {currentView === 'leaderboard' && (
             <div className="max-w-6xl mx-auto">
-              <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 p-8">
+              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-8">
                 <div className="flex justify-between items-center mb-6">
                   <h1 className="text-4xl font-bold text-yellow-400 flex items-center gap-3">
                     <span>🏆</span> {t('leaderboard')}
@@ -3279,7 +3281,7 @@ export default function TCGPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-700">
+                        <tr className="border-b border-vintage-gold/20">
                           <th className="text-left p-4 text-vintage-burnt-gold font-semibold">{t('rank')}</th>
                           <th className="text-left p-4 text-vintage-burnt-gold font-semibold">{t('player')}</th>
                           <th className="text-right p-4 text-vintage-burnt-gold font-semibold">🃏 Opened</th>
@@ -3291,7 +3293,7 @@ export default function TCGPage() {
                       </thead>
                       <tbody>
                         {leaderboard.map((profile, index) => (
-                          <tr key={profile.address} className={`border-b border-gray-800 hover:bg-gray-700/30 transition ${profile.address === address ? 'bg-purple-900/20' : ''}`}>
+                          <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
                             <td className="p-4">
                               <span className={`text-2xl font-bold ${
                                 index === 0 ? 'text-yellow-400' :
@@ -3314,7 +3316,7 @@ export default function TCGPage() {
                               </Link>
                             </td>
                             <td className="p-4 text-right text-green-400 font-bold">{profile.stats.openedCards || 0}</td>
-                            <td className="p-4 text-right text-vintage-gold font-bold">{(profile.stats.openedCards || 0) + (profile.stats.unopenedCards || 0)}</td>
+                            <td className="p-4 text-right text-vintage-gold font-bold">{profile.stats.totalCards || 0}</td>
                             <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
                             <td className="p-4 text-right text-vintage-neon-blue font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
                             <td className="p-4 text-right text-red-400 font-semibold">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
@@ -3350,7 +3352,7 @@ export default function TCGPage() {
                       onChange={(e) => setProfileUsername(e.target.value)}
                       placeholder={t('usernamePlaceholder')}
                       maxLength={20}
-                      className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-vintage-gold"
+                      className="w-full px-4 py-3 bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
                     />
                     <p className="text-xs text-yellow-400 mt-2">⚠️ Don't include @ symbol - just enter your username</p>
                     <p className="text-xs text-gray-500 mt-1">💡 Você pode adicionar seu Twitter depois na aba de perfil</p>
