@@ -2462,7 +2462,7 @@ export default function TCGPage() {
       )}
 
       {/* Modal de Busca Automática */}
-      {pvpMode === 'autoMatch' && isSearching && (
+      {pvpMode === 'autoMatch' && isSearching && !roomCode && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-green-500 max-w-md w-full p-8">
             <div className="text-center">
