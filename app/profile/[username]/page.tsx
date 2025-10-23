@@ -6,8 +6,8 @@ import { ProfileService, UserProfile, MatchHistory } from '@/lib/firebase';
 import sdk from '@farcaster/miniapp-sdk';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
-const CHAIN = process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
 async function fetchNFTs(owner: string): Promise<any[]> {
   if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
