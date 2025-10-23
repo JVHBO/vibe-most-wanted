@@ -295,15 +295,24 @@ export class PvPService {
   // Observa mudanças no matchmaking para detectar quando a sala é criada
   static watchMatchmaking(playerAddress: string, callback: (roomCode: string | null) => void): () => void {
     const playerRef = ref(database, `matchmaking/${playerAddress}`);
+    let hasSeenEntry = false; // Flag para rastrear se já vimos a entrada pelo menos uma vez
 
     // Escuta mudanças na entrada de matchmaking
     const matchmakingListener = onValue(playerRef, (snapshot) => {
       if (!snapshot.exists()) {
-        // Jogador foi removido do matchmaking (cancelado)
-        console.log('⚠️ Player removed from matchmaking - cancelled');
-        callback(null);
+        // Se nunca vimos a entrada, ignora (ainda não foi criada)
+        // Se já vimos, significa que foi removida (cancelamento)
+        if (hasSeenEntry) {
+          console.log('⚠️ Player removed from matchmaking - cancelled');
+          callback(null);
+        } else {
+          console.log('⏳ Waiting for matchmaking entry to be created...');
+        }
         return;
       }
+
+      // Marca que já vimos a entrada
+      hasSeenEntry = true;
 
       const data = snapshot.val();
 
