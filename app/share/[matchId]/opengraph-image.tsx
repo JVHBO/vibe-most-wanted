@@ -37,7 +37,7 @@ export default async function Image({ params }: { params: { matchId: string } })
       subtitle = `vs ${opponentName}`;
     } else {
       title = isWin ? '🎮 VICTORY!' : isTie ? '🎮 TIE!' : '🎮 DEFEAT!';
-      subtitle = 'vs AI';
+      subtitle = 'vs JC';
     }
 
     return new ImageResponse(

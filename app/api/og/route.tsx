@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       subtitle = `vs ${opponentName}`;
     } else {
       title = isWin ? '🎮 VICTORY!' : isTie ? '🎮 TIE!' : '🎮 DEFEAT!';
-      subtitle = 'vs AI';
+      subtitle = 'vs JC';
     }
 
     return new ImageResponse(
