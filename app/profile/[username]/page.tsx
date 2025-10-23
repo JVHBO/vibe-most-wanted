@@ -327,7 +327,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 p-6 rounded-xl border border-purple-500/30">
             <p className="text-xs text-gray-400 mb-1">🃏 Total Cards</p>
-            <p className="text-3xl font-bold text-purple-400">{profile.stats.totalCards}</p>
+            <p className="text-3xl font-bold text-purple-400">{nfts.length || profile.stats.totalCards}</p>
           </div>
           <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/30 p-6 rounded-xl border border-yellow-500/30">
             <p className="text-xs text-gray-400 mb-1">⚡ Total Power</p>
