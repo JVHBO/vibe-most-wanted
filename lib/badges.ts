@@ -3,8 +3,8 @@ export const BADGES_CONFIG = {
   // Developer wallet address
   DEV_WALLET: '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52',
 
-  // Número máximo de early testers
-  MAX_EARLY_TESTERS: 50,
+  // Número máximo de early testers (temporariamente alto para incluir todos os perfis existentes)
+  MAX_EARLY_TESTERS: 9999,
 };
 
 export type BadgeType = 'dev' | 'early_tester';
@@ -25,18 +25,18 @@ export const BADGES: Record<BadgeType, Badge> = {
     label: 'DEV',
     description: 'Developer & Creator of Vibe Most Wanted',
     icon: '⚡',
-    color: 'bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold',
-    borderColor: 'border-vintage-gold',
-    textColor: 'text-vintage-black',
+    color: 'bg-vintage-gold/20',
+    borderColor: 'border-vintage-gold/40',
+    textColor: 'text-vintage-gold',
   },
   early_tester: {
     type: 'early_tester',
     label: 'EARLY',
-    description: 'Early Tester - One of the first 50 players',
+    description: 'Early Tester - One of the first players',
     icon: '♦',
-    color: 'bg-gradient-to-r from-vintage-neon-blue to-cyan-500',
-    borderColor: 'border-vintage-neon-blue',
-    textColor: 'text-vintage-black',
+    color: 'bg-vintage-neon-blue/20',
+    borderColor: 'border-vintage-neon-blue/40',
+    textColor: 'text-vintage-neon-blue',
   },
 };
 

@@ -12,9 +12,9 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5',
-    md: 'text-sm px-3 py-1',
-    lg: 'text-base px-4 py-1.5',
+    sm: 'text-[10px] px-1.5 py-0.5',
+    md: 'text-xs px-2 py-0.5',
+    lg: 'text-sm px-3 py-1',
   };
 
   return (
@@ -29,18 +29,17 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
           ${badge.color}
           ${badge.textColor}
           ${sizeClasses[size]}
-          font-modern font-bold
-          rounded-lg
-          border-2 ${badge.borderColor}
-          shadow-lg
+          font-modern font-semibold
+          rounded
+          border ${badge.borderColor}
           flex items-center gap-1
           cursor-pointer
           transition-all duration-200
           hover:scale-105
-          hover:shadow-xl
+          opacity-80 hover:opacity-100
         `}
       >
-        <span className="text-lg leading-none">{badge.icon}</span>
+        <span className="text-xs leading-none">{badge.icon}</span>
         <span className="leading-none">{badge.label}</span>
       </div>
 
