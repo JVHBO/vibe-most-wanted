@@ -1604,7 +1604,7 @@ export default function TCGPage() {
                 // Fecha a sala PVP e volta ao menu após ver o resultado
                 setTimeout(async () => {
                   // Deleta a sala do Firebase se for o host
-                  if (currentRoom && roomCode && address === currentRoom.host.address) {
+                  if (currentRoom && roomCode && address && address === currentRoom.host.address) {
                     try {
                       await PvPService.leaveRoom(roomCode, address);
                       console.log('✅ Room deleted after battle ended');
