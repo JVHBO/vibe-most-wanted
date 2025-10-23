@@ -39,12 +39,12 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
           opacity-80 hover:opacity-100
         `}
       >
-        <span className="text-xs leading-none">{badge.icon}</span>
+        {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
         <span className="leading-none">{badge.label}</span>
       </div>
 
       {/* Tooltip */}
-      {showTooltip && (
+      {showTooltip && badge.description && (
         <div
           className="
             absolute z-50
