@@ -30,7 +30,7 @@ export interface Badge {
 export const BADGES: Record<BadgeType, Badge> = {
   dev: {
     type: 'dev',
-    label: 'DEV',
+    label: 'dev',
     description: '',
     icon: '',
     color: 'bg-gradient-to-r from-vintage-gold/30 to-vintage-burnt-gold/30',
@@ -39,7 +39,7 @@ export const BADGES: Record<BadgeType, Badge> = {
   },
   early_tester: {
     type: 'early_tester',
-    label: 'EARLY',
+    label: 'early',
     description: '',
     icon: '',
     color: 'bg-gradient-to-r from-vintage-neon-blue/30 to-blue-400/30',
