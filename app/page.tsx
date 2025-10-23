@@ -1088,6 +1088,9 @@ export default function TCGPage() {
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
+  const [newUsername, setNewUsername] = useState<string>('');
+  const [isChangingUsername, setIsChangingUsername] = useState<boolean>(false);
 
   const t = useCallback((key: string, params: Record<string, any> = {}) => {
     let text = (translations as any)[lang][key] || key;
@@ -1914,6 +1917,118 @@ export default function TCGPage() {
                   <option value="hi">🇮🇳 हिन्दी</option>
                 </select>
               </div>
+
+              {/* Change Username */}
+              {userProfile && (
+                <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-3xl">👤</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-white">Username</p>
+                      <p className="text-xs text-gray-400">@{userProfile.username}</p>
+                    </div>
+                    {!showChangeUsername && (
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setShowChangeUsername(true);
+                          setNewUsername('');
+                        }}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition text-sm"
+                      >
+                        Change
+                      </button>
+                    )}
+                  </div>
+
+                  {showChangeUsername && (
+                    <div className="mt-4 space-y-3">
+                      <div className="bg-yellow-900/20 border border-yellow-600/50 rounded-lg p-3">
+                        <p className="text-yellow-400 text-sm font-semibold mb-1">⚠️ Important</p>
+                        <p className="text-yellow-200 text-xs">
+                          Changing your username will change your profile URL from<br />
+                          <span className="font-mono bg-black/30 px-1 rounded">/profile/{userProfile.username}</span> to<br />
+                          <span className="font-mono bg-black/30 px-1 rounded">/profile/{newUsername || 'new_username'}</span>
+                        </p>
+                      </div>
+
+                      <input
+                        type="text"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value.toLowerCase())}
+                        placeholder="New username"
+                        className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none font-medium"
+                        maxLength={20}
+                      />
+                      <p className="text-xs text-gray-400">
+                        3-20 characters, only letters, numbers and underscore
+                      </p>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (soundEnabled) AudioManager.buttonClick();
+
+                            if (!newUsername || newUsername.length < 3) {
+                              alert('Username must have at least 3 characters');
+                              return;
+                            }
+
+                            if (!/^[a-z0-9_]+$/.test(newUsername)) {
+                              alert('Username can only contain letters, numbers and underscore');
+                              return;
+                            }
+
+                            const confirmed = confirm(
+                              `Are you sure you want to change your username to @${newUsername}?\n\n` +
+                              `Your profile URL will change from:\n/profile/${userProfile.username}\nto:\n/profile/${newUsername}\n\n` +
+                              `This action cannot be undone easily.`
+                            );
+
+                            if (!confirmed) return;
+
+                            setIsChangingUsername(true);
+                            try {
+                              await ProfileService.updateUsername(address!, newUsername);
+
+                              // Recarrega o perfil
+                              const updatedProfile = await ProfileService.getProfile(address!);
+                              setUserProfile(updatedProfile);
+
+                              setShowChangeUsername(false);
+                              setNewUsername('');
+
+                              if (soundEnabled) AudioManager.buttonSuccess();
+                              alert(`✅ Username successfully changed to @${newUsername}!`);
+                            } catch (err: any) {
+                              console.error('Error changing username:', err);
+                              if (soundEnabled) AudioManager.buttonError();
+                              alert(`❌ Error: ${err.message || 'Failed to change username'}`);
+                            } finally {
+                              setIsChangingUsername(false);
+                            }
+                          }}
+                          disabled={isChangingUsername}
+                          className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg font-semibold transition"
+                        >
+                          {isChangingUsername ? 'Changing...' : 'Confirm'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (soundEnabled) AudioManager.buttonNav();
+                            setShowChangeUsername(false);
+                            setNewUsername('');
+                          }}
+                          disabled={isChangingUsername}
+                          className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 text-white rounded-lg font-semibold transition"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Twitter/X Connection */}
               {userProfile && (

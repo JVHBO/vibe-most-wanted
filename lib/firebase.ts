@@ -662,6 +662,89 @@ export class ProfileService {
     });
   }
 
+  // Atualiza Username
+  static async updateUsername(address: string, newUsername: string): Promise<void> {
+    const normalizedAddress = address.toLowerCase();
+    const normalizedNewUsername = newUsername.toLowerCase().trim();
+
+    if (!normalizedNewUsername || normalizedNewUsername.length === 0) {
+      throw new Error('Username não pode ser vazio');
+    }
+
+    if (normalizedNewUsername.length < 3) {
+      throw new Error('Username deve ter no mínimo 3 caracteres');
+    }
+
+    if (normalizedNewUsername.length > 20) {
+      throw new Error('Username deve ter no máximo 20 caracteres');
+    }
+
+    // Valida formato (apenas letras, números e underscore)
+    if (!/^[a-z0-9_]+$/.test(normalizedNewUsername)) {
+      throw new Error('Username pode conter apenas letras, números e underscore');
+    }
+
+    try {
+      // Busca o perfil atual
+      const currentProfile = await withTimeout(
+        this.getProfile(normalizedAddress),
+        8000,
+        'Get current profile'
+      );
+
+      if (!currentProfile) {
+        throw new Error('Perfil não encontrado');
+      }
+
+      const oldUsername = currentProfile.username.toLowerCase();
+
+      // Se for o mesmo username, não faz nada
+      if (oldUsername === normalizedNewUsername) {
+        return;
+      }
+
+      // Verifica se o novo username já está em uso
+      const usernameExists = await withTimeout(
+        this.usernameExists(normalizedNewUsername),
+        8000,
+        'Check new username existence'
+      );
+
+      if (usernameExists) {
+        throw new Error('Este username já está em uso');
+      }
+
+      // Remove o username antigo
+      await withTimeout(
+        remove(ref(database, `usernames/${oldUsername}`)),
+        8000,
+        'Remove old username'
+      );
+
+      // Reserva o novo username
+      await withTimeout(
+        set(ref(database, `usernames/${normalizedNewUsername}`), normalizedAddress),
+        8000,
+        'Reserve new username'
+      );
+
+      // Atualiza o username no perfil
+      await withTimeout(
+        update(ref(database, `profiles/${normalizedAddress}`), {
+          username: newUsername.trim(),
+          lastUpdated: Date.now()
+        }),
+        8000,
+        'Update profile username'
+      );
+
+      console.log('✅ Username updated successfully:', oldUsername, '->', normalizedNewUsername);
+    } catch (error: any) {
+      console.error('❌ updateUsername error:', error);
+      throw new Error(`Erro ao atualizar username: ${error.message}`);
+    }
+  }
+
   // Registra resultado de partida
   static async recordMatch(
     playerAddress: string,
