@@ -25,25 +25,53 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
       onMouseLeave={() => setShowTooltip(false)}
     >
       {/* Badge */}
-      <div
-        className={`
-          ${badge.color}
-          ${badge.textColor}
-          ${sizeClasses[size]}
-          font-modern font-bold tracking-wider
-          rounded-md
-          border-2 ${badge.borderColor}
-          flex items-center gap-1
-          cursor-pointer
-          transition-all duration-200
-          hover:scale-105 hover:shadow-lg
-          shadow-md
-          backdrop-blur-sm
-        `}
-      >
-        {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
-        <span className="leading-none">{badge.label}</span>
-      </div>
+      {badge.type === 'gey' ? (
+        // Rainbow gradient border for gey badge
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-md opacity-75"></div>
+          <div
+            className={`
+              relative
+              ${badge.color}
+              ${badge.textColor}
+              ${sizeClasses[size]}
+              font-modern font-bold tracking-wider
+              rounded-md
+              flex items-center gap-1
+              cursor-pointer
+              transition-all duration-200
+              hover:scale-105 hover:shadow-lg
+              shadow-md
+              backdrop-blur-sm
+              m-[2px]
+            `}
+          >
+            {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
+            <span className="leading-none">{badge.label}</span>
+          </div>
+        </div>
+      ) : (
+        // Normal badges
+        <div
+          className={`
+            ${badge.color}
+            ${badge.textColor}
+            ${sizeClasses[size]}
+            font-modern font-bold tracking-wider
+            rounded-md
+            border-2 ${badge.borderColor}
+            flex items-center gap-1
+            cursor-pointer
+            transition-all duration-200
+            hover:scale-105 hover:shadow-lg
+            shadow-md
+            backdrop-blur-sm
+          `}
+        >
+          {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
+          <span className="leading-none">{badge.label}</span>
+        </div>
+      )}
 
       {/* Tooltip */}
       {showTooltip && badge.description && (
