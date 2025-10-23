@@ -2091,12 +2091,12 @@ export default function TCGPage() {
                 <select
                   onChange={(e) => setLang(e.target.value)}
                   value={lang}
-                  className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold"
+                  className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
                 >
-                  <option value="en">English</option>
-                  <option value="pt-BR">Português</option>
-                  <option value="es">Español</option>
-                  <option value="hi">हिन्दी</option>
+                  <option value="en" className="bg-vintage-charcoal text-vintage-ice">English</option>
+                  <option value="pt-BR" className="bg-vintage-charcoal text-vintage-ice">Português</option>
+                  <option value="es" className="bg-vintage-charcoal text-vintage-ice">Español</option>
+                  <option value="hi" className="bg-vintage-charcoal text-vintage-ice">हिन्दी</option>
                 </select>
               </div>
 
