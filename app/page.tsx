@@ -2059,9 +2059,20 @@ export default function TCGPage() {
               <a
                 href={(() => {
                   if (!lastBattleResult) return '#';
-                  const shareId = `${lastBattleResult.result}_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName)}_${lastBattleResult.type}`;
-                  const shareUrl = `${window.location.origin}/share/${shareId}`;
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(t('castVictory', { power: lastBattleResult.playerPower }))}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                  let castText = t('castVictory', { power: lastBattleResult.playerPower });
+
+                  // Add battle details to cast
+                  if (lastBattleResult.type === 'attack') {
+                    castText += `\n\n⚔️ Attacked ${lastBattleResult.opponentName}!`;
+                  } else if (lastBattleResult.type === 'defense') {
+                    castText += `\n\n🛡️ Defended against ${lastBattleResult.opponentName}!`;
+                  } else if (lastBattleResult.type === 'pvp') {
+                    castText += `\n\n👑 Defeated ${lastBattleResult.opponentName}!`;
+                  }
+
+                  castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
+
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -2118,9 +2129,20 @@ export default function TCGPage() {
               <a
                 href={(() => {
                   if (!lastBattleResult) return '#';
-                  const shareId = `${lastBattleResult.result}_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName)}_${lastBattleResult.type}`;
-                  const shareUrl = `${window.location.origin}/share/${shareId}`;
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(t('castDefeat', { power: lastBattleResult.playerPower }))}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                  let castText = t('castDefeat', { power: lastBattleResult.playerPower });
+
+                  // Add battle details to cast
+                  if (lastBattleResult.type === 'attack') {
+                    castText += `\n\n⚔️ Lost attacking ${lastBattleResult.opponentName}`;
+                  } else if (lastBattleResult.type === 'defense') {
+                    castText += `\n\n🛡️ Defense failed against ${lastBattleResult.opponentName}`;
+                  } else if (lastBattleResult.type === 'pvp') {
+                    castText += `\n\n👑 Lost to ${lastBattleResult.opponentName}`;
+                  }
+
+                  castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
+
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
