@@ -29,14 +29,15 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
           ${badge.color}
           ${badge.textColor}
           ${sizeClasses[size]}
-          font-modern font-semibold
-          rounded
-          border ${badge.borderColor}
+          font-modern font-bold tracking-wider
+          rounded-md
+          border-2 ${badge.borderColor}
           flex items-center gap-1
           cursor-pointer
           transition-all duration-200
-          hover:scale-105
-          opacity-80 hover:opacity-100
+          hover:scale-105 hover:shadow-lg
+          shadow-md
+          backdrop-blur-sm
         `}
       >
         {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
