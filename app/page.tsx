@@ -1052,25 +1052,31 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
 
         .prize-foil {
-          position: relative;
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
           pointer-events: none;
         }
 
         .prize-foil::before {
           content: '';
           position: absolute;
-          inset: -50%;
+          top: -100%;
+          left: -100%;
+          width: 300%;
+          height: 300%;
           background: conic-gradient(
             from 0deg,
-            transparent,
-            #ff00ff,
-            #00ffff,
-            #ffff00,
-            #ff00ff,
-            transparent
+            transparent 0%,
+            transparent 25%,
+            #ff00ff 35%,
+            #00ffff 45%,
+            #ffff00 55%,
+            #ff00ff 65%,
+            transparent 75%,
+            transparent 100%
           );
           animation: girar 3s linear infinite;
-          opacity: 0.7;
           mix-blend-mode: screen;
         }
         
