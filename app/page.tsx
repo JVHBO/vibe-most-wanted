@@ -3297,7 +3297,7 @@ export default function TCGPage() {
                           <th className="text-left p-4 text-vintage-burnt-gold font-semibold">{t('rank')}</th>
                           <th className="text-left p-4 text-vintage-burnt-gold font-semibold">{t('player')}</th>
                           <th className="text-right p-4 text-vintage-burnt-gold font-semibold">Opened</th>
-                          <th className="text-right p-4 text-vintage-burnt-gold font-semibold">Cards</th>
+                          <th className="text-right p-4 text-vintage-burnt-gold font-semibold">Total Packs</th>
                           <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('power')}</th>
                           <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('wins')}</th>
                           <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('losses')}</th>
