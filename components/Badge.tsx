@@ -12,7 +12,7 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
   const sizeClasses = {
-    xs: 'text-[7px] px-0.5 py-0.5',
+    xs: 'text-[6px] px-0.5 py-[1px]',
     sm: 'text-[10px] px-1.5 py-0.5',
     md: 'text-xs px-2 py-0.5',
     lg: 'text-sm px-3 py-1',
