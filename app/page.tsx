@@ -28,12 +28,35 @@ const setCache = (key: string, value: string): void => {
   imageUrlCache.set(key, { url: value, time: Date.now() });
 };
 
+// Tornar AudioManager global para persistir entre páginas
+const getGlobalAudioManager = () => {
+  if (typeof window === 'undefined') return null;
+  if (!(window as any).globalAudioManager) {
+    (window as any).globalAudioManager = {
+      context: null as AudioContext | null,
+      musicGain: null as GainNode | null,
+      backgroundMusic: null as HTMLAudioElement | null,
+      backgroundSource: null as AudioBufferSourceNode | null,
+      currentVolume: 0.1,
+      isPlaying: false
+    };
+  }
+  return (window as any).globalAudioManager;
+};
+
 const AudioManager = {
-  context: null as AudioContext | null,
-  musicGain: null as GainNode | null,
-  backgroundMusic: null as HTMLAudioElement | null,
-  backgroundSource: null as AudioBufferSourceNode | null,
-  currentVolume: 0.1, // Volume padrão para música ambiente (10%)
+  get context() { return getGlobalAudioManager()?.context || null; },
+  set context(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.context = value; },
+  get musicGain() { return getGlobalAudioManager()?.musicGain || null; },
+  set musicGain(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.musicGain = value; },
+  get backgroundMusic() { return getGlobalAudioManager()?.backgroundMusic || null; },
+  set backgroundMusic(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.backgroundMusic = value; },
+  get backgroundSource() { return getGlobalAudioManager()?.backgroundSource || null; },
+  set backgroundSource(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.backgroundSource = value; },
+  get currentVolume() { return getGlobalAudioManager()?.currentVolume || 0.1; },
+  set currentVolume(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.currentVolume = value; },
+  get isPlaying() { return getGlobalAudioManager()?.isPlaying || false; },
+  set isPlaying(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.isPlaying = value; },
   async init() {
     if (typeof window === 'undefined') return;
     if (!this.context) {
@@ -74,6 +97,15 @@ const AudioManager = {
   async startBackgroundMusic() {
     await this.init();
     if (!this.context) return;
+
+    // Se já estiver tocando, apenas retoma o contexto se necessário
+    if (this.isPlaying && this.backgroundSource) {
+      if (this.context.state === 'suspended') {
+        await this.context.resume();
+      }
+      return;
+    }
+
     if (this.context.state === 'suspended') {
       await this.context.resume();
     }
@@ -101,6 +133,7 @@ const AudioManager = {
       this.musicGain.connect(this.context.destination);
 
       this.backgroundSource.start(0);
+      this.isPlaying = true;
     } catch (e) {
       console.log('Erro ao tocar música de fundo:', e);
     }
@@ -114,6 +147,7 @@ const AudioManager = {
       }
       this.backgroundSource.disconnect();
       this.backgroundSource = null;
+      this.isPlaying = false;
     }
     if (this.backgroundMusic) {
       this.backgroundMusic.pause();
@@ -1154,21 +1188,40 @@ export default function TCGPage() {
     return text;
   }, [lang]);
 
+  // Carregar estado da música do localStorage na montagem
   useEffect(() => {
-    if (musicEnabled) {
-      AudioManager.startBackgroundMusic();
-    } else {
-      AudioManager.stopBackgroundMusic();
-    }
+    if (typeof window !== 'undefined') {
+      const savedMusicEnabled = localStorage.getItem('musicEnabled');
+      const savedMusicVolume = localStorage.getItem('musicVolume');
 
-    return () => {
-      AudioManager.stopBackgroundMusic();
-    };
+      if (savedMusicEnabled !== null) {
+        setMusicEnabled(savedMusicEnabled === 'true');
+      }
+      if (savedMusicVolume !== null) {
+        setMusicVolume(parseFloat(savedMusicVolume));
+      }
+    }
+  }, []);
+
+  // Salvar estado da música no localStorage e controlar reprodução
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('musicEnabled', musicEnabled.toString());
+
+      if (musicEnabled) {
+        AudioManager.startBackgroundMusic();
+      } else {
+        AudioManager.stopBackgroundMusic();
+      }
+    }
   }, [musicEnabled]);
 
-  // Atualiza volume da música quando musicVolume muda
+  // Atualiza e salva volume da música quando musicVolume muda
   useEffect(() => {
-    AudioManager.setVolume(musicVolume);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('musicVolume', musicVolume.toString());
+      AudioManager.setVolume(musicVolume);
+    }
   }, [musicVolume]);
 
   // Farcaster SDK - Informa que o app está pronto
