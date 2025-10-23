@@ -8,6 +8,7 @@ export const BADGES_CONFIG = {
     '0x9c9d341658cd8be9023c8b6b6cd2179c720538a0',
     '0x12cf353ef7d37ab6c5505ff673116986db7c9102',
     '0xc2c3ca34cf5e80c49514acda6a466ed2894483e3',
+    '0x28f4a9a2e747ec2cb1b4e235a55dff5be2ef48d6',
   ],
 
   // Número máximo de early testers por userIndex (fallback)
