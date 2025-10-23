@@ -214,6 +214,23 @@ export default function ProfilePage() {
     return '';
   };
 
+  // Helper functions para estilização das cartas (mesma lógica da página principal)
+  const getRarityRing = (rarity: string) => {
+    const r = (rarity || '').toLowerCase();
+    if (r.includes('legend')) return 'ring-vintage-gold shadow-gold-lg';
+    if (r.includes('mythic')) return 'ring-vintage-gold shadow-gold-lg';
+    if (r.includes('epic')) return 'ring-vintage-silver shadow-neon';
+    if (r.includes('rare')) return 'ring-vintage-burnt-gold shadow-gold';
+    return 'ring-vintage-charcoal shadow-lg';
+  };
+
+  const getFoilEffect = (foil: string) => {
+    const f = (foil || '').toLowerCase();
+    if (f.includes('prize')) return 'prize-foil';
+    if (f.includes('standard')) return 'standard-foil';
+    return '';
+  };
+
   // Helper function para verificar se a carta está revelada (mesma lógica da página principal)
   const isUnrevealed = (nft: any): boolean => {
     const hasAttrs = !!(nft?.raw?.metadata?.attributes?.length || nft?.metadata?.attributes?.length || nft?.raw?.metadata?.traits?.length || nft?.metadata?.traits?.length);
@@ -485,20 +502,20 @@ export default function ProfilePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
               {filteredNfts
                 .slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE)
                 .map((nft) => {
                   const tokenId = nft.tokenId;
                   const power = findAttr(nft, 'Power') || 0;
                   const rarity = findAttr(nft, 'Rarity') || 'Common';
+                  const wear = findAttr(nft, 'Wear') || '';
+                  const foilValue = findAttr(nft, 'Foil') || '';
                   const imageUrl = nft.image?.cachedUrl || nft.image?.thumbnailUrl || nft.raw?.metadata?.image || '';
-
-                  // OpenSea URL (Base chain)
                   const openSeaUrl = `https://opensea.io/assets/base/${CONTRACT_ADDRESS}/${tokenId}`;
 
-                  // Check if NFT is listed (simplificado - verifica se tem marketplace data)
-                  const isListed = nft.raw?.metadata?.marketplace || nft.contract?.openSeaMetadata?.floorPrice;
+                  const foilEffect = getFoilEffect(foilValue);
+                  const isLegendary = (rarity || '').toLowerCase().includes('legend') || (rarity || '').toLowerCase().includes('mythic');
 
                   const getRarityColor = (r: string) => {
                     const rLower = (r || '').toLowerCase();
@@ -509,47 +526,67 @@ export default function ProfilePage() {
                   };
 
                   return (
-                    <a
+                    <div
                       key={tokenId}
-                      href={openSeaUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative group hover:scale-105 transition-all duration-300"
+                      className="relative group transition-all duration-300 hover:scale-105 cursor-pointer"
+                      style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}
                     >
-                      <div className="relative overflow-hidden rounded-xl ring-2 ring-gray-700 group-hover:ring-purple-500 transition-all">
+                      <div
+                        className={`relative overflow-hidden rounded-xl ring-2 ${getRarityRing(rarity)} hover:ring-vintage-gold/50 ${isLegendary ? 'legendary-card' : ''}`}
+                        style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}}
+                      >
                         <img
                           src={imageUrl}
-                          alt={`Card #${tokenId}`}
-                          className="w-full aspect-[2/3] object-cover bg-gray-900"
+                          alt={`#${tokenId}`}
+                          className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none"
                           loading="lazy"
                         />
 
-                        {/* Power badge */}
-                        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3">
+                        {/* Card Reflection on Hover */}
+                        <div className="card-reflection"></div>
+
+                        {/* Foil Effect */}
+                        {foilEffect && (
+                          <div className={`absolute inset-0 ${foilEffect}`}></div>
+                        )}
+
+                        {/* OpenSea Button (top right) */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                          <a
+                            href={openSeaUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-vintage-neon-blue hover:bg-blue-500 text-white text-xs px-2 py-1 rounded-lg shadow-lg font-bold"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            OS
+                          </a>
+                        </div>
+
+                        {/* Power Badge (top) */}
+                        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
                           <div className="flex items-center justify-between">
                             <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(rarity)} bg-clip-text text-transparent`}>
                               {power} PWR
                             </span>
-                            {isListed && (
-                              <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full font-bold">
-                                LISTED
-                              </span>
-                            )}
                           </div>
                         </div>
 
-                        {/* Token ID and OpenSea link */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent p-2">
-                          <p className="text-xs text-gray-300 font-mono text-center mb-1">#{tokenId}</p>
-                          <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <svg className="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 0C5.374 0 0 5.374 0 12s5.374 12 12 12 12-5.374 12-12S18.626 0 12 0zm5.52 14.168c-.044.28-.088.56-.132.84-.044.28-.088.56-.132.84-.088.56-.176 1.12-.264 1.68-.044.28-.088.56-.132.84-.044.28-.088.56-.132.84-.088.56-.176 1.12-.264 1.68-.044.28-.088.56-.132.84-.044.28-.088.56-.132.84-.088.56-.176 1.12-.264 1.68l-1.56-1.56c.088-.56.176-1.12.264-1.68.044-.28.088-.56.132-.84.044-.28.088-.56.132-.84.088-.56.176-1.12.264-1.68.044-.28.088-.56.132-.84.044-.28.088-.56.132-.84.088-.56.176-1.12.264-1.68.044-.28.088-.56.132-.84.044-.28.088-.56.132-.84.088-.56.176-1.12.264-1.68l1.56 1.56c-.088.56-.176 1.12-.264 1.68z"/>
-                            </svg>
-                            <span className="text-xs text-cyan-400 font-semibold">View on OpenSea</span>
-                          </div>
+                        {/* Rarity + Wear Info (bottom) */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-3 pointer-events-none z-20">
+                          {rarity && (
+                            <div className="text-xs font-bold uppercase tracking-wider text-white drop-shadow-lg">
+                              {rarity}
+                            </div>
+                          )}
+                          {wear && (
+                            <div className="text-xs text-yellow-300 font-semibold drop-shadow-lg">
+                              {wear}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </a>
+                    </div>
                   );
                 })}
             </div>
