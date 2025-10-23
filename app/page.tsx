@@ -1042,73 +1042,29 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           75% { transform: rotate(3deg); }
         }
 
-        @keyframes holographicShift {
+        @keyframes rainbowMove {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
 
-        @keyframes prismaticRotate {
-          0% { transform: rotate(0deg) scale(1.5); }
-          100% { transform: rotate(360deg) scale(1.5); }
-        }
-
-        @keyframes lightMove {
-          0%, 100% { transform: translate(-30%, -30%); }
-          25% { transform: translate(30%, -30%); }
-          50% { transform: translate(30%, 30%); }
-          75% { transform: translate(-30%, 30%); }
-        }
-
         .prize-foil {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-          pointer-events: none;
-        }
-
-        .prize-foil::before {
-          content: '';
-          position: absolute;
-          inset: 0;
           background: linear-gradient(
-            45deg,
-            #ff0080,
-            #ff8c00,
-            #ffd700,
-            #00ff00,
-            #00ffff,
-            #0080ff,
-            #8000ff,
-            #ff0080
+            110deg,
+            rgba(255, 0, 128, 0.6) 0%,
+            rgba(255, 140, 0, 0.6) 14%,
+            rgba(255, 215, 0, 0.6) 28%,
+            rgba(0, 255, 0, 0.6) 42%,
+            rgba(0, 255, 255, 0.6) 56%,
+            rgba(0, 128, 255, 0.6) 70%,
+            rgba(128, 0, 255, 0.6) 84%,
+            rgba(255, 0, 128, 0.6) 100%
           );
-          background-size: 300% 300%;
-          animation: holographicShift 3s ease infinite;
-          opacity: 0.7;
-          mix-blend-mode: overlay;
-        }
-
-        .prize-foil::after {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: conic-gradient(
-            from 0deg,
-            #ff0080,
-            #ff8c00,
-            #ffd700,
-            #00ff00,
-            #00ffff,
-            #0080ff,
-            #8000ff,
-            #ff0080
-          );
-          animation: prismaticRotate 10s linear infinite;
-          opacity: 0.5;
-          mix-blend-mode: color-dodge;
+          background-size: 200% 200%;
+          animation: rainbowMove 4s ease-in-out infinite;
+          mix-blend-mode: hard-light;
+          pointer-events: none;
+          filter: brightness(1.3) saturate(1.6);
         }
         
         .standard-foil {
@@ -1133,7 +1089,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
       `}</style>
       
-      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : ''} cursor-pointer`} onClick={handleClick}>
+      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick}>
         <div className={`relative overflow-hidden rounded-xl ${
           selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
           'ring-2 ring-gray-700 hover:ring-gray-500'
