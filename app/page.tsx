@@ -33,7 +33,7 @@ const AudioManager = {
   musicGain: null as GainNode | null,
   backgroundMusic: null as HTMLAudioElement | null,
   backgroundSource: null as AudioBufferSourceNode | null,
-  currentVolume: 0.2, // Volume padrão para música ambiente (20%)
+  currentVolume: 0.1, // Volume padrão para música ambiente (10%)
   async init() {
     if (typeof window === 'undefined') return;
     if (!this.context) {
@@ -1104,7 +1104,7 @@ export default function TCGPage() {
   const [lang, setLang] = useState<string>('en');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
-  const [musicVolume, setMusicVolume] = useState<number>(0.2); // Volume padrão 20%
+  const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [address, setAddress] = useState<string | null>(null);
