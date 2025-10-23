@@ -950,42 +950,95 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
     <>
       <style>{`
         @keyframes holographic {
-          0% { background-position: 0% 0%; }
-          100% { background-position: 200% 200%; }
+          0% {
+            background-position: 0% 50%;
+            filter: hue-rotate(0deg) brightness(1.2) saturate(1.5);
+          }
+          25% {
+            background-position: 50% 100%;
+            filter: hue-rotate(90deg) brightness(1.3) saturate(1.6);
+          }
+          50% {
+            background-position: 100% 50%;
+            filter: hue-rotate(180deg) brightness(1.4) saturate(1.7);
+          }
+          75% {
+            background-position: 50% 0%;
+            filter: hue-rotate(270deg) brightness(1.3) saturate(1.6);
+          }
+          100% {
+            background-position: 0% 50%;
+            filter: hue-rotate(360deg) brightness(1.2) saturate(1.5);
+          }
         }
-        
+
         @keyframes prizePulse {
           0%, 100% { opacity: 0.95; }
           50% { opacity: 1; }
         }
-        
+
         @keyframes prizeGlow {
           0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 140, 0, 0.4), 0 0 60px rgba(255, 0, 255, 0.3); }
           50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 140, 0, 0.6), 0 0 90px rgba(255, 0, 255, 0.5); }
         }
-        
+
+        @keyframes rainbowShine {
+          0% {
+            background-position: -200% center;
+          }
+          100% {
+            background-position: 200% center;
+          }
+        }
+
         @keyframes shake {
           0%, 100% { transform: rotate(0deg); }
           25% { transform: rotate(-3deg); }
           75% { transform: rotate(3deg); }
         }
-        
+
         .prize-foil {
+          position: relative;
           background: linear-gradient(
-            135deg,
-            rgba(255, 220, 150, 0.8) 0%,
-            rgba(220, 150, 255, 0.8) 20%,
-            rgba(150, 255, 220, 0.8) 40%,
-            rgba(255, 200, 150, 0.8) 60%,
-            rgba(150, 220, 255, 0.8) 80%,
-            rgba(255, 220, 150, 0.8) 100%
+            45deg,
+            #ff0080 0%,
+            #ff8c00 10%,
+            #ffd700 20%,
+            #00ff00 30%,
+            #00ffff 40%,
+            #0080ff 50%,
+            #8000ff 60%,
+            #ff00ff 70%,
+            #ff0080 80%,
+            #ff8c00 90%,
+            #ffd700 100%
           );
-          background-size: 600% 600%;
-          animation: holographic 3s linear infinite;
+          background-size: 400% 400%;
+          animation: holographic 4s linear infinite;
           mix-blend-mode: screen;
           pointer-events: none;
-          opacity: 0.9;
-          filter: brightness(1.3) saturate(1.4);
+          opacity: 0.85;
+        }
+
+        .prize-foil::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.8) 45%,
+            rgba(255, 255, 255, 0.9) 50%,
+            rgba(255, 255, 255, 0.8) 55%,
+            transparent 100%
+          );
+          background-size: 200% 100%;
+          animation: rainbowShine 3s linear infinite;
+          mix-blend-mode: overlay;
+          opacity: 0.6;
         }
         
         .standard-foil {
