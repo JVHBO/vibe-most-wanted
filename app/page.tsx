@@ -1086,16 +1086,18 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         .standard-foil {
           background: linear-gradient(
             135deg,
-            rgba(150, 220, 255, 0.5) 0%,
-            rgba(220, 150, 255, 0.5) 25%,
-            rgba(150, 255, 220, 0.5) 50%,
-            rgba(255, 200, 150, 0.5) 75%,
-            rgba(150, 220, 255, 0.5) 100%
+            rgba(150, 220, 255, 0.7) 0%,
+            rgba(220, 150, 255, 0.7) 25%,
+            rgba(150, 255, 220, 0.7) 50%,
+            rgba(255, 200, 150, 0.7) 75%,
+            rgba(150, 220, 255, 0.7) 100%
           );
           background-size: 400% 400%;
-          animation: holographic 4s linear infinite;
-          mix-blend-mode: screen;
+          animation: holographic 4s ease-in-out infinite;
+          mix-blend-mode: overlay;
           pointer-events: none;
+          opacity: 0.8;
+          filter: brightness(1.2) saturate(1.3);
         }
         
         .prize-card-ring {
