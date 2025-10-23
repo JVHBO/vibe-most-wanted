@@ -1044,36 +1044,32 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
 
         .prize-foil {
           background:
-            linear-gradient(
+            repeating-linear-gradient(
+              0deg,
+              transparent 0px,
+              rgba(255, 255, 255, 0.03) 1px,
+              transparent 2px
+            ),
+            repeating-linear-gradient(
               90deg,
-              transparent 0%,
-              rgba(255, 255, 255, 0.4) 45%,
-              rgba(255, 255, 255, 0.6) 50%,
-              rgba(255, 255, 255, 0.4) 55%,
-              transparent 100%
+              transparent 0px,
+              rgba(255, 255, 255, 0.03) 1px,
+              transparent 2px
             ),
             linear-gradient(
-              45deg,
-              #ff0080 0%,
-              #ff3366 8%,
-              #ff8c00 16%,
-              #ffb84d 24%,
-              #ffd700 32%,
-              #80ff00 40%,
-              #00ff80 48%,
-              #00ffff 56%,
-              #0080ff 64%,
-              #4d4dff 72%,
-              #8000ff 80%,
-              #cc00ff 88%,
-              #ff00ff 96%,
-              #ff0080 100%
+              135deg,
+              rgba(255, 100, 200, 0.3) 0%,
+              rgba(100, 200, 255, 0.3) 20%,
+              rgba(255, 220, 100, 0.3) 40%,
+              rgba(100, 255, 150, 0.3) 60%,
+              rgba(200, 100, 255, 0.3) 80%,
+              rgba(255, 100, 200, 0.3) 100%
             );
-          background-size: 300% 100%, 600% 600%;
-          animation: holographic 8s ease-in-out infinite, rainbowShine 6s ease-in-out infinite;
-          mix-blend-mode: overlay;
+          background-size: 2px 2px, 2px 2px, 300% 300%;
+          animation: holographic 6s ease-in-out infinite;
+          mix-blend-mode: color-dodge;
           pointer-events: none;
-          opacity: 0.7;
+          opacity: 0.5;
         }
         
         .standard-foil {
@@ -1096,10 +1092,9 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
       `}</style>
       
-      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer ${isPrizeFoil ? 'prize-card-ring' : ''}`} onClick={handleClick}>
+      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick}>
         <div className={`relative overflow-hidden rounded-xl ${
-          isPrizeFoil ? 'ring-4 ring-yellow-400 shadow-2xl' : 
-          selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` : 
+          selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
           'ring-2 ring-gray-700 hover:ring-gray-500'
         }`}>
           <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-gray-900 pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
