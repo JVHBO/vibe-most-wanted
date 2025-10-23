@@ -1043,33 +1043,23 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
 
         .prize-foil {
-          background:
-            repeating-linear-gradient(
-              0deg,
-              transparent 0px,
-              rgba(255, 255, 255, 0.03) 1px,
-              transparent 2px
-            ),
-            repeating-linear-gradient(
-              90deg,
-              transparent 0px,
-              rgba(255, 255, 255, 0.03) 1px,
-              transparent 2px
-            ),
-            linear-gradient(
-              135deg,
-              rgba(255, 100, 200, 0.3) 0%,
-              rgba(100, 200, 255, 0.3) 20%,
-              rgba(255, 220, 100, 0.3) 40%,
-              rgba(100, 255, 150, 0.3) 60%,
-              rgba(200, 100, 255, 0.3) 80%,
-              rgba(255, 100, 200, 0.3) 100%
-            );
-          background-size: 2px 2px, 2px 2px, 300% 300%;
-          animation: holographic 6s ease-in-out infinite;
-          mix-blend-mode: color-dodge;
+          background: linear-gradient(
+            45deg,
+            #ff0000 0%,
+            #ff7f00 14%,
+            #ffff00 28%,
+            #00ff00 42%,
+            #0000ff 57%,
+            #4b0082 71%,
+            #9400d3 85%,
+            #ff0000 100%
+          );
+          background-size: 400% 400%;
+          animation: holographic 4s ease-in-out infinite;
+          mix-blend-mode: overlay;
           pointer-events: none;
-          opacity: 0.5;
+          opacity: 0.8;
+          filter: brightness(1.2) saturate(1.5);
         }
         
         .standard-foil {
