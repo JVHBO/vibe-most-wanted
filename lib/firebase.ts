@@ -227,16 +227,21 @@ export class PvPService {
         const players = snapshot.val();
         const now = Date.now();
 
-        // Filtra jogadores válidos (não é o próprio jogador e está online há menos de 30 segundos)
+        // Filtra jogadores válidos (não é o próprio jogador, está online há menos de 30 segundos, e NÃO tem roomCode)
         const waitingPlayers = Object.entries(players).filter(
           ([addr, data]: [string, any]) => {
             const age = now - data.timestamp;
-            const isValid = addr !== playerAddress && age < 30000; // Reduzido para 30s
+            const hasRoomCode = !!data.roomCode; // Já está em uma sala
+            const isValid = addr !== playerAddress && age < 30000 && !hasRoomCode;
 
             if (!isValid && addr !== playerAddress) {
-              console.log('⚠️ Removing stale matchmaking entry:', addr, 'age:', age / 1000, 'seconds');
-              // Remove entrada antiga
-              remove(ref(database, `matchmaking/${addr}`)).catch(console.error);
+              if (hasRoomCode) {
+                console.log('⚠️ Removing matchmaking entry (already in room):', addr);
+                remove(ref(database, `matchmaking/${addr}`)).catch(console.error);
+              } else if (age >= 30000) {
+                console.log('⚠️ Removing stale matchmaking entry:', addr, 'age:', age / 1000, 'seconds');
+                remove(ref(database, `matchmaking/${addr}`)).catch(console.error);
+              }
             }
 
             return isValid;
