@@ -153,7 +153,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-vintage-black flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-cyan-500 border-t-transparent mb-4"></div>
           <p className="text-white text-xl">Loading profile...</p>
@@ -164,7 +164,7 @@ export default function ProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-vintage-black flex items-center justify-center p-4">
         <div className="text-center bg-red-900/20 border border-red-500/50 rounded-xl p-8 max-w-md">
           <p className="text-red-400 text-2xl mb-4">❌ {error || 'Profile not found'}</p>
           <button
@@ -262,12 +262,12 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 lg:p-8">
+    <div className="min-h-screen bg-vintage-black text-vintage-ice p-4 lg:p-8">
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-6">
         <button
           onClick={() => router.push('/')}
-          className="text-cyan-400 hover:text-cyan-300 transition-colors mb-4 flex items-center gap-2"
+          className="text-vintage-gold hover:text-vintage-gold-dark transition-colors mb-4 flex items-center gap-2 font-modern font-semibold"
         >
           ← Back to Game
         </button>
@@ -275,28 +275,28 @@ export default function ProfilePage() {
 
       {/* Profile Header */}
       <div className="max-w-6xl mx-auto mb-8">
-        <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 rounded-2xl border-2 border-purple-500/50 p-8 shadow-2xl">
+        <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-8 shadow-gold">
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
-            <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-6xl font-bold shadow-lg">
+            <div className="w-32 h-32 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex items-center justify-center text-6xl font-display font-bold shadow-gold">
               {profile.username.substring(0, 2).toUpperCase()}
             </div>
 
             {/* Profile Info */}
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-5xl font-display font-bold mb-2 text-vintage-gold">
                 {profile.username}
               </h1>
               <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
-                <p className="text-gray-400 font-mono text-sm">
+                <p className="text-vintage-burnt-gold font-mono text-sm">
                   {profile.address}
                 </p>
                 <button
                   onClick={copyAddress}
-                  className="text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-gray-700/50"
+                  className="text-vintage-gold hover:text-vintage-ice transition-colors p-1 rounded hover:bg-vintage-gold/20"
                   title="Copy wallet address"
                 >
-                  {copiedAddress ? '✓' : '📋'}
+                  {copiedAddress ? '✓' : '□'}
                 </button>
               </div>
               {profile.twitter && (
@@ -304,7 +304,7 @@ export default function ProfilePage() {
                   href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                  className="text-vintage-neon-blue hover:text-vintage-gold inline-flex items-center gap-1 font-modern"
                 >
                   𝕏 @{profile.twitter.replace('@', '')}
                 </a>
@@ -313,13 +313,13 @@ export default function ProfilePage() {
 
             {/* Quick Stats */}
             <div className="flex gap-4">
-              <div className="bg-green-900/30 px-6 py-3 rounded-xl border border-green-500/30 text-center">
-                <p className="text-3xl font-bold text-green-400">{totalWins}</p>
-                <p className="text-xs text-gray-400">Wins</p>
+              <div className="bg-vintage-black/50 px-6 py-3 rounded-xl border-2 border-vintage-gold text-center">
+                <p className="text-3xl font-bold text-vintage-gold">{totalWins}</p>
+                <p className="text-xs text-vintage-burnt-gold font-modern">WINS</p>
               </div>
-              <div className="bg-red-900/30 px-6 py-3 rounded-xl border border-red-500/30 text-center">
-                <p className="text-3xl font-bold text-red-400">{totalLosses}</p>
-                <p className="text-xs text-gray-400">Losses</p>
+              <div className="bg-vintage-black/50 px-6 py-3 rounded-xl border-2 border-vintage-silver text-center">
+                <p className="text-3xl font-bold text-vintage-silver">{totalLosses}</p>
+                <p className="text-xs text-vintage-burnt-gold font-modern">LOSSES</p>
               </div>
             </div>
           </div>
@@ -328,41 +328,41 @@ export default function ProfilePage() {
 
       {/* Stats Grid */}
       <div className="max-w-6xl mx-auto mb-8">
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          📊 Statistics
+        <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
+          <span className="text-3xl">♦</span> Statistics
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 p-6 rounded-xl border border-purple-500/30">
-            <p className="text-xs text-gray-400 mb-1">🃏 Total Cards</p>
-            <p className="text-3xl font-bold text-purple-400">{nfts.length || profile.stats.totalCards}</p>
+          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
+            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♠ TOTAL CARDS</p>
+            <p className="text-3xl font-bold text-vintage-gold">{nfts.length || profile.stats.totalCards}</p>
           </div>
-          <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/30 p-6 rounded-xl border border-yellow-500/30">
-            <p className="text-xs text-gray-400 mb-1">⚡ Total Power</p>
-            <p className="text-3xl font-bold text-yellow-400">{profile.stats.totalPower.toLocaleString()}</p>
+          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
+            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">◆ TOTAL POWER</p>
+            <p className="text-3xl font-bold text-vintage-gold">{profile.stats.totalPower.toLocaleString()}</p>
           </div>
-          <div className="bg-gradient-to-br from-blue-900/30 to-cyan-900/30 p-6 rounded-xl border border-blue-500/30">
-            <p className="text-xs text-gray-400 mb-1">🎮 PvE Record</p>
-            <p className="text-2xl font-bold text-cyan-400">
+          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-neon-blue/50">
+            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♣ PvE RECORD</p>
+            <p className="text-2xl font-bold text-vintage-neon-blue">
               {profile.stats.pveWins}W / {profile.stats.pveLosses}L
             </p>
           </div>
-          <div className="bg-gradient-to-br from-pink-900/30 to-purple-900/30 p-6 rounded-xl border border-pink-500/30">
-            <p className="text-xs text-gray-400 mb-1">⚔️ PvP Record</p>
-            <p className="text-2xl font-bold text-pink-400">
+          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-silver/50">
+            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♥ PvP RECORD</p>
+            <p className="text-2xl font-bold text-vintage-silver">
               {profile.stats.pvpWins}W / {profile.stats.pvpLosses}L
             </p>
           </div>
         </div>
 
         {/* Win Rate */}
-        <div className="mt-4 bg-gradient-to-r from-cyan-900/30 to-purple-900/30 p-6 rounded-xl border border-cyan-500/30">
+        <div className="mt-4 bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-gray-400">Overall Win Rate</p>
-            <p className="text-3xl font-bold text-cyan-400">{winRate}%</p>
+            <p className="text-vintage-burnt-gold font-modern font-semibold">OVERALL WIN RATE</p>
+            <p className="text-3xl font-bold text-vintage-gold">{winRate}%</p>
           </div>
-          <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden">
+          <div className="w-full bg-vintage-black rounded-full h-4 overflow-hidden border border-vintage-gold/30">
             <div
-              className="bg-gradient-to-r from-cyan-500 to-purple-500 h-full transition-all duration-500"
+              className="bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold h-full transition-all duration-500"
               style={{ width: `${winRate}%` }}
             />
           </div>
@@ -371,23 +371,23 @@ export default function ProfilePage() {
 
       {/* NFT Cards Collection */}
       <div className="max-w-6xl mx-auto mb-8">
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          🃏 Card Collection ({filteredNfts.length} / {nfts.length})
+        <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
+          <span className="text-3xl">♠</span> Card Collection ({filteredNfts.length} / {nfts.length})
         </h2>
 
         {/* Filtros */}
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 mb-6">
+        <div className="bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-xl p-4 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Filtro de Revelação */}
             <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">📦 Card Status</label>
+              <label className="block text-sm font-modern font-semibold text-vintage-gold mb-2">♦ CARD STATUS</label>
               <select
                 value={filterRevealed}
                 onChange={(e) => {
                   setFilterRevealed(e.target.value);
                   setCurrentNFTPage(1);
                 }}
-                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
               >
                 <option value="all">All Cards</option>
                 <option value="revealed">Revealed Only</option>
@@ -397,14 +397,14 @@ export default function ProfilePage() {
 
             {/* Filtro de Raridade */}
             <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">✨ Rarity</label>
+              <label className="block text-sm font-modern font-semibold text-vintage-gold mb-2">♣ RARITY</label>
               <select
                 value={filterRarity}
                 onChange={(e) => {
                   setFilterRarity(e.target.value);
                   setCurrentNFTPage(1);
                 }}
-                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
                 disabled={filterRevealed === 'unrevealed'}
               >
                 <option value="all">All Rarities</option>
@@ -418,14 +418,14 @@ export default function ProfilePage() {
 
             {/* Filtro de Foil */}
             <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">🌟 Foil</label>
+              <label className="block text-sm font-modern font-semibold text-vintage-gold mb-2">♥ FOIL</label>
               <select
                 value={filterFoil}
                 onChange={(e) => {
                   setFilterFoil(e.target.value);
                   setCurrentNFTPage(1);
                 }}
-                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
                 disabled={filterRevealed === 'unrevealed'}
               >
                 <option value="all">All Foils</option>
@@ -445,9 +445,9 @@ export default function ProfilePage() {
                 setFilterRevealed('revealed');
                 setCurrentNFTPage(1);
               }}
-              className="mt-4 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+              className="mt-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black px-4 py-2 rounded-lg text-sm font-modern font-semibold transition-all"
             >
-              🔄 Reset Filters
+              ↻ Reset Filters
             </button>
           )}
         </div>
@@ -509,7 +509,7 @@ export default function ProfilePage() {
                         <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3">
                           <div className="flex items-center justify-between">
                             <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(rarity)} bg-clip-text text-transparent`}>
-                              ⚡ {power}
+                              {power} PWR
                             </span>
                             {isListed && (
                               <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full font-bold">
@@ -592,25 +592,25 @@ export default function ProfilePage() {
               const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
               const bgColor = isWin ? 'from-green-900/20' : isTie ? 'from-yellow-900/20' : 'from-red-900/20';
               const resultColor = isWin ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-red-400';
-              const resultText = isWin ? '✅ Victory' : isTie ? '🤝 Tie' : '❌ Defeat';
+              const resultText = isWin ? '♔ VICTORY' : isTie ? '♦ TIE' : '♠ DEFEAT';
 
               return (
                 <div
                   key={match.id}
-                  className={`bg-gradient-to-r ${bgColor} to-transparent border ${borderColor} rounded-xl p-4 hover:scale-[1.02] transition-transform`}
+                  className={`bg-vintage-charcoal border-2 ${borderColor} rounded-xl p-4 hover:scale-[1.02] transition-transform`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     {/* Match Type & Result */}
                     <div className="flex items-center gap-4">
-                      <div className="text-3xl">
-                        {match.type === 'pvp' ? '⚔️' : '🎮'}
+                      <div className="text-3xl text-vintage-gold">
+                        {match.type === 'pvp' ? '♥' : '♣'}
                       </div>
                       <div>
-                        <p className={`font-bold text-lg ${resultColor}`}>{resultText}</p>
-                        <p className="text-xs text-gray-400">
-                          {match.type === 'pvp' ? 'Player vs Player' : 'Player vs Environment'}
+                        <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
+                        <p className="text-xs text-vintage-burnt-gold font-modern">
+                          {match.type === 'pvp' ? 'PLAYER VS PLAYER' : 'PLAYER VS ENVIRONMENT'}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-vintage-burnt-gold/70">
                           {new Date(match.timestamp).toLocaleString()}
                         </p>
                       </div>
@@ -618,20 +618,20 @@ export default function ProfilePage() {
 
                     {/* Power Stats */}
                     <div className="flex items-center gap-4">
-                      <div className="text-center bg-purple-900/30 px-4 py-2 rounded-lg border border-purple-500/30">
-                        <p className="text-xs text-gray-400">Your Power</p>
-                        <p className="text-xl font-bold text-purple-400">{match.playerPower}</p>
+                      <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-gold/50">
+                        <p className="text-xs text-vintage-burnt-gold font-modern">YOUR POWER</p>
+                        <p className="text-xl font-bold text-vintage-gold">{match.playerPower}</p>
                       </div>
-                      <div className="text-2xl text-gray-500">VS</div>
-                      <div className="text-center bg-pink-900/30 px-4 py-2 rounded-lg border border-pink-500/30">
-                        <p className="text-xs text-gray-400">Opponent</p>
-                        <p className="text-xl font-bold text-pink-400">{match.opponentPower}</p>
+                      <div className="text-2xl text-vintage-burnt-gold font-bold">VS</div>
+                      <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-silver/50">
+                        <p className="text-xs text-vintage-burnt-gold font-modern">OPPONENT</p>
+                        <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
                       </div>
                     </div>
 
                     {/* Opponent Address (if PvP) */}
                     {match.type === 'pvp' && match.opponentAddress && (
-                      <div className="text-xs text-gray-400 font-mono bg-gray-800/50 px-3 py-2 rounded-lg">
+                      <div className="text-xs text-vintage-gold font-mono bg-vintage-black/50 px-3 py-2 rounded-lg border border-vintage-gold/30">
                         vs {match.opponentAddress.slice(0, 6)}...{match.opponentAddress.slice(-4)}
                       </div>
                     )}
