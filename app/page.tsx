@@ -1251,6 +1251,16 @@ export default function TCGPage() {
   const [targetPlayer, setTargetPlayer] = useState<UserProfile | null>(null);
   const [attacksRemaining, setAttacksRemaining] = useState<number>(3);
 
+  // Battle Result States for sharing
+  const [lastBattleResult, setLastBattleResult] = useState<{
+    result: 'win' | 'loss' | 'tie';
+    playerPower: number;
+    opponentPower: number;
+    opponentName: string;
+    opponentTwitter?: string;
+    type: 'pve' | 'pvp' | 'attack' | 'defense';
+  } | null>(null);
+
   const t = useCallback((key: string, params: Record<string, any> = {}) => {
     let text = (translations as any)[lang][key] || key;
     Object.entries(params).forEach(([k, v]) => {
@@ -1635,6 +1645,15 @@ export default function TCGPage() {
         setShowBattleScreen(false);
         setBattlePhase('cards');
 
+        // Set last battle result for sharing
+        setLastBattleResult({
+          result: matchResult,
+          playerPower: playerTotal,
+          opponentPower: dealerTotal,
+          opponentName: 'AI',
+          type: 'pve'
+        });
+
         // Mostra popup IMEDIATAMENTE
         if (matchResult === 'win') {
           setShowWinPopup(true);
@@ -2016,9 +2035,20 @@ export default function TCGPage() {
             </p>
             <div className="flex gap-3">
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('tweetVictory', {
-                  power: playerPower
-                }))}&url=${encodeURIComponent(userProfile?.username ? `${window.location.origin}/profile/${userProfile.username}` : window.location.origin)}`}
+                href={(() => {
+                  if (!lastBattleResult) return '#';
+                  const shareId = `${lastBattleResult.result}_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName)}_${lastBattleResult.type}`;
+                  const shareUrl = `${window.location.origin}/share/${shareId}`;
+
+                  // Build tweet text with opponent mention if they have Twitter
+                  let tweetText = t('tweetVictory', { power: lastBattleResult.playerPower });
+                  if (lastBattleResult.opponentTwitter && lastBattleResult.type !== 'pve') {
+                    const twitterHandle = lastBattleResult.opponentTwitter.replace('@', '');
+                    tweetText += `\n\nDefeated @${twitterHandle}!`;
+                  }
+
+                  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                })()}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
@@ -2027,9 +2057,12 @@ export default function TCGPage() {
                 <span>𝕏</span> {t('shareVictory')}
               </a>
               <a
-                href={`https://warpcast.com/~/compose?text=${encodeURIComponent(t('castVictory', {
-                  power: playerPower
-                }))}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`}
+                href={(() => {
+                  if (!lastBattleResult) return '#';
+                  const shareId = `${lastBattleResult.result}_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName)}_${lastBattleResult.type}`;
+                  const shareUrl = `${window.location.origin}/share/${shareId}`;
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(t('castVictory', { power: lastBattleResult.playerPower }))}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                })()}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
@@ -2061,9 +2094,20 @@ export default function TCGPage() {
             </p>
             <div className="flex gap-3">
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('tweetDefeat', {
-                  power: playerPower
-                }))}&url=${encodeURIComponent(userProfile?.username ? `${window.location.origin}/profile/${userProfile.username}` : window.location.origin)}`}
+                href={(() => {
+                  if (!lastBattleResult) return '#';
+                  const shareId = `${lastBattleResult.result}_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName)}_${lastBattleResult.type}`;
+                  const shareUrl = `${window.location.origin}/share/${shareId}`;
+
+                  // Build tweet text with opponent mention if they have Twitter
+                  let tweetText = t('tweetDefeat', { power: lastBattleResult.playerPower });
+                  if (lastBattleResult.opponentTwitter && lastBattleResult.type !== 'pve') {
+                    const twitterHandle = lastBattleResult.opponentTwitter.replace('@', '');
+                    tweetText += `\n\nLost to @${twitterHandle} - I want a rematch!`;
+                  }
+
+                  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                })()}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
@@ -2072,9 +2116,12 @@ export default function TCGPage() {
                 <span>𝕏</span> {t('shareDefeat')}
               </a>
               <a
-                href={`https://warpcast.com/~/compose?text=${encodeURIComponent(t('castDefeat', {
-                  power: playerPower
-                }))}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`}
+                href={(() => {
+                  if (!lastBattleResult) return '#';
+                  const shareId = `${lastBattleResult.result}_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName)}_${lastBattleResult.type}`;
+                  const shareUrl = `${window.location.origin}/share/${shareId}`;
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(t('castDefeat', { power: lastBattleResult.playerPower }))}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                })()}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
@@ -2703,16 +2750,26 @@ export default function TCGPage() {
 
                     setShowAttackCardSelection(false);
                     setAttackSelectedCards([]);
+
+                    // Set last battle result for sharing
+                    setLastBattleResult({
+                      result: matchResult,
+                      playerPower: attackPower,
+                      opponentPower: defensePower,
+                      opponentName: targetPlayer.username,
+                      opponentTwitter: targetPlayer.twitter,
+                      type: 'attack'
+                    });
+
                     setTargetPlayer(null);
 
                     if (matchResult === 'win') {
-                      alert(`Victory! You defeated ${targetPlayer.username}! (${attackPower} vs ${defensePower})`);
+                      setShowWinPopup(true);
                       if (soundEnabled) AudioManager.win();
                     } else if (matchResult === 'loss') {
-                      alert(`Defeat! ${targetPlayer.username}'s defense was too strong! (${attackPower} vs ${defensePower})`);
+                      setShowLossPopup(true);
                       if (soundEnabled) AudioManager.lose();
                     } else {
-                      alert(`Draw! You tied with ${targetPlayer.username}! (${attackPower} vs ${defensePower})`);
                       if (soundEnabled) AudioManager.tie();
                     }
                   } catch (error) {
