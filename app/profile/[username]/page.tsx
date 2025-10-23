@@ -11,6 +11,178 @@ const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
+// Image cache (same as main page)
+const imageUrlCache = new Map();
+const IMAGE_CACHE_TIME = 1000 * 60 * 60;
+
+const getFromCache = (key: string): string | null => {
+  const item = imageUrlCache.get(key);
+  if (!item) return null;
+  const timeDiff = Date.now() - item.time;
+  if (timeDiff > IMAGE_CACHE_TIME) {
+    imageUrlCache.delete(key);
+    return null;
+  }
+  return item.url;
+};
+
+const setCache = (key: string, value: string): void => {
+  imageUrlCache.set(key, { url: value, time: Date.now() });
+};
+
+// URL normalization (same as main page)
+function normalizeUrl(url: string): string {
+  if (!url) return '';
+  let u = url.trim();
+  if (u.startsWith('ipfs://')) u = 'https://ipfs.io/ipfs/' + u.slice(7);
+  else if (u.startsWith('ipfs/')) u = 'https://ipfs.io/ipfs/' + u.slice(5);
+  u = u.replace(/^http:\/\//i, 'https://');
+  return u;
+}
+
+// Get image URL with caching and proxy handling (same as main page)
+async function getImage(nft: any): Promise<string> {
+  const tid = nft.tokenId;
+  const cached = getFromCache(tid);
+  if (cached) return cached;
+
+  const extractUrl = (value: any): string | null => {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') return value.url || value.cachedUrl || value.originalUrl || value.gateway || null;
+    return null;
+  };
+
+  try {
+    const uri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
+    if (uri) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(uri, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const json = await res.json();
+        const imageFromUri = json?.image || json?.image_url || json?.imageUrl;
+        if (imageFromUri) {
+          let imageUrl = String(imageFromUri);
+          if (imageUrl.includes('wieldcd.net')) {
+            const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(imageUrl)}`;
+            setCache(tid, proxyUrl);
+            return proxyUrl;
+          }
+          imageUrl = normalizeUrl(imageUrl);
+          if (imageUrl && !imageUrl.includes('undefined')) {
+            setCache(tid, imageUrl);
+            return imageUrl;
+          }
+        }
+      }
+    }
+  } catch {}
+
+  let rawImage = extractUrl(nft?.raw?.metadata?.image);
+  if (rawImage) {
+    if (rawImage.includes('wieldcd.net')) {
+      const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(rawImage)}`;
+      setCache(tid, proxyUrl);
+      return proxyUrl;
+    }
+    rawImage = normalizeUrl(rawImage);
+    if (rawImage && !rawImage.includes('undefined')) {
+      setCache(tid, rawImage);
+      return rawImage;
+    }
+  }
+
+  const alchemyUrls = [
+    extractUrl(nft?.image?.cachedUrl),
+    extractUrl(nft?.image?.thumbnailUrl),
+    extractUrl(nft?.image?.pngUrl),
+    extractUrl(nft?.image?.originalUrl),
+  ].filter(Boolean);
+
+  for (const url of alchemyUrls) {
+    if (url) {
+      if (url.includes('wieldcd.net')) {
+        const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(url)}`;
+        setCache(tid, proxyUrl);
+        return proxyUrl;
+      }
+      const norm = normalizeUrl(String(url));
+      if (norm && !norm.includes("undefined")) {
+        setCache(tid, norm);
+        return norm;
+      }
+    }
+  }
+
+  const placeholder = `https://via.placeholder.com/300x420/6366f1/ffffff?text=NFT+%23${tid}`;
+  setCache(tid, placeholder);
+  return placeholder;
+}
+
+// Helper to find attribute
+function findAttr(nft: any, trait: string): string {
+  const locs = [nft?.raw?.metadata?.attributes, nft?.metadata?.attributes, nft?.metadata?.traits, nft?.raw?.metadata?.traits];
+  for (const attrs of locs) {
+    if (!Array.isArray(attrs)) continue;
+    const found = attrs.find((a: any) => {
+      const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
+      const searchTrait = trait.toLowerCase().trim();
+      return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
+    });
+    if (found) {
+      return String(found?.value || found?.trait_value || found?.displayType || '').trim();
+    }
+  }
+  return '';
+}
+
+// Check if card is unrevealed
+function isUnrevealed(nft: any): boolean {
+  const hasAttrs = !!(nft?.raw?.metadata?.attributes?.length || nft?.metadata?.attributes?.length || nft?.raw?.metadata?.traits?.length || nft?.metadata?.traits?.length);
+
+  if (!hasAttrs) return true;
+
+  const r = (findAttr(nft, 'rarity') || '').toLowerCase();
+  const s = (findAttr(nft, 'status') || '').toLowerCase();
+  const n = String(nft?.name || '').toLowerCase();
+
+  if (r === 'unopened' || s === 'unopened' || n === 'unopened' || n.includes('sealed pack')) {
+    return true;
+  }
+
+  const hasImage = !!(nft?.image?.cachedUrl || nft?.image?.originalUrl || nft?.metadata?.image || nft?.raw?.metadata?.image);
+  const hasRarity = r !== '';
+
+  return !(hasImage || hasRarity);
+}
+
+// Calculate card power (same as main page)
+function calcPower(nft: any): number {
+  const foil = findAttr(nft, 'foil') || 'None';
+  const rarity = findAttr(nft, 'rarity') || 'Common';
+  const wear = findAttr(nft, 'wear') || 'Lightly Played';
+  let base = 1;
+  const r = rarity.toLowerCase();
+  if (r.includes('mythic')) base = 100;
+  else if (r.includes('legend')) base = 60;
+  else if (r.includes('epic')) base = 30;
+  else if (r.includes('rare')) base = 15;
+  else if (r.includes('uncommon')) base = 8;
+  else base = 1;
+  let wearMult = 1.0;
+  const w = wear.toLowerCase();
+  if (w.includes('pristine')) wearMult = 1.4;
+  else if (w.includes('mint')) wearMult = 1.2;
+  let foilMult = 1.0;
+  const f = foil.toLowerCase();
+  if (f.includes('prize')) foilMult = 15.0;
+  else if (f.includes('standard')) foilMult = 2.5;
+  const power = base * wearMult * foilMult;
+  return Math.max(1, Math.round(power));
+}
+
 async function fetchNFTs(owner: string): Promise<any[]> {
   if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
   if (!CHAIN) throw new Error("Chain não configurada");
@@ -132,7 +304,32 @@ export default function ProfilePage() {
           });
           const playerNFTs = await fetchNFTs(address);
           console.log('✅ NFTs loaded:', playerNFTs.length);
-          setNfts(playerNFTs);
+
+          // Enrich NFTs with image URLs and attributes (like main page)
+          const IMAGE_BATCH_SIZE = 50;
+          const enriched = [];
+
+          for (let i = 0; i < playerNFTs.length; i += IMAGE_BATCH_SIZE) {
+            const batch = playerNFTs.slice(i, i + IMAGE_BATCH_SIZE);
+            const batchEnriched = await Promise.all(
+              batch.map(async (nft) => {
+                const imageUrl = await getImage(nft);
+                return {
+                  ...nft,
+                  imageUrl,
+                  rarity: findAttr(nft, 'rarity'),
+                  status: findAttr(nft, 'status'),
+                  wear: findAttr(nft, 'wear'),
+                  foil: findAttr(nft, 'foil'),
+                  power: calcPower(nft),
+                };
+              })
+            );
+            enriched.push(...batchEnriched);
+          }
+
+          console.log('✅ NFTs enriched with images:', enriched.length);
+          setNfts(enriched);
         } catch (err: any) {
           console.error('❌ Error loading NFTs:', err.message || err);
           // Se falhar, deixa array vazio
@@ -197,23 +394,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Helper function para encontrar atributo (mesma lógica da página principal)
-  const findAttr = (nft: any, trait: string): string => {
-    const locs = [nft?.raw?.metadata?.attributes, nft?.metadata?.attributes, nft?.metadata?.traits, nft?.raw?.metadata?.traits];
-    for (const attrs of locs) {
-      if (!Array.isArray(attrs)) continue;
-      const found = attrs.find((a: any) => {
-        const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
-        const searchTrait = trait.toLowerCase().trim();
-        return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
-      });
-      if (found) {
-        return String(found?.value || found?.trait_value || found?.displayType || '').trim();
-      }
-    }
-    return '';
-  };
-
   // Helper functions para estilização das cartas (mesma lógica da página principal)
   const getRarityRing = (rarity: string) => {
     const r = (rarity || '').toLowerCase();
@@ -231,34 +411,11 @@ export default function ProfilePage() {
     return '';
   };
 
-  // Helper function para verificar se a carta está revelada (mesma lógica da página principal)
-  const isUnrevealed = (nft: any): boolean => {
-    const hasAttrs = !!(nft?.raw?.metadata?.attributes?.length || nft?.metadata?.attributes?.length || nft?.raw?.metadata?.traits?.length || nft?.metadata?.traits?.length);
-
-    // Se não tem atributos, é não revelada
-    if (!hasAttrs) return true;
-
-    const r = (findAttr(nft, 'rarity') || '').toLowerCase();
-    const s = (findAttr(nft, 'status') || '').toLowerCase();
-    const n = String(nft?.name || '').toLowerCase();
-
-    // Verifica se tem indicadores explícitos de não revelada
-    if (r === 'unopened' || s === 'unopened' || n === 'unopened' || n.includes('sealed pack')) {
-      return true;
-    }
-
-    // Se tem imagem OU tem rarity, considera revelada
-    const hasImage = !!(nft?.image?.cachedUrl || nft?.image?.originalUrl || nft?.metadata?.image || nft?.raw?.metadata?.image);
-    const hasRarity = r !== '';
-
-    return !(hasImage || hasRarity);
-  };
-
   // Filtrar NFTs
   const filteredNfts = nfts.filter(nft => {
-    // Pegar atributos usando findAttr
-    const rarity = findAttr(nft, 'Rarity');
-    const foilTrait = findAttr(nft, 'Foil');
+    // Use enriched data directly
+    const rarity = nft.rarity || '';
+    const foilTrait = nft.foil || '';
     const revealed = !isUnrevealed(nft);
 
     // Filtro de revelação
@@ -520,11 +677,11 @@ export default function ProfilePage() {
                 .slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE)
                 .map((nft) => {
                   const tokenId = nft.tokenId;
-                  const power = findAttr(nft, 'Power') || 0;
-                  const rarity = findAttr(nft, 'Rarity') || 'Common';
-                  const wear = findAttr(nft, 'Wear') || '';
-                  const foilValue = findAttr(nft, 'Foil') || '';
-                  const imageUrl = nft.image?.cachedUrl || nft.image?.thumbnailUrl || nft.raw?.metadata?.image || '';
+                  const power = nft.power || 0;
+                  const rarity = nft.rarity || 'Common';
+                  const wear = nft.wear || '';
+                  const foilValue = nft.foil || '';
+                  const imageUrl = nft.imageUrl || '';
                   const openSeaUrl = `https://opensea.io/assets/base/${CONTRACT_ADDRESS}/${tokenId}`;
 
                   const foilEffect = getFoilEffect(foilValue);

@@ -5,13 +5,14 @@ import { Badge as BadgeType } from '@/lib/badges';
 
 interface BadgeProps {
   badge: BadgeType;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export default function Badge({ badge, size = 'md' }: BadgeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
   const sizeClasses = {
+    xs: 'text-[8px] px-1 py-0.5',
     sm: 'text-[10px] px-1.5 py-0.5',
     md: 'text-xs px-2 py-0.5',
     lg: 'text-sm px-3 py-1',
@@ -92,14 +93,14 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
 // Component for displaying multiple badges
 interface BadgeListProps {
   badges: BadgeType[];
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export function BadgeList({ badges, size = 'md' }: BadgeListProps) {
   if (badges.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1">
       {badges.map((badge) => (
         <Badge key={badge.type} badge={badge} size={size} />
       ))}
