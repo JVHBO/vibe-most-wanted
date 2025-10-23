@@ -5,15 +5,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Vintage casino theme
+        // Vintage casino theme - refined
         'vintage': {
-          black: '#0a0a0a',
-          charcoal: '#1a1a1a',
+          black: '#0C0C0C',
+          charcoal: '#1A1A1A',
+          'deep-black': '#121212',
           gold: '#FFD700',
-          'gold-dark': '#B8860B',
+          'gold-dark': '#C9A227',
+          'gold-metallic': '#B8860B',
           silver: '#C0C0C0',
           'neon-blue': '#00C6FF',
           wine: '#4a1a1a',
+          'felt-green': '#0d3d2d',
           purple: '#2d1b4e',
           'burnt-gold': '#8B7355',
           ice: '#F5F5F5',

@@ -519,26 +519,26 @@ const translations = {
     connectTitle: 'Connect your wallet',
     connectDescription: 'Connect to load your revealed cards from this contract and build your hand.',
     tutorialTitle: 'How to Play Vibe Most Wanted',
-    howToPlay: '🎮 Game Rules',
-    howToPlayDesc: '1. You need AT LEAST 5 CARDS to play\n2. Select exactly 5 cards from your collection\n3. Click "Play Hand" to start the battle\n4. Dealer picks 5 random cards from your remaining collection\n5. Highest total power WINS!',
-    needCards: '🛒 Need Cards?',
-    needCardsDesc: 'Buy cards on Vibe Market to start playing! Minimum required: 5 cards.',
-    buyCards: '💳 Buy Cards',
-    powerCalc: '⚡ How Power Works',
-    powerCalcDesc: 'Each card has power calculated by: Rarity × Wear × Foil',
-    rarityBase: '• Rarity (Base)',
+    howToPlay: 'Game Rules',
+    howToPlayDesc: '1. You need AT LEAST 5 CARDS to play\n2. Select exactly 5 cards to build your hand\n3. Click "Play Hand" to enter the battle arena\n4. The dealer will randomly draw 5 cards from your remaining collection\n5. Highest total power WINS! May the best hand prevail!',
+    needCards: 'Need Cards?',
+    needCardsDesc: 'Start your journey in the arena! Buy cards on Vibe Market to build your ultimate deck. Minimum 5 cards required to play.',
+    buyCards: 'Buy Cards on Vibe Market',
+    powerCalc: 'How Power Works',
+    powerCalcDesc: 'Every card has a power level calculated by multiplying three attributes: Rarity × Wear × Foil',
+    rarityBase: '• Rarity (Base Power)',
     rarityValues: 'Common=1 • Uncommon=8 • Rare=15 • Epic=30 • Legendary=60 • Mythic=100',
-    wearMultiplier: '• Wear (Multiplier)',
-    wearValues: 'Pristine=×1.4 • Mint=×1.2 • Others=×1.0',
-    foilMultiplier: '• Foil (Multiplier)',
+    wearMultiplier: '• Wear Condition (Multiplier)',
+    wearValues: 'Pristine=×1.4 • Mint=×1.2 • Normal & Others=×1.0',
+    foilMultiplier: '• Foil Type (Multiplier)',
     foilValues: '🌟 Prize Foil=×15 • ✨ Standard Foil=×2.5 • Normal=×1',
-    prizeFoil: '🌟 Prize Foil: holographic effect + power ×15!',
-    standardFoil: '✨ Standard Foil: soft effect + power ×2.5',
-    powerExamples: '📊 Examples',
-    exampleCommon: '• Common normal = 1 power',
-    exampleRare: '• Rare + Standard Foil = 38 power',
-    exampleLegendary: '• Legendary + Mint = 72 power',
-    exampleMythic: '• Mythic + Prize Foil = 1500 power! 🔥',
+    prizeFoil: 'Prize Foil: Ultra-rare holographic effect with ×15 power boost!',
+    standardFoil: 'Standard Foil: Shiny finish with ×2.5 power boost',
+    powerExamples: 'Power Examples',
+    exampleCommon: 'Common (normal) = 1 × 1 × 1 = 1 power',
+    exampleRare: 'Rare + Standard Foil = 15 × 1 × 2.5 = 38 power',
+    exampleLegendary: 'Legendary + Mint = 60 × 1.2 × 1 = 72 power',
+    exampleMythic: 'Mythic + Prize Foil = 100 × 1 × 15 = 1,500 power! 🔥',
     victoryPrize: 'This is your prize! 😏',
     defeatPrize: 'This is your prize! 😅',
     buyCardsExternal: '🛒 Buy Cards on Vibe Market',
@@ -1043,6 +1043,35 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           animation: goldGlow 2s ease-in-out infinite;
         }
 
+        @keyframes cardReflection {
+          0% {
+            transform: translateX(-200%) translateY(-200%) rotate(45deg);
+            opacity: 0;
+          }
+          50% {
+            opacity: 0.3;
+          }
+          100% {
+            transform: translateX(200%) translateY(200%) rotate(45deg);
+            opacity: 0;
+          }
+        }
+
+        .card-reflection {
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+          pointer-events: none;
+          opacity: 0;
+        }
+
+        .group:hover .card-reflection {
+          animation: cardReflection 1.5s ease-in-out;
+        }
+
         @keyframes rainbowShine {
           0% {
             background-position: -200% center;
@@ -1123,13 +1152,16 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
       `}</style>
       
-      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick}>
+      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick} style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}>
         <div className={`relative overflow-hidden rounded-xl ${
           selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
-          'ring-2 ring-gray-700 hover:ring-gray-500'
-        } ${(nft.rarity || '').toLowerCase().includes('legend') || (nft.rarity || '').toLowerCase().includes('mythic') ? 'legendary-card' : ''}`}>
-          <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-gray-900 pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
-          
+          'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
+        } ${(nft.rarity || '').toLowerCase().includes('legend') || (nft.rarity || '').toLowerCase().includes('mythic') ? 'legendary-card' : ''}`} style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}}>
+          <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
+
+          {/* Card Reflection on Hover */}
+          <div className="card-reflection"></div>
+
           {foilEffect && (
             <div className={`absolute inset-0 ${foilEffect}`}></div>
           )}
@@ -1910,7 +1942,7 @@ export default function TCGPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-vintage-black text-vintage-ice p-4 lg:p-6">
+    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6">
       {showWinPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]" onClick={() => setShowWinPopup(false)}>
           <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
@@ -2798,102 +2830,128 @@ export default function TCGPage() {
       )}
 
       {showTutorial && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-2xl border border-vintage-gold max-w-2xl max-h-[90vh] overflow-y-auto p-8">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)]">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-bold text-vintage-neon-blue">{t('tutorialTitle')}</h2>
-              <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-white text-2xl">✕</button>
+              <h2 className="text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
+              <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-2xl transition">✕</button>
             </div>
 
-            <div className="space-y-6 text-gray-300">
+            <div className="space-y-6 text-vintage-ice">
               {/* Precisa de Cartas? */}
-              <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 p-5 rounded-xl border-2 border-vintage-gold/50 animate-pulse">
-                <h3 className="text-xl font-bold text-green-400 mb-2">{t('needCards')}</h3>
-                <p className="mb-4">{t('needCardsDesc')}</p>
-                <a
-                  href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold hover:shadow-xl hover:shadow-green-500/50 transition-all hover:scale-105"
-                >
-                  {t('buyCards')} 🛒
-                </a>
+              <div className="relative p-1 rounded-xl" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.4)', animation: 'pulse 2s ease-in-out infinite'}}>
+                <div className="bg-vintage-black/90 p-5 rounded-lg">
+                  <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
+                    <span className="text-2xl">🛒</span> {t('needCards')}
+                  </h3>
+                  <p className="mb-4 text-vintage-burnt-gold">{t('needCardsDesc')}</p>
+                  <a
+                    href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-modern font-bold transition-all hover:scale-105"
+                    style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}
+                  >
+                    {t('buyCards')} 🛒
+                  </a>
+                </div>
               </div>
 
               {/* Como Jogar */}
-              <div>
-                <h3 className="text-xl font-bold text-yellow-400 mb-3">{t('howToPlay')}</h3>
-                <div className="bg-gray-800/50 p-4 rounded-lg">
-                  <p className="whitespace-pre-line text-sm leading-relaxed">{t('howToPlayDesc')}</p>
+              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
+                <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                  <span className="text-2xl">🎮</span> {t('howToPlay')}
+                </h3>
+                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('howToPlayDesc')}</p>
                 </div>
               </div>
 
               {/* Como o Poder Funciona */}
-              <div>
-                <h3 className="text-xl font-bold text-yellow-400 mb-2">{t('powerCalc')}</h3>
-                <p className="mb-3 text-sm">{t('powerCalcDesc')}</p>
-                <div className="bg-gray-800/50 p-4 rounded-lg space-y-3 text-sm">
+              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
+                <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
+                  <span className="text-2xl">⚡</span> {t('powerCalc')}
+                </h3>
+                <p className="mb-3 text-sm text-vintage-burnt-gold">{t('powerCalcDesc')}</p>
+                <div className="bg-vintage-black/50 p-4 rounded-lg space-y-3 text-sm border border-vintage-gold/20">
                   <div>
-                    <p className="text-vintage-neon-blue font-bold">{t('rarityBase')}</p>
-                    <p className="ml-4 text-vintage-burnt-gold text-xs">{t('rarityValues')}</p>
+                    <p className="text-vintage-gold font-bold font-modern">{t('rarityBase')}</p>
+                    <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('rarityValues')}</p>
                   </div>
                   <div>
-                    <p className="text-vintage-neon-blue font-bold">{t('wearMultiplier')}</p>
-                    <p className="ml-4 text-vintage-burnt-gold text-xs">{t('wearValues')}</p>
+                    <p className="text-vintage-gold font-bold font-modern">{t('wearMultiplier')}</p>
+                    <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('wearValues')}</p>
                   </div>
                   <div>
-                    <p className="text-vintage-neon-blue font-bold">{t('foilMultiplier')}</p>
-                    <p className="ml-4 text-vintage-burnt-gold text-xs">{t('foilValues')}</p>
+                    <p className="text-vintage-gold font-bold font-modern">{t('foilMultiplier')}</p>
+                    <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('foilValues')}</p>
                   </div>
                 </div>
               </div>
 
               {/* Foil Types */}
-              <div>
-                <div className="bg-gray-800/50 p-4 rounded-lg space-y-2 text-sm">
-                  <p className="text-yellow-300 font-bold">{t('prizeFoil')}</p>
-                  <p className="text-blue-300 font-bold">{t('standardFoil')}</p>
+              <div className="bg-vintage-felt-green/20 p-4 rounded-xl border border-vintage-gold/30">
+                <div className="space-y-2 text-sm">
+                  <p className="text-vintage-gold font-bold font-modern flex items-center gap-2">
+                    <span className="text-xl">🌟</span> {t('prizeFoil')}
+                  </p>
+                  <p className="text-vintage-neon-blue font-bold font-modern flex items-center gap-2">
+                    <span className="text-xl">✨</span> {t('standardFoil')}
+                  </p>
                 </div>
               </div>
 
               {/* Exemplos */}
-              <div>
-                <h3 className="text-xl font-bold text-yellow-400 mb-2">{t('powerExamples')}</h3>
-                <div className="bg-gray-800/50 p-4 rounded-lg space-y-1 text-sm">
-                  <p>{t('exampleCommon')}</p>
-                  <p>{t('exampleRare')}</p>
-                  <p>{t('exampleLegendary')}</p>
-                  <p className="text-vintage-neon-blue font-bold text-base">{t('exampleMythic')}</p>
+              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
+                <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                  <span className="text-2xl">📊</span> {t('powerExamples')}
+                </h3>
+                <div className="bg-vintage-black/50 p-4 rounded-lg space-y-2 text-sm border border-vintage-gold/20">
+                  <p className="text-vintage-ice">• {t('exampleCommon')}</p>
+                  <p className="text-vintage-ice">• {t('exampleRare')}</p>
+                  <p className="text-vintage-ice">• {t('exampleLegendary')}</p>
+                  <p className="text-vintage-gold font-bold text-base flex items-center gap-2">
+                    <span>•</span> {t('exampleMythic')}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <button onClick={() => setShowTutorial(false)} className="w-full mt-6 px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold hover:shadow-gold-lg transition text-lg">
-              {t('understood')}
-            </button>
+            {/* Illuminated Button */}
+            <div className="relative mt-6 p-1 rounded-xl" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)'}}>
+              <button
+                onClick={() => setShowTutorial(false)}
+                className="w-full px-6 py-4 rounded-lg font-display font-bold text-lg transition-all hover:scale-[1.02]"
+                style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)'}}
+              >
+                {t('understood')} ♠
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <header className="flex flex-col items-center gap-6 mb-8 p-6 bg-vintage-charcoal border-2 border-vintage-gold rounded-lg shadow-gold">
-        <div className="text-center">
-          <h1 className="text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-2 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">
+      <header className="flex flex-col items-center gap-6 mb-8 p-6 bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)]">
+        <div className="text-center relative">
+          <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
+          <h1 className="relative text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-2" style={{textShadow: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'}}>
             VIBE MOST WANTED
           </h1>
-          <p className="text-sm text-vintage-burnt-gold font-modern tracking-[0.3em] uppercase">{t('cardBattle')}</p>
+          <p className="relative text-sm text-vintage-burnt-gold font-modern tracking-[0.3em] uppercase">{t('cardBattle')}</p>
         </div>
 
         <a
           href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-8 py-3 bg-vintage-black border-2 border-vintage-gold text-vintage-gold font-modern font-semibold rounded-lg hover:bg-vintage-gold hover:text-vintage-black transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex items-center gap-2"
+          className="px-8 py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex items-center gap-2"
+          style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
         >
           <span className="text-lg">◆</span> {t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}
         </a>
 
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowTutorial(true)} className="bg-vintage-charcoal border border-vintage-gold text-vintage-gold px-4 py-2 rounded-lg hover:bg-vintage-gold hover:text-vintage-black transition font-medium" title={t('tutorial')}>
+          <button onClick={() => setShowTutorial(true)} className="bg-vintage-deep-black border border-vintage-gold/50 text-vintage-gold px-4 py-2 rounded-lg hover:bg-vintage-gold/10 transition font-medium" title={t('tutorial')}>
             <span className="font-bold">?</span>
           </button>
         </div>
@@ -3083,9 +3141,9 @@ export default function TCGPage() {
             </div>
 
             <div>
-              <div className="bg-gradient-to-br from-vintage-wine to-vintage-purple rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,.1) 10px, rgba(0,0,0,.1) 20px)'}}>
+              <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{boxShadow: '0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5)'}}>
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-display font-bold text-vintage-gold">
+                  <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
                     {t('yourHand')}
                   </h2>
                   <div className="flex gap-2">
@@ -3102,36 +3160,48 @@ export default function TCGPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-5 gap-2 mb-4 min-h-[120px] bg-vintage-black/20 p-3 rounded-xl border border-vintage-gold/30">
-                  {selectedCards.map((c, i) => (
-                    <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
-                      <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                      <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
-                    </div>
-                  ))}
-                  {[...Array(HAND_SIZE_CONST - selectedCards.length)].map((_, i) => (
-                    <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50">
-                      <span className="text-2xl font-bold">+</span>
-                    </div>
-                  ))}
+                {/* Felt Table Surface */}
+                <div className="bg-vintage-felt-green p-4 rounded-xl border-2 border-vintage-gold/40 mb-4" style={{boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.6)', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,.05) 2px, rgba(0,0,0,.05) 4px)'}}>
+                  <div className="grid grid-cols-5 gap-2 min-h-[120px]">
+                    {selectedCards.map((c, i) => (
+                      <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
+                        <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
+                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
+                      </div>
+                    ))}
+                    {[...Array(HAND_SIZE_CONST - selectedCards.length)].map((_, i) => (
+                      <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
+                        <span className="text-2xl font-bold">+</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                
-                <button
-                  id="battle-button"
-                  onClick={() => {
-                    if (soundEnabled) AudioManager.buttonClick();
-                    setGameMode(null);
-                    setPvpMode('menu');
-                  }}
-                  disabled={selectedCards.length !== HAND_SIZE_CONST || isBattling}
-                  className={`w-full px-6 py-4 rounded-xl shadow-lg text-sm font-display font-bold transition-all uppercase tracking-wide ${
-                    selectedCards.length === HAND_SIZE_CONST && !isBattling
-                      ? 'bg-vintage-gold text-vintage-black hover:shadow-gold-lg'
-                      : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                  }`}
-                >
-                  {t('playHand')} ({selectedCards.length}/{HAND_SIZE_CONST})
-                </button>
+
+                {/* Illuminated Casino Panel for Play Hand Button */}
+                <div className="relative p-1 rounded-xl mb-4" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(255, 215, 0, 0.3)'}}>
+                  <div className="bg-vintage-black/90 p-4 rounded-lg">
+                    <button
+                      id="battle-button"
+                      onClick={() => {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        setGameMode(null);
+                        setPvpMode('menu');
+                      }}
+                      disabled={selectedCards.length !== HAND_SIZE_CONST || isBattling}
+                      className={`w-full px-6 py-4 rounded-xl shadow-lg text-lg font-display font-bold transition-all uppercase tracking-wide ${
+                        selectedCards.length === HAND_SIZE_CONST && !isBattling
+                          ? 'text-vintage-black hover:shadow-gold-lg'
+                          : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                      }`}
+                      style={selectedCards.length === HAND_SIZE_CONST && !isBattling ? {
+                        background: 'linear-gradient(145deg, #FFD700, #C9A227)',
+                        boxShadow: '0 0 20px rgba(255, 215, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)'
+                      } : {}}
+                    >
+                      {t('playHand')} ({selectedCards.length}/{HAND_SIZE_CONST})
+                    </button>
+                  </div>
+                </div>
 
                 <div className="mt-6 space-y-4">
                   {dealerCards.length > 0 && !showBattleScreen && (
