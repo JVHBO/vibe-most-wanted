@@ -593,6 +593,52 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Defense Deck */}
+      {profile.defenseDeck && profile.defenseDeck.length === 5 && (
+        <div className="max-w-6xl mx-auto mb-8">
+          <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
+            <span className="text-3xl">🛡️</span> Defense Deck
+          </h2>
+          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold">
+            <p className="text-sm text-vintage-burnt-gold mb-4 font-modern">
+              These cards will defend when this player is attacked
+            </p>
+            <div className="grid grid-cols-5 gap-4">
+              {profile.defenseDeck.map((tokenId, i) => {
+                const card = nfts.find(nft => nft.tokenId === tokenId);
+                if (!card) {
+                  return (
+                    <div key={i} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center bg-vintage-black/50">
+                      <span className="text-vintage-gold/50 text-xs">#{tokenId}</span>
+                    </div>
+                  );
+                }
+                return (
+                  <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
+                    <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
+                      {card.power}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-vintage-black/90 to-transparent p-2">
+                      <p className="text-xs text-vintage-gold font-modern">#{card.tokenId}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 text-center">
+              <p className="text-xs text-vintage-burnt-gold">Total Defense Power</p>
+              <p className="text-3xl font-bold text-vintage-gold">
+                {profile.defenseDeck.reduce((sum, tokenId) => {
+                  const card = nfts.find(nft => nft.tokenId === tokenId);
+                  return sum + (card?.power || 0);
+                }, 0)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* NFT Cards Collection */}
       <div className="max-w-6xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-4">
