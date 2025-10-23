@@ -3014,8 +3014,20 @@ export default function TCGPage() {
                     </button>
                   )}
 
-                  <button onClick={loadNFTs} disabled={status === 'fetching'} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg text-sm">🔄</button>
-                  <button onClick={disconnectWallet} className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm border border-red-600/50">{t('disconnect')}</button>
+                  <button
+                    onClick={loadNFTs}
+                    disabled={status === 'fetching'}
+                    className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
+                    title="Refresh cards and metadata"
+                  >
+                    🔄 Refresh
+                  </button>
+                  <button
+                    onClick={disconnectWallet}
+                    className="px-4 py-2 bg-vintage-charcoal hover:bg-red-500/20 text-red-400 rounded-lg text-sm border border-red-500/50 font-modern font-semibold transition-all"
+                  >
+                    {t('disconnect')}
+                  </button>
                 </div>
               </div>
             </div>
