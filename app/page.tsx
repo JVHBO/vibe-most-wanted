@@ -1133,7 +1133,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
       `}</style>
       
-      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick}>
+      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : ''} cursor-pointer`} onClick={handleClick}>
         <div className={`relative overflow-hidden rounded-xl ${
           selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
           'ring-2 ring-gray-700 hover:ring-gray-500'
