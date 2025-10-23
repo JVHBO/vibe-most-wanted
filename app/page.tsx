@@ -1776,9 +1776,11 @@ export default function TCGPage() {
   useEffect(() => {
     if (address && userProfile && nfts.length > 0) {
       const totalPower = nfts.reduce((sum, nft) => sum + (nft.power || 0), 0);
+      const openedCards = nfts.filter(nft => !isUnrevealed(nft)).length;
+      const unopenedCards = nfts.filter(nft => isUnrevealed(nft)).length;
 
       // Update stats and reload profile to show updated values
-      ProfileService.updateStats(address, nfts.length, totalPower)
+      ProfileService.updateStats(address, nfts.length, openedCards, unopenedCards, totalPower)
         .then(() => {
           // Reload profile to get updated stats
           return ProfileService.getProfile(address);
@@ -3111,7 +3113,8 @@ export default function TCGPage() {
                         <tr className="border-b border-gray-700">
                           <th className="text-left p-4 text-gray-400 font-semibold">{t('rank')}</th>
                           <th className="text-left p-4 text-gray-400 font-semibold">{t('player')}</th>
-                          <th className="text-right p-4 text-gray-400 font-semibold">{t('cards')}</th>
+                          <th className="text-right p-4 text-gray-400 font-semibold">🃏 Opened</th>
+                          <th className="text-right p-4 text-gray-400 font-semibold">📦 Packs</th>
                           <th className="text-right p-4 text-gray-400 font-semibold">{t('power')}</th>
                           <th className="text-right p-4 text-gray-400 font-semibold">{t('wins')}</th>
                           <th className="text-right p-4 text-gray-400 font-semibold">{t('losses')}</th>
@@ -3133,14 +3136,15 @@ export default function TCGPage() {
                             <td className="p-4">
                               <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
                                 <div>
-                                  <p className="font-bold text-cyan-400 hover:text-cyan-300 transition-colors">@{profile.username}</p>
+                                  <p className="font-bold text-cyan-400 hover:text-cyan-300 transition-colors">{profile.username}</p>
                                   <p className="text-xs text-gray-400 font-mono">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
                                 </div>
                               </Link>
                             </td>
-                            <td className="p-4 text-right text-purple-400 font-bold">{profile.stats.totalCards}</td>
+                            <td className="p-4 text-right text-green-400 font-bold">{profile.stats.openedCards || 0}</td>
+                            <td className="p-4 text-right text-purple-400 font-bold">{profile.stats.unopenedCards || 0}</td>
                             <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
-                            <td className="p-4 text-right text-green-400 font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
+                            <td className="p-4 text-right text-cyan-400 font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
                             <td className="p-4 text-right text-red-400 font-semibold">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
                           </tr>
                         ))}
@@ -3176,7 +3180,8 @@ export default function TCGPage() {
                       maxLength={20}
                       className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-purple-500"
                     />
-                    <p className="text-xs text-gray-500 mt-2">💡 Você pode adicionar seu Twitter depois na aba de perfil</p>
+                    <p className="text-xs text-yellow-400 mt-2">⚠️ Don't include @ symbol - just enter your username</p>
+                    <p className="text-xs text-gray-500 mt-1">💡 Você pode adicionar seu Twitter depois na aba de perfil</p>
                   </div>
 
                   <button
