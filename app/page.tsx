@@ -3201,7 +3201,7 @@ export default function TCGPage() {
                               </Link>
                             </td>
                             <td className="p-4 text-right text-green-400 font-bold">{profile.stats.openedCards || 0}</td>
-                            <td className="p-4 text-right text-purple-400 font-bold">{profile.stats.unopenedCards || 0}</td>
+                            <td className="p-4 text-right text-purple-400 font-bold">{(profile.stats.openedCards || 0) + (profile.stats.unopenedCards || 0)}</td>
                             <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
                             <td className="p-4 text-right text-cyan-400 font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
                             <td className="p-4 text-right text-red-400 font-semibold">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
