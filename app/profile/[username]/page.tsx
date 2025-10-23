@@ -5,6 +5,33 @@ import { useParams, useRouter } from 'next/navigation';
 import { ProfileService, UserProfile, MatchHistory } from '@/lib/firebase';
 import sdk from '@farcaster/miniapp-sdk';
 
+const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+const CHAIN = process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+
+async function fetchNFTs(owner: string): Promise<any[]> {
+  if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
+  if (!CHAIN) throw new Error("Chain não configurada");
+  if (!CONTRACT_ADDRESS) throw new Error("Contract address não configurado");
+
+  let allNfts: any[] = [];
+  let pageKey: string | undefined = undefined;
+  let pageCount = 0;
+  const maxPages = 20;
+
+  do {
+    pageCount++;
+    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${CONTRACT_ADDRESS}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`API falhou: ${res.status}`);
+    const json = await res.json();
+    allNfts = allNfts.concat(json.ownedNfts || []);
+    pageKey = json.pageKey;
+  } while (pageKey && pageCount < maxPages);
+
+  return allNfts;
+}
+
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -15,6 +42,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUserAddress, setCurrentUserAddress] = useState<string | null>(null);
+  const [nfts, setNfts] = useState<any[]>([]);
+  const [loadingNFTs, setLoadingNFTs] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
 
   // Load current user's address
   useEffect(() => {
@@ -82,6 +112,16 @@ export default function ProfilePage() {
         const history = await ProfileService.getMatchHistory(address, 50);
         setMatchHistory(history);
 
+        // Carrega NFTs do jogador
+        setLoadingNFTs(true);
+        try {
+          const playerNFTs = await fetchNFTs(address);
+          setNfts(playerNFTs);
+        } catch (err) {
+          console.error('Error loading NFTs:', err);
+        }
+        setLoadingNFTs(false);
+
         setLoading(false);
       } catch (err: any) {
         console.error('Error loading profile:', err);
@@ -127,6 +167,18 @@ export default function ProfilePage() {
   const totalMatches = totalWins + totalLosses;
   const winRate = totalMatches > 0 ? ((totalWins / totalMatches) * 100).toFixed(1) : '0';
 
+  const copyAddress = async () => {
+    if (profile?.address) {
+      try {
+        await navigator.clipboard.writeText(profile.address);
+        setCopiedAddress(true);
+        setTimeout(() => setCopiedAddress(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy address:', err);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 lg:p-8">
       {/* Header */}
@@ -153,9 +205,18 @@ export default function ProfilePage() {
               <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                 {profile.username}
               </h1>
-              <p className="text-gray-400 font-mono text-sm mb-2">
-                {profile.address.slice(0, 8)}...{profile.address.slice(-8)}
-              </p>
+              <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                <p className="text-gray-400 font-mono text-sm">
+                  {profile.address}
+                </p>
+                <button
+                  onClick={copyAddress}
+                  className="text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-gray-700/50"
+                  title="Copy wallet address"
+                >
+                  {copiedAddress ? '✓' : '📋'}
+                </button>
+              </div>
               {profile.twitter && (
                 <a
                   href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
@@ -224,6 +285,63 @@ export default function ProfilePage() {
             />
           </div>
         </div>
+      </div>
+
+      {/* NFT Cards Collection */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          🃏 Card Collection ({nfts.length})
+        </h2>
+        {loadingNFTs ? (
+          <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mb-4"></div>
+            <p className="text-gray-400">Loading cards...</p>
+          </div>
+        ) : nfts.length === 0 ? (
+          <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
+            <p className="text-gray-400">No cards in collection</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {nfts.map((nft) => {
+              const tokenId = nft.tokenId;
+              const power = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Power')?.value || 0;
+              const rarity = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Rarity')?.value || 'Common';
+              const imageUrl = nft.image?.cachedUrl || nft.image?.thumbnailUrl || nft.raw?.metadata?.image || '';
+
+              const getRarityColor = (r: string) => {
+                const rLower = (r || '').toLowerCase();
+                if (rLower.includes('legend')) return 'from-orange-500 to-yellow-400';
+                if (rLower.includes('epic')) return 'from-purple-500 to-pink-500';
+                if (rLower.includes('rare')) return 'from-blue-500 to-cyan-400';
+                return 'from-gray-600 to-gray-500';
+              };
+
+              return (
+                <div key={tokenId} className="relative group hover:scale-105 transition-all duration-300">
+                  <div className="relative overflow-hidden rounded-xl ring-2 ring-gray-700 hover:ring-purple-500 transition-all">
+                    <img
+                      src={imageUrl}
+                      alt={`Card #${tokenId}`}
+                      className="w-full aspect-[2/3] object-cover bg-gray-900"
+                      loading="lazy"
+                    />
+                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3">
+                      <div className="flex items-center justify-between">
+                        <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(rarity)} bg-clip-text text-transparent`}>
+                          ⚡ {power}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent p-2">
+                      <p className="text-xs text-gray-300 font-mono text-center">#{tokenId}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Match History */}

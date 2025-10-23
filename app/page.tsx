@@ -33,6 +33,7 @@ const AudioManager = {
   musicGain: null as GainNode | null,
   backgroundMusic: null as HTMLAudioElement | null,
   backgroundSource: null as AudioBufferSourceNode | null,
+  currentVolume: 0.2, // Volume padrão para música ambiente (20%)
   async init() {
     if (typeof window === 'undefined') return;
     if (!this.context) {
@@ -46,6 +47,12 @@ const AudioManager = {
     }
     if (this.context && this.context.state === 'suspended') {
       await this.context.resume();
+    }
+  },
+  setVolume(volume: number) {
+    this.currentVolume = Math.max(0, Math.min(1, volume)); // Clamp entre 0 e 1
+    if (this.musicGain) {
+      this.musicGain.gain.value = this.currentVolume;
     }
   },
   async playTone(freq: number, dur: number, vol: number = 0.3) {
@@ -86,12 +93,12 @@ const AudioManager = {
       this.backgroundSource.loopEnd = audioBuffer.duration;
 
       // Cria ganho para controlar volume
-      const gainNode = this.context.createGain();
-      gainNode.gain.value = 0.3; // Volume baixo
+      this.musicGain = this.context.createGain();
+      this.musicGain.gain.value = this.currentVolume; // Usa volume configurado
 
       // Conecta: source -> gain -> destination
-      this.backgroundSource.connect(gainNode);
-      gainNode.connect(this.context.destination);
+      this.backgroundSource.connect(this.musicGain);
+      this.musicGain.connect(this.context.destination);
 
       this.backgroundSource.start(0);
     } catch (e) {
@@ -1044,6 +1051,7 @@ export default function TCGPage() {
   const [lang, setLang] = useState<string>('en');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
+  const [musicVolume, setMusicVolume] = useState<number>(0.2); // Volume padrão 20%
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [address, setAddress] = useState<string | null>(null);
@@ -1100,6 +1108,11 @@ export default function TCGPage() {
       AudioManager.stopBackgroundMusic();
     };
   }, [musicEnabled]);
+
+  // Atualiza volume da música quando musicVolume muda
+  useEffect(() => {
+    AudioManager.setVolume(musicVolume);
+  }, [musicVolume]);
 
   // Farcaster SDK - Informa que o app está pronto
   useEffect(() => {
@@ -1589,7 +1602,17 @@ export default function TCGPage() {
                 }
 
                 // Fecha a sala PVP e volta ao menu após ver o resultado
-                setTimeout(() => {
+                setTimeout(async () => {
+                  // Deleta a sala do Firebase se for o host
+                  if (currentRoom && roomCode && address === currentRoom.host.address) {
+                    try {
+                      await PvPService.leaveRoom(roomCode, address);
+                      console.log('✅ Room deleted after battle ended');
+                    } catch (err) {
+                      console.error('❌ Error deleting room:', err);
+                    }
+                  }
+
                   setPvpMode(null);
                   setGameMode(null);
                   setRoomCode('');
@@ -1841,7 +1864,7 @@ export default function TCGPage() {
             <div className="space-y-6">
               {/* Music Toggle */}
               <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">🎵</span>
                     <div>
@@ -1856,6 +1879,22 @@ export default function TCGPage() {
                     <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${musicEnabled ? 'translate-x-8' : 'translate-x-0'}`} />
                   </button>
                 </div>
+                {musicEnabled && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-400">Volume</span>
+                      <span className="text-sm text-purple-400 font-bold">{Math.round(musicVolume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={musicVolume * 100}
+                      onChange={(e) => setMusicVolume(Number(e.target.value) / 100)}
+                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Language Selector */}
