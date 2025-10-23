@@ -1650,7 +1650,7 @@ export default function TCGPage() {
           result: matchResult,
           playerPower: playerTotal,
           opponentPower: dealerTotal,
-          opponentName: 'AI',
+          opponentName: 'JC',
           type: 'pve'
         });
 
@@ -3671,8 +3671,8 @@ export default function TCGPage() {
                         return;
                       }
                       if (soundEnabled) AudioManager.buttonClick();
-                      setGameMode(null);
-                      setPvpMode('menu');
+                      setGameMode('pvp');
+                      setPvpMode('pvpMenu');
                     }}
                     disabled={!userProfile}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
