@@ -517,10 +517,10 @@ export default function ProfilePage() {
                 </p>
                 <button
                   onClick={copyAddress}
-                  className="text-vintage-gold hover:text-vintage-ice transition-colors p-1 rounded hover:bg-vintage-gold/20"
+                  className="px-2 py-1 bg-vintage-charcoal hover:bg-vintage-gold/20 border border-vintage-gold/50 rounded text-vintage-gold hover:text-vintage-ice transition-all text-xs font-modern font-semibold"
                   title="Copy wallet address"
                 >
-                  {copiedAddress ? '✓' : '□'}
+                  {copiedAddress ? '✓ Copied' : '📋 Copy'}
                 </button>
               </div>
               {profile.twitter && (
