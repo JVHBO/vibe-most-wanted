@@ -1615,9 +1615,11 @@ export default function TCGPage() {
     if (pvpMode === 'inRoom' && roomCode) {
       console.log('🎧 Firebase listener started for room:', roomCode);
       let battleStarted = false; // Flag para evitar executar batalha múltiplas vezes
+      let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
 
       const unsubscribe = PvPService.watchRoom(roomCode, (room) => {
         if (room) {
+          hasSeenRoom = true; // Marca que vimos a sala
           console.log('🔄 Room update received:', {
             hostReady: room.host.ready,
             guestReady: room.guest?.ready,
@@ -1743,10 +1745,16 @@ export default function TCGPage() {
             }, 3500);
           }
         } else {
-          // Sala foi deletada
-          setPvpMode('pvpMenu');
-          setRoomCode('');
-          setCurrentRoom(null);
+          // Sala não existe - só volta ao menu se já vimos a sala antes (foi deletada)
+          // Se nunca vimos, pode estar sendo criada ainda (race condition)
+          if (hasSeenRoom) {
+            console.log('⚠️ Sala foi deletada, voltando ao menu');
+            setPvpMode('pvpMenu');
+            setRoomCode('');
+            setCurrentRoom(null);
+          } else {
+            console.log('⏳ Aguardando sala ser criada...');
+          }
         }
       });
 
