@@ -1793,8 +1793,10 @@ export default function TCGPage() {
         console.log('🛑 Stopping matchmaking listener and heartbeat');
         unsubscribe();
         clearInterval(heartbeatInterval);
-        // Remove do matchmaking quando sair da tela de busca
-        PvPService.cancelMatchmaking(address).catch(err => console.error('Error canceling matchmaking:', err));
+        // Nota: não chamamos cancelMatchmaking aqui porque:
+        // 1. Se entramos em sala, watchMatchmaking já remove (linha 316 do firebase.ts)
+        // 2. Se cancelamos manualmente, o botão Cancel já chama cancelMatchmaking
+        // 3. Entradas antigas são limpadas automaticamente pelo cleanup (30s)
       };
     }
   }, [pvpMode, isSearching, address]);
