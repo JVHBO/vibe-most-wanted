@@ -3365,6 +3365,12 @@ export default function TCGPage() {
                 <div className="mb-4">
                   <button
                     onClick={() => {
+                      // Check if defense deck is set
+                      if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE_CONST) {
+                        alert('You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".');
+                        if (soundEnabled) AudioManager.buttonError();
+                        return;
+                      }
                       if (soundEnabled) AudioManager.buttonClick();
                       setShowPveCardSelection(true);
                       setPveSelectedCards([]);
@@ -3384,6 +3390,12 @@ export default function TCGPage() {
                 <div className="mb-4">
                   <button
                     onClick={() => {
+                      // Check if defense deck is set
+                      if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE_CONST) {
+                        alert('You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".');
+                        if (soundEnabled) AudioManager.buttonError();
+                        return;
+                      }
                       if (soundEnabled) AudioManager.buttonClick();
                       setGameMode(null);
                       setPvpMode('menu');
