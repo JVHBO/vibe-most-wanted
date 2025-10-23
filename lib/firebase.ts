@@ -896,6 +896,33 @@ export class ProfileService {
   }
 
   // Busca leaderboard (otimizado - ainda faz full scan mas é necessário para ranking)
+  // Deleta um perfil
+  static async deleteProfile(address: string): Promise<void> {
+    const normalizedAddress = address.toLowerCase();
+
+    try {
+      // Busca o perfil para pegar o username
+      const profile = await this.getProfile(normalizedAddress);
+
+      if (!profile) {
+        throw new Error('Perfil não encontrado');
+      }
+
+      const username = profile.username.toLowerCase();
+
+      // Remove o perfil
+      await remove(ref(database, `profiles/${normalizedAddress}`));
+
+      // Remove o username mapping
+      await remove(ref(database, `usernames/${username}`));
+
+      console.log(`✅ Profile deleted: ${normalizedAddress} (${username})`);
+    } catch (error: any) {
+      console.error('❌ deleteProfile error:', error);
+      throw new Error(`Erro ao deletar perfil: ${error.message}`);
+    }
+  }
+
   static async getLeaderboard(limit: number = 100): Promise<UserProfile[]> {
     const profilesRef = ref(database, 'profiles');
     const snapshot = await get(profilesRef);
