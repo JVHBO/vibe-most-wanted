@@ -191,6 +191,29 @@ export class PvPService {
         throw new Error('Você não pode entrar na própria sala');
       }
 
+      // Verifica se o guest já está em outra sala (como host ou guest)
+      const roomsRef = ref(database, 'rooms');
+      const allRoomsSnapshot = await withTimeout(
+        get(roomsRef),
+        8000,
+        'Check guest in other rooms'
+      );
+
+      if (allRoomsSnapshot.exists()) {
+        const allRooms = allRoomsSnapshot.val();
+        for (const [roomCode, roomData] of Object.entries(allRooms)) {
+          const r = roomData as GameRoom;
+          // Ignora a sala atual
+          if (roomCode === code) continue;
+
+          // Verifica se guest é host ou guest em outra sala
+          if (r.host.address === guestAddress || r.guest?.address === guestAddress) {
+            console.log(`⚠️ Guest ${guestAddress} already in room ${roomCode}`);
+            throw new Error('Você já está em outra sala');
+          }
+        }
+      }
+
       await withTimeout(
         update(roomRef, {
           guest: {

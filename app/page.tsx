@@ -1785,10 +1785,11 @@ export default function TCGPage() {
       // Heartbeat - atualiza timestamp a cada 10 segundos para manter entrada ativa
       const heartbeatInterval = setInterval(async () => {
         try {
-          const { ref: dbRef, set } = await import('firebase/database');
+          const { ref: dbRef, update } = await import('firebase/database');
           const { getDatabase } = await import('firebase/database');
           const db = getDatabase();
-          await set(dbRef(db, `matchmaking/${address}`), {
+          // Usa update() em vez de set() para NÃO sobrescrever roomCode se existir
+          await update(dbRef(db, `matchmaking/${address}`), {
             timestamp: Date.now()
           });
           console.log('💓 Matchmaking heartbeat sent');
@@ -2405,6 +2406,7 @@ export default function TCGPage() {
             <div className="space-y-4">
               {/* Busca Automática */}
               <button
+                disabled={isSearching}
                 onClick={async () => {
                   if (soundEnabled) AudioManager.buttonSuccess();
                   setPvpMode('autoMatch');
@@ -2424,7 +2426,7 @@ export default function TCGPage() {
                     setPvpMode('pvpMenu');
                   }
                 }}
-                className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-green-500/50 text-white rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105"
+                className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-green-500/50 text-white rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 🔍 {t('autoMatch')}
               </button>
