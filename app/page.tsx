@@ -1042,13 +1042,22 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           75% { transform: rotate(3deg); }
         }
 
-        @keyframes girar {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
+        @keyframes holographicShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        @keyframes prismaticRotate {
+          0% { transform: rotate(0deg) scale(1.5); }
+          100% { transform: rotate(360deg) scale(1.5); }
+        }
+
+        @keyframes lightMove {
+          0%, 100% { transform: translate(-30%, -30%); }
+          25% { transform: translate(30%, -30%); }
+          50% { transform: translate(30%, 30%); }
+          75% { transform: translate(-30%, 30%); }
         }
 
         .prize-foil {
@@ -1061,23 +1070,45 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         .prize-foil::before {
           content: '';
           position: absolute;
-          top: -100%;
-          left: -100%;
-          width: 300%;
-          height: 300%;
+          inset: 0;
+          background: linear-gradient(
+            45deg,
+            #ff0080,
+            #ff8c00,
+            #ffd700,
+            #00ff00,
+            #00ffff,
+            #0080ff,
+            #8000ff,
+            #ff0080
+          );
+          background-size: 300% 300%;
+          animation: holographicShift 3s ease infinite;
+          opacity: 0.7;
+          mix-blend-mode: overlay;
+        }
+
+        .prize-foil::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
           background: conic-gradient(
             from 0deg,
-            transparent 0%,
-            transparent 25%,
-            #ff00ff 35%,
-            #00ffff 45%,
-            #ffff00 55%,
-            #ff00ff 65%,
-            transparent 75%,
-            transparent 100%
+            #ff0080,
+            #ff8c00,
+            #ffd700,
+            #00ff00,
+            #00ffff,
+            #0080ff,
+            #8000ff,
+            #ff0080
           );
-          animation: girar 3s linear infinite;
-          mix-blend-mode: screen;
+          animation: prismaticRotate 10s linear infinite;
+          opacity: 0.5;
+          mix-blend-mode: color-dodge;
         }
         
         .standard-foil {
