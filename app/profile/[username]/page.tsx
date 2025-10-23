@@ -117,10 +117,19 @@ export default function ProfilePage() {
         // Carrega NFTs do jogador
         setLoadingNFTs(true);
         try {
+          console.log('🔍 Fetching NFTs for address:', address);
+          console.log('📊 Config:', {
+            ALCHEMY_API_KEY: ALCHEMY_API_KEY ? '✅ Set' : '❌ Missing',
+            CHAIN,
+            CONTRACT_ADDRESS: CONTRACT_ADDRESS ? '✅ Set' : '❌ Missing'
+          });
           const playerNFTs = await fetchNFTs(address);
+          console.log('✅ NFTs loaded:', playerNFTs.length);
           setNfts(playerNFTs);
-        } catch (err) {
-          console.error('Error loading NFTs:', err);
+        } catch (err: any) {
+          console.error('❌ Error loading NFTs:', err.message || err);
+          // Se falhar, deixa array vazio
+          setNfts([]);
         }
         setLoadingNFTs(false);
 
