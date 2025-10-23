@@ -40,8 +40,8 @@ export const BADGES: Record<BadgeType, Badge> = {
   early_tester: {
     type: 'early_tester',
     label: 'EARLY',
-    description: 'Early Tester - One of the first players',
-    icon: '♦',
+    description: '',
+    icon: '',
     color: 'bg-vintage-neon-blue/20',
     borderColor: 'border-vintage-neon-blue/40',
     textColor: 'text-vintage-neon-blue',
