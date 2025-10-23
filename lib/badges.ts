@@ -3,7 +3,14 @@ export const BADGES_CONFIG = {
   // Developer wallet address
   DEV_WALLET: '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52',
 
-  // Número máximo de early testers (temporariamente alto para incluir todos os perfis existentes)
+  // Early tester wallet addresses (adicione os endereços aqui)
+  EARLY_TESTER_WALLETS: [
+    // Adicione endereços aqui, exemplo:
+    // '0x1234567890123456789012345678901234567890',
+    // '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+  ],
+
+  // Número máximo de early testers por userIndex (fallback)
   MAX_EARLY_TESTERS: 9999,
 };
 
@@ -23,8 +30,8 @@ export const BADGES: Record<BadgeType, Badge> = {
   dev: {
     type: 'dev',
     label: 'DEV',
-    description: 'Developer & Creator of Vibe Most Wanted',
-    icon: '⚡',
+    description: '',
+    icon: '',
     color: 'bg-vintage-gold/20',
     borderColor: 'border-vintage-gold/40',
     textColor: 'text-vintage-gold',
@@ -45,9 +52,16 @@ export function isDev(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.DEV_WALLET.toLowerCase();
 }
 
-// Check if user is an early tester based on registration order
-export function isEarlyTester(userIndex: number): boolean {
-  return userIndex < BADGES_CONFIG.MAX_EARLY_TESTERS;
+// Check if user is an early tester based on registration order or wallet address
+export function isEarlyTester(address: string, userIndex: number): boolean {
+  // Verifica se está na lista de endereços específicos
+  const isInWalletList = BADGES_CONFIG.EARLY_TESTER_WALLETS
+    .some(wallet => wallet.toLowerCase() === address.toLowerCase());
+
+  // Ou se está dentro do limite por userIndex
+  const isInIndexRange = userIndex < BADGES_CONFIG.MAX_EARLY_TESTERS;
+
+  return isInWalletList || isInIndexRange;
 }
 
 // Get badges for a user
@@ -58,7 +72,7 @@ export function getUserBadges(address: string, userIndex: number): Badge[] {
     badges.push(BADGES.dev);
   }
 
-  if (isEarlyTester(userIndex)) {
+  if (isEarlyTester(address, userIndex)) {
     badges.push(BADGES.early_tester);
   }
 
