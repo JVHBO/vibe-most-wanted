@@ -108,6 +108,9 @@ export interface UserProfile {
   createdAt: number;
   lastUpdated: number;
   userIndex?: number; // Ordem de registro do usuário (0, 1, 2, 3...)
+  defenseDeck?: string[]; // 5 tokenIds for defense deck (mandatory after first set)
+  attacksToday?: number; // Number of attacks made today (0-3)
+  lastAttackDate?: string; // UTC date of last attack (YYYY-MM-DD)
   stats: {
     totalCards: number;
     openedCards: number;
@@ -117,17 +120,22 @@ export interface UserProfile {
     pveLosses: number;
     pvpWins: number;
     pvpLosses: number;
+    attackWins?: number; // Wins when attacking others
+    attackLosses?: number; // Losses when attacking others
+    defenseWins?: number; // Wins when defending
+    defenseLosses?: number; // Losses when defending
   };
 }
 
 export interface MatchHistory {
   id: string;
   playerAddress: string;
-  type: 'pve' | 'pvp';
+  type: 'pve' | 'pvp' | 'attack' | 'defense'; // attack = you attacked, defense = you were attacked
   result: 'win' | 'loss' | 'tie';
   playerPower: number;
   opponentPower: number;
-  opponentAddress?: string; // Para PvP
+  opponentAddress?: string; // Para PvP e Attack/Defense
+  opponentUsername?: string; // Para identificar oponente no histórico
   timestamp: number;
   playerCards: any[];
   opponentCards: any[];
@@ -710,6 +718,31 @@ export class ProfileService {
       twitter: cleanTwitter,
       lastUpdated: Date.now()
     });
+  }
+
+  // Salva Defense Deck
+  static async saveDefenseDeck(address: string, tokenIds: string[]): Promise<void> {
+    if (tokenIds.length !== 5) {
+      throw new Error('Defense deck must have exactly 5 cards');
+    }
+
+    const normalizedAddress = address.toLowerCase();
+    await update(ref(database, `profiles/${normalizedAddress}`), {
+      defenseDeck: tokenIds,
+      lastUpdated: Date.now()
+    });
+  }
+
+  // Verifica se tem Defense Deck
+  static async hasDefenseDeck(address: string): Promise<boolean> {
+    const profile = await this.getProfile(address);
+    return !!(profile?.defenseDeck && profile.defenseDeck.length === 5);
+  }
+
+  // Pega Defense Deck
+  static async getDefenseDeck(address: string): Promise<string[] | null> {
+    const profile = await this.getProfile(address);
+    return profile?.defenseDeck || null;
   }
 
   // Atualiza Username
