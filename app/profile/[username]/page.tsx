@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ProfileService, UserProfile, MatchHistory } from '@/lib/firebase';
 import sdk from '@farcaster/miniapp-sdk';
+import { BadgeList } from '@/components/Badge';
+import { getUserBadges } from '@/lib/badges';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -278,15 +280,32 @@ export default function ProfilePage() {
         <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-8 shadow-gold">
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
-            <div className="w-32 h-32 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex items-center justify-center text-6xl font-display font-bold shadow-gold">
-              {profile.username.substring(0, 2).toUpperCase()}
+            <div className="w-32 h-32 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex items-center justify-center text-6xl font-display font-bold shadow-gold overflow-hidden">
+              {profile.twitter ? (
+                <img
+                  src={`https://unavatar.io/twitter/${profile.twitter.replace('@', '')}`}
+                  alt={profile.username}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-6xl font-display font-bold">${profile.username.substring(0, 2).toUpperCase()}</span>`;
+                  }}
+                />
+              ) : (
+                <span>{profile.username.substring(0, 2).toUpperCase()}</span>
+              )}
             </div>
 
             {/* Profile Info */}
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-4xl md:text-5xl font-display font-bold mb-2 text-vintage-gold">
-                {profile.username}
-              </h1>
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-2">
+                <h1 className="text-4xl md:text-5xl font-display font-bold text-vintage-gold">
+                  {profile.username}
+                </h1>
+                <div className="flex items-center gap-2">
+                  <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="md" />
+                </div>
+              </div>
               <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
                 <p className="text-vintage-burnt-gold font-mono text-sm">
                   {profile.address}

@@ -107,6 +107,7 @@ export interface UserProfile {
   twitter?: string;
   createdAt: number;
   lastUpdated: number;
+  userIndex?: number; // Ordem de registro do usuário (0, 1, 2, 3...)
   stats: {
     totalCards: number;
     openedCards: number;
@@ -545,6 +546,23 @@ export class ProfileService {
     return Object.values(usernames).includes(username.toLowerCase());
   }
 
+  // Obtém o próximo índice de usuário (para early tester badge)
+  static async getNextUserIndex(): Promise<number> {
+    try {
+      const counterRef = ref(database, 'userCounter');
+      const snapshot = await get(counterRef);
+      const currentCount = snapshot.exists() ? snapshot.val() : 0;
+
+      // Incrementa o contador
+      await set(counterRef, currentCount + 1);
+
+      return currentCount;
+    } catch (error: any) {
+      console.error('❌ getNextUserIndex error:', error);
+      return 9999; // Fallback para um número alto se der erro
+    }
+  }
+
   // Cria um novo perfil
   static async createProfile(address: string, username: string): Promise<void> {
     const normalizedAddress = address.toLowerCase();
@@ -573,12 +591,16 @@ export class ProfileService {
         throw new Error('Username já está em uso');
       }
 
+      // Obtém o próximo índice de usuário (para early tester badge)
+      const userIndex = await this.getNextUserIndex();
+
       // Cria o perfil (sem twitter - será adicionado depois)
       const profile = {
         address: normalizedAddress,
         username,
         createdAt: Date.now(),
         lastUpdated: Date.now(),
+        userIndex,
         stats: {
           totalCards: 0,
           openedCards: 0,

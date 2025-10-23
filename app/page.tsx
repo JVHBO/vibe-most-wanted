@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import Link from "next/link";
 import { PvPService, ProfileService, type GameRoom, type UserProfile, type MatchHistory } from "../lib/firebase";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { BadgeList } from "@/components/Badge";
+import { getUserBadges } from "@/lib/badges";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -2995,7 +2997,10 @@ export default function TCGPage() {
                           {userProfile.username[0].toUpperCase()}
                         </div>
                       )}
-                      <span className="text-sm font-semibold text-white">@{userProfile.username}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">@{userProfile.username}</span>
+                        <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999)} size="sm" />
+                      </div>
                     </Link>
                   ) : (
                     <button
@@ -3300,7 +3305,10 @@ export default function TCGPage() {
                             <td className="p-4">
                               <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
                                 <div>
-                                  <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors">{profile.username}</p>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors">{profile.username}</p>
+                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="sm" />
+                                  </div>
                                   <p className="text-xs text-vintage-burnt-gold font-mono">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
                                 </div>
                               </Link>
