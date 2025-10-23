@@ -48,6 +48,11 @@ export default function ProfilePage() {
   const [currentNFTPage, setCurrentNFTPage] = useState(1);
   const NFT_PER_PAGE = 12;
 
+  // Filtros
+  const [filterRarity, setFilterRarity] = useState<string>('all');
+  const [filterFoil, setFilterFoil] = useState<string>('all');
+  const [filterRevealed, setFilterRevealed] = useState<string>('revealed');
+
   // Load current user's address
   useEffect(() => {
     const initSDK = async () => {
@@ -190,6 +195,38 @@ export default function ProfilePage() {
     }
   };
 
+  // Helper function para verificar se a carta está revelada
+  const isUnrevealed = (nft: any) => {
+    const name = nft.name || nft.raw?.metadata?.name || '';
+    return name.toLowerCase().includes('unrevealed') || name.toLowerCase().includes('pack');
+  };
+
+  // Filtrar NFTs
+  const filteredNfts = nfts.filter(nft => {
+    // Pegar atributos
+    const rarity = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Rarity')?.value || '';
+    const foilTrait = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Foil')?.value || '';
+    const revealed = !isUnrevealed(nft);
+
+    // Filtro de revelação
+    if (filterRevealed === 'revealed' && !revealed) return false;
+    if (filterRevealed === 'unrevealed' && revealed) return false;
+
+    // Filtro de raridade (só aplica em cartas reveladas)
+    if (revealed && filterRarity !== 'all') {
+      if (!rarity.toLowerCase().includes(filterRarity.toLowerCase())) return false;
+    }
+
+    // Filtro de foil (só aplica em cartas reveladas)
+    if (revealed && filterFoil !== 'all') {
+      if (filterFoil === 'none' && foilTrait) return false;
+      if (filterFoil === 'standard' && !foilTrait.toLowerCase().includes('standard')) return false;
+      if (filterFoil === 'prize' && !foilTrait.toLowerCase().includes('prize')) return false;
+    }
+
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 lg:p-8">
       {/* Header */}
@@ -301,8 +338,85 @@ export default function ProfilePage() {
       {/* NFT Cards Collection */}
       <div className="max-w-6xl mx-auto mb-8">
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          🃏 Card Collection ({nfts.length})
+          🃏 Card Collection ({filteredNfts.length} / {nfts.length})
         </h2>
+
+        {/* Filtros */}
+        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Filtro de Revelação */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">📦 Card Status</label>
+              <select
+                value={filterRevealed}
+                onChange={(e) => {
+                  setFilterRevealed(e.target.value);
+                  setCurrentNFTPage(1);
+                }}
+                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="all">All Cards</option>
+                <option value="revealed">Revealed Only</option>
+                <option value="unrevealed">Unopened Packs</option>
+              </select>
+            </div>
+
+            {/* Filtro de Raridade */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">✨ Rarity</label>
+              <select
+                value={filterRarity}
+                onChange={(e) => {
+                  setFilterRarity(e.target.value);
+                  setCurrentNFTPage(1);
+                }}
+                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={filterRevealed === 'unrevealed'}
+              >
+                <option value="all">All Rarities</option>
+                <option value="common">Common</option>
+                <option value="rare">Rare</option>
+                <option value="epic">Epic</option>
+                <option value="legendary">Legendary</option>
+                <option value="mythic">Mythic</option>
+              </select>
+            </div>
+
+            {/* Filtro de Foil */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">🌟 Foil</label>
+              <select
+                value={filterFoil}
+                onChange={(e) => {
+                  setFilterFoil(e.target.value);
+                  setCurrentNFTPage(1);
+                }}
+                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={filterRevealed === 'unrevealed'}
+              >
+                <option value="all">All Foils</option>
+                <option value="none">No Foil</option>
+                <option value="standard">Standard Foil</option>
+                <option value="prize">Prize Foil</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Reset Filters Button */}
+          {(filterRarity !== 'all' || filterFoil !== 'all' || filterRevealed !== 'revealed') && (
+            <button
+              onClick={() => {
+                setFilterRarity('all');
+                setFilterFoil('all');
+                setFilterRevealed('revealed');
+                setCurrentNFTPage(1);
+              }}
+              className="mt-4 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+            >
+              🔄 Reset Filters
+            </button>
+          )}
+        </div>
         {loadingNFTs ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mb-4"></div>
@@ -312,10 +426,14 @@ export default function ProfilePage() {
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
             <p className="text-gray-400">No cards in collection</p>
           </div>
+        ) : filteredNfts.length === 0 ? (
+          <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
+            <p className="text-gray-400">No cards match the selected filters</p>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {nfts
+              {filteredNfts
                 .slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE)
                 .map((nft) => {
                   const tokenId = nft.tokenId;
@@ -384,7 +502,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Pagination */}
-            {nfts.length > NFT_PER_PAGE && (
+            {filteredNfts.length > NFT_PER_PAGE && (
               <div className="mt-6 flex items-center justify-center gap-2">
                 <button
                   onClick={() => setCurrentNFTPage(Math.max(1, currentNFTPage - 1))}
@@ -395,7 +513,7 @@ export default function ProfilePage() {
                 </button>
 
                 <div className="flex gap-2">
-                  {Array.from({ length: Math.ceil(nfts.length / NFT_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                  {Array.from({ length: Math.ceil(filteredNfts.length / NFT_PER_PAGE) }, (_, i) => i + 1).map(page => (
                     <button
                       key={page}
                       onClick={() => setCurrentNFTPage(page)}
@@ -411,8 +529,8 @@ export default function ProfilePage() {
                 </div>
 
                 <button
-                  onClick={() => setCurrentNFTPage(Math.min(Math.ceil(nfts.length / NFT_PER_PAGE), currentNFTPage + 1))}
-                  disabled={currentNFTPage === Math.ceil(nfts.length / NFT_PER_PAGE)}
+                  onClick={() => setCurrentNFTPage(Math.min(Math.ceil(filteredNfts.length / NFT_PER_PAGE), currentNFTPage + 1))}
+                  disabled={currentNFTPage === Math.ceil(filteredNfts.length / NFT_PER_PAGE)}
                   className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition"
                 >
                   Next →
