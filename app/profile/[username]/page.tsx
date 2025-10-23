@@ -195,17 +195,44 @@ export default function ProfilePage() {
     }
   };
 
-  // Helper function para verificar se a carta está revelada
-  const isUnrevealed = (nft: any) => {
-    const name = nft.name || nft.raw?.metadata?.name || '';
-    return name.toLowerCase().includes('unrevealed') || name.toLowerCase().includes('pack');
+  // Helper function para encontrar atributo
+  const findAttr = (nft: any, trait: string): string => {
+    const attrs = nft?.raw?.metadata?.attributes || nft?.metadata?.attributes || nft?.raw?.metadata?.traits || nft?.metadata?.traits || [];
+    const found = attrs.find((a: any) => {
+      const key = a.trait_type || a.traitType || a.name || '';
+      return key.toLowerCase() === trait.toLowerCase();
+    });
+    return found?.value || found?.trait_value || '';
+  };
+
+  // Helper function para verificar se a carta está revelada (mesma lógica da página principal)
+  const isUnrevealed = (nft: any): boolean => {
+    const hasAttrs = !!(nft?.raw?.metadata?.attributes?.length || nft?.metadata?.attributes?.length || nft?.raw?.metadata?.traits?.length || nft?.metadata?.traits?.length);
+
+    // Se não tem atributos, é não revelada
+    if (!hasAttrs) return true;
+
+    const r = (findAttr(nft, 'rarity') || '').toLowerCase();
+    const s = (findAttr(nft, 'status') || '').toLowerCase();
+    const n = String(nft?.name || '').toLowerCase();
+
+    // Verifica se tem indicadores explícitos de não revelada
+    if (r === 'unopened' || s === 'unopened' || n === 'unopened' || n.includes('sealed pack')) {
+      return true;
+    }
+
+    // Se tem imagem OU tem rarity, considera revelada
+    const hasImage = !!(nft?.image?.cachedUrl || nft?.image?.originalUrl || nft?.metadata?.image || nft?.raw?.metadata?.image);
+    const hasRarity = r !== '';
+
+    return !(hasImage || hasRarity);
   };
 
   // Filtrar NFTs
   const filteredNfts = nfts.filter(nft => {
-    // Pegar atributos
-    const rarity = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Rarity')?.value || '';
-    const foilTrait = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Foil')?.value || '';
+    // Pegar atributos usando findAttr
+    const rarity = findAttr(nft, 'Rarity');
+    const foilTrait = findAttr(nft, 'Foil');
     const revealed = !isUnrevealed(nft);
 
     // Filtro de revelação
