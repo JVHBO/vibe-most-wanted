@@ -17,6 +17,70 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const database = getDatabase(app);
 
+// Função auxiliar para adicionar timeout às operações do Firebase
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 10000, operation: string = 'Firebase operation'): Promise<T> {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(`${operation} timeout after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } catch (error: any) {
+    console.error(`❌ ${operation} failed:`, error);
+    throw error;
+  }
+}
+
+// Sistema de debounce para evitar múltiplas chamadas simultâneas
+const pendingOperations = new Map<string, Promise<any>>();
+
+async function withDebounce<T>(key: string, operation: () => Promise<T>): Promise<T> {
+  // Se já existe uma operação pendente com essa chave, retorna ela
+  if (pendingOperations.has(key)) {
+    console.log('⏳ Reusing pending operation:', key);
+    return pendingOperations.get(key) as Promise<T>;
+  }
+
+  const promise = operation().finally(() => {
+    // Remove da lista de pendentes quando terminar
+    pendingOperations.delete(key);
+  });
+
+  pendingOperations.set(key, promise);
+  return promise;
+}
+
+// Sistema de retry para operações que podem falhar temporariamente
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 2,
+  delayMs: number = 1000,
+  operationName: string = 'Operation'
+): Promise<T> {
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 ${operationName} - Attempt ${attempt}/${maxRetries}`);
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`⚠️ ${operationName} failed on attempt ${attempt}:`, error.message);
+
+      // Se não for o último retry, espera antes de tentar novamente
+      if (attempt < maxRetries) {
+        console.log(`⏳ Retrying in ${delayMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        // Aumenta o delay exponencialmente
+        delayMs *= 2;
+      }
+    }
+  }
+
+  console.error(`❌ ${operationName} failed after ${maxRetries} attempts`);
+  throw lastError;
+}
+
 export interface GameRoom {
   id: string;
   code: string;
@@ -69,111 +133,150 @@ export interface MatchHistory {
 export class PvPService {
   // Cria uma sala personalizada
   static async createRoom(hostAddress: string): Promise<string> {
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const roomRef = ref(database, `rooms/${code}`);
+    try {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const roomRef = ref(database, `rooms/${code}`);
 
-    const room: GameRoom = {
-      id: code,
-      code,
-      host: {
-        address: hostAddress,
-        ready: false,
-        cards: [],
-        power: 0
-      },
-      status: 'waiting',
-      createdAt: Date.now()
-    };
+      const room: GameRoom = {
+        id: code,
+        code,
+        host: {
+          address: hostAddress,
+          ready: false,
+          cards: [],
+          power: 0
+        },
+        status: 'waiting',
+        createdAt: Date.now()
+      };
 
-    await set(roomRef, room);
-    return code;
+      await withTimeout(
+        set(roomRef, room),
+        8000,
+        `Create room ${code}`
+      );
+
+      console.log('✅ Room created:', code);
+      return code;
+    } catch (error: any) {
+      console.error('❌ createRoom error:', error);
+      throw new Error(`Erro ao criar sala: ${error.message}`);
+    }
   }
 
   // Entra em uma sala com código
   static async joinRoom(code: string, guestAddress: string): Promise<boolean> {
-    const roomRef = ref(database, `rooms/${code}`);
-    const snapshot = await get(roomRef);
+    try {
+      const roomRef = ref(database, `rooms/${code}`);
 
-    if (!snapshot.exists()) {
-      throw new Error('Sala não encontrada');
+      const snapshot = await withTimeout(
+        get(roomRef),
+        8000,
+        `Get room ${code}`
+      );
+
+      if (!snapshot.exists()) {
+        throw new Error('Sala não encontrada');
+      }
+
+      const room = snapshot.val() as GameRoom;
+
+      if (room.guest) {
+        throw new Error('Sala já está cheia');
+      }
+
+      if (room.host.address === guestAddress) {
+        throw new Error('Você não pode entrar na própria sala');
+      }
+
+      await withTimeout(
+        update(roomRef, {
+          guest: {
+            address: guestAddress,
+            ready: false,
+            cards: [],
+            power: 0
+          },
+          status: 'ready'
+        }),
+        8000,
+        `Join room ${code}`
+      );
+
+      console.log('✅ Joined room:', code);
+      return true;
+    } catch (error: any) {
+      console.error('❌ joinRoom error:', error);
+      throw new Error(`Erro ao entrar na sala: ${error.message}`);
     }
-
-    const room = snapshot.val() as GameRoom;
-
-    if (room.guest) {
-      throw new Error('Sala já está cheia');
-    }
-
-    if (room.host.address === guestAddress) {
-      throw new Error('Você não pode entrar na própria sala');
-    }
-
-    await update(roomRef, {
-      guest: {
-        address: guestAddress,
-        ready: false,
-        cards: [],
-        power: 0
-      },
-      status: 'ready'
-    });
-
-    return true;
   }
 
   // Busca automática de oponente
   static async findMatch(playerAddress: string): Promise<string> {
     console.log('🔍 findMatch called for:', playerAddress);
 
-    const matchmakingRef = ref(database, 'matchmaking');
-    const snapshot = await get(matchmakingRef);
+    try {
+      const matchmakingRef = ref(database, 'matchmaking');
+      console.log('📡 Getting matchmaking data...');
+      const snapshot = await get(matchmakingRef);
+      console.log('✅ Got matchmaking snapshot, exists:', snapshot.exists());
 
-    if (snapshot.exists()) {
-      const players = snapshot.val();
-      const now = Date.now();
+      if (snapshot.exists()) {
+        const players = snapshot.val();
+        const now = Date.now();
 
-      // Filtra jogadores válidos (não é o próprio jogador e está online há menos de 30 segundos)
-      const waitingPlayers = Object.entries(players).filter(
-        ([addr, data]: [string, any]) => {
-          const age = now - data.timestamp;
-          const isValid = addr !== playerAddress && age < 30000; // Reduzido para 30s
+        // Filtra jogadores válidos (não é o próprio jogador e está online há menos de 30 segundos)
+        const waitingPlayers = Object.entries(players).filter(
+          ([addr, data]: [string, any]) => {
+            const age = now - data.timestamp;
+            const isValid = addr !== playerAddress && age < 30000; // Reduzido para 30s
 
-          if (!isValid && addr !== playerAddress) {
-            console.log('⚠️ Removing stale matchmaking entry:', addr, 'age:', age / 1000, 'seconds');
-            // Remove entrada antiga
-            remove(ref(database, `matchmaking/${addr}`)).catch(console.error);
+            if (!isValid && addr !== playerAddress) {
+              console.log('⚠️ Removing stale matchmaking entry:', addr, 'age:', age / 1000, 'seconds');
+              // Remove entrada antiga
+              remove(ref(database, `matchmaking/${addr}`)).catch(console.error);
+            }
+
+            return isValid;
           }
+        );
 
-          return isValid;
+        console.log('📊 Found', waitingPlayers.length, 'waiting players');
+
+        if (waitingPlayers.length > 0) {
+          const [opponentAddress] = waitingPlayers[0];
+          console.log('✅ Matched with:', opponentAddress);
+
+          // Remove ambos do matchmaking
+          console.log('🗑️ Removing players from matchmaking...');
+          await remove(ref(database, `matchmaking/${opponentAddress}`));
+          await remove(ref(database, `matchmaking/${playerAddress}`));
+
+          // Cria sala automaticamente
+          console.log('🏠 Creating room...');
+          const code = await this.createRoom(playerAddress);
+          console.log('👥 Adding opponent to room...');
+          await this.joinRoom(code, opponentAddress);
+
+          console.log('🎮 Room created:', code);
+          return code;
         }
-      );
-
-      console.log('📊 Found', waitingPlayers.length, 'waiting players');
-
-      if (waitingPlayers.length > 0) {
-        const [opponentAddress] = waitingPlayers[0];
-        console.log('✅ Matched with:', opponentAddress);
-
-        // Remove ambos do matchmaking
-        await remove(ref(database, `matchmaking/${opponentAddress}`));
-        await remove(ref(database, `matchmaking/${playerAddress}`));
-
-        // Cria sala automaticamente
-        const code = await this.createRoom(playerAddress);
-        await this.joinRoom(code, opponentAddress);
-
-        console.log('🎮 Room created:', code);
-        return code;
       }
+
+      // Adiciona à fila de matchmaking com timestamp
+      console.log('⏳ Added to matchmaking queue');
+      await set(ref(database, `matchmaking/${playerAddress}`), {
+        timestamp: Date.now()
+      });
+      console.log('✅ Successfully added to queue');
+
+      return '';
+    } catch (error: any) {
+      console.error('❌ findMatch ERROR:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      throw error;
     }
-
-    // Adiciona à fila de matchmaking com timestamp
-    console.log('⏳ Added to matchmaking queue');
-    await set(ref(database, `matchmaking/${playerAddress}`), {
-      timestamp: Date.now()
-    });
-
-    return '';
   }
 
   // Remove da fila de matchmaking
@@ -222,48 +325,77 @@ export class PvPService {
   static async updateCards(code: string, playerAddress: string, cards: any[]): Promise<void> {
     console.log('🎯 updateCards called:', { code, playerAddress, cardsCount: cards.length });
 
-    const roomRef = ref(database, `rooms/${code}`);
-    const snapshot = await get(roomRef);
+    // Usa debounce para evitar múltiplas chamadas simultâneas
+    const debounceKey = `updateCards:${code}:${playerAddress}`;
 
-    if (!snapshot.exists()) {
-      console.error('❌ Room not found:', code);
-      return;
-    }
+    return withDebounce(debounceKey, async () => {
+      // Usa retry para tentar novamente em caso de falha
+      return withRetry(async () => {
+        const roomRef = ref(database, `rooms/${code}`);
 
-    const room = snapshot.val() as GameRoom;
-    const isHost = room.host.address === playerAddress;
-    const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
+        // Adiciona timeout à leitura
+        const snapshot = await withTimeout(
+          get(roomRef),
+          8000,
+          `Get room ${code}`
+        );
 
-    console.log('📊 Player info:', { isHost, power, playerAddress });
-    console.log('📊 Current room state:', {
-      hostReady: room.host.ready,
-      guestReady: room.guest?.ready,
-      roomStatus: room.status
+        if (!snapshot.exists()) {
+          console.error('❌ Room not found:', code);
+          throw new Error('Sala não encontrada');
+        }
+
+        const room = snapshot.val() as GameRoom;
+        const isHost = room.host.address === playerAddress;
+        const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
+
+        console.log('📊 Player info:', { isHost, power, playerAddress });
+        console.log('📊 Current room state:', {
+          hostReady: room.host.ready,
+          guestReady: room.guest?.ready,
+          roomStatus: room.status
+        });
+
+        const updatePath = isHost ? 'host' : 'guest';
+        const updateData = {
+          cards,
+          power,
+          ready: true
+        };
+
+        console.log('💾 Updating Firebase:', { path: `rooms/${code}/${updatePath}`, data: updateData });
+
+        // Adiciona timeout à escrita
+        await withTimeout(
+          update(ref(database, `rooms/${code}/${updatePath}`), updateData),
+          8000,
+          `Update room ${code}/${updatePath}`
+        );
+
+        console.log('✅ Firebase update complete');
+
+        // Verify the update worked (com timeout menor)
+        const verifySnapshot = await withTimeout(
+          get(roomRef),
+          5000,
+          `Verify room ${code}`
+        ).catch(err => {
+          console.warn('⚠️ Verification timeout (non-critical):', err);
+          return null;
+        });
+
+        if (verifySnapshot?.exists()) {
+          const updatedRoom = verifySnapshot.val() as GameRoom;
+          console.log('🔍 Verification - Updated room state:', {
+            hostReady: updatedRoom.host.ready,
+            guestReady: updatedRoom.guest?.ready,
+            roomStatus: updatedRoom.status
+          });
+        }
+
+        return;
+      }, 2, 1000, `Update cards for room ${code}`);
     });
-
-    const updatePath = isHost ? 'host' : 'guest';
-    const updateData = {
-      cards,
-      power,
-      ready: true
-    };
-
-    console.log('💾 Updating Firebase:', { path: `rooms/${code}/${updatePath}`, data: updateData });
-
-    await update(ref(database, `rooms/${code}/${updatePath}`), updateData);
-
-    console.log('✅ Firebase update complete');
-
-    // Verify the update worked
-    const verifySnapshot = await get(roomRef);
-    if (verifySnapshot.exists()) {
-      const updatedRoom = verifySnapshot.val() as GameRoom;
-      console.log('🔍 Verification - Updated room state:', {
-        hostReady: updatedRoom.host.ready,
-        guestReady: updatedRoom.guest?.ready,
-        roomStatus: updatedRoom.status
-      });
-    }
   }
 
   // Escuta mudanças na sala
@@ -393,74 +525,120 @@ export class ProfileService {
 
   // Cria um novo perfil
   static async createProfile(address: string, username: string): Promise<void> {
+    const normalizedAddress = address.toLowerCase();
     const normalizedUsername = username.toLowerCase();
 
-    // IMPORTANTE: Verifica se a wallet já tem um perfil
-    const existingProfile = await this.getProfile(address);
-    if (existingProfile) {
-      throw new Error('Esta wallet já possui um perfil. Use o perfil existente.');
-    }
+    try {
+      // IMPORTANTE: Verifica se a wallet já tem um perfil
+      const existingProfile = await withTimeout(
+        this.getProfile(normalizedAddress),
+        8000,
+        'Check existing profile'
+      );
 
-    // Verifica se username já existe
-    const exists = await this.usernameExists(normalizedUsername);
-    if (exists) {
-      throw new Error('Username já está em uso');
-    }
-
-    // Cria o perfil (sem twitter - será adicionado depois)
-    const profile = {
-      address,
-      username,
-      createdAt: Date.now(),
-      lastUpdated: Date.now(),
-      stats: {
-        totalCards: 0,
-        totalPower: 0,
-        pveWins: 0,
-        pveLosses: 0,
-        pvpWins: 0,
-        pvpLosses: 0
+      if (existingProfile) {
+        throw new Error('Esta wallet já possui um perfil. Use o perfil existente.');
       }
-    };
 
-    // Salva o perfil
-    await set(ref(database, `profiles/${address}`), profile);
+      // Verifica se username já existe
+      const exists = await withTimeout(
+        this.usernameExists(normalizedUsername),
+        8000,
+        'Check username existence'
+      );
 
-    // Reserva o username
-    await set(ref(database, `usernames/${normalizedUsername}`), address);
+      if (exists) {
+        throw new Error('Username já está em uso');
+      }
+
+      // Cria o perfil (sem twitter - será adicionado depois)
+      const profile = {
+        address: normalizedAddress,
+        username,
+        createdAt: Date.now(),
+        lastUpdated: Date.now(),
+        stats: {
+          totalCards: 0,
+          totalPower: 0,
+          pveWins: 0,
+          pveLosses: 0,
+          pvpWins: 0,
+          pvpLosses: 0
+        }
+      };
+
+      // Salva o perfil
+      await withTimeout(
+        set(ref(database, `profiles/${normalizedAddress}`), profile),
+        8000,
+        'Save profile'
+      );
+
+      // Reserva o username
+      await withTimeout(
+        set(ref(database, `usernames/${normalizedUsername}`), normalizedAddress),
+        8000,
+        'Reserve username'
+      );
+
+      console.log('✅ Profile created successfully:', username);
+    } catch (error: any) {
+      console.error('❌ createProfile error:', error);
+      throw new Error(`Erro ao criar perfil: ${error.message}`);
+    }
   }
 
   // Busca perfil por endereço
   static async getProfile(address: string): Promise<UserProfile | null> {
-    const snapshot = await get(ref(database, `profiles/${address}`));
-    return snapshot.exists() ? snapshot.val() : null;
+    try {
+      const normalizedAddress = address.toLowerCase();
+      const snapshot = await withTimeout(
+        get(ref(database, `profiles/${normalizedAddress}`)),
+        8000,
+        `Get profile for ${normalizedAddress.substring(0, 8)}`
+      );
+      return snapshot.exists() ? snapshot.val() : null;
+    } catch (error: any) {
+      console.error('❌ getProfile error:', error);
+      return null;
+    }
   }
 
   // Busca endereço por username
   static async getAddressByUsername(username: string): Promise<string | null> {
-    const normalizedUsername = username.toLowerCase();
-    const snapshot = await get(ref(database, `usernames/${normalizedUsername}`));
-    return snapshot.exists() ? snapshot.val() : null;
+    try {
+      const normalizedUsername = username.toLowerCase();
+      const snapshot = await withTimeout(
+        get(ref(database, `usernames/${normalizedUsername}`)),
+        8000,
+        `Get address for username ${normalizedUsername}`
+      );
+      return snapshot.exists() ? snapshot.val() : null;
+    } catch (error: any) {
+      console.error('❌ getAddressByUsername error:', error);
+      return null;
+    }
   }
 
   // Atualiza estatísticas do perfil
   static async updateStats(address: string, totalCards: number, totalPower: number): Promise<void> {
-    console.log('📊 updateStats called:', { address, totalCards, totalPower });
+    const normalizedAddress = address.toLowerCase();
+    console.log('📊 updateStats called:', { address: normalizedAddress, totalCards, totalPower });
 
     // Atualiza o objeto stats diretamente no path correto
-    await update(ref(database, `profiles/${address}/stats`), {
+    await update(ref(database, `profiles/${normalizedAddress}/stats`), {
       totalCards,
       totalPower
     });
 
-    await update(ref(database, `profiles/${address}`), {
+    await update(ref(database, `profiles/${normalizedAddress}`), {
       lastUpdated: Date.now()
     });
 
     console.log('✅ Profile stats updated successfully');
 
     // Verify the update
-    const profile = await this.getProfile(address);
+    const profile = await this.getProfile(normalizedAddress);
     if (profile) {
       console.log('🔍 Verified profile stats:', {
         totalCards: profile.stats.totalCards,
@@ -471,13 +649,14 @@ export class ProfileService {
 
   // Atualiza Twitter
   static async updateTwitter(address: string, twitter: string): Promise<void> {
+    const normalizedAddress = address.toLowerCase();
     const cleanTwitter = twitter?.trim();
 
     if (!cleanTwitter || cleanTwitter.length === 0) {
       return; // Não atualiza se estiver vazio
     }
 
-    await update(ref(database, `profiles/${address}`), {
+    await update(ref(database, `profiles/${normalizedAddress}`), {
       twitter: cleanTwitter,
       lastUpdated: Date.now()
     });
@@ -494,18 +673,20 @@ export class ProfileService {
     opponentCards: any[],
     opponentAddress?: string
   ): Promise<void> {
-    console.log('🎮 recordMatch called:', { playerAddress, type, result, playerPower, opponentPower });
+    const normalizedPlayerAddress = playerAddress.toLowerCase();
+    const normalizedOpponentAddress = opponentAddress?.toLowerCase();
+    console.log('🎮 recordMatch called:', { playerAddress: normalizedPlayerAddress, type, result, playerPower, opponentPower });
 
-    const matchId = push(ref(database, `playerMatches/${playerAddress}`)).key;
+    const matchId = push(ref(database, `playerMatches/${normalizedPlayerAddress}`)).key;
 
     const match: MatchHistory = {
       id: matchId!,
-      playerAddress,
+      playerAddress: normalizedPlayerAddress,
       type,
       result,
       playerPower,
       opponentPower,
-      opponentAddress,
+      opponentAddress: normalizedOpponentAddress,
       timestamp: Date.now(),
       playerCards,
       opponentCards
@@ -513,11 +694,11 @@ export class ProfileService {
 
     // Salva a partida diretamente no path do jogador (evita full scan)
     // Estrutura: playerMatches/{playerAddress}/{matchId}
-    await set(ref(database, `playerMatches/${playerAddress}/${matchId}`), match);
+    await set(ref(database, `playerMatches/${normalizedPlayerAddress}/${matchId}`), match);
     console.log('✅ Match saved to Firebase:', matchId);
 
     // Atualiza estatísticas
-    const profile = await this.getProfile(playerAddress);
+    const profile = await this.getProfile(normalizedPlayerAddress);
     console.log('📝 Current profile:', profile);
     if (profile) {
       // Prepara update do objeto stats
@@ -540,17 +721,17 @@ export class ProfileService {
       console.log('💾 Updating profile stats:', statsUpdate);
 
       // Atualiza stats no path correto
-      await update(ref(database, `profiles/${playerAddress}/stats`), statsUpdate);
+      await update(ref(database, `profiles/${normalizedPlayerAddress}/stats`), statsUpdate);
 
       // Atualiza lastUpdated no perfil
-      await update(ref(database, `profiles/${playerAddress}`), {
+      await update(ref(database, `profiles/${normalizedPlayerAddress}`), {
         lastUpdated: Date.now()
       });
 
       console.log('✅ Profile stats updated after match');
 
       // Verifica a atualização
-      const updatedProfile = await this.getProfile(playerAddress);
+      const updatedProfile = await this.getProfile(normalizedPlayerAddress);
       if (updatedProfile) {
         console.log('🔍 Verified updated stats:', {
           pveWins: updatedProfile.stats.pveWins,
@@ -566,8 +747,9 @@ export class ProfileService {
 
   // Busca histórico de partidas (otimizado - busca apenas as partidas do jogador)
   static async getMatchHistory(playerAddress: string, limit: number = 20): Promise<MatchHistory[]> {
+    const normalizedAddress = playerAddress.toLowerCase();
     // Busca diretamente as partidas do jogador (sem full scan)
-    const playerMatchesRef = ref(database, `playerMatches/${playerAddress}`);
+    const playerMatchesRef = ref(database, `playerMatches/${normalizedAddress}`);
     const snapshot = await get(playerMatchesRef);
 
     if (!snapshot.exists()) return [];
