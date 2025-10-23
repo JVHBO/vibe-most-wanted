@@ -109,6 +109,8 @@ export interface UserProfile {
   lastUpdated: number;
   stats: {
     totalCards: number;
+    openedCards: number;
+    unopenedCards: number;
     totalPower: number;
     pveWins: number;
     pveLosses: number;
@@ -559,6 +561,8 @@ export class ProfileService {
         lastUpdated: Date.now(),
         stats: {
           totalCards: 0,
+          openedCards: 0,
+          unopenedCards: 0,
           totalPower: 0,
           pveWins: 0,
           pveLosses: 0,
@@ -621,13 +625,15 @@ export class ProfileService {
   }
 
   // Atualiza estatísticas do perfil
-  static async updateStats(address: string, totalCards: number, totalPower: number): Promise<void> {
+  static async updateStats(address: string, totalCards: number, openedCards: number, unopenedCards: number, totalPower: number): Promise<void> {
     const normalizedAddress = address.toLowerCase();
-    console.log('📊 updateStats called:', { address: normalizedAddress, totalCards, totalPower });
+    console.log('📊 updateStats called:', { address: normalizedAddress, totalCards, openedCards, unopenedCards, totalPower });
 
     // Atualiza o objeto stats diretamente no path correto
     await update(ref(database, `profiles/${normalizedAddress}/stats`), {
       totalCards,
+      openedCards,
+      unopenedCards,
       totalPower
     });
 
@@ -642,6 +648,8 @@ export class ProfileService {
     if (profile) {
       console.log('🔍 Verified profile stats:', {
         totalCards: profile.stats.totalCards,
+        openedCards: profile.stats.openedCards,
+        unopenedCards: profile.stats.unopenedCards,
         totalPower: profile.stats.totalPower
       });
     }
