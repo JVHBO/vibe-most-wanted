@@ -11,11 +11,14 @@ export const BADGES_CONFIG = {
     '0x28f4a9a2e747ec2cb1b4e235a55dff5be2ef48d6',
   ],
 
+  // Gey badge wallet
+  GEY_WALLET: '0x673a827c0df98274fa94ef194f7f9d1a8a00bbb9',
+
   // Número máximo de early testers por userIndex (fallback)
   MAX_EARLY_TESTERS: 9999,
 };
 
-export type BadgeType = 'dev' | 'early_tester';
+export type BadgeType = 'dev' | 'early_tester' | 'gey';
 
 export interface Badge {
   type: BadgeType;
@@ -46,6 +49,15 @@ export const BADGES: Record<BadgeType, Badge> = {
     borderColor: 'border-vintage-neon-blue',
     textColor: 'text-vintage-neon-blue',
   },
+  gey: {
+    type: 'gey',
+    label: 'gey',
+    description: '',
+    icon: '',
+    color: 'bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-blue-500/30',
+    borderColor: 'border-transparent',
+    textColor: 'text-pink-400',
+  },
 };
 
 // Check if address is the developer
@@ -65,6 +77,11 @@ export function isEarlyTester(address: string, userIndex: number): boolean {
   return isInWalletList || isInIndexRange;
 }
 
+// Check if address has the gey badge
+export function isGey(address: string): boolean {
+  return address.toLowerCase() === BADGES_CONFIG.GEY_WALLET.toLowerCase();
+}
+
 // Get badges for a user
 export function getUserBadges(address: string, userIndex: number): Badge[] {
   const badges: Badge[] = [];
@@ -75,6 +92,10 @@ export function getUserBadges(address: string, userIndex: number): Badge[] {
 
   if (isEarlyTester(address, userIndex)) {
     badges.push(BADGES.early_tester);
+  }
+
+  if (isGey(address)) {
+    badges.push(BADGES.gey);
   }
 
   return badges;
