@@ -331,8 +331,9 @@ export class PvPService {
         console.log('✅ Match found! Room:', data.roomCode);
         callback(data.roomCode);
 
-        // Remove do matchmaking após pegar o código
-        remove(playerRef).catch(err => console.error('Error removing from matchmaking:', err));
+        // Nota: NÃO removemos aqui porque causaria o listener disparar novamente
+        // com !snapshot.exists() e chamar callback(null), voltando ao menu.
+        // A entrada será limpa automaticamente pelo filtro do findMatch (30s).
       } else {
         // Ainda esperando por match (só tem timestamp)
         console.log('⏳ Still waiting for match...');
