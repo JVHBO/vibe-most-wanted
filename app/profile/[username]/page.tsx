@@ -45,6 +45,8 @@ export default function ProfilePage() {
   const [nfts, setNfts] = useState<any[]>([]);
   const [loadingNFTs, setLoadingNFTs] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [currentNFTPage, setCurrentNFTPage] = useState(1);
+  const NFT_PER_PAGE = 12;
 
   // Load current user's address
   useEffect(() => {
@@ -302,45 +304,113 @@ export default function ProfilePage() {
             <p className="text-gray-400">No cards in collection</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {nfts.map((nft) => {
-              const tokenId = nft.tokenId;
-              const power = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Power')?.value || 0;
-              const rarity = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Rarity')?.value || 'Common';
-              const imageUrl = nft.image?.cachedUrl || nft.image?.thumbnailUrl || nft.raw?.metadata?.image || '';
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {nfts
+                .slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE)
+                .map((nft) => {
+                  const tokenId = nft.tokenId;
+                  const power = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Power')?.value || 0;
+                  const rarity = nft.raw?.metadata?.attributes?.find((a: any) => a.trait_type === 'Rarity')?.value || 'Common';
+                  const imageUrl = nft.image?.cachedUrl || nft.image?.thumbnailUrl || nft.raw?.metadata?.image || '';
 
-              const getRarityColor = (r: string) => {
-                const rLower = (r || '').toLowerCase();
-                if (rLower.includes('legend')) return 'from-orange-500 to-yellow-400';
-                if (rLower.includes('epic')) return 'from-purple-500 to-pink-500';
-                if (rLower.includes('rare')) return 'from-blue-500 to-cyan-400';
-                return 'from-gray-600 to-gray-500';
-              };
+                  // OpenSea URL (Base chain)
+                  const openSeaUrl = `https://opensea.io/assets/base/${CONTRACT_ADDRESS}/${tokenId}`;
 
-              return (
-                <div key={tokenId} className="relative group hover:scale-105 transition-all duration-300">
-                  <div className="relative overflow-hidden rounded-xl ring-2 ring-gray-700 hover:ring-purple-500 transition-all">
-                    <img
-                      src={imageUrl}
-                      alt={`Card #${tokenId}`}
-                      className="w-full aspect-[2/3] object-cover bg-gray-900"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3">
-                      <div className="flex items-center justify-between">
-                        <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(rarity)} bg-clip-text text-transparent`}>
-                          ⚡ {power}
-                        </span>
+                  // Check if NFT is listed (simplificado - verifica se tem marketplace data)
+                  const isListed = nft.raw?.metadata?.marketplace || nft.contract?.openSeaMetadata?.floorPrice;
+
+                  const getRarityColor = (r: string) => {
+                    const rLower = (r || '').toLowerCase();
+                    if (rLower.includes('legend')) return 'from-orange-500 to-yellow-400';
+                    if (rLower.includes('epic')) return 'from-purple-500 to-pink-500';
+                    if (rLower.includes('rare')) return 'from-blue-500 to-cyan-400';
+                    return 'from-gray-600 to-gray-500';
+                  };
+
+                  return (
+                    <a
+                      key={tokenId}
+                      href={openSeaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative group hover:scale-105 transition-all duration-300"
+                    >
+                      <div className="relative overflow-hidden rounded-xl ring-2 ring-gray-700 group-hover:ring-purple-500 transition-all">
+                        <img
+                          src={imageUrl}
+                          alt={`Card #${tokenId}`}
+                          className="w-full aspect-[2/3] object-cover bg-gray-900"
+                          loading="lazy"
+                        />
+
+                        {/* Power badge */}
+                        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3">
+                          <div className="flex items-center justify-between">
+                            <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(rarity)} bg-clip-text text-transparent`}>
+                              ⚡ {power}
+                            </span>
+                            {isListed && (
+                              <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full font-bold">
+                                LISTED
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Token ID and OpenSea link */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent p-2">
+                          <p className="text-xs text-gray-300 font-mono text-center mb-1">#{tokenId}</p>
+                          <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg className="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 0C5.374 0 0 5.374 0 12s5.374 12 12 12 12-5.374 12-12S18.626 0 12 0zm5.52 14.168c-.044.28-.088.56-.132.84-.044.28-.088.56-.132.84-.088.56-.176 1.12-.264 1.68-.044.28-.088.56-.132.84-.044.28-.088.56-.132.84-.088.56-.176 1.12-.264 1.68-.044.28-.088.56-.132.84-.044.28-.088.56-.132.84-.088.56-.176 1.12-.264 1.68l-1.56-1.56c.088-.56.176-1.12.264-1.68.044-.28.088-.56.132-.84.044-.28.088-.56.132-.84.088-.56.176-1.12.264-1.68.044-.28.088-.56.132-.84.044-.28.088-.56.132-.84.088-.56.176-1.12.264-1.68.044-.28.088-.56.132-.84.044-.28.088-.56.132-.84.088-.56.176-1.12.264-1.68l1.56 1.56c-.088.56-.176 1.12-.264 1.68z"/>
+                            </svg>
+                            <span className="text-xs text-cyan-400 font-semibold">View on OpenSea</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent p-2">
-                      <p className="text-xs text-gray-300 font-mono text-center">#{tokenId}</p>
-                    </div>
-                  </div>
+                    </a>
+                  );
+                })}
+            </div>
+
+            {/* Pagination */}
+            {nfts.length > NFT_PER_PAGE && (
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setCurrentNFTPage(Math.max(1, currentNFTPage - 1))}
+                  disabled={currentNFTPage === 1}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition"
+                >
+                  ← Previous
+                </button>
+
+                <div className="flex gap-2">
+                  {Array.from({ length: Math.ceil(nfts.length / NFT_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentNFTPage(page)}
+                      className={`w-10 h-10 rounded-lg font-semibold transition ${
+                        currentNFTPage === page
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-700 hover:bg-gray-600 text-white'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+
+                <button
+                  onClick={() => setCurrentNFTPage(Math.min(Math.ceil(nfts.length / NFT_PER_PAGE), currentNFTPage + 1))}
+                  disabled={currentNFTPage === Math.ceil(nfts.length / NFT_PER_PAGE)}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
