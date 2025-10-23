@@ -1793,6 +1793,8 @@ export default function TCGPage() {
         console.log('🛑 Stopping matchmaking listener and heartbeat');
         unsubscribe();
         clearInterval(heartbeatInterval);
+        // Remove do matchmaking quando sair da tela de busca
+        PvPService.cancelMatchmaking(address).catch(err => console.error('Error canceling matchmaking:', err));
       };
     }
   }, [pvpMode, isSearching, address]);
