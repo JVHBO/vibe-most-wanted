@@ -407,9 +407,22 @@ export default function ProfilePage() {
 
       {/* NFT Cards Collection */}
       <div className="max-w-6xl mx-auto mb-8">
-        <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-          <span className="text-3xl">♠</span> Card Collection ({filteredNfts.length} / {nfts.length})
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-display font-bold flex items-center gap-2 text-vintage-gold">
+            <span className="text-3xl">♠</span> Card Collection ({filteredNfts.length} / {nfts.length})
+          </h2>
+          <button
+            onClick={() => {
+              setLoadingNFTs(true);
+              window.location.reload();
+            }}
+            disabled={loadingNFTs}
+            className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
+            title="Refresh cards and metadata"
+          >
+            🔄 Refresh
+          </button>
+        </div>
 
         {/* Filtros */}
         <div className="bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-xl p-4 mb-6">
