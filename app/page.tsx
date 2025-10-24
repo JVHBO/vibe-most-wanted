@@ -3087,6 +3087,8 @@ export default function TCGPage() {
                   let defenderNFTs: any[] = [];
                   try {
                     defenderNFTs = await fetchNFTs(targetPlayer.address);
+                    console.log('🔍 Defender NFTs loaded:', defenderNFTs.length);
+                    console.log('🔍 Defense deck tokenIds:', targetPlayer.defenseDeck);
                   } catch (error) {
                     console.error('Error fetching defender NFTs:', error);
                   }
@@ -3108,8 +3110,9 @@ export default function TCGPage() {
                   `);
 
                   const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => {
-                    // Find the actual card from defender's NFTs
-                    const actualCard = defenderNFTs.find(nft => nft.tokenId === tokenId);
+                    // Find the actual card from defender's NFTs (compare as strings to handle type mismatch)
+                    const actualCard = defenderNFTs.find(nft => String(nft.tokenId) === String(tokenId));
+                    console.log(`🔍 Card ${i}: tokenId=${tokenId}, found=${!!actualCard}, imageUrl=${actualCard?.imageUrl?.substring(0, 50)}`);
                     return {
                       tokenId: tokenId,
                       imageUrl: actualCard?.imageUrl || cardBackUrl,
