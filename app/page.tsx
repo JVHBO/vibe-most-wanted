@@ -1512,61 +1512,28 @@ export default function TCGPage() {
 
   const loadJCNFTs = useCallback(async () => {
     try {
-      console.log('Loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
+      console.log('⚡ Fast-loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
       const raw = await fetchNFTs(JC_WALLET_ADDRESS);
+      console.log(`📦 Fetched ${raw.length} raw NFTs, processing...`);
 
-      const METADATA_BATCH_SIZE = 50;
-      const enrichedRaw = [];
+      // FAST MODE: Skip expensive metadata/image enrichment
+      // We only need attributes for battle logic, not images!
+      const revealed = raw.filter((n) => !isUnrevealed(n));
 
-      for (let i = 0; i < raw.length; i += METADATA_BATCH_SIZE) {
-        const batch = raw.slice(i, i + METADATA_BATCH_SIZE);
-        const batchResults = await Promise.all(
-          batch.map(async (nft) => {
-            const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
-            if (!tokenUri) return nft;
-            try {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 2000);
-              const res = await fetch(tokenUri, { signal: controller.signal });
-              clearTimeout(timeoutId);
-              if (res.ok) {
-                const metadata = await res.json();
-                return { ...nft, metadata: metadata, raw: { ...nft.raw, metadata: metadata } };
-              }
-            } catch {}
-            return nft;
-          })
-        );
-        enrichedRaw.push(...batchResults);
-      }
+      const processed = revealed.map(nft => {
+        return {
+          ...nft,
+          imageUrl: '', // Skip image loading for JC cards (not needed for battle)
+          rarity: findAttr(nft, 'rarity'),
+          status: findAttr(nft, 'status'),
+          wear: findAttr(nft, 'wear'),
+          foil: findAttr(nft, 'foil'),
+          power: calcPower(nft),
+        };
+      });
 
-      const revealed = enrichedRaw.filter((n) => !isUnrevealed(n));
-
-      const IMAGE_BATCH_SIZE = 50;
-      const processed = [];
-
-      for (let i = 0; i < revealed.length; i += IMAGE_BATCH_SIZE) {
-        const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
-        const enriched = await Promise.all(
-          batch.map(async (nft) => {
-            const imageUrl = await getImage(nft);
-            return {
-              ...nft,
-              imageUrl,
-              rarity: findAttr(nft, 'rarity'),
-              status: findAttr(nft, 'status'),
-              wear: findAttr(nft, 'wear'),
-              foil: findAttr(nft, 'foil'),
-              power: calcPower(nft),
-            };
-          })
-        );
-        processed.push(...enriched);
-
-        // Update progress every batch
-        setJcNfts([...processed]);
-        console.log(`⏳ Loading progress: ${processed.length}/${revealed.length} cards`);
-      }
+      console.log(`⚡ Fast-processed ${processed.length} cards (skipped images/metadata for speed)`);
+      setJcNfts(processed);
 
       // Filter out cards with same image as token 7024 that are also "rare"
       const token7024 = processed.find(nft => nft.tokenId === '7024');
