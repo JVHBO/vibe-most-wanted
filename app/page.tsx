@@ -414,11 +414,9 @@ async function fetchNFTs(owner: string, contractAddress?: string, onProgress?: (
   if (!contract) throw new Error("Contract address não configurado");
 
   let allNfts: any[] = [];
-  let revealedNfts: any[] = [];
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
-  const maxPages = 70; // Get all pages to fetch all ~859 opened cards
-  const targetRevealed = 900; // Target all opened cards (~859 total)
+  const maxPages = 20; // Reduced from 70 - most users have < 2000 NFTs
 
   do {
     pageCount++;
@@ -427,31 +425,20 @@ async function fetchNFTs(owner: string, contractAddress?: string, onProgress?: (
     if (!res.ok) throw new Error(`API falhou: ${res.status}`);
     const json = await res.json();
 
-    // Filter unopened cards immediately to save memory
+    // Don't filter here - some NFTs don't have attributes cached in Alchemy
+    // Filter after metadata refresh instead (like profile page does)
     const pageNfts = json.ownedNfts || [];
-    const revealed = pageNfts.filter((nft: any) => {
-      const attrs = nft?.raw?.metadata?.attributes || nft?.metadata?.attributes || [];
-      const rarityAttr = attrs.find((a: any) => a.trait_type?.toLowerCase() === 'rarity');
-      const rarity = rarityAttr?.value || '';
-      return rarity.toLowerCase() !== 'unopened';
-    });
-
-    revealedNfts = revealedNfts.concat(revealed);
+    allNfts = allNfts.concat(pageNfts);
 
     // Report progress
     if (onProgress) {
-      onProgress(pageCount, revealedNfts.length);
+      onProgress(pageCount, allNfts.length);
     }
 
     pageKey = json.pageKey;
-
-    // Stop if we have enough revealed cards
-    if (revealedNfts.length >= targetRevealed) {
-      break;
-    }
   } while (pageKey && pageCount < maxPages);
 
-  return revealedNfts;
+  return allNfts;
 }
 
 const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean; onSelect: (nft: any) => void }) => {
@@ -1008,13 +995,23 @@ export default function TCGPage() {
         enrichedRaw.push(...batchResults);
       }
 
-      // Não filtrar novamente - fetchNFTs já filtrou unopened cards
-      // Processar TODAS as cartas retornadas para evitar perder cartas válidas
+      // Filter unopened cards AFTER metadata refresh (not before)
+      // This ensures we have fresh attributes to check
+      const revealed = enrichedRaw.filter((nft) => {
+        const rarity = findAttr(nft, 'rarity').toLowerCase();
+        const status = findAttr(nft, 'status').toLowerCase();
+        // Keep cards that are NOT unopened
+        return rarity !== 'unopened' && status !== 'unopened';
+      });
+
+      const filtered = enrichedRaw.length - revealed.length;
+      setFilteredCount(filtered);
+
       const IMAGE_BATCH_SIZE = 50;
       const processed = [];
 
-      for (let i = 0; i < enrichedRaw.length; i += IMAGE_BATCH_SIZE) {
-        const batch = enrichedRaw.slice(i, i + IMAGE_BATCH_SIZE);
+      for (let i = 0; i < revealed.length; i += IMAGE_BATCH_SIZE) {
+        const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
         const enriched = await Promise.all(
           batch.map(async (nft) => {
             const imageUrl = await getImage(nft);
