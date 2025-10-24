@@ -2390,7 +2390,7 @@ export default function TCGPage() {
   }, [userProfile, maxAttacks]);
 
   return (
-    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6">
+    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6 overflow-x-hidden">
       {showWinPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]" onClick={() => setShowWinPopup(false)}>
           <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>

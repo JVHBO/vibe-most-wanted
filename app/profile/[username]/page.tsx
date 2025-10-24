@@ -481,7 +481,7 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="min-h-screen bg-vintage-black text-vintage-ice p-4 lg:p-8">
+    <div className="min-h-screen bg-vintage-black text-vintage-ice p-4 lg:p-8 overflow-x-hidden">
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-6">
         <button

@@ -71,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="overflow-x-hidden">
       <head>
         {/* Farcaster Frame Meta Tags */}
         <meta property="fc:frame" content="vNext" />
@@ -93,7 +93,7 @@ export default function RootLayout({
         <meta name="twitter:image" content="https://www.vibemostwanted.xyz/og-placeholder.svg" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased overflow-x-hidden`}
       >
         {children}
       </body>
