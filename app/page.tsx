@@ -3815,27 +3815,27 @@ export default function TCGPage() {
         </div>
       )}
 
-      <header className="flex flex-col items-center gap-6 mb-8 p-6 bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)]">
+      <header className="flex flex-col items-center gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6 bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)]">
         <div className="text-center relative">
           <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
-          <h1 className="relative text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-2" style={{textShadow: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'}}>
+          <h1 className="relative text-3xl md:text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-1 md:mb-2" style={{textShadow: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'}}>
             VIBE MOST WANTED
           </h1>
-          <p className="relative text-sm text-vintage-burnt-gold font-modern tracking-[0.3em] uppercase">{t('cardBattle')}</p>
+          <p className="relative text-xs md:text-sm text-vintage-burnt-gold font-modern tracking-[0.2em] md:tracking-[0.3em] uppercase">{t('cardBattle')}</p>
         </div>
 
         <a
           href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-8 py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex items-center gap-2"
+          className="px-4 md:px-8 py-2 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex items-center gap-2 text-sm md:text-base"
           style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
         >
-          <span className="text-lg">◆</span> {t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}
+          <span className="text-base md:text-lg">◆</span> <span className="hidden md:inline">{t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}</span><span className="md:hidden">Buy Cards</span>
         </a>
 
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowTutorial(true)} className="bg-vintage-deep-black border border-vintage-gold/50 text-vintage-gold px-4 py-2 rounded-lg hover:bg-vintage-gold/10 transition font-medium" title={t('tutorial')}>
+          <button onClick={() => setShowTutorial(true)} className="bg-vintage-deep-black border border-vintage-gold/50 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/10 transition font-medium text-sm md:text-base" title={t('tutorial')}>
             <span className="font-bold">?</span>
           </button>
         </div>
@@ -3852,9 +3852,9 @@ export default function TCGPage() {
         </div>
       ) : (
         <>
-          <div className="mb-6">
-            <div className="bg-vintage-charcoal/80 backdrop-blur-lg p-4 rounded-xl border-2 border-vintage-gold/30 shadow-gold">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="mb-3 md:mb-6">
+            <div className="bg-vintage-charcoal/80 backdrop-blur-lg p-2 md:p-4 rounded-xl border-2 border-vintage-gold/30 shadow-gold">
+              <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
                 <div className="flex items-center gap-3">
                   <p className="text-sm text-gray-300"><span className="text-vintage-neon-blue">●</span> {address.slice(0, 6)}...{address.slice(-4)}</p>
                   {filteredCount > 0 && <span className="text-xs text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-lg">🚫 {t('filtered', { count: filteredCount })}</span>}
@@ -3916,42 +3916,42 @@ export default function TCGPage() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="mb-6 relative z-40">
-            <div className="bg-vintage-charcoal backdrop-blur-lg rounded-xl border-2 border-vintage-gold/50 p-2 flex gap-2">
+          <div className="mb-3 md:mb-6 relative z-40">
+            <div className="bg-vintage-charcoal backdrop-blur-lg rounded-xl border-2 border-vintage-gold/50 p-1.5 md:p-2 flex gap-1.5 md:gap-2">
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('game');
                 }}
-                className={`flex-1 px-6 py-3 rounded-lg font-modern font-semibold transition-all ${
+                className={`flex-1 px-2 md:px-6 py-2 md:py-3 rounded-lg font-modern font-semibold transition-all text-xs md:text-base ${
                   currentView === 'game'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
-                <span className="text-lg">♠</span> {t('title')}
+                <span className="text-base md:text-lg">♠</span> <span className="hidden sm:inline">{t('title')}</span>
               </button>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                   setShowSettings(true);
                 }}
-                className="flex-1 px-6 py-3 rounded-lg font-modern font-semibold transition-all bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30"
+                className="flex-1 px-2 md:px-6 py-2 md:py-3 rounded-lg font-modern font-semibold transition-all bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30 text-xs md:text-base"
               >
-                <span className="text-lg">§</span> {t('settings')}
+                <span className="text-base md:text-lg">§</span> <span className="hidden sm:inline">{t('settings')}</span>
               </button>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('leaderboard');
                 }}
-                className={`flex-1 px-6 py-3 rounded-lg font-modern font-semibold transition-all ${
+                className={`flex-1 px-2 md:px-6 py-2 md:py-3 rounded-lg font-modern font-semibold transition-all text-xs md:text-base ${
                   currentView === 'leaderboard'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
-                <span className="text-lg">♔</span> {t('leaderboard')}
+                <span className="text-base md:text-lg">♔</span> <span className="hidden sm:inline">{t('leaderboard')}</span>
               </button>
             </div>
           </div>
@@ -4209,18 +4209,18 @@ export default function TCGPage() {
           {/* Leaderboard View */}
           {currentView === 'leaderboard' && (
             <div className="max-w-6xl mx-auto">
-              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-8">
-                <div className="flex justify-between items-center mb-6">
-                  <h1 className="text-4xl font-bold text-yellow-400 flex items-center gap-3">
-                    <span>🏆</span> {t('leaderboard')}
+              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-3 md:p-8">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-4 md:mb-6">
+                  <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3">
+                    <span className="text-2xl md:text-4xl">🏆</span> {t('leaderboard')}
                   </h1>
-                  <div className="text-right">
+                  <div className="text-left md:text-right">
                     {userProfile && (
-                      <p className="text-sm font-modern font-semibold text-vintage-gold mb-1">
-                        ⚔️ Attacks Remaining: <span className="text-vintage-neon-blue">{attacksRemaining}/{maxAttacks}</span>
+                      <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold mb-1">
+                        ⚔️ <span className="hidden md:inline">Attacks Remaining:</span> <span className="text-vintage-neon-blue">{attacksRemaining}/{maxAttacks}</span>
                       </p>
                     )}
-                    <p className="text-xs text-vintage-burnt-gold">⏱️ {t('updateEvery5Min')}</p>
+                    <p className="text-[10px] md:text-xs text-vintage-burnt-gold">⏱️ {t('updateEvery5Min')}</p>
                   </div>
                 </div>
 
@@ -4230,24 +4230,24 @@ export default function TCGPage() {
                     <p className="text-vintage-burnt-gold">{t('noProfile')}</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
+                  <div className="overflow-x-auto -mx-3 md:mx-0">
+                    <table className="w-full text-sm md:text-base">
                       <thead>
                         <tr className="border-b border-vintage-gold/20">
-                          <th className="text-left p-4 text-vintage-burnt-gold font-semibold">{t('rank')}</th>
-                          <th className="text-left p-4 text-vintage-burnt-gold font-semibold">{t('player')}</th>
-                          <th className="text-right p-4 text-vintage-burnt-gold font-semibold">Opened</th>
-                          <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('power')}</th>
-                          <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('wins')}</th>
-                          <th className="text-right p-4 text-vintage-burnt-gold font-semibold">{t('losses')}</th>
-                          <th className="text-center p-4 text-vintage-burnt-gold font-semibold">Actions</th>
+                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
+                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Opened</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
+                          <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden sm:table-cell">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {leaderboard.map((profile, index) => (
                           <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
-                            <td className="p-4">
-                              <span className={`text-2xl font-bold ${
+                            <td className="p-2 md:p-4">
+                              <span className={`text-lg md:text-2xl font-bold ${
                                 index === 0 ? 'text-yellow-400' :
                                 index === 1 ? 'text-gray-300' :
                                 index === 2 ? 'text-orange-400' :
@@ -4256,22 +4256,22 @@ export default function TCGPage() {
                                 #{index + 1}
                               </span>
                             </td>
-                            <td className="p-4">
+                            <td className="p-2 md:p-4">
                               <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
                                 <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors">{profile.username}</p>
+                                  <div className="flex items-center gap-1 md:gap-2 mb-1">
+                                    <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base">{profile.username}</p>
                                     <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
                                   </div>
-                                  <p className="text-xs text-vintage-burnt-gold font-mono">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
+                                  <p className="text-[10px] md:text-xs text-vintage-burnt-gold font-mono hidden sm:block">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
                                 </div>
                               </Link>
                             </td>
-                            <td className="p-4 text-right text-green-400 font-bold">{profile.stats.openedCards || 0}</td>
-                            <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
-                            <td className="p-4 text-right text-vintage-neon-blue font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
-                            <td className="p-4 text-right text-red-400 font-semibold">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
-                            <td className="p-4 text-center">
+                            <td className="p-2 md:p-4 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats.openedCards || 0}</td>
+                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{profile.stats.totalPower.toLocaleString()}</td>
+                            <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{profile.stats.pveWins + profile.stats.pvpWins}</td>
+                            <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
+                            <td className="p-2 md:p-4 text-center hidden sm:table-cell">
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <button
                                   onClick={() => {
