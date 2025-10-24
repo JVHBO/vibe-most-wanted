@@ -1516,14 +1516,20 @@ export default function TCGPage() {
       const raw = await fetchNFTs(JC_WALLET_ADDRESS);
       console.log(`📦 Fetched ${raw.length} raw NFTs, processing...`);
 
-      // FAST MODE: Skip expensive metadata/image enrichment
-      // We only need attributes for battle logic, not images!
+      // FAST MODE: Extract images directly from Alchemy response (no async fetch needed)
       const revealed = raw.filter((n) => !isUnrevealed(n));
 
       const processed = revealed.map(nft => {
+        // Extract image URL directly from Alchemy metadata (already in response)
+        const imageUrl = nft?.image?.cachedUrl ||
+                         nft?.image?.thumbnailUrl ||
+                         nft?.image?.originalUrl ||
+                         nft?.raw?.metadata?.image ||
+                         '';
+
         return {
           ...nft,
-          imageUrl: '', // Skip image loading for JC cards (not needed for battle)
+          imageUrl: normalizeUrl(imageUrl), // Direct from Alchemy - fast!
           rarity: findAttr(nft, 'rarity'),
           status: findAttr(nft, 'status'),
           wear: findAttr(nft, 'wear'),
@@ -1532,7 +1538,7 @@ export default function TCGPage() {
         };
       });
 
-      console.log(`⚡ Fast-processed ${processed.length} cards (skipped images/metadata for speed)`);
+      console.log(`⚡ Fast-processed ${processed.length} cards with images from Alchemy`);
       setJcNfts(processed);
 
       // Filter out cards with same image as token 7024 that are also "rare"
