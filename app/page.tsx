@@ -9,6 +9,7 @@ import { getUserBadges } from "@/lib/badges";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
+const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 const HAND_SIZE_CONST = 5;
 const JC_WALLET_ADDRESS = '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728';
@@ -911,10 +912,10 @@ async function getImage(nft: any): Promise<string> {
   return placeholder;
 }
 
-async function fetchNFTs(owner: string): Promise<any[]> {
+async function fetchNFTs(owner: string, contractAddress: string = CONTRACT_ADDRESS): Promise<any[]> {
   if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
   if (!CHAIN) throw new Error("Chain não configurada");
-  if (!CONTRACT_ADDRESS) throw new Error("Contract address não configurado");
+  if (!contractAddress) throw new Error("Contract address não configurado");
 
   let allNfts: any[] = [];
   let revealedNfts: any[] = [];
@@ -926,7 +927,7 @@ async function fetchNFTs(owner: string): Promise<any[]> {
   do {
     pageCount++;
     console.log(`   Fetching page ${pageCount}... (${revealedNfts.length} revealed so far)`);
-    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${CONTRACT_ADDRESS}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
+    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contractAddress}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`API falhou: ${res.status}`);
     const json = await res.json();
@@ -1535,7 +1536,8 @@ export default function TCGPage() {
   const loadJCNFTs = useCallback(async () => {
     try {
       console.log('⚡ Fast-loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
-      const revealed = await fetchNFTs(JC_WALLET_ADDRESS); // Already filtered!
+      console.log('   Using JC contract:', JC_CONTRACT_ADDRESS);
+      const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS); // Already filtered!
       console.log(`📦 Fetched ${revealed.length} revealed NFTs, processing...`);
 
       // FAST MODE: Extract images directly from Alchemy response (no async fetch needed)
