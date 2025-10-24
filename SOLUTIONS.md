@@ -1040,4 +1040,107 @@ Sistema está seguro, performático e bem testado.
 
 ---
 
+## 🎨 MELHORIAS DE LAYOUT PARA FARCASTER MINIAPP (2025-10-24)
+
+### ✅ RESOLVIDO - Overflow Horizontal e Barra Amarela
+
+**Problema**: Barra amarela vazando no lado direito da página de perfil no miniapp Farcaster. Conteúdo ultrapassando a largura da viewport.
+
+**Causa**: Falta de constraints de largura e overflow horizontal não prevenido.
+
+**Fix Aplicado**:
+```css
+/* globals.css */
+html, body {
+  max-width: 100vw;
+  overflow-x-hidden;
+}
+
+* {
+  max-width: 100%;
+}
+```
+
+```typescript
+// layout.tsx
+<html lang="en" className="overflow-x-hidden">
+<body className="... overflow-x-hidden">
+
+// page.tsx
+<div className="min-h-screen ... overflow-x-hidden">
+
+// profile/[username]/page.tsx
+<div className="min-h-screen ... overflow-x-hidden">
+```
+
+**Arquivos Modificados**:
+- `app/globals.css` (linhas 5-13)
+- `app/layout.tsx` (linhas 74, 96)
+- `app/page.tsx` (linha 2393)
+- `app/profile/[username]/page.tsx` (linha 484)
+
+**Commit**: `d84f762`
+
+**Resultado**: ✅ Sem mais overflow horizontal, layout otimizado para Farcaster miniapp
+
+---
+
+### ✅ Novas Classes Utilitárias de Design
+
+**Problema**: Design muito flat, falta de profundidade e sofisticação visual.
+
+**Solução**: Adicionadas classes CSS utilitárias para melhorar aparência:
+
+```css
+/* Gradiente metálico para botões */
+.btn-gold-gradient {
+  background: linear-gradient(145deg, #FFD700, #FF8700, #C9A227);
+}
+
+/* Brilho radial suave para títulos */
+.glow-gold {
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+}
+
+/* Sombra interna dourada para cartas */
+.card-glow {
+  box-shadow: inset 0 0 10px rgba(255, 215, 5, 0.3);
+}
+
+/* Textura de feltro para mesas */
+.felt-texture {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.05) 2px,
+    rgba(0, 0, 0, 0.05) 4px
+  );
+}
+```
+
+**Uso Futuro**:
+- `.btn-gold-gradient` - Aplicar em botões principais para efeito metálico
+- `.glow-gold` - Adicionar ao header/título para destaque suave
+- `.card-glow` - Aplicar em cartas reveladas para efeito holográfico sutil
+- `.felt-texture` - Usar em áreas de "mesa" como "Your Hand" e "Defense Deck"
+
+**Arquivo**: `app/globals.css` (linhas 15-35)
+
+**Status**: ✅ Classes criadas, prontas para uso
+
+---
+
+### 📋 Checklist Pós-Deploy
+
+- [x] Build sem erros TypeScript
+- [x] Overflow horizontal corrigido
+- [x] Deploy em produção
+- [x] Commit e push para GitHub
+- [ ] Testar no miniapp Farcaster real
+- [ ] Aplicar novas classes utilitárias nas páginas principais
+- [ ] Feedback de usuários sobre melhorias visuais
+
+---
+
 **🎯 Objetivo deste documento**: Nunca resolver o mesmo problema duas vezes!
