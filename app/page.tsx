@@ -13,6 +13,17 @@ const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDR
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 const HAND_SIZE_CONST = 5;
 const JC_WALLET_ADDRESS = '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728';
+const ADMIN_WALLET = '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52'; // Admin gets 40 attacks
+const MAX_ATTACKS_DEFAULT = 3;
+const MAX_ATTACKS_ADMIN = 40;
+
+// Helper function to get max attacks for a user
+const getMaxAttacks = (walletAddress: string | null): number => {
+  if (!walletAddress) return MAX_ATTACKS_DEFAULT;
+  return walletAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()
+    ? MAX_ATTACKS_ADMIN
+    : MAX_ATTACKS_DEFAULT;
+};
 
 const imageUrlCache = new Map();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60;
@@ -1423,7 +1434,10 @@ export default function TCGPage() {
   const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
   const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
   const [targetPlayer, setTargetPlayer] = useState<UserProfile | null>(null);
-  const [attacksRemaining, setAttacksRemaining] = useState<number>(3);
+  const [attacksRemaining, setAttacksRemaining] = useState<number>(MAX_ATTACKS_DEFAULT);
+
+  // Calculate max attacks for current user
+  const maxAttacks = useMemo(() => getMaxAttacks(address), [address]);
 
   // Battle Result States for sharing
   const [lastBattleResult, setLastBattleResult] = useState<{
@@ -2292,12 +2306,12 @@ export default function TCGPage() {
 
     if (lastAttackDate === todayUTC) {
       // Same day, use existing count
-      setAttacksRemaining(Math.max(0, 3 - attacksToday));
+      setAttacksRemaining(Math.max(0, maxAttacks - attacksToday));
     } else {
-      // New day, reset to 3
-      setAttacksRemaining(3);
+      // New day, reset to max attacks
+      setAttacksRemaining(maxAttacks);
     }
-  }, [userProfile]);
+  }, [userProfile, maxAttacks]);
 
   return (
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6">
@@ -4203,7 +4217,7 @@ export default function TCGPage() {
                   <div className="text-right">
                     {userProfile && (
                       <p className="text-sm font-modern font-semibold text-vintage-gold mb-1">
-                        ⚔️ Attacks Remaining: <span className="text-vintage-neon-blue">{attacksRemaining}/3</span>
+                        ⚔️ Attacks Remaining: <span className="text-vintage-neon-blue">{attacksRemaining}/{maxAttacks}</span>
                       </p>
                     )}
                     <p className="text-xs text-vintage-burnt-gold">⏱️ {t('updateEvery5Min')}</p>
@@ -4275,7 +4289,7 @@ export default function TCGPage() {
                                     }
                                     // Check attack limit
                                     if (attacksRemaining <= 0) {
-                                      alert('You have used all 3 attacks for today. Attacks reset at midnight UTC.');
+                                      alert(`You have used all ${maxAttacks} attacks for today. Attacks reset at midnight UTC.`);
                                       if (soundEnabled) AudioManager.buttonError();
                                       return;
                                     }
