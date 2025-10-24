@@ -3091,7 +3091,21 @@ export default function TCGPage() {
                     const res = await fetch(url);
                     if (!res.ok) throw new Error(`API failed: ${res.status}`);
                     const json = await res.json();
-                    defenderNFTs = json.ownedNfts || [];
+                    const rawNFTs = json.ownedNfts || [];
+
+                    // Process NFTs to extract imageUrl
+                    defenderNFTs = rawNFTs.map((nft: any) => {
+                      const imageUrl = nft?.image?.cachedUrl ||
+                                       nft?.image?.thumbnailUrl ||
+                                       nft?.image?.originalUrl ||
+                                       nft?.raw?.metadata?.image ||
+                                       '';
+                      return {
+                        ...nft,
+                        imageUrl: normalizeUrl(imageUrl)
+                      };
+                    });
+
                     console.log('🔍 Defender NFTs loaded:', defenderNFTs.length);
                     console.log('🔍 Defense deck tokenIds:', targetPlayer.defenseDeck);
                     console.log('🔍 Fetching from address:', targetPlayer.address);
