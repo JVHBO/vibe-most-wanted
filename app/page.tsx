@@ -2039,6 +2039,8 @@ export default function TCGPage() {
             const playerPower = isHost ? room.host.power : room.guest.power;
             const opponentPower = isHost ? room.guest.power : room.host.power;
             const opponentAddress = isHost ? room.guest.address : room.host.address;
+            const opponentName = isHost ? (room.guest.username || 'Guest') : (room.host.username || 'Host');
+            const opponentTwitter = isHost ? room.guest.twitter : room.host.twitter;
 
             // Executa a batalha PvP com animações (igual PVE)
             setIsBattling(true);
@@ -2110,6 +2112,16 @@ export default function TCGPage() {
                 setIsBattling(false);
                 setShowBattleScreen(false);
                 setBattlePhase('cards');
+
+                // Set last battle result for sharing
+                setLastBattleResult({
+                  result: matchResult,
+                  playerPower: playerPower,
+                  opponentPower: opponentPower,
+                  opponentName: opponentName,
+                  opponentTwitter: opponentTwitter,
+                  type: 'pvp'
+                });
 
                 // Mostra popup IMEDIATAMENTE
                 if (matchResult === 'win') {
@@ -3025,7 +3037,7 @@ export default function TCGPage() {
             </div>
 
             {/* Available Cards Grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto p-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-[60vh] overflow-y-auto p-2">
               {sortedAttackNfts.map((nft) => {
                 const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
                 return (
