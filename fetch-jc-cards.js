@@ -36,7 +36,7 @@ function calcPower(nft) {
     rare: 15,
     epic: 60,
     legendary: 150,
-    mythic: 320
+    mythic: 350
   };
 
   const wearMap = {
