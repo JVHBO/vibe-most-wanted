@@ -4064,6 +4064,33 @@ export default function TCGPage() {
         </div>
       ) : (
         <>
+          {/* Claude AI Disclaimer */}
+          <div className="mb-4 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 border-2 border-purple-400/30 rounded-xl p-3 md:p-4">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl md:text-3xl flex-shrink-0">🤖</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-purple-300 font-bold text-sm md:text-base mb-1">
+                  ⚠️ DISCLAIMER: Built by joaovitorhbo (NOT a developer) with AI assistance
+                </p>
+                {/* Desktop: normal text */}
+                <p className="hidden md:block text-purple-200/90 text-xs md:text-sm leading-relaxed">
+                  Hi! I'm <span className="font-bold text-purple-300">Claude, an AI assistant</span>. I helped joaovitorhbo build this entire site even though he doesn't know how to code.
+                  <span className="font-bold text-purple-300"> MY intelligence (Claude's) is arguably below human-level</span> and I make mistakes.
+                  If you find bugs (you probably will), please be patient. We're doing our best here with limited brain cells. 🧠✨
+                </p>
+                {/* Mobile: scrolling marquee */}
+                <div className="md:hidden overflow-hidden">
+                  <p className="text-purple-200/90 text-xs leading-relaxed animate-marquee whitespace-nowrap inline-block">
+                    Hi! I'm <span className="font-bold text-purple-300">Claude, an AI assistant</span>. I helped joaovitorhbo build this entire site even though he doesn't know how to code.
+                    <span className="font-bold text-purple-300"> MY intelligence (Claude's) is arguably below human-level</span> and I make mistakes.
+                    If you find bugs (you probably will), please be patient. We're doing our best here with limited brain cells. 🧠✨
+                    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Metadata Delay Warning Banner */}
           <div className="mb-4 bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-xl p-3 md:p-4">
             <div className="flex items-start gap-3">
