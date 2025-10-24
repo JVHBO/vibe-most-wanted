@@ -2977,8 +2977,8 @@ export default function TCGPage() {
             {/* Difficulty Selector */}
             <div className="mb-4 bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
               <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ JC DIFFICULTY ⚔️</p>
-              <div className="grid grid-cols-3 gap-2">
-                {(['easy', 'medium'] as const).map((diff) => (
+              <div className="grid grid-cols-5 gap-1.5">
+                {(['easy', 'medium', 'hard'] as const).map((diff) => (
                   <button
                     key={diff}
                     onClick={() => {
@@ -3004,10 +3004,27 @@ export default function TCGPage() {
                     </span>
                   </button>
                 ))}
+                {/* Coming Soon difficulties */}
+                {(['extreme', 'impossible'] as const).map((diff) => (
+                  <button
+                    key={diff}
+                    disabled
+                    className="px-1 py-2 rounded text-xs font-bold transition-all bg-vintage-black/30 text-vintage-burnt-gold/40 border border-vintage-gold/10 cursor-not-allowed relative"
+                  >
+                    <span className="opacity-30">
+                      {diff === 'extreme' ? '🔥' : '👑'}
+                    </span>
+                    <br/>
+                    <span className="text-[8px] opacity-50">
+                      {diff === 'extreme' ? 'SOON' : 'SOON'}
+                    </span>
+                  </button>
+                ))}
               </div>
               <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                 {aiDifficulty === 'easy' && '🟢 5 random cards'}
                 {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (~300 power)'}
+                {aiDifficulty === 'hard' && '🔥 JC\'s absolute best cards (1,473 power)'}
               </p>
             </div>
 
@@ -4393,7 +4410,7 @@ export default function TCGPage() {
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
-                          <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden sm:table-cell">Actions</th>
+                          <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -4424,7 +4441,7 @@ export default function TCGPage() {
                             <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{profile.stats.totalPower.toLocaleString()}</td>
                             <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{profile.stats.pveWins + profile.stats.pvpWins}</td>
                             <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
-                            <td className="p-2 md:p-4 text-center hidden sm:table-cell">
+                            <td className="p-1 md:p-4 text-center">
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <button
                                   onClick={() => {
@@ -4453,17 +4470,17 @@ export default function TCGPage() {
                                     setAttackSelectedCards([]);
                                   }}
                                   disabled={!userProfile || attacksRemaining <= 0 || !profile.defenseDeck}
-                                  className={`px-3 py-1.5 rounded-lg font-modern font-semibold text-sm transition-all ${
+                                  className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
                                     userProfile && attacksRemaining > 0 && profile.defenseDeck
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
                                 >
-                                  ⚔️ Attack
+                                  ⚔️<span className="hidden sm:inline"> Attack</span>
                                 </button>
                               )}
                               {profile.address.toLowerCase() === address?.toLowerCase() && (
-                                <span className="text-xs text-vintage-burnt-gold">(You)</span>
+                                <span className="text-[10px] md:text-xs text-vintage-burnt-gold">(You)</span>
                               )}
                             </td>
                           </tr>
