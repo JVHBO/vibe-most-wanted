@@ -2784,129 +2784,6 @@ export default function TCGPage() {
                 </div>
               )}
 
-              {/* Admin Panel - Only visible to admin wallet */}
-              {address?.toLowerCase() === ADMIN_WALLET.toLowerCase() && (
-                <div className="bg-red-900/20 p-5 rounded-xl border-2 border-red-500/50">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-3xl">👑</span>
-                    <div>
-                      <p className="font-modern font-bold text-red-400">ADMIN PANEL</p>
-                      <p className="text-xs text-red-300/70">Dangerous operations</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <button
-                      onClick={async () => {
-                        const confirmed = confirm(
-                          '⚠️ WARNING: This will reset ALL game data!\n\n' +
-                          'This includes:\n' +
-                          '• All match history\n' +
-                          '• All win/loss counters\n' +
-                          '• All attack counters\n\n' +
-                          'But will preserve:\n' +
-                          '• User profiles and usernames\n' +
-                          '• Defense decks\n' +
-                          '• Total power and card counts\n\n' +
-                          'Are you ABSOLUTELY SURE?'
-                        );
-
-                        if (!confirmed) return;
-
-                        const doubleConfirm = confirm(
-                          '⚠️ FINAL CONFIRMATION\n\n' +
-                          'Type YES in the next prompt to proceed with data reset.'
-                        );
-
-                        if (!doubleConfirm) return;
-
-                        const finalCheck = prompt('Type YES to confirm:');
-                        if (finalCheck !== 'YES') {
-                          alert('Reset cancelled.');
-                          return;
-                        }
-
-                        try {
-                          console.log('🧹 Starting admin data reset...');
-
-                          // Get database reference
-                          const { getDatabase, ref: dbRef, get, update, remove } = await import('firebase/database');
-                          const { getApps } = await import('firebase/app');
-                          const database = getDatabase(getApps()[0]);
-
-                          // 1. Clear match history
-                          console.log('📋 Clearing match history...');
-                          const matchHistoryRef = dbRef(database, 'playerMatches');
-                          await remove(matchHistoryRef);
-
-                          // 2. Reset all profile stats
-                          console.log('📊 Resetting profile stats...');
-                          const profilesRef = dbRef(database, 'profiles');
-                          const profilesSnapshot = await get(profilesRef);
-
-                          if (profilesSnapshot.exists()) {
-                            const profiles = profilesSnapshot.val();
-                            const addresses = Object.keys(profiles);
-
-                            for (const addr of addresses) {
-                              const profile = profiles[addr];
-
-                              // Reset battle stats only, keep cards/power
-                              await update(dbRef(database, `profiles/${addr}/stats`), {
-                                pveWins: 0,
-                                pveLosses: 0,
-                                pvpWins: 0,
-                                pvpLosses: 0,
-                                attackWins: 0,
-                                attackLosses: 0,
-                                defenseWins: 0,
-                                defenseLosses: 0,
-                                totalCards: profile.stats?.totalCards || 0,
-                                openedCards: profile.stats?.openedCards || 0,
-                                unopenedCards: profile.stats?.unopenedCards || 0,
-                                totalPower: profile.stats?.totalPower || 0
-                              });
-
-                              // Reset attack counters
-                              await update(dbRef(database, `profiles/${addr}`), {
-                                attacksToday: 0,
-                                lastAttackDate: null
-                              });
-                            }
-                          }
-
-                          // 3. Clear rooms and matchmaking
-                          console.log('🏠 Clearing rooms and matchmaking...');
-                          await remove(dbRef(database, 'rooms'));
-                          await remove(dbRef(database, 'matchmaking'));
-
-                          console.log('✅ Admin data reset completed!');
-                          alert(
-                            '✅ Data reset successful!\n\n' +
-                            'All match history and stats have been cleared.\n' +
-                            'Profiles, usernames, and defense decks were preserved.\n\n' +
-                            'Refreshing page...'
-                          );
-
-                          // Refresh page to update UI
-                          window.location.reload();
-                        } catch (error: any) {
-                          console.error('❌ Admin reset error:', error);
-                          alert(`Error during reset: ${error.message}`);
-                        }
-                      }}
-                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-modern font-bold transition flex items-center justify-center gap-2"
-                    >
-                      <span>🧹</span> RESET ALL GAME DATA
-                    </button>
-
-                    <p className="text-xs text-red-300/70 text-center">
-                      Use this before public launch to clear test data
-                    </p>
-                  </div>
-                </div>
-              )}
-
               {/* Close Button */}
               <button
                 onClick={() => setShowSettings(false)}
@@ -4166,8 +4043,12 @@ export default function TCGPage() {
         </a>
 
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowTutorial(true)} className="bg-vintage-deep-black border border-vintage-gold/50 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/10 transition font-medium text-sm md:text-base" title={t('tutorial')}>
-            <span className="font-bold">?</span>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base animate-tutorial-pulse"
+            title={t('tutorial')}
+          >
+            <span className="text-lg">?</span>
           </button>
         </div>
       </header>
@@ -4183,6 +4064,23 @@ export default function TCGPage() {
         </div>
       ) : (
         <>
+          {/* Metadata Delay Warning Banner */}
+          <div className="mb-4 bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-xl p-3 md:p-4">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl md:text-3xl flex-shrink-0">⚠️</div>
+              <div className="flex-1">
+                <p className="text-yellow-300 font-bold text-sm md:text-base mb-1">
+                  ⏱️ NEWLY OPENED CARDS TAKE TIME TO APPEAR
+                </p>
+                <p className="text-yellow-200/90 text-xs md:text-sm leading-relaxed">
+                  Cards you just opened may take <span className="font-bold text-yellow-300">5-10 minutes</span> to show up on the site.
+                  This is because metadata needs to be indexed. <span className="font-bold">This is normal and always happens!</span>
+                  Refresh the page after a few minutes if your new cards don't appear immediately.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="mb-3 md:mb-6">
             <div className="bg-vintage-charcoal/80 backdrop-blur-lg p-2 md:p-4 rounded-xl border-2 border-vintage-gold/30 shadow-gold">
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
