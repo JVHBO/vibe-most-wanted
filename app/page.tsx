@@ -2344,9 +2344,9 @@ export default function TCGPage() {
             <div className="flex gap-3">
               <a
                 href={(() => {
-                  if (!lastBattleResult) return '#';
-                  const shareId = `${lastBattleResult.result}_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName)}_${lastBattleResult.type}`;
-                  const shareUrl = `${window.location.origin}/share/${shareId}`;
+                  if (!lastBattleResult || !userProfile) return '#';
+                  // Link to user's profile page
+                  const profileUrl = `${window.location.origin}/profile/${userProfile.username}`;
 
                   // Build tweet text with opponent mention if they have Twitter
                   let tweetText = t('tweetVictory', { power: lastBattleResult.playerPower });
@@ -2355,7 +2355,7 @@ export default function TCGPage() {
                     tweetText += `\n\nDefeated @${twitterHandle}!`;
                   }
 
-                  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -2414,9 +2414,9 @@ export default function TCGPage() {
             <div className="flex gap-3">
               <a
                 href={(() => {
-                  if (!lastBattleResult) return '#';
-                  const shareId = `${lastBattleResult.result}_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName)}_${lastBattleResult.type}`;
-                  const shareUrl = `${window.location.origin}/share/${shareId}`;
+                  if (!lastBattleResult || !userProfile) return '#';
+                  // Link to user's profile page
+                  const profileUrl = `${window.location.origin}/profile/${userProfile.username}`;
 
                   // Build tweet text with opponent mention if they have Twitter
                   let tweetText = t('tweetDefeat', { power: lastBattleResult.playerPower });
@@ -2425,7 +2425,7 @@ export default function TCGPage() {
                     tweetText += `\n\nLost to @${twitterHandle} - I want a rematch!`;
                   }
 
-                  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
