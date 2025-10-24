@@ -912,7 +912,7 @@ async function getImage(nft: any): Promise<string> {
   return placeholder;
 }
 
-async function fetchNFTs(owner: string, contractAddress: string = CONTRACT_ADDRESS): Promise<any[]> {
+async function fetchNFTs(owner: string, contractAddress: string = CONTRACT_ADDRESS, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
   if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
   if (!CHAIN) throw new Error("Chain não configurada");
   if (!contractAddress) throw new Error("Contract address não configurado");
@@ -943,6 +943,11 @@ async function fetchNFTs(owner: string, contractAddress: string = CONTRACT_ADDRE
 
     revealedNfts = revealedNfts.concat(revealed);
     console.log(`   → Found ${revealed.length} revealed cards on this page`);
+
+    // Report progress
+    if (onProgress) {
+      onProgress(pageCount, revealedNfts.length);
+    }
 
     pageKey = json.pageKey;
 
@@ -1231,6 +1236,7 @@ export default function TCGPage() {
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
   const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
+  const [jcLoadingProgress, setJcLoadingProgress] = useState<{page: number, cards: number} | null>(null);
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -1553,7 +1559,9 @@ export default function TCGPage() {
 
       console.log('⚡ Fast-loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
       console.log('   Using JC contract:', JC_CONTRACT_ADDRESS);
-      const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS); // Already filtered!
+      const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS, (page, cards) => {
+        setJcLoadingProgress({ page, cards });
+      }); // Already filtered!
       console.log(`📦 Fetched ${revealed.length} revealed NFTs, processing...`);
 
       // FAST MODE: Extract images directly from Alchemy response (no async fetch needed)
@@ -1602,6 +1610,7 @@ export default function TCGPage() {
 
       setJcNfts(finalProcessed);
       setJcNftsLoading(false);
+      setJcLoadingProgress(null); // Reset progress
 
       // Save to cache
       try {
@@ -3985,6 +3994,32 @@ export default function TCGPage() {
 
                 {/* Battle vs AI Button */}
                 <div className="mb-4">
+                  {/* Lore Description */}
+                  <div className="mb-3 p-3 bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-500/30 rounded-lg">
+                    <p className="text-xs text-red-200/80 italic font-medium leading-relaxed">
+                      ⚠️ These are the burned cards seeking revenge. Cards that players sent to the void now haunt this realm, waiting to challenge you...
+                    </p>
+                  </div>
+
+                  {/* Loading Progress */}
+                  {jcNftsLoading && jcLoadingProgress && (
+                    <div className="mb-3 p-3 bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-vintage-gold font-medium">Loading Burned Cards...</span>
+                        <span className="text-xs text-vintage-gold/60">Page {jcLoadingProgress.page}</span>
+                      </div>
+                      <div className="text-sm text-vintage-gold font-bold">
+                        {jcLoadingProgress.cards} cards found
+                      </div>
+                      <div className="mt-2 w-full bg-vintage-black/50 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-300 animate-pulse"
+                          style={{ width: `${Math.min(100, (jcLoadingProgress.cards / 859) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     onClick={() => {
                       // Check if JC cards are loaded
@@ -4013,7 +4048,7 @@ export default function TCGPage() {
                     {jcNftsLoading ? (
                       <span className="flex items-center justify-center gap-2">
                         <span className="animate-spin">⏳</span>
-                        Loading JC Deck ({jcNfts.length} cards)...
+                        Loading... ({jcLoadingProgress?.cards || 0} cards)
                       </span>
                     ) : (
                       'Battle vs AI'
