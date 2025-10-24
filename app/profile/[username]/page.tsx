@@ -534,13 +534,13 @@ export default function ProfilePage() {
                   <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="md" />
                 </div>
               </div>
-              <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
-                <p className="text-vintage-burnt-gold font-mono text-sm">
+              <div className="flex items-center gap-2 justify-center md:justify-start mb-2 max-w-full">
+                <p className="text-vintage-burnt-gold font-mono text-sm truncate max-w-[180px] sm:max-w-[250px] md:max-w-none">
                   {profile.address}
                 </p>
                 <button
                   onClick={copyAddress}
-                  className="px-2 py-1 bg-vintage-charcoal hover:bg-vintage-gold/20 border border-vintage-gold/50 rounded text-vintage-gold hover:text-vintage-ice transition-all text-xs font-modern font-semibold"
+                  className="px-2 py-1 bg-vintage-charcoal hover:bg-vintage-gold/20 border border-vintage-gold/50 rounded text-vintage-gold hover:text-vintage-ice transition-all text-xs font-modern font-semibold flex-shrink-0"
                   title="Copy wallet address"
                 >
                   {copiedAddress ? '✓ Copied' : '📋 Copy'}
@@ -863,37 +863,73 @@ export default function ProfilePage() {
 
             {/* Pagination */}
             {filteredNfts.length > NFT_PER_PAGE && (
-              <div className="mt-6 flex items-center justify-center gap-2">
+              <div className="mt-6 flex items-center justify-center gap-1 md:gap-2 flex-wrap">
                 <button
                   onClick={() => setCurrentNFTPage(Math.max(1, currentNFTPage - 1))}
                   disabled={currentNFTPage === 1}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition"
+                  className="px-2 md:px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition text-xs md:text-base"
                 >
-                  ← Previous
+                  <span className="hidden sm:inline">← Previous</span>
+                  <span className="sm:hidden">←</span>
                 </button>
 
-                <div className="flex gap-2">
-                  {Array.from({ length: Math.ceil(filteredNfts.length / NFT_PER_PAGE) }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentNFTPage(page)}
-                      className={`w-10 h-10 rounded-lg font-semibold transition ${
-                        currentNFTPage === page
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-700 hover:bg-gray-600 text-white'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+                <div className="flex gap-1 md:gap-2">
+                  {(() => {
+                    const totalPages = Math.ceil(filteredNfts.length / NFT_PER_PAGE);
+                    const maxVisible = 5; // Mostrar no máximo 5 páginas no mobile
+                    const pages: (number | string)[] = [];
+
+                    if (totalPages <= maxVisible) {
+                      // Se tem poucas páginas, mostra todas
+                      for (let i = 1; i <= totalPages; i++) pages.push(i);
+                    } else {
+                      // Mostrar páginas ao redor da atual
+                      if (currentNFTPage <= 3) {
+                        for (let i = 1; i <= 4; i++) pages.push(i);
+                        pages.push('...');
+                        pages.push(totalPages);
+                      } else if (currentNFTPage >= totalPages - 2) {
+                        pages.push(1);
+                        pages.push('...');
+                        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+                      } else {
+                        pages.push(1);
+                        pages.push('...');
+                        pages.push(currentNFTPage - 1);
+                        pages.push(currentNFTPage);
+                        pages.push(currentNFTPage + 1);
+                        pages.push('...');
+                        pages.push(totalPages);
+                      }
+                    }
+
+                    return pages.map((page, idx) =>
+                      typeof page === 'string' ? (
+                        <span key={`ellipsis-${idx}`} className="w-8 md:w-10 h-8 md:h-10 flex items-center justify-center text-gray-500">...</span>
+                      ) : (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentNFTPage(page)}
+                          className={`w-8 md:w-10 h-8 md:h-10 rounded-lg font-semibold transition text-xs md:text-base ${
+                            currentNFTPage === page
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-700 hover:bg-gray-600 text-white'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    );
+                  })()}
                 </div>
 
                 <button
                   onClick={() => setCurrentNFTPage(Math.min(Math.ceil(filteredNfts.length / NFT_PER_PAGE), currentNFTPage + 1))}
                   disabled={currentNFTPage === Math.ceil(filteredNfts.length / NFT_PER_PAGE)}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition"
+                  className="px-2 md:px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition text-xs md:text-base"
                 >
-                  Next →
+                  <span className="hidden sm:inline">Next →</span>
+                  <span className="sm:hidden">→</span>
                 </button>
               </div>
             )}
