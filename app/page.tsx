@@ -1074,7 +1074,6 @@ async function fetchNFTs(owner: string, contractAddress?: string, onProgress?: (
 
   do {
     pageCount++;
-    console.log(`   Fetching page ${pageCount}... (${revealedNfts.length} revealed so far)`);
     const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`API falhou: ${res.status}`);
@@ -1090,7 +1089,6 @@ async function fetchNFTs(owner: string, contractAddress?: string, onProgress?: (
     });
 
     revealedNfts = revealedNfts.concat(revealed);
-    console.log(`   → Found ${revealed.length} revealed cards on this page`);
 
     // Report progress
     if (onProgress) {
@@ -1101,12 +1099,10 @@ async function fetchNFTs(owner: string, contractAddress?: string, onProgress?: (
 
     // Stop if we have enough revealed cards
     if (revealedNfts.length >= targetRevealed) {
-      console.log(`   ✅ Reached ${revealedNfts.length} revealed cards, stopping early`);
       break;
     }
   } while (pageKey && pageCount < maxPages);
 
-  console.log(`   📊 Total: ${revealedNfts.length} revealed cards from ${pageCount} pages`);
   return revealedNfts;
 }
 
@@ -3132,6 +3128,12 @@ export default function TCGPage() {
 
                     } while (pageKey && pageCount < maxPages);
 
+                    // Debug: Show what was found
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log(`⚔️  ATTACKING: ${targetPlayer.username}`);
+                    console.log(`📦 Total NFTs fetched: ${defenderNFTs.length} (from ${pageCount} pages)`);
+                    console.log(`🛡️  Defense Deck IDs:`, targetPlayer.defenseDeck);
+
                   } catch (error) {
                     console.error('Error fetching defender NFTs:', error);
                   }
@@ -3155,6 +3157,7 @@ export default function TCGPage() {
                   const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => {
                     // Find the actual card from defender's NFTs (compare as strings to handle type mismatch)
                     const actualCard = defenderNFTs.find(nft => String(nft.tokenId) === String(tokenId));
+                    console.log(`🃏 Card ${i+1}: ID=${tokenId}, Found=${!!actualCard}, Name="${actualCard?.name || 'NOT FOUND'}", Rarity="${actualCard?.rarity || 'N/A'}"`);
                     return {
                       tokenId: tokenId,
                       imageUrl: actualCard?.imageUrl || cardBackUrl,
@@ -3162,6 +3165,7 @@ export default function TCGPage() {
                       name: actualCard?.name || `Defense Card #${i + 1}`
                     };
                   });
+                  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                   // Set up battle
                   setSelectedCards(attackSelectedCards);
