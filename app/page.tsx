@@ -2997,8 +2997,8 @@ export default function TCGPage() {
             </p>
 
             {/* Selected Cards Display */}
-            <div className="mb-6 p-4 bg-vintage-black/50 rounded-xl border border-red-600/50">
-              <div className="grid grid-cols-5 gap-2">
+            <div className="mb-3 p-2 bg-vintage-black/50 rounded-xl border border-red-600/50">
+              <div className="grid grid-cols-5 gap-1.5">
                 {attackSelectedCards.map((card, i) => (
                   <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-600 shadow-lg">
                     <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
@@ -3007,26 +3007,26 @@ export default function TCGPage() {
                 ))}
                 {Array(HAND_SIZE_CONST - attackSelectedCards.length).fill(0).map((_, i) => (
                   <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-red-600/40 flex items-center justify-center text-red-600/50 bg-vintage-felt-green/30">
-                    <span className="text-2xl font-bold">+</span>
+                    <span className="text-xl font-bold">+</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 text-center">
+              <div className="mt-2 text-center">
                 <p className="text-xs text-vintage-burnt-gold">Your Attack Power</p>
-                <p className="text-2xl font-bold text-red-500">
+                <p className="text-xl font-bold text-red-500">
                   {attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0)}
                 </p>
               </div>
             </div>
 
             {/* Sort Button */}
-            <div className="mb-4 flex justify-end">
+            <div className="mb-2 flex justify-end">
               <button
                 onClick={() => {
                   setSortAttackByPower(!sortAttackByPower);
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-modern font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all ${
                   sortAttackByPower
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
@@ -3037,7 +3037,7 @@ export default function TCGPage() {
             </div>
 
             {/* Available Cards Grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-[60vh] overflow-y-auto p-2">
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5 mb-4 max-h-[65vh] overflow-y-auto p-1">
               {sortedAttackNfts.map((nft) => {
                 const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
                 return (
