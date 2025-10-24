@@ -919,10 +919,11 @@ async function fetchNFTs(owner: string): Promise<any[]> {
   let allNfts: any[] = [];
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
-  const maxPages = 100; // Increased to fetch all 6720+ cards
+  const maxPages = 20; // 2000 cards - enough to get all strong cards from 30-card collection
 
   do {
     pageCount++;
+    console.log(`   Fetching page ${pageCount}...`);
     const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${CONTRACT_ADDRESS}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`API falhou: ${res.status}`);
