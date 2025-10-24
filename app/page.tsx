@@ -2784,6 +2784,129 @@ export default function TCGPage() {
                 </div>
               )}
 
+              {/* Admin Panel - Only visible to admin wallet */}
+              {address?.toLowerCase() === ADMIN_WALLET.toLowerCase() && (
+                <div className="bg-red-900/20 p-5 rounded-xl border-2 border-red-500/50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-3xl">👑</span>
+                    <div>
+                      <p className="font-modern font-bold text-red-400">ADMIN PANEL</p>
+                      <p className="text-xs text-red-300/70">Dangerous operations</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <button
+                      onClick={async () => {
+                        const confirmed = confirm(
+                          '⚠️ WARNING: This will reset ALL game data!\n\n' +
+                          'This includes:\n' +
+                          '• All match history\n' +
+                          '• All win/loss counters\n' +
+                          '• All attack counters\n\n' +
+                          'But will preserve:\n' +
+                          '• User profiles and usernames\n' +
+                          '• Defense decks\n' +
+                          '• Total power and card counts\n\n' +
+                          'Are you ABSOLUTELY SURE?'
+                        );
+
+                        if (!confirmed) return;
+
+                        const doubleConfirm = confirm(
+                          '⚠️ FINAL CONFIRMATION\n\n' +
+                          'Type YES in the next prompt to proceed with data reset.'
+                        );
+
+                        if (!doubleConfirm) return;
+
+                        const finalCheck = prompt('Type YES to confirm:');
+                        if (finalCheck !== 'YES') {
+                          alert('Reset cancelled.');
+                          return;
+                        }
+
+                        try {
+                          console.log('🧹 Starting admin data reset...');
+
+                          // Get database reference
+                          const { getDatabase, ref: dbRef, get, update, remove } = await import('firebase/database');
+                          const { getApps } = await import('firebase/app');
+                          const database = getDatabase(getApps()[0]);
+
+                          // 1. Clear match history
+                          console.log('📋 Clearing match history...');
+                          const matchHistoryRef = dbRef(database, 'playerMatches');
+                          await remove(matchHistoryRef);
+
+                          // 2. Reset all profile stats
+                          console.log('📊 Resetting profile stats...');
+                          const profilesRef = dbRef(database, 'profiles');
+                          const profilesSnapshot = await get(profilesRef);
+
+                          if (profilesSnapshot.exists()) {
+                            const profiles = profilesSnapshot.val();
+                            const addresses = Object.keys(profiles);
+
+                            for (const addr of addresses) {
+                              const profile = profiles[addr];
+
+                              // Reset battle stats only, keep cards/power
+                              await update(dbRef(database, `profiles/${addr}/stats`), {
+                                pveWins: 0,
+                                pveLosses: 0,
+                                pvpWins: 0,
+                                pvpLosses: 0,
+                                attackWins: 0,
+                                attackLosses: 0,
+                                defenseWins: 0,
+                                defenseLosses: 0,
+                                totalCards: profile.stats?.totalCards || 0,
+                                openedCards: profile.stats?.openedCards || 0,
+                                unopenedCards: profile.stats?.unopenedCards || 0,
+                                totalPower: profile.stats?.totalPower || 0
+                              });
+
+                              // Reset attack counters
+                              await update(dbRef(database, `profiles/${addr}`), {
+                                attacksToday: 0,
+                                lastAttackDate: null
+                              });
+                            }
+                          }
+
+                          // 3. Clear rooms and matchmaking
+                          console.log('🏠 Clearing rooms and matchmaking...');
+                          await remove(dbRef(database, 'rooms'));
+                          await remove(dbRef(database, 'matchmaking'));
+
+                          console.log('✅ Admin data reset completed!');
+                          alert(
+                            '✅ Data reset successful!\n\n' +
+                            'All match history and stats have been cleared.\n' +
+                            'Profiles, usernames, and defense decks were preserved.\n\n' +
+                            'Refreshing page...'
+                          );
+
+                          // Refresh page to update UI
+                          window.location.reload();
+                        } catch (error: any) {
+                          console.error('❌ Admin reset error:', error);
+                          alert(`Error during reset: ${error.message}`);
+                        }
+                      }}
+                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-modern font-bold transition flex items-center justify-center gap-2"
+                    >
+                      <span>🧹</span> RESET ALL GAME DATA
+                    </button>
+
+                    <p className="text-xs text-red-300/70 text-center">
+                      Use this before public launch to clear test data
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Close Button */}
               <button
                 onClick={() => setShowSettings(false)}
@@ -2799,86 +2922,124 @@ export default function TCGPage() {
       {showBattleScreen && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300]">
           <div className="w-full max-w-6xl p-8">
-            <style>{`
-              @keyframes slideInLeft {
-                from { transform: translateX(-100%) rotate(-10deg); opacity: 0; }
-                to { transform: translateX(0) rotate(0); opacity: 1; }
-              }
-              @keyframes slideInRight {
-                from { transform: translateX(100%) rotate(10deg); opacity: 0; }
-                to { transform: translateX(0) rotate(0); opacity: 1; }
-              }
-              @keyframes cardClash {
-                0%, 100% { transform: translateX(0); }
-                25% { transform: translateX(-20px); }
-                75% { transform: translateX(20px); }
-              }
-              @keyframes shake {
-                0%, 100% { transform: rotate(0deg); }
-                25% { transform: rotate(-5deg); }
-                75% { transform: rotate(5deg); }
-              }
-              @keyframes pulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.05); }
-              }
-            `}</style>
-
-            <h2 className="text-3xl md:text-5xl font-bold text-center mb-8 md:mb-12 text-yellow-400 animate-pulse uppercase tracking-wider">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-8 md:mb-12 text-yellow-400 uppercase tracking-wider" style={{ animation: 'battlePowerPulse 2s ease-in-out infinite' }}>
               {t('battle')}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
+              {/* Player Cards */}
               <div>
                 <h3 className="text-xl md:text-2xl font-bold text-vintage-neon-blue mb-3 md:mb-4 text-center">{battlePlayerName}</h3>
-                <div className="grid grid-cols-5 gap-1 md:gap-2" style={{ animation: battlePhase === 'clash' ? 'cardClash 0.5s ease-in-out infinite' : 'slideInLeft 0.5s ease' }}>
+                <div
+                  className="grid grid-cols-5 gap-1 md:gap-2"
+                  style={{
+                    animation: battlePhase === 'clash'
+                      ? 'battleCardShake 2s ease-in-out'
+                      : 'battleCardFadeIn 0.8s ease-out'
+                  }}
+                >
                   {selectedCards.map((c, i) => (
-                    <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-cyan-500 shadow-lg shadow-cyan-500/50">
+                    <div
+                      key={i}
+                      className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-cyan-500"
+                      style={{
+                        animation: battlePhase === 'clash'
+                          ? `battleGlowBlue 1.5s ease-in-out infinite`
+                          : undefined,
+                        animationDelay: `${i * 0.1}s`
+                      }}
+                    >
                       <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
-                      <div className="absolute top-0 left-0 bg-cyan-500 text-white text-xs font-bold px-1 md:px-2 py-1 rounded-br">{c.power}</div>
+                      {/* Power badge sempre visível */}
+                      <div
+                        className="absolute top-0 left-0 bg-cyan-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
+                        style={{
+                          animation: battlePhase === 'clash'
+                            ? 'battlePowerPulse 1s ease-in-out infinite'
+                            : undefined
+                        }}
+                      >
+                        {c.power}
+                      </div>
                     </div>
                   ))}
                 </div>
-                {battlePhase === 'result' && (
-                  <div className="mt-3 md:mt-4 text-center">
-                    <p className="text-3xl md:text-4xl font-bold text-vintage-neon-blue animate-pulse">{playerPower}</p>
-                  </div>
-                )}
+                <div className="mt-3 md:mt-4 text-center">
+                  <p
+                    className="text-3xl md:text-4xl font-bold text-vintage-neon-blue"
+                    style={{
+                      animation: battlePhase === 'result'
+                        ? 'battlePowerPulse 1.5s ease-in-out 3'
+                        : undefined
+                    }}
+                  >
+                    {playerPower}
+                  </p>
+                </div>
               </div>
 
+              {/* Opponent Cards */}
               <div>
                 <h3 className="text-xl md:text-2xl font-bold text-red-400 mb-3 md:mb-4 text-center">{battleOpponentName}</h3>
-                <div className="grid grid-cols-5 gap-1 md:gap-2" style={{ animation: battlePhase === 'clash' ? 'cardClash 0.5s ease-in-out infinite' : 'slideInRight 0.5s ease' }}>
+                <div
+                  className="grid grid-cols-5 gap-1 md:gap-2"
+                  style={{
+                    animation: battlePhase === 'clash'
+                      ? 'battleCardShake 2s ease-in-out'
+                      : 'battleCardFadeIn 0.8s ease-out'
+                  }}
+                >
                   {dealerCards.map((c, i) => (
-                    <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/50">
+                    <div
+                      key={i}
+                      className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500"
+                      style={{
+                        animation: battlePhase === 'clash'
+                          ? `battleGlowRed 1.5s ease-in-out infinite`
+                          : undefined,
+                        animationDelay: `${i * 0.1}s`
+                      }}
+                    >
                       <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
-                      <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-1 md:px-2 py-1 rounded-br">{c.power}</div>
+                      {/* Power badge sempre visível */}
+                      <div
+                        className="absolute top-0 left-0 bg-red-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
+                        style={{
+                          animation: battlePhase === 'clash'
+                            ? 'battlePowerPulse 1s ease-in-out infinite'
+                            : undefined
+                        }}
+                      >
+                        {c.power}
+                      </div>
                     </div>
                   ))}
                 </div>
-                {battlePhase === 'result' && (
-                  <div className="mt-3 md:mt-4 text-center">
-                    <p className="text-3xl md:text-4xl font-bold text-red-400 animate-pulse">{dealerPower}</p>
-                  </div>
-                )}
+                <div className="mt-3 md:mt-4 text-center">
+                  <p
+                    className="text-3xl md:text-4xl font-bold text-red-400"
+                    style={{
+                      animation: battlePhase === 'result'
+                        ? 'battlePowerPulse 1.5s ease-in-out 3'
+                        : undefined
+                    }}
+                  >
+                    {dealerPower}
+                  </p>
+                </div>
               </div>
             </div>
 
+            {/* Result */}
             {battlePhase === 'result' && result && (
-              <div className="text-center">
-                <div className={`text-3xl md:text-6xl font-bold animate-[shake_0.5s_ease] ${
+              <div className="text-center" style={{ animation: 'battleResultSlide 0.8s ease-out' }}>
+                <div className={`text-3xl md:text-6xl font-bold ${
                   result === t('playerWins') ? 'text-green-400' :
                   result === t('dealerWins') ? 'text-red-400' :
                   'text-yellow-400'
                 }`}>
                   {result}
                 </div>
-              </div>
-            )}
-
-            {battlePhase === 'clash' && (
-              <div className="text-center text-4xl animate-pulse">
-                💥 💥 💥
               </div>
             )}
           </div>
