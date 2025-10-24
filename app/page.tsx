@@ -2869,8 +2869,8 @@ export default function TCGPage() {
             {/* Difficulty Selector */}
             <div className="mb-4 bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
               <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ JC DIFFICULTY ⚔️</p>
-              <div className="grid grid-cols-5 gap-2">
-                {(['easy', 'medium', 'hard', 'extreme', 'impossible'] as const).map((diff) => (
+              <div className="grid grid-cols-3 gap-2">
+                {(['easy', 'medium', 'hard'] as const).map((diff) => (
                   <button
                     key={diff}
                     onClick={() => {
@@ -2881,24 +2881,18 @@ export default function TCGPage() {
                       aiDifficulty === diff
                         ? diff === 'easy' ? 'bg-green-500 text-white shadow-lg scale-105'
                         : diff === 'medium' ? 'bg-blue-500 text-white shadow-lg scale-105'
-                        : diff === 'hard' ? 'bg-orange-500 text-white shadow-lg scale-105'
-                        : diff === 'extreme' ? 'bg-red-500 text-white shadow-lg scale-105'
-                        : 'bg-purple-600 text-white shadow-lg scale-105'
+                        : 'bg-orange-500 text-white shadow-lg scale-105'
                         : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
                     }`}
                   >
-                    {diff === 'easy' ? '😊'
-                    : diff === 'medium' ? '😐'
-                    : diff === 'hard' ? '😠'
-                    : diff === 'extreme' ? '💀'
-                    : '👿'}
+                    {diff === 'easy' ? '🏳️‍🌈'
+                    : diff === 'medium' ? '💀'
+                    : '💪'}
                     <br/>
                     <span className="text-[9px]">
-                      {diff === 'easy' ? 'EASY'
-                      : diff === 'medium' ? 'MED'
-                      : diff === 'hard' ? 'HARD'
-                      : diff === 'extreme' ? 'EXTR'
-                      : 'IMP'}
+                      {diff === 'easy' ? 'GEY'
+                      : diff === 'medium' ? 'GOONER'
+                      : 'GIGACHAD'}
                     </span>
                   </button>
                 ))}
@@ -2906,9 +2900,7 @@ export default function TCGPage() {
               <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                 {aiDifficulty === 'easy' && '🟢 Random cards'}
                 {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
-                {aiDifficulty === 'hard' && '🟠 Picks from top 7'}
-                {aiDifficulty === 'extreme' && '🔴 Picks from top 10'}
-                {aiDifficulty === 'impossible' && '🟣 EXACTLY top 5 strongest (MAX POWER)'}
+                {aiDifficulty === 'hard' && '🟠 Picks from top 5'}
               </p>
             </div>
 
@@ -3224,8 +3216,8 @@ export default function TCGPage() {
               {/* Difficulty Selector */}
               <div className="bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
                 <p className="text-center text-vintage-gold text-sm font-modern mb-3">JC DIFFICULTY</p>
-                <div className="grid grid-cols-5 gap-2">
-                  {(['easy', 'medium', 'hard', 'extreme', 'impossible'] as const).map((diff) => (
+                <div className="grid grid-cols-3 gap-2">
+                  {(['easy', 'medium', 'hard'] as const).map((diff) => (
                     <button
                       key={diff}
                       onClick={() => {
@@ -3236,24 +3228,18 @@ export default function TCGPage() {
                         aiDifficulty === diff
                           ? diff === 'easy' ? 'bg-green-500 text-white shadow-lg scale-105'
                           : diff === 'medium' ? 'bg-blue-500 text-white shadow-lg scale-105'
-                          : diff === 'hard' ? 'bg-orange-500 text-white shadow-lg scale-105'
-                          : diff === 'extreme' ? 'bg-red-500 text-white shadow-lg scale-105'
-                          : 'bg-purple-600 text-white shadow-lg scale-105'
+                          : 'bg-orange-500 text-white shadow-lg scale-105'
                           : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
                       }`}
                     >
-                      {diff === 'easy' ? '😊'
-                      : diff === 'medium' ? '😐'
-                      : diff === 'hard' ? '😠'
-                      : diff === 'extreme' ? '💀'
-                      : '👿'}
+                      {diff === 'easy' ? '🏳️‍🌈'
+                      : diff === 'medium' ? '💀'
+                      : '💪'}
                       <br/>
                       <span className="text-[9px]">
-                        {diff === 'easy' ? 'EASY'
-                        : diff === 'medium' ? 'MED'
-                        : diff === 'hard' ? 'HARD'
-                        : diff === 'extreme' ? 'EXTR'
-                        : 'IMP'}
+                        {diff === 'easy' ? 'GEY'
+                        : diff === 'medium' ? 'GOONER'
+                        : 'GIGACHAD'}
                       </span>
                     </button>
                   ))}
@@ -3261,9 +3247,7 @@ export default function TCGPage() {
                 <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                   {aiDifficulty === 'easy' && '🟢 Random cards'}
                   {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
-                  {aiDifficulty === 'hard' && '🟠 Picks from top 7'}
-                  {aiDifficulty === 'extreme' && '🔴 Picks from top 5'}
-                  {aiDifficulty === 'impossible' && '🟣 Always top 5 strongest'}
+                  {aiDifficulty === 'hard' && '🟠 Picks from top 5'}
                 </p>
               </div>
 
