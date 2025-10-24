@@ -270,8 +270,18 @@ const translations = {
     connectTitle: 'Conecte sua carteira',
     connectDescription: 'Conecte para carregar suas cartas reveladas deste contrato e montar sua mão.',
     tutorialTitle: 'Como Jogar Vibe Most Wanted',
-    howToPlay: '🎮 Regras do Jogo',
-    howToPlayDesc: '1. Você precisa de NO MÍNIMO 5 CARTAS para jogar\n2. Selecione exatamente 5 cartas da sua coleção\n3. Clique em "Jogar Mão" para começar a batalha\n4. O Dealer escolhe 5 cartas aleatórias do resto da sua coleção\n5. Quem tiver o maior poder total VENCE!',
+    howToPlay: '🎮 Modos de Jogo',
+    howToPlayDesc: '1. Você precisa de NO MÍNIMO 5 CARTAS para jogar\n2. Selecione exatamente 5 cartas da sua coleção\n3. Escolha seu modo:\n   • PvE: Batalhe contra a IA (Dealer)\n   • PvP: Enfrente outros jogadores em tempo real\n   • Ataque: Desafie jogadores do ranking\n4. Quem tiver o maior poder total VENCE!',
+    gameModes: 'Modos de Jogo',
+    gameModesDesc: '🤖 PvE - Jogue contra a IA (Dealer)\n👥 PvP - Batalhas em tempo real contra outros jogadores\n⚔️ Ataque - Ataque jogadores do ranking para roubar pontos',
+    totalPowerInfo: 'Poder Total',
+    totalPowerInfoDesc: 'Seu PODER TOTAL é a soma do poder das suas 5 cartas mais fortes. Este valor aparece no ranking e determina sua posição. Quanto mais cartas fortes você tiver, maior seu poder total!',
+    defenseDeckInfo: 'Deck de Defesa',
+    defenseDeckInfoDesc: 'Configure seu DECK DE DEFESA com suas 5 melhores cartas! Quando outros jogadores atacarem você, essas cartas serão usadas automaticamente para defender. Atualize sempre que conseguir cartas mais fortes!',
+    attackSystemInfo: 'Sistema de Ataques',
+    attackSystemInfoDesc: 'Ataque jogadores do RANKING para roubar seus pontos!\n• Você tem 3 ataques por dia\n• Ataques resetam à meia-noite UTC\n• Escolha suas 5 melhores cartas para atacar\n• Enfrente o deck de defesa do oponente\n• Se vencer, rouba pontos da vítima!',
+    leaderboardInfo: 'Ranking Global',
+    leaderboardInfoDesc: 'Veja os melhores jogadores no RANKING GLOBAL! A classificação é baseada no seu PODER TOTAL (soma das 5 cartas mais fortes). Crie seu perfil para aparecer no ranking e mostre sua coleção para o mundo!',
     needCards: '🛒 Precisa de Cartas?',
     needCardsDesc: 'Compre cartas no Vibe Market para começar a jogar! Mínimo necessário: 5 cartas.',
     buyCards: '💳 Comprar Cartas',
@@ -436,8 +446,18 @@ const translations = {
     connectTitle: 'अपना वॉलेट कनेक्ट करें',
     connectDescription: 'इस अनुबंध से अपने खुले कार्ड लोड करने और अपना हाथ बनाने के लिए कनेक्ट करें।',
     tutorialTitle: 'Vibe Most Wanted कैसे खेलें',
-    howToPlay: 'कैसे खेलें',
-    howToPlayDesc: 'अपने 5 कार्ड चुनें और "हाथ खेलें" पर क्लिक करें। डीलर आपके शेष संग्रह से 5 यादृच्छिक कार्ड चुनता है। सबसे अधिक कुल शक्ति जीतती है।',
+    howToPlay: 'खेल मोड',
+    howToPlayDesc: '1. खेलने के लिए कम से कम 5 कार्ड चाहिए\n2. अपने संग्रह से ठीक 5 कार्ड चुनें\n3. अपना मोड चुनें:\n   • PvE: AI (डीलर) के खिलाफ लड़ें\n   • PvP: वास्तविक समय में अन्य खिलाड़ियों से लड़ें\n   • हमला: रैंकिंग खिलाड़ियों को चुनौती दें\n4. सबसे अधिक कुल शक्ति जीतती है!',
+    gameModes: 'खेल मोड',
+    gameModesDesc: '🤖 PvE - AI (डीलर) के खिलाफ खेलें\n👥 PvP - अन्य खिलाड़ियों के खिलाफ वास्तविक समय लड़ाई\n⚔️ हमला - अंक चुराने के लिए रैंकिंग खिलाड़ियों पर हमला करें',
+    totalPowerInfo: 'कुल शक्ति',
+    totalPowerInfoDesc: 'आपकी कुल शक्ति आपके 5 सबसे मजबूत कार्डों की शक्ति का योग है। यह मान रैंकिंग में दिखाई देता है और आपकी स्थिति निर्धारित करता है। आपके पास जितने अधिक मजबूत कार्ड होंगे, आपकी कुल शक्ति उतनी ही अधिक होगी!',
+    defenseDeckInfo: 'रक्षा डेक',
+    defenseDeckInfoDesc: 'अपने 5 सर्वश्रेष्ठ कार्डों के साथ अपना रक्षा डेक कॉन्फ़िगर करें! जब अन्य खिलाड़ी आप पर हमला करते हैं, तो ये कार्ड स्वचालित रूप से बचाव के लिए उपयोग किए जाएंगे। जब भी आपको मजबूत कार्ड मिलें तो अपडेट करें!',
+    attackSystemInfo: 'हमला प्रणाली',
+    attackSystemInfoDesc: 'उनके अंक चुराने के लिए रैंकिंग खिलाड़ियों पर हमला करें!\n• आपके पास प्रति दिन 3 हमले हैं\n• हमले मध्यरात्रि UTC पर रीसेट होते हैं\n• हमला करने के लिए अपने 5 सर्वश्रेष्ठ कार्ड चुनें\n• प्रतिद्वंद्वी के रक्षा डेक का सामना करें\n• अगर जीतते हैं, तो पीड़ित के अंक चुराएं!',
+    leaderboardInfo: 'वैश्विक रैंकिंग',
+    leaderboardInfoDesc: 'वैश्विक रैंकिंग में सर्वश्रेष्ठ खिलाड़ियों को देखें! रैंकिंग आपकी कुल शक्ति (5 सबसे मजबूत कार्डों का योग) पर आधारित है। रैंकिंग में दिखाई देने के लिए अपनी प्रोफ़ाइल बनाएं और दुनिया को अपना संग्रह दिखाएं!',
     powerCalc: 'शक्ति गणना',
     powerCalcDesc: 'कार्ड की शक्ति दुर्लभता, घिसावट और फ़ॉइल प्रकार पर निर्भर करती है।',
     rarityBase: 'दुर्लभता के आधार पर',
@@ -604,8 +624,18 @@ const translations = {
     connectTitle: 'Connect your wallet',
     connectDescription: 'Connect to load your revealed cards from this contract and build your hand.',
     tutorialTitle: 'How to Play Vibe Most Wanted',
-    howToPlay: 'Game Rules',
-    howToPlayDesc: '1. You need AT LEAST 5 CARDS to play\n2. Select exactly 5 cards to build your hand\n3. Click "Play Hand" to enter the battle arena\n4. The dealer will randomly draw 5 cards from your remaining collection\n5. Highest total power WINS! May the best hand prevail!',
+    howToPlay: 'Game Modes',
+    howToPlayDesc: '1. You need AT LEAST 5 CARDS to play\n2. Select exactly 5 cards from your collection\n3. Choose your mode:\n   • PvE: Battle against the AI (Dealer)\n   • PvP: Face other players in real-time\n   • Attack: Challenge players from the leaderboard\n4. Highest total power WINS!',
+    gameModes: 'Game Modes',
+    gameModesDesc: '🤖 PvE - Play against the AI (Dealer)\n👥 PvP - Real-time battles against other players\n⚔️ Attack - Attack leaderboard players to steal their points',
+    totalPowerInfo: 'Total Power',
+    totalPowerInfoDesc: 'Your TOTAL POWER is the sum of your 5 strongest cards. This value appears in the leaderboard and determines your position. The more strong cards you have, the higher your total power!',
+    defenseDeckInfo: 'Defense Deck',
+    defenseDeckInfoDesc: 'Configure your DEFENSE DECK with your 5 best cards! When other players attack you, these cards will be used automatically to defend. Update it whenever you get stronger cards!',
+    attackSystemInfo: 'Attack System',
+    attackSystemInfoDesc: 'Attack LEADERBOARD players to steal their points!\n• You have 3 attacks per day\n• Attacks reset at midnight UTC\n• Choose your 5 best cards to attack\n• Face your opponent\'s defense deck\n• If you win, steal points from your victim!',
+    leaderboardInfo: 'Global Leaderboard',
+    leaderboardInfoDesc: 'See the best players on the GLOBAL LEADERBOARD! Rankings are based on your TOTAL POWER (sum of your 5 strongest cards). Create your profile to appear in the leaderboard and show your collection to the world!',
     needCards: 'Need Cards?',
     needCardsDesc: 'Start your journey in the arena! Buy cards on Vibe Market to build your ultimate deck. Minimum 5 cards required to play.',
     buyCards: 'Buy Cards on Vibe Market',
@@ -769,8 +799,18 @@ const translations = {
     connectTitle: 'Conecta tu billetera',
     connectDescription: 'Conéctate para cargar tus cartas reveladas de este contrato y armar tu mano.',
     tutorialTitle: 'Cómo Jugar Vibe Most Wanted',
-    howToPlay: 'Cómo jugar',
-    howToPlayDesc: 'Elige exactamente 5 cartas y haz clic en "Jugar Mano". El Dealer toma 5 cartas aleatorias del resto de tu colección. Gana el mayor poder total.',
+    howToPlay: 'Modos de Juego',
+    howToPlayDesc: '1. Necesitas AL MENOS 5 CARTAS para jugar\n2. Selecciona exactamente 5 cartas de tu colección\n3. Elige tu modo:\n   • PvE: Batalla contra la IA (Dealer)\n   • PvP: Enfrenta a otros jugadores en tiempo real\n   • Ataque: Desafía a jugadores del ranking\n4. ¡El mayor poder total GANA!',
+    gameModes: 'Modos de Juego',
+    gameModesDesc: '🤖 PvE - Juega contra la IA (Dealer)\n👥 PvP - Batallas en tiempo real contra otros jugadores\n⚔️ Ataque - Ataca jugadores del ranking para robar sus puntos',
+    totalPowerInfo: 'Poder Total',
+    totalPowerInfoDesc: 'Tu PODER TOTAL es la suma del poder de tus 5 cartas más fuertes. Este valor aparece en el ranking y determina tu posición. ¡Cuantas más cartas fuertes tengas, mayor será tu poder total!',
+    defenseDeckInfo: 'Mazo de Defensa',
+    defenseDeckInfoDesc: '¡Configura tu MAZO DE DEFENSA con tus 5 mejores cartas! Cuando otros jugadores te ataquen, estas cartas se usarán automáticamente para defender. ¡Actualízalo siempre que consigas cartas más fuertes!',
+    attackSystemInfo: 'Sistema de Ataques',
+    attackSystemInfoDesc: '¡Ataca jugadores del RANKING para robar sus puntos!\n• Tienes 3 ataques por día\n• Los ataques se reinician a medianoche UTC\n• Elige tus 5 mejores cartas para atacar\n• Enfrenta el mazo de defensa del oponente\n• ¡Si ganas, robas puntos de la víctima!',
+    leaderboardInfo: 'Ranking Global',
+    leaderboardInfoDesc: '¡Ve a los mejores jugadores en el RANKING GLOBAL! La clasificación se basa en tu PODER TOTAL (suma de tus 5 cartas más fuertes). ¡Crea tu perfil para aparecer en el ranking y muestra tu colección al mundo!',
     powerCalc: 'Cálculo de Poder',
     powerCalcDesc: 'El poder depende de rareza, desgaste y tipo de foil.',
     rarityBase: 'Base por rareza',
@@ -3796,6 +3836,46 @@ export default function TCGPage() {
                 </h3>
                 <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
                   <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('howToPlayDesc')}</p>
+                </div>
+              </div>
+
+              {/* Poder Total */}
+              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-neon-blue/30">
+                <h3 className="text-xl font-display font-bold text-vintage-neon-blue mb-3 flex items-center gap-2">
+                  <span className="text-2xl">⚡</span> {t('totalPowerInfo')}
+                </h3>
+                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-neon-blue/20">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('totalPowerInfoDesc')}</p>
+                </div>
+              </div>
+
+              {/* Ranking Global */}
+              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
+                <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                  <span className="text-2xl">🏆</span> {t('leaderboardInfo')}
+                </h3>
+                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('leaderboardInfoDesc')}</p>
+                </div>
+              </div>
+
+              {/* Deck de Defesa */}
+              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-burnt-gold/30">
+                <h3 className="text-xl font-display font-bold text-vintage-burnt-gold mb-3 flex items-center gap-2">
+                  <span className="text-2xl">🛡️</span> {t('defenseDeckInfo')}
+                </h3>
+                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-burnt-gold/20">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('defenseDeckInfoDesc')}</p>
+                </div>
+              </div>
+
+              {/* Sistema de Ataques */}
+              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-red-500/30">
+                <h3 className="text-xl font-display font-bold text-red-400 mb-3 flex items-center gap-2">
+                  <span className="text-2xl">⚔️</span> {t('attackSystemInfo')}
+                </h3>
+                <div className="bg-vintage-black/50 p-4 rounded-lg border border-red-500/20">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('attackSystemInfoDesc')}</p>
                 </div>
               </div>
 
