@@ -1207,6 +1207,7 @@ export default function TCGPage() {
   const [address, setAddress] = useState<string | null>(null);
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
+  const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -1585,9 +1586,11 @@ export default function TCGPage() {
       }
 
       setJcNfts(finalProcessed);
-      console.log('JC NFTs loaded:', finalProcessed.length, 'cards');
+      setJcNftsLoading(false);
+      console.log('✅ JC NFTs loaded:', finalProcessed.length, 'cards');
     } catch (e: any) {
-      console.error('Error loading JC NFTs:', e);
+      console.error('❌ Error loading JC NFTs:', e);
+      setJcNftsLoading(false);
     }
   }, []);
 
@@ -3959,6 +3962,12 @@ export default function TCGPage() {
                 <div className="mb-4">
                   <button
                     onClick={() => {
+                      // Check if JC cards are loaded
+                      if (jcNftsLoading) {
+                        alert('JC deck is still loading! Please wait...');
+                        if (soundEnabled) AudioManager.buttonError();
+                        return;
+                      }
                       // Check if defense deck is set
                       if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE_CONST) {
                         alert('You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".');
@@ -3969,14 +3978,21 @@ export default function TCGPage() {
                       setShowPveCardSelection(true);
                       setPveSelectedCards([]);
                     }}
-                    disabled={!userProfile}
+                    disabled={!userProfile || jcNftsLoading}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
-                      userProfile
+                      userProfile && !jcNftsLoading
                         ? 'bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black shadow-neon hover:scale-105'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    Battle vs AI
+                    {jcNftsLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="animate-spin">⏳</span>
+                        Loading JC Deck ({jcNfts.length} cards)...
+                      </span>
+                    ) : (
+                      'Battle vs AI'
+                    )}
                   </button>
                 </div>
 
