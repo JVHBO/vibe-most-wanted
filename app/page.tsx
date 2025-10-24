@@ -3112,7 +3112,7 @@ export default function TCGPage() {
                     const actualCard = defenderNFTs.find(nft => nft.tokenId === tokenId);
                     return {
                       tokenId: tokenId,
-                      imageUrl: cardBackUrl,
+                      imageUrl: actualCard?.imageUrl || cardBackUrl,
                       power: actualCard ? calcPower(actualCard) : 20, // Use real power or fallback to 20
                       name: actualCard?.name || `Defense Card #${i + 1}`
                     };
