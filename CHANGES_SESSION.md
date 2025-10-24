@@ -234,10 +234,47 @@ cd vibe-most-wanted && node test-wallet-nfts.js
 4. `e2223c8` - Fix: Extract images from Alchemy response for JC deck (fast + with images)
 5. `64edcd3` - Optimize JC deck loading - skip metadata/image enrichment
 6. `e012b1e` - Optimize: Reduce target to 500 revealed cards for faster loading
+7. `a3ec81e` - feat: Add separate JC_CONTRACT for JC's cards (supports 2 contracts)
+8. `7dcd858` - perf: Reduce target to 100 cards + add localStorage cache (1 day)
+
+## Otimizações Finais (Commit 7dcd858)
+
+### Problema: Ainda demorando muito
+Com 859 cartas abertas (13.1%) e target de 500:
+- Precisava buscar ~3,800 cartas total
+- ~38 páginas × 1-2 seg/página = 38-76 segundos
+
+### Solução Implementada:
+
+**1. Reduzido Target para 100 cartas**
+- 100 cartas é suficiente para pegar as top 5 mais fortes
+- ~8-15 páginas × 1-2 seg/página = **8-30 segundos** (primeira vez)
+
+**2. Cache LocalStorage (1 dia)**
+```typescript
+// Verifica cache antes de buscar
+const cached = localStorage.getItem('jc_deck_cache_v2');
+const cacheTime = localStorage.getItem('jc_deck_cache_time_v2');
+
+if (cached && (Date.now() - cacheTime) < oneDay) {
+  // Carrega do cache - INSTANTÂNEO!
+  return cachedData;
+}
+
+// Busca da API só na primeira vez
+// Salva no cache após processar
+localStorage.setItem('jc_deck_cache_v2', JSON.stringify(finalProcessed));
+```
+
+**Resultado:**
+- ⚡ **Primeira visita**: 8-30 segundos
+- 🚀 **Visitas seguintes**: < 1 segundo (cache)
+- 💾 Cache válido por 24 horas
 
 ## Próximos Passos
 
-1. ✅ Atualizar `NEXT_PUBLIC_VIBE_CONTRACT` no Vercel (quando tiver deployments disponíveis)
+1. ⚠️  Adicionar `NEXT_PUBLIC_JC_CONTRACT` no Vercel (quando tiver deployments)
+   - Valor: `0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728`
 2. ✅ Testar loading no ambiente de produção
 3. ✅ Verificar se IMPOSSIBLE mode está com poder alto o suficiente
 
