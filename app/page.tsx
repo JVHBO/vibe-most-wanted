@@ -921,8 +921,8 @@ async function fetchNFTs(owner: string, contractAddress: string = CONTRACT_ADDRE
   let revealedNfts: any[] = [];
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
-  const maxPages = 15; // Fast loading - just enough to get strong cards
-  const targetRevealed = 100; // 100 cards is plenty to get the top 5 strongest
+  const maxPages = 70; // Get all pages to fetch all ~859 opened cards
+  const targetRevealed = 900; // Target all opened cards (~859 total)
 
   do {
     pageCount++;
