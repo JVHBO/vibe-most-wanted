@@ -482,6 +482,39 @@ const difficulties: AIDifficulty[] = ['easy', 'medium', 'hard'];
 
 ## Deployment (Vercel)
 
+### ⚠️ REGRA CRÍTICA: NUNCA USE `vercel --prod` DIRETAMENTE
+
+**🚨 NUNCA FAÇA ISSO:**
+```bash
+vercel --prod  # ❌ ERRADO! Gasta deploys desnecessários
+```
+
+**✅ SEMPRE FAÇA ISSO:**
+```bash
+git add .
+git commit -m "sua mensagem"
+git push origin main  # ✅ CORRETO! Vercel faz auto-deploy
+```
+
+**Por quê?**
+- Vercel tem **auto-deploy do GitHub** configurado
+- Usar `vercel --prod` cria **2 deploys do mesmo commit** (desperdiça quota)
+- Vercel Free tier tem **limite de 100 deploys/dia**
+- Auto-deploy do GitHub é mais confiável e controlado
+
+**Workflow correto**:
+1. Fazer alterações no código
+2. `git add` + `git commit`
+3. `git push origin main`
+4. Vercel detecta automaticamente e deploya
+5. ✅ **PRONTO!** Não fazer mais nada
+
+**Exceções** (raramente necessárias):
+- Apenas use Vercel CLI se GitHub auto-deploy estiver quebrado
+- Ou se precisar fazer deploy de branch específica
+
+---
+
 ### Pattern: Environment Variables
 
 **Problema**: `.env.local` não é deployado automaticamente.
