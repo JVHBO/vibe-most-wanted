@@ -1567,4 +1567,104 @@ updateEvery5Min: 'हमले आधी रात को रीसेट हो
 
 ---
 
+## 🐛 BUG: Cartas Faltando na Home Page (2025-10-24)
+
+### ✅ RESOLVIDO - Filtro Duplicado Removendo Cartas Válidas
+
+**Problema**: Home page mostrava menos cartas do que a página de perfil para o mesmo wallet.
+
+**Exemplo Reportado**:
+- Wallet: `0xd024c93588fb2fc5da321eba704d2302d2c9443a`
+- Profile page: **11 cartas reveladas** ✅
+- Home page: **< 11 cartas** ❌ (faltando cartas)
+
+**Causa Raiz**:
+
+A home page estava aplicando **dois filtros** nas cartas:
+
+1. **Primeiro filtro** (linha 436 em `fetchNFTs`):
+```typescript
+const revealed = pageNfts.filter((nft: any) => {
+  const rarityAttr = attrs.find((a: any) => a.trait_type?.toLowerCase() === 'rarity');
+  const rarity = rarityAttr?.value || '';
+  return rarity.toLowerCase() !== 'unopened'; // ✅ Remove unopened
+});
+```
+
+2. **Segundo filtro** (linha 1011 - PROBLEMÁTICO):
+```typescript
+const revealed = enrichedRaw.filter((n) => !isUnrevealed(n)); // ❌ Remove cartas válidas!
+```
+
+**Por que o segundo filtro era problemático:**
+
+A função `isUnrevealed()` marca cartas como "não reveladas" se:
+```typescript
+// Linha 279
+if (!hasAttrs) return true; // ❌ Sem attributes = unrevealed
+```
+
+**O que acontecia:**
+1. Carta passa pelo primeiro filtro (rarity !== 'unopened') ✅
+2. Metadata fetch FALHA (linhas 996-1004 catch silencioso)
+3. Carta fica SEM `attributes` completos
+4. Segundo filtro `isUnrevealed()` marca como unrevealed (sem attributes)
+5. Carta VÁLIDA é removida incorretamente ❌
+
+**Comparação com Profile Page:**
+
+Profile page **NÃO** aplica filtro duplo:
+```typescript
+// profile/[username]/page.tsx linha 219
+async function fetchNFTs(owner: string): Promise<any[]> {
+  // ...
+  return allNfts; // ✅ Retorna TUDO, filtro só na UI
+}
+```
+
+**Solução Implementada**:
+
+Remover o filtro duplicado da home page:
+
+**ANTES** (linhas 1011-1018):
+```typescript
+const revealed = enrichedRaw.filter((n) => !isUnrevealed(n));
+const filtered = enrichedRaw.length - revealed.length;
+setFilteredCount(filtered);
+
+const IMAGE_BATCH_SIZE = 50;
+const processed = [];
+
+for (let i = 0; i < revealed.length; i += IMAGE_BATCH_SIZE) {
+  const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
+```
+
+**DEPOIS**:
+```typescript
+// Não filtrar novamente - fetchNFTs já filtrou unopened cards
+// Processar TODAS as cartas retornadas para evitar perder cartas válidas
+const IMAGE_BATCH_SIZE = 50;
+const processed = [];
+
+for (let i = 0; i < enrichedRaw.length; i += IMAGE_BATCH_SIZE) {
+  const batch = enrichedRaw.slice(i, i + IMAGE_BATCH_SIZE);
+```
+
+**Arquivos modificados**:
+- `app/page.tsx` (linhas 1011-1017)
+
+**Commit**: `a27302b`
+
+**Resultado**: ✅ Home e Profile agora mostram o mesmo número de cartas
+
+---
+
+**Lição Aprendida**:
+- ⚠️ Nunca filtrar cartas duas vezes com critérios diferentes
+- ⚠️ Se metadata fetch pode falhar, não use `hasAttributes` como critério de revelação
+- ✅ Confiar no filtro único em `fetchNFTs` (rarity !== 'unopened')
+- ✅ Manter consistência entre home e profile
+
+---
+
 **🎯 Objetivo deste documento**: Nunca resolver o mesmo problema duas vezes!
