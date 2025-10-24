@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(vercel --prod:*)",
+      "Bash(git push:*)",
+      "Bash(vercel ls:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(git log:*)",
+      "Read(//c/Users/zoboo/Desktop/**)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(echo:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

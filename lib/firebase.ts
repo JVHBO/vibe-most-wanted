@@ -681,7 +681,6 @@ export class ProfileService {
   // Atualiza estatísticas do perfil
   static async updateStats(address: string, totalCards: number, openedCards: number, unopenedCards: number, totalPower: number): Promise<void> {
     const normalizedAddress = address.toLowerCase();
-    console.log('📊 updateStats called:', { address: normalizedAddress, totalCards, openedCards, unopenedCards, totalPower });
 
     // Atualiza o objeto stats diretamente no path correto
     await update(ref(database, `profiles/${normalizedAddress}/stats`), {
@@ -694,19 +693,6 @@ export class ProfileService {
     await update(ref(database, `profiles/${normalizedAddress}`), {
       lastUpdated: Date.now()
     });
-
-    console.log('✅ Profile stats updated successfully');
-
-    // Verify the update
-    const profile = await this.getProfile(normalizedAddress);
-    if (profile) {
-      console.log('🔍 Verified profile stats:', {
-        totalCards: profile.stats.totalCards,
-        openedCards: profile.stats.openedCards,
-        unopenedCards: profile.stats.unopenedCards,
-        totalPower: profile.stats.totalPower
-      });
-    }
   }
 
   // Atualiza Twitter
@@ -920,8 +906,6 @@ export class ProfileService {
         }
       }
 
-      console.log('💾 Updating profile stats:', statsUpdate);
-
       // Atualiza stats no path correto
       await update(ref(database, `profiles/${normalizedPlayerAddress}/stats`), statsUpdate);
 
@@ -929,19 +913,6 @@ export class ProfileService {
       await update(ref(database, `profiles/${normalizedPlayerAddress}`), {
         lastUpdated: Date.now()
       });
-
-      console.log('✅ Profile stats updated after match');
-
-      // Verifica a atualização
-      const updatedProfile = await this.getProfile(normalizedPlayerAddress);
-      if (updatedProfile) {
-        console.log('🔍 Verified updated stats:', {
-          pveWins: updatedProfile.stats.pveWins,
-          pveLosses: updatedProfile.stats.pveLosses,
-          pvpWins: updatedProfile.stats.pvpWins,
-          pvpLosses: updatedProfile.stats.pvpLosses
-        });
-      }
     } else {
       console.warn('⚠️ No profile found for player:', playerAddress);
     }
