@@ -1846,16 +1846,8 @@ export default function TCGPage() {
         break;
 
       case 'hard':
-        // Hard: Always picks from top 5 strongest
-        for (let i = 0; i < HAND_SIZE_CONST; i++) {
-          if (sorted.length > 0) {
-            const idx = Math.floor(Math.random() * Math.min(5, sorted.length));
-            pickedDealer.push(sorted[idx]);
-            sorted.splice(idx, 1);
-          } else {
-            pickedDealer.push(shuffled[i]);
-          }
-        }
+        // GIGACHAD: EXATAMENTE as top 5 mais fortes (PODER MÁXIMO)
+        pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
         break;
     }
 
@@ -2924,7 +2916,7 @@ export default function TCGPage() {
               <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                 {aiDifficulty === 'easy' && '🟢 Random cards'}
                 {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
-                {aiDifficulty === 'hard' && '🟠 Picks from top 5'}
+                {aiDifficulty === 'hard' && '🟠 EXACTLY top 5 strongest (MAX POWER)'}
               </p>
             </div>
 
@@ -3271,7 +3263,7 @@ export default function TCGPage() {
                 <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                   {aiDifficulty === 'easy' && '🟢 Random cards'}
                   {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
-                  {aiDifficulty === 'hard' && '🟠 Picks from top 5'}
+                  {aiDifficulty === 'hard' && '🟠 EXACTLY top 5 strongest (MAX POWER)'}
                 </p>
               </div>
 
