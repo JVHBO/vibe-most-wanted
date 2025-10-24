@@ -81,11 +81,79 @@ const getMaxAttacks = (walletAddress: string | null): number => {
 ## Status do Deploy
 
 ❌ **BLOQUEADO**: Vercel atingiu limite de 100 deploys gratuitos/dia
-⏳ **Tempo**: Esperar 13 minutos (desde ~última tentativa)
+⏳ **Tempo**: Esperar 7 minutos (desde ~última tentativa)
 ✅ **GitHub**: Todos os commits estão no repositório
 📦 **Último deploy bem-sucedido**: `https://vibe-most-wanted-kt8i7i1te-joaovitorhbos-projects.vercel.app` (commit b34af72)
 
-**Commit pendente de deploy**: `fc2d049` (Admin 40 attacks)
+**Commits pendentes de deploy**:
+- `fc2d049` (Admin 40 attacks)
+- `888fea1` (Session summary doc)
+- `f374c1a` (Mobile optimizations)
+
+---
+
+### 5. Commit `f374c1a` - Mobile Optimizations (NÃO DEPLOYADO)
+**Feature**: Otimizações completas do layout para mobile/Farcaster miniapp.
+
+**Problemas identificados no mobile**:
+1. Título muito grande
+2. Conteúdo cortado embaixo
+3. Botões ocupando muito espaço
+4. Tabela do leaderboard com colunas cortadas
+5. Textos muito pequenos ou muito grandes
+
+**Otimizações do Header**:
+```typescript
+// Título
+className="text-3xl md:text-5xl lg:text-6xl"  // Antes: text-5xl lg:text-6xl
+
+// Gaps e padding
+className="gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6"  // Antes: gap-6 mb-8 p-6
+
+// Botão "Buy Cards"
+<span className="hidden md:inline">BUY CARDS ON VIBE MARKET</span>
+<span className="md:hidden">Buy Cards</span>
+```
+
+**Otimizações dos Botões de Navegação**:
+```typescript
+// Tabs (Vibe Most Wanted, Settings, Leaderboard)
+className="px-2 md:px-6 py-2 md:py-3"  // Antes: px-6 py-3
+className="text-xs md:text-base"  // Antes: (sem classe)
+
+// Esconde texto no mobile, mostra só ícones
+<span className="hidden sm:inline">{t('title')}</span>
+```
+
+**Otimizações da Tabela do Leaderboard**:
+```typescript
+// Header
+className="p-2 md:p-4 text-xs md:text-base"  // Antes: p-4
+
+// Esconde colunas no mobile
+<th className="hidden md:table-cell">Opened</th>  // Esconde < md
+<th className="hidden lg:table-cell">{t('wins')}</th>  // Esconde < lg
+<th className="hidden lg:table-cell">{t('losses')}</th>  // Esconde < lg
+<th className="hidden sm:table-cell">Actions</th>  // Esconde < sm
+
+// Células de dados
+className="p-2 md:p-4"  // Antes: p-4
+className="text-xs md:text-base"  // Responsivo
+className="text-base md:text-xl"  // Power column
+
+// Esconde endereço wallet em telas pequenas
+className="hidden sm:block"  // Para o endereço
+```
+
+**Resultado**:
+- ✅ Todo o conteúdo cabe na tela mobile
+- ✅ Não há mais corte de texto
+- ✅ Leaderboard mostra apenas colunas essenciais: Rank, Player, Power
+- ✅ Textos legíveis em todos os tamanhos de tela
+- ✅ Layout compacto mas funcional
+- ✅ Otimizado para Farcaster miniapp
+
+**Arquivos**: `app/page.tsx` (linhas 3818-3842, 3855-3857, 3919-3957, 4210-4274)
 
 ---
 
@@ -107,6 +175,11 @@ vercel --prod
 ✅ **GEY**: Mantido 5 random
 ✅ **Admin Attacks**: 40 ataques/dia para 0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52
 ✅ **Descrições**: Todas as dificuldades com descrições corretas
+✅ **Mobile/Farcaster**: Layout completamente otimizado para mobile
+  - Header menor e mais compacto
+  - Botões responsivos (só ícones no mobile)
+  - Leaderboard com colunas escondidas no mobile
+  - Todo conteúdo cabe na tela sem cortes
 
 ---
 
