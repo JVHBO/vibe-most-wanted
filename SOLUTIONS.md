@@ -1143,4 +1143,150 @@ html, body {
 
 ---
 
+## 🎬 ANIMAÇÕES DE BATALHA - PRÓXIMAS MELHORIAS
+
+### ⏳ PENDENTE - Nova Animação de Batalha
+
+**Requisito**: Melhorar a experiência visual durante as batalhas.
+
+**Sequência Desejada** (ATUALIZADA):
+1. **Cartas aparecem JÁ com poder visível** (fade in ou slide) - mostram valores desde o início
+2. **Animação dinâmica** - cartas se mexem/tremem mostrando seus poderes (shake, bounce, ou float)
+   - Efeitos visuais: shake, glow, particles
+   - Duração: 2-3 segundos
+   - **SEM emojis nas/abaixo das cartas**
+3. **Transição para tela final** - resultado da batalha (vitória/derrota)
+
+**Implementação Futura**:
+```typescript
+// Estrutura da animação atualizada (SEM emojis)
+const battleAnimation = async () => {
+  // 1. Fade in cards WITH power already visible
+  setShowPower(true); // Poder visível desde o início
+  await animateCardsIn(); // Fade in ou slide in
+
+  // 2. Dynamic animation with power showing (2-3 segundos)
+  await Promise.all([
+    animateCardsShake(), // Cartas tremendo
+    animateGlowEffect(), // Brilho pulsando
+    animateParticles()   // Partículas ao redor (opcional)
+  ]);
+
+  // 3. Transition to final result screen
+  await transitionToResult(); // Smooth transition
+  showBattleResult(); // Vitória/Derrota
+};
+```
+
+**Classes CSS Necessárias**:
+```css
+/* Fade in cards com poder */
+@keyframes cardFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Shake dinâmico */
+@keyframes cardShake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-10px) rotate(-2deg); }
+  75% { transform: translateX(10px) rotate(2deg); }
+}
+
+/* Glow pulsante */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.9),
+                0 0 60px rgba(255, 215, 0, 0.6);
+  }
+}
+
+/* Bounce suave */
+@keyframes cardBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Particles ao redor (opcional) */
+@keyframes particleFly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0);
+  }
+}
+```
+
+**Status**: 📝 Anotado, aguardando implementação
+
+**Prioridade**: 🟡 MÉDIA (melhoria de UX, não crítico)
+
+---
+
+## 🧹 LIMPEZA DE DADOS - ANTES DO LANÇAMENTO
+
+### ⏳ PENDENTE - Reset de Dados de Teste
+
+**Requisito**: Limpar histórico de batalhas antigas e contadores antes do lançamento público.
+
+**O que precisa ser limpo**:
+- [ ] Match History (Firebase `/matchHistory`)
+- [ ] Stats de wins/losses nos perfis (`/profiles/{address}/stats`)
+- [ ] Ataques registrados (`/profiles/{address}/lastAttacks`)
+
+**Opções de Implementação**:
+
+**Opção 1: Script Manual** (Recomendado para lançamento)
+```javascript
+// scripts/reset-game-data.js
+import admin from 'firebase-admin';
+
+async function resetGameData() {
+  // 1. Limpar match history
+  await admin.database().ref('matchHistory').remove();
+
+  // 2. Reset stats de todos os perfis
+  const profiles = await admin.database().ref('profiles').once('value');
+  profiles.forEach(profile => {
+    profile.ref.child('stats').update({
+      pveWins: 0,
+      pveLosses: 0,
+      pvpWins: 0,
+      pvpLosses: 0,
+    });
+    profile.ref.child('lastAttacks').remove();
+  });
+
+  console.log('✅ Dados resetados com sucesso!');
+}
+```
+
+**Opção 2: Botão Admin na UI**
+- Adicionar botão "Reset All Data" apenas para admin wallet
+- Confirmação em 2 etapas para evitar acidentes
+- Log de quem fez o reset e quando
+
+**Opção 3: Firebase Console Manual**
+- Ir no Firebase Realtime Database
+- Deletar node `matchHistory`
+- Editar stats manualmente em cada perfil
+
+**Status**: 📝 Anotado, aguardando decisão de como proceder
+
+**Prioridade**: 🔴 ALTA (antes do lançamento público)
+
+---
+
 **🎯 Objetivo deste documento**: Nunca resolver o mesmo problema duas vezes!
