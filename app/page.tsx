@@ -1415,6 +1415,7 @@ export default function TCGPage() {
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
   const [showPveCardSelection, setShowPveCardSelection] = useState<boolean>(false);
   const [pveSelectedCards, setPveSelectedCards] = useState<any[]>([]);
+  const [pveSortByPower, setPveSortByPower] = useState<boolean>(false);
   const [newUsername, setNewUsername] = useState<string>('');
   const [isChangingUsername, setIsChangingUsername] = useState<boolean>(false);
 
@@ -1993,6 +1994,12 @@ export default function TCGPage() {
     if (!sortAttackByPower) return nfts;
     return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
   }, [nfts, sortAttackByPower]);
+
+  // Sorted NFTs for PvE modal
+  const sortedPveNfts = useMemo(() => {
+    if (!pveSortByPower) return nfts;
+    return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+  }, [nfts, pveSortByPower]);
 
   // Firebase Room Listener - Escuta mudanças na sala em tempo real
   useEffect(() => {
@@ -2830,7 +2837,7 @@ export default function TCGPage() {
 
             {/* Available Cards Grid */}
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto p-2">
-              {nfts.map((nft) => {
+              {sortedPveNfts.map((nft) => {
                 const isSelected = pveSelectedCards.find(c => c.tokenId === nft.tokenId);
                 return (
                   <div
@@ -2864,6 +2871,23 @@ export default function TCGPage() {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Sort Button */}
+            <div className="mb-4 flex justify-center">
+              <button
+                onClick={() => {
+                  setPveSortByPower(!pveSortByPower);
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className={`px-4 py-2 rounded-xl font-modern font-semibold transition-all ${
+                  pveSortByPower
+                    ? 'bg-vintage-neon-blue text-vintage-black shadow-neon'
+                    : 'bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 hover:bg-vintage-gold/10'
+                }`}
+              >
+                {pveSortByPower ? '↓ Sorted by Power' : '⇄ Sort by Power'}
+              </button>
             </div>
 
             {/* Difficulty Selector */}
@@ -3255,9 +3279,9 @@ export default function TCGPage() {
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonSuccess();
-                  setGameMode('ai');
                   setPvpMode(null);
-                  playHand();
+                  setShowPveCardSelection(true);
+                  setPveSelectedCards([]);
                 }}
                 className="w-full px-6 py-4 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-display font-bold text-lg shadow-neon transition-all hover:scale-105"
               >
@@ -3365,7 +3389,7 @@ export default function TCGPage() {
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonNav();
-                  setPvpMode('menu');
+                  setPvpMode(null);
                   setGameMode(null);
                 }}
                 className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
