@@ -75,14 +75,15 @@ export async function GET(request: Request) {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '40px',
+              gap: '25px',
               zIndex: 1,
+              paddingBottom: '100px',
             }}
           >
             {/* Title */}
             <div
               style={{
-                fontSize: '80px',
+                fontSize: '68px',
                 fontWeight: 900,
                 color: isWin ? '#FFD700' : isTie ? '#C0C0C0' : '#DC2626',
                 textShadow: isWin
@@ -90,7 +91,7 @@ export async function GET(request: Request) {
                   : isTie
                   ? '0 0 40px rgba(192, 192, 192, 0.8), 0 0 80px rgba(192, 192, 192, 0.4)'
                   : '0 0 40px rgba(220, 38, 38, 0.8), 0 0 80px rgba(220, 38, 38, 0.4)',
-                letterSpacing: '4px',
+                letterSpacing: '3px',
                 display: 'flex',
               }}
             >
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
             {/* Subtitle */}
             <div
               style={{
-                fontSize: '36px',
+                fontSize: '30px',
                 fontWeight: 600,
                 color: '#D4AF37',
                 display: 'flex',
@@ -113,9 +114,9 @@ export async function GET(request: Request) {
             <div
               style={{
                 display: 'flex',
-                gap: '60px',
+                gap: '50px',
                 alignItems: 'center',
-                marginTop: '20px',
+                marginTop: '10px',
               }}
             >
               {/* Your Power */}
@@ -124,12 +125,12 @@ export async function GET(request: Request) {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '8px',
                 }}
               >
                 <div
                   style={{
-                    fontSize: '24px',
+                    fontSize: '20px',
                     color: '#9CA3AF',
                     fontWeight: 600,
                     display: 'flex',
@@ -139,7 +140,7 @@ export async function GET(request: Request) {
                 </div>
                 <div
                   style={{
-                    fontSize: '64px',
+                    fontSize: '52px',
                     fontWeight: 900,
                     color: '#3B82F6',
                     textShadow: '0 0 20px rgba(59, 130, 246, 0.6)',
@@ -153,7 +154,7 @@ export async function GET(request: Request) {
               {/* VS */}
               <div
                 style={{
-                  fontSize: '48px',
+                  fontSize: '40px',
                   fontWeight: 700,
                   color: '#6B7280',
                   display: 'flex',
@@ -168,12 +169,12 @@ export async function GET(request: Request) {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '8px',
                 }}
               >
                 <div
                   style={{
-                    fontSize: '24px',
+                    fontSize: '20px',
                     color: '#9CA3AF',
                     fontWeight: 600,
                     display: 'flex',
@@ -183,7 +184,7 @@ export async function GET(request: Request) {
                 </div>
                 <div
                   style={{
-                    fontSize: '64px',
+                    fontSize: '52px',
                     fontWeight: 900,
                     color: '#EF4444',
                     textShadow: '0 0 20px rgba(239, 68, 68, 0.6)',
