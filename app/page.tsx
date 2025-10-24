@@ -3077,8 +3077,16 @@ export default function TCGPage() {
             {/* Action Buttons */}
             <div className="space-y-3">
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer) return;
+
+                  // Fetch defender's actual NFTs to get real power values
+                  let defenderNFTs: any[] = [];
+                  try {
+                    defenderNFTs = await fetchNFTs(targetPlayer.address);
+                  } catch (error) {
+                    console.error('Error fetching defender NFTs:', error);
+                  }
 
                   // Create defender card objects (hidden cards with card back)
                   const cardBackUrl = 'data:image/svg+xml;base64,' + btoa(`
@@ -3096,12 +3104,16 @@ export default function TCGPage() {
                     </svg>
                   `);
 
-                  const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => ({
-                    tokenId: tokenId,
-                    imageUrl: cardBackUrl,
-                    power: 20, // Placeholder power
-                    name: `Defense Card #${i + 1}`
-                  }));
+                  const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => {
+                    // Find the actual card from defender's NFTs
+                    const actualCard = defenderNFTs.find(nft => nft.tokenId === tokenId);
+                    return {
+                      tokenId: tokenId,
+                      imageUrl: cardBackUrl,
+                      power: actualCard ? calcPower(actualCard) : 20, // Use real power or fallback to 20
+                      name: actualCard?.name || `Defense Card #${i + 1}`
+                    };
+                  });
 
                   // Set up battle
                   setSelectedCards(attackSelectedCards);
