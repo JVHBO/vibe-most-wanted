@@ -1828,21 +1828,23 @@ export default function TCGPage() {
     // Different strategies based on difficulty
     switch (aiDifficulty) {
       case 'easy':
-        // Easy: Completely random selection
+        // GEY: Completely random selection (weakest difficulty)
         pickedDealer = shuffled.slice(0, HAND_SIZE_CONST);
         break;
 
       case 'medium':
-        // Medium: 70% top 3, 30% random (current strategy)
-        for (let i = 0; i < HAND_SIZE_CONST; i++) {
-          if (Math.random() < 0.7 && sorted.length > 0) {
-            const idx = Math.floor(Math.random() * Math.min(3, sorted.length));
-            pickedDealer.push(sorted[idx]);
-            sorted.splice(idx, 1);
-          } else {
-            pickedDealer.push(shuffled[i]);
-          }
-        }
+        // GOONER: Mix of strong and random cards
+        // Pick 3 from top 7, then 2 completely random
+        const strongCards = sorted.slice(0, 7);
+        const shuffledStrong = [...strongCards].sort(() => Math.random() - 0.5);
+        pickedDealer = shuffledStrong.slice(0, 3);
+
+        // Add 2 random cards from remaining deck
+        const remaining = available.filter(card =>
+          !pickedDealer.find(picked => picked.tokenId === card.tokenId)
+        );
+        const shuffledRemaining = [...remaining].sort(() => Math.random() - 0.5);
+        pickedDealer = [...pickedDealer, ...shuffledRemaining.slice(0, 2)];
         break;
 
       case 'hard':
@@ -2914,8 +2916,8 @@ export default function TCGPage() {
                 ))}
               </div>
               <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
-                {aiDifficulty === 'easy' && '🟢 Random cards'}
-                {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
+                {aiDifficulty === 'easy' && '🟢 5 random cards'}
+                {aiDifficulty === 'medium' && '🔵 3 from top 7 + 2 random'}
                 {aiDifficulty === 'hard' && '🟠 EXACTLY top 5 strongest (MAX POWER)'}
               </p>
             </div>
@@ -3261,8 +3263,8 @@ export default function TCGPage() {
                   ))}
                 </div>
                 <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
-                  {aiDifficulty === 'easy' && '🟢 Random cards'}
-                  {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
+                  {aiDifficulty === 'easy' && '🟢 5 random cards'}
+                  {aiDifficulty === 'medium' && '🔵 3 from top 7 + 2 random'}
                   {aiDifficulty === 'hard' && '🟠 EXACTLY top 5 strongest (MAX POWER)'}
                 </p>
               </div>
