@@ -209,7 +209,7 @@ async function fetchNFTs(owner: string): Promise<any[]> {
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const username = params.username as string;
+  const username = decodeURIComponent(params.username as string);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);

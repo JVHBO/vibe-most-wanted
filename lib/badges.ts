@@ -9,6 +9,7 @@ export const BADGES_CONFIG = {
     '0x12cf353ef7d37ab6c5505ff673116986db7c9102',
     '0xc2c3ca34cf5e80c49514acda6a466ed2894483e3',
     '0x28f4a9a2e747ec2cb1b4e235a55dff5be2ef48d6',
+    '0x167e316d548cf1613b12cdd7c92e5859053a0039',
   ],
 
   // Gey badge wallet

@@ -11,6 +11,7 @@ const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 const HAND_SIZE_CONST = 5;
+const JC_WALLET_ADDRESS = '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728';
 
 const imageUrlCache = new Map();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60;
@@ -1204,6 +1205,7 @@ export default function TCGPage() {
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [address, setAddress] = useState<string | null>(null);
   const [nfts, setNfts] = useState<any[]>([]);
+  const [jcNfts, setJcNfts] = useState<any[]>([]);
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -1226,6 +1228,9 @@ export default function TCGPage() {
   const [roomCode, setRoomCode] = useState<string>('');
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
+
+  // AI Difficulty
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard' | 'extreme' | 'impossible'>('medium');
 
   // Profile States
   const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
@@ -1503,6 +1508,92 @@ export default function TCGPage() {
     if (address) loadNFTs();
   }, [address, loadNFTs]);
 
+  const loadJCNFTs = useCallback(async () => {
+    try {
+      console.log('Loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
+      const raw = await fetchNFTs(JC_WALLET_ADDRESS);
+
+      const METADATA_BATCH_SIZE = 50;
+      const enrichedRaw = [];
+
+      for (let i = 0; i < raw.length; i += METADATA_BATCH_SIZE) {
+        const batch = raw.slice(i, i + METADATA_BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (nft) => {
+            const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
+            if (!tokenUri) return nft;
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 2000);
+              const res = await fetch(tokenUri, { signal: controller.signal });
+              clearTimeout(timeoutId);
+              if (res.ok) {
+                const metadata = await res.json();
+                return { ...nft, metadata: metadata, raw: { ...nft.raw, metadata: metadata } };
+              }
+            } catch {}
+            return nft;
+          })
+        );
+        enrichedRaw.push(...batchResults);
+      }
+
+      const revealed = enrichedRaw.filter((n) => !isUnrevealed(n));
+
+      const IMAGE_BATCH_SIZE = 50;
+      const processed = [];
+
+      for (let i = 0; i < revealed.length; i += IMAGE_BATCH_SIZE) {
+        const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
+        const enriched = await Promise.all(
+          batch.map(async (nft) => {
+            const imageUrl = await getImage(nft);
+            return {
+              ...nft,
+              imageUrl,
+              rarity: findAttr(nft, 'rarity'),
+              status: findAttr(nft, 'status'),
+              wear: findAttr(nft, 'wear'),
+              foil: findAttr(nft, 'foil'),
+              power: calcPower(nft),
+            };
+          })
+        );
+        processed.push(...enriched);
+      }
+
+      // Filter out cards with same image as token 7024 that are also "rare"
+      const token7024 = processed.find(nft => nft.tokenId === '7024');
+      let finalProcessed = processed;
+
+      if (token7024 && token7024.imageUrl) {
+        const imageToExclude = token7024.imageUrl;
+        finalProcessed = processed.filter(nft => {
+          // Keep the card if it doesn't match both conditions
+          const hasSameImage = nft.imageUrl === imageToExclude;
+          const isRare = nft.rarity?.toLowerCase() === 'rare';
+
+          // Exclude only if BOTH conditions are true
+          if (hasSameImage && isRare) {
+            console.log('Filtering out card:', nft.tokenId, 'with rare trait and image from 7024');
+            return false;
+          }
+          return true;
+        });
+        console.log('Filtered out', processed.length - finalProcessed.length, 'rare cards with image from token 7024');
+      }
+
+      setJcNfts(finalProcessed);
+      console.log('JC NFTs loaded:', finalProcessed.length, 'cards');
+    } catch (e: any) {
+      console.error('Error loading JC NFTs:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadJCNFTs();
+  }, [loadJCNFTs]);
+
   const handleSelectCard = useCallback((card: any) => {
     setSelectedCards(prev => {
       const isSelected = prev.find(c => c.tokenId === card.tokenId);
@@ -1563,7 +1654,7 @@ export default function TCGPage() {
     if (soundEnabled) AudioManager.playHand();
 
     const playerTotal = selectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
-    const available = nfts.filter(n => !selectedCards.find(s => s.tokenId === n.tokenId));
+    const available = jcNfts.length > 0 ? jcNfts : nfts.filter(n => !selectedCards.find(s => s.tokenId === n.tokenId));
 
     if (available.length < HAND_SIZE_CONST) {
       alert(t('noNfts'));
@@ -1575,15 +1666,74 @@ export default function TCGPage() {
     const shuffled = [...available].sort(() => Math.random() - 0.5);
     const sorted = [...available].sort((a, b) => (b.power || 0) - (a.power || 0));
 
-    const pickedDealer: any[] = [];
-    for (let i = 0; i < HAND_SIZE_CONST; i++) {
-      if (Math.random() < 0.7 && sorted.length > 0) {
-        const idx = Math.floor(Math.random() * Math.min(3, sorted.length));
-        pickedDealer.push(sorted[idx]);
-        sorted.splice(idx, 1);
-      } else {
-        pickedDealer.push(shuffled[i]);
-      }
+    let pickedDealer: any[] = [];
+
+    // Different strategies based on difficulty
+    switch (aiDifficulty) {
+      case 'easy':
+        // Easy: Completely random selection
+        pickedDealer = shuffled.slice(0, HAND_SIZE_CONST);
+        break;
+
+      case 'medium':
+        // Medium: 70% top 3, 30% random (current strategy)
+        for (let i = 0; i < HAND_SIZE_CONST; i++) {
+          if (Math.random() < 0.7 && sorted.length > 0) {
+            const idx = Math.floor(Math.random() * Math.min(3, sorted.length));
+            pickedDealer.push(sorted[idx]);
+            sorted.splice(idx, 1);
+          } else {
+            pickedDealer.push(shuffled[i]);
+          }
+        }
+        break;
+
+      case 'hard':
+        // Hard: Always picks from top 7 strongest
+        for (let i = 0; i < HAND_SIZE_CONST; i++) {
+          if (sorted.length > 0) {
+            const idx = Math.floor(Math.random() * Math.min(7, sorted.length));
+            pickedDealer.push(sorted[idx]);
+            sorted.splice(idx, 1);
+          } else {
+            pickedDealer.push(shuffled[i]);
+          }
+        }
+        break;
+
+      case 'extreme':
+        // Extreme: Always picks from top 5 strongest
+        for (let i = 0; i < HAND_SIZE_CONST; i++) {
+          if (sorted.length > 0) {
+            const idx = Math.floor(Math.random() * Math.min(5, sorted.length));
+            pickedDealer.push(sorted[idx]);
+            sorted.splice(idx, 1);
+          } else {
+            pickedDealer.push(shuffled[i]);
+          }
+        }
+        break;
+
+      case 'impossible':
+        // Impossible: Prioritizes legendary cards, then strongest
+        const legendaries = available.filter(card =>
+          card.rarity?.toLowerCase() === 'legendary' ||
+          card.rarity?.toLowerCase() === 'lendária'
+        );
+
+        if (legendaries.length >= HAND_SIZE_CONST) {
+          // If we have 5+ legendaries, pick the strongest ones
+          const sortedLegendaries = legendaries.sort((a, b) => (b.power || 0) - (a.power || 0));
+          pickedDealer = sortedLegendaries.slice(0, HAND_SIZE_CONST);
+        } else {
+          // Pick all legendaries and fill with strongest cards
+          pickedDealer = [...legendaries];
+          const remaining = sorted.filter(card =>
+            !legendaries.find(leg => leg.tokenId === card.tokenId)
+          );
+          pickedDealer.push(...remaining.slice(0, HAND_SIZE_CONST - legendaries.length));
+        }
+        break;
     }
 
     setTimeout(() => {
@@ -1666,7 +1816,7 @@ export default function TCGPage() {
         }
       }, 2000);
     }, 4500);
-  }, [selectedCards, nfts, t, soundEnabled, isBattling]);
+  }, [selectedCards, nfts, jcNfts, t, soundEnabled, isBattling, aiDifficulty, address, userProfile]);
 
   const saveDefenseDeck = useCallback(async () => {
     if (!address || !userProfile || selectedCards.length !== HAND_SIZE_CONST) return;
@@ -2588,6 +2738,52 @@ export default function TCGPage() {
               })}
             </div>
 
+            {/* Difficulty Selector */}
+            <div className="mb-4 bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
+              <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ JC DIFFICULTY ⚔️</p>
+              <div className="grid grid-cols-5 gap-2">
+                {(['easy', 'medium', 'hard', 'extreme', 'impossible'] as const).map((diff) => (
+                  <button
+                    key={diff}
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      setAiDifficulty(diff);
+                    }}
+                    className={`px-2 py-2 rounded text-xs font-bold transition-all ${
+                      aiDifficulty === diff
+                        ? diff === 'easy' ? 'bg-green-500 text-white shadow-lg scale-105'
+                        : diff === 'medium' ? 'bg-blue-500 text-white shadow-lg scale-105'
+                        : diff === 'hard' ? 'bg-orange-500 text-white shadow-lg scale-105'
+                        : diff === 'extreme' ? 'bg-red-500 text-white shadow-lg scale-105'
+                        : 'bg-purple-600 text-white shadow-lg scale-105'
+                        : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
+                    }`}
+                  >
+                    {diff === 'easy' ? '😊'
+                    : diff === 'medium' ? '😐'
+                    : diff === 'hard' ? '😠'
+                    : diff === 'extreme' ? '💀'
+                    : '👿'}
+                    <br/>
+                    <span className="text-[9px]">
+                      {diff === 'easy' ? 'EASY'
+                      : diff === 'medium' ? 'MED'
+                      : diff === 'hard' ? 'HARD'
+                      : diff === 'extreme' ? 'EXTR'
+                      : 'IMP'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
+                {aiDifficulty === 'easy' && '🟢 Random cards'}
+                {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
+                {aiDifficulty === 'hard' && '🟠 Picks from top 7'}
+                {aiDifficulty === 'extreme' && '🔴 Picks from top 5'}
+                {aiDifficulty === 'impossible' && '🟣 Prioritizes 5 LEGENDARY cards'}
+              </p>
+            </div>
+
             {/* Action Buttons */}
             <div className="space-y-3">
               <button
@@ -2880,6 +3076,52 @@ export default function TCGPage() {
             </p>
 
             <div className="space-y-4">
+              {/* Difficulty Selector */}
+              <div className="bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
+                <p className="text-center text-vintage-gold text-sm font-modern mb-3">JC DIFFICULTY</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {(['easy', 'medium', 'hard', 'extreme', 'impossible'] as const).map((diff) => (
+                    <button
+                      key={diff}
+                      onClick={() => {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        setAiDifficulty(diff);
+                      }}
+                      className={`px-2 py-2 rounded text-xs font-bold transition-all ${
+                        aiDifficulty === diff
+                          ? diff === 'easy' ? 'bg-green-500 text-white shadow-lg scale-105'
+                          : diff === 'medium' ? 'bg-blue-500 text-white shadow-lg scale-105'
+                          : diff === 'hard' ? 'bg-orange-500 text-white shadow-lg scale-105'
+                          : diff === 'extreme' ? 'bg-red-500 text-white shadow-lg scale-105'
+                          : 'bg-purple-600 text-white shadow-lg scale-105'
+                          : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
+                      }`}
+                    >
+                      {diff === 'easy' ? '😊'
+                      : diff === 'medium' ? '😐'
+                      : diff === 'hard' ? '😠'
+                      : diff === 'extreme' ? '💀'
+                      : '👿'}
+                      <br/>
+                      <span className="text-[9px]">
+                        {diff === 'easy' ? 'EASY'
+                        : diff === 'medium' ? 'MED'
+                        : diff === 'hard' ? 'HARD'
+                        : diff === 'extreme' ? 'EXTR'
+                        : 'IMP'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
+                  {aiDifficulty === 'easy' && '🟢 Random cards'}
+                  {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
+                  {aiDifficulty === 'hard' && '🟠 Picks from top 7'}
+                  {aiDifficulty === 'extreme' && '🔴 Picks from top 5'}
+                  {aiDifficulty === 'impossible' && '🟣 Always top 5 strongest'}
+                </p>
+              </div>
+
               {/* Jogar vs IA */}
               <button
                 onClick={() => {
@@ -3866,7 +4108,7 @@ export default function TCGPage() {
                               </Link>
                             </td>
                             <td className="p-4 text-right text-green-400 font-bold">{profile.stats.openedCards || 0}</td>
-                            <td className="p-4 text-right text-vintage-gold font-bold">{profile.stats.totalCards || 0}</td>
+                            <td className="p-4 text-right text-vintage-gold font-bold">{profile.stats.unopenedCards || 0}</td>
                             <td className="p-4 text-right text-yellow-400 font-bold text-xl">{profile.stats.totalPower.toLocaleString()}</td>
                             <td className="p-4 text-right text-vintage-neon-blue font-semibold">{profile.stats.pveWins + profile.stats.pvpWins}</td>
                             <td className="p-4 text-right text-red-400 font-semibold">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
