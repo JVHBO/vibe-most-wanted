@@ -131,7 +131,7 @@ export const translations = {
     defeat: 'Derrota',
     vs: 'vs',
     ai: 'IA',
-    updateEvery5Min: 'Atualiza a cada 5 minutos',
+    updateEvery5Min: 'Ataques resetam à meia-noite (UTC)',
     usernameRequired: 'Username é obrigatório',
     usernameInUse: 'Username já está em uso',
     profileCreated: 'Perfil criado com sucesso!',
@@ -187,7 +187,9 @@ export const translations = {
     copyAddress: '📋 Copiar',
     addressCopied: '✓ Copiado',
     noCardsInCollection: 'Nenhuma carta na coleção',
-    noCardsMatchFilters: 'Nenhuma carta corresponde aos filtros selecionados'
+    noCardsMatchFilters: 'Nenhuma carta corresponde aos filtros selecionados',
+    previous: 'Anterior',
+    next: 'Próximo'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -315,7 +317,7 @@ export const translations = {
     defeat: 'Defeat',
     vs: 'vs',
     ai: 'AI',
-    updateEvery5Min: 'Updates every 5 minutes',
+    updateEvery5Min: 'Attacks reset at midnight (UTC)',
     usernameRequired: 'Username is required',
     usernameInUse: 'Username is already in use',
     profileCreated: 'Profile created successfully!',
@@ -370,7 +372,9 @@ export const translations = {
     copyAddress: '📋 Copy',
     addressCopied: '✓ Copied',
     noCardsInCollection: 'No cards in collection',
-    noCardsMatchFilters: 'No cards match the selected filters'
+    noCardsMatchFilters: 'No cards match the selected filters',
+    previous: 'Previous',
+    next: 'Next'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -501,7 +505,7 @@ export const translations = {
     defeat: 'Derrota',
     vs: 'vs',
     ai: 'IA',
-    updateEvery5Min: 'Se actualiza cada 5 minutos',
+    updateEvery5Min: 'Ataques se resetean a medianoche (UTC)',
     usernameRequired: 'El username es obligatorio',
     usernameInUse: 'El username ya está en uso',
     profileCreated: '¡Perfil creado exitosamente!',
@@ -556,7 +560,9 @@ export const translations = {
     copyAddress: '📋 Copiar',
     addressCopied: '✓ Copiado',
     noCardsInCollection: 'Sin cartas en la colección',
-    noCardsMatchFilters: 'Ninguna carta coincide con los filtros seleccionados'
+    noCardsMatchFilters: 'Ninguna carta coincide con los filtros seleccionados',
+    previous: 'Anterior',
+    next: 'Siguiente'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -688,7 +694,7 @@ export const translations = {
     defeat: 'हार',
     vs: 'vs',
     ai: 'AI',
-    updateEvery5Min: 'हर 5 मिनट में अपडेट होता है',
+    updateEvery5Min: 'हमले आधी रात को रीसेट होते हैं (UTC)',
     usernameRequired: 'Username आवश्यक है',
     usernameInUse: 'Username पहले से उपयोग में है',
     profileCreated: 'प्रोफ़ाइल सफलतापूर्वक बनाई गई!',
@@ -744,6 +750,8 @@ export const translations = {
     copyAddress: '📋 कॉपी करें',
     addressCopied: '✓ कॉपी किया गया',
     noCardsInCollection: 'संग्रह में कोई कार्ड नहीं',
-    noCardsMatchFilters: 'कोई कार्ड फ़िल्टर से मेल नहीं खाता'
+    noCardsMatchFilters: 'कोई कार्ड फ़िल्टर से मेल नहीं खाता',
+    previous: 'पिछला',
+    next: 'अगला'
   }
 } as const;
