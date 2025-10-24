@@ -11,6 +11,18 @@ const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
+// Development logging helpers - only log in development mode
+const isDev = process.env.NODE_ENV === 'development';
+const devLog = (...args: any[]) => {
+  if (isDev) devLog(...args);
+};
+const devWarn = (...args: any[]) => {
+  if (isDev) console.warn(...args);
+};
+const devError = (...args: any[]) => {
+  if (isDev) devError(...args);
+};
+
 // Image cache (same as main page)
 const imageUrlCache = new Map();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60;
@@ -234,7 +246,7 @@ export default function ProfilePage() {
         // Primeiro tenta pegar do localStorage (mais rápido e confiável)
         const savedAddress = localStorage.getItem('connectedAddress');
         if (savedAddress) {
-          console.log('✅ Current user address from localStorage:', savedAddress);
+          devLog('✅ Current user address from localStorage:', savedAddress);
           setCurrentUserAddress(savedAddress.toLowerCase());
           return;
         }
@@ -248,16 +260,16 @@ export default function ProfilePage() {
             method: "eth_requestAccounts"
           });
           if (addresses && addresses[0]) {
-            console.log('✅ Current user address loaded from SDK:', addresses[0]);
+            devLog('✅ Current user address loaded from SDK:', addresses[0]);
             setCurrentUserAddress(addresses[0].toLowerCase());
           } else {
-            console.log('⚠️ No address found in wallet');
+            devLog('⚠️ No address found in wallet');
           }
         } else {
-          console.log('⚠️ SDK wallet not available');
+          devLog('⚠️ SDK wallet not available');
         }
       } catch (err) {
-        console.error('❌ Error loading current user:', err);
+        devError('❌ Error loading current user:', err);
       }
     };
     initSDK();
@@ -296,20 +308,20 @@ export default function ProfilePage() {
         // Carrega NFTs do jogador
         setLoadingNFTs(true);
         try {
-          console.log('🔍 Fetching NFTs for address:', address);
-          console.log('📊 Config:', {
+          devLog('🔍 Fetching NFTs for address:', address);
+          devLog('📊 Config:', {
             ALCHEMY_API_KEY: ALCHEMY_API_KEY ? '✅ Set' : '❌ Missing',
             CHAIN,
             CONTRACT_ADDRESS: CONTRACT_ADDRESS ? '✅ Set' : '❌ Missing'
           });
           const playerNFTs = await fetchNFTs(address);
-          console.log('✅ NFTs loaded:', playerNFTs.length);
+          devLog('✅ NFTs loaded:', playerNFTs.length);
 
           // Step 1: Refresh metadata from tokenUri (get fresh attributes, not cached!)
           const METADATA_BATCH_SIZE = 50;
           const metadataEnriched = [];
 
-          console.log('🔄 Refreshing metadata from tokenUri...');
+          devLog('🔄 Refreshing metadata from tokenUri...');
           for (let i = 0; i < playerNFTs.length; i += METADATA_BATCH_SIZE) {
             const batch = playerNFTs.slice(i, i + METADATA_BATCH_SIZE);
             const batchResults = await Promise.all(
@@ -333,13 +345,13 @@ export default function ProfilePage() {
             metadataEnriched.push(...batchResults);
           }
 
-          console.log('✅ Metadata refreshed:', metadataEnriched.length);
+          devLog('✅ Metadata refreshed:', metadataEnriched.length);
 
           // Step 2: Enrich with image URLs and extract attributes
           const IMAGE_BATCH_SIZE = 50;
           const enriched = [];
 
-          console.log('🔄 Enriching with images...');
+          devLog('🔄 Enriching with images...');
           for (let i = 0; i < metadataEnriched.length; i += IMAGE_BATCH_SIZE) {
             const batch = metadataEnriched.slice(i, i + IMAGE_BATCH_SIZE);
             const batchEnriched = await Promise.all(
@@ -359,10 +371,10 @@ export default function ProfilePage() {
             enriched.push(...batchEnriched);
           }
 
-          console.log('✅ NFTs fully enriched:', enriched.length);
+          devLog('✅ NFTs fully enriched:', enriched.length);
           setNfts(enriched);
         } catch (err: any) {
-          console.error('❌ Error loading NFTs:', err.message || err);
+          devError('❌ Error loading NFTs:', err.message || err);
           // Se falhar, deixa array vazio
           setNfts([]);
         }
@@ -370,7 +382,7 @@ export default function ProfilePage() {
 
         setLoading(false);
       } catch (err: any) {
-        console.error('Error loading profile:', err);
+        devError('Error loading profile:', err);
         setError('Failed to load profile');
         setLoading(false);
       }
@@ -420,7 +432,7 @@ export default function ProfilePage() {
         setCopiedAddress(true);
         setTimeout(() => setCopiedAddress(false), 2000);
       } catch (err) {
-        console.error('Failed to copy address:', err);
+        devError('Failed to copy address:', err);
       }
     }
   };

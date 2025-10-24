@@ -25,6 +25,18 @@ const getMaxAttacks = (walletAddress: string | null): number => {
     : MAX_ATTACKS_DEFAULT;
 };
 
+// Development logging helpers - only log in development mode
+const isDev = process.env.NODE_ENV === 'development';
+const devLog = (...args: any[]) => {
+  if (isDev) devLog(...args);
+};
+const devWarn = (...args: any[]) => {
+  if (isDev) devWarn(...args);
+};
+const devError = (...args: any[]) => {
+  if (isDev) devError(...args);
+};
+
 const imageUrlCache = new Map();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60;
 
@@ -150,7 +162,7 @@ const AudioManager = {
       this.backgroundSource.start(0);
       this.isPlaying = true;
     } catch (e) {
-      console.log('Erro ao tocar música de fundo:', e);
+      devLog('Erro ao tocar música de fundo:', e);
     }
   },
   stopBackgroundMusic() {
@@ -199,7 +211,7 @@ const AudioManager = {
         await playPromise;
       }
     } catch (e) {
-      console.log('Erro ao tocar som de vitória:', e);
+      devLog('Erro ao tocar som de vitória:', e);
     }
   },
   async lose() {
@@ -215,7 +227,7 @@ const AudioManager = {
         await playPromise;
       }
     } catch (e) {
-      console.log('Erro ao tocar som de derrota:', e);
+      devLog('Erro ao tocar som de derrota:', e);
     }
   },
   async tie() { await this.playTone(500, 0.3, 0.25); },
@@ -1197,7 +1209,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
 
   // Debug Prize Foil
   if (foilValue && foilValue.toLowerCase().includes('prize')) {
-    console.log(`🌟 Prize Foil Card #${nft.tokenId}:`, {
+    devLog(`🌟 Prize Foil Card #${nft.tokenId}:`, {
       foilValue,
       foilEffect,
       isPrizeFoil,
@@ -1458,6 +1470,7 @@ export default function TCGPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
+  const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
@@ -1478,6 +1491,7 @@ export default function TCGPage() {
   const [targetPlayer, setTargetPlayer] = useState<UserProfile | null>(null);
   const [attacksRemaining, setAttacksRemaining] = useState<number>(MAX_ATTACKS_DEFAULT);
   const [isAttacking, setIsAttacking] = useState<boolean>(false);
+  const [isConfirmingCards, setIsConfirmingCards] = useState<boolean>(false);
 
   // Calculate max attacks for current user
   const maxAttacks = useMemo(() => getMaxAttacks(address), [address]);
@@ -1592,13 +1606,13 @@ export default function TCGPage() {
       if (event.origin !== window.location.origin) return;
 
       if (event.data.type === 'twitter_connected') {
-        console.log('✅ Twitter connected via popup:', event.data.username);
+        devLog('✅ Twitter connected via popup:', event.data.username);
         if (address) {
           // Reload profile from Firebase to get the updated Twitter handle
           ProfileService.getProfile(address).then((profile) => {
             if (profile) {
               setUserProfile(profile);
-              console.log('✅ Profile reloaded with Twitter:', profile.twitter);
+              devLog('✅ Profile reloaded with Twitter:', profile.twitter);
             }
           });
         }
@@ -1633,11 +1647,11 @@ export default function TCGPage() {
             setAddress(farcasterAddress[0]);
             localStorage.setItem('connectedAddress', farcasterAddress[0].toLowerCase());
             if (soundEnabled) AudioManager.buttonSuccess();
-            console.log('✅ Conectado via Farcaster SDK:', farcasterAddress[0]);
+            devLog('✅ Conectado via Farcaster SDK:', farcasterAddress[0]);
             return;
           }
         } catch (farcasterError) {
-          console.log('⚠️ Farcaster wallet não disponível, tentando MetaMask...');
+          devLog('⚠️ Farcaster wallet não disponível, tentando MetaMask...');
         }
       }
 
@@ -1653,7 +1667,7 @@ export default function TCGPage() {
         setAddress(accounts[0]);
         localStorage.setItem('connectedAddress', accounts[0].toLowerCase());
         if (soundEnabled) AudioManager.buttonSuccess();
-        console.log('✅ Conectado via MetaMask:', accounts[0]);
+        devLog('✅ Conectado via MetaMask:', accounts[0]);
       }
     } catch (e: any) {
       if (soundEnabled) AudioManager.buttonError();
@@ -1756,20 +1770,20 @@ export default function TCGPage() {
       const thirtyDays = 30 * 24 * 60 * 60 * 1000; // 30 days cache
 
       if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < thirtyDays) {
-        console.log('⚡ Loading JC deck from cache!');
+        devLog('⚡ Loading JC deck from cache!');
         const cachedData = JSON.parse(cached);
         setJcNfts(cachedData);
         setJcNftsLoading(false);
-        console.log('✅ JC NFTs loaded from cache:', cachedData.length, 'cards');
+        devLog('✅ JC NFTs loaded from cache:', cachedData.length, 'cards');
         return;
       }
 
-      console.log('⚡ Loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
-      console.log('   Using JC contract:', JC_CONTRACT_ADDRESS);
+      devLog('⚡ Loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
+      devLog('   Using JC contract:', JC_CONTRACT_ADDRESS);
       const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS, (page, cards) => {
         setJcLoadingProgress({ page, cards });
       });
-      console.log(`📦 Fetched ${revealed.length} revealed NFTs, processing...`);
+      devLog(`📦 Fetched ${revealed.length} revealed NFTs, processing...`);
 
       // Extract images directly from Alchemy response
       const processed = revealed.map(nft => {
@@ -1790,7 +1804,7 @@ export default function TCGPage() {
         };
       });
 
-      console.log(`⚡ Processed ${processed.length} cards with images`);
+      devLog(`⚡ Processed ${processed.length} cards with images`);
       setJcNfts(processed);
       setJcNftsLoading(false);
       setJcLoadingProgress(null);
@@ -1799,14 +1813,14 @@ export default function TCGPage() {
       try {
         localStorage.setItem(cacheKey, JSON.stringify(processed));
         localStorage.setItem(cacheTimeKey, Date.now().toString());
-        console.log('💾 JC deck saved to cache (expires in 30 days)');
+        devLog('💾 JC deck saved to cache (expires in 30 days)');
       } catch (e) {
-        console.log('⚠️  Failed to cache JC deck:', e);
+        devLog('⚠️  Failed to cache JC deck:', e);
       }
 
-      console.log('✅ JC NFTs loaded:', processed.length, 'cards');
+      devLog('✅ JC NFTs loaded:', processed.length, 'cards');
     } catch (e: any) {
-      console.error('❌ Error loading JC NFTs:', e);
+      devError('❌ Error loading JC NFTs:', e);
       setJcNftsLoading(false);
     }
   }, []);
@@ -1880,9 +1894,9 @@ export default function TCGPage() {
     // Use remaining cards from player's deck (not selected)
     const available = nfts.filter(n => !selectedCards.find(s => s.tokenId === n.tokenId));
 
-    console.log('🎮 BATTLE DEBUG:');
-    console.log('  available cards:', available.length);
-    console.log('  Top 5 strongest:', available.sort((a, b) => (b.power || 0) - (a.power || 0)).slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
+    devLog('🎮 BATTLE DEBUG:');
+    devLog('  available cards:', available.length);
+    devLog('  Top 5 strongest:', available.sort((a, b) => (b.power || 0) - (a.power || 0)).slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
 
     if (available.length < HAND_SIZE_CONST) {
       alert(t('noNfts'));
@@ -1933,20 +1947,20 @@ export default function TCGPage() {
     }, 3500);
 
     setTimeout(() => {
-      console.log('🎮 RESULTADO:', { playerTotal, dealerTotal });
+      devLog('🎮 RESULTADO:', { playerTotal, dealerTotal });
 
       let matchResult: 'win' | 'loss' | 'tie';
 
       if (playerTotal > dealerTotal) {
-        console.log('✅ JOGADOR VENCEU!');
+        devLog('✅ JOGADOR VENCEU!');
         matchResult = 'win';
         setResult(t('playerWins'));
       } else if (playerTotal < dealerTotal) {
-        console.log('❌ DEALER VENCEU!');
+        devLog('❌ DEALER VENCEU!');
         matchResult = 'loss';
         setResult(t('dealerWins'));
       } else {
-        console.log('🤝 EMPATE!');
+        devLog('🤝 EMPATE!');
         matchResult = 'tie';
         setResult(t('tie'));
       }
@@ -1964,7 +1978,7 @@ export default function TCGPage() {
         ).then(() => {
           // Reload match history
           ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
-        }).catch(err => console.error('Error recording match:', err));
+        }).catch(err => devError('Error recording match:', err));
       }
 
       // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
@@ -2017,7 +2031,7 @@ export default function TCGPage() {
         setUserProfile(updatedProfile);
       }
     } catch (error) {
-      console.error('Error saving defense deck:', error);
+      devError('Error saving defense deck:', error);
       alert('Error saving defense deck. Please try again.');
     }
   }, [address, userProfile, selectedCards, soundEnabled]);
@@ -2059,14 +2073,14 @@ export default function TCGPage() {
   // Firebase Room Listener - Escuta mudanças na sala em tempo real
   useEffect(() => {
     if (pvpMode === 'inRoom' && roomCode) {
-      console.log('🎧 Firebase listener started for room:', roomCode);
+      devLog('🎧 Firebase listener started for room:', roomCode);
       let battleStarted = false; // Flag para evitar executar batalha múltiplas vezes
       let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
 
       const unsubscribe = PvPService.watchRoom(roomCode, (room) => {
         if (room) {
           hasSeenRoom = true; // Marca que vimos a sala
-          console.log('🔄 Room update received:', {
+          devLog('🔄 Room update received:', {
             hostReady: room.host.ready,
             guestReady: room.guest?.ready,
             roomStatus: room.status,
@@ -2077,7 +2091,7 @@ export default function TCGPage() {
           // Se ambos os jogadores estiverem prontos, inicia a batalha
           if (room.host.ready && room.guest?.ready && room.status === 'ready' && !battleStarted) {
             battleStarted = true; // Marca que a batalha já iniciou
-            console.log('✅ Ambos jogadores prontos! Iniciando batalha...');
+            devLog('✅ Ambos jogadores prontos! Iniciando batalha...');
 
             // Determina quem é o jogador local e quem é o oponente
             const isHost = room.host.address === address;
@@ -2154,7 +2168,7 @@ export default function TCGPage() {
                   opponentAddress
                 ).then(() => {
                   ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
-                }).catch(err => console.error('Error recording PvP match:', err));
+                }).catch(err => devError('Error recording PvP match:', err));
               }
 
               // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
@@ -2190,9 +2204,9 @@ export default function TCGPage() {
                   if (currentRoom && roomCode && address && address === currentRoom.host.address) {
                     try {
                       await PvPService.leaveRoom(roomCode, address);
-                      console.log('✅ Room deleted after battle ended');
+                      devLog('✅ Room deleted after battle ended');
                     } catch (err) {
-                      console.error('❌ Error deleting room:', err);
+                      devError('❌ Error deleting room:', err);
                     }
                   }
 
@@ -2209,12 +2223,12 @@ export default function TCGPage() {
           // Sala não existe - só volta ao menu se já vimos a sala antes (foi deletada)
           // Se nunca vimos, pode estar sendo criada ainda (race condition)
           if (hasSeenRoom) {
-            console.log('⚠️ Sala foi deletada, voltando ao menu');
+            devLog('⚠️ Sala foi deletada, voltando ao menu');
             setPvpMode('pvpMenu');
             setRoomCode('');
             setCurrentRoom(null);
           } else {
-            console.log('⏳ Aguardando sala ser criada...');
+            devLog('⏳ Aguardando sala ser criada...');
           }
         }
       });
@@ -2228,16 +2242,16 @@ export default function TCGPage() {
   // Auto Match Listener - Detecta quando uma sala é criada para o jogador
   useEffect(() => {
     if (pvpMode === 'autoMatch' && isSearching && address) {
-      console.log('🔍 Starting matchmaking listener for:', address);
+      devLog('🔍 Starting matchmaking listener for:', address);
 
       const unsubscribe = PvPService.watchMatchmaking(address, (roomCode) => {
         if (roomCode) {
-          console.log('✅ Match found! Room:', roomCode);
+          devLog('✅ Match found! Room:', roomCode);
           setRoomCode(roomCode);
           setPvpMode('inRoom');
           setIsSearching(false);
         } else {
-          console.log('⚠️ Matchmaking cancelled or failed');
+          devLog('⚠️ Matchmaking cancelled or failed');
           setIsSearching(false);
           setPvpMode('pvpMenu');
         }
@@ -2253,14 +2267,14 @@ export default function TCGPage() {
           await update(dbRef(db, `matchmaking/${address}`), {
             timestamp: Date.now()
           });
-          console.log('💓 Matchmaking heartbeat sent');
+          devLog('💓 Matchmaking heartbeat sent');
         } catch (err) {
-          console.error('❌ Heartbeat error:', err);
+          devError('❌ Heartbeat error:', err);
         }
       }, 10000); // A cada 10 segundos
 
       return () => {
-        console.log('🛑 Stopping matchmaking listener and heartbeat');
+        devLog('🛑 Stopping matchmaking listener and heartbeat');
         unsubscribe();
         clearInterval(heartbeatInterval);
         // Nota: não chamamos cancelMatchmaking aqui porque:
@@ -2276,9 +2290,9 @@ export default function TCGPage() {
     const initFarcasterSDK = async () => {
       try {
         await sdk.actions.ready();
-        console.log('✅ Farcaster SDK ready called');
+        devLog('✅ Farcaster SDK ready called');
       } catch (error) {
-        console.error('❌ Error calling Farcaster ready:', error);
+        devError('❌ Error calling Farcaster ready:', error);
       }
     };
 
@@ -2324,7 +2338,7 @@ export default function TCGPage() {
           }
         })
         .catch((error) => {
-          console.error('Error updating profile stats:', error);
+          devError('Error updating profile stats:', error);
         });
     }
   }, [address, userProfile, nfts]);
@@ -2344,11 +2358,11 @@ export default function TCGPage() {
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
     // Run cleanup immediately on mount
-    PvPService.cleanupOldRooms().catch(err => console.error('Cleanup error:', err));
+    PvPService.cleanupOldRooms().catch(err => devError('Cleanup error:', err));
 
     // Run cleanup every 2 minutes
     const cleanupInterval = setInterval(() => {
-      PvPService.cleanupOldRooms().catch(err => console.error('Cleanup error:', err));
+      PvPService.cleanupOldRooms().catch(err => devError('Cleanup error:', err));
     }, 2 * 60 * 1000);
 
     return () => clearInterval(cleanupInterval);
@@ -2665,7 +2679,7 @@ export default function TCGPage() {
                               if (soundEnabled) AudioManager.buttonSuccess();
                               alert(`Username successfully changed to @${newUsername}!`);
                             } catch (err: any) {
-                              console.error('Error changing username:', err);
+                              devError('Error changing username:', err);
                               if (soundEnabled) AudioManager.buttonError();
                               alert(`Error: ${err.message || 'Failed to change username'}`);
                             } finally {
@@ -2718,18 +2732,18 @@ export default function TCGPage() {
                         }
 
                         try {
-                          console.log('🔵 Calling Twitter OAuth API...');
+                          devLog('🔵 Calling Twitter OAuth API...');
 
                           // Call our API to get Twitter OAuth URL
                           const response = await fetch(`/api/auth/twitter?address=${address}`);
-                          console.log('📡 Response status:', response.status);
+                          devLog('📡 Response status:', response.status);
 
                           const data = await response.json();
-                          console.log('📦 Response data:', data);
+                          devLog('📦 Response data:', data);
 
                           if (data.url) {
-                            console.log('✅ Got OAuth URL, opening popup...');
-                            console.log('🔗 URL:', data.url);
+                            devLog('✅ Got OAuth URL, opening popup...');
+                            devLog('🔗 URL:', data.url);
 
                             // Open Twitter OAuth in a popup
                             const width = 600;
@@ -2747,11 +2761,11 @@ export default function TCGPage() {
                               alert('Popup bloqueado! Permita popups para este site.');
                             }
                           } else {
-                            console.error('❌ No URL in response');
+                            devError('❌ No URL in response');
                             throw new Error('Failed to get OAuth URL');
                           }
                         } catch (error) {
-                          console.error('❌ Twitter OAuth error:', error);
+                          devError('❌ Twitter OAuth error:', error);
                           alert('Failed to connect Twitter. Check console for details.');
                         }
                       }}
@@ -3144,13 +3158,13 @@ export default function TCGPage() {
                     });
 
                     // Debug: Show what was found
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log(`⚔️  ATTACKING: ${targetPlayer.username}`);
-                    console.log(`📦 Total NFTs fetched: ${defenderNFTs.length}`);
-                    console.log(`🛡️  Defense Deck IDs:`, targetPlayer.defenseDeck);
+                    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    devLog(`⚔️  ATTACKING: ${targetPlayer.username}`);
+                    devLog(`📦 Total NFTs fetched: ${defenderNFTs.length}`);
+                    devLog(`🛡️  Defense Deck IDs:`, targetPlayer.defenseDeck);
 
                   } catch (error) {
-                    console.error('Error fetching defender NFTs:', error);
+                    devError('Error fetching defender NFTs:', error);
                   }
 
                   // Create defender card objects (hidden cards with card back)
@@ -3172,7 +3186,7 @@ export default function TCGPage() {
                   const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => {
                     // Find the actual card from defender's NFTs (compare as strings to handle type mismatch)
                     const actualCard = defenderNFTs.find(nft => String(nft.tokenId) === String(tokenId));
-                    console.log(`🃏 Card ${i+1}: ID=${tokenId}, Found=${!!actualCard}, Name="${actualCard?.name || 'NOT FOUND'}", Rarity="${actualCard?.rarity || 'N/A'}"`);
+                    devLog(`🃏 Card ${i+1}: ID=${tokenId}, Found=${!!actualCard}, Name="${actualCard?.name || 'NOT FOUND'}", Rarity="${actualCard?.rarity || 'N/A'}"`);
                     return {
                       tokenId: tokenId,
                       imageUrl: actualCard?.imageUrl || cardBackUrl,
@@ -3180,7 +3194,7 @@ export default function TCGPage() {
                       name: actualCard?.name || `Defense Card #${i + 1}`
                     };
                   });
-                  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                  devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                   // Set up battle
                   setSelectedCards(attackSelectedCards);
@@ -3265,7 +3279,7 @@ export default function TCGPage() {
                           setUserProfile(updatedProfile);
                         }
                       } catch (error) {
-                        console.error('Attack error:', error);
+                        devError('Attack error:', error);
                       }
                     }
 
@@ -3763,13 +3777,19 @@ export default function TCGPage() {
                   return (
                     <button
                       onClick={async () => {
+                        if (isConfirmingCards || selectedCards.length !== 5) return;
+                        setIsConfirmingCards(true);
+
                         if (soundEnabled) AudioManager.buttonSuccess();
                         await PvPService.updateCards(roomCode, address || '', selectedCards);
+
+                        // Reset after 2 seconds in case of error
+                        setTimeout(() => setIsConfirmingCards(false), 2000);
                       }}
-                      disabled={selectedCards.length !== 5}
+                      disabled={selectedCards.length !== 5 || isConfirmingCards}
                       className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition mt-4"
                     >
-                      {t('confirmCards') || 'Confirm Cards'} ({selectedCards.length}/5)
+                      {isConfirmingCards ? '⏳ Confirming...' : `${t('confirmCards') || 'Confirm Cards'} (${selectedCards.length}/5)`}
                     </button>
                   );
                 })()}
@@ -4486,25 +4506,27 @@ export default function TCGPage() {
 
                   <button
                     onClick={async () => {
-                      if (!profileUsername.trim()) {
-                        if (soundEnabled) AudioManager.buttonError();
+                      if (isCreatingProfile || !profileUsername.trim()) {
+                        if (!profileUsername.trim() && soundEnabled) AudioManager.buttonError();
                         return;
                       }
+
+                      setIsCreatingProfile(true);
 
                       if (soundEnabled) AudioManager.buttonClick();
 
                       try {
-                        console.log('🔐 Firebase config check:', {
+                        devLog('🔐 Firebase config check:', {
                           hasApiKey: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
                           hasDbUrl: !!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
                           address: address
                         });
-                        
+
                         await ProfileService.createProfile(address!, profileUsername.trim());
-                        console.log('✅ Profile created successfully!');
+                        devLog('✅ Profile created successfully!');
 
                         const profile = await ProfileService.getProfile(address!);
-                        console.log('📊 Profile retrieved:', profile);
+                        devLog('📊 Profile retrieved:', profile);
 
                         setUserProfile(profile);
                         setShowCreateProfile(false);
@@ -4514,12 +4536,15 @@ export default function TCGPage() {
                         if (soundEnabled) AudioManager.buttonSuccess();
                       } catch (error: any) {
                         if (soundEnabled) AudioManager.buttonError();
-                        console.error('❌ Error creating profile:', error.code, error.message);
+                        devError('❌ Error creating profile:', error.code, error.message);
+                      } finally {
+                        setIsCreatingProfile(false);
                       }
                     }}
-                    className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark shadow-gold text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105"
+                    disabled={isCreatingProfile || !profileUsername.trim()}
+                    className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark shadow-gold text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {t('save')}
+                    {isCreatingProfile ? '⏳ Creating...' : t('save')}
                   </button>
 
                   <button
