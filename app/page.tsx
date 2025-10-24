@@ -1708,10 +1708,10 @@ export default function TCGPage() {
         break;
 
       case 'extreme':
-        // Extreme: Always picks from top 5 strongest
+        // Extreme: Always picks from top 10 strongest
         for (let i = 0; i < HAND_SIZE_CONST; i++) {
           if (sorted.length > 0) {
-            const idx = Math.floor(Math.random() * Math.min(5, sorted.length));
+            const idx = Math.floor(Math.random() * Math.min(10, sorted.length));
             pickedDealer.push(sorted[idx]);
             sorted.splice(idx, 1);
           } else {
@@ -2775,8 +2775,8 @@ export default function TCGPage() {
                 {aiDifficulty === 'easy' && '🟢 Random cards'}
                 {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
                 {aiDifficulty === 'hard' && '🟠 Picks from top 7'}
-                {aiDifficulty === 'extreme' && '🔴 Picks from top 5'}
-                {aiDifficulty === 'impossible' && '🟣 ALWAYS top 5 strongest (MAX POWER)'}
+                {aiDifficulty === 'extreme' && '🔴 Picks from top 10'}
+                {aiDifficulty === 'impossible' && '🟣 EXACTLY top 5 strongest (MAX POWER)'}
               </p>
             </div>
 
