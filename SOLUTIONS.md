@@ -1405,4 +1405,166 @@ O script:
 
 ---
 
+## 📄 PAGINAÇÃO DO LEADERBOARD (2025-10-24)
+
+### ✅ RESOLVIDO - Leaderboard com Muitos Jogadores
+
+**Problema**: Leaderboard mostrando todos os jogadores em uma única página, causaria scroll infinito quando houver dezenas/centenas de jogadores.
+
+**Requisito**: Máximo de 10 jogadores por página com botões de navegação.
+
+**Solução Implementada**:
+
+```typescript
+// Estado para paginação
+const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
+const LEADERBOARD_PER_PAGE = 10;
+
+// Renderização com slice
+{leaderboard
+  .slice(
+    (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE,
+    currentLeaderboardPage * LEADERBOARD_PER_PAGE
+  )
+  .map((profile, sliceIndex) => {
+    // Calcular índice global correto
+    const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
+    return (
+      <tr key={profile.address}>
+        <td>#{index + 1}</td>
+        {/* ... resto da row */}
+      </tr>
+    );
+  })}
+
+// Controles de paginação (só aparecem se > 10 jogadores)
+{leaderboard.length > LEADERBOARD_PER_PAGE && (
+  <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+    {/* Botão Previous */}
+    <button
+      onClick={() => setCurrentLeaderboardPage(Math.max(1, currentLeaderboardPage - 1))}
+      disabled={currentLeaderboardPage === 1}
+      className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50..."
+    >
+      ← {t('previous')}
+    </button>
+
+    {/* Números das páginas */}
+    <div className="flex gap-1 md:gap-2">
+      {Array.from({ length: Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE) }, (_, i) => i + 1)
+        .map(pageNum => (
+          <button
+            key={pageNum}
+            onClick={() => setCurrentLeaderboardPage(pageNum)}
+            className={currentLeaderboardPage === pageNum ? 'bg-vintage-gold...' : 'bg-vintage-charcoal...'}
+          >
+            {pageNum}
+          </button>
+        ))}
+    </div>
+
+    {/* Botão Next */}
+    <button
+      onClick={() => setCurrentLeaderboardPage(Math.min(totalPages, currentLeaderboardPage + 1))}
+      disabled={currentLeaderboardPage === totalPages}
+      className="px-3 md:px-4 py-2..."
+    >
+      {t('next')} →
+    </button>
+  </div>
+)}
+```
+
+**Traduções adicionadas** em `lib/translations.ts`:
+```typescript
+// PT-BR
+previous: 'Anterior',
+next: 'Próximo'
+
+// EN
+previous: 'Previous',
+next: 'Next'
+
+// ES
+previous: 'Anterior',
+next: 'Siguiente'
+
+// HI
+previous: 'पिछला',
+next: 'अगला'
+```
+
+**Features**:
+- ✅ Máximo 10 jogadores por página
+- ✅ Botões Previous/Next com estados disabled quando apropriado
+- ✅ Números das páginas clicáveis com highlight na página atual
+- ✅ Paginação só aparece quando há mais de 10 jogadores
+- ✅ Sons de clique nos botões (AudioManager.buttonClick)
+- ✅ Design responsivo (mobile e desktop)
+- ✅ Rank global correto (não reseta a cada página)
+
+**Arquivos modificados**:
+- `app/page.tsx` (linhas 3860-3905)
+- `lib/translations.ts` (linhas 191-192, 376-377, 564-565, 754-755)
+
+**Commit**: `1ed5374`
+
+**Status**: ✅ Resolvido e deployado
+
+---
+
+## ⏱️ MENSAGEM DE RESET DE ATAQUES (2025-10-24)
+
+### ✅ RESOLVIDO - Mensagem Confusa no Leaderboard
+
+**Problema**: Mensagem "⏱️ Atualiza a cada 5 minutos" estava causando confusão. Usuários pensavam que a informação se referia ao tempo de atualização do ranking, mas na verdade não tinha relação com nada útil.
+
+**Feedback do usuário**:
+> "existe um outro problema no ranking embaixo do tanto que ataques restante esta atualiza a cada 5 minutos oq faz referencia ao tempo que demora pra atualizar o ranking mude isso porque causa confusao"
+
+**Solução**: Substituir por informação útil sobre o reset dos ataques.
+
+**Antes**:
+```typescript
+<p className="text-[10px] md:text-xs text-vintage-burnt-gold">
+  ⏱️ {t('updateEvery5Min')}
+</p>
+
+// translations.ts
+updateEvery5Min: 'Atualiza a cada 5 minutos'
+```
+
+**Depois**:
+```typescript
+// Mesma linha de código, apenas mudou a tradução
+<p className="text-[10px] md:text-xs text-vintage-burnt-gold">
+  ⏱️ {t('updateEvery5Min')}
+</p>
+
+// translations.ts - ATUALIZADO
+updateEvery5Min: 'Ataques resetam à meia-noite (UTC)' // PT-BR
+updateEvery5Min: 'Attacks reset at midnight (UTC)' // EN
+updateEvery5Min: 'Ataques se resetean a medianoche (UTC)' // ES
+updateEvery5Min: 'हमले आधी रात को रीसेट होते हैं (UTC)' // HI
+```
+
+**Por que essa mensagem é melhor**:
+- ✅ Informação útil e relevante para o usuário
+- ✅ Explica quando os ataques resetam (informação crítica)
+- ✅ Clarifica o fuso horário (UTC)
+- ✅ Sem confusão sobre "atualização do ranking"
+
+**Arquivos modificados**:
+- `lib/translations.ts` (linhas 134, 320, 508, 697)
+
+**Localização na UI**:
+- Leaderboard view (linha 3757 em `app/page.tsx`)
+- Aparece ao lado de "Attacks Remaining" no canto superior direito
+
+**Commit**: `1ed5374`
+
+**Status**: ✅ Resolvido e deployado
+
+---
+
 **🎯 Objetivo deste documento**: Nunca resolver o mesmo problema duas vezes!
