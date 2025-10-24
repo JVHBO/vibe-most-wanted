@@ -1469,12 +1469,24 @@ export default function TCGPage() {
     }
   }, []);
 
+  // Restaurar wallet conectada ao carregar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedAddress = localStorage.getItem('connectedAddress');
+      if (savedAddress) {
+        setAddress(savedAddress);
+      }
+    }
+  }, []);
+
   // Salvar estado da música no localStorage e controlar reprodução
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('musicEnabled', musicEnabled.toString());
 
       if (musicEnabled) {
+        // Aplica volume ANTES de iniciar música para evitar bug de volume 0
+        AudioManager.setVolume(musicVolume);
         AudioManager.startBackgroundMusic();
       } else {
         AudioManager.stopBackgroundMusic();
