@@ -919,7 +919,7 @@ async function fetchNFTs(owner: string): Promise<any[]> {
   let allNfts: any[] = [];
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
-  const maxPages = 20;
+  const maxPages = 100; // Increased to fetch all 6720+ cards
 
   do {
     pageCount++;
@@ -1656,6 +1656,11 @@ export default function TCGPage() {
 
     const playerTotal = selectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
     const available = jcNfts.length > 0 ? jcNfts : nfts.filter(n => !selectedCards.find(s => s.tokenId === n.tokenId));
+
+    console.log('🎮 BATTLE DEBUG:');
+    console.log('  jcNfts loaded:', jcNfts.length, 'cards');
+    console.log('  available cards:', available.length);
+    console.log('  Top 5 strongest:', available.sort((a, b) => (b.power || 0) - (a.power || 0)).slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
 
     if (available.length < HAND_SIZE_CONST) {
       alert(t('noNfts'));
