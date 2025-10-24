@@ -1203,6 +1203,7 @@ export default function TCGPage() {
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [sortByPower, setSortByPower] = useState<boolean>(false);
+  const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
   const [address, setAddress] = useState<string | null>(null);
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
@@ -1715,24 +1716,8 @@ export default function TCGPage() {
         break;
 
       case 'impossible':
-        // Impossible: Prioritizes legendary cards, then strongest
-        const legendaries = available.filter(card =>
-          card.rarity?.toLowerCase() === 'legendary' ||
-          card.rarity?.toLowerCase() === 'lendária'
-        );
-
-        if (legendaries.length >= HAND_SIZE_CONST) {
-          // If we have 5+ legendaries, pick the strongest ones
-          const sortedLegendaries = legendaries.sort((a, b) => (b.power || 0) - (a.power || 0));
-          pickedDealer = sortedLegendaries.slice(0, HAND_SIZE_CONST);
-        } else {
-          // Pick all legendaries and fill with strongest cards
-          pickedDealer = [...legendaries];
-          const remaining = sorted.filter(card =>
-            !legendaries.find(leg => leg.tokenId === card.tokenId)
-          );
-          pickedDealer.push(...remaining.slice(0, HAND_SIZE_CONST - legendaries.length));
-        }
+        // Impossible: Always picks the TOP 5 strongest cards (maximum power)
+        pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
         break;
     }
 
@@ -1865,6 +1850,12 @@ export default function TCGPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [sortByPower, nfts.length]);
+
+  // Sorted NFTs for attack modal
+  const sortedAttackNfts = useMemo(() => {
+    if (!sortAttackByPower) return nfts;
+    return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+  }, [nfts, sortAttackByPower]);
 
   // Firebase Room Listener - Escuta mudanças na sala em tempo real
   useEffect(() => {
@@ -2780,7 +2771,7 @@ export default function TCGPage() {
                 {aiDifficulty === 'medium' && '🔵 Balanced strategy (70% top 3)'}
                 {aiDifficulty === 'hard' && '🟠 Picks from top 7'}
                 {aiDifficulty === 'extreme' && '🔴 Picks from top 5'}
-                {aiDifficulty === 'impossible' && '🟣 Prioritizes 5 LEGENDARY cards'}
+                {aiDifficulty === 'impossible' && '🟣 ALWAYS top 5 strongest (MAX POWER)'}
               </p>
             </div>
 
@@ -2855,9 +2846,26 @@ export default function TCGPage() {
               </div>
             </div>
 
+            {/* Sort Button */}
+            <div className="mb-4 flex justify-end">
+              <button
+                onClick={() => {
+                  setSortAttackByPower(!sortAttackByPower);
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-modern font-medium transition-all ${
+                  sortAttackByPower
+                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                    : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                }`}
+              >
+                {sortAttackByPower ? '↓ Sort by Power' : '⇄ Default Order'}
+              </button>
+            </div>
+
             {/* Available Cards Grid */}
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto p-2">
-              {nfts.map((nft) => {
+              {sortedAttackNfts.map((nft) => {
                 const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
                 return (
                   <div
