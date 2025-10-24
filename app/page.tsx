@@ -2703,12 +2703,27 @@ export default function TCGPage() {
                 onClick={() => {
                   if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer) return;
 
-                  // Create defender card objects (placeholder images/data)
+                  // Create defender card objects (hidden cards with card back)
+                  const cardBackUrl = 'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="300" height="420" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style="stop-color:#8B0000;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#4B0000;stop-opacity:1" />
+                        </linearGradient>
+                      </defs>
+                      <rect width="300" height="420" fill="url(#grad)" rx="20"/>
+                      <rect x="20" y="20" width="260" height="380" fill="none" stroke="#FFD700" stroke-width="4" rx="15"/>
+                      <circle cx="150" cy="210" r="80" fill="none" stroke="#FFD700" stroke-width="3"/>
+                      <text x="150" y="230" font-family="Arial" font-size="60" fill="#FFD700" text-anchor="middle" font-weight="bold">?</text>
+                    </svg>
+                  `);
+
                   const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => ({
                     tokenId: tokenId,
-                    imageUrl: '/icon.png', // Placeholder - defender's cards are hidden
+                    imageUrl: cardBackUrl,
                     power: 20, // Placeholder power
-                    name: `Card #${tokenId}`
+                    name: `Defense Card #${i + 1}`
                   }));
 
                   // Set up battle
