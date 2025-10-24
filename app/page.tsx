@@ -3079,59 +3079,21 @@ export default function TCGPage() {
                 onClick={async () => {
                   if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer) return;
 
-                  // Fetch defender's actual NFTs to get real power values (including unopened)
+                  // Fetch defender's actual NFTs using the same logic as profile (includes fresh metadata)
                   let defenderNFTs: any[] = [];
                   try {
-                    // Fetch ALL pages to find defense deck cards (they might not be in first 100)
-                    let pageKey: string | undefined = undefined;
-                    let pageCount = 0;
-                    const maxPages = 20; // Limit to prevent infinite loops
-                    const neededTokenIds = new Set((targetPlayer.defenseDeck || []).map((id: any) => String(id)));
-                    let foundTokenIds = new Set();
+                    const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
 
-                    do {
-                      pageCount++;
-                      const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${targetPlayer.address}&contractAddresses[]=${CONTRACT_ADDRESS}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
-                      const res = await fetch(url);
-                      if (!res.ok) throw new Error(`API failed: ${res.status}`);
-                      const json = await res.json();
-                      const rawNFTs = json.ownedNfts || [];
-
-                      // Process NFTs to extract imageUrl
-                      const processed = rawNFTs.map((nft: any) => {
-                        const imageUrl = nft?.image?.cachedUrl ||
-                                         nft?.image?.thumbnailUrl ||
-                                         nft?.image?.originalUrl ||
-                                         nft?.raw?.metadata?.image ||
-                                         '';
-                        return {
-                          ...nft,
-                          imageUrl: normalizeUrl(imageUrl)
-                        };
-                      });
-
-                      defenderNFTs = defenderNFTs.concat(processed);
-
-                      // Track which defense deck cards we've found
-                      processed.forEach((nft: any) => {
-                        if (neededTokenIds.has(String(nft.tokenId))) {
-                          foundTokenIds.add(String(nft.tokenId));
-                        }
-                      });
-
-                      pageKey = json.pageKey;
-
-                      // Stop if we found all defense deck cards
-                      if (foundTokenIds.size === neededTokenIds.size) {
-                        break;
-                      }
-
-                    } while (pageKey && pageCount < maxPages);
+                    // Use the same function that works correctly in profile
+                    defenderNFTs = await fetchAndProcessNFTs(targetPlayer.address, {
+                      maxPages: 20,
+                      refreshMetadata: true, // Get fresh data from tokenUri!
+                    });
 
                     // Debug: Show what was found
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     console.log(`⚔️  ATTACKING: ${targetPlayer.username}`);
-                    console.log(`📦 Total NFTs fetched: ${defenderNFTs.length} (from ${pageCount} pages)`);
+                    console.log(`📦 Total NFTs fetched: ${defenderNFTs.length}`);
                     console.log(`🛡️  Defense Deck IDs:`, targetPlayer.defenseDeck);
 
                   } catch (error) {
