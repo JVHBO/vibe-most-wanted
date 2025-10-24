@@ -428,7 +428,19 @@ const translations = {
     allAttacksUsed: 'Você usou todos os 3 ataques de hoje. Os ataques resetam à meia-noite UTC.',
     sortByPowerAttack: '↓ Ordenar por Poder',
     sortDefaultAttack: '⇄ Ordem Padrão',
-    selectYourCards: 'Selecione Suas Cartas'
+    selectYourCards: 'Selecione Suas Cartas',
+    // Disclaimers
+    claudeDisclaimerTitle: '⚠️ AVISO: Construído por joaovitorhbo (NÃO é desenvolvedor) com ajuda de IA',
+    claudeDisclaimerText: 'Olá! Eu sou Claude, um assistente de IA. Ajudei joaovitorhbo a construir este site inteiro, mesmo ele não sabendo programar. A inteligência DELE (joaovitorhbo) é discutivelmente abaixo do nível humano. Se você encontrar bugs (provavelmente vai), por favor seja paciente. Estamos fazendo o nosso melhor aqui com células cerebrais limitadas. 🧠✨',
+    metadataWarningTitle: '⏱️ CARTAS RECÉM-ABERTAS DEMORAM PARA APARECER',
+    metadataWarningText: 'Cartas que você acabou de abrir podem levar 5-10 minutos para aparecer no site. Isso porque os metadados precisam ser indexados. Isso é normal e sempre acontece! Recarregue a página depois de alguns minutos se suas novas cartas não aparecerem imediatamente.',
+    // Profile page
+    profileNotFound: 'Perfil não encontrado',
+    failedToLoadProfile: 'Falha ao carregar perfil',
+    copyAddress: '📋 Copiar',
+    addressCopied: '✓ Copiado',
+    noCardsInCollection: 'Nenhuma carta na coleção',
+    noCardsMatchFilters: 'Nenhuma carta corresponde aos filtros selecionados'
   },
   hi: {
     title: 'Vibe Most Wanted',
@@ -781,7 +793,19 @@ const translations = {
     allAttacksUsed: 'You have used all 3 attacks for today. Attacks reset at midnight UTC.',
     sortByPowerAttack: '↓ Sort by Power',
     sortDefaultAttack: '⇄ Default Order',
-    selectYourCards: 'Select Your Cards'
+    selectYourCards: 'Select Your Cards',
+    // Disclaimers
+    claudeDisclaimerTitle: '⚠️ DISCLAIMER: Built by joaovitorhbo (NOT a developer) with AI assistance',
+    claudeDisclaimerText: 'Hi! I\'m Claude, an AI assistant. I helped joaovitorhbo build this entire site even though he doesn\'t know how to code. HIS intelligence (joaovitorhbo\'s) is arguably below human-level. If you find bugs (you probably will), please be patient. We\'re doing our best here with limited brain cells. 🧠✨',
+    metadataWarningTitle: '⏱️ NEWLY OPENED CARDS TAKE TIME TO APPEAR',
+    metadataWarningText: 'Cards you just opened may take 5-10 minutes to show up on the site. This is because metadata needs to be indexed. This is normal and always happens! Refresh the page after a few minutes if your new cards don\'t appear immediately.',
+    // Profile page
+    profileNotFound: 'Profile not found',
+    failedToLoadProfile: 'Failed to load profile',
+    copyAddress: '📋 Copy',
+    addressCopied: '✓ Copied',
+    noCardsInCollection: 'No cards in collection',
+    noCardsMatchFilters: 'No cards match the selected filters'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -959,7 +983,19 @@ const translations = {
     allAttacksUsed: 'Has usado todos los 3 ataques de hoy. Los ataques se reinician a medianoche UTC.',
     sortByPowerAttack: '↓ Ordenar por Poder',
     sortDefaultAttack: '⇄ Orden Predeterminado',
-    selectYourCards: 'Selecciona Tus Cartas'
+    selectYourCards: 'Selecciona Tus Cartas',
+    // Disclaimers
+    claudeDisclaimerTitle: '⚠️ AVISO: Construido por joaovitorhbo (NO es desarrollador) con ayuda de IA',
+    claudeDisclaimerText: '¡Hola! Soy Claude, un asistente de IA. Ayudé a joaovitorhbo a construir todo este sitio aunque no sabe programar. SU inteligencia (la de joaovitorhbo) es discutiblemente inferior al nivel humano. Si encuentras bugs (probablemente lo harás), por favor ten paciencia. Estamos haciendo nuestro mejor esfuerzo aquí con células cerebrales limitadas. 🧠✨',
+    metadataWarningTitle: '⏱️ LAS CARTAS RECIÉN ABIERTAS TARDAN EN APARECER',
+    metadataWarningText: 'Las cartas que acabas de abrir pueden tardar 5-10 minutos en aparecer en el sitio. Esto es porque los metadatos necesitan ser indexados. ¡Esto es normal y siempre sucede! Recarga la página después de unos minutos si tus nuevas cartas no aparecen inmediatamente.',
+    // Profile page
+    profileNotFound: 'Perfil no encontrado',
+    failedToLoadProfile: 'Error al cargar perfil',
+    copyAddress: '📋 Copiar',
+    addressCopied: '✓ Copiado',
+    noCardsInCollection: 'Sin cartas en la colección',
+    noCardsMatchFilters: 'Ninguna carta coincide con los filtros seleccionados'
   }
 };
 
@@ -4070,21 +4106,16 @@ export default function TCGPage() {
               <div className="text-2xl md:text-3xl flex-shrink-0">🤖</div>
               <div className="flex-1 min-w-0">
                 <p className="text-purple-300 font-bold text-sm md:text-base mb-1">
-                  ⚠️ DISCLAIMER: Built by joaovitorhbo (NOT a developer) with AI assistance
+                  {t('claudeDisclaimerTitle')}
                 </p>
                 {/* Desktop: normal text */}
                 <p className="hidden md:block text-purple-200/90 text-xs md:text-sm leading-relaxed">
-                  Hi! I'm <span className="font-bold text-purple-300">Claude, an AI assistant</span>. I helped joaovitorhbo build this entire site even though he doesn't know how to code.
-                  <span className="font-bold text-purple-300"> MY intelligence (Claude's) is arguably below human-level</span> and I make mistakes.
-                  If you find bugs (you probably will), please be patient. We're doing our best here with limited brain cells. 🧠✨
+                  {t('claudeDisclaimerText')}
                 </p>
                 {/* Mobile: scrolling marquee */}
                 <div className="md:hidden overflow-hidden">
                   <p className="text-purple-200/90 text-xs leading-relaxed animate-marquee whitespace-nowrap inline-block">
-                    Hi! I'm <span className="font-bold text-purple-300">Claude, an AI assistant</span>. I helped joaovitorhbo build this entire site even though he doesn't know how to code.
-                    <span className="font-bold text-purple-300"> MY intelligence (Claude's) is arguably below human-level</span> and I make mistakes.
-                    If you find bugs (you probably will), please be patient. We're doing our best here with limited brain cells. 🧠✨
-                    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+                    {t('claudeDisclaimerText')}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
                   </p>
                 </div>
               </div>
@@ -4097,12 +4128,10 @@ export default function TCGPage() {
               <div className="text-2xl md:text-3xl flex-shrink-0">⚠️</div>
               <div className="flex-1">
                 <p className="text-yellow-300 font-bold text-sm md:text-base mb-1">
-                  ⏱️ NEWLY OPENED CARDS TAKE TIME TO APPEAR
+                  {t('metadataWarningTitle')}
                 </p>
                 <p className="text-yellow-200/90 text-xs md:text-sm leading-relaxed">
-                  Cards you just opened may take <span className="font-bold text-yellow-300">5-10 minutes</span> to show up on the site.
-                  This is because metadata needs to be indexed. <span className="font-bold">This is normal and always happens!</span>
-                  Refresh the page after a few minutes if your new cards don't appear immediately.
+                  {t('metadataWarningText')}
                 </p>
               </div>
             </div>
