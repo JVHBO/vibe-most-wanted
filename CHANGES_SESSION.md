@@ -1,0 +1,249 @@
+# Sessão de Otimizações - JC Deck Loading
+
+## Data: 2025-10-23
+
+## Problema Inicial
+- Dificuldade da IA muito baixa (IMPOSSIBLE mode só tinha 184 de poder)
+- Loading do deck do JC estava demorando muito (10+ minutos)
+- JC tem 6,720 cartas mas só carregava 0
+
+## Descobertas
+
+### Análise da Wallet do JC
+```
+Wallet: 0xf14c1dc8ce5fe65413379f76c43fa1460c31e728
+Contrato NFT: 0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728
+
+📦 TOTAL: 6,720 cartas
+- 🔒 UNOPENED: 5,843 (86.9%) - nunca serão abertas
+- ✅ OPENED: 859 (13.1%)
+
+Por raridade (apenas abertas):
+- Common: 330 (4.9%)
+- Rare: 137 (2.0%)
+- Epic: 50 (0.7%)
+- Legendary: 1 (0.0%)
+```
+
+## Mudanças Implementadas
+
+### 1. Fix do Contrato Address
+**Arquivo**: `.env.local`
+```env
+# ANTES (ERRADO)
+NEXT_PUBLIC_VIBE_CONTRACT=0x29f9673bbcbab3dece542fc78f4f3b5b61c5a15a
+
+# DEPOIS (CORRETO)
+NEXT_PUBLIC_VIBE_CONTRACT=0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728
+```
+
+**⚠️ IMPORTANTE**: Atualizar também no Vercel Dashboard:
+1. https://vercel.com/joaovitorhbos-projects/vibe-most-wanted/settings/environment-variables
+2. Editar `NEXT_PUBLIC_VIBE_CONTRACT`
+3. Valor: `0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728`
+4. Salvar e fazer Redeploy
+
+### 2. Otimização do fetchNFTs (app/page.tsx)
+
+**Localização**: Linha 914-956
+
+**Mudanças**:
+```typescript
+// ANTES: Fetching sem filtro, processando tudo depois
+async function fetchNFTs(owner: string): Promise<any[]> {
+  // Buscava todas as páginas
+  // Não filtrava unopened
+  // Retornava tudo
+}
+
+// DEPOIS: Filtra unopened durante o fetch
+async function fetchNFTs(owner: string): Promise<any[]> {
+  const maxPages = 50; // Suficiente para pegar maioria das abertas
+  const targetRevealed = 500; // Para quando tiver 500 abertas
+
+  do {
+    // Fetch página
+    const pageNfts = json.ownedNfts || [];
+
+    // ✅ FILTRO NOVO: Remove unopened imediatamente
+    const revealed = pageNfts.filter((nft: any) => {
+      const attrs = nft?.raw?.metadata?.attributes || nft?.metadata?.attributes || [];
+      const rarityAttr = attrs.find((a: any) => a.trait_type?.toLowerCase() === 'rarity');
+      const rarity = rarityAttr?.value || '';
+      return rarity.toLowerCase() !== 'unopened';
+    });
+
+    revealedNfts = revealedNfts.concat(revealed);
+
+    // ✅ PARA CEDO: Quando tiver 500 abertas
+    if (revealedNfts.length >= targetRevealed) {
+      console.log(`   ✅ Reached ${revealedNfts.length} revealed cards, stopping early`);
+      break;
+    }
+  } while (pageKey && pageCount < maxPages);
+}
+```
+
+### 3. Otimização do loadJCNFTs (app/page.tsx)
+
+**Localização**: Linha 1534-1560
+
+**Mudanças**:
+```typescript
+// ANTES: Buscava, depois filtrava unrevealed
+const raw = await fetchNFTs(JC_WALLET_ADDRESS);
+const revealed = raw.filter((n) => !isUnrevealed(n));
+
+// DEPOIS: Já vem filtrado
+const revealed = await fetchNFTs(JC_WALLET_ADDRESS); // Já filtrado!
+
+// ✅ Extrai imagens diretamente da resposta da Alchemy (sem fetch async)
+const processed = revealed.map(nft => {
+  const imageUrl = nft?.image?.cachedUrl ||
+                   nft?.image?.thumbnailUrl ||
+                   nft?.image?.originalUrl ||
+                   nft?.raw?.metadata?.image ||
+                   '';
+
+  return {
+    ...nft,
+    imageUrl: normalizeUrl(imageUrl), // Direto, sem async!
+    rarity: findAttr(nft, 'rarity'),
+    status: findAttr(nft, 'status'),
+    wear: findAttr(nft, 'wear'),
+    foil: findAttr(nft, 'foil'),
+    power: calcPower(nft),
+  };
+});
+```
+
+### 4. Botão de Sort no Attack Mode (app/page.tsx)
+
+**Localização**: Linha 1206, 1871-1874, 2865-2880
+
+**Mudanças**:
+```typescript
+// Estado
+const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
+
+// Memo para cartas ordenadas
+const sortedAttackNfts = useMemo(() => {
+  if (!sortAttackByPower) return nfts;
+  return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+}, [nfts, sortAttackByPower]);
+
+// Botão no modal de ataque
+<button
+  onClick={() => {
+    setSortAttackByPower(!sortAttackByPower);
+    if (soundEnabled) AudioManager.buttonClick();
+  }}
+  className={...}
+>
+  {sortAttackByPower ? '↓ Sort by Power' : '⇄ Default Order'}
+</button>
+```
+
+### 5. Fix das Dificuldades (app/page.tsx)
+
+**Localização**: Linha 1710-1726
+
+**Mudanças**:
+```typescript
+// ANTES: EXTREME e IMPOSSIBLE eram iguais (ambos top 5)
+
+// DEPOIS:
+case 'extreme':
+  // Extreme: Pega das top 10 mais fortes
+  for (let i = 0; i < HAND_SIZE_CONST; i++) {
+    const idx = Math.floor(Math.random() * Math.min(10, sorted.length));
+    pickedDealer.push(sorted[idx]);
+    sorted.splice(idx, 1);
+  }
+  break;
+
+case 'impossible':
+  // Impossible: EXATAMENTE as top 5 mais fortes (máximo poder)
+  pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
+  break;
+```
+
+### 6. Loading Indicator (app/page.tsx)
+
+**Localização**: Linha 1210, 3963-3997
+
+**Mudanças**:
+```typescript
+// Estado
+const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
+
+// Botão com loading
+<button
+  disabled={!userProfile || jcNftsLoading}
+>
+  {jcNftsLoading ? (
+    <span className="flex items-center justify-center gap-2">
+      <span className="animate-spin">⏳</span>
+      Loading JC Deck ({jcNfts.length} cards)...
+    </span>
+  ) : (
+    'Battle vs AI'
+  )}
+</button>
+```
+
+## Scripts de Teste Criados
+
+### test-unopened.js
+Analisa a wallet e conta cartas opened vs unopened por raridade.
+
+```bash
+cd vibe-most-wanted && node test-unopened.js
+```
+
+### test-wallet-nfts.js
+Testa se a wallet tem NFTs (sem filtro de contrato).
+
+```bash
+cd vibe-most-wanted && node test-wallet-nfts.js
+```
+
+## Resultados Esperados
+
+### Performance
+- ❌ ANTES: 68 páginas = ~60-90 segundos de loading
+- ✅ DEPOIS: ~40-50 páginas = ~30-40 segundos de loading (~40-50% mais rápido)
+
+### Deck do JC
+- ✅ ~500-859 cartas abertas disponíveis para batalhas
+- ✅ Unopened filtradas automaticamente (economiza memória e tempo)
+- ✅ Imagens carregadas direto da resposta Alchemy (sem async)
+
+### Dificuldades
+- 🟢 EASY: 100% random
+- 🔵 MEDIUM: 70% top 3, 30% random
+- 🟠 HARD: Random das top 7
+- 🔴 EXTREME: Random das top 10
+- 🟣 IMPOSSIBLE: EXATAMENTE top 5 (máximo poder)
+
+## Commits Feitos
+
+1. `787e3fb` - Fix: Filter by rarity=unopened trait instead of name check
+2. `9cbab9c` - Optimize: Filter unrevealed cards during fetch, stop at 1000 revealed cards
+3. `8801478` - Optimize: Limit JC deck to 20 pages (2000 cards) for faster loading
+4. `e2223c8` - Fix: Extract images from Alchemy response for JC deck (fast + with images)
+5. `64edcd3` - Optimize JC deck loading - skip metadata/image enrichment
+6. `e012b1e` - Optimize: Reduce target to 500 revealed cards for faster loading
+
+## Próximos Passos
+
+1. ✅ Atualizar `NEXT_PUBLIC_VIBE_CONTRACT` no Vercel (quando tiver deployments disponíveis)
+2. ✅ Testar loading no ambiente de produção
+3. ✅ Verificar se IMPOSSIBLE mode está com poder alto o suficiente
+
+## Notas Técnicas
+
+- **Unopened cards**: Nunca serão abertas, então o filtro sempre funcionará
+- **Contract address**: O contrato NFT tem o mesmo endereço que a wallet do JC
+- **Rarity trait**: Unopened cards têm `rarity: "unopened"` nos attributes
+- **Total de páginas necessárias**: ~40-50 para pegar 500 cards opened (suficiente)
