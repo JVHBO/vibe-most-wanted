@@ -28,6 +28,10 @@ export async function generateMetadata({ params }: { params: { matchId: string }
 
   const description = `${playerPower} vs ${opponentPower} Power - VIBE Most Wanted Battle Result`;
 
+  // Explicitly set the OpenGraph image URL
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vibe-most-wanted.vercel.app';
+  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image`;
+
   return {
     title,
     description,
@@ -36,11 +40,20 @@ export async function generateMetadata({ params }: { params: { matchId: string }
       description,
       type: 'website',
       siteName: 'VIBE Most Wanted',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: 'Battle Result',
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [imageUrl],
     },
   };
 }
