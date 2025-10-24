@@ -1477,6 +1477,7 @@ export default function TCGPage() {
   const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
   const [targetPlayer, setTargetPlayer] = useState<UserProfile | null>(null);
   const [attacksRemaining, setAttacksRemaining] = useState<number>(MAX_ATTACKS_DEFAULT);
+  const [isAttacking, setIsAttacking] = useState<boolean>(false);
 
   // Calculate max attacks for current user
   const maxAttacks = useMemo(() => getMaxAttacks(address), [address]);
@@ -3126,7 +3127,10 @@ export default function TCGPage() {
             <div className="space-y-3">
               <button
                 onClick={async () => {
-                  if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer) return;
+                  if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer || isAttacking) return;
+
+                  // Prevent multiple clicks
+                  setIsAttacking(true);
 
                   // Fetch defender's actual NFTs using the same logic as profile (includes fresh metadata)
                   let defenderNFTs: any[] = [];
@@ -3271,6 +3275,7 @@ export default function TCGPage() {
                       setShowBattleScreen(false);
                       setBattlePhase('cards');
                       setAttackSelectedCards([]);
+                      setIsAttacking(false); // Reset attack state
 
                       // Set last battle result for sharing
                       setLastBattleResult({
@@ -3296,14 +3301,14 @@ export default function TCGPage() {
                     }, 2000);
                   }, 4500);
                 }}
-                disabled={attackSelectedCards.length !== HAND_SIZE_CONST}
+                disabled={attackSelectedCards.length !== HAND_SIZE_CONST || isAttacking}
                 className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
-                  attackSelectedCards.length === HAND_SIZE_CONST
+                  attackSelectedCards.length === HAND_SIZE_CONST && !isAttacking
                     ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/50 hover:scale-105'
                     : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                 }`}
               >
-                ⚔️ Attack! ({attackSelectedCards.length}/{HAND_SIZE_CONST})
+                {isAttacking ? '⏳ Attacking...' : `⚔️ Attack! (${attackSelectedCards.length}/${HAND_SIZE_CONST})`}
               </button>
 
               <button
