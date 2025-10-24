@@ -917,22 +917,42 @@ async function fetchNFTs(owner: string): Promise<any[]> {
   if (!CONTRACT_ADDRESS) throw new Error("Contract address não configurado");
 
   let allNfts: any[] = [];
+  let revealedNfts: any[] = [];
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
-  const maxPages = 20; // 2000 cards - enough to get all strong cards from 30-card collection
+  const maxPages = 30; // Increased because many are unrevealed
+  const targetRevealed = 1000; // Stop when we have 1000 revealed cards
 
   do {
     pageCount++;
-    console.log(`   Fetching page ${pageCount}...`);
+    console.log(`   Fetching page ${pageCount}... (${revealedNfts.length} revealed so far)`);
     const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${CONTRACT_ADDRESS}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`API falhou: ${res.status}`);
     const json = await res.json();
-    allNfts = allNfts.concat(json.ownedNfts || []);
+
+    // Filter unrevealed cards immediately to save memory
+    const pageNfts = json.ownedNfts || [];
+    const revealed = pageNfts.filter((nft: any) => {
+      const name = nft?.name || nft?.raw?.metadata?.name || '';
+      const desc = nft?.description || nft?.raw?.metadata?.description || '';
+      return !name.toLowerCase().includes('unrevealed') && !desc.toLowerCase().includes('unrevealed');
+    });
+
+    revealedNfts = revealedNfts.concat(revealed);
+    console.log(`   → Found ${revealed.length} revealed cards on this page`);
+
     pageKey = json.pageKey;
+
+    // Stop if we have enough revealed cards
+    if (revealedNfts.length >= targetRevealed) {
+      console.log(`   ✅ Reached ${revealedNfts.length} revealed cards, stopping early`);
+      break;
+    }
   } while (pageKey && pageCount < maxPages);
 
-  return allNfts;
+  console.log(`   📊 Total: ${revealedNfts.length} revealed cards from ${pageCount} pages`);
+  return revealedNfts;
 }
 
 const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean; onSelect: (nft: any) => void }) => {
@@ -1514,12 +1534,10 @@ export default function TCGPage() {
   const loadJCNFTs = useCallback(async () => {
     try {
       console.log('⚡ Fast-loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
-      const raw = await fetchNFTs(JC_WALLET_ADDRESS);
-      console.log(`📦 Fetched ${raw.length} raw NFTs, processing...`);
+      const revealed = await fetchNFTs(JC_WALLET_ADDRESS); // Already filtered!
+      console.log(`📦 Fetched ${revealed.length} revealed NFTs, processing...`);
 
       // FAST MODE: Extract images directly from Alchemy response (no async fetch needed)
-      const revealed = raw.filter((n) => !isUnrevealed(n));
-
       const processed = revealed.map(nft => {
         // Extract image URL directly from Alchemy metadata (already in response)
         const imageUrl = nft?.image?.cachedUrl ||
