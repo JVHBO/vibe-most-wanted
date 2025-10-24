@@ -4142,7 +4142,6 @@ export default function TCGPage() {
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
                 <div className="flex items-center gap-3">
                   <p className="text-sm text-gray-300"><span className="text-vintage-neon-blue">●</span> {address.slice(0, 6)}...{address.slice(-4)}</p>
-                  {filteredCount > 0 && <span className="text-xs text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-lg">🚫 {t('filtered', { count: filteredCount })}</span>}
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Profile Button */}
