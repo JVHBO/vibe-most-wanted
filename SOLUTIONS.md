@@ -1322,4 +1322,87 @@ async function resetGameData() {
 
 ---
 
+## 🐛 BUG CRÍTICO: NaN nos Stats do Leaderboard
+
+### ✅ RESOLVIDO - Valores undefined gerando NaN
+
+**Problema**: Após reset manual no Firebase, alguns perfis mostravam "NaN" nas colunas Wins/Losses.
+
+**Causa**: Quando stats são deletados manualmente no Firebase Console, os valores ficam `undefined`. JavaScript faz operações matemáticas com `undefined` e retorna `NaN`.
+
+**Exemplo do bug**:
+```
+Ted Binion: Wins = NaN, Losses = NaN
+sweet: Losses = NaN
+Jayabs: Losses = NaN
+```
+
+**Causa raiz**:
+```javascript
+// ❌ ERRADO - Gera NaN se undefined
+{profile.stats.pveWins + profile.stats.pvpWins}
+
+// ✅ CORRETO - Sempre retorna número válido
+{(profile.stats.pveWins || 0) + (profile.stats.pvpWins || 0)}
+```
+
+**Arquivos corrigidos**:
+1. `app/page.tsx` (linha 4500-4502):
+   - `totalPower.toLocaleString()` → `(totalPower || 0).toLocaleString()`
+   - `pveWins + pvpWins` → `(pveWins || 0) + (pvpWins || 0)`
+   - `pveLosses + pvpLosses` → `(pveLosses || 0) + (pvpLosses || 0)`
+
+2. `app/profile/[username]/page.tsx` (linhas 423-424, 595, 600, 606):
+   - Todas as referências a stats agora usam `|| 0` fallback
+   - `totalPower.toLocaleString()` → `(totalPower || 0).toLocaleString()`
+
+**Script de limpeza criado**: `scripts/fix-nan-stats.js`
+
+**Como executar o script**:
+```bash
+node scripts/fix-nan-stats.js
+```
+
+O script:
+- Verifica todos os perfis no Firebase
+- Detecta stats com valores `null`, `undefined` ou `NaN`
+- Substitui por `0` preservando valores válidos
+- Mostra quantos perfis foram corrigidos
+
+**Prevenção futura**:
+- ✅ Código sempre usa `|| 0` fallback
+- ✅ Script disponível para limpar dados corrompidos
+- ✅ Documentado em SOLUTIONS.md
+
+**Commit**: `[pending]`
+
+**Prioridade**: 🔴 CRÍTICA - Execute o script antes do lançamento!
+
+---
+
+## 📊 Análise Completa de Possíveis Problemas
+
+### Locais que acessam stats (auditados):
+
+**✅ PROTEGIDOS (com || 0 ou verificações)**:
+- `app/page.tsx:3299-3305` - Atualizações de stats (já protegido)
+- `app/page.tsx:4499` - openedCards (já protegido)
+- `app/page.tsx:4500` - totalPower (CORRIGIDO)
+- `app/page.tsx:4501-4502` - Wins/Losses no leaderboard (CORRIGIDO)
+- `app/profile/[username]/page.tsx:423-424` - Total wins/losses (CORRIGIDO)
+- `app/profile/[username]/page.tsx:591` - totalCards (já protegido)
+- `app/profile/[username]/page.tsx:595` - totalPower (CORRIGIDO)
+- `app/profile/[username]/page.tsx:600` - PvE record (CORRIGIDO)
+- `app/profile/[username]/page.tsx:606` - PvP record (CORRIGIDO)
+
+**Nenhum problema encontrado em**:
+- Componentes de batalha
+- Modais de seleção de cartas
+- Profile creation/update
+- Match history recording
+
+**Conclusão**: ✅ Todo o código está protegido contra valores undefined/null/NaN
+
+---
+
 **🎯 Objetivo deste documento**: Nunca resolver o mesmo problema duas vezes!

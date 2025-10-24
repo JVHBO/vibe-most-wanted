@@ -4497,9 +4497,9 @@ export default function TCGPage() {
                               </Link>
                             </td>
                             <td className="p-2 md:p-4 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats.openedCards || 0}</td>
-                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{profile.stats.totalPower.toLocaleString()}</td>
-                            <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{profile.stats.pveWins + profile.stats.pvpWins}</td>
-                            <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{profile.stats.pveLosses + profile.stats.pvpLosses}</td>
+                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats.totalPower || 0).toLocaleString()}</td>
+                            <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats.pveWins || 0) + (profile.stats.pvpWins || 0)}</td>
+                            <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats.pveLosses || 0) + (profile.stats.pvpLosses || 0)}</td>
                             <td className="p-1 md:p-4 text-center">
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <button
