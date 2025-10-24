@@ -405,7 +405,8 @@ const translations = {
     mustSetDefenseDeckFull: 'Você deve configurar seu Deck de Defesa primeiro! Selecione 5 cartas acima e clique em "Salvar Deck de Defesa".',
     allAttacksUsed: 'Você usou todos os 3 ataques de hoje. Os ataques resetam à meia-noite UTC.',
     sortByPowerAttack: '↓ Ordenar por Poder',
-    sortDefaultAttack: '⇄ Ordem Padrão'
+    sortDefaultAttack: '⇄ Ordem Padrão',
+    selectYourCards: 'Selecione Suas Cartas'
   },
   hi: {
     title: 'Vibe Most Wanted',
@@ -572,7 +573,8 @@ const translations = {
     mustSetDefenseDeckFull: 'आपको पहले अपना रक्षा डेक सेट करना होगा! ऊपर 5 कार्ड चुनें और "रक्षा डेक सहेजें" पर क्लिक करें।',
     allAttacksUsed: 'आपने आज के सभी 3 हमले उपयोग कर लिए हैं। हमले मध्यरात्रि UTC पर रीसेट होते हैं।',
     sortByPowerAttack: '↓ शक्ति से क्रमबद्ध करें',
-    sortDefaultAttack: '⇄ डिफ़ॉल्ट क्रम'
+    sortDefaultAttack: '⇄ डिफ़ॉल्ट क्रम',
+    selectYourCards: 'अपने कार्ड चुनें'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -736,7 +738,8 @@ const translations = {
     mustSetDefenseDeckFull: 'You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".',
     allAttacksUsed: 'You have used all 3 attacks for today. Attacks reset at midnight UTC.',
     sortByPowerAttack: '↓ Sort by Power',
-    sortDefaultAttack: '⇄ Default Order'
+    sortDefaultAttack: '⇄ Default Order',
+    selectYourCards: 'Select Your Cards'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -903,7 +906,8 @@ const translations = {
     mustSetDefenseDeckFull: '¡Debes configurar tu Mazo de Defensa primero! Selecciona 5 cartas arriba y haz clic en "Guardar Mazo de Defensa".',
     allAttacksUsed: 'Has usado todos los 3 ataques de hoy. Los ataques se reinician a medianoche UTC.',
     sortByPowerAttack: '↓ Ordenar por Poder',
-    sortDefaultAttack: '⇄ Orden Predeterminado'
+    sortDefaultAttack: '⇄ Orden Predeterminado',
+    selectYourCards: 'Selecciona Tus Cartas'
   }
 };
 
@@ -1393,6 +1397,7 @@ export default function TCGPage() {
   const [showBattleScreen, setShowBattleScreen] = useState<boolean>(false);
   const [battlePhase, setBattlePhase] = useState<string>('cards');
   const [battleOpponentName, setBattleOpponentName] = useState<string>('Dealer');
+  const [battlePlayerName, setBattlePlayerName] = useState<string>('You');
   const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
   const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -1821,6 +1826,7 @@ export default function TCGPage() {
     setShowBattleScreen(true);
     setBattlePhase('cards');
     setBattleOpponentName(t('dealer')); // Reset to Dealer for PvE
+    setBattlePlayerName(userProfile?.username || 'You'); // Show player username
     setShowLossPopup(false);
     setShowWinPopup(false);
     setResult('');
@@ -1857,18 +1863,8 @@ export default function TCGPage() {
         break;
 
       case 'medium':
-        // GOONER: Mix of strong and random cards
-        // Pick 3 from top 7, then 2 completely random
-        const strongCards = sorted.slice(0, 7);
-        const shuffledStrong = [...strongCards].sort(() => Math.random() - 0.5);
-        pickedDealer = shuffledStrong.slice(0, 3);
-
-        // Add 2 random cards from remaining deck
-        const remaining = available.filter(card =>
-          !pickedDealer.find(picked => picked.tokenId === card.tokenId)
-        );
-        const shuffledRemaining = [...remaining].sort(() => Math.random() - 0.5);
-        pickedDealer = [...pickedDealer, ...shuffledRemaining.slice(0, 2)];
+        // GOONER: All 5 strongest cards (average power ~300)
+        pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
         break;
 
       case 'hard':
@@ -2050,6 +2046,7 @@ export default function TCGPage() {
             const opponentPower = isHost ? room.guest.power : room.host.power;
             const opponentAddress = isHost ? room.guest.address : room.host.address;
             const opponentName = isHost ? (room.guest.username || 'Guest') : (room.host.username || 'Host');
+            const playerName = isHost ? (room.host.username || 'You') : (room.guest.username || 'You');
             const opponentTwitter = isHost ? room.guest.twitter : room.host.twitter;
 
             // Executa a batalha PvP com animações (igual PVE)
@@ -2057,6 +2054,7 @@ export default function TCGPage() {
             setShowBattleScreen(true);
             setBattlePhase('cards');
             setBattleOpponentName(opponentName); // Show PvP opponent username
+            setBattlePlayerName(playerName); // Show player username
             setShowLossPopup(false);
             setShowWinPopup(false);
             setResult('');
@@ -2777,7 +2775,7 @@ export default function TCGPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-vintage-neon-blue mb-3 md:mb-4 text-center">{t('you')}</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-vintage-neon-blue mb-3 md:mb-4 text-center">{battlePlayerName}</h3>
                 <div className="grid grid-cols-5 gap-1 md:gap-2" style={{ animation: battlePhase === 'clash' ? 'cardClash 0.5s ease-in-out infinite' : 'slideInLeft 0.5s ease' }}>
                   {selectedCards.map((c, i) => (
                     <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-cyan-500 shadow-lg shadow-cyan-500/50">
@@ -2925,7 +2923,7 @@ export default function TCGPage() {
             <div className="mb-4 bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
               <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ JC DIFFICULTY ⚔️</p>
               <div className="grid grid-cols-3 gap-2">
-                {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                {(['easy', 'medium'] as const).map((diff) => (
                   <button
                     key={diff}
                     onClick={() => {
@@ -2954,8 +2952,7 @@ export default function TCGPage() {
               </div>
               <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                 {aiDifficulty === 'easy' && '🟢 5 random cards'}
-                {aiDifficulty === 'medium' && '🔵 3 from top 7 + 2 random'}
-                {aiDifficulty === 'hard' && '🟠 EXACTLY top 5 strongest (MAX POWER)'}
+                {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (~300 power)'}
               </p>
             </div>
 
@@ -3145,6 +3142,7 @@ export default function TCGPage() {
                   setSelectedCards(attackSelectedCards);
                   setDealerCards(defenderCards);
                   setBattleOpponentName(targetPlayer.username); // Show enemy username
+                  setBattlePlayerName(userProfile?.username || 'You'); // Show player username
                   setShowAttackCardSelection(false);
                   setIsBattling(true);
                   setShowBattleScreen(true);
@@ -3300,7 +3298,7 @@ export default function TCGPage() {
               <div className="bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
                 <p className="text-center text-vintage-gold text-sm font-modern mb-3">JC DIFFICULTY</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                  {(['easy', 'medium'] as const).map((diff) => (
                     <button
                       key={diff}
                       onClick={() => {
@@ -3329,8 +3327,7 @@ export default function TCGPage() {
                 </div>
                 <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                   {aiDifficulty === 'easy' && '🟢 5 random cards'}
-                  {aiDifficulty === 'medium' && '🔵 3 from top 7 + 2 random'}
-                  {aiDifficulty === 'hard' && '🟠 EXACTLY top 5 strongest (MAX POWER)'}
+                  {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (~300 power)'}
                 </p>
               </div>
 
@@ -3624,7 +3621,7 @@ export default function TCGPage() {
                 {/* Host */}
                 <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-neon-blue/50">
                   <p className="text-vintage-neon-blue font-bold mb-2 font-modern">Host</p>
-                  <p className="text-white text-sm font-mono">{currentRoom.host.address.slice(0, 10)}...</p>
+                  <p className="text-white text-sm font-mono">{currentRoom.host.username || `${currentRoom.host.address.slice(0, 10)}...`}</p>
                   <p className="text-vintage-burnt-gold text-sm">
                     {currentRoom.host.ready ? '✓ Ready' : '⏳ Selecting cards...'}
                   </p>
@@ -3635,7 +3632,7 @@ export default function TCGPage() {
                   <p className="text-vintage-gold font-bold mb-2 font-modern">{t('opponent')}</p>
                   {currentRoom.guest ? (
                     <>
-                      <p className="text-white text-sm font-mono">{currentRoom.guest.address.slice(0, 10)}...</p>
+                      <p className="text-white text-sm font-mono">{currentRoom.guest.username || `${currentRoom.guest.address.slice(0, 10)}...`}</p>
                       <p className="text-vintage-burnt-gold text-sm">
                         {currentRoom.guest.ready ? '✓ Ready' : '⏳ Selecting cards...'}
                       </p>
