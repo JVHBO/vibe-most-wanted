@@ -420,8 +420,8 @@ export default function ProfilePage() {
     );
   }
 
-  const totalWins = profile.stats.pveWins + profile.stats.pvpWins;
-  const totalLosses = profile.stats.pveLosses + profile.stats.pvpLosses;
+  const totalWins = (profile.stats.pveWins || 0) + (profile.stats.pvpWins || 0);
+  const totalLosses = (profile.stats.pveLosses || 0) + (profile.stats.pvpLosses || 0);
   const totalMatches = totalWins + totalLosses;
   const winRate = totalMatches > 0 ? ((totalWins / totalMatches) * 100).toFixed(1) : '0';
 
@@ -592,18 +592,18 @@ export default function ProfilePage() {
           </div>
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">◆ TOTAL POWER</p>
-            <p className="text-3xl font-bold text-vintage-gold">{profile.stats.totalPower.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-vintage-gold">{(profile.stats.totalPower || 0).toLocaleString()}</p>
           </div>
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-neon-blue/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♣ PvE RECORD</p>
             <p className="text-2xl font-bold text-vintage-neon-blue">
-              {profile.stats.pveWins}W / {profile.stats.pveLosses}L
+              {profile.stats.pveWins || 0}W / {profile.stats.pveLosses || 0}L
             </p>
           </div>
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-silver/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♥ PvP RECORD</p>
             <p className="text-2xl font-bold text-vintage-silver">
-              {profile.stats.pvpWins}W / {profile.stats.pvpLosses}L
+              {profile.stats.pvpWins || 0}W / {profile.stats.pvpLosses || 0}L
             </p>
           </div>
         </div>
