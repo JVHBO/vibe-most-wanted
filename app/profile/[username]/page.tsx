@@ -6,6 +6,7 @@ import { ProfileService, UserProfile, MatchHistory } from '@/lib/firebase';
 import sdk from '@farcaster/miniapp-sdk';
 import { BadgeList } from '@/components/Badge';
 import { getUserBadges } from '@/lib/badges';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -222,6 +223,7 @@ export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
   const username = decodeURIComponent(params.username as string);
+  const { t } = useLanguage();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
@@ -285,7 +287,7 @@ export default function ProfilePage() {
         const address = await ProfileService.getAddressByUsername(username.toLowerCase());
 
         if (!address) {
-          setError('Profile not found');
+          setError(t('profileNotFound'));
           setLoading(false);
           return;
         }
@@ -294,7 +296,7 @@ export default function ProfilePage() {
         const profileData = await ProfileService.getProfile(address);
 
         if (!profileData) {
-          setError('Profile not found');
+          setError(t('profileNotFound'));
           setLoading(false);
           return;
         }
@@ -383,7 +385,7 @@ export default function ProfilePage() {
         setLoading(false);
       } catch (err: any) {
         devError('Error loading profile:', err);
-        setError('Failed to load profile');
+        setError(t('failedToLoadProfile'));
         setLoading(false);
       }
     }
@@ -550,7 +552,7 @@ export default function ProfilePage() {
                   className="px-2 py-1 bg-vintage-charcoal hover:bg-vintage-gold/20 border border-vintage-gold/50 rounded text-vintage-gold hover:text-vintage-ice transition-all text-xs font-modern font-semibold flex-shrink-0"
                   title="Copy wallet address"
                 >
-                  {copiedAddress ? '✓ Copied' : '📋 Copy'}
+                  {copiedAddress ? t('addressCopied') : t('copyAddress')}
                 </button>
               </div>
               {profile.twitter && (
@@ -771,11 +773,11 @@ export default function ProfilePage() {
           </div>
         ) : nfts.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
-            <p className="text-gray-400">No cards in collection</p>
+            <p className="text-gray-400">{t('noCardsInCollection')}</p>
           </div>
         ) : filteredNfts.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
-            <p className="text-gray-400">No cards match the selected filters</p>
+            <p className="text-gray-400">{t('noCardsMatchFilters')}</p>
           </div>
         ) : (
           <>
