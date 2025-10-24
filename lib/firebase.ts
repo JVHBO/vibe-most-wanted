@@ -89,12 +89,16 @@ export interface GameRoom {
     ready: boolean;
     cards: any[];
     power: number;
+    username?: string;
+    twitter?: string;
   };
   guest?: {
     address: string;
     ready: boolean;
     cards: any[];
     power: number;
+    username?: string;
+    twitter?: string;
   };
   status: 'waiting' | 'ready' | 'playing' | 'finished';
   winner?: string;

@@ -61,9 +61,9 @@ function calcPower(nft) {
   const wear = findAttr(nft, 'wear') || 'Lightly Played';
   let base = 1;
   const r = rarity.toLowerCase();
-  if (r.includes('mythic')) base = 100;
-  else if (r.includes('legend')) base = 60;
-  else if (r.includes('epic')) base = 30;
+  if (r.includes('mythic')) base = 200;
+  else if (r.includes('legend')) base = 120;
+  else if (r.includes('epic')) base = 60;
   else if (r.includes('rare')) base = 15;
   else if (r.includes('uncommon')) base = 8;
   else base = 1;
