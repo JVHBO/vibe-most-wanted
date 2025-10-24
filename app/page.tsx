@@ -3083,12 +3083,18 @@ export default function TCGPage() {
                 onClick={async () => {
                   if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer) return;
 
-                  // Fetch defender's actual NFTs to get real power values
+                  // Fetch defender's actual NFTs to get real power values (including unopened)
                   let defenderNFTs: any[] = [];
                   try {
-                    defenderNFTs = await fetchNFTs(targetPlayer.address);
+                    // Fetch ALL NFTs without filtering by rarity (defense deck may include any cards)
+                    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${targetPlayer.address}&contractAddresses[]=${CONTRACT_ADDRESS}&withMetadata=true&pageSize=100`;
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`API failed: ${res.status}`);
+                    const json = await res.json();
+                    defenderNFTs = json.ownedNfts || [];
                     console.log('🔍 Defender NFTs loaded:', defenderNFTs.length);
                     console.log('🔍 Defense deck tokenIds:', targetPlayer.defenseDeck);
+                    console.log('🔍 Fetching from address:', targetPlayer.address);
                   } catch (error) {
                     console.error('Error fetching defender NFTs:', error);
                   }
