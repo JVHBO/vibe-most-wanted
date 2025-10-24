@@ -921,8 +921,8 @@ async function fetchNFTs(owner: string, contractAddress: string = CONTRACT_ADDRE
   let revealedNfts: any[] = [];
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
-  const maxPages = 50; // Enough to get most revealed cards
-  const targetRevealed = 500; // Stop when we have 500 revealed cards (plenty for battles)
+  const maxPages = 15; // Fast loading - just enough to get strong cards
+  const targetRevealed = 100; // 100 cards is plenty to get the top 5 strongest
 
   do {
     pageCount++;
@@ -1535,6 +1535,22 @@ export default function TCGPage() {
 
   const loadJCNFTs = useCallback(async () => {
     try {
+      // Check cache first (expires after 1 day)
+      const cacheKey = 'jc_deck_cache_v2';
+      const cacheTimeKey = 'jc_deck_cache_time_v2';
+      const cached = localStorage.getItem(cacheKey);
+      const cacheTime = localStorage.getItem(cacheTimeKey);
+      const oneDay = 24 * 60 * 60 * 1000;
+
+      if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < oneDay) {
+        console.log('⚡ Loading JC deck from cache!');
+        const cachedData = JSON.parse(cached);
+        setJcNfts(cachedData);
+        setJcNftsLoading(false);
+        console.log('✅ JC NFTs loaded from cache:', cachedData.length, 'cards');
+        return;
+      }
+
       console.log('⚡ Fast-loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
       console.log('   Using JC contract:', JC_CONTRACT_ADDRESS);
       const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS); // Already filtered!
@@ -1586,6 +1602,16 @@ export default function TCGPage() {
 
       setJcNfts(finalProcessed);
       setJcNftsLoading(false);
+
+      // Save to cache
+      try {
+        localStorage.setItem('jc_deck_cache_v2', JSON.stringify(finalProcessed));
+        localStorage.setItem('jc_deck_cache_time_v2', Date.now().toString());
+        console.log('💾 JC deck saved to cache');
+      } catch (e) {
+        console.log('⚠️  Failed to cache JC deck:', e);
+      }
+
       console.log('✅ JC NFTs loaded:', finalProcessed.length, 'cards');
     } catch (e: any) {
       console.error('❌ Error loading JC NFTs:', e);
