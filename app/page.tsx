@@ -931,12 +931,13 @@ async function fetchNFTs(owner: string): Promise<any[]> {
     if (!res.ok) throw new Error(`API falhou: ${res.status}`);
     const json = await res.json();
 
-    // Filter unrevealed cards immediately to save memory
+    // Filter unopened cards immediately to save memory
     const pageNfts = json.ownedNfts || [];
     const revealed = pageNfts.filter((nft: any) => {
-      const name = nft?.name || nft?.raw?.metadata?.name || '';
-      const desc = nft?.description || nft?.raw?.metadata?.description || '';
-      return !name.toLowerCase().includes('unrevealed') && !desc.toLowerCase().includes('unrevealed');
+      const attrs = nft?.raw?.metadata?.attributes || nft?.metadata?.attributes || [];
+      const rarityAttr = attrs.find((a: any) => a.trait_type?.toLowerCase() === 'rarity');
+      const rarity = rarityAttr?.value || '';
+      return rarity.toLowerCase() !== 'unopened';
     });
 
     revealedNfts = revealedNfts.concat(revealed);
