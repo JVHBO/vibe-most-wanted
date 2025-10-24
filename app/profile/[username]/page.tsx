@@ -535,8 +535,15 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 justify-center md:justify-start mb-2 max-w-full">
-                <p className="text-vintage-burnt-gold font-mono text-sm truncate max-w-[180px] sm:max-w-[250px] md:max-w-none">
-                  {profile.address}
+                <p className="text-vintage-burnt-gold font-mono text-sm">
+                  {/* Mobile/miniapp: truncated format */}
+                  <span className="md:hidden">
+                    {profile.address.slice(0, 6)}...{profile.address.slice(-4)}
+                  </span>
+                  {/* Desktop: full address */}
+                  <span className="hidden md:inline">
+                    {profile.address}
+                  </span>
                 </p>
                 <button
                   onClick={copyAddress}
