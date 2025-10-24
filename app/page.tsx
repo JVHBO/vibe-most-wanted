@@ -1562,6 +1562,10 @@ export default function TCGPage() {
           })
         );
         processed.push(...enriched);
+
+        // Update progress every batch
+        setJcNfts([...processed]);
+        console.log(`⏳ Loading progress: ${processed.length}/${revealed.length} cards`);
       }
 
       // Filter out cards with same image as token 7024 that are also "rare"
