@@ -3127,16 +3127,11 @@ export default function TCGPage() {
 
                       // Stop if we found all defense deck cards
                       if (foundTokenIds.size === neededTokenIds.size) {
-                        console.log('🔍 Found all defense deck cards, stopping early');
                         break;
                       }
 
                     } while (pageKey && pageCount < maxPages);
 
-                    console.log('🔍 Defender NFTs loaded:', defenderNFTs.length, 'from', pageCount, 'pages');
-                    console.log('🔍 Defense deck tokenIds:', targetPlayer.defenseDeck);
-                    console.log('🔍 Found cards:', Array.from(foundTokenIds));
-                    console.log('🔍 Fetching from address:', targetPlayer.address);
                   } catch (error) {
                     console.error('Error fetching defender NFTs:', error);
                   }
@@ -3160,7 +3155,6 @@ export default function TCGPage() {
                   const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => {
                     // Find the actual card from defender's NFTs (compare as strings to handle type mismatch)
                     const actualCard = defenderNFTs.find(nft => String(nft.tokenId) === String(tokenId));
-                    console.log(`🔍 Card ${i}: tokenId=${tokenId}, found=${!!actualCard}, imageUrl=${actualCard?.imageUrl?.substring(0, 50)}`);
                     return {
                       tokenId: tokenId,
                       imageUrl: actualCard?.imageUrl || cardBackUrl,
