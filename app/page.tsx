@@ -1396,6 +1396,7 @@ export default function TCGPage() {
   const [dealerCards, setDealerCards] = useState<any[]>([]);
   const [showBattleScreen, setShowBattleScreen] = useState<boolean>(false);
   const [battlePhase, setBattlePhase] = useState<string>('cards');
+  const [battleOpponentName, setBattleOpponentName] = useState<string>('Dealer');
   const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
   const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -1811,6 +1812,7 @@ export default function TCGPage() {
     setIsBattling(true);
     setShowBattleScreen(true);
     setBattlePhase('cards');
+    setBattleOpponentName(t('dealer')); // Reset to Dealer for PvE
     setShowLossPopup(false);
     setShowWinPopup(false);
     setResult('');
@@ -2046,6 +2048,7 @@ export default function TCGPage() {
             setIsBattling(true);
             setShowBattleScreen(true);
             setBattlePhase('cards');
+            setBattleOpponentName(opponentName); // Show PvP opponent username
             setShowLossPopup(false);
             setShowWinPopup(false);
             setResult('');
@@ -2783,7 +2786,7 @@ export default function TCGPage() {
               </div>
 
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-red-400 mb-3 md:mb-4 text-center">{t('dealer')}</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-red-400 mb-3 md:mb-4 text-center">{battleOpponentName}</h3>
                 <div className="grid grid-cols-5 gap-1 md:gap-2" style={{ animation: battlePhase === 'clash' ? 'cardClash 0.5s ease-in-out infinite' : 'slideInRight 0.5s ease' }}>
                   {dealerCards.map((c, i) => (
                     <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/50">
@@ -2988,7 +2991,7 @@ export default function TCGPage() {
       {/* Attack Card Selection Modal */}
       {showAttackCardSelection && targetPlayer && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-8 shadow-lg shadow-red-600/50 my-8">
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-4 shadow-lg shadow-red-600/50 my-4 max-h-[95vh] overflow-y-auto">
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-red-500">
               ⚔️ ATTACK {targetPlayer.username.toUpperCase()}
             </h2>
@@ -3037,7 +3040,7 @@ export default function TCGPage() {
             </div>
 
             {/* Available Cards Grid */}
-            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5 mb-4 max-h-[65vh] overflow-y-auto p-1">
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5 mb-4 max-h-[45vh] overflow-y-auto p-1">
               {sortedAttackNfts.map((nft) => {
                 const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
                 return (
@@ -3118,6 +3121,7 @@ export default function TCGPage() {
                   // Set up battle
                   setSelectedCards(attackSelectedCards);
                   setDealerCards(defenderCards);
+                  setBattleOpponentName(targetPlayer.username); // Show enemy username
                   setShowAttackCardSelection(false);
                   setIsBattling(true);
                   setShowBattleScreen(true);
