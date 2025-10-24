@@ -764,6 +764,8 @@ export default function TCGPage() {
   const [profileUsername, setProfileUsername] = useState<string>('');
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
+  const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
+  const LEADERBOARD_PER_PAGE = 10;
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -3776,7 +3778,11 @@ export default function TCGPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {leaderboard.map((profile, index) => (
+                        {leaderboard
+                          .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
+                          .map((profile, sliceIndex) => {
+                            const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
+                            return (
                           <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
                             <td className="p-2 md:p-4">
                               <span className={`text-lg md:text-2xl font-bold ${
@@ -3846,9 +3852,57 @@ export default function TCGPage() {
                               )}
                             </td>
                           </tr>
-                        ))}
+                        );
+                          })}
                       </tbody>
                     </table>
+
+                    {/* Pagination Controls - only show if more than 10 players */}
+                    {leaderboard.length > LEADERBOARD_PER_PAGE && (
+                      <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => {
+                            setCurrentLeaderboardPage(Math.max(1, currentLeaderboardPage - 1));
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }}
+                          disabled={currentLeaderboardPage === 1}
+                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
+                        >
+                          ← {t('previous')}
+                        </button>
+
+                        {/* Page numbers */}
+                        <div className="flex gap-1 md:gap-2">
+                          {Array.from({ length: Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE) }, (_, i) => i + 1).map(pageNum => (
+                            <button
+                              key={pageNum}
+                              onClick={() => {
+                                setCurrentLeaderboardPage(pageNum);
+                                if (soundEnabled) AudioManager.buttonClick();
+                              }}
+                              className={`px-2 md:px-3 py-2 rounded-lg font-semibold transition text-sm md:text-base ${
+                                currentLeaderboardPage === pageNum
+                                  ? 'bg-vintage-gold text-vintage-black border-2 border-vintage-gold'
+                                  : 'bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setCurrentLeaderboardPage(Math.min(Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }}
+                          disabled={currentLeaderboardPage === Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE)}
+                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
+                        >
+                          {t('next')} →
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
