@@ -912,10 +912,11 @@ async function getImage(nft: any): Promise<string> {
   return placeholder;
 }
 
-async function fetchNFTs(owner: string, contractAddress: string = CONTRACT_ADDRESS, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
+async function fetchNFTs(owner: string, contractAddress?: string, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
   if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
   if (!CHAIN) throw new Error("Chain não configurada");
-  if (!contractAddress) throw new Error("Contract address não configurado");
+  const contract = contractAddress || CONTRACT_ADDRESS;
+  if (!contract) throw new Error("Contract address não configurado");
 
   let allNfts: any[] = [];
   let revealedNfts: any[] = [];
@@ -927,7 +928,7 @@ async function fetchNFTs(owner: string, contractAddress: string = CONTRACT_ADDRE
   do {
     pageCount++;
     console.log(`   Fetching page ${pageCount}... (${revealedNfts.length} revealed so far)`);
-    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contractAddress}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
+    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`API falhou: ${res.status}`);
     const json = await res.json();
