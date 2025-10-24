@@ -360,7 +360,41 @@ const translations = {
     myInventory: 'Meu Inventário',
     viewStats: 'Ver Estatísticas',
     settings: 'Configurações',
-    vibeMarketEasterEgg: '🎯 Nico, me manda um DM que te mostro como adicionar esse botão'
+    vibeMarketEasterEgg: '🎯 Nico, me manda um DM que te mostro como adicionar esse botão',
+    // Difficulty levels
+    difficulty: 'Dificuldade',
+    easy: 'Fácil',
+    medium: 'Médio',
+    hard: 'Difícil',
+    extreme: 'Extremo',
+    impossible: 'Impossível',
+    difficultyEasy: '🟢 Cartas aleatórias',
+    difficultyMedium: '🔵 Estratégia balanceada (70% top 3)',
+    difficultyHard: '🟠 Escolhe das top 7',
+    difficultyExtreme: '🔴 Escolhe das top 10',
+    difficultyImpossible: '🟣 EXATAMENTE as top 5 mais fortes (PODER MÁXIMO)',
+    // Attack/Defense system
+    battleVsAI: 'Batalhar vs IA',
+    yourAttackPower: 'Seu Poder de Ataque',
+    chooseYourCards: 'Escolha Suas Cartas',
+    selectAttackCards: 'Selecione suas cartas de ataque',
+    attackButton: '⚔️ Atacar',
+    attacksRemaining: '⚔️ Ataques Restantes:',
+    saveDefenseDeck: 'Salvar Deck de Defesa',
+    defenseDeckSaved: '✓ Deck de Defesa Salvo!',
+    defenseCard: 'Carta de Defesa',
+    // AI/JC Loading
+    loadingBurnedCards: 'Carregando Cartas Queimadas...',
+    cardsFound: 'cartas encontradas',
+    page: 'Página',
+    // Leaderboard
+    opened: 'Abertas',
+    // Alert messages
+    mustSetDefenseDeck: 'Você deve configurar seu Deck de Defesa primeiro!',
+    mustSetDefenseDeckFull: 'Você deve configurar seu Deck de Defesa primeiro! Selecione 5 cartas acima e clique em "Salvar Deck de Defesa".',
+    allAttacksUsed: 'Você usou todos os 3 ataques de hoje. Os ataques resetam à meia-noite UTC.',
+    sortByPowerAttack: '↓ Ordenar por Poder',
+    sortDefaultAttack: '⇄ Ordem Padrão'
   },
   hi: {
     title: 'Vibe Most Wanted',
@@ -493,7 +527,41 @@ const translations = {
     myInventory: 'मेरी सूची',
     viewStats: 'आंकड़े देखें',
     settings: 'सेटिंग्स',
-    vibeMarketEasterEgg: '🎯 Nico, DM me and I will show you how to add this button'
+    vibeMarketEasterEgg: '🎯 Nico, DM me and I will show you how to add this button',
+    // Difficulty levels
+    difficulty: 'कठिनाई',
+    easy: 'आसान',
+    medium: 'मध्यम',
+    hard: 'कठिन',
+    extreme: 'अत्यधिक',
+    impossible: 'असंभव',
+    difficultyEasy: '🟢 यादृच्छिक कार्ड',
+    difficultyMedium: '🔵 संतुलित रणनीति (70% top 3)',
+    difficultyHard: '🟠 शीर्ष 7 से चुनता है',
+    difficultyExtreme: '🔴 शीर्ष 10 से चुनता है',
+    difficultyImpossible: '🟣 बिल्कुल शीर्ष 5 सबसे मजबूत (अधिकतम शक्ति)',
+    // Attack/Defense system
+    battleVsAI: 'AI से लड़ाई',
+    yourAttackPower: 'आपकी आक्रमण शक्ति',
+    chooseYourCards: 'अपने कार्ड चुनें',
+    selectAttackCards: 'अपने हमले के कार्ड चुनें',
+    attackButton: '⚔️ हमला',
+    attacksRemaining: '⚔️ शेष हमले:',
+    saveDefenseDeck: 'रक्षा डेक सहेजें',
+    defenseDeckSaved: '✓ रक्षा डेक सहेजा गया!',
+    defenseCard: 'रक्षा कार्ड',
+    // AI/JC Loading
+    loadingBurnedCards: 'जले हुए कार्ड लोड हो रहे हैं...',
+    cardsFound: 'कार्ड मिले',
+    page: 'पृष्ठ',
+    // Leaderboard
+    opened: 'खोले गए',
+    // Alert messages
+    mustSetDefenseDeck: 'आपको पहले अपना रक्षा डेक सेट करना होगा!',
+    mustSetDefenseDeckFull: 'आपको पहले अपना रक्षा डेक सेट करना होगा! ऊपर 5 कार्ड चुनें और "रक्षा डेक सहेजें" पर क्लिक करें।',
+    allAttacksUsed: 'आपने आज के सभी 3 हमले उपयोग कर लिए हैं। हमले मध्यरात्रि UTC पर रीसेट होते हैं।',
+    sortByPowerAttack: '↓ शक्ति से क्रमबद्ध करें',
+    sortDefaultAttack: '⇄ डिफ़ॉल्ट क्रम'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -623,7 +691,41 @@ const translations = {
     myInventory: 'My Inventory',
     viewStats: 'View Stats',
     settings: 'Settings',
-    vibeMarketEasterEgg: '🎯 Nico, DM me and I will show you how to add this button'
+    vibeMarketEasterEgg: '🎯 Nico, DM me and I will show you how to add this button',
+    // Difficulty levels
+    difficulty: 'Difficulty',
+    easy: 'Easy',
+    medium: 'Medium',
+    hard: 'Hard',
+    extreme: 'Extreme',
+    impossible: 'Impossible',
+    difficultyEasy: '🟢 Random cards',
+    difficultyMedium: '🔵 Balanced strategy (70% top 3)',
+    difficultyHard: '🟠 Picks from top 7',
+    difficultyExtreme: '🔴 Picks from top 10',
+    difficultyImpossible: '🟣 EXACTLY top 5 strongest (MAX POWER)',
+    // Attack/Defense system
+    battleVsAI: 'Battle vs AI',
+    yourAttackPower: 'Your Attack Power',
+    chooseYourCards: 'Choose Your Cards',
+    selectAttackCards: 'Select your attack cards',
+    attackButton: '⚔️ Attack',
+    attacksRemaining: '⚔️ Attacks Remaining:',
+    saveDefenseDeck: 'Save Defense Deck',
+    defenseDeckSaved: '✓ Defense Deck Saved!',
+    defenseCard: 'Defense Card',
+    // AI/JC Loading
+    loadingBurnedCards: 'Loading Burned Cards...',
+    cardsFound: 'cards found',
+    page: 'Page',
+    // Leaderboard
+    opened: 'Opened',
+    // Alert messages
+    mustSetDefenseDeck: 'You must set your Defense Deck first!',
+    mustSetDefenseDeckFull: 'You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".',
+    allAttacksUsed: 'You have used all 3 attacks for today. Attacks reset at midnight UTC.',
+    sortByPowerAttack: '↓ Sort by Power',
+    sortDefaultAttack: '⇄ Default Order'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -756,7 +858,41 @@ const translations = {
     myInventory: 'Mi Inventario',
     viewStats: 'Ver Estadísticas',
     settings: 'Configuración',
-    vibeMarketEasterEgg: '🎯 Nico, envíame un DM y te mostraré cómo agregar este botón'
+    vibeMarketEasterEgg: '🎯 Nico, envíame un DM y te mostraré cómo agregar este botón',
+    // Difficulty levels
+    difficulty: 'Dificultad',
+    easy: 'Fácil',
+    medium: 'Medio',
+    hard: 'Difícil',
+    extreme: 'Extremo',
+    impossible: 'Imposible',
+    difficultyEasy: '🟢 Cartas aleatorias',
+    difficultyMedium: '🔵 Estrategia balanceada (70% top 3)',
+    difficultyHard: '🟠 Elige de las top 7',
+    difficultyExtreme: '🔴 Elige de las top 10',
+    difficultyImpossible: '🟣 EXACTAMENTE las top 5 más fuertes (PODER MÁXIMO)',
+    // Attack/Defense system
+    battleVsAI: 'Batalla vs IA',
+    yourAttackPower: 'Tu Poder de Ataque',
+    chooseYourCards: 'Elige Tus Cartas',
+    selectAttackCards: 'Selecciona tus cartas de ataque',
+    attackButton: '⚔️ Atacar',
+    attacksRemaining: '⚔️ Ataques Restantes:',
+    saveDefenseDeck: 'Guardar Mazo de Defensa',
+    defenseDeckSaved: '✓ ¡Mazo de Defensa Guardado!',
+    defenseCard: 'Carta de Defensa',
+    // AI/JC Loading
+    loadingBurnedCards: 'Cargando Cartas Quemadas...',
+    cardsFound: 'cartas encontradas',
+    page: 'Página',
+    // Leaderboard
+    opened: 'Abiertas',
+    // Alert messages
+    mustSetDefenseDeck: '¡Debes configurar tu Mazo de Defensa primero!',
+    mustSetDefenseDeckFull: '¡Debes configurar tu Mazo de Defensa primero! Selecciona 5 cartas arriba y haz clic en "Guardar Mazo de Defensa".',
+    allAttacksUsed: 'Has usado todos los 3 ataques de hoy. Los ataques se reinician a medianoche UTC.',
+    sortByPowerAttack: '↓ Ordenar por Poder',
+    sortDefaultAttack: '⇄ Orden Predeterminado'
   }
 };
 
@@ -1261,8 +1397,8 @@ export default function TCGPage() {
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
-  // AI Difficulty
-  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard' | 'extreme' | 'impossible'>('medium');
+  // AI Difficulty (only 3 levels now)
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
   // Profile States
   const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
@@ -1542,14 +1678,14 @@ export default function TCGPage() {
 
   const loadJCNFTs = useCallback(async () => {
     try {
-      // Check cache first (expires after 1 day)
-      const cacheKey = 'jc_deck_cache_v2';
-      const cacheTimeKey = 'jc_deck_cache_time_v2';
+      // Check cache first (expires after 30 days for long-term storage)
+      const cacheKey = 'jc_deck_cache_v3';
+      const cacheTimeKey = 'jc_deck_cache_time_v3';
       const cached = localStorage.getItem(cacheKey);
       const cacheTime = localStorage.getItem(cacheTimeKey);
-      const oneDay = 24 * 60 * 60 * 1000;
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000; // 30 days cache
 
-      if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < oneDay) {
+      if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < thirtyDays) {
         console.log('⚡ Loading JC deck from cache!');
         const cachedData = JSON.parse(cached);
         setJcNfts(cachedData);
@@ -1558,16 +1694,15 @@ export default function TCGPage() {
         return;
       }
 
-      console.log('⚡ Fast-loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
+      console.log('⚡ Loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
       console.log('   Using JC contract:', JC_CONTRACT_ADDRESS);
       const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS, (page, cards) => {
         setJcLoadingProgress({ page, cards });
-      }); // Already filtered!
+      });
       console.log(`📦 Fetched ${revealed.length} revealed NFTs, processing...`);
 
-      // FAST MODE: Extract images directly from Alchemy response (no async fetch needed)
+      // Extract images directly from Alchemy response
       const processed = revealed.map(nft => {
-        // Extract image URL directly from Alchemy metadata (already in response)
         const imageUrl = nft?.image?.cachedUrl ||
                          nft?.image?.thumbnailUrl ||
                          nft?.image?.originalUrl ||
@@ -1576,7 +1711,7 @@ export default function TCGPage() {
 
         return {
           ...nft,
-          imageUrl: normalizeUrl(imageUrl), // Direct from Alchemy - fast!
+          imageUrl: normalizeUrl(imageUrl),
           rarity: findAttr(nft, 'rarity'),
           status: findAttr(nft, 'status'),
           wear: findAttr(nft, 'wear'),
@@ -1585,44 +1720,21 @@ export default function TCGPage() {
         };
       });
 
-      console.log(`⚡ Fast-processed ${processed.length} cards with images from Alchemy`);
+      console.log(`⚡ Processed ${processed.length} cards with images`);
       setJcNfts(processed);
-
-      // Filter out cards with same image as token 7024 that are also "rare"
-      const token7024 = processed.find(nft => nft.tokenId === '7024');
-      let finalProcessed = processed;
-
-      if (token7024 && token7024.imageUrl) {
-        const imageToExclude = token7024.imageUrl;
-        finalProcessed = processed.filter(nft => {
-          // Keep the card if it doesn't match both conditions
-          const hasSameImage = nft.imageUrl === imageToExclude;
-          const isRare = nft.rarity?.toLowerCase() === 'rare';
-
-          // Exclude only if BOTH conditions are true
-          if (hasSameImage && isRare) {
-            console.log('Filtering out card:', nft.tokenId, 'with rare trait and image from 7024');
-            return false;
-          }
-          return true;
-        });
-        console.log('Filtered out', processed.length - finalProcessed.length, 'rare cards with image from token 7024');
-      }
-
-      setJcNfts(finalProcessed);
       setJcNftsLoading(false);
-      setJcLoadingProgress(null); // Reset progress
+      setJcLoadingProgress(null);
 
-      // Save to cache
+      // Save to cache (30 days)
       try {
-        localStorage.setItem('jc_deck_cache_v2', JSON.stringify(finalProcessed));
-        localStorage.setItem('jc_deck_cache_time_v2', Date.now().toString());
-        console.log('💾 JC deck saved to cache');
+        localStorage.setItem(cacheKey, JSON.stringify(processed));
+        localStorage.setItem(cacheTimeKey, Date.now().toString());
+        console.log('💾 JC deck saved to cache (expires in 30 days)');
       } catch (e) {
         console.log('⚠️  Failed to cache JC deck:', e);
       }
 
-      console.log('✅ JC NFTs loaded:', finalProcessed.length, 'cards');
+      console.log('✅ JC NFTs loaded:', processed.length, 'cards');
     } catch (e: any) {
       console.error('❌ Error loading JC NFTs:', e);
       setJcNftsLoading(false);
@@ -1693,10 +1805,10 @@ export default function TCGPage() {
     if (soundEnabled) AudioManager.playHand();
 
     const playerTotal = selectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
-    const available = jcNfts.length > 0 ? jcNfts : nfts.filter(n => !selectedCards.find(s => s.tokenId === n.tokenId));
+    // Use remaining cards from player's deck (not selected)
+    const available = nfts.filter(n => !selectedCards.find(s => s.tokenId === n.tokenId));
 
     console.log('🎮 BATTLE DEBUG:');
-    console.log('  jcNfts loaded:', jcNfts.length, 'cards');
     console.log('  available cards:', available.length);
     console.log('  Top 5 strongest:', available.sort((a, b) => (b.power || 0) - (a.power || 0)).slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
 
@@ -1733,34 +1845,16 @@ export default function TCGPage() {
         break;
 
       case 'hard':
-        // Hard: Always picks from top 7 strongest
+        // Hard: Always picks from top 5 strongest
         for (let i = 0; i < HAND_SIZE_CONST; i++) {
           if (sorted.length > 0) {
-            const idx = Math.floor(Math.random() * Math.min(7, sorted.length));
+            const idx = Math.floor(Math.random() * Math.min(5, sorted.length));
             pickedDealer.push(sorted[idx]);
             sorted.splice(idx, 1);
           } else {
             pickedDealer.push(shuffled[i]);
           }
         }
-        break;
-
-      case 'extreme':
-        // Extreme: Always picks from top 10 strongest
-        for (let i = 0; i < HAND_SIZE_CONST; i++) {
-          if (sorted.length > 0) {
-            const idx = Math.floor(Math.random() * Math.min(10, sorted.length));
-            pickedDealer.push(sorted[idx]);
-            sorted.splice(idx, 1);
-          } else {
-            pickedDealer.push(shuffled[i]);
-          }
-        }
-        break;
-
-      case 'impossible':
-        // Impossible: Always picks the TOP 5 strongest cards (maximum power)
-        pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
         break;
     }
 
@@ -1844,7 +1938,7 @@ export default function TCGPage() {
         }
       }, 2000);
     }, 4500);
-  }, [selectedCards, nfts, jcNfts, t, soundEnabled, isBattling, aiDifficulty, address, userProfile]);
+  }, [selectedCards, nfts, t, soundEnabled, isBattling, aiDifficulty, address, userProfile]);
 
   const saveDefenseDeck = useCallback(async () => {
     if (!address || !userProfile || selectedCards.length !== HAND_SIZE_CONST) return;
@@ -3995,40 +4089,8 @@ export default function TCGPage() {
 
                 {/* Battle vs AI Button */}
                 <div className="mb-4">
-                  {/* Lore Description */}
-                  <div className="mb-3 p-3 bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-500/30 rounded-lg">
-                    <p className="text-xs text-red-200/80 italic font-medium leading-relaxed">
-                      ⚠️ These are the burned cards seeking revenge. Cards that players sent to the void now haunt this realm, waiting to challenge you...
-                    </p>
-                  </div>
-
-                  {/* Loading Progress */}
-                  {jcNftsLoading && jcLoadingProgress && (
-                    <div className="mb-3 p-3 bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-vintage-gold font-medium">Loading Burned Cards...</span>
-                        <span className="text-xs text-vintage-gold/60">Page {jcLoadingProgress.page}</span>
-                      </div>
-                      <div className="text-sm text-vintage-gold font-bold">
-                        {jcLoadingProgress.cards} cards found
-                      </div>
-                      <div className="mt-2 w-full bg-vintage-black/50 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-300 animate-pulse"
-                          style={{ width: `${Math.min(100, (jcLoadingProgress.cards / 859) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
                   <button
                     onClick={() => {
-                      // Check if JC cards are loaded
-                      if (jcNftsLoading) {
-                        alert('JC deck is still loading! Please wait...');
-                        if (soundEnabled) AudioManager.buttonError();
-                        return;
-                      }
                       // Check if defense deck is set
                       if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE_CONST) {
                         alert('You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".');
@@ -4039,21 +4101,14 @@ export default function TCGPage() {
                       setShowPveCardSelection(true);
                       setPveSelectedCards([]);
                     }}
-                    disabled={!userProfile || jcNftsLoading}
+                    disabled={!userProfile}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
-                      userProfile && !jcNftsLoading
+                      userProfile
                         ? 'bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black shadow-neon hover:scale-105'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    {jcNftsLoading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="animate-spin">⏳</span>
-                        Loading... ({jcLoadingProgress?.cards || 0} cards)
-                      </span>
-                    ) : (
-                      'Battle vs AI'
-                    )}
+                    Battle vs AI
                   </button>
                 </div>
 
