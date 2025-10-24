@@ -1008,15 +1008,13 @@ export default function TCGPage() {
         enrichedRaw.push(...batchResults);
       }
 
-      const revealed = enrichedRaw.filter((n) => !isUnrevealed(n));
-      const filtered = enrichedRaw.length - revealed.length;
-      setFilteredCount(filtered);
-
+      // Não filtrar novamente - fetchNFTs já filtrou unopened cards
+      // Processar TODAS as cartas retornadas para evitar perder cartas válidas
       const IMAGE_BATCH_SIZE = 50;
       const processed = [];
 
-      for (let i = 0; i < revealed.length; i += IMAGE_BATCH_SIZE) {
-        const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
+      for (let i = 0; i < enrichedRaw.length; i += IMAGE_BATCH_SIZE) {
+        const batch = enrichedRaw.slice(i, i + IMAGE_BATCH_SIZE);
         const enriched = await Promise.all(
           batch.map(async (nft) => {
             const imageUrl = await getImage(nft);
