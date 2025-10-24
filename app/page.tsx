@@ -920,8 +920,8 @@ async function fetchNFTs(owner: string): Promise<any[]> {
   let revealedNfts: any[] = [];
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
-  const maxPages = 30; // Increased because many are unrevealed
-  const targetRevealed = 1000; // Stop when we have 1000 revealed cards
+  const maxPages = 50; // Enough to get most revealed cards
+  const targetRevealed = 500; // Stop when we have 500 revealed cards (plenty for battles)
 
   do {
     pageCount++;
