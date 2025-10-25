@@ -16,13 +16,13 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT || process.env.NE
 // Development logging helpers - only log in development mode
 const isDev = process.env.NODE_ENV === 'development';
 const devLog = (...args: any[]) => {
-  if (isDev) devLog(...args);
+  if (isDev) console.log(...args);
 };
 const devWarn = (...args: any[]) => {
   if (isDev) console.warn(...args);
 };
 const devError = (...args: any[]) => {
-  if (isDev) devError(...args);
+  if (isDev) console.error(...args);
 };
 
 // Image cache (same as main page)
