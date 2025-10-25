@@ -16,16 +16,20 @@ const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDR
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 const HAND_SIZE_CONST = 5;
 const JC_WALLET_ADDRESS = '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728';
-const ADMIN_WALLET = '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52'; // Admin gets 40 attacks
+const ADMIN_WALLETS = [
+  '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52', // joaovitoribeiro (you)
+  '0xBb4c7d8B2E32c7C99d358Be999377c208cCE53c2', // Claude's wallet
+]; // Admin wallets get 50 attacks
 const MAX_ATTACKS_DEFAULT = 3;
-const MAX_ATTACKS_ADMIN = 40;
+const MAX_ATTACKS_ADMIN = 50; // Increased from 40 to 50
 
 // Helper function to get max attacks for a user
 const getMaxAttacks = (walletAddress: string | null | undefined): number => {
   if (!walletAddress) return MAX_ATTACKS_DEFAULT;
-  return walletAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()
-    ? MAX_ATTACKS_ADMIN
-    : MAX_ATTACKS_DEFAULT;
+  const isAdmin = ADMIN_WALLETS.some(
+    admin => admin.toLowerCase() === walletAddress.toLowerCase()
+  );
+  return isAdmin ? MAX_ATTACKS_ADMIN : MAX_ATTACKS_DEFAULT;
 };
 
 // Development logging helpers - only log in development mode
@@ -95,7 +99,8 @@ const AudioManager = {
         this.context = new Ctx();
         this.musicGain = this.context.createGain();
         this.musicGain.connect(this.context.destination);
-        this.musicGain.gain.value = 0.6;
+        // Usa o volume configurado ao invés de hardcoded 0.6
+        this.musicGain.gain.value = this.currentVolume;
       }
     }
     if (this.context && this.context.state === 'suspended') {
@@ -105,7 +110,9 @@ const AudioManager = {
   setVolume(volume: number) {
     this.currentVolume = Math.max(0, Math.min(1, volume)); // Clamp entre 0 e 1
     if (this.musicGain) {
+      // Define o valor do gain diretamente - 0 vai mutar completamente
       this.musicGain.gain.value = this.currentVolume;
+      devLog(`🔊 Volume ajustado para: ${this.currentVolume} (${Math.round(this.currentVolume * 100)}%)`);
     }
   },
   async playTone(freq: number, dur: number, vol: number = 0.3) {
@@ -126,7 +133,7 @@ const AudioManager = {
   },
   async startBackgroundMusic() {
     await this.init();
-    if (!this.context) return;
+    if (!this.context || !this.musicGain) return;
 
     // Se já estiver tocando, apenas retoma o contexto se necessário
     if (this.isPlaying && this.backgroundSource) {
@@ -140,7 +147,17 @@ const AudioManager = {
       await this.context.resume();
     }
 
-    this.stopBackgroundMusic();
+    // Apenas para a source antiga, não destroi o musicGain
+    if (this.backgroundSource) {
+      try {
+        this.backgroundSource.stop();
+        this.backgroundSource.disconnect();
+      } catch (e) {
+        // Ignora erro se já estiver parado
+      }
+      this.backgroundSource = null;
+      this.isPlaying = false;
+    }
 
     try {
       // Loop sem interrupções usando AudioContext
@@ -154,13 +171,13 @@ const AudioManager = {
       this.backgroundSource.loopStart = 0;
       this.backgroundSource.loopEnd = audioBuffer.duration;
 
-      // Cria ganho para controlar volume
-      this.musicGain = this.context.createGain();
-      this.musicGain.gain.value = this.currentVolume; // Usa volume configurado
+      // NÃO cria um novo musicGain, usa o existente do init()
+      // Garante que o volume está correto antes de conectar
+      this.musicGain.gain.value = this.currentVolume;
+      devLog(`🎵 Iniciando música de fundo com volume: ${this.currentVolume} (${Math.round(this.currentVolume * 100)}%)`);
 
       // Conecta: source -> gain -> destination
       this.backgroundSource.connect(this.musicGain);
-      this.musicGain.connect(this.context.destination);
 
       this.backgroundSource.start(0);
       this.isPlaying = true;
@@ -820,7 +837,11 @@ export default function TCGPage() {
         setMusicEnabled(savedMusicEnabled === 'true');
       }
       if (savedMusicVolume !== null) {
-        setMusicVolume(parseFloat(savedMusicVolume));
+        const volume = parseFloat(savedMusicVolume);
+        setMusicVolume(volume);
+        // Sincroniza o AudioManager.currentVolume imediatamente
+        AudioManager.currentVolume = volume;
+        devLog(`📦 Volume carregado do localStorage: ${volume} (${Math.round(volume * 100)}%)`);
       }
     }
   }, []);
