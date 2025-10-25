@@ -217,4 +217,76 @@ Adicione esta seção ao SOLUTIONS.md:
 
 ---
 
+---
+
+## 🔧 UPDATE (2025-10-25): Farcaster Miniapp Fix
+
+**Commit**: `db722bf`
+
+### Problema Encontrado:
+No Farcaster miniapp, o modal do RainbowKit estava abrindo, causando:
+- ❌ Experiência confusa para usuários
+- ❌ Modal desnecessário (wallet já conectada via Farcaster)
+- ❌ Possíveis erros de conexão
+
+### Solução Implementada: **Conexão Híbrida**
+
+**No Farcaster Miniapp**:
+1. ✅ Detecta automaticamente contexto Farcaster via SDK
+2. ✅ Conecta wallet automaticamente (sem modal)
+3. ✅ Mostra apenas "Loading..." durante conexão
+4. ✅ Experiência seamless para usuário
+
+**Fora do Farcaster (Desktop/Web)**:
+1. ✅ Mostra RainbowKit com 100+ wallets
+2. ✅ Modal completo com todas as opções
+3. ✅ WalletConnect, MetaMask, Rainbow, etc.
+
+### Como Funciona:
+
+```typescript
+// Detecta se está no Farcaster
+const [isInFarcaster, setIsInFarcaster] = useState(false);
+const [farcasterAddress, setFarcasterAddress] = useState(null);
+
+// Auto-conecta via Farcaster SDK
+useEffect(() => {
+  if (sdk && sdk.wallet) {
+    setIsInFarcaster(true);
+    const addresses = await sdk.wallet.ethProvider.request({
+      method: "eth_requestAccounts"
+    });
+    setFarcasterAddress(addresses[0]);
+  }
+}, []);
+
+// Usa Farcaster se disponível, senão Wagmi
+const address = farcasterAddress || wagmiAddress;
+```
+
+### UI Condicional:
+
+```typescript
+{!address ? (
+  isInFarcaster ? (
+    // Apenas loading no Farcaster
+    <div>Loading...</div>
+  ) : (
+    // RainbowKit fora do Farcaster
+    <ConnectButton.Custom>...</ConnectButton.Custom>
+  )
+) : (
+  // App normal quando conectado
+  ...
+)}
+```
+
+### Resultado:
+- ✅ Farcaster: Zero cliques, conexão automática
+- ✅ Desktop: Full RainbowKit experience
+- ✅ Melhor UX para ambos os contextos
+- ✅ Zero conflitos entre SDK e Wagmi
+
+---
+
 **🎮 Vibe Most Wanted agora suporta todas as wallets! 🔥**
