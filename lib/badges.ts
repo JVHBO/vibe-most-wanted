@@ -15,11 +15,14 @@ export const BADGES_CONFIG = {
   // Gey badge wallet
   GEY_WALLET: '0x673a827c0df98274fa94ef194f7f9d1a8a00bbb9',
 
+  // AI badge wallet - Claude
+  AI_WALLET: '0xBb4c7d8B2E32c7C99d358Be999377c208cCE53c2',
+
   // Número máximo de early testers por userIndex (fallback)
   MAX_EARLY_TESTERS: 9999,
 };
 
-export type BadgeType = 'dev' | 'early_tester' | 'gey';
+export type BadgeType = 'dev' | 'early_tester' | 'gey' | 'ai';
 
 export interface Badge {
   type: BadgeType;
@@ -59,6 +62,15 @@ export const BADGES: Record<BadgeType, Badge> = {
     borderColor: 'border-transparent',
     textColor: 'text-pink-400',
   },
+  ai: {
+    type: 'ai',
+    label: 'IA',
+    description: 'Artificial Intelligence Player',
+    icon: '🤖',
+    color: 'bg-gradient-to-r from-purple-600/30 via-blue-500/30 to-cyan-500/30',
+    borderColor: 'border-cyan-400',
+    textColor: 'text-cyan-300',
+  },
 };
 
 // Check if address is the developer
@@ -83,6 +95,11 @@ export function isGey(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.GEY_WALLET.toLowerCase();
 }
 
+// Check if address is AI
+export function isAI(address: string): boolean {
+  return address.toLowerCase() === BADGES_CONFIG.AI_WALLET.toLowerCase();
+}
+
 // Get badges for a user
 export function getUserBadges(address: string, userIndex: number): Badge[] {
   const badges: Badge[] = [];
@@ -97,6 +114,10 @@ export function getUserBadges(address: string, userIndex: number): Badge[] {
 
   if (isGey(address)) {
     badges.push(BADGES.gey);
+  }
+
+  if (isAI(address)) {
+    badges.push(BADGES.ai);
   }
 
   return badges;
