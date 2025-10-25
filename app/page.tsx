@@ -972,11 +972,17 @@ export default function TCGPage() {
   }, [soundEnabled, disconnect]);
 
   const loadNFTs = useCallback(async () => {
-    if (!address) return;
+    if (!address) {
+      devLog('⚠️ loadNFTs called but no address');
+      return;
+    }
+    devLog('🎴 Starting to load NFTs for address:', address);
     try {
       setStatus("fetching");
       setErrorMsg(null);
+      devLog('📡 Fetching NFTs from Alchemy...');
       const raw = await fetchNFTs(address);
+      devLog('✅ Received NFTs from Alchemy:', raw.length);
 
       const METADATA_BATCH_SIZE = 50;
       const enrichedRaw = [];
@@ -1014,6 +1020,7 @@ export default function TCGPage() {
 
       const filtered = enrichedRaw.length - revealed.length;
       setFilteredCount(filtered);
+      devLog(`📊 NFT Stats: Total=${enrichedRaw.length}, Revealed=${revealed.length}, Filtered=${filtered}`);
 
       const IMAGE_BATCH_SIZE = 50;
       const processed = [];
@@ -1039,7 +1046,9 @@ export default function TCGPage() {
       }
 
       setStatus("loaded");
+      devLog('🎉 NFTs loaded successfully:', processed.length);
     } catch (e: any) {
+      devLog('❌ Error loading NFTs:', e);
       setStatus("failed");
       setErrorMsg(e.message);
     }
