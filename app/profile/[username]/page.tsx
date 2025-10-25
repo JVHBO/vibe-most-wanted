@@ -227,7 +227,13 @@ export default function ProfilePage() {
   const { t } = useLanguage();
 
   // Get current user address from Wagmi
-  const { address: currentUserAddress } = useAccount();
+  const { address: wagmiAddress } = useAccount();
+
+  // State for Farcaster address (when in miniapp)
+  const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null);
+
+  // Use Farcaster address if available, otherwise Wagmi
+  const currentUserAddress = farcasterAddress || wagmiAddress;
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
@@ -244,8 +250,25 @@ export default function ProfilePage() {
   const [filterFoil, setFilterFoil] = useState<string>('all');
   const [filterRevealed, setFilterRevealed] = useState<string>('revealed');
 
-  // Current user address is now automatically managed by Wagmi
-  // No need for manual SDK/localStorage loading
+  // Auto-detect and connect Farcaster wallet if in miniapp
+  useEffect(() => {
+    const initFarcasterWallet = async () => {
+      try {
+        if (sdk && typeof sdk.wallet !== 'undefined') {
+          const addresses = await sdk.wallet.ethProvider.request({
+            method: "eth_requestAccounts"
+          });
+          if (addresses && addresses[0]) {
+            setFarcasterAddress(addresses[0]);
+            devLog('✅ Auto-connected Farcaster wallet in profile:', addresses[0]);
+          }
+        }
+      } catch (err) {
+        devLog('⚠️ Not in Farcaster context');
+      }
+    };
+    initFarcasterWallet();
+  }, []);
 
   useEffect(() => {
     async function loadProfile() {

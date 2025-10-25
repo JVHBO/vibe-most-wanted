@@ -709,8 +709,15 @@ export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
 
   // Wagmi hooks for wallet connection
-  const { address, isConnected } = useAccount();
+  const { address: wagmiAddress, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+
+  // State for Farcaster address (when in miniapp)
+  const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null);
+  const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
+
+  // Use Farcaster address if available, otherwise Wagmi
+  const address = farcasterAddress || wagmiAddress;
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
@@ -808,8 +815,27 @@ export default function TCGPage() {
     }
   }, []);
 
-  // Wallet persistence is now handled automatically by Wagmi
-  // No need for manual localStorage restoration
+  // Auto-connect Farcaster wallet in miniapp context
+  useEffect(() => {
+    const initFarcasterWallet = async () => {
+      try {
+        // Check if we're in Farcaster context
+        if (sdk && typeof sdk.wallet !== 'undefined') {
+          setIsInFarcaster(true);
+          const addresses = await sdk.wallet.ethProvider.request({
+            method: "eth_requestAccounts"
+          });
+          if (addresses && addresses[0]) {
+            setFarcasterAddress(addresses[0]);
+            devLog('✅ Auto-connected Farcaster wallet:', addresses[0]);
+          }
+        }
+      } catch (err) {
+        devLog('⚠️ Not in Farcaster context or wallet unavailable');
+      }
+    };
+    initFarcasterWallet();
+  }, []);
 
   // Salvar estado da música no localStorage e controlar reprodução
   useEffect(() => {
@@ -3302,45 +3328,54 @@ export default function TCGPage() {
             <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
             <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
             <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
-            <div className="flex justify-center">
-              <ConnectButton.Custom>
-                {({
-                  account,
-                  chain,
-                  openAccountModal,
-                  openChainModal,
-                  openConnectModal,
-                  mounted,
-                }) => {
-                  return (
-                    <div
-                      {...(!mounted && {
-                        'aria-hidden': true,
-                        'style': {
-                          opacity: 0,
-                          pointerEvents: 'none',
-                          userSelect: 'none',
-                        },
-                      })}
-                    >
-                      {(() => {
-                        if (!mounted || !account || !chain) {
-                          return (
-                            <button
-                              onClick={openConnectModal}
-                              className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-                            >
-                              {t('connectWallet')}
-                            </button>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </div>
-                  );
-                }}
-              </ConnectButton.Custom>
-            </div>
+
+            {/* Show loading if in Farcaster context but address not loaded yet */}
+            {isInFarcaster ? (
+              <div className="w-full px-6 py-4 bg-vintage-gold/20 text-vintage-gold rounded-xl border-2 border-vintage-gold/50 font-display font-semibold">
+                {t('loading')}...
+              </div>
+            ) : (
+              /* Show RainbowKit only if NOT in Farcaster */
+              <div className="flex justify-center">
+                <ConnectButton.Custom>
+                  {({
+                    account,
+                    chain,
+                    openAccountModal,
+                    openChainModal,
+                    openConnectModal,
+                    mounted,
+                  }) => {
+                    return (
+                      <div
+                        {...(!mounted && {
+                          'aria-hidden': true,
+                          'style': {
+                            opacity: 0,
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                          },
+                        })}
+                      >
+                        {(() => {
+                          if (!mounted || !account || !chain) {
+                            return (
+                              <button
+                                onClick={openConnectModal}
+                                className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                              >
+                                {t('connectWallet')}
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    );
+                  }}
+                </ConnectButton.Custom>
+              </div>
+            )}
           </div>
         </div>
       ) : (
