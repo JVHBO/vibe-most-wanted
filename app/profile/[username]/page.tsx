@@ -254,17 +254,22 @@ export default function ProfilePage() {
   useEffect(() => {
     const initFarcasterWallet = async () => {
       try {
-        if (sdk && typeof sdk.wallet !== 'undefined') {
+        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
           const addresses = await sdk.wallet.ethProvider.request({
             method: "eth_requestAccounts"
           });
           if (addresses && addresses[0]) {
             setFarcasterAddress(addresses[0]);
             devLog('✅ Auto-connected Farcaster wallet in profile:', addresses[0]);
+          } else {
+            // Failed to get address, reset state
+            setFarcasterAddress(null);
           }
         }
       } catch (err) {
-        devLog('⚠️ Not in Farcaster context');
+        devLog('⚠️ Not in Farcaster context or wallet unavailable');
+        // Reset state on error
+        setFarcasterAddress(null);
       }
     };
     initFarcasterWallet();

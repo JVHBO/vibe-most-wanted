@@ -820,18 +820,25 @@ export default function TCGPage() {
     const initFarcasterWallet = async () => {
       try {
         // Check if we're in Farcaster context
-        if (sdk && typeof sdk.wallet !== 'undefined') {
+        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
           setIsInFarcaster(true);
           const addresses = await sdk.wallet.ethProvider.request({
             method: "eth_requestAccounts"
           });
           if (addresses && addresses[0]) {
             setFarcasterAddress(addresses[0]);
+            localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
             devLog('✅ Auto-connected Farcaster wallet:', addresses[0]);
+          } else {
+            // Failed to get address, reset Farcaster state
+            setIsInFarcaster(false);
           }
         }
       } catch (err) {
         devLog('⚠️ Not in Farcaster context or wallet unavailable');
+        // Reset Farcaster state on error
+        setIsInFarcaster(false);
+        setFarcasterAddress(null);
       }
     };
     initFarcasterWallet();
@@ -938,6 +945,9 @@ export default function TCGPage() {
   const disconnectWallet = useCallback(() => {
     if (soundEnabled) AudioManager.buttonNav();
     disconnect();
+    // Clear Farcaster state as well
+    setFarcasterAddress(null);
+    setIsInFarcaster(false);
     localStorage.removeItem('connectedAddress');
     setNfts([]);
     setSelectedCards([]);
