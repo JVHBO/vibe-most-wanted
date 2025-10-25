@@ -9,13 +9,17 @@
   },
   "dependencies": {
     "@farcaster/miniapp-sdk": "^0.2.1",
+    "@rainbow-me/rainbowkit": "^2.2.9",
+    "@tanstack/react-query": "^5.90.5",
     "firebase": "^12.4.0",
     "firebase-admin": "^13.5.0",
     "nanoid": "^5.1.6",
     "next": "15.5.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "twitter-api-v2": "^1.27.0"
+    "twitter-api-v2": "^1.27.0",
+    "viem": "^2.38.4",
+    "wagmi": "^2.18.2"
   },
   "devDependencies": {
     "@types/node": "^20",

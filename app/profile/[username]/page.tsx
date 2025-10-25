@@ -7,6 +7,7 @@ import sdk from '@farcaster/miniapp-sdk';
 import { BadgeList } from '@/components/Badge';
 import { getUserBadges } from '@/lib/badges';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAccount } from 'wagmi';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -225,11 +226,13 @@ export default function ProfilePage() {
   const username = decodeURIComponent(params.username as string);
   const { t } = useLanguage();
 
+  // Get current user address from Wagmi
+  const { address: currentUserAddress } = useAccount();
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [currentUserAddress, setCurrentUserAddress] = useState<string | null>(null);
   const [nfts, setNfts] = useState<any[]>([]);
   const [loadingNFTs, setLoadingNFTs] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
@@ -241,41 +244,8 @@ export default function ProfilePage() {
   const [filterFoil, setFilterFoil] = useState<string>('all');
   const [filterRevealed, setFilterRevealed] = useState<string>('revealed');
 
-  // Load current user's address
-  useEffect(() => {
-    const initSDK = async () => {
-      try {
-        // Primeiro tenta pegar do localStorage (mais rápido e confiável)
-        const savedAddress = localStorage.getItem('connectedAddress');
-        if (savedAddress) {
-          devLog('✅ Current user address from localStorage:', savedAddress);
-          setCurrentUserAddress(savedAddress.toLowerCase());
-          return;
-        }
-
-        // Se não tiver no localStorage, tenta SDK
-        await sdk.actions.ready();
-
-        // Tenta obter o endereço do wallet conectado
-        if (sdk && typeof sdk.wallet !== 'undefined') {
-          const addresses = await sdk.wallet.ethProvider.request({
-            method: "eth_requestAccounts"
-          });
-          if (addresses && addresses[0]) {
-            devLog('✅ Current user address loaded from SDK:', addresses[0]);
-            setCurrentUserAddress(addresses[0].toLowerCase());
-          } else {
-            devLog('⚠️ No address found in wallet');
-          }
-        } else {
-          devLog('⚠️ SDK wallet not available');
-        }
-      } catch (err) {
-        devError('❌ Error loading current user:', err);
-      }
-    };
-    initSDK();
-  }, []);
+  // Current user address is now automatically managed by Wagmi
+  // No need for manual SDK/localStorage loading
 
   useEffect(() => {
     async function loadProfile() {

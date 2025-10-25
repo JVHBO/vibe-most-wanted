@@ -12,7 +12,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<SupportedLanguage>('pt-BR');
+  const [lang, setLangState] = useState<SupportedLanguage>('en');
 
   // Load language from localStorage on mount
   useEffect(() => {
