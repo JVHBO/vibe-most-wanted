@@ -719,6 +719,16 @@ export default function TCGPage() {
   // Use Farcaster address if available, otherwise Wagmi
   const address = farcasterAddress || wagmiAddress;
 
+  // Debug logging for address changes
+  useEffect(() => {
+    devLog('🔍 Address state:', {
+      wagmiAddress,
+      farcasterAddress,
+      finalAddress: address,
+      isConnected
+    });
+  }, [wagmiAddress, farcasterAddress, address, isConnected]);
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
@@ -1036,7 +1046,10 @@ export default function TCGPage() {
   }, [address]);
 
   useEffect(() => {
-    if (address) loadNFTs();
+    if (address) {
+      devLog('📦 Address changed, loading NFTs:', address);
+      loadNFTs();
+    }
   }, [address, loadNFTs]);
 
   const loadJCNFTs = useCallback(async () => {
