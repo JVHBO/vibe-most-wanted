@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cinzel_Decorative, Playfair_Display_SC, Rajdhani } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { Web3Provider } from "@/contexts/Web3Provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -96,9 +97,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased overflow-x-hidden`}
       >
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <Web3Provider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </Web3Provider>
       </body>
     </html>
   );

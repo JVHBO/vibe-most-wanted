@@ -7,6 +7,8 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAccount, useDisconnect } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -19,7 +21,7 @@ const MAX_ATTACKS_DEFAULT = 3;
 const MAX_ATTACKS_ADMIN = 40;
 
 // Helper function to get max attacks for a user
-const getMaxAttacks = (walletAddress: string | null): number => {
+const getMaxAttacks = (walletAddress: string | null | undefined): number => {
   if (!walletAddress) return MAX_ATTACKS_DEFAULT;
   return walletAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()
     ? MAX_ATTACKS_ADMIN
@@ -705,13 +707,17 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
 
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
+
+  // Wagmi hooks for wallet connection
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
-  const [address, setAddress] = useState<string | null>(null);
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
   const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
@@ -802,15 +808,8 @@ export default function TCGPage() {
     }
   }, []);
 
-  // Restaurar wallet conectada ao carregar
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedAddress = localStorage.getItem('connectedAddress');
-      if (savedAddress) {
-        setAddress(savedAddress);
-      }
-    }
-  }, []);
+  // Wallet persistence is now handled automatically by Wagmi
+  // No need for manual localStorage restoration
 
   // Salvar estado da música no localStorage e controlar reprodução
   useEffect(() => {
@@ -907,50 +906,12 @@ export default function TCGPage() {
     setMusicEnabled(!musicEnabled);
   }, [musicEnabled, soundEnabled]);
 
-  const connectWallet = useCallback(async () => {
-    if (soundEnabled) AudioManager.buttonSuccess();
-    try {
-      // Tenta usar Farcaster SDK primeiro (para mini apps)
-      if (sdk && typeof sdk.wallet !== 'undefined') {
-        try {
-          const farcasterAddress = await sdk.wallet.ethProvider.request({
-            method: "eth_requestAccounts"
-          });
-          if (farcasterAddress && farcasterAddress[0]) {
-            setAddress(farcasterAddress[0]);
-            localStorage.setItem('connectedAddress', farcasterAddress[0].toLowerCase());
-            if (soundEnabled) AudioManager.buttonSuccess();
-            devLog('✅ Conectado via Farcaster SDK:', farcasterAddress[0]);
-            return;
-          }
-        } catch (farcasterError) {
-          devLog('⚠️ Farcaster wallet não disponível, tentando MetaMask...');
-        }
-      }
-
-      // Fallback para MetaMask (para uso fora do Farcaster)
-      const eth = (window as any).ethereum;
-      if (!eth) {
-        if (soundEnabled) AudioManager.buttonError();
-        alert("Install MetaMask or open in Farcaster app!");
-        return;
-      }
-      const accounts = await eth.request({ method: "eth_requestAccounts" });
-      if (accounts[0]) {
-        setAddress(accounts[0]);
-        localStorage.setItem('connectedAddress', accounts[0].toLowerCase());
-        if (soundEnabled) AudioManager.buttonSuccess();
-        devLog('✅ Conectado via MetaMask:', accounts[0]);
-      }
-    } catch (e: any) {
-      if (soundEnabled) AudioManager.buttonError();
-      setErrorMsg("Failed: " + e.message);
-    }
-  }, [soundEnabled]);
+  // Wallet connection is now handled by RainbowKit ConnectButton
+  // No need for manual connectWallet function
 
   const disconnectWallet = useCallback(() => {
     if (soundEnabled) AudioManager.buttonNav();
-    setAddress(null);
+    disconnect();
     localStorage.removeItem('connectedAddress');
     setNfts([]);
     setSelectedCards([]);
@@ -961,7 +922,8 @@ export default function TCGPage() {
     setDealerPower(0);
     setResult('');
     setDealerCards([]);
-  }, [soundEnabled]);
+    devLog('🔌 Desconectado');
+  }, [soundEnabled, disconnect]);
 
   const loadNFTs = useCallback(async () => {
     if (!address) return;
@@ -3340,7 +3302,45 @@ export default function TCGPage() {
             <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
             <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
             <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
-            <button onClick={connectWallet} className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold">{t('connectWallet')}</button>
+            <div className="flex justify-center">
+              <ConnectButton.Custom>
+                {({
+                  account,
+                  chain,
+                  openAccountModal,
+                  openChainModal,
+                  openConnectModal,
+                  mounted,
+                }) => {
+                  return (
+                    <div
+                      {...(!mounted && {
+                        'aria-hidden': true,
+                        'style': {
+                          opacity: 0,
+                          pointerEvents: 'none',
+                          userSelect: 'none',
+                        },
+                      })}
+                    >
+                      {(() => {
+                        if (!mounted || !account || !chain) {
+                          return (
+                            <button
+                              onClick={openConnectModal}
+                              className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                            >
+                              {t('connectWallet')}
+                            </button>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  );
+                }}
+              </ConnectButton.Custom>
+            </div>
           </div>
         </div>
       ) : (
