@@ -1,5 +1,123 @@
 # Sessão de Otimizações - JC Deck Loading
 
+## ⚠️ INFORMAÇÕES CRÍTICAS - NÃO MODIFICAR
+
+### Wallet de Desenvolvimento
+```
+Dev Wallet: 0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52
+- Possui 363 NFTs do contrato Vibe Most Wanted
+- Usar esta wallet para testes locais
+```
+
+### Contrato Vibe Most Wanted - NUNCA MUDAR
+```
+NEXT_PUBLIC_VIBE_CONTRACT=0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728
+```
+**⚠️ ATENÇÃO**: Este é o único contrato correto do Vibe Most Wanted!
+- **NUNCA** mudar este endereço
+- Se mudado, as cartas não irão carregar (retorna 0 NFTs)
+- Válido tanto para `.env.local` quanto para Vercel
+
+### Problema Comum: Loop Infinito no devLog
+Se a aplicação travar com "Maximum call stack size exceeded":
+- **Causa**: Funções `devLog`, `devWarn`, `devError` chamando a si mesmas
+- **Solução**: Trocar chamadas recursivas por `console.log`, `console.warn`, `console.error`
+- **Arquivos afetados**: `app/page.tsx` e `app/profile/[username]/page.tsx`
+
+```typescript
+// ❌ ERRADO (causa loop infinito)
+const devLog = (...args: any[]) => {
+  if (isDev) devLog(...args);  // Chamada recursiva!
+};
+
+// ✅ CORRETO
+const devLog = (...args: any[]) => {
+  if (isDev) console.log(...args);
+};
+```
+
+### Configurações Essenciais (.env.local)
+```env
+# Alchemy API (para buscar NFTs da blockchain)
+NEXT_PUBLIC_ALCHEMY_API_KEY=Y4XuYCtUIN1ArerfvN83lI2IgS8AJQyh
+NEXT_PUBLIC_ALCHEMY_CHAIN=base-mainnet
+
+# Contratos NFT
+NEXT_PUBLIC_VIBE_CONTRACT=0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728
+NEXT_PUBLIC_JC_CONTRACT=0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728
+
+# WalletConnect (para conectar carteiras)
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=925c3c3ff15267c5b5ad367984db55cb
+
+# Firebase (PvP e Perfis)
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=https://vibe-most-wanted-default-rtdb.firebaseio.com
+
+# Produção
+NEXT_PUBLIC_APP_URL=https://vibe-most-wanted.vercel.app
+```
+
+### Como Verificar se NFTs Estão Carregando
+1. Conectar wallet no app
+2. Abrir console do navegador (F12)
+3. Procurar por logs:
+   - ✅ `"Received NFTs from Alchemy: XXX"` (onde XXX > 0)
+   - ❌ `"Received NFTs from Alchemy: 0"` = contrato errado ou wallet sem NFTs
+
+### Workflow de Deploy para Vercel
+```bash
+# 1. Fazer commit das mudanças
+git add .
+git commit -m "Sua mensagem"
+git push
+
+# 2. Verificar variáveis de ambiente no Vercel
+vercel env ls
+
+# 3. Atualizar variável se necessário
+vercel env rm NEXT_PUBLIC_VIBE_CONTRACT production
+echo "0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728" | vercel env add NEXT_PUBLIC_VIBE_CONTRACT production
+
+# 4. Deploy
+vercel --prod
+
+# 5. Verificar se está funcionando
+# Abrir https://vibe-most-wanted.vercel.app
+```
+
+### Estrutura de Arquivos Importantes
+```
+vibe-most-wanted/
+├── app/
+│   ├── page.tsx                    # Página principal do jogo
+│   ├── profile/[username]/page.tsx # Página de perfil
+│   └── api/                        # API routes
+├── lib/
+│   └── nft-fetcher.ts             # Utilitários para buscar NFTs
+├── .env.local                      # Variáveis de ambiente LOCAL
+└── CHANGES_SESSION.md             # Este arquivo (documentação)
+```
+
+### Troubleshooting Comum
+
+**Problema**: "No revealed cards found"
+- **Causa 1**: Contrato errado no .env
+- **Causa 2**: Wallet conectada não tem NFTs desse contrato
+- **Solução**: Verificar contrato e wallet nos logs do console
+
+**Problema**: Aplicação trava ao carregar
+- **Causa**: Loop infinito no devLog
+- **Solução**: Ver seção "Loop Infinito no devLog" acima
+
+**Problema**: Mudanças no .env.local não aparecem
+- **Causa**: Next.js cacheia variáveis de ambiente
+- **Solução**: Reiniciar servidor dev (`Ctrl+C` e `npm run dev`)
+
+**Problema**: Vercel mostra versão antiga após deploy
+- **Causa**: CDN cache ou variáveis de ambiente não atualizadas
+- **Solução**: Fazer redeploy ou limpar cache do Vercel
+
+---
+
 ## Data: 2025-10-23
 
 ## Problema Inicial
