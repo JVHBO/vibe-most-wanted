@@ -1792,23 +1792,12 @@ export default function TCGPage() {
       // Same day, use existing count
       setAttacksRemaining(Math.max(0, maxAttacks - attacksToday));
     } else {
-      // ✅ FIX: New day detected - reset in Firebase AND local state
-      devLog('🆕 New day detected! Resetting attacks in Firebase...');
-      ProfileService.updateProfile(address, {
-        attacksToday: 0,
-        lastAttackDate: todayUTC,
-      }).then(() => {
-        devLog('✅ Attacks reset in Firebase');
-        // Reload profile to get fresh data
-        ProfileService.getProfile(address).then((updated) => {
-          if (updated) setUserProfile(updated);
-        });
-      }).catch(err => devError('❌ Error resetting attacks:', err));
-
-      // Set local state immediately
+      // New day detected - just set attacks to max locally
+      // Let the backend handle the reset when user makes next attack
+      devLog('🆕 New day detected! Attacks reset to max.');
       setAttacksRemaining(maxAttacks);
     }
-  }, [userProfile, maxAttacks, address]);
+  }, [userProfile?.lastAttackDate, userProfile?.attacksToday, maxAttacks, address]);
 
   // Load defenses received (attacks from other players)
   useEffect(() => {
