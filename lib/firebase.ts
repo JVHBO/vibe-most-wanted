@@ -115,6 +115,8 @@ export interface UserProfile {
   defenseDeck?: string[]; // 5 tokenIds for defense deck (mandatory after first set)
   attacksToday?: number; // Number of attacks made today (0-3)
   lastAttackDate?: string; // UTC date of last attack (YYYY-MM-DD)
+  rematchesToday?: number; // Number of rematches made today (0-5)
+  lastRematchDate?: string; // UTC date of last rematch (YYYY-MM-DD)
   stats: {
     totalCards: number;
     openedCards: number;

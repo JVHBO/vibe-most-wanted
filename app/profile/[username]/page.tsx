@@ -244,6 +244,8 @@ export default function ProfilePage() {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [currentNFTPage, setCurrentNFTPage] = useState(1);
   const NFT_PER_PAGE = 12;
+  const [rematchesRemaining, setRematchesRemaining] = useState<number>(5);
+  const MAX_REMATCHES = 5;
 
   // Filtros
   const [filterRarity, setFilterRarity] = useState<string>('all');
@@ -392,6 +394,40 @@ export default function ProfilePage() {
       loadProfile();
     }
   }, [username]);
+
+  // Calculate rematches remaining based on UTC date
+  useEffect(() => {
+    if (!profile) {
+      setRematchesRemaining(0);
+      return;
+    }
+
+    const now = new Date();
+    const todayUTC = now.toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+    const lastRematchDate = profile.lastRematchDate || '';
+    const rematchesToday = profile.rematchesToday || 0;
+
+    if (lastRematchDate === todayUTC) {
+      // Same day, use existing count
+      setRematchesRemaining(Math.max(0, MAX_REMATCHES - rematchesToday));
+    } else {
+      // New day, reset to max rematches
+      setRematchesRemaining(MAX_REMATCHES);
+    }
+  }, [profile]);
+
+  // Scroll to match history if hash is present (from notifications)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#match-history') {
+      // Wait for content to load
+      setTimeout(() => {
+        const element = document.getElementById('match-history');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -945,10 +981,18 @@ export default function ProfilePage() {
       </div>
 
       {/* Match History */}
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          📜 Match History
-        </h2>
+      <div id="match-history" className="max-w-6xl mx-auto scroll-mt-24">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            📜 Match History
+          </h2>
+          {profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
+            <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold">
+              ⚔️ Revanches Restantes: <span className="text-vintage-neon-blue">{rematchesRemaining}/{MAX_REMATCHES}</span>
+              <span className="block text-[10px] text-vintage-burnt-gold">Resetam à meia-noite (UTC)</span>
+            </p>
+          )}
+        </div>
         {matchHistory.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
             <p className="text-gray-400">No matches played yet</p>
@@ -968,40 +1012,92 @@ export default function ProfilePage() {
                   key={match.id}
                   className={`bg-vintage-charcoal border-2 ${borderColor} rounded-xl p-4 hover:scale-[1.02] transition-transform`}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    {/* Match Type & Result */}
-                    <div className="flex items-center gap-4">
-                      <div className="text-3xl text-vintage-gold">
-                        {match.type === 'pvp' ? '♥' : '♣'}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      {/* Match Type & Result */}
+                      <div className="flex items-center gap-4">
+                        <div className="text-3xl text-vintage-gold">
+                          {match.type === 'pvp' ? '♥' : match.type === 'attack' ? '⚔️' : match.type === 'defense' ? '🛡️' : '♣'}
+                        </div>
+                        <div>
+                          <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
+                          <p className="text-xs text-vintage-burnt-gold font-modern">
+                            {match.type === 'pvp' ? 'PLAYER VS PLAYER' :
+                             match.type === 'attack' ? 'YOU ATTACKED' :
+                             match.type === 'defense' ? 'YOU WERE ATTACKED' :
+                             'PLAYER VS ENVIRONMENT'}
+                          </p>
+                          <p className="text-xs text-vintage-burnt-gold/70">
+                            {new Date(match.timestamp).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
-                        <p className="text-xs text-vintage-burnt-gold font-modern">
-                          {match.type === 'pvp' ? 'PLAYER VS PLAYER' : 'PLAYER VS ENVIRONMENT'}
-                        </p>
-                        <p className="text-xs text-vintage-burnt-gold/70">
-                          {new Date(match.timestamp).toLocaleString()}
-                        </p>
+
+                      {/* Power Stats */}
+                      <div className="flex items-center gap-4">
+                        <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-gold/50">
+                          <p className="text-xs text-vintage-burnt-gold font-modern">YOUR POWER</p>
+                          <p className="text-xl font-bold text-vintage-gold">{match.playerPower}</p>
+                        </div>
+                        <div className="text-2xl text-vintage-burnt-gold font-bold">VS</div>
+                        <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-silver/50">
+                          <p className="text-xs text-vintage-burnt-gold font-modern">OPPONENT</p>
+                          <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
+                        </div>
                       </div>
+
+                      {/* Opponent Address (if PvP/Attack/Defense) */}
+                      {match.opponentAddress && (
+                        <div className="text-xs text-vintage-gold font-mono bg-vintage-black/50 px-3 py-2 rounded-lg border border-vintage-gold/30">
+                          vs {match.opponentAddress.slice(0, 6)}...{match.opponentAddress.slice(-4)}
+                          {match.opponentUsername && (
+                            <span className="block text-vintage-burnt-gold mt-1">@{match.opponentUsername}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Power Stats */}
-                    <div className="flex items-center gap-4">
-                      <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-gold/50">
-                        <p className="text-xs text-vintage-burnt-gold font-modern">YOUR POWER</p>
-                        <p className="text-xl font-bold text-vintage-gold">{match.playerPower}</p>
-                      </div>
-                      <div className="text-2xl text-vintage-burnt-gold font-bold">VS</div>
-                      <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-silver/50">
-                        <p className="text-xs text-vintage-burnt-gold font-modern">OPPONENT</p>
-                        <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
-                      </div>
-                    </div>
+                    {/* Rematch Button - Only if LOST and has opponent */}
+                    {match.result === 'loss' && match.opponentAddress && (match.type === 'pvp' || match.type === 'attack' || match.type === 'defense') &&
+                     profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={async () => {
+                            if (rematchesRemaining <= 0) {
+                              alert('Você usou todas as 5 revanches de hoje! Revanches resetam à meia-noite (UTC).');
+                              return;
+                            }
 
-                    {/* Opponent Address (if PvP) */}
-                    {match.type === 'pvp' && match.opponentAddress && (
-                      <div className="text-xs text-vintage-gold font-mono bg-vintage-black/50 px-3 py-2 rounded-lg border border-vintage-gold/30">
-                        vs {match.opponentAddress.slice(0, 6)}...{match.opponentAddress.slice(-4)}
+                            // Update rematch count in Firebase
+                            try {
+                              const now = new Date();
+                              const todayUTC = now.toISOString().split('T')[0];
+
+                              await ProfileService.updateProfile(profile.address, {
+                                rematchesToday: (profile.rematchesToday || 0) + 1,
+                                lastRematchDate: todayUTC
+                              });
+
+                              // Update local state
+                              setRematchesRemaining(prev => Math.max(0, prev - 1));
+                            } catch (err) {
+                              devError('Failed to update rematch count:', err);
+                            }
+
+                            // Redirect to home with target opponent
+                            router.push(`/?attack=${match.opponentAddress}`);
+                          }}
+                          disabled={rematchesRemaining <= 0}
+                          className={`px-4 py-2 rounded-lg font-modern font-semibold text-sm transition-all flex items-center gap-2 ${
+                            rematchesRemaining > 0
+                              ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white hover:scale-105'
+                              : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
+                          }`}
+                        >
+                          <span>⚔️</span>
+                          <span>Revanche</span>
+                          <span className="text-xs opacity-75">({rematchesRemaining}/5)</span>
+                        </button>
                       </div>
                     )}
                   </div>
