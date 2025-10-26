@@ -864,6 +864,24 @@ export default function TCGPage() {
             setFarcasterAddress(addresses[0]);
             localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
             devLog('✅ Auto-connected Farcaster wallet:', addresses[0]);
+
+            // ✅ Save FID to profile for notifications
+            try {
+              const fid = sdk.context?.user?.fid;
+              if (fid) {
+                devLog('📱 Farcaster FID detected:', fid);
+                // Update profile with FID
+                const profile = await ProfileService.getProfile(addresses[0]);
+                if (profile && (!profile.fid || profile.fid !== fid.toString())) {
+                  await ProfileService.updateProfile(addresses[0], {
+                    fid: fid.toString()
+                  });
+                  devLog('✅ FID saved to profile');
+                }
+              }
+            } catch (fidError) {
+              devLog('⚠️ Could not save FID:', fidError);
+            }
           } else {
             // Failed to get address, reset Farcaster state
             setIsInFarcaster(false);
@@ -878,6 +896,25 @@ export default function TCGPage() {
     };
     initFarcasterWallet();
   }, []);
+
+  // 🔔 Handler to enable Farcaster notifications
+  const handleEnableNotifications = async () => {
+    try {
+      if (!sdk || !sdk.actions || !isInFarcaster) {
+        devLog('⚠️ Farcaster SDK not available');
+        return;
+      }
+
+      devLog('🔔 Requesting Farcaster notification permissions...');
+      await sdk.actions.addMiniApp();
+      devLog('✅ Notification permission requested');
+
+      if (soundEnabled) AudioManager.buttonClick();
+    } catch (error) {
+      devError('❌ Error enabling notifications:', error);
+      if (soundEnabled) AudioManager.buttonError();
+    }
+  };
 
   // Salvar estado da música no localStorage e controlar reprodução
   useEffect(() => {
@@ -3950,6 +3987,15 @@ export default function TCGPage() {
                       <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold mb-1">
                         ⚔️ <span className="hidden md:inline">Attacks Remaining:</span> <span className="text-vintage-neon-blue">{attacksRemaining}/{maxAttacks}</span>
                       </p>
+                    )}
+                    {/* 🔔 Farcaster Notifications Button */}
+                    {isInFarcaster && userProfile && (
+                      <button
+                        onClick={handleEnableNotifications}
+                        className="mb-1 px-2 py-1 rounded-lg bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 text-vintage-gold text-[10px] md:text-xs font-modern font-semibold transition-all hover:scale-105"
+                      >
+                        🔔 Enable Notifications
+                      </button>
                     )}
                     <p className="text-[10px] md:text-xs text-vintage-burnt-gold">⏱️ {t('updateEvery5Min')}</p>
                   </div>
