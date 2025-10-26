@@ -106,6 +106,7 @@ export const upsertProfile = mutation({
     defenseDeck: v.optional(v.array(v.string())),
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),
+    fid: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();

@@ -873,9 +873,9 @@ export default function TCGPage() {
               if (fid) {
                 devLog('📱 Farcaster FID detected:', fid);
                 // Update profile with FID
-                const profile = await ProfileService.getProfile(addresses[0]);
+                const profile = await ConvexProfileService.getProfile(addresses[0]);
                 if (profile && (!profile.fid || profile.fid !== fid.toString())) {
-                  await ProfileService.updateProfile(addresses[0], {
+                  await ConvexProfileService.updateProfile(addresses[0], {
                     fid: fid.toString()
                   });
                   devLog('✅ FID saved to profile');
@@ -988,7 +988,7 @@ export default function TCGPage() {
         devLog('✅ Twitter connected via popup:', event.data.username);
         if (address) {
           // Reload profile from Firebase to get the updated Twitter handle
-          ProfileService.getProfile(address).then((profile) => {
+          ConvexProfileService.getProfile(address).then((profile) => {
             if (profile) {
               setUserProfile(profile);
               devLog('✅ Profile reloaded with Twitter:', profile.twitter);
@@ -1011,7 +1011,7 @@ export default function TCGPage() {
 
     if (attackAddress && address && nfts.length > 0) {
       // Fetch target player profile
-      ProfileService.getProfile(attackAddress).then((profile) => {
+      ConvexProfileService.getProfile(attackAddress).then((profile) => {
         if (profile) {
           devLog('🎯 Opening attack modal for:', profile.username);
           setTargetPlayer(profile);
@@ -1409,7 +1409,7 @@ export default function TCGPage() {
 
     try {
       const tokenIds = selectedCards.map(card => card.tokenId);
-      await ProfileService.saveDefenseDeck(address, tokenIds);
+      await ConvexProfileService.updateDefenseDeck(address, tokenIds);
 
       if (soundEnabled) AudioManager.buttonSuccess();
       setShowDefenseDeckSaved(true);
@@ -1420,7 +1420,7 @@ export default function TCGPage() {
       }, 3000);
 
       // Reload profile to get updated defense deck
-      const updatedProfile = await ProfileService.getProfile(address);
+      const updatedProfile = await ConvexProfileService.getProfile(address);
       if (updatedProfile) {
         setUserProfile(updatedProfile);
       }
@@ -1712,7 +1712,7 @@ export default function TCGPage() {
   useEffect(() => {
     if (address) {
       setIsLoadingProfile(true);
-      ProfileService.getProfile(address).then((profile) => {
+      ConvexProfileService.getProfile(address).then((profile) => {
 
         setUserProfile(profile);
         setIsLoadingProfile(false);
@@ -1736,10 +1736,10 @@ export default function TCGPage() {
       const unopenedCards = nfts.filter(nft => isUnrevealed(nft)).length;
 
       // Update stats and reload profile to show updated values
-      ProfileService.updateStats(address, nfts.length, openedCards, unopenedCards, totalPower)
+      ConvexProfileService.updateStats(address, nfts.length, openedCards, unopenedCards, totalPower)
         .then(() => {
           // Reload profile to get updated stats
-          return ProfileService.getProfile(address);
+          return ConvexProfileService.getProfile(address);
         })
         .then((updatedProfile) => {
           if (updatedProfile) {
@@ -2104,7 +2104,7 @@ export default function TCGPage() {
                               await ProfileService.updateUsername(address!, newUsername);
 
                               // Recarrega o perfil
-                              const updatedProfile = await ProfileService.getProfile(address!);
+                              const updatedProfile = await ConvexProfileService.getProfile(address!);
                               setUserProfile(updatedProfile);
 
                               setShowChangeUsername(false);
@@ -2730,17 +2730,26 @@ export default function TCGPage() {
                     if (address && userProfile) {
                       try {
                         const todayUTC = new Date().toISOString().split('T')[0];
-                        await ProfileService.updateProfile(address, {
+
+                        // Update attack tracking
+                        await ConvexProfileService.updateProfile(address, {
                           attacksToday: (userProfile.attacksToday || 0) + 1,
                           lastAttackDate: todayUTC,
-                          'stats.attackWins': (userProfile.stats.attackWins || 0) + (matchResult === 'win' ? 1 : 0),
-                          'stats.attackLosses': (userProfile.stats.attackLosses || 0) + (matchResult === 'loss' ? 1 : 0),
                         });
 
-                        await ProfileService.updateProfile(targetPlayer.address, {
-                          'stats.defenseWins': (targetPlayer.stats.defenseWins || 0) + (matchResult === 'loss' ? 1 : 0),
-                          'stats.defenseLosses': (targetPlayer.stats.defenseLosses || 0) + (matchResult === 'win' ? 1 : 0),
-                        });
+                        // Increment attacker stats
+                        if (matchResult === 'win') {
+                          await ConvexProfileService.incrementStat(address, 'attackWins');
+                        } else if (matchResult === 'loss') {
+                          await ConvexProfileService.incrementStat(address, 'attackLosses');
+                        }
+
+                        // Increment defender stats
+                        if (matchResult === 'loss') {
+                          await ConvexProfileService.incrementStat(targetPlayer.address, 'defenseWins');
+                        } else if (matchResult === 'win') {
+                          await ConvexProfileService.incrementStat(targetPlayer.address, 'defenseLosses');
+                        }
 
                         await ProfileService.recordMatch(
                           address,
@@ -2766,7 +2775,7 @@ export default function TCGPage() {
                           userProfile.username
                         );
 
-                        const updatedProfile = await ProfileService.getProfile(address);
+                        const updatedProfile = await ConvexProfileService.getProfile(address);
                         if (updatedProfile) {
                           setUserProfile(updatedProfile);
                         }
@@ -4189,10 +4198,10 @@ export default function TCGPage() {
                           address: address
                         });
 
-                        await ProfileService.createProfile(address!, profileUsername.trim());
+                        await ConvexProfileService.createProfile(address!, profileUsername.trim());
                         devLog('✅ Profile created successfully!');
 
-                        const profile = await ProfileService.getProfile(address!);
+                        const profile = await ConvexProfileService.getProfile(address!);
                         devLog('📊 Profile retrieved:', profile);
 
                         setUserProfile(profile);

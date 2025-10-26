@@ -50,6 +50,7 @@ export default defineSchema({
     // Social
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),
+    fid: v.optional(v.string()), // Farcaster ID
 
     // Metadata
     userIndex: v.optional(v.number()),

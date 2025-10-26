@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ProfileService, UserProfile, MatchHistory } from '@/lib/firebase';
+import { ConvexProfileService } from '@/lib/convex-profile';
 import sdk from '@farcaster/miniapp-sdk';
 import { BadgeList } from '@/components/Badge';
 import { getUserBadges } from '@/lib/badges';
@@ -275,7 +276,7 @@ export default function ProfilePage() {
         }
 
         // Carrega o perfil completo
-        const profileData = await ProfileService.getProfile(address);
+        const profileData = await ConvexProfileService.getProfile(address);
 
         if (!profileData) {
           setError(t('profileNotFound'));
@@ -1015,7 +1016,7 @@ export default function ProfilePage() {
                             }
 
                             // Load opponent profile
-                            const opponentProfile = await ProfileService.getProfile(match.opponentAddress);
+                            const opponentProfile = await ConvexProfileService.getProfile(match.opponentAddress);
                             if (!opponentProfile) {
                               alert('Oponente não encontrado');
                               return;
@@ -1026,7 +1027,7 @@ export default function ProfilePage() {
                               const now = new Date();
                               const todayUTC = now.toISOString().split('T')[0];
 
-                              await ProfileService.updateProfile(profile.address, {
+                              await ConvexProfileService.updateProfile(profile.address, {
                                 rematchesToday: (profile.rematchesToday || 0) + 1,
                                 lastRematchDate: todayUTC
                               });
