@@ -14,16 +14,11 @@ import { mutation, query } from "./_generated/server";
 /**
  * Verify that a message was signed by the claimed address
  *
- * Uses the same verification as Ethereum:
- * 1. Message is prefixed with "\x19Ethereum Signed Message:\n" + length
- * 2. Hash with keccak256
- * 3. Recover public key from signature
- * 4. Derive address from public key
+ * NOTE: This is now a wrapper that delegates to Convex Action
+ * for full ECDSA verification with ethers.js in Node.js runtime
  *
- * This prevents:
- * - Impersonation (only wallet owner can sign)
- * - Replay attacks (when combined with nonces)
- * - Man-in-the-middle attacks (signature is cryptographic proof)
+ * For mutations, call this synchronously for format validation,
+ * then use authenticateActionWithBackend() for full verification
  */
 export function verifySignature(
   address: string,
@@ -31,7 +26,7 @@ export function verifySignature(
   message: string
 ): boolean {
   try {
-    // Validate formats first
+    // Validate formats only (fast, synchronous check)
     if (!signature.startsWith("0x") || signature.length !== 132) {
       console.error("❌ Invalid signature format");
       return false;
@@ -51,27 +46,11 @@ export function verifySignature(
       return false;
     }
 
-    // Full ECDSA verification using @noble/secp256k1
-    try {
-      const { recoverAddress } = require("./crypto-utils");
-      const recoveredAddress = recoverAddress(message, signature);
-
-      if (recoveredAddress.toLowerCase() !== normalizedAddress) {
-        console.error("❌ Signature verification failed: address mismatch");
-        console.error(
-          `Expected: ${normalizedAddress}, Got: ${recoveredAddress.toLowerCase()}`
-        );
-        return false;
-      }
-
-      console.log("✅ Signature verified successfully");
-      return true;
-    } catch (error: any) {
-      console.error("❌ ECDSA verification error:", error);
-      return false;
-    }
+    // Format validation passed
+    // Full ECDSA verification happens in authenticateActionWithBackend()
+    return true;
   } catch (error: any) {
-    console.error("❌ Signature verification error:", error);
+    console.error("❌ Signature validation error:", error);
     return false;
   }
 }
@@ -125,8 +104,8 @@ export function verifyMessageAddress(
 }
 
 /**
- * Complete authentication check
- * Combines all verification steps
+ * Complete authentication check (format validation only)
+ * Use authenticateActionWithBackend() for full ECDSA verification
  */
 export function authenticateAction(
   address: string,
@@ -143,12 +122,52 @@ export function authenticateAction(
     return { success: false, error: "Expired signature" };
   }
 
-  // 3. Verify cryptographic signature
+  // 3. Verify signature format
   if (!verifySignature(address, signature, message)) {
-    return { success: false, error: "Invalid signature" };
+    return { success: false, error: "Invalid signature format" };
   }
 
   return { success: true };
+}
+
+/**
+ * Complete authentication with backend ECDSA verification
+ * Calls Convex Action for full cryptographic validation
+ */
+export async function authenticateActionWithBackend(
+  ctx: any,
+  address: string,
+  signature: string,
+  message: string
+): Promise<{ success: boolean; error?: string }> {
+  // 1. Format validation first (fast)
+  const formatCheck = authenticateAction(address, signature, message);
+  if (!formatCheck.success) {
+    return formatCheck;
+  }
+
+  // 2. Full ECDSA verification via Convex Action
+  try {
+    // Import the action - types will be generated after deployment
+    const cryptoActions = await import("./cryptoActions");
+
+    const result = await ctx.runAction(cryptoActions.verifyEthereumSignature as any, {
+      message,
+      signature,
+      expectedAddress: address,
+    });
+
+    if (!result.success) {
+      console.error("❌ Backend signature verification failed:", result.error);
+      return { success: false, error: result.error };
+    }
+
+    console.log("✅ Backend signature verification passed");
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Backend verification error:", error);
+    return { success: false, error: "Backend verification failed" };
+  }
 }
 
 // ============================================================================

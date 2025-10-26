@@ -131,14 +131,12 @@ await convex.mutation(api.profiles.updateStatsSecure, {
 - Nonce system prevents replay attacks
 - 5-minute timeout on all signatures
 
-**Backend (⚠️ PLACEHOLDER)**
-- Format validation only
-- Accepts all valid-format signatures
-- TODO: Full ECDSA recovery needed
-- Options:
-  1. Convex actions with node runtime
-  2. Next.js API routes as middleware
-  3. Wait for Convex crypto support
+**Backend (✅ SECURE)**
+- Full ECDSA verification using Convex Actions
+- Runs ethers.verifyMessage() in Node.js runtime
+- All secure mutations verify signatures server-side
+- Format validation + cryptographic verification
+- Implementation: convex/cryptoActions.ts
 
 ## 🔍 Testing Security
 

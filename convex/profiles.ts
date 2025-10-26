@@ -291,7 +291,7 @@ export const incrementStat = mutation({
 // ============================================================================
 
 import {
-  authenticateAction,
+  authenticateActionWithBackend,
   verifyNonce,
   incrementNonce,
 } from "./auth";
@@ -323,8 +323,8 @@ export const updateStatsSecure = mutation({
     }),
   },
   handler: async (ctx, { address, signature, message, stats }) => {
-    // 1. Authenticate the action
-    const auth = authenticateAction(address, signature, message);
+    // 1. Authenticate with full backend ECDSA verification
+    const auth = await authenticateActionWithBackend(ctx, address, signature, message);
     if (!auth.success) {
       throw new Error(`Unauthorized: ${auth.error}`);
     }
@@ -368,8 +368,8 @@ export const updateDefenseDeckSecure = mutation({
     defenseDeck: v.array(v.string()),
   },
   handler: async (ctx, { address, signature, message, defenseDeck }) => {
-    // 1. Authenticate
-    const auth = authenticateAction(address, signature, message);
+    // 1. Authenticate with full backend ECDSA verification
+    const auth = await authenticateActionWithBackend(ctx, address, signature, message);
     if (!auth.success) {
       throw new Error(`Unauthorized: ${auth.error}`);
     }
@@ -420,8 +420,8 @@ export const incrementStatSecure = mutation({
     ),
   },
   handler: async (ctx, { address, signature, message, stat }) => {
-    // 1. Authenticate
-    const auth = authenticateAction(address, signature, message);
+    // 1. Authenticate with full backend ECDSA verification
+    const auth = await authenticateActionWithBackend(ctx, address, signature, message);
     if (!auth.success) {
       throw new Error(`Unauthorized: ${auth.error}`);
     }
