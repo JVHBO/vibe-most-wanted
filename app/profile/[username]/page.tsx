@@ -285,8 +285,8 @@ export default function ProfilePage() {
 
         setProfile(profileData);
 
-        // Carrega histórico de partidas
-        const history = await ProfileService.getMatchHistory(address, 50);
+        // Carrega histórico de partidas (reduzido para 20 para loading mais rápido)
+        const history = await ProfileService.getMatchHistory(address, 20);
         setMatchHistory(history);
 
         // Carrega NFTs do jogador usando o fetcher unificado (OTIMIZADO)
@@ -297,8 +297,8 @@ export default function ProfilePage() {
           // ✅ Use the unified, optimized fetcher
           const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
           const enriched = await fetchAndProcessNFTs(address, {
-            maxPages: 10, // ✅ Reduced from 20 to 10 for faster loading
-            refreshMetadata: true, // Keep metadata fresh for profiles
+            maxPages: 8, // ✅ Reduced from 10 to 8 for faster loading
+            refreshMetadata: false, // ✅ Disable for faster loading (profiles don't need fresh metadata)
           });
 
           devLog('✅ NFTs fully enriched:', enriched.length);
