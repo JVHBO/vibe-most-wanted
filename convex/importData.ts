@@ -290,12 +290,13 @@ export const importProfiles = internalMutation({
       };
 
       // Adicionar campos opcionais apenas se existirem
-      if (profile.defenseDeck) profileData.defenseDeck = profile.defenseDeck;
-      if (profile.lastAttackDate) profileData.lastAttackDate = profile.lastAttackDate;
-      if (profile.twitter) profileData.twitter = profile.twitter;
-      if (profile.twitterHandle) profileData.twitterHandle = profile.twitterHandle;
-      if (profile.userIndex) profileData.userIndex = profile.userIndex;
-      if ((profile as any).updatedAt) profileData.updatedAt = (profile as any).updatedAt;
+      const p = profile as any;
+      if (p.defenseDeck) profileData.defenseDeck = p.defenseDeck;
+      if (p.lastAttackDate) profileData.lastAttackDate = p.lastAttackDate;
+      if (p.twitter) profileData.twitter = p.twitter;
+      if (p.twitterHandle) profileData.twitterHandle = p.twitterHandle;
+      if (p.userIndex) profileData.userIndex = p.userIndex;
+      if (p.updatedAt) profileData.updatedAt = p.updatedAt;
 
       await ctx.db.insert("profiles", profileData);
       count++;
