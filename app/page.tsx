@@ -20,7 +20,7 @@ const ADMIN_WALLETS = [
   '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52', // joaovitoribeiro (you)
   '0xBb4c7d8B2E32c7C99d358Be999377c208cCE53c2', // Claude's wallet
 ]; // Admin wallets get 50 attacks
-const MAX_ATTACKS_DEFAULT = 3;
+const MAX_ATTACKS_DEFAULT = 5; // Increased from 3 to 5
 const MAX_ATTACKS_ADMIN = 50; // Increased from 40 to 50
 
 // Helper function to get max attacks for a user
