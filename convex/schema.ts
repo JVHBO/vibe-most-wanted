@@ -184,4 +184,11 @@ export default defineSchema({
     .index("by_status", ["status", "createdAt"])
     .index("by_creator", ["creatorAddress"])
     .index("by_acceptor", ["acceptorAddress"]),
+
+  // Security: Nonces for replay attack prevention
+  nonces: defineTable({
+    address: v.string(), // Wallet address
+    nonce: v.number(), // Current nonce (increments with each signed action)
+    lastUsed: v.number(), // Timestamp of last use
+  }).index("by_address", ["address"]),
 });

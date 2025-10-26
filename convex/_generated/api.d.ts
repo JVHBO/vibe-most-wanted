@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
 import type * as importData from "../importData.js";
 import type * as matches from "../matches.js";
 import type * as profiles from "../profiles.js";
@@ -28,6 +29,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
   importData: typeof importData;
   matches: typeof matches;
   profiles: typeof profiles;
