@@ -1758,7 +1758,7 @@ export default function TCGPage() {
     };
 
     loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 5 * 60 * 1000); // 5 minutes
+    const interval = setInterval(loadLeaderboard, 30 * 60 * 1000); // 30 minutes (reduced from 5 to save Firebase bandwidth)
 
     return () => clearInterval(interval);
   }, []);
