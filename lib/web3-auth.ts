@@ -9,6 +9,7 @@
 
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
+import { verifyMessage } from "ethers";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -81,6 +82,20 @@ export async function createAuthPayload(
 
   // 3. Sign message
   const signature = await signMessage(signer, message);
+
+  // 4. Verify signature locally (security check)
+  const recoveredAddress = verifyMessage(message, signature);
+  if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+    throw new Error(
+      "Signature verification failed: address mismatch"
+    );
+  }
+
+  console.log("✅ Signature verified locally:", {
+    address,
+    recoveredAddress,
+    match: recoveredAddress.toLowerCase() === address.toLowerCase(),
+  });
 
   return { signature, message, nonce };
 }

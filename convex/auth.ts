@@ -31,17 +31,12 @@ export function verifySignature(
   message: string
 ): boolean {
   try {
-    // For Convex, we'll use a simple server-side verification
-    // In production, you'd use ethers or viem to verify
-    // For now, we'll implement a basic check
-
-    // Signature format: 0x + 130 hex chars (65 bytes: r (32) + s (32) + v (1))
+    // Validate formats first
     if (!signature.startsWith("0x") || signature.length !== 132) {
       console.error("❌ Invalid signature format");
       return false;
     }
 
-    // Address format: 0x + 40 hex chars
     const normalizedAddress = address.toLowerCase();
     if (
       !normalizedAddress.startsWith("0x") ||
@@ -51,19 +46,30 @@ export function verifySignature(
       return false;
     }
 
-    // Message should not be empty
     if (!message || message.length === 0) {
       console.error("❌ Empty message");
       return false;
     }
 
-    // NOTE: Full ECDSA verification requires crypto libraries
-    // For now, we'll validate format and add TODO for production
-    console.log("⚠️ TODO: Implement full ECDSA verification with ethers/viem");
+    // Full ECDSA verification using @noble/secp256k1
+    try {
+      const { recoverAddress } = require("./crypto-utils");
+      const recoveredAddress = recoverAddress(message, signature);
 
-    // TEMPORARY: Accept all valid-format signatures in development
-    // TODO: Replace with actual verification before production
-    return true;
+      if (recoveredAddress.toLowerCase() !== normalizedAddress) {
+        console.error("❌ Signature verification failed: address mismatch");
+        console.error(
+          `Expected: ${normalizedAddress}, Got: ${recoveredAddress.toLowerCase()}`
+        );
+        return false;
+      }
+
+      console.log("✅ Signature verified successfully");
+      return true;
+    } catch (error: any) {
+      console.error("❌ ECDSA verification error:", error);
+      return false;
+    }
   } catch (error: any) {
     console.error("❌ Signature verification error:", error);
     return false;
