@@ -14,9 +14,11 @@ This document explains the security measures implemented to protect user data an
 5. **Stat Manipulation** - Cannot fake wins/losses without wallet signature
 
 ### Current Vulnerabilities:
-- ⚠️ **TODO**: Full ECDSA verification (currently format validation only)
+- ✅ **DONE**: ECDSA verification on frontend (ethers.verifyMessage)
+- ⚠️ **PARTIAL**: Backend verification is placeholder only
 - ⚠️ **TODO**: Rate limiting on mutations (prevent spam)
 - ⚠️ **TODO**: Audit logging for suspicious activity
+- ⚠️ **TODO**: Move to API routes or Convex actions for full backend verification
 
 ## 🔐 How It Works
 
@@ -105,6 +107,8 @@ await convex.mutation(api.profiles.updateStatsSecure, {
 - ✅ Added `nonces` table to schema
 - ✅ Created secure versions of critical mutations
 - ✅ Created frontend helpers in `lib/web3-auth.ts`
+- ✅ Implemented ECDSA verification on frontend with ethers
+- ⚠️ Backend verification is placeholder (see convex/crypto-utils.ts)
 
 ### Phase 2: Gradual Migration (IN PROGRESS)
 - ⏳ Keep old mutations working (backward compatibility)
@@ -116,8 +120,25 @@ await convex.mutation(api.profiles.updateStatsSecure, {
 - ⏳ Make secure mutations mandatory
 - ⏳ Remove old insecure mutations
 - ⏳ Add rate limiting
-- ⏳ Implement full ECDSA verification
+- ⏳ Implement full backend ECDSA (Convex actions or API routes)
 - ⏳ Security audit
+
+### Current Implementation Status:
+
+**Frontend (✅ SECURE)**
+- Signatures verified with ethers.verifyMessage()
+- Invalid signatures rejected before backend
+- Nonce system prevents replay attacks
+- 5-minute timeout on all signatures
+
+**Backend (⚠️ PLACEHOLDER)**
+- Format validation only
+- Accepts all valid-format signatures
+- TODO: Full ECDSA recovery needed
+- Options:
+  1. Convex actions with node runtime
+  2. Next.js API routes as middleware
+  3. Wait for Convex crypto support
 
 ## 🔍 Testing Security
 
