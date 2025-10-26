@@ -1755,7 +1755,7 @@ export default function TCGPage() {
           devError('Error updating profile stats:', error);
         });
     }
-  }, [address, userProfile, nfts]);
+  }, [address, nfts]); // Removed userProfile to prevent infinite loop
 
   // Load leaderboard with 5-minute refresh (usando Convex agora! 🚀)
   useEffect(() => {

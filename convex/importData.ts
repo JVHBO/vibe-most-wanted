@@ -6,8 +6,38 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
+// Type for backup profile data
+type BackupProfile = {
+  address: string;
+  username: string;
+  stats: {
+    totalPower: number;
+    totalCards: number;
+    openedCards: number;
+    unopenedCards: number;
+    pveWins: number;
+    pveLosses: number;
+    pvpWins: number;
+    pvpLosses: number;
+    attackWins: number;
+    attackLosses: number;
+    defenseWins: number;
+    defenseLosses: number;
+  };
+  attacksToday: number;
+  rematchesToday: number;
+  createdAt: number;
+  lastUpdated: number;
+  defenseDeck?: string[];
+  lastAttackDate?: string;
+  twitter?: string;
+  twitterHandle?: string;
+  userIndex?: number;
+  updatedAt?: number;
+};
+
 // Sample profile data (we'll add real data here)
-const BACKUP_PROFILES = {
+const BACKUP_PROFILES: Record<string, BackupProfile> = {
   "0x12cf353ef7d37ab6c5505ff673116986db7c9102": {
     address: "0x12cf353ef7d37ab6c5505ff673116986db7c9102",
     username: "0xjoonx",
@@ -290,13 +320,12 @@ export const importProfiles = internalMutation({
       };
 
       // Adicionar campos opcionais apenas se existirem
-      const p = profile as any;
-      if (p.defenseDeck) profileData.defenseDeck = p.defenseDeck;
-      if (p.lastAttackDate) profileData.lastAttackDate = p.lastAttackDate;
-      if (p.twitter) profileData.twitter = p.twitter;
-      if (p.twitterHandle) profileData.twitterHandle = p.twitterHandle;
-      if (p.userIndex) profileData.userIndex = p.userIndex;
-      if (p.updatedAt) profileData.updatedAt = p.updatedAt;
+      if (profile.defenseDeck) profileData.defenseDeck = profile.defenseDeck;
+      if (profile.lastAttackDate) profileData.lastAttackDate = profile.lastAttackDate;
+      if (profile.twitter) profileData.twitter = profile.twitter;
+      if (profile.twitterHandle) profileData.twitterHandle = profile.twitterHandle;
+      if (profile.userIndex) profileData.userIndex = profile.userIndex;
+      if (profile.updatedAt) profileData.updatedAt = profile.updatedAt;
 
       await ctx.db.insert("profiles", profileData);
       count++;
