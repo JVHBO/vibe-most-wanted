@@ -22,6 +22,11 @@ html, body {
     animation: tutorialPulse 2s ease-in-out infinite;
   }
 
+  /* Notification bell pulse animation */
+  .animate-notification-pulse {
+    animation: notificationPulse 1.5s ease-in-out infinite;
+  }
+
   /* Gradiente metálico para botões */
   .btn-gold-gradient {
     background: linear-gradient(145deg, #FFD700, #FF8700, #C9A227);
@@ -155,6 +160,18 @@ html, body {
   50% {
     transform: scale(1.05);
     box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+  }
+}
+
+/* Notification bell pulse - red glow */
+@keyframes notificationPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.9);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
   }
 }
 

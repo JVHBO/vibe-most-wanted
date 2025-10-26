@@ -46,3 +46,14 @@ next-env.d.ts
 !.well-known/
 !public/.well-known/
 !public/.well-known/farcaster.json
+
+# Test wallet - never commit!
+test-wallet.txt
+
+# Synpress test files (not needed for production)
+synpress.config.ts
+synpress.config.ts.bak
+wallet-setup/
+wallet-setup.bak/
+.cache-synpress/
+metamask-v13/

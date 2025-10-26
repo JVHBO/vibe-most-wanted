@@ -814,6 +814,10 @@ export default function TCGPage() {
   const [isAttacking, setIsAttacking] = useState<boolean>(false);
   const [isConfirmingCards, setIsConfirmingCards] = useState<boolean>(false);
 
+  // Notifications States
+  const [defensesReceived, setDefensesReceived] = useState<any[]>([]);
+  const [unreadDefenses, setUnreadDefenses] = useState<number>(0);
+
   // Calculate max attacks for current user
   const maxAttacks = useMemo(() => getMaxAttacks(address), [address]);
 
@@ -1710,6 +1714,29 @@ export default function TCGPage() {
       setAttacksRemaining(maxAttacks);
     }
   }, [userProfile, maxAttacks]);
+
+  // Load defenses received (attacks from other players)
+  useEffect(() => {
+    if (!address || !userProfile) {
+      setDefensesReceived([]);
+      setUnreadDefenses(0);
+      return;
+    }
+
+    // Fetch match history filtering only defenses
+    ProfileService.getMatchHistory(address, 20).then((history) => {
+      const defenses = history.filter(match => match.type === 'defense');
+      setDefensesReceived(defenses);
+
+      // Check localStorage for last seen timestamp
+      const lastSeenKey = `defenses_last_seen_${address.toLowerCase()}`;
+      const lastSeen = parseInt(localStorage.getItem(lastSeenKey) || '0');
+
+      // Count unread defenses (newer than last seen)
+      const unread = defenses.filter(d => d.timestamp > lastSeen).length;
+      setUnreadDefenses(unread);
+    });
+  }, [address, userProfile]);
 
   return (
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6 overflow-x-hidden">
@@ -3365,6 +3392,33 @@ export default function TCGPage() {
         </a>
 
         <div className="flex items-center gap-3">
+          {/* Notifications Button - Only show if user is logged in */}
+          {address && userProfile && (
+            <button
+              onClick={() => {
+                // Mark all as read
+                const lastSeenKey = `defenses_last_seen_${address.toLowerCase()}`;
+                localStorage.setItem(lastSeenKey, Date.now().toString());
+                setUnreadDefenses(0);
+
+                // Redirect to profile with scroll to match history
+                const username = userProfile.username;
+                window.location.href = `/profile/${username}#match-history`;
+              }}
+              className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base relative ${
+                unreadDefenses > 0 ? 'border-red-500 animate-notification-pulse' : 'border-vintage-gold'
+              }`}
+              title={unreadDefenses > 0 ? `${unreadDefenses} novos ataques recebidos` : 'Notificações'}
+            >
+              <span className="text-lg">🔔</span>
+              {unreadDefenses > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                  {unreadDefenses}
+                </span>
+              )}
+            </button>
+          )}
+
           <button
             onClick={() => setShowTutorial(true)}
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base animate-tutorial-pulse"
