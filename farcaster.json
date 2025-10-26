@@ -1,0 +1,7 @@
+{
+  "miniapp": {
+    "name": "VIBE MOST WANTED",
+    "description": "NFT Card Battle Arena - Attack players and defend your deck!",
+    "webhookUrl": "https://vibe-most-wanted.vercel.app/api/farcaster/webhook"
+  }
+}

@@ -109,6 +109,7 @@ export interface UserProfile {
   address: string;
   username: string;
   twitter?: string;
+  fid?: string; // Farcaster ID for notifications
   createdAt: number;
   lastUpdated: number;
   userIndex?: number; // Ordem de registro do usuário (0, 1, 2, 3...)
