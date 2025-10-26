@@ -1008,6 +1008,12 @@ export default function ProfilePage() {
                               return;
                             }
 
+                            // Validate opponent address
+                            if (!match.opponentAddress) {
+                              alert('Endereço do oponente não encontrado');
+                              return;
+                            }
+
                             // Load opponent profile
                             const opponentProfile = await ProfileService.getProfile(match.opponentAddress);
                             if (!opponentProfile) {
