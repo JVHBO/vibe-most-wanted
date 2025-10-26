@@ -11,6 +11,7 @@
 import type * as importData from "../importData.js";
 import type * as matches from "../matches.js";
 import type * as profiles from "../profiles.js";
+import type * as rooms from "../rooms.js";
 
 import type {
   ApiFromModules,
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   importData: typeof importData;
   matches: typeof matches;
   profiles: typeof profiles;
+  rooms: typeof rooms;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
