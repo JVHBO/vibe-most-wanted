@@ -57,3 +57,4 @@ wallet-setup/
 wallet-setup.bak/
 .cache-synpress/
 metamask-v13/
+*.bak
