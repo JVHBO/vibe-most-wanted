@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import Link from "next/link";
 import { PvPService, ProfileService, type GameRoom, type UserProfile, type MatchHistory } from "../lib/firebase";
+import { ConvexProfileService } from "../lib/convex-profile"; // ✨ Convex para Leaderboard
 import { sdk } from "@farcaster/miniapp-sdk";
 import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
@@ -1751,14 +1752,14 @@ export default function TCGPage() {
     }
   }, [address, userProfile, nfts]);
 
-  // Load leaderboard with 5-minute refresh
+  // Load leaderboard with 5-minute refresh (usando Convex agora! 🚀)
   useEffect(() => {
     const loadLeaderboard = () => {
-      ProfileService.getLeaderboard().then(setLeaderboard);
+      ConvexProfileService.getLeaderboard().then(setLeaderboard);
     };
 
     loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 30 * 60 * 1000); // 30 minutes (reduced from 5 to save Firebase bandwidth)
+    const interval = setInterval(loadLeaderboard, 30 * 60 * 1000); // 30 minutes (sem limites com Convex!)
 
     return () => clearInterval(interval);
   }, []);
