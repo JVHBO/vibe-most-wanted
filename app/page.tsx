@@ -867,7 +867,8 @@ export default function TCGPage() {
 
             // ✅ Save FID to profile for notifications
             try {
-              const fid = sdk.context?.user?.fid;
+              const context = await sdk.context;
+              const fid = context?.user?.fid;
               if (fid) {
                 devLog('📱 Farcaster FID detected:', fid);
                 // Update profile with FID
