@@ -91,6 +91,7 @@ export default defineSchema({
     roomId: v.string(),
     status: v.union(
       v.literal("waiting"),
+      v.literal("ready"),
       v.literal("playing"),
       v.literal("finished"),
       v.literal("cancelled")

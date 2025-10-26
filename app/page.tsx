@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import Link from "next/link";
-import { PvPService, ProfileService, type GameRoom, type UserProfile, type MatchHistory } from "../lib/firebase";
-import { ConvexProfileService } from "../lib/convex-profile"; // ✨ Convex para Leaderboard
+import { ProfileService, type UserProfile, type MatchHistory } from "../lib/firebase";
+import { ConvexProfileService } from "../lib/convex-profile"; // ✨ Convex para Profiles
+import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
 import { sdk } from "@farcaster/miniapp-sdk";
 import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
@@ -1471,32 +1472,36 @@ export default function TCGPage() {
       let battleStarted = false; // Flag para evitar executar batalha múltiplas vezes
       let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
 
-      const unsubscribe = PvPService.watchRoom(roomCode, (room) => {
+      const unsubscribe = ConvexPvPService.watchRoom(roomCode, (room) => {
         if (room) {
           hasSeenRoom = true; // Marca que vimos a sala
+          // Check if players are ready (Convex: ready = has cards)
+          const hostReady = !!room.hostCards && room.hostCards.length > 0;
+          const guestReady = !!room.guestCards && room.guestCards.length > 0;
+
           devLog('🔄 Room update received:', {
-            hostReady: room.host.ready,
-            guestReady: room.guest?.ready,
+            hostReady,
+            guestReady,
             roomStatus: room.status,
             battleStarted
           });
           setCurrentRoom(room);
 
           // Se ambos os jogadores estiverem prontos, inicia a batalha
-          if (room.host.ready && room.guest?.ready && room.status === 'ready' && !battleStarted) {
+          if (hostReady && guestReady && (room.status === 'ready' || room.status === 'playing') && !battleStarted) {
             battleStarted = true; // Marca que a batalha já iniciou
             devLog('✅ Ambos jogadores prontos! Iniciando batalha...');
 
             // Determina quem é o jogador local e quem é o oponente
-            const isHost = room.host.address === address;
-            const playerCards = isHost ? room.host.cards : room.guest.cards;
-            const opponentCards = isHost ? room.guest.cards : room.host.cards;
-            const playerPower = isHost ? room.host.power : room.guest.power;
-            const opponentPower = isHost ? room.guest.power : room.host.power;
-            const opponentAddress = isHost ? room.guest.address : room.host.address;
-            const opponentName = isHost ? (room.guest.username || 'Guest') : (room.host.username || 'Host');
-            const playerName = isHost ? (room.host.username || 'You') : (room.guest.username || 'You');
-            const opponentTwitter = isHost ? room.guest.twitter : room.host.twitter;
+            const isHost = room.hostAddress === address;
+            const playerCards = isHost ? (room.hostCards || []) : (room.guestCards || []);
+            const opponentCards = isHost ? (room.guestCards || []) : (room.hostCards || []);
+            const playerPower = isHost ? (room.hostPower || 0) : (room.guestPower || 0);
+            const opponentPower = isHost ? (room.guestPower || 0) : (room.hostPower || 0);
+            const opponentAddress = isHost ? room.guestAddress : room.hostAddress;
+            const opponentName = isHost ? (room.guestUsername || 'Guest') : (room.hostUsername || 'Host');
+            const playerName = isHost ? (room.hostUsername || 'You') : (room.guestUsername || 'You');
+            const opponentTwitter = undefined; // Twitter not stored in room for now
 
             // Executa a batalha PvP com animações (igual PVE)
             setIsBattling(true);
@@ -1612,7 +1617,7 @@ export default function TCGPage() {
                   // Deleta a sala do Firebase se for o host
                   if (currentRoom && roomCode && address && address === currentRoom.host.address) {
                     try {
-                      await PvPService.leaveRoom(roomCode, address);
+                      await ConvexPvPService.leaveRoom(roomCode, address);
                       devLog('✅ Room deleted after battle ended');
                     } catch (err) {
                       devError('❌ Error deleting room:', err);
@@ -1653,7 +1658,7 @@ export default function TCGPage() {
     if (pvpMode === 'autoMatch' && isSearching && address) {
       devLog('🔍 Starting matchmaking listener for:', address);
 
-      const unsubscribe = PvPService.watchMatchmaking(address, (roomCode) => {
+      const unsubscribe = ConvexPvPService.watchMatchmaking(address, (roomCode) => {
         if (roomCode) {
           devLog('✅ Match found! Room:', roomCode);
           setRoomCode(roomCode);
@@ -1767,11 +1772,11 @@ export default function TCGPage() {
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
     // Run cleanup immediately on mount
-    PvPService.cleanupOldRooms().catch(err => devError('Cleanup error:', err));
+    ConvexPvPService.cleanupOldRooms().catch(err => devError('Cleanup error:', err));
 
     // Run cleanup every 2 minutes
     const cleanupInterval = setInterval(() => {
-      PvPService.cleanupOldRooms().catch(err => devError('Cleanup error:', err));
+      ConvexPvPService.cleanupOldRooms().catch(err => devError('Cleanup error:', err));
     }, 2 * 60 * 1000);
 
     return () => clearInterval(cleanupInterval);
@@ -2952,7 +2957,7 @@ export default function TCGPage() {
                   setPvpMode('autoMatch');
                   setIsSearching(true);
                   try {
-                    const code = await PvPService.findMatch(address || '');
+                    const code = await ConvexPvPService.findMatch(address || '', userProfile?.username);
                     if (code) {
                       // Encontrou uma sala imediatamente
                       setRoomCode(code);
@@ -2977,8 +2982,8 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   try {
                     // Remove do matchmaking antes de criar sala manual
-                    await PvPService.cancelMatchmaking(address || '');
-                    const code = await PvPService.createRoom(address || '');
+                    await ConvexPvPService.cancelMatchmaking(address || '');
+                    const code = await ConvexPvPService.createRoom(address || '', userProfile?.username);
                     setRoomCode(code);
                     setPvpMode('createRoom');
                   } catch (error) {
@@ -3036,7 +3041,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonError();
                   setIsSearching(false);
                   setPvpMode('pvpMenu');
-                  PvPService.cancelMatchmaking(address || '');
+                  ConvexPvPService.cancelMatchmaking(address || '');
                 }}
                 className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition"
               >
@@ -3090,7 +3095,7 @@ export default function TCGPage() {
                 if (soundEnabled) AudioManager.buttonNav();
                 setPvpMode('pvpMenu');
                 setRoomCode('');
-                PvPService.leaveRoom(roomCode, address || '');
+                ConvexPvPService.leaveRoom(roomCode, address || '');
               }}
               className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-semibold transition"
             >
@@ -3125,8 +3130,8 @@ export default function TCGPage() {
                 if (soundEnabled) AudioManager.buttonClick();
                 try {
                   // Remove do matchmaking antes de entrar em sala manual
-                  await PvPService.cancelMatchmaking(address || '');
-                  await PvPService.joinRoom(roomCode, address || '');
+                  await ConvexPvPService.cancelMatchmaking(address || '');
+                  await ConvexPvPService.joinRoom(roomCode, address || '', userProfile?.username);
                   setPvpMode('inRoom');
                   if (soundEnabled) AudioManager.buttonSuccess();
                 } catch (error: any) {
@@ -3168,7 +3173,7 @@ export default function TCGPage() {
                   setPvpMode('pvpMenu');
                   setRoomCode('');
                   setCurrentRoom(null);
-                  PvPService.leaveRoom(roomCode, address || '');
+                  ConvexPvPService.leaveRoom(roomCode, address || '');
                 }}
                 className="text-vintage-burnt-gold hover:text-white text-2xl"
               >
@@ -3282,7 +3287,7 @@ export default function TCGPage() {
                         setIsConfirmingCards(true);
 
                         if (soundEnabled) AudioManager.buttonSuccess();
-                        await PvPService.updateCards(roomCode, address || '', selectedCards);
+                        await ConvexPvPService.updateCards(roomCode, address || '', selectedCards);
 
                         // Reset after 2 seconds in case of error
                         setTimeout(() => setIsConfirmingCards(false), 2000);
