@@ -1667,4 +1667,134 @@ for (let i = 0; i < enrichedRaw.length; i += IMAGE_BATCH_SIZE) {
 
 ---
 
+## 🔗 NAVEGAÇÃO E DEEP LINKING (2025-10-26)
+
+### ✅ RESOLVIDO - Scroll de Notificações Não Funcionava
+
+**Problema**: Ao clicar no sino de notificações 🔔, o usuário era redirecionado para `/profile/username#match-history`, mas a página não fazia scroll até a seção de histórico de partidas.
+
+**Causa**: O `useEffect` que fazia scroll só executava uma vez no mount inicial. Quando o usuário clicava na notificação e era redirecionado com o hash `#match-history`, o scroll não acontecia porque a página já estava montada.
+
+**ANTES** (`app/profile/[username]/page.tsx:419-430`):
+```typescript
+useEffect(() => {
+  if (typeof window !== 'undefined' && window.location.hash === '#match-history') {
+    setTimeout(() => {
+      const element = document.getElementById('match-history');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 500);
+  }
+}, []); // ❌ Só executa uma vez
+```
+
+**DEPOIS**:
+```typescript
+useEffect(() => {
+  const handleHashScroll = () => {
+    if (typeof window !== 'undefined' && window.location.hash === '#match-history') {
+      setTimeout(() => {
+        const element = document.getElementById('match-history');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+    }
+  };
+
+  // Run on mount
+  handleHashScroll();
+
+  // ✅ Listen for hash changes
+  window.addEventListener('hashchange', handleHashScroll);
+
+  return () => {
+    window.removeEventListener('hashchange', handleHashScroll);
+  };
+}, []);
+```
+
+**Arquivos modificados**:
+- `app/profile/[username]/page.tsx` (linhas 419-442)
+
+**Commit**: `833ba84`
+
+**Status**: ✅ Resolvido
+
+---
+
+### ✅ RESOLVIDO - Botão de Revanche Não Abria Tela de Ataque
+
+**Problema**: Ao clicar no botão "Revanche ⚔️" no histórico de partidas (profile page), o usuário era redirecionado para a home page, mas a tela de ataque não abria automaticamente. Era necessário encontrar o oponente no ranking e clicar em attack novamente.
+
+**Causa**: O botão redirecionava para `/?attack=${opponentAddress}`, mas a página principal não lia esse parâmetro da URL.
+
+**Solução**: Adicionar novo `useEffect` na home page que detecta o parâmetro `attack` e abre automaticamente a modal de ataque.
+
+**IMPLEMENTAÇÃO** (`app/page.tsx:968-995`):
+```typescript
+// Check for attack parameter (from rematch button)
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const attackAddress = urlParams.get('attack');
+
+  if (attackAddress && address && nfts.length > 0) {
+    // ✅ Fetch target player profile
+    ProfileService.getProfile(attackAddress).then((profile) => {
+      if (profile) {
+        devLog('🎯 Opening attack modal for:', profile.username);
+        setTargetPlayer(profile);
+        setShowAttackCardSelection(true);
+        setAttackSelectedCards([]);
+        setCurrentView('game');
+        // Clean up URL
+        window.history.replaceState({}, '', '/');
+      } else {
+        devWarn('⚠️ Could not find profile for attack target:', attackAddress);
+        window.history.replaceState({}, '', '/');
+      }
+    }).catch((err) => {
+      devError('❌ Error loading attack target profile:', err);
+      window.history.replaceState({}, '', '/');
+    });
+  }
+}, [address, nfts.length]);
+```
+
+**Features**:
+- ✅ Lê parâmetro `?attack=` da URL
+- ✅ Busca perfil do oponente no Firebase automaticamente
+- ✅ Abre modal de seleção de cartas de ataque (`setShowAttackCardSelection(true)`)
+- ✅ Define o jogador alvo (`setTargetPlayer`)
+- ✅ Limpa a URL após processar (`window.history.replaceState`)
+- ✅ Tratamento de erros (perfil não encontrado, fetch falhou)
+
+**Fluxo completo**:
+1. Usuário perde uma partida
+2. Clica em "Revanche" no histórico
+3. Redirecionado para `/?attack=0x123...`
+4. Home page detecta parâmetro
+5. Carrega perfil do oponente
+6. Abre modal de ataque automaticamente
+7. URL limpa fica apenas `/`
+
+**Arquivos modificados**:
+- `app/page.tsx` (linhas 968-995)
+
+**Commit**: `833ba84`
+
+**Status**: ✅ Resolvido
+
+---
+
+**Lição Aprendida**:
+- ✅ Use `hashchange` event listener para detectar mudanças de hash na URL
+- ✅ Use URL search params para deep linking (`?param=value`)
+- ✅ Sempre limpar a URL após processar parâmetros temporários
+- ✅ Adicionar tratamento de erros para casos onde dados não são encontrados
+- ⚠️ Dependencies do `useEffect` devem incluir `address` e `nfts.length` para garantir que só execute quando usuário está pronto
+
+---
+
 **🎯 Objetivo deste documento**: Nunca resolver o mesmo problema duas vezes!
