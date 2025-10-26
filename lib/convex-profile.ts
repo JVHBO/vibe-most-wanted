@@ -41,6 +41,20 @@ export interface UserProfile {
   lastUpdated: number;
 }
 
+export interface MatchHistory {
+  id?: string;
+  playerAddress: string;
+  type: "pve" | "pvp" | "attack" | "defense";
+  result: "win" | "loss" | "tie";
+  playerPower: number;
+  opponentPower: number;
+  opponentAddress?: string;
+  opponentUsername?: string;
+  timestamp: number;
+  playerCards: any[];
+  opponentCards: any[];
+}
+
 export class ConvexProfileService {
   /**
    * Get a profile by wallet address
@@ -328,6 +342,73 @@ export class ConvexProfileService {
     } catch (error: any) {
       console.error("❌ incrementStat error:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Record a match result
+   */
+  static async recordMatch(
+    playerAddress: string,
+    type: "pve" | "pvp" | "attack" | "defense",
+    result: "win" | "loss" | "tie",
+    playerPower: number,
+    opponentPower: number,
+    playerCards: any[],
+    opponentCards: any[],
+    opponentAddress?: string,
+    opponentUsername?: string
+  ): Promise<void> {
+    try {
+      const normalizedPlayerAddress = playerAddress.toLowerCase();
+      const normalizedOpponentAddress = opponentAddress?.toLowerCase();
+
+      console.log("🎮 recordMatch called:", {
+        playerAddress: normalizedPlayerAddress,
+        type,
+        result,
+        playerPower,
+        opponentPower,
+      });
+
+      await convex.mutation(api.matches.recordMatch, {
+        playerAddress: normalizedPlayerAddress,
+        type,
+        result,
+        playerPower,
+        opponentPower,
+        playerCards,
+        opponentCards,
+        opponentAddress: normalizedOpponentAddress,
+        opponentUsername,
+      });
+
+      console.log("✅ Match recorded successfully");
+    } catch (error: any) {
+      console.error("❌ recordMatch error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get match history for a player
+   */
+  static async getMatchHistory(
+    address: string,
+    limit: number = 50
+  ): Promise<MatchHistory[]> {
+    try {
+      const normalizedAddress = address.toLowerCase();
+
+      const matches = await convex.query(api.matches.getMatchHistory, {
+        address: normalizedAddress,
+        limit,
+      });
+
+      return matches as MatchHistory[];
+    } catch (error: any) {
+      console.error("❌ getMatchHistory error:", error);
+      return [];
     }
   }
 }

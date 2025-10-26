@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import Link from "next/link";
-import { ProfileService, type UserProfile, type MatchHistory } from "../lib/firebase";
-import { ConvexProfileService } from "../lib/convex-profile"; // ✨ Convex para Profiles
+import { ProfileService } from "../lib/firebase";
+import { ConvexProfileService, type UserProfile, type MatchHistory } from "../lib/convex-profile"; // ✨ Convex para Profiles
 import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
 import { sdk } from "@farcaster/miniapp-sdk";
 import { BadgeList } from "@/components/Badge";
@@ -1362,7 +1362,7 @@ export default function TCGPage() {
 
       // Record PvE match if user has profile
       if (userProfile && address) {
-        ProfileService.recordMatch(
+        ConvexProfileService.recordMatch(
           address,
           'pve',
           matchResult,
@@ -1372,7 +1372,7 @@ export default function TCGPage() {
           pickedDealer
         ).then(() => {
           // Reload match history
-          ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+          ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
         }).catch(err => devError('Error recording match:', err));
       }
 
@@ -1556,7 +1556,7 @@ export default function TCGPage() {
 
               // Record PvP match if user has profile
               if (userProfile && address) {
-                ProfileService.recordMatch(
+                ConvexProfileService.recordMatch(
                   address,
                   'pvp',
                   matchResult,
@@ -1566,7 +1566,7 @@ export default function TCGPage() {
                   opponentCards,
                   opponentAddress
                 ).then(() => {
-                  ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+                  ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
 
                   // 🔔 Send notification to defender (opponent)
                   fetch('/api/notifications/send', {
@@ -1724,7 +1724,7 @@ export default function TCGPage() {
 
         // Load match history
         if (profile) {
-          ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+          ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
         }
       });
     } else {
@@ -1814,7 +1814,7 @@ export default function TCGPage() {
     }
 
     // Fetch match history filtering only defenses
-    ProfileService.getMatchHistory(address, 20).then((history) => {
+    ConvexProfileService.getMatchHistory(address, 20).then((history) => {
       const defenses = history.filter(match => match.type === 'defense');
       setDefensesReceived(defenses);
 
@@ -2756,7 +2756,7 @@ export default function TCGPage() {
                           await ConvexProfileService.incrementStat(targetPlayer.address, 'defenseLosses');
                         }
 
-                        await ProfileService.recordMatch(
+                        await ConvexProfileService.recordMatch(
                           address,
                           'attack',
                           matchResult,
@@ -2768,7 +2768,7 @@ export default function TCGPage() {
                           targetPlayer.username
                         );
 
-                        await ProfileService.recordMatch(
+                        await ConvexProfileService.recordMatch(
                           targetPlayer.address,
                           'defense',
                           matchResult === 'win' ? 'loss' : matchResult === 'loss' ? 'win' : 'tie',

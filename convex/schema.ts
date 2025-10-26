@@ -62,28 +62,30 @@ export default defineSchema({
     .index("by_username", ["username"])
     .index("by_total_power", ["stats.totalPower"]), // For leaderboard
 
-  // Player Matches (PvP history)
+  // Player Matches (Match History)
   matches: defineTable({
     // Match Info
-    matchId: v.string(), // Original Firebase matchId
     timestamp: v.number(),
-    type: v.union(v.literal("attack"), v.literal("defense"), v.literal("pvp")),
-    result: v.union(v.literal("win"), v.literal("loss"), v.literal("draw")),
+    type: v.union(
+      v.literal("pve"),
+      v.literal("pvp"),
+      v.literal("attack"),
+      v.literal("defense")
+    ),
+    result: v.union(v.literal("win"), v.literal("loss"), v.literal("tie")),
 
     // Player Info
     playerAddress: v.string(),
-    playerPower: v.optional(v.number()),
-    playerCards: v.optional(v.array(v.any())), // Full card objects or simplified
+    playerPower: v.number(),
+    playerCards: v.array(v.any()), // Full card objects
 
-    // Opponent Info
-    opponentAddress: v.string(),
+    // Opponent Info (optional for PvE)
+    opponentAddress: v.optional(v.string()),
     opponentUsername: v.optional(v.string()),
-    opponentPower: v.optional(v.number()),
-    opponentCards: v.optional(v.array(v.any())),
+    opponentPower: v.number(),
+    opponentCards: v.array(v.any()),
   })
-    .index("by_player", ["playerAddress", "timestamp"])
-    .index("by_opponent", ["opponentAddress", "timestamp"])
-    .index("by_player_type", ["playerAddress", "type", "timestamp"]),
+    .index("by_player", ["playerAddress", "timestamp"]),
 
   // PvP Rooms (for realtime matchmaking)
   rooms: defineTable({
