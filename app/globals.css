@@ -12,6 +12,44 @@ html, body {
   max-width: 100%;
 }
 
+/* Hide/customize scrollbars globally for cleaner UI */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.3) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.5);
+}
+
+/* Fix RainbowKit/Wallet modals scrollbar issues */
+[data-rk] *,
+[role="dialog"] *,
+[class*="modal"] * {
+  scrollbar-width: thin !important;
+}
+
+[data-rk] *::-webkit-scrollbar,
+[role="dialog"] *::-webkit-scrollbar,
+[class*="modal"] *::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
 @layer utilities {
   .animate-fade-in {
     animation: fadeIn 0.2s ease-in-out;
