@@ -1740,7 +1740,7 @@ export default function TCGPage() {
 
   // Calculate attacks remaining based on UTC date
   useEffect(() => {
-    if (!userProfile) {
+    if (!userProfile || !address) {
       setAttacksRemaining(0);
       return;
     }
@@ -1754,10 +1754,23 @@ export default function TCGPage() {
       // Same day, use existing count
       setAttacksRemaining(Math.max(0, maxAttacks - attacksToday));
     } else {
-      // New day, reset to max attacks
+      // ✅ FIX: New day detected - reset in Firebase AND local state
+      devLog('🆕 New day detected! Resetting attacks in Firebase...');
+      ProfileService.updateProfile(address, {
+        attacksToday: 0,
+        lastAttackDate: todayUTC,
+      }).then(() => {
+        devLog('✅ Attacks reset in Firebase');
+        // Reload profile to get fresh data
+        ProfileService.getProfile(address).then((updated) => {
+          if (updated) setUserProfile(updated);
+        });
+      }).catch(err => devError('❌ Error resetting attacks:', err));
+
+      // Set local state immediately
       setAttacksRemaining(maxAttacks);
     }
-  }, [userProfile, maxAttacks]);
+  }, [userProfile, maxAttacks, address]);
 
   // Load defenses received (attacks from other players)
   useEffect(() => {
