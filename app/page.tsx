@@ -2579,22 +2579,25 @@ export default function TCGPage() {
                   // Prevent multiple clicks
                   setIsAttacking(true);
 
-                  // Fetch defender's actual NFTs using the same logic as profile (includes fresh metadata)
+                  // Fetch ONLY the defender's defense deck cards (fast!)
                   let defenderNFTs: any[] = [];
                   try {
                     const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
 
-                    // Use the same function that works correctly in profile
+                    // ✅ OPTIMIZED: Only fetch enough pages to find the 5 defense deck cards
+                    const defenseDeckIds = (targetPlayer.defenseDeck || []).map(String);
+
                     defenderNFTs = await fetchAndProcessNFTs(targetPlayer.address, {
-                      maxPages: 20,
-                      refreshMetadata: true, // Get fresh data from tokenUri!
+                      maxPages: 5,  // ✅ Much faster: only 5 pages max instead of 20
+                      refreshMetadata: false, // ✅ Skip metadata refresh for speed
+                      targetTokenIds: defenseDeckIds, // ✅ Stop early when found all cards
                     });
 
                     // Debug: Show what was found
                     devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     devLog(`⚔️  ATTACKING: ${targetPlayer.username}`);
                     devLog(`📦 Total NFTs fetched: ${defenderNFTs.length}`);
-                    devLog(`🛡️  Defense Deck IDs:`, targetPlayer.defenseDeck);
+                    devLog(`🛡️  Defense Deck IDs:`, defenseDeckIds);
 
                   } catch (error) {
                     devError('Error fetching defender NFTs:', error);
