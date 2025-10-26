@@ -285,3 +285,174 @@ export const incrementStat = mutation({
     });
   },
 });
+
+// ============================================================================
+// SECURE MUTATIONS (With Web3 Authentication)
+// ============================================================================
+
+import {
+  authenticateAction,
+  verifyNonce,
+  incrementNonce,
+} from "./auth";
+
+/**
+ * SECURE: Update stats with Web3 signature verification
+ *
+ * Required message format:
+ * "Update stats: {address} nonce:{N} at {timestamp}"
+ */
+export const updateStatsSecure = mutation({
+  args: {
+    address: v.string(),
+    signature: v.string(),
+    message: v.string(),
+    stats: v.object({
+      totalPower: v.number(),
+      totalCards: v.number(),
+      openedCards: v.number(),
+      unopenedCards: v.number(),
+      pveWins: v.number(),
+      pveLosses: v.number(),
+      pvpWins: v.number(),
+      pvpLosses: v.number(),
+      attackWins: v.number(),
+      attackLosses: v.number(),
+      defenseWins: v.number(),
+      defenseLosses: v.number(),
+    }),
+  },
+  handler: async (ctx, { address, signature, message, stats }) => {
+    // 1. Authenticate the action
+    const auth = authenticateAction(address, signature, message);
+    if (!auth.success) {
+      throw new Error(`Unauthorized: ${auth.error}`);
+    }
+
+    // 2. Verify nonce (prevent replay attacks)
+    const nonceValid = await verifyNonce(ctx, address, message);
+    if (!nonceValid) {
+      throw new Error("Invalid nonce - possible replay attack");
+    }
+
+    // 3. Perform the action (same as original mutation)
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      throw new Error(`Profile not found: ${address}`);
+    }
+
+    await ctx.db.patch(profile._id, {
+      stats,
+      lastUpdated: Date.now(),
+    });
+
+    // 4. Increment nonce for next action
+    await incrementNonce(ctx, address);
+
+    console.log("✅ SECURE: Stats updated for", address);
+  },
+});
+
+/**
+ * SECURE: Update defense deck with Web3 signature verification
+ */
+export const updateDefenseDeckSecure = mutation({
+  args: {
+    address: v.string(),
+    signature: v.string(),
+    message: v.string(),
+    defenseDeck: v.array(v.string()),
+  },
+  handler: async (ctx, { address, signature, message, defenseDeck }) => {
+    // 1. Authenticate
+    const auth = authenticateAction(address, signature, message);
+    if (!auth.success) {
+      throw new Error(`Unauthorized: ${auth.error}`);
+    }
+
+    // 2. Verify nonce
+    const nonceValid = await verifyNonce(ctx, address, message);
+    if (!nonceValid) {
+      throw new Error("Invalid nonce - possible replay attack");
+    }
+
+    // 3. Perform action
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      throw new Error(`Profile not found: ${address}`);
+    }
+
+    await ctx.db.patch(profile._id, {
+      defenseDeck,
+      lastUpdated: Date.now(),
+    });
+
+    // 4. Increment nonce
+    await incrementNonce(ctx, address);
+
+    console.log("✅ SECURE: Defense deck updated for", address);
+  },
+});
+
+/**
+ * SECURE: Increment a stat with Web3 signature verification
+ */
+export const incrementStatSecure = mutation({
+  args: {
+    address: v.string(),
+    signature: v.string(),
+    message: v.string(),
+    stat: v.union(
+      v.literal("pvpWins"),
+      v.literal("pvpLosses"),
+      v.literal("attackWins"),
+      v.literal("attackLosses"),
+      v.literal("defenseWins"),
+      v.literal("defenseLosses")
+    ),
+  },
+  handler: async (ctx, { address, signature, message, stat }) => {
+    // 1. Authenticate
+    const auth = authenticateAction(address, signature, message);
+    if (!auth.success) {
+      throw new Error(`Unauthorized: ${auth.error}`);
+    }
+
+    // 2. Verify nonce
+    const nonceValid = await verifyNonce(ctx, address, message);
+    if (!nonceValid) {
+      throw new Error("Invalid nonce - possible replay attack");
+    }
+
+    // 3. Perform action
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      throw new Error(`Profile not found: ${address}`);
+    }
+
+    const newStats = { ...profile.stats };
+    newStats[stat] = (newStats[stat] || 0) + 1;
+
+    await ctx.db.patch(profile._id, {
+      stats: newStats,
+      lastUpdated: Date.now(),
+    });
+
+    // 4. Increment nonce
+    await incrementNonce(ctx, address);
+
+    console.log(`✅ SECURE: ${stat} incremented for`, address);
+  },
+});
