@@ -965,6 +965,35 @@ export default function TCGPage() {
     return () => window.removeEventListener('message', handleMessage);
   }, [userProfile, address]);
 
+  // Check for attack parameter (from rematch button)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const attackAddress = urlParams.get('attack');
+
+    if (attackAddress && address && nfts.length > 0) {
+      // Fetch target player profile
+      ProfileService.getProfile(attackAddress).then((profile) => {
+        if (profile) {
+          devLog('🎯 Opening attack modal for:', profile.username);
+          setTargetPlayer(profile);
+          setShowAttackCardSelection(true);
+          setAttackSelectedCards([]);
+          setCurrentView('game');
+          // Clean up URL
+          window.history.replaceState({}, '', '/');
+        } else {
+          devWarn('⚠️ Could not find profile for attack target:', attackAddress);
+          // Clean up URL even if profile not found
+          window.history.replaceState({}, '', '/');
+        }
+      }).catch((err) => {
+        devError('❌ Error loading attack target profile:', err);
+        // Clean up URL on error
+        window.history.replaceState({}, '', '/');
+      });
+    }
+  }, [address, nfts.length]);
+
   const toggleMusic = useCallback(async () => {
     await AudioManager.init();
     if (soundEnabled) {

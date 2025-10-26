@@ -418,15 +418,27 @@ export default function ProfilePage() {
 
   // Scroll to match history if hash is present (from notifications)
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '#match-history') {
-      // Wait for content to load
-      setTimeout(() => {
-        const element = document.getElementById('match-history');
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 500);
-    }
+    const handleHashScroll = () => {
+      if (typeof window !== 'undefined' && window.location.hash === '#match-history') {
+        // Wait for content to load
+        setTimeout(() => {
+          const element = document.getElementById('match-history');
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 500);
+      }
+    };
+
+    // Run on mount
+    handleHashScroll();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashScroll);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashScroll);
+    };
   }, []);
 
   if (loading) {
