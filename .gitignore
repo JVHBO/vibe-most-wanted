@@ -58,3 +58,13 @@ wallet-setup.bak/
 .cache-synpress/
 metamask-v13/
 *.bak
+
+# Old files archive (histórico de desenvolvimento)
+old/
+
+# Test artifacts
+test-results/
+playwright-report/
+twitter-user-data/
+playwright-user-data/
+gemini-screenshots/

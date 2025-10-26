@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Cinzel_Decorative, Playfair_Display_SC, Rajdhani } f
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Web3Provider } from "@/contexts/Web3Provider";
+import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -97,11 +98,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased overflow-x-hidden`}
       >
-        <Web3Provider>
-          <LanguageProvider>
-            {children}
-          </LanguageProvider>
-        </Web3Provider>
+        <ConvexClientProvider>
+          <Web3Provider>
+            <LanguageProvider>
+              {children}
+            </LanguageProvider>
+          </Web3Provider>
+        </ConvexClientProvider>
       </body>
     </html>
   );
