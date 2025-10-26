@@ -112,18 +112,16 @@ async function importData() {
     )) {
       for (const [matchId, match] of Object.entries(matches)) {
         try {
-          await client.mutation(api.matches.createMatch, {
-            matchId: match.id || matchId,
-            type: match.type || "pvp",
-            result: match.result || "draw",
+          await client.mutation(api.matches.recordMatch, {
             playerAddress: match.playerAddress || playerAddress,
-            playerPower: match.playerPower,
-            playerCards: match.playerCards,
+            type: match.type || "pvp",
+            result: match.result === "draw" ? "tie" : (match.result || "tie"),
+            playerPower: match.playerPower || 0,
+            opponentPower: match.opponentPower || 0,
+            playerCards: match.playerCards || [],
+            opponentCards: match.opponentCards || [],
             opponentAddress: match.opponentAddress,
             opponentUsername: match.opponentUsername,
-            opponentPower: match.opponentPower,
-            opponentCards: match.opponentCards,
-            timestamp: match.timestamp || Date.now(),
           });
 
           matchCount++;
