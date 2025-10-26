@@ -197,29 +197,6 @@ function calcPower(nft: any): number {
   return Math.max(1, Math.round(power));
 }
 
-async function fetchNFTs(owner: string): Promise<any[]> {
-  if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
-  if (!CHAIN) throw new Error("Chain não configurada");
-  if (!CONTRACT_ADDRESS) throw new Error("Contract address não configurado");
-
-  let allNfts: any[] = [];
-  let pageKey: string | undefined = undefined;
-  let pageCount = 0;
-  const maxPages = 20;
-
-  do {
-    pageCount++;
-    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${CONTRACT_ADDRESS}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`API falhou: ${res.status}`);
-    const json = await res.json();
-    allNfts = allNfts.concat(json.ownedNfts || []);
-    pageKey = json.pageKey;
-  } while (pageKey && pageCount < maxPages);
-
-  return allNfts;
-}
-
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -246,6 +223,11 @@ export default function ProfilePage() {
   const NFT_PER_PAGE = 12;
   const [rematchesRemaining, setRematchesRemaining] = useState<number>(5);
   const MAX_REMATCHES = 5;
+
+  // Attack Modal States
+  const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
+  const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
+  const [targetOpponent, setTargetOpponent] = useState<UserProfile | null>(null);
 
   // Filtros
   const [filterRarity, setFilterRarity] = useState<string>('all');
@@ -307,71 +289,17 @@ export default function ProfilePage() {
         const history = await ProfileService.getMatchHistory(address, 50);
         setMatchHistory(history);
 
-        // Carrega NFTs do jogador
+        // Carrega NFTs do jogador usando o fetcher unificado (OTIMIZADO)
         setLoadingNFTs(true);
         try {
           devLog('🔍 Fetching NFTs for address:', address);
-          devLog('📊 Config:', {
-            ALCHEMY_API_KEY: ALCHEMY_API_KEY ? '✅ Set' : '❌ Missing',
-            CHAIN,
-            CONTRACT_ADDRESS: CONTRACT_ADDRESS ? '✅ Set' : '❌ Missing'
+
+          // ✅ Use the unified, optimized fetcher
+          const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
+          const enriched = await fetchAndProcessNFTs(address, {
+            maxPages: 10, // ✅ Reduced from 20 to 10 for faster loading
+            refreshMetadata: true, // Keep metadata fresh for profiles
           });
-          const playerNFTs = await fetchNFTs(address);
-          devLog('✅ NFTs loaded:', playerNFTs.length);
-
-          // Step 1: Refresh metadata from tokenUri (get fresh attributes, not cached!)
-          const METADATA_BATCH_SIZE = 50;
-          const metadataEnriched = [];
-
-          devLog('🔄 Refreshing metadata from tokenUri...');
-          for (let i = 0; i < playerNFTs.length; i += METADATA_BATCH_SIZE) {
-            const batch = playerNFTs.slice(i, i + METADATA_BATCH_SIZE);
-            const batchResults = await Promise.all(
-              batch.map(async (nft) => {
-                const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
-                if (!tokenUri) return nft;
-                try {
-                  const controller = new AbortController();
-                  const timeoutId = setTimeout(() => controller.abort(), 2000);
-                  const res = await fetch(tokenUri, { signal: controller.signal });
-                  clearTimeout(timeoutId);
-                  if (res.ok) {
-                    const json = await res.json();
-                    // Merge fresh metadata
-                    return { ...nft, raw: { ...nft.raw, metadata: json } };
-                  }
-                } catch {}
-                return nft;
-              })
-            );
-            metadataEnriched.push(...batchResults);
-          }
-
-          devLog('✅ Metadata refreshed:', metadataEnriched.length);
-
-          // Step 2: Enrich with image URLs and extract attributes
-          const IMAGE_BATCH_SIZE = 50;
-          const enriched = [];
-
-          devLog('🔄 Enriching with images...');
-          for (let i = 0; i < metadataEnriched.length; i += IMAGE_BATCH_SIZE) {
-            const batch = metadataEnriched.slice(i, i + IMAGE_BATCH_SIZE);
-            const batchEnriched = await Promise.all(
-              batch.map(async (nft) => {
-                const imageUrl = await getImage(nft);
-                return {
-                  ...nft,
-                  imageUrl,
-                  rarity: findAttr(nft, 'rarity'),
-                  status: findAttr(nft, 'status'),
-                  wear: findAttr(nft, 'wear'),
-                  foil: findAttr(nft, 'foil'),
-                  power: calcPower(nft),
-                };
-              })
-            );
-            enriched.push(...batchEnriched);
-          }
 
           devLog('✅ NFTs fully enriched:', enriched.length);
           setNfts(enriched);
@@ -1080,6 +1008,13 @@ export default function ProfilePage() {
                               return;
                             }
 
+                            // Load opponent profile
+                            const opponentProfile = await ProfileService.getProfile(match.opponentAddress);
+                            if (!opponentProfile) {
+                              alert('Oponente não encontrado');
+                              return;
+                            }
+
                             // Update rematch count in Firebase
                             try {
                               const now = new Date();
@@ -1096,8 +1031,10 @@ export default function ProfilePage() {
                               devError('Failed to update rematch count:', err);
                             }
 
-                            // Redirect to home with target opponent
-                            router.push(`/?attack=${match.opponentAddress}`);
+                            // ✅ Open attack modal directly in profile (no redirect!)
+                            setTargetOpponent(opponentProfile);
+                            setAttackSelectedCards([]);
+                            setShowAttackCardSelection(true);
                           }}
                           disabled={rematchesRemaining <= 0}
                           className={`px-4 py-2 rounded-lg font-modern font-semibold text-sm transition-all flex items-center gap-2 ${
@@ -1119,6 +1056,111 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Attack Card Selection Modal (Simplified for Profile) */}
+      {showAttackCardSelection && targetOpponent && nfts.length > 0 && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-4 shadow-lg shadow-red-600/50 my-4 max-h-[95vh] overflow-y-auto">
+            <h2 className="text-3xl font-display font-bold text-center mb-2 text-red-500">
+              ⚔️ ATTACK {targetOpponent.username.toUpperCase()}
+            </h2>
+            <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
+              Choose 5 cards to attack with ({attackSelectedCards.length}/5 selected)
+            </p>
+
+            {/* Selected Cards Display */}
+            <div className="mb-3 p-2 bg-vintage-black/50 rounded-xl border border-red-600/50">
+              <div className="grid grid-cols-5 gap-1.5">
+                {attackSelectedCards.map((card, i) => (
+                  <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-600 shadow-lg">
+                    <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-0 left-0 bg-red-600 text-white text-xs px-1 rounded-br font-bold">{card.power}</div>
+                  </div>
+                ))}
+                {Array(5 - attackSelectedCards.length).fill(0).map((_, i) => (
+                  <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-red-600/40 flex items-center justify-center text-red-600/50 bg-vintage-felt-green/30">
+                    <span className="text-xl font-bold">+</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 text-center">
+                <p className="text-xs text-vintage-burnt-gold">Your Attack Power</p>
+                <p className="text-xl font-bold text-red-500">
+                  {attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0)}
+                </p>
+              </div>
+            </div>
+
+            {/* Available Cards Grid */}
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5 mb-4 max-h-[45vh] overflow-y-auto p-1">
+              {nfts
+                .filter(nft => nft.rarity && nft.rarity.toLowerCase() !== 'unopened')
+                .map((nft) => {
+                const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
+                return (
+                  <div
+                    key={nft.tokenId}
+                    onClick={() => {
+                      if (isSelected) {
+                        setAttackSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
+                      } else if (attackSelectedCards.length < 5) {
+                        setAttackSelectedCards(prev => [...prev, nft]);
+                      }
+                    }}
+                    className={`relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer transition-all ${
+                      isSelected
+                        ? 'ring-4 ring-red-600 scale-95'
+                        : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50'
+                    }`}
+                  >
+                    <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
+                      {nft.power}
+                    </div>
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-red-600/20 flex items-center justify-center">
+                        <div className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                          ✓
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  if (attackSelectedCards.length !== 5) return;
+                  // Redirect to home with attack parameter
+                  router.push(`/?attack=${targetOpponent.address}`);
+                }}
+                disabled={attackSelectedCards.length !== 5}
+                className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
+                  attackSelectedCards.length === 5
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/50 hover:scale-105'
+                    : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                }`}
+              >
+                ⚔️ Continue to Battle ({attackSelectedCards.length}/5)
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowAttackCardSelection(false);
+                  setAttackSelectedCards([]);
+                  setTargetOpponent(null);
+                }}
+                className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
