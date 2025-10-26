@@ -1523,6 +1523,21 @@ export default function TCGPage() {
                   opponentAddress
                 ).then(() => {
                   ProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+
+                  // 🔔 Send notification to defender (opponent)
+                  fetch('/api/notifications/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      type: 'defense_attacked',
+                      data: {
+                        defenderAddress: opponentAddress,
+                        defenderUsername: opponentName || 'Unknown',
+                        attackerUsername: userProfile.username || 'Unknown',
+                        result: matchResult === 'win' ? 'lose' : 'win', // Inverted: attacker wins = defender loses
+                      },
+                    }),
+                  }).catch(err => devError('Error sending notification:', err));
                 }).catch(err => devError('Error recording PvP match:', err));
               }
 
