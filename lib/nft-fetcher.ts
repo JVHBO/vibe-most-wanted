@@ -171,7 +171,12 @@ function calcPower(nft: any): number {
 /**
  * Fetch raw NFTs from Alchemy (without filtering)
  */
-async function fetchRawNFTs(owner: string, contractAddress?: string, maxPages: number = 20): Promise<any[]> {
+async function fetchRawNFTs(
+  owner: string,
+  contractAddress?: string,
+  maxPages: number = 20,
+  targetTokenIds?: string[]
+): Promise<any[]> {
   if (!ALCHEMY_API_KEY) throw new Error("API Key not configured");
   if (!CHAIN) throw new Error("Chain not configured");
   const contract = contractAddress || CONTRACT_ADDRESS;
@@ -181,13 +186,30 @@ async function fetchRawNFTs(owner: string, contractAddress?: string, maxPages: n
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
 
+  // If targetTokenIds provided, track which ones we've found
+  const targetsToFind = targetTokenIds ? new Set(targetTokenIds.map(String)) : null;
+
   do {
     pageCount++;
     const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`API failed: ${res.status}`);
     const json = await res.json();
-    allNfts = allNfts.concat(json.ownedNfts || []);
+    const pageNfts = json.ownedNfts || [];
+    allNfts = allNfts.concat(pageNfts);
+
+    // ✅ Early stopping: if we found all target token IDs, stop fetching
+    if (targetsToFind) {
+      for (const nft of pageNfts) {
+        targetsToFind.delete(String(nft.tokenId));
+      }
+      // Stop if we found all targets
+      if (targetsToFind.size === 0) {
+        console.log(`✅ Found all ${targetTokenIds?.length} target cards, stopping early`);
+        break;
+      }
+    }
+
     pageKey = json.pageKey;
   } while (pageKey && pageCount < maxPages);
 
@@ -266,6 +288,7 @@ export async function fetchAndProcessNFTs(
     metadataBatchSize?: number;
     imageBatchSize?: number;
     refreshMetadata?: boolean;
+    targetTokenIds?: string[]; // ✅ NEW: For early stopping when specific cards are found
   } = {}
 ): Promise<any[]> {
   const {
@@ -274,10 +297,11 @@ export async function fetchAndProcessNFTs(
     metadataBatchSize = 50,
     imageBatchSize = 50,
     refreshMetadata: shouldRefreshMetadata = true,
+    targetTokenIds,
   } = options;
 
   // Step 1: Fetch raw NFTs (no filtering)
-  const rawNFTs = await fetchRawNFTs(owner, contractAddress, maxPages);
+  const rawNFTs = await fetchRawNFTs(owner, contractAddress, maxPages, targetTokenIds);
 
   // Step 2: Refresh metadata (optional but recommended for accurate data)
   let processedNFTs = rawNFTs;
