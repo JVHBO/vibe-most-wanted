@@ -36,18 +36,38 @@ html, body {
   background: rgba(255, 215, 0, 0.5);
 }
 
+/* MOBILE/FARCASTER MINIAPP: Hide scrollbars completely */
+@media (max-width: 768px) {
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+}
+
 /* Fix RainbowKit/Wallet modals scrollbar issues */
 [data-rk] *,
 [role="dialog"] *,
-[class*="modal"] * {
-  scrollbar-width: thin !important;
+[class*="modal"] *,
+[class*="Modal"] *,
+[class*="wallet"] * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 [data-rk] *::-webkit-scrollbar,
 [role="dialog"] *::-webkit-scrollbar,
-[class*="modal"] *::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
+[class*="modal"] *::-webkit-scrollbar,
+[class*="Modal"] *::-webkit-scrollbar,
+[class*="wallet"] *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 @layer utilities {
