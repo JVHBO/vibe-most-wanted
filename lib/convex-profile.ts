@@ -32,8 +32,10 @@ export interface UserProfile {
   attacksToday: number;
   rematchesToday: number;
   lastAttackDate?: string;
+  lastRematchDate?: string;
   twitter?: string;
   twitterHandle?: string;
+  fid?: string;
   userIndex?: number;
   createdAt: number;
   lastUpdated: number;
@@ -292,6 +294,15 @@ export class ConvexProfileService {
           username: profile.username,
           twitter: updates.twitter,
           twitterHandle: updates.twitterHandle,
+        });
+      }
+
+      // Handle FID (Farcaster ID) update
+      if (updates.fid) {
+        await convex.mutation(api.profiles.upsertProfile, {
+          address: normalizedAddress,
+          username: profile.username,
+          fid: updates.fid,
         });
       }
     } catch (error: any) {
