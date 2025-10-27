@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as cryptoActions from "../cryptoActions.js";
 import type * as importData from "../importData.js";
 import type * as matches from "../matches.js";
 import type * as profiles from "../profiles.js";
@@ -30,6 +31,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  cryptoActions: typeof cryptoActions;
   importData: typeof importData;
   matches: typeof matches;
   profiles: typeof profiles;
