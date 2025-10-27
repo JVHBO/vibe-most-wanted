@@ -3645,8 +3645,19 @@ export default function TCGPage() {
           )}
 
           <button
+            onClick={() => {
+              if (soundEnabled) AudioManager.buttonClick();
+              setShowSettings(true);
+            }}
+            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
+            title={t('settings')}
+          >
+            <span className="text-lg">⚙</span>
+          </button>
+
+          <button
             onClick={() => setShowTutorial(true)}
-            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base animate-tutorial-pulse"
+            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
             title={t('tutorial')}
           >
             <span className="text-lg">?</span>
@@ -3826,15 +3837,6 @@ export default function TCGPage() {
                 }`}
               >
                 <span className="text-base md:text-lg">♠</span> <span className="hidden sm:inline">{t('title')}</span>
-              </button>
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                  setShowSettings(true);
-                }}
-                className="flex-1 px-2 md:px-6 py-2 md:py-3 rounded-lg font-modern font-semibold transition-all bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30 text-xs md:text-base"
-              >
-                <span className="text-base md:text-lg">§</span> <span className="hidden sm:inline">{t('settings')}</span>
               </button>
               <button
                 onClick={() => {
