@@ -700,9 +700,6 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
             <div className={`absolute inset-0 ${foilEffect}`}></div>
           )}
 
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <a href={`https://opensea.io/assets/base/${CONTRACT_ADDRESS}/${tid}`} target="_blank" rel="noopener noreferrer" className="bg-vintage-neon-blue hover:bg-blue-500 text-white text-xs px-2 py-1 rounded-lg shadow-lg font-bold" onClick={(e) => e.stopPropagation()}>OS</a>
-          </div>
           <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
             <div className="flex items-center justify-between">
               <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{nft.power || 0} PWR</span>
