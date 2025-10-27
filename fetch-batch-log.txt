@@ -1,0 +1,34 @@
+🔍 Buscando TODAS as NFTs token por token
+   Contract: 0x1cd2136250422ea29b98a78ec812a921c001fe7a
+   Range: 0 a 10000
+
+📡 Buscando tokens 0 a 49...
+  ✓ 0 tokens existem
+  🔥 0 burned + valid rarity (total: 0)
+
+📡 Buscando tokens 50 a 99...
+  ✓ 0 tokens existem
+  🔥 0 burned + valid rarity (total: 0)
+
+📡 Buscando tokens 100 a 149...
+  ✓ 0 tokens existem
+  🔥 0 burned + valid rarity (total: 0)
+
+📡 Buscando tokens 150 a 199...
+  ✓ 0 tokens existem
+  🔥 0 burned + valid rarity (total: 0)
+
+⚠️ Não encontrou 200 tokens seguidos, parando busca...
+
+✅ Busca completa!
+📊 Total processado: 0 tokens
+🔥 Total BURNED com rarity válida: 0
+
+🎯 Cartas por raridade:
+
+💪 Top 10 mais fortes:
+
+🔥 Poder total das TOP 5: 0
+    
+
+✅ Salvo em: jc-cards-revealed.json

@@ -1,0 +1,370 @@
+🔍 Buscando TODAS as NFTs do contrato com trait "burned"
+   Contract: 0xf14c1dc8ce5fe65413379f76c43fa1460c31e728
+
+📡 Página 1 (startToken: 0)...
+  ✓ 100 NFTs nesta página
+  ✅ 54 reveladas (total acumulado: 54)
+
+📡 Página 2 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000065)...
+  ✓ 100 NFTs nesta página
+  ✅ 19 reveladas (total acumulado: 73)
+
+📡 Página 3 (startToken: 0x00000000000000000000000000000000000000000000000000000000000000c9)...
+  ✓ 100 NFTs nesta página
+  ✅ 29 reveladas (total acumulado: 102)
+
+📡 Página 4 (startToken: 0x000000000000000000000000000000000000000000000000000000000000012d)...
+  ✓ 100 NFTs nesta página
+  ✅ 4 reveladas (total acumulado: 106)
+
+📡 Página 5 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000191)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 106)
+
+📡 Página 6 (startToken: 0x00000000000000000000000000000000000000000000000000000000000001f5)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 106)
+
+📡 Página 7 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000259)...
+  ✓ 100 NFTs nesta página
+  ✅ 10 reveladas (total acumulado: 116)
+
+📡 Página 8 (startToken: 0x00000000000000000000000000000000000000000000000000000000000002bd)...
+  ✓ 100 NFTs nesta página
+  ✅ 10 reveladas (total acumulado: 126)
+
+📡 Página 9 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000321)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 126)
+
+📡 Página 10 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000385)...
+  ✓ 100 NFTs nesta página
+  ✅ 1 reveladas (total acumulado: 127)
+
+📡 Página 11 (startToken: 0x00000000000000000000000000000000000000000000000000000000000003e9)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 127)
+
+📡 Página 12 (startToken: 0x000000000000000000000000000000000000000000000000000000000000044d)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 127)
+
+📡 Página 13 (startToken: 0x00000000000000000000000000000000000000000000000000000000000004b1)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 127)
+
+📡 Página 14 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000515)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 127)
+
+📡 Página 15 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000579)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 127)
+
+📡 Página 16 (startToken: 0x00000000000000000000000000000000000000000000000000000000000005dd)...
+  ✓ 100 NFTs nesta página
+  ✅ 6 reveladas (total acumulado: 133)
+
+📡 Página 17 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000641)...
+  ✓ 100 NFTs nesta página
+  ✅ 39 reveladas (total acumulado: 172)
+
+📡 Página 18 (startToken: 0x00000000000000000000000000000000000000000000000000000000000006a5)...
+  ✓ 100 NFTs nesta página
+  ✅ 4 reveladas (total acumulado: 176)
+
+📡 Página 19 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000709)...
+  ✓ 100 NFTs nesta página
+  ✅ 7 reveladas (total acumulado: 183)
+
+📡 Página 20 (startToken: 0x000000000000000000000000000000000000000000000000000000000000076d)...
+  ✓ 100 NFTs nesta página
+  ✅ 50 reveladas (total acumulado: 233)
+
+📡 Página 21 (startToken: 0x00000000000000000000000000000000000000000000000000000000000007d1)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 233)
+
+📡 Página 22 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000835)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 233)
+
+📡 Página 23 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000899)...
+  ✓ 100 NFTs nesta página
+  ✅ 5 reveladas (total acumulado: 238)
+
+📡 Página 24 (startToken: 0x00000000000000000000000000000000000000000000000000000000000008fd)...
+  ✓ 100 NFTs nesta página
+  ✅ 23 reveladas (total acumulado: 261)
+
+📡 Página 25 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000961)...
+  ✓ 100 NFTs nesta página
+  ✅ 2 reveladas (total acumulado: 263)
+
+📡 Página 26 (startToken: 0x00000000000000000000000000000000000000000000000000000000000009c5)...
+  ✓ 100 NFTs nesta página
+  ✅ 6 reveladas (total acumulado: 269)
+
+📡 Página 27 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000a29)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 269)
+
+📡 Página 28 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000a8d)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 269)
+
+📡 Página 29 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000af1)...
+  ✓ 100 NFTs nesta página
+  ✅ 8 reveladas (total acumulado: 277)
+
+📡 Página 30 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000b55)...
+  ✓ 100 NFTs nesta página
+  ✅ 29 reveladas (total acumulado: 306)
+
+📡 Página 31 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000bb9)...
+  ✓ 100 NFTs nesta página
+  ✅ 1 reveladas (total acumulado: 307)
+
+📡 Página 32 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000c1d)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 307)
+
+📡 Página 33 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000c81)...
+  ✓ 100 NFTs nesta página
+  ✅ 11 reveladas (total acumulado: 318)
+
+📡 Página 34 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000ce5)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 318)
+
+📡 Página 35 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000d49)...
+  ✓ 100 NFTs nesta página
+  ✅ 2 reveladas (total acumulado: 320)
+
+📡 Página 36 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000dad)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 320)
+
+📡 Página 37 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000e11)...
+  ✓ 100 NFTs nesta página
+  ✅ 4 reveladas (total acumulado: 324)
+
+📡 Página 38 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000e75)...
+  ✓ 100 NFTs nesta página
+  ✅ 12 reveladas (total acumulado: 336)
+
+📡 Página 39 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000ed9)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 336)
+
+📡 Página 40 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000f3d)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 336)
+
+📡 Página 41 (startToken: 0x0000000000000000000000000000000000000000000000000000000000000fa1)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 336)
+
+📡 Página 42 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001005)...
+  ✓ 100 NFTs nesta página
+  ✅ 29 reveladas (total acumulado: 365)
+
+📡 Página 43 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001069)...
+  ✓ 100 NFTs nesta página
+  ✅ 3 reveladas (total acumulado: 368)
+
+📡 Página 44 (startToken: 0x00000000000000000000000000000000000000000000000000000000000010cd)...
+  ✓ 100 NFTs nesta página
+  ✅ 8 reveladas (total acumulado: 376)
+
+📡 Página 45 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001131)...
+  ✓ 100 NFTs nesta página
+  ✅ 5 reveladas (total acumulado: 381)
+
+📡 Página 46 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001195)...
+  ✓ 100 NFTs nesta página
+  ✅ 47 reveladas (total acumulado: 428)
+
+📡 Página 47 (startToken: 0x00000000000000000000000000000000000000000000000000000000000011f9)...
+  ✓ 100 NFTs nesta página
+  ✅ 36 reveladas (total acumulado: 464)
+
+📡 Página 48 (startToken: 0x000000000000000000000000000000000000000000000000000000000000125d)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 49 (startToken: 0x00000000000000000000000000000000000000000000000000000000000012c1)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 50 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001325)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 51 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001389)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 52 (startToken: 0x00000000000000000000000000000000000000000000000000000000000013ed)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 53 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001451)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 54 (startToken: 0x00000000000000000000000000000000000000000000000000000000000014b5)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 55 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001519)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 56 (startToken: 0x000000000000000000000000000000000000000000000000000000000000157d)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 464)
+
+📡 Página 57 (startToken: 0x00000000000000000000000000000000000000000000000000000000000015e1)...
+  ✓ 100 NFTs nesta página
+  ✅ 17 reveladas (total acumulado: 481)
+
+📡 Página 58 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001645)...
+  ✓ 100 NFTs nesta página
+  ✅ 27 reveladas (total acumulado: 508)
+
+📡 Página 59 (startToken: 0x00000000000000000000000000000000000000000000000000000000000016a9)...
+  ✓ 100 NFTs nesta página
+  ✅ 60 reveladas (total acumulado: 568)
+
+📡 Página 60 (startToken: 0x000000000000000000000000000000000000000000000000000000000000170d)...
+  ✓ 100 NFTs nesta página
+  ✅ 26 reveladas (total acumulado: 594)
+
+📡 Página 61 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001771)...
+  ✓ 100 NFTs nesta página
+  ✅ 12 reveladas (total acumulado: 606)
+
+📡 Página 62 (startToken: 0x00000000000000000000000000000000000000000000000000000000000017d5)...
+  ✓ 100 NFTs nesta página
+  ✅ 2 reveladas (total acumulado: 608)
+
+📡 Página 63 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001839)...
+  ✓ 100 NFTs nesta página
+  ✅ 2 reveladas (total acumulado: 610)
+
+📡 Página 64 (startToken: 0x000000000000000000000000000000000000000000000000000000000000189d)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 610)
+
+📡 Página 65 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001901)...
+  ✓ 100 NFTs nesta página
+  ✅ 1 reveladas (total acumulado: 611)
+
+📡 Página 66 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001965)...
+  ✓ 100 NFTs nesta página
+  ✅ 2 reveladas (total acumulado: 613)
+
+📡 Página 67 (startToken: 0x00000000000000000000000000000000000000000000000000000000000019c9)...
+  ✓ 100 NFTs nesta página
+  ✅ 2 reveladas (total acumulado: 615)
+
+📡 Página 68 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001a2d)...
+  ✓ 100 NFTs nesta página
+  ✅ 1 reveladas (total acumulado: 616)
+
+📡 Página 69 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001a91)...
+  ✓ 100 NFTs nesta página
+  ✅ 13 reveladas (total acumulado: 629)
+
+📡 Página 70 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001af5)...
+  ✓ 100 NFTs nesta página
+  ✅ 1 reveladas (total acumulado: 630)
+
+📡 Página 71 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001b59)...
+  ✓ 100 NFTs nesta página
+  ✅ 60 reveladas (total acumulado: 690)
+
+📡 Página 72 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001bbd)...
+  ✓ 100 NFTs nesta página
+  ✅ 42 reveladas (total acumulado: 732)
+
+📡 Página 73 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001c21)...
+  ✓ 100 NFTs nesta página
+  ✅ 73 reveladas (total acumulado: 805)
+
+📡 Página 74 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001c85)...
+  ✓ 100 NFTs nesta página
+  ✅ 95 reveladas (total acumulado: 900)
+
+📡 Página 75 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001ce9)...
+  ✓ 100 NFTs nesta página
+  ✅ 81 reveladas (total acumulado: 981)
+
+📡 Página 76 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001d4d)...
+  ✓ 100 NFTs nesta página
+  ✅ 92 reveladas (total acumulado: 1073)
+
+📡 Página 77 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001db1)...
+  ✓ 100 NFTs nesta página
+  ✅ 51 reveladas (total acumulado: 1124)
+
+📡 Página 78 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001e15)...
+  ✓ 100 NFTs nesta página
+  ✅ 50 reveladas (total acumulado: 1174)
+
+📡 Página 79 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001e79)...
+  ✓ 100 NFTs nesta página
+  ✅ 79 reveladas (total acumulado: 1253)
+
+📡 Página 80 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001edd)...
+  ✓ 100 NFTs nesta página
+  ✅ 64 reveladas (total acumulado: 1317)
+
+📡 Página 81 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001f41)...
+  ✓ 100 NFTs nesta página
+  ✅ 36 reveladas (total acumulado: 1353)
+
+📡 Página 82 (startToken: 0x0000000000000000000000000000000000000000000000000000000000001fa5)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 1353)
+
+📡 Página 83 (startToken: 0x0000000000000000000000000000000000000000000000000000000000002009)...
+  ✓ 100 NFTs nesta página
+  ✅ 15 reveladas (total acumulado: 1368)
+
+📡 Página 84 (startToken: 0x000000000000000000000000000000000000000000000000000000000000206d)...
+  ✓ 100 NFTs nesta página
+  ✅ 0 reveladas (total acumulado: 1368)
+
+📡 Página 85 (startToken: 0x00000000000000000000000000000000000000000000000000000000000020d1)...
+  ✓ 93 NFTs nesta página
+  ✅ 5 reveladas (total acumulado: 1373)
+
+✅ Todas as páginas foram processadas!
+
+📊 Total de NFTs REVELADAS: 1373
+
+🎯 Cartas por raridade:
+  Common: 566 cartas
+  Unknown: 497 cartas
+  Rare: 216 cartas
+  Epic: 87 cartas
+  Legendary: 7 cartas
+
+💪 Top 10 mais fortes:
+  1. Token #1 - Common - Power: 0
+  2. Token #2 - Common - Power: 0
+  3. Token #3 - Rare - Power: 0
+  4. Token #9 - Epic - Power: 0
+  5. Token #10 - Rare - Power: 0
+  6. Token #12 - Rare - Power: 0
+  7. Token #13 - Epic - Power: 0
+  8. Token #19 - Common - Power: 0
+  9. Token #20 - Common - Power: 0
+  10. Token #21 - Common - Power: 0
+
+🔥 Poder total das TOP 5: 0
+    #1 (0), #2 (0), #3 (0), #9 (0), #10 (0)
+
+✅ Salvo em: jc-cards-revealed.json

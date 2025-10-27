@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TwitterApi } from 'twitter-api-v2';
-import { ProfileService } from '@/lib/firebase';
+import { ConvexProfileService } from '@/lib/convex-profile';
 
 const CALLBACK_URL = process.env.NEXT_PUBLIC_APP_URL
   ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/twitter/callback`
@@ -91,10 +91,10 @@ export async function GET(request: NextRequest) {
     const { data: userObject } = await loggedClient.v2.me();
     console.log('✅ Got user:', userObject.username);
 
-    // Save Twitter handle to Firebase
-    console.log('💾 Saving to Firebase...');
-    await ProfileService.updateTwitter(address, userObject.username);
-    console.log('✅ Saved to Firebase');
+    // Save Twitter handle to Convex
+    console.log('💾 Saving to Convex...');
+    await ConvexProfileService.updateTwitter(address, userObject.username);
+    console.log('✅ Saved to Convex');
 
     // Redirect back to app with success
     return NextResponse.redirect(new URL(`/?twitter_connected=${userObject.username}`, request.url));
