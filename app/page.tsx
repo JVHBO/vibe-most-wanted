@@ -1382,15 +1382,15 @@ export default function TCGPage() {
     if (soundEnabled) AudioManager.playHand();
 
     const playerTotal = selectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
-    // Use remaining cards from player's deck (not selected)
-    const available = nfts.filter(n => !selectedCards.find(s => s.tokenId === n.tokenId));
+    // Use JC's deck for dealer cards
+    const available = jcNfts;
 
     devLog('🎮 BATTLE DEBUG:');
-    devLog('  available cards:', available.length);
+    devLog('  JC available cards:', available.length);
     devLog('  Top 5 strongest:', available.sort((a, b) => (b.power || 0) - (a.power || 0)).slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
 
     if (available.length < HAND_SIZE_CONST) {
-      alert(t('noNfts'));
+      alert('JC deck not loaded yet. Please wait...');
       setIsBattling(false);
       setShowBattleScreen(false);
       return;
