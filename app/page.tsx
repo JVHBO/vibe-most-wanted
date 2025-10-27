@@ -1587,7 +1587,8 @@ export default function TCGPage() {
           setCurrentRoom(room);
 
           // Se ambos os jogadores estiverem prontos, inicia a batalha
-          if (hostReady && guestReady && (room.status === 'ready' || room.status === 'playing') && !battleStarted) {
+          // Só inicia quando status é 'playing' (após ambos submeterem cartas)
+          if (hostReady && guestReady && room.status === 'playing' && !battleStarted) {
             battleStarted = true; // Marca que a batalha já iniciou
             devLog('✅ Ambos jogadores prontos! Iniciando batalha...');
 
