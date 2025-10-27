@@ -3624,7 +3624,7 @@ export default function TCGPage() {
               rel="noopener noreferrer"
               className="px-4 md:px-6 py-2 md:py-2.5 border-2 border-purple-500 text-purple-300 hover:text-purple-100 bg-purple-900/30 hover:bg-purple-800/40 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-xs md:text-sm"
             >
-              <span className="text-base md:text-lg">🎮</span> TESTE NOSSO MINIAPP FARCASTER
+              <span className="text-base md:text-lg">🎮</span> {t('tryMiniapp')}
             </a>
           )}
         </div>
