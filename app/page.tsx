@@ -3628,7 +3628,7 @@ export default function TCGPage() {
 
                 // Redirect to profile with scroll to match history
                 const username = userProfile.username;
-                router.push(`/profile/${username}#match-history`);
+                router.push(`/profile/${username}?scrollTo=match-history`);
               }}
               className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base relative ${
                 unreadDefenses > 0 ? 'border-red-500 animate-notification-pulse' : 'border-vintage-gold'
