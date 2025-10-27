@@ -830,6 +830,7 @@ export default function TCGPage() {
   // State for Farcaster address (when in miniapp)
   const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null);
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
+  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(true);
 
   // Use Farcaster address if available, otherwise Wagmi
   const address = farcasterAddress || wagmiAddress;
@@ -991,6 +992,9 @@ export default function TCGPage() {
         // Reset Farcaster state on error
         setIsInFarcaster(false);
         setFarcasterAddress(null);
+      } finally {
+        // Always set checking to false after checking
+        setIsCheckingFarcaster(false);
       }
     };
     initFarcasterWallet();
@@ -3662,8 +3666,8 @@ export default function TCGPage() {
 
       {!address ? (
         <div className="flex flex-col items-center justify-center py-20">
-          {/* Show ONLY loading if in Farcaster context - no connect modal */}
-          {isInFarcaster ? (
+          {/* Show loading while checking for Farcaster OR if confirmed in Farcaster */}
+          {isCheckingFarcaster || isInFarcaster ? (
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display animate-pulse">♠</div>
               <div className="w-full px-6 py-4 bg-vintage-gold/20 text-vintage-gold rounded-xl border-2 border-vintage-gold/50 font-display font-semibold">
@@ -3671,7 +3675,7 @@ export default function TCGPage() {
               </div>
             </div>
           ) : (
-            /* Show full connect modal ONLY if NOT in Farcaster */
+            /* Show full connect modal ONLY after confirming NOT in Farcaster */
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
               <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
