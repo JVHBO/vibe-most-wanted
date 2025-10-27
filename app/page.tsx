@@ -4276,7 +4276,7 @@ export default function TCGPage() {
 
 
           {/* Create Profile Modal */}
-          {showCreateProfile && (
+          {showCreateProfile && !isCheckingFarcaster && (
             <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setShowCreateProfile(false)}>
               <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-gold max-w-md w-full p-8" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-3xl font-bold text-center mb-2 text-vintage-gold font-display">
