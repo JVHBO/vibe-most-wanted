@@ -3823,9 +3823,10 @@ export default function TCGPage() {
                   </button>
                   <button
                     onClick={disconnectWallet}
-                    className="px-4 py-2 bg-vintage-charcoal hover:bg-red-500/20 text-red-400 rounded-lg text-sm border border-red-500/50 font-modern font-semibold transition-all"
+                    className="px-3 py-2 bg-vintage-charcoal hover:bg-red-500/20 text-red-400 rounded-lg text-lg border border-red-500/50 font-modern font-semibold transition-all"
+                    title={t('disconnect')}
                   >
-                    {t('disconnect')}
+                    ✖
                   </button>
                 </div>
               </div>
