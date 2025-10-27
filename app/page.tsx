@@ -11,6 +11,8 @@ import { getUserBadges } from "@/lib/badges";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -721,6 +723,100 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         </div>
       </div>
     </>
+  );
+});
+
+// Match History Section Component
+const MatchHistorySection = memo(({ address }: { address: string }) => {
+  const { t } = useLanguage();
+
+  // Query match history from Convex
+  const matchHistory = useQuery(
+    api.matches.getMatchHistory,
+    address ? { address: address.toLowerCase(), limit: 20 } : "skip"
+  );
+
+  if (!matchHistory || matchHistory.length === 0) {
+    return (
+      <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6">
+        <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
+          <span className="text-3xl">📜</span> Match History
+        </h2>
+        <div className="bg-vintage-black/50 border border-vintage-gold/20 rounded-xl p-8 text-center">
+          <p className="text-vintage-burnt-gold">No matches played yet</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6">
+      <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
+        <span className="text-3xl">📜</span> Match History
+      </h2>
+      <div className="space-y-3">
+        {matchHistory.map((match, index) => {
+          const isWin = match.result === 'win';
+          const isTie = match.result === 'tie';
+          const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
+          const resultColor = isWin ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-red-400';
+          const resultText = isWin ? '♔ VICTORY' : isTie ? '♦ TIE' : '♠ DEFEAT';
+
+          return (
+            <div
+              key={match._id || index}
+              className={`bg-vintage-charcoal border-2 ${borderColor} rounded-xl p-4 hover:scale-[1.01] transition-transform`}
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {/* Match Type & Result */}
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl text-vintage-gold">
+                    {match.type === 'pvp' ? '♥' : match.type === 'attack' ? '⚔️' : match.type === 'defense' ? '🛡️' : '♣'}
+                  </div>
+                  <div>
+                    <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
+                    <p className="text-xs text-vintage-burnt-gold font-modern">
+                      {match.type === 'pvp' ? 'PLAYER VS PLAYER' :
+                       match.type === 'attack' ? 'ATTACK' :
+                       match.type === 'defense' ? 'DEFENSE' :
+                       'PLAYER VS ENVIRONMENT'}
+                    </p>
+                    <p className="text-xs text-vintage-burnt-gold/70">
+                      {new Date(match.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Power Stats */}
+                <div className="flex items-center gap-4">
+                  <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-gold/50">
+                    <p className="text-xs text-vintage-burnt-gold font-modern">YOUR POWER</p>
+                    <p className="text-xl font-bold text-vintage-gold">{match.playerPower}</p>
+                  </div>
+                  <div className="text-2xl text-vintage-burnt-gold font-bold">VS</div>
+                  <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-silver/50">
+                    <p className="text-xs text-vintage-burnt-gold font-modern">OPPONENT</p>
+                    <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
+                  </div>
+                </div>
+
+                {/* Opponent Info (if PvP/Attack/Defense) */}
+                {match.opponentUsername && (
+                  <div className="text-xs font-modern">
+                    <p className="text-vintage-gold">vs @{match.opponentUsername}</p>
+                    {match.opponentAddress && (
+                      <p className="text-vintage-burnt-gold font-mono">
+                        {match.opponentAddress.slice(0, 6)}...{match.opponentAddress.slice(-4)}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 });
 
@@ -4151,6 +4247,13 @@ export default function TCGPage() {
                         </button>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Match History Section */}
+                {userProfile && (
+                  <div className="mt-8">
+                    <MatchHistorySection address={userProfile.address} />
                   </div>
                 )}
               </div>

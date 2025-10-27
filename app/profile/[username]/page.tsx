@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ProfileService, UserProfile, MatchHistory } from '@/lib/firebase';
-import { ConvexProfileService } from '@/lib/convex-profile';
+import { ProfileService } from '@/lib/firebase';
+import { ConvexProfileService, type UserProfile, type MatchHistory } from '@/lib/convex-profile';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import sdk from '@farcaster/miniapp-sdk';
 import { BadgeList } from '@/components/Badge';
 import { getUserBadges } from '@/lib/badges';
@@ -214,7 +216,6 @@ export default function ProfilePage() {
   const currentUserAddress = farcasterAddress || wagmiAddress;
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [nfts, setNfts] = useState<any[]>([]);
@@ -224,6 +225,12 @@ export default function ProfilePage() {
   const NFT_PER_PAGE = 12;
   const [rematchesRemaining, setRematchesRemaining] = useState<number>(5);
   const MAX_REMATCHES = 5;
+
+  // Query match history from Convex
+  const matchHistory = useQuery(
+    api.matches.getMatchHistory,
+    profile?.address ? { address: profile.address, limit: 20 } : "skip"
+  ) || [];
 
   // Attack Modal States
   const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
@@ -285,10 +292,6 @@ export default function ProfilePage() {
         }
 
         setProfile(profileData);
-
-        // Carrega histórico de partidas (reduzido para 20 para loading mais rápido)
-        const history = await ProfileService.getMatchHistory(address, 20);
-        setMatchHistory(history);
 
         // Carrega NFTs do jogador usando o fetcher unificado (OTIMIZADO)
         setLoadingNFTs(true);
@@ -950,7 +953,7 @@ export default function ProfilePage() {
 
               return (
                 <div
-                  key={match.id}
+                  key={match._id}
                   className={`bg-vintage-charcoal border-2 ${borderColor} rounded-xl p-4 hover:scale-[1.02] transition-transform`}
                 >
                   <div className="flex flex-col gap-4">
