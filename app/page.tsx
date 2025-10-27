@@ -3814,14 +3814,6 @@ export default function TCGPage() {
                   )}
 
                   <button
-                    onClick={loadNFTs}
-                    disabled={status === 'fetching'}
-                    className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
-                    title="Refresh cards and metadata"
-                  >
-                    🔄 Refresh
-                  </button>
-                  <button
                     onClick={disconnectWallet}
                     className="px-3 py-2 bg-vintage-charcoal hover:bg-red-500/20 text-red-400 rounded-lg text-lg border border-red-500/50 font-modern font-semibold transition-all"
                     title={t('disconnect')}
@@ -3895,16 +3887,26 @@ export default function TCGPage() {
                   </h2>
 
                   {nfts.length > 0 && (
-                    <button
-                      onClick={() => setSortByPower(!sortByPower)}
-                      className={`px-4 py-2 rounded-lg text-sm font-modern font-medium transition-all ${
-                        sortByPower
-                          ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                          : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                      }`}
-                    >
-                      {sortByPower ? '↓ ' + t('sortByPower') : '⇄ ' + t('sortDefault')}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={loadNFTs}
+                        disabled={status === 'fetching'}
+                        className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
+                        title="Refresh cards and metadata"
+                      >
+                        ↻
+                      </button>
+                      <button
+                        onClick={() => setSortByPower(!sortByPower)}
+                        className={`px-4 py-2 rounded-lg text-sm font-modern font-medium transition-all ${
+                          sortByPower
+                            ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        {sortByPower ? '↓ ' + t('sortByPower') : '⇄ ' + t('sortDefault')}
+                      </button>
+                    </div>
                   )}
                 </div>
 
