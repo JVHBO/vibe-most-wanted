@@ -2559,7 +2559,7 @@ export default function TCGPage() {
             {/* Difficulty Selector */}
             <div className="mb-4 bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
               <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ JC DIFFICULTY ⚔️</p>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-3 gap-2">
                 {(['easy', 'medium', 'hard'] as const).map((diff) => (
                   <button
                     key={diff}
@@ -2586,27 +2586,11 @@ export default function TCGPage() {
                     </span>
                   </button>
                 ))}
-                {/* Coming Soon difficulties */}
-                {(['extreme', 'impossible'] as const).map((diff) => (
-                  <button
-                    key={diff}
-                    disabled
-                    className="px-1 py-2 rounded text-xs font-bold transition-all bg-vintage-black/30 text-vintage-burnt-gold/40 border border-vintage-gold/10 cursor-not-allowed relative"
-                  >
-                    <span className="opacity-30">
-                      {diff === 'extreme' ? '🔥' : '👑'}
-                    </span>
-                    <br/>
-                    <span className="text-[8px] opacity-50">
-                      {diff === 'extreme' ? 'SOON' : 'SOON'}
-                    </span>
-                  </button>
-                ))}
               </div>
               <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                 {aiDifficulty === 'easy' && '🟢 5 random cards'}
-                {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (~300 power)'}
-                {aiDifficulty === 'hard' && '🔥 JC\'s absolute best cards (1,473 power)'}
+                {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (1,050 power)'}
+                {aiDifficulty === 'hard' && '🔥 JC\'s absolute best cards (1,050 power)'}
               </p>
             </div>
 
@@ -2983,7 +2967,7 @@ export default function TCGPage() {
               <div className="bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
                 <p className="text-center text-vintage-gold text-sm font-modern mb-3">JC DIFFICULTY</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['easy', 'medium'] as const).map((diff) => (
+                  {(['easy', 'medium', 'hard'] as const).map((diff) => (
                     <button
                       key={diff}
                       onClick={() => {
@@ -3012,7 +2996,8 @@ export default function TCGPage() {
                 </div>
                 <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
                   {aiDifficulty === 'easy' && '🟢 5 random cards'}
-                  {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (~300 power)'}
+                  {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (1,050 power)'}
+                  {aiDifficulty === 'hard' && '🔥 JC\'s absolute best cards (1,050 power)'}
                 </p>
               </div>
 
@@ -3677,18 +3662,21 @@ export default function TCGPage() {
 
       {!address ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
-            <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
-            <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
-            <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
-
-            {/* Show loading if in Farcaster context but address not loaded yet */}
-            {isInFarcaster ? (
+          {/* Show ONLY loading if in Farcaster context - no connect modal */}
+          {isInFarcaster ? (
+            <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
+              <div className="text-6xl mb-4 text-vintage-gold font-display animate-pulse">♠</div>
               <div className="w-full px-6 py-4 bg-vintage-gold/20 text-vintage-gold rounded-xl border-2 border-vintage-gold/50 font-display font-semibold">
                 {t('loading')}...
               </div>
-            ) : (
-              /* Show RainbowKit only if NOT in Farcaster */
+            </div>
+          ) : (
+            /* Show full connect modal ONLY if NOT in Farcaster */
+            <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
+              <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
+              <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
+              <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
+
               <div className="flex justify-center">
                 <ConnectButton.Custom>
                   {({
@@ -3728,8 +3716,8 @@ export default function TCGPage() {
                   }}
                 </ConnectButton.Custom>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       ) : (
         <>
