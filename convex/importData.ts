@@ -307,7 +307,9 @@ export const importProfiles = internalMutation({
   handler: async (ctx) => {
     let count = 0;
 
-    for (const [address, profile] of Object.entries(BACKUP_PROFILES)) {
+    for (const [address, profileRaw] of Object.entries(BACKUP_PROFILES)) {
+      const profile = profileRaw as BackupProfile;
+
       // Criar objeto apenas com campos que existem
       const profileData: any = {
         address: profile.address,

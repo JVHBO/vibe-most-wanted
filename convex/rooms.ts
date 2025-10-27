@@ -42,6 +42,51 @@ export const getWaitingRooms = query({
   },
 });
 
+/**
+ * Get matchmaking status for a player
+ */
+export const getMatchmakingStatus = query({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    const entry = await ctx.db
+      .query("matchmaking")
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
+      .first();
+
+    return entry;
+  },
+});
+
+/**
+ * Get room where player is host or guest
+ */
+export const getRoomByPlayer = query({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    // Try finding as host
+    const asHost = await ctx.db
+      .query("rooms")
+      .filter((q) => q.eq(q.field("hostAddress"), normalizedAddress))
+      .filter((q) => q.neq(q.field("status"), "finished"))
+      .first();
+
+    if (asHost) return asHost;
+
+    // Try finding as guest
+    const asGuest = await ctx.db
+      .query("rooms")
+      .filter((q) => q.eq(q.field("guestAddress"), normalizedAddress))
+      .filter((q) => q.neq(q.field("status"), "finished"))
+      .first();
+
+    return asGuest;
+  },
+});
+
 // ============================================================================
 // MUTATIONS (write data)
 // ============================================================================
