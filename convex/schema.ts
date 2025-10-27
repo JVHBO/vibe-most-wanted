@@ -136,7 +136,7 @@ export default defineSchema({
   notificationTokens: defineTable({
     fid: v.string(), // Farcaster ID or user identifier
     token: v.string(), // Push notification token
-    url: v.optional(v.string()),
+    url: v.string(), // Farcaster notification URL (required)
     createdAt: v.number(),
     lastUpdated: v.number(),
   })
