@@ -1593,7 +1593,7 @@ export default function TCGPage() {
             devLog('✅ Ambos jogadores prontos! Iniciando batalha...');
 
             // Determina quem é o jogador local e quem é o oponente
-            const isHost = room.hostAddress === address;
+            const isHost = room.hostAddress === address?.toLowerCase();
             const playerCards = isHost ? (room.hostCards || []) : (room.guestCards || []);
             const opponentCards = isHost ? (room.guestCards || []) : (room.hostCards || []);
             const playerPower = isHost ? (room.hostPower || 0) : (room.guestPower || 0);
@@ -1715,7 +1715,7 @@ export default function TCGPage() {
                 // Fecha a sala PVP e volta ao menu após ver o resultado
                 setTimeout(async () => {
                   // Deleta a sala do Convex se for o host
-                  if (currentRoom && roomCode && address && address === currentRoom.hostAddress) {
+                  if (currentRoom && roomCode && address && address.toLowerCase() === currentRoom.hostAddress) {
                     try {
                       await ConvexPvPService.leaveRoom(roomCode, address);
                       devLog('✅ Room deleted after battle ended');
@@ -3298,7 +3298,7 @@ export default function TCGPage() {
 
                 {/* Grid de Seleção de Cartas */}
                 {currentRoom.guestAddress && (() => {
-                  const isHost = currentRoom.hostAddress === address;
+                  const isHost = currentRoom.hostAddress === address?.toLowerCase();
                   const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
 
                   // Só mostra grid se o jogador atual NÃO estiver pronto ainda
@@ -3363,7 +3363,7 @@ export default function TCGPage() {
 
                 {/* Botão de Confirmar Cartas */}
                 {currentRoom.guestAddress && (() => {
-                  const isHost = currentRoom.hostAddress === address;
+                  const isHost = currentRoom.hostAddress === address?.toLowerCase();
                   const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
 
                   // Só mostra botão se o jogador atual NÃO estiver pronto ainda
@@ -3391,7 +3391,7 @@ export default function TCGPage() {
 
                 {/* Mensagem de aguardo */}
                 {currentRoom.guestAddress && (() => {
-                  const isHost = currentRoom.hostAddress === address;
+                  const isHost = currentRoom.hostAddress === address?.toLowerCase();
                   const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
                   const opponentReady = isHost ? (currentRoom.guestCards && currentRoom.guestCards.length > 0) : (currentRoom.hostCards && currentRoom.hostCards.length > 0);
 
