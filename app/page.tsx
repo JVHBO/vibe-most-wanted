@@ -1615,7 +1615,7 @@ export default function TCGPage() {
                 // Fecha a sala PVP e volta ao menu após ver o resultado
                 setTimeout(async () => {
                   // Deleta a sala do Firebase se for o host
-                  if (currentRoom && roomCode && address && address === currentRoom.host.address) {
+                  if (currentRoom && roomCode && address && address === currentRoom.hostAddress) {
                     try {
                       await ConvexPvPService.leaveRoom(roomCode, address);
                       devLog('✅ Room deleted after battle ended');
@@ -3186,20 +3186,20 @@ export default function TCGPage() {
                 {/* Host */}
                 <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-neon-blue/50">
                   <p className="text-vintage-neon-blue font-bold mb-2 font-modern">Host</p>
-                  <p className="text-white text-sm font-mono">{currentRoom.host.username || `${currentRoom.host.address.slice(0, 10)}...`}</p>
+                  <p className="text-white text-sm font-mono">{currentRoom.hostUsername || `${currentRoom.hostAddress.slice(0, 10)}...`}</p>
                   <p className="text-vintage-burnt-gold text-sm">
-                    {currentRoom.host.ready ? '✓ Ready' : '⏳ Selecting cards...'}
+                    {(currentRoom.hostCards && currentRoom.hostCards.length > 0) ? '✓ Ready' : '⏳ Selecting cards...'}
                   </p>
                 </div>
 
                 {/* Guest */}
                 <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-gold/50">
                   <p className="text-vintage-gold font-bold mb-2 font-modern">{t('opponent')}</p>
-                  {currentRoom.guest ? (
+                  {currentRoom.guestAddress ? (
                     <>
-                      <p className="text-white text-sm font-mono">{currentRoom.guest.username || `${currentRoom.guest.address.slice(0, 10)}...`}</p>
+                      <p className="text-white text-sm font-mono">{currentRoom.guestUsername || `${currentRoom.guestAddress.slice(0, 10)}...`}</p>
                       <p className="text-vintage-burnt-gold text-sm">
-                        {currentRoom.guest.ready ? '✓ Ready' : '⏳ Selecting cards...'}
+                        {(currentRoom.guestCards && currentRoom.guestCards.length > 0) ? '✓ Ready' : '⏳ Selecting cards...'}
                       </p>
                     </>
                   ) : (
@@ -3208,9 +3208,9 @@ export default function TCGPage() {
                 </div>
 
                 {/* Grid de Seleção de Cartas */}
-                {currentRoom.guest && (() => {
-                  const isHost = currentRoom.host.address === address;
-                  const playerReady = isHost ? currentRoom.host.ready : currentRoom.guest.ready;
+                {currentRoom.guestAddress && (() => {
+                  const isHost = currentRoom.hostAddress === address;
+                  const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
 
                   // Só mostra grid se o jogador atual NÃO estiver pronto ainda
                   if (playerReady) return null;
@@ -3273,9 +3273,9 @@ export default function TCGPage() {
                 })()}
 
                 {/* Botão de Confirmar Cartas */}
-                {currentRoom.guest && (() => {
-                  const isHost = currentRoom.host.address === address;
-                  const playerReady = isHost ? currentRoom.host.ready : currentRoom.guest.ready;
+                {currentRoom.guestAddress && (() => {
+                  const isHost = currentRoom.hostAddress === address;
+                  const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
 
                   // Só mostra botão se o jogador atual NÃO estiver pronto ainda
                   if (playerReady) return null;
@@ -3301,10 +3301,10 @@ export default function TCGPage() {
                 })()}
 
                 {/* Mensagem de aguardo */}
-                {currentRoom.guest && (() => {
-                  const isHost = currentRoom.host.address === address;
-                  const playerReady = isHost ? currentRoom.host.ready : currentRoom.guest.ready;
-                  const opponentReady = isHost ? currentRoom.guest.ready : currentRoom.host.ready;
+                {currentRoom.guestAddress && (() => {
+                  const isHost = currentRoom.hostAddress === address;
+                  const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
+                  const opponentReady = isHost ? (currentRoom.guestCards && currentRoom.guestCards.length > 0) : (currentRoom.hostCards && currentRoom.hostCards.length > 0);
 
                   // Mostra loading se pelo menos um jogador confirmou
                   if (!playerReady && !opponentReady) return null;
