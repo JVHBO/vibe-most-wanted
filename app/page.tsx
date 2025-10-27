@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback, useMemo, memo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ProfileService } from "../lib/firebase";
 import { ConvexProfileService, type UserProfile, type MatchHistory } from "../lib/convex-profile"; // ✨ Convex para Profiles
 import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
 import { sdk } from "@farcaster/miniapp-sdk";
@@ -2215,7 +2214,7 @@ export default function TCGPage() {
 
                             setIsChangingUsername(true);
                             try {
-                              await ProfileService.updateUsername(address!, newUsername);
+                              await ConvexProfileService.updateUsername(address!, newUsername);
 
                               // Recarrega o perfil
                               const updatedProfile = await ConvexProfileService.getProfile(address!);

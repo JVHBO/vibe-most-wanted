@@ -411,4 +411,69 @@ export class ConvexProfileService {
       return [];
     }
   }
+
+  /**
+   * Update username
+   */
+  static async updateUsername(
+    address: string,
+    newUsername: string
+  ): Promise<void> {
+    try {
+      const normalizedAddress = address.toLowerCase();
+      const normalizedUsername = newUsername.toLowerCase().trim();
+
+      if (!normalizedUsername || normalizedUsername.length === 0) {
+        throw new Error("Username não pode ser vazio");
+      }
+
+      if (normalizedUsername.length < 3) {
+        throw new Error("Username deve ter no mínimo 3 caracteres");
+      }
+
+      if (normalizedUsername.length > 20) {
+        throw new Error("Username deve ter no máximo 20 caracteres");
+      }
+
+      // Valida formato (apenas letras, números e underscore)
+      if (!/^[a-z0-9_]+$/.test(normalizedUsername)) {
+        throw new Error("Username pode conter apenas letras, números e underscore");
+      }
+
+      // Get current profile
+      const currentProfile = await this.getProfile(normalizedAddress);
+      if (!currentProfile) {
+        throw new Error("Perfil não encontrado");
+      }
+
+      const oldUsername = currentProfile.username.toLowerCase();
+
+      // Se for o mesmo username, não faz nada
+      if (oldUsername === normalizedUsername) {
+        return;
+      }
+
+      // Verifica se o novo username já está em uso
+      const usernameExists = await this.usernameExists(normalizedUsername);
+      if (usernameExists) {
+        throw new Error("Este username já está em uso");
+      }
+
+      // Update profile with new username
+      await convex.mutation(api.profiles.upsertProfile, {
+        address: normalizedAddress,
+        username: newUsername.trim(),
+        stats: currentProfile.stats,
+        defenseDeck: currentProfile.defenseDeck,
+        twitter: currentProfile.twitter,
+        twitterHandle: currentProfile.twitterHandle,
+        fid: currentProfile.fid,
+      });
+
+      console.log("✅ Username updated successfully:", oldUsername, "->", normalizedUsername);
+    } catch (error: any) {
+      console.error("❌ updateUsername error:", error);
+      throw new Error(`Erro ao atualizar username: ${error.message}`);
+    }
+  }
 }
