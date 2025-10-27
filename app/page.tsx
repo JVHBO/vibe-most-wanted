@@ -3652,7 +3652,7 @@ export default function TCGPage() {
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
             title={t('settings')}
           >
-            <span className="text-lg">⚙</span>
+            <span className="text-lg">§</span>
           </button>
 
           <button

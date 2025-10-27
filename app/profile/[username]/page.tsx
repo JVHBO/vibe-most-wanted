@@ -276,9 +276,9 @@ export default function ProfilePage() {
         if (matchHistoryElement) {
           matchHistoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 500);
+      }, 800);
     }
-  }, [matchHistory]);
+  }, [matchHistory, params.username]);
 
   useEffect(() => {
     async function loadProfile() {
