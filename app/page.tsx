@@ -1087,7 +1087,7 @@ export default function TCGPage() {
       if (event.data.type === 'twitter_connected') {
         devLog('✅ Twitter connected via popup:', event.data.username);
         if (address) {
-          // Reload profile from Firebase to get the updated Twitter handle
+          // Reload profile from Convex to get the updated Twitter handle
           ConvexProfileService.getProfile(address).then((profile) => {
             if (profile) {
               setUserProfile(profile);
@@ -1564,10 +1564,10 @@ export default function TCGPage() {
     return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
   }, [nfts, pveSortByPower]);
 
-  // Firebase Room Listener - Escuta mudanças na sala em tempo real
+  // Convex Room Listener - Escuta mudanças na sala em tempo real
   useEffect(() => {
     if (pvpMode === 'inRoom' && roomCode) {
-      devLog('🎧 Firebase listener started for room:', roomCode);
+      devLog('🎧 Convex listener started for room:', roomCode);
       let battleStarted = false; // Flag para evitar executar batalha múltiplas vezes
       let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
 
@@ -1713,7 +1713,7 @@ export default function TCGPage() {
 
                 // Fecha a sala PVP e volta ao menu após ver o resultado
                 setTimeout(async () => {
-                  // Deleta a sala do Firebase se for o host
+                  // Deleta a sala do Convex se for o host
                   if (currentRoom && roomCode && address && address === currentRoom.hostAddress) {
                     try {
                       await ConvexPvPService.leaveRoom(roomCode, address);
@@ -1770,30 +1770,10 @@ export default function TCGPage() {
         }
       });
 
-      // Heartbeat - atualiza timestamp a cada 10 segundos para manter entrada ativa
-      const heartbeatInterval = setInterval(async () => {
-        try {
-          const { ref: dbRef, update } = await import('firebase/database');
-          const { getDatabase } = await import('firebase/database');
-          const db = getDatabase();
-          // Usa update() em vez de set() para NÃO sobrescrever roomCode se existir
-          await update(dbRef(db, `matchmaking/${address}`), {
-            timestamp: Date.now()
-          });
-          devLog('💓 Matchmaking heartbeat sent');
-        } catch (err) {
-          devError('❌ Heartbeat error:', err);
-        }
-      }, 10000); // A cada 10 segundos
-
+      // ConvexPvPService já cuida do polling internamente, não precisa de heartbeat manual
       return () => {
-        devLog('🛑 Stopping matchmaking listener and heartbeat');
+        devLog('🛑 Stopping matchmaking listener');
         unsubscribe();
-        clearInterval(heartbeatInterval);
-        // Nota: não chamamos cancelMatchmaking aqui porque:
-        // 1. Se entramos em sala, watchMatchmaking já remove (linha 316 do firebase.ts)
-        // 2. Se cancelamos manualmente, o botão Cancel já chama cancelMatchmaking
-        // 3. Entradas antigas são limpadas automaticamente pelo cleanup (30s)
       };
     }
   }, [pvpMode, isSearching, address]);
@@ -4333,12 +4313,6 @@ export default function TCGPage() {
                       if (soundEnabled) AudioManager.buttonClick();
 
                       try {
-                        devLog('🔐 Firebase config check:', {
-                          hasApiKey: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-                          hasDbUrl: !!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-                          address: address
-                        });
-
                         await ConvexProfileService.createProfile(address!, profileUsername.trim());
                         devLog('✅ Profile created successfully!');
 
