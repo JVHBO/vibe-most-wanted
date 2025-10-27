@@ -456,7 +456,6 @@ export const translations = {
     defeatPrize: '¡Este es tu premio! 😅',
     buyCardsExternal: '🛒 Comprar Cartas en Vibe Market',
     tryMiniapp: 'PRUEBA NUESTRA MINIAPP FARCASTER',
-    understood: 'Entendido',
     pvp: 'PvP',
     playVsAI: 'Jugar vs IA',
     playVsPlayer: 'Jugar vs Jugador',
