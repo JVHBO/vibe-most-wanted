@@ -246,3 +246,13 @@ html, body {
 .animate-marquee {
   animation: marquee 25s linear infinite;
 }
+
+/* Fix RainbowKit modal positioning in iframe/miniapp */
+[data-rk] div[role="dialog"] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-width: 90vw !important;
+  max-height: 85vh !important;
+}
