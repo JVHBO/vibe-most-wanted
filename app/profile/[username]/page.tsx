@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ProfileService } from '@/lib/firebase';
 import { ConvexProfileService, type UserProfile, type MatchHistory } from '@/lib/convex-profile';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -294,8 +293,8 @@ export default function ProfilePage() {
         setLoading(true);
         setError('');
 
-        // Busca o endereço pelo username
-        const address = await ProfileService.getAddressByUsername(username.toLowerCase());
+        // ✅ Busca o endereço pelo username NO CONVEX (não Firebase)
+        const address = await ConvexProfileService.getAddressByUsername(username.toLowerCase());
 
         if (!address) {
           setError(t('profileNotFound'));
