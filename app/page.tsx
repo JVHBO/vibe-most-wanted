@@ -2472,8 +2472,8 @@ export default function TCGPage() {
 
       {/* PvE Card Selection Modal */}
       {showPveCardSelection && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-8 shadow-neon my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto" onClick={() => setShowPveCardSelection(false)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-8 shadow-neon my-8 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-neon-blue">
               SELECT YOUR CARDS
             </h2>
@@ -2652,8 +2652,8 @@ export default function TCGPage() {
 
       {/* Attack Card Selection Modal */}
       {showAttackCardSelection && targetPlayer && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-4 shadow-lg shadow-red-600/50 my-4 max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto" onClick={() => setShowAttackCardSelection(false)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-4 shadow-lg shadow-red-600/50 my-4 max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-red-500">
               ⚔️ ATTACK {targetPlayer.username.toUpperCase()}
             </h2>
@@ -2972,8 +2972,8 @@ export default function TCGPage() {
 
       {/* Modal de Seleção de Modo de Jogo */}
       {pvpMode === 'menu' && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode(null)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-gold">
               {t('selectMode') || 'SELECT MODE'}
             </h2>
@@ -3062,8 +3062,8 @@ export default function TCGPage() {
 
       {/* Modal de Menu PvP */}
       {pvpMode === 'pvpMenu' && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode(null)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-gold">
               {t('pvp')}
             </h2>
@@ -3456,8 +3456,8 @@ export default function TCGPage() {
       )}
 
       {showTutorial && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)]">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowTutorial(false)}>
+          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)]" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
               <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-2xl transition">✕</button>
@@ -4309,8 +4309,8 @@ export default function TCGPage() {
 
           {/* Create Profile Modal */}
           {showCreateProfile && (
-            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
-              <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-gold max-w-md w-full p-8">
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setShowCreateProfile(false)}>
+              <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-gold max-w-md w-full p-8" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-3xl font-bold text-center mb-2 text-vintage-gold font-display">
                   {t('createProfile')}
                 </h2>
