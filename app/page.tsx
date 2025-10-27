@@ -3776,9 +3776,6 @@ export default function TCGPage() {
           <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`}>
             <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-2 md:p-4 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30 shadow-gold`}>
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
-                <div className="flex items-center gap-3">
-                  <p className="text-sm text-gray-300"><span className="text-vintage-neon-blue">●</span> {address.slice(0, 6)}...{address.slice(-4)}</p>
-                </div>
                 <div className="flex items-center gap-2">
                   {/* Profile Button */}
                   {userProfile ? (
