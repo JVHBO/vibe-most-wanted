@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Web3Provider } from "@/contexts/Web3Provider";
 import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
+import { FarcasterNotificationRegistration } from "@/components/FarcasterNotificationRegistration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -101,6 +102,7 @@ export default function RootLayout({
         <ConvexClientProvider>
           <Web3Provider>
             <LanguageProvider>
+              <FarcasterNotificationRegistration />
               {children}
             </LanguageProvider>
           </Web3Provider>
