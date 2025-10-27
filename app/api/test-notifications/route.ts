@@ -40,6 +40,13 @@ export async function POST(request: NextRequest) {
     // Send to each user
     for (const tokenData of tokens) {
       try {
+        // Skip if missing required fields
+        if (!tokenData.url || !tokenData.token) {
+          failed++;
+          results.push({ fid: tokenData.fid, status: 'missing_data' });
+          continue;
+        }
+
         const payload = {
           notificationId: `test_${tokenData.fid}_${Date.now()}`,
           title: title.slice(0, 32),
