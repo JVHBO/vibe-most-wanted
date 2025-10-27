@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { database } from '@/lib/firebase-admin';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
 
 /**
  * Webhook endpoint para receber eventos do Farcaster miniapp
@@ -21,6 +22,9 @@ export async function POST(request: NextRequest) {
 
     const { event, data } = body;
 
+    // Initialize Convex
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
     switch (event) {
       case 'miniapp_added':
       case 'notifications_enabled':
@@ -28,12 +32,11 @@ export async function POST(request: NextRequest) {
         if (data?.fid && data?.notificationDetails) {
           const { token, url } = data.notificationDetails;
 
-          // Salvar no Firebase
-          await database.ref(`notificationTokens/${data.fid}`).set({
+          // Salvar no Convex
+          await convex.mutation(api.notifications.saveToken, {
+            fid: data.fid,
             token,
             url,
-            enabled: true,
-            updatedAt: Date.now(),
           });
 
           console.log(`✅ Notification token saved for FID ${data.fid}`);
@@ -44,7 +47,9 @@ export async function POST(request: NextRequest) {
       case 'notifications_disabled':
         // Remover token de notificação do usuário
         if (data?.fid) {
-          await database.ref(`notificationTokens/${data.fid}`).remove();
+          await convex.mutation(api.notifications.removeToken, {
+            fid: data.fid,
+          });
           console.log(`❌ Notification token removed for FID ${data.fid}`);
         }
         break;
