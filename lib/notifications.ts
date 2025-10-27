@@ -127,7 +127,7 @@ export async function notifyDefenseAttacked(params: {
     const notificationId = `attack_${defenderAddress}_${Date.now()}`;
 
     // URL para abrir o perfil do defensor com histórico de partidas
-    const targetUrl = `https://vibe-most-wanted.vercel.app/profile/${defenderUsername}#match-history`;
+    const targetUrl = `https://www.vibemostwanted.xyz/profile/${defenderUsername}#match-history`;
 
     await sendFarcasterNotification({
       fid,
