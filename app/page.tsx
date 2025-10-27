@@ -2880,6 +2880,21 @@ export default function TCGPage() {
                         if (updatedProfile) {
                           setUserProfile(updatedProfile);
                         }
+
+                        // 🔔 Send notification to defender
+                        fetch('/api/notifications/send', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            type: 'defense_attacked',
+                            data: {
+                              defenderAddress: targetPlayer.address,
+                              defenderUsername: targetPlayer.username || 'Unknown',
+                              attackerUsername: userProfile.username || 'Unknown',
+                              result: matchResult === 'win' ? 'lose' : 'win', // Inverted: attacker wins = defender loses
+                            },
+                          }),
+                        }).catch(err => devError('Error sending notification:', err));
                       } catch (error) {
                         devError('Attack error:', error);
                       }
