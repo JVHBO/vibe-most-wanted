@@ -3606,15 +3606,28 @@ export default function TCGPage() {
           <p className="relative text-xs md:text-sm text-vintage-burnt-gold font-modern tracking-[0.2em] md:tracking-[0.3em] uppercase">{t('cardBattle')}</p>
         </div>
 
-        <a
-          href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-4 md:px-8 py-2 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex items-center gap-2 text-sm md:text-base"
-          style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
-        >
-          <span className="text-base md:text-lg">◆</span> <span className="hidden md:inline">{t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}</span><span className="md:hidden">Buy Cards</span>
-        </a>
+        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto">
+          <a
+            href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 md:px-8 py-2 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex items-center gap-2 text-sm md:text-base"
+            style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
+          >
+            <span className="text-base md:text-lg">◆</span> <span className="hidden md:inline">{t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}</span><span className="md:hidden">Buy Cards</span>
+          </a>
+
+          {!isInFarcaster && (
+            <a
+              href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 md:px-6 py-2 md:py-2.5 border-2 border-purple-500 text-purple-300 hover:text-purple-100 bg-purple-900/30 hover:bg-purple-800/40 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-xs md:text-sm"
+            >
+              <span className="text-base md:text-lg">🎮</span> TESTE NOSSO MINIAPP FARCASTER
+            </a>
+          )}
+        </div>
 
         <div className="flex items-center gap-3">
           {/* Notifications Button - Only show if user is logged in */}
@@ -3760,8 +3773,8 @@ export default function TCGPage() {
             </div>
           </div>
 
-          <div className="mb-3 md:mb-6">
-            <div className="bg-vintage-charcoal/80 backdrop-blur-lg p-2 md:p-4 rounded-xl border-2 border-vintage-gold/30 shadow-gold">
+          <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`}>
+            <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-2 md:p-4 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30 shadow-gold`}>
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
                 <div className="flex items-center gap-3">
                   <p className="text-sm text-gray-300"><span className="text-vintage-neon-blue">●</span> {address.slice(0, 6)}...{address.slice(-4)}</p>
@@ -3823,8 +3836,8 @@ export default function TCGPage() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="mb-3 md:mb-6 relative z-40">
-            <div className="bg-vintage-charcoal backdrop-blur-lg rounded-xl border-2 border-vintage-gold/50 p-1.5 md:p-2 flex gap-1.5 md:gap-2">
+          <div className={`mb-3 md:mb-6 relative z-40 ${isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100] m-0' : ''}`}>
+            <div className={`bg-vintage-charcoal backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/50 p-1.5 md:p-2 flex gap-1.5 md:gap-2`}>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
@@ -3854,6 +3867,8 @@ export default function TCGPage() {
             </div>
           </div>
 
+          {/* Content wrapper with padding for fixed bars in miniapp */}
+          <div className={isInFarcaster ? 'pt-[60px] pb-[70px]' : ''}>
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
               <p className="text-red-400 font-bold">❌ {t('error')}</p>
@@ -4288,7 +4303,8 @@ export default function TCGPage() {
               </div>
             </div>
           )}
-
+          </div>
+          {/* End content wrapper */}
 
 
           {/* Create Profile Modal */}
