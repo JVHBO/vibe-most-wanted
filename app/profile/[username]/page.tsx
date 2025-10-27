@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ProfileService } from '@/lib/firebase';
 import { ConvexProfileService, type UserProfile, type MatchHistory } from '@/lib/convex-profile';
 import { useQuery } from 'convex/react';
@@ -203,6 +203,7 @@ function calcPower(nft: any): number {
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const username = decodeURIComponent(params.username as string);
   const { t } = useLanguage();
 
@@ -267,18 +268,25 @@ export default function ProfilePage() {
     initFarcasterWallet();
   }, []);
 
-  // Scroll to match history if hash is present
+  // Scroll to match history if hash is present or scrollTo param exists
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '#match-history') {
+    const shouldScroll =
+      (typeof window !== 'undefined' && window.location.hash === '#match-history') ||
+      searchParams.get('scrollTo') === 'match-history';
+
+    if (shouldScroll) {
       // Wait for content to load before scrolling
       setTimeout(() => {
         const matchHistoryElement = document.getElementById('match-history');
         if (matchHistoryElement) {
           matchHistoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          devLog('✅ Scrolled to match history');
+        } else {
+          devLog('⚠️ Match history element not found');
         }
-      }, 800);
+      }, 1000);
     }
-  }, [matchHistory, params.username]);
+  }, [matchHistory, searchParams]);
 
   useEffect(() => {
     async function loadProfile() {
