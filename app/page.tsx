@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, memo, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ProfileService } from "../lib/firebase";
 import { ConvexProfileService, type UserProfile, type MatchHistory } from "../lib/convex-profile"; // ✨ Convex para Profiles
 import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
@@ -822,6 +823,8 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
 
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
+  const router = useRouter();
+  const playButtonsRef = useRef<HTMLDivElement>(null);
 
   // Wagmi hooks for wallet connection
   const { address: wagmiAddress, isConnected } = useAccount();
@@ -1829,6 +1832,15 @@ export default function TCGPage() {
     }
   }, [address]);
 
+  // Auto scroll to play buttons when 5 cards are selected
+  useEffect(() => {
+    if (selectedCards.length === 5 && playButtonsRef.current) {
+      setTimeout(() => {
+        playButtonsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [selectedCards.length]);
+
   // Update profile stats when NFTs change
   useEffect(() => {
     if (address && userProfile && nfts.length > 0) {
@@ -2461,7 +2473,7 @@ export default function TCGPage() {
       {/* PvE Card Selection Modal */}
       {showPveCardSelection && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-8 shadow-neon my-8">
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-8 shadow-neon my-8 max-h-[90vh] overflow-y-auto">
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-neon-blue">
               SELECT YOUR CARDS
             </h2>
@@ -3616,7 +3628,7 @@ export default function TCGPage() {
 
                 // Redirect to profile with scroll to match history
                 const username = userProfile.username;
-                window.location.href = `/profile/${username}#match-history`;
+                router.push(`/profile/${username}#match-history`);
               }}
               className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base relative ${
                 unreadDefenses > 0 ? 'border-red-500 animate-notification-pulse' : 'border-vintage-gold'
@@ -3961,7 +3973,7 @@ export default function TCGPage() {
                 </div>
 
                 {/* Illuminated Casino Panel for Defense Deck Button */}
-                <div className="relative p-1 rounded-xl mb-4" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(255, 215, 0, 0.3)'}}>
+                <div ref={playButtonsRef} className="relative p-1 rounded-xl mb-4" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(255, 215, 0, 0.3)'}}>
                   <div className="bg-vintage-black/90 p-4 rounded-lg">
                     <button
                       id="defense-deck-button"

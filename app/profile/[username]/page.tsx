@@ -267,6 +267,19 @@ export default function ProfilePage() {
     initFarcasterWallet();
   }, []);
 
+  // Scroll to match history if hash is present
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#match-history') {
+      // Wait for content to load before scrolling
+      setTimeout(() => {
+        const matchHistoryElement = document.getElementById('match-history');
+        if (matchHistoryElement) {
+          matchHistoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+    }
+  }, [matchHistory]);
+
   useEffect(() => {
     async function loadProfile() {
       try {
