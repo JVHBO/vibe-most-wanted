@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
           title: title.slice(0, 32),
           body: message.slice(0, 128),
           tokens: [tokenData.token],
-          targetUrl: 'https://vibe-most-wanted.vercel.app',
+          targetUrl: 'https://www.vibemostwanted.xyz',
         };
 
         const response = await fetch(tokenData.url, {
