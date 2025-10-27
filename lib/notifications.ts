@@ -4,14 +4,8 @@
  * Envia notificações para usuários do Farcaster miniapp quando eventos importantes acontecem
  */
 
-import { database } from '@/lib/firebase-admin';
-
-interface NotificationToken {
-  token: string;
-  url: string;
-  enabled: boolean;
-  updatedAt: number;
-}
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
 
 interface SendNotificationParams {
   fid: string; // Farcaster ID do usuário
@@ -28,11 +22,13 @@ export async function sendFarcasterNotification(params: SendNotificationParams):
   try {
     const { fid, notificationId, title, body, targetUrl } = params;
 
-    // Buscar token de notificação do usuário
-    const snapshot = await database.ref(`notificationTokens/${fid}`).once('value');
-    const tokenData: NotificationToken | null = snapshot.val();
+    // Initialize Convex
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-    if (!tokenData || !tokenData.enabled) {
+    // Buscar token de notificação do usuário
+    const tokenData = await convex.query(api.notifications.getTokenByFid, { fid });
+
+    if (!tokenData) {
       console.log(`⚠️ No notification token for FID ${fid}`);
       return false;
     }
@@ -75,7 +71,7 @@ export async function sendFarcasterNotification(params: SendNotificationParams):
 
     if (result.invalidTokens?.includes(token)) {
       // Token inválido - remover do banco
-      await database.ref(`notificationTokens/${fid}`).remove();
+      await convex.mutation(api.notifications.removeToken, { fid });
       console.log(`🗑️ Invalid token removed for FID ${fid}`);
       return false;
     }
@@ -106,9 +102,13 @@ export async function notifyDefenseAttacked(params: {
   try {
     const { defenderAddress, defenderUsername, attackerUsername, result } = params;
 
+    // Initialize Convex
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
     // Buscar FID do defensor (assumindo que está salvo no perfil)
-    const profileSnapshot = await database.ref(`profiles/${defenderAddress.toLowerCase()}`).once('value');
-    const profile = profileSnapshot.val();
+    const profile = await convex.query(api.profiles.getProfile, {
+      address: defenderAddress.toLowerCase(),
+    });
 
     if (!profile?.fid) {
       console.log(`⚠️ No FID found for defender ${defenderAddress}`);
