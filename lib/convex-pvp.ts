@@ -248,24 +248,43 @@ export class ConvexPvPService {
     callback: (roomCode: string | null) => void
   ): () => void {
     let isActive = true;
-    let lastStatus: string | null = null;
+    let hasCalledBack = false; // Prevent multiple callbacks
 
     const poll = async () => {
-      if (!isActive) return;
+      if (!isActive || hasCalledBack) return;
 
       try {
-        // Try to find if a match was made by checking for a room with this player
-        const room = await convex.query(api.rooms.getRoom, {
-          code: playerAddress.toLowerCase(), // This won't work, need different approach
+        // Check if player has been matched
+        const matchStatus = await convex.query(api.rooms.getMatchmakingStatus, {
+          playerAddress: playerAddress.toLowerCase(),
         });
 
-        // Note: This is simplified - in production you'd want to use Convex subscriptions
-        // or a more sophisticated polling mechanism
+        if (matchStatus) {
+          if (matchStatus.status === "matched") {
+            // Player was matched! Find the room
+            const room = await convex.query(api.rooms.getRoomByPlayer, {
+              playerAddress: playerAddress.toLowerCase(),
+            });
+
+            if (room && room.roomId) {
+              console.log("✅ Match found! Room:", room.roomId);
+              hasCalledBack = true;
+              callback(room.roomId);
+              return; // Stop polling
+            }
+          } else if (matchStatus.status === "cancelled") {
+            // Matchmaking was cancelled
+            console.log("⚠️ Matchmaking cancelled");
+            hasCalledBack = true;
+            callback(null);
+            return; // Stop polling
+          }
+        }
       } catch (error) {
-        // Ignore errors in polling
+        console.error("❌ Error polling matchmaking status:", error);
       }
 
-      if (isActive) {
+      if (isActive && !hasCalledBack) {
         setTimeout(poll, 2000); // Poll every 2 seconds
       }
     };
