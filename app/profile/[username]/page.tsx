@@ -326,7 +326,7 @@ export default function ProfilePage() {
 
           const enriched = await fetchAndProcessNFTs(address, {
             maxPages: 8, // ✅ Reduced from 10 to 8 for faster loading
-            refreshMetadata: false, // ✅ Disable for faster loading (profiles don't need fresh metadata)
+            refreshMetadata: !!defenseDeckIds, // ✅ CRITICAL: Enable metadata refresh when defense deck exists to get accurate power/rarity
             targetTokenIds: defenseDeckIds, // ✅ Ensure defense deck cards are always loaded
           });
 
