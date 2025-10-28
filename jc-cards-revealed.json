@@ -114,6 +114,708 @@
     ]
   },
   {
+    "tokenId": "6070",
+    "name": "Vibe Most Wanted #6070",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 4141,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Moderately Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.5146961118,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "5225",
+    "name": "Vibe Most Wanted #5225",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 1410,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Mint"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.1469540627,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F52f68b3b-44b9-4f74-861c-79ee10e45300%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "3067",
+    "name": "Vibe Most Wanted #3067",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 1753,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Lightly Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.419629537,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1773ffd4-4400-4cfd-d98a-b5f0c3d4d900%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "8549",
+    "name": "Vibe Most Wanted #8549",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 2223,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Heavily Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.7823563498,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fccd5b0a9-494e-4f37-3c67-0bf22c2f6700%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "4378",
+    "name": "Vibe Most Wanted #4378",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 3236,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Lightly Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.314180487,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "6465",
+    "name": "Vibe Most Wanted #6465",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 2672,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Heavily Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.7720750841,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1773ffd4-4400-4cfd-d98a-b5f0c3d4d900%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "6452",
+    "name": "Vibe Most Wanted #6452",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 1786,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Heavily Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.891906154,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1773ffd4-4400-4cfd-d98a-b5f0c3d4d900%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "4664",
+    "name": "Vibe Most Wanted #4664",
+    "rarity": "Legendary",
+    "power": 375,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 3328,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Pristine"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.0021648106,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "7160",
+    "name": "Vibe Most Wanted #7160",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 4684,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Moderately Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.5252833284,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "6071",
+    "name": "Vibe Most Wanted #6071",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 3258,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Mint"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.0876767398,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "6521",
+    "name": "Vibe Most Wanted #6521",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Burned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 1911,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Burned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Moderately Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.6705130956,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1773ffd4-4400-4cfd-d98a-b5f0c3d4d900%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "7948",
+    "name": "Vibe Most Wanted #7948",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Rarity Assigned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 1951,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Rarity Assigned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Lightly Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.3175567522,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fccd5b0a9-494e-4f37-3c67-0bf22c2f6700%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "7700",
+    "name": "Vibe Most Wanted #7700",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Rarity Assigned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 1402,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Rarity Assigned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Heavily Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.8426479425,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fccd5b0a9-494e-4f37-3c67-0bf22c2f6700%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "7431",
+    "name": "Vibe Most Wanted #7431",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Rarity Assigned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 4288,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Rarity Assigned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Mint"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.1342882238,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "6729",
+    "name": "Vibe Most Wanted #6729",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Rarity Assigned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 577,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Rarity Assigned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Mint"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.0566451921,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F88c2a08b-97be-4a4a-6355-ae37bf54c800%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "3202",
+    "name": "Vibe Most Wanted #3202",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Rarity Assigned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 335,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Rarity Assigned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Heavily Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.8423766425,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F52f68b3b-44b9-4f74-861c-79ee10e45300%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "2927",
+    "name": "Vibe Most Wanted #2927",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Rarity Assigned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 3637,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Rarity Assigned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Moderately Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.4563880072,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
+    "tokenId": "6183",
+    "name": "Vibe Most Wanted #6183",
+    "rarity": "Legendary",
+    "power": 250,
+    "status": "Rarity Assigned",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary",
+        "display_type": "string"
+      },
+      {
+        "trait_type": "Randomness",
+        "value": 1487,
+        "display_type": "number"
+      },
+      {
+        "trait_type": "Status",
+        "value": "Rarity Assigned"
+      },
+      {
+        "trait_type": "Wear",
+        "value": "Moderately Played"
+      },
+      {
+        "trait_type": "Wear Value",
+        "value": 0.7307556443,
+        "display_type": "number",
+        "max_value": 1
+      },
+      {
+        "trait_type": "Foil",
+        "value": "None"
+      }
+    ],
+    "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F52f68b3b-44b9-4f74-861c-79ee10e45300%2Fpublic",
+    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+  },
+  {
     "tokenId": "1616",
     "rarity": "Epic",
     "status": "Burned",
@@ -3496,196 +4198,6 @@
     ]
   },
   {
-    "tokenId": "1608",
-    "rarity": "Rare",
-    "status": "Burned",
-    "power": 15,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6b3dcdb7c390ae4fd684c63a74d5b930",
-    "name": "Vibe Most Wanted #1608",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Rare",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 247719,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Heavily Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.8986022617,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "1614",
-    "rarity": "Rare",
-    "status": "Burned",
-    "power": 15,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0d17eb55fbd47185ccb9bca401387d47",
-    "name": "Vibe Most Wanted #1614",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Rare",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 246755,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Heavily Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.8762562828,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "1622",
-    "rarity": "Rare",
-    "status": "Burned",
-    "power": 15,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/03b161375b4e3256e93165db772b583a",
-    "name": "Vibe Most Wanted #1622",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Rare",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 139622,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Heavily Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.8528015338,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "1623",
-    "rarity": "Rare",
-    "status": "Burned",
-    "power": 15,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/92f8bec0f0bde156b3f871a86a09daca",
-    "name": "Vibe Most Wanted #1623",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Rare",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 215628,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Lightly Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.3007653701,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "1631",
-    "rarity": "Rare",
-    "status": "Burned",
-    "power": 15,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e9194ed36c5f73ed9b61da122f77be35",
-    "name": "Vibe Most Wanted #1631",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Rare",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 185897,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Moderately Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.6385391862,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
     "tokenId": "7394",
     "rarity": "Common",
     "status": "Rarity Assigned",
@@ -6358,500 +6870,6 @@
       {
         "display_type": "number",
         "value": 0.7913730812,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "609",
-    "rarity": "Common",
-    "status": "Burned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/05fa25f5eda4cce10b31c6108f58e290",
-    "name": "Vibe Most Wanted #609",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 616398,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Lightly Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.3870653929,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "712",
-    "rarity": "Common",
-    "status": "Burned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9315291c2b9b165e282a252f024fcc4",
-    "name": "Vibe Most Wanted #712",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 386106,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Moderately Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.6504201122,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "713",
-    "rarity": "Common",
-    "status": "Burned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8c13c83c4db59b90e22a4a432d27d0b4",
-    "name": "Vibe Most Wanted #713",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 620172,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Moderately Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.4977655379,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "714",
-    "rarity": "Common",
-    "status": "Burned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/900f3710789404656c2b6de5b96994af",
-    "name": "Vibe Most Wanted #714",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 644855,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Mint",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.1235292597,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "715",
-    "rarity": "Common",
-    "status": "Burned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6f036a52ddd07904e838d02e00d367d3",
-    "name": "Vibe Most Wanted #715",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 896017,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Lightly Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.2897288306,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "718",
-    "rarity": "Common",
-    "status": "Burned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a32680f3b02005d52c9d98a9c1c4586f",
-    "name": "Vibe Most Wanted #718",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 483144,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Burned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Moderately Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.7093231083,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "7380",
-    "rarity": "Common",
-    "status": "Rarity Assigned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0ba1c2c328e89b00280e1317a748cb57",
-    "name": "Vibe Most Wanted #7380",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 350853,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Rarity Assigned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Mint",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.0606291171,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "7384",
-    "rarity": "Common",
-    "status": "Rarity Assigned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/68f97b21c6c4e9bd2c073707e8ae53b7",
-    "name": "Vibe Most Wanted #7384",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 374866,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Rarity Assigned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Lightly Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.4292304505,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "7385",
-    "rarity": "Common",
-    "status": "Rarity Assigned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c668366252c13f4330d1925c40ff540b",
-    "name": "Vibe Most Wanted #7385",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 718436,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Rarity Assigned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Lightly Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.3775213189,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "7386",
-    "rarity": "Common",
-    "status": "Rarity Assigned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2b47271dd81e3b460da0d53c54942890",
-    "name": "Vibe Most Wanted #7386",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 568791,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Rarity Assigned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Moderately Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.578134263,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "7387",
-    "rarity": "Common",
-    "status": "Rarity Assigned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b46652495f552307f7fd4c492c12ae92",
-    "name": "Vibe Most Wanted #7387",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 649323,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Rarity Assigned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Moderately Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.4633856922,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "7388",
-    "rarity": "Common",
-    "status": "Rarity Assigned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ffe3c9867bd2805780b2a121d78bc060",
-    "name": "Vibe Most Wanted #7388",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 758622,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Rarity Assigned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Moderately Played",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.5426366123,
-        "trait_type": "Wear Value",
-        "max_value": 1
-      },
-      {
-        "value": "None",
-        "trait_type": "Foil"
-      }
-    ]
-  },
-  {
-    "tokenId": "7391",
-    "rarity": "Common",
-    "status": "Rarity Assigned",
-    "power": 1,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5bc4d33b6e373405def7e0e1d0db73d8",
-    "name": "Vibe Most Wanted #7391",
-    "attributes": [
-      {
-        "display_type": "string",
-        "value": "Common",
-        "trait_type": "Rarity"
-      },
-      {
-        "display_type": "number",
-        "value": 424905,
-        "trait_type": "Randomness"
-      },
-      {
-        "value": "Rarity Assigned",
-        "trait_type": "Status"
-      },
-      {
-        "value": "Mint",
-        "trait_type": "Wear"
-      },
-      {
-        "display_type": "number",
-        "value": 0.061198793,
         "trait_type": "Wear Value",
         "max_value": 1
       },
