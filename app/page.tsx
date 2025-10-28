@@ -1339,7 +1339,7 @@ export default function TCGPage() {
 
   useEffect(() => {
     loadJCNFTs();
-  }, [loadJCNFTs]);
+  }, []); // Run only once on mount
 
   // Load unlocked difficulties from localStorage
   useEffect(() => {
@@ -1443,7 +1443,7 @@ export default function TCGPage() {
     devLog('  Top 5 strongest:', available.sort((a, b) => (b.power || 0) - (a.power || 0)).slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
 
     if (available.length < HAND_SIZE_CONST) {
-      alert('Mecha George Floyd deck not loaded yet. Please wait...');
+      devLog('⚠️ Mecha George Floyd deck not loaded yet');
       setIsBattling(false);
       setShowBattleScreen(false);
       return;
@@ -1515,9 +1515,7 @@ export default function TCGPage() {
         // Unlock next difficulty on win
         const unlockedDiff = unlockNextDifficulty(aiDifficulty);
         if (unlockedDiff) {
-          setTimeout(() => {
-            alert(`Unlocked new difficulty: ${unlockedDiff.toUpperCase()}!`);
-          }, 2000);
+          devLog(`🔓 Unlocked new difficulty: ${unlockedDiff.toUpperCase()}`);
         }
       } else if (playerTotal < dealerTotal) {
         devLog('❌ DEALER VENCEU!');
@@ -2686,7 +2684,7 @@ export default function TCGPage() {
             <div className="space-y-3">
               <button
                 onClick={() => {
-                  if (pveSelectedCards.length === HAND_SIZE_CONST) {
+                  if (pveSelectedCards.length === HAND_SIZE_CONST && jcNfts.length >= HAND_SIZE_CONST) {
                     setSelectedCards(pveSelectedCards);
                     setShowPveCardSelection(false);
                     setGameMode('ai');
@@ -2694,14 +2692,14 @@ export default function TCGPage() {
                     playHand();
                   }
                 }}
-                disabled={pveSelectedCards.length !== HAND_SIZE_CONST}
+                disabled={pveSelectedCards.length !== HAND_SIZE_CONST || jcNfts.length < HAND_SIZE_CONST}
                 className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
-                  pveSelectedCards.length === HAND_SIZE_CONST
+                  pveSelectedCards.length === HAND_SIZE_CONST && jcNfts.length >= HAND_SIZE_CONST
                     ? 'bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black shadow-neon hover:scale-105'
                     : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                 }`}
               >
-                Battle! ({pveSelectedCards.length}/{HAND_SIZE_CONST})
+                {jcNfts.length < HAND_SIZE_CONST ? 'Loading George deck...' : `Battle! (${pveSelectedCards.length}/${HAND_SIZE_CONST})`}
               </button>
 
               <button
