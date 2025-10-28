@@ -879,8 +879,9 @@ export default function TCGPage() {
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
-  // AI Difficulty (only 3 levels now)
-  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  // AI Difficulty (5 levels with progressive unlock)
+  const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'godlike' | 'gigachad'>('gey');
+  const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
 
   // Profile States
   const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
@@ -1256,72 +1257,121 @@ export default function TCGPage() {
 
   const loadJCNFTs = useCallback(async () => {
     try {
-      // Check cache first (expires after 30 days for long-term storage)
-      const cacheKey = 'jc_deck_cache_v3';
-      const cacheTimeKey = 'jc_deck_cache_time_v3';
-      const cached = localStorage.getItem(cacheKey);
-      const cacheTime = localStorage.getItem(cacheTimeKey);
-      const thirtyDays = 30 * 24 * 60 * 60 * 1000; // 30 days cache
+      devLog('⚡ Loading JC deck from optimized static file...');
 
-      if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < thirtyDays) {
-        devLog('⚡ Loading JC deck from cache!');
-        const cachedData = JSON.parse(cached);
-        setJcNfts(cachedData);
-        setJcNftsLoading(false);
-        devLog('✅ JC NFTs loaded from cache:', cachedData.length, 'cards');
-        return;
+      // Load from optimized static endpoint (instant!)
+      const res = await fetch('/api/jc-deck');
+      if (!res.ok) {
+        throw new Error(`Failed to load JC deck: ${res.status}`);
       }
 
-      devLog('⚡ Loading JC NFTs from wallet:', JC_WALLET_ADDRESS);
-      devLog('   Using JC contract:', JC_CONTRACT_ADDRESS);
-      const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS, (page, cards) => {
-        setJcLoadingProgress({ page, cards });
-      });
-      devLog(`📦 Fetched ${revealed.length} revealed NFTs, processing...`);
+      const data = await res.json();
+      const cards = data.cards || [];
 
-      // Extract images directly from Alchemy response
-      const processed = revealed.map(nft => {
-        const imageUrl = nft?.image?.cachedUrl ||
-                         nft?.image?.thumbnailUrl ||
-                         nft?.image?.originalUrl ||
-                         nft?.raw?.metadata?.image ||
-                         '';
+      devLog(`✅ JC deck loaded instantly: ${cards.length} cards from ${data.source}`);
 
-        return {
-          ...nft,
-          imageUrl: normalizeUrl(imageUrl),
-          rarity: findAttr(nft, 'rarity'),
-          status: findAttr(nft, 'status'),
-          wear: findAttr(nft, 'wear'),
-          foil: findAttr(nft, 'foil'),
-          power: calcPower(nft),
-        };
-      });
+      // Map to expected format with normalized URLs
+      const processed = cards.map((card: any) => ({
+        tokenId: card.tokenId,
+        imageUrl: normalizeUrl(card.imageUrl || ''),
+        rarity: card.rarity,
+        status: card.status,
+        power: card.power,
+        name: card.name,
+        attributes: card.attributes || [],
+        // Reconstruct full NFT object if needed
+        raw: {
+          metadata: {
+            name: card.name,
+            image: card.imageUrl,
+            attributes: card.attributes
+          }
+        }
+      }));
 
-      devLog(`⚡ Processed ${processed.length} cards with images`);
       setJcNfts(processed);
       setJcNftsLoading(false);
-      setJcLoadingProgress(null);
 
-      // Save to cache (30 days)
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify(processed));
-        localStorage.setItem(cacheTimeKey, Date.now().toString());
-        devLog('💾 JC deck saved to cache (expires in 30 days)');
-      } catch (e) {
-        devLog('⚠️  Failed to cache JC deck:', e);
-      }
+      devLog('✅ JC NFTs ready:', processed.length, 'cards');
+      devLog(`   Legendary: ${processed.filter((c: any) => c.rarity === 'Legendary').length}`);
+      devLog(`   Epic: ${processed.filter((c: any) => c.rarity === 'Epic').length}`);
+      devLog(`   Rare: ${processed.filter((c: any) => c.rarity === 'Rare').length}`);
 
-      devLog('✅ JC NFTs loaded:', processed.length, 'cards');
     } catch (e: any) {
-      devError('❌ Error loading JC NFTs:', e);
-      setJcNftsLoading(false);
+      devError('❌ Error loading JC NFTs from static file:', e);
+      devLog('⚠️  Falling back to live API...');
+
+      // Fallback to original live API method
+      try {
+        const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS, (page, cards) => {
+          setJcLoadingProgress({ page, cards });
+        });
+
+        const processed = revealed.map(nft => {
+          const imageUrl = nft?.image?.cachedUrl ||
+                           nft?.image?.thumbnailUrl ||
+                           nft?.image?.originalUrl ||
+                           nft?.raw?.metadata?.image ||
+                           '';
+
+          return {
+            ...nft,
+            imageUrl: normalizeUrl(imageUrl),
+            rarity: findAttr(nft, 'rarity'),
+            status: findAttr(nft, 'status'),
+            wear: findAttr(nft, 'wear'),
+            foil: findAttr(nft, 'foil'),
+            power: calcPower(nft),
+          };
+        });
+
+        setJcNfts(processed);
+        setJcNftsLoading(false);
+        setJcLoadingProgress(null);
+        devLog('✅ JC NFTs loaded from live API:', processed.length, 'cards');
+
+      } catch (fallbackError: any) {
+        devError('❌ Fallback also failed:', fallbackError);
+        setJcNftsLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     loadJCNFTs();
   }, [loadJCNFTs]);
+
+  // Load unlocked difficulties from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('unlockedDifficulties');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setUnlockedDifficulties(new Set(parsed));
+      } catch (e) {
+        devError('Error loading unlocked difficulties:', e);
+      }
+    }
+  }, []);
+
+  // Save unlocked difficulties to localStorage
+  const unlockNextDifficulty = useCallback((currentDifficulty: string) => {
+    const difficultyOrder = ['gey', 'goofy', 'gooner', 'godlike', 'gigachad'];
+    const currentIndex = difficultyOrder.indexOf(currentDifficulty);
+
+    if (currentIndex < difficultyOrder.length - 1) {
+      const nextDifficulty = difficultyOrder[currentIndex + 1];
+      setUnlockedDifficulties(prev => {
+        const newSet = new Set(prev);
+        newSet.add(nextDifficulty);
+        localStorage.setItem('unlockedDifficulties', JSON.stringify(Array.from(newSet)));
+        return newSet;
+      });
+      devLog(`Unlocked difficulty: ${nextDifficulty}`);
+      return nextDifficulty;
+    }
+    return null;
+  }, []);
 
   const handleSelectCard = useCallback((card: any) => {
     setSelectedCards(prev => {
@@ -1393,7 +1443,7 @@ export default function TCGPage() {
     devLog('  Top 5 strongest:', available.sort((a, b) => (b.power || 0) - (a.power || 0)).slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
 
     if (available.length < HAND_SIZE_CONST) {
-      alert('JC deck not loaded yet. Please wait...');
+      alert('Mecha George Floyd deck not loaded yet. Please wait...');
       setIsBattling(false);
       setShowBattleScreen(false);
       return;
@@ -1404,20 +1454,32 @@ export default function TCGPage() {
 
     let pickedDealer: any[] = [];
 
-    // Different strategies based on difficulty
+    // Different strategies based on difficulty (5 levels)
     switch (aiDifficulty) {
-      case 'easy':
-        // GEY: Completely random selection (weakest difficulty)
-        pickedDealer = shuffled.slice(0, HAND_SIZE_CONST);
+      case 'gey':
+        // GEY (Level 1): Weakest cards (~5-20 power)
+        const weakCards = sorted.filter(c => (c.power || 0) >= 1 && (c.power || 0) <= 5);
+        pickedDealer = weakCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
         break;
 
-      case 'medium':
-        // GOONER: All 5 strongest cards (average power ~300)
-        pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
+      case 'goofy':
+        // GOOFY (Level 2): Low-tier cards (~90 power)
+        pickedDealer = sorted.slice(100, 100 + HAND_SIZE_CONST);
         break;
 
-      case 'hard':
-        // GIGACHAD: EXATAMENTE as top 5 mais fortes (PODER MÁXIMO)
+      case 'gooner':
+        // GOONER (Level 3): Mid-tier strong cards (~300 power)
+        pickedDealer = sorted.slice(20, 20 + HAND_SIZE_CONST);
+        break;
+
+      case 'godlike':
+        // GODLIKE (Level 4): Very strong cards (~462 power)
+        // Mix: 1 legendary (rank 2) + 4 top epics (ranks 4-7)
+        pickedDealer = [sorted[2], sorted[4], sorted[5], sorted[6], sorted[7]];
+        break;
+
+      case 'gigachad':
+        // GIGACHAD (Level 5): ABSOLUTE MAXIMUM (789 power)
         pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
         break;
     }
@@ -1449,6 +1511,14 @@ export default function TCGPage() {
         devLog('✅ JOGADOR VENCEU!');
         matchResult = 'win';
         setResult(t('playerWins'));
+
+        // Unlock next difficulty on win
+        const unlockedDiff = unlockNextDifficulty(aiDifficulty);
+        if (unlockedDiff) {
+          setTimeout(() => {
+            alert(`Unlocked new difficulty: ${unlockedDiff.toUpperCase()}!`);
+          }, 2000);
+        }
       } else if (playerTotal < dealerTotal) {
         devLog('❌ DEALER VENCEU!');
         matchResult = 'loss';
@@ -1486,7 +1556,7 @@ export default function TCGPage() {
           result: matchResult,
           playerPower: playerTotal,
           opponentPower: dealerTotal,
-          opponentName: 'JC',
+          opponentName: 'Mecha George Floyd',
           type: 'pve'
         });
 
@@ -2385,7 +2455,19 @@ export default function TCGPage() {
 
               {/* Opponent Cards */}
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-red-400 mb-3 md:mb-4 text-center">{battleOpponentName}</h3>
+                {/* Opponent Header with Image */}
+                <div className="flex flex-col items-center mb-3 md:mb-4">
+                  {battleOpponentName === 'Mecha George Floyd' && (
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-red-500 shadow-lg shadow-red-500/50 mb-2">
+                      <img
+                        src="/images/mecha-george-floyd.jpg"
+                        alt="Mecha George Floyd"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <h3 className="text-xl md:text-2xl font-bold text-red-400 text-center">{battleOpponentName}</h3>
+                </div>
                 <div
                   className="grid grid-cols-5 gap-1 md:gap-2"
                   style={{
@@ -2540,41 +2622,63 @@ export default function TCGPage() {
               </button>
             </div>
 
-            {/* Difficulty Selector */}
+            {/* Difficulty Selector - 5 Levels */}
             <div className="mb-4 bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
-              <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ JC DIFFICULTY ⚔️</p>
-              <div className="grid grid-cols-3 gap-2">
-                {(['easy', 'medium', 'hard'] as const).map((diff) => (
-                  <button
-                    key={diff}
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setAiDifficulty(diff);
-                    }}
-                    className={`px-2 py-2 rounded text-xs font-bold transition-all ${
-                      aiDifficulty === diff
-                        ? diff === 'easy' ? 'bg-green-500 text-white shadow-lg scale-105'
-                        : diff === 'medium' ? 'bg-blue-500 text-white shadow-lg scale-105'
-                        : 'bg-orange-500 text-white shadow-lg scale-105'
-                        : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
-                    }`}
-                  >
-                    {diff === 'easy' ? '🏳️‍🌈'
-                    : diff === 'medium' ? '💀'
-                    : '💪'}
-                    <br/>
-                    <span className="text-[9px]">
-                      {diff === 'easy' ? 'GEY'
-                      : diff === 'medium' ? 'GOONER'
-                      : 'GIGACHAD'}
-                    </span>
-                  </button>
-                ))}
+              <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ MECHA GEORGE FLOYD DIFFICULTY (5 LEVELS) ⚔️</p>
+              <div className="grid grid-cols-5 gap-1">
+                {(['gey', 'goofy', 'gooner', 'godlike', 'gigachad'] as const).map((diff, index) => {
+                  const isUnlocked = unlockedDifficulties.has(diff);
+                  const diffInfo = {
+                    gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '~5', color: 'bg-gray-500' },
+                    goofy: { emoji: '🤪', name: 'GOOFY', power: '~90', color: 'bg-green-500' },
+                    gooner: { emoji: '💀', name: 'GOONER', power: '~300', color: 'bg-blue-500' },
+                    godlike: { emoji: '⚡', name: 'GODLIKE', power: '~462', color: 'bg-purple-500' },
+                    gigachad: { emoji: '💪', name: 'GIGACHAD', power: '789', color: 'bg-orange-500' }
+                  };
+
+                  return (
+                    <button
+                      key={diff}
+                      onClick={() => {
+                        if (isUnlocked) {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setAiDifficulty(diff);
+                        }
+                      }}
+                      disabled={!isUnlocked}
+                      className={`px-1 py-2 rounded text-xs font-bold transition-all relative ${
+                        !isUnlocked
+                          ? 'bg-vintage-black/80 text-vintage-burnt-gold/30 border border-vintage-gold/10 cursor-not-allowed'
+                          : aiDifficulty === diff
+                          ? `${diffInfo[diff].color} text-white shadow-lg scale-105`
+                          : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
+                      }`}
+                    >
+                      {!isUnlocked && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded">
+                          <span className="text-xs font-bold text-white/80">LOCKED</span>
+                        </div>
+                      )}
+                      <div className={!isUnlocked ? 'opacity-30' : ''}>
+                        {diffInfo[diff].emoji}
+                        <br/>
+                        <span className="text-[8px]">
+                          {diffInfo[diff].name}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
               <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
-                {aiDifficulty === 'easy' && '🟢 5 random cards'}
-                {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (1,050 power)'}
-                {aiDifficulty === 'hard' && '🔥 JC\'s absolute best cards (1,050 power)'}
+                {aiDifficulty === 'gey' && '🏳️‍🌈 Level 1: Weakest cards (~5 power)'}
+                {aiDifficulty === 'goofy' && '🤪 Level 2: Low-tier cards (~90 power)'}
+                {aiDifficulty === 'gooner' && '💀 Level 3: Mid-tier strong (~300 power)'}
+                {aiDifficulty === 'godlike' && '⚡ Level 4: Very strong (~462 power)'}
+                {aiDifficulty === 'gigachad' && '💪 Level 5: MAXIMUM POWER (789)'}
+              </p>
+              <p className="text-center text-vintage-burnt-gold/50 text-[9px] mt-1 font-modern italic">
+                Win to unlock next level!
               </p>
             </div>
 
@@ -2947,41 +3051,63 @@ export default function TCGPage() {
             </p>
 
             <div className="space-y-4">
-              {/* Difficulty Selector */}
+              {/* Difficulty Selector - 5 Levels */}
               <div className="bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
-                <p className="text-center text-vintage-gold text-sm font-modern mb-3">JC DIFFICULTY</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['easy', 'medium', 'hard'] as const).map((diff) => (
-                    <button
-                      key={diff}
-                      onClick={() => {
-                        if (soundEnabled) AudioManager.buttonClick();
-                        setAiDifficulty(diff);
-                      }}
-                      className={`px-2 py-2 rounded text-xs font-bold transition-all ${
-                        aiDifficulty === diff
-                          ? diff === 'easy' ? 'bg-green-500 text-white shadow-lg scale-105'
-                          : diff === 'medium' ? 'bg-blue-500 text-white shadow-lg scale-105'
-                          : 'bg-orange-500 text-white shadow-lg scale-105'
-                          : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
-                      }`}
-                    >
-                      {diff === 'easy' ? '🏳️‍🌈'
-                      : diff === 'medium' ? '💀'
-                      : '💪'}
-                      <br/>
-                      <span className="text-[9px]">
-                        {diff === 'easy' ? 'GEY'
-                        : diff === 'medium' ? 'GOONER'
-                        : 'GIGACHAD'}
-                      </span>
-                    </button>
-                  ))}
+                <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ MECHA GEORGE FLOYD DIFFICULTY (5 LEVELS) ⚔️</p>
+                <div className="grid grid-cols-5 gap-1">
+                  {(['gey', 'goofy', 'gooner', 'godlike', 'gigachad'] as const).map((diff, index) => {
+                    const isUnlocked = unlockedDifficulties.has(diff);
+                    const diffInfo = {
+                      gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '~5', color: 'bg-gray-500' },
+                      goofy: { emoji: '🤪', name: 'GOOFY', power: '~90', color: 'bg-green-500' },
+                      gooner: { emoji: '💀', name: 'GOONER', power: '~300', color: 'bg-blue-500' },
+                      godlike: { emoji: '⚡', name: 'GODLIKE', power: '~462', color: 'bg-purple-500' },
+                      gigachad: { emoji: '💪', name: 'GIGACHAD', power: '789', color: 'bg-orange-500' }
+                    };
+
+                    return (
+                      <button
+                        key={diff}
+                        onClick={() => {
+                          if (isUnlocked) {
+                            if (soundEnabled) AudioManager.buttonClick();
+                            setAiDifficulty(diff);
+                          }
+                        }}
+                        disabled={!isUnlocked}
+                        className={`px-1 py-2 rounded text-xs font-bold transition-all relative ${
+                          !isUnlocked
+                            ? 'bg-vintage-black/80 text-vintage-burnt-gold/30 border border-vintage-gold/10 cursor-not-allowed'
+                            : aiDifficulty === diff
+                            ? `${diffInfo[diff].color} text-white shadow-lg scale-105`
+                            : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
+                        }`}
+                      >
+                        {!isUnlocked && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded">
+                            <span className="text-2xl">🔒</span>
+                          </div>
+                        )}
+                        <div className={!isUnlocked ? 'opacity-30' : ''}>
+                          {diffInfo[diff].emoji}
+                          <br/>
+                          <span className="text-[8px]">
+                            {diffInfo[diff].name}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
                 <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
-                  {aiDifficulty === 'easy' && '🟢 5 random cards'}
-                  {aiDifficulty === 'medium' && '💀 Top 5 strongest cards (1,050 power)'}
-                  {aiDifficulty === 'hard' && '🔥 JC\'s absolute best cards (1,050 power)'}
+                  {aiDifficulty === 'gey' && '🏳️‍🌈 Level 1: Weakest cards (~5 power)'}
+                  {aiDifficulty === 'goofy' && '🤪 Level 2: Low-tier cards (~90 power)'}
+                  {aiDifficulty === 'gooner' && '💀 Level 3: Mid-tier strong (~300 power)'}
+                  {aiDifficulty === 'godlike' && '⚡ Level 4: Very strong (~462 power)'}
+                  {aiDifficulty === 'gigachad' && '💪 Level 5: MAXIMUM POWER (789)'}
+                </p>
+                <p className="text-center text-vintage-burnt-gold/50 text-[9px] mt-1 font-modern italic">
+                  Win to unlock next level!
                 </p>
               </div>
 
