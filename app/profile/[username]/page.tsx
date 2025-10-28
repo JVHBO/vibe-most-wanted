@@ -320,12 +320,21 @@ export default function ProfilePage() {
 
           // ✅ Use the unified, optimized fetcher
           const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
+
+          // ✅ IMPORTANT: Include defense deck IDs to ensure they are loaded even if beyond 8 pages
+          const defenseDeckIds = profileData.defenseDeck ? profileData.defenseDeck.map(String) : undefined;
+
           const enriched = await fetchAndProcessNFTs(address, {
             maxPages: 8, // ✅ Reduced from 10 to 8 for faster loading
             refreshMetadata: false, // ✅ Disable for faster loading (profiles don't need fresh metadata)
+            targetTokenIds: defenseDeckIds, // ✅ Ensure defense deck cards are always loaded
           });
 
           devLog('✅ NFTs fully enriched:', enriched.length);
+          if (defenseDeckIds) {
+            devLog('🛡️ Defense deck IDs:', defenseDeckIds);
+            devLog('🛡️ Defense deck cards found:', defenseDeckIds.filter(id => enriched.some(nft => String(nft.tokenId) === id)).length);
+          }
           setNfts(enriched);
         } catch (err: any) {
           devError('❌ Error loading NFTs:', err.message || err);
