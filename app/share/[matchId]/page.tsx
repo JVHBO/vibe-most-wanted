@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: { matchId: string }
   } else if (type === 'pvp') {
     title = isWin ? `👑 PvP Victory vs ${opponentName}!` : isTie ? `👑 PvP Tie vs ${opponentName}` : `👑 PvP Defeat vs ${opponentName}`;
   } else {
-    title = isWin ? `🎮 Victory vs JC!` : isTie ? `🎮 Tie vs JC` : `🎮 Defeat vs JC`;
+    title = isWin ? `🎮 Victory vs Mecha George Floyd!` : isTie ? `🎮 Tie vs Mecha George Floyd` : `🎮 Defeat vs Mecha George Floyd`;
   }
 
   const description = `${playerPower} vs ${opponentPower} Power - VIBE Most Wanted Battle Result`;
