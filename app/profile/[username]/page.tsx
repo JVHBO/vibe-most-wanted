@@ -627,37 +627,69 @@ export default function ProfilePage() {
       </div>
 
       {/* Defense Deck */}
-      {profile.defenseDeck && profile.defenseDeck.length === 5 && (
-        <div className="max-w-6xl mx-auto mb-8">
-          <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-            <span className="text-3xl">🛡️</span> Defense Deck
-          </h2>
-          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold">
-            <p className="text-sm text-vintage-burnt-gold mb-4 font-modern">
-              These cards will defend when this player is attacked
-            </p>
-            <div className="grid grid-cols-5 gap-4">
-              {profile.defenseDeck.map((card, i) => (
-                <FoilCardEffect key={i} foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
-                  <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
-                  <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
-                    {card.power}
+      {profile.defenseDeck && profile.defenseDeck.length === 5 && (() => {
+        // Validate defense deck data
+        const validCards = profile.defenseDeck.filter(card =>
+          card &&
+          card.tokenId &&
+          typeof card.power === 'number' &&
+          !isNaN(card.power) &&
+          card.imageUrl &&
+          card.imageUrl !== 'undefined' &&
+          card.imageUrl !== ''
+        );
+
+        const hasInvalidData = validCards.length !== 5;
+
+        return (
+          <div className="max-w-6xl mx-auto mb-8">
+            <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
+              <span className="text-3xl">🛡️</span> Defense Deck
+            </h2>
+            <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold">
+              {hasInvalidData ? (
+                <div className="text-center py-8">
+                  <p className="text-vintage-burnt-gold mb-4">⚠️ Defense deck has corrupted data</p>
+                  <p className="text-sm text-vintage-silver">Player needs to reset their defense deck</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-vintage-burnt-gold mb-4 font-modern">
+                    These cards will defend when this player is attacked
+                  </p>
+                  <div className="grid grid-cols-5 gap-4">
+                    {validCards.map((card, i) => (
+                      <FoilCardEffect key={i} foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
+                        <img
+                          src={card.imageUrl}
+                          alt={`#${card.tokenId}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback for broken images
+                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300"%3E%3Crect width="200" height="300" fill="%23222"%2F%3E%3Ctext x="50%25" y="50%25" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle" font-family="monospace"%3E%23' + card.tokenId + '%3C/text%3E%3C/svg%3E';
+                          }}
+                        />
+                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
+                          {card.power}
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-vintage-black/90 to-transparent p-2">
+                          <p className="text-xs text-vintage-gold font-modern">#{card.tokenId}</p>
+                        </div>
+                      </FoilCardEffect>
+                    ))}
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-vintage-black/90 to-transparent p-2">
-                    <p className="text-xs text-vintage-gold font-modern">#{card.tokenId}</p>
+                  <div className="mt-4 text-center">
+                    <p className="text-xs text-vintage-burnt-gold">Total Defense Power</p>
+                    <p className="text-3xl font-bold text-vintage-gold">
+                      {validCards.reduce((sum, card) => sum + (Number(card.power) || 0), 0)}
+                    </p>
                   </div>
-                </FoilCardEffect>
-              ))}
-            </div>
-            <div className="mt-4 text-center">
-              <p className="text-xs text-vintage-burnt-gold">Total Defense Power</p>
-              <p className="text-3xl font-bold text-vintage-gold">
-                {profile.defenseDeck.reduce((sum, card) => sum + card.power, 0)}
-              </p>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* NFT Cards Collection */}
       <div className="max-w-6xl mx-auto mb-8">
