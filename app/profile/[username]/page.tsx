@@ -638,7 +638,7 @@ export default function ProfilePage() {
             </p>
             <div className="grid grid-cols-5 gap-4">
               {profile.defenseDeck.map((card, i) => (
-                <FoilCardEffect key={i} foilType={card.foil} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
+                <FoilCardEffect key={i} foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
                   <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
                   <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
                     {card.power}
