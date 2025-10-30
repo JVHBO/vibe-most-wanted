@@ -39,8 +39,16 @@ export default defineSchema({
       defenseLosses: v.number(),
     }),
 
-    // Defense Deck (array of NFT tokenIds)
-    defenseDeck: v.optional(v.array(v.string())),
+    // Defense Deck (array of card objects with saved power)
+    defenseDeck: v.optional(v.array(
+      v.object({
+        tokenId: v.string(),
+        power: v.number(),
+        imageUrl: v.string(),
+        name: v.string(),
+        rarity: v.string(),
+      })
+    )),
 
     // Attack limits
     attacksToday: v.number(),

@@ -321,20 +321,13 @@ export default function ProfilePage() {
           // ✅ Use the unified, optimized fetcher
           const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
 
-          // ✅ IMPORTANT: Include defense deck IDs to ensure they are loaded even if beyond 8 pages
-          const defenseDeckIds = profileData.defenseDeck ? profileData.defenseDeck.map(String) : undefined;
-
+          // ✅ Load NFTs for collection display (defense deck data is already in profile)
           const enriched = await fetchAndProcessNFTs(address, {
             maxPages: 8, // ✅ Reduced from 10 to 8 for faster loading
-            refreshMetadata: !!defenseDeckIds, // ✅ CRITICAL: Enable metadata refresh when defense deck exists to get accurate power/rarity
-            targetTokenIds: defenseDeckIds, // ✅ Ensure defense deck cards are always loaded
+            refreshMetadata: false, // ✅ No need to refresh metadata
           });
 
           devLog('✅ NFTs fully enriched:', enriched.length);
-          if (defenseDeckIds) {
-            devLog('🛡️ Defense deck IDs:', defenseDeckIds);
-            devLog('🛡️ Defense deck cards found:', defenseDeckIds.filter(id => enriched.some(nft => String(nft.tokenId) === id)).length);
-          }
           setNfts(enriched);
         } catch (err: any) {
           devError('❌ Error loading NFTs:', err.message || err);
@@ -643,35 +636,22 @@ export default function ProfilePage() {
               These cards will defend when this player is attacked
             </p>
             <div className="grid grid-cols-5 gap-4">
-              {profile.defenseDeck.map((tokenId, i) => {
-                const card = nfts.find(nft => nft.tokenId === tokenId);
-                if (!card) {
-                  return (
-                    <div key={i} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center bg-vintage-black/50">
-                      <span className="text-vintage-gold/50 text-xs">#{tokenId}</span>
-                    </div>
-                  );
-                }
-                return (
-                  <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
-                    <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
-                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
-                      {card.power}
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-vintage-black/90 to-transparent p-2">
-                      <p className="text-xs text-vintage-gold font-modern">#{card.tokenId}</p>
-                    </div>
+              {profile.defenseDeck.map((card, i) => (
+                <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
+                  <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                  <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
+                    {card.power}
                   </div>
-                );
-              })}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-vintage-black/90 to-transparent p-2">
+                    <p className="text-xs text-vintage-gold font-modern">#{card.tokenId}</p>
+                  </div>
+                </div>
+              ))}
             </div>
             <div className="mt-4 text-center">
               <p className="text-xs text-vintage-burnt-gold">Total Defense Power</p>
               <p className="text-3xl font-bold text-vintage-gold">
-                {profile.defenseDeck.reduce((sum, tokenId) => {
-                  const card = nfts.find(nft => nft.tokenId === tokenId);
-                  return sum + (card?.power || 0);
-                }, 0)}
+                {profile.defenseDeck.reduce((sum, card) => sum + card.power, 0)}
               </p>
             </div>
           </div>
