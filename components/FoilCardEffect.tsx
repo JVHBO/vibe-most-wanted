@@ -32,60 +32,45 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
   const isPrize = foilType === 'Prize';
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative overflow-hidden ${className}`}>
       {/* PRIZE FOIL: Holographic effect based on reference HTML */}
       {isPrize && (
-        <>
-          {/* Main holographic layer - EXACTLY like reference */}
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              top: '0',
-              left: '0',
-              width: '100%',
-              height: '100%',
-              overflow: 'hidden',
-              borderRadius: 'inherit',
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: '-50%',
-                left: '-50%',
-                width: '200%',
-                height: '200%',
-                background: `
-                  radial-gradient(circle 300px at 30% 30%,
-                    rgba(255, 0, 200, 0.8) 0%,
-                    rgba(255, 0, 150, 0.5) 25%,
-                    transparent 50%),
-                  radial-gradient(circle 280px at 70% 25%,
-                    rgba(255, 255, 0, 0.8) 0%,
-                    rgba(200, 255, 0, 0.5) 25%,
-                    transparent 50%),
-                  radial-gradient(circle 320px at 45% 65%,
-                    rgba(0, 255, 255, 0.8) 0%,
-                    rgba(0, 200, 255, 0.5) 25%,
-                    transparent 50%),
-                  radial-gradient(circle 250px at 20% 75%,
-                    rgba(200, 0, 255, 0.8) 0%,
-                    rgba(255, 0, 255, 0.5) 25%,
-                    transparent 50%),
-                  radial-gradient(circle 270px at 80% 50%,
-                    rgba(0, 255, 100, 0.8) 0%,
-                    rgba(100, 255, 0, 0.5) 25%,
-                    transparent 50%)
-                `,
-                filter: 'blur(30px) saturate(2) brightness(1.3)',
-                animation: 'holoMove 10s ease-in-out infinite',
-                mixBlendMode: 'multiply',
-                opacity: 0.7,
-              }}
-            />
-          </div>
-        </>
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            zIndex: 1,
+            background: `
+              radial-gradient(circle 300px at 30% 30%,
+                rgba(255, 0, 200, 0.8) 0%,
+                rgba(255, 0, 150, 0.5) 25%,
+                transparent 50%),
+              radial-gradient(circle 280px at 70% 25%,
+                rgba(255, 255, 0, 0.8) 0%,
+                rgba(200, 255, 0, 0.5) 25%,
+                transparent 50%),
+              radial-gradient(circle 320px at 45% 65%,
+                rgba(0, 255, 255, 0.8) 0%,
+                rgba(0, 200, 255, 0.5) 25%,
+                transparent 50%),
+              radial-gradient(circle 250px at 20% 75%,
+                rgba(200, 0, 255, 0.8) 0%,
+                rgba(255, 0, 255, 0.5) 25%,
+                transparent 50%),
+              radial-gradient(circle 270px at 80% 50%,
+                rgba(0, 255, 100, 0.8) 0%,
+                rgba(100, 255, 0, 0.5) 25%,
+                transparent 50%)
+            `,
+            filter: 'blur(30px) saturate(2) brightness(1.3)',
+            animation: 'holoMove 10s ease-in-out infinite',
+            mixBlendMode: 'multiply',
+            opacity: 0.7,
+          }}
+        />
       )}
 
       {/* Main card content */}
@@ -95,49 +80,34 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
 
       {/* STANDARD FOIL: Subtle holographic shimmer (similar to Prize but softer) */}
       {!isPrize && (
-        <>
-          {/* Soft rainbow gradients */}
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              top: '0',
-              left: '0',
-              width: '100%',
-              height: '100%',
-              overflow: 'hidden',
-              borderRadius: 'inherit',
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: '-50%',
-                left: '-50%',
-                width: '200%',
-                height: '200%',
-                background: `
-                  radial-gradient(circle 280px at 35% 35%,
-                    rgba(200, 150, 255, 0.6) 0%,
-                    rgba(180, 100, 255, 0.4) 25%,
-                    transparent 50%),
-                  radial-gradient(circle 260px at 65% 30%,
-                    rgba(100, 200, 255, 0.6) 0%,
-                    rgba(150, 220, 255, 0.4) 25%,
-                    transparent 50%),
-                  radial-gradient(circle 300px at 50% 70%,
-                    rgba(150, 255, 200, 0.6) 0%,
-                    rgba(100, 255, 180, 0.4) 25%,
-                    transparent 50%)
-                `,
-                filter: 'blur(25px) saturate(1.5) brightness(1.2)',
-                animation: 'holoMove 12s ease-in-out infinite',
-                mixBlendMode: 'multiply',
-                opacity: 0.6,
-              }}
-            />
-          </div>
-        </>
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            zIndex: 1,
+            background: `
+              radial-gradient(circle 280px at 35% 35%,
+                rgba(200, 150, 255, 0.6) 0%,
+                rgba(180, 100, 255, 0.4) 25%,
+                transparent 50%),
+              radial-gradient(circle 260px at 65% 30%,
+                rgba(100, 200, 255, 0.6) 0%,
+                rgba(150, 220, 255, 0.4) 25%,
+                transparent 50%),
+              radial-gradient(circle 300px at 50% 70%,
+                rgba(150, 255, 200, 0.6) 0%,
+                rgba(100, 255, 180, 0.4) 25%,
+                transparent 50%)
+            `,
+            filter: 'blur(25px) saturate(1.5) brightness(1.2)',
+            animation: 'holoMove 12s ease-in-out infinite',
+            mixBlendMode: 'multiply',
+            opacity: 0.6,
+          }}
+        />
       )}
 
       {/* CSS Animations */}
