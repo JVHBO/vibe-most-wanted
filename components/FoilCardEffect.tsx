@@ -81,22 +81,22 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
             height: '200%',
             background: `
               radial-gradient(circle 280px at 35% 35%,
-                rgba(200, 150, 255, 0.6) 0%,
-                rgba(180, 100, 255, 0.4) 25%,
+                rgba(200, 150, 255, 0.9) 0%,
+                rgba(180, 100, 255, 0.6) 25%,
                 transparent 50%),
               radial-gradient(circle 260px at 65% 30%,
-                rgba(100, 200, 255, 0.6) 0%,
-                rgba(150, 220, 255, 0.4) 25%,
+                rgba(100, 200, 255, 0.9) 0%,
+                rgba(150, 220, 255, 0.6) 25%,
                 transparent 50%),
               radial-gradient(circle 300px at 50% 70%,
-                rgba(150, 255, 200, 0.6) 0%,
-                rgba(100, 255, 180, 0.4) 25%,
+                rgba(150, 255, 200, 0.9) 0%,
+                rgba(100, 255, 180, 0.6) 25%,
                 transparent 50%)
             `,
-            filter: 'blur(25px) saturate(1.5) brightness(1.2)',
+            filter: 'blur(25px) saturate(2.5) brightness(1.5)',
             animation: 'holoMove 12s ease-in-out infinite',
             mixBlendMode: 'multiply',
-            opacity: 0.6,
+            opacity: 0.85,
           }}
         />
       )}
