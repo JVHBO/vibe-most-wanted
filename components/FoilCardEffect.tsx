@@ -11,13 +11,8 @@ interface FoilCardEffectProps {
 /**
  * FoilCardEffect - Wrapper component that adds holographic effects to foil cards
  *
- * Prize Foil: Dramatic multi-color blob animation with shimmer (like your HTML example)
- * Standard Foil: Subtle rainbow shimmer effect
- *
- * Usage:
- * <FoilCardEffect foilType={card.foil}>
- *   <img src={card.imageUrl} alt={card.name} />
- * </FoilCardEffect>
+ * IMPORTANT: Effect comes AFTER content in DOM (like reference HTML)
+ * This makes mixBlendMode work correctly
  */
 const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
   children,
@@ -33,7 +28,10 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {/* PRIZE FOIL: Holographic effect based on reference HTML */}
+      {/* Card content FIRST */}
+      {children}
+
+      {/* PRIZE FOIL effect AFTER content */}
       {isPrize && (
         <div
           className="absolute pointer-events-none"
@@ -42,7 +40,6 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
             left: '-50%',
             width: '200%',
             height: '200%',
-            zIndex: 1,
             background: `
               radial-gradient(circle 300px at 30% 30%,
                 rgba(255, 0, 200, 0.8) 0%,
@@ -73,12 +70,7 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
         />
       )}
 
-      {/* Main card content */}
-      <div className="relative" style={{ zIndex: 10 }}>
-        {children}
-      </div>
-
-      {/* STANDARD FOIL: Subtle holographic shimmer (similar to Prize but softer) */}
+      {/* STANDARD FOIL effect AFTER content */}
       {!isPrize && (
         <div
           className="absolute pointer-events-none"
@@ -87,7 +79,6 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
             left: '-50%',
             width: '200%',
             height: '200%',
-            zIndex: 1,
             background: `
               radial-gradient(circle 280px at 35% 35%,
                 rgba(200, 150, 255, 0.6) 0%,
