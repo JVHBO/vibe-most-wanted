@@ -558,21 +558,6 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           }
         }
 
-        .card-reflection {
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), transparent);
-          pointer-events: none;
-          opacity: 0;
-        }
-
-        .group:hover .card-reflection {
-          animation: cardReflection 1.5s ease-in-out;
-        }
-
         @keyframes rainbowShine {
           0% {
             background-position: -200% center;
@@ -614,9 +599,6 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           >
             <div style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}} className="rounded-lg overflow-hidden">
             <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
-
-            {/* Card Reflection on Hover */}
-            <div className="card-reflection"></div>
 
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
               <div className="flex items-center justify-between">
