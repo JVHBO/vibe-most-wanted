@@ -38,111 +38,117 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
         {children}
       </div>
 
-      {/* PRIZE FOIL: Full holographic effect like your HTML example */}
+      {/* PRIZE FOIL: Soft, realistic holographic effect */}
       {isPrize && (
         <>
-          {/* Color blobs layer */}
+          {/* Main color blobs layer - larger, softer, more blended */}
           <div
             className="absolute z-20 pointer-events-none"
             style={{
-              top: '-20%',
-              left: '-20%',
-              width: '140%',
-              height: '140%',
+              top: '-30%',
+              left: '-30%',
+              width: '160%',
+              height: '160%',
               background: `
-                radial-gradient(ellipse 300px 400px at 25% 25%,
-                  rgba(255, 0, 200, 0.7) 0%,
-                  rgba(255, 100, 150, 0.5) 30%,
-                  transparent 50%),
-                radial-gradient(ellipse 400px 300px at 75% 35%,
-                  rgba(255, 255, 0, 0.7) 0%,
-                  rgba(200, 255, 0, 0.5) 30%,
-                  transparent 50%),
-                radial-gradient(ellipse 350px 350px at 50% 70%,
-                  rgba(0, 200, 255, 0.7) 0%,
-                  rgba(0, 255, 200, 0.5) 30%,
-                  transparent 50%),
-                radial-gradient(ellipse 300px 300px at 20% 80%,
-                  rgba(200, 0, 255, 0.7) 0%,
-                  rgba(255, 0, 255, 0.5) 30%,
-                  transparent 50%),
-                radial-gradient(ellipse 250px 350px at 80% 70%,
-                  rgba(0, 255, 100, 0.7) 0%,
-                  rgba(100, 255, 0, 0.5) 30%,
-                  transparent 50%)
+                radial-gradient(ellipse 400px 500px at 20% 20%,
+                  rgba(255, 0, 200, 0.4) 0%,
+                  rgba(255, 100, 150, 0.25) 25%,
+                  transparent 45%),
+                radial-gradient(ellipse 500px 400px at 80% 30%,
+                  rgba(255, 200, 0, 0.4) 0%,
+                  rgba(255, 255, 100, 0.25) 25%,
+                  transparent 45%),
+                radial-gradient(ellipse 450px 450px at 50% 75%,
+                  rgba(0, 200, 255, 0.4) 0%,
+                  rgba(100, 255, 200, 0.25) 25%,
+                  transparent 45%),
+                radial-gradient(ellipse 350px 400px at 15% 85%,
+                  rgba(150, 0, 255, 0.35) 0%,
+                  rgba(200, 100, 255, 0.2) 25%,
+                  transparent 45%),
+                radial-gradient(ellipse 300px 400px at 85% 75%,
+                  rgba(0, 255, 150, 0.35) 0%,
+                  rgba(100, 255, 100, 0.2) 25%,
+                  transparent 45%)
               `,
-              filter: 'blur(8px)',
-              animation: 'blobMove 10s ease-in-out infinite',
-              mixBlendMode: 'screen',
+              filter: 'blur(40px)',
+              animation: 'blobMove 15s ease-in-out infinite',
+              mixBlendMode: 'overlay',
+              opacity: 0.8,
             }}
           />
 
-          {/* Color flow layer */}
+          {/* Secondary glow layer - adds depth */}
           <div
             className="absolute inset-0 z-[21] pointer-events-none"
             style={{
               background: `
-                radial-gradient(circle at 70% 20%,
-                  rgba(255, 100, 0, 0.5) 0%,
-                  transparent 35%),
-                radial-gradient(circle at 30% 50%,
-                  rgba(0, 255, 255, 0.5) 0%,
-                  transparent 35%),
-                radial-gradient(circle at 60% 80%,
-                  rgba(255, 0, 100, 0.5) 0%,
-                  transparent 35%)
+                radial-gradient(circle at 30% 30%,
+                  rgba(255, 150, 0, 0.3) 0%,
+                  transparent 30%),
+                radial-gradient(circle at 70% 40%,
+                  rgba(100, 200, 255, 0.3) 0%,
+                  transparent 30%),
+                radial-gradient(circle at 50% 70%,
+                  rgba(255, 100, 200, 0.3) 0%,
+                  transparent 30%)
               `,
-              filter: 'blur(12px)',
-              animation: 'flowMove 12s ease-in-out infinite reverse',
+              filter: 'blur(25px)',
+              animation: 'flowMove 18s ease-in-out infinite',
+              mixBlendMode: 'screen',
+              opacity: 0.5,
             }}
           />
 
-          {/* Shimmer pass */}
+          {/* Subtle shimmer pass - less aggressive */}
           <div
             className="absolute inset-0 z-[22] pointer-events-none"
             style={{
-              background: 'linear-gradient(125deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%)',
-              backgroundSize: '200% 200%',
-              animation: 'shimmerPass 8s ease-in-out infinite',
+              background: 'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%)',
+              backgroundSize: '300% 300%',
+              animation: 'shimmerPass 12s ease-in-out infinite',
+              mixBlendMode: 'overlay',
             }}
           />
         </>
       )}
 
-      {/* STANDARD FOIL: Subtle rainbow effect */}
+      {/* STANDARD FOIL: Delicate rainbow shimmer */}
       {!isPrize && (
         <>
-          {/* Subtle color gradients */}
+          {/* Soft rainbow gradients */}
           <div
             className="absolute inset-0 z-20 pointer-events-none"
             style={{
               background: `
-                radial-gradient(ellipse 300px 400px at 25% 25%,
-                  rgba(255, 0, 200, 0.3) 0%,
-                  rgba(255, 100, 150, 0.2) 30%,
-                  transparent 50%),
-                radial-gradient(ellipse 400px 300px at 75% 35%,
-                  rgba(255, 255, 0, 0.3) 0%,
-                  rgba(200, 255, 0, 0.2) 30%,
-                  transparent 50%),
-                radial-gradient(ellipse 350px 350px at 50% 70%,
-                  rgba(0, 200, 255, 0.3) 0%,
-                  rgba(0, 255, 200, 0.2) 30%,
-                  transparent 50%)
+                radial-gradient(ellipse 350px 450px at 30% 30%,
+                  rgba(200, 150, 255, 0.25) 0%,
+                  rgba(180, 100, 255, 0.15) 25%,
+                  transparent 45%),
+                radial-gradient(ellipse 400px 350px at 70% 40%,
+                  rgba(100, 200, 255, 0.25) 0%,
+                  rgba(150, 220, 255, 0.15) 25%,
+                  transparent 45%),
+                radial-gradient(ellipse 380px 380px at 50% 70%,
+                  rgba(150, 255, 200, 0.25) 0%,
+                  rgba(100, 255, 180, 0.15) 25%,
+                  transparent 45%)
               `,
-              filter: 'blur(8px)',
-              animation: 'blobMove 10s ease-in-out infinite',
+              filter: 'blur(30px)',
+              animation: 'blobMove 12s ease-in-out infinite',
               mixBlendMode: 'overlay',
+              opacity: 0.6,
             }}
           />
 
-          {/* Shimmer effect */}
+          {/* Light shimmer */}
           <div
-            className="absolute inset-0 z-30 pointer-events-none"
+            className="absolute inset-0 z-[21] pointer-events-none"
             style={{
-              background: 'linear-gradient(125deg, transparent 40%, rgba(255, 255, 255, 0.2) 50%, transparent 60%)',
-              backgroundSize: '200% 200%',
-              animation: 'shimmerPass 3s ease-in-out infinite',
+              background: 'linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%)',
+              backgroundSize: '250% 250%',
+              animation: 'shimmerPass 8s ease-in-out infinite',
+              mixBlendMode: 'overlay',
             }}
           />
         </>
@@ -152,40 +158,47 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
       <style jsx>{`
         @keyframes blobMove {
           0%, 100% {
-            transform: rotate(0deg) translate(0, 0);
+            transform: rotate(0deg) translate(0, 0) scale(1);
           }
-          25% {
-            transform: rotate(90deg) translate(5%, -5%);
+          20% {
+            transform: rotate(72deg) translate(3%, -2%) scale(1.05);
           }
-          50% {
-            transform: rotate(180deg) translate(-5%, 5%);
+          40% {
+            transform: rotate(144deg) translate(-2%, 3%) scale(0.98);
           }
-          75% {
-            transform: rotate(270deg) translate(5%, 5%);
+          60% {
+            transform: rotate(216deg) translate(2%, 2%) scale(1.02);
+          }
+          80% {
+            transform: rotate(288deg) translate(-3%, -1%) scale(0.96);
           }
         }
 
         @keyframes flowMove {
           0%, 100% {
             transform: scale(1) rotate(0deg);
-            filter: blur(12px) hue-rotate(0deg);
+            filter: blur(25px) hue-rotate(0deg);
           }
-          33% {
-            transform: scale(1.2) rotate(120deg);
-            filter: blur(8px) hue-rotate(120deg);
+          25% {
+            transform: scale(1.15) rotate(90deg);
+            filter: blur(20px) hue-rotate(90deg);
           }
-          66% {
-            transform: scale(0.9) rotate(240deg);
-            filter: blur(15px) hue-rotate(240deg);
+          50% {
+            transform: scale(0.95) rotate(180deg);
+            filter: blur(30px) hue-rotate(180deg);
+          }
+          75% {
+            transform: scale(1.08) rotate(270deg);
+            filter: blur(22px) hue-rotate(270deg);
           }
         }
 
         @keyframes shimmerPass {
           0% {
-            background-position: -100% -100%;
+            background-position: -150% -150%;
           }
           100% {
-            background-position: 200% 200%;
+            background-position: 250% 250%;
           }
         }
       `}</style>
