@@ -486,13 +486,6 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
     return 'ring-vintage-charcoal shadow-lg';
   };
 
-  const getFoilEffect = (foil: string) => {
-    const f = (foil || '').toLowerCase();
-    if (f.includes('prize')) return 'prize-foil';
-    if (f.includes('standard')) return 'standard-foil';
-    return '';
-  };
-
   const fallbacks = useMemo(() => {
     const allUrls = [];
     if (nft.imageUrl) allUrls.push(nft.imageUrl);
@@ -507,18 +500,6 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
 
   const currentSrc = fallbacks[imgError] || fallbacks[fallbacks.length - 1];
   const foilValue = (nft.foil || '').trim();
-  const foilEffect = getFoilEffect(foilValue);
-  const isPrizeFoil = foilValue.toLowerCase().includes('prize');
-
-  // Debug Prize Foil
-  if (foilValue && foilValue.toLowerCase().includes('prize')) {
-    devLog(`🌟 Prize Foil Card #${nft.tokenId}:`, {
-      foilValue,
-      foilEffect,
-      isPrizeFoil,
-      hasEffect: !!foilEffect
-    });
-  }
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -630,95 +611,45 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           }
         }
 
-        .prize-foil {
-          background:
-            linear-gradient(
-              90deg,
-              transparent 0%,
-              rgba(255, 255, 255, 0.4) 45%,
-              rgba(255, 255, 255, 0.6) 50%,
-              rgba(255, 255, 255, 0.4) 55%,
-              transparent 100%
-            ),
-            linear-gradient(
-              45deg,
-              #ff0080 0%,
-              #ff3366 8%,
-              #ff8c00 16%,
-              #ffb84d 24%,
-              #ffd700 32%,
-              #80ff00 40%,
-              #00ff80 48%,
-              #00ffff 56%,
-              #0080ff 64%,
-              #4d4dff 72%,
-              #8000ff 80%,
-              #cc00ff 88%,
-              #ff00ff 96%,
-              #ff0080 100%
-            );
-          background-size: 300% 100%, 600% 600%;
-          animation: holographic 8s ease-in-out infinite, rainbowShine 6s ease-in-out infinite;
-          mix-blend-mode: overlay;
-          pointer-events: none;
-          opacity: 0.7;
-        }
-
-        .standard-foil {
-          background: linear-gradient(
-            135deg,
-            rgba(150, 220, 255, 0.7) 0%,
-            rgba(220, 150, 255, 0.7) 25%,
-            rgba(150, 255, 220, 0.7) 50%,
-            rgba(255, 200, 150, 0.7) 75%,
-            rgba(150, 220, 255, 0.7) 100%
-          );
-          background-size: 400% 400%;
-          animation: holographic 4s ease-in-out infinite;
-          mix-blend-mode: overlay;
-          pointer-events: none;
-          opacity: 0.8;
-          filter: brightness(1.2) saturate(1.3);
-        }
-        
         .prize-card-ring {
           animation: prizeGlow 2s ease-in-out infinite;
         }
       `}</style>
       
       <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick} style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}>
-        <div className={`relative rounded-xl ${
-          selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
-          'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
-        } ${(nft.rarity || '').toLowerCase().includes('legend') || (nft.rarity || '').toLowerCase().includes('mythic') ? 'legendary-card' : ''}`} style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)', overflow: 'hidden'}}>
-          <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
+        <FoilCardEffect
+          foilType={(foilValue === 'Standard' || foilValue === 'Prize') ? foilValue as 'Standard' | 'Prize' : null}
+          className={`relative rounded-xl ${
+            selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
+            'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
+          } ${(nft.rarity || '').toLowerCase().includes('legend') || (nft.rarity || '').toLowerCase().includes('mythic') ? 'legendary-card' : ''}`}
+        >
+          <div style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)', overflow: 'hidden'}} className="rounded-xl">
+            <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
 
-          {/* Card Reflection on Hover */}
-          <div className="card-reflection"></div>
+            {/* Card Reflection on Hover */}
+            <div className="card-reflection"></div>
 
-          {foilEffect && (
-            <div className={`absolute inset-0 ${foilEffect}`}></div>
-          )}
-
-          <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
-            <div className="flex items-center justify-between">
-              <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{nft.power || 0} PWR</span>
-              {selected && <span className="text-vintage-gold text-2xl drop-shadow-lg font-bold">✓</span>}
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
+              <div className="flex items-center justify-between">
+                <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{nft.power || 0} PWR</span>
+                {selected && <span className="text-vintage-gold text-2xl drop-shadow-lg font-bold">✓</span>}
+              </div>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-3 pointer-events-none z-20">
+              {nft.rarity && (
+                <div className="text-xs font-bold uppercase tracking-wider text-white drop-shadow-lg">
+                  {nft.rarity}
+                </div>
+              )}
+              {nft.wear && (
+                <div className="text-xs text-yellow-300 font-semibold drop-shadow-lg">
+                  {nft.wear}
+                </div>
+              )}
             </div>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-3 pointer-events-none z-20">
-            {nft.rarity && (
-              <div className="text-xs font-bold uppercase tracking-wider text-white drop-shadow-lg">
-                {nft.rarity}
-              </div>
-            )}
-            {nft.wear && (
-              <div className="text-xs text-yellow-300 font-semibold drop-shadow-lg">
-                {nft.wear}
-              </div>
-            )}
-          </div>
-        </div>
+        </FoilCardEffect>
       </div>
     </>
   );
