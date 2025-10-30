@@ -535,3 +535,50 @@ export const incrementStatSecure = mutation({
     console.log(`✅ SECURE: ${stat} incremented for`, address);
   },
 });
+
+// ============================================================================
+// MIGRATION: Clean old defense deck format
+// ============================================================================
+
+/**
+ * MIGRATION: Clean old defense decks (array of strings → array of objects)
+ * Run once to clean legacy data from Firebase migration
+ */
+export const cleanOldDefenseDecks = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("profiles").collect();
+
+    let cleanedCount = 0;
+    let skippedCount = 0;
+
+    for (const profile of profiles) {
+      if (!profile.defenseDeck || profile.defenseDeck.length === 0) {
+        skippedCount++;
+        continue;
+      }
+
+      // Check if first element is a string (old format)
+      const firstCard = profile.defenseDeck[0];
+      if (typeof firstCard === 'string') {
+        console.log(`Cleaning old defense deck for ${profile.username} (${profile.address})`);
+
+        await ctx.db.patch(profile._id, {
+          defenseDeck: undefined,
+        });
+
+        cleanedCount++;
+      } else {
+        skippedCount++;
+      }
+    }
+
+    console.log(`✅ Migration complete: ${cleanedCount} cleaned, ${skippedCount} skipped`);
+
+    return {
+      cleanedCount,
+      skippedCount,
+      totalProfiles: profiles.length,
+    };
+  },
+});
