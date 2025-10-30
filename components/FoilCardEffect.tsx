@@ -113,39 +113,39 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
         </>
       )}
 
-      {/* STANDARD FOIL: Delicate rainbow shimmer */}
+      {/* STANDARD FOIL: Visible rainbow shimmer */}
       {!isPrize && (
         <>
-          {/* Soft rainbow gradients */}
+          {/* Rainbow color gradients */}
           <div
             className="absolute inset-0 z-20 pointer-events-none"
             style={{
               background: `
                 radial-gradient(ellipse 350px 450px at 30% 30%,
-                  rgba(200, 150, 255, 0.25) 0%,
-                  rgba(180, 100, 255, 0.15) 25%,
-                  transparent 45%),
+                  rgba(200, 150, 255, 0.45) 0%,
+                  rgba(180, 100, 255, 0.3) 25%,
+                  transparent 50%),
                 radial-gradient(ellipse 400px 350px at 70% 40%,
-                  rgba(100, 200, 255, 0.25) 0%,
-                  rgba(150, 220, 255, 0.15) 25%,
-                  transparent 45%),
+                  rgba(100, 200, 255, 0.45) 0%,
+                  rgba(150, 220, 255, 0.3) 25%,
+                  transparent 50%),
                 radial-gradient(ellipse 380px 380px at 50% 70%,
-                  rgba(150, 255, 200, 0.25) 0%,
-                  rgba(100, 255, 180, 0.15) 25%,
-                  transparent 45%)
+                  rgba(150, 255, 200, 0.45) 0%,
+                  rgba(100, 255, 180, 0.3) 25%,
+                  transparent 50%)
               `,
-              filter: 'blur(30px)',
+              filter: 'blur(25px)',
               animation: 'blobMove 12s ease-in-out infinite',
               mixBlendMode: 'overlay',
-              opacity: 0.6,
+              opacity: 0.85,
             }}
           />
 
-          {/* Light shimmer */}
+          {/* Shimmer sweep */}
           <div
             className="absolute inset-0 z-[21] pointer-events-none"
             style={{
-              background: 'linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%)',
+              background: 'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%)',
               backgroundSize: '250% 250%',
               animation: 'shimmerPass 8s ease-in-out infinite',
               mixBlendMode: 'overlay',
