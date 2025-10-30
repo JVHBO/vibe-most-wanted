@@ -205,7 +205,15 @@ export const updateStats = mutation({
 export const updateDefenseDeck = mutation({
   args: {
     address: v.string(),
-    defenseDeck: v.array(v.string()),
+    defenseDeck: v.array(
+      v.object({
+        tokenId: v.string(),
+        power: v.number(),
+        imageUrl: v.string(),
+        name: v.string(),
+        rarity: v.string(),
+      })
+    ),
   },
   handler: async (ctx, { address, defenseDeck }) => {
     const profile = await ctx.db
@@ -365,7 +373,15 @@ export const updateDefenseDeckSecure = mutation({
     address: v.string(),
     signature: v.string(),
     message: v.string(),
-    defenseDeck: v.array(v.string()),
+    defenseDeck: v.array(
+      v.object({
+        tokenId: v.string(),
+        power: v.number(),
+        imageUrl: v.string(),
+        name: v.string(),
+        rarity: v.string(),
+      })
+    ),
   },
   handler: async (ctx, { address, signature, message, defenseDeck }) => {
     // 1. Authenticate with full backend ECDSA verification

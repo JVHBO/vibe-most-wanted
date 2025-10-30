@@ -1576,8 +1576,16 @@ export default function TCGPage() {
     if (!address || !userProfile || selectedCards.length !== HAND_SIZE_CONST) return;
 
     try {
-      const tokenIds = selectedCards.map(card => card.tokenId);
-      await ConvexProfileService.updateDefenseDeck(address, tokenIds);
+      // ✅ MUDANÇA: Salvar objetos completos ao invés de apenas tokenIds
+      const defenseDeckData = selectedCards.map(card => ({
+        tokenId: card.tokenId,
+        power: card.power || 0,
+        imageUrl: card.imageUrl || '',
+        name: card.name || `Card #${card.tokenId}`,
+        rarity: card.rarity || 'Common',
+      }));
+
+      await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
 
       if (soundEnabled) AudioManager.buttonSuccess();
       setShowDefenseDeckSaved(true);
@@ -2815,55 +2823,19 @@ export default function TCGPage() {
                   // Prevent multiple clicks
                   setIsAttacking(true);
 
-                  // Fetch ONLY the defender's defense deck cards (fast!)
-                  let defenderNFTs: any[] = [];
-                  try {
-                    const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
+                  // ✅ MUDANÇA: Usar dados salvos ao invés de recalcular
+                  devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                  devLog(`⚔️  ATTACKING: ${targetPlayer.username}`);
+                  devLog(`🛡️  Using saved defense deck data (no NFT fetch needed)`);
 
-                    // ✅ OPTIMIZED: Only fetch enough pages to find the 5 defense deck cards
-                    const defenseDeckIds = (targetPlayer.defenseDeck || []).map(String);
-
-                    defenderNFTs = await fetchAndProcessNFTs(targetPlayer.address, {
-                      maxPages: 5,  // ✅ Much faster: only 5 pages max instead of 20
-                      refreshMetadata: false, // ✅ Skip metadata refresh for speed
-                      targetTokenIds: defenseDeckIds, // ✅ Stop early when found all cards
-                    });
-
-                    // Debug: Show what was found
-                    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    devLog(`⚔️  ATTACKING: ${targetPlayer.username}`);
-                    devLog(`📦 Total NFTs fetched: ${defenderNFTs.length}`);
-                    devLog(`🛡️  Defense Deck IDs:`, defenseDeckIds);
-
-                  } catch (error) {
-                    devError('Error fetching defender NFTs:', error);
-                  }
-
-                  // Create defender card objects (hidden cards with card back)
-                  const cardBackUrl = 'data:image/svg+xml;base64,' + btoa(`
-                    <svg width="300" height="420" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" style="stop-color:#8B0000;stop-opacity:1" />
-                          <stop offset="100%" style="stop-color:#4B0000;stop-opacity:1" />
-                        </linearGradient>
-                      </defs>
-                      <rect width="300" height="420" fill="url(#grad)" rx="20"/>
-                      <rect x="20" y="20" width="260" height="380" fill="none" stroke="#FFD700" stroke-width="4" rx="15"/>
-                      <circle cx="150" cy="210" r="80" fill="none" stroke="#FFD700" stroke-width="3"/>
-                      <text x="150" y="230" font-family="Arial" font-size="60" fill="#FFD700" text-anchor="middle" font-weight="bold">?</text>
-                    </svg>
-                  `);
-
-                  const defenderCards = (targetPlayer.defenseDeck || []).map((tokenId, i) => {
-                    // Find the actual card from defender's NFTs (compare as strings to handle type mismatch)
-                    const actualCard = defenderNFTs.find(nft => String(nft.tokenId) === String(tokenId));
-                    devLog(`🃏 Card ${i+1}: ID=${tokenId}, Found=${!!actualCard}, Name="${actualCard?.name || 'NOT FOUND'}", Rarity="${actualCard?.rarity || 'N/A'}"`);
+                  const defenderCards = (targetPlayer.defenseDeck || []).map((card, i) => {
+                    devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);
                     return {
-                      tokenId: tokenId,
-                      imageUrl: actualCard?.imageUrl || cardBackUrl,
-                      power: actualCard ? calcPower(actualCard) : 20, // Use real power or fallback to 20
-                      name: actualCard?.name || `Defense Card #${i + 1}`
+                      tokenId: card.tokenId,
+                      power: card.power,           // ✅ USA PODER SALVO
+                      imageUrl: card.imageUrl,
+                      name: card.name,
+                      rarity: card.rarity,
                     };
                   });
                   devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

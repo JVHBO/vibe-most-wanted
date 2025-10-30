@@ -28,7 +28,13 @@ export interface UserProfile {
     defenseWins: number;
     defenseLosses: number;
   };
-  defenseDeck?: string[];
+  defenseDeck?: {
+    tokenId: string;
+    power: number;
+    imageUrl: string;
+    name: string;
+    rarity: string;
+  }[];
   attacksToday: number;
   rematchesToday: number;
   lastAttackDate?: string;
@@ -211,7 +217,13 @@ export class ConvexProfileService {
    */
   static async updateDefenseDeck(
     address: string,
-    defenseDeck: string[]
+    defenseDeck: {
+      tokenId: string;
+      power: number;
+      imageUrl: string;
+      name: string;
+      rarity: string;
+    }[]
   ): Promise<void> {
     try {
       const normalizedAddress = address.toLowerCase();
