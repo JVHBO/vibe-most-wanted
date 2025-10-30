@@ -38,6 +38,11 @@ export const metadata: Metadata = {
   title: "VIBE MOST WANTED - NFT Card Game",
   description: "Battle with your VIBE NFT cards in PvE and PvP modes. Join the most wanted card game on Base!",
   manifest: "/.well-known/farcaster.json",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
   openGraph: {
     title: "VIBE MOST WANTED - NFT Card Game",
     description: "Battle with your VIBE NFT cards in PvE and PvP modes",
