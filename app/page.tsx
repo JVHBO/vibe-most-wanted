@@ -13,6 +13,7 @@ import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import FoilCardEffect from "@/components/FoilCardEffect";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -1583,6 +1584,7 @@ export default function TCGPage() {
         imageUrl: card.imageUrl || '',
         name: card.name || `Card #${card.tokenId}`,
         rarity: card.rarity || 'Common',
+        foil: card.foil || undefined,
       }));
 
       await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
@@ -4041,10 +4043,10 @@ export default function TCGPage() {
                 <div className="bg-vintage-felt-green p-4 rounded-xl border-2 border-vintage-gold/40 mb-4" style={{boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.6)', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,.05) 2px, rgba(0,0,0,.05) 4px)'}}>
                   <div className="grid grid-cols-5 gap-2 min-h-[120px]">
                     {selectedCards.map((c, i) => (
-                      <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
+                      <FoilCardEffect key={i} foilType={c.foil} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
                         <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
                         <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
-                      </div>
+                      </FoilCardEffect>
                     ))}
                     {[...Array(HAND_SIZE_CONST - selectedCards.length)].map((_, i) => (
                       <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
@@ -4137,10 +4139,10 @@ export default function TCGPage() {
                       <p className="text-xs font-modern font-semibold text-vintage-gold mb-3"><span className="text-lg">♦</span> {t('dealerCards').toUpperCase()}</p>
                       <div className="grid grid-cols-5 gap-2 mb-3">
                         {dealerCards.map((c, i) => (
-                          <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/30">
+                          <FoilCardEffect key={i} foilType={c.foil} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/30">
                             <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
                             <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br">{c.power}</div>
-                          </div>
+                          </FoilCardEffect>
                         ))}
                       </div>
                       <div className="text-right">
