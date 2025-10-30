@@ -42,7 +42,7 @@
     "tokenId": "2",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a410e19f3dea9aff4b82aa382840babe",
     "name": "Vibe Most Wanted #2",
     "attributes": [
@@ -81,7 +81,7 @@
     "tokenId": "3",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b90069fd9d9da42c2cd6416d12da4073",
     "name": "Vibe Most Wanted #3",
     "attributes": [
@@ -120,7 +120,7 @@
     "tokenId": "9",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2108ff44d8a68a96ffab496796a2b995",
     "name": "Vibe Most Wanted #9",
     "attributes": [
@@ -159,7 +159,7 @@
     "tokenId": "10",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4143f5ab0e395293d12b44caa4fcc0c9",
     "name": "Vibe Most Wanted #10",
     "attributes": [
@@ -198,7 +198,7 @@
     "tokenId": "12",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7712a941ed369a9afbc26042a0cc9ebf",
     "name": "Vibe Most Wanted #12",
     "attributes": [
@@ -237,7 +237,7 @@
     "tokenId": "13",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/15e53335b8893e83d0224636a0743931",
     "name": "Vibe Most Wanted #13",
     "attributes": [
@@ -510,7 +510,7 @@
     "tokenId": "28",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1027fc257a7ad950dd96efa44b3f8ff7",
     "name": "Vibe Most Wanted #28",
     "attributes": [
@@ -627,7 +627,7 @@
     "tokenId": "31",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0be4784d5666dec156687b97cf936762",
     "name": "Vibe Most Wanted #31",
     "attributes": [
@@ -666,7 +666,7 @@
     "tokenId": "32",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/35dabe4b823f238850f9755e4a006d01",
     "name": "Vibe Most Wanted #32",
     "attributes": [
@@ -744,7 +744,7 @@
     "tokenId": "34",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e5f554c280d5acdded2398fd63769245",
     "name": "Vibe Most Wanted #34",
     "attributes": [
@@ -783,7 +783,7 @@
     "tokenId": "35",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e62c0fd4b0e9ddfb68346f9940688178",
     "name": "Vibe Most Wanted #35",
     "attributes": [
@@ -900,7 +900,7 @@
     "tokenId": "38",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ed1ddb232521ed7c12b3cf592fd24f28",
     "name": "Vibe Most Wanted #38",
     "attributes": [
@@ -939,7 +939,7 @@
     "tokenId": "39",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e5075d41444ee91267613fce0f97e286",
     "name": "Vibe Most Wanted #39",
     "attributes": [
@@ -978,7 +978,7 @@
     "tokenId": "40",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9401bd8fecbcd865d63c3e537b7e544a",
     "name": "Vibe Most Wanted #40",
     "attributes": [
@@ -1017,7 +1017,7 @@
     "tokenId": "41",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e97385519e6d0c594f5f3659c0dff51",
     "name": "Vibe Most Wanted #41",
     "attributes": [
@@ -1056,7 +1056,7 @@
     "tokenId": "42",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/08c01ecbc591a7268d8541bb411d2792",
     "name": "Vibe Most Wanted #42",
     "attributes": [
@@ -1095,7 +1095,7 @@
     "tokenId": "43",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/906a13931024df2b4cc7268825f5d8bc",
     "name": "Vibe Most Wanted #43",
     "attributes": [
@@ -1173,7 +1173,7 @@
     "tokenId": "45",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f512bb158e8366d5de3928589d2af061",
     "name": "Vibe Most Wanted #45",
     "attributes": [
@@ -1368,7 +1368,7 @@
     "tokenId": "50",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fd97a46279d1b80f45faf4739a245da1",
     "name": "Vibe Most Wanted #50",
     "attributes": [
@@ -1407,7 +1407,7 @@
     "tokenId": "51",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fb15b03d340dc9481416f208c0fba80c",
     "name": "Vibe Most Wanted #51",
     "attributes": [
@@ -1524,7 +1524,7 @@
     "tokenId": "54",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3f3af5f75a995f2dbb714acafb37b5e2",
     "name": "Vibe Most Wanted #54",
     "attributes": [
@@ -1602,7 +1602,7 @@
     "tokenId": "89",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8717debb2f0c419a8c22be87ab886b27",
     "name": "Vibe Most Wanted #89",
     "attributes": [
@@ -1715,7 +1715,7 @@
     "tokenId": "92",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0a002eb5c988f97b44d44864d9f6a3c7",
     "name": "Vibe Most Wanted #92",
     "attributes": [
@@ -1867,7 +1867,7 @@
     "tokenId": "97",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/65cbc442cc2e16c4ede8f959bb30aa79",
     "name": "Vibe Most Wanted #97",
     "attributes": [
@@ -1945,7 +1945,7 @@
     "tokenId": "112",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/011ec1411831c1b4de602f5e2bc50b1d",
     "name": "Vibe Most Wanted #112",
     "attributes": [
@@ -2023,7 +2023,7 @@
     "tokenId": "114",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/42f1b8232a42eb924b0aea49879c4946",
     "name": "Vibe Most Wanted #114",
     "attributes": [
@@ -2136,7 +2136,7 @@
     "tokenId": "118",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a845830f89e5eb2a32a0c5b5fbe06651",
     "name": "Vibe Most Wanted #118",
     "attributes": [
@@ -2175,7 +2175,7 @@
     "tokenId": "119",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2a448bcaa58807ded3b7d41e01b9d796",
     "name": "Vibe Most Wanted #119",
     "attributes": [
@@ -2253,7 +2253,7 @@
     "tokenId": "121",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/71ed9129f85460e644b6b2e1721729ab",
     "name": "Vibe Most Wanted #121",
     "attributes": [
@@ -2370,7 +2370,7 @@
     "tokenId": "124",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/aeee4d71fef1ad213fb045265b1a961f",
     "name": "Vibe Most Wanted #124",
     "attributes": [
@@ -2409,7 +2409,7 @@
     "tokenId": "125",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f6b270e455635646a652cf7164f69673",
     "name": "Vibe Most Wanted #125",
     "attributes": [
@@ -2483,7 +2483,7 @@
     "tokenId": "127",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/91e9fc9d9a886b905137d5033fd165aa",
     "name": "Vibe Most Wanted #127",
     "attributes": [
@@ -2600,7 +2600,7 @@
     "tokenId": "131",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e13241c64169b27d2fa88f324bba6644",
     "name": "Vibe Most Wanted #131",
     "attributes": [
@@ -2834,7 +2834,7 @@
     "tokenId": "218",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/93b868bb684f1d6b7c3aed98f4b9560d",
     "name": "Vibe Most Wanted #218",
     "attributes": [
@@ -2873,7 +2873,7 @@
     "tokenId": "219",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1a81ff2842cada1bb78b3fbb358c5b39",
     "name": "Vibe Most Wanted #219",
     "attributes": [
@@ -3029,7 +3029,7 @@
     "tokenId": "223",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e7160ee63b0a9774536f72717c574b98",
     "name": "Vibe Most Wanted #223",
     "attributes": [
@@ -3107,7 +3107,7 @@
     "tokenId": "225",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d38a74801dcf1eb537fc1fc072367d65",
     "name": "Vibe Most Wanted #225",
     "attributes": [
@@ -3146,7 +3146,7 @@
     "tokenId": "226",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f458103ac991a2b68c883eef45d79549",
     "name": "Vibe Most Wanted #226",
     "attributes": [
@@ -3224,7 +3224,7 @@
     "tokenId": "252",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e952ed5be5465780c9b179a149c7f5f5",
     "name": "Vibe Most Wanted #252",
     "attributes": [
@@ -3341,7 +3341,7 @@
     "tokenId": "263",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/25f92e7e692b1f0dc9606598401e7ae7",
     "name": "Vibe Most Wanted #263",
     "attributes": [
@@ -3419,7 +3419,7 @@
     "tokenId": "271",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2067f9899c7b238c4de27c65e547e752",
     "name": "Vibe Most Wanted #271",
     "attributes": [
@@ -3536,7 +3536,7 @@
     "tokenId": "362",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c1bfaddc976c187fb0a066583d3e2c50",
     "name": "Vibe Most Wanted #362",
     "attributes": [
@@ -3575,7 +3575,7 @@
     "tokenId": "363",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/75af9a0068d09ecdfb4bde84f52535ff",
     "name": "Vibe Most Wanted #363",
     "attributes": [
@@ -3770,7 +3770,7 @@
     "tokenId": "604",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/33206084488267b383fbf5e04c1249ba",
     "name": "Vibe Most Wanted #604",
     "attributes": [
@@ -3809,7 +3809,7 @@
     "tokenId": "605",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2f2c04371ccc8cd5f3e4a73abef6cd97",
     "name": "Vibe Most Wanted #605",
     "attributes": [
@@ -3848,7 +3848,7 @@
     "tokenId": "606",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a249a98faf38ff3e350a81b62b327f7d",
     "name": "Vibe Most Wanted #606",
     "attributes": [
@@ -3926,7 +3926,7 @@
     "tokenId": "608",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/be17c48c1b83b9cce9aa6f4474546af3",
     "name": "Vibe Most Wanted #608",
     "attributes": [
@@ -4004,7 +4004,7 @@
     "tokenId": "610",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/96ab9acc5db8ffe1116312a9f14eb5f2",
     "name": "Vibe Most Wanted #610",
     "attributes": [
@@ -4043,7 +4043,7 @@
     "tokenId": "711",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1368d04fc119f63007fcb616db77130a",
     "name": "Vibe Most Wanted #711",
     "attributes": [
@@ -4160,7 +4160,7 @@
     "tokenId": "714",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/900f3710789404656c2b6de5b96994af",
     "name": "Vibe Most Wanted #714",
     "attributes": [
@@ -4277,7 +4277,7 @@
     "tokenId": "717",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0702ed5a9fce4e3a0f34797581b352ba",
     "name": "Vibe Most Wanted #717",
     "attributes": [
@@ -4394,7 +4394,7 @@
     "tokenId": "720",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/abbf6a660f651605e16775efce44cd13",
     "name": "Vibe Most Wanted #720",
     "attributes": [
@@ -4433,7 +4433,7 @@
     "tokenId": "940",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bef31672522d959f1b44104a4148bbb3",
     "name": "Vibe Most Wanted #940",
     "attributes": [
@@ -4589,7 +4589,7 @@
     "tokenId": "1593",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dee699940d88b707d6c7c2059e6415a0",
     "name": "Vibe Most Wanted #1593",
     "attributes": [
@@ -4628,7 +4628,7 @@
     "tokenId": "1595",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/55f227041b88d1a32199c35f02b6bb44",
     "name": "Vibe Most Wanted #1595",
     "attributes": [
@@ -4667,7 +4667,7 @@
     "tokenId": "1596",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3b96548cebddfef1735c7457bbfbd369",
     "name": "Vibe Most Wanted #1596",
     "attributes": [
@@ -4706,7 +4706,7 @@
     "tokenId": "1600",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9ee4d1535329ca7a549fa2d3d9b1b68a",
     "name": "Vibe Most Wanted #1600",
     "attributes": [
@@ -4784,7 +4784,7 @@
     "tokenId": "1602",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ca7acef9b47199d11d467887b1644f3a",
     "name": "Vibe Most Wanted #1602",
     "attributes": [
@@ -4979,7 +4979,7 @@
     "tokenId": "1608",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6b3dcdb7c390ae4fd684c63a74d5b930",
     "name": "Vibe Most Wanted #1608",
     "attributes": [
@@ -5213,7 +5213,7 @@
     "tokenId": "1614",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0d17eb55fbd47185ccb9bca401387d47",
     "name": "Vibe Most Wanted #1614",
     "attributes": [
@@ -5291,7 +5291,7 @@
     "tokenId": "1616",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 225,
+    "power": 84,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/20aa3668e707ecbff2056dafda940df7",
     "name": "Vibe Most Wanted #1616",
     "attributes": [
@@ -5330,7 +5330,7 @@
     "tokenId": "1617",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bd3ecf9fa6b2811a096946182a096143",
     "name": "Vibe Most Wanted #1617",
     "attributes": [
@@ -5408,7 +5408,7 @@
     "tokenId": "1619",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a639a79813b1a80bf7103326c036b72f",
     "name": "Vibe Most Wanted #1619",
     "attributes": [
@@ -5525,7 +5525,7 @@
     "tokenId": "1622",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/03b161375b4e3256e93165db772b583a",
     "name": "Vibe Most Wanted #1622",
     "attributes": [
@@ -5564,7 +5564,7 @@
     "tokenId": "1623",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/92f8bec0f0bde156b3f871a86a09daca",
     "name": "Vibe Most Wanted #1623",
     "attributes": [
@@ -5642,7 +5642,7 @@
     "tokenId": "1625",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6195d92e5b51b41b172d9d159c900c83",
     "name": "Vibe Most Wanted #1625",
     "attributes": [
@@ -5720,7 +5720,7 @@
     "tokenId": "1627",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d4a3f9a4348181ca21095d20e1337c77",
     "name": "Vibe Most Wanted #1627",
     "attributes": [
@@ -5876,7 +5876,7 @@
     "tokenId": "1631",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e9194ed36c5f73ed9b61da122f77be35",
     "name": "Vibe Most Wanted #1631",
     "attributes": [
@@ -5915,7 +5915,7 @@
     "tokenId": "1632",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8b21a49100a2770d32b7fd32ff43430b",
     "name": "Vibe Most Wanted #1632",
     "attributes": [
@@ -5993,7 +5993,7 @@
     "tokenId": "1634",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6246043b928f41639a1ad4c57fb2a9eb",
     "name": "Vibe Most Wanted #1634",
     "attributes": [
@@ -6032,7 +6032,7 @@
     "tokenId": "1637",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/03b161375b4e3256e93165db772b583a",
     "name": "Vibe Most Wanted #1637",
     "attributes": [
@@ -6071,7 +6071,7 @@
     "tokenId": "1639",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3992d12c6ff33f8623a17730d1ce8921",
     "name": "Vibe Most Wanted #1639",
     "attributes": [
@@ -6110,7 +6110,7 @@
     "tokenId": "1640",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/94d6ad4b2ba2716dfcd46d25b3cd77a0",
     "name": "Vibe Most Wanted #1640",
     "attributes": [
@@ -6149,7 +6149,7 @@
     "tokenId": "1643",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e37379e8f4bb143baf4605ac7fe1311b",
     "name": "Vibe Most Wanted #1643",
     "attributes": [
@@ -6266,7 +6266,7 @@
     "tokenId": "1754",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/acba8d3a8fcbda172e3132d6f813c725",
     "name": "Vibe Most Wanted #1754",
     "attributes": [
@@ -6383,7 +6383,7 @@
     "tokenId": "1847",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/94d6ad4b2ba2716dfcd46d25b3cd77a0",
     "name": "Vibe Most Wanted #1847",
     "attributes": [
@@ -6461,7 +6461,7 @@
     "tokenId": "1855",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7026abd6369f375d6c4814c43b16d18c",
     "name": "Vibe Most Wanted #1855",
     "attributes": [
@@ -6617,7 +6617,7 @@
     "tokenId": "1939",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e7a82f8265343cf05ecd602324ca7a03",
     "name": "Vibe Most Wanted #1939",
     "attributes": [
@@ -6656,7 +6656,7 @@
     "tokenId": "1940",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/09b8f4c30c0228f756a05bdad4e0811c",
     "name": "Vibe Most Wanted #1940",
     "attributes": [
@@ -6851,7 +6851,7 @@
     "tokenId": "1945",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/550676cd6c041d7d5424feda81614ec8",
     "name": "Vibe Most Wanted #1945",
     "attributes": [
@@ -6890,7 +6890,7 @@
     "tokenId": "1946",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/626a12dbb925afd630aed6a26748b813",
     "name": "Vibe Most Wanted #1946",
     "attributes": [
@@ -7046,7 +7046,7 @@
     "tokenId": "1950",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9f0f57aa04375a154bcfc4acbe6f685",
     "name": "Vibe Most Wanted #1950",
     "attributes": [
@@ -7124,7 +7124,7 @@
     "tokenId": "1952",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e0677417400a6a8a67c6de0c7096352c",
     "name": "Vibe Most Wanted #1952",
     "attributes": [
@@ -7163,7 +7163,7 @@
     "tokenId": "1953",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e0677417400a6a8a67c6de0c7096352c",
     "name": "Vibe Most Wanted #1953",
     "attributes": [
@@ -7202,7 +7202,7 @@
     "tokenId": "1954",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/25c8799ddee79fa3a998b4772c4df529",
     "name": "Vibe Most Wanted #1954",
     "attributes": [
@@ -7474,8 +7474,8 @@
   {
     "tokenId": "1961",
     "rarity": "Rare",
-    "status": "Rarity Assigned",
-    "power": 375,
+    "status": "Burned",
+    "power": 225,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2e802f6cea40e0209ccc3c4981d6ecb3",
     "name": "Vibe Most Wanted #1961",
     "attributes": [
@@ -7490,7 +7490,7 @@
         "trait_type": "Randomness"
       },
       {
-        "value": "Rarity Assigned",
+        "value": "Burned",
         "trait_type": "Status"
       },
       {
@@ -7592,7 +7592,7 @@
     "tokenId": "1964",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e625aa5c370c3517f22cbbdff03fa59d",
     "name": "Vibe Most Wanted #1964",
     "attributes": [
@@ -7631,7 +7631,7 @@
     "tokenId": "1965",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0ef4927a5d7b2fa75b46beb0d72b4fec",
     "name": "Vibe Most Wanted #1965",
     "attributes": [
@@ -7670,7 +7670,7 @@
     "tokenId": "1966",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/682dd5e77253dcb679545cbf70f951c5",
     "name": "Vibe Most Wanted #1966",
     "attributes": [
@@ -7787,7 +7787,7 @@
     "tokenId": "1969",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e7a82f8265343cf05ecd602324ca7a03",
     "name": "Vibe Most Wanted #1969",
     "attributes": [
@@ -7865,7 +7865,7 @@
     "tokenId": "1971",
     "rarity": "Legendary",
     "status": "Rarity Assigned",
-    "power": 58,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d7736da792bbea347a2630ed26c41f67",
     "name": "Vibe Most Wanted #1971",
     "attributes": [
@@ -7904,7 +7904,7 @@
     "tokenId": "1972",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5e9e8c3237ac82ab2fe4c6bd254dc0ad",
     "name": "Vibe Most Wanted #1972",
     "attributes": [
@@ -7943,7 +7943,7 @@
     "tokenId": "1973",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9467566427e154c97f9711d67fa1415a",
     "name": "Vibe Most Wanted #1973",
     "attributes": [
@@ -8099,7 +8099,7 @@
     "tokenId": "1977",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/77821de2dd224a76cb60d7ed8b6c2afc",
     "name": "Vibe Most Wanted #1977",
     "attributes": [
@@ -8216,7 +8216,7 @@
     "tokenId": "1980",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6f8396af8c3e39697a496441bd960519",
     "name": "Vibe Most Wanted #1980",
     "attributes": [
@@ -8255,7 +8255,7 @@
     "tokenId": "1981",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0780ed1d96241f7d1d284063e2b9477e",
     "name": "Vibe Most Wanted #1981",
     "attributes": [
@@ -8294,7 +8294,7 @@
     "tokenId": "1982",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f14bfa167a94901fb484297a7243393b",
     "name": "Vibe Most Wanted #1982",
     "attributes": [
@@ -8333,7 +8333,7 @@
     "tokenId": "1983",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f24a3e5b8cad42341c7699bd18647c3a",
     "name": "Vibe Most Wanted #1983",
     "attributes": [
@@ -8450,7 +8450,7 @@
     "tokenId": "1986",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/682dd5e77253dcb679545cbf70f951c5",
     "name": "Vibe Most Wanted #1986",
     "attributes": [
@@ -8489,7 +8489,7 @@
     "tokenId": "1987",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/682dd5e77253dcb679545cbf70f951c5",
     "name": "Vibe Most Wanted #1987",
     "attributes": [
@@ -8567,7 +8567,7 @@
     "tokenId": "2378",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4bc8ca6476f0cff0bc88fea000b290fe",
     "name": "Vibe Most Wanted #2378",
     "attributes": [
@@ -8762,7 +8762,7 @@
     "tokenId": "2518",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4184e94deac3d16d989d014308cab2d9",
     "name": "Vibe Most Wanted #2518",
     "attributes": [
@@ -8801,7 +8801,7 @@
     "tokenId": "2519",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/76b3708791a2d282189b12ecd9331ac9",
     "name": "Vibe Most Wanted #2519",
     "attributes": [
@@ -8957,7 +8957,7 @@
     "tokenId": "2884",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3517c759f4bc3391bc70fc497a637188",
     "name": "Vibe Most Wanted #2884",
     "attributes": [
@@ -8996,7 +8996,7 @@
     "tokenId": "2889",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/427a5cc4600e28a41b00460f9320182b",
     "name": "Vibe Most Wanted #2889",
     "attributes": [
@@ -9074,7 +9074,7 @@
     "tokenId": "2891",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/94e8ddabba9cfbaf7823055b42c13fa6",
     "name": "Vibe Most Wanted #2891",
     "attributes": [
@@ -9113,7 +9113,7 @@
     "tokenId": "2892",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9180270cd95f73b8f191c11a154ae4e",
     "name": "Vibe Most Wanted #2892",
     "attributes": [
@@ -9152,7 +9152,7 @@
     "tokenId": "2893",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e80d1321d29f331492492730da481de",
     "name": "Vibe Most Wanted #2893",
     "attributes": [
@@ -9269,7 +9269,7 @@
     "tokenId": "3227",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/78cd75ebecd95a178c31f1270cf4a108",
     "name": "Vibe Most Wanted #3227",
     "attributes": [
@@ -9308,7 +9308,7 @@
     "tokenId": "3245",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/88944379644670f9fa28c73a23ad2ead",
     "name": "Vibe Most Wanted #3245",
     "attributes": [
@@ -9386,7 +9386,7 @@
     "tokenId": "3247",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8f6f5fd23d86bb67f7921f8c220d0329",
     "name": "Vibe Most Wanted #3247",
     "attributes": [
@@ -9503,7 +9503,7 @@
     "tokenId": "3250",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/01a8bb2e95eaeae400a49e0bc55d73af",
     "name": "Vibe Most Wanted #3250",
     "attributes": [
@@ -9659,7 +9659,7 @@
     "tokenId": "3254",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3517c759f4bc3391bc70fc497a637188",
     "name": "Vibe Most Wanted #3254",
     "attributes": [
@@ -9698,7 +9698,7 @@
     "tokenId": "3456",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/84bc47547bdaf1aac4039b66bfbbe1b0",
     "name": "Vibe Most Wanted #3456",
     "attributes": [
@@ -9737,7 +9737,7 @@
     "tokenId": "3459",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5539e0100c2a09b1ea6521ec94d9ede7",
     "name": "Vibe Most Wanted #3459",
     "attributes": [
@@ -9815,7 +9815,7 @@
     "tokenId": "3676",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/76a9604f656f9cf0fbcdf844ae961be1",
     "name": "Vibe Most Wanted #3676",
     "attributes": [
@@ -9893,7 +9893,7 @@
     "tokenId": "3680",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/554bec62d91b4bae708b6482a193e0ca",
     "name": "Vibe Most Wanted #3680",
     "attributes": [
@@ -9932,7 +9932,7 @@
     "tokenId": "3702",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/476e55dd6a6da0c7473325bc3223fb51",
     "name": "Vibe Most Wanted #3702",
     "attributes": [
@@ -9971,7 +9971,7 @@
     "tokenId": "3704",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7e8e645101b0e36a969c524e60fa8c6b",
     "name": "Vibe Most Wanted #3704",
     "attributes": [
@@ -10010,7 +10010,7 @@
     "tokenId": "3706",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 225,
+    "power": 84,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dc2f39b6951dc0516b8f5d50d4055df0",
     "name": "Vibe Most Wanted #3706",
     "attributes": [
@@ -10088,7 +10088,7 @@
     "tokenId": "3710",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e9ad35fc36f0532400f5951a692346cc",
     "name": "Vibe Most Wanted #3710",
     "attributes": [
@@ -10166,7 +10166,7 @@
     "tokenId": "3714",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0dfa1b763675005d883f263e283e1aaa",
     "name": "Vibe Most Wanted #3714",
     "attributes": [
@@ -10205,7 +10205,7 @@
     "tokenId": "3715",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0d5e278f1a234dfdef665bbb9dd1ec2c",
     "name": "Vibe Most Wanted #3715",
     "attributes": [
@@ -10322,7 +10322,7 @@
     "tokenId": "3720",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/050472d9f0f986e578d88c7b281aeb68",
     "name": "Vibe Most Wanted #3720",
     "attributes": [
@@ -10634,7 +10634,7 @@
     "tokenId": "4181",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0e3fca6d1b37d860f063aaeba32f758d",
     "name": "Vibe Most Wanted #4181",
     "attributes": [
@@ -10751,7 +10751,7 @@
     "tokenId": "4184",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/58e98c901fb75f5a99a8ef0318546693",
     "name": "Vibe Most Wanted #4184",
     "attributes": [
@@ -10790,7 +10790,7 @@
     "tokenId": "4185",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9fe028c0fc1fb6c64d6176e8aef44297",
     "name": "Vibe Most Wanted #4185",
     "attributes": [
@@ -10829,7 +10829,7 @@
     "tokenId": "4186",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7bff103bff320d1e1fdef1eaef316a1c",
     "name": "Vibe Most Wanted #4186",
     "attributes": [
@@ -11063,7 +11063,7 @@
     "tokenId": "4192",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ec22a582397ae2c54df083fb77258f1c",
     "name": "Vibe Most Wanted #4192",
     "attributes": [
@@ -11102,7 +11102,7 @@
     "tokenId": "4196",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1cd42d5e7cd20714f9d70687398090dc",
     "name": "Vibe Most Wanted #4196",
     "attributes": [
@@ -11141,7 +11141,7 @@
     "tokenId": "4197",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/921119f46bf9911be6f9a9525c0190ca",
     "name": "Vibe Most Wanted #4197",
     "attributes": [
@@ -11180,7 +11180,7 @@
     "tokenId": "4198",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ded2927333d0597727e6299cb2e1926c",
     "name": "Vibe Most Wanted #4198",
     "attributes": [
@@ -11219,7 +11219,7 @@
     "tokenId": "4200",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/749737188fcecd32e5b07e12fa9aa998",
     "name": "Vibe Most Wanted #4200",
     "attributes": [
@@ -11297,7 +11297,7 @@
     "tokenId": "4373",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/476e55dd6a6da0c7473325bc3223fb51",
     "name": "Vibe Most Wanted #4373",
     "attributes": [
@@ -11375,7 +11375,7 @@
     "tokenId": "4396",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/27ad9bacbcf72ccf0c00744000c069b2",
     "name": "Vibe Most Wanted #4396",
     "attributes": [
@@ -11414,7 +11414,7 @@
     "tokenId": "4397",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/235aef3a7b5b8e94fc69b7b6f289cc55",
     "name": "Vibe Most Wanted #4397",
     "attributes": [
@@ -11453,7 +11453,7 @@
     "tokenId": "4398",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3154ad0f93766a505905d7356c145daf",
     "name": "Vibe Most Wanted #4398",
     "attributes": [
@@ -11492,7 +11492,7 @@
     "tokenId": "4399",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1e4f5284ab5a0eae1f5fd01412be35c8",
     "name": "Vibe Most Wanted #4399",
     "attributes": [
@@ -11531,7 +11531,7 @@
     "tokenId": "4400",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/13edd2ffe6bf66bacac75b0201c150ab",
     "name": "Vibe Most Wanted #4400",
     "attributes": [
@@ -11570,7 +11570,7 @@
     "tokenId": "4401",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/016f6b4b82a0f96aed61261737ed16d2",
     "name": "Vibe Most Wanted #4401",
     "attributes": [
@@ -11609,7 +11609,7 @@
     "tokenId": "4402",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/478b684232f22edaf488d35c0bd4aa45",
     "name": "Vibe Most Wanted #4402",
     "attributes": [
@@ -11765,7 +11765,7 @@
     "tokenId": "4554",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/05c62569a5aa461400943546898d7394",
     "name": "Vibe Most Wanted #4554",
     "attributes": [
@@ -11843,7 +11843,7 @@
     "tokenId": "4556",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7cb75684c975cc6f006e7d3552f2b6cf",
     "name": "Vibe Most Wanted #4556",
     "attributes": [
@@ -12155,7 +12155,7 @@
     "tokenId": "4564",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4f7ba53fe93fd0a266b87aa1e876fb0a",
     "name": "Vibe Most Wanted #4564",
     "attributes": [
@@ -12194,7 +12194,7 @@
     "tokenId": "4565",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/44c5faa775e1f860c0d6b1ab4d33cdef",
     "name": "Vibe Most Wanted #4565",
     "attributes": [
@@ -12272,7 +12272,7 @@
     "tokenId": "4567",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dea3c674d39f202ad59faf9b5888fe19",
     "name": "Vibe Most Wanted #4567",
     "attributes": [
@@ -12350,7 +12350,7 @@
     "tokenId": "4569",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1c4aae18b381dce9a1751dfd037a18ae",
     "name": "Vibe Most Wanted #4569",
     "attributes": [
@@ -12389,7 +12389,7 @@
     "tokenId": "4570",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/38ef192cc5654d4d76f25fd2f8603c17",
     "name": "Vibe Most Wanted #4570",
     "attributes": [
@@ -12506,7 +12506,7 @@
     "tokenId": "4573",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b14f5458ed806f7ad1613aec6f817564",
     "name": "Vibe Most Wanted #4573",
     "attributes": [
@@ -12623,7 +12623,7 @@
     "tokenId": "4576",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/202fd968d4fd4a77391a4919f4facf8f",
     "name": "Vibe Most Wanted #4576",
     "attributes": [
@@ -12662,7 +12662,7 @@
     "tokenId": "4577",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/935332830ccfbec5a0e4a19c37ffd140",
     "name": "Vibe Most Wanted #4577",
     "attributes": [
@@ -12740,7 +12740,7 @@
     "tokenId": "4579",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/95717803bb57d92e13bbc4a7955bced1",
     "name": "Vibe Most Wanted #4579",
     "attributes": [
@@ -12857,7 +12857,7 @@
     "tokenId": "4582",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/53081e77ea6084a3ea6a5c9803c4683e",
     "name": "Vibe Most Wanted #4582",
     "attributes": [
@@ -12896,7 +12896,7 @@
     "tokenId": "4583",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d9d0316141187834893c8af07a26ef60",
     "name": "Vibe Most Wanted #4583",
     "attributes": [
@@ -12935,7 +12935,7 @@
     "tokenId": "4584",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/96a8ca50d0f4fb78c12ea11383101a2b",
     "name": "Vibe Most Wanted #4584",
     "attributes": [
@@ -13130,7 +13130,7 @@
     "tokenId": "4589",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d2c26e734e28e62a8736662f772b183a",
     "name": "Vibe Most Wanted #4589",
     "attributes": [
@@ -13247,7 +13247,7 @@
     "tokenId": "4592",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4f7ba53fe93fd0a266b87aa1e876fb0a",
     "name": "Vibe Most Wanted #4592",
     "attributes": [
@@ -13286,7 +13286,7 @@
     "tokenId": "4593",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a0ad700f83de5206ca44baf4bf726c31",
     "name": "Vibe Most Wanted #4593",
     "attributes": [
@@ -13325,7 +13325,7 @@
     "tokenId": "4594",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f0a79904166a65e17252066d77a46c33",
     "name": "Vibe Most Wanted #4594",
     "attributes": [
@@ -13364,7 +13364,7 @@
     "tokenId": "4595",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/42ef03179259cf71d9309e8305f10eee",
     "name": "Vibe Most Wanted #4595",
     "attributes": [
@@ -13442,7 +13442,7 @@
     "tokenId": "4597",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3edc73d9e6380531f09e469d13255634",
     "name": "Vibe Most Wanted #4597",
     "attributes": [
@@ -13520,7 +13520,7 @@
     "tokenId": "4599",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/556a80bd3ac7e9b93aba8fbef0b88868",
     "name": "Vibe Most Wanted #4599",
     "attributes": [
@@ -13676,7 +13676,7 @@
     "tokenId": "4603",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9ae208493524ad3d080dc6583c43e31a",
     "name": "Vibe Most Wanted #4603",
     "attributes": [
@@ -13754,7 +13754,7 @@
     "tokenId": "4605",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bc7359791a6b0a59a926e3d41f20833b",
     "name": "Vibe Most Wanted #4605",
     "attributes": [
@@ -13793,7 +13793,7 @@
     "tokenId": "4606",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a3e295b5b00e1a671957bed1b3bbd277",
     "name": "Vibe Most Wanted #4606",
     "attributes": [
@@ -13832,7 +13832,7 @@
     "tokenId": "4607",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/42dc1ef9d119aa3dccef37655f1436f1",
     "name": "Vibe Most Wanted #4607",
     "attributes": [
@@ -13949,7 +13949,7 @@
     "tokenId": "4612",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e0824b6763367aa395f276f04bd45489",
     "name": "Vibe Most Wanted #4612",
     "attributes": [
@@ -13988,7 +13988,7 @@
     "tokenId": "4615",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a61fa190bdcb68ace6561a16f4b75051",
     "name": "Vibe Most Wanted #4615",
     "attributes": [
@@ -14027,7 +14027,7 @@
     "tokenId": "4616",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c351ad356b15f8fffa8a693481aae494",
     "name": "Vibe Most Wanted #4616",
     "attributes": [
@@ -14066,7 +14066,7 @@
     "tokenId": "4617",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/342a29e677dfdda7777ec6c0f978ab8d",
     "name": "Vibe Most Wanted #4617",
     "attributes": [
@@ -14144,7 +14144,7 @@
     "tokenId": "4619",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9d75c45f23a339abb9a5706073d302f1",
     "name": "Vibe Most Wanted #4619",
     "attributes": [
@@ -14183,7 +14183,7 @@
     "tokenId": "4620",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f05cce9bb2481830bab2dcca11981e9e",
     "name": "Vibe Most Wanted #4620",
     "attributes": [
@@ -14378,7 +14378,7 @@
     "tokenId": "4633",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9cc49aff47af5f70f74afea5ba4438ff",
     "name": "Vibe Most Wanted #4633",
     "attributes": [
@@ -14417,7 +14417,7 @@
     "tokenId": "4636",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3735419c79e074ec10a28dd8947c0628",
     "name": "Vibe Most Wanted #4636",
     "attributes": [
@@ -14456,7 +14456,7 @@
     "tokenId": "4637",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ee9e29f919d31fdf106a54b7b83f314c",
     "name": "Vibe Most Wanted #4637",
     "attributes": [
@@ -14495,7 +14495,7 @@
     "tokenId": "4638",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dd577b688bd8d033261e6dd9732cc23e",
     "name": "Vibe Most Wanted #4638",
     "attributes": [
@@ -14651,7 +14651,7 @@
     "tokenId": "4643",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a2fe8864883f025dd9a63ed82bef0b78",
     "name": "Vibe Most Wanted #4643",
     "attributes": [
@@ -14768,7 +14768,7 @@
     "tokenId": "4648",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9180270cd95f73b8f191c11a154ae4e",
     "name": "Vibe Most Wanted #4648",
     "attributes": [
@@ -14807,7 +14807,7 @@
     "tokenId": "4650",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f7d92f6e010a0d68e68d52bee47e7a75",
     "name": "Vibe Most Wanted #4650",
     "attributes": [
@@ -14846,7 +14846,7 @@
     "tokenId": "4652",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/476e55dd6a6da0c7473325bc3223fb51",
     "name": "Vibe Most Wanted #4652",
     "attributes": [
@@ -14885,7 +14885,7 @@
     "tokenId": "4654",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b943b6ccd268115db4b8395411443fe8",
     "name": "Vibe Most Wanted #4654",
     "attributes": [
@@ -14924,7 +14924,7 @@
     "tokenId": "4656",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a5a878712c58a397e7332cdfc1ead635",
     "name": "Vibe Most Wanted #4656",
     "attributes": [
@@ -15002,7 +15002,7 @@
     "tokenId": "5679",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/24d502994673f6a0c3a10123f01b796c",
     "name": "Vibe Most Wanted #5679",
     "attributes": [
@@ -15041,7 +15041,7 @@
     "tokenId": "5682",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a3f6aff82b566571052f1812a0f24c8a",
     "name": "Vibe Most Wanted #5682",
     "attributes": [
@@ -15080,7 +15080,7 @@
     "tokenId": "5688",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b0068fe4ed6617d779a30ef269c1aeb2",
     "name": "Vibe Most Wanted #5688",
     "attributes": [
@@ -15158,7 +15158,7 @@
     "tokenId": "5690",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/24d502994673f6a0c3a10123f01b796c",
     "name": "Vibe Most Wanted #5690",
     "attributes": [
@@ -15353,7 +15353,7 @@
     "tokenId": "5695",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9cc49aff47af5f70f74afea5ba4438ff",
     "name": "Vibe Most Wanted #5695",
     "attributes": [
@@ -15509,7 +15509,7 @@
     "tokenId": "5699",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/10f29515afd6a34b05a43ab768578caa",
     "name": "Vibe Most Wanted #5699",
     "attributes": [
@@ -15548,7 +15548,7 @@
     "tokenId": "5700",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a74777b2b7f19b88b8edb03a4af49885",
     "name": "Vibe Most Wanted #5700",
     "attributes": [
@@ -15587,7 +15587,7 @@
     "tokenId": "5701",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/483233542502e36fc5a22a1b6352d82c",
     "name": "Vibe Most Wanted #5701",
     "attributes": [
@@ -15626,7 +15626,7 @@
     "tokenId": "5702",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/360cb1c5906331808ca2735742a448c9",
     "name": "Vibe Most Wanted #5702",
     "attributes": [
@@ -15704,7 +15704,7 @@
     "tokenId": "5704",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/58924d933161f31f853ba3ad210d3429",
     "name": "Vibe Most Wanted #5704",
     "attributes": [
@@ -15821,7 +15821,7 @@
     "tokenId": "5707",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a27a98f8fa7bb454ec264d816c2e24ce",
     "name": "Vibe Most Wanted #5707",
     "attributes": [
@@ -15938,7 +15938,7 @@
     "tokenId": "5710",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d4a36e64f5e69214ffb63c6d85179d91",
     "name": "Vibe Most Wanted #5710",
     "attributes": [
@@ -15977,7 +15977,7 @@
     "tokenId": "5711",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6548e2fc4021263e8adc7451e0b75229",
     "name": "Vibe Most Wanted #5711",
     "attributes": [
@@ -16094,7 +16094,7 @@
     "tokenId": "5720",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/cb5082a5df4b6064185eeacb9520d477",
     "name": "Vibe Most Wanted #5720",
     "attributes": [
@@ -16211,7 +16211,7 @@
     "tokenId": "5723",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7c4a58bdc7fb21c68a09ccedb340634d",
     "name": "Vibe Most Wanted #5723",
     "attributes": [
@@ -16328,7 +16328,7 @@
     "tokenId": "5758",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/380f55b229fd3845a1721e4b9bba198d",
     "name": "Vibe Most Wanted #5758",
     "attributes": [
@@ -16367,7 +16367,7 @@
     "tokenId": "5761",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7086657be11e19c5a553d9583059e036",
     "name": "Vibe Most Wanted #5761",
     "attributes": [
@@ -16406,7 +16406,7 @@
     "tokenId": "5763",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/069cf7853364004e4ea05e26e2d15c8b",
     "name": "Vibe Most Wanted #5763",
     "attributes": [
@@ -16445,7 +16445,7 @@
     "tokenId": "5773",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c3af1a524688dd73d31bf382802b29ce",
     "name": "Vibe Most Wanted #5773",
     "attributes": [
@@ -16718,7 +16718,7 @@
     "tokenId": "5833",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 46,
+    "power": 180,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0a40bdcf7ae5ffa3b5961230f3bc1764",
     "name": "Vibe Most Wanted #5833",
     "attributes": [
@@ -16796,7 +16796,7 @@
     "tokenId": "5835",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ae11d4aba5a074ba8bd3dcefcd615c4f",
     "name": "Vibe Most Wanted #5835",
     "attributes": [
@@ -16952,7 +16952,7 @@
     "tokenId": "5839",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/54dc7327edede11be0a0739df8b9bab1",
     "name": "Vibe Most Wanted #5839",
     "attributes": [
@@ -16991,7 +16991,7 @@
     "tokenId": "5840",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/74e1a2fd62bfd90b11535bd6c8766f25",
     "name": "Vibe Most Wanted #5840",
     "attributes": [
@@ -17147,7 +17147,7 @@
     "tokenId": "5844",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b139656a051045b264b3df6cea916915",
     "name": "Vibe Most Wanted #5844",
     "attributes": [
@@ -17303,7 +17303,7 @@
     "tokenId": "5848",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3438db5e0f04b3a24ad05a098c4d349a",
     "name": "Vibe Most Wanted #5848",
     "attributes": [
@@ -17342,7 +17342,7 @@
     "tokenId": "5849",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/66360b618735f135c303839bd5595ef5",
     "name": "Vibe Most Wanted #5849",
     "attributes": [
@@ -17498,7 +17498,7 @@
     "tokenId": "5864",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a2ba8781168264b097a6cb64cc210e63",
     "name": "Vibe Most Wanted #5864",
     "attributes": [
@@ -17537,7 +17537,7 @@
     "tokenId": "5865",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c225673358a95ef5d5ec39fbe1217fb7",
     "name": "Vibe Most Wanted #5865",
     "attributes": [
@@ -17576,7 +17576,7 @@
     "tokenId": "5869",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d1cf8ac7eff0bc1c1bf707299d038a40",
     "name": "Vibe Most Wanted #5869",
     "attributes": [
@@ -17615,7 +17615,7 @@
     "tokenId": "5870",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d55f77f3197de0d46c3dcb265fa75a39",
     "name": "Vibe Most Wanted #5870",
     "attributes": [
@@ -17654,7 +17654,7 @@
     "tokenId": "5877",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/74e1a2fd62bfd90b11535bd6c8766f25",
     "name": "Vibe Most Wanted #5877",
     "attributes": [
@@ -17732,7 +17732,7 @@
     "tokenId": "5879",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ae11d4aba5a074ba8bd3dcefcd615c4f",
     "name": "Vibe Most Wanted #5879",
     "attributes": [
@@ -17849,7 +17849,7 @@
     "tokenId": "5883",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6ac3c6cbbe99d1655fbb756b67b1d8ed",
     "name": "Vibe Most Wanted #5883",
     "attributes": [
@@ -17927,7 +17927,7 @@
     "tokenId": "5885",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/944714f875dacdaf1763aa671c1d4a2a",
     "name": "Vibe Most Wanted #5885",
     "attributes": [
@@ -18044,7 +18044,7 @@
     "tokenId": "5888",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/815dde6ac0923c3b97ad9a309bd317dd",
     "name": "Vibe Most Wanted #5888",
     "attributes": [
@@ -18317,7 +18317,7 @@
     "tokenId": "5895",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c23b780e4ad5c60c479bf8ab7f9a4a22",
     "name": "Vibe Most Wanted #5895",
     "attributes": [
@@ -18395,7 +18395,7 @@
     "tokenId": "5897",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/03932b59dae3f689254f3d05cf5ef751",
     "name": "Vibe Most Wanted #5897",
     "attributes": [
@@ -18473,7 +18473,7 @@
     "tokenId": "5899",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/57ae2bd7473c5458e75978bc19938932",
     "name": "Vibe Most Wanted #5899",
     "attributes": [
@@ -18512,7 +18512,7 @@
     "tokenId": "5900",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/866037601dbecb88b81bd5b85c76a5bb",
     "name": "Vibe Most Wanted #5900",
     "attributes": [
@@ -18707,7 +18707,7 @@
     "tokenId": "5906",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4bad98460224ba9816aa346a6e68325a",
     "name": "Vibe Most Wanted #5906",
     "attributes": [
@@ -18824,7 +18824,7 @@
     "tokenId": "5909",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/74e1a2fd62bfd90b11535bd6c8766f25",
     "name": "Vibe Most Wanted #5909",
     "attributes": [
@@ -18941,7 +18941,7 @@
     "tokenId": "5912",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/85c76105836eb0ee48a47d30f798e6ae",
     "name": "Vibe Most Wanted #5912",
     "attributes": [
@@ -18980,7 +18980,7 @@
     "tokenId": "5924",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fba4cde0200ca4b01e0bc872823b38c8",
     "name": "Vibe Most Wanted #5924",
     "attributes": [
@@ -19015,7 +19015,7 @@
     "tokenId": "5932",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b139656a051045b264b3df6cea916915",
     "name": "Vibe Most Wanted #5932",
     "attributes": [
@@ -19093,7 +19093,7 @@
     "tokenId": "5934",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3990cbd17b94dec5d1e3d5823b11dc91",
     "name": "Vibe Most Wanted #5934",
     "attributes": [
@@ -19132,7 +19132,7 @@
     "tokenId": "5935",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b85f6b21cf6dcd9dfa5dfbe588cc68c3",
     "name": "Vibe Most Wanted #5935",
     "attributes": [
@@ -19210,7 +19210,7 @@
     "tokenId": "5937",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/eec79c72eb2875b0b405661a0e319e1e",
     "name": "Vibe Most Wanted #5937",
     "attributes": [
@@ -19249,7 +19249,7 @@
     "tokenId": "5938",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/14eeb53e99848043a548e48495845d67",
     "name": "Vibe Most Wanted #5938",
     "attributes": [
@@ -19366,7 +19366,7 @@
     "tokenId": "5941",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1f0484ee13339682414758e20a252da5",
     "name": "Vibe Most Wanted #5941",
     "attributes": [
@@ -19522,7 +19522,7 @@
     "tokenId": "5945",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 58,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0c83313af1b9017149b6984b2a40a135",
     "name": "Vibe Most Wanted #5945",
     "attributes": [
@@ -19834,7 +19834,7 @@
     "tokenId": "6037",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6150a03ac2ec4d2ab6ca4587c23ff4d7",
     "name": "Vibe Most Wanted #6037",
     "attributes": [
@@ -19912,7 +19912,7 @@
     "tokenId": "6040",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9b552594b0646d3c37038c7ba9774892",
     "name": "Vibe Most Wanted #6040",
     "attributes": [
@@ -19951,7 +19951,7 @@
     "tokenId": "6041",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6efad098fc1a0c5054a84b89d544d1bc",
     "name": "Vibe Most Wanted #6041",
     "attributes": [
@@ -19990,7 +19990,7 @@
     "tokenId": "6043",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d77bbfb09b81e1f6d81ff576cdece822",
     "name": "Vibe Most Wanted #6043",
     "attributes": [
@@ -20029,7 +20029,7 @@
     "tokenId": "6582",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2eb40098058588e268e0b1f94a62c5dd",
     "name": "Vibe Most Wanted #6582",
     "attributes": [
@@ -20068,7 +20068,7 @@
     "tokenId": "6583",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/05f8e313506c19d327cc86f47bb66707",
     "name": "Vibe Most Wanted #6583",
     "attributes": [
@@ -20107,7 +20107,7 @@
     "tokenId": "6862",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/db70b7e8a78a80eb6a1669db0ea612b1",
     "name": "Vibe Most Wanted #6862",
     "attributes": [
@@ -20146,7 +20146,7 @@
     "tokenId": "6982",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c86c26cd3e5d9f3acc17f1d34b664aac",
     "name": "Vibe Most Wanted #6982",
     "attributes": [
@@ -20185,7 +20185,7 @@
     "tokenId": "7004",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3e8befe65a80666718a1f4c8c8aedc3e",
     "name": "Vibe Most Wanted #7004",
     "attributes": [
@@ -20224,7 +20224,7 @@
     "tokenId": "7031",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ba2bccb4c0a40976c9aedfadb70b55df",
     "name": "Vibe Most Wanted #7031",
     "attributes": [
@@ -20263,7 +20263,7 @@
     "tokenId": "7032",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b4426027b020b8f52c65c45ff97e04fd",
     "name": "Vibe Most Wanted #7032",
     "attributes": [
@@ -20341,7 +20341,7 @@
     "tokenId": "7037",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dc84d4fd70dc102023c38cff03d1ac3f",
     "name": "Vibe Most Wanted #7037",
     "attributes": [
@@ -20419,7 +20419,7 @@
     "tokenId": "7042",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d279f7d5a9c8261c47c1333267fef5e5",
     "name": "Vibe Most Wanted #7042",
     "attributes": [
@@ -20458,7 +20458,7 @@
     "tokenId": "7043",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/95f30979208785f9b004f2be3a681835",
     "name": "Vibe Most Wanted #7043",
     "attributes": [
@@ -20497,7 +20497,7 @@
     "tokenId": "7045",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/01a691d0edc15d8bc7566d3001ab0741",
     "name": "Vibe Most Wanted #7045",
     "attributes": [
@@ -20536,7 +20536,7 @@
     "tokenId": "7046",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f5f12cb6db9ccb0875bc516339d48814",
     "name": "Vibe Most Wanted #7046",
     "attributes": [
@@ -20614,7 +20614,7 @@
     "tokenId": "7048",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/01e703eea740929e6db01556e0dcb046",
     "name": "Vibe Most Wanted #7048",
     "attributes": [
@@ -20731,7 +20731,7 @@
     "tokenId": "7052",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c9b999082397727f24847629c9d05828",
     "name": "Vibe Most Wanted #7052",
     "attributes": [
@@ -20770,7 +20770,7 @@
     "tokenId": "7054",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3bf09fc8f4481633f45eb5dd988de1e9",
     "name": "Vibe Most Wanted #7054",
     "attributes": [
@@ -20809,7 +20809,7 @@
     "tokenId": "7055",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1cd42d5e7cd20714f9d70687398090dc",
     "name": "Vibe Most Wanted #7055",
     "attributes": [
@@ -20848,7 +20848,7 @@
     "tokenId": "7056",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5d289aa9fd2cf2f14da426f7dc6a6d29",
     "name": "Vibe Most Wanted #7056",
     "attributes": [
@@ -20887,7 +20887,7 @@
     "tokenId": "7057",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/018541f1dc0ef693fa12decb14105fab",
     "name": "Vibe Most Wanted #7057",
     "attributes": [
@@ -20965,7 +20965,7 @@
     "tokenId": "7059",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/41ad0e7e7d80a7ffdb3dc326d44b21e4",
     "name": "Vibe Most Wanted #7059",
     "attributes": [
@@ -21004,7 +21004,7 @@
     "tokenId": "7060",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f78ba686715d93c92a17c03ca2d45bcf",
     "name": "Vibe Most Wanted #7060",
     "attributes": [
@@ -21082,7 +21082,7 @@
     "tokenId": "7062",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9276be996acb9f968ba42e5643296f3",
     "name": "Vibe Most Wanted #7062",
     "attributes": [
@@ -21121,7 +21121,7 @@
     "tokenId": "7063",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8d51024f30f19f38168b3b3afeecd9a8",
     "name": "Vibe Most Wanted #7063",
     "attributes": [
@@ -21160,7 +21160,7 @@
     "tokenId": "7064",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ab518795ba0caf7a5efd8f295439376b",
     "name": "Vibe Most Wanted #7064",
     "attributes": [
@@ -21199,7 +21199,7 @@
     "tokenId": "7065",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a3cfce2d038c997750386e516a6797f0",
     "name": "Vibe Most Wanted #7065",
     "attributes": [
@@ -21238,7 +21238,7 @@
     "tokenId": "7066",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/749737188fcecd32e5b07e12fa9aa998",
     "name": "Vibe Most Wanted #7066",
     "attributes": [
@@ -21277,7 +21277,7 @@
     "tokenId": "7067",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5a9a715a75e29cefe1b93b1ed3f908e6",
     "name": "Vibe Most Wanted #7067",
     "attributes": [
@@ -21316,7 +21316,7 @@
     "tokenId": "7068",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8bd80abe510fcbb3e572a66d071223c1",
     "name": "Vibe Most Wanted #7068",
     "attributes": [
@@ -21355,7 +21355,7 @@
     "tokenId": "7069",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8b2ab8fb65a63e7a6b8d1454ef70f2c3",
     "name": "Vibe Most Wanted #7069",
     "attributes": [
@@ -21394,7 +21394,7 @@
     "tokenId": "7070",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d8ce2be2b266e807484c30c9d91738ed",
     "name": "Vibe Most Wanted #7070",
     "attributes": [
@@ -21511,7 +21511,7 @@
     "tokenId": "7073",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ded2927333d0597727e6299cb2e1926c",
     "name": "Vibe Most Wanted #7073",
     "attributes": [
@@ -21589,7 +21589,7 @@
     "tokenId": "7075",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7daab71a60d1150a8871c611d83fefbd",
     "name": "Vibe Most Wanted #7075",
     "attributes": [
@@ -21628,7 +21628,7 @@
     "tokenId": "7076",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0e84fdb404337332e31d3b2db00da66c",
     "name": "Vibe Most Wanted #7076",
     "attributes": [
@@ -21706,7 +21706,7 @@
     "tokenId": "7078",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/faab2f6a043e1dd01c34c0ff44dce391",
     "name": "Vibe Most Wanted #7078",
     "attributes": [
@@ -21784,7 +21784,7 @@
     "tokenId": "7080",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/23aff6104e631ec6c2db24c20197dbba",
     "name": "Vibe Most Wanted #7080",
     "attributes": [
@@ -21823,7 +21823,7 @@
     "tokenId": "7081",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ffed3320a67b187abb5cde899db8f3ed",
     "name": "Vibe Most Wanted #7081",
     "attributes": [
@@ -21862,7 +21862,7 @@
     "tokenId": "7082",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c7cb3f42706e6da2f4e5cea2c9efd300",
     "name": "Vibe Most Wanted #7082",
     "attributes": [
@@ -22018,7 +22018,7 @@
     "tokenId": "7086",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ddabe2d1132982bd9ecc52c3932be380",
     "name": "Vibe Most Wanted #7086",
     "attributes": [
@@ -22096,7 +22096,7 @@
     "tokenId": "7088",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/27e61d32979504a2e06514d4cbc540ad",
     "name": "Vibe Most Wanted #7088",
     "attributes": [
@@ -22174,7 +22174,7 @@
     "tokenId": "7090",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d08ad267410923c8d1a3740306fec4a5",
     "name": "Vibe Most Wanted #7090",
     "attributes": [
@@ -22252,7 +22252,7 @@
     "tokenId": "7092",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e47adeef2d6b30cca33428fa8b099a8b",
     "name": "Vibe Most Wanted #7092",
     "attributes": [
@@ -22330,7 +22330,7 @@
     "tokenId": "7094",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2ab3142602c1aac73ef0544513be5ff2",
     "name": "Vibe Most Wanted #7094",
     "attributes": [
@@ -22369,7 +22369,7 @@
     "tokenId": "7095",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b448c0986ee229b2b71f97b428c09b5f",
     "name": "Vibe Most Wanted #7095",
     "attributes": [
@@ -22447,7 +22447,7 @@
     "tokenId": "7100",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e7d1817c84f62a6f4412e235cb8ddde6",
     "name": "Vibe Most Wanted #7100",
     "attributes": [
@@ -22486,7 +22486,7 @@
     "tokenId": "7102",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b0485b49fd854b8a49d05fb5c9dbdc26",
     "name": "Vibe Most Wanted #7102",
     "attributes": [
@@ -22642,7 +22642,7 @@
     "tokenId": "7368",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a84cad8cf33d9dbc1717cb10afdcc433",
     "name": "Vibe Most Wanted #7368",
     "attributes": [
@@ -22681,7 +22681,7 @@
     "tokenId": "7369",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9f07a89d9f13e5ba06dca50af6917147",
     "name": "Vibe Most Wanted #7369",
     "attributes": [
@@ -22759,7 +22759,7 @@
     "tokenId": "7371",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e83bb48c93dd6e2d55a82d2995af67fa",
     "name": "Vibe Most Wanted #7371",
     "attributes": [
@@ -22837,7 +22837,7 @@
     "tokenId": "7373",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b6f7052645cf923e351c166dc6757790",
     "name": "Vibe Most Wanted #7373",
     "attributes": [
@@ -22876,7 +22876,7 @@
     "tokenId": "7374",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e8b6e0c0392b2a47dd76b5f33f343ce",
     "name": "Vibe Most Wanted #7374",
     "attributes": [
@@ -23110,7 +23110,7 @@
     "tokenId": "7380",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0ba1c2c328e89b00280e1317a748cb57",
     "name": "Vibe Most Wanted #7380",
     "attributes": [
@@ -23149,7 +23149,7 @@
     "tokenId": "7381",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c137d8132639ff3d03e4dc3692930bac",
     "name": "Vibe Most Wanted #7381",
     "attributes": [
@@ -23188,7 +23188,7 @@
     "tokenId": "7382",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e8b6e0c0392b2a47dd76b5f33f343ce",
     "name": "Vibe Most Wanted #7382",
     "attributes": [
@@ -23227,7 +23227,7 @@
     "tokenId": "7383",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/eac74b530029b7da8335098745df932a",
     "name": "Vibe Most Wanted #7383",
     "attributes": [
@@ -23461,7 +23461,7 @@
     "tokenId": "7389",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bcd820f62c24d91f251e45a2925b42a9",
     "name": "Vibe Most Wanted #7389",
     "attributes": [
@@ -23500,7 +23500,7 @@
     "tokenId": "7390",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/63335429ab233c419ed79e0184b7151b",
     "name": "Vibe Most Wanted #7390",
     "attributes": [
@@ -23539,7 +23539,7 @@
     "tokenId": "7391",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5bc4d33b6e373405def7e0e1d0db73d8",
     "name": "Vibe Most Wanted #7391",
     "attributes": [
@@ -23578,7 +23578,7 @@
     "tokenId": "7392",
     "rarity": "Common",
     "status": "Rarity Assigned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e728aac976e8abd207ac1e006226bab6",
     "name": "Vibe Most Wanted #7392",
     "attributes": [
@@ -23655,8 +23655,8 @@
   {
     "tokenId": "7394",
     "rarity": "Common",
-    "status": "Rarity Assigned",
-    "power": 38,
+    "status": "Burned",
+    "power": 45,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a3bf2c213c9ce3bd6af78654f7819a5a",
     "name": "Vibe Most Wanted #7394",
     "attributes": [
@@ -23671,7 +23671,7 @@
         "trait_type": "Randomness"
       },
       {
-        "value": "Rarity Assigned",
+        "value": "Burned",
         "trait_type": "Status"
       },
       {
@@ -23812,7 +23812,7 @@
     "tokenId": "7398",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5aa6077f474a461776d6729358653933",
     "name": "Vibe Most Wanted #7398",
     "attributes": [
@@ -23851,7 +23851,7 @@
     "tokenId": "7399",
     "rarity": "Epic",
     "status": "Rarity Assigned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2bdcd0dc85ffc247f152f9cc1df5912c",
     "name": "Vibe Most Wanted #7399",
     "attributes": [
@@ -23890,7 +23890,7 @@
     "tokenId": "7400",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c6961e2005f5c10c948c5c6c1f6ec5d1",
     "name": "Vibe Most Wanted #7400",
     "attributes": [
@@ -23968,7 +23968,7 @@
     "tokenId": "7402",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/88f0e649df0964f4e5a1d364416f583d",
     "name": "Vibe Most Wanted #7402",
     "attributes": [
@@ -24046,7 +24046,7 @@
     "tokenId": "7404",
     "rarity": "Rare",
     "status": "Rarity Assigned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c79a84f274277c382794300fac1f2652",
     "name": "Vibe Most Wanted #7404",
     "attributes": [
@@ -24124,7 +24124,7 @@
     "tokenId": "7489",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0dfa1b763675005d883f263e283e1aaa",
     "name": "Vibe Most Wanted #7489",
     "attributes": [
@@ -24280,7 +24280,7 @@
     "tokenId": "7521",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/26f5c62255eb0de754e48358090c9154",
     "name": "Vibe Most Wanted #7521",
     "attributes": [
@@ -24319,7 +24319,7 @@
     "tokenId": "7525",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/01e703eea740929e6db01556e0dcb046",
     "name": "Vibe Most Wanted #7525",
     "attributes": [
@@ -24436,7 +24436,7 @@
     "tokenId": "7534",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b0068fe4ed6617d779a30ef269c1aeb2",
     "name": "Vibe Most Wanted #7534",
     "attributes": [
@@ -24475,7 +24475,7 @@
     "tokenId": "7591",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6546d5c9e4eea97c4c0a467b7e432e54",
     "name": "Vibe Most Wanted #7591",
     "attributes": [
@@ -24514,7 +24514,7 @@
     "tokenId": "7792",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/03969d8dcf1da76c2293338d86a03350",
     "name": "Vibe Most Wanted #7792",
     "attributes": [
@@ -24709,7 +24709,7 @@
     "tokenId": "7798",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0f61f3254d74b0a40e5640e73aa92553",
     "name": "Vibe Most Wanted #7798",
     "attributes": [
@@ -24787,7 +24787,7 @@
     "tokenId": "7800",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/158ebfd36c48ee52e1e6943854ac75f0",
     "name": "Vibe Most Wanted #7800",
     "attributes": [
@@ -24904,7 +24904,7 @@
     "tokenId": "7803",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6fb21c127a8e2520ebc1bce2a3e72fde",
     "name": "Vibe Most Wanted #7803",
     "attributes": [
@@ -24943,7 +24943,7 @@
     "tokenId": "7804",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/751b4a48474d4a06913978776c2e2548",
     "name": "Vibe Most Wanted #7804",
     "attributes": [
@@ -24982,7 +24982,7 @@
     "tokenId": "7805",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0f61f3254d74b0a40e5640e73aa92553",
     "name": "Vibe Most Wanted #7805",
     "attributes": [
@@ -25060,7 +25060,7 @@
     "tokenId": "7807",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ca931be9d4d3bdc6b5f0a45b0c8cc194",
     "name": "Vibe Most Wanted #7807",
     "attributes": [
@@ -25099,7 +25099,7 @@
     "tokenId": "7808",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9795e98ddfb157dfe8e0e7e9d9e0249e",
     "name": "Vibe Most Wanted #7808",
     "attributes": [
@@ -25138,7 +25138,7 @@
     "tokenId": "7809",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6e06bd97dbefe443f53078d5886cef6f",
     "name": "Vibe Most Wanted #7809",
     "attributes": [
@@ -25177,7 +25177,7 @@
     "tokenId": "7810",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d7aa25e991c5d6097244be2e08a22bf9",
     "name": "Vibe Most Wanted #7810",
     "attributes": [
@@ -25216,7 +25216,7 @@
     "tokenId": "7811",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5e83d8c89d9721fc1ceb4424874fc21a",
     "name": "Vibe Most Wanted #7811",
     "attributes": [
@@ -25255,7 +25255,7 @@
     "tokenId": "7812",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3ae4bc6ad1d84eb8b556b56d7ae2b460",
     "name": "Vibe Most Wanted #7812",
     "attributes": [
@@ -25411,7 +25411,7 @@
     "tokenId": "7822",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/203302597bdefcfebe95c694b8e7a58e",
     "name": "Vibe Most Wanted #7822",
     "attributes": [
@@ -25528,7 +25528,7 @@
     "tokenId": "7825",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e5774eb2ca751128e42aca1c0252abf3",
     "name": "Vibe Most Wanted #7825",
     "attributes": [
@@ -25567,7 +25567,7 @@
     "tokenId": "7826",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/895b8004d30af01156c24ef98a1acfc5",
     "name": "Vibe Most Wanted #7826",
     "attributes": [
@@ -25606,7 +25606,7 @@
     "tokenId": "7827",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c8def702063d583ce3d4586e8168a444",
     "name": "Vibe Most Wanted #7827",
     "attributes": [
@@ -25684,7 +25684,7 @@
     "tokenId": "7829",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c636e5d37c1eef59d8d22abe9728944f",
     "name": "Vibe Most Wanted #7829",
     "attributes": [
@@ -25723,7 +25723,7 @@
     "tokenId": "7830",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d9616849d0f7fe75995813d01dcace30",
     "name": "Vibe Most Wanted #7830",
     "attributes": [
@@ -25762,7 +25762,7 @@
     "tokenId": "7831",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/72ea318a1a4034281ce77c57f3677d89",
     "name": "Vibe Most Wanted #7831",
     "attributes": [
@@ -25879,7 +25879,7 @@
     "tokenId": "7835",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fed247a618597778a4b5581c2bac1f77",
     "name": "Vibe Most Wanted #7835",
     "attributes": [
@@ -25996,7 +25996,7 @@
     "tokenId": "7838",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2513d43c1d38e616465a36b7ba4a7135",
     "name": "Vibe Most Wanted #7838",
     "attributes": [
@@ -26035,7 +26035,7 @@
     "tokenId": "7839",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2263a19e05f9ceef0360019fc4edc901",
     "name": "Vibe Most Wanted #7839",
     "attributes": [
@@ -26113,7 +26113,7 @@
     "tokenId": "7842",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/45d1e42cb0f4b6eae89e2be4ba8385c0",
     "name": "Vibe Most Wanted #7842",
     "attributes": [
@@ -26152,7 +26152,7 @@
     "tokenId": "7843",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/43b2e052ae9709745b8ab8c97919d4a5",
     "name": "Vibe Most Wanted #7843",
     "attributes": [
@@ -26230,7 +26230,7 @@
     "tokenId": "7846",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ef167bd11df536d5c4cf568543af1172",
     "name": "Vibe Most Wanted #7846",
     "attributes": [
@@ -26347,7 +26347,7 @@
     "tokenId": "7849",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e30b786f5ac4f2414ef46bfc24386889",
     "name": "Vibe Most Wanted #7849",
     "attributes": [
@@ -26542,7 +26542,7 @@
     "tokenId": "7854",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/07d7dea1ae66392fa6708ce4ab89564f",
     "name": "Vibe Most Wanted #7854",
     "attributes": [
@@ -26620,7 +26620,7 @@
     "tokenId": "7856",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f68b7c51ceaf4b74fe6622e40daffe83",
     "name": "Vibe Most Wanted #7856",
     "attributes": [
@@ -26659,7 +26659,7 @@
     "tokenId": "7857",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/345eaf279bebe75ab716c1fb0a5d3d38",
     "name": "Vibe Most Wanted #7857",
     "attributes": [
@@ -26854,7 +26854,7 @@
     "tokenId": "7862",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/eab86eefc983547b8366ea642d3d022e",
     "name": "Vibe Most Wanted #7862",
     "attributes": [
@@ -26893,7 +26893,7 @@
     "tokenId": "7863",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a4ade6c90c1819531cdcb94cacc8c008",
     "name": "Vibe Most Wanted #7863",
     "attributes": [
@@ -26932,7 +26932,7 @@
     "tokenId": "7864",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/55431bd9d2400179af148d94adbcfcd6",
     "name": "Vibe Most Wanted #7864",
     "attributes": [
@@ -27010,7 +27010,7 @@
     "tokenId": "7866",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c373ae0a5c55b879661154a3882ab47a",
     "name": "Vibe Most Wanted #7866",
     "attributes": [
@@ -27088,7 +27088,7 @@
     "tokenId": "7868",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d629b3d75cda005acc3dc900dcd9e576",
     "name": "Vibe Most Wanted #7868",
     "attributes": [
@@ -27127,7 +27127,7 @@
     "tokenId": "7869",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8539506e33597fa128acd89ba909e61d",
     "name": "Vibe Most Wanted #7869",
     "attributes": [
@@ -27166,7 +27166,7 @@
     "tokenId": "7870",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0fb57457e527e7d882dde79064988676",
     "name": "Vibe Most Wanted #7870",
     "attributes": [
@@ -27283,7 +27283,7 @@
     "tokenId": "7889",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f5375a82dfd3f457a1be86989200b7ea",
     "name": "Vibe Most Wanted #7889",
     "attributes": [
@@ -27322,7 +27322,7 @@
     "tokenId": "7890",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/017fd871c9695d4b81492cad0f8143fc",
     "name": "Vibe Most Wanted #7890",
     "attributes": [
@@ -27400,7 +27400,7 @@
     "tokenId": "7892",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d669d728e2b42172a69eeaa2e02c2ac0",
     "name": "Vibe Most Wanted #7892",
     "attributes": [
@@ -27439,7 +27439,7 @@
     "tokenId": "7893",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/778f6ba852da1eb85677696512cdecee",
     "name": "Vibe Most Wanted #7893",
     "attributes": [
@@ -27556,7 +27556,7 @@
     "tokenId": "7897",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/34a2b815f3fdaeba2ae7197895ca07f8",
     "name": "Vibe Most Wanted #7897",
     "attributes": [
@@ -27595,7 +27595,7 @@
     "tokenId": "7898",
     "rarity": "Common",
     "status": "Burned",
-    "power": 23,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/669d4fa8ac080934c432eb2bf3a462bb",
     "name": "Vibe Most Wanted #7898",
     "attributes": [
@@ -27673,7 +27673,7 @@
     "tokenId": "7900",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2c9dd42ff5beb772bfbce158364ea3dd",
     "name": "Vibe Most Wanted #7900",
     "attributes": [
@@ -27712,7 +27712,7 @@
     "tokenId": "7901",
     "rarity": "Common",
     "status": "Burned",
-    "power": 15,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/212d1f1adacf5388a8ce234541d07782",
     "name": "Vibe Most Wanted #7901",
     "attributes": [
@@ -27751,7 +27751,7 @@
     "tokenId": "7902",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/cbc73fb768e31061fa22bba19bb2bfe2",
     "name": "Vibe Most Wanted #7902",
     "attributes": [
@@ -27790,7 +27790,7 @@
     "tokenId": "7903",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e1090e0900758f93ffbe408d55623f3",
     "name": "Vibe Most Wanted #7903",
     "attributes": [
@@ -27829,7 +27829,7 @@
     "tokenId": "7904",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/398566694a6479648eea48c7635a1cbd",
     "name": "Vibe Most Wanted #7904",
     "attributes": [
@@ -27868,7 +27868,7 @@
     "tokenId": "7916",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/959abcaa237e9ae65fa5f8d647682de3",
     "name": "Vibe Most Wanted #7916",
     "attributes": [
@@ -27931,7 +27931,7 @@
     "tokenId": "8041",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "",
     "name": "Vibe Most Wanted #8041",
     "attributes": [
@@ -27979,7 +27979,7 @@
     "tokenId": "8043",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "",
     "name": "Vibe Most Wanted #8043",
     "attributes": [
@@ -28003,7 +28003,7 @@
     "tokenId": "8555",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b4520d5c98eefaeeb11c84c4f2b6bec6",
     "name": "Vibe Most Wanted #8555",
     "attributes": [
@@ -28042,7 +28042,7 @@
     "tokenId": "8559",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3ce6e7b52de3bf7bec3198a56e69e377",
     "name": "Vibe Most Wanted #8559",
     "attributes": [
@@ -28081,7 +28081,7 @@
     "tokenId": "8565",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 150,
+    "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/05d6379f30a6e6ecd96f4c3332086295",
     "name": "Vibe Most Wanted #8565",
     "attributes": [
@@ -28120,7 +28120,7 @@
     "tokenId": "8571",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/93dbf27f963b7a8660a8e319a3936248",
     "name": "Vibe Most Wanted #8571",
     "attributes": [
@@ -28159,7 +28159,7 @@
     "tokenId": "8572",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4eb46f9f25441b264c40ab57213052e3",
     "name": "Vibe Most Wanted #8572",
     "attributes": [
@@ -28198,7 +28198,7 @@
     "tokenId": "8586",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 113,
+    "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dfa5c0a650ece6e96698cfe1f1b84ddf",
     "name": "Vibe Most Wanted #8586",
     "attributes": [
@@ -28237,7 +28237,7 @@
     "tokenId": "8607",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/12b00f871e5f55ad5b1073c717d285cc",
     "name": "Vibe Most Wanted #8607",
     "attributes": [
@@ -28276,7 +28276,7 @@
     "tokenId": "8620",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/77c8f116808574b0e41428b21eeef72f",
     "name": "Vibe Most Wanted #8620",
     "attributes": [
@@ -28315,7 +28315,7 @@
     "tokenId": "8621",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/87829214715ff063c04d6314c394229f",
     "name": "Vibe Most Wanted #8621",
     "attributes": [
@@ -28354,7 +28354,7 @@
     "tokenId": "8623",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d9f8d952afa37321291559de21e242fe",
     "name": "Vibe Most Wanted #8623",
     "attributes": [
@@ -28393,7 +28393,7 @@
     "tokenId": "8624",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/93dbf27f963b7a8660a8e319a3936248",
     "name": "Vibe Most Wanted #8624",
     "attributes": [
@@ -28432,7 +28432,7 @@
     "tokenId": "8627",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/728d00f7b0af6148cf4779a59a59adda",
     "name": "Vibe Most Wanted #8627",
     "attributes": [
@@ -28471,7 +28471,7 @@
     "tokenId": "8630",
     "rarity": "Rare",
     "status": "Burned",
-    "power": 75,
+    "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6a94019a6026458e102cc92da36e20d3",
     "name": "Vibe Most Wanted #8630",
     "attributes": [
@@ -28510,7 +28510,7 @@
     "tokenId": "6070",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 58,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-6070]",
     "name": "Vibe Most Wanted #6070",
     "attributes": [
@@ -28549,7 +28549,7 @@
     "tokenId": "5225",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 46,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-5225]",
     "name": "Vibe Most Wanted #5225",
     "attributes": [
@@ -28588,7 +28588,7 @@
     "tokenId": "3067",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 53,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-3067]",
     "name": "Vibe Most Wanted #3067",
     "attributes": [
@@ -28627,7 +28627,7 @@
     "tokenId": "8549",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 55,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-8549]",
     "name": "Vibe Most Wanted #8549",
     "attributes": [
@@ -28666,7 +28666,7 @@
     "tokenId": "4378",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 53,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-4378]",
     "name": "Vibe Most Wanted #4378",
     "attributes": [
@@ -28705,7 +28705,7 @@
     "tokenId": "6465",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 55,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-6465]",
     "name": "Vibe Most Wanted #6465",
     "attributes": [
@@ -28744,7 +28744,7 @@
     "tokenId": "6452",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 55,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-6452]",
     "name": "Vibe Most Wanted #6452",
     "attributes": [
@@ -28783,7 +28783,7 @@
     "tokenId": "4664",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 34,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-4664]",
     "name": "Vibe Most Wanted #4664",
     "attributes": [
@@ -28822,7 +28822,7 @@
     "tokenId": "7160",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 58,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-7160]",
     "name": "Vibe Most Wanted #7160",
     "attributes": [
@@ -28861,7 +28861,7 @@
     "tokenId": "7948",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 250,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-7948]",
     "name": "Vibe Most Wanted #7948",
     "attributes": [
@@ -28900,7 +28900,7 @@
     "tokenId": "6071",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 46,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-6071]",
     "name": "Vibe Most Wanted #6071",
     "attributes": [
@@ -28939,7 +28939,7 @@
     "tokenId": "7700",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 250,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-7700]",
     "name": "Vibe Most Wanted #7700",
     "attributes": [
@@ -28978,7 +28978,7 @@
     "tokenId": "7431",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 250,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-7431]",
     "name": "Vibe Most Wanted #7431",
     "attributes": [
@@ -29017,7 +29017,7 @@
     "tokenId": "6729",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 250,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-6729]",
     "name": "Vibe Most Wanted #6729",
     "attributes": [
@@ -29056,7 +29056,7 @@
     "tokenId": "3202",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 250,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-3202]",
     "name": "Vibe Most Wanted #3202",
     "attributes": [
@@ -29095,7 +29095,7 @@
     "tokenId": "6521",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 58,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-6521]",
     "name": "Vibe Most Wanted #6521",
     "attributes": [
@@ -29134,7 +29134,7 @@
     "tokenId": "2927",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 250,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-2927]",
     "name": "Vibe Most Wanted #2927",
     "attributes": [
@@ -29173,7 +29173,7 @@
     "tokenId": "6183",
     "rarity": "Legendary",
     "status": "Burned",
-    "power": 250,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-6183]",
     "name": "Vibe Most Wanted #6183",
     "attributes": [
@@ -29210,15 +29210,15 @@
   },
   {
     "tokenId": "2486",
-    "rarity": "Epic",
+    "rarity": "Common",
     "status": "Burned",
-    "power": 375,
+    "power": 53,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-2486]",
     "name": "Vibe Most Wanted #2486",
     "attributes": [
       {
         "display_type": "string",
-        "value": "Epic",
+        "value": "Common",
         "trait_type": "Rarity"
       },
       {
@@ -29231,7 +29231,7 @@
         "trait_type": "Status"
       },
       {
-        "value": "Moderately Played",
+        "value": "Pristine",
         "trait_type": "Wear"
       },
       {
@@ -29249,15 +29249,15 @@
   },
   {
     "tokenId": "2761",
-    "rarity": "Epic",
+    "rarity": "Common",
     "status": "Burned",
-    "power": 375,
+    "power": 53,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-2761]",
     "name": "Vibe Most Wanted #2761",
     "attributes": [
       {
         "display_type": "string",
-        "value": "Epic",
+        "value": "Common",
         "trait_type": "Rarity"
       },
       {
@@ -29270,7 +29270,7 @@
         "trait_type": "Status"
       },
       {
-        "value": "Moderately Played",
+        "value": "Pristine",
         "trait_type": "Wear"
       },
       {
@@ -29290,7 +29290,7 @@
     "tokenId": "2435",
     "rarity": "Epic",
     "status": "Burned",
-    "power": 750,
+    "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-2435]",
     "name": "Vibe Most Wanted #2435",
     "attributes": [
@@ -29309,7 +29309,7 @@
         "trait_type": "Status"
       },
       {
-        "value": "Moderately Played",
+        "value": "Heavily Played",
         "trait_type": "Wear"
       },
       {
@@ -29319,7 +29319,7 @@
         "max_value": 1
       },
       {
-        "value": "Prize",
+        "value": "Standard",
         "trait_type": "Foil"
       }
     ],
@@ -29348,7 +29348,7 @@
         "trait_type": "Status"
       },
       {
-        "value": "Moderately Played",
+        "value": "Heavily Played",
         "trait_type": "Wear"
       },
       {
@@ -29366,15 +29366,15 @@
   },
   {
     "tokenId": "2347",
-    "rarity": "Rare",
+    "rarity": "Common",
     "status": "Burned",
-    "power": 375,
+    "power": 38,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-2347]",
     "name": "Vibe Most Wanted #2347",
     "attributes": [
       {
         "display_type": "string",
-        "value": "Rare",
+        "value": "Common",
         "trait_type": "Rarity"
       },
       {
@@ -29387,7 +29387,7 @@
         "trait_type": "Status"
       },
       {
-        "value": "Moderately Played",
+        "value": "Lightly Played",
         "trait_type": "Wear"
       },
       {
@@ -29397,7 +29397,7 @@
         "max_value": 1
       },
       {
-        "value": "Prize",
+        "value": "Standard",
         "trait_type": "Foil"
       }
     ],
