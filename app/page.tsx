@@ -603,14 +603,16 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
       `}</style>
       
       <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick} style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}>
-        <FoilCardEffect
-          foilType={(foilValue === 'Standard' || foilValue === 'Prize') ? foilValue as 'Standard' | 'Prize' : null}
-          className={`relative rounded-lg ${
-            selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
-            'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
-          }`}
-        >
-          <div style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)', overflow: 'hidden'}} className="rounded-xl">
+        {/* Ring wrapper OUTSIDE overflow-hidden */}
+        <div className={`rounded-lg ${
+          selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
+          'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
+        }`}>
+          <FoilCardEffect
+            foilType={(foilValue === 'Standard' || foilValue === 'Prize') ? foilValue as 'Standard' | 'Prize' : null}
+            className="relative rounded-lg"
+          >
+            <div style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}} className="rounded-lg overflow-hidden">
             <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
 
             {/* Card Reflection on Hover */}
@@ -635,7 +637,8 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
               )}
             </div>
           </div>
-        </FoilCardEffect>
+          </FoilCardEffect>
+        </div>
       </div>
     </>
   );
