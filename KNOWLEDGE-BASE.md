@@ -804,6 +804,138 @@ npx tsx scripts/import-to-convex.ts
 
 ---
 
+### 🔥 Pattern: Schema Validation & Data Migration (CRITICAL)
+
+**Data**: 2025-10-30
+**Problema**: Defense deck save falhando com "Server Error" genérico. Client-side validation OK, mas Convex rejeitava.
+
+#### ROOT CAUSE
+
+Dados legacy do Firebase em produção com formato incompatível:
+- **Formato Antigo**: `defenseDeck: ["8117", "8118", ...]` (array de strings)
+- **Schema Novo**: `defenseDeck: [{tokenId: "8117", power: 150, ...}]` (array de objects)
+
+Convex **blocking deployment** porque dados existentes não passam na validação do schema!
+
+```bash
+✖ Schema validation failed.
+Document with ID "..." in table "profiles" does not match the schema
+Path: .defenseDeck[0]
+Value: "8117"
+Validator: v.object({tokenId: v.string(), power: v.number(), ...})
+```
+
+#### SOLUÇÃO: 3-Step Migration Process
+
+**Step 1: Temporary Permissive Schema**
+```typescript
+// convex/schema.ts
+profiles: defineTable({
+  // OLD (strict):
+  defenseDeck: v.optional(v.array(
+    v.object({
+      tokenId: v.string(),
+      power: v.number(),
+      // ...
+    })
+  )),
+
+  // NEW (permissive para migration):
+  defenseDeck: v.optional(v.any()),
+}).index("by_address", ["address"])
+```
+
+**Step 2: Create Migration Function**
+```typescript
+// convex/profiles.ts
+export const cleanOldDefenseDecks = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("profiles").collect();
+
+    let cleanedCount = 0;
+    for (const profile of profiles) {
+      if (!profile.defenseDeck?.length) continue;
+
+      // Check if old format (first element is string)
+      if (typeof profile.defenseDeck[0] === 'string') {
+        console.log(`Cleaning ${profile.username}`);
+        await ctx.db.patch(profile._id, {
+          defenseDeck: undefined, // Clear old data
+        });
+        cleanedCount++;
+      }
+    }
+
+    return { cleanedCount, totalProfiles: profiles.length };
+  },
+});
+```
+
+**Step 3: Execute Migration**
+```bash
+# Set to prod deployment
+CONVEX_DEPLOYMENT=prod:your-deployment
+
+# Deploy with permissive schema
+npx convex deploy --yes
+
+# Run migration
+npx convex run profiles:cleanOldDefenseDecks --prod
+
+# Result:
+# { cleanedCount: 8, totalProfiles: 16 }
+```
+
+**Step 4: Restore Strict Schema**
+```typescript
+// Revert back to strict validation
+defenseDeck: v.optional(v.array(
+  v.object({
+    tokenId: v.string(),
+    power: v.number(),
+    imageUrl: v.string(),
+    name: v.string(),
+    rarity: v.string(),
+    foil: v.optional(v.string()),
+  })
+)),
+```
+
+**Step 5: Deploy Final Schema**
+```bash
+npx convex deploy --yes
+# ✅ Now deployment works - all data matches schema!
+```
+
+#### LIÇÕES APRENDIDAS
+
+1. **Schema validation blocks deployment** - Não pode deployer se dados existentes não passam validação
+2. **Use v.any() temporariamente** - Para permitir deploy durante migração
+3. **internalMutation vs mutation** - `internalMutation` precisa setup especial, use `mutation` normal para migrations
+4. **Migration files in subfolders** - Convex não reconhece `migrations/file.ts`, colocar mutation direto no arquivo principal
+5. **Always check production data** - Firebase migration pode deixar dados em formatos antigos
+6. **Add legacy fields to schema** - `matchId` do Firebase estava causando erro similar
+
+#### CHECKLIST: Future Schema Changes
+
+Quando mudar schema que afeta dados existentes:
+
+- [ ] Check production data format first (`convex dashboard`)
+- [ ] If incompatible, create migration plan
+- [ ] Change schema to `v.any()` temporarily
+- [ ] Deploy permissive schema
+- [ ] Write and test migration function
+- [ ] Run migration on production
+- [ ] Verify all old data cleaned
+- [ ] Restore strict schema
+- [ ] Deploy final schema
+- [ ] Test in production
+
+**Commits**: `b27cdea`, `30baa18`, `fa21094`, `bb86591`
+
+---
+
 ### Pattern: Convex + TypeScript
 
 **Problema**: TypeScript reclama de campos opcionais no Convex.
@@ -3385,3 +3517,10 @@ const saveDefenseDeck = useCallback(async () => {
   - AI difficulty ranges corrigidos (15-750 ao invés de 1-5)
   - Tutorial power examples atualizados com valores reais
   - Card IDs visíveis após batalha com IA
+- v1.4 (2025-10-30): 🔥 CRITICAL - Schema Validation & Data Migration
+  - **ROOT CAUSE IDENTIFIED**: Legacy Firebase data blocking Convex schema validation
+  - Created and executed migration to clean old defense deck format (string[] → object[])
+  - Added `matchId` field to matches schema (legacy Firebase field)
+  - Cleaned 8 profiles with old format in production
+  - Defense deck save errors COMPLETELY RESOLVED
+  - Foil effects simplified (removed complex multi-layer, kept original overlay)
