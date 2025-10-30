@@ -226,19 +226,71 @@ export const updateDefenseDeck = mutation({
     ),
   },
   handler: async (ctx, { address, defenseDeck }) => {
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    try {
+      console.log('🔍 updateDefenseDeck handler called:', {
+        address,
+        cardCount: defenseDeck.length,
+        cards: defenseDeck.map(c => ({
+          tokenId: c.tokenId,
+          power: c.power,
+          powerType: typeof c.power,
+          imageUrlLength: c.imageUrl?.length,
+          nameLength: c.name?.length,
+          rarity: c.rarity,
+          foil: c.foil,
+        }))
+      });
 
-    if (!profile) {
-      throw new Error(`Profile not found: ${address}`);
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+        .first();
+
+      if (!profile) {
+        console.error('❌ Profile not found:', address);
+        throw new Error(`Profile not found: ${address}`);
+      }
+
+      console.log('✅ Profile found:', {
+        id: profile._id,
+        username: profile.username,
+        currentDefenseDeckLength: profile.defenseDeck?.length
+      });
+
+      // Clean the defense deck data - remove undefined values
+      const cleanedDefenseDeck = defenseDeck.map(card => {
+        const cleaned: any = {
+          tokenId: card.tokenId,
+          power: card.power,
+          imageUrl: card.imageUrl,
+          name: card.name,
+          rarity: card.rarity,
+        };
+
+        // Only add foil if it's a non-empty string
+        if (card.foil && card.foil !== '') {
+          cleaned.foil = card.foil;
+        }
+
+        return cleaned;
+      });
+
+      console.log('🧹 Cleaned defense deck:', cleanedDefenseDeck);
+
+      await ctx.db.patch(profile._id, {
+        defenseDeck: cleanedDefenseDeck,
+        lastUpdated: Date.now(),
+      });
+
+      console.log('✅ Defense deck updated successfully');
+    } catch (error: any) {
+      console.error('❌ updateDefenseDeck handler error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+      });
+      throw error;
     }
-
-    await ctx.db.patch(profile._id, {
-      defenseDeck,
-      lastUpdated: Date.now(),
-    });
   },
 });
 
