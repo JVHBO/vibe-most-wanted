@@ -103,7 +103,15 @@ export const upsertProfile = mutation({
         defenseLosses: v.number(),
       })
     ),
-    defenseDeck: v.optional(v.array(v.string())),
+    defenseDeck: v.optional(v.array(
+      v.object({
+        tokenId: v.string(),
+        power: v.number(),
+        imageUrl: v.string(),
+        name: v.string(),
+        rarity: v.string(),
+      })
+    )),
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),
     fid: v.optional(v.string()),
