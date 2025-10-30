@@ -63,7 +63,7 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
                 transparent 50%)
             `,
             filter: 'blur(30px) saturate(2) brightness(1.3)',
-            animation: 'holoMove 10s ease-in-out infinite',
+            animation: 'holoMoveFast 5s ease-in-out infinite',
             mixBlendMode: 'multiply',
             opacity: 0.7,
           }}
@@ -111,6 +111,24 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
 
       {/* CSS Animations */}
       <style jsx>{`
+        @keyframes holoMoveFast {
+          0%, 100% {
+            transform: rotate(0deg) scale(1) translate(0, 0);
+          }
+          20% {
+            transform: rotate(72deg) scale(1.15) translate(8%, -8%);
+          }
+          40% {
+            transform: rotate(144deg) scale(0.95) translate(-8%, 8%);
+          }
+          60% {
+            transform: rotate(216deg) scale(1.15) translate(8%, 8%);
+          }
+          80% {
+            transform: rotate(288deg) scale(0.95) translate(-8%, -8%);
+          }
+        }
+
         @keyframes holoMove {
           0%, 100% {
             transform: rotate(0deg) scale(1) translate(0, 0);
