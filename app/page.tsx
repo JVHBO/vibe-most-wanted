@@ -1632,14 +1632,17 @@ export default function TCGPage() {
       }
 
       // ✅ MUDANÇA: Salvar objetos completos ao invés de apenas tokenIds
-      const defenseDeckData = selectedCards.map(card => ({
-        tokenId: String(card.tokenId),
-        power: Number(card.power) || 0,
-        imageUrl: String(card.imageUrl),
-        name: card.name || `Card #${card.tokenId}`,
-        rarity: card.rarity || 'Common',
-        ...(card.foil && card.foil !== 'None' && card.foil !== '' ? { foil: String(card.foil) } : {}),
-      }));
+      const defenseDeckData = selectedCards.map(card => {
+        const hasFoil = card.foil && card.foil !== 'None' && card.foil !== '';
+        return {
+          tokenId: String(card.tokenId),
+          power: Number(card.power) || 0,
+          imageUrl: String(card.imageUrl),
+          name: card.name || `Card #${card.tokenId}`,
+          rarity: card.rarity || 'Common',
+          foil: hasFoil ? String(card.foil) : undefined,
+        };
+      });
 
       devLog('💾 Saving defense deck:', {
         address,
