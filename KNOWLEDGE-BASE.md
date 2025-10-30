@@ -3550,3 +3550,25 @@ const saveDefenseDeck = useCallback(async () => {
     - ✅ lib/translations.ts - Removed emojis from tutorial, changed headers to UPPERCASE
   - **Key Takeaway**: Always check reference HTML structure when implementing CSS blend modes
   - **Time Saved**: This lesson prevents future DOM order mistakes with visual effects
+- v1.6 (2025-10-30): 🎮 New Game Modes - Ideas & Planning
+  - **8 NEW GAME MODE IDEAS DOCUMENTED**:
+    1. **Draft Mode** 🎯 - Players alternate picking from shared pool of 20 cards
+    2. **Elimination Mode** ⚔️ - 1v1 sequential battles, order matters
+    3. **Chaos Mode** 🎲 - Random modifiers change rules each battle (EASIEST TO IMPLEMENT)
+    4. **Tag Team Mode** 👥 - 2v2 battles, 6 cards per team
+    5. **Survival Mode** 🏆 - 5 consecutive AI waves, cards lose 10% power each wave
+    6. **Ante Mode** 💰 - Bet 1 NFT, winner takes both (requires betting system)
+    7. **Sniper Mode** 🎯 - Strategic card targeting, 5 simultaneous 1v1s
+    8. **Daily Challenge** 📅 - Same challenge for all players, resets daily
+  - **TOP 3 EASIEST TO IMPLEMENT**:
+    1. Chaos Mode (2-3h) - Modifies power calculations only
+    2. Daily Challenge (4-5h) - Uses existing AI, needs new Convex table
+    3. Elimination Mode (5-6h) - Similar battle logic, adds rounds UI
+  - **CURRENT GAME STATE ANALYZED**:
+    - 5-card battle system (power-based)
+    - 5 AI difficulties (progressive unlock)
+    - Async PvP (attack mode with defense decks)
+    - Real-time PvP (matchmaking + custom rooms)
+    - Daily attack limits (5/day)
+    - No betting/rewards implemented yet (schema ready)
+  - **STATUS**: Ideas documented, implementation pending user choice
