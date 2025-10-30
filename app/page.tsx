@@ -1441,12 +1441,28 @@ export default function TCGPage() {
 
     devLog('🎮 BATTLE DEBUG:');
     devLog('  JC available cards:', available.length);
-    devLog('  Top 5 strongest:', available.sort((a, b) => (b.power || 0) - (a.power || 0)).slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
+    devLog('  JC deck loading status:', jcNftsLoading);
+    devLog('  AI difficulty:', aiDifficulty);
+    if (available.length > 0) {
+      const sorted = [...available].sort((a, b) => (b.power || 0) - (a.power || 0));
+      devLog('  Top 5 strongest:', sorted.slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
+      devLog('  Bottom 5 weakest:', sorted.slice(-5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
+    }
 
     if (available.length < HAND_SIZE_CONST) {
-      devLog('⚠️ Mecha George Floyd deck not loaded yet');
+      devLog('⚠️ Mecha George Floyd deck not loaded yet - retrying in 2 seconds...');
+
+      // Auto-retry after 2 seconds if deck not loaded
+      if (!jcNftsLoading) {
+        setTimeout(() => {
+          devLog('🔄 Retrying battle after waiting for deck to load...');
+          playHand();
+        }, 2000);
+      }
+
       setIsBattling(false);
       setShowBattleScreen(false);
+      alert('⏳ Loading AI deck... Please try again in a moment.');
       return;
     }
 
@@ -1456,31 +1472,53 @@ export default function TCGPage() {
     let pickedDealer: any[] = [];
 
     // Different strategies based on difficulty (5 levels)
+    // Power values in JC deck: 15, 23, 38, 75, 113, 150, 225, 250, 375, 750
     switch (aiDifficulty) {
       case 'gey':
-        // GEY (Level 1): Weakest cards (~5-20 power)
-        const weakCards = sorted.filter(c => (c.power || 0) >= 1 && (c.power || 0) <= 5);
+        // GEY (Level 1): Weakest cards (power 15-38, total ~75-190)
+        const weakCards = sorted.filter(c => (c.power || 0) >= 15 && (c.power || 0) <= 38);
         pickedDealer = weakCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        if (pickedDealer.length < HAND_SIZE_CONST) {
+          // Fallback: use weakest available cards
+          pickedDealer = sorted.slice(-HAND_SIZE_CONST).reverse();
+        }
         break;
 
       case 'goofy':
-        // GOOFY (Level 2): Low-tier cards (~90 power)
-        pickedDealer = sorted.slice(100, 100 + HAND_SIZE_CONST);
+        // GOOFY (Level 2): Low-tier cards (power 75-113, total ~375-565)
+        const lowTierCards = sorted.filter(c => (c.power || 0) >= 75 && (c.power || 0) <= 113);
+        pickedDealer = lowTierCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        if (pickedDealer.length < HAND_SIZE_CONST) {
+          // Fallback: use cards from middle range
+          const midPoint = Math.floor(sorted.length / 2);
+          pickedDealer = sorted.slice(midPoint, midPoint + HAND_SIZE_CONST);
+        }
         break;
 
       case 'gooner':
-        // GOONER (Level 3): Mid-tier strong cards (~300 power)
-        pickedDealer = sorted.slice(20, 20 + HAND_SIZE_CONST);
+        // GOONER (Level 3): Mid-tier strong cards (power 150-225, total ~750-1125)
+        const midTierCards = sorted.filter(c => (c.power || 0) >= 150 && (c.power || 0) <= 225);
+        pickedDealer = midTierCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        if (pickedDealer.length < HAND_SIZE_CONST) {
+          // Fallback: use top 20-30% cards
+          const startIdx = Math.floor(sorted.length * 0.2);
+          pickedDealer = sorted.slice(startIdx, startIdx + HAND_SIZE_CONST);
+        }
         break;
 
       case 'godlike':
-        // GODLIKE (Level 4): Very strong cards (~462 power)
-        // Mix: 1 legendary (rank 2) + 4 top epics (ranks 4-7)
-        pickedDealer = [sorted[2], sorted[4], sorted[5], sorted[6], sorted[7]];
+        // GODLIKE (Level 4): Very strong cards (power 250-375, total ~1250-1875)
+        const strongCards = sorted.filter(c => (c.power || 0) >= 250 && (c.power || 0) <= 375);
+        pickedDealer = strongCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        if (pickedDealer.length < HAND_SIZE_CONST) {
+          // Fallback: use top 10% cards
+          pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
+        }
         break;
 
       case 'gigachad':
-        // GIGACHAD (Level 5): ABSOLUTE MAXIMUM (789 power)
+        // GIGACHAD (Level 5): ABSOLUTE MAXIMUM (power 375-750, total ~1875-3750)
+        // Prioritize mythic cards (power 750) and highest epics
         pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
         break;
     }
@@ -2507,6 +2545,12 @@ export default function TCGPage() {
                       >
                         {c.power}
                       </div>
+                      {/* Token ID badge - visible after battle result */}
+                      {battlePhase === 'result' && (
+                        <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
+                          #{c.tokenId}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -4142,6 +4186,7 @@ export default function TCGPage() {
                           <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/30">
                             <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
                             <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br">{c.power}</div>
+                            <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">#{c.tokenId}</div>
                           </FoilCardEffect>
                         ))}
                       </div>
