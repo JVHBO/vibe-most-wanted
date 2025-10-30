@@ -230,12 +230,35 @@ export class ConvexProfileService {
     try {
       const normalizedAddress = address.toLowerCase();
 
+      // ✅ Additional validation and logging
+      console.log('📤 updateDefenseDeck called:', {
+        address: normalizedAddress,
+        cardCount: defenseDeck.length,
+        cards: defenseDeck.map(c => ({
+          tokenId: c.tokenId,
+          power: c.power,
+          powerType: typeof c.power,
+          imageUrl: c.imageUrl?.substring(0, 50),
+          name: c.name,
+          rarity: c.rarity,
+          foil: c.foil,
+          hasAllFields: !!(c.tokenId && c.power !== undefined && c.imageUrl && c.name && c.rarity)
+        }))
+      });
+
       await convex.mutation(api.profiles.updateDefenseDeck, {
         address: normalizedAddress,
         defenseDeck,
       });
+
+      console.log('✅ updateDefenseDeck succeeded');
     } catch (error: any) {
       console.error("❌ updateDefenseDeck error:", error);
+      console.error("❌ Error details:", {
+        message: error.message,
+        stack: error.stack,
+        data: error.data
+      });
       throw error;
     }
   }
