@@ -3524,3 +3524,29 @@ const saveDefenseDeck = useCallback(async () => {
   - Cleaned 8 profiles with old format in production
   - Defense deck save errors COMPLETELY RESOLVED
   - Foil effects simplified (removed complex multi-layer, kept original overlay)
+- v1.5 (2025-10-30): 🎨 Holographic Foil Effects - DOM Order Fix
+  - **CRITICAL LESSON**: DOM order affects CSS `mixBlendMode` rendering
+  - **Problem**: Foil effects were inconsistent/invisible in home and defense deck
+  - **Root Cause**: Effect overlay was positioned BEFORE content in DOM tree
+  - **Solution**: Reordered DOM - content FIRST, then effect layer AFTER
+  - **Why This Matters**: `mixBlendMode: 'multiply'` blends with elements BEFORE it in DOM
+  - **Reference HTML Structure**:
+    ```html
+    <div class="container overflow-hidden">
+      <img src="card.jpg">  <!-- Content FIRST -->
+      <div class="holo-effect"></div>  <!-- Effect AFTER -->
+    </div>
+    ```
+  - **Implementation** (components/FoilCardEffect.tsx):
+    - Container: `relative overflow-hidden` to clip extended effect area
+    - Children (card content) rendered first
+    - Effect layer: `absolute` positioned at `-50% top/left` with `200% width/height`
+    - Prize Foil: 5 radial gradients (pink, yellow, cyan, purple, green) with `blur(30px) saturate(2) brightness(1.3)`
+    - Standard Foil: 3 radial gradients (purple, blue, mint) with `blur(25px) saturate(1.5) brightness(1.2)`
+    - Both use `mixBlendMode: 'multiply'` and `holoMove` animation
+  - **Files Modified**:
+    - ✅ components/FoilCardEffect.tsx - Corrected DOM order (content first, effect after)
+    - ✅ app/page.tsx - Removed duplicate inline foil CSS, unified to use FoilCardEffect component
+    - ✅ lib/translations.ts - Removed emojis from tutorial, changed headers to UPPERCASE
+  - **Key Takeaway**: Always check reference HTML structure when implementing CSS blend modes
+  - **Time Saved**: This lesson prevents future DOM order mistakes with visual effects
