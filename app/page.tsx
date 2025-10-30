@@ -1615,15 +1615,42 @@ export default function TCGPage() {
     if (!address || !userProfile || selectedCards.length !== HAND_SIZE_CONST) return;
 
     try {
+      // ✅ Validate all cards have required data
+      const invalidCards = selectedCards.filter(card =>
+        !card.tokenId ||
+        typeof card.power !== 'number' ||
+        isNaN(card.power) ||
+        !card.imageUrl ||
+        card.imageUrl === 'undefined' ||
+        card.imageUrl === ''
+      );
+
+      if (invalidCards.length > 0) {
+        devError('❌ Invalid cards detected:', invalidCards);
+        alert(`Error: ${invalidCards.length} card(s) have invalid data (missing image or power). Please refresh the page and try again.`);
+        return;
+      }
+
       // ✅ MUDANÇA: Salvar objetos completos ao invés de apenas tokenIds
       const defenseDeckData = selectedCards.map(card => ({
-        tokenId: card.tokenId,
-        power: card.power || 0,
-        imageUrl: card.imageUrl || '',
+        tokenId: String(card.tokenId),
+        power: Number(card.power) || 0,
+        imageUrl: String(card.imageUrl),
         name: card.name || `Card #${card.tokenId}`,
         rarity: card.rarity || 'Common',
-        foil: card.foil || undefined,
+        ...(card.foil && card.foil !== 'None' && card.foil !== '' ? { foil: String(card.foil) } : {}),
       }));
+
+      devLog('💾 Saving defense deck:', {
+        address,
+        cardCount: defenseDeckData.length,
+        cards: defenseDeckData.map(c => ({
+          tokenId: c.tokenId,
+          power: c.power,
+          foil: c.foil,
+          imageUrl: c.imageUrl.substring(0, 50) + '...'
+        }))
+      });
 
       await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
 
