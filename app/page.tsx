@@ -621,64 +621,132 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           75% { transform: rotate(3deg); }
         }
 
-        @keyframes rainbowShine {
-          0% {
-            background-position: -200% center;
+        @keyframes blobMove {
+          0%, 100% {
+            transform: rotate(0deg) translate(0, 0);
           }
-          100% {
-            background-position: 200% center;
+          25% {
+            transform: rotate(90deg) translate(5%, -5%);
+          }
+          50% {
+            transform: rotate(180deg) translate(-5%, 5%);
+          }
+          75% {
+            transform: rotate(270deg) translate(5%, 5%);
           }
         }
 
-        .prize-foil {
-          background:
-            linear-gradient(
-              90deg,
-              transparent 0%,
-              rgba(255, 255, 255, 0.4) 45%,
-              rgba(255, 255, 255, 0.6) 50%,
-              rgba(255, 255, 255, 0.4) 55%,
-              transparent 100%
-            ),
-            linear-gradient(
-              45deg,
-              #ff0080 0%,
-              #ff3366 8%,
-              #ff8c00 16%,
-              #ffb84d 24%,
-              #ffd700 32%,
-              #80ff00 40%,
-              #00ff80 48%,
-              #00ffff 56%,
-              #0080ff 64%,
-              #4d4dff 72%,
-              #8000ff 80%,
-              #cc00ff 88%,
-              #ff00ff 96%,
-              #ff0080 100%
-            );
-          background-size: 300% 100%, 600% 600%;
-          animation: holographic 8s ease-in-out infinite, rainbowShine 6s ease-in-out infinite;
-          mix-blend-mode: overlay;
-          pointer-events: none;
-          opacity: 0.7;
+        @keyframes flowMove {
+          0%, 100% {
+            transform: scale(1) rotate(0deg);
+            filter: blur(12px) hue-rotate(0deg);
+          }
+          33% {
+            transform: scale(1.2) rotate(120deg);
+            filter: blur(8px) hue-rotate(120deg);
+          }
+          66% {
+            transform: scale(0.9) rotate(240deg);
+            filter: blur(15px) hue-rotate(240deg);
+          }
         }
-        
+
+        @keyframes shimmerPass {
+          0% {
+            background-position: -100% -100%;
+          }
+          100% {
+            background-position: 200% 200%;
+          }
+        }
+
+        .prize-foil-blobs {
+          position: absolute;
+          top: -20%;
+          left: -20%;
+          width: 140%;
+          height: 140%;
+          background:
+            radial-gradient(ellipse 300px 400px at 25% 25%,
+              rgba(255, 0, 200, 0.7) 0%,
+              rgba(255, 100, 150, 0.5) 30%,
+              transparent 50%),
+            radial-gradient(ellipse 400px 300px at 75% 35%,
+              rgba(255, 255, 0, 0.7) 0%,
+              rgba(200, 255, 0, 0.5) 30%,
+              transparent 50%),
+            radial-gradient(ellipse 350px 350px at 50% 70%,
+              rgba(0, 200, 255, 0.7) 0%,
+              rgba(0, 255, 200, 0.5) 30%,
+              transparent 50%),
+            radial-gradient(ellipse 300px 300px at 20% 80%,
+              rgba(200, 0, 255, 0.7) 0%,
+              rgba(255, 0, 255, 0.5) 30%,
+              transparent 50%),
+            radial-gradient(ellipse 250px 350px at 80% 70%,
+              rgba(0, 255, 100, 0.7) 0%,
+              rgba(100, 255, 0, 0.5) 30%,
+              transparent 50%);
+          filter: blur(8px);
+          animation: blobMove 10s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        .prize-foil-flow {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background:
+            radial-gradient(circle at 70% 20%,
+              rgba(255, 100, 0, 0.5) 0%,
+              transparent 35%),
+            radial-gradient(circle at 30% 50%,
+              rgba(0, 255, 255, 0.5) 0%,
+              transparent 35%),
+            radial-gradient(circle at 60% 80%,
+              rgba(255, 0, 100, 0.5) 0%,
+              transparent 35%);
+          filter: blur(12px);
+          animation: flowMove 12s ease-in-out infinite reverse;
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        .prize-foil-shimmer {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            125deg,
+            transparent 40%,
+            rgba(255, 255, 255, 0.1) 50%,
+            transparent 60%
+          );
+          background-size: 200% 200%;
+          animation: shimmerPass 8s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 3;
+        }
+
         .standard-foil {
           background: linear-gradient(
             135deg,
-            rgba(150, 220, 255, 0.7) 0%,
-            rgba(220, 150, 255, 0.7) 25%,
-            rgba(150, 255, 220, 0.7) 50%,
-            rgba(255, 200, 150, 0.7) 75%,
-            rgba(150, 220, 255, 0.7) 100%
+            rgba(150, 220, 255, 0.4) 0%,
+            rgba(220, 150, 255, 0.4) 25%,
+            rgba(150, 255, 220, 0.4) 50%,
+            rgba(255, 200, 150, 0.4) 75%,
+            rgba(150, 220, 255, 0.4) 100%
           );
           background-size: 400% 400%;
           animation: holographic 4s ease-in-out infinite;
           mix-blend-mode: overlay;
           pointer-events: none;
-          opacity: 0.8;
-          filter: brightness(1.2) saturate(1.3);
+          opacity: 0.6;
         }
         
         .prize-card-ring {
@@ -687,17 +755,27 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
       `}</style>
       
       <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick} style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}>
-        <div className={`relative overflow-hidden rounded-xl ${
+        <div className={`relative rounded-xl ${
           selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
           'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
-        } ${(nft.rarity || '').toLowerCase().includes('legend') || (nft.rarity || '').toLowerCase().includes('mythic') ? 'legendary-card' : ''}`} style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}}>
+        } ${(nft.rarity || '').toLowerCase().includes('legend') || (nft.rarity || '').toLowerCase().includes('mythic') ? 'legendary-card' : ''}`} style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)', overflow: 'hidden'}}>
           <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
 
           {/* Card Reflection on Hover */}
           <div className="card-reflection"></div>
 
-          {foilEffect && (
-            <div className={`absolute inset-0 ${foilEffect}`}></div>
+          {/* Prize Foil - Multi-layer holographic effect */}
+          {foilEffect === 'prize-foil' && (
+            <>
+              <div className="prize-foil-blobs"></div>
+              <div className="prize-foil-flow"></div>
+              <div className="prize-foil-shimmer"></div>
+            </>
+          )}
+
+          {/* Standard Foil - Simple gradient overlay */}
+          {foilEffect === 'standard-foil' && (
+            <div className="absolute inset-0 standard-foil"></div>
           )}
 
           <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
