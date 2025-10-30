@@ -322,14 +322,13 @@ function calcPower(nft: any): number {
   const foil = findAttr(nft, 'foil') || 'None';
   const rarity = findAttr(nft, 'rarity') || 'Common';
   const wear = findAttr(nft, 'wear') || 'Lightly Played';
-  let base = 1;
+  let base = 15;
   const r = rarity.toLowerCase();
-  if (r.includes('mythic')) base = 350;
-  else if (r.includes('legend')) base = 150;
+  if (r.includes('legend')) base = 150;
   else if (r.includes('epic')) base = 60;
   else if (r.includes('rare')) base = 15;
-  else if (r.includes('uncommon')) base = 8;
-  else base = 1;
+  else if (r.includes('common')) base = 15;
+  else base = 15;
   let wearMult = 1.0;
   const w = wear.toLowerCase();
   if (w.includes('pristine')) wearMult = 1.4;
@@ -480,7 +479,6 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
   const getRarityRing = (rarity: string) => {
     const r = (rarity || '').toLowerCase();
     if (r.includes('legend')) return 'ring-vintage-gold shadow-gold-lg';
-    if (r.includes('mythic')) return 'ring-vintage-gold shadow-gold-lg';
     if (r.includes('epic')) return 'ring-vintage-silver shadow-neon';
     if (r.includes('rare')) return 'ring-vintage-burnt-gold shadow-gold';
     return 'ring-vintage-charcoal shadow-lg';
@@ -1381,7 +1379,7 @@ export default function TCGPage() {
         // Filter only revealed cards by checking rarity is valid
         const validCards = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
-          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+          return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
 
         const commons = validCards.filter(c => (c.rarity || '').toLowerCase() === 'common');
@@ -1405,7 +1403,7 @@ export default function TCGPage() {
         // Filter only revealed cards
         const goofyValid = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
-          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+          return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
         const lowTierCards = goofyValid.filter(c => (c.power || 0) >= 75 && (c.power || 0) <= 113);
         pickedDealer = lowTierCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
@@ -1421,7 +1419,7 @@ export default function TCGPage() {
         // Filter only revealed cards
         const goonerValid = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
-          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+          return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
         const midTierCards = goonerValid.filter(c => (c.power || 0) >= 150 && (c.power || 0) <= 225);
         pickedDealer = midTierCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
@@ -1437,7 +1435,7 @@ export default function TCGPage() {
         // Filter only revealed cards
         const godlikeValid = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
-          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+          return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
         const strongCards = godlikeValid.filter(c => (c.power || 0) >= 250 && (c.power || 0) <= 375);
         pickedDealer = strongCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
@@ -1452,7 +1450,7 @@ export default function TCGPage() {
         // Filter only revealed cards and prioritize mythic cards (power 750) and highest epics
         const gigachadValid = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
-          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+          return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
         pickedDealer = gigachadValid.slice(0, HAND_SIZE_CONST);
         break;
