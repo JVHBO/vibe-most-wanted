@@ -70,7 +70,7 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
         />
       )}
 
-      {/* STANDARD FOIL effect AFTER content */}
+      {/* STANDARD FOIL effect AFTER content - Similar to Prize but weaker and slower */}
       {!isPrize && (
         <div
           className="absolute pointer-events-none"
@@ -80,23 +80,31 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
             width: '200%',
             height: '200%',
             background: `
-              radial-gradient(circle 280px at 35% 35%,
-                rgba(200, 150, 255, 0.9) 0%,
-                rgba(180, 100, 255, 0.6) 25%,
+              radial-gradient(circle 300px at 30% 30%,
+                rgba(180, 120, 255, 0.5) 0%,
+                rgba(150, 100, 220, 0.3) 25%,
                 transparent 50%),
-              radial-gradient(circle 260px at 65% 30%,
-                rgba(100, 200, 255, 0.9) 0%,
-                rgba(150, 220, 255, 0.6) 25%,
+              radial-gradient(circle 280px at 70% 25%,
+                rgba(100, 180, 255, 0.5) 0%,
+                rgba(80, 150, 220, 0.3) 25%,
                 transparent 50%),
-              radial-gradient(circle 300px at 50% 70%,
-                rgba(150, 255, 200, 0.9) 0%,
-                rgba(100, 255, 180, 0.6) 25%,
+              radial-gradient(circle 320px at 45% 65%,
+                rgba(120, 220, 255, 0.5) 0%,
+                rgba(100, 180, 220, 0.3) 25%,
+                transparent 50%),
+              radial-gradient(circle 250px at 20% 75%,
+                rgba(160, 120, 255, 0.5) 0%,
+                rgba(140, 100, 220, 0.3) 25%,
+                transparent 50%),
+              radial-gradient(circle 270px at 80% 50%,
+                rgba(100, 200, 220, 0.5) 0%,
+                rgba(80, 170, 200, 0.3) 25%,
                 transparent 50%)
             `,
-            filter: 'blur(25px) saturate(2.5) brightness(1.5)',
-            animation: 'holoMove 12s ease-in-out infinite',
+            filter: 'blur(30px) saturate(1.3) brightness(1.1)',
+            animation: 'holoMoveSlow 25s ease-in-out infinite',
             mixBlendMode: 'multiply',
-            opacity: 0.85,
+            opacity: 0.5,
           }}
         />
       )}
@@ -115,6 +123,21 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
           }
           75% {
             transform: rotate(270deg) scale(1.1) translate(5%, 5%);
+          }
+        }
+
+        @keyframes holoMoveSlow {
+          0%, 100% {
+            transform: rotate(0deg) scale(1) translate(0, 0);
+          }
+          25% {
+            transform: rotate(90deg) scale(1.05) translate(2%, -2%);
+          }
+          50% {
+            transform: rotate(180deg) scale(1) translate(-2%, 2%);
+          }
+          75% {
+            transform: rotate(270deg) scale(1.05) translate(2%, 2%);
           }
         }
 
