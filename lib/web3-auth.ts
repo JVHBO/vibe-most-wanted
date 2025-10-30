@@ -162,6 +162,7 @@ export class SecureConvexClient {
     imageUrl: string;
     name: string;
     rarity: string;
+    foil?: string;
   }[]) {
     const auth = await createAuthPayload(
       this.signer,

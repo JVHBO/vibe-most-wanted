@@ -47,6 +47,7 @@ export default defineSchema({
         imageUrl: v.string(),
         name: v.string(),
         rarity: v.string(),
+        foil: v.optional(v.string()),
       })
     )),
 

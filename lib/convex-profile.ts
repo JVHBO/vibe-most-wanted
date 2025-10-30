@@ -34,6 +34,7 @@ export interface UserProfile {
     imageUrl: string;
     name: string;
     rarity: string;
+    foil?: string;
   }[];
   attacksToday: number;
   rematchesToday: number;
@@ -223,6 +224,7 @@ export class ConvexProfileService {
       imageUrl: string;
       name: string;
       rarity: string;
+      foil?: string;
     }[]
   ): Promise<void> {
     try {

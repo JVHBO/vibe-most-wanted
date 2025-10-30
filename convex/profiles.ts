@@ -110,6 +110,7 @@ export const upsertProfile = mutation({
         imageUrl: v.string(),
         name: v.string(),
         rarity: v.string(),
+        foil: v.optional(v.string()),
       })
     )),
     twitter: v.optional(v.string()),
@@ -220,6 +221,7 @@ export const updateDefenseDeck = mutation({
         imageUrl: v.string(),
         name: v.string(),
         rarity: v.string(),
+        foil: v.optional(v.string()),
       })
     ),
   },
@@ -388,6 +390,7 @@ export const updateDefenseDeckSecure = mutation({
         imageUrl: v.string(),
         name: v.string(),
         rarity: v.string(),
+        foil: v.optional(v.string()),
       })
     ),
   },

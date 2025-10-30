@@ -10,6 +10,7 @@ import { BadgeList } from '@/components/Badge';
 import { getUserBadges } from '@/lib/badges';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAccount } from 'wagmi';
+import FoilCardEffect from '@/components/FoilCardEffect';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -637,7 +638,7 @@ export default function ProfilePage() {
             </p>
             <div className="grid grid-cols-5 gap-4">
               {profile.defenseDeck.map((card, i) => (
-                <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
+                <FoilCardEffect key={i} foilType={card.foil} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
                   <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
                   <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
                     {card.power}
@@ -645,7 +646,7 @@ export default function ProfilePage() {
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-vintage-black/90 to-transparent p-2">
                     <p className="text-xs text-vintage-gold font-modern">#{card.tokenId}</p>
                   </div>
-                </div>
+                </FoilCardEffect>
               ))}
             </div>
             <div className="mt-4 text-center">
