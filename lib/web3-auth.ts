@@ -156,7 +156,13 @@ export class SecureConvexClient {
   /**
    * Update defense deck securely
    */
-  async updateDefenseDeck(defenseDeck: string[]) {
+  async updateDefenseDeck(defenseDeck: {
+    tokenId: string;
+    power: number;
+    imageUrl: string;
+    name: string;
+    rarity: string;
+  }[]) {
     const auth = await createAuthPayload(
       this.signer,
       this.address,
