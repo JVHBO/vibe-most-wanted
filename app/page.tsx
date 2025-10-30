@@ -668,24 +668,24 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           height: 140%;
           background:
             radial-gradient(ellipse 300px 400px at 25% 25%,
-              rgba(255, 0, 200, 0.7) 0%,
-              rgba(255, 100, 150, 0.5) 30%,
+              rgba(255, 0, 200, 0.3) 0%,
+              rgba(255, 100, 150, 0.2) 30%,
               transparent 50%),
             radial-gradient(ellipse 400px 300px at 75% 35%,
-              rgba(255, 255, 0, 0.7) 0%,
-              rgba(200, 255, 0, 0.5) 30%,
+              rgba(255, 255, 0, 0.3) 0%,
+              rgba(200, 255, 0, 0.2) 30%,
               transparent 50%),
             radial-gradient(ellipse 350px 350px at 50% 70%,
-              rgba(0, 200, 255, 0.7) 0%,
-              rgba(0, 255, 200, 0.5) 30%,
+              rgba(0, 200, 255, 0.3) 0%,
+              rgba(0, 255, 200, 0.2) 30%,
               transparent 50%),
             radial-gradient(ellipse 300px 300px at 20% 80%,
-              rgba(200, 0, 255, 0.7) 0%,
-              rgba(255, 0, 255, 0.5) 30%,
+              rgba(200, 0, 255, 0.3) 0%,
+              rgba(255, 0, 255, 0.2) 30%,
               transparent 50%),
             radial-gradient(ellipse 250px 350px at 80% 70%,
-              rgba(0, 255, 100, 0.7) 0%,
-              rgba(100, 255, 0, 0.5) 30%,
+              rgba(0, 255, 100, 0.3) 0%,
+              rgba(100, 255, 0, 0.2) 30%,
               transparent 50%);
           filter: blur(8px);
           animation: blobMove 10s ease-in-out infinite;
@@ -701,13 +701,13 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           height: 100%;
           background:
             radial-gradient(circle at 70% 20%,
-              rgba(255, 100, 0, 0.5) 0%,
+              rgba(255, 100, 0, 0.25) 0%,
               transparent 35%),
             radial-gradient(circle at 30% 50%,
-              rgba(0, 255, 255, 0.5) 0%,
+              rgba(0, 255, 255, 0.25) 0%,
               transparent 35%),
             radial-gradient(circle at 60% 80%,
-              rgba(255, 0, 100, 0.5) 0%,
+              rgba(255, 0, 100, 0.25) 0%,
               transparent 35%);
           filter: blur(12px);
           animation: flowMove 12s ease-in-out infinite reverse;
@@ -724,7 +724,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           background: linear-gradient(
             125deg,
             transparent 40%,
-            rgba(255, 255, 255, 0.1) 50%,
+            rgba(255, 255, 255, 0.06) 50%,
             transparent 60%
           );
           background-size: 200% 200%;
