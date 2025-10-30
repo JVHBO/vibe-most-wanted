@@ -543,20 +543,6 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 140, 0, 0.6), 0 0 90px rgba(255, 0, 255, 0.5); }
         }
 
-        @keyframes goldGlow {
-          0%, 100% {
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.3);
-            filter: brightness(1);
-          }
-          50% {
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.5);
-            filter: brightness(1.1);
-          }
-        }
-
-        .legendary-card {
-          animation: goldGlow 2s ease-in-out infinite;
-        }
 
         @keyframes cardReflection {
           0% {
@@ -622,7 +608,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
           className={`relative rounded-xl ${
             selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
             'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
-          } ${(nft.rarity || '').toLowerCase().includes('legend') || (nft.rarity || '').toLowerCase().includes('mythic') ? 'legendary-card' : ''}`}
+          }`}
         >
           <div style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)', overflow: 'hidden'}} className="rounded-xl">
             <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
