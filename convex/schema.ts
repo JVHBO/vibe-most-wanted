@@ -93,6 +93,9 @@ export default defineSchema({
     opponentUsername: v.optional(v.string()),
     opponentPower: v.number(),
     opponentCards: v.array(v.any()),
+
+    // Legacy field from Firebase migration
+    matchId: v.optional(v.string()),
   })
     .index("by_player", ["playerAddress", "timestamp"]),
 
