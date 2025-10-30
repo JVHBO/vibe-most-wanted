@@ -73,38 +73,34 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
       {/* STANDARD FOIL effect AFTER content - Similar to Prize but weaker and slower */}
       {!isPrize && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute pointer-events-none inset-0"
           style={{
-            top: '-50%',
-            left: '-50%',
-            width: '200%',
-            height: '200%',
             background: `
               radial-gradient(circle 300px at 30% 30%,
-                rgba(180, 120, 255, 0.5) 0%,
-                rgba(150, 100, 220, 0.3) 25%,
+                rgba(180, 120, 255, 0.7) 0%,
+                rgba(150, 100, 220, 0.4) 25%,
                 transparent 50%),
               radial-gradient(circle 280px at 70% 25%,
-                rgba(100, 180, 255, 0.5) 0%,
-                rgba(80, 150, 220, 0.3) 25%,
+                rgba(100, 180, 255, 0.7) 0%,
+                rgba(80, 150, 220, 0.4) 25%,
                 transparent 50%),
               radial-gradient(circle 320px at 45% 65%,
-                rgba(120, 220, 255, 0.5) 0%,
-                rgba(100, 180, 220, 0.3) 25%,
+                rgba(120, 220, 255, 0.7) 0%,
+                rgba(100, 180, 220, 0.4) 25%,
                 transparent 50%),
               radial-gradient(circle 250px at 20% 75%,
-                rgba(160, 120, 255, 0.5) 0%,
-                rgba(140, 100, 220, 0.3) 25%,
+                rgba(160, 120, 255, 0.7) 0%,
+                rgba(140, 100, 220, 0.4) 25%,
                 transparent 50%),
               radial-gradient(circle 270px at 80% 50%,
-                rgba(100, 200, 220, 0.5) 0%,
-                rgba(80, 170, 200, 0.3) 25%,
+                rgba(100, 200, 220, 0.7) 0%,
+                rgba(80, 170, 200, 0.4) 25%,
                 transparent 50%)
             `,
-            filter: 'blur(30px) saturate(1.3) brightness(1.1)',
+            filter: 'blur(20px) saturate(1.5) brightness(1.3)',
             animation: 'holoMoveSlow 25s ease-in-out infinite',
-            mixBlendMode: 'multiply',
-            opacity: 0.5,
+            mixBlendMode: 'screen',
+            opacity: 0.6,
           }}
         />
       )}
