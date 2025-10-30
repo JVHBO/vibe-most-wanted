@@ -38,76 +38,43 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
         {children}
       </div>
 
-      {/* PRIZE FOIL: Soft, realistic holographic effect */}
+      {/* PRIZE FOIL: Holographic effect based on reference HTML */}
       {isPrize && (
         <>
-          {/* Main color blobs layer - larger, softer, more blended */}
+          {/* Main holographic layer - EXACTLY like reference */}
           <div
             className="absolute z-20 pointer-events-none"
             style={{
-              top: '-30%',
-              left: '-30%',
-              width: '160%',
-              height: '160%',
+              top: '-50%',
+              left: '-50%',
+              width: '200%',
+              height: '200%',
               background: `
-                radial-gradient(ellipse 400px 500px at 20% 20%,
-                  rgba(255, 0, 200, 0.4) 0%,
-                  rgba(255, 100, 150, 0.25) 25%,
-                  transparent 45%),
-                radial-gradient(ellipse 500px 400px at 80% 30%,
-                  rgba(255, 200, 0, 0.4) 0%,
-                  rgba(255, 255, 100, 0.25) 25%,
-                  transparent 45%),
-                radial-gradient(ellipse 450px 450px at 50% 75%,
-                  rgba(0, 200, 255, 0.4) 0%,
-                  rgba(100, 255, 200, 0.25) 25%,
-                  transparent 45%),
-                radial-gradient(ellipse 350px 400px at 15% 85%,
-                  rgba(150, 0, 255, 0.35) 0%,
-                  rgba(200, 100, 255, 0.2) 25%,
-                  transparent 45%),
-                radial-gradient(ellipse 300px 400px at 85% 75%,
-                  rgba(0, 255, 150, 0.35) 0%,
-                  rgba(100, 255, 100, 0.2) 25%,
-                  transparent 45%)
+                radial-gradient(circle 300px at 30% 30%,
+                  rgba(255, 0, 200, 0.8) 0%,
+                  rgba(255, 0, 150, 0.5) 25%,
+                  transparent 50%),
+                radial-gradient(circle 280px at 70% 25%,
+                  rgba(255, 255, 0, 0.8) 0%,
+                  rgba(200, 255, 0, 0.5) 25%,
+                  transparent 50%),
+                radial-gradient(circle 320px at 45% 65%,
+                  rgba(0, 255, 255, 0.8) 0%,
+                  rgba(0, 200, 255, 0.5) 25%,
+                  transparent 50%),
+                radial-gradient(circle 250px at 20% 75%,
+                  rgba(200, 0, 255, 0.8) 0%,
+                  rgba(255, 0, 255, 0.5) 25%,
+                  transparent 50%),
+                radial-gradient(circle 270px at 80% 50%,
+                  rgba(0, 255, 100, 0.8) 0%,
+                  rgba(100, 255, 0, 0.5) 25%,
+                  transparent 50%)
               `,
-              filter: 'blur(40px)',
-              animation: 'blobMove 15s ease-in-out infinite',
-              mixBlendMode: 'overlay',
-              opacity: 0.8,
-            }}
-          />
-
-          {/* Secondary glow layer - adds depth */}
-          <div
-            className="absolute inset-0 z-[21] pointer-events-none"
-            style={{
-              background: `
-                radial-gradient(circle at 30% 30%,
-                  rgba(255, 150, 0, 0.3) 0%,
-                  transparent 30%),
-                radial-gradient(circle at 70% 40%,
-                  rgba(100, 200, 255, 0.3) 0%,
-                  transparent 30%),
-                radial-gradient(circle at 50% 70%,
-                  rgba(255, 100, 200, 0.3) 0%,
-                  transparent 30%)
-              `,
-              filter: 'blur(25px)',
-              animation: 'flowMove 18s ease-in-out infinite',
-              mixBlendMode: 'screen',
-              opacity: 0.5,
-            }}
-          />
-
-          {/* Subtle shimmer pass - less aggressive */}
-          <div
-            className="absolute inset-0 z-[22] pointer-events-none"
-            style={{
-              background: 'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%)',
-              backgroundSize: '300% 300%',
-              animation: 'shimmerPass 12s ease-in-out infinite',
-              mixBlendMode: 'overlay',
+              filter: 'blur(30px) saturate(2) brightness(1.3)',
+              animation: 'holoMove 10s ease-in-out infinite',
+              mixBlendMode: 'multiply',
+              opacity: 0.7,
             }}
           />
         </>
@@ -156,6 +123,21 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
 
       {/* CSS Animations */}
       <style jsx>{`
+        @keyframes holoMove {
+          0%, 100% {
+            transform: rotate(0deg) scale(1) translate(0, 0);
+          }
+          25% {
+            transform: rotate(90deg) scale(1.1) translate(5%, -5%);
+          }
+          50% {
+            transform: rotate(180deg) scale(1) translate(-5%, 5%);
+          }
+          75% {
+            transform: rotate(270deg) scale(1.1) translate(5%, 5%);
+          }
+        }
+
         @keyframes blobMove {
           0%, 100% {
             transform: rotate(0deg) translate(0, 0) scale(1);
@@ -171,25 +153,6 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
           }
           80% {
             transform: rotate(288deg) translate(-3%, -1%) scale(0.96);
-          }
-        }
-
-        @keyframes flowMove {
-          0%, 100% {
-            transform: scale(1) rotate(0deg);
-            filter: blur(25px) hue-rotate(0deg);
-          }
-          25% {
-            transform: scale(1.15) rotate(90deg);
-            filter: blur(20px) hue-rotate(90deg);
-          }
-          50% {
-            transform: scale(0.95) rotate(180deg);
-            filter: blur(30px) hue-rotate(180deg);
-          }
-          75% {
-            transform: scale(1.08) rotate(270deg);
-            filter: blur(22px) hue-rotate(270deg);
           }
         }
 
