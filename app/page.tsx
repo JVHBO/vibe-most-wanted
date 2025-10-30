@@ -1615,6 +1615,16 @@ export default function TCGPage() {
     if (!address || !userProfile || selectedCards.length !== HAND_SIZE_CONST) return;
 
     try {
+      // ✅ Verify profile exists in Convex first
+      devLog('🔍 Verifying profile exists...');
+      const existingProfile = await ConvexProfileService.getProfile(address);
+      if (!existingProfile) {
+        devError('❌ Profile not found in Convex!');
+        alert('Error: Your profile was not found. Please create a profile first.');
+        return;
+      }
+      devLog('✅ Profile verified:', existingProfile.username);
+
       // ✅ Validate all cards have required data
       const invalidCards = selectedCards.filter(card =>
         !card.tokenId ||
@@ -1655,24 +1665,58 @@ export default function TCGPage() {
         }))
       });
 
-      await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
+      // ✅ Try to save with retry logic
+      let saveSuccess = false;
+      let lastError: any = null;
 
-      if (soundEnabled) AudioManager.buttonSuccess();
-      setShowDefenseDeckSaved(true);
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          devLog(`📡 Attempt ${attempt}/3 to save defense deck...`);
+          await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
+          devLog(`✅ Defense deck saved successfully on attempt ${attempt}`);
+          saveSuccess = true;
+          break;
+        } catch (err: any) {
+          lastError = err;
+          devError(`❌ Attempt ${attempt}/3 failed:`, err);
 
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setShowDefenseDeckSaved(false);
-      }, 3000);
+          // If it's the last attempt, throw
+          if (attempt === 3) {
+            throw err;
+          }
 
-      // Reload profile to get updated defense deck
-      const updatedProfile = await ConvexProfileService.getProfile(address);
-      if (updatedProfile) {
-        setUserProfile(updatedProfile);
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        }
       }
-    } catch (error) {
+
+      if (saveSuccess) {
+        if (soundEnabled) AudioManager.buttonSuccess();
+        setShowDefenseDeckSaved(true);
+
+        // Hide success message after 3 seconds
+        setTimeout(() => {
+          setShowDefenseDeckSaved(false);
+        }, 3000);
+
+        // Reload profile to get updated defense deck
+        const updatedProfile = await ConvexProfileService.getProfile(address);
+        if (updatedProfile) {
+          setUserProfile(updatedProfile);
+        }
+      }
+    } catch (error: any) {
       devError('Error saving defense deck:', error);
-      alert('Error saving defense deck. Please try again.');
+
+      // More helpful error message
+      const errorMsg = error?.message || String(error);
+      if (errorMsg.includes('Server Error') || errorMsg.includes('Request ID')) {
+        alert('Error: Convex server error. This might be temporary. Please wait a few seconds and try again.');
+      } else if (errorMsg.includes('Profile not found')) {
+        alert('Error: Your profile was not found. Please refresh the page and try again.');
+      } else {
+        alert(`Error saving defense deck: ${errorMsg}\n\nPlease try again or refresh the page.`);
+      }
     }
   }, [address, userProfile, selectedCards, soundEnabled]);
 
