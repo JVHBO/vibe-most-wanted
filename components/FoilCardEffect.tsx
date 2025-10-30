@@ -80,42 +80,35 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
         </>
       )}
 
-      {/* STANDARD FOIL: Visible rainbow shimmer */}
+      {/* STANDARD FOIL: Subtle holographic shimmer (similar to Prize but softer) */}
       {!isPrize && (
         <>
-          {/* Rainbow color gradients */}
+          {/* Soft rainbow gradients */}
           <div
-            className="absolute inset-0 z-20 pointer-events-none"
+            className="absolute z-20 pointer-events-none"
             style={{
+              top: '-50%',
+              left: '-50%',
+              width: '200%',
+              height: '200%',
               background: `
-                radial-gradient(ellipse 350px 450px at 30% 30%,
-                  rgba(200, 150, 255, 0.45) 0%,
-                  rgba(180, 100, 255, 0.3) 25%,
+                radial-gradient(circle 280px at 35% 35%,
+                  rgba(200, 150, 255, 0.6) 0%,
+                  rgba(180, 100, 255, 0.4) 25%,
                   transparent 50%),
-                radial-gradient(ellipse 400px 350px at 70% 40%,
-                  rgba(100, 200, 255, 0.45) 0%,
-                  rgba(150, 220, 255, 0.3) 25%,
+                radial-gradient(circle 260px at 65% 30%,
+                  rgba(100, 200, 255, 0.6) 0%,
+                  rgba(150, 220, 255, 0.4) 25%,
                   transparent 50%),
-                radial-gradient(ellipse 380px 380px at 50% 70%,
-                  rgba(150, 255, 200, 0.45) 0%,
-                  rgba(100, 255, 180, 0.3) 25%,
+                radial-gradient(circle 300px at 50% 70%,
+                  rgba(150, 255, 200, 0.6) 0%,
+                  rgba(100, 255, 180, 0.4) 25%,
                   transparent 50%)
               `,
-              filter: 'blur(25px)',
-              animation: 'blobMove 12s ease-in-out infinite',
-              mixBlendMode: 'overlay',
-              opacity: 0.85,
-            }}
-          />
-
-          {/* Shimmer sweep */}
-          <div
-            className="absolute inset-0 z-[21] pointer-events-none"
-            style={{
-              background: 'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%)',
-              backgroundSize: '250% 250%',
-              animation: 'shimmerPass 8s ease-in-out infinite',
-              mixBlendMode: 'overlay',
+              filter: 'blur(25px) saturate(1.5) brightness(1.2)',
+              animation: 'holoMove 12s ease-in-out infinite',
+              mixBlendMode: 'multiply',
+              opacity: 0.6,
             }}
           />
         </>
