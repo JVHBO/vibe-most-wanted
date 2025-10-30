@@ -1377,51 +1377,84 @@ export default function TCGPage() {
     // Power values in JC deck: 15, 23, 38, 75, 113, 150, 225, 250, 375, 750
     switch (aiDifficulty) {
       case 'gey':
-        // GEY (Level 1): Weakest cards (power 15-38, total ~75-190)
-        const weakCards = sorted.filter(c => (c.power || 0) >= 15 && (c.power || 0) <= 38);
-        pickedDealer = weakCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        // GEY (Level 1): 4 Commons + 1 Rare (total ~135-190)
+        // Filter only revealed cards by checking rarity is valid
+        const validCards = sorted.filter(c => {
+          const r = (c.rarity || '').toLowerCase();
+          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+        });
+
+        const commons = validCards.filter(c => (c.rarity || '').toLowerCase() === 'common');
+        const rares = validCards.filter(c => (c.rarity || '').toLowerCase() === 'rare');
+
+        // Pick 4 random commons
+        const pickedCommons = commons.sort(() => Math.random() - 0.5).slice(0, 4);
+        // Pick 1 random rare
+        const pickedRare = rares.sort(() => Math.random() - 0.5).slice(0, 1);
+
+        pickedDealer = [...pickedCommons, ...pickedRare];
+
+        // Fallback if not enough cards
         if (pickedDealer.length < HAND_SIZE_CONST) {
-          // Fallback: use weakest available cards
-          pickedDealer = sorted.slice(-HAND_SIZE_CONST).reverse();
+          pickedDealer = validCards.slice(-HAND_SIZE_CONST).reverse();
         }
         break;
 
       case 'goofy':
         // GOOFY (Level 2): Low-tier cards (power 75-113, total ~375-565)
-        const lowTierCards = sorted.filter(c => (c.power || 0) >= 75 && (c.power || 0) <= 113);
+        // Filter only revealed cards
+        const goofyValid = sorted.filter(c => {
+          const r = (c.rarity || '').toLowerCase();
+          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+        });
+        const lowTierCards = goofyValid.filter(c => (c.power || 0) >= 75 && (c.power || 0) <= 113);
         pickedDealer = lowTierCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
         if (pickedDealer.length < HAND_SIZE_CONST) {
           // Fallback: use cards from middle range
-          const midPoint = Math.floor(sorted.length / 2);
-          pickedDealer = sorted.slice(midPoint, midPoint + HAND_SIZE_CONST);
+          const midPoint = Math.floor(goofyValid.length / 2);
+          pickedDealer = goofyValid.slice(midPoint, midPoint + HAND_SIZE_CONST);
         }
         break;
 
       case 'gooner':
         // GOONER (Level 3): Mid-tier strong cards (power 150-225, total ~750-1125)
-        const midTierCards = sorted.filter(c => (c.power || 0) >= 150 && (c.power || 0) <= 225);
+        // Filter only revealed cards
+        const goonerValid = sorted.filter(c => {
+          const r = (c.rarity || '').toLowerCase();
+          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+        });
+        const midTierCards = goonerValid.filter(c => (c.power || 0) >= 150 && (c.power || 0) <= 225);
         pickedDealer = midTierCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
         if (pickedDealer.length < HAND_SIZE_CONST) {
           // Fallback: use top 20-30% cards
-          const startIdx = Math.floor(sorted.length * 0.2);
-          pickedDealer = sorted.slice(startIdx, startIdx + HAND_SIZE_CONST);
+          const startIdx = Math.floor(goonerValid.length * 0.2);
+          pickedDealer = goonerValid.slice(startIdx, startIdx + HAND_SIZE_CONST);
         }
         break;
 
       case 'godlike':
         // GODLIKE (Level 4): Very strong cards (power 250-375, total ~1250-1875)
-        const strongCards = sorted.filter(c => (c.power || 0) >= 250 && (c.power || 0) <= 375);
+        // Filter only revealed cards
+        const godlikeValid = sorted.filter(c => {
+          const r = (c.rarity || '').toLowerCase();
+          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+        });
+        const strongCards = godlikeValid.filter(c => (c.power || 0) >= 250 && (c.power || 0) <= 375);
         pickedDealer = strongCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
         if (pickedDealer.length < HAND_SIZE_CONST) {
           // Fallback: use top 10% cards
-          pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
+          pickedDealer = godlikeValid.slice(0, HAND_SIZE_CONST);
         }
         break;
 
       case 'gigachad':
         // GIGACHAD (Level 5): ABSOLUTE MAXIMUM (power 375-750, total ~1875-3750)
-        // Prioritize mythic cards (power 750) and highest epics
-        pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
+        // Filter only revealed cards and prioritize mythic cards (power 750) and highest epics
+        const gigachadValid = sorted.filter(c => {
+          const r = (c.rarity || '').toLowerCase();
+          return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(r);
+        });
+        pickedDealer = gigachadValid.slice(0, HAND_SIZE_CONST);
         break;
     }
 
