@@ -317,9 +317,15 @@ export class ConvexProfileService {
 
       // Handle defense deck update
       if (updates.defenseDeck) {
+        // Filter out legacy string format, only pass object format to mutation
+        const validDefenseDeck = updates.defenseDeck.filter(
+          (card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } =>
+            typeof card === 'object' && card !== null
+        );
+
         await convex.mutation(api.profiles.updateDefenseDeck, {
           address: normalizedAddress,
-          defenseDeck: updates.defenseDeck,
+          defenseDeck: validDefenseDeck,
         });
       }
 
@@ -501,7 +507,12 @@ export class ConvexProfileService {
         address: normalizedAddress,
         username: newUsername.trim(),
         stats: currentProfile.stats,
-        defenseDeck: currentProfile.defenseDeck,
+        defenseDeck: currentProfile.defenseDeck
+          ? currentProfile.defenseDeck.filter(
+              (card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } =>
+                typeof card === 'object' && card !== null
+            )
+          : undefined,
         twitter: currentProfile.twitter,
         twitterHandle: currentProfile.twitterHandle,
         fid: currentProfile.fid,
