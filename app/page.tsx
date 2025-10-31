@@ -1425,10 +1425,14 @@ export default function TCGPage() {
           return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
         const legendaries150 = gangsterValid.filter(c => (c.power || 0) === 150);
-        pickedDealer = legendaries150.slice(0, HAND_SIZE_CONST);
+        // Randomize selection of 150 PWR cards to add variety
+        pickedDealer = legendaries150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
         if (pickedDealer.length < HAND_SIZE_CONST) {
-          // Fallback: use strongest available
-          pickedDealer = gangsterValid.slice(0, HAND_SIZE_CONST);
+          // Fallback: use cards with 150 power or closest
+          const closeCards = gangsterValid.filter(c => (c.power || 0) >= 150 && (c.power || 0) <= 150);
+          pickedDealer = closeCards.length >= HAND_SIZE_CONST
+            ? closeCards.slice(0, HAND_SIZE_CONST)
+            : gangsterValid.filter(c => (c.power || 0) >= 140).slice(0, HAND_SIZE_CONST);
         }
         break;
 
@@ -2464,7 +2468,12 @@ export default function TCGPage() {
                         animationDelay: `${i * 0.1}s`
                       }}
                     >
-                      <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                      <FoilCardEffect
+                        foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
+                        className="w-full h-full"
+                      >
+                        <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                      </FoilCardEffect>
                       {/* Power badge sempre visível */}
                       <div
                         className="absolute top-0 left-0 bg-cyan-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
@@ -2600,7 +2609,12 @@ export default function TCGPage() {
               <div className="grid grid-cols-5 gap-2">
                 {pveSelectedCards.map((card, i) => (
                   <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-neon-blue shadow-lg">
-                    <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                    <FoilCardEffect
+                      foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null}
+                      className="w-full h-full"
+                    >
+                      <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                    </FoilCardEffect>
                     <div className="absolute top-0 left-0 bg-vintage-neon-blue text-vintage-black text-xs px-1 rounded-br font-bold">{card.power}</div>
                   </div>
                 ))}
