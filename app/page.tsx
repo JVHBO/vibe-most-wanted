@@ -789,6 +789,16 @@ export default function TCGPage() {
   const [isDifficultyModalOpen, setIsDifficultyModalOpen] = useState(false);
   const [tempSelectedDifficulty, setTempSelectedDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad' | null>(null);
 
+  // Elimination Mode States
+  const [battleMode, setBattleMode] = useState<'normal' | 'elimination'>('normal');
+  const [eliminationPhase, setEliminationPhase] = useState<'ordering' | 'battle' | null>(null);
+  const [orderedPlayerCards, setOrderedPlayerCards] = useState<any[]>([]);
+  const [orderedOpponentCards, setOrderedOpponentCards] = useState<any[]>([]);
+  const [currentRound, setCurrentRound] = useState<number>(1);
+  const [roundResults, setRoundResults] = useState<('win' | 'loss' | 'tie')[]>([]);
+  const [eliminationPlayerScore, setEliminationPlayerScore] = useState<number>(0);
+  const [eliminationOpponentScore, setEliminationOpponentScore] = useState<number>(0);
+
   // Profile States
   const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -1325,6 +1335,84 @@ export default function TCGPage() {
     }, 300);
   }, [nfts, soundEnabled]);
 
+  // Generate AI hand with strategic ordering based on difficulty
+  const generateAIHand = useCallback((difficulty: 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad') => {
+    const available = jcNfts;
+    if (available.length < HAND_SIZE_CONST) {
+      alert('⏳ AI deck not ready yet...');
+      return [];
+    }
+
+    const sorted = [...available].sort((a, b) => (b.power || 0) - (a.power || 0));
+    let pickedCards: any[] = [];
+
+    // Select cards based on difficulty (same logic as normal battle)
+    switch (difficulty) {
+      case 'gey':
+        const weakest = sorted.filter(c => (c.power || 0) === 15);
+        pickedCards = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        break;
+      case 'goofy':
+        const weak = sorted.filter(c => {
+          const p = c.power || 0;
+          return p === 18 || p === 21;
+        });
+        pickedCards = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        break;
+      case 'gooner':
+        const medium = sorted.filter(c => {
+          const p = c.power || 0;
+          return p === 60 || p === 72;
+        });
+        pickedCards = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        break;
+      case 'gangster':
+        const cards150 = sorted.filter(c => (c.power || 0) === 150);
+        if (cards150.length >= HAND_SIZE_CONST) {
+          pickedCards = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        } else {
+          const legendaries = sorted.filter(c => (c.rarity || '').toLowerCase().includes('legend'));
+          pickedCards = legendaries.slice(0, HAND_SIZE_CONST);
+        }
+        break;
+      case 'gigachad':
+        pickedCards = sorted.slice(0, HAND_SIZE_CONST);
+        break;
+    }
+
+    // Apply strategic ordering based on difficulty
+    let orderedCards: any[] = [];
+    switch (difficulty) {
+      case 'gey':
+      case 'goofy':
+        // Random order (no strategy)
+        orderedCards = pickedCards.sort(() => Math.random() - 0.5);
+        break;
+      case 'gooner':
+        // Weak-first strategy (sacrifice weak cards)
+        orderedCards = [...pickedCards].sort((a, b) => (a.power || 0) - (b.power || 0));
+        break;
+      case 'gangster':
+        // Strong-first strategy (overwhelming force)
+        orderedCards = [...pickedCards].sort((a, b) => (b.power || 0) - (a.power || 0));
+        break;
+      case 'gigachad':
+        // Balanced strategy (strong-weak-strong-weak-strong)
+        const sortedByPower = [...pickedCards].sort((a, b) => (b.power || 0) - (a.power || 0));
+        orderedCards = [
+          sortedByPower[0], // strongest
+          sortedByPower[4], // weakest
+          sortedByPower[1], // 2nd strongest
+          sortedByPower[3], // 2nd weakest
+          sortedByPower[2]  // middle
+        ];
+        break;
+    }
+
+    console.log(`🤖 AI ordered cards for ${difficulty}:`, orderedCards.map(c => `#${c.tokenId} (${c.power} PWR)`));
+    return orderedCards;
+  }, [jcNfts]);
+
   const playHand = useCallback((cardsToPlay?: any[]) => {
     const cards = cardsToPlay || selectedCards;
     if (cards.length !== HAND_SIZE_CONST || isBattling) return;
@@ -1463,17 +1551,161 @@ export default function TCGPage() {
     }
 
     setTimeout(() => {
-      setDealerCards(pickedDealer);
+      // Use orderedOpponentCards if elimination mode, otherwise use pickedDealer
+      setDealerCards(battleMode === 'elimination' ? orderedOpponentCards : pickedDealer);
       if (soundEnabled) AudioManager.shuffle();
     }, 1000);
 
     const dealerTotal = pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0);
-    
+
+    // Check if this is elimination mode
+    if (battleMode === 'elimination') {
+      // Elimination mode: play round-by-round
+      setTimeout(() => {
+        // Compare current round's cards
+        const playerCard = orderedPlayerCards[currentRound - 1];
+        const opponentCard = orderedOpponentCards[currentRound - 1];
+
+        if (!playerCard || !opponentCard) {
+          console.error('❌ Missing cards for elimination round!');
+          return;
+        }
+
+        setPlayerPower(playerCard.power || 0);
+        setDealerPower(opponentCard.power || 0);
+
+        setBattlePhase('clash');
+        if (soundEnabled) AudioManager.cardBattle();
+      }, 2500);
+
+      setTimeout(() => {
+        const playerCard = orderedPlayerCards[currentRound - 1];
+        const opponentCard = orderedOpponentCards[currentRound - 1];
+        const playerCardPower = playerCard?.power || 0;
+        const opponentCardPower = opponentCard?.power || 0;
+
+        setBattlePhase('result');
+
+        let roundResult: 'win' | 'loss' | 'tie';
+        let newPlayerScore = eliminationPlayerScore;
+        let newOpponentScore = eliminationOpponentScore;
+
+        if (playerCardPower > opponentCardPower) {
+          roundResult = 'win';
+          newPlayerScore++;
+          setResult(t('playerWins'));
+        } else if (playerCardPower < opponentCardPower) {
+          roundResult = 'loss';
+          newOpponentScore++;
+          setResult(t('dealerWins'));
+        } else {
+          roundResult = 'tie';
+          setResult(t('tie'));
+        }
+
+        setEliminationPlayerScore(newPlayerScore);
+        setEliminationOpponentScore(newOpponentScore);
+        setRoundResults([...roundResults, roundResult]);
+
+        console.log(`⚔️ Round ${currentRound} result:`, roundResult, `Score: ${newPlayerScore}-${newOpponentScore}`);
+
+        // Check if match is over
+        setTimeout(() => {
+          const isMatchOver = currentRound === 5 || newPlayerScore === 3 || newOpponentScore === 3;
+
+          if (isMatchOver) {
+            // Determine final winner
+            const finalResult: 'win' | 'loss' | 'tie' = newPlayerScore > newOpponentScore ? 'win' : newPlayerScore < newOpponentScore ? 'loss' : 'tie';
+
+            if (finalResult === 'win') {
+              setResult(t('playerWins'));
+              // Unlock next difficulty
+              const unlockedDiff = unlockNextDifficulty(aiDifficulty);
+              if (unlockedDiff) {
+                devLog(`🔓 Unlocked new difficulty: ${unlockedDiff.toUpperCase()}`);
+              }
+            } else if (finalResult === 'loss') {
+              setResult(t('dealerWins'));
+            } else {
+              setResult(t('tie'));
+            }
+
+            // Record match
+            if (userProfile && address) {
+              ConvexProfileService.recordMatch(
+                address,
+                'pve',
+                finalResult,
+                newPlayerScore,
+                newOpponentScore,
+                orderedPlayerCards,
+                orderedOpponentCards
+              ).then(() => {
+                ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+              }).catch(err => devError('Error recording match:', err));
+            }
+
+            // Close battle and show result
+            setTimeout(() => {
+              setIsBattling(false);
+              setShowBattleScreen(false);
+              setBattlePhase('cards');
+              setBattleMode('normal');
+              setEliminationPhase(null);
+
+              setLastBattleResult({
+                result: finalResult,
+                playerPower: newPlayerScore,
+                opponentPower: newOpponentScore,
+                opponentName: 'Mecha George Floyd',
+                type: 'pve'
+              });
+
+              if (finalResult === 'win') {
+                setShowWinPopup(true);
+                if (soundEnabled) AudioManager.win();
+              } else if (finalResult === 'loss') {
+                setShowLossPopup(true);
+                if (soundEnabled) AudioManager.lose();
+              } else {
+                if (soundEnabled) AudioManager.tie();
+              }
+            }, 2000);
+          } else {
+            // Next round
+            setTimeout(() => {
+              setCurrentRound(currentRound + 1);
+              setBattlePhase('cards');
+
+              // Trigger next round battle sequence
+              setTimeout(() => {
+                const nextPlayerCard = orderedPlayerCards[currentRound]; // currentRound is still old value here
+                const nextOpponentCard = orderedOpponentCards[currentRound];
+
+                setPlayerPower(nextPlayerCard?.power || 0);
+                setDealerPower(nextOpponentCard?.power || 0);
+
+                setBattlePhase('clash');
+                if (soundEnabled) AudioManager.cardBattle();
+
+                setTimeout(() => {
+                  setBattlePhase('result');
+                }, 1000);
+              }, 1000);
+            }, 2000);
+          }
+        }, 2000);
+      }, 3500);
+
+      return; // Skip normal battle logic
+    }
+
+    // Normal mode battle logic
     setTimeout(() => {
       setBattlePhase('clash');
       if (soundEnabled) AudioManager.cardBattle();
     }, 2500);
-    
+
     setTimeout(() => {
       setPlayerPower(playerTotal);
       setDealerPower(dealerTotal);
@@ -2468,12 +2700,139 @@ export default function TCGPage() {
         </div>
       )}
 
+      {/* Elimination Mode - Card Ordering Screen */}
+      {eliminationPhase === 'ordering' && (
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300] overflow-y-auto">
+          <div className="w-full max-w-4xl p-8 my-8">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-4 text-purple-400 uppercase tracking-wider">
+              ⚔️ ELIMINATION MODE
+            </h2>
+            <p className="text-center text-vintage-gold mb-8 text-lg">
+              Arrange your cards in battle order (Position 1 fights first)
+            </p>
+
+            {/* Card Ordering List */}
+            <div className="space-y-2 mb-6">
+              {orderedPlayerCards.map((card, index) => {
+                const power = card?.power || 0;
+
+                return (
+                  <div key={index} className="flex items-center gap-3 bg-vintage-charcoal border-2 border-purple-500/50 rounded-lg p-3">
+                    {/* Position Number */}
+                    <div className="text-2xl font-bold text-purple-400 w-12 text-center">
+                      #{index + 1}
+                    </div>
+
+                    {/* Card Image */}
+                    <div className="w-16 h-20 rounded-lg overflow-hidden border border-vintage-gold/30">
+                      <img
+                        src={card?.imageUrl || '/placeholder.png'}
+                        alt={card?.name || 'Card'}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Card Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-vintage-gold truncate">{card?.name || 'Unknown'}</h3>
+                      <p className="text-vintage-burnt-gold font-bold">⚡ {power}</p>
+                    </div>
+
+                    {/* Reorder Buttons */}
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => {
+                          if (index > 0) {
+                            const newOrder = [...orderedPlayerCards];
+                            [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
+                            setOrderedPlayerCards(newOrder);
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }
+                        }}
+                        disabled={index === 0}
+                        className={`px-3 py-1 rounded-lg font-bold text-sm ${index === 0 ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (index < orderedPlayerCards.length - 1) {
+                            const newOrder = [...orderedPlayerCards];
+                            [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+                            setOrderedPlayerCards(newOrder);
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }
+                        }}
+                        disabled={index === orderedPlayerCards.length - 1}
+                        className={`px-3 py-1 rounded-lg font-bold text-sm ${index === orderedPlayerCards.length - 1 ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Start Battle Button */}
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  // Generate AI card order based on difficulty
+                  const aiCards = generateAIHand(aiDifficulty);
+                  setOrderedOpponentCards(aiCards);
+
+                  // Start elimination battle
+                  setEliminationPhase('battle');
+                  setCurrentRound(1);
+                  setRoundResults([]);
+                  setEliminationPlayerScore(0);
+                  setEliminationOpponentScore(0);
+                  setShowBattleScreen(true);
+                }}
+                className="px-12 py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-600 text-white rounded-lg font-display font-bold text-2xl shadow-lg transition-all uppercase tracking-wider border-2 border-purple-500/30"
+              >
+                <span className="drop-shadow-lg">START ELIMINATION BATTLE</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setEliminationPhase(null);
+                  setBattleMode('normal');
+                  setShowPveCardSelection(true);
+                }}
+                className="px-8 py-4 bg-vintage-black/50 border-2 border-vintage-burnt-gold text-vintage-burnt-gold rounded-lg hover:bg-vintage-burnt-gold hover:text-vintage-black transition-all font-modern font-bold text-lg uppercase"
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showBattleScreen && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300]">
           <div className="w-full max-w-6xl p-8">
-            <h2 className="text-3xl md:text-5xl font-bold text-center mb-8 md:mb-12 text-yellow-400 uppercase tracking-wider" style={{ animation: 'battlePowerPulse 2s ease-in-out infinite' }}>
-              {t('battle')}
-            </h2>
+            {/* Title - Different for Elimination Mode */}
+            {battleMode === 'elimination' ? (
+              <div className="text-center mb-6 md:mb-8">
+                <h2 className="text-2xl md:text-4xl font-bold text-purple-400 uppercase tracking-wider mb-2">
+                  ⚔️ ELIMINATION MODE
+                </h2>
+                <div className="flex items-center justify-center gap-4 md:gap-8 text-lg md:text-2xl font-bold">
+                  <span className="text-cyan-400">Round {currentRound}/5</span>
+                  <span className="text-vintage-gold">•</span>
+                  <span className="text-cyan-400">You {eliminationPlayerScore}</span>
+                  <span className="text-vintage-gold">-</span>
+                  <span className="text-red-400">{eliminationOpponentScore} Opponent</span>
+                </div>
+              </div>
+            ) : (
+              <h2 className="text-3xl md:text-5xl font-bold text-center mb-8 md:mb-12 text-yellow-400 uppercase tracking-wider" style={{ animation: 'battlePowerPulse 2s ease-in-out infinite' }}>
+                {t('battle')}
+              </h2>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
               {/* Player Cards */}
@@ -2499,57 +2858,103 @@ export default function TCGPage() {
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-vintage-neon-blue text-center">{battlePlayerName}</h3>
                 </div>
-                <div
-                  className="grid grid-cols-5 gap-1 md:gap-2"
-                  style={{
-                    animation: battlePhase === 'clash'
-                      ? 'battleCardShake 2s ease-in-out'
-                      : 'battleCardFadeIn 0.8s ease-out'
-                  }}
-                >
-                  {selectedCards.map((c, i) => (
+
+                {/* Cards Display - Different for Elimination Mode */}
+                {battleMode === 'elimination' ? (
+                  // Show only current round's card (single large card)
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="text-purple-400 font-bold text-lg">Position #{currentRound}</div>
                     <div
-                      key={i}
-                      className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-cyan-500"
+                      className="relative w-48 md:w-64 aspect-[2/3] rounded-lg overflow-hidden ring-4 ring-cyan-500"
                       style={{
                         animation: battlePhase === 'clash'
                           ? `battleGlowBlue 1.5s ease-in-out infinite`
-                          : undefined,
-                        animationDelay: `${i * 0.1}s`
+                          : 'battleCardFadeIn 0.8s ease-out'
                       }}
                     >
                       <FoilCardEffect
-                        foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
+                        foilType={(selectedCards[currentRound - 1]?.foil === 'Standard' || selectedCards[currentRound - 1]?.foil === 'Prize') ? selectedCards[currentRound - 1].foil : null}
                         className="w-full h-full"
                       >
-                        <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                        <img src={selectedCards[currentRound - 1]?.imageUrl} alt={`#${selectedCards[currentRound - 1]?.tokenId}`} className="w-full h-full object-cover" loading="eager" />
                       </FoilCardEffect>
-                      {/* Power badge sempre visível */}
                       <div
-                        className="absolute top-0 left-0 bg-cyan-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
+                        className="absolute top-0 left-0 bg-cyan-500 text-white text-lg md:text-xl font-bold px-3 py-2 rounded-br"
                         style={{
                           animation: battlePhase === 'clash'
                             ? 'battlePowerPulse 1s ease-in-out infinite'
                             : undefined
                         }}
                       >
-                        {c.power}
+                        {selectedCards[currentRound - 1]?.power}
                       </div>
                     </div>
-                  ))}
-                </div>
-                <div className="mt-3 md:mt-4 text-center">
-                  <p
-                    className="text-3xl md:text-4xl font-bold text-vintage-neon-blue"
-                    style={{
-                      animation: battlePhase === 'result'
-                        ? 'battlePowerPulse 1.5s ease-in-out 3'
-                        : undefined
-                    }}
-                  >
-                    {playerPower}
-                  </p>
-                </div>
+                    {/* Show mini previous cards if not first round */}
+                    {currentRound > 1 && (
+                      <div className="flex gap-1 mt-2">
+                        {orderedPlayerCards.slice(0, currentRound - 1).map((card, i) => (
+                          <div key={i} className={`w-12 h-16 rounded border-2 ${roundResults[i] === 'win' ? 'border-green-500' : roundResults[i] === 'loss' ? 'border-red-500' : 'border-yellow-500'} opacity-50`}>
+                            <img src={card.imageUrl} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Normal mode - show all 5 cards
+                  <>
+                    <div
+                      className="grid grid-cols-5 gap-1 md:gap-2"
+                      style={{
+                        animation: battlePhase === 'clash'
+                          ? 'battleCardShake 2s ease-in-out'
+                          : 'battleCardFadeIn 0.8s ease-out'
+                      }}
+                    >
+                      {selectedCards.map((c, i) => (
+                        <div
+                          key={i}
+                          className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-cyan-500"
+                          style={{
+                            animation: battlePhase === 'clash'
+                              ? `battleGlowBlue 1.5s ease-in-out infinite`
+                              : undefined,
+                            animationDelay: `${i * 0.1}s`
+                          }}
+                        >
+                          <FoilCardEffect
+                            foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
+                            className="w-full h-full"
+                          >
+                            <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                          </FoilCardEffect>
+                          <div
+                            className="absolute top-0 left-0 bg-cyan-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
+                            style={{
+                              animation: battlePhase === 'clash'
+                                ? 'battlePowerPulse 1s ease-in-out infinite'
+                                : undefined
+                            }}
+                          >
+                            {c.power}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 md:mt-4 text-center">
+                      <p
+                        className="text-3xl md:text-4xl font-bold text-vintage-neon-blue"
+                        style={{
+                          animation: battlePhase === 'result'
+                            ? 'battlePowerPulse 1.5s ease-in-out 3'
+                            : undefined
+                        }}
+                      >
+                        {playerPower}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Opponent Cards */}
@@ -2573,63 +2978,113 @@ export default function TCGPage() {
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-red-400 text-center">{battleOpponentName}</h3>
                 </div>
-                <div
-                  className="grid grid-cols-5 gap-1 md:gap-2"
-                  style={{
-                    animation: battlePhase === 'clash'
-                      ? 'battleCardShake 2s ease-in-out'
-                      : 'battleCardFadeIn 0.8s ease-out'
-                  }}
-                >
-                  {dealerCards.map((c, i) => (
+
+                {/* Cards Display - Different for Elimination Mode */}
+                {battleMode === 'elimination' ? (
+                  // Show only current round's card (single large card)
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="text-purple-400 font-bold text-lg">Position #{currentRound}</div>
                     <div
-                      key={i}
-                      className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500"
+                      className="relative w-48 md:w-64 aspect-[2/3] rounded-lg overflow-hidden ring-4 ring-red-500"
                       style={{
                         animation: battlePhase === 'clash'
                           ? `battleGlowRed 1.5s ease-in-out infinite`
-                          : undefined,
-                        animationDelay: `${i * 0.1}s`
+                          : 'battleCardFadeIn 0.8s ease-out'
                       }}
                     >
                       <FoilCardEffect
-                        foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
+                        foilType={(dealerCards[currentRound - 1]?.foil === 'Standard' || dealerCards[currentRound - 1]?.foil === 'Prize') ? dealerCards[currentRound - 1].foil : null}
                         className="w-full h-full"
                       >
-                        <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                        <img src={dealerCards[currentRound - 1]?.imageUrl} alt={`#${dealerCards[currentRound - 1]?.tokenId}`} className="w-full h-full object-cover" loading="eager" />
                       </FoilCardEffect>
-                      {/* Power badge sempre visível */}
                       <div
-                        className="absolute top-0 left-0 bg-red-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
+                        className="absolute top-0 left-0 bg-red-500 text-white text-lg md:text-xl font-bold px-3 py-2 rounded-br"
                         style={{
                           animation: battlePhase === 'clash'
                             ? 'battlePowerPulse 1s ease-in-out infinite'
                             : undefined
                         }}
                       >
-                        {c.power}
+                        {dealerCards[currentRound - 1]?.power}
                       </div>
-                      {/* Token ID badge - visible after battle result */}
                       {battlePhase === 'result' && (
                         <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
-                          #{c.tokenId}
+                          #{dealerCards[currentRound - 1]?.tokenId}
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-                <div className="mt-3 md:mt-4 text-center">
-                  <p
-                    className="text-3xl md:text-4xl font-bold text-red-400"
-                    style={{
-                      animation: battlePhase === 'result'
-                        ? 'battlePowerPulse 1.5s ease-in-out 3'
-                        : undefined
-                    }}
-                  >
-                    {dealerPower}
-                  </p>
-                </div>
+                    {/* Show mini previous cards if not first round */}
+                    {currentRound > 1 && (
+                      <div className="flex gap-1 mt-2">
+                        {orderedOpponentCards.slice(0, currentRound - 1).map((card, i) => (
+                          <div key={i} className={`w-12 h-16 rounded border-2 ${roundResults[i] === 'loss' ? 'border-green-500' : roundResults[i] === 'win' ? 'border-red-500' : 'border-yellow-500'} opacity-50`}>
+                            <img src={card.imageUrl} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Normal mode - show all 5 cards
+                  <>
+                    <div
+                      className="grid grid-cols-5 gap-1 md:gap-2"
+                      style={{
+                        animation: battlePhase === 'clash'
+                          ? 'battleCardShake 2s ease-in-out'
+                          : 'battleCardFadeIn 0.8s ease-out'
+                      }}
+                    >
+                      {dealerCards.map((c, i) => (
+                        <div
+                          key={i}
+                          className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500"
+                          style={{
+                            animation: battlePhase === 'clash'
+                              ? `battleGlowRed 1.5s ease-in-out infinite`
+                              : undefined,
+                            animationDelay: `${i * 0.1}s`
+                          }}
+                        >
+                          <FoilCardEffect
+                            foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
+                            className="w-full h-full"
+                          >
+                            <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                          </FoilCardEffect>
+                          <div
+                            className="absolute top-0 left-0 bg-red-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
+                            style={{
+                              animation: battlePhase === 'clash'
+                                ? 'battlePowerPulse 1s ease-in-out infinite'
+                                : undefined
+                            }}
+                          >
+                            {c.power}
+                          </div>
+                          {battlePhase === 'result' && (
+                            <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
+                              #{c.tokenId}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 md:mt-4 text-center">
+                      <p
+                        className="text-3xl md:text-4xl font-bold text-red-400"
+                        style={{
+                          animation: battlePhase === 'result'
+                            ? 'battlePowerPulse 1.5s ease-in-out 3'
+                            : undefined
+                        }}
+                      >
+                        {dealerPower}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -2641,7 +3096,10 @@ export default function TCGPage() {
                   result === t('dealerWins') ? 'text-red-400' :
                   'text-yellow-400'
                 }`}>
-                  {result}
+                  {battleMode === 'elimination' && currentRound <= 5
+                    ? (result === t('playerWins') ? '🏆 ROUND WIN!' : result === t('dealerWins') ? '💀 ROUND LOST' : '🤝 ROUND TIE')
+                    : result
+                  }
                 </div>
               </div>
             )}
@@ -4515,9 +4973,25 @@ export default function TCGPage() {
           setGameMode('ai');
           setPvpMode(null);
           setSelectedCards(pveSelectedCards);
+          setBattleMode('normal');
 
           // Pass cards directly to playHand to avoid state timing issues
           playHand(pveSelectedCards);
+        }}
+        onEliminationBattle={(difficulty) => {
+          if (soundEnabled) AudioManager.buttonClick();
+          setAiDifficulty(difficulty);
+          setIsDifficultyModalOpen(false);
+          setTempSelectedDifficulty(null);
+
+          // Start elimination mode
+          setShowPveCardSelection(false);
+          setGameMode('ai');
+          setPvpMode(null);
+          setSelectedCards(pveSelectedCards);
+          setBattleMode('elimination');
+          setEliminationPhase('ordering');
+          setOrderedPlayerCards(pveSelectedCards);
         }}
         unlockedDifficulties={unlockedDifficulties as Set<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>}
         currentDifficulty={aiDifficulty}
