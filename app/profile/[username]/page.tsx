@@ -639,6 +639,9 @@ export default function ProfilePage() {
             card.imageUrl !== 'undefined' &&
             card.imageUrl !== ''
           );
+
+        const hasInvalidData = validCards.length !== 5;
+
         return (
           <div className="max-w-6xl mx-auto mb-8">
             <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
