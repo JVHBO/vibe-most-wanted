@@ -1333,8 +1333,8 @@ export default function TCGPage() {
     setBattlePhase('cards');
     setBattleOpponentName('Mecha George Floyd'); // Show Mecha George Floyd name
     setBattlePlayerName(userProfile?.username || 'You'); // Show player username
-    setBattleOpponentPfp('/images/mecha-george-floyd.jpg'); // Mecha George pfp
-    // Player pfp from Twitter if available
+    setBattleOpponentPfp(`/images/mecha-george-floyd.jpg?v=${Date.now()}`); // Mecha George pfp with cache bust
+    // Player pfp from Twitter if available (same logic as profile/home)
     setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
     setShowLossPopup(false);
     setShowWinPopup(false);
@@ -2469,9 +2469,9 @@ export default function TCGPage() {
                 {/* Player Header with Avatar */}
                 <div className="flex flex-col items-center mb-3 md:mb-4">
                   <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-cyan-500 shadow-lg shadow-cyan-500/50 mb-2 bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center relative">
-                    {battlePlayerPfp ? (
+                    {userProfile?.twitter ? (
                       <img
-                        src={battlePlayerPfp}
+                        src={`https://unavatar.io/twitter/${userProfile.twitter}`}
                         alt={battlePlayerName}
                         className="w-full h-full object-cover absolute inset-0"
                         onError={(e) => {
@@ -2479,7 +2479,7 @@ export default function TCGPage() {
                         }}
                       />
                     ) : null}
-                    <span className={`text-2xl md:text-3xl font-bold text-white ${battlePlayerPfp ? 'opacity-0' : 'opacity-100'}`}>
+                    <span className={`text-2xl md:text-3xl font-bold text-white ${userProfile?.twitter ? 'opacity-0' : 'opacity-100'}`}>
                       {battlePlayerName?.substring(0, 2).toUpperCase() || '??'}
                     </span>
                   </div>
