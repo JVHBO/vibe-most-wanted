@@ -28,14 +28,14 @@ export interface UserProfile {
     defenseWins: number;
     defenseLosses: number;
   };
-  defenseDeck?: {
+  defenseDeck?: (string | {
     tokenId: string;
     power: number;
     imageUrl: string;
     name: string;
     rarity: string;
     foil?: string;
-  }[];
+  })[];
   attacksToday: number;
   rematchesToday: number;
   lastAttackDate?: string;

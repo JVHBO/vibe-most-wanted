@@ -2972,6 +2972,7 @@ export default function TCGPage() {
                         className="w-full h-full object-cover absolute inset-0"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
+                          setBattleOpponentPfp(null); // Reset to null so initials show
                         }}
                       />
                     ) : null}
