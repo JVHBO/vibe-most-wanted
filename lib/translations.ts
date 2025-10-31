@@ -190,7 +190,12 @@ export const translations = {
     noCardsInCollection: 'Nenhuma carta na coleção',
     noCardsMatchFilters: 'Nenhuma carta corresponde aos filtros selecionados',
     previous: 'Anterior',
-    next: 'Próximo'
+    next: 'Próximo',
+    selectYourCardsTitle: 'SELECIONE SUAS CARTAS',
+    chooseDifficulty: 'Escolher Dificuldade',
+    loadingDealerDeck: 'Carregando deck do dealer...',
+    startBattle: 'INICIAR BATALHA',
+    close: 'FECHAR'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -376,7 +381,12 @@ export const translations = {
     noCardsInCollection: 'No cards in collection',
     noCardsMatchFilters: 'No cards match the selected filters',
     previous: 'Previous',
-    next: 'Next'
+    next: 'Next',
+    selectYourCardsTitle: 'SELECT YOUR CARDS',
+    chooseDifficulty: 'Choose Difficulty',
+    loadingDealerDeck: 'Loading dealer deck...',
+    startBattle: 'START BATTLE',
+    close: 'CLOSE'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -565,7 +575,12 @@ export const translations = {
     noCardsInCollection: 'Sin cartas en la colección',
     noCardsMatchFilters: 'Ninguna carta coincide con los filtros seleccionados',
     previous: 'Anterior',
-    next: 'Siguiente'
+    next: 'Siguiente',
+    selectYourCardsTitle: 'SELECCIONA TUS CARTAS',
+    chooseDifficulty: 'Elegir Dificultad',
+    loadingDealerDeck: 'Cargando mazo del dealer...',
+    startBattle: 'INICIAR BATALLA',
+    close: 'CERRAR'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -756,6 +771,11 @@ export const translations = {
     noCardsInCollection: 'संग्रह में कोई कार्ड नहीं',
     noCardsMatchFilters: 'कोई कार्ड फ़िल्टर से मेल नहीं खाता',
     previous: 'पिछला',
-    next: 'अगला'
+    next: 'अगला',
+    selectYourCardsTitle: 'अपने कार्ड चुनें',
+    chooseDifficulty: 'कठिनाई चुनें',
+    loadingDealerDeck: 'डीलर डेक लोड हो रहा है...',
+    startBattle: 'युद्ध शुरू करें',
+    close: 'बंद करें'
   }
 } as const;
