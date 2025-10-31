@@ -626,19 +626,19 @@ export default function ProfilePage() {
 
       {/* Defense Deck */}
       {profile.defenseDeck && profile.defenseDeck.length === 5 && (() => {
-        // Validate defense deck data
-        const validCards = profile.defenseDeck.filter(card =>
-          card &&
-          card.tokenId &&
-          typeof card.power === 'number' &&
-          !isNaN(card.power) &&
-          card.imageUrl &&
-          card.imageUrl !== 'undefined' &&
-          card.imageUrl !== ''
-        );
-
-        const hasInvalidData = validCards.length !== 5;
-
+        // Validate defense deck data - filter only object format, skip legacy strings
+        const validCards = profile.defenseDeck
+          .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } =>
+            typeof card === 'object' && card !== null
+          )
+          .filter(card =>
+            card.tokenId &&
+            typeof card.power === 'number' &&
+            !isNaN(card.power) &&
+            card.imageUrl &&
+            card.imageUrl !== 'undefined' &&
+            card.imageUrl !== ''
+          );
         return (
           <div className="max-w-6xl mx-auto mb-8">
             <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
