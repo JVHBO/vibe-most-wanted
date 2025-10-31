@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import SharePageClient from './SharePageClient';
 
-export async function generateMetadata({ params }: { params: { matchId: string } }): Promise<Metadata> {
-  const matchId = params.matchId;
+export async function generateMetadata({ params }: { params: Promise<{ matchId: string }> }): Promise<Metadata> {
+  const { matchId } = await params;
 
   // Decode match data from matchId (format: result_playerPower_opponentPower_opponentName_type)
   const parts = decodeURIComponent(matchId).split('_');
@@ -58,6 +58,7 @@ export async function generateMetadata({ params }: { params: { matchId: string }
   };
 }
 
-export default function SharePage({ params }: { params: { matchId: string } }) {
+export default async function SharePage({ params }: { params: Promise<{ matchId: string }> }) {
+  const { matchId } = await params;
   return <SharePageClient />;
 }
