@@ -180,18 +180,17 @@ function calcPower(nft: any): number {
   const foil = findAttr(nft, 'foil') || 'None';
   const rarity = findAttr(nft, 'rarity') || 'Common';
   const wear = findAttr(nft, 'wear') || 'Lightly Played';
-  let base = 1;
+  let base = 15;
   const r = rarity.toLowerCase();
-  if (r.includes('mythic')) base = 350;
-  else if (r.includes('legend')) base = 150;
+  if (r.includes('legend')) base = 150;
   else if (r.includes('epic')) base = 60;
   else if (r.includes('rare')) base = 15;
-  else if (r.includes('uncommon')) base = 8;
-  else base = 1;
+  else if (r.includes('common')) base = 15;
+  else base = 15;
   let wearMult = 1.0;
   const w = wear.toLowerCase();
-  if (w.includes('pristine')) wearMult = 1.4;
-  else if (w.includes('mint')) wearMult = 1.2;
+  if (w.includes('pristine')) wearMult = 1.25;
+  else if (w.includes('mint')) wearMult = 1.1;
   let foilMult = 1.0;
   const f = foil.toLowerCase();
   if (f.includes('prize')) foilMult = 15.0;
@@ -444,7 +443,6 @@ export default function ProfilePage() {
   const getRarityRing = (rarity: string) => {
     const r = (rarity || '').toLowerCase();
     if (r.includes('legend')) return 'ring-vintage-gold shadow-gold-lg';
-    if (r.includes('mythic')) return 'ring-vintage-gold shadow-gold-lg';
     if (r.includes('epic')) return 'ring-vintage-silver shadow-neon';
     if (r.includes('rare')) return 'ring-vintage-burnt-gold shadow-gold';
     return 'ring-vintage-charcoal shadow-lg';
@@ -747,7 +745,6 @@ export default function ProfilePage() {
                 <option value="rare">Rare</option>
                 <option value="epic">Epic</option>
                 <option value="legendary">Legendary</option>
-                <option value="mythic">Mythic</option>
               </select>
             </div>
 
@@ -814,7 +811,7 @@ export default function ProfilePage() {
                   const openSeaUrl = `https://opensea.io/assets/base/${CONTRACT_ADDRESS}/${tokenId}`;
 
                   const foilEffect = getFoilEffect(foilValue);
-                  const isLegendary = (rarity || '').toLowerCase().includes('legend') || (rarity || '').toLowerCase().includes('mythic');
+                  const isLegendary = (rarity || '').toLowerCase().includes('legend');
 
                   const getRarityColor = (r: string) => {
                     const rLower = (r || '').toLowerCase();

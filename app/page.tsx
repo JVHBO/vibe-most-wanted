@@ -331,8 +331,8 @@ function calcPower(nft: any): number {
   else base = 15;
   let wearMult = 1.0;
   const w = wear.toLowerCase();
-  if (w.includes('pristine')) wearMult = 1.4;
-  else if (w.includes('mint')) wearMult = 1.2;
+  if (w.includes('pristine')) wearMult = 1.25;
+  else if (w.includes('mint')) wearMult = 1.1;
   let foilMult = 1.0;
   const f = foil.toLowerCase();
   if (f.includes('prize')) foilMult = 15.0;
@@ -781,7 +781,7 @@ export default function TCGPage() {
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
   // AI Difficulty (5 levels with progressive unlock)
-  const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'godlike' | 'gigachad'>('gey');
+  const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
   const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
 
   // Profile States
@@ -1257,7 +1257,7 @@ export default function TCGPage() {
 
   // Save unlocked difficulties to localStorage
   const unlockNextDifficulty = useCallback((currentDifficulty: string) => {
-    const difficultyOrder = ['gey', 'goofy', 'gooner', 'godlike', 'gigachad'];
+    const difficultyOrder = ['gey', 'goofy', 'gooner', 'gangster', 'gigachad'];
     const currentIndex = difficultyOrder.indexOf(currentDifficulty);
 
     if (currentIndex < difficultyOrder.length - 1) {
@@ -1372,25 +1372,16 @@ export default function TCGPage() {
     let pickedDealer: any[] = [];
 
     // Different strategies based on difficulty (5 levels)
-    // Power values in JC deck: 15, 23, 38, 75, 113, 150, 225, 250, 375, 750
+    // Power values with new multipliers: 15, 17, 19, 60, 66, 75, 150, 165, 225
     switch (aiDifficulty) {
       case 'gey':
-        // GEY (Level 1): 4 Commons + 1 Rare (total ~135-190)
-        // Filter only revealed cards by checking rarity is valid
+        // GEY (Level 1): Weakest cards only (15 power only, total 75)
         const validCards = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
           return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
-
-        const commons = validCards.filter(c => (c.rarity || '').toLowerCase() === 'common');
-        const rares = validCards.filter(c => (c.rarity || '').toLowerCase() === 'rare');
-
-        // Pick 4 random commons
-        const pickedCommons = commons.sort(() => Math.random() - 0.5).slice(0, 4);
-        // Pick 1 random rare
-        const pickedRare = rares.sort(() => Math.random() - 0.5).slice(0, 1);
-
-        pickedDealer = [...pickedCommons, ...pickedRare];
+        const weakest = validCards.filter(c => (c.power || 0) === 15);
+        pickedDealer = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
 
         // Fallback if not enough cards
         if (pickedDealer.length < HAND_SIZE_CONST) {
@@ -1399,59 +1390,55 @@ export default function TCGPage() {
         break;
 
       case 'goofy':
-        // GOOFY (Level 2): Low-tier cards (power 75-113, total ~375-565)
-        // Filter only revealed cards
+        // GOOFY (Level 2): Low commons with wear (power 15-21, total ~85)
         const goofyValid = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
           return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
-        const lowTierCards = goofyValid.filter(c => (c.power || 0) >= 75 && (c.power || 0) <= 113);
+        const lowTierCards = goofyValid.filter(c => (c.power || 0) >= 15 && (c.power || 0) <= 21);
         pickedDealer = lowTierCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
         if (pickedDealer.length < HAND_SIZE_CONST) {
-          // Fallback: use cards from middle range
-          const midPoint = Math.floor(goofyValid.length / 2);
-          pickedDealer = goofyValid.slice(midPoint, midPoint + HAND_SIZE_CONST);
+          // Fallback: use weakest available
+          pickedDealer = goofyValid.slice(-HAND_SIZE_CONST).reverse();
         }
         break;
 
       case 'gooner':
-        // GOONER (Level 3): Mid-tier strong cards (power 150-225, total ~750-1125)
-        // Filter only revealed cards
+        // GOONER (Level 3): Basic epics (power 60-72, total ~300)
         const goonerValid = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
           return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
-        const midTierCards = goonerValid.filter(c => (c.power || 0) >= 150 && (c.power || 0) <= 225);
+        const midTierCards = goonerValid.filter(c => (c.power || 0) >= 60 && (c.power || 0) <= 72);
         pickedDealer = midTierCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
         if (pickedDealer.length < HAND_SIZE_CONST) {
-          // Fallback: use top 20-30% cards
-          const startIdx = Math.floor(goonerValid.length * 0.2);
-          pickedDealer = goonerValid.slice(startIdx, startIdx + HAND_SIZE_CONST);
+          // Fallback: use mid-range cards
+          const midPoint = Math.floor(goonerValid.length / 2);
+          pickedDealer = goonerValid.slice(midPoint, midPoint + HAND_SIZE_CONST);
         }
         break;
 
-      case 'godlike':
-        // GODLIKE (Level 4): Very strong cards (power 250-375, total ~1250-1875)
-        // Filter only revealed cards
-        const godlikeValid = sorted.filter(c => {
+      case 'gangster':
+        // GANGSTER (Level 4): Strong legendaries (150 PWR only, total 750)
+        const gangsterValid = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
           return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
-        const strongCards = godlikeValid.filter(c => (c.power || 0) >= 250 && (c.power || 0) <= 375);
-        pickedDealer = strongCards.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        const legendaries150 = gangsterValid.filter(c => (c.power || 0) === 150);
+        pickedDealer = legendaries150.slice(0, HAND_SIZE_CONST);
         if (pickedDealer.length < HAND_SIZE_CONST) {
-          // Fallback: use top 10% cards
-          pickedDealer = godlikeValid.slice(0, HAND_SIZE_CONST);
+          // Fallback: use strongest available
+          pickedDealer = gangsterValid.slice(0, HAND_SIZE_CONST);
         }
         break;
 
       case 'gigachad':
-        // GIGACHAD (Level 5): ABSOLUTE MAXIMUM (power 375-750, total ~1875-3750)
-        // Filter only revealed cards and prioritize mythic cards (power 750) and highest epics
+        // GIGACHAD (Level 5): TOP 5 STRONGEST (always same cards, total 840)
         const gigachadValid = sorted.filter(c => {
           const r = (c.rarity || '').toLowerCase();
           return ['common', 'rare', 'epic', 'legendary'].includes(r);
         });
+        // Always pick top 5, no randomization
         pickedDealer = gigachadValid.slice(0, HAND_SIZE_CONST);
         break;
     }
@@ -2540,7 +2527,12 @@ export default function TCGPage() {
                         animationDelay: `${i * 0.1}s`
                       }}
                     >
-                      <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                      <FoilCardEffect
+                        foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
+                        className="w-full h-full"
+                      >
+                        <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                      </FoilCardEffect>
                       {/* Power badge sempre visível */}
                       <div
                         className="absolute top-0 left-0 bg-red-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
@@ -2685,14 +2677,14 @@ export default function TCGPage() {
             <div className="mb-4 bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
               <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ MECHA GEORGE FLOYD DIFFICULTY (5 LEVELS) ⚔️</p>
               <div className="grid grid-cols-5 gap-1">
-                {(['gey', 'goofy', 'gooner', 'godlike', 'gigachad'] as const).map((diff, index) => {
+                {(['gey', 'goofy', 'gooner', 'gangster', 'gigachad'] as const).map((diff, index) => {
                   const isUnlocked = unlockedDifficulties.has(diff);
                   const diffInfo = {
-                    gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '~5', color: 'bg-gray-500' },
-                    goofy: { emoji: '🤪', name: 'GOOFY', power: '~90', color: 'bg-green-500' },
+                    gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '75', color: 'bg-gray-500' },
+                    goofy: { emoji: '🤪', name: 'GOOFY', power: '~85', color: 'bg-green-500' },
                     gooner: { emoji: '💀', name: 'GOONER', power: '~300', color: 'bg-blue-500' },
-                    godlike: { emoji: '⚡', name: 'GODLIKE', power: '~462', color: 'bg-purple-500' },
-                    gigachad: { emoji: '💪', name: 'GIGACHAD', power: '789', color: 'bg-orange-500' }
+                    gangster: { emoji: '🔫', name: 'GANGSTER', power: '750', color: 'bg-purple-500' },
+                    gigachad: { emoji: '💪', name: 'GIGACHAD', power: '840', color: 'bg-orange-500' }
                   };
 
                   return (
@@ -2730,11 +2722,11 @@ export default function TCGPage() {
                 })}
               </div>
               <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
-                {aiDifficulty === 'gey' && '🏳️‍🌈 Level 1: Weakest cards (~5 power)'}
-                {aiDifficulty === 'goofy' && '🤪 Level 2: Low-tier cards (~90 power)'}
+                {aiDifficulty === 'gey' && '🏳️‍🌈 Level 1: Weakest cards (75 power)'}
+                {aiDifficulty === 'goofy' && '🤪 Level 2: Low-tier cards (~85 power)'}
                 {aiDifficulty === 'gooner' && '💀 Level 3: Mid-tier strong (~300 power)'}
-                {aiDifficulty === 'godlike' && '⚡ Level 4: Very strong (~462 power)'}
-                {aiDifficulty === 'gigachad' && '💪 Level 5: MAXIMUM POWER (789)'}
+                {aiDifficulty === 'gangster' && '🔫 Level 4: Strong legendaries (750 power)'}
+                {aiDifficulty === 'gigachad' && '💪 Level 5: MAXIMUM POWER (840)'}
               </p>
               <p className="text-center text-vintage-burnt-gold/50 text-[9px] mt-1 font-modern italic">
                 Win to unlock next level!
@@ -3078,14 +3070,14 @@ export default function TCGPage() {
               <div className="bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
                 <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ MECHA GEORGE FLOYD DIFFICULTY (5 LEVELS) ⚔️</p>
                 <div className="grid grid-cols-5 gap-1">
-                  {(['gey', 'goofy', 'gooner', 'godlike', 'gigachad'] as const).map((diff, index) => {
+                  {(['gey', 'goofy', 'gooner', 'gangster', 'gigachad'] as const).map((diff, index) => {
                     const isUnlocked = unlockedDifficulties.has(diff);
                     const diffInfo = {
-                      gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '~5', color: 'bg-gray-500' },
-                      goofy: { emoji: '🤪', name: 'GOOFY', power: '~90', color: 'bg-green-500' },
+                      gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '75', color: 'bg-gray-500' },
+                      goofy: { emoji: '🤪', name: 'GOOFY', power: '~85', color: 'bg-green-500' },
                       gooner: { emoji: '💀', name: 'GOONER', power: '~300', color: 'bg-blue-500' },
-                      godlike: { emoji: '⚡', name: 'GODLIKE', power: '~462', color: 'bg-purple-500' },
-                      gigachad: { emoji: '💪', name: 'GIGACHAD', power: '789', color: 'bg-orange-500' }
+                      gangster: { emoji: '🔫', name: 'GANGSTER', power: '750', color: 'bg-purple-500' },
+                      gigachad: { emoji: '💪', name: 'GIGACHAD', power: '840', color: 'bg-orange-500' }
                     };
 
                     return (
@@ -3112,22 +3104,20 @@ export default function TCGPage() {
                           </div>
                         )}
                         <div className={!isUnlocked ? 'opacity-30' : ''}>
-                          {diffInfo[diff].emoji}
+                          <span className="text-sm font-bold">{diffInfo[diff].name}</span>
                           <br/>
-                          <span className="text-[8px]">
-                            {diffInfo[diff].name}
-                          </span>
+                          <span className="text-[10px] opacity-70">{diffInfo[diff].power}</span>
                         </div>
                       </button>
                     );
                   })}
                 </div>
                 <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
-                  {aiDifficulty === 'gey' && '🏳️‍🌈 Level 1: Weakest cards (~5 power)'}
-                  {aiDifficulty === 'goofy' && '🤪 Level 2: Low-tier cards (~90 power)'}
+                  {aiDifficulty === 'gey' && '🏳️‍🌈 Level 1: Weakest cards (75 power)'}
+                  {aiDifficulty === 'goofy' && '🤪 Level 2: Low-tier cards (~85 power)'}
                   {aiDifficulty === 'gooner' && '💀 Level 3: Mid-tier strong (~300 power)'}
-                  {aiDifficulty === 'godlike' && '⚡ Level 4: Very strong (~462 power)'}
-                  {aiDifficulty === 'gigachad' && '💪 Level 5: MAXIMUM POWER (789)'}
+                  {aiDifficulty === 'gangster' && '🔫 Level 4: Strong legendaries (750 power)'}
+                  {aiDifficulty === 'gigachad' && '💪 Level 5: MAXIMUM POWER (840)'}
                 </p>
                 <p className="text-center text-vintage-burnt-gold/50 text-[9px] mt-1 font-modern italic">
                   Win to unlock next level!

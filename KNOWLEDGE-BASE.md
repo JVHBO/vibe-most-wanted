@@ -1136,11 +1136,11 @@ is not assignable to parameter of type 'SetStateAction<"easy" | "medium" | "hard
 
 **Fix**:
 ```typescript
-// Mudou de 5 dificuldades para 3
-const difficulties: AIDifficulty[] = ['easy', 'medium', 'hard'];
+// Agora temos 5 dificuldades
+const difficulties: AIDifficulty[] = ['gey', 'goofy', 'gooner', 'gangster', 'gigachad'];
 
-// UI de grid-cols-5 para grid-cols-3
-<div className="grid grid-cols-3 gap-2">
+// UI com grid-cols-5
+<div className="grid grid-cols-5 gap-1">
 ```
 
 **Arquivo**: `app/page.tsx` linhas 3256-3268
@@ -3572,3 +3572,87 @@ const saveDefenseDeck = useCallback(async () => {
     - Daily attack limits (5/day)
     - No betting/rewards implemented yet (schema ready)
   - **STATUS**: Ideas documented, implementation pending user choice
+
+---
+
+## 📊 CURRENT POWER CALCULATION & AI DIFFICULTIES (2025)
+
+### Power Calculation Formula
+
+```typescript
+Power = Base(Rarity) × WearMultiplier × FoilMultiplier
+```
+
+**Rarity Base Power:**
+- Common: 15
+- Rare: 15
+- Epic: 60
+- Legendary: 150
+
+**Wear Multipliers:**
+- Pristine: 1.25×
+- Mint: 1.1×
+- Others: 1.0×
+
+**Foil Multipliers:**
+- Prize: 15×
+- Standard: 2.5×
+- None: 1×
+
+**Examples:**
+- Common + Lightly Played + None = 15 × 1.0 × 1.0 = **15 PWR**
+- Common + Mint + None = 15 × 1.1 × 1.0 = **17 PWR**
+- Common + Pristine + None = 15 × 1.25 × 1.0 = **19 PWR**
+- Epic + Lightly Played + None = 60 × 1.0 × 1.0 = **60 PWR**
+- Legendary + Lightly Played + None = 150 × 1.0 × 1.0 = **150 PWR**
+- Legendary + Mint + None = 150 × 1.1 × 1.0 = **165 PWR**
+- Legendary + Lightly Played + Prize = 150 × 1.0 × 15.0 = **2250 PWR** (not in JC deck)
+
+### AI Difficulty Levels (5 Levels)
+
+**Type Definition:**
+```typescript
+type AIDifficulty = 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad';
+```
+
+**Difficulty Progression:**
+
+1. **GEY (Level 1)** 🏳️‍🌈
+   - Power Range: 15 only
+   - Total Power: **75** (5 × 15)
+   - Strategy: Weakest cards only
+   - Unlock: Available from start
+
+2. **GOOFY (Level 2)** 🤪
+   - Power Range: 15-21
+   - Total Power: **~85**
+   - Strategy: Low commons with wear
+   - Unlock: Win against GEY
+
+3. **GOONER (Level 3)** 💀
+   - Power Range: 60-72
+   - Total Power: **~300**
+   - Strategy: Basic epics
+   - Unlock: Win against GOOFY
+
+4. **GANGSTER (Level 4)** 🔫
+   - Power Range: 150 only
+   - Total Power: **750** (5 × 150)
+   - Strategy: Strong legendaries
+   - Unlock: Win against GOONER
+
+5. **GIGACHAD (Level 5)** 💪
+   - Power Range: Top 5 strongest
+   - Total Power: **840+**
+   - Strategy: Always picks top 5 strongest cards (no randomization)
+   - Unlock: Win against GANGSTER
+
+**Power Progression:**
+- GEY → GOOFY: +13% stronger
+- GOOFY → GOONER: +253% stronger
+- GOONER → GANGSTER: +150% stronger
+- GANGSTER → GIGACHAD: +12% stronger
+
+**Files:**
+- `app/page.tsx` lines 784, 1260, 1376-1443, 2675-2683, 3068-3076
+- `app/profile/[username]/page.tsx` lines 183-200
