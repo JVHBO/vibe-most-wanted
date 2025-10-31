@@ -1420,30 +1420,29 @@ export default function TCGPage() {
 
       case 'gangster':
         // GANGSTER (Level 4): Strong legendaries (150 PWR only, total 750)
-        const gangsterValid = sorted.filter(c => {
-          const r = (c.rarity || '').toLowerCase();
-          return ['common', 'rare', 'epic', 'legendary'].includes(r);
-        });
-        const legendaries150 = gangsterValid.filter(c => (c.power || 0) === 150);
-        // Randomize selection of 150 PWR cards to add variety
-        pickedDealer = legendaries150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
-        if (pickedDealer.length < HAND_SIZE_CONST) {
-          // Fallback: use cards with 150 power or closest
-          const closeCards = gangsterValid.filter(c => (c.power || 0) >= 150 && (c.power || 0) <= 150);
-          pickedDealer = closeCards.length >= HAND_SIZE_CONST
-            ? closeCards.slice(0, HAND_SIZE_CONST)
-            : gangsterValid.filter(c => (c.power || 0) >= 140).slice(0, HAND_SIZE_CONST);
+        // Filter cards with exactly 150 power
+        const cards150 = sorted.filter(c => (c.power || 0) === 150);
+        devLog('🔫 GANGSTER: Found', cards150.length, 'cards with 150 PWR');
+
+        if (cards150.length >= HAND_SIZE_CONST) {
+          // Randomize to add variety
+          pickedDealer = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        } else {
+          // Fallback: pick legendaries
+          const legendaries = sorted.filter(c => {
+            const r = (c.rarity || '').toLowerCase();
+            return r.includes('legend');
+          });
+          pickedDealer = legendaries.slice(0, HAND_SIZE_CONST);
         }
+        devLog('🔫 GANGSTER picked:', pickedDealer.length, 'cards, total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'gigachad':
-        // GIGACHAD (Level 5): TOP 5 STRONGEST (always same cards, total 840)
-        const gigachadValid = sorted.filter(c => {
-          const r = (c.rarity || '').toLowerCase();
-          return ['common', 'rare', 'epic', 'legendary'].includes(r);
-        });
-        // Always pick top 5, no randomization
-        pickedDealer = gigachadValid.slice(0, HAND_SIZE_CONST);
+        // GIGACHAD (Level 5): TOP 5 STRONGEST (always same cards, total ~855)
+        pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
+        devLog('💪 GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        devLog('💪 GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
     }
 
