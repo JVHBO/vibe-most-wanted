@@ -1700,7 +1700,7 @@ export default function TCGPage() {
       let battleStarted = false; // Flag para evitar executar batalha múltiplas vezes
       let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
 
-      const unsubscribe = ConvexPvPService.watchRoom(roomCode, (room) => {
+      const unsubscribe = ConvexPvPService.watchRoom(roomCode, async (room) => {
         if (room) {
           hasSeenRoom = true; // Marca que vimos a sala
           // Check if players are ready (Convex: ready = has cards)
