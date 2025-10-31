@@ -2474,8 +2474,10 @@ export default function TCGPage() {
                         src={`https://unavatar.io/twitter/${userProfile.twitter}`}
                         alt={battlePlayerName}
                         className="w-full h-full object-cover absolute inset-0"
+                        onLoad={() => console.log('Player PFP loaded:', userProfile.twitter)}
                         onError={(e) => {
-                          e.currentTarget.style.display = 'none';
+                          console.log('Player PFP failed to load:', userProfile.twitter);
+                          (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2306b6d4"><circle cx="12" cy="12" r="10"/></svg>';
                         }}
                       />
                     ) : null}
