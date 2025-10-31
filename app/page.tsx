@@ -1944,7 +1944,7 @@ export default function TCGPage() {
             hostReady,
             guestReady,
             roomStatus: room.status,
-            battleStarted
+            pvpBattleStarted
           });
           setCurrentRoom(room);
 
