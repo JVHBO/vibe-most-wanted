@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type Difficulty = 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad';
 
@@ -101,7 +101,7 @@ export default function DifficultyModal({
       </div>
 
       {/* Cards Row */}
-      <div className="relative z-[9999] flex items-center justify-center gap-6 mb-8 max-w-full overflow-x-auto px-4">
+      <div className="relative z-[9999] flex items-center justify-center gap-6 mb-8 max-w-full overflow-x-auto px-4 py-8">
         {DIFFICULTIES.map((diff, index) => {
               const info = DIFFICULTY_INFO[diff];
               const isUnlocked = unlockedDifficulties.has(diff);
@@ -140,7 +140,7 @@ export default function DifficultyModal({
 
                     {/* Lock Overlay */}
                     {!isUnlocked && (
-                      <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 rounded-xl backdrop-blur-sm">
+                      <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm overflow-hidden rounded-xl">
                         <div className="text-center">
                           <div className="text-6xl mb-2">🔒</div>
                           <p className="text-vintage-burnt-gold text-sm font-modern">
