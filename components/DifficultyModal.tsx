@@ -86,7 +86,7 @@ export default function DifficultyModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center p-8">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-start md:justify-center p-4 md:p-8 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/95 z-[9990]"
@@ -94,14 +94,14 @@ export default function DifficultyModal({
       />
 
       {/* Title */}
-      <div className="relative z-[9999] mb-8">
-        <h2 className="text-4xl font-bold text-vintage-gold font-display text-center drop-shadow-lg uppercase tracking-wider">
+      <div className="relative z-[9999] mb-4 md:mb-8 mt-4 md:mt-0">
+        <h2 className="text-2xl md:text-4xl font-bold text-vintage-gold font-display text-center drop-shadow-lg uppercase tracking-wider">
           <span className="text-vintage-neon-blue">▸</span> SELECT YOUR DIFFICULTY <span className="text-vintage-neon-blue">◂</span>
         </h2>
       </div>
 
-      {/* Cards Row */}
-      <div className="relative z-[9999] flex items-center justify-center gap-6 mb-8 max-w-full overflow-x-auto px-4 py-8">
+      {/* Cards Grid - Responsive */}
+      <div className="relative z-[9999] grid grid-cols-2 md:flex md:flex-row items-center justify-center gap-3 md:gap-6 mb-4 md:mb-8 max-w-full px-2 md:px-4 py-4 md:py-8">
         {DIFFICULTIES.map((diff, index) => {
               const info = DIFFICULTY_INFO[diff];
               const isUnlocked = unlockedDifficulties.has(diff);
@@ -112,7 +112,7 @@ export default function DifficultyModal({
               return (
                 <div
                   key={diff}
-                  className="relative"
+                  className="relative w-full md:w-auto"
                   onMouseEnter={() => isUnlocked && setHoveredDiff(diff)}
                   onMouseLeave={() => setHoveredDiff(null)}
                 >
@@ -121,12 +121,12 @@ export default function DifficultyModal({
                     onClick={() => isUnlocked && onSelect(diff)}
                     disabled={!isUnlocked}
                     className={`
-                      relative w-64 h-96 rounded-xl overflow-hidden
+                      relative w-full md:w-64 h-56 md:h-96 rounded-xl overflow-hidden
                       transition-all duration-300 bg-vintage-black
-                      ${isUnlocked ? 'cursor-pointer hover:scale-105 hover:shadow-2xl' : 'cursor-not-allowed'}
-                      ${isSelected ? 'ring-4 ring-vintage-neon-blue shadow-lg shadow-vintage-neon-blue/50' : ''}
-                      ${isCurrent && !isSelected ? 'ring-2 ring-vintage-burnt-gold/50' : ''}
-                      ${isHovered && !isSelected ? 'scale-105 shadow-2xl' : ''}
+                      ${isUnlocked ? 'cursor-pointer md:hover:scale-105 md:hover:shadow-2xl' : 'cursor-not-allowed'}
+                      ${isSelected ? 'ring-2 md:ring-4 ring-vintage-neon-blue shadow-lg shadow-vintage-neon-blue/50' : ''}
+                      ${isCurrent && !isSelected ? 'ring-1 md:ring-2 ring-vintage-burnt-gold/50' : ''}
+                      ${isHovered && !isSelected ? 'md:scale-105 md:shadow-2xl' : ''}
                     `}
                   >
                     {/* Card Image Background */}
@@ -141,9 +141,9 @@ export default function DifficultyModal({
                     {/* Lock Overlay */}
                     {!isUnlocked && (
                       <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm overflow-hidden rounded-xl">
-                        <div className="text-center">
-                          <div className="text-6xl mb-2">🔒</div>
-                          <p className="text-vintage-burnt-gold text-sm font-modern">
+                        <div className="text-center px-2">
+                          <div className="text-3xl md:text-6xl mb-1 md:mb-2">🔒</div>
+                          <p className="text-vintage-burnt-gold text-xs md:text-sm font-modern">
                             Beat {index > 0 ? DIFFICULTY_INFO[DIFFICULTIES[index - 1]].name : 'previous'} to unlock
                           </p>
                         </div>
@@ -152,28 +152,28 @@ export default function DifficultyModal({
 
                     {/* Selected Badge */}
                     {isSelected && (
-                      <div className="absolute top-2 left-2 bg-vintage-neon-blue text-vintage-black px-3 py-1 rounded-full text-xs font-bold z-40 animate-pulse">
+                      <div className="absolute top-1 left-1 md:top-2 md:left-2 bg-vintage-neon-blue text-vintage-black px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold z-40 animate-pulse">
                         SELECTED
                       </div>
                     )}
 
                     {/* Current Badge */}
                     {isCurrent && !isSelected && (
-                      <div className="absolute top-2 right-2 bg-vintage-burnt-gold text-vintage-black px-3 py-1 rounded-full text-xs font-bold z-40">
+                      <div className="absolute top-1 right-1 md:top-2 md:right-2 bg-vintage-burnt-gold text-vintage-black px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold z-40">
                         CURRENT
                       </div>
                     )}
 
                     {/* Info Overlay (appears on hover or when selected) */}
                     {isUnlocked && (isHovered || isSelected) && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col justify-end p-4 z-50">
-                        <div className="text-vintage-gold text-base font-bold mb-1 font-display uppercase tracking-wide">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col justify-end p-2 md:p-4 z-50">
+                        <div className="text-vintage-gold text-xs md:text-base font-bold mb-0.5 md:mb-1 font-display uppercase tracking-wide">
                           {info.name}
                         </div>
-                        <div className="text-vintage-neon-blue text-xs mb-2 font-modern font-bold">
+                        <div className="text-vintage-neon-blue text-[10px] md:text-xs mb-1 md:mb-2 font-modern font-bold">
                           POWER: {info.power}
                         </div>
-                        <div className="text-vintage-white text-xs font-modern">
+                        <div className="text-vintage-white text-[10px] md:text-xs font-modern">
                           {info.description}
                         </div>
                       </div>
@@ -185,18 +185,18 @@ export default function DifficultyModal({
       </div>
 
       {/* Footer Buttons */}
-      <div className="relative z-[9999] flex items-center justify-center gap-4">
+      <div className="relative z-[9999] flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 w-full md:w-auto px-4 md:px-0 mb-4 md:mb-0">
         {tempSelected && (
           <button
             onClick={() => onBattle(tempSelected)}
-            className="relative px-12 py-4 bg-gradient-to-r from-vintage-neon-blue to-vintage-neon-blue/90 hover:from-vintage-neon-blue/90 hover:to-vintage-neon-blue text-vintage-black rounded-lg font-display font-bold text-2xl shadow-neon transition-all hover:shadow-gold uppercase tracking-wider border-2 border-vintage-neon-blue/30"
+            className="relative w-full md:w-auto px-8 md:px-12 py-3 md:py-4 bg-gradient-to-r from-vintage-neon-blue to-vintage-neon-blue/90 hover:from-vintage-neon-blue/90 hover:to-vintage-neon-blue text-vintage-black rounded-lg font-display font-bold text-lg md:text-2xl shadow-neon transition-all hover:shadow-gold uppercase tracking-wider border-2 border-vintage-neon-blue/30"
           >
             <span className="drop-shadow-lg">{t('startBattle')}</span>
           </button>
         )}
         <button
           onClick={onClose}
-          className="px-8 py-3 bg-vintage-black/50 border-2 border-vintage-burnt-gold text-vintage-burnt-gold rounded-lg hover:bg-vintage-burnt-gold hover:text-vintage-black transition-all font-modern font-bold text-lg uppercase"
+          className="w-full md:w-auto px-6 md:px-8 py-2 md:py-3 bg-vintage-black/50 border-2 border-vintage-burnt-gold text-vintage-burnt-gold rounded-lg hover:bg-vintage-burnt-gold hover:text-vintage-black transition-all font-modern font-bold text-base md:text-lg uppercase"
         >
           {tempSelected ? t('cancel') : t('close')}
         </button>
