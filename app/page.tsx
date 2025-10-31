@@ -1334,7 +1334,8 @@ export default function TCGPage() {
     setBattleOpponentName(t('dealer')); // Reset to Dealer for PvE
     setBattlePlayerName(userProfile?.username || 'You'); // Show player username
     setBattleOpponentPfp('/images/mecha-george-floyd.jpg'); // Mecha George pfp
-    setBattlePlayerPfp(userProfile?.fid ? `https://api.farcaster.xyz/v2/user-by-fid?fid=${userProfile.fid}` : null); // Player pfp from Farcaster if available
+    // Player pfp from Twitter if available
+    setBattlePlayerPfp(userProfile?.twitterHandle ? `https://unavatar.io/twitter/${userProfile.twitterHandle.replace('@', '')}` : null);
     setShowLossPopup(false);
     setShowWinPopup(false);
     setResult('');
@@ -1738,7 +1739,8 @@ export default function TCGPage() {
             setBattleOpponentName(opponentName); // Show PvP opponent username
             setBattlePlayerName(playerName); // Show player username
             setBattleOpponentPfp(null); // PvP opponent - no pfp for now, will show initials
-            setBattlePlayerPfp(userProfile?.fid ? `https://api.farcaster.xyz/v2/user-by-fid?fid=${userProfile.fid}` : null); // Player pfp from Farcaster if available
+            // Player pfp from Twitter if available
+            setBattlePlayerPfp(userProfile?.twitterHandle ? `https://unavatar.io/twitter/${userProfile.twitterHandle.replace('@', '')}` : null);
             setShowLossPopup(false);
             setShowWinPopup(false);
             setResult('');
@@ -2881,8 +2883,10 @@ export default function TCGPage() {
                   setDealerCards(defenderCards);
                   setBattleOpponentName(targetPlayer.username); // Show enemy username
                   setBattlePlayerName(userProfile?.username || 'You'); // Show player username
-                  setBattleOpponentPfp(targetPlayer.fid ? `https://api.farcaster.xyz/v2/user-by-fid?fid=${targetPlayer.fid}` : null); // Opponent pfp from Farcaster if available
-                  setBattlePlayerPfp(userProfile?.fid ? `https://api.farcaster.xyz/v2/user-by-fid?fid=${userProfile.fid}` : null); // Player pfp from Farcaster if available
+                  // Opponent pfp from Twitter if available
+                  setBattleOpponentPfp(targetPlayer.twitterHandle ? `https://unavatar.io/twitter/${targetPlayer.twitterHandle.replace('@', '')}` : null);
+                  // Player pfp from Twitter if available
+                  setBattlePlayerPfp(userProfile?.twitterHandle ? `https://unavatar.io/twitter/${userProfile.twitterHandle.replace('@', '')}` : null);
                   setShowAttackCardSelection(false);
                   setIsBattling(true);
                   setShowBattleScreen(true);
