@@ -1929,6 +1929,9 @@ export default function TCGPage() {
   // Convex Room Listener - Escuta mudanças na sala em tempo real
   useEffect(() => {
     if (pvpMode === 'inRoom' && roomCode) {
+      // Reset battle flag when entering a new room to prevent stale state from previous battles
+      setPvpBattleStarted(false);
+      devLog('🔄 Reset pvpBattleStarted to false for new room');
       devLog('🎧 Convex listener started for room:', roomCode);
       // battleStarted is now a state variable (pvpBattleStarted)
       let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
@@ -2089,6 +2092,9 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.tie();
                 }
 
+                // Reset battle flag immediately so player can start new match without waiting
+                setPvpBattleStarted(false);
+                devLog('🔄 Battle ended, reset pvpBattleStarted immediately');
                 // Fecha a sala PVP e volta ao menu após ver o resultado
                 setTimeout(async () => {
                   // Deleta a sala do Convex se for o host
