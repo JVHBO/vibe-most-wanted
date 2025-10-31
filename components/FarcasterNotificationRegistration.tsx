@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import sdk from '@farcaster/frame-sdk';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 

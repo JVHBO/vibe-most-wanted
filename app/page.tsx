@@ -1730,7 +1730,18 @@ export default function TCGPage() {
             const opponentAddress = isHost ? room.guestAddress : room.hostAddress;
             const opponentName = isHost ? (room.guestUsername || 'Guest') : (room.hostUsername || 'Host');
             const playerName = isHost ? (room.hostUsername || 'You') : (room.guestUsername || 'You');
-            const opponentTwitter = undefined; // Twitter not stored in room for now
+
+            // Busca perfil do oponente para pegar Twitter
+            let opponentTwitter = undefined;
+            if (opponentAddress) {
+              try {
+                const opponentProfile = await ConvexProfileService.getProfile(opponentAddress);
+                opponentTwitter = opponentProfile?.twitter;
+                console.log('Opponent profile loaded:', opponentProfile?.username, 'twitter:', opponentTwitter);
+              } catch (e) {
+                console.log('Failed to load opponent profile:', e);
+              }
+            }
 
             // Executa a batalha PvP com animações (igual PVE)
             setIsBattling(true);
@@ -1738,7 +1749,8 @@ export default function TCGPage() {
             setBattlePhase('cards');
             setBattleOpponentName(opponentName); // Show PvP opponent username
             setBattlePlayerName(playerName); // Show player username
-            setBattleOpponentPfp(null); // PvP opponent - no pfp for now, will show initials
+            // Opponent pfp from Twitter if available
+            setBattleOpponentPfp(opponentTwitter ? `https://unavatar.io/twitter/${opponentTwitter}` : null);
             // Player pfp from Twitter if available
             setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
             setShowLossPopup(false);
