@@ -1369,10 +1369,10 @@ export default function TCGPage() {
     const shuffled = [...available].sort(() => Math.random() - 0.5);
     const sorted = [...available].sort((a, b) => (b.power || 0) - (a.power || 0));
 
-    devLog('🎲 AI DECK SELECTION DEBUG:');
-    devLog('  Available cards:', available.length);
-    devLog('  Sorted top 5:', sorted.slice(0, 5).map(c => `#${c.tokenId} (${c.power} PWR)`));
-    devLog('  Difficulty:', aiDifficulty);
+    console.log('🎲 AI DECK SELECTION DEBUG:');
+    console.log('  Available cards:', available.length);
+    console.log('  Sorted top 5:', sorted.slice(0, 5).map(c => `#${c.tokenId} (${c.power} PWR)`));
+    console.log('  Difficulty:', aiDifficulty);
 
     let pickedDealer: any[] = [];
 
@@ -1427,37 +1427,37 @@ export default function TCGPage() {
         // GANGSTER (Level 4): Strong legendaries (150 PWR only, total 750)
         // Filter cards with exactly 150 power
         const cards150 = sorted.filter(c => (c.power || 0) === 150);
-        devLog('🔫 GANGSTER DEBUG:');
-        devLog('  Total cards in sorted:', sorted.length);
-        devLog('  Cards with 150 PWR:', cards150.length);
+        console.log('🔫 GANGSTER DEBUG:');
+        console.log('  Total cards in sorted:', sorted.length);
+        console.log('  Cards with 150 PWR:', cards150.length);
         if (cards150.length > 0) {
-          devLog('  First 3 cards with 150 PWR:', cards150.slice(0, 3).map(c => `#${c.tokenId} (${c.power} PWR, ${c.rarity})`));
+          console.log('  First 3 cards with 150 PWR:', cards150.slice(0, 3).map(c => `#${c.tokenId} (${c.power} PWR, ${c.rarity})`));
         }
 
         if (cards150.length >= HAND_SIZE_CONST) {
           // Randomize to add variety
           pickedDealer = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
-          devLog('  ✅ Picked', HAND_SIZE_CONST, 'random cards from 150 PWR pool');
+          console.log('  ✅ Picked', HAND_SIZE_CONST, 'random cards from 150 PWR pool');
         } else {
           // Fallback: pick legendaries
-          devLog('  ⚠️ Not enough 150 PWR cards, using legendaries fallback');
+          console.log('  ⚠️ Not enough 150 PWR cards, using legendaries fallback');
           const legendaries = sorted.filter(c => {
             const r = (c.rarity || '').toLowerCase();
             return r.includes('legend');
           });
-          devLog('  Legendaries found:', legendaries.length);
+          console.log('  Legendaries found:', legendaries.length);
           pickedDealer = legendaries.slice(0, HAND_SIZE_CONST);
         }
-        devLog('🔫 GANGSTER FINAL:', pickedDealer.length, 'cards picked');
-        devLog('  Cards:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
+        console.log('🔫 GANGSTER FINAL:', pickedDealer.length, 'cards picked');
+        console.log('  Cards:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        console.log('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'gigachad':
         // GIGACHAD (Level 5): TOP 5 STRONGEST (always same cards, total ~855)
         pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
-        devLog('💪 GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        devLog('💪 GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
+        console.log('💪 GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        console.log('💪 GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
     }
 
