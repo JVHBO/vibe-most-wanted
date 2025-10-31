@@ -39,16 +39,19 @@ export default defineSchema({
       defenseLosses: v.number(),
     }),
 
-    // Defense Deck (array of card objects with saved power)
+    // Defense Deck (array of card objects with saved power or legacy string tokenIds)
     defenseDeck: v.optional(v.array(
-      v.object({
-        tokenId: v.string(),
-        power: v.number(),
-        imageUrl: v.string(),
-        name: v.string(),
-        rarity: v.string(),
-        foil: v.optional(v.string()),
-      })
+      v.union(
+        v.string(), // Legacy format: just tokenId string
+        v.object({
+          tokenId: v.string(),
+          power: v.number(),
+          imageUrl: v.string(),
+          name: v.string(),
+          rarity: v.string(),
+          foil: v.optional(v.string()),
+        })
+      )
     )),
 
     // Attack limits

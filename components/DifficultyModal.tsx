@@ -10,6 +10,7 @@ interface DifficultyModalProps {
   onClose: () => void;
   onSelect: (difficulty: Difficulty) => void;
   onBattle: (difficulty: Difficulty) => void;
+  onEliminationBattle?: (difficulty: Difficulty) => void;
   unlockedDifficulties: Set<Difficulty>;
   currentDifficulty?: Difficulty;
   tempSelected?: Difficulty | null;
@@ -65,6 +66,7 @@ export default function DifficultyModal({
   onClose,
   onSelect,
   onBattle,
+  onEliminationBattle,
   unlockedDifficulties,
   currentDifficulty,
   tempSelected
@@ -189,12 +191,22 @@ export default function DifficultyModal({
         {/* Footer Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
           {tempSelected && (
-            <button
-              onClick={() => onBattle(tempSelected)}
-              className="relative w-full sm:w-auto px-8 lg:px-12 py-3 lg:py-4 bg-gradient-to-r from-vintage-neon-blue to-vintage-neon-blue/90 hover:from-vintage-neon-blue/90 hover:to-vintage-neon-blue text-vintage-black rounded-lg font-display font-bold text-base lg:text-2xl shadow-neon transition-all hover:shadow-gold uppercase tracking-wider border-2 border-vintage-neon-blue/30"
-            >
-              <span className="drop-shadow-lg">{t('startBattle')}</span>
-            </button>
+            <>
+              <button
+                onClick={() => onBattle(tempSelected)}
+                className="relative w-full sm:w-auto px-8 lg:px-12 py-3 lg:py-4 bg-gradient-to-r from-vintage-neon-blue to-vintage-neon-blue/90 hover:from-vintage-neon-blue/90 hover:to-vintage-neon-blue text-vintage-black rounded-lg font-display font-bold text-base lg:text-2xl shadow-neon transition-all hover:shadow-gold uppercase tracking-wider border-2 border-vintage-neon-blue/30"
+              >
+                <span className="drop-shadow-lg">{t('startBattle')}</span>
+              </button>
+              {onEliminationBattle && (
+                <button
+                  onClick={() => onEliminationBattle(tempSelected)}
+                  className="relative w-full sm:w-auto px-6 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-600 text-white rounded-lg font-display font-bold text-sm lg:text-xl shadow-lg transition-all hover:shadow-purple-500/50 uppercase tracking-wider border-2 border-purple-500/30"
+                >
+                  <span className="drop-shadow-lg">⚔️ Elimination Mode</span>
+                </button>
+              )}
+            </>
           )}
           <button
             onClick={onClose}
