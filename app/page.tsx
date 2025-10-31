@@ -769,6 +769,8 @@ export default function TCGPage() {
   const [battlePhase, setBattlePhase] = useState<string>('cards');
   const [battleOpponentName, setBattleOpponentName] = useState<string>('Dealer');
   const [battlePlayerName, setBattlePlayerName] = useState<string>('You');
+  const [battlePlayerPfp, setBattlePlayerPfp] = useState<string | null>(null);
+  const [battleOpponentPfp, setBattleOpponentPfp] = useState<string | null>(null);
   const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
   const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -1331,6 +1333,8 @@ export default function TCGPage() {
     setBattlePhase('cards');
     setBattleOpponentName(t('dealer')); // Reset to Dealer for PvE
     setBattlePlayerName(userProfile?.username || 'You'); // Show player username
+    setBattleOpponentPfp('/images/mecha-george-floyd.jpg'); // Mecha George pfp
+    setBattlePlayerPfp(userProfile?.fid ? `https://api.farcaster.xyz/v2/user-by-fid?fid=${userProfile.fid}` : null); // Player pfp from Farcaster if available
     setShowLossPopup(false);
     setShowWinPopup(false);
     setResult('');
@@ -1733,6 +1737,8 @@ export default function TCGPage() {
             setBattlePhase('cards');
             setBattleOpponentName(opponentName); // Show PvP opponent username
             setBattlePlayerName(playerName); // Show player username
+            setBattleOpponentPfp(null); // PvP opponent - no pfp for now, will show initials
+            setBattlePlayerPfp(userProfile?.fid ? `https://api.farcaster.xyz/v2/user-by-fid?fid=${userProfile.fid}` : null); // Player pfp from Farcaster if available
             setShowLossPopup(false);
             setShowWinPopup(false);
             setResult('');
@@ -2458,7 +2464,25 @@ export default function TCGPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
               {/* Player Cards */}
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-vintage-neon-blue mb-3 md:mb-4 text-center">{battlePlayerName}</h3>
+                {/* Player Header with Avatar */}
+                <div className="flex flex-col items-center mb-3 md:mb-4">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-cyan-500 shadow-lg shadow-cyan-500/50 mb-2 bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center relative">
+                    {battlePlayerPfp ? (
+                      <img
+                        src={battlePlayerPfp}
+                        alt={battlePlayerName}
+                        className="w-full h-full object-cover absolute inset-0"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <span className={`text-2xl md:text-3xl font-bold text-white ${battlePlayerPfp ? 'opacity-0' : 'opacity-100'}`}>
+                      {battlePlayerName?.substring(0, 2).toUpperCase() || '??'}
+                    </span>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-vintage-neon-blue text-center">{battlePlayerName}</h3>
+                </div>
                 <div
                   className="grid grid-cols-5 gap-1 md:gap-2"
                   style={{
@@ -2514,17 +2538,23 @@ export default function TCGPage() {
 
               {/* Opponent Cards */}
               <div>
-                {/* Opponent Header with Image */}
+                {/* Opponent Header with Avatar */}
                 <div className="flex flex-col items-center mb-3 md:mb-4">
-                  {battleOpponentName === 'Mecha George Floyd' && (
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-red-500 shadow-lg shadow-red-500/50 mb-2">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-red-500 shadow-lg shadow-red-500/50 mb-2 bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center relative">
+                    {battleOpponentPfp ? (
                       <img
-                        src="/images/mecha-george-floyd.jpg"
-                        alt="Mecha George Floyd"
-                        className="w-full h-full object-cover"
+                        src={battleOpponentPfp}
+                        alt={battleOpponentName}
+                        className="w-full h-full object-cover absolute inset-0"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
-                    </div>
-                  )}
+                    ) : null}
+                    <span className={`text-2xl md:text-3xl font-bold text-white ${battleOpponentPfp ? 'opacity-0' : 'opacity-100'}`}>
+                      {battleOpponentName?.substring(0, 2).toUpperCase() || '??'}
+                    </span>
+                  </div>
                   <h3 className="text-xl md:text-2xl font-bold text-red-400 text-center">{battleOpponentName}</h3>
                 </div>
                 <div
@@ -2851,6 +2881,8 @@ export default function TCGPage() {
                   setDealerCards(defenderCards);
                   setBattleOpponentName(targetPlayer.username); // Show enemy username
                   setBattlePlayerName(userProfile?.username || 'You'); // Show player username
+                  setBattleOpponentPfp(targetPlayer.fid ? `https://api.farcaster.xyz/v2/user-by-fid?fid=${targetPlayer.fid}` : null); // Opponent pfp from Farcaster if available
+                  setBattlePlayerPfp(userProfile?.fid ? `https://api.farcaster.xyz/v2/user-by-fid?fid=${userProfile.fid}` : null); // Player pfp from Farcaster if available
                   setShowAttackCardSelection(false);
                   setIsBattling(true);
                   setShowBattleScreen(true);
