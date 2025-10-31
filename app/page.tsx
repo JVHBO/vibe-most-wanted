@@ -14,6 +14,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
+import DifficultyModal from "@/components/DifficultyModal";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -783,6 +784,8 @@ export default function TCGPage() {
   // AI Difficulty (5 levels with progressive unlock)
   const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
   const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
+  const [isDifficultyModalOpen, setIsDifficultyModalOpen] = useState(false);
+  const [tempSelectedDifficulty, setTempSelectedDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad' | null>(null);
 
   // Profile States
   const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
@@ -1320,8 +1323,9 @@ export default function TCGPage() {
     }, 300);
   }, [nfts, soundEnabled]);
 
-  const playHand = useCallback(() => {
-    if (selectedCards.length !== HAND_SIZE_CONST || isBattling) return;
+  const playHand = useCallback((cardsToPlay?: any[]) => {
+    const cards = cardsToPlay || selectedCards;
+    if (cards.length !== HAND_SIZE_CONST || isBattling) return;
     setIsBattling(true);
     setShowBattleScreen(true);
     setBattlePhase('cards');
@@ -1335,7 +1339,7 @@ export default function TCGPage() {
 
     if (soundEnabled) AudioManager.playHand();
 
-    const playerTotal = selectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+    const playerTotal = cards.reduce((sum, c) => sum + (c.power || 0), 0);
     // Use JC's deck for dealer cards
     const available = jcNfts;
 
@@ -1504,7 +1508,7 @@ export default function TCGPage() {
           matchResult,
           playerTotal,
           dealerTotal,
-          selectedCards,
+          cards,
           pickedDealer
         ).then(() => {
           // Reload match history
@@ -2600,11 +2604,11 @@ export default function TCGPage() {
       )}
 
       {/* PvE Card Selection Modal */}
-      {showPveCardSelection && (
+      {showPveCardSelection && !isDifficultyModalOpen && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto" onClick={() => setShowPveCardSelection(false)}>
           <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-8 shadow-neon my-8 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-neon-blue">
-              SELECT YOUR CARDS
+              {t('selectYourCardsTitle')}
             </h2>
             <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
               Choose {HAND_SIZE_CONST} cards to battle vs AI ({pveSelectedCards.length}/{HAND_SIZE_CONST} selected)
@@ -2693,86 +2697,23 @@ export default function TCGPage() {
               </button>
             </div>
 
-            {/* Difficulty Selector - 5 Levels */}
-            <div className="mb-4 bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
-              <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ MECHA GEORGE FLOYD DIFFICULTY (5 LEVELS) ⚔️</p>
-              <div className="grid grid-cols-5 gap-1">
-                {(['gey', 'goofy', 'gooner', 'gangster', 'gigachad'] as const).map((diff, index) => {
-                  const isUnlocked = unlockedDifficulties.has(diff);
-                  const diffInfo = {
-                    gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '75 (15 PWR)', color: 'bg-gray-500' },
-                    goofy: { emoji: '🤪', name: 'GOOFY', power: '~105 (18-21)', color: 'bg-green-500' },
-                    gooner: { emoji: '💀', name: 'GOONER', power: '~360 (60-72)', color: 'bg-blue-500' },
-                    gangster: { emoji: '🔫', name: 'GANGSTER', power: '750 (150)', color: 'bg-purple-500' },
-                    gigachad: { emoji: '💪', name: 'GIGACHAD', power: '855 (Top 5)', color: 'bg-orange-500' }
-                  };
-
-                  return (
-                    <button
-                      key={diff}
-                      onClick={() => {
-                        if (isUnlocked) {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          setAiDifficulty(diff);
-                        }
-                      }}
-                      disabled={!isUnlocked}
-                      className={`px-1 py-2 rounded text-xs font-bold transition-all relative ${
-                        !isUnlocked
-                          ? 'bg-vintage-black/80 text-vintage-burnt-gold/30 border border-vintage-gold/10 cursor-not-allowed'
-                          : aiDifficulty === diff
-                          ? `${diffInfo[diff].color} text-white shadow-lg scale-105`
-                          : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
-                      }`}
-                    >
-                      {!isUnlocked && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded">
-                          <span className="text-xs font-bold text-white/80">LOCKED</span>
-                        </div>
-                      )}
-                      <div className={!isUnlocked ? 'opacity-30' : ''}>
-                        {diffInfo[diff].emoji}
-                        <br/>
-                        <span className="text-[8px]">
-                          {diffInfo[diff].name}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
-                {aiDifficulty === 'gey' && '🏳️‍🌈 Level 1: Weakest cards (75 power)'}
-                {aiDifficulty === 'goofy' && '🤪 Level 2: Low-tier cards (~85 power)'}
-                {aiDifficulty === 'gooner' && '💀 Level 3: Mid-tier strong (~300 power)'}
-                {aiDifficulty === 'gangster' && '🔫 Level 4: Strong legendaries (750 power)'}
-                {aiDifficulty === 'gigachad' && '💪 Level 5: MAXIMUM POWER (840)'}
-              </p>
-              <p className="text-center text-vintage-burnt-gold/50 text-[9px] mt-1 font-modern italic">
-                Win to unlock next level!
-              </p>
-            </div>
-
             {/* Action Buttons */}
             <div className="space-y-3">
               <button
                 onClick={() => {
                   if (pveSelectedCards.length === HAND_SIZE_CONST && jcNfts.length >= HAND_SIZE_CONST) {
-                    setSelectedCards(pveSelectedCards);
-                    setShowPveCardSelection(false);
-                    setGameMode('ai');
-                    setPvpMode(null);
-                    playHand();
+                    if (soundEnabled) AudioManager.buttonClick();
+                    setIsDifficultyModalOpen(true);
                   }
                 }}
                 disabled={pveSelectedCards.length !== HAND_SIZE_CONST || jcNfts.length < HAND_SIZE_CONST}
                 className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
                   pveSelectedCards.length === HAND_SIZE_CONST && jcNfts.length >= HAND_SIZE_CONST
-                    ? 'bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black shadow-neon hover:scale-105'
+                    ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                     : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                 }`}
               >
-                {jcNfts.length < HAND_SIZE_CONST ? 'Loading George deck...' : `Battle! (${pveSelectedCards.length}/${HAND_SIZE_CONST})`}
+                {jcNfts.length < HAND_SIZE_CONST ? t('loadingDealerDeck') : `⚔️ ${t('chooseDifficulty')} (${pveSelectedCards.length}/${HAND_SIZE_CONST})`}
               </button>
 
               <button
@@ -3086,63 +3027,48 @@ export default function TCGPage() {
             </p>
 
             <div className="space-y-4">
-              {/* Difficulty Selector - 5 Levels */}
-              <div className="bg-vintage-charcoal/50 rounded-xl p-4 border border-vintage-gold/30">
-                <p className="text-center text-vintage-gold text-sm font-modern mb-3">⚔️ MECHA GEORGE FLOYD DIFFICULTY (5 LEVELS) ⚔️</p>
-                <div className="grid grid-cols-5 gap-1">
-                  {(['gey', 'goofy', 'gooner', 'gangster', 'gigachad'] as const).map((diff, index) => {
-                    const isUnlocked = unlockedDifficulties.has(diff);
-                    const diffInfo = {
-                      gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '75 (15 PWR)', color: 'bg-gray-500' },
-                      goofy: { emoji: '🤪', name: 'GOOFY', power: '~105 (18-21)', color: 'bg-green-500' },
-                      gooner: { emoji: '💀', name: 'GOONER', power: '~360 (60-72)', color: 'bg-blue-500' },
-                      gangster: { emoji: '🔫', name: 'GANGSTER', power: '750 (150)', color: 'bg-purple-500' },
-                      gigachad: { emoji: '💪', name: 'GIGACHAD', power: '855 (Top 5)', color: 'bg-orange-500' }
+              {/* Difficulty Selector Button */}
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setIsDifficultyModalOpen(true);
+                }}
+                className="w-full bg-vintage-charcoal/50 rounded-xl p-4 border-2 border-vintage-gold/50 hover:border-vintage-gold hover:shadow-lg hover:shadow-vintage-gold/20 transition-all"
+              >
+                <p className="text-center text-vintage-gold text-sm font-modern mb-2">⚔️ SELECT DIFFICULTY ⚔️</p>
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  {(['gey', 'goofy', 'gooner', 'gangster', 'gigachad'] as const).map((diff) => {
+                    const diffEmoji = {
+                      gey: '🏳️‍🌈',
+                      goofy: '🤪',
+                      gooner: '💀',
+                      gangster: '🔫',
+                      gigachad: '💪'
                     };
+                    const isUnlocked = unlockedDifficulties.has(diff);
+                    const isCurrent = aiDifficulty === diff;
 
                     return (
-                      <button
+                      <div
                         key={diff}
-                        onClick={() => {
-                          if (isUnlocked) {
-                            if (soundEnabled) AudioManager.buttonClick();
-                            setAiDifficulty(diff);
-                          }
-                        }}
-                        disabled={!isUnlocked}
-                        className={`px-1 py-2 rounded text-xs font-bold transition-all relative ${
-                          !isUnlocked
-                            ? 'bg-vintage-black/80 text-vintage-burnt-gold/30 border border-vintage-gold/10 cursor-not-allowed'
-                            : aiDifficulty === diff
-                            ? `${diffInfo[diff].color} text-white shadow-lg scale-105`
-                            : 'bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 hover:border-vintage-gold/50'
+                        className={`text-xl transition-all ${
+                          !isUnlocked ? 'opacity-20 grayscale' :
+                          isCurrent ? 'scale-125 drop-shadow-lg' : 'opacity-50'
                         }`}
                       >
-                        {!isUnlocked && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded">
-                            <span className="text-2xl">🔒</span>
-                          </div>
-                        )}
-                        <div className={!isUnlocked ? 'opacity-30' : ''}>
-                          <span className="text-sm font-bold">{diffInfo[diff].name}</span>
-                          <br/>
-                          <span className="text-[10px] opacity-70">{diffInfo[diff].power}</span>
-                        </div>
-                      </button>
+                        {diffEmoji[diff]}
+                      </div>
                     );
                   })}
                 </div>
-                <p className="text-center text-vintage-burnt-gold/70 text-[10px] mt-2 font-modern">
-                  {aiDifficulty === 'gey' && '🏳️‍🌈 Level 1: Weakest cards (75 power)'}
-                  {aiDifficulty === 'goofy' && '🤪 Level 2: Low-tier cards (~85 power)'}
-                  {aiDifficulty === 'gooner' && '💀 Level 3: Mid-tier strong (~300 power)'}
-                  {aiDifficulty === 'gangster' && '🔫 Level 4: Strong legendaries (750 power)'}
-                  {aiDifficulty === 'gigachad' && '💪 Level 5: MAXIMUM POWER (840)'}
+                <p className="text-center text-vintage-burnt-gold text-xs">
+                  Current: {aiDifficulty === 'gey' && '🏳️‍🌈 GEY (75 PWR)'}
+                  {aiDifficulty === 'goofy' && '🤪 GOOFY (~105 PWR)'}
+                  {aiDifficulty === 'gooner' && '💀 GOONER (~360 PWR)'}
+                  {aiDifficulty === 'gangster' && '🔫 GANGSTER (750 PWR)'}
+                  {aiDifficulty === 'gigachad' && '💪 GIGACHAD (855 PWR)'}
                 </p>
-                <p className="text-center text-vintage-burnt-gold/50 text-[9px] mt-1 font-modern italic">
-                  Win to unlock next level!
-                </p>
-              </div>
+              </button>
 
               {/* Jogar vs IA */}
               <button
@@ -4516,6 +4442,37 @@ export default function TCGPage() {
 
         </>
       )}
+
+      {/* Difficulty Selection Modal */}
+      <DifficultyModal
+        isOpen={isDifficultyModalOpen}
+        onClose={() => {
+          setIsDifficultyModalOpen(false);
+          setTempSelectedDifficulty(null);
+        }}
+        onSelect={(difficulty) => {
+          if (soundEnabled) AudioManager.buttonClick();
+          setTempSelectedDifficulty(difficulty);
+        }}
+        onBattle={(difficulty) => {
+          // Don't play sound here - playHand() will play AudioManager.playHand()
+          setAiDifficulty(difficulty);
+          setIsDifficultyModalOpen(false);
+          setTempSelectedDifficulty(null);
+
+          // Start the battle with selected cards and difficulty
+          setShowPveCardSelection(false);
+          setGameMode('ai');
+          setPvpMode(null);
+          setSelectedCards(pveSelectedCards);
+
+          // Pass cards directly to playHand to avoid state timing issues
+          playHand(pveSelectedCards);
+        }}
+        unlockedDifficulties={unlockedDifficulties as Set<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>}
+        currentDifficulty={aiDifficulty}
+        tempSelected={tempSelectedDifficulty}
+      />
     </div>
   );
 }
