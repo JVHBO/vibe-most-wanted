@@ -798,6 +798,7 @@ export default function TCGPage() {
   const [roundResults, setRoundResults] = useState<('win' | 'loss' | 'tie')[]>([]);
   const [eliminationPlayerScore, setEliminationPlayerScore] = useState<number>(0);
   const [eliminationOpponentScore, setEliminationOpponentScore] = useState<number>(0);
+  const [pvpBattleStarted, setPvpBattleStarted] = useState<boolean>(false); // PvP battle flag to prevent double-start
 
   // Profile States
   const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
@@ -1929,7 +1930,7 @@ export default function TCGPage() {
   useEffect(() => {
     if (pvpMode === 'inRoom' && roomCode) {
       devLog('🎧 Convex listener started for room:', roomCode);
-      let battleStarted = false; // Flag para evitar executar batalha múltiplas vezes
+      // battleStarted is now a state variable (pvpBattleStarted)
       let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
 
       const unsubscribe = ConvexPvPService.watchRoom(roomCode, async (room) => {
@@ -1949,8 +1950,8 @@ export default function TCGPage() {
 
           // Se ambos os jogadores estiverem prontos, inicia a batalha
           // Só inicia quando status é 'playing' (após ambos submeterem cartas)
-          if (hostReady && guestReady && room.status === 'playing' && !battleStarted) {
-            battleStarted = true; // Marca que a batalha já iniciou
+          if (hostReady && guestReady && room.status === 'playing' && !pvpBattleStarted) {
+            setPvpBattleStarted(true); // Marca que a batalha já iniciou
             devLog('✅ Ambos jogadores prontos! Iniciando batalha...');
 
             // Determina quem é o jogador local e quem é o oponente
@@ -2105,6 +2106,8 @@ export default function TCGPage() {
                   setRoomCode('');
                   setCurrentRoom(null);
                   setSelectedCards([]);
+                  setDealerCards([]); // Clear dealer cards
+                  setPvpBattleStarted(false); // Reset battle flag
                 }, 5000);
               }, 2000);
             }, 3500);
@@ -2127,7 +2130,7 @@ export default function TCGPage() {
         unsubscribe();
       };
     }
-  }, [pvpMode, roomCode, address, soundEnabled]);
+  }, [pvpMode, roomCode, address, soundEnabled, pvpBattleStarted]);
 
   // Auto Match Listener - Detecta quando uma sala é criada para o jogador
   useEffect(() => {
