@@ -1333,7 +1333,7 @@ export default function TCGPage() {
     setBattlePhase('cards');
     setBattleOpponentName('Mecha George Floyd'); // Show Mecha George Floyd name
     setBattlePlayerName(userProfile?.username || 'You'); // Show player username
-    setBattleOpponentPfp(null); // Mecha George will show "MG" initials for now
+    setBattleOpponentPfp('/images/mecha-george-floyd.jpg'); // Mecha George pfp
     // Player pfp from Twitter if available
     setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
     setShowLossPopup(false);
