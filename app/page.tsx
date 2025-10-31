@@ -3342,16 +3342,18 @@ export default function TCGPage() {
                   devLog(`⚔️  ATTACKING: ${targetPlayer.username}`);
                   devLog(`🛡️  Using saved defense deck data (no NFT fetch needed)`);
 
-                  const defenderCards = (targetPlayer.defenseDeck || []).map((card, i) => {
-                    devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);
-                    return {
-                      tokenId: card.tokenId,
-                      power: card.power,           // ✅ USA PODER SALVO
-                      imageUrl: card.imageUrl,
-                      name: card.name,
-                      rarity: card.rarity,
-                    };
-                  });
+                  const defenderCards = (targetPlayer.defenseDeck || [])
+                    .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } => typeof card === 'object') // Skip legacy string format
+                    .map((card, i) => {
+                      devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);
+                      return {
+                        tokenId: card.tokenId,
+                        power: card.power,           // ✅ USA PODER SALVO
+                        imageUrl: card.imageUrl,
+                        name: card.name,
+                        rarity: card.rarity,
+                      };
+                    });
                   devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                   // Set up battle
