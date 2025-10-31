@@ -1331,11 +1331,11 @@ export default function TCGPage() {
     setIsBattling(true);
     setShowBattleScreen(true);
     setBattlePhase('cards');
-    setBattleOpponentName(t('dealer')); // Reset to Dealer for PvE
+    setBattleOpponentName('Mecha George Floyd'); // Show Mecha George Floyd name
     setBattlePlayerName(userProfile?.username || 'You'); // Show player username
-    setBattleOpponentPfp('/images/mecha-george-floyd.jpg'); // Mecha George pfp
+    setBattleOpponentPfp(null); // Mecha George will show "MG" initials for now
     // Player pfp from Twitter if available
-    setBattlePlayerPfp(userProfile?.twitterHandle ? `https://unavatar.io/twitter/${userProfile.twitterHandle.replace('@', '')}` : null);
+    setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
     setShowLossPopup(false);
     setShowWinPopup(false);
     setResult('');
@@ -1740,7 +1740,7 @@ export default function TCGPage() {
             setBattlePlayerName(playerName); // Show player username
             setBattleOpponentPfp(null); // PvP opponent - no pfp for now, will show initials
             // Player pfp from Twitter if available
-            setBattlePlayerPfp(userProfile?.twitterHandle ? `https://unavatar.io/twitter/${userProfile.twitterHandle.replace('@', '')}` : null);
+            setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
             setShowLossPopup(false);
             setShowWinPopup(false);
             setResult('');
@@ -2884,9 +2884,9 @@ export default function TCGPage() {
                   setBattleOpponentName(targetPlayer.username); // Show enemy username
                   setBattlePlayerName(userProfile?.username || 'You'); // Show player username
                   // Opponent pfp from Twitter if available
-                  setBattleOpponentPfp(targetPlayer.twitterHandle ? `https://unavatar.io/twitter/${targetPlayer.twitterHandle.replace('@', '')}` : null);
+                  setBattleOpponentPfp(targetPlayer.twitter ? `https://unavatar.io/twitter/${targetPlayer.twitter}` : null);
                   // Player pfp from Twitter if available
-                  setBattlePlayerPfp(userProfile?.twitterHandle ? `https://unavatar.io/twitter/${userProfile.twitterHandle.replace('@', '')}` : null);
+                  setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
                   setShowAttackCardSelection(false);
                   setIsBattling(true);
                   setShowBattleScreen(true);
