@@ -1377,47 +1377,42 @@ export default function TCGPage() {
     let pickedDealer: any[] = [];
 
     // Different strategies based on difficulty (5 levels)
-    // Power values with new multipliers: 15, 17, 19, 60, 66, 75, 150, 165, 225
+    // Power-based ranges (actual unique values: 15, 18, 21, 38, 45, 53, 60, 72, 84, 150, 180, 225)
     switch (aiDifficulty) {
       case 'gey':
-        // GEY (Level 1): Commons only (NO foils), total ~80 PWR
-        const commons = sorted.filter(c => {
-          const r = (c.rarity || '').toLowerCase();
-          const f = (c.foil || 'None').toLowerCase();
-          return r === 'common' && f === 'none';
-        });
-        pickedDealer = commons.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
-        console.log('🏳️‍🌈 GEY: Common only (no foils)');
-        console.log('  Available:', commons.length);
+        // GEY (Level 1): Weakest (15 PWR only), total = 75 PWR
+        const weakest = sorted.filter(c => (c.power || 0) === 15);
+        pickedDealer = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        console.log('🏳️‍🌈 GEY: 15 PWR only');
+        console.log('  Available:', weakest.length);
         console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        console.log('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'goofy':
-        // GOOFY (Level 2): Rares only (NO Prize foils!), total ~85 PWR
-        const rares = sorted.filter(c => {
-          const r = (c.rarity || '').toLowerCase();
-          const f = (c.foil || 'None').toLowerCase();
-          // Exclude Prize foil (225 PWR would break balance)
-          return r === 'rare' && f !== 'prize';
+        // GOOFY (Level 2): Weak (18-21 PWR), total ~90-105 PWR
+        const weak = sorted.filter(c => {
+          const p = c.power || 0;
+          return p === 18 || p === 21;
         });
-        pickedDealer = rares.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
-        console.log('🤪 GOOFY: Rare only (no Prize)');
-        console.log('  Available:', rares.length);
+        pickedDealer = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        console.log('🤪 GOOFY: 18-21 PWR');
+        console.log('  Available:', weak.length);
         console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        console.log('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'gooner':
-        // GOONER (Level 3): Epics only (can include Standard, NO Prize), total ~315 PWR
-        const epics = sorted.filter(c => {
-          const r = (c.rarity || '').toLowerCase();
-          const f = (c.foil || 'None').toLowerCase();
-          // Allow Standard foils, but not Prize (too strong)
-          return r === 'epic' && f !== 'prize';
+        // GOONER (Level 3): Medium (60-72 PWR), total ~300-360 PWR
+        const medium = sorted.filter(c => {
+          const p = c.power || 0;
+          return p === 60 || p === 72;
         });
-        pickedDealer = epics.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
-        console.log('💀 GOONER: Epic only (Standard ok, no Prize)');
-        console.log('  Available:', epics.length);
+        pickedDealer = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        console.log('💀 GOONER: 60-72 PWR');
+        console.log('  Available:', medium.length);
         console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        console.log('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'gangster':
@@ -2705,11 +2700,11 @@ export default function TCGPage() {
                 {(['gey', 'goofy', 'gooner', 'gangster', 'gigachad'] as const).map((diff, index) => {
                   const isUnlocked = unlockedDifficulties.has(diff);
                   const diffInfo = {
-                    gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '~80 (Commons)', color: 'bg-gray-500' },
-                    goofy: { emoji: '🤪', name: 'GOOFY', power: '~85 (Rares)', color: 'bg-green-500' },
-                    gooner: { emoji: '💀', name: 'GOONER', power: '~315 (Epics)', color: 'bg-blue-500' },
-                    gangster: { emoji: '🔫', name: 'GANGSTER', power: '750 (150 PWR)', color: 'bg-purple-500' },
-                    gigachad: { emoji: '💪', name: 'GIGACHAD', power: '~855 (Top 5)', color: 'bg-orange-500' }
+                    gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '75 (15 PWR)', color: 'bg-gray-500' },
+                    goofy: { emoji: '🤪', name: 'GOOFY', power: '~105 (18-21)', color: 'bg-green-500' },
+                    gooner: { emoji: '💀', name: 'GOONER', power: '~360 (60-72)', color: 'bg-blue-500' },
+                    gangster: { emoji: '🔫', name: 'GANGSTER', power: '750 (150)', color: 'bg-purple-500' },
+                    gigachad: { emoji: '💪', name: 'GIGACHAD', power: '855 (Top 5)', color: 'bg-orange-500' }
                   };
 
                   return (
@@ -3098,11 +3093,11 @@ export default function TCGPage() {
                   {(['gey', 'goofy', 'gooner', 'gangster', 'gigachad'] as const).map((diff, index) => {
                     const isUnlocked = unlockedDifficulties.has(diff);
                     const diffInfo = {
-                      gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '~80 (Commons)', color: 'bg-gray-500' },
-                      goofy: { emoji: '🤪', name: 'GOOFY', power: '~85 (Rares)', color: 'bg-green-500' },
-                      gooner: { emoji: '💀', name: 'GOONER', power: '~315 (Epics)', color: 'bg-blue-500' },
-                      gangster: { emoji: '🔫', name: 'GANGSTER', power: '750 (150 PWR)', color: 'bg-purple-500' },
-                      gigachad: { emoji: '💪', name: 'GIGACHAD', power: '~855 (Top 5)', color: 'bg-orange-500' }
+                      gey: { emoji: '🏳️‍🌈', name: 'GEY', power: '75 (15 PWR)', color: 'bg-gray-500' },
+                      goofy: { emoji: '🤪', name: 'GOOFY', power: '~105 (18-21)', color: 'bg-green-500' },
+                      gooner: { emoji: '💀', name: 'GOONER', power: '~360 (60-72)', color: 'bg-blue-500' },
+                      gangster: { emoji: '🔫', name: 'GANGSTER', power: '750 (150)', color: 'bg-purple-500' },
+                      gigachad: { emoji: '💪', name: 'GIGACHAD', power: '855 (Top 5)', color: 'bg-orange-500' }
                     };
 
                     return (
