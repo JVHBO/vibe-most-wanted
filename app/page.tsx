@@ -866,7 +866,15 @@ export default function TCGPage() {
     coinsEarned?: number;
   } | null>(null);
   const [showTiePopup, setShowTiePopup] = useState(false);
+  const [tieGifLoaded, setTieGifLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Preload tie.gif to prevent loading delay
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/tie.gif';
+    img.onload = () => setTieGifLoaded(true);
+  }, []);
 
   // Carregar estado da música do localStorage na montagem
   useEffect(() => {
@@ -2644,9 +2652,12 @@ export default function TCGPage() {
             <p className="text-2xl md:text-3xl font-bold text-gray-400 animate-pulse px-4 text-center">
               {t('tieResult')}
             </p>
-            <audio autoPlay loop>
-              <source src="/tie-music.mp3" type="audio/mpeg" />
-            </audio>
+            {/* Only play audio after GIF is preloaded */}
+            {tieGifLoaded && (
+              <audio autoPlay loop>
+                <source src="/tie-music.mp3" type="audio/mpeg" />
+              </audio>
+            )}
             <button
               onClick={() => setShowTiePopup(false)}
               className="absolute top-4 right-4 bg-gray-400 hover:bg-gray-500 text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
