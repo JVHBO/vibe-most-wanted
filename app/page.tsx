@@ -868,6 +868,7 @@ export default function TCGPage() {
   const [showTiePopup, setShowTiePopup] = useState(false);
   const [tieGifLoaded, setTieGifLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showDailyClaimPopup, setShowDailyClaimPopup] = useState(false);
 
   // Preload tie.gif to prevent loading delay
   useEffect(() => {
@@ -1042,14 +1043,18 @@ export default function TCGPage() {
     }
   }, []);
 
-  // Sync login bonus claimed status
+  // Sync login bonus claimed status and show popup on login
   useEffect(() => {
     if (playerEconomy?.dailyLimits?.loginBonus) {
       setLoginBonusClaimed(true);
     } else {
       setLoginBonusClaimed(false);
+      // Show daily claim popup on login if bonus not claimed
+      if (address && userProfile && playerEconomy) {
+        setShowDailyClaimPopup(true);
+      }
     }
-  }, [playerEconomy]);
+  }, [playerEconomy, address, userProfile]);
 
   // Check for Twitter OAuth success
   useEffect(() => {
@@ -2685,6 +2690,38 @@ export default function TCGPage() {
             >
               OK
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Daily Claim Popup - Shows on login (hidden in Farcaster) */}
+      {showDailyClaimPopup && !isInFarcaster && !loginBonusClaimed && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setShowDailyClaimPopup(false)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-4 border-green-500 max-w-md w-full p-6 shadow-2xl shadow-green-500/50" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-2xl font-display font-bold text-green-400">Daily Bonus Available</h2>
+            </div>
+            <p className="text-vintage-ice mb-6 font-modern text-lg">
+              Claim your daily bonus: <span className="text-green-400 font-bold">+25 $TESTVBMS</span>
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  handleClaimLoginBonus();
+                  setShowDailyClaimPopup(false);
+                }}
+                disabled={isClaimingBonus}
+                className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isClaimingBonus ? 'Claiming...' : 'Claim Now'}
+              </button>
+              <button
+                onClick={() => setShowDailyClaimPopup(false)}
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all hover:scale-105"
+              >
+                Later
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -4728,22 +4765,6 @@ export default function TCGPage() {
                         </span>
                       </div>
                     </div>
-                  )}
-
-                  {/* Daily Login Bonus Button */}
-                  {address && userProfile && playerEconomy && (
-                    <button
-                      onClick={handleClaimLoginBonus}
-                      disabled={loginBonusClaimed || isClaimingBonus}
-                      className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                        loginBonusClaimed
-                          ? 'bg-gray-600/30 text-gray-400 border border-gray-500/30 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white border-2 border-green-400 hover:from-green-500 hover:to-emerald-500 shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:shadow-[0_0_25px_rgba(34,197,94,0.6)]'
-                      }`}
-                      title={loginBonusClaimed ? t('dailyBonusClaimed') : t('claimDailyBonus')}
-                    >
-                      {isClaimingBonus ? '...' : loginBonusClaimed ? `✓ ${t('claimed')}` : '+ 25'}
-                    </button>
                   )}
 
                   <button
