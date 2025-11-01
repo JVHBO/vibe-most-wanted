@@ -3799,15 +3799,19 @@ export default function TCGPage() {
 
                       // Registrar partida
                       if (address && userProfile) {
-                        await ConvexProfileService.recordMatch({
-                          playerAddress: address,
-                          opponentUsername: targetPlayer.username,
-                          opponentAddress: targetPlayer.address,
-                          result: matchResult,
-                          playerPower: playerTotal,
-                          opponentPower: dealerTotal,
-                          type: 'attack',
-                        });
+                        await ConvexProfileService.recordMatch(
+                          address,                  // playerAddress
+                          'attack',                 // type
+                          matchResult,              // result
+                          playerTotal,              // playerPower
+                          dealerTotal,              // opponentPower
+                          attackSelectedCards,      // playerCards
+                          defenderCards,            // opponentCards
+                          targetPlayer.address,     // opponentAddress
+                          targetPlayer.username,    // opponentUsername
+                          coinsEarned,              // coinsEarned
+                          50                        // entryFeePaid (attack mode costs 50)
+                        );
 
                         const updatedProfile = await ConvexProfileService.getProfile(address);
                         if (updatedProfile) {
