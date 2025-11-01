@@ -1755,7 +1755,7 @@ export default function TCGPage() {
                   // Award economy coins for PvE Elimination
                   const reward = await awardPvECoins({
                     address,
-                    difficulty: aiDifficulty,
+                    difficulty: eliminationDifficulty,
                     won: finalResult === 'win'
                   });
                   coinsEarned = reward?.awarded || 0;
