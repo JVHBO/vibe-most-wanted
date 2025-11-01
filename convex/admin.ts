@@ -108,3 +108,63 @@ export const deleteQuestProgress = mutation({
     return { deleted: questProgress.length };
   },
 });
+
+/**
+ * MIGRATION: Normalize all usernames to lowercase
+ * Fixes profiles being inaccessible due to uppercase letters
+ */
+export const normalizeUsernames = mutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("🔄 Starting username normalization migration...");
+
+    const profiles = await ctx.db.query("profiles").collect();
+
+    let updated = 0;
+    let skipped = 0;
+    const changes: string[] = [];
+
+    for (const profile of profiles) {
+      const originalUsername = profile.username;
+      const normalizedUsername = originalUsername.toLowerCase();
+
+      if (originalUsername !== normalizedUsername) {
+        const conflict = await ctx.db
+          .query("profiles")
+          .withIndex("by_username", (q) =>
+            q.eq("username", normalizedUsername)
+          )
+          .first();
+
+        if (conflict && conflict._id !== profile._id) {
+          console.warn(
+            `⚠️ CONFLICT: Cannot normalize "${originalUsername}" - already exists`
+          );
+          skipped++;
+          continue;
+        }
+
+        await ctx.db.patch(profile._id, {
+          username: normalizedUsername,
+        });
+
+        changes.push(
+          `✅ ${originalUsername} → ${normalizedUsername}`
+        );
+        updated++;
+      } else {
+        skipped++;
+      }
+    }
+
+    console.log(`📊 Total: ${profiles.length}, Updated: ${updated}, Skipped: ${skipped}`);
+
+    return {
+      success: true,
+      totalProfiles: profiles.length,
+      updated,
+      skipped,
+      changes,
+    };
+  },
+});
