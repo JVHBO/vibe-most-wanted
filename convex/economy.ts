@@ -284,7 +284,7 @@ export const awardPvECoins = mutation({
       // Reload profile
       const updatedProfile = await ctx.db.get(profile._id);
       if (!updatedProfile) throw new Error("Failed to initialize economy");
-      profile = updatedProfile as any;
+      profile = updatedProfile;
     }
 
     // Check and reset daily limits
@@ -323,7 +323,7 @@ export const awardPvECoins = mutation({
     }
 
     // Award coins
-    await ctx.db.patch(profile._id, {
+    await ctx.db.patch(profile!._id, {
       coins: (profile.coins || 0) + totalReward,
       lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
       dailyLimits: {
@@ -381,7 +381,7 @@ export const awardPvPCoins = mutation({
       // Reload profile
       const updatedProfile = await ctx.db.get(profile._id);
       if (!updatedProfile) throw new Error("Failed to initialize economy");
-      profile = updatedProfile as any;
+      profile = updatedProfile;
     }
 
     // Check and reset daily limits
@@ -435,7 +435,7 @@ export const awardPvPCoins = mutation({
     }
 
     // Award coins
-    await ctx.db.patch(profile._id, {
+    await ctx.db.patch(profile!._id, {
       coins: (profile.coins || 0) + totalReward,
       lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
       winStreak: newStreak,
@@ -504,7 +504,7 @@ export const claimLoginBonus = mutation({
     address: v.string(),
   },
   handler: async (ctx, { address }) => {
-    const profile = await ctx.db
+    let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .first();
@@ -535,7 +535,7 @@ export const claimLoginBonus = mutation({
       // Reload profile
       const updatedProfile = await ctx.db.get(profile._id);
       if (!updatedProfile) throw new Error("Failed to initialize economy");
-      profile = updatedProfile as any;
+      profile = updatedProfile;
     }
 
     // Check and reset daily limits
@@ -549,7 +549,7 @@ export const claimLoginBonus = mutation({
     // Award bonus
     const bonus = BONUSES.login;
 
-    await ctx.db.patch(profile._id, {
+    await ctx.db.patch(profile!._id, {
       coins: (profile.coins || 0) + bonus,
       lifetimeEarned: (profile.lifetimeEarned || 0) + bonus,
       dailyLimits: {
