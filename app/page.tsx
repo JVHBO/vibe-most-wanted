@@ -2495,7 +2495,7 @@ export default function TCGPage() {
             />
             <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
               {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
-                ? `Você ganhou ${lastBattleResult.coinsEarned} $TESTVBMS!`
+                ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
                 : t('victoryPrize')}
             </p>
             <div className="flex gap-3">
@@ -2567,9 +2567,9 @@ export default function TCGPage() {
             />
             <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
               {lastBattleResult?.type === 'pve' || lastBattleResult?.type === 'attack'
-                ? 'Você não ganhou nada'
+                ? t('noCoinsEarned')
                 : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
-                  ? `Você ganhou ${lastBattleResult.coinsEarned} $TESTVBMS`
+                  ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
                   : t('defeatPrize')}
             </p>
             <div className="flex gap-3">
@@ -3555,7 +3555,7 @@ export default function TCGPage() {
                   // Check if player has enough coins for attack entry fee
                   const currentBalance = playerEconomy?.coins || 0;
                   if (currentBalance < 50) {
-                    alert(`Fundos insuficientes!\n\nPrecisa de 50 $TESTVBMS para atacar.\nSaldo atual: ${currentBalance} $TESTVBMS`);
+                    alert(t('insufficientFundsAttack').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
                   }
@@ -3896,7 +3896,7 @@ export default function TCGPage() {
                   // Check if player has enough coins
                   const currentBalance = playerEconomy?.coins || 0;
                   if (currentBalance < 80) {
-                    alert(`Fundos insuficientes!\n\nPrecisa de 80 $TESTVBMS para jogar PvP.\nSaldo atual: ${currentBalance} $TESTVBMS`);
+                    alert(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
                   }
@@ -3938,7 +3938,7 @@ export default function TCGPage() {
                   // Check if player has enough coins
                   const currentBalance = playerEconomy?.coins || 0;
                   if (currentBalance < 80) {
-                    alert(`Fundos insuficientes!\n\nPrecisa de 80 $TESTVBMS para jogar PvP.\nSaldo atual: ${currentBalance} $TESTVBMS`);
+                    alert(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
                   }

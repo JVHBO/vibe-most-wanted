@@ -202,7 +202,11 @@ export const translations = {
     claiming: 'Coletando...',
     questProgress: 'Progresso',
     claimReward: 'Coletar Recompensa',
-    questClaimed: 'COLETADO'
+    questClaimed: 'COLETADO',
+    earnedCoins: 'Você ganhou {amount} $TESTVBMS!',
+    noCoinsEarned: 'Você não ganhou nada',
+    insufficientFundsAttack: 'Fundos insuficientes!\n\nPrecisa de 50 $TESTVBMS para atacar.\nSaldo atual: {balance} $TESTVBMS',
+    insufficientFundsPvP: 'Fundos insuficientes!\n\nPrecisa de 80 $TESTVBMS para jogar PvP.\nSaldo atual: {balance} $TESTVBMS'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -400,7 +404,11 @@ export const translations = {
     claiming: 'Claiming...',
     questProgress: 'Progress',
     claimReward: 'Claim Reward',
-    questClaimed: 'CLAIMED'
+    questClaimed: 'CLAIMED',
+    earnedCoins: 'You earned {amount} $TESTVBMS!',
+    noCoinsEarned: 'You earned nothing',
+    insufficientFundsAttack: 'Insufficient funds!\n\nNeed 50 $TESTVBMS to attack.\nCurrent balance: {balance} $TESTVBMS',
+    insufficientFundsPvP: 'Insufficient funds!\n\nNeed 80 $TESTVBMS to play PvP.\nCurrent balance: {balance} $TESTVBMS'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -601,7 +609,11 @@ export const translations = {
     claiming: 'Cobrando...',
     questProgress: 'Progreso',
     claimReward: 'Cobrar Recompensa',
-    questClaimed: 'COBRADO'
+    questClaimed: 'COBRADO',
+    earnedCoins: '¡Ganaste {amount} $TESTVBMS!',
+    noCoinsEarned: 'No ganaste nada',
+    insufficientFundsAttack: '¡Fondos insuficientes!\n\nNecesitas 50 $TESTVBMS para atacar.\nSaldo actual: {balance} $TESTVBMS',
+    insufficientFundsPvP: '¡Fondos insuficientes!\n\nNecesitas 80 $TESTVBMS para jugar PvP.\nSaldo actual: {balance} $TESTVBMS'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -804,6 +816,10 @@ export const translations = {
     claiming: 'प्राप्त कर रहे हैं...',
     questProgress: 'प्रगति',
     claimReward: 'पुरस्कार प्राप्त करें',
-    questClaimed: 'प्राप्त किया गया'
+    questClaimed: 'प्राप्त किया गया',
+    earnedCoins: 'आपने {amount} $TESTVBMS कमाए!',
+    noCoinsEarned: 'आपने कुछ नहीं कमाया',
+    insufficientFundsAttack: 'अपर्याप्त धनराशि!\n\nहमले के लिए 50 $TESTVBMS की आवश्यकता है।\nवर्तमान शेष: {balance} $TESTVBMS',
+    insufficientFundsPvP: 'अपर्याप्त धनराशि!\n\nPvP खेलने के लिए 80 $TESTVBMS की आवश्यकता है।\nवर्तमान शेष: {balance} $TESTVBMS'
   }
 } as const;
