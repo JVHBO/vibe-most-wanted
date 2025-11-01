@@ -789,6 +789,7 @@ export default function TCGPage() {
 
   // AI Difficulty (5 levels with progressive unlock)
   const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
+  const [eliminationDifficulty, setEliminationDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
 
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
@@ -1422,8 +1423,9 @@ export default function TCGPage() {
     return orderedCards;
   }, [jcNfts]);
 
-  const playHand = useCallback((cardsToPlay?: any[]) => {
-    const cards = cardsToPlay || selectedCards;
+  const playHand = useCallback((cardsToPlay?: any[], battleDifficulty?: typeof aiDifficulty) => {
+        const cards = cardsToPlay || selectedCards;
+    const difficulty = battleDifficulty || aiDifficulty; // Use parameter if provided, otherwise state
     if (cards.length !== HAND_SIZE_CONST || isBattling) return;
     setIsBattling(true);
     setShowBattleScreen(true);
@@ -1448,7 +1450,7 @@ export default function TCGPage() {
     devLog('🎮 BATTLE DEBUG:');
     devLog('  JC available cards:', available.length);
     devLog('  JC deck loading status:', jcNftsLoading);
-    devLog('  AI difficulty:', aiDifficulty);
+    devLog('  AI difficulty:', difficulty);
     if (available.length > 0) {
       const sorted = [...available].sort((a, b) => (b.power || 0) - (a.power || 0));
       devLog('  Top 5 strongest:', sorted.slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
@@ -1478,13 +1480,13 @@ export default function TCGPage() {
     console.log('🎲 AI DECK SELECTION DEBUG:');
     console.log('  Available cards:', available.length);
     console.log('  Sorted top 5:', sorted.slice(0, 5).map(c => `#${c.tokenId} (${c.power} PWR)`));
-    console.log('  Difficulty:', aiDifficulty);
+    console.log('  Difficulty:', difficulty);
 
     let pickedDealer: any[] = [];
 
     // Different strategies based on difficulty (5 levels)
     // Power-based ranges (actual unique values: 15, 18, 21, 38, 45, 53, 60, 72, 84, 150, 180, 225)
-    switch (aiDifficulty) {
+    switch (difficulty) {
       case 'gey':
         // GEY (Level 1): Weakest (15 PWR only), total = 75 PWR
         const weakest = sorted.filter(c => (c.power || 0) === 15);
@@ -1639,7 +1641,7 @@ export default function TCGPage() {
             if (finalResult === 'win') {
               setResult(t('playerWins'));
               // Unlock next difficulty
-              const unlockedDiff = unlockNextDifficulty(aiDifficulty);
+              const unlockedDiff = unlockNextDifficulty(difficulty);
               if (unlockedDiff) {
                 devLog(`🔓 Unlocked new difficulty: ${unlockedDiff.toUpperCase()}`);
               }
@@ -1756,7 +1758,7 @@ export default function TCGPage() {
         setResult(t('playerWins'));
 
         // Unlock next difficulty on win
-        const unlockedDiff = unlockNextDifficulty(aiDifficulty);
+        const unlockedDiff = unlockNextDifficulty(difficulty);
         if (unlockedDiff) {
           devLog(`🔓 Unlocked new difficulty: ${unlockedDiff.toUpperCase()}`);
         }
@@ -2848,7 +2850,7 @@ export default function TCGPage() {
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                   // Generate AI card order based on difficulty
-                  const aiCards = generateAIHand(aiDifficulty);
+                  const aiCards = generateAIHand(eliminationDifficulty);
                   setOrderedOpponentCards(aiCards);
 
                   // Start elimination battle
@@ -5061,12 +5063,13 @@ export default function TCGPage() {
           setSelectedCards(pveSelectedCards);
           setBattleMode('normal');
 
-          // Pass cards directly to playHand to avoid state timing issues
-          playHand(pveSelectedCards);
+          // Pass difficulty directly to playHand to avoid state timing issues
+          playHand(pveSelectedCards, difficulty);
         }}
         onEliminationBattle={(difficulty) => {
           if (soundEnabled) AudioManager.buttonClick();
           setAiDifficulty(difficulty);
+          setEliminationDifficulty(difficulty); // Store for elimination mode
           setIsDifficultyModalOpen(false);
           setTempSelectedDifficulty(null);
 
