@@ -470,6 +470,203 @@ All cards correctly detected as revealed! 🎉
 
 ---
 
+## 💰 Economy System - Ranking-Based Rewards Implementation
+
+**Date**: 2025-11-01
+**Status**: ✅ FULLY IMPLEMENTED
+**Documentation**: `ECONOMY-IMPROVEMENTS.md`
+
+### Features Implemented
+
+1. **Ranking-Based PvP Rewards** - Defeating higher-ranked players gives more coins:
+   - 🥇 Top 3: 2.5x rewards (100 → 250 coins)
+   - 🥈 Top 10: 2.0x rewards (100 → 200 coins)
+   - 🥉 Top 20: 1.5x rewards (100 → 150 coins)
+   - 🏅 Top 50: 1.2x rewards (100 → 120 coins)
+
+2. **Penalty Reduction** - Losing to high-ranked players reduces coin loss:
+   - 🥇 Lose to Top 3: 70% less penalty (-20 → -6 coins)
+   - 🥈 Lose to Top 10: 50% less penalty (-20 → -10 coins)
+   - 🥉 Lose to Top 20: 30% less penalty (-20 → -14 coins)
+
+3. **Preview Modal** - Custom modal showing potential gains/losses before battle with:
+   - Win scenario with all bonuses (ranking, streak, first PvP)
+   - Loss scenario with penalty reduction
+   - Current balance and player rankings
+
+4. **Economy Analytics** - `analyze-economy.js` script showing:
+   - Coin distribution across all players
+   - Gini coefficient (inequality measure)
+   - Top 10 richest players
+   - Top 10 lifetime earners
+   - Daily activity metrics
+
+### Backend Changes (`convex/economy.ts`)
+
+- Added `getOpponentRanking()` function to get player's leaderboard position
+- Added `calculateRankingMultiplier()` to calculate win/loss multipliers
+- Modified `awardPvPCoins()` to accept optional `opponentAddress` parameter
+- Created `previewPvPRewards()` query to show gains/losses before battle
+
+### Frontend Changes (`app/page.tsx`)
+
+- Added preview modal states (showPvPPreview, pvpPreviewData, isLoadingPreview)
+- Created custom glassmorphism modal component
+- Integrated preview fetching in ATTACK button using `client.query()`
+- Pass `opponentAddress` to `awardPvPCoins()` in all PvP modes:
+  - Attack mode (line ~3774)
+  - Auto-match/rooms (line ~2241)
+
+### Economy Health (2025-11-01)
+
+```
+Total Players: 17
+Total Coins: 5,115 $TESTVBMS
+Average: 300.88 per player
+Gini Coefficient: 0.079 (excellent equality!)
+88.2% of players have ≥300 coins
+```
+
+**Result**: Very healthy economy with excellent coin distribution!
+
+---
+
+## Bug #12 - PvE Elimination Mode Not Scaling Rewards by Difficulty
+
+**Date**: 2025-11-01
+**Reported By**: User ("testei o pve n ta dando mais moedas quando enfrenta as dificuldades mais dificeis")
+**Status**: ✅ FIXED
+**Severity**: High (game balance issue)
+
+### Problem
+
+In PvE Elimination mode, all difficulties were giving the same coin rewards. User reported that harder difficulties (gangster, gigachad) weren't giving more coins than easy difficulties (gey, goofy).
+
+### Root Cause
+
+The Elimination mode battle completion handler was passing the **wrong difficulty variable** to `awardPvECoins()`:
+
+```typescript
+// ❌ WRONG (line 1758) - Using aiDifficulty instead of eliminationDifficulty
+const reward = await awardPvECoins({
+  address,
+  difficulty: aiDifficulty,      // ❌ Wrong variable!
+  won: finalResult === 'win'
+});
+```
+
+**Why this failed:**
+- `aiDifficulty` is the state for regular PvE mode
+- `eliminationDifficulty` is the separate state for Elimination mode
+- Using `aiDifficulty` meant Elimination rewards always used the default PvE difficulty
+
+### Solution
+
+Changed to use the correct difficulty state for Elimination mode:
+
+```typescript
+// ✅ FIXED (line 1758) - Using eliminationDifficulty
+const reward = await awardPvECoins({
+  address,
+  difficulty: eliminationDifficulty,  // ✅ Correct!
+  won: finalResult === 'win'
+});
+```
+
+### Impact
+
+PvE rewards now correctly scale by difficulty:
+- **Gey**: 5 coins
+- **Goofy**: 15 coins (3x gey)
+- **Gooner**: 30 coins (6x gey)
+- **Gangster**: 60 coins (12x gey)
+- **Gigachad**: 120 coins (24x gey)
+
+### Files Modified
+
+- `app/page.tsx` line 1758 (Elimination mode awardPvECoins call)
+
+### Lessons Learned
+
+1. **State naming matters** - Similar state names (`aiDifficulty` vs `eliminationDifficulty`) can cause confusion
+2. **Test all game modes** - Bug only affected Elimination, not regular PvE
+3. **Variable naming should be explicit** - Could rename to `pveStandardDifficulty` vs `pveEliminationDifficulty`
+
+### Commit
+
+- `fix: Use correct difficulty variable in Elimination mode`
+
+---
+
+## Bug #13 - Wrong AudioManager Method Names Causing Build Errors
+
+**Date**: 2025-11-01
+**Reported By**: Vercel build failure
+**Status**: ✅ FIXED
+**Severity**: Critical (blocking deployment)
+
+### Problem
+
+TypeScript compilation error during Vercel build:
+
+```
+Type error: Property 'playWin' does not exist on type AudioManager
+./app/page.tsx:3759:56
+```
+
+### Root Cause
+
+Used incorrect method names when calling AudioManager:
+
+```typescript
+// ❌ WRONG - Methods don't exist
+if (soundEnabled) AudioManager.playWin();
+if (soundEnabled) AudioManager.playLoss();
+```
+
+**Actual AudioManager API:**
+```typescript
+// ✅ CORRECT method names
+AudioManager.win();    // Not playWin()
+AudioManager.lose();   // Not playLoss()
+AudioManager.tie();
+AudioManager.playHand();
+AudioManager.shuffle();
+```
+
+### Solution
+
+Corrected the method calls to match the actual AudioManager API:
+
+```typescript
+// ✅ FIXED (lines 3759-3767)
+if (playerTotal > dealerTotal) {
+  matchResult = 'win';
+  if (soundEnabled) AudioManager.win();  // ✅ Correct
+} else if (playerTotal < dealerTotal) {
+  matchResult = 'loss';
+  if (soundEnabled) AudioManager.lose(); // ✅ Correct
+}
+```
+
+### Files Modified
+
+- `app/page.tsx` lines 3759-3767 (PvP battle completion sound effects)
+
+### Lessons Learned
+
+1. **Check API documentation** - Always verify method names before using
+2. **TypeScript is your friend** - Build errors caught this immediately
+3. **Consistent naming** - AudioManager uses simple verbs (`win`, `lose`) not `play*` pattern
+
+### Commit
+
+- `fix: Correct AudioManager method names (win/lose not playWin/playLoss)`
+
+---
+
+---
+
 ## 📚 Índice Principal
 
 ### 🔧 PARTE I: Soluções & Patterns
