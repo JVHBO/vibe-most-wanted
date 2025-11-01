@@ -29,6 +29,24 @@ const PVE_REWARDS = {
 const PVP_WIN_REWARD = 100;
 const PVP_LOSS_PENALTY = -20; // Lose 20 coins on loss
 
+// PvP Ranking Bonuses
+const RANKING_BONUS = {
+  // Bonus multiplier based on opponent's leaderboard position
+  top3: 2.5,     // Defeating top 3 players gives 2.5x rewards
+  top10: 2.0,    // Defeating top 10 players gives 2.0x rewards
+  top20: 1.5,    // Defeating top 20 players gives 1.5x rewards
+  top50: 1.2,    // Defeating top 50 players gives 1.2x rewards
+  default: 1.0,  // Default multiplier
+};
+
+// Penalty reduction based on opponent's ranking
+const PENALTY_REDUCTION = {
+  top3: 0.3,     // Losing to top 3 = only 30% penalty
+  top10: 0.5,    // Losing to top 10 = only 50% penalty
+  top20: 0.7,    // Losing to top 20 = only 70% penalty
+  default: 1.0,  // Full penalty for others
+};
+
 // Entry Fees
 const ENTRY_FEES = {
   attack: 50,
@@ -203,6 +221,49 @@ export const resetDailyLimits = mutation({
 });
 
 /**
+ * Get opponent's leaderboard ranking
+ * Returns ranking position (1 = first place) or 999 if not ranked
+ */
+async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<number> {
+  const leaderboard = await ctx.db
+    .query("profiles")
+    .filter((q: any) => q.gte(q.field("stats.totalPower"), 0))
+    .collect();
+
+  // Sort by total power (descending)
+  const sorted = leaderboard.sort((a: any, b: any) =>
+    (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0)
+  );
+
+  // Find opponent's position
+  const position = sorted.findIndex((p: any) =>
+    p.address.toLowerCase() === opponentAddress.toLowerCase()
+  );
+
+  return position === -1 ? 999 : position + 1; // 1-indexed
+}
+
+/**
+ * Calculate reward multiplier based on opponent's ranking
+ */
+function calculateRankingMultiplier(opponentRank: number, isWin: boolean): number {
+  if (isWin) {
+    // Win bonuses - higher ranked opponent = more coins
+    if (opponentRank <= 3) return RANKING_BONUS.top3;
+    if (opponentRank <= 10) return RANKING_BONUS.top10;
+    if (opponentRank <= 20) return RANKING_BONUS.top20;
+    if (opponentRank <= 50) return RANKING_BONUS.top50;
+    return RANKING_BONUS.default;
+  } else {
+    // Loss penalty reduction - higher ranked opponent = less penalty
+    if (opponentRank <= 3) return PENALTY_REDUCTION.top3;
+    if (opponentRank <= 10) return PENALTY_REDUCTION.top10;
+    if (opponentRank <= 20) return PENALTY_REDUCTION.top20;
+    return PENALTY_REDUCTION.default;
+  }
+}
+
+/**
  * Check if player can receive daily limits before resetting
  */
 async function checkAndResetDailyLimits(ctx: any, profile: any) {
@@ -236,6 +297,98 @@ async function checkAndResetDailyLimits(ctx: any, profile: any) {
 
   return profile.dailyLimits;
 }
+
+/**
+ * Preview PvP rewards/penalties before battle
+ * Shows how much player will gain (win) or lose (loss) based on opponent's ranking
+ */
+export const previewPvPRewards = query({
+  args: {
+    playerAddress: v.string(),
+    opponentAddress: v.string(),
+  },
+  handler: async (ctx, { playerAddress, opponentAddress }) => {
+    const player = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", playerAddress.toLowerCase()))
+      .first();
+
+    if (!player) {
+      throw new Error("Player profile not found");
+    }
+
+    // Get opponent's ranking
+    const opponentRank = await getOpponentRanking(ctx, opponentAddress);
+
+    // Calculate multipliers
+    const winMultiplier = calculateRankingMultiplier(opponentRank, true);
+    const lossMultiplier = calculateRankingMultiplier(opponentRank, false);
+
+    // Calculate potential rewards/penalties
+    const baseWinReward = PVP_WIN_REWARD;
+    const winReward = Math.round(baseWinReward * winMultiplier);
+    const winBonus = winReward - baseWinReward;
+
+    const baseLossPenalty = PVP_LOSS_PENALTY;
+    const lossPenalty = Math.round(baseLossPenalty * lossMultiplier);
+    const penaltyReduction = Math.abs(lossPenalty - baseLossPenalty);
+
+    // Get current streak
+    const currentStreak = player.winStreak || 0;
+    const nextStreak = currentStreak + 1;
+
+    // Calculate potential streak bonuses (if win)
+    let streakBonus = 0;
+    let streakMessage = "";
+    if (nextStreak === 3) {
+      streakBonus = BONUSES.streak3;
+      streakMessage = "3-Win Streak Bonus";
+    } else if (nextStreak === 5) {
+      streakBonus = BONUSES.streak5;
+      streakMessage = "5-Win Streak Bonus";
+    } else if (nextStreak === 10) {
+      streakBonus = BONUSES.streak10;
+      streakMessage = "10-Win Streak Bonus";
+    }
+
+    // Check if first PvP bonus available
+    const today = new Date().toISOString().split('T')[0];
+    const dailyLimits = player.dailyLimits || {};
+    const isToday = dailyLimits.lastResetDate === today;
+    const firstPvpBonus = isToday && !dailyLimits.firstPvpBonus ? BONUSES.firstPvp : 0;
+
+    // Calculate total potential rewards
+    const totalWinReward = winReward + streakBonus + firstPvpBonus;
+
+    return {
+      opponentRank,
+      currentStreak,
+
+      // Win scenario
+      win: {
+        baseReward: baseWinReward,
+        rankingBonus: winBonus,
+        rankingMultiplier: winMultiplier,
+        firstPvpBonus,
+        streakBonus,
+        streakMessage,
+        totalReward: totalWinReward,
+      },
+
+      // Loss scenario
+      loss: {
+        basePenalty: baseLossPenalty,
+        penaltyReduction,
+        rankingMultiplier: lossMultiplier,
+        totalPenalty: lossPenalty,
+      },
+
+      // Current player state
+      playerCoins: player.coins || 0,
+      playerRank: await getOpponentRanking(ctx, playerAddress),
+    };
+  },
+});
 
 /**
  * Award coins after PvE battle
@@ -342,14 +495,15 @@ export const awardPvECoins = mutation({
 });
 
 /**
- * Award coins after PvP battle
+ * Award coins after PvP battle with ranking-based bonuses
  */
 export const awardPvPCoins = mutation({
   args: {
     address: v.string(),
     won: v.boolean(),
+    opponentAddress: v.optional(v.string()), // ✅ NEW: For ranking bonus calculation
   },
-  handler: async (ctx, { address, won }) => {
+  handler: async (ctx, { address, won, opponentAddress }) => {
     let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
@@ -392,6 +546,14 @@ export const awardPvPCoins = mutation({
       return { awarded: 0, reason: "Daily PvP match limit reached" };
     }
 
+    // ✅ Calculate ranking bonus if opponent provided
+    let opponentRank = 999;
+    let rankingMultiplier = 1.0;
+    if (opponentAddress) {
+      opponentRank = await getOpponentRanking(ctx, opponentAddress);
+      rankingMultiplier = calculateRankingMultiplier(opponentRank, won);
+    }
+
     // Update win streak
     let newStreak = profile.winStreak || 0;
     const bonuses: string[] = [];
@@ -400,7 +562,13 @@ export const awardPvPCoins = mutation({
     if (won) {
       // WINNER: Award coins
       newStreak++;
-      totalReward = PVP_WIN_REWARD;
+      totalReward = Math.round(PVP_WIN_REWARD * rankingMultiplier); // ✅ Apply ranking multiplier
+
+      // ✅ Add ranking bonus message
+      if (rankingMultiplier > 1.0 && opponentAddress) {
+        const bonusAmount = totalReward - PVP_WIN_REWARD;
+        bonuses.push(`Rank #${opponentRank} Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
+      }
 
       // First PvP bonus
       if (!dailyLimits.firstPvpBonus) {
@@ -450,15 +618,24 @@ export const awardPvPCoins = mutation({
         awarded: totalReward,
         bonuses,
         winStreak: newStreak,
+        opponentRank, // ✅ Include opponent rank in response
+        rankingMultiplier, // ✅ Include multiplier in response
         dailyEarned: dailyEarnedAfter,
         remaining: DAILY_CAP - dailyEarnedAfter,
       };
     } else {
-      // LOSER: Deduct coins
+      // LOSER: Deduct coins (with ranking-based penalty reduction)
       newStreak = 0; // Reset on loss
-      const penalty = PVP_LOSS_PENALTY; // -20
+      const basePenalty = PVP_LOSS_PENALTY; // -20
+      const penalty = Math.round(basePenalty * rankingMultiplier); // ✅ Apply penalty reduction
       const currentCoins = profile.coins || 0;
       const newCoins = Math.max(0, currentCoins + penalty); // Can't go below 0
+
+      // ✅ Add penalty reduction message
+      if (rankingMultiplier < 1.0 && opponentAddress) {
+        const reduction = Math.abs(penalty - basePenalty);
+        bonuses.push(`Rank #${opponentRank} Penalty Reduced -${reduction} (${(rankingMultiplier * 100).toFixed(0)}% penalty)`);
+      }
 
       await ctx.db.patch(profile!._id, {
         coins: newCoins,
@@ -472,9 +649,11 @@ export const awardPvPCoins = mutation({
       });
 
       return {
-        awarded: penalty, // Negative value
-        bonuses: [],
+        awarded: penalty, // Negative value (reduced if high-rank opponent)
+        bonuses, // ✅ Now includes penalty reduction message
         winStreak: newStreak,
+        opponentRank, // ✅ Include opponent rank in response
+        rankingMultiplier, // ✅ Include multiplier in response
         dailyEarned: calculateDailyEarned(profile),
         remaining: DAILY_CAP - calculateDailyEarned(profile),
       };
