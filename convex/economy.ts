@@ -29,22 +29,25 @@ const PVE_REWARDS = {
 const PVP_WIN_REWARD = 100;
 const PVP_LOSS_PENALTY = -20; // Lose 20 coins on loss
 
-// PvP Ranking Bonuses
-const RANKING_BONUS = {
-  // Bonus multiplier based on opponent's leaderboard position
-  top3: 2.5,     // Defeating top 3 players gives 2.5x rewards
-  top10: 2.0,    // Defeating top 10 players gives 2.0x rewards
-  top20: 1.5,    // Defeating top 20 players gives 1.5x rewards
-  top50: 1.2,    // Defeating top 50 players gives 1.2x rewards
-  default: 1.0,  // Default multiplier
+// PvP Ranking Bonuses - Based on RANK DIFFERENCE (not absolute position)
+// This prevents #2 vs #3 giving huge bonuses, but rewards attacking much higher ranked players
+const RANKING_BONUS_BY_DIFF = {
+  // Win bonuses based on how many ranks higher the opponent is
+  diff50Plus: 2.0,   // Opponent 50+ ranks higher = 2.0x (100 → 200 coins)
+  diff20to49: 1.5,   // Opponent 20-49 ranks higher = 1.5x (100 → 150 coins)
+  diff10to19: 1.3,   // Opponent 10-19 ranks higher = 1.3x (100 → 130 coins)
+  diff5to9: 1.15,    // Opponent 5-9 ranks higher = 1.15x (100 → 115 coins)
+  default: 1.0,      // Less than 5 ranks difference = no bonus
 };
 
-// Penalty reduction based on opponent's ranking
-const PENALTY_REDUCTION = {
-  top3: 0.3,     // Losing to top 3 = only 30% penalty
-  top10: 0.5,    // Losing to top 10 = only 50% penalty
-  top20: 0.7,    // Losing to top 20 = only 70% penalty
-  default: 1.0,  // Full penalty for others
+// Penalty reduction - Based on RANK DIFFERENCE
+const PENALTY_REDUCTION_BY_DIFF = {
+  // Loss penalty reduction based on how many ranks higher the opponent is
+  diff50Plus: 0.4,   // Opponent 50+ ranks higher = 60% penalty reduction (-20 → -8)
+  diff20to49: 0.5,   // Opponent 20-49 ranks higher = 50% reduction (-20 → -10)
+  diff10to19: 0.65,  // Opponent 10-19 ranks higher = 35% reduction (-20 → -13)
+  diff5to9: 0.8,     // Opponent 5-9 ranks higher = 20% reduction (-20 → -16)
+  default: 1.0,      // Less than 5 ranks difference = full penalty
 };
 
 // Entry Fees
@@ -244,22 +247,42 @@ async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<nu
 }
 
 /**
- * Calculate reward multiplier based on opponent's ranking
+ * Calculate reward multiplier based on RANK DIFFERENCE
+ * @param playerRank - Your ranking position (1 = first place)
+ * @param opponentRank - Opponent's ranking position
+ * @param isWin - true if player won, false if lost
+ * @returns multiplier for coins (e.g., 1.5x, 2.0x)
  */
-function calculateRankingMultiplier(opponentRank: number, isWin: boolean): number {
+function calculateRankingMultiplier(playerRank: number, opponentRank: number, isWin: boolean): number {
+  // Calculate rank difference (positive = opponent is higher ranked, negative = opponent is lower ranked)
+  const rankDiff = playerRank - opponentRank; // If you're rank 50 and opponent is rank 3, diff = 47 (good!)
+
   if (isWin) {
-    // Win bonuses - higher ranked opponent = more coins
-    if (opponentRank <= 3) return RANKING_BONUS.top3;
-    if (opponentRank <= 10) return RANKING_BONUS.top10;
-    if (opponentRank <= 20) return RANKING_BONUS.top20;
-    if (opponentRank <= 50) return RANKING_BONUS.top50;
-    return RANKING_BONUS.default;
+    // Win bonuses - ONLY if opponent is higher ranked (opponentRank < playerRank)
+    if (rankDiff <= 0) {
+      // Attacking lower-ranked or equal players = no bonus
+      return RANKING_BONUS_BY_DIFF.default;
+    }
+
+    // Opponent is higher ranked - calculate bonus based on how much higher
+    if (rankDiff >= 50) return RANKING_BONUS_BY_DIFF.diff50Plus;   // 2.0x
+    if (rankDiff >= 20) return RANKING_BONUS_BY_DIFF.diff20to49;   // 1.5x
+    if (rankDiff >= 10) return RANKING_BONUS_BY_DIFF.diff10to19;   // 1.3x
+    if (rankDiff >= 5) return RANKING_BONUS_BY_DIFF.diff5to9;      // 1.15x
+    return RANKING_BONUS_BY_DIFF.default; // < 5 ranks = 1.0x
   } else {
-    // Loss penalty reduction - higher ranked opponent = less penalty
-    if (opponentRank <= 3) return PENALTY_REDUCTION.top3;
-    if (opponentRank <= 10) return PENALTY_REDUCTION.top10;
-    if (opponentRank <= 20) return PENALTY_REDUCTION.top20;
-    return PENALTY_REDUCTION.default;
+    // Loss penalty reduction - ONLY if opponent is higher ranked
+    if (rankDiff <= 0) {
+      // Losing to lower-ranked or equal players = full penalty (no mercy!)
+      return PENALTY_REDUCTION_BY_DIFF.default;
+    }
+
+    // Opponent is higher ranked - reduce penalty based on how much higher
+    if (rankDiff >= 50) return PENALTY_REDUCTION_BY_DIFF.diff50Plus;   // 40% penalty (60% reduced)
+    if (rankDiff >= 20) return PENALTY_REDUCTION_BY_DIFF.diff20to49;   // 50% penalty
+    if (rankDiff >= 10) return PENALTY_REDUCTION_BY_DIFF.diff10to19;   // 65% penalty
+    if (rankDiff >= 5) return PENALTY_REDUCTION_BY_DIFF.diff5to9;      // 80% penalty
+    return PENALTY_REDUCTION_BY_DIFF.default; // < 5 ranks = 100% penalty
   }
 }
 
@@ -317,12 +340,13 @@ export const previewPvPRewards = query({
       throw new Error("Player profile not found");
     }
 
-    // Get opponent's ranking
+    // Get both player and opponent rankings
+    const playerRank = await getOpponentRanking(ctx, playerAddress);
     const opponentRank = await getOpponentRanking(ctx, opponentAddress);
 
-    // Calculate multipliers
-    const winMultiplier = calculateRankingMultiplier(opponentRank, true);
-    const lossMultiplier = calculateRankingMultiplier(opponentRank, false);
+    // Calculate multipliers based on rank difference
+    const winMultiplier = calculateRankingMultiplier(playerRank, opponentRank, true);
+    const lossMultiplier = calculateRankingMultiplier(playerRank, opponentRank, false);
 
     // Calculate potential rewards/penalties
     const baseWinReward = PVP_WIN_REWARD;
@@ -552,11 +576,13 @@ export const awardPvPCoins = mutation({
     }
 
     // ✅ Calculate ranking bonus if opponent provided
+    let playerRank = 999;
     let opponentRank = 999;
     let rankingMultiplier = 1.0;
     if (opponentAddress) {
+      playerRank = await getOpponentRanking(ctx, address);
       opponentRank = await getOpponentRanking(ctx, opponentAddress);
-      rankingMultiplier = calculateRankingMultiplier(opponentRank, won);
+      rankingMultiplier = calculateRankingMultiplier(playerRank, opponentRank, won);
     }
 
     // Update win streak
