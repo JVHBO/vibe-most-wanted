@@ -11,7 +11,10 @@ import { getUserBadges } from "@/lib/badges";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
+
+  // Query player's economy data
+  const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
@@ -785,6 +788,10 @@ export default function TCGPage() {
 
   // AI Difficulty (5 levels with progressive unlock)
   const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
+
+  // Economy mutations
+  const awardPvECoins = useMutation(api.economy.awardPvECoins);
+  const awardPvPCoins = useMutation(api.economy.awardPvPCoins);
   const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
   const [isDifficultyModalOpen, setIsDifficultyModalOpen] = useState(false);
   const [tempSelectedDifficulty, setTempSelectedDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad' | null>(null);
@@ -1644,15 +1651,29 @@ export default function TCGPage() {
             // Record match
             if (userProfile && address) {
               ConvexProfileService.recordMatch(
-                address,
-                'pve',
-                finalResult,
-                newPlayerScore,
-                newOpponentScore,
-                orderedPlayerCards,
-                orderedOpponentCards
-              ).then(() => {
+              address,
+              'pve',
+              finalResult,
+              newPlayerScore,
+              newOpponentScore,
+              orderedPlayerCards,
+              orderedOpponentCards
+              ).then(async () => {
                 ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+                
+                // Award economy coins for PvE Elimination
+                try {
+                  const reward = await awardPvECoins({
+                    address,
+                    difficulty: aiDifficulty,
+                    won: finalResult === 'win'
+                  });
+                  if (reward && reward.awarded > 0) {
+                    devLog(`💰 Elimination Mode: Awarded ${reward.awarded} $TESTVBMS`, reward);
+                  }
+                } catch (err) {
+                  devError('❌ Error awarding PvE coins (Elimination):', err);
+                }
               }).catch(err => devError('Error recording match:', err));
             }
 
@@ -1758,9 +1779,23 @@ export default function TCGPage() {
           dealerTotal,
           cards,
           pickedDealer
-        ).then(() => {
+        ).then(async () => {
           // Reload match history
           ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+          
+          // Award economy coins for PvE
+          try {
+            const reward = await awardPvECoins({
+              address,
+              difficulty: aiDifficulty,
+              won: matchResult === 'win'
+            });
+            if (reward && reward.awarded > 0) {
+              devLog(`💰 Awarded ${reward.awarded} $TESTVBMS`, reward);
+            }
+          } catch (err) {
+            devError('❌ Error awarding PvE coins:', err);
+          }
         }).catch(err => devError('Error recording match:', err));
       }
 
@@ -2055,8 +2090,21 @@ export default function TCGPage() {
                   playerCards,
                   opponentCards,
                   opponentAddress
-                ).then(() => {
+                ).then(async () => {
                   ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+                  
+                  // Award economy coins for PvP
+                  try {
+                    const reward = await awardPvPCoins({
+                      address,
+                      won: matchResult === 'win'
+                    });
+                    if (reward && reward.awarded > 0) {
+                      devLog(`💰 PvP: Awarded ${reward.awarded} $TESTVBMS`, reward);
+                    }
+                  } catch (err) {
+                    devError('❌ Error awarding PvP coins:', err);
+                  }
 
                   // 🔔 Send notification to defender (opponent)
                   fetch('/api/notifications/send', {
@@ -4211,6 +4259,21 @@ export default function TCGPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Coin Balance Display */}
+          {address && userProfile && playerEconomy && (
+            <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-4 md:px-6 py-2 md:py-3 rounded-lg flex items-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+              <span className="text-2xl">💰</span>
+              <div className="flex flex-col">
+                <span className="text-vintage-gold font-display font-bold text-sm md:text-base leading-none">
+                  {(playerEconomy.coins || 0).toLocaleString()}
+                </span>
+                <span className="text-vintage-burnt-gold font-modern text-[9px] md:text-xs leading-none mt-0.5">
+                  $TESTVBMS
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Notifications Button - Only show if user is logged in */}
           {address && userProfile && (
             <button

@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as cryptoActions from "../cryptoActions.js";
+import type * as economy from "../economy.js";
 import type * as importData from "../importData.js";
 import type * as matches from "../matches.js";
 import type * as migrations_cleanDefenseDecks from "../migrations/cleanDefenseDecks.js";
@@ -34,6 +35,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   cryptoActions: typeof cryptoActions;
+  economy: typeof economy;
   importData: typeof importData;
   matches: typeof matches;
   "migrations/cleanDefenseDecks": typeof migrations_cleanDefenseDecks;
