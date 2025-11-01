@@ -59,6 +59,28 @@ export default defineSchema({
     rematchesToday: v.number(),
     lastAttackDate: v.optional(v.string()), // ISO date string YYYY-MM-DD
 
+    // Economy System ($TESTVBMS)
+    coins: v.optional(v.number()), // Current balance
+    lifetimeEarned: v.optional(v.number()), // Total ever earned
+    lifetimeSpent: v.optional(v.number()), // Total ever spent
+
+    // Daily Limits for Economy
+    dailyLimits: v.optional(v.object({
+      pveWins: v.number(), // PvE wins today
+      pvpMatches: v.number(), // PvP matches today
+      lastResetDate: v.string(), // "2025-10-31" format
+
+      // Daily bonuses claimed
+      firstPveBonus: v.boolean(),
+      firstPvpBonus: v.boolean(),
+      loginBonus: v.boolean(),
+      streakBonus: v.boolean(),
+    })),
+
+    // Win Streak Tracking
+    winStreak: v.optional(v.number()),
+    lastWinTimestamp: v.optional(v.number()),
+
     // Social
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),
