@@ -2642,7 +2642,7 @@ export default function TCGPage() {
               className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-gray-500/50 border-4 border-gray-400"
             />
             <p className="text-2xl md:text-3xl font-bold text-gray-400 animate-pulse px-4 text-center">
-              Empate!
+              {t('tieResult')}
             </p>
             <audio autoPlay loop>
               <source src="/tie-music.mp3" type="audio/mpeg" />
@@ -4126,8 +4126,8 @@ export default function TCGPage() {
 
                 // Check if player has enough coins
                 const currentBalance = playerEconomy?.coins || 0;
-                if (currentBalance < 80) {
-                  alert(`💸 Fundos insuficientes!\n\nPrecisa de 80 $TESTVBMS para jogar PvP.\nSaldo atual: ${currentBalance} $TESTVBMS`);
+                if (currentBalance < 40) {
+                  setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
                   if (soundEnabled) AudioManager.buttonError();
                   return;
                 }
@@ -5312,7 +5312,7 @@ export default function TCGPage() {
                       className="w-full px-4 py-3 bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
                     />
                     <p className="text-xs text-yellow-400 mt-2">! Don't include @ symbol - just enter your username</p>
-                    <p className="text-xs text-gray-500 mt-1">※ Você pode adicionar seu Twitter depois na aba de perfil</p>
+                    <p className="text-xs text-gray-500 mt-1">※ {t('twitterHint')}</p>
                   </div>
 
                   <button
