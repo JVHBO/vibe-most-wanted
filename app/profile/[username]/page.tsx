@@ -244,6 +244,18 @@ export default function ProfilePage() {
   const [filterFoil, setFilterFoil] = useState<string>('all');
   const [filterRevealed, setFilterRevealed] = useState<string>('revealed');
 
+  // Force metadata refresh state (check localStorage on mount)
+  const [forceMetadataRefresh, setForceMetadataRefresh] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('forceMetadataRefresh');
+      if (stored === 'true') {
+        localStorage.removeItem('forceMetadataRefresh'); // Clear after reading
+        return true;
+      }
+    }
+    return false;
+  });
+
   // Auto-detect and connect Farcaster wallet if in miniapp
   useEffect(() => {
     const initFarcasterWallet = async () => {
@@ -329,7 +341,7 @@ export default function ProfilePage() {
           // Some players have many unopened cards, causing revealed cards to be spread across many pages
           const enriched = await fetchAndProcessNFTs(address, {
             maxPages: 20, // ✅ Increased to ensure we load ALL cards (profile stats has totalCards count)
-            refreshMetadata: false, // ✅ No need to refresh metadata
+            refreshMetadata: forceMetadataRefresh, // ✅ Force refresh when user clicks refresh button
           });
 
           devLog('✅ NFTs fully enriched:', enriched.length);
@@ -752,14 +764,14 @@ export default function ProfilePage() {
           </h2>
           <button
             onClick={() => {
-              setLoadingNFTs(true);
+              localStorage.setItem('forceMetadataRefresh', 'true');
               window.location.reload();
             }}
             disabled={loadingNFTs}
             className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
-            title="Refresh cards and metadata"
+            title="Refresh cards and force metadata update from blockchain (may take 1-2 minutes)"
           >
-            🔄 Refresh
+            🔄 {forceMetadataRefresh ? 'Refreshing Metadata...' : 'Refresh'}
           </button>
         </div>
 
