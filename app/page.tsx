@@ -4584,7 +4584,7 @@ export default function TCGPage() {
               }`}
               title={unreadDefenses > 0 ? `${unreadDefenses} novos ataques recebidos` : 'Notificações'}
             >
-              <span className="text-lg">◈</span>
+              <span className="text-lg text-yellow-400">⎔</span>
               {unreadDefenses > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                   {unreadDefenses}
