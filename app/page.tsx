@@ -863,7 +863,9 @@ export default function TCGPage() {
     opponentName: string;
     opponentTwitter?: string;
     type: 'pve' | 'pvp' | 'attack' | 'defense';
+    coinsEarned?: number;
   } | null>(null);
+  const [showTiePopup, setShowTiePopup] = useState(false);
 
   // Carregar estado da música do localStorage na montagem
   useEffect(() => {
@@ -1716,9 +1718,11 @@ export default function TCGPage() {
               setResult(t('tie'));
             }
 
-            // Award economy coins and record match
-            if (userProfile && address) {
-              (async () => {
+            // Award economy coins and record match, then show popup
+            (async () => {
+              let coinsEarned = 0;
+
+              if (userProfile && address) {
                 try {
                   // Award economy coins for PvE Elimination
                   const reward = await awardPvECoins({
@@ -1726,8 +1730,9 @@ export default function TCGPage() {
                     difficulty: aiDifficulty,
                     won: finalResult === 'win'
                   });
-                  if (reward && reward.awarded > 0) {
-                    devLog(`💰 Elimination Mode: Awarded ${reward.awarded} $TESTVBMS`, reward);
+                  coinsEarned = reward?.awarded || 0;
+                  if (coinsEarned > 0) {
+                    devLog(`💰 Elimination Mode: Awarded ${coinsEarned} $TESTVBMS`, reward);
                   }
 
                   // Record match with coins earned
@@ -1741,7 +1746,7 @@ export default function TCGPage() {
                     orderedOpponentCards,
                     undefined,
                     undefined,
-                    reward?.awarded || 0, // coinsEarned
+                    coinsEarned, // coinsEarned
                     0, // entryFeePaid (PvE is free)
                     eliminationDifficulty // difficulty
                   );
@@ -1750,35 +1755,37 @@ export default function TCGPage() {
                 } catch (err) {
                   devError('❌ Error awarding PvE coins (Elimination):', err);
                 }
-              })();
-            }
-
-            // Close battle and show result
-            setTimeout(() => {
-              setIsBattling(false);
-              setShowBattleScreen(false);
-              setBattlePhase('cards');
-              setBattleMode('normal');
-              setEliminationPhase(null);
-
-              setLastBattleResult({
-                result: finalResult,
-                playerPower: newPlayerScore,
-                opponentPower: newOpponentScore,
-                opponentName: 'Mecha George Floyd',
-                type: 'pve'
-              });
-
-              if (finalResult === 'win') {
-                setShowWinPopup(true);
-                if (soundEnabled) AudioManager.win();
-              } else if (finalResult === 'loss') {
-                setShowLossPopup(true);
-                if (soundEnabled) AudioManager.lose();
-              } else {
-                if (soundEnabled) AudioManager.tie();
               }
-            }, 2000);
+
+              // Close battle and show result
+              setTimeout(() => {
+                setIsBattling(false);
+                setShowBattleScreen(false);
+                setBattlePhase('cards');
+                setBattleMode('normal');
+                setEliminationPhase(null);
+
+                setLastBattleResult({
+                  result: finalResult,
+                  playerPower: newPlayerScore,
+                  opponentPower: newOpponentScore,
+                  opponentName: 'Mecha George Floyd',
+                  type: 'pve',
+                  coinsEarned
+                });
+
+                if (finalResult === 'win') {
+                  setShowWinPopup(true);
+                  if (soundEnabled) AudioManager.win();
+                } else if (finalResult === 'loss') {
+                  setShowLossPopup(true);
+                  if (soundEnabled) AudioManager.lose();
+                } else {
+                  setShowTiePopup(true);
+                  if (soundEnabled) AudioManager.tie();
+                }
+              }, 2000);
+            })();
           } else {
             // Next round
             setTimeout(() => {
@@ -1845,9 +1852,11 @@ export default function TCGPage() {
         setResult(t('tie'));
       }
 
-      // Award economy coins and record PvE match
-      if (userProfile && address) {
-        (async () => {
+      // Award economy coins and record PvE match, then show popup
+      (async () => {
+        let coinsEarned = 0;
+
+        if (userProfile && address) {
           try {
             // Award economy coins for PvE
             const reward = await awardPvECoins({
@@ -1855,8 +1864,9 @@ export default function TCGPage() {
               difficulty: aiDifficulty,
               won: matchResult === 'win'
             });
-            if (reward && reward.awarded > 0) {
-              devLog(`💰 Awarded ${reward.awarded} $TESTVBMS`, reward);
+            coinsEarned = reward?.awarded || 0;
+            if (coinsEarned > 0) {
+              devLog(`💰 Awarded ${coinsEarned} $TESTVBMS`, reward);
             }
 
             // Record match with coins earned
@@ -1870,7 +1880,7 @@ export default function TCGPage() {
               pickedDealer,
               undefined,
               undefined,
-              reward?.awarded || 0, // coinsEarned
+              coinsEarned, // coinsEarned
               0, // entryFeePaid (PvE is free)
               aiDifficulty // difficulty
             );
@@ -1880,35 +1890,37 @@ export default function TCGPage() {
           } catch (err) {
             devError('❌ Error awarding PvE coins:', err);
           }
-        })();
-      }
-
-      // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
-      setTimeout(() => {
-        setIsBattling(false);
-        setShowBattleScreen(false);
-        setBattlePhase('cards');
-
-        // Set last battle result for sharing
-        setLastBattleResult({
-          result: matchResult,
-          playerPower: playerTotal,
-          opponentPower: dealerTotal,
-          opponentName: 'Mecha George Floyd',
-          type: 'pve'
-        });
-
-        // Mostra popup IMEDIATAMENTE
-        if (matchResult === 'win') {
-          setShowWinPopup(true);
-          if (soundEnabled) AudioManager.win();
-        } else if (matchResult === 'loss') {
-          setShowLossPopup(true);
-          if (soundEnabled) AudioManager.lose();
-        } else {
-          if (soundEnabled) AudioManager.tie();
         }
-      }, 2000);
+
+        // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
+        setTimeout(() => {
+          setIsBattling(false);
+          setShowBattleScreen(false);
+          setBattlePhase('cards');
+
+          // Set last battle result for sharing
+          setLastBattleResult({
+            result: matchResult,
+            playerPower: playerTotal,
+            opponentPower: dealerTotal,
+            opponentName: 'Mecha George Floyd',
+            type: 'pve',
+            coinsEarned
+          });
+
+          // Mostra popup IMEDIATAMENTE
+          if (matchResult === 'win') {
+            setShowWinPopup(true);
+            if (soundEnabled) AudioManager.win();
+          } else if (matchResult === 'loss') {
+            setShowLossPopup(true);
+            if (soundEnabled) AudioManager.lose();
+          } else {
+            setShowTiePopup(true);
+            if (soundEnabled) AudioManager.tie();
+          }
+        }, 2000);
+      })();
     }, 4500);
   }, [selectedCards, nfts, t, soundEnabled, isBattling, aiDifficulty, address, userProfile]);
 
@@ -2178,17 +2190,20 @@ export default function TCGPage() {
                 setResult(t('dealerWins'));
               }
 
-              // Award economy coins and record PvP match
-              if (userProfile && address) {
-                (async () => {
+              // Award economy coins and record PvP match, then show popup
+              (async () => {
+                let coinsEarned = 0;
+
+                if (userProfile && address) {
                   try {
                     // Award economy coins for PvP
                     const reward = await awardPvPCoins({
                       address,
                       won: matchResult === 'win'
                     });
-                    if (reward && reward.awarded > 0) {
-                      devLog(`💰 PvP: Awarded ${reward.awarded} $TESTVBMS`, reward);
+                    coinsEarned = reward?.awarded || 0;
+                    if (coinsEarned > 0) {
+                      devLog(`💰 PvP: Awarded ${coinsEarned} $TESTVBMS`, reward);
                     }
 
                     // Record match with coins earned and entry fee paid
@@ -2202,7 +2217,7 @@ export default function TCGPage() {
                       opponentCards,
                       opponentAddress,
                       opponentName,
-                      reward?.awarded || 0, // coinsEarned
+                      coinsEarned, // coinsEarned
                       80 // entryFeePaid (PvP mode costs 80 $TESTVBMS)
                     );
 
@@ -2225,61 +2240,63 @@ export default function TCGPage() {
                   } catch (err) {
                     devError('❌ Error awarding PvP coins:', err);
                   }
-                })();
-              }
-
-              // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
-              setTimeout(() => {
-                setIsBattling(false);
-                setShowBattleScreen(false);
-                setBattlePhase('cards');
-
-                // Set last battle result for sharing
-                setLastBattleResult({
-                  result: matchResult,
-                  playerPower: playerPower,
-                  opponentPower: opponentPower,
-                  opponentName: opponentName,
-                  opponentTwitter: opponentTwitter,
-                  type: 'pvp'
-                });
-
-                // Mostra popup IMEDIATAMENTE
-                if (matchResult === 'win') {
-                  setShowWinPopup(true);
-                  if (soundEnabled) AudioManager.win();
-                } else if (matchResult === 'loss') {
-                  setShowLossPopup(true);
-                  if (soundEnabled) AudioManager.lose();
-                } else {
-                  if (soundEnabled) AudioManager.tie();
                 }
 
-                // Reset battle flag immediately so player can start new match without waiting
-                pvpBattleStarted.current = false;
-                battleProcessing = false; // Also reset local flag
-                devLog('🔄 Battle ended, reset pvpBattleStarted immediately');
-                // Fecha a sala PVP e volta ao menu após ver o resultado
-                setTimeout(async () => {
-                  // Deleta a sala do Convex se for o host
-                  if (currentRoom && roomCode && address && address.toLowerCase() === currentRoom.hostAddress) {
-                    try {
-                      await ConvexPvPService.leaveRoom(roomCode, address);
-                      devLog('✅ Room deleted after battle ended');
-                    } catch (err) {
-                      devError('❌ Error deleting room:', err);
-                    }
+                // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
+                setTimeout(() => {
+                  setIsBattling(false);
+                  setShowBattleScreen(false);
+                  setBattlePhase('cards');
+
+                  // Set last battle result for sharing
+                  setLastBattleResult({
+                    result: matchResult,
+                    playerPower: playerPower,
+                    opponentPower: opponentPower,
+                    opponentName: opponentName,
+                    opponentTwitter: opponentTwitter,
+                    type: 'pvp',
+                    coinsEarned
+                  });
+
+                  // Mostra popup IMEDIATAMENTE
+                  if (matchResult === 'win') {
+                    setShowWinPopup(true);
+                    if (soundEnabled) AudioManager.win();
+                  } else if (matchResult === 'loss') {
+                    setShowLossPopup(true);
+                    if (soundEnabled) AudioManager.lose();
+                  } else {
+                    setShowTiePopup(true);
+                    if (soundEnabled) AudioManager.tie();
                   }
 
-                  setPvpMode(null);
-                  setGameMode(null);
-                  setRoomCode('');
-                  setCurrentRoom(null);
-                  setSelectedCards([]);
-                  setDealerCards([]); // Clear dealer cards
-                  pvpBattleStarted.current = false; // Reset battle flag
-                }, 5000);
-              }, 2000);
+                  // Reset battle flag immediately so player can start new match without waiting
+                  pvpBattleStarted.current = false;
+                  battleProcessing = false; // Also reset local flag
+                  devLog('🔄 Battle ended, reset pvpBattleStarted immediately');
+                  // Fecha a sala PVP e volta ao menu após ver o resultado
+                  setTimeout(async () => {
+                    // Deleta a sala do Convex se for o host
+                    if (currentRoom && roomCode && address && address.toLowerCase() === currentRoom.hostAddress) {
+                      try {
+                        await ConvexPvPService.leaveRoom(roomCode, address);
+                        devLog('✅ Room deleted after battle ended');
+                      } catch (err) {
+                        devError('❌ Error deleting room:', err);
+                      }
+                    }
+
+                    setPvpMode(null);
+                    setGameMode(null);
+                    setRoomCode('');
+                    setCurrentRoom(null);
+                    setSelectedCards([]);
+                    setDealerCards([]); // Clear dealer cards
+                    pvpBattleStarted.current = false; // Reset battle flag
+                  }, 5000);
+                }, 2000);
+              })();
             }, 3500);
           }
         } else {
@@ -2477,7 +2494,9 @@ export default function TCGPage() {
               className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-yellow-500/50 border-4 border-yellow-400"
             />
             <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
-              {t('victoryPrize')}
+              {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
+                ? `Você ganhou ${lastBattleResult.coinsEarned} $TESTVBMS!`
+                : t('victoryPrize')}
             </p>
             <div className="flex gap-3">
               <a
@@ -2547,7 +2566,11 @@ export default function TCGPage() {
               className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
             />
             <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
-              {t('defeatPrize')}
+              {lastBattleResult?.type === 'pve' || lastBattleResult?.type === 'attack'
+                ? 'Você não ganhou nada'
+                : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
+                  ? `Você ganhou ${lastBattleResult.coinsEarned} $TESTVBMS`
+                  : t('defeatPrize')}
             </p>
             <div className="flex gap-3">
               <a
@@ -2601,6 +2624,31 @@ export default function TCGPage() {
             <button
               onClick={() => setShowLossPopup(false)}
               className="absolute top-4 right-4 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tie Popup */}
+      {showTiePopup && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]" onClick={() => setShowTiePopup(false)}>
+          <div className="relative flex flex-col items-center gap-4">
+            <img
+              src="/tie.gif"
+              alt="Tie!"
+              className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-gray-500/50 border-4 border-gray-400"
+            />
+            <p className="text-2xl md:text-3xl font-bold text-gray-400 animate-pulse px-4 text-center">
+              Empate!
+            </p>
+            <audio autoPlay loop>
+              <source src="/tie-music.mp3" type="audio/mpeg" />
+            </audio>
+            <button
+              onClick={() => setShowTiePopup(false)}
+              className="absolute top-4 right-4 bg-gray-400 hover:bg-gray-500 text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
             >
               ×
             </button>
@@ -3679,7 +3727,8 @@ export default function TCGPage() {
                         opponentPower: dealerTotal,
                         opponentName: targetPlayer.username,
                         opponentTwitter: targetPlayer.twitter,
-                        type: 'attack'
+                        type: 'attack',
+                        coinsEarned: 0 // Attacks don't earn coins
                       });
 
                       setTargetPlayer(null);
@@ -3691,6 +3740,7 @@ export default function TCGPage() {
                         setShowLossPopup(true);
                         if (soundEnabled) AudioManager.lose();
                       } else {
+                        setShowTiePopup(true);
                         if (soundEnabled) AudioManager.tie();
                       }
                     }, 2000);
