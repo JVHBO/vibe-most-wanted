@@ -13,8 +13,6 @@ import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery, useMutation } from "convex/react";
 
-  // Query player's economy data
-  const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
@@ -738,6 +736,9 @@ export default function TCGPage() {
 
   // Use Farcaster address if available, otherwise Wagmi
   const address = farcasterAddress || wagmiAddress;
+
+  // Query player's economy data
+  const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
 
   // Debug logging for address changes
   useEffect(() => {
