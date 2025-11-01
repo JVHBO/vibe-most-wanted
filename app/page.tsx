@@ -1668,7 +1668,7 @@ export default function TCGPage() {
                 try {
                   const reward = await awardPvECoins({
                     address,
-                    difficulty: difficulty,
+                    difficulty: aiDifficulty,
                     won: finalResult === 'win'
                   });
                   if (reward && reward.awarded > 0) {
@@ -1790,7 +1790,7 @@ export default function TCGPage() {
           try {
             const reward = await awardPvECoins({
               address,
-              difficulty: difficulty,
+              difficulty: aiDifficulty,
               won: matchResult === 'win'
             });
             if (reward && reward.awarded > 0) {
@@ -1829,7 +1829,7 @@ export default function TCGPage() {
         }
       }, 2000);
     }, 4500);
-  }, [selectedCards, nfts, t, soundEnabled, isBattling, address, userProfile, jcNfts, jcNftsLoading, battleMode, orderedPlayerCards, orderedOpponentCards, currentRound, eliminationPlayerScore, eliminationOpponentScore, roundResults, awardPvECoins]);
+  }, [selectedCards, nfts, t, soundEnabled, isBattling, aiDifficulty, address, userProfile]);
 
   const saveDefenseDeck = useCallback(async () => {
     if (!address || !userProfile || selectedCards.length !== HAND_SIZE_CONST) return;
