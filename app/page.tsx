@@ -801,11 +801,7 @@ export default function TCGPage() {
   const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
-  const previewPvPRewards = useQuery(api.economy.previewPvPRewards,
-    address && targetPlayer?.address
-      ? { playerAddress: address, opponentAddress: targetPlayer.address }
-      : 'skip'
-  ) as any;
+  // Note: previewPvPRewards is called manually in the ATTACK button using client.query()
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
   const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
@@ -2241,14 +2237,18 @@ export default function TCGPage() {
 
                 if (userProfile && address) {
                   try {
-                    // Award economy coins for PvP
+                    // ✅ Award economy coins for PvP with ranking bonus
                     const reward = await awardPvPCoins({
                       address,
-                      won: matchResult === 'win'
+                      won: matchResult === 'win',
+                      opponentAddress: opponentAddress // ✅ Pass opponent for ranking bonus
                     });
                     coinsEarned = reward?.awarded || 0;
                     if (coinsEarned > 0) {
                       devLog(`💰 PvP: Awarded ${coinsEarned} $TESTVBMS`, reward);
+                      if (reward?.bonuses && reward.bonuses.length > 0) {
+                        devLog(`🎁 Bonuses: ${reward.bonuses.join(', ')}`);
+                      }
                     }
 
                     // Record match with coins earned and entry fee paid
