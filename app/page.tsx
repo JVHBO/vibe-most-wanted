@@ -1889,6 +1889,7 @@ export default function TCGPage() {
         if (userProfile && address) {
           try {
             // Award economy coins for PvE
+            devLog(`🎯 PvE Difficulty: ${aiDifficulty}`); // Debug log
             const reward = await awardPvECoins({
               address,
               difficulty: aiDifficulty,
@@ -1896,7 +1897,7 @@ export default function TCGPage() {
             });
             coinsEarned = reward?.awarded || 0;
             if (coinsEarned > 0) {
-              devLog(`💰 Awarded ${coinsEarned} $TESTVBMS`, reward);
+              devLog(`💰 PvE ${aiDifficulty}: Awarded ${coinsEarned} $TESTVBMS`, reward);
             }
 
             // Record match with coins earned
