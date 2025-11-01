@@ -2127,6 +2127,15 @@ export default function TCGPage() {
             battleProcessing = true;
             devLog('✓ Ambos jogadores prontos! Iniciando batalha única:', battleId);
 
+            // Pay entry fee now that battle is actually starting
+            try {
+              await payEntryFee({ address: address || '', mode: 'pvp' });
+              devLog('💰 PvP entry fee paid: 40 $TESTVBMS');
+            } catch (error: any) {
+              devError('❌ Failed to pay PvP entry fee:', error);
+              // Continue with battle even if payment fails (already committed to battle)
+            }
+
             // Determina quem é o jogador local e quem é o oponente
             const isHost = room.hostAddress === address?.toLowerCase();
             const playerCards = isHost ? (room.hostCards || []) : (room.guestCards || []);
@@ -3974,10 +3983,7 @@ export default function TCGPage() {
                   setPvpMode('autoMatch');
                   setIsSearching(true);
                   try {
-                    // Pay entry fee BEFORE starting match
-                    await payEntryFee({ address: address || '', mode: 'pvp' });
-                    devLog('Entry fee paid: 80 $TESTVBMS');
-
+                    // Entry fee will be paid when battle actually starts (both players ready)
                     const code = await ConvexPvPService.findMatch(address || '', userProfile?.username);
                     if (code) {
                       // Encontrou uma sala imediatamente
@@ -4014,10 +4020,7 @@ export default function TCGPage() {
                   }
 
                   try {
-                    // Pay entry fee BEFORE creating room
-                    await payEntryFee({ address: address || '', mode: 'pvp' });
-                    devLog('Entry fee paid: 80 $TESTVBMS');
-
+                    // Entry fee will be paid when battle actually starts (both players ready)
                     // Remove do matchmaking antes de criar sala manual
                     await ConvexPvPService.cancelMatchmaking(address || '');
                     const code = await ConvexPvPService.createRoom(address || '', userProfile?.username);
@@ -4181,10 +4184,7 @@ export default function TCGPage() {
                 }
 
                 try {
-                  // Pay entry fee BEFORE joining room
-                  await payEntryFee({ address: address || '', mode: 'pvp' });
-                  devLog('💸 Entry fee paid: 80 $TESTVBMS');
-
+                  // Entry fee will be paid when battle actually starts (both players ready)
                   // Remove do matchmaking antes de entrar em sala manual
                   await ConvexPvPService.cancelMatchmaking(address || '');
                   await ConvexPvPService.joinRoom(roomCode, address || '', userProfile?.username);

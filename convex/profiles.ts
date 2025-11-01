@@ -165,6 +165,14 @@ export const upsertProfile = mutation({
         createdAt: now,
         lastUpdated: now,
       });
+
+      // Give 100 welcome coins to new users
+      await ctx.runMutation("economy:addCoins", {
+        address,
+        amount: 100,
+        reason: "Welcome bonus"
+      });
+
       return newId;
     }
   },
