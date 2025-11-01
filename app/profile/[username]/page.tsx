@@ -317,17 +317,27 @@ export default function ProfilePage() {
         setLoadingNFTs(true);
         try {
           devLog('🔍 Fetching NFTs for address:', address);
+          devLog('📊 Expected cards from profile:', profileData.stats?.totalCards || 0);
 
           // ✅ Use the unified, optimized fetcher
           const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
 
           // ✅ Load NFTs for collection display (defense deck data is already in profile)
+          // ⚠️ IMPORTANT: Increased maxPages from 8 to 20 to ensure all cards are loaded
+          // Some players have many unopened cards, causing revealed cards to be spread across many pages
           const enriched = await fetchAndProcessNFTs(address, {
-            maxPages: 8, // ✅ Reduced from 10 to 8 for faster loading
+            maxPages: 20, // ✅ Increased to ensure we load ALL cards (profile stats has totalCards count)
             refreshMetadata: false, // ✅ No need to refresh metadata
           });
 
           devLog('✅ NFTs fully enriched:', enriched.length);
+          devLog('📊 Comparison: Profile says', profileData.stats?.totalCards, 'cards, fetched', enriched.length);
+
+          // ⚠️ Warning if mismatch (for debugging)
+          if (enriched.length < (profileData.stats?.totalCards || 0)) {
+            devWarn('⚠️ Fetched fewer cards than expected! Profile stats may be outdated or maxPages still too low.');
+          }
+
           setNfts(enriched);
         } catch (err: any) {
           devError('❌ Error loading NFTs:', err.message || err);

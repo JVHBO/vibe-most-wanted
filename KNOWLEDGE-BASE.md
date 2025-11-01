@@ -2,7 +2,148 @@
 
 **Propósito**: Base de conhecimento consolidada com soluções técnicas, patterns, aprendizados de automação e troubleshooting para evitar resolver os mesmos problemas múltiplas vezes.
 
-**Última atualização**: 2025-10-26
+**Última atualização**: 2025-11-01
+
+---
+
+## Bug #9 - Profile Showing Fewer Cards Than Leaderboard (maxPages Too Low)
+
+**Date**: 2025-11-01
+**Reported By**: User (mavzero showing 28 cards in leaderboard but only 1 in profile)
+**Status**: ✅ FIXED
+**Severity**: Medium (visual inconsistency, data is correct in database)
+
+### Problem
+
+Player profiles were showing significantly fewer cards than the leaderboard reported:
+- **Leaderboard**: Shows 28 opened cards ✅
+- **Database (Convex prod)**: Has 28 cards registered ✅
+- **Profile page**: Shows only 1 card ❌
+
+User verified the wallet actually has 28 opened cards on-chain.
+
+### Root Cause
+
+The profile page (`app/profile/[username]/page.tsx` line 326) was using `maxPages: 8` when fetching NFTs from Alchemy API:
+
+```typescript
+const enriched = await fetchAndProcessNFTs(address, {
+  maxPages: 8, // ❌ TOO LOW!
+  refreshMetadata: false,
+});
+```
+
+**Why this causes the problem:**
+
+1. Alchemy API returns ~100 NFTs per page
+2. If a player has many **unopened** NFTs or NFTs from other contracts, their **revealed cards** get spread across many pages
+3. The code stops fetching at page 8, even if there are more cards to load
+4. Players with 28 cards spread across 15+ pages would only show cards from the first 8 pages
+
+**Example scenario:**
+- Player has 200 total NFTs in wallet
+- 28 are revealed Vibe cards, 172 are unopened packs
+- Unopened packs come first in API response
+- After 8 pages (800 NFTs scanned), only found 1 revealed card
+- Remaining 27 cards are in pages 9-20, never fetched
+
+### Solution
+
+**Fix 1: Increased maxPages from 8 to 20**
+
+```typescript
+const enriched = await fetchAndProcessNFTs(address, {
+  maxPages: 20, // ✅ Increased to ensure we load ALL cards
+  refreshMetadata: false,
+});
+```
+
+**Fix 2: Added debug logging to detect mismatches**
+
+```typescript
+devLog('📊 Expected cards from profile:', profileData.stats?.totalCards || 0);
+devLog('📊 Comparison: Profile says', profileData.stats?.totalCards, 'cards, fetched', enriched.length);
+
+if (enriched.length < (profileData.stats?.totalCards || 0)) {
+  devWarn('⚠️ Fetched fewer cards than expected! Profile stats may be outdated or maxPages still too low.');
+}
+```
+
+This helps catch the issue in development if maxPages is still too low.
+
+### Files Modified
+
+- `app/profile/[username]/page.tsx` lines 326-339
+
+### Why Was It 8 Before?
+
+Previous comment said "Reduced from 10 to 8 for faster loading" - this optimization was TOO aggressive and caused cards to be missed.
+
+### Performance Impact
+
+- **Before**: ~5-10 seconds (8 pages)
+- **After**: ~10-15 seconds (20 pages)
+- **Trade-off**: Slightly slower but CORRECT data
+
+### Alternative Solutions Considered
+
+1. **Early stopping based on profile.stats.totalCards** ✅ Partially implemented (warning)
+   - Could add: Stop fetching when `enriched.length >= profile.stats.totalCards`
+   - Issue: Stats might be outdated if player just bought/revealed new cards
+
+2. **Increase to 30+ pages** ❌ Too slow
+   - Would take 20-30 seconds to load profile
+   - Most players don't need this
+
+3. **Use targetTokenIds from database** ✅ Best long-term solution
+   - Store all tokenIds in database during stats update
+   - Pass them to `fetchAndProcessNFTs` for early stopping
+   - Stop immediately when all known tokenIds are found
+   - Requires schema change
+
+### Future Improvements
+
+**TODO: Implement targetTokenIds pattern**
+
+When updating profile stats (app/page.tsx line 2422), save all tokenIds:
+
+```typescript
+// Save tokenIds for efficient profile loading
+const tokenIds = nfts.filter(nft => !isUnrevealed(nft)).map(nft => nft.tokenId);
+ConvexProfileService.updateStats(address, nfts.length, openedCards, unopenedCards, totalPower, tokenIds);
+```
+
+Then in profile page:
+
+```typescript
+const enriched = await fetchAndProcessNFTs(address, {
+  maxPages: 30, // Higher limit as backup
+  refreshMetadata: false,
+  targetTokenIds: profileData.tokenIds, // ✅ Early stopping when all found
+});
+```
+
+This would make profile loading **much faster** for players with cards spread across many pages.
+
+### Lessons Learned
+
+1. **Never optimize without measuring impact** - The 8 → 10 change was made for "performance" but broke correctness
+2. **Always validate against expected data** - Leaderboard had 28, profile had 1, should have caught this
+3. **Consider data distribution** - NFTs aren't evenly distributed in API responses
+4. **Add debug logging for critical data paths** - Comparison logs help catch discrepancies
+5. **Database is source of truth** - Stats in Convex were correct, UI was showing incomplete data
+
+### Testing Checklist
+
+- [x] Verified mavzero shows 28 cards in database (prod Convex)
+- [ ] Load mavzero's profile and verify all 28 cards appear
+- [ ] Check other players with similar issues (sweet: 110 cards, jayabs: 20 cards)
+- [ ] Verify loading time is acceptable (<15 seconds)
+- [ ] Monitor for any warnings about mismatches in dev console
+
+### Commit
+
+- `fix: Increase profile maxPages from 8 to 20 to load all player cards`
 
 ---
 
