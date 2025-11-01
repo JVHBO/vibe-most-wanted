@@ -665,6 +665,97 @@ if (playerTotal > dealerTotal) {
 
 ---
 
+## Bug #14 - recordMatch Called with Object Instead of Positional Arguments
+
+**Date**: 2025-11-01
+**Reported By**: Vercel build failure
+**Status**: ✅ FIXED
+**Severity**: Critical (blocking deployment)
+
+### Problem
+
+TypeScript compilation error during Vercel build:
+
+```
+Type error: Expected 7-12 arguments, but got 1.
+./app/page.tsx:3802:52
+```
+
+### Root Cause
+
+The `recordMatch` function in `lib/convex-profile.ts` expects **positional arguments**, but line 3802 was calling it with an **object** (named parameters):
+
+```typescript
+// ❌ WRONG - Object syntax (line 3802)
+await ConvexProfileService.recordMatch({
+  playerAddress: address,
+  opponentUsername: targetPlayer.username,
+  opponentAddress: targetPlayer.address,
+  result: matchResult,
+  playerPower: playerTotal,
+  opponentPower: dealerTotal,
+  type: 'attack',
+});
+```
+
+**Actual function signature** (lib/convex-profile.ts:411):
+```typescript
+static async recordMatch(
+  playerAddress: string,      // 1
+  type: string,                // 2
+  result: string,              // 3
+  playerPower: number,         // 4
+  opponentPower: number,       // 5
+  playerCards: any[],          // 6
+  opponentCards: any[],        // 7
+  opponentAddress?: string,    // 8
+  opponentUsername?: string,   // 9
+  coinsEarned?: number,        // 10
+  entryFeePaid?: number,       // 11
+  difficulty?: string          // 12
+): Promise<void>
+```
+
+### Solution
+
+Changed to use positional arguments matching the function signature:
+
+```typescript
+// ✅ FIXED - Positional arguments (line 3802-3814)
+await ConvexProfileService.recordMatch(
+  address,                  // playerAddress
+  'attack',                 // type
+  matchResult,              // result
+  playerTotal,              // playerPower
+  dealerTotal,              // opponentPower
+  attackSelectedCards,      // playerCards
+  defenderCards,            // opponentCards
+  targetPlayer.address,     // opponentAddress
+  targetPlayer.username,    // opponentUsername
+  coinsEarned,              // coinsEarned
+  50                        // entryFeePaid (attack mode costs 50)
+);
+```
+
+### Why This Happened
+
+This appears to be a partial refactoring. Someone started converting the API to use object parameters but didn't update the actual function signature in `lib/convex-profile.ts`. All other calls in the codebase (lines 1767, 1901, 2255, 4073, 4087) already used the correct positional syntax.
+
+### Files Modified
+
+- `app/page.tsx` lines 3802-3814 (Attack mode battle completion)
+
+### Lessons Learned
+
+1. **Consistency matters** - If refactoring function signatures, update ALL calls
+2. **Check similar code** - Other recordMatch calls were correct, only this one was wrong
+3. **TypeScript catches this** - Strong typing immediately caught the mismatch
+4. **Named vs positional** - Object parameters are more maintainable, but need to be implemented everywhere
+
+### Commit
+
+- `fix: Correct recordMatch call syntax from object to positional arguments`
+
 ---
 
 ## 📚 Índice Principal
