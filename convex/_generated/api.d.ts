@@ -16,6 +16,7 @@ import type * as matches from "../matches.js";
 import type * as migrations_cleanDefenseDecks from "../migrations/cleanDefenseDecks.js";
 import type * as notifications from "../notifications.js";
 import type * as profiles from "../profiles.js";
+import type * as quests from "../quests.js";
 import type * as rooms from "../rooms.js";
 
 import type {
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/cleanDefenseDecks": typeof migrations_cleanDefenseDecks;
   notifications: typeof notifications;
   profiles: typeof profiles;
+  quests: typeof quests;
   rooms: typeof rooms;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

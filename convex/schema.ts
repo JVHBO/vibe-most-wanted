@@ -119,6 +119,19 @@ export default defineSchema({
     opponentPower: v.number(),
     opponentCards: v.array(v.any()),
 
+    // Economy
+    coinsEarned: v.optional(v.number()), // $TESTVBMS earned from this match
+    entryFeePaid: v.optional(v.number()), // Entry fee paid (50 for attack, 80 for pvp)
+
+    // PvE specific data
+    difficulty: v.optional(v.union(
+      v.literal("gey"),
+      v.literal("goofy"),
+      v.literal("gooner"),
+      v.literal("gangster"),
+      v.literal("gigachad")
+    )), // AI difficulty for PvE matches
+
     // Legacy field from Firebase migration
     matchId: v.optional(v.string()),
   })
@@ -223,6 +236,31 @@ export default defineSchema({
     .index("by_status", ["status", "createdAt"])
     .index("by_creator", ["creatorAddress"])
     .index("by_acceptor", ["acceptorAddress"]),
+
+  // Daily Quest System
+  dailyQuests: defineTable({
+    date: v.string(), // "2025-11-01" (1 quest per day globally)
+    type: v.string(), // "win_pve", "defeat_gigachad", "play_matches", etc
+    description: v.string(), // "Win 3 PvE battles"
+    requirement: v.object({
+      count: v.optional(v.number()), // Number of times to do something
+      difficulty: v.optional(v.string()), // Specific difficulty required
+      maxPower: v.optional(v.number()), // Max power restriction
+    }),
+    reward: v.number(), // $TESTVBMS reward
+    difficulty: v.string(), // "easy", "medium", "hard" (quest difficulty, not AI)
+    createdAt: v.number(),
+  })
+    .index("by_date", ["date"]),
+
+  questProgress: defineTable({
+    playerAddress: v.string(),
+    questDate: v.string(), // "2025-11-01"
+    completed: v.boolean(),
+    claimed: v.boolean(),
+    claimedAt: v.optional(v.number()),
+  })
+    .index("by_player_date", ["playerAddress", "questDate"]),
 
   // Security: Nonces for replay attack prevention
   nonces: defineTable({
