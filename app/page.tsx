@@ -2281,6 +2281,7 @@ export default function TCGPage() {
                           defenderUsername: opponentName || 'Unknown',
                           attackerUsername: userProfile.username || 'Unknown',
                           result: matchResult === 'win' ? 'lose' : 'win', // Inverted: attacker wins = defender loses
+                          coinsChange: coinsEarned, // Attacker's coin change (positive = won coins, negative = lost coins)
                         },
                       }),
                     }).catch(err => devError('Error sending notification:', err));
@@ -3820,6 +3821,22 @@ export default function TCGPage() {
                           setUserProfile(updatedProfile);
                           setAttacksRemaining(maxAttacks - (updatedProfile.attacksToday || 0));
                         }
+
+                        // 🔔 Send notification to defender with coins info
+                        fetch('/api/notifications/send', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            type: 'defense_attacked',
+                            data: {
+                              defenderAddress: targetPlayer.address,
+                              defenderUsername: targetPlayer.username || 'Unknown',
+                              attackerUsername: userProfile.username || 'Unknown',
+                              result: matchResult === 'win' ? 'lose' : 'win', // Inverted: attacker wins = defender loses
+                              coinsChange: coinsEarned, // Attacker's coin change
+                            },
+                          }),
+                        }).catch(err => devError('Error sending notification:', err));
                       }
 
                       setIsBattling(false);
