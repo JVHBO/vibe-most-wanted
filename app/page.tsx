@@ -836,6 +836,7 @@ export default function TCGPage() {
 
   // Defense Deck States
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
+  const [defenseDeckSaveStatus, setDefenseDeckSaveStatus] = useState<string>(''); // For retry feedback
   const [showPveCardSelection, setShowPveCardSelection] = useState<boolean>(false);
   const [pveSelectedCards, setPveSelectedCards] = useState<any[]>([]);
   const [pveSortByPower, setPveSortByPower] = useState<boolean>(false);
@@ -2002,10 +2003,12 @@ export default function TCGPage() {
 
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
+          setDefenseDeckSaveStatus(`Saving... (Attempt ${attempt}/3)`);
           devLog(`📡 Attempt ${attempt}/3 to save defense deck...`);
           await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
           devLog(`✓ Defense deck saved successfully on attempt ${attempt}`);
           saveSuccess = true;
+          setDefenseDeckSaveStatus('');
           break;
         } catch (err: any) {
           lastError = err;
@@ -2013,10 +2016,12 @@ export default function TCGPage() {
 
           // If it's the last attempt, throw
           if (attempt === 3) {
+            setDefenseDeckSaveStatus('');
             throw err;
           }
 
           // Wait before retry (exponential backoff)
+          setDefenseDeckSaveStatus(`Retrying in ${attempt} second(s)...`);
           await new Promise(resolve => setTimeout(resolve, attempt * 1000));
         }
       }
@@ -5037,6 +5042,12 @@ export default function TCGPage() {
                     {showDefenseDeckSaved && (
                       <div className="mt-2 text-center text-green-400 font-modern font-semibold animate-pulse">
                         ✓ Defense Deck Saved!
+                      </div>
+                    )}
+                    {/* Defense Deck Save Status (retry feedback) */}
+                    {defenseDeckSaveStatus && (
+                      <div className="mt-2 text-center text-yellow-400 font-modern font-semibold animate-pulse">
+                        {defenseDeckSaveStatus}
                       </div>
                     )}
                   </div>
