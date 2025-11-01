@@ -32,7 +32,7 @@ const PVP_LOSS_REWARD = 20;
 // Entry Fees
 const ENTRY_FEES = {
   attack: 50,
-  pvp: 80,
+  pvp: 40,  // Reduced from 80 to 40
 };
 
 // Daily Bonuses

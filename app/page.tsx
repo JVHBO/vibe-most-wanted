@@ -866,6 +866,7 @@ export default function TCGPage() {
     coinsEarned?: number;
   } | null>(null);
   const [showTiePopup, setShowTiePopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Carregar estado da música do localStorage na montagem
   useEffect(() => {
@@ -2656,6 +2657,27 @@ export default function TCGPage() {
         </div>
       )}
 
+      {/* Error Popup - Custom alert replacement (hidden in Farcaster) */}
+      {errorMessage && !isInFarcaster && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setErrorMessage(null)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-4 border-red-500 max-w-md w-full p-6 shadow-2xl shadow-red-500/50" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="text-4xl">!</div>
+              <h2 className="text-2xl font-display font-bold text-red-400">Error</h2>
+            </div>
+            <p className="text-vintage-ice whitespace-pre-line mb-6 font-modern">
+              {errorMessage}
+            </p>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all hover:scale-105"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[250] p-4" onClick={() => setShowSettings(false)}>
@@ -3555,7 +3577,7 @@ export default function TCGPage() {
                   // Check if player has enough coins for attack entry fee
                   const currentBalance = playerEconomy?.coins || 0;
                   if (currentBalance < 50) {
-                    alert(t('insufficientFundsAttack').replace('{balance}', currentBalance.toString()));
+                    setErrorMessage(t('insufficientFundsAttack').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
                   }
@@ -3895,8 +3917,8 @@ export default function TCGPage() {
 
                   // Check if player has enough coins
                   const currentBalance = playerEconomy?.coins || 0;
-                  if (currentBalance < 80) {
-                    alert(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
+                  if (currentBalance < 40) {
+                    setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
                   }
@@ -3926,7 +3948,7 @@ export default function TCGPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>◊ {t('autoMatch')}</span>
-                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 80 ⟩</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 40 ⟩</span>
                 </div>
               </button>
 
@@ -3937,8 +3959,8 @@ export default function TCGPage() {
 
                   // Check if player has enough coins
                   const currentBalance = playerEconomy?.coins || 0;
-                  if (currentBalance < 80) {
-                    alert(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
+                  if (currentBalance < 40) {
+                    setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
                   }
@@ -3961,7 +3983,7 @@ export default function TCGPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>＋ {t('createRoom')}</span>
-                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 80 ⟩</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 40 ⟩</span>
                 </div>
               </button>
 
@@ -3975,7 +3997,7 @@ export default function TCGPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>→ {t('joinRoom')}</span>
-                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 80 ⟩</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 40 ⟩</span>
                 </div>
               </button>
 
@@ -4130,7 +4152,7 @@ export default function TCGPage() {
             >
               <div className="flex items-center justify-between">
                 <span>{t('join')}</span>
-                <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded">⟨ 80 ⟩</span>
+                <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded">⟨ 40 ⟩</span>
               </div>
             </button>
 

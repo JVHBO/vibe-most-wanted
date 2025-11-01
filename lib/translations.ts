@@ -206,7 +206,7 @@ export const translations = {
     earnedCoins: 'Você ganhou {amount} $TESTVBMS!',
     noCoinsEarned: 'Você não ganhou nada',
     insufficientFundsAttack: 'Fundos insuficientes!\n\nPrecisa de 50 $TESTVBMS para atacar.\nSaldo atual: {balance} $TESTVBMS',
-    insufficientFundsPvP: 'Fundos insuficientes!\n\nPrecisa de 80 $TESTVBMS para jogar PvP.\nSaldo atual: {balance} $TESTVBMS'
+    insufficientFundsPvP: 'Fundos insuficientes!\n\nPrecisa de 40 $TESTVBMS para jogar PvP.\nSaldo atual: {balance} $TESTVBMS'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -408,7 +408,7 @@ export const translations = {
     earnedCoins: 'You earned {amount} $TESTVBMS!',
     noCoinsEarned: 'You earned nothing',
     insufficientFundsAttack: 'Insufficient funds!\n\nNeed 50 $TESTVBMS to attack.\nCurrent balance: {balance} $TESTVBMS',
-    insufficientFundsPvP: 'Insufficient funds!\n\nNeed 80 $TESTVBMS to play PvP.\nCurrent balance: {balance} $TESTVBMS'
+    insufficientFundsPvP: 'Insufficient funds!\n\nNeed 40 $TESTVBMS to play PvP.\nCurrent balance: {balance} $TESTVBMS'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -613,7 +613,7 @@ export const translations = {
     earnedCoins: '¡Ganaste {amount} $TESTVBMS!',
     noCoinsEarned: 'No ganaste nada',
     insufficientFundsAttack: '¡Fondos insuficientes!\n\nNecesitas 50 $TESTVBMS para atacar.\nSaldo actual: {balance} $TESTVBMS',
-    insufficientFundsPvP: '¡Fondos insuficientes!\n\nNecesitas 80 $TESTVBMS para jugar PvP.\nSaldo actual: {balance} $TESTVBMS'
+    insufficientFundsPvP: '¡Fondos insuficientes!\n\nNecesitas 40 $TESTVBMS para jugar PvP.\nSaldo actual: {balance} $TESTVBMS'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -820,6 +820,6 @@ export const translations = {
     earnedCoins: 'आपने {amount} $TESTVBMS कमाए!',
     noCoinsEarned: 'आपने कुछ नहीं कमाया',
     insufficientFundsAttack: 'अपर्याप्त धनराशि!\n\nहमले के लिए 50 $TESTVBMS की आवश्यकता है।\nवर्तमान शेष: {balance} $TESTVBMS',
-    insufficientFundsPvP: 'अपर्याप्त धनराशि!\n\nPvP खेलने के लिए 80 $TESTVBMS की आवश्यकता है।\nवर्तमान शेष: {balance} $TESTVBMS'
+    insufficientFundsPvP: 'अपर्याप्त धनराशि!\n\nPvP खेलने के लिए 40 $TESTVBMS की आवश्यकता है।\nवर्तमान शेष: {balance} $TESTVBMS'
   }
 } as const;
