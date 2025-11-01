@@ -4449,6 +4449,16 @@ export default function TCGPage() {
                 </div>
               </div>
 
+              {/* Sistema de Moedas / Economy */}
+              <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-5 rounded-xl border border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
+                <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                  <span className="text-2xl">$</span> {t('economyInfo')}
+                </h3>
+                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('economyInfoDesc')}</p>
+                </div>
+              </div>
+
               {/* Deck de Defesa */}
               <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-burnt-gold/30">
                 <h3 className="text-xl font-display font-bold text-vintage-burnt-gold mb-3 flex items-center gap-2">
