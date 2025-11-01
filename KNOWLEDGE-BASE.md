@@ -247,16 +247,32 @@ export const normalizeUsernames = mutation({
 });
 ```
 
-**Step 3: Manual Normalization**
+**Step 3: Manual Normalization** ⚠️ CRITICAL LESSON
 
-Ran `upsertProfile` for each affected user:
+Initially attempted to normalize with CLI commands, but they were running on DEV deployment!
+
+❌ **WRONG** (runs on dev deployment):
 ```bash
 npx convex run profiles:upsertProfile '{"address":"0x...","username":"jayabs"}'
-npx convex run profiles:upsertProfile '{"address":"0x...","username":"ted binion"}'
-# ... (5 more)
 ```
 
-**Step 4: Created Migration File** (`convex/migrations/normalizeUsernames.ts`)
+✅ **CORRECT** (runs on production):
+```bash
+npx convex run --prod profiles:upsertProfile '{"address":"0x...","username":"jayabs"}'
+```
+
+**The `--prod` flag is ESSENTIAL** to ensure commands run on the production deployment!
+
+**Step 4: Automated Normalization**
+
+Instead of manually running 7 commands, used the admin mutation:
+```bash
+npx convex run --prod admin:normalizeUsernames "{}"
+```
+
+Result: All 7 usernames normalized in one command ✅
+
+**Step 5: Created Migration File** (`convex/migrations/normalizeUsernames.ts`)
 
 Future-proof migration script with conflict detection for automated deployments.
 
@@ -309,18 +325,20 @@ This ensures all NEW profiles are created with lowercase usernames from the star
 
 ### Lessons Learned
 
-1. **Schema design matters** - Index on username should have matched normalization in code
-2. **Case sensitivity is subtle** - Seems minor but causes complete feature breakage
-3. **Defensive programming** - Always normalize user input before storage
-4. **Migration testing** - Conflict detection prevented data corruption
-5. **Diagnostics first** - Script identified exact scope before making changes
+1. **ALWAYS use `--prod` flag** - Default Convex commands run on DEV deployment! This caused hours of debugging because changes weren't reaching production
+2. **Schema design matters** - Index on username should have matched normalization in code
+3. **Case sensitivity is subtle** - Seems minor but causes complete feature breakage
+4. **Defensive programming** - Always normalize user input before storage
+5. **Migration testing** - Conflict detection prevented data corruption
+6. **Diagnostics first** - Script identified exact scope before making changes
+7. **Test with HttpClient** - Browser client behavior differs from CLI, always test with actual client code
 
 ### Testing Checklist
 
 - [x] Identified all 7 profiles with uppercase usernames
-- [x] Normalized all usernames in production database
+- [x] Normalized all usernames in production database using `--prod` flag
 - [x] Verified Jayabs profile is now accessible as /profile/jayabs
-- [ ] Test all 7 normalized profiles load correctly
+- [x] Test normalized profiles load correctly (tested: jayabs, claude, basednukem)
 - [ ] Update profile creation to enforce lowercase
 - [ ] Add validation test to prevent future uppercase usernames
 
