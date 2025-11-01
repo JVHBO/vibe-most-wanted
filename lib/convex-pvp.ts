@@ -249,6 +249,8 @@ export class ConvexPvPService {
   ): () => void {
     let isActive = true;
     let hasCalledBack = false; // Prevent multiple callbacks
+    let retryCount = 0;
+    const MAX_RETRIES = 15; // Max 15 retries after seeing "matched" status
 
     const poll = async () => {
       if (!isActive || hasCalledBack) return;
@@ -272,6 +274,18 @@ export class ConvexPvPService {
               callback(room.roomId);
               return; // Stop polling
             }
+            else {
+              // Matched but room not found yet - retry with faster polling
+              retryCount++;
+              console.log(`⏳ Matched but room not ready yet, retry ${retryCount}/${MAX_RETRIES}`);
+
+              if (retryCount >= MAX_RETRIES) {
+                console.error("❌ Max retries reached, room never appeared");
+                hasCalledBack = true;
+                callback(null); // Give up
+                return;
+              }
+            }
           } else if (matchStatus.status === "cancelled") {
             // Matchmaking was cancelled
             console.log("⚠️ Matchmaking cancelled");
@@ -285,7 +299,10 @@ export class ConvexPvPService {
       }
 
       if (isActive && !hasCalledBack) {
-        setTimeout(poll, 2000); // Poll every 2 seconds
+        // Use faster polling (500ms) when matched but room not found
+        // Otherwise use normal polling (1000ms instead of 2000ms for better UX)
+        const pollInterval = retryCount > 0 ? 500 : 1000;
+        setTimeout(poll, pollInterval);
       }
     };
 

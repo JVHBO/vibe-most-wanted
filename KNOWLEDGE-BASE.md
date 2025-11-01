@@ -3656,3 +3656,327 @@ type AIDifficulty = 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad';
 **Files:**
 - `app/page.tsx` lines 784, 1260, 1376-1443, 2675-2683, 3068-3076
 - `app/profile/[username]/page.tsx` lines 183-200
+
+
+---
+
+## 🔒 SECURITY AUDIT (2025-10-31)
+
+### Current Security Implementation
+
+**Authentication System:**
+- `convex/auth.ts` - ECDSA signature verification with ethers.js
+- `authenticateActionWithBackend()` - Full cryptographic verification via Convex Actions
+- Nonce management to prevent replay attacks
+- Timestamp validation (5-minute expiry) to prevent old signature reuse
+
+**Message Format for Signatures:**
+```
+"Action: {address} nonce:{N} at {timestamp}"
+```
+
+### Security Audit Findings
+
+**✅ SECURED Mutations (profiles.ts):**
+1. `updateStatsSecure` - Requires signature + nonce verification
+2. `updateDefenseDeckSecure` - Requires signature + nonce verification  
+3. `incrementStatSecure` - Requires signature + nonce verification
+
+**⚠️ UNSECURED Mutations (profiles.ts):**
+1. `upsertProfile` - No signature verification
+2. `updateStats` - No signature verification
+3. `updateDefenseDeck` - No signature verification
+4. `updateAttacks` - No signature verification
+5. `incrementStat` - No signature verification
+
+**🔴 CRITICAL - ALL PvP Mutations UNSECURED (rooms.ts):**
+1. `createRoom` - Anyone can create rooms with fake addresses
+2. `joinRoom` - Anyone can join as any address
+3. `updateCards` - Anyone can update cards for other players
+4. `finishRoom` - Anyone can set wrong winners
+5. `leaveRoom` - Anyone can leave rooms as other players
+6. `findMatch` - Anyone can trigger matches for other players
+7. `addToMatchmaking` - Anyone can add other players to queue
+8. `cancelMatchmaking` - Anyone can cancel others' matchmaking
+
+**Risk Assessment:**
+
+**Current Risk: LOW** (Pre-web3)
+- No real money or NFTs at stake yet
+- Game is in development/testing phase
+- Backend (Convex) is trusted environment
+
+**Future Risk: CRITICAL** (Post-web3)
+- Web3 contract will enable betting/rewards
+- Malicious clients can:
+  - Create fake game results
+  - Claim wins they didn't earn
+  - Manipulate matchmaking
+  - Spoof other players' actions
+- **MUST secure all mutations before mainnet deployment**
+
+### Security Roadmap for Web3 Contract
+
+**Phase 1: Testnet Deployment** (Current)
+- Deploy web3 contract to Base Sepolia testnet
+- Test contract interactions
+- Implement basic bet/reward logic
+- Keep mutations unsecured (testnet only, no real value)
+
+**Phase 2: Backend Security** (Before Mainnet)
+- Create secure versions of ALL room mutations
+- Require signature verification for:
+  - createRoom → createRoomSecure
+  - joinRoom → joinRoomSecure
+  - updateCards → updateCardsSecure
+  - finishRoom → finishRoomSecure
+  - findMatch → findMatchSecure
+- Migrate frontend to use secure mutations only
+
+**Phase 3: Contract Security** (Before Mainnet)
+- Verify game results on-chain
+- Store game state hashes on-chain
+- Implement dispute resolution
+- Add emergency pause mechanism
+- Security audit by external firm
+
+**Phase 4: Mainnet** (Final)
+- Deploy to Base mainnet
+- Enable real value betting
+- Monitor for suspicious activity
+- Rate limiting on mutations
+
+### Current Implementation Pattern (Good)
+
+```typescript
+// UNSECURED (for testing/development)
+export const updateStats = mutation({
+  args: { address: v.string(), stats: v.object({...}) },
+  handler: async (ctx, { address, stats }) => {
+    // Direct update, no verification
+  },
+});
+
+// SECURED (for production)
+export const updateStatsSecure = mutation({
+  args: {
+    address: v.string(),
+    signature: v.string(),
+    message: v.string(),
+    stats: v.object({...}),
+  },
+  handler: async (ctx, { address, signature, message, stats }) => {
+    // 1. Authenticate with ECDSA verification
+    const auth = await authenticateActionWithBackend(ctx, address, signature, message);
+    if (!auth.success) {
+      throw new Error(`Unauthorized: ${auth.error}`);
+    }
+
+    // 2. Verify nonce (prevent replay attacks)
+    const nonceValid = await verifyNonce(ctx, address, message);
+    if (!nonceValid) {
+      throw new Error("Invalid nonce - possible replay attack");
+    }
+
+    // 3. Perform action
+    // ... actual mutation logic ...
+
+    // 4. Increment nonce for next action
+    await incrementNonce(ctx, address);
+  },
+});
+```
+
+### Files to Secure Before Mainnet
+
+**High Priority:**
+- `convex/rooms.ts` - ALL mutations need secure versions
+- Frontend migration to use `*Secure` mutations only
+
+**Medium Priority:**
+- `convex/profiles.ts` - Remove unsecured mutations or restrict to read-only
+- Rate limiting on mutations (prevent spam attacks)
+
+**Low Priority:**
+- Cleanup mutations (cleanupOldRooms, cleanupMatchmaking) - Can stay unsecured
+- Query functions - Already read-only, no security risk
+
+### Summary
+
+**Current State:**
+- ✅ Security infrastructure exists and works
+- ✅ Pattern established (secured vs unsecured mutations)
+- ✅ Ready for testnet deployment
+- ⚠️ NOT ready for mainnet (PvP mutations unsecured)
+
+**Next Steps:**
+1. Deploy web3 contract to Base Sepolia testnet
+2. Test contract interactions with unsecured backend
+3. Before mainnet: Create secure versions of ALL room mutations
+4. Before mainnet: Frontend migration to secured mutations
+5. Before mainnet: External security audit
+
+**Timeline:**
+- Testnet: Can deploy NOW (low risk, no real value)
+- Mainnet: Requires 2-3 weeks of security work + audit
+
+**Files Analyzed:**
+- `convex/auth.ts` (268 lines) - Security implementation
+- `convex/profiles.ts` (585 lines) - Mixed secured/unsecured mutations
+- `convex/rooms.ts` (497 lines) - All unsecured mutations
+- `convex/cryptoActions.ts` - Backend ECDSA verification (imported by auth.ts)
+
+
+---
+
+## 🐛 BUG #8: Automatch Race Condition (2025-10-31)
+
+### Problem Description
+
+User report: "tem problemas no automatch ainda as vezes um player entra na sala e o outro ainda nem esta nela ta bem bugado"
+
+**Symptom**: When two players use automatch, one player enters the room immediately while the other is still "Searching for match...", creating a desynchronized experience.
+
+### Root Cause Analysis
+
+**Automatch Flow:**
+
+**Player A (first):**
+1. Clicks Automatch → `findMatch()` called
+2. Backend finds no one waiting → adds to queue with status "searching"
+3. Returns `null` to frontend
+4. Frontend starts polling `watchMatchmaking()` **every 2 seconds**
+
+**Player B (second):**
+1. Clicks Automatch → `findMatch()` called
+2. Backend finds Player A in queue
+3. Creates room with:
+   - hostAddress = Player B
+   - guestAddress = Player A
+   - status = "ready"
+4. **Immediately returns roomCode to Player B**
+5. Player B enters room and can start selecting cards
+
+**Player A (still waiting):**
+1. Continues polling every **2 seconds**
+2. Can take up to 2 seconds to discover they were matched
+3. When poll runs, sees status="matched"
+4. Calls `getRoomByPlayer()` to find room
+5. Finally enters room
+
+### The Problem
+
+**Time Gap**: Player B receives roomCode instantly, but Player A discovers it up to 2 seconds later. This creates the perception that "one player enters but the other is not there yet".
+
+**Additional Issues Identified:**
+
+1. **Slow Polling**: 2000ms interval is too long for realtime matchmaking UX
+2. **No Retry Logic**: If `getRoomByPlayer()` fails to find room on first try (race condition with DB), the flag `hasCalledBack` prevents retries
+3. **Possible Convex Latency**: Between room `insert` and `query` returning results
+
+### Proposed Solution
+
+**Safe, Frontend-Only Fix** (doesn't touch backend to avoid breaking rooms.ts):
+
+1. **Reduce poll interval**: 2000ms → 1000ms for better responsiveness
+2. **Add retry logic**: If status="matched" but room not found, retry up to 15 times with faster polling (500ms)
+3. **Add timeout**: After 15 retries, give up to prevent infinite loop
+
+**Changes in `lib/convex-pvp.ts` lines 250-298:**
+
+```typescript
+static watchMatchmaking(...): () => void {
+  let isActive = true;
+  let hasCalledBack = false;
+  let retryCount = 0;               // NEW
+  const MAX_RETRIES = 15;            // NEW
+
+  const poll = async () => {
+    if (!isActive || hasCalledBack) return;
+
+    try {
+      const matchStatus = await convex.query(api.rooms.getMatchmakingStatus, ...);
+
+      if (matchStatus?.status === "matched") {
+        const room = await convex.query(api.rooms.getRoomByPlayer, ...);
+
+        if (room && room.roomId) {
+          // Found room - enter!
+          hasCalledBack = true;
+          callback(room.roomId);
+          return;
+        } else {
+          // NEW: Room not found yet - retry
+          retryCount++;
+          console.log(`⏳ Matched but room not ready yet, retry ${retryCount}/${MAX_RETRIES}`);
+
+          if (retryCount >= MAX_RETRIES) {
+            console.error("❌ Max retries reached, room never appeared");
+            hasCalledBack = true;
+            callback(null); // Give up
+            return;
+          }
+        }
+      } else if (matchStatus?.status === "cancelled") {
+        // Cancelled
+        hasCalledBack = true;
+        callback(null);
+        return;
+      }
+    } catch (error) {
+      console.error("❌ Error polling matchmaking status:", error);
+    }
+
+    if (isActive && !hasCalledBack) {
+      // NEW: Faster polling when retrying (500ms), otherwise 1000ms
+      const pollInterval = retryCount > 0 ? 500 : 1000;
+      setTimeout(poll, pollInterval);
+    }
+  };
+
+  poll();
+  return () => { isActive = false; };
+}
+```
+
+### Benefits of This Fix
+
+1. **2x faster discovery**: 1000ms instead of 2000ms poll
+2. **Handles race conditions**: Retries if room not found immediately after match
+3. **4x faster retries**: 500ms when actively retrying
+4. **Safe timeout**: Won't loop forever if something goes wrong
+5. **No backend changes**: Doesn't touch sensitive `rooms.ts` code
+6. **Better UX**: Both players enter room within ~1 second of each other
+
+### Why This is Safe
+
+- Only modifies `lib/convex-pvp.ts` (frontend service layer)
+- Doesn't change any backend mutations or queries
+- Doesn't modify schemas or database logic
+- Adds defensive retry logic
+- Has proper timeout to prevent infinite loops
+- Backwards compatible (if rollback needed, just revert one file)
+
+### Files to Modify
+
+- `lib/convex-pvp.ts` lines 250-298 (watchMatchmaking function)
+
+### Testing Plan
+
+1. Open 2 browser windows with different wallets
+2. Click Automatch on both at the same time
+3. Verify both players enter room within 1 second
+4. Check console logs for retry messages
+5. Test edge cases:
+   - One player cancels before match
+   - Network latency simulation
+   - Rapid repeated matching
+
+### Related Context
+
+- Previous rollback on 2025-10-30 due to breaking automatch with index changes
+- User emphasized: "cuidado com as mudanças nisso lembre dos problemas que tivemos"
+- This fix avoids touching backend to prevent similar issues
+
+---
+
