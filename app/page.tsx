@@ -3756,10 +3756,10 @@ export default function TCGPage() {
                       let matchResult: 'win' | 'loss' | 'tie';
                       if (playerTotal > dealerTotal) {
                         matchResult = 'win';
-                        if (soundEnabled) AudioManager.playWin();
+                        if (soundEnabled) AudioManager.win();
                       } else if (playerTotal < dealerTotal) {
                         matchResult = 'loss';
-                        if (soundEnabled) AudioManager.playLoss();
+                        if (soundEnabled) AudioManager.lose();
                       } else {
                         matchResult = 'tie';
                         setShowTiePopup(true);
