@@ -76,7 +76,9 @@ async function getImage(nft: any): Promise<string> {
         }
       }
     }
-  } catch {}
+  } catch (error) {
+    console.warn(`⚠️ Failed to fetch image from tokenUri for NFT #${tid}:`, error);
+  }
 
   let rawImage = extractUrl(nft?.raw?.metadata?.image);
   if (rawImage) {
@@ -238,7 +240,9 @@ async function refreshMetadata(nfts: any[], batchSize: number = 50): Promise<any
             // Merge fresh metadata
             return { ...nft, raw: { ...nft.raw, metadata: json } };
           }
-        } catch {}
+        } catch (error) {
+          console.warn(`⚠️ Failed to refresh metadata for NFT #${nft.tokenId}:`, error);
+        }
         return nft;
       })
     );
