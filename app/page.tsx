@@ -2905,7 +2905,7 @@ export default function TCGPage() {
                             );
 
                             if (!popup) {
-                              alert('Popup bloqueado! Permita popups para este site.');
+                              setErrorMessage('Popup blocked! Please allow popups for this site.');
                             }
                           } else {
                             devError('✗ No URL in response');
@@ -3590,7 +3590,7 @@ export default function TCGPage() {
                     await payEntryFee({ address: address || '', mode: 'attack' });
                     devLog('Attack entry fee paid: 50 $TESTVBMS');
                   } catch (error: any) {
-                    alert('Erro ao pagar taxa: ' + error.message);
+                    setErrorMessage('Error paying entry fee: ' + error.message);
                     setIsAttacking(false);
                     if (soundEnabled) AudioManager.buttonError();
                     return;
@@ -3939,7 +3939,7 @@ export default function TCGPage() {
                     }
                     // Se não encontrou (code === ''), continua em autoMatch aguardando
                   } catch (error: any) {
-                    alert('Erro ao buscar partida: ' + error.message);
+                    setErrorMessage('Error finding match: ' + error.message);
                     setIsSearching(false);
                     setPvpMode('pvpMenu');
                   }
@@ -3976,7 +3976,7 @@ export default function TCGPage() {
                     setRoomCode(code);
                     setPvpMode('createRoom');
                   } catch (error: any) {
-                    alert('Erro ao criar sala: ' + error.message);
+                    setErrorMessage('Error creating room: ' + error.message);
                   }
                 }}
                 className="w-full px-6 py-4 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-display font-bold text-lg shadow-neon transition-all hover:scale-105"
