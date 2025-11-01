@@ -95,7 +95,9 @@ async function getImage(nft: any): Promise<string> {
         }
       }
     }
-  } catch {}
+  } catch (error) {
+    devWarn(`⚠️ Failed to fetch image from tokenUri for NFT #${tid}:`, error);
+  }
 
   let rawImage = extractUrl(nft?.raw?.metadata?.image);
   if (rawImage) {
