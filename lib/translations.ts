@@ -195,7 +195,14 @@ export const translations = {
     chooseDifficulty: 'Escolher Dificuldade',
     loadingDealerDeck: 'Carregando deck do dealer...',
     startBattle: 'INICIAR BATALHA',
-    close: 'FECHAR'
+    close: 'FECHAR',
+    dailyBonusClaimed: 'Já coletado hoje',
+    claimDailyBonus: 'Coletar +25 $TESTVBMS',
+    claimed: 'COLETADO',
+    claiming: 'Coletando...',
+    questProgress: 'Progresso',
+    claimReward: 'Coletar Recompensa',
+    questClaimed: 'COLETADO'
   },
   en: {
     title: 'Vibe Most Wanted',
@@ -386,7 +393,14 @@ export const translations = {
     chooseDifficulty: 'Choose Difficulty',
     loadingDealerDeck: 'Loading dealer deck...',
     startBattle: 'START BATTLE',
-    close: 'CLOSE'
+    close: 'CLOSE',
+    dailyBonusClaimed: 'Already claimed today',
+    claimDailyBonus: 'Claim +25 $TESTVBMS',
+    claimed: 'CLAIMED',
+    claiming: 'Claiming...',
+    questProgress: 'Progress',
+    claimReward: 'Claim Reward',
+    questClaimed: 'CLAIMED'
   },
   es: {
     title: 'Vibe Most Wanted',
@@ -580,7 +594,14 @@ export const translations = {
     chooseDifficulty: 'Elegir Dificultad',
     loadingDealerDeck: 'Cargando mazo del dealer...',
     startBattle: 'INICIAR BATALLA',
-    close: 'CERRAR'
+    close: 'CERRAR',
+    dailyBonusClaimed: 'Ya cobrado hoy',
+    claimDailyBonus: 'Cobrar +25 $TESTVBMS',
+    claimed: 'COBRADO',
+    claiming: 'Cobrando...',
+    questProgress: 'Progreso',
+    claimReward: 'Cobrar Recompensa',
+    questClaimed: 'COBRADO'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -776,6 +797,13 @@ export const translations = {
     chooseDifficulty: 'कठिनाई चुनें',
     loadingDealerDeck: 'डीलर डेक लोड हो रहा है...',
     startBattle: 'युद्ध शुरू करें',
-    close: 'बंद करें'
+    close: 'बंद करें',
+    dailyBonusClaimed: 'आज पहले से प्राप्त',
+    claimDailyBonus: '+25 $TESTVBMS प्राप्त करें',
+    claimed: 'प्राप्त किया गया',
+    claiming: 'प्राप्त कर रहे हैं...',
+    questProgress: 'प्रगति',
+    claimReward: 'पुरस्कार प्राप्त करें',
+    questClaimed: 'प्राप्त किया गया'
   }
 } as const;

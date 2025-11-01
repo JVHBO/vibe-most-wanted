@@ -4707,9 +4707,9 @@ export default function TCGPage() {
                           ? 'bg-gray-600/30 text-gray-400 border border-gray-500/30 cursor-not-allowed'
                           : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white border-2 border-green-400 hover:from-green-500 hover:to-emerald-500 shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:shadow-[0_0_25px_rgba(34,197,94,0.6)]'
                       }`}
-                      title={loginBonusClaimed ? "Já coletado hoje" : "Coletar +25 $TESTVBMS"}
+                      title={loginBonusClaimed ? t('dailyBonusClaimed') : t('claimDailyBonus')}
                     >
-                      {isClaimingBonus ? '⏳' : loginBonusClaimed ? '✓ COLETADO' : '🎁 +25'}
+                      {isClaimingBonus ? '⏳' : loginBonusClaimed ? `✓ ${t('claimed')}` : '🎁 +25'}
                     </button>
                   )}
 
@@ -4792,7 +4792,7 @@ export default function TCGPage() {
                 </div>
                 {questProgress.claimed ? (
                   <div className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg font-modern font-semibold text-xs md:text-sm">
-                    ✓ CLAIMED
+                    ✓ {t('questClaimed')}
                   </div>
                 ) : questProgress.completed ? (
                   <button
@@ -4800,7 +4800,7 @@ export default function TCGPage() {
                     disabled={isClaimingQuest}
                     className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white border-2 border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
                   >
-                    {isClaimingQuest ? '⏳' : '💎 CLAIM'}
+                    {isClaimingQuest ? '⏳' : `💎 ${t('claimReward')}`}
                   </button>
                 ) : null}
               </div>
@@ -4812,7 +4812,7 @@ export default function TCGPage() {
               {!questProgress.claimed && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs md:text-sm text-purple-300 font-modern">
-                    <span>Progress</span>
+                    <span>{t('questProgress')}</span>
                     <span className="font-bold">
                       {questProgress.progress} / {questProgress.quest.requirement.count || 1}
                     </span>
