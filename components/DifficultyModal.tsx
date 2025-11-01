@@ -199,12 +199,17 @@ export default function DifficultyModal({
                 <span className="drop-shadow-lg">{t('startBattle')}</span>
               </button>
               {onEliminationBattle && (
-                <button
-                  onClick={() => onEliminationBattle(tempSelected)}
-                  className="relative w-full sm:w-auto px-6 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-600 text-white rounded-lg font-display font-bold text-sm lg:text-xl shadow-lg transition-all hover:shadow-purple-500/50 uppercase tracking-wider border-2 border-purple-500/30"
-                >
-                  <span className="drop-shadow-lg">⚔️ Elimination Mode</span>
-                </button>
+                <div className="relative w-full sm:w-auto">
+                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-vintage-burnt-gold font-bold text-xs tracking-widest">
+                    SOON
+                  </div>
+                  <button
+                    disabled
+                    className="relative w-full sm:w-auto px-6 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-purple-600/30 to-purple-700/30 text-white/40 rounded-lg font-display font-bold text-sm lg:text-xl uppercase tracking-wider border-2 border-purple-500/20 cursor-not-allowed opacity-50"
+                  >
+                    <span className="drop-shadow-lg">⚔️ Elimination Mode</span>
+                  </button>
+                </div>
               )}
             </>
           )}
