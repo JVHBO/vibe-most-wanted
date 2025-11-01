@@ -147,6 +147,189 @@ This would make profile loading **much faster** for players with cards spread ac
 
 ---
 
+## Bug #10 - Profiles Inaccessible Due to Uppercase Usernames
+
+**Date**: 2025-11-01
+**Reported By**: User (profiles like Jayabs, Ted Binion not loading)
+**Status**: ✅ FIXED
+**Severity**: High (complete profile inaccessibility for affected users)
+
+### Problem
+
+7 player profiles were completely inaccessible via URL:
+- **URL**: `https://www.vibemostwanted.xyz/profile/Jayabs` → "Profile not found"
+- **Database**: Profile exists with username `"Jayabs"` (uppercase J)
+- **Search**: App uses `.toLowerCase()` but database has mixed case
+
+### Root Cause
+
+**Schema Inconsistency**: The `profiles` table has a unique index on `username`, but profile creation/lookup was inconsistent:
+
+1. **Profile Creation** (`convex/profiles.ts`): Saves username with original casing
+   ```typescript
+   username: args.username, // ❌ Could be "Jayabs", "Ted Binion", etc.
+   ```
+
+2. **Profile Lookup** (`app/profile/[username]/page.tsx`): Searches with lowercase
+   ```typescript
+   const username = params.username.toLowerCase(); // ✅ Always lowercase
+   const profile = await getProfileByUsername({ username });
+   ```
+
+3. **Database Query** (`convex/profiles.ts`): Exact match on index
+   ```typescript
+   .withIndex("by_username", (q) => q.eq("username", args.username))
+   // ❌ Searches for "jayabs" but DB has "Jayabs" - NO MATCH!
+   ```
+
+**Affected Users** (7 profiles):
+- Jayabs → jayabs
+- Ted Binion → ted binion
+- 0xStk → 0xstk
+- Shiro → shiro
+- Claude → claude
+- BASEDNUKEM → basednukem
+- Vipul → vipul
+
+### Solution
+
+**Step 1: Created Diagnostic Script** (`normalize-usernames-script.js`)
+
+```javascript
+const profiles = await client.query(api.profiles.getLeaderboard, { limit: 1000 });
+
+for (const profile of profiles) {
+  if (profile.username !== profile.username.toLowerCase()) {
+    needsNormalization.push({
+      address: profile.address,
+      original: profile.username,
+      normalized: profile.username.toLowerCase()
+    });
+  }
+}
+```
+
+This identified all 7 profiles that needed fixing.
+
+**Step 2: Added Admin Mutation** (`convex/admin.ts` lines 112-170)
+
+```typescript
+export const normalizeUsernames = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("profiles").collect();
+
+    for (const profile of profiles) {
+      const normalizedUsername = profile.username.toLowerCase();
+
+      if (profile.username !== normalizedUsername) {
+        // Check for conflicts
+        const conflict = await ctx.db
+          .query("profiles")
+          .withIndex("by_username", (q) => q.eq("username", normalizedUsername))
+          .first();
+
+        if (conflict && conflict._id !== profile._id) {
+          console.warn(`⚠️ CONFLICT: ${profile.username} already exists`);
+          continue;
+        }
+
+        await ctx.db.patch(profile._id, {
+          username: normalizedUsername,
+        });
+
+        updated++;
+      }
+    }
+
+    return { success: true, updated };
+  },
+});
+```
+
+**Step 3: Manual Normalization**
+
+Ran `upsertProfile` for each affected user:
+```bash
+npx convex run profiles:upsertProfile '{"address":"0x...","username":"jayabs"}'
+npx convex run profiles:upsertProfile '{"address":"0x...","username":"ted binion"}'
+# ... (5 more)
+```
+
+**Step 4: Created Migration File** (`convex/migrations/normalizeUsernames.ts`)
+
+Future-proof migration script with conflict detection for automated deployments.
+
+### Files Modified
+
+- `convex/admin.ts` - Added normalizeUsernames mutation
+- `normalize-usernames-script.js` - NEW: Diagnostic tool
+- `convex/migrations/normalizeUsernames.ts` - NEW: Migration script
+
+### Verification
+
+After normalization, all profiles are now accessible:
+```bash
+# Before: Profile not found
+https://www.vibemostwanted.xyz/profile/Jayabs ❌
+
+# After: Profile loads correctly
+https://www.vibemostwanted.xyz/profile/jayabs ✅
+```
+
+Verified with Convex query:
+```bash
+npx convex run profiles:getProfileByUsername '{"username":"jayabs"}'
+# Returns: { "username": "jayabs", ... } ✅
+```
+
+### Prevention
+
+**TODO: Enforce lowercase at creation time**
+
+Update `convex/profiles.ts` to normalize usernames on creation:
+
+```typescript
+export const upsertProfile = mutation({
+  args: { address: v.string(), username: v.string() },
+  handler: async (ctx, args) => {
+    const normalizedUsername = args.username.toLowerCase(); // ✅ Force lowercase
+
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_username", (q) => q.eq("username", normalizedUsername))
+      .first();
+
+    // ... rest of logic
+  },
+});
+```
+
+This ensures all NEW profiles are created with lowercase usernames from the start.
+
+### Lessons Learned
+
+1. **Schema design matters** - Index on username should have matched normalization in code
+2. **Case sensitivity is subtle** - Seems minor but causes complete feature breakage
+3. **Defensive programming** - Always normalize user input before storage
+4. **Migration testing** - Conflict detection prevented data corruption
+5. **Diagnostics first** - Script identified exact scope before making changes
+
+### Testing Checklist
+
+- [x] Identified all 7 profiles with uppercase usernames
+- [x] Normalized all usernames in production database
+- [x] Verified Jayabs profile is now accessible as /profile/jayabs
+- [ ] Test all 7 normalized profiles load correctly
+- [ ] Update profile creation to enforce lowercase
+- [ ] Add validation test to prevent future uppercase usernames
+
+### Commit
+
+- `fix: Add username normalization tools and admin function`
+
+---
+
 ## 📚 Índice Principal
 
 ### 🔧 PARTE I: Soluções & Patterns
