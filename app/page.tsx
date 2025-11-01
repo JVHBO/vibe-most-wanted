@@ -1464,7 +1464,7 @@ export default function TCGPage() {
       if (!jcNftsLoading) {
         setTimeout(() => {
           devLog('🔄 Retrying battle after waiting for deck to load...');
-          playHand();
+          playHand(cards, difficulty); // Fix: pass parameters to preserve selected difficulty
         }, 2000);
       }
 
