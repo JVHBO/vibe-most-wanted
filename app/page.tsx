@@ -855,6 +855,9 @@ export default function TCGPage() {
   const [defensesReceived, setDefensesReceived] = useState<any[]>([]);
   const [unreadDefenses, setUnreadDefenses] = useState<number>(0);
 
+  // Refs for preventing race conditions
+  const updateStatsInProgress = useRef(false);
+
   // Calculate max attacks for current user
   const maxAttacks = useMemo(() => getMaxAttacks(address), [address]);
 
@@ -2420,12 +2423,22 @@ export default function TCGPage() {
     }
   }, [selectedCards.length]);
 
-  // Update profile stats when NFTs change
+  // Update profile stats when NFTs change (with mutex to prevent race conditions)
   useEffect(() => {
+    // Guard: Skip if update already in progress
+    if (updateStatsInProgress.current) {
+      devLog('⏸️ Stats update already in progress, skipping...');
+      return;
+    }
+
     if (address && userProfile && nfts.length > 0) {
+      updateStatsInProgress.current = true;
+
       const totalPower = nfts.reduce((sum, nft) => sum + (nft.power || 0), 0);
       const openedCards = nfts.filter(nft => !isUnrevealed(nft)).length;
       const unopenedCards = nfts.filter(nft => isUnrevealed(nft)).length;
+
+      devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards, totalPower });
 
       // Update stats and reload profile to show updated values
       ConvexProfileService.updateStats(address, nfts.length, openedCards, unopenedCards, totalPower)
@@ -2440,6 +2453,10 @@ export default function TCGPage() {
         })
         .catch((error) => {
           devError('Error updating profile stats:', error);
+        })
+        .finally(() => {
+          // Always release the lock
+          updateStatsInProgress.current = false;
         });
     }
   }, [address, nfts]); // Removed userProfile to prevent infinite loop
