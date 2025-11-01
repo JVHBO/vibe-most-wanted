@@ -163,10 +163,29 @@ function isUnrevealed(nft: any): boolean {
 
   if (!hasAttrs) return true;
 
-  const r = (findAttr(nft, 'rarity') || '').toLowerCase();
-  const s = (findAttr(nft, 'status') || '').toLowerCase();
   const n = String(nft?.name || '').toLowerCase();
 
+  // ✅ IMPROVED: Check if card has revealed attributes (Wear, Character, Power) BEFORE checking Rarity
+  // Some NFTs have Rarity="Unopened" even after being revealed (contract bug)
+  const wear = findAttr(nft, 'wear');
+  const character = findAttr(nft, 'character');
+  const power = findAttr(nft, 'power');
+  const actualRarity = findAttr(nft, 'rarity');
+
+  // If card has Wear/Character/Power attributes, it's definitely revealed
+  if (wear || character || power) {
+    return false;
+  }
+
+  // Check if it has a real rarity (Common, Rare, Epic, Legendary)
+  const r = (actualRarity || '').toLowerCase();
+  if (r && r !== 'unopened' && (r.includes('common') || r.includes('rare') || r.includes('epic') || r.includes('legendary'))) {
+    return false;
+  }
+
+  const s = (findAttr(nft, 'status') || '').toLowerCase();
+
+  // Only mark as unopened if explicitly stated
   if (r === 'unopened' || s === 'unopened' || n === 'unopened' || n.includes('sealed pack')) {
     return true;
   }
