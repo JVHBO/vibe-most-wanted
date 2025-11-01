@@ -671,7 +671,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
                 {/* Match Type & Result */}
                 <div className="flex items-center gap-4">
                   <div className="text-3xl text-vintage-gold">
-                    {match.type === 'pvp' ? '♥' : match.type === 'attack' ? '✦' : match.type === 'defense' ? '◆' : '♣'}
+                    {match.type === 'pvp' ? '♥' : match.type === 'attack' ? '†' : match.type === 'defense' ? '◆' : '♣'}
                   </div>
                   <div>
                     <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
@@ -3532,7 +3532,7 @@ export default function TCGPage() {
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto" onClick={() => setShowAttackCardSelection(false)}>
           <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-4 shadow-lg shadow-red-600/50 my-4 max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-red-500">
-              ✦ ATTACK {targetPlayer.username.toUpperCase()}
+              † ATTACK {targetPlayer.username.toUpperCase()}
             </h2>
             <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
               Choose {HAND_SIZE_CONST} cards to attack with ({attackSelectedCards.length}/{HAND_SIZE_CONST} selected)
@@ -3827,7 +3827,7 @@ export default function TCGPage() {
                   '... Attacking'
                 ) : (
                   <div className="flex items-center justify-between">
-                    <span>✦ Attack! ({attackSelectedCards.length}/{HAND_SIZE_CONST})</span>
+                    <span>† Attack! ({attackSelectedCards.length}/{HAND_SIZE_CONST})</span>
                     <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded ml-2">⟨ 50 ⟩</span>
                   </div>
                 )}
@@ -4462,7 +4462,7 @@ export default function TCGPage() {
               {/* Sistema de Ataques */}
               <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-red-500/30">
                 <h3 className="text-xl font-display font-bold text-red-400 mb-3 flex items-center gap-2">
-                  <span className="text-2xl">✦</span> {t('attackSystemInfo')}
+                  <span className="text-2xl">†</span> {t('attackSystemInfo')}
                 </h3>
                 <div className="bg-vintage-black/50 p-4 rounded-lg border border-red-500/20">
                   <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('attackSystemInfoDesc')}</p>
@@ -5246,7 +5246,7 @@ export default function TCGPage() {
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
                                 >
-                                  ✦<span className="hidden sm:inline"> Attack</span>
+                                  †<span className="hidden sm:inline"> Attack</span>
                                 </button>
                               )}
                               {profile.address.toLowerCase() === address?.toLowerCase() && (
