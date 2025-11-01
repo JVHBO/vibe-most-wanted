@@ -1493,7 +1493,17 @@ export default function TCGPage() {
           const p = c.power || 0;
           return p === 18 || p === 21;
         });
-        pickedDealer = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        if (weak.length >= HAND_SIZE_CONST) {
+          pickedDealer = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        } else {
+          // Fallback: expand to include nearby power values (15-38 range)
+          console.log('  ⚠️ Not enough 18-21 PWR cards, using expanded range');
+          const weakExpanded = sorted.filter(c => {
+            const p = c.power || 0;
+            return p >= 18 && p <= 38;
+          });
+          pickedDealer = weakExpanded.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        }
         console.log('🤪 GOOFY: 18-21 PWR');
         console.log('  Available:', weak.length);
         console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
