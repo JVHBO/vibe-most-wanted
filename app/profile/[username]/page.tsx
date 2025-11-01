@@ -273,8 +273,8 @@ export default function ProfilePage() {
       (typeof window !== 'undefined' && window.location.hash === '#match-history') ||
       searchParams.get('scrollTo') === 'match-history';
 
-    if (shouldScroll) {
-      // Wait for content to load before scrolling
+    if (shouldScroll && matchHistory && matchHistory.length >= 0) {
+      // Wait for match history to render before scrolling
       setTimeout(() => {
         const matchHistoryElement = document.getElementById('match-history');
         if (matchHistoryElement) {
@@ -283,7 +283,7 @@ export default function ProfilePage() {
         } else {
           devLog('⚠️ Match history element not found');
         }
-      }, 1000);
+      }, 1500); // Increased timeout to ensure match history is rendered
     }
   }, [matchHistory, searchParams]);
 
