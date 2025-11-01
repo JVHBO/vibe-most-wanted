@@ -1,7 +1,28 @@
 # 💰 ECONOMY SYSTEM IMPROVEMENTS
 
 **Data**: 2025-11-01
-**Status**: ✅ Backend Implemented | ⏳ Frontend Pending
+**Status**: ✅ FULLY IMPLEMENTED (Backend + Frontend)
+
+---
+
+## 🐛 Bug Fixes (2025-11-01)
+
+### Bug #1: PvE Elimination Mode Not Scaling Rewards
+**Issue**: Elimination mode was passing `aiDifficulty` instead of `eliminationDifficulty` to `awardPvECoins()`, causing all difficulties to give the same rewards.
+
+**Fix**: Changed line 1758 in `app/page.tsx` from `difficulty: aiDifficulty` to `difficulty: eliminationDifficulty`.
+
+**Impact**: Higher difficulties now correctly give more coins:
+- Gey: 5 coins
+- Goofy: 15 coins
+- Gooner: 30 coins
+- Gangster: 60 coins
+- Gigachad: 120 coins
+
+### Bug #2: Wrong AudioManager Method Names
+**Issue**: Used `AudioManager.playWin()` and `AudioManager.playLoss()` but actual methods are `win()` and `lose()`.
+
+**Fix**: Corrected method calls in line 3759-3767 of `app/page.tsx`.
 
 ---
 
@@ -304,13 +325,14 @@ npx convex run profiles:getLeaderboard '{"limit": 50}' | grep coins
 - [x] Documentar no KNOWLEDGE-BASE
 
 ### Frontend (Next.js)
-- [ ] Adicionar estado showPvPPreview
-- [ ] Criar modal customizado de preview
-- [ ] Integrar previewPvPRewards() no botão de ataque
-- [ ] Passar opponentAddress para awardPvPCoins()
-- [ ] Mostrar ranking bonuses no resultado da batalha
-- [ ] Adicionar preview no PvP auto-match também
-- [ ] Testar com diferentes rankings
+- [x] Adicionar estado showPvPPreview
+- [x] Criar modal customizado de preview
+- [x] Integrar previewPvPRewards() no botão de ataque
+- [x] Passar opponentAddress para awardPvPCoins() (attack + auto-match)
+- [x] Mostrar ranking bonuses no resultado da batalha
+- [x] Adicionar preview no PvP auto-match também
+- [x] Fix PvE Elimination difficulty bug
+- [x] Fix AudioManager method names
 
 ### Sistema de Distribuição Semanal
 - [ ] Implementar distributeWeeklyRewards()
