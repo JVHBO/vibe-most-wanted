@@ -353,7 +353,12 @@ export const previewPvPRewards = query({
 
     // Check if first PvP bonus available
     const today = new Date().toISOString().split('T')[0];
-    const dailyLimits = player.dailyLimits || {};
+    const dailyLimits = player.dailyLimits || {
+      lastResetDate: '',
+      firstPvpBonus: false,
+      pveWins: 0,
+      pvpMatches: 0,
+    };
     const isToday = dailyLimits.lastResetDate === today;
     const firstPvpBonus = isToday && !dailyLimits.firstPvpBonus ? BONUSES.firstPvp : 0;
 
