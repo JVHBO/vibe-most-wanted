@@ -3980,3 +3980,549 @@ static watchMatchmaking(...): () => void {
 
 ---
 
+
+## Bug #6 - Difficulty Selection Not Preserved on Retry
+
+**Date**: 2025-11-01
+**Status**: ✅ FIXED
+**Severity**: Medium
+
+### Problem
+
+When unlocking a new difficulty level, the first battle attempt would use the PREVIOUS difficulty level instead of the newly selected one. Only the second attempt would work correctly.
+
+**User Report**: "quando desbloqueia a nova dificuldade, a primeira partida sempre usa a dificuldade anterior, precisa tentar duas vezes"
+
+### Root Cause
+
+In `app/page.tsx` line 1467, when the JC deck wasn't loaded yet, the retry mechanism called `playHand()` without parameters:
+
+```typescript
+setTimeout(() => {
+  devLog('🔄 Retrying battle after waiting for deck to load...');
+  playHand(); // ❌ NO PARAMETERS - uses old state
+}, 2000);
+```
+
+This caused the function to use the stale `aiDifficulty` state from the previous render instead of the newly selected `difficulty` parameter.
+
+### Solution
+
+Pass the original parameters to preserve the selected difficulty:
+
+```typescript
+setTimeout(() => {
+  devLog('🔄 Retrying battle after waiting for deck to load...');
+  playHand(cards, difficulty); // ✅ Pass parameters to preserve selection
+}, 2000);
+```
+
+### Files Modified
+
+- `app/page.tsx` line 1467
+
+### Commit
+
+- `fix: Preserve selected difficulty on playHand retry`
+
+---
+
+## Bug #7 - TypeScript Compilation Errors in Economy System
+
+**Date**: 2025-11-01
+**Status**: ✅ FIXED
+**Severity**: Critical (blocked Vercel deployment)
+
+### Problem
+
+After fixing Bug #6 and pushing to Vercel, the build failed with 3 TypeScript errors in `convex/economy.ts`:
+
+1. **Error**: `Property 'mutation' does not exist on type 'GenericMutationCtx'`
+2. **Error**: `Cannot assign to 'profile' because it is a constant`
+3. **Error**: `'profile' is possibly 'null'`
+
+### Root Causes
+
+#### Error 1: Invalid ctx.mutation() call (3 occurrences)
+
+In Convex, you **cannot** call `ctx.mutation()` from within a mutation handler. The code was trying to recursively call `initializeEconomy` mutation:
+
+```typescript
+// ❌ WRONG - cannot call mutation from mutation
+if (profile.coins === undefined) {
+  await ctx.mutation(api.economy.initializeEconomy, { address });
+  const updatedProfile = await ctx.db.get(profile._id);
+  if (!updatedProfile) throw new Error("Failed to initialize economy");
+  profile = updatedProfile;
+}
+```
+
+#### Error 2: Reassignment to const (3 occurrences)
+
+Profile was declared as `const` but needed reassignment after initialization:
+
+```typescript
+const profile = await ctx.db.query("profiles")... // ❌ const
+// Later:
+profile = updatedProfile; // ❌ Cannot reassign const
+```
+
+#### Error 3: Null assertion needed (3 occurrences)
+
+After reassignment, TypeScript couldn't determine profile was non-null:
+
+```typescript
+await ctx.db.patch(profile._id, { // ❌ profile might be null
+  coins: ...
+});
+```
+
+### Solutions
+
+#### Fix 1: Inline initialization instead of ctx.mutation()
+
+Replace all 3 occurrences with inline `ctx.db.patch()`:
+
+```typescript
+// ✅ CORRECT - inline initialization
+if (profile.coins === undefined) {
+  const today = new Date().toISOString().split('T')[0];
+  await ctx.db.patch(profile._id, {
+    coins: 0,
+    lifetimeEarned: 0,
+    lifetimeSpent: 0,
+    dailyLimits: {
+      pveWins: 0,
+      pvpMatches: 0,
+      lastResetDate: today,
+      firstPveBonus: false,
+      firstPvpBonus: false,
+      loginBonus: false,
+      streakBonus: false,
+    },
+    winStreak: 0,
+    lastWinTimestamp: 0,
+  });
+  const updatedProfile = await ctx.db.get(profile._id);
+  if (!updatedProfile) throw new Error("Failed to initialize economy");
+  profile = updatedProfile;
+}
+```
+
+#### Fix 2: Change const to let
+
+```typescript
+let profile = await ctx.db.query("profiles")... // ✅ let allows reassignment
+```
+
+Changed on lines: 256, 353, 468
+
+#### Fix 3: Add non-null assertion operator
+
+```typescript
+await ctx.db.patch(profile!._id, { // ✅ Tell TypeScript it's not null
+  coins: ...
+});
+```
+
+Added on lines: 326, 438, 552
+
+### Files Modified
+
+- `convex/economy.ts` lines 256, 265-288, 326, 353, 362-384, 438, 468, 477-499, 552
+
+### Commits
+
+- `fix: Replace ctx.mutation with inline initialization in economy.ts`
+- `fix: Change const to let for profile reassignment in economy.ts`
+- `fix: Add non-null assertion for profile._id after reassignment`
+
+---
+
+## Bug #8 - Production Site Using Wrong Convex Deployment
+
+**Date**: 2025-11-01
+**Status**: ✅ FIXED
+**Severity**: Critical (production site down)
+
+### Problem
+
+Production site at https://www.vibemostwanted.xyz/ failed to load with errors:
+
+```
+[CONVEX Q(economy:getPlayerEconomy)] Server Error
+```
+
+**User Report**: "site n carrega" (site doesn't load)
+
+### Root Cause
+
+The project has TWO Convex deployments:
+- **Dev**: `canny-dachshund-674.convex.cloud`
+- **Prod**: `scintillating-crane-430.convex.cloud`
+
+The Vercel production environment variable `NEXT_PUBLIC_CONVEX_URL` was incorrectly set to the **dev** deployment URL instead of **prod**.
+
+When we deployed the economy.ts fixes (Bug #7), they only went to the dev Convex deployment. The production Vercel site was still pointing to the old dev deployment which didn't have the updated code, causing server errors.
+
+### Discovery Process
+
+1. Attempted `npx convex deploy` but discovered it was deploying to dev
+2. Found `.env.local` had `NEXT_PUBLIC_CONVEX_URL=https://canny-dachshund-674.convex.cloud` (dev)
+3. Pulled Vercel production env vars and confirmed same issue
+4. Realized need to deploy to **both** Convex prod AND update Vercel env var
+
+### Solution
+
+**Step 1**: Deploy updated code to Convex production:
+
+```bash
+CONVEX_DEPLOYMENT=prod:scintillating-crane-430 npx convex deploy -y
+```
+
+**Step 2**: Update Vercel production environment variable:
+
+```bash
+# Remove old env var
+npx vercel env rm NEXT_PUBLIC_CONVEX_URL production -y
+
+# Add correct prod URL
+echo "https://scintillating-crane-430.convex.cloud" | npx vercel env add NEXT_PUBLIC_CONVEX_URL production
+```
+
+**Step 3**: Redeploy Vercel production:
+
+```bash
+npx vercel --prod --yes
+```
+
+### Deployment Architecture (Now Correct)
+
+- **Local Development**: Uses `.env.local` → `canny-dachshund-674.convex.cloud` (dev)
+- **Vercel Production**: Uses env vars → `scintillating-crane-430.convex.cloud` (prod)
+
+### Files Modified
+
+- Vercel environment variables (NEXT_PUBLIC_CONVEX_URL for production)
+
+### Important Lessons
+
+1. **Always check deployment targets**: When dealing with Convex, verify which deployment you're targeting
+2. **Environment isolation**: Dev and prod must use separate Convex deployments AND separate Vercel environments
+3. **Deploy to both places**: Code changes need to go to BOTH Convex prod AND trigger Vercel redeploy
+4. **Verify env vars match**: Production Vercel env vars must point to production Convex deployment
+
+### Commands for Future Reference
+
+Check which Convex deployment is active:
+```bash
+cat .env.local | grep CONVEX
+```
+
+Deploy to specific Convex deployment:
+```bash
+CONVEX_DEPLOYMENT=prod:scintillating-crane-430 npx convex deploy -y
+```
+
+List all Convex functions on prod:
+```bash
+CONVEX_DEPLOYMENT=prod:scintillating-crane-430 npx convex function-spec
+```
+
+Check Vercel env vars:
+```bash
+npx vercel env ls
+```
+
+---
+
+## Summary of 2025-11-01 Bug Fixes
+
+Three interconnected bugs were discovered and fixed:
+
+1. **Bug #6 (Difficulty Retry)**: Game logic bug where retry didn't preserve selected difficulty
+   - Impact: User experience issue, required double-clicking
+   - Fix: Pass parameters to preserve state
+
+2. **Bug #7 (TypeScript Economy)**: Three TypeScript errors blocking deployment
+   - Impact: Blocked all Vercel deployments
+   - Fix: Inline initialization, let instead of const, non-null assertions
+
+3. **Bug #8 (Deployment Mismatch)**: Production using wrong Convex URL
+   - Impact: Production site completely down
+   - Fix: Deploy to correct Convex prod + update Vercel env vars + redeploy
+
+All fixes deployed successfully to production. Economy system now working with persistent coin storage.
+
+## Bug #6 - Difficulty Selection Not Preserved on Retry
+
+**Date**: 2025-11-01
+**Status**: ✅ FIXED
+**Severity**: Medium
+
+### Problem
+
+When unlocking a new difficulty level, the first battle attempt would use the PREVIOUS difficulty level instead of the newly selected one. Only the second attempt would work correctly.
+
+**User Report**: "quando desbloqueia a nova dificuldade, a primeira partida sempre usa a dificuldade anterior, precisa tentar duas vezes"
+
+### Root Cause
+
+In `app/page.tsx` line 1467, when the JC deck wasn't loaded yet, the retry mechanism called `playHand()` without parameters:
+
+```typescript
+setTimeout(() => {
+  devLog('🔄 Retrying battle after waiting for deck to load...');
+  playHand(); // ❌ NO PARAMETERS - uses old state
+}, 2000);
+```
+
+This caused the function to use the stale `aiDifficulty` state from the previous render instead of the newly selected `difficulty` parameter.
+
+### Solution
+
+Pass the original parameters to preserve the selected difficulty:
+
+```typescript
+setTimeout(() => {
+  devLog('🔄 Retrying battle after waiting for deck to load...');
+  playHand(cards, difficulty); // ✅ Pass parameters to preserve selection
+}, 2000);
+```
+
+### Files Modified
+
+- `app/page.tsx` line 1467
+
+### Commit
+
+- `fix: Preserve selected difficulty on playHand retry`
+
+---
+
+## Bug #7 - TypeScript Compilation Errors in Economy System
+
+**Date**: 2025-11-01
+**Status**: ✅ FIXED
+**Severity**: Critical (blocked Vercel deployment)
+
+### Problem
+
+After fixing Bug #6 and pushing to Vercel, the build failed with 3 TypeScript errors in `convex/economy.ts`:
+
+1. **Error**: `Property 'mutation' does not exist on type 'GenericMutationCtx'`
+2. **Error**: `Cannot assign to 'profile' because it is a constant`
+3. **Error**: `'profile' is possibly 'null'`
+
+### Root Causes
+
+#### Error 1: Invalid ctx.mutation() call (3 occurrences)
+
+In Convex, you **cannot** call `ctx.mutation()` from within a mutation handler. The code was trying to recursively call `initializeEconomy` mutation:
+
+```typescript
+// ❌ WRONG - cannot call mutation from mutation
+if (profile.coins === undefined) {
+  await ctx.mutation(api.economy.initializeEconomy, { address });
+  const updatedProfile = await ctx.db.get(profile._id);
+  if (!updatedProfile) throw new Error("Failed to initialize economy");
+  profile = updatedProfile;
+}
+```
+
+#### Error 2: Reassignment to const (3 occurrences)
+
+Profile was declared as `const` but needed reassignment after initialization:
+
+```typescript
+const profile = await ctx.db.query("profiles")... // ❌ const
+// Later:
+profile = updatedProfile; // ❌ Cannot reassign const
+```
+
+#### Error 3: Null assertion needed (3 occurrences)
+
+After reassignment, TypeScript couldn't determine profile was non-null:
+
+```typescript
+await ctx.db.patch(profile._id, { // ❌ profile might be null
+  coins: ...
+});
+```
+
+### Solutions
+
+#### Fix 1: Inline initialization instead of ctx.mutation()
+
+Replace all 3 occurrences with inline `ctx.db.patch()`:
+
+```typescript
+// ✅ CORRECT - inline initialization
+if (profile.coins === undefined) {
+  const today = new Date().toISOString().split('T')[0];
+  await ctx.db.patch(profile._id, {
+    coins: 0,
+    lifetimeEarned: 0,
+    lifetimeSpent: 0,
+    dailyLimits: {
+      pveWins: 0,
+      pvpMatches: 0,
+      lastResetDate: today,
+      firstPveBonus: false,
+      firstPvpBonus: false,
+      loginBonus: false,
+      streakBonus: false,
+    },
+    winStreak: 0,
+    lastWinTimestamp: 0,
+  });
+  const updatedProfile = await ctx.db.get(profile._id);
+  if (!updatedProfile) throw new Error("Failed to initialize economy");
+  profile = updatedProfile;
+}
+```
+
+#### Fix 2: Change const to let
+
+```typescript
+let profile = await ctx.db.query("profiles")... // ✅ let allows reassignment
+```
+
+Changed on lines: 256, 353, 468
+
+#### Fix 3: Add non-null assertion operator
+
+```typescript
+await ctx.db.patch(profile!._id, { // ✅ Tell TypeScript it's not null
+  coins: ...
+});
+```
+
+Added on lines: 326, 438, 552
+
+### Files Modified
+
+- `convex/economy.ts` lines 256, 265-288, 326, 353, 362-384, 438, 468, 477-499, 552
+
+### Commits
+
+- `fix: Replace ctx.mutation with inline initialization in economy.ts`
+- `fix: Change const to let for profile reassignment in economy.ts`
+- `fix: Add non-null assertion for profile._id after reassignment`
+
+---
+
+## Bug #8 - Production Site Using Wrong Convex Deployment
+
+**Date**: 2025-11-01
+**Status**: ✅ FIXED
+**Severity**: Critical (production site down)
+
+### Problem
+
+Production site at https://www.vibemostwanted.xyz/ failed to load with errors:
+
+```
+[CONVEX Q(economy:getPlayerEconomy)] Server Error
+```
+
+**User Report**: "site n carrega" (site doesn't load)
+
+### Root Cause
+
+The project has TWO Convex deployments:
+- **Dev**: `canny-dachshund-674.convex.cloud`
+- **Prod**: `scintillating-crane-430.convex.cloud`
+
+The Vercel production environment variable `NEXT_PUBLIC_CONVEX_URL` was incorrectly set to the **dev** deployment URL instead of **prod**.
+
+When we deployed the economy.ts fixes (Bug #7), they only went to the dev Convex deployment. The production Vercel site was still pointing to the old dev deployment which didn't have the updated code, causing server errors.
+
+### Discovery Process
+
+1. Attempted `npx convex deploy` but discovered it was deploying to dev
+2. Found `.env.local` had `NEXT_PUBLIC_CONVEX_URL=https://canny-dachshund-674.convex.cloud` (dev)
+3. Pulled Vercel production env vars and confirmed same issue
+4. Realized need to deploy to **both** Convex prod AND update Vercel env var
+
+### Solution
+
+**Step 1**: Deploy updated code to Convex production:
+
+```bash
+CONVEX_DEPLOYMENT=prod:scintillating-crane-430 npx convex deploy -y
+```
+
+**Step 2**: Update Vercel production environment variable:
+
+```bash
+# Remove old env var
+npx vercel env rm NEXT_PUBLIC_CONVEX_URL production -y
+
+# Add correct prod URL
+echo "https://scintillating-crane-430.convex.cloud" | npx vercel env add NEXT_PUBLIC_CONVEX_URL production
+```
+
+**Step 3**: Redeploy Vercel production:
+
+```bash
+npx vercel --prod --yes
+```
+
+### Deployment Architecture (Now Correct)
+
+- **Local Development**: Uses `.env.local` → `canny-dachshund-674.convex.cloud` (dev)
+- **Vercel Production**: Uses env vars → `scintillating-crane-430.convex.cloud` (prod)
+
+### Files Modified
+
+- Vercel environment variables (NEXT_PUBLIC_CONVEX_URL for production)
+
+### Important Lessons
+
+1. **Always check deployment targets**: When dealing with Convex, verify which deployment you're targeting
+2. **Environment isolation**: Dev and prod must use separate Convex deployments AND separate Vercel environments
+3. **Deploy to both places**: Code changes need to go to BOTH Convex prod AND trigger Vercel redeploy
+4. **Verify env vars match**: Production Vercel env vars must point to production Convex deployment
+
+### Commands for Future Reference
+
+Check which Convex deployment is active:
+```bash
+cat .env.local | grep CONVEX
+```
+
+Deploy to specific Convex deployment:
+```bash
+CONVEX_DEPLOYMENT=prod:scintillating-crane-430 npx convex deploy -y
+```
+
+List all Convex functions on prod:
+```bash
+CONVEX_DEPLOYMENT=prod:scintillating-crane-430 npx convex function-spec
+```
+
+Check Vercel env vars:
+```bash
+npx vercel env ls
+```
+
+---
+
+## Summary of 2025-11-01 Bug Fixes
+
+Three interconnected bugs were discovered and fixed:
+
+1. **Bug #6 (Difficulty Retry)**: Game logic bug where retry didn't preserve selected difficulty
+   - Impact: User experience issue, required double-clicking
+   - Fix: Pass parameters to preserve state
+
+2. **Bug #7 (TypeScript Economy)**: Three TypeScript errors blocking deployment
+   - Impact: Blocked all Vercel deployments
+   - Fix: Inline initialization, let instead of const, non-null assertions
+
+3. **Bug #8 (Deployment Mismatch)**: Production using wrong Convex URL
+   - Impact: Production site completely down
+   - Fix: Deploy to correct Convex prod + update Vercel env vars + redeploy
+
+All fixes deployed successfully to production. Economy system now working with persistent coin storage.
