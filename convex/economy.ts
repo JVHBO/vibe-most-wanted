@@ -264,8 +264,27 @@ export const awardPvECoins = mutation({
 
     // Initialize if needed
     if (profile.coins === undefined) {
-      await ctx.mutation(api.economy.initializeEconomy, { address });
-      return { awarded: 0, reason: "Initialized economy" };
+      const today = new Date().toISOString().split('T')[0];
+      await ctx.db.patch(profile._id, {
+        coins: 0,
+        lifetimeEarned: 0,
+        lifetimeSpent: 0,
+        dailyLimits: {
+          pveWins: 0,
+          pvpMatches: 0,
+          lastResetDate: today,
+          firstPveBonus: false,
+          firstPvpBonus: false,
+          loginBonus: false,
+          streakBonus: false,
+        },
+        winStreak: 0,
+        lastWinTimestamp: 0,
+      });
+      // Reload profile
+      const updatedProfile = await ctx.db.get(profile._id);
+      if (!updatedProfile) throw new Error("Failed to initialize economy");
+      profile = updatedProfile as any;
     }
 
     // Check and reset daily limits
@@ -342,8 +361,27 @@ export const awardPvPCoins = mutation({
 
     // Initialize if needed
     if (profile.coins === undefined) {
-      await ctx.mutation(api.economy.initializeEconomy, { address });
-      return { awarded: 0, reason: "Initialized economy" };
+      const today = new Date().toISOString().split('T')[0];
+      await ctx.db.patch(profile._id, {
+        coins: 0,
+        lifetimeEarned: 0,
+        lifetimeSpent: 0,
+        dailyLimits: {
+          pveWins: 0,
+          pvpMatches: 0,
+          lastResetDate: today,
+          firstPveBonus: false,
+          firstPvpBonus: false,
+          loginBonus: false,
+          streakBonus: false,
+        },
+        winStreak: 0,
+        lastWinTimestamp: 0,
+      });
+      // Reload profile
+      const updatedProfile = await ctx.db.get(profile._id);
+      if (!updatedProfile) throw new Error("Failed to initialize economy");
+      profile = updatedProfile as any;
     }
 
     // Check and reset daily limits
@@ -477,8 +515,27 @@ export const claimLoginBonus = mutation({
 
     // Initialize if needed
     if (profile.coins === undefined) {
-      await ctx.mutation(api.economy.initializeEconomy, { address });
-      return { awarded: 0, reason: "Initialized economy" };
+      const today = new Date().toISOString().split('T')[0];
+      await ctx.db.patch(profile._id, {
+        coins: 0,
+        lifetimeEarned: 0,
+        lifetimeSpent: 0,
+        dailyLimits: {
+          pveWins: 0,
+          pvpMatches: 0,
+          lastResetDate: today,
+          firstPveBonus: false,
+          firstPvpBonus: false,
+          loginBonus: false,
+          streakBonus: false,
+        },
+        winStreak: 0,
+        lastWinTimestamp: 0,
+      });
+      // Reload profile
+      const updatedProfile = await ctx.db.get(profile._id);
+      if (!updatedProfile) throw new Error("Failed to initialize economy");
+      profile = updatedProfile as any;
     }
 
     // Check and reset daily limits
