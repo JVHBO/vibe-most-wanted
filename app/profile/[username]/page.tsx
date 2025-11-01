@@ -338,6 +338,41 @@ export default function ProfilePage() {
             devWarn('⚠️ Fetched fewer cards than expected! Profile stats may be outdated or maxPages still too low.');
           }
 
+          // ✅ UPDATE STATS: When someone visits a profile, update the database with fresh data
+          // This keeps the leaderboard accurate even if the player sold/bought cards and never logged in
+          try {
+            const openedCards = enriched.filter(nft => !isUnrevealed(nft)).length;
+            const unopenedCards = enriched.filter(nft => isUnrevealed(nft)).length;
+            const totalPower = enriched.reduce((sum, nft) => sum + (nft.power || 0), 0);
+
+            devLog('📊 Updating profile stats in database:', {
+              totalCards: enriched.length,
+              openedCards,
+              unopenedCards,
+              totalPower
+            });
+
+            await ConvexProfileService.updateStats(
+              address,
+              enriched.length,
+              openedCards,
+              unopenedCards,
+              totalPower
+            );
+
+            // Update local profile data to reflect the fresh stats
+            profileData.stats.totalCards = enriched.length;
+            profileData.stats.openedCards = openedCards;
+            profileData.stats.unopenedCards = unopenedCards;
+            profileData.stats.totalPower = totalPower;
+            setProfile({...profileData}); // Trigger re-render with updated stats
+
+            devLog('✅ Profile stats updated successfully');
+          } catch (updateErr: any) {
+            devWarn('⚠️ Failed to update profile stats:', updateErr.message || updateErr);
+            // Non-critical error, continue showing the profile
+          }
+
           setNfts(enriched);
         } catch (err: any) {
           devError('❌ Error loading NFTs:', err.message || err);
