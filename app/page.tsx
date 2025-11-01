@@ -11,7 +11,7 @@ import { getUserBadges } from "@/lib/badges";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
@@ -795,13 +795,15 @@ export default function TCGPage() {
   const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
   const [eliminationDifficulty, setEliminationDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
 
+  // Convex client for imperative queries
+  const convex = useConvex();
+
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
   const awardPvPCoins = useMutation(api.economy.awardPvPCoins);
   const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
-  // Note: previewPvPRewards is called manually in the ATTACK button using client.query()
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
   const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
@@ -3958,7 +3960,7 @@ export default function TCGPage() {
                   if (address && targetPlayer.address) {
                     try {
                       setIsLoadingPreview(true);
-                      const preview = await client.query(api.economy.previewPvPRewards, {
+                      const preview = await convex.query(api.economy.previewPvPRewards, {
                         playerAddress: address,
                         opponentAddress: targetPlayer.address
                       });
