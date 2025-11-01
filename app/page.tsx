@@ -4262,21 +4262,6 @@ export default function TCGPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Coin Balance Display */}
-          {address && userProfile && playerEconomy && (
-            <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-4 md:px-6 py-2 md:py-3 rounded-lg flex items-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-              <span className="text-2xl">💰</span>
-              <div className="flex flex-col">
-                <span className="text-vintage-gold font-display font-bold text-sm md:text-base leading-none">
-                  {(playerEconomy.coins || 0).toLocaleString()}
-                </span>
-                <span className="text-vintage-burnt-gold font-modern text-[9px] md:text-xs leading-none mt-0.5">
-                  $TESTVBMS
-                </span>
-              </div>
-            </div>
-          )}
-
           {/* Notifications Button - Only show if user is logged in */}
           {address && userProfile && (
             <button
@@ -4461,6 +4446,21 @@ export default function TCGPage() {
                     >
                       {t('createProfile')}
                     </button>
+                  )}
+
+                  {/* Coin Balance Display */}
+                  {address && userProfile && playerEconomy && (
+                    <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-1.5 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+                      <span className="text-lg md:text-xl">💰</span>
+                      <div className="flex flex-col">
+                        <span className="text-vintage-gold font-display font-bold text-xs md:text-sm leading-none">
+                          {(playerEconomy.coins || 0).toLocaleString()}
+                        </span>
+                        <span className="text-vintage-burnt-gold font-modern text-[8px] md:text-[10px] leading-none mt-0.5">
+                          $TESTVBMS
+                        </span>
+                      </div>
+                    </div>
                   )}
 
                   <button
