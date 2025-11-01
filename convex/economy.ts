@@ -253,7 +253,7 @@ export const awardPvECoins = mutation({
     won: v.boolean(),
   },
   handler: async (ctx, { address, difficulty, won }) => {
-    const profile = await ctx.db
+    let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .first();
@@ -350,7 +350,7 @@ export const awardPvPCoins = mutation({
     won: v.boolean(),
   },
   handler: async (ctx, { address, won }) => {
-    const profile = await ctx.db
+    let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .first();
@@ -465,7 +465,7 @@ export const chargeEntryFee = mutation({
     mode: v.union(v.literal("attack"), v.literal("pvp")),
   },
   handler: async (ctx, { address, mode }) => {
-    const profile = await ctx.db
+    let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .first();
