@@ -801,6 +801,11 @@ export default function TCGPage() {
   const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
+  const previewPvPRewards = useQuery(api.economy.previewPvPRewards,
+    address && targetPlayer?.address
+      ? { playerAddress: address, opponentAddress: targetPlayer.address }
+      : 'skip'
+  ) as any;
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
   const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
@@ -850,6 +855,11 @@ export default function TCGPage() {
   const [attacksRemaining, setAttacksRemaining] = useState<number>(MAX_ATTACKS_DEFAULT);
   const [isAttacking, setIsAttacking] = useState<boolean>(false);
   const [isConfirmingCards, setIsConfirmingCards] = useState<boolean>(false);
+
+  // ✅ PvP Preview States
+  const [showPvPPreview, setShowPvPPreview] = useState<boolean>(false);
+  const [pvpPreviewData, setPvpPreviewData] = useState<any>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
 
   // Notifications States
   const [defensesReceived, setDefensesReceived] = useState<any[]>([]);
@@ -3562,6 +3572,281 @@ export default function TCGPage() {
         </div>
       )}
 
+      {/* ✅ PvP Preview Modal - Shows potential gains/losses before battle */}
+      {showPvPPreview && pvpPreviewData && targetPlayer && (
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[200] p-4">
+          <div className="bg-gradient-to-br from-vintage-charcoal via-vintage-black to-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-8 shadow-2xl shadow-vintage-gold/30">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h2 className="text-4xl font-display font-bold text-vintage-gold mb-2">
+                ⚔️ BATTLE PREVIEW
+              </h2>
+              <p className="text-vintage-burnt-gold font-modern">
+                Potential gains and losses for this battle
+              </p>
+            </div>
+
+            {/* Rankings */}
+            <div className="flex justify-between items-center mb-6 p-4 bg-vintage-black/50 rounded-xl border border-vintage-gold/30">
+              <div className="text-center flex-1">
+                <p className="text-xs text-vintage-burnt-gold font-modern mb-1">YOUR RANK</p>
+                <p className="text-3xl font-bold text-cyan-400">#{pvpPreviewData.playerRank}</p>
+              </div>
+              <div className="text-vintage-gold text-2xl">VS</div>
+              <div className="text-center flex-1">
+                <p className="text-xs text-vintage-burnt-gold font-modern mb-1">OPPONENT RANK</p>
+                <p className="text-3xl font-bold text-red-400">#{pvpPreviewData.opponentRank}</p>
+              </div>
+            </div>
+
+            {/* Win/Loss Scenarios */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Win Scenario */}
+              <div className="bg-green-900/20 border-2 border-green-500/50 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">🏆</span>
+                  <h3 className="text-xl font-bold text-green-400 font-display">IF YOU WIN</h3>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-4xl font-bold text-green-300 mb-1">
+                    +{pvpPreviewData.win.totalReward}
+                  </p>
+                  <p className="text-sm text-green-200/70">$TESTVBMS</p>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-green-100/80">
+                    <span>Base Reward:</span>
+                    <span className="font-mono">+{pvpPreviewData.win.baseReward}</span>
+                  </div>
+
+                  {pvpPreviewData.win.rankingBonus > 0 && (
+                    <div className="flex justify-between text-yellow-300 font-medium">
+                      <span>⭐ Ranking Bonus ({pvpPreviewData.win.rankingMultiplier.toFixed(1)}x):</span>
+                      <span className="font-mono">+{pvpPreviewData.win.rankingBonus}</span>
+                    </div>
+                  )}
+
+                  {pvpPreviewData.win.firstPvpBonus > 0 && (
+                    <div className="flex justify-between text-blue-300">
+                      <span>First PvP Today:</span>
+                      <span className="font-mono">+{pvpPreviewData.win.firstPvpBonus}</span>
+                    </div>
+                  )}
+
+                  {pvpPreviewData.win.streakBonus > 0 && (
+                    <div className="flex justify-between text-purple-300 font-medium">
+                      <span>🔥 {pvpPreviewData.win.streakMessage}:</span>
+                      <span className="font-mono">+{pvpPreviewData.win.streakBonus}</span>
+                    </div>
+                  )}
+                </div>
+
+                {pvpPreviewData.currentStreak > 0 && (
+                  <div className="mt-3 p-2 bg-orange-500/20 rounded text-xs text-orange-200 border border-orange-500/30">
+                    Current Streak: {pvpPreviewData.currentStreak} win{pvpPreviewData.currentStreak !== 1 ? 's' : ''}
+                  </div>
+                )}
+              </div>
+
+              {/* Loss Scenario */}
+              <div className="bg-red-900/20 border-2 border-red-500/50 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">💀</span>
+                  <h3 className="text-xl font-bold text-red-400 font-display">IF YOU LOSE</h3>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-4xl font-bold text-red-300 mb-1">
+                    {pvpPreviewData.loss.totalPenalty}
+                  </p>
+                  <p className="text-sm text-red-200/70">$TESTVBMS</p>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-red-100/80">
+                    <span>Base Penalty:</span>
+                    <span className="font-mono">{pvpPreviewData.loss.basePenalty}</span>
+                  </div>
+
+                  {pvpPreviewData.loss.penaltyReduction > 0 && (
+                    <div className="flex justify-between text-orange-300 font-medium">
+                      <span>🛡️ Penalty Reduced ({Math.round(pvpPreviewData.loss.rankingMultiplier * 100)}%):</span>
+                      <span className="font-mono">+{pvpPreviewData.loss.penaltyReduction}</span>
+                    </div>
+                  )}
+                </div>
+
+                {pvpPreviewData.loss.penaltyReduction > 0 && (
+                  <div className="mt-3 p-2 bg-orange-500/20 rounded text-xs text-orange-200 border border-orange-500/30">
+                    Fighting a high-ranked opponent reduces your loss!
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Current Balance */}
+            <div className="mb-6 p-3 bg-vintage-black/50 rounded-lg border border-vintage-gold/20 text-center">
+              <p className="text-xs text-vintage-burnt-gold mb-1">YOUR CURRENT BALANCE</p>
+              <p className="text-2xl font-bold text-vintage-gold">{pvpPreviewData.playerCoins} $TESTVBMS</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={async () => {
+                  // Fechar modal e continuar com o ataque
+                  setShowPvPPreview(false);
+                  if (soundEnabled) AudioManager.buttonClick();
+
+                  // Agora sim, fazer o ataque
+                  setIsAttacking(true);
+
+                  try {
+                    // Pay entry fee
+                    await payEntryFee({ address: address || '', mode: 'attack' });
+                    devLog('Attack entry fee paid: 50 $TESTVBMS');
+
+                    // Setup battle (código original continua aqui...)
+                    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    devLog(`✦ ATTACKING: ${targetPlayer.username}`);
+                    devLog(`◆ Using saved defense deck data`);
+
+                    const defenderCards = (targetPlayer.defenseDeck || [])
+                      .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } => typeof card === 'object')
+                      .map((card) => ({
+                        tokenId: card.tokenId,
+                        power: card.power,
+                        imageUrl: card.imageUrl,
+                        name: card.name,
+                        rarity: card.rarity,
+                      }));
+                    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                    setSelectedCards(attackSelectedCards);
+                    setDealerCards(defenderCards);
+                    setBattleOpponentName(targetPlayer.username);
+                    setBattlePlayerName(userProfile?.username || 'You');
+                    setBattleOpponentPfp(targetPlayer.twitter ? `https://unavatar.io/twitter/${targetPlayer.twitter}` : null);
+                    setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
+                    setShowAttackCardSelection(false);
+                    setIsBattling(true);
+                    setShowBattleScreen(true);
+                    setBattlePhase('cards');
+                    setGameMode('pvp');
+
+                    if (soundEnabled) AudioManager.playHand();
+
+                    const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                    const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+
+                    setTimeout(() => {
+                      setBattlePhase('clash');
+                      if (soundEnabled) AudioManager.cardBattle();
+                    }, 2500);
+
+                    setTimeout(() => {
+                      setPlayerPower(playerTotal);
+                      setDealerPower(dealerTotal);
+                      setBattlePhase('result');
+                    }, 3500);
+
+                    setTimeout(async () => {
+                      let matchResult: 'win' | 'loss' | 'tie';
+                      if (playerTotal > dealerTotal) {
+                        matchResult = 'win';
+                        if (soundEnabled) AudioManager.playWin();
+                      } else if (playerTotal < dealerTotal) {
+                        matchResult = 'loss';
+                        if (soundEnabled) AudioManager.playLoss();
+                      } else {
+                        matchResult = 'tie';
+                        setShowTiePopup(true);
+                        setTimeout(() => setShowTiePopup(false), 3000);
+                      }
+
+                      let coinsEarned = 0;
+
+                      if (userProfile && address) {
+                        try {
+                          // ✅ NOVO: Passar opponentAddress para awardPvPCoins
+                          const reward = await awardPvPCoins({
+                            address,
+                            won: matchResult === 'win',
+                            opponentAddress: targetPlayer.address // ✅ CRÍTICO!
+                          });
+                          coinsEarned = reward?.awarded || 0;
+
+                          devLog(`💰 Coins awarded: ${coinsEarned}`);
+                          if (reward?.bonuses && reward.bonuses.length > 0) {
+                            devLog(`🎁 Bonuses: ${reward.bonuses.join(', ')}`);
+                          }
+                        } catch (error: any) {
+                          devError('Error awarding PvP coins:', error);
+                        }
+                      }
+
+                      setLastBattleResult({
+                        result: matchResult,
+                        playerPower: playerTotal,
+                        opponentPower: dealerTotal,
+                        opponentName: targetPlayer.username,
+                        opponentTwitter: targetPlayer.twitter,
+                        type: 'attack',
+                        coinsEarned,
+                      });
+
+                      // Registrar partida
+                      if (address && userProfile) {
+                        await ConvexProfileService.recordMatch({
+                          playerAddress: address,
+                          opponentUsername: targetPlayer.username,
+                          opponentAddress: targetPlayer.address,
+                          result: matchResult,
+                          playerPower: playerTotal,
+                          opponentPower: dealerTotal,
+                          type: 'attack',
+                        });
+
+                        const updatedProfile = await ConvexProfileService.getProfile(address);
+                        if (updatedProfile) {
+                          setUserProfile(updatedProfile);
+                          setAttacksRemaining(maxAttacks - (updatedProfile.attacksToday || 0));
+                        }
+                      }
+
+                      setIsBattling(false);
+                      setIsAttacking(false);
+                    }, 5500);
+
+                  } catch (error: any) {
+                    setErrorMessage('Error: ' + error.message);
+                    setIsAttacking(false);
+                    if (soundEnabled) AudioManager.buttonError();
+                  }
+                }}
+                disabled={isAttacking}
+                className="flex-1 px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-display font-bold text-xl shadow-lg transition-all uppercase tracking-wider border-2 border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isAttacking ? 'ATTACKING...' : '⚔️ CONFIRM ATTACK'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowPvPPreview(false);
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                disabled={isAttacking}
+                className="px-8 py-4 bg-vintage-black/50 border-2 border-vintage-burnt-gold text-vintage-burnt-gold rounded-xl hover:bg-vintage-burnt-gold hover:text-vintage-black transition-all font-modern font-bold text-lg uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Attack Card Selection Modal */}
       {showAttackCardSelection && targetPlayer && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto" onClick={() => setShowAttackCardSelection(false)}>
@@ -3663,6 +3948,26 @@ export default function TCGPage() {
                     setErrorMessage(t('insufficientFundsAttack').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
+                  }
+
+                  // ✅ NOVO: Mostrar preview de ganhos/perdas antes de atacar
+                  if (address && targetPlayer.address) {
+                    try {
+                      setIsLoadingPreview(true);
+                      const preview = await client.query(api.economy.previewPvPRewards, {
+                        playerAddress: address,
+                        opponentAddress: targetPlayer.address
+                      });
+                      setPvpPreviewData(preview);
+                      setShowPvPPreview(true);
+                      setIsLoadingPreview(false);
+                      if (soundEnabled) AudioManager.buttonClick();
+                      return; // Parar aqui - batalha só começa depois de confirmar no modal
+                    } catch (error) {
+                      console.error('Error fetching PvP preview:', error);
+                      setIsLoadingPreview(false);
+                      // Se preview falhar, continuar normalmente
+                    }
                   }
 
                   // Prevent multiple clicks
