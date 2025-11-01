@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as cryptoActions from "../cryptoActions.js";
 import type * as economy from "../economy.js";
@@ -34,6 +35,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   auth: typeof auth;
   cryptoActions: typeof cryptoActions;
   economy: typeof economy;
