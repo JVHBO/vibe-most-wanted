@@ -40,6 +40,23 @@ export interface UserProfile {
   rematchesToday: number;
   lastAttackDate?: string;
   lastRematchDate?: string;
+
+  // Economy fields
+  coins?: number;
+  lifetimeEarned?: number;
+  lifetimeSpent?: number;
+  dailyLimits?: {
+    pveWins: number;
+    pvpMatches: number;
+    lastResetDate: string;
+    firstPveBonus: boolean;
+    firstPvpBonus: boolean;
+    loginBonus: boolean;
+    streakBonus: boolean;
+  };
+  winStreak?: number;
+  lastWinTimestamp?: number;
+
   twitter?: string;
   twitterHandle?: string;
   fid?: string;
