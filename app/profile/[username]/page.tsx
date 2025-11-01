@@ -586,7 +586,7 @@ export default function ProfilePage() {
         <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
           <span className="text-3xl">♦</span> Statistics
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♠ TOTAL CARDS</p>
             <p className="text-3xl font-bold text-vintage-gold">{nfts.length || profile.stats.totalCards}</p>
@@ -594,6 +594,11 @@ export default function ProfilePage() {
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">◆ TOTAL POWER</p>
             <p className="text-3xl font-bold text-vintage-gold">{(profile.stats.totalPower || 0).toLocaleString()}</p>
+          </div>
+          <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-6 rounded-xl border-2 border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
+            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern flex items-center gap-1">💰 COINS</p>
+            <p className="text-3xl font-bold text-vintage-gold">{(profile.coins || 0).toLocaleString()}</p>
+            <p className="text-[10px] text-vintage-burnt-gold font-modern mt-1">$TESTVBMS</p>
           </div>
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-neon-blue/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♣ PvE RECORD</p>
@@ -1031,6 +1036,19 @@ export default function ProfilePage() {
                           <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
                         </div>
                       </div>
+
+                      {/* Coins Earned/Lost */}
+                      {match.coinsEarned !== undefined && match.coinsEarned !== null && (
+                        <div className={`text-center px-4 py-2 rounded-lg border ${match.coinsEarned > 0 ? 'bg-vintage-gold/10 border-vintage-gold' : 'bg-gray-500/10 border-gray-500'}`}>
+                          <p className="text-xs text-vintage-burnt-gold font-modern">
+                            {match.coinsEarned > 0 ? '💰 EARNED' : '💸 LOST'}
+                          </p>
+                          <p className={`text-xl font-bold ${match.coinsEarned > 0 ? 'text-vintage-gold' : 'text-gray-400'}`}>
+                            {match.coinsEarned > 0 ? '+' : ''}{match.coinsEarned}
+                          </p>
+                          <p className="text-[10px] text-vintage-burnt-gold font-modern">$TESTVBMS</p>
+                        </div>
+                      )}
 
                       {/* Opponent Address (if PvP/Attack/Defense) */}
                       {match.opponentAddress && (

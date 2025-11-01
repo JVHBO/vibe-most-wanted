@@ -400,7 +400,10 @@ export class ConvexProfileService {
     playerCards: any[],
     opponentCards: any[],
     opponentAddress?: string,
-    opponentUsername?: string
+    opponentUsername?: string,
+    coinsEarned?: number,
+    entryFeePaid?: number,
+    difficulty?: "gey" | "goofy" | "gooner" | "gangster" | "gigachad"
   ): Promise<void> {
     try {
       const normalizedPlayerAddress = playerAddress.toLowerCase();
@@ -412,6 +415,9 @@ export class ConvexProfileService {
         result,
         playerPower,
         opponentPower,
+        coinsEarned,
+        entryFeePaid,
+        difficulty,
       });
 
       await convex.mutation(api.matches.recordMatch, {
@@ -424,6 +430,9 @@ export class ConvexProfileService {
         opponentCards,
         opponentAddress: normalizedOpponentAddress,
         opponentUsername,
+        coinsEarned,
+        entryFeePaid,
+        difficulty,
       });
 
       console.log("✅ Match recorded successfully");

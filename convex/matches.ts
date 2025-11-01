@@ -49,6 +49,15 @@ export const recordMatch = mutation({
     opponentCards: v.array(v.any()),
     opponentAddress: v.optional(v.string()),
     opponentUsername: v.optional(v.string()),
+    coinsEarned: v.optional(v.number()), // $TESTVBMS earned from this match
+    entryFeePaid: v.optional(v.number()), // Entry fee paid
+    difficulty: v.optional(v.union(
+      v.literal("gey"),
+      v.literal("goofy"),
+      v.literal("gooner"),
+      v.literal("gangster"),
+      v.literal("gigachad")
+    )), // AI difficulty for PvE
   },
   handler: async (ctx, args) => {
     const normalizedPlayerAddress = args.playerAddress.toLowerCase();
@@ -74,6 +83,9 @@ export const recordMatch = mutation({
       timestamp: Date.now(),
       playerCards: args.playerCards,
       opponentCards: args.opponentCards,
+      coinsEarned: args.coinsEarned,
+      entryFeePaid: args.entryFeePaid,
+      difficulty: args.difficulty,
     });
 
     console.log("✅ Match saved to Convex:", matchId);

@@ -739,6 +739,8 @@ export default function TCGPage() {
 
   // Query player's economy data
   const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
+  const dailyQuest = useQuery(api.quests.getDailyQuest, {});
+  const questProgress = useQuery(api.quests.getQuestProgress, address ? { address } : "skip");
 
   // Debug logging for address changes
   useEffect(() => {
@@ -794,6 +796,12 @@ export default function TCGPage() {
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
   const awardPvPCoins = useMutation(api.economy.awardPvPCoins);
+  const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
+  const payEntryFee = useMutation(api.economy.payEntryFee);
+  const claimQuestReward = useMutation(api.quests.claimQuestReward);
+  const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
+  const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
+  const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
   const [isDifficultyModalOpen, setIsDifficultyModalOpen] = useState(false);
   const [tempSelectedDifficulty, setTempSelectedDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad' | null>(null);
@@ -807,7 +815,8 @@ export default function TCGPage() {
   const [roundResults, setRoundResults] = useState<('win' | 'loss' | 'tie')[]>([]);
   const [eliminationPlayerScore, setEliminationPlayerScore] = useState<number>(0);
   const [eliminationOpponentScore, setEliminationOpponentScore] = useState<number>(0);
-  const [pvpBattleStarted, setPvpBattleStarted] = useState<boolean>(false); // PvP battle flag to prevent double-start
+  const pvpBattleStarted = useRef<boolean>(false); // PvP battle flag to prevent double-start (useRef for immediate sync access)
+  const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
   // Profile States
   const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
@@ -945,6 +954,53 @@ export default function TCGPage() {
     }
   };
 
+  // 💰 Handler to claim daily login bonus
+  const handleClaimLoginBonus = async () => {
+    if (!address || loginBonusClaimed || isClaimingBonus) return;
+
+    try {
+      setIsClaimingBonus(true);
+      devLog('💰 Claiming login bonus...');
+
+      const result = await claimLoginBonus({ address });
+
+      if (result.awarded > 0) {
+        devLog(`✅ Login bonus claimed: +${result.awarded} $TESTVBMS`);
+        setLoginBonusClaimed(true);
+        if (soundEnabled) AudioManager.buttonClick();
+      } else {
+        devLog(`⚠️ ${result.reason}`);
+        if (soundEnabled) AudioManager.buttonError();
+      }
+    } catch (error) {
+      devError('❌ Error claiming login bonus:', error);
+      if (soundEnabled) AudioManager.buttonError();
+    } finally {
+      setIsClaimingBonus(false);
+    }
+  };
+
+  // 🎯 Handler to claim daily quest reward
+  const handleClaimQuestReward = async () => {
+    if (!address || isClaimingQuest) return;
+
+    try {
+      setIsClaimingQuest(true);
+      devLog('🎯 Claiming quest reward...');
+
+      const result = await claimQuestReward({ address });
+
+      devLog(`✅ Quest reward claimed: +${result.reward} $TESTVBMS`);
+      if (soundEnabled) AudioManager.buttonClick();
+    } catch (error: any) {
+      devError('❌ Error claiming quest reward:', error);
+      alert(error.message || 'Failed to claim quest reward');
+      if (soundEnabled) AudioManager.buttonError();
+    } finally {
+      setIsClaimingQuest(false);
+    }
+  };
+
   // Salvar estado da música no localStorage e controlar reprodução
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -974,6 +1030,15 @@ export default function TCGPage() {
       (window as any).sdk.actions.ready();
     }
   }, []);
+
+  // Sync login bonus claimed status
+  useEffect(() => {
+    if (playerEconomy?.dailyLimits?.loginBonus) {
+      setLoginBonusClaimed(true);
+    } else {
+      setLoginBonusClaimed(false);
+    }
+  }, [playerEconomy]);
 
   // Check for Twitter OAuth success
   useEffect(() => {
@@ -1651,21 +1716,11 @@ export default function TCGPage() {
               setResult(t('tie'));
             }
 
-            // Record match
+            // Award economy coins and record match
             if (userProfile && address) {
-              ConvexProfileService.recordMatch(
-              address,
-              'pve',
-              finalResult,
-              newPlayerScore,
-              newOpponentScore,
-              orderedPlayerCards,
-              orderedOpponentCards
-              ).then(async () => {
-                ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
-                
-                // Award economy coins for PvE Elimination
+              (async () => {
                 try {
+                  // Award economy coins for PvE Elimination
                   const reward = await awardPvECoins({
                     address,
                     difficulty: aiDifficulty,
@@ -1674,10 +1729,28 @@ export default function TCGPage() {
                   if (reward && reward.awarded > 0) {
                     devLog(`💰 Elimination Mode: Awarded ${reward.awarded} $TESTVBMS`, reward);
                   }
+
+                  // Record match with coins earned
+                  await ConvexProfileService.recordMatch(
+                    address,
+                    'pve',
+                    finalResult,
+                    newPlayerScore,
+                    newOpponentScore,
+                    orderedPlayerCards,
+                    orderedOpponentCards,
+                    undefined,
+                    undefined,
+                    reward?.awarded || 0, // coinsEarned
+                    0, // entryFeePaid (PvE is free)
+                    eliminationDifficulty // difficulty
+                  );
+
+                  ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
                 } catch (err) {
                   devError('❌ Error awarding PvE coins (Elimination):', err);
                 }
-              }).catch(err => devError('Error recording match:', err));
+              })();
             }
 
             // Close battle and show result
@@ -1772,22 +1845,11 @@ export default function TCGPage() {
         setResult(t('tie'));
       }
 
-      // Record PvE match if user has profile
+      // Award economy coins and record PvE match
       if (userProfile && address) {
-        ConvexProfileService.recordMatch(
-          address,
-          'pve',
-          matchResult,
-          playerTotal,
-          dealerTotal,
-          cards,
-          pickedDealer
-        ).then(async () => {
-          // Reload match history
-          ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
-          
-          // Award economy coins for PvE
+        (async () => {
           try {
+            // Award economy coins for PvE
             const reward = await awardPvECoins({
               address,
               difficulty: aiDifficulty,
@@ -1796,10 +1858,29 @@ export default function TCGPage() {
             if (reward && reward.awarded > 0) {
               devLog(`💰 Awarded ${reward.awarded} $TESTVBMS`, reward);
             }
+
+            // Record match with coins earned
+            await ConvexProfileService.recordMatch(
+              address,
+              'pve',
+              matchResult,
+              playerTotal,
+              dealerTotal,
+              cards,
+              pickedDealer,
+              undefined,
+              undefined,
+              reward?.awarded || 0, // coinsEarned
+              0, // entryFeePaid (PvE is free)
+              aiDifficulty // difficulty
+            );
+
+            // Reload match history
+            ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
           } catch (err) {
             devError('❌ Error awarding PvE coins:', err);
           }
-        }).catch(err => devError('Error recording match:', err));
+        })();
       }
 
       // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
@@ -1978,11 +2059,13 @@ export default function TCGPage() {
   useEffect(() => {
     if (pvpMode === 'inRoom' && roomCode) {
       // Reset battle flag when entering a new room to prevent stale state from previous battles
-      setPvpBattleStarted(false);
+      pvpBattleStarted.current = false;
+      pvpProcessedBattles.current.clear(); // Clear processed battles set for new room
       devLog('🔄 Reset pvpBattleStarted to false for new room');
       devLog('🎧 Convex listener started for room:', roomCode);
-      // battleStarted is now a state variable (pvpBattleStarted)
+
       let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
+      let battleProcessing = false; // Local flag to prevent concurrent battle starts within same listener
 
       const unsubscribe = ConvexPvPService.watchRoom(roomCode, async (room) => {
         if (room) {
@@ -1995,15 +2078,28 @@ export default function TCGPage() {
             hostReady,
             guestReady,
             roomStatus: room.status,
-            pvpBattleStarted
+            pvpBattleStarted: pvpBattleStarted.current,
+            battleProcessing
           });
           setCurrentRoom(room);
 
           // Se ambos os jogadores estiverem prontos, inicia a batalha
           // Só inicia quando status é 'playing' (após ambos submeterem cartas)
-          if (hostReady && guestReady && room.status === 'playing' && !pvpBattleStarted) {
-            setPvpBattleStarted(true); // Marca que a batalha já iniciou
-            devLog('✅ Ambos jogadores prontos! Iniciando batalha...');
+          if (hostReady && guestReady && room.status === 'playing') {
+            // Create unique battle ID to prevent duplicate processing
+            const battleId = `${room.roomId}_${room.hostPower}_${room.guestPower}_${room.startedAt || Date.now()}`;
+
+            // Check if this battle has already been processed
+            if (pvpProcessedBattles.current.has(battleId)) {
+              devLog('⚠️ Battle already processed, skipping:', battleId);
+              return; // Skip if already processed
+            }
+
+            // Mark this battle as processed IMMEDIATELY (before any async operations)
+            pvpProcessedBattles.current.add(battleId);
+            pvpBattleStarted.current = true;
+            battleProcessing = true;
+            devLog('✅ Ambos jogadores prontos! Iniciando batalha única:', battleId);
 
             // Determina quem é o jogador local e quem é o oponente
             const isHost = room.hostAddress === address?.toLowerCase();
@@ -2082,22 +2178,11 @@ export default function TCGPage() {
                 setResult(t('dealerWins'));
               }
 
-              // Record PvP match if user has profile
+              // Award economy coins and record PvP match
               if (userProfile && address) {
-                ConvexProfileService.recordMatch(
-                  address,
-                  'pvp',
-                  matchResult,
-                  playerPower,
-                  opponentPower,
-                  playerCards,
-                  opponentCards,
-                  opponentAddress
-                ).then(async () => {
-                  ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
-                  
-                  // Award economy coins for PvP
+                (async () => {
                   try {
+                    // Award economy coins for PvP
                     const reward = await awardPvPCoins({
                       address,
                       won: matchResult === 'win'
@@ -2105,25 +2190,42 @@ export default function TCGPage() {
                     if (reward && reward.awarded > 0) {
                       devLog(`💰 PvP: Awarded ${reward.awarded} $TESTVBMS`, reward);
                     }
+
+                    // Record match with coins earned and entry fee paid
+                    await ConvexProfileService.recordMatch(
+                      address,
+                      'pvp',
+                      matchResult,
+                      playerPower,
+                      opponentPower,
+                      playerCards,
+                      opponentCards,
+                      opponentAddress,
+                      opponentName,
+                      reward?.awarded || 0, // coinsEarned
+                      80 // entryFeePaid (PvP mode costs 80 $TESTVBMS)
+                    );
+
+                    ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
+
+                    // 🔔 Send notification to defender (opponent)
+                    fetch('/api/notifications/send', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        type: 'defense_attacked',
+                        data: {
+                          defenderAddress: opponentAddress,
+                          defenderUsername: opponentName || 'Unknown',
+                          attackerUsername: userProfile.username || 'Unknown',
+                          result: matchResult === 'win' ? 'lose' : 'win', // Inverted: attacker wins = defender loses
+                        },
+                      }),
+                    }).catch(err => devError('Error sending notification:', err));
                   } catch (err) {
                     devError('❌ Error awarding PvP coins:', err);
                   }
-
-                  // 🔔 Send notification to defender (opponent)
-                  fetch('/api/notifications/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      type: 'defense_attacked',
-                      data: {
-                        defenderAddress: opponentAddress,
-                        defenderUsername: opponentName || 'Unknown',
-                        attackerUsername: userProfile.username || 'Unknown',
-                        result: matchResult === 'win' ? 'lose' : 'win', // Inverted: attacker wins = defender loses
-                      },
-                    }),
-                  }).catch(err => devError('Error sending notification:', err));
-                }).catch(err => devError('Error recording PvP match:', err));
+                })();
               }
 
               // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
@@ -2154,7 +2256,8 @@ export default function TCGPage() {
                 }
 
                 // Reset battle flag immediately so player can start new match without waiting
-                setPvpBattleStarted(false);
+                pvpBattleStarted.current = false;
+                battleProcessing = false; // Also reset local flag
                 devLog('🔄 Battle ended, reset pvpBattleStarted immediately');
                 // Fecha a sala PVP e volta ao menu após ver o resultado
                 setTimeout(async () => {
@@ -2174,7 +2277,7 @@ export default function TCGPage() {
                   setCurrentRoom(null);
                   setSelectedCards([]);
                   setDealerCards([]); // Clear dealer cards
-                  setPvpBattleStarted(false); // Reset battle flag
+                  pvpBattleStarted.current = false; // Reset battle flag
                 }, 5000);
               }, 2000);
             }, 3500);
@@ -2197,7 +2300,7 @@ export default function TCGPage() {
         unsubscribe();
       };
     }
-  }, [pvpMode, roomCode, address, soundEnabled, pvpBattleStarted]);
+  }, [pvpMode, roomCode, address, soundEnabled]);
 
   // Auto Match Listener - Detecta quando uma sala é criada para o jogador
   useEffect(() => {
@@ -3401,8 +3504,27 @@ export default function TCGPage() {
                 onClick={async () => {
                   if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer || isAttacking) return;
 
+                  // Check if player has enough coins for attack entry fee
+                  const currentBalance = playerEconomy?.coins || 0;
+                  if (currentBalance < 50) {
+                    alert(`💸 Fundos insuficientes!\n\nPrecisa de 50 $TESTVBMS para atacar.\nSaldo atual: ${currentBalance} $TESTVBMS`);
+                    if (soundEnabled) AudioManager.buttonError();
+                    return;
+                  }
+
                   // Prevent multiple clicks
                   setIsAttacking(true);
+
+                  try {
+                    // Pay entry fee BEFORE attacking
+                    await payEntryFee({ address: address || '', mode: 'attack' });
+                    devLog('💸 Attack entry fee paid: 50 $TESTVBMS');
+                  } catch (error: any) {
+                    alert('Erro ao pagar taxa: ' + error.message);
+                    setIsAttacking(false);
+                    if (soundEnabled) AudioManager.buttonError();
+                    return;
+                  }
 
                   // ✅ MUDANÇA: Usar dados salvos ao invés de recalcular
                   devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -3499,7 +3621,9 @@ export default function TCGPage() {
                           attackSelectedCards,
                           defenderCards,
                           targetPlayer.address,
-                          targetPlayer.username
+                          targetPlayer.username,
+                          0, // coinsEarned (attacks don't earn coins, only spend entry fee)
+                          50 // entryFeePaid (attack mode costs 50 $TESTVBMS)
                         );
 
                         await ConvexProfileService.recordMatch(
@@ -3511,7 +3635,9 @@ export default function TCGPage() {
                           defenderCards,
                           attackSelectedCards,
                           address,
-                          userProfile.username
+                          userProfile.username,
+                          0, // coinsEarned (defense doesn't earn/spend coins)
+                          0 // entryFeePaid (defense is free)
                         );
 
                         const updatedProfile = await ConvexProfileService.getProfile(address);
@@ -3577,7 +3703,14 @@ export default function TCGPage() {
                     : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                 }`}
               >
-                {isAttacking ? '⏳ Attacking...' : `⚔️ Attack! (${attackSelectedCards.length}/${HAND_SIZE_CONST})`}
+                {isAttacking ? (
+                  '⏳ Attacking...'
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span>⚔️ Attack! ({attackSelectedCards.length}/{HAND_SIZE_CONST})</span>
+                    <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded ml-2">💸 50</span>
+                  </div>
+                )}
               </button>
 
               <button
@@ -3709,9 +3842,22 @@ export default function TCGPage() {
                 disabled={isSearching}
                 onClick={async () => {
                   if (soundEnabled) AudioManager.buttonSuccess();
+
+                  // Check if player has enough coins
+                  const currentBalance = playerEconomy?.coins || 0;
+                  if (currentBalance < 80) {
+                    alert(`💸 Fundos insuficientes!\n\nPrecisa de 80 $TESTVBMS para jogar PvP.\nSaldo atual: ${currentBalance} $TESTVBMS`);
+                    if (soundEnabled) AudioManager.buttonError();
+                    return;
+                  }
+
                   setPvpMode('autoMatch');
                   setIsSearching(true);
                   try {
+                    // Pay entry fee BEFORE starting match
+                    await payEntryFee({ address: address || '', mode: 'pvp' });
+                    devLog('💸 Entry fee paid: 80 $TESTVBMS');
+
                     const code = await ConvexPvPService.findMatch(address || '', userProfile?.username);
                     if (code) {
                       // Encontrou uma sala imediatamente
@@ -3720,34 +3866,53 @@ export default function TCGPage() {
                       setIsSearching(false);
                     }
                     // Se não encontrou (code === ''), continua em autoMatch aguardando
-                  } catch (error) {
-                    alert('Erro ao buscar partida: ' + error);
+                  } catch (error: any) {
+                    alert('Erro ao buscar partida: ' + error.message);
                     setIsSearching(false);
                     setPvpMode('pvpMenu');
                   }
                 }}
                 className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold text-lg shadow-gold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                ◊ {t('autoMatch')}
+                <div className="flex items-center justify-between">
+                  <span>◊ {t('autoMatch')}</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">💸 80</span>
+                </div>
               </button>
 
               {/* Criar Sala */}
               <button
                 onClick={async () => {
                   if (soundEnabled) AudioManager.buttonClick();
+
+                  // Check if player has enough coins
+                  const currentBalance = playerEconomy?.coins || 0;
+                  if (currentBalance < 80) {
+                    alert(`💸 Fundos insuficientes!\n\nPrecisa de 80 $TESTVBMS para jogar PvP.\nSaldo atual: ${currentBalance} $TESTVBMS`);
+                    if (soundEnabled) AudioManager.buttonError();
+                    return;
+                  }
+
                   try {
+                    // Pay entry fee BEFORE creating room
+                    await payEntryFee({ address: address || '', mode: 'pvp' });
+                    devLog('💸 Entry fee paid: 80 $TESTVBMS');
+
                     // Remove do matchmaking antes de criar sala manual
                     await ConvexPvPService.cancelMatchmaking(address || '');
                     const code = await ConvexPvPService.createRoom(address || '', userProfile?.username);
                     setRoomCode(code);
                     setPvpMode('createRoom');
-                  } catch (error) {
-                    alert('Erro ao criar sala: ' + error);
+                  } catch (error: any) {
+                    alert('Erro ao criar sala: ' + error.message);
                   }
                 }}
                 className="w-full px-6 py-4 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-display font-bold text-lg shadow-neon transition-all hover:scale-105"
               >
-                ＋ {t('createRoom')}
+                <div className="flex items-center justify-between">
+                  <span>＋ {t('createRoom')}</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">💸 80</span>
+                </div>
               </button>
 
               {/* Entrar na Sala */}
@@ -3758,7 +3923,10 @@ export default function TCGPage() {
                 }}
                 className="w-full px-6 py-4 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-display font-bold text-lg shadow-lg transition-all hover:scale-105"
               >
-                → {t('joinRoom')}
+                <div className="flex items-center justify-between">
+                  <span>→ {t('joinRoom')}</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">💸 80</span>
+                </div>
               </button>
 
               {/* Voltar */}
@@ -3883,7 +4051,20 @@ export default function TCGPage() {
             <button
               onClick={async () => {
                 if (soundEnabled) AudioManager.buttonClick();
+
+                // Check if player has enough coins
+                const currentBalance = playerEconomy?.coins || 0;
+                if (currentBalance < 80) {
+                  alert(`💸 Fundos insuficientes!\n\nPrecisa de 80 $TESTVBMS para jogar PvP.\nSaldo atual: ${currentBalance} $TESTVBMS`);
+                  if (soundEnabled) AudioManager.buttonError();
+                  return;
+                }
+
                 try {
+                  // Pay entry fee BEFORE joining room
+                  await payEntryFee({ address: address || '', mode: 'pvp' });
+                  devLog('💸 Entry fee paid: 80 $TESTVBMS');
+
                   // Remove do matchmaking antes de entrar em sala manual
                   await ConvexPvPService.cancelMatchmaking(address || '');
                   await ConvexPvPService.joinRoom(roomCode, address || '', userProfile?.username);
@@ -3897,7 +4078,10 @@ export default function TCGPage() {
               disabled={roomCode.length !== 6}
               className="w-full px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold mb-2 transition"
             >
-              {t('join')}
+              <div className="flex items-center justify-between">
+                <span>{t('join')}</span>
+                <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded">💸 80</span>
+              </div>
             </button>
 
             <button
@@ -4463,6 +4647,22 @@ export default function TCGPage() {
                     </div>
                   )}
 
+                  {/* Daily Login Bonus Button */}
+                  {address && userProfile && playerEconomy && (
+                    <button
+                      onClick={handleClaimLoginBonus}
+                      disabled={loginBonusClaimed || isClaimingBonus}
+                      className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
+                        loginBonusClaimed
+                          ? 'bg-gray-600/30 text-gray-400 border border-gray-500/30 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white border-2 border-green-400 hover:from-green-500 hover:to-emerald-500 shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:shadow-[0_0_25px_rgba(34,197,94,0.6)]'
+                      }`}
+                      title={loginBonusClaimed ? "Já coletado hoje" : "Coletar +25 $TESTVBMS"}
+                    >
+                      {isClaimingBonus ? '⏳' : loginBonusClaimed ? '✓ COLETADO' : '🎁 +25'}
+                    </button>
+                  )}
+
                   <button
                     onClick={disconnectWallet}
                     className="px-3 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 text-vintage-gold rounded-lg text-xl border border-vintage-gold/50 font-modern font-semibold transition-all"
@@ -4526,6 +4726,64 @@ export default function TCGPage() {
 
           {/* Game View */}
           {currentView === 'game' && (
+          <>
+          {/* Daily Quest Card */}
+          {address && userProfile && questProgress && questProgress.quest && (
+            <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 backdrop-blur-lg rounded-2xl border-2 border-purple-500/50 p-4 md:p-6 mb-6 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl md:text-4xl">🎯</span>
+                  <div>
+                    <h3 className="text-lg md:text-xl font-display font-bold text-purple-300">DAILY QUEST</h3>
+                    <p className="text-xs md:text-sm text-purple-400 font-modern capitalize">
+                      {questProgress.quest.difficulty} • +{questProgress.quest.reward} $TESTVBMS
+                    </p>
+                  </div>
+                </div>
+                {questProgress.claimed ? (
+                  <div className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg font-modern font-semibold text-xs md:text-sm">
+                    ✓ CLAIMED
+                  </div>
+                ) : questProgress.completed ? (
+                  <button
+                    onClick={handleClaimQuestReward}
+                    disabled={isClaimingQuest}
+                    className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white border-2 border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
+                  >
+                    {isClaimingQuest ? '⏳' : '💎 CLAIM'}
+                  </button>
+                ) : null}
+              </div>
+
+              <p className="text-white font-modern text-sm md:text-base mb-3">
+                {questProgress.quest.description}
+              </p>
+
+              {!questProgress.claimed && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs md:text-sm text-purple-300 font-modern">
+                    <span>Progress</span>
+                    <span className="font-bold">
+                      {questProgress.progress} / {questProgress.quest.requirement.count || 1}
+                    </span>
+                  </div>
+                  <div className="w-full bg-purple-950/50 rounded-full h-2.5 md:h-3 border border-purple-500/30">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        questProgress.completed
+                          ? 'bg-gradient-to-r from-purple-500 to-blue-500 shadow-[0_0_10px_rgba(168,85,247,0.8)]'
+                          : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
+                      }`}
+                      style={{
+                        width: `${Math.min(100, (questProgress.progress / (questProgress.quest.requirement.count || 1)) * 100)}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/50 p-6">
@@ -4768,6 +5026,7 @@ export default function TCGPage() {
               </div>
             </div>
           </div>
+          </>
           )}
 
           {/* Leaderboard View */}
