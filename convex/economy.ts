@@ -27,7 +27,7 @@ const PVE_REWARDS = {
 
 // PvP Rewards
 const PVP_WIN_REWARD = 100;
-const PVP_LOSS_REWARD = 20;
+const PVP_LOSS_PENALTY = -20; // Lose 20 coins on loss
 
 // Entry Fees
 const ENTRY_FEES = {
@@ -392,22 +392,23 @@ export const awardPvPCoins = mutation({
       return { awarded: 0, reason: "Daily PvP match limit reached" };
     }
 
-    // Calculate reward
-    const baseReward = won ? PVP_WIN_REWARD : PVP_LOSS_REWARD;
-    let totalReward = baseReward;
-    const bonuses: string[] = [];
-
-    // First PvP bonus
-    if (!dailyLimits.firstPvpBonus) {
-      totalReward += BONUSES.firstPvp;
-      bonuses.push(`First PvP +${BONUSES.firstPvp}`);
-      dailyLimits.firstPvpBonus = true;
-    }
-
     // Update win streak
     let newStreak = profile.winStreak || 0;
+    const bonuses: string[] = [];
+    let totalReward = 0;
+
     if (won) {
+      // WINNER: Award coins
       newStreak++;
+      totalReward = PVP_WIN_REWARD;
+
+      // First PvP bonus
+      if (!dailyLimits.firstPvpBonus) {
+        totalReward += BONUSES.firstPvp;
+        bonuses.push(`First PvP +${BONUSES.firstPvp}`);
+        dailyLimits.firstPvpBonus = true;
+      }
+
       // Streak bonuses
       if (newStreak === 3 && !dailyLimits.streakBonus) {
         totalReward += BONUSES.streak3;
@@ -420,39 +421,64 @@ export const awardPvPCoins = mutation({
         totalReward += BONUSES.streak10;
         bonuses.push(`10-Win Streak +${BONUSES.streak10}`);
       }
-    } else {
-      newStreak = 0; // Reset on loss
-    }
 
-    // Check daily cap
-    const dailyEarned = calculateDailyEarned(profile);
-    if (dailyEarned + totalReward > DAILY_CAP) {
-      const remaining = Math.max(0, DAILY_CAP - dailyEarned);
-      if (remaining === 0) {
-        return { awarded: 0, reason: "Daily cap reached" };
+      // Check daily cap for winners only
+      const dailyEarned = calculateDailyEarned(profile);
+      if (dailyEarned + totalReward > DAILY_CAP) {
+        const remaining = Math.max(0, DAILY_CAP - dailyEarned);
+        if (remaining === 0) {
+          return { awarded: 0, reason: "Daily cap reached" };
+        }
+        totalReward = remaining;
       }
-      totalReward = remaining;
+
+      // Award coins
+      await ctx.db.patch(profile!._id, {
+        coins: (profile.coins || 0) + totalReward,
+        lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
+        winStreak: newStreak,
+        lastWinTimestamp: Date.now(),
+        dailyLimits: {
+          ...dailyLimits,
+          pvpMatches: dailyLimits.pvpMatches + 1,
+        },
+      });
+
+      const dailyEarnedAfter = dailyEarned + totalReward;
+
+      return {
+        awarded: totalReward,
+        bonuses,
+        winStreak: newStreak,
+        dailyEarned: dailyEarnedAfter,
+        remaining: DAILY_CAP - dailyEarnedAfter,
+      };
+    } else {
+      // LOSER: Deduct coins
+      newStreak = 0; // Reset on loss
+      const penalty = PVP_LOSS_PENALTY; // -20
+      const currentCoins = profile.coins || 0;
+      const newCoins = Math.max(0, currentCoins + penalty); // Can't go below 0
+
+      await ctx.db.patch(profile!._id, {
+        coins: newCoins,
+        lifetimeSpent: (profile.lifetimeSpent || 0) + Math.abs(penalty),
+        winStreak: newStreak,
+        lastWinTimestamp: Date.now(),
+        dailyLimits: {
+          ...dailyLimits,
+          pvpMatches: dailyLimits.pvpMatches + 1,
+        },
+      });
+
+      return {
+        awarded: penalty, // Negative value
+        bonuses: [],
+        winStreak: newStreak,
+        dailyEarned: calculateDailyEarned(profile),
+        remaining: DAILY_CAP - calculateDailyEarned(profile),
+      };
     }
-
-    // Award coins
-    await ctx.db.patch(profile!._id, {
-      coins: (profile.coins || 0) + totalReward,
-      lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
-      winStreak: newStreak,
-      lastWinTimestamp: Date.now(),
-      dailyLimits: {
-        ...dailyLimits,
-        pvpMatches: dailyLimits.pvpMatches + 1,
-      },
-    });
-
-    return {
-      awarded: totalReward,
-      bonuses,
-      winStreak: newStreak,
-      dailyEarned: dailyEarned + totalReward,
-      remaining: DAILY_CAP - (dailyEarned + totalReward),
-    };
   },
 });
 
