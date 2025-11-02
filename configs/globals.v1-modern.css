@@ -1,0 +1,287 @@
+/* VERSÃO 1: MODERNA E MINIMALISTA */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent horizontal overflow */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background: #0A0A0A;
+}
+
+* {
+  max-width: 100%;
+}
+
+/* Modern custom scrollbar - minimal and sleek */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 197, 71, 0.2) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(232, 197, 71, 0.2);
+  border-radius: 2px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(232, 197, 71, 0.4);
+}
+
+/* Mobile: hide scrollbars */
+@media (max-width: 768px) {
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+/* Fix modal scrollbars */
+[data-rk] *,
+[role="dialog"] *,
+[class*="modal"] *,
+[class*="Modal"] *,
+[class*="wallet"] * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+[data-rk] *::-webkit-scrollbar,
+[role="dialog"] *::-webkit-scrollbar,
+[class*="modal"] *::-webkit-scrollbar,
+[class*="Modal"] *::-webkit-scrollbar,
+[class*="wallet"] *::-webkit-scrollbar {
+  display: none !important;
+}
+
+@layer utilities {
+  /* Modern smooth fade-in */
+  .animate-fade-in {
+    animation: modernFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Subtle pulse for notifications */
+  .animate-notification-pulse {
+    animation: subtlePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Modern card hover effect */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Glass effect */
+  .glass {
+    background: rgba(26, 26, 26, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Modern gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, #E8C547 0%, #4FC3F7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Soft glow effect */
+  .glow-soft {
+    box-shadow: 0 0 20px rgba(232, 197, 71, 0.15);
+  }
+}
+
+/* Modern smooth animations */
+@keyframes modernFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes subtlePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+/* Modern battle animations - smoother and more elegant */
+@keyframes battleCardFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes battleCardShake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-3px) rotate(-0.5deg); }
+  75% { transform: translateX(3px) rotate(0.5deg); }
+}
+
+@keyframes battleGlow {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(232, 197, 71, 0.2);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(232, 197, 71, 0.4);
+  }
+}
+
+@keyframes battleGlowBlue {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(79, 195, 247, 0.2);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(79, 195, 247, 0.4);
+  }
+}
+
+@keyframes battleGlowRed {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(239, 83, 80, 0.2);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(239, 83, 80, 0.4);
+  }
+}
+
+@keyframes battlePowerPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+}
+
+@keyframes battleResultSlide {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes tutorialPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(232, 197, 71, 0.4);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 8px rgba(232, 197, 71, 0);
+  }
+}
+
+@keyframes notificationPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(79, 195, 247, 0.5);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(79, 195, 247, 0);
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+/* Fix RainbowKit modal positioning */
+[data-rk] div[role="dialog"] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-width: 90vw !important;
+  max-height: 85vh !important;
+}
+
+/* Modern button styles */
+.btn-modern {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-modern::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-modern:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Modern card effect */
+.card-modern {
+  position: relative;
+  background: linear-gradient(145deg, #1A1A1A 0%, #222222 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-modern:hover {
+  border-color: rgba(232, 197, 71, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
