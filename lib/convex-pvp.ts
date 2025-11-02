@@ -15,6 +15,7 @@ export interface GameRoom {
   _id: string;
   roomId: string;
   status: "waiting" | "ready" | "playing" | "finished" | "cancelled";
+  mode?: "ranked" | "casual"; // Optional: ranked (costs coins) or casual (free)
   hostAddress: string;
   hostUsername: string;
   guestAddress?: string;
