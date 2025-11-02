@@ -2,7 +2,212 @@
 
 **Propósito**: Base de conhecimento consolidada com soluções técnicas, patterns, aprendizados de automação e troubleshooting para evitar resolver os mesmos problemas múltiplas vezes.
 
-**Última atualização**: 2025-11-01
+**Última atualização**: 2025-11-02
+
+---
+
+## Bug #10 - Hardcoded Portuguese Strings Mixed with English UI
+
+**Date**: 2025-11-02
+**Reported By**: User (screenshot showing "Match History" in English with Portuguese text below)
+**Status**: ✅ FIXED
+**Severity**: High (breaks internationalization, bad UX)
+
+### Problem
+
+The Match History section was showing mixed languages when users switched to English:
+- **Title**: "Match History" (English) ✅
+- **Status labels**: "Revanches Restantes", "Resetam à meia-noite" (Portuguese) ❌
+- **Result text**: "VICTORY", "DEFEAT" (English) ✅
+- **Match type**: "PLAYER VS ENVIRONMENT" (English) ✅
+- **Power labels**: "YOUR POWER", "OPPONENT" (English) ✅
+- **Alert messages**: Portuguese ❌
+
+User screenshot (`Desktop/aqui.jpg`) showed this language mixing issue clearly.
+
+### Root Cause
+
+Multiple hardcoded strings in Portuguese were not using the translation system (`useLanguage` hook):
+
+**In `app/profile/[username]/page.tsx`:**
+- Line 1060: `"⚔️ Revanches Restantes:"`
+- Line 1061: `"Resetam à meia-noite (UTC)"`
+- Line 1077: `'♔ VICTORY'`, `'♠ DEFEAT'` (hardcoded English)
+- Line 1094-1097: `'PLAYER VS PLAYER'`, `'YOU ATTACKED'`, etc. (hardcoded English)
+- Line 1108: `"YOUR POWER"` (hardcoded English)
+- Line 1113: `"OPPONENT"` (hardcoded English)
+- Line 1122: `'💰 EARNED'`, `'💸 LOST'` (hardcoded English)
+- Line 1149: `alert('Você usou todas as 5 revanches...')` (Portuguese)
+- Line 1155: `alert('Endereço do oponente não encontrado')` (Portuguese)
+- Line 1162: `alert('Oponente não encontrado')` (Portuguese)
+
+**In `app/page.tsx`:**
+- Similar hardcoded strings in the MatchHistorySection component
+
+### Why This Happened
+
+The initial implementation used hardcoded strings instead of calling the translation function `t('key')` from the `useLanguage` hook. When new features like Match History were added, developers forgot to internationalize all strings.
+
+### Solution
+
+#### 1. Added 16 new translation keys to `lib/translations.ts` (all 4 languages: pt, en, es, hi):
+
+```typescript
+// Portuguese (pt)
+yourPower: 'SEU PODER',
+earned: 'GANHOU',
+lost: 'PERDEU',
+rematchesRemaining: 'Revanches Restantes',
+resetsAtMidnight: 'Resetam à meia-noite (UTC)',
+playerVsPlayer: 'JOGADOR VS JOGADOR',
+playerVsEnvironment: 'JOGADOR VS AMBIENTE',
+youAttacked: 'VOCÊ ATACOU',
+youWereAttacked: 'VOCÊ FOI ATACADO',
+attack: 'ATAQUE',
+defense: 'DEFESA',
+rematch: 'Revanche',
+rematchLimitReached: 'Você usou todas as 5 revanches de hoje! Revanches resetam à meia-noite (UTC).',
+opponentAddressNotFound: 'Endereço do oponente não encontrado',
+opponentNotFound: 'Oponente não encontrado',
+
+// English (en)
+yourPower: 'YOUR POWER',
+earned: 'EARNED',
+lost: 'LOST',
+rematchesRemaining: 'Rematches Remaining',
+resetsAtMidnight: 'Resets at midnight (UTC)',
+playerVsPlayer: 'PLAYER VS PLAYER',
+playerVsEnvironment: 'PLAYER VS ENVIRONMENT',
+youAttacked: 'YOU ATTACKED',
+youWereAttacked: 'YOU WERE ATTACKED',
+attack: 'ATTACK',
+defense: 'DEFENSE',
+rematch: 'Rematch',
+rematchLimitReached: 'You used all 5 rematches for today! Rematches reset at midnight (UTC).',
+opponentAddressNotFound: 'Opponent address not found',
+opponentNotFound: 'Opponent not found',
+
+// Spanish (es)
+yourPower: 'TU PODER',
+earned: 'GANADO',
+lost: 'PERDIDO',
+rematchesRemaining: 'Revanchas Restantes',
+resetsAtMidnight: 'Se reinicia a medianoche (UTC)',
+playerVsPlayer: 'JUGADOR VS JUGADOR',
+playerVsEnvironment: 'JUGADOR VS AMBIENTE',
+youAttacked: 'TÚ ATACASTE',
+youWereAttacked: 'FUISTE ATACADO',
+attack: 'ATAQUE',
+defense: 'DEFENSA',
+rematch: 'Revancha',
+rematchLimitReached: '¡Usaste todas las 5 revanchas de hoy! Las revanchas se reinician a medianoche (UTC).',
+opponentAddressNotFound: 'Dirección del oponente no encontrada',
+opponentNotFound: 'Oponente no encontrado',
+
+// Hindi (hi)
+yourPower: 'आपकी शक्ति',
+earned: 'कमाया',
+lost: 'खोया',
+rematchesRemaining: 'शेष रीमैच',
+resetsAtMidnight: 'मध्यरात्रि (UTC) को रीसेट होता है',
+playerVsPlayer: 'खिलाड़ी VS खिलाड़ी',
+playerVsEnvironment: 'खिलाड़ी VS पर्यावरण',
+youAttacked: 'आपने हमला किया',
+youWereAttacked: 'आप पर हमला हुआ',
+attack: 'हमला',
+defense: 'रक्षा',
+rematch: 'रीमैच',
+rematchLimitReached: 'आपने आज के सभी 5 रीमैच का उपयोग कर लिया है! रीमैच मध्यरात्रि (UTC) को रीसेट होते हैं।',
+opponentAddressNotFound: 'प्रतिद्वंद्वी का पता नहीं मिला',
+opponentNotFound: 'प्रतिद्वंद्वी नहीं मिला',
+```
+
+#### 2. Replaced all hardcoded strings in `app/page.tsx`:
+
+**Before:**
+```typescript
+<h2>Match History</h2>
+const resultText = isWin ? '♔ VICTORY' : '♠ DEFEAT';
+<p>YOUR POWER</p>
+<p>OPPONENT</p>
+```
+
+**After:**
+```typescript
+<h2>{t('matchHistory')}</h2>
+const resultText = isWin ? `♔ ${t('victory').toUpperCase()}` : `♠ ${t('defeat').toUpperCase()}`;
+<p>{t('yourPower')}</p>
+<p>{t('opponent').toUpperCase()}</p>
+```
+
+#### 3. Replaced all hardcoded strings in `app/profile/[username]/page.tsx`:
+
+**Before:**
+```typescript
+<h2>📜 Match History</h2>
+<p>⚔️ Revanches Restantes: {count}</p>
+<span>Resetam à meia-noite (UTC)</span>
+alert('Você usou todas as 5 revanches...');
+alert('Oponente não encontrado');
+```
+
+**After:**
+```typescript
+<h2>📜 {t('matchHistory')}</h2>
+<p>⚔️ {t('rematchesRemaining')}: {count}</p>
+<span>{t('resetsAtMidnight')}</span>
+alert(t('rematchLimitReached'));
+alert(t('opponentNotFound'));
+```
+
+### How to Test
+
+1. Visit the site in different languages
+2. Go to Match History section on home page
+3. Go to any player's profile page and scroll to Match History
+4. Verify all text changes correctly:
+   - Portuguese → "Revanches Restantes", "GANHOU", "JOGADOR VS JOGADOR"
+   - English → "Rematches Remaining", "EARNED", "PLAYER VS PLAYER"
+   - Spanish → "Revanchas Restantes", "GANADO", "JUGADOR VS JUGADOR"
+   - Hindi → "शेष रीमैच", "कमाया", "खिलाड़ी VS खिलाड़ी"
+
+### Prevention
+
+**Best Practices for i18n:**
+
+1. ✅ **ALWAYS use `t('key')` for user-facing text** - Never hardcode strings
+2. ✅ **Add translation keys in ALL languages** - Don't add just Portuguese and English
+3. ✅ **Search for hardcoded strings** - Use grep to find `'UPPERCASE TEXT'` or `'Portuguese text'`
+4. ✅ **Test language switching** - Verify all languages work before deployment
+5. ✅ **Use uppercase transformation** - `t('key').toUpperCase()` instead of hardcoding uppercase translations
+
+**Detection command:**
+```bash
+# Find hardcoded Portuguese strings
+grep -rn "Revanches\|Resetam\|Você usou" app/
+
+# Find hardcoded English UI strings (common pattern: all caps in quotes)
+grep -rn "'[A-Z][A-Z ]*'" app/ --include="*.tsx" --include="*.ts"
+```
+
+### Files Modified
+
+1. ✅ `lib/translations.ts` - Added 16 new keys × 4 languages = 64 new translations
+2. ✅ `app/page.tsx` - Replaced 8 hardcoded strings with `t('key')`
+3. ✅ `app/profile/[username]/page.tsx` - Replaced 13 hardcoded strings with `t('key')`
+
+### Build Status
+
+✅ Project compiled successfully with no errors:
+```
+ ✓ Compiled successfully in 7.5s
+ ✓ Generating static pages (13/13)
+```
+
+### Related Issues
+
+- Similar to tutorial text issue where Portuguese was mixed with other languages
+- Part of larger i18n audit requested by user: "eu n mandou voce revisar todo o site e colocar as traducoes certas das 4 linguas?"
 
 ---
 
