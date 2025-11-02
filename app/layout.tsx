@@ -112,53 +112,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="overflow-x-hidden">
-      <head>
-        {/* Farcaster Mini App Meta Tag - REQUIRED FOR DISCOVERY */}
-        <meta name="fc:miniapp" content={JSON.stringify({
-          version: "1",
-          imageUrl: "https://www.vibemostwanted.xyz/screenshot.jpg",
-          button: {
-            title: "Play Now",
-            action: {
-              type: "launch_frame",
-              name: "VIBE MOST WANTED",
-              url: "https://www.vibemostwanted.xyz",
-              splashImageUrl: "https://www.vibemostwanted.xyz/splash.png",
-              splashBackgroundColor: "#FFD700"
-            }
-          }
-        })} />
-
-        {/* Backward compatibility */}
-        <meta name="fc:frame" content={JSON.stringify({
-          version: "1",
-          imageUrl: "https://www.vibemostwanted.xyz/screenshot.jpg",
-          button: {
-            title: "Play Now",
-            action: {
-              type: "launch_frame",
-              name: "VIBE MOST WANTED",
-              url: "https://www.vibemostwanted.xyz",
-              splashImageUrl: "https://www.vibemostwanted.xyz/splash.png",
-              splashBackgroundColor: "#FFD700"
-            }
-          }
-        })} />
-
-        {/* OpenGraph */}
-        <meta property="og:title" content="VIBE MOST WANTED - NFT Card Game" />
-        <meta property="og:description" content="Battle with your VIBE NFT cards in PvE and PvP modes" />
-        <meta property="og:image" content="https://www.vibemostwanted.xyz/screenshot.jpg" />
-        <meta property="og:url" content="https://www.vibemostwanted.xyz" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="VIBE MOST WANTED" />
-
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="VIBE MOST WANTED - NFT Card Game" />
-        <meta name="twitter:description" content="Battle with your VIBE NFT cards in PvE and PvP modes" />
-        <meta name="twitter:image" content="https://www.vibemostwanted.xyz/screenshot.jpg" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased overflow-x-hidden`}
       >
