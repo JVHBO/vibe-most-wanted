@@ -761,6 +761,8 @@ export default function TCGPage() {
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
+  const [tutorialPage, setTutorialPage] = useState<number>(1);
+  const TUTORIAL_PAGES = 4; // Total number of tutorial pages
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
   const [nfts, setNfts] = useState<any[]>([]);
@@ -2545,6 +2547,13 @@ export default function TCGPage() {
       setAttacksRemaining(maxAttacks);
     }
   }, [userProfile?.lastAttackDate, userProfile?.attacksToday, maxAttacks, address]);
+
+  // Reset tutorial page when tutorial closes
+  useEffect(() => {
+    if (!showTutorial) {
+      setTutorialPage(1);
+    }
+  }, [showTutorial]);
 
   // Load defenses received (attacks from other players)
   useEffect(() => {
@@ -4817,151 +4826,224 @@ export default function TCGPage() {
 
       {showTutorial && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowTutorial(false)}>
-          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl max-h-[90vh] overflow-y-auto p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)]" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
+              <div>
+                <h2 className="text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
+                <p className="text-xs text-vintage-burnt-gold mt-1">{tutorialPage}/{TUTORIAL_PAGES}</p>
+              </div>
               <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-2xl transition">✕</button>
             </div>
 
-            <div className="space-y-6 text-vintage-ice">
-              {/* Precisa de Cartas? */}
-              <div className="relative p-1 rounded-xl" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.4)', animation: 'pulse 2s ease-in-out infinite'}}>
-                <div className="bg-vintage-black/90 p-5 rounded-lg">
-                  <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
-                    <span className="text-2xl">$</span> {t('needCards')}
-                  </h3>
-                  <p className="mb-4 text-vintage-burnt-gold">{t('needCardsDesc')}</p>
-                  <a
-                    href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-modern font-bold transition-all hover:scale-105"
-                    style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}
-                  >
-                    {t('buyCards')} $
-                  </a>
-                </div>
-              </div>
+            {/* Page Content - Max height with scroll for individual pages if needed */}
+            <div className="max-h-[60vh] overflow-y-auto">
+              <div className="space-y-6 text-vintage-ice">
+                {/* PAGE 1: Welcome + Need Cards + How to Play */}
+                {tutorialPage === 1 && (
+                  <>
+                    {/* Precisa de Cartas? */}
+                    <div className="relative p-1 rounded-xl" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.4)', animation: 'pulse 2s ease-in-out infinite'}}>
+                      <div className="bg-vintage-black/90 p-5 rounded-lg">
+                        <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
+                          <span className="text-2xl">$</span> {t('needCards')}
+                        </h3>
+                        <p className="mb-4 text-vintage-burnt-gold">{t('needCardsDesc')}</p>
+                        <a
+                          href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-modern font-bold transition-all hover:scale-105"
+                          style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}
+                        >
+                          {t('buyCards')} $
+                        </a>
+                      </div>
+                    </div>
 
-              {/* Como Jogar */}
-              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
-                <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                  <span className="text-2xl">?</span> {t('howToPlay')}
-                </h3>
-                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('howToPlayDesc')}</p>
-                </div>
-              </div>
+                    {/* Como Jogar */}
+                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
+                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                        <span className="text-2xl">?</span> {t('howToPlay')}
+                      </h3>
+                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('howToPlayDesc')}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
 
-              {/* Poder Total */}
-              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-neon-blue/30">
-                <h3 className="text-xl font-display font-bold text-vintage-neon-blue mb-3 flex items-center gap-2">
-                  <span className="text-2xl">※</span> {t('totalPowerInfo')}
-                </h3>
-                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-neon-blue/20">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('totalPowerInfoDesc')}</p>
-                </div>
-              </div>
+                {/* PAGE 2: Power System */}
+                {tutorialPage === 2 && (
+                  <>
+                    {/* Poder Total */}
+                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-neon-blue/30">
+                      <h3 className="text-xl font-display font-bold text-vintage-neon-blue mb-3 flex items-center gap-2">
+                        <span className="text-2xl">※</span> {t('totalPowerInfo')}
+                      </h3>
+                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-neon-blue/20">
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('totalPowerInfoDesc')}</p>
+                      </div>
+                    </div>
 
-              {/* Ranking Global */}
-              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
-                <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                  <span className="text-2xl">★</span> {t('leaderboardInfo')}
-                </h3>
-                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('leaderboardInfoDesc')}</p>
-                </div>
-              </div>
+                    {/* Como o Poder Funciona */}
+                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
+                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
+                        <span className="text-2xl">※</span> {t('powerCalc')}
+                      </h3>
+                      <p className="mb-3 text-sm text-vintage-burnt-gold">{t('powerCalcDesc')}</p>
+                      <div className="bg-vintage-black/50 p-4 rounded-lg space-y-3 text-sm border border-vintage-gold/20">
+                        <div>
+                          <p className="text-vintage-gold font-bold font-modern">{t('rarityBase')}</p>
+                          <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('rarityValues')}</p>
+                        </div>
+                        <div>
+                          <p className="text-vintage-gold font-bold font-modern">{t('wearMultiplier')}</p>
+                          <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('wearValues')}</p>
+                        </div>
+                        <div>
+                          <p className="text-vintage-gold font-bold font-modern">{t('foilMultiplier')}</p>
+                          <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('foilValues')}</p>
+                        </div>
+                      </div>
+                    </div>
 
-              {/* Sistema de Moedas / Economy */}
-              <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-5 rounded-xl border border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
-                <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                  <span className="text-2xl">$</span> {t('economyInfo')}
-                </h3>
-                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('economyInfoDesc')}</p>
-                </div>
-              </div>
+                    {/* Foil Types */}
+                    <div className="bg-vintage-felt-green/20 p-4 rounded-xl border border-vintage-gold/30">
+                      <div className="space-y-2 text-sm">
+                        <p className="text-vintage-gold font-bold font-modern flex items-center gap-2">
+                          <span className="text-xl">★</span> {t('prizeFoil')}
+                        </p>
+                        <p className="text-vintage-neon-blue font-bold font-modern flex items-center gap-2">
+                          <span className="text-xl">☆</span> {t('standardFoil')}
+                        </p>
+                      </div>
+                    </div>
 
-              {/* Deck de Defesa */}
-              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-burnt-gold/30">
-                <h3 className="text-xl font-display font-bold text-vintage-burnt-gold mb-3 flex items-center gap-2">
-                  <span className="text-2xl">◆</span> {t('defenseDeckInfo')}
-                </h3>
-                <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-burnt-gold/20">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('defenseDeckInfoDesc')}</p>
-                </div>
-              </div>
+                    {/* Exemplos */}
+                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
+                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                        <span className="text-2xl">§</span> {t('powerExamples')}
+                      </h3>
+                      <div className="bg-vintage-black/50 p-4 rounded-lg space-y-2 text-sm border border-vintage-gold/20">
+                        <p className="text-vintage-ice">• {t('exampleCommon')}</p>
+                        <p className="text-vintage-ice">• {t('exampleRare')}</p>
+                        <p className="text-vintage-ice">• {t('exampleLegendary')}</p>
+                        <p className="text-vintage-gold font-bold text-base flex items-center gap-2">
+                          <span>•</span> {t('exampleMythic')}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
 
-              {/* Sistema de Ataques */}
-              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-red-500/30">
-                <h3 className="text-xl font-display font-bold text-red-400 mb-3 flex items-center gap-2">
-                  <span className="text-2xl">†</span> {t('attackSystemInfo')}
-                </h3>
-                <div className="bg-vintage-black/50 p-4 rounded-lg border border-red-500/20">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('attackSystemInfoDesc')}</p>
-                </div>
-              </div>
+                {/* PAGE 3: Economy + Defense */}
+                {tutorialPage === 3 && (
+                  <>
+                    {/* Sistema de Moedas / Economy */}
+                    <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-5 rounded-xl border border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
+                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                        <span className="text-2xl">$</span> {t('economyInfo')}
+                      </h3>
+                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('economyInfoDesc')}</p>
+                      </div>
+                    </div>
 
-              {/* Como o Poder Funciona */}
-              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
-                <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
-                  <span className="text-2xl">※</span> {t('powerCalc')}
-                </h3>
-                <p className="mb-3 text-sm text-vintage-burnt-gold">{t('powerCalcDesc')}</p>
-                <div className="bg-vintage-black/50 p-4 rounded-lg space-y-3 text-sm border border-vintage-gold/20">
-                  <div>
-                    <p className="text-vintage-gold font-bold font-modern">{t('rarityBase')}</p>
-                    <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('rarityValues')}</p>
-                  </div>
-                  <div>
-                    <p className="text-vintage-gold font-bold font-modern">{t('wearMultiplier')}</p>
-                    <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('wearValues')}</p>
-                  </div>
-                  <div>
-                    <p className="text-vintage-gold font-bold font-modern">{t('foilMultiplier')}</p>
-                    <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('foilValues')}</p>
-                  </div>
-                </div>
-              </div>
+                    {/* Deck de Defesa */}
+                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-burnt-gold/30">
+                      <h3 className="text-xl font-display font-bold text-vintage-burnt-gold mb-3 flex items-center gap-2">
+                        <span className="text-2xl">◆</span> {t('defenseDeckInfo')}
+                      </h3>
+                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-burnt-gold/20">
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('defenseDeckInfoDesc')}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
 
-              {/* Foil Types */}
-              <div className="bg-vintage-felt-green/20 p-4 rounded-xl border border-vintage-gold/30">
-                <div className="space-y-2 text-sm">
-                  <p className="text-vintage-gold font-bold font-modern flex items-center gap-2">
-                    <span className="text-xl">★</span> {t('prizeFoil')}
-                  </p>
-                  <p className="text-vintage-neon-blue font-bold font-modern flex items-center gap-2">
-                    <span className="text-xl">☆</span> {t('standardFoil')}
-                  </p>
-                </div>
-              </div>
+                {/* PAGE 4: Attack + Leaderboard */}
+                {tutorialPage === 4 && (
+                  <>
+                    {/* Sistema de Ataques */}
+                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-red-500/30">
+                      <h3 className="text-xl font-display font-bold text-red-400 mb-3 flex items-center gap-2">
+                        <span className="text-2xl">†</span> {t('attackSystemInfo')}
+                      </h3>
+                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-red-500/20">
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('attackSystemInfoDesc')}</p>
+                      </div>
+                    </div>
 
-              {/* Exemplos */}
-              <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
-                <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                  <span className="text-2xl">§</span> {t('powerExamples')}
-                </h3>
-                <div className="bg-vintage-black/50 p-4 rounded-lg space-y-2 text-sm border border-vintage-gold/20">
-                  <p className="text-vintage-ice">• {t('exampleCommon')}</p>
-                  <p className="text-vintage-ice">• {t('exampleRare')}</p>
-                  <p className="text-vintage-ice">• {t('exampleLegendary')}</p>
-                  <p className="text-vintage-gold font-bold text-base flex items-center gap-2">
-                    <span>•</span> {t('exampleMythic')}
-                  </p>
-                </div>
+                    {/* Ranking Global */}
+                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
+                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                        <span className="text-2xl">★</span> {t('leaderboardInfo')}
+                      </h3>
+                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('leaderboardInfoDesc')}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Illuminated Button */}
-            <div className="relative mt-6 p-1 rounded-xl" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)'}}>
+            {/* Navigation */}
+            <div className="mt-6 flex items-center justify-between gap-4">
+              {/* Previous Button */}
               <button
-                onClick={() => setShowTutorial(false)}
-                className="w-full px-6 py-4 rounded-lg font-display font-bold text-lg transition-all hover:scale-[1.02]"
-                style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)'}}
+                onClick={() => {
+                  if (tutorialPage > 1) {
+                    setTutorialPage(tutorialPage - 1);
+                    if (soundEnabled) AudioManager.buttonClick();
+                  }
+                }}
+                disabled={tutorialPage === 1}
+                className={`px-6 py-3 rounded-lg font-modern font-bold transition-all ${
+                  tutorialPage === 1
+                    ? 'bg-vintage-black/30 text-vintage-burnt-gold/30 cursor-not-allowed border border-vintage-gold/10'
+                    : 'bg-vintage-charcoal border border-vintage-gold text-vintage-gold hover:bg-vintage-gold/20 hover:scale-105'
+                }`}
               >
-                {t('understood')} ♠
+                ← {t('previous') || 'Previous'}
               </button>
+
+              {/* Page Indicators (Dots) */}
+              <div className="flex gap-2">
+                {Array.from({ length: TUTORIAL_PAGES }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-2 rounded-full transition-all ${
+                      i + 1 === tutorialPage
+                        ? 'w-8 bg-vintage-gold'
+                        : 'w-2 bg-vintage-gold/30'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Next / Done Button */}
+              {tutorialPage < TUTORIAL_PAGES ? (
+                <button
+                  onClick={() => {
+                    setTutorialPage(tutorialPage + 1);
+                    if (soundEnabled) AudioManager.buttonClick();
+                  }}
+                  className="px-6 py-3 rounded-lg font-modern font-bold bg-vintage-gold text-vintage-black hover:bg-vintage-gold-dark transition-all hover:scale-105"
+                >
+                  {t('next') || 'Next'} →
+                </button>
+              ) : (
+                <div className="relative p-1 rounded-lg" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>
+                  <button
+                    onClick={() => setShowTutorial(false)}
+                    className="px-8 py-3 rounded-lg font-display font-bold transition-all hover:scale-[1.02]"
+                    style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C'}}
+                  >
+                    {t('understood')} ♠
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
