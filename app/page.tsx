@@ -2581,7 +2581,7 @@ export default function TCGPage() {
   return (
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6 overflow-x-hidden">
       {showWinPopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]" onClick={() => setShowWinPopup(false)}>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowWinPopup(false)}>
           <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
             <img
               src="https://pbs.twimg.com/media/G2cr8wQWMAADqE7.jpg"
@@ -2653,7 +2653,7 @@ export default function TCGPage() {
       )}
 
       {showLossPopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]" onClick={() => setShowLossPopup(false)}>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowLossPopup(false)}>
           <div className="relative flex flex-col items-center gap-4">
             <img
               src="https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26"
@@ -2728,7 +2728,7 @@ export default function TCGPage() {
 
       {/* Tie Popup */}
       {showTiePopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]" onClick={() => setShowTiePopup(false)}>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowTiePopup(false)}>
           <div className="relative flex flex-col items-center gap-4">
             <img
               src="/tie.gif"
