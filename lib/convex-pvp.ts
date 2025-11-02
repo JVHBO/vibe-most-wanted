@@ -34,16 +34,21 @@ export class ConvexPvPService {
   /**
    * Create a custom room
    */
-  static async createRoom(hostAddress: string, hostUsername?: string): Promise<string> {
+  static async createRoom(
+    hostAddress: string,
+    hostUsername?: string,
+    mode?: "ranked" | "casual"
+  ): Promise<string> {
     try {
       const normalizedAddress = hostAddress.toLowerCase();
 
       const code = await convex.mutation(api.rooms.createRoom, {
         hostAddress: normalizedAddress,
         hostUsername: hostUsername || normalizedAddress.substring(0, 8),
+        mode: mode || "ranked", // Default to ranked if not specified
       });
 
-      console.log("✅ Room created:", code);
+      console.log("✅ Room created:", code, `(${mode || 'ranked'})`);
       return code;
     } catch (error: any) {
       console.error("❌ createRoom error:", error);
