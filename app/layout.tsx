@@ -53,11 +53,12 @@ export const metadata: Metadata = {
   openGraph: {
     title: "VIBE MOST WANTED - NFT Card Game",
     description: "Battle with your VIBE NFT cards in PvE and PvP modes",
+    url: "https://www.vibemostwanted.xyz",
     images: [
       {
-        url: "https://www.vibemostwanted.xyz/og-image.png",
+        url: "https://www.vibemostwanted.xyz/screenshot.jpg",
         width: 1200,
-        height: 630,
+        height: 800,
         alt: "VIBE MOST WANTED Game"
       }
     ],
@@ -68,16 +69,39 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "VIBE MOST WANTED - NFT Card Game",
     description: "Battle with your VIBE NFT cards in PvE and PvP modes",
-    images: ["https://www.vibemostwanted.xyz/og-image.png"],
+    images: ["https://www.vibemostwanted.xyz/screenshot.jpg"],
   },
   other: {
-    // Farcaster Frame Meta Tags
-    "fc:frame": "vNext",
-    "fc:frame:image": "https://www.vibemostwanted.xyz/og-image.png",
-    "fc:frame:image:aspect_ratio": "1.91:1",
-    "fc:frame:button:1": "🎮 Play Game",
-    "fc:frame:button:1:action": "link",
-    "fc:frame:button:1:target": "https://www.vibemostwanted.xyz",
+    // Farcaster Mini App Meta Tag (NEW - REQUIRED FOR DISCOVERY)
+    "fc:miniapp": JSON.stringify({
+      "version": "1",
+      "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
+      "button": {
+        "title": "🎮 Play Now",
+        "action": {
+          "type": "launch_miniapp",
+          "name": "VIBE MOST WANTED",
+          "url": "https://www.vibemostwanted.xyz",
+          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
+          "splashBackgroundColor": "#FFD700"
+        }
+      }
+    }),
+    // Backward compatibility with old frame spec
+    "fc:frame": JSON.stringify({
+      "version": "1",
+      "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
+      "button": {
+        "title": "🎮 Play Now",
+        "action": {
+          "type": "launch_frame",
+          "name": "VIBE MOST WANTED",
+          "url": "https://www.vibemostwanted.xyz",
+          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
+          "splashBackgroundColor": "#FFD700"
+        }
+      }
+    }),
   }
 };
 
@@ -89,24 +113,51 @@ export default function RootLayout({
   return (
     <html lang="en" className="overflow-x-hidden">
       <head>
-        {/* Farcaster Frame Meta Tags */}
-        <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="https://www.vibemostwanted.xyz/og-placeholder.svg" />
-        <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-        <meta property="fc:frame:button:1" content="🎮 Play Game" />
-        <meta property="fc:frame:button:1:action" content="link" />
-        <meta property="fc:frame:button:1:target" content="https://www.vibemostwanted.xyz" />
+        {/* Farcaster Mini App Meta Tag - REQUIRED FOR DISCOVERY */}
+        <meta name="fc:miniapp" content={JSON.stringify({
+          version: "1",
+          imageUrl: "https://www.vibemostwanted.xyz/screenshot.jpg",
+          button: {
+            title: "🎮 Play Now",
+            action: {
+              type: "launch_miniapp",
+              name: "VIBE MOST WANTED",
+              url: "https://www.vibemostwanted.xyz",
+              splashImageUrl: "https://www.vibemostwanted.xyz/splash.png",
+              splashBackgroundColor: "#FFD700"
+            }
+          }
+        })} />
+
+        {/* Backward compatibility */}
+        <meta name="fc:frame" content={JSON.stringify({
+          version: "1",
+          imageUrl: "https://www.vibemostwanted.xyz/screenshot.jpg",
+          button: {
+            title: "🎮 Play Now",
+            action: {
+              type: "launch_frame",
+              name: "VIBE MOST WANTED",
+              url: "https://www.vibemostwanted.xyz",
+              splashImageUrl: "https://www.vibemostwanted.xyz/splash.png",
+              splashBackgroundColor: "#FFD700"
+            }
+          }
+        })} />
 
         {/* OpenGraph */}
         <meta property="og:title" content="VIBE MOST WANTED - NFT Card Game" />
         <meta property="og:description" content="Battle with your VIBE NFT cards in PvE and PvP modes" />
-        <meta property="og:image" content="https://www.vibemostwanted.xyz/og-placeholder.svg" />
+        <meta property="og:image" content="https://www.vibemostwanted.xyz/screenshot.jpg" />
+        <meta property="og:url" content="https://www.vibemostwanted.xyz" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="VIBE MOST WANTED" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="VIBE MOST WANTED - NFT Card Game" />
         <meta name="twitter:description" content="Battle with your VIBE NFT cards in PvE and PvP modes" />
-        <meta name="twitter:image" content="https://www.vibemostwanted.xyz/og-placeholder.svg" />
+        <meta name="twitter:image" content="https://www.vibemostwanted.xyz/screenshot.jpg" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased overflow-x-hidden`}
