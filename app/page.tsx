@@ -5117,7 +5117,7 @@ export default function TCGPage() {
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
             title={t('settings')}
           >
-            <span className="text-xl" style={{color: '#FFD700'}}>⚙️</span>
+            <Image src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
           <button
