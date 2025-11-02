@@ -3859,6 +3859,14 @@ export default function TCGPage() {
                         }).catch(err => devError('Error sending notification:', err));
                       }
 
+                      // 🎯 Show victory/loss popup
+                      if (matchResult === 'win') {
+                        setShowWinPopup(true);
+                      } else if (matchResult === 'loss') {
+                        setShowLossPopup(true);
+                      }
+                      // Note: Tie popup is already shown above at line 3792
+
                       setIsBattling(false);
                       setIsAttacking(false);
                     }, 5500);
