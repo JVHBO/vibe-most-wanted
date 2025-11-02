@@ -801,6 +801,7 @@ export default function TCGPage() {
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
   const awardPvPCoins = useMutation(api.economy.awardPvPCoins);
+  const recordAttackResult = useMutation(api.economy.recordAttackResult); // ⚛️ ATOMIC: Combines coins + match + profile update
   const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
@@ -3774,20 +3775,35 @@ export default function TCGPage() {
 
                       if (userProfile && address) {
                         try {
-                          // ✅ NOVO: Passar opponentAddress para awardPvPCoins
-                          const reward = await awardPvPCoins({
-                            address,
-                            won: matchResult === 'win',
-                            opponentAddress: targetPlayer.address // ✅ CRÍTICO!
+                          // ⚛️ ATOMIC: Single transaction for coins + match + profile update
+                          const result = await recordAttackResult({
+                            playerAddress: address,
+                            playerPower: playerTotal,
+                            playerCards: attackSelectedCards,
+                            playerUsername: userProfile.username,
+                            result: matchResult,
+                            opponentAddress: targetPlayer.address,
+                            opponentUsername: targetPlayer.username,
+                            opponentPower: dealerTotal,
+                            opponentCards: defenderCards,
+                            entryFeePaid: 50, // Attack mode costs 50
                           });
-                          coinsEarned = reward?.awarded || 0;
 
+                          coinsEarned = result.coinsAwarded || 0;
+
+                          devLog(`⚛️ ATOMIC: Attack recorded successfully`);
                           devLog(`💰 Coins awarded: ${coinsEarned}`);
-                          if (reward?.bonuses && reward.bonuses.length > 0) {
-                            devLog(`🎁 Bonuses: ${reward.bonuses.join(', ')}`);
+                          if (result.bonuses && result.bonuses.length > 0) {
+                            devLog(`🎁 Bonuses: ${result.bonuses.join(', ')}`);
+                          }
+
+                          // Update UI with returned profile (no separate getProfile call needed!)
+                          if (result.profile) {
+                            setUserProfile(result.profile);
+                            setAttacksRemaining(maxAttacks - (result.profile.attacksToday || 0));
                           }
                         } catch (error: any) {
-                          devError('Error awarding PvP coins:', error);
+                          devError('⚛️ ATOMIC: Error recording attack:', error);
                         }
                       }
 
@@ -3801,27 +3817,8 @@ export default function TCGPage() {
                         coinsEarned,
                       });
 
-                      // Registrar partida
+                      // 🔔 Send notification (outside atomic transaction - non-critical)
                       if (address && userProfile) {
-                        await ConvexProfileService.recordMatch(
-                          address,                  // playerAddress
-                          'attack',                 // type
-                          matchResult,              // result
-                          playerTotal,              // playerPower
-                          dealerTotal,              // opponentPower
-                          attackSelectedCards,      // playerCards
-                          defenderCards,            // opponentCards
-                          targetPlayer.address,     // opponentAddress
-                          targetPlayer.username,    // opponentUsername
-                          coinsEarned,              // coinsEarned
-                          50                        // entryFeePaid (attack mode costs 50)
-                        );
-
-                        const updatedProfile = await ConvexProfileService.getProfile(address);
-                        if (updatedProfile) {
-                          setUserProfile(updatedProfile);
-                          setAttacksRemaining(maxAttacks - (updatedProfile.attacksToday || 0));
-                        }
 
                         // 🔔 Send notification to defender with coins info
                         fetch('/api/notifications/send', {
