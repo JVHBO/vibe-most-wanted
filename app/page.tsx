@@ -792,10 +792,11 @@ export default function TCGPage() {
 
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
-  const [pvpMode, setPvpMode] = useState<'menu' | 'pvpMenu' | 'autoMatch' | 'createRoom' | 'joinRoom' | 'inRoom' | null>(null);
+  const [pvpMode, setPvpMode] = useState<'menu' | 'pvpMenu' | 'autoMatch' | 'selectMode' | 'createRoom' | 'joinRoom' | 'inRoom' | null>(null);
   const [roomCode, setRoomCode] = useState<string>('');
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [selectedRoomMode, setSelectedRoomMode] = useState<'ranked' | 'casual'>('ranked');
 
   // AI Difficulty (5 levels with progressive unlock)
   const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
@@ -2469,6 +2470,14 @@ export default function TCGPage() {
       setMatchHistory([]);
     }
   }, [address]);
+
+  // ✓ Force username creation for new users
+  useEffect(() => {
+    if (address && !userProfile && !isLoadingProfile) {
+      devLog('🆕 New user detected - forcing profile creation');
+      setShowCreateProfile(true);
+    }
+  }, [address, userProfile, isLoadingProfile]);
 
   // Auto scroll to play buttons when 5 cards are selected
   useEffect(() => {
@@ -4423,33 +4432,16 @@ export default function TCGPage() {
 
               {/* Criar Sala */}
               <button
-                onClick={async () => {
+                onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
-
-                  // Check if player has enough coins
-                  const currentBalance = playerEconomy?.coins || 0;
-                  if (currentBalance < 40) {
-                    setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
-                    if (soundEnabled) AudioManager.buttonError();
-                    return;
-                  }
-
-                  try {
-                    // Entry fee will be paid when battle actually starts (both players ready)
-                    // Remove do matchmaking antes de criar sala manual
-                    await ConvexPvPService.cancelMatchmaking(address || '');
-                    const code = await ConvexPvPService.createRoom(address || '', userProfile?.username);
-                    setRoomCode(code);
-                    setPvpMode('createRoom');
-                  } catch (error: any) {
-                    setErrorMessage('Error creating room: ' + error.message);
-                  }
+                  // Show mode selection screen
+                  setPvpMode('selectMode');
                 }}
                 className="w-full px-6 py-4 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-display font-bold text-lg shadow-neon transition-all hover:scale-105"
               >
                 <div className="flex items-center justify-between">
                   <span>＋ {t('createRoom')}</span>
-                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 40 ⟩</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">Free / Ranked</span>
                 </div>
               </button>
 
@@ -4473,6 +4465,103 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonNav();
                   setPvpMode(null);
                   setGameMode(null);
+                }}
+                className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
+              >
+                ← {t('back') || 'BACK'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Seleção de Modo (Casual vs Ranked) */}
+      {pvpMode === 'selectMode' && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode('pvpMenu')}>
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-gold">
+              {t('createRoom')}
+            </h2>
+            <p className="text-center text-vintage-burnt-gold mb-8 text-sm font-modern">
+              CHOOSE MATCH TYPE
+            </p>
+
+            <div className="space-y-4">
+              {/* Casual Mode - Free */}
+              <button
+                onClick={async () => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setSelectedRoomMode('casual');
+
+                  try {
+                    // Remove from matchmaking before creating manual room
+                    await ConvexPvPService.cancelMatchmaking(address || '');
+                    const code = await ConvexPvPService.createRoom(address || '', userProfile?.username, 'casual');
+                    setRoomCode(code);
+                    setPvpMode('createRoom');
+                  } catch (error: any) {
+                    setErrorMessage('Error creating room: ' + error.message);
+                    if (soundEnabled) AudioManager.buttonError();
+                  }
+                }}
+                className="w-full px-6 py-4 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-display font-bold text-lg shadow-neon transition-all hover:scale-105"
+              >
+                <div className="flex flex-col items-start">
+                  <div className="flex items-center justify-between w-full mb-2">
+                    <span>🎮 CASUAL</span>
+                    <span className="text-sm font-modern bg-green-500/30 px-3 py-1 rounded">FREE</span>
+                  </div>
+                  <p className="text-xs text-left text-vintage-black/70 font-modern">
+                    Just for fun • No coins required • No rewards
+                  </p>
+                </div>
+              </button>
+
+              {/* Ranked Mode - 40 coins */}
+              <button
+                onClick={async () => {
+                  if (soundEnabled) AudioManager.buttonClick();
+
+                  // Check if player has enough coins
+                  const currentBalance = playerEconomy?.coins || 0;
+                  if (currentBalance < 40) {
+                    setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
+                    if (soundEnabled) AudioManager.buttonError();
+                    return;
+                  }
+
+                  setSelectedRoomMode('ranked');
+
+                  try {
+                    // Entry fee will be paid when battle actually starts (both players ready)
+                    // Remove from matchmaking before creating manual room
+                    await ConvexPvPService.cancelMatchmaking(address || '');
+                    const code = await ConvexPvPService.createRoom(address || '', userProfile?.username, 'ranked');
+                    setRoomCode(code);
+                    setPvpMode('createRoom');
+                  } catch (error: any) {
+                    setErrorMessage('Error creating room: ' + error.message);
+                    if (soundEnabled) AudioManager.buttonError();
+                  }
+                }}
+                className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold text-lg shadow-gold transition-all hover:scale-105"
+              >
+                <div className="flex flex-col items-start">
+                  <div className="flex items-center justify-between w-full mb-2">
+                    <span>⚔️ RANKED</span>
+                    <span className="text-sm font-modern bg-vintage-black/30 px-3 py-1 rounded">⟨ 40 ⟩</span>
+                  </div>
+                  <p className="text-xs text-left text-vintage-black/70 font-modern">
+                    Competitive • Entry fee • Win coins with ranking bonus
+                  </p>
+                </div>
+              </button>
+
+              {/* Voltar */}
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonNav();
+                  setPvpMode('pvpMenu');
                 }}
                 className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
               >
@@ -4638,9 +4727,20 @@ export default function TCGPage() {
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
           <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-yellow-500 max-w-2xl w-full p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-yellow-400">
-                {t('room') || 'Room'}: {roomCode}
-              </h2>
+              <div>
+                <h2 className="text-2xl font-bold text-yellow-400">
+                  {t('room') || 'Room'}: {roomCode}
+                </h2>
+                {currentRoom && (
+                  <p className="text-sm font-modern mt-1">
+                    {currentRoom.mode === 'casual' ? (
+                      <span className="text-green-400">🎮 CASUAL - Free Match</span>
+                    ) : (
+                      <span className="text-vintage-gold">⚔️ RANKED - Entry Fee: 40 coins</span>
+                    )}
+                  </p>
+                )}
+              </div>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonNav();
