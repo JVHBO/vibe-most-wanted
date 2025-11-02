@@ -1056,6 +1056,18 @@ export const recordAttackResult = mutation({
       throw new Error("Daily PvP match limit reached");
     }
 
+    // Check daily cap BEFORE battle (prevent paying entry fee when at cap)
+    const dailyEarned = calculateDailyEarned(profile);
+    const remaining = DAILY_CAP - dailyEarned;
+    if (remaining <= 0) {
+      throw new Error(`Daily earning cap reached (${DAILY_CAP} $TESTVBMS). Come back tomorrow!`);
+    }
+    // Warn if remaining reward won't cover entry fee (would result in net loss)
+    const entryFee = args.entryFeePaid || 0;
+    if (remaining < entryFee) {
+      throw new Error(`Not enough daily cap remaining (${remaining} $TESTVBMS left, entry fee is ${entryFee}). Come back tomorrow to avoid losses!`);
+    }
+
     // ===== STEP 2: Calculate ranking bonus =====
     const playerRank = await getOpponentRanking(ctx, normalizedPlayerAddress);
     const opponentRank = await getOpponentRanking(ctx, normalizedOpponentAddress);
@@ -1099,14 +1111,12 @@ export const recordAttackResult = mutation({
         bonuses.push(`10-Win Streak +${BONUSES.streak10}`);
       }
 
-      // Check daily cap
-      const dailyEarned = calculateDailyEarned(profile);
-      if (dailyEarned + totalReward > DAILY_CAP) {
-        const remaining = Math.max(0, DAILY_CAP - dailyEarned);
-        if (remaining === 0) {
-          throw new Error("Daily cap reached");
-        }
-        totalReward = remaining;
+      // Check daily cap (cap the reward if it would exceed daily limit)
+      const currentDailyEarned = calculateDailyEarned(profile);
+      if (currentDailyEarned + totalReward > DAILY_CAP) {
+        const remainingCap = Math.max(0, DAILY_CAP - currentDailyEarned);
+        totalReward = remainingCap;
+        bonuses.push(`Daily cap reached, reward capped at ${remainingCap}`);
       }
 
       newCoins = (profile.coins || 0) + totalReward;
