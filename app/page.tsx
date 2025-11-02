@@ -2179,13 +2179,18 @@ export default function TCGPage() {
             battleProcessing = true;
             devLog('✓ Ambos jogadores prontos! Iniciando batalha única:', battleId);
 
-            // Pay entry fee now that battle is actually starting
-            try {
-              await payEntryFee({ address: address || '', mode: 'pvp' });
-              devLog('💰 PvP entry fee paid: 40 $TESTVBMS');
-            } catch (error: any) {
-              devError('❌ Failed to pay PvP entry fee:', error);
-              // Continue with battle even if payment fails (already committed to battle)
+            // Pay entry fee only for ranked matches (casual is free)
+            const isRanked = room.mode === 'ranked' || room.mode === undefined; // Default to ranked for legacy rooms
+            if (isRanked) {
+              try {
+                await payEntryFee({ address: address || '', mode: 'pvp' });
+                devLog('💰 PvP entry fee paid: 40 $TESTVBMS (ranked match)');
+              } catch (error: any) {
+                devError('❌ Failed to pay PvP entry fee:', error);
+                // Continue with battle even if payment fails (already committed to battle)
+              }
+            } else {
+              devLog('🎮 Casual match - no entry fee required');
             }
 
             // Determina quem é o jogador local e quem é o oponente
@@ -2271,18 +2276,22 @@ export default function TCGPage() {
 
                 if (userProfile && address) {
                   try {
-                    // ✅ Award economy coins for PvP with ranking bonus
-                    const reward = await awardPvPCoins({
-                      address,
-                      won: matchResult === 'win',
-                      opponentAddress: opponentAddress // ✅ Pass opponent for ranking bonus
-                    });
-                    coinsEarned = reward?.awarded || 0;
-                    if (coinsEarned > 0) {
-                      devLog(`💰 PvP: Awarded ${coinsEarned} $TESTVBMS`, reward);
-                      if (reward?.bonuses && reward.bonuses.length > 0) {
-                        devLog(`🎁 Bonuses: ${reward.bonuses.join(', ')}`);
+                    // ✅ Award economy coins for ranked PvP only (casual is free)
+                    if (isRanked) {
+                      const reward = await awardPvPCoins({
+                        address,
+                        won: matchResult === 'win',
+                        opponentAddress: opponentAddress // ✅ Pass opponent for ranking bonus
+                      });
+                      coinsEarned = reward?.awarded || 0;
+                      if (coinsEarned > 0) {
+                        devLog(`💰 PvP: Awarded ${coinsEarned} $TESTVBMS`, reward);
+                        if (reward?.bonuses && reward.bonuses.length > 0) {
+                          devLog(`🎁 Bonuses: ${reward.bonuses.join(', ')}`);
+                        }
                       }
+                    } else {
+                      devLog('🎮 Casual match - no coins awarded');
                     }
 
                     // Record match with coins earned and entry fee paid
@@ -2296,8 +2305,8 @@ export default function TCGPage() {
                       opponentCards,
                       opponentAddress,
                       opponentName,
-                      coinsEarned, // coinsEarned
-                      80 // entryFeePaid (PvP mode costs 80 $TESTVBMS)
+                      coinsEarned, // coinsEarned (0 for casual)
+                      isRanked ? 40 : 0 // entryFeePaid (40 for ranked, 0 for casual)
                     );
 
                     ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
