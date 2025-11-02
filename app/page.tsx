@@ -4144,61 +4144,36 @@ export default function TCGPage() {
                     }
 
                     // Update stats and record matches
+                    let coinsEarned = 0;
+
                     if (address && userProfile) {
                       try {
-                        const todayUTC = new Date().toISOString().split('T')[0];
-
-                        // Update attack tracking
-                        await ConvexProfileService.updateProfile(address, {
-                          attacksToday: (userProfile.attacksToday || 0) + 1,
-                          lastAttackDate: todayUTC,
+                        // ⚛️ ATOMIC: Single transaction for coins + match + profile update
+                        const result = await recordAttackResult({
+                          playerAddress: address,
+                          playerPower: playerTotal,
+                          playerCards: attackSelectedCards,
+                          playerUsername: userProfile.username,
+                          result: matchResult,
+                          opponentAddress: targetPlayer.address,
+                          opponentUsername: targetPlayer.username,
+                          opponentPower: dealerTotal,
+                          opponentCards: defenderCards,
+                          entryFeePaid: 50, // Attack mode costs 50
                         });
 
-                        // Increment attacker stats
-                        if (matchResult === 'win') {
-                          await ConvexProfileService.incrementStat(address, 'attackWins');
-                        } else if (matchResult === 'loss') {
-                          await ConvexProfileService.incrementStat(address, 'attackLosses');
+                        coinsEarned = result.coinsAwarded || 0;
+
+                        devLog(`⚛️ ATOMIC: Attack recorded successfully`);
+                        devLog(`💰 Coins awarded: ${coinsEarned}`);
+                        if (result.bonuses && result.bonuses.length > 0) {
+                          devLog(`🎁 Bonuses: ${result.bonuses.join(', ')}`);
                         }
 
-                        // Increment defender stats
-                        if (matchResult === 'loss') {
-                          await ConvexProfileService.incrementStat(targetPlayer.address, 'defenseWins');
-                        } else if (matchResult === 'win') {
-                          await ConvexProfileService.incrementStat(targetPlayer.address, 'defenseLosses');
-                        }
-
-                        await ConvexProfileService.recordMatch(
-                          address,
-                          'attack',
-                          matchResult,
-                          playerTotal,
-                          dealerTotal,
-                          attackSelectedCards,
-                          defenderCards,
-                          targetPlayer.address,
-                          targetPlayer.username,
-                          0, // coinsEarned (attacks don't earn coins, only spend entry fee)
-                          50 // entryFeePaid (attack mode costs 50 $TESTVBMS)
-                        );
-
-                        await ConvexProfileService.recordMatch(
-                          targetPlayer.address,
-                          'defense',
-                          matchResult === 'win' ? 'loss' : matchResult === 'loss' ? 'win' : 'tie',
-                          dealerTotal,
-                          playerTotal,
-                          defenderCards,
-                          attackSelectedCards,
-                          address,
-                          userProfile.username,
-                          0, // coinsEarned (defense doesn't earn/spend coins)
-                          0 // entryFeePaid (defense is free)
-                        );
-
-                        const updatedProfile = await ConvexProfileService.getProfile(address);
-                        if (updatedProfile) {
-                          setUserProfile(updatedProfile);
+                        // Update UI with returned profile (no separate getProfile call needed!)
+                        if (result.profile) {
+                          setUserProfile(result.profile);
+                          setAttacksRemaining(maxAttacks - (result.profile.attacksToday || 0));
                         }
 
                         // 🔔 Send notification to defender
@@ -4237,7 +4212,7 @@ export default function TCGPage() {
                         opponentName: targetPlayer.username,
                         opponentTwitter: targetPlayer.twitter,
                         type: 'attack',
-                        coinsEarned: 0
+                        coinsEarned
                       });
 
                       // Show result popup after closing battle
