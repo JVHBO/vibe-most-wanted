@@ -642,10 +642,10 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
     return (
       <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6">
         <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-          <span className="text-3xl">§</span> Match History
+          <span className="text-3xl">§</span> {t('matchHistory')}
         </h2>
         <div className="bg-vintage-black/50 border border-vintage-gold/20 rounded-xl p-8 text-center">
-          <p className="text-vintage-burnt-gold">No matches played yet</p>
+          <p className="text-vintage-burnt-gold">{t('noMatches')}</p>
         </div>
       </div>
     );
@@ -654,7 +654,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
   return (
     <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6">
       <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-        <span className="text-3xl">§</span> Match History
+        <span className="text-3xl">§</span> {t('matchHistory')}
       </h2>
       <div className="space-y-3">
         {matchHistory.map((match, index) => {
@@ -662,7 +662,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
           const isTie = match.result === 'tie';
           const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
           const resultColor = isWin ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-red-400';
-          const resultText = isWin ? '♔ VICTORY' : isTie ? '♦ TIE' : '♠ DEFEAT';
+          const resultText = isWin ? `♔ ${t('victory').toUpperCase()}` : isTie ? `♦ ${t('tie').toUpperCase()}` : `♠ ${t('defeat').toUpperCase()}`;
 
           return (
             <div
@@ -678,10 +678,10 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
                   <div>
                     <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
                     <p className="text-xs text-vintage-burnt-gold font-modern">
-                      {match.type === 'pvp' ? 'PLAYER VS PLAYER' :
-                       match.type === 'attack' ? 'ATTACK' :
-                       match.type === 'defense' ? 'DEFENSE' :
-                       'PLAYER VS ENVIRONMENT'}
+                      {match.type === 'pvp' ? t('playerVsPlayer') :
+                       match.type === 'attack' ? t('attack') :
+                       match.type === 'defense' ? t('defense') :
+                       t('playerVsEnvironment')}
                     </p>
                     <p className="text-xs text-vintage-burnt-gold/70">
                       {new Date(match.timestamp).toLocaleString()}
@@ -692,12 +692,12 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
                 {/* Power Stats */}
                 <div className="flex items-center gap-4">
                   <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-gold/50">
-                    <p className="text-xs text-vintage-burnt-gold font-modern">YOUR POWER</p>
+                    <p className="text-xs text-vintage-burnt-gold font-modern">{t('yourPower')}</p>
                     <p className="text-xl font-bold text-vintage-gold">{match.playerPower}</p>
                   </div>
                   <div className="text-2xl text-vintage-burnt-gold font-bold">VS</div>
                   <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-silver/50">
-                    <p className="text-xs text-vintage-burnt-gold font-modern">OPPONENT</p>
+                    <p className="text-xs text-vintage-burnt-gold font-modern">{t('opponent').toUpperCase()}</p>
                     <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
                   </div>
                 </div>
@@ -743,6 +743,9 @@ export default function TCGPage() {
   const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
   const dailyQuest = useQuery(api.quests.getDailyQuest, {});
   const questProgress = useQuery(api.quests.getQuestProgress, address ? { address } : "skip");
+
+  // 🎯 Weekly Quests & Missions
+  const weeklyProgress = useQuery(api.quests.getWeeklyProgress, address ? { address } : "skip");
 
   // Debug logging for address changes
   useEffect(() => {
@@ -805,6 +808,19 @@ export default function TCGPage() {
   const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
+
+  // 🎯 Weekly Quests mutations
+  const claimWeeklyReward = useMutation(api.quests.claimWeeklyReward);
+
+  // 🔒 Defense Lock System - Get locked cards for Attack/PvP modes
+  const attackLockedCards = useQuery(
+    api.profiles.getAvailableCards,
+    address ? { address, mode: "attack" } : "skip"
+  );
+  const pvpLockedCards = useQuery(
+    api.profiles.getAvailableCards,
+    address ? { address, mode: "pvp" } : "skip"
+  );
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
   const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
@@ -825,7 +841,7 @@ export default function TCGPage() {
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
   // Profile States
-  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard'>('game');
+  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions'>('game');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
@@ -2091,13 +2107,19 @@ export default function TCGPage() {
     setCurrentPage(1);
   }, [sortByPower, nfts.length]);
 
-  // Sorted NFTs for attack modal
+  // 🔒 Sorted NFTs for attack modal (show locked cards but mark them)
   const sortedAttackNfts = useMemo(() => {
     if (!sortAttackByPower) return nfts;
     return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
   }, [nfts, sortAttackByPower]);
 
-  // Sorted NFTs for PvE modal
+  // Helper to check if card is locked
+  const isCardLocked = (tokenId: string, mode: 'attack' | 'pvp') => {
+    const lockedCards = mode === 'attack' ? attackLockedCards : pvpLockedCards;
+    return (lockedCards?.lockedTokenIds as string[] | undefined)?.includes(tokenId) || false;
+  };
+
+  // Sorted NFTs for PvE modal (PvE allows defense cards - NO lock)
   const sortedPveNfts = useMemo(() => {
     if (!pveSortByPower) return nfts;
     return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
@@ -3923,10 +3945,16 @@ export default function TCGPage() {
             <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5 mb-4 max-h-[45vh] overflow-y-auto p-1">
               {sortedAttackNfts.map((nft) => {
                 const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
+                const isLocked = isCardLocked(nft.tokenId, 'attack'); // 🔒 Check if locked in defense
                 return (
                   <div
                     key={nft.tokenId}
                     onClick={() => {
+                      if (isLocked) {
+                        // 🔒 Locked cards can't be selected - play error sound
+                        if (soundEnabled) AudioManager.buttonError();
+                        return;
+                      }
                       if (isSelected) {
                         setAttackSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
                         if (soundEnabled) AudioManager.deselectCard();
@@ -3935,17 +3963,32 @@ export default function TCGPage() {
                         if (soundEnabled) AudioManager.selectCard();
                       }
                     }}
-                    className={`relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer transition-all ${
-                      isSelected
-                        ? 'ring-4 ring-red-600 scale-95'
-                        : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50'
+                    className={`relative aspect-[2/3] rounded-lg overflow-hidden transition-all ${
+                      isLocked
+                        ? 'opacity-50 cursor-not-allowed' // 🔒 Locked appearance
+                        : isSelected
+                        ? 'ring-4 ring-red-600 scale-95 cursor-pointer'
+                        : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50 cursor-pointer'
                     }`}
+                    title={isLocked ? "🔒 This card is locked in your defense deck" : undefined}
                   >
                     <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
                     <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
                       {nft.power}
                     </div>
-                    {isSelected && (
+
+                    {/* 🔒 Locked Overlay */}
+                    {isLocked && (
+                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                        <div className="text-3xl mb-1">🔒</div>
+                        <div className="text-[10px] text-white font-bold bg-black/50 px-1 rounded">
+                          IN DEFENSE
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Selected Checkmark */}
+                    {isSelected && !isLocked && (
                       <div className="absolute inset-0 bg-red-600/20 flex items-center justify-center">
                         <div className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                           ✓
@@ -4644,10 +4687,16 @@ export default function TCGPage() {
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto p-2">
                         {nfts.map((nft, index) => {
                           const isSelected = selectedCards.some((c: any) => c.tokenId === nft.tokenId);
+                          const isLocked = isCardLocked(nft.tokenId, 'pvp'); // 🔒 Check if locked in defense
                           return (
                             <div
                               key={index}
                               onClick={() => {
+                                if (isLocked) {
+                                  // 🔒 Locked cards can't be selected - play error sound
+                                  if (soundEnabled) AudioManager.buttonError();
+                                  return;
+                                }
                                 if (isSelected) {
                                   setSelectedCards(selectedCards.filter((c: any) => c.tokenId !== nft.tokenId));
                                 } else if (selectedCards.length < 5) {
@@ -4655,11 +4704,14 @@ export default function TCGPage() {
                                 }
                                 if (soundEnabled) AudioManager.buttonClick();
                               }}
-                              className={`relative cursor-pointer rounded-lg overflow-hidden transition-all ${
-                                isSelected
-                                  ? 'ring-4 ring-green-500 scale-95'
-                                  : 'hover:scale-105 opacity-70 hover:opacity-100'
+                              className={`relative rounded-lg overflow-hidden transition-all ${
+                                isLocked
+                                  ? 'opacity-50 cursor-not-allowed' // 🔒 Locked appearance
+                                  : isSelected
+                                  ? 'ring-4 ring-green-500 scale-95 cursor-pointer'
+                                  : 'hover:scale-105 opacity-70 hover:opacity-100 cursor-pointer'
                               }`}
+                              title={isLocked ? "🔒 This card is locked in your defense deck" : undefined}
                             >
                               <img
                                 src={nft.imageUrl}
@@ -4670,7 +4722,19 @@ export default function TCGPage() {
                               <div className="absolute top-1 right-1 bg-black/70 rounded-full px-2 py-0.5 text-xs font-bold text-white">
                                 {nft.power}
                               </div>
-                              {isSelected && (
+
+                              {/* 🔒 Locked Overlay */}
+                              {isLocked && (
+                                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                                  <div className="text-3xl mb-1">🔒</div>
+                                  <div className="text-[10px] text-white font-bold bg-black/50 px-1 rounded">
+                                    IN DEFENSE
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Selected Checkmark */}
+                              {isSelected && !isLocked && (
                                 <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
                                   <span className="text-4xl">✓</span>
                                 </div>
@@ -5156,6 +5220,19 @@ export default function TCGPage() {
                 }`}
               >
                 <span className={isInFarcaster ? 'text-2xl' : 'text-base md:text-lg'}>♠</span> {isInFarcaster ? t('title') : <><span className="hidden sm:inline">{t('title')}</span></>}
+              </button>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setCurrentView('missions');
+                }}
+                className={`flex-1 ${isInFarcaster ? 'px-4 py-3' : 'px-2 md:px-6 py-2 md:py-3'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-base' : 'text-xs md:text-base'} ${
+                  currentView === 'missions'
+                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
+                }`}
+              >
+                <span className={isInFarcaster ? 'text-2xl' : 'text-base md:text-lg'}>🎯</span> {isInFarcaster ? t('missions') : <><span className="hidden sm:inline">{t('missions')}</span></>}
               </button>
               <button
                 onClick={() => {
@@ -5682,6 +5759,330 @@ export default function TCGPage() {
                     <MatchHistorySection address={userProfile.address} />
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* 🎯 Missions View */}
+          {currentView === 'missions' && (
+            <div className="max-w-6xl mx-auto space-y-6">
+              {/* Weekly Quests Section */}
+              <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 backdrop-blur-lg rounded-2xl border-2 border-purple-500/50 p-6 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-4xl">🎯</span>
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-display font-bold text-purple-300">WEEKLY MISSIONS</h2>
+                    <p className="text-sm text-purple-400 font-modern">Reset every Sunday 00:00 UTC</p>
+                  </div>
+                </div>
+
+                {!address || !userProfile ? (
+                  <div className="text-center py-8">
+                    <p className="text-purple-300">Create a profile to track weekly missions</p>
+                  </div>
+                ) : weeklyProgress ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Attack Master Quest */}
+                    {weeklyProgress.quests.weekly_attack_wins && (
+                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-purple-500/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🏆</span>
+                            <div>
+                              <h3 className="text-lg font-bold text-white">Attack Master</h3>
+                              <p className="text-xs text-purple-400">Win 20 attacks</p>
+                            </div>
+                          </div>
+                          {weeklyProgress.quests.weekly_attack_wins.claimed ? (
+                            <div className="px-3 py-1.5 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg text-xs font-semibold">
+                              ✓ Claimed
+                            </div>
+                          ) : weeklyProgress.quests.weekly_attack_wins.completed ? (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await claimWeeklyReward({ address, questId: 'weekly_attack_wins' });
+                                  if (soundEnabled) AudioManager.buttonSuccess();
+                                } catch (error) {
+                                  console.error('Error claiming reward:', error);
+                                  if (soundEnabled) AudioManager.buttonError();
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white border border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg text-xs font-semibold transition-all"
+                            >
+                              ✦ Claim 300 $TESTVBMS
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-purple-300">
+                            <span>Progress</span>
+                            <span className="font-bold">
+                              {weeklyProgress.quests.weekly_attack_wins.current} / {weeklyProgress.quests.weekly_attack_wins.target}
+                            </span>
+                          </div>
+                          <div className="w-full bg-purple-950/50 rounded-full h-2 border border-purple-500/30">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                weeklyProgress.quests.weekly_attack_wins.completed
+                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
+                                  : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
+                              }`}
+                              style={{
+                                width: `${Math.min(100, (weeklyProgress.quests.weekly_attack_wins.current / weeklyProgress.quests.weekly_attack_wins.target) * 100)}%`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Active Player Quest */}
+                    {weeklyProgress.quests.weekly_total_matches && (
+                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-purple-500/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🎲</span>
+                            <div>
+                              <h3 className="text-lg font-bold text-white">Active Player</h3>
+                              <p className="text-xs text-purple-400">Play 30 matches (any mode)</p>
+                            </div>
+                          </div>
+                          {weeklyProgress.quests.weekly_total_matches.claimed ? (
+                            <div className="px-3 py-1.5 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg text-xs font-semibold">
+                              ✓ Claimed
+                            </div>
+                          ) : weeklyProgress.quests.weekly_total_matches.completed ? (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await claimWeeklyReward({ address, questId: 'weekly_total_matches' });
+                                  if (soundEnabled) AudioManager.buttonSuccess();
+                                } catch (error) {
+                                  console.error('Error claiming reward:', error);
+                                  if (soundEnabled) AudioManager.buttonError();
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white border border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg text-xs font-semibold transition-all"
+                            >
+                              ✦ Claim 200 $TESTVBMS
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-purple-300">
+                            <span>Progress</span>
+                            <span className="font-bold">
+                              {weeklyProgress.quests.weekly_total_matches.current} / {weeklyProgress.quests.weekly_total_matches.target}
+                            </span>
+                          </div>
+                          <div className="w-full bg-purple-950/50 rounded-full h-2 border border-purple-500/30">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                weeklyProgress.quests.weekly_total_matches.completed
+                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
+                                  : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
+                              }`}
+                              style={{
+                                width: `${Math.min(100, (weeklyProgress.quests.weekly_total_matches.current / weeklyProgress.quests.weekly_total_matches.target) * 100)}%`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fortress Quest */}
+                    {weeklyProgress.quests.weekly_defense_wins && (
+                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-purple-500/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🛡️</span>
+                            <div>
+                              <h3 className="text-lg font-bold text-white">Fortress</h3>
+                              <p className="text-xs text-purple-400">Defend successfully 10 times</p>
+                            </div>
+                          </div>
+                          {weeklyProgress.quests.weekly_defense_wins.claimed ? (
+                            <div className="px-3 py-1.5 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg text-xs font-semibold">
+                              ✓ Claimed
+                            </div>
+                          ) : weeklyProgress.quests.weekly_defense_wins.completed ? (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await claimWeeklyReward({ address, questId: 'weekly_defense_wins' });
+                                  if (soundEnabled) AudioManager.buttonSuccess();
+                                } catch (error) {
+                                  console.error('Error claiming reward:', error);
+                                  if (soundEnabled) AudioManager.buttonError();
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white border border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg text-xs font-semibold transition-all"
+                            >
+                              ✦ Claim 400 $TESTVBMS
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-purple-300">
+                            <span>Progress</span>
+                            <span className="font-bold">
+                              {weeklyProgress.quests.weekly_defense_wins.current} / {weeklyProgress.quests.weekly_defense_wins.target}
+                            </span>
+                          </div>
+                          <div className="w-full bg-purple-950/50 rounded-full h-2 border border-purple-500/30">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                weeklyProgress.quests.weekly_defense_wins.completed
+                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
+                                  : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
+                              }`}
+                              style={{
+                                width: `${Math.min(100, (weeklyProgress.quests.weekly_defense_wins.current / weeklyProgress.quests.weekly_defense_wins.target) * 100)}%`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Unbeatable Quest */}
+                    {weeklyProgress.quests.weekly_pve_streak && (
+                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-purple-500/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🔥</span>
+                            <div>
+                              <h3 className="text-lg font-bold text-white">Unbeatable</h3>
+                              <p className="text-xs text-purple-400">Win 10 PvE battles in a row</p>
+                            </div>
+                          </div>
+                          {weeklyProgress.quests.weekly_pve_streak.claimed ? (
+                            <div className="px-3 py-1.5 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg text-xs font-semibold">
+                              ✓ Claimed
+                            </div>
+                          ) : weeklyProgress.quests.weekly_pve_streak.completed ? (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await claimWeeklyReward({ address, questId: 'weekly_pve_streak' });
+                                  if (soundEnabled) AudioManager.buttonSuccess();
+                                } catch (error) {
+                                  console.error('Error claiming reward:', error);
+                                  if (soundEnabled) AudioManager.buttonError();
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white border border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg text-xs font-semibold transition-all"
+                            >
+                              ✦ Claim 500 $TESTVBMS
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-purple-300">
+                            <span>Progress</span>
+                            <span className="font-bold">
+                              {weeklyProgress.quests.weekly_pve_streak.current} / {weeklyProgress.quests.weekly_pve_streak.target}
+                            </span>
+                          </div>
+                          <div className="w-full bg-purple-950/50 rounded-full h-2 border border-purple-500/30">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                weeklyProgress.quests.weekly_pve_streak.completed
+                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
+                                  : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
+                              }`}
+                              style={{
+                                width: `${Math.min(100, (weeklyProgress.quests.weekly_pve_streak.current / weeklyProgress.quests.weekly_pve_streak.target) * 100)}%`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+                    <p className="text-purple-300 mt-4">Loading missions...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Weekly Leaderboard Rewards Section */}
+              <div className="bg-gradient-to-r from-yellow-900/40 to-orange-900/40 backdrop-blur-lg rounded-2xl border-2 border-yellow-500/50 p-6 shadow-[0_0_30px_rgba(234,179,8,0.3)]">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-4xl">🏅</span>
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-display font-bold text-yellow-300">WEEKLY LEADERBOARD REWARDS</h2>
+                    <p className="text-sm text-yellow-400 font-modern">Distributed every Sunday • TOP 10 ONLY</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-yellow-400">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">🥇</span>
+                      <div>
+                        <p className="text-lg font-bold text-yellow-300">1st Place</p>
+                        <p className="text-xs text-yellow-400">Champion of the Week</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-display font-bold text-yellow-300">1,000</p>
+                      <p className="text-xs text-yellow-400">$TESTVBMS</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-gray-300">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">🥈</span>
+                      <div>
+                        <p className="text-lg font-bold text-gray-200">2nd Place</p>
+                        <p className="text-xs text-gray-400">Runner-up</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-display font-bold text-gray-200">750</p>
+                      <p className="text-xs text-gray-400">$TESTVBMS</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-orange-400">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">🥉</span>
+                      <div>
+                        <p className="text-lg font-bold text-orange-300">3rd Place</p>
+                        <p className="text-xs text-orange-400">Bronze Medal</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-display font-bold text-orange-300">500</p>
+                      <p className="text-xs text-orange-400">$TESTVBMS</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border border-purple-500/30">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">⭐</span>
+                      <div>
+                        <p className="text-base font-bold text-purple-300">4th - 10th Place</p>
+                        <p className="text-xs text-purple-400">Top 10 Finishers</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-display font-bold text-purple-300">300</p>
+                      <p className="text-xs text-purple-400">$TESTVBMS</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-blue-900/30 border border-blue-500/30 rounded-lg">
+                  <p className="text-sm text-blue-300 text-center">
+                    ℹ️ Rewards are automatically distributed every Sunday at 00:00 UTC based on <span className="font-bold">Total Power</span> ranking
+                  </p>
+                </div>
               </div>
             </div>
           )}

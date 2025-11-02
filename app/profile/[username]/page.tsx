@@ -1053,18 +1053,18 @@ export default function ProfilePage() {
       <div id="match-history" className="max-w-6xl mx-auto scroll-mt-24">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            📜 Match History
+            📜 {t('matchHistory')}
           </h2>
           {profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
             <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold">
-              ⚔️ Revanches Restantes: <span className="text-vintage-neon-blue">{rematchesRemaining}/{MAX_REMATCHES}</span>
-              <span className="block text-[10px] text-vintage-burnt-gold">Resetam à meia-noite (UTC)</span>
+              ⚔️ {t('rematchesRemaining')}: <span className="text-vintage-neon-blue">{rematchesRemaining}/{MAX_REMATCHES}</span>
+              <span className="block text-[10px] text-vintage-burnt-gold">{t('resetsAtMidnight')}</span>
             </p>
           )}
         </div>
         {matchHistory.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
-            <p className="text-gray-400">No matches played yet</p>
+            <p className="text-gray-400">{t('noMatches')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -1074,7 +1074,7 @@ export default function ProfilePage() {
               const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
               const bgColor = isWin ? 'from-green-900/20' : isTie ? 'from-yellow-900/20' : 'from-red-900/20';
               const resultColor = isWin ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-red-400';
-              const resultText = isWin ? '♔ VICTORY' : isTie ? '♦ TIE' : '♠ DEFEAT';
+              const resultText = isWin ? `♔ ${t('victory').toUpperCase()}` : isTie ? `♦ ${t('tie').toUpperCase()}` : `♠ ${t('defeat').toUpperCase()}`;
 
               return (
                 <div
@@ -1091,10 +1091,10 @@ export default function ProfilePage() {
                         <div>
                           <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
                           <p className="text-xs text-vintage-burnt-gold font-modern">
-                            {match.type === 'pvp' ? 'PLAYER VS PLAYER' :
-                             match.type === 'attack' ? 'YOU ATTACKED' :
-                             match.type === 'defense' ? 'YOU WERE ATTACKED' :
-                             'PLAYER VS ENVIRONMENT'}
+                            {match.type === 'pvp' ? t('playerVsPlayer') :
+                             match.type === 'attack' ? t('youAttacked') :
+                             match.type === 'defense' ? t('youWereAttacked') :
+                             t('playerVsEnvironment')}
                           </p>
                           <p className="text-xs text-vintage-burnt-gold/70">
                             {new Date(match.timestamp).toLocaleString()}
@@ -1105,12 +1105,12 @@ export default function ProfilePage() {
                       {/* Power Stats */}
                       <div className="flex items-center gap-4">
                         <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-gold/50">
-                          <p className="text-xs text-vintage-burnt-gold font-modern">YOUR POWER</p>
+                          <p className="text-xs text-vintage-burnt-gold font-modern">{t('yourPower')}</p>
                           <p className="text-xl font-bold text-vintage-gold">{match.playerPower}</p>
                         </div>
                         <div className="text-2xl text-vintage-burnt-gold font-bold">VS</div>
                         <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-silver/50">
-                          <p className="text-xs text-vintage-burnt-gold font-modern">OPPONENT</p>
+                          <p className="text-xs text-vintage-burnt-gold font-modern">{t('opponent').toUpperCase()}</p>
                           <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
                         </div>
                       </div>
@@ -1119,7 +1119,7 @@ export default function ProfilePage() {
                       {match.coinsEarned !== undefined && match.coinsEarned !== null && (
                         <div className={`text-center px-4 py-2 rounded-lg border ${match.coinsEarned > 0 ? 'bg-vintage-gold/10 border-vintage-gold' : 'bg-gray-500/10 border-gray-500'}`}>
                           <p className="text-xs text-vintage-burnt-gold font-modern">
-                            {match.coinsEarned > 0 ? '💰 EARNED' : '💸 LOST'}
+                            {match.coinsEarned > 0 ? `💰 ${t('earned')}` : `💸 ${t('lost')}`}
                           </p>
                           <p className={`text-xl font-bold ${match.coinsEarned > 0 ? 'text-vintage-gold' : 'text-gray-400'}`}>
                             {match.coinsEarned > 0 ? '+' : ''}{match.coinsEarned}
@@ -1146,20 +1146,20 @@ export default function ProfilePage() {
                         <button
                           onClick={async () => {
                             if (rematchesRemaining <= 0) {
-                              alert('Você usou todas as 5 revanches de hoje! Revanches resetam à meia-noite (UTC).');
+                              alert(t('rematchLimitReached'));
                               return;
                             }
 
                             // Validate opponent address
                             if (!match.opponentAddress) {
-                              alert('Endereço do oponente não encontrado');
+                              alert(t('opponentAddressNotFound'));
                               return;
                             }
 
                             // Load opponent profile
                             const opponentProfile = await ConvexProfileService.getProfile(match.opponentAddress);
                             if (!opponentProfile) {
-                              alert('Oponente não encontrado');
+                              alert(t('opponentNotFound'));
                               return;
                             }
 
