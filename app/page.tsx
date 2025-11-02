@@ -1807,7 +1807,7 @@ export default function TCGPage() {
                 }
               }
 
-              // Close battle and show result
+              // Close battle first
               setTimeout(() => {
                 setIsBattling(false);
                 setShowBattleScreen(false);
@@ -1824,16 +1824,19 @@ export default function TCGPage() {
                   coinsEarned
                 });
 
-                if (finalResult === 'win') {
-                  setShowWinPopup(true);
-                  if (soundEnabled) AudioManager.win();
-                } else if (finalResult === 'loss') {
-                  setShowLossPopup(true);
-                  if (soundEnabled) AudioManager.lose();
-                } else {
-                  setShowTiePopup(true);
-                  if (soundEnabled) AudioManager.tie();
-                }
+                // Show result popup after closing battle
+                setTimeout(() => {
+                  if (finalResult === 'win') {
+                    setShowWinPopup(true);
+                    if (soundEnabled) AudioManager.win();
+                  } else if (finalResult === 'loss') {
+                    setShowLossPopup(true);
+                    if (soundEnabled) AudioManager.lose();
+                  } else {
+                    setShowTiePopup(true);
+                    if (soundEnabled) AudioManager.tie();
+                  }
+                }, 100);
               }, 2000);
             })();
           } else {
@@ -1943,7 +1946,7 @@ export default function TCGPage() {
           }
         }
 
-        // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
+        // Fecha a tela de batalha PRIMEIRO
         setTimeout(() => {
           setIsBattling(false);
           setShowBattleScreen(false);
@@ -1959,17 +1962,19 @@ export default function TCGPage() {
             coinsEarned
           });
 
-          // Mostra popup IMEDIATAMENTE
-          if (matchResult === 'win') {
-            setShowWinPopup(true);
-            if (soundEnabled) AudioManager.win();
-          } else if (matchResult === 'loss') {
-            setShowLossPopup(true);
-            if (soundEnabled) AudioManager.lose();
-          } else {
-            setShowTiePopup(true);
-            if (soundEnabled) AudioManager.tie();
-          }
+          // Mostra popup DEPOIS de fechar batalha
+          setTimeout(() => {
+            if (matchResult === 'win') {
+              setShowWinPopup(true);
+              if (soundEnabled) AudioManager.win();
+            } else if (matchResult === 'loss') {
+              setShowLossPopup(true);
+              if (soundEnabled) AudioManager.lose();
+            } else {
+              setShowTiePopup(true);
+              if (soundEnabled) AudioManager.tie();
+            }
+          }, 100);
         }, 2000);
       })();
     }, 4500);
@@ -2317,7 +2322,7 @@ export default function TCGPage() {
                   }
                 }
 
-                // Fecha a tela de batalha E mostra popup SIMULTANEAMENTE
+                // Fecha a tela de batalha PRIMEIRO
                 setTimeout(() => {
                   setIsBattling(false);
                   setShowBattleScreen(false);
@@ -2334,17 +2339,19 @@ export default function TCGPage() {
                     coinsEarned
                   });
 
-                  // Mostra popup IMEDIATAMENTE
-                  if (matchResult === 'win') {
-                    setShowWinPopup(true);
-                    if (soundEnabled) AudioManager.win();
-                  } else if (matchResult === 'loss') {
-                    setShowLossPopup(true);
-                    if (soundEnabled) AudioManager.lose();
-                  } else {
-                    setShowTiePopup(true);
-                    if (soundEnabled) AudioManager.tie();
-                  }
+                  // Mostra popup DEPOIS de fechar batalha
+                  setTimeout(() => {
+                    if (matchResult === 'win') {
+                      setShowWinPopup(true);
+                      if (soundEnabled) AudioManager.win();
+                    } else if (matchResult === 'loss') {
+                      setShowLossPopup(true);
+                      if (soundEnabled) AudioManager.lose();
+                    } else {
+                      setShowTiePopup(true);
+                      if (soundEnabled) AudioManager.tie();
+                    }
+                  }, 100);
 
                   // Reset battle flag immediately so player can start new match without waiting
                   pvpBattleStarted.current = false;
@@ -3869,16 +3876,24 @@ export default function TCGPage() {
                         }).catch(err => devError('Error sending notification:', err));
                       }
 
-                      // 🎯 Show victory/loss popup
-                      if (matchResult === 'win') {
-                        setShowWinPopup(true);
-                      } else if (matchResult === 'loss') {
-                        setShowLossPopup(true);
-                      }
-                      // Note: Tie popup is already shown above at line 3792
-
+                      // Close battle first
                       setIsBattling(false);
+                      setShowBattleScreen(false);
+                      setBattlePhase('cards');
                       setIsAttacking(false);
+                      setShowAttackCardSelection(false);
+                      setTargetPlayer(null);
+                      setAttackSelectedCards([]);
+
+                      // 🎯 Show victory/loss popup after closing
+                      setTimeout(() => {
+                        if (matchResult === 'win') {
+                          setShowWinPopup(true);
+                        } else if (matchResult === 'loss') {
+                          setShowLossPopup(true);
+                        }
+                        // Note: Tie popup is already shown above
+                      }, 100);
                     }, 5500);
 
                   } catch (error: any) {
@@ -4204,13 +4219,14 @@ export default function TCGPage() {
                       }
                     }
 
-                    // Close battle and show result
+                    // Close battle first
                     setTimeout(() => {
                       setIsBattling(false);
                       setShowBattleScreen(false);
                       setBattlePhase('cards');
                       setAttackSelectedCards([]);
-                      setIsAttacking(false); // Reset attack state
+                      setIsAttacking(false);
+                      setTargetPlayer(null);
 
                       // Set last battle result for sharing
                       setLastBattleResult({
@@ -4220,21 +4236,22 @@ export default function TCGPage() {
                         opponentName: targetPlayer.username,
                         opponentTwitter: targetPlayer.twitter,
                         type: 'attack',
-                        coinsEarned: 0 // Attacks don't earn coins
+                        coinsEarned: 0
                       });
 
-                      setTargetPlayer(null);
-
-                      if (matchResult === 'win') {
-                        setShowWinPopup(true);
-                        if (soundEnabled) AudioManager.win();
-                      } else if (matchResult === 'loss') {
-                        setShowLossPopup(true);
-                        if (soundEnabled) AudioManager.lose();
-                      } else {
-                        setShowTiePopup(true);
-                        if (soundEnabled) AudioManager.tie();
-                      }
+                      // Show result popup after closing battle
+                      setTimeout(() => {
+                        if (matchResult === 'win') {
+                          setShowWinPopup(true);
+                          if (soundEnabled) AudioManager.win();
+                        } else if (matchResult === 'loss') {
+                          setShowLossPopup(true);
+                          if (soundEnabled) AudioManager.lose();
+                        } else {
+                          setShowTiePopup(true);
+                          if (soundEnabled) AudioManager.tie();
+                        }
+                      }, 100);
                     }, 2000);
                   }, 4500);
                 }}
