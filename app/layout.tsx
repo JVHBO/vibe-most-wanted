@@ -73,17 +73,14 @@ export const metadata: Metadata = {
   },
   other: {
     // Farcaster Mini App Meta Tag (NEW - REQUIRED FOR DISCOVERY)
+    // Only required fields - optional ones come from farcaster.json
     "fc:miniapp": JSON.stringify({
       "version": "1",
       "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
       "button": {
-        "title": "🎮 Play Now",
+        "title": "Play Now",
         "action": {
-          "type": "launch_miniapp",
-          "name": "VIBE MOST WANTED",
-          "url": "https://www.vibemostwanted.xyz",
-          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
-          "splashBackgroundColor": "#FFD700"
+          "type": "launch_miniapp"
         }
       }
     }),
@@ -92,13 +89,9 @@ export const metadata: Metadata = {
       "version": "1",
       "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
       "button": {
-        "title": "🎮 Play Now",
+        "title": "Play Now",
         "action": {
-          "type": "launch_frame",
-          "name": "VIBE MOST WANTED",
-          "url": "https://www.vibemostwanted.xyz",
-          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
-          "splashBackgroundColor": "#FFD700"
+          "type": "launch_frame"
         }
       }
     }),
@@ -118,13 +111,9 @@ export default function RootLayout({
           version: "1",
           imageUrl: "https://www.vibemostwanted.xyz/screenshot.jpg",
           button: {
-            title: "🎮 Play Now",
+            title: "Play Now",
             action: {
-              type: "launch_miniapp",
-              name: "VIBE MOST WANTED",
-              url: "https://www.vibemostwanted.xyz",
-              splashImageUrl: "https://www.vibemostwanted.xyz/splash.png",
-              splashBackgroundColor: "#FFD700"
+              type: "launch_miniapp"
             }
           }
         })} />
@@ -134,13 +123,9 @@ export default function RootLayout({
           version: "1",
           imageUrl: "https://www.vibemostwanted.xyz/screenshot.jpg",
           button: {
-            title: "🎮 Play Now",
+            title: "Play Now",
             action: {
-              type: "launch_frame",
-              name: "VIBE MOST WANTED",
-              url: "https://www.vibemostwanted.xyz",
-              splashImageUrl: "https://www.vibemostwanted.xyz/splash.png",
-              splashBackgroundColor: "#FFD700"
+              type: "launch_frame"
             }
           }
         })} />
