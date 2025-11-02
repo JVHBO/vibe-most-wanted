@@ -307,16 +307,31 @@ export default function ProfilePage() {
       searchParams.get('scrollTo') === 'match-history';
 
     if (shouldScroll && matchHistory && matchHistory.length >= 0) {
-      // Wait for match history to render before scrolling
-      setTimeout(() => {
-        const matchHistoryElement = document.getElementById('match-history');
-        if (matchHistoryElement) {
-          matchHistoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          devLog('✅ Scrolled to match history');
-        } else {
-          devLog('⚠️ Match history element not found');
-        }
-      }, 1500); // Increased timeout to ensure match history is rendered
+      // Retry scroll with exponential backoff
+      let attempts = 0;
+      const maxAttempts = 5;
+
+      const attemptScroll = () => {
+        attempts++;
+
+        // Wait for next frame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          const matchHistoryElement = document.getElementById('match-history');
+          if (matchHistoryElement) {
+            matchHistoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            devLog(`✅ Scrolled to match history (attempt ${attempts})`);
+          } else if (attempts < maxAttempts) {
+            devLog(`⚠️ Match history element not found, retrying... (attempt ${attempts}/${maxAttempts})`);
+            // Exponential backoff: 500ms, 1000ms, 2000ms, 3000ms, 4000ms
+            setTimeout(attemptScroll, attempts * 1000);
+          } else {
+            devLog('❌ Failed to scroll to match history after max attempts');
+          }
+        });
+      };
+
+      // Initial delay to let page load
+      setTimeout(attemptScroll, 500);
     }
   }, [matchHistory, searchParams]);
 
@@ -452,13 +467,26 @@ export default function ProfilePage() {
   useEffect(() => {
     const handleHashScroll = () => {
       if (typeof window !== 'undefined' && window.location.hash === '#match-history') {
-        // Wait for content to load
-        setTimeout(() => {
-          const element = document.getElementById('match-history');
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 500);
+        // Retry with exponential backoff
+        let attempts = 0;
+        const maxAttempts = 5;
+
+        const attemptScroll = () => {
+          attempts++;
+
+          requestAnimationFrame(() => {
+            const element = document.getElementById('match-history');
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              devLog(`✅ Hash scroll to match history (attempt ${attempts})`);
+            } else if (attempts < maxAttempts) {
+              devLog(`⚠️ Match history element not found, retrying... (attempt ${attempts}/${maxAttempts})`);
+              setTimeout(attemptScroll, attempts * 1000);
+            }
+          });
+        };
+
+        setTimeout(attemptScroll, 500);
       }
     };
 

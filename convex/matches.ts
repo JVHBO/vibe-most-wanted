@@ -2,10 +2,12 @@
  * MATCH HISTORY SYSTEM
  *
  * Replaces Firebase match history with Convex
+ * Includes weekly quest tracking integration
  */
 
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { api } from "./_generated/api";
 
 /**
  * Get match history for a player
@@ -123,6 +125,22 @@ export const recordMatch = mutation({
       });
 
       console.log("✅ Profile stats updated");
+    }
+
+    // 🎯 Track weekly quest progress (async, non-blocking)
+    try {
+      // Track defense wins when defender wins
+      if (args.type === "defense" && args.result === "win") {
+        await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+          address: normalizedPlayerAddress,
+          questId: "weekly_defense_wins",
+          increment: 1,
+        });
+
+        console.log(`✅ Weekly quest tracked: Defense win for ${normalizedPlayerAddress}`);
+      }
+    } catch (error) {
+      console.error("❌ Failed to track weekly quest:", error);
     }
 
     return matchId;

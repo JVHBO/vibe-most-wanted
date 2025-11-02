@@ -4825,18 +4825,18 @@ export default function TCGPage() {
       )}
 
       {showTutorial && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowTutorial(false)}>
-          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4" onClick={() => setShowTutorial(false)}>
+          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-4 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 md:mb-6">
               <div>
-                <h2 className="text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
+                <h2 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
                 <p className="text-xs text-vintage-burnt-gold mt-1">{tutorialPage}/{TUTORIAL_PAGES}</p>
               </div>
-              <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-2xl transition">✕</button>
+              <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-xl md:text-2xl transition">✕</button>
             </div>
 
             {/* Page Content - Max height with scroll for individual pages if needed */}
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div className="max-h-[65vh] md:max-h-[60vh] overflow-y-auto">
               <div className="space-y-6 text-vintage-ice">
                 {/* PAGE 1: Welcome + Need Cards + How to Play */}
                 {tutorialPage === 1 && (
@@ -5808,24 +5808,68 @@ export default function TCGPage() {
                           ← {t('previous')}
                         </button>
 
-                        {/* Page numbers */}
+                        {/* Page numbers with ellipsis */}
                         <div className="flex gap-1 md:gap-2">
-                          {Array.from({ length: Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE) }, (_, i) => i + 1).map(pageNum => (
-                            <button
-                              key={pageNum}
-                              onClick={() => {
-                                setCurrentLeaderboardPage(pageNum);
-                                if (soundEnabled) AudioManager.buttonClick();
-                              }}
-                              className={`px-2 md:px-3 py-2 rounded-lg font-semibold transition text-sm md:text-base ${
-                                currentLeaderboardPage === pageNum
-                                  ? 'bg-vintage-gold text-vintage-black border-2 border-vintage-gold'
-                                  : 'bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold'
-                              }`}
-                            >
-                              {pageNum}
-                            </button>
-                          ))}
+                          {(() => {
+                            const totalPages = Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE);
+                            const current = currentLeaderboardPage;
+                            const pages: (number | string)[] = [];
+
+                            if (totalPages <= 7) {
+                              // Show all pages if 7 or fewer
+                              for (let i = 1; i <= totalPages; i++) {
+                                pages.push(i);
+                              }
+                            } else {
+                              // Always show first page
+                              pages.push(1);
+
+                              // Show ellipsis or pages around current
+                              if (current > 3) {
+                                pages.push('ellipsis-start');
+                              }
+
+                              // Show current page ± 1
+                              for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
+                                pages.push(i);
+                              }
+
+                              // Show ellipsis before last page
+                              if (current < totalPages - 2) {
+                                pages.push('ellipsis-end');
+                              }
+
+                              // Always show last page
+                              pages.push(totalPages);
+                            }
+
+                            return pages.map((page, index) => {
+                              if (typeof page === 'string') {
+                                return (
+                                  <span key={page} className="px-2 py-2 text-vintage-burnt-gold text-sm md:text-base">
+                                    ...
+                                  </span>
+                                );
+                              }
+
+                              return (
+                                <button
+                                  key={page}
+                                  onClick={() => {
+                                    setCurrentLeaderboardPage(page);
+                                    if (soundEnabled) AudioManager.buttonClick();
+                                  }}
+                                  className={`px-2 md:px-3 py-2 rounded-lg font-semibold transition text-sm md:text-base ${
+                                    currentLeaderboardPage === page
+                                      ? 'bg-vintage-gold text-vintage-black border-2 border-vintage-gold'
+                                      : 'bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              );
+                            });
+                          })()}
                         </div>
 
                         <button
