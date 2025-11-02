@@ -1192,7 +1192,7 @@ export default function ProfilePage() {
                           }`}
                         >
                           <span>⚔️</span>
-                          <span>Revanche</span>
+                          <span>{t('rematch')}</span>
                           <span className="text-xs opacity-75">({rematchesRemaining}/5)</span>
                         </button>
                       </div>
