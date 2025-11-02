@@ -255,7 +255,7 @@ export const translations = {
     leaderboardInfo: 'Global Leaderboard',
     leaderboardInfoDesc: 'See the best players on the GLOBAL LEADERBOARD! Rankings are based on your TOTAL POWER (sum of your 5 strongest cards). Create your profile to appear in the leaderboard and show your collection to the world!',
     economyInfo: 'Coin System',
-    economyInfoDesc: 'Earn and spend $TESTVBMS in the game!\n• EARN coins by playing PvE (up to 3 wins per day)\n• Daily login bonus of +25 coins\n• PvP and Attacks COST coins to play:\n   - PvP: 40 coins per match\n   - Attack: 50 coins per attack\n• Win in PvP to recover your coins + earn more!\n• Coins are used to unlock new features',
+    economyInfoDesc: 'Earn and spend $TESTVBMS in the game!\n• EARN coins by playing PvE (up to 3 wins per day)\n• Daily login bonus of +25 coins\n• PvP and Attacks COST coins to play:\n   - PvP: 40 coins per match\n   - Attack: 50 coins per attack\n• Win in PvP to recover your coins + earn more!',
     needCards: 'NEED CARDS?',
     needCardsDesc: 'Start your journey in the arena! Buy cards on Vibe Market to build your ultimate deck. Minimum 5 cards required to play.',
     buyCards: 'Buy Cards on Vibe Market',
