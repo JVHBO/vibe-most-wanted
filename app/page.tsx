@@ -5232,7 +5232,7 @@ export default function TCGPage() {
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
-                <span className={isInFarcaster ? 'text-2xl' : 'text-base md:text-lg'}>🎯</span> {isInFarcaster ? t('missions') : <><span className="hidden sm:inline">{t('missions')}</span></>}
+                <span className={isInFarcaster ? 'text-2xl' : 'text-base md:text-lg'}>◈</span> {isInFarcaster ? t('missions') : <><span className="hidden sm:inline">{t('missions')}</span></>}
               </button>
               <button
                 onClick={() => {
