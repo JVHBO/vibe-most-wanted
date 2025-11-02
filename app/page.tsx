@@ -4825,34 +4825,34 @@ export default function TCGPage() {
       )}
 
       {showTutorial && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4" onClick={() => setShowTutorial(false)}>
-          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-4 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4 md:mb-6">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4" onClick={() => setShowTutorial(false)}>
+          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-3 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)] max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-3 md:mb-6 flex-shrink-0">
               <div>
-                <h2 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
+                <h2 className="text-xl md:text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
                 <p className="text-xs text-vintage-burnt-gold mt-1">{tutorialPage}/{TUTORIAL_PAGES}</p>
               </div>
               <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-xl md:text-2xl transition">✕</button>
             </div>
 
             {/* Page Content - Max height with scroll for individual pages if needed */}
-            <div className="max-h-[65vh] md:max-h-[60vh] overflow-y-auto">
-              <div className="space-y-6 text-vintage-ice">
+            <div className="overflow-y-auto flex-1 min-h-0">
+              <div className="space-y-3 md:space-y-6 text-vintage-ice">
                 {/* PAGE 1: Welcome + Need Cards + How to Play */}
                 {tutorialPage === 1 && (
                   <>
                     {/* Precisa de Cartas? */}
                     <div className="relative p-1 rounded-xl" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.4)', animation: 'pulse 2s ease-in-out infinite'}}>
-                      <div className="bg-vintage-black/90 p-5 rounded-lg">
-                        <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
-                          <span className="text-2xl">$</span> {t('needCards')}
+                      <div className="bg-vintage-black/90 p-3 md:p-5 rounded-lg">
+                        <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
+                          <span className="text-xl md:text-2xl">$</span> {t('needCards')}
                         </h3>
-                        <p className="mb-4 text-vintage-burnt-gold">{t('needCardsDesc')}</p>
+                        <p className="mb-3 md:mb-4 text-sm md:text-base text-vintage-burnt-gold">{t('needCardsDesc')}</p>
                         <a
                           href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-modern font-bold transition-all hover:scale-105"
+                          className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-modern font-bold text-sm md:text-base transition-all hover:scale-105"
                           style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}
                         >
                           {t('buyCards')} $
@@ -4861,12 +4861,12 @@ export default function TCGPage() {
                     </div>
 
                     {/* Como Jogar */}
-                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
-                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                        <span className="text-2xl">?</span> {t('howToPlay')}
+                    <div className="bg-vintage-charcoal/50 p-3 md:p-5 rounded-xl border border-vintage-gold/30">
+                      <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold mb-2 md:mb-3 flex items-center gap-2">
+                        <span className="text-xl md:text-2xl">?</span> {t('howToPlay')}
                       </h3>
-                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('howToPlayDesc')}</p>
+                      <div className="bg-vintage-black/50 p-3 md:p-4 rounded-lg border border-vintage-gold/20">
+                        <p className="whitespace-pre-line text-xs md:text-sm leading-relaxed text-vintage-ice">{t('howToPlayDesc')}</p>
                       </div>
                     </div>
                   </>
@@ -4989,7 +4989,7 @@ export default function TCGPage() {
             </div>
 
             {/* Navigation */}
-            <div className="mt-6 flex items-center justify-between gap-4">
+            <div className="mt-3 md:mt-6 pt-3 border-t border-vintage-gold/20 flex items-center justify-between gap-2 md:gap-4 flex-shrink-0">
               {/* Previous Button */}
               <button
                 onClick={() => {
@@ -4999,13 +4999,13 @@ export default function TCGPage() {
                   }
                 }}
                 disabled={tutorialPage === 1}
-                className={`px-6 py-3 rounded-lg font-modern font-bold transition-all ${
+                className={`px-3 md:px-6 py-2 md:py-3 rounded-lg font-modern font-bold text-sm md:text-base transition-all ${
                   tutorialPage === 1
                     ? 'bg-vintage-black/30 text-vintage-burnt-gold/30 cursor-not-allowed border border-vintage-gold/10'
                     : 'bg-vintage-charcoal border border-vintage-gold text-vintage-gold hover:bg-vintage-gold/20 hover:scale-105'
                 }`}
               >
-                ← {t('previous') || 'Previous'}
+                ← <span className="hidden sm:inline">{t('previous') || 'Previous'}</span><span className="sm:hidden">Prev</span>
               </button>
 
               {/* Page Indicators (Dots) */}
@@ -5029,15 +5029,15 @@ export default function TCGPage() {
                     setTutorialPage(tutorialPage + 1);
                     if (soundEnabled) AudioManager.buttonClick();
                   }}
-                  className="px-6 py-3 rounded-lg font-modern font-bold bg-vintage-gold text-vintage-black hover:bg-vintage-gold-dark transition-all hover:scale-105"
+                  className="px-3 md:px-6 py-2 md:py-3 rounded-lg font-modern font-bold text-sm md:text-base bg-vintage-gold text-vintage-black hover:bg-vintage-gold-dark transition-all hover:scale-105"
                 >
-                  {t('next') || 'Next'} →
+                  <span className="hidden sm:inline">{t('next') || 'Next'}</span><span className="sm:hidden">Next</span> →
                 </button>
               ) : (
                 <div className="relative p-1 rounded-lg" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>
                   <button
                     onClick={() => setShowTutorial(false)}
-                    className="px-8 py-3 rounded-lg font-display font-bold transition-all hover:scale-[1.02]"
+                    className="px-4 md:px-8 py-2 md:py-3 rounded-lg font-display font-bold text-sm md:text-base transition-all hover:scale-[1.02]"
                     style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C'}}
                   >
                     {t('understood')} ♠
