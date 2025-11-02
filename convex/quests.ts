@@ -1,7 +1,10 @@
 /**
- * DAILY QUEST SYSTEM
+ * QUEST SYSTEM (DAILY & WEEKLY)
  *
- * Generates one random quest per day (global)
+ * DAILY QUESTS: One random quest per day (global)
+ * WEEKLY QUESTS: Personal quests that reset every Sunday
+ * WEEKLY REWARDS: TOP 10 leaderboard rewards (distributed Sunday 00:00 UTC)
+ *
  * Players complete by playing matches
  * Rewards $TESTVBMS coins
  */
@@ -452,3 +455,304 @@ export const claimQuestReward = mutation({
     };
   },
 });
+
+// ============================================================================
+// 📅 WEEKLY QUESTS & REWARDS
+// ============================================================================
+
+// Weekly quest definitions (personal, reset every Sunday)
+const WEEKLY_QUESTS = {
+  attackWins: {
+    id: "weekly_attack_wins",
+    name: "Attack Master",
+    description: "Win 20 attacks",
+    target: 20,
+    reward: 300, // TODO: Ajustar valores depois
+    icon: "🏆",
+  },
+  totalMatches: {
+    id: "weekly_total_matches",
+    name: "Active Player",
+    description: "Play 30 matches (any mode)",
+    target: 30,
+    reward: 200,
+    icon: "🎲",
+  },
+  defenseWins: {
+    id: "weekly_defense_wins",
+    name: "Fortress",
+    description: "Defend successfully 10 times",
+    target: 10,
+    reward: 400,
+    icon: "🛡️",
+  },
+  pveStreak: {
+    id: "weekly_pve_streak",
+    name: "Unbeatable",
+    description: "Win 10 PvE battles in a row",
+    target: 10,
+    reward: 500,
+    icon: "🔥",
+  },
+} as const;
+
+// 🏅 Weekly Leaderboard Rewards (APENAS TOP 10!)
+export const WEEKLY_LEADERBOARD_REWARDS = {
+  rank1: 1000,    // 1st place
+  rank2: 750,     // 2nd place
+  rank3: 500,     // 3rd place
+  rank4to10: 300, // 4th-10th place
+  // SEM top20 ou top50 - APENAS TOP 10!
+} as const;
+
+/**
+ * Get weekly quest progress for player
+ */
+export const getWeeklyProgress = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    const lastSunday = getLastSunday();
+
+    // Get player's weekly progress
+    const progress = await ctx.db
+      .query("weeklyProgress")
+      .withIndex("by_player_week", (q) =>
+        q.eq("playerAddress", normalizedAddress).eq("weekStart", lastSunday)
+      )
+      .first();
+
+    if (!progress) {
+      // Initialize weekly progress
+      return {
+        weekStart: lastSunday,
+        weekEnd: getNextSunday(),
+        quests: initializeWeeklyQuests(),
+      };
+    }
+
+    return {
+      weekStart: lastSunday,
+      weekEnd: getNextSunday(),
+      quests: progress.quests || initializeWeeklyQuests(),
+    };
+  },
+});
+
+/**
+ * Update weekly quest progress
+ */
+export const updateWeeklyProgress = mutation({
+  args: {
+    address: v.string(),
+    questId: v.string(),
+    increment: v.optional(v.number()),
+  },
+  handler: async (ctx, { address, questId, increment = 1 }) => {
+    const normalizedAddress = address.toLowerCase();
+    const lastSunday = getLastSunday();
+
+    let progress = await ctx.db
+      .query("weeklyProgress")
+      .withIndex("by_player_week", (q) =>
+        q.eq("playerAddress", normalizedAddress).eq("weekStart", lastSunday)
+      )
+      .first();
+
+    // Initialize if not exists
+    if (!progress) {
+      const progressId = await ctx.db.insert("weeklyProgress", {
+        playerAddress: normalizedAddress,
+        weekStart: lastSunday,
+        quests: initializeWeeklyQuests(),
+      });
+      progress = await ctx.db.get(progressId);
+      if (!progress) throw new Error("Failed to create weekly progress");
+    }
+
+    // Update quest progress
+    const quests = { ...progress.quests };
+    if (quests[questId]) {
+      quests[questId].current = Math.min(
+        (quests[questId].current || 0) + increment,
+        quests[questId].target
+      );
+      quests[questId].completed = quests[questId].current >= quests[questId].target;
+    }
+
+    await ctx.db.patch(progress._id, { quests });
+
+    return { success: true, progress: quests[questId] };
+  },
+});
+
+/**
+ * Claim weekly quest reward
+ */
+export const claimWeeklyReward = mutation({
+  args: {
+    address: v.string(),
+    questId: v.string(),
+  },
+  handler: async (ctx, { address, questId }) => {
+    const normalizedAddress = address.toLowerCase();
+    const lastSunday = getLastSunday();
+
+    const progress = await ctx.db
+      .query("weeklyProgress")
+      .withIndex("by_player_week", (q) =>
+        q.eq("playerAddress", normalizedAddress).eq("weekStart", lastSunday)
+      )
+      .first();
+
+    if (!progress || !progress.quests[questId]) {
+      throw new Error("Quest not found");
+    }
+
+    const quest = progress.quests[questId];
+
+    if (!quest.completed) {
+      throw new Error("Quest not completed yet");
+    }
+
+    if (quest.claimed) {
+      throw new Error("Reward already claimed");
+    }
+
+    // Get quest definition
+    const questDef = Object.values(WEEKLY_QUESTS).find((q) => q.id === questId);
+    if (!questDef) {
+      throw new Error("Quest definition not found");
+    }
+
+    // Award coins
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const reward = questDef.reward;
+    await ctx.db.patch(profile._id, {
+      coins: (profile.coins || 0) + reward,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + reward,
+    });
+
+    // Mark as claimed
+    const updatedQuests = { ...progress.quests };
+    updatedQuests[questId].claimed = true;
+    await ctx.db.patch(progress._id, { quests: updatedQuests });
+
+    console.log(`✅ Weekly quest reward claimed: ${questId} → ${reward} coins`);
+
+    return {
+      success: true,
+      reward,
+      newBalance: (profile.coins || 0) + reward,
+    };
+  },
+});
+
+/**
+ * 🏅 Distribute weekly leaderboard rewards (TOP 10 ONLY!)
+ * Called by cron job every Sunday at 00:00 UTC
+ */
+export const distributeWeeklyRewards = mutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("🏅 Starting weekly rewards distribution (TOP 10 ONLY)...");
+
+    // Get top 10 players by total power
+    const topPlayers = await ctx.db
+      .query("profiles")
+      .withIndex("by_total_power")
+      .order("desc")
+      .take(10); // APENAS TOP 10!
+
+    if (topPlayers.length === 0) {
+      console.log("⚠️ No players found");
+      return { distributed: 0, rewards: [] };
+    }
+
+    const rewards = [];
+
+    for (let i = 0; i < topPlayers.length; i++) {
+      const rank = i + 1;
+      const player = topPlayers[i];
+
+      let reward = 0;
+      if (rank === 1) {
+        reward = WEEKLY_LEADERBOARD_REWARDS.rank1;
+      } else if (rank === 2) {
+        reward = WEEKLY_LEADERBOARD_REWARDS.rank2;
+      } else if (rank === 3) {
+        reward = WEEKLY_LEADERBOARD_REWARDS.rank3;
+      } else if (rank <= 10) {
+        reward = WEEKLY_LEADERBOARD_REWARDS.rank4to10;
+      }
+
+      if (reward > 0) {
+        await ctx.db.patch(player._id, {
+          coins: (player.coins || 0) + reward,
+          lifetimeEarned: (player.lifetimeEarned || 0) + reward,
+        });
+
+        rewards.push({
+          rank,
+          username: player.username,
+          address: player.address,
+          reward,
+        });
+
+        console.log(`💰 Rank #${rank} ${player.username}: +${reward} $TESTVBMS`);
+      }
+    }
+
+    console.log(`✅ Weekly rewards distributed to ${rewards.length} players (TOP 10)`);
+
+    return {
+      distributed: rewards.length,
+      rewards,
+      timestamp: Date.now(),
+    };
+  },
+});
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function initializeWeeklyQuests() {
+  return Object.fromEntries(
+    Object.values(WEEKLY_QUESTS).map((quest) => [
+      quest.id,
+      {
+        current: 0,
+        target: quest.target,
+        completed: false,
+        claimed: false,
+      },
+    ])
+  );
+}
+
+function getLastSunday(): string {
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay();
+  const lastSunday = new Date(now);
+  lastSunday.setUTCDate(now.getUTCDate() - dayOfWeek);
+  lastSunday.setUTCHours(0, 0, 0, 0);
+  return lastSunday.toISOString().split('T')[0];
+}
+
+function getNextSunday(): string {
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay();
+  const nextSunday = new Date(now);
+  nextSunday.setUTCDate(now.getUTCDate() + (7 - dayOfWeek));
+  nextSunday.setUTCHours(0, 0, 0, 0);
+  return nextSunday.toISOString().split('T')[0];
+}

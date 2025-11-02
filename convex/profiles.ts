@@ -591,3 +591,59 @@ export const cleanOldDefenseDecks = mutation({
     };
   },
 });
+
+/**
+ * 🔒 Get available cards for player (excluding defense deck locked cards)
+ *
+ * DEFENSE LOCK SYSTEM:
+ * - Cards in defense deck are LOCKED and cannot be used in PvP Attack/Rooms
+ * - PvE battles still allow defense cards (fighting AI is OK)
+ * - Forces strategic decisions: strong defense OR strong offense
+ *
+ * @param address - Player wallet address
+ * @param allNFTs - All NFTs owned by player (from Alchemy/NFT fetch)
+ * @param mode - Game mode ("attack", "pvp", "pve")
+ * @returns Filtered NFT list with locked cards removed (for attack/pvp)
+ */
+export const getAvailableCards = query({
+  args: {
+    address: v.string(),
+    mode: v.union(v.literal("attack"), v.literal("pvp"), v.literal("pve")),
+  },
+  handler: async (ctx, { address, mode }) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      return { lockedTokenIds: [], isLockEnabled: false };
+    }
+
+    // PvE doesn't have lock restrictions (AI battles are OK)
+    if (mode === "pve") {
+      return { lockedTokenIds: [], isLockEnabled: false };
+    }
+
+    // If no defense deck set, no cards are locked
+    if (!profile.defenseDeck || profile.defenseDeck.length === 0) {
+      return { lockedTokenIds: [], isLockEnabled: false };
+    }
+
+    // Extract token IDs from defense deck
+    const lockedTokenIds: string[] = [];
+    for (const card of profile.defenseDeck) {
+      if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+        lockedTokenIds.push(card.tokenId);
+      } else if (typeof card === 'string') {
+        lockedTokenIds.push(card);
+      }
+    }
+
+    return {
+      lockedTokenIds,
+      isLockEnabled: true,
+      lockedCount: lockedTokenIds.length,
+    };
+  },
+});
