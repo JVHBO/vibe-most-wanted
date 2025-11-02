@@ -54,8 +54,8 @@ const PENALTY_REDUCTION_BY_DIFF = {
 
 // Entry Fees
 const ENTRY_FEES = {
-  attack: 50,
-  pvp: 40,  // Reduced from 80 to 40
+  attack: 0,   // No entry fee for leaderboard attacks
+  pvp: 20,     // Reduced from 40 to 20
 };
 
 // Daily Bonuses

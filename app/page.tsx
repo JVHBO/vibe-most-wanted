@@ -2185,7 +2185,7 @@ export default function TCGPage() {
             if (isRanked) {
               try {
                 await payEntryFee({ address: address || '', mode: 'pvp' });
-                devLog('💰 PvP entry fee paid: 40 $TESTVBMS (ranked match)');
+                devLog('💰 PvP entry fee paid: 20 $TESTVBMS (ranked match)');
               } catch (error: any) {
                 devError('❌ Failed to pay PvP entry fee:', error);
                 // Continue with battle even if payment fails (already committed to battle)
@@ -2307,7 +2307,7 @@ export default function TCGPage() {
                       opponentAddress,
                       opponentName,
                       coinsEarned, // coinsEarned (0 for casual)
-                      isRanked ? 40 : 0 // entryFeePaid (40 for ranked, 0 for casual)
+                      isRanked ? 20 : 0 // entryFeePaid (20 for ranked, 0 for casual)
                     );
 
                     ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
@@ -3842,7 +3842,7 @@ export default function TCGPage() {
                             opponentUsername: targetPlayer.username,
                             opponentPower: dealerTotal,
                             opponentCards: defenderCards,
-                            entryFeePaid: 50, // Attack mode costs 50
+                            entryFeePaid: 0, // No entry fee for leaderboard attacks
                           });
 
                           coinsEarned = result.coinsAwarded || 0;
@@ -4058,14 +4058,6 @@ export default function TCGPage() {
                 onClick={async () => {
                   if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer || isAttacking) return;
 
-                  // Check if player has enough coins for attack entry fee
-                  const currentBalance = playerEconomy?.coins || 0;
-                  if (currentBalance < 50) {
-                    setErrorMessage(t('insufficientFundsAttack').replace('{balance}', currentBalance.toString()));
-                    if (soundEnabled) AudioManager.buttonError();
-                    return;
-                  }
-
                   // ✅ NOVO: Mostrar preview de ganhos/perdas antes de atacar
                   if (address && targetPlayer.address) {
                     try {
@@ -4177,7 +4169,7 @@ export default function TCGPage() {
                           opponentUsername: targetPlayer.username,
                           opponentPower: dealerTotal,
                           opponentCards: defenderCards,
-                          entryFeePaid: 50, // Attack mode costs 50
+                          entryFeePaid: 0, // No entry fee for leaderboard attacks
                         });
 
                         coinsEarned = result.coinsAwarded || 0;
@@ -4261,7 +4253,7 @@ export default function TCGPage() {
                 ) : (
                   <div className="flex items-center justify-between">
                     <span>† Attack! ({attackSelectedCards.length}/{HAND_SIZE_CONST})</span>
-                    <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded ml-2">⟨ 50 ⟩</span>
+                    <span className="text-sm font-modern bg-green-500/30 px-2 py-1 rounded ml-2">FREE</span>
                   </div>
                 )}
               </button>
@@ -4398,7 +4390,7 @@ export default function TCGPage() {
 
                   // Check if player has enough coins
                   const currentBalance = playerEconomy?.coins || 0;
-                  if (currentBalance < 40) {
+                  if (currentBalance < 20) {
                     setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
@@ -4426,7 +4418,7 @@ export default function TCGPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>◊ {t('autoMatch')}</span>
-                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 40 ⟩</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 20 ⟩</span>
                 </div>
               </button>
 
@@ -4455,7 +4447,7 @@ export default function TCGPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>→ {t('joinRoom')}</span>
-                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 40 ⟩</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 20 ⟩</span>
                 </div>
               </button>
 
@@ -4524,7 +4516,7 @@ export default function TCGPage() {
 
                   // Check if player has enough coins
                   const currentBalance = playerEconomy?.coins || 0;
-                  if (currentBalance < 40) {
+                  if (currentBalance < 20) {
                     setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
                     if (soundEnabled) AudioManager.buttonError();
                     return;
@@ -4549,7 +4541,7 @@ export default function TCGPage() {
                 <div className="flex flex-col items-start">
                   <div className="flex items-center justify-between w-full mb-2">
                     <span>⚔️ RANKED</span>
-                    <span className="text-sm font-modern bg-vintage-black/30 px-3 py-1 rounded">⟨ 40 ⟩</span>
+                    <span className="text-sm font-modern bg-vintage-black/30 px-3 py-1 rounded">⟨ 20 ⟩</span>
                   </div>
                   <p className="text-xs text-left text-vintage-black/70 font-modern">
                     Competitive • Entry fee • Win coins with ranking bonus
@@ -4681,7 +4673,7 @@ export default function TCGPage() {
 
                 // Check if player has enough coins
                 const currentBalance = playerEconomy?.coins || 0;
-                if (currentBalance < 40) {
+                if (currentBalance < 20) {
                   setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
                   if (soundEnabled) AudioManager.buttonError();
                   return;
@@ -4704,7 +4696,7 @@ export default function TCGPage() {
             >
               <div className="flex items-center justify-between">
                 <span>{t('join')}</span>
-                <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded">⟨ 40 ⟩</span>
+                <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded">⟨ 20 ⟩</span>
               </div>
             </button>
 
@@ -4736,7 +4728,7 @@ export default function TCGPage() {
                     {currentRoom.mode === 'casual' ? (
                       <span className="text-green-400">🎮 CASUAL - Free Match</span>
                     ) : (
-                      <span className="text-vintage-gold">⚔️ RANKED - Entry Fee: 40 coins</span>
+                      <span className="text-vintage-gold">⚔️ RANKED - Entry Fee: 20 coins</span>
                     )}
                   </p>
                 )}
