@@ -637,15 +637,7 @@ export const awardPvPCoins = mutation({
         bonuses.push(`10-Win Streak +${BONUSES.streak10}`);
       }
 
-      // Check daily cap for winners only
-      const dailyEarned = calculateDailyEarned(profile);
-      if (dailyEarned + totalReward > DAILY_CAP) {
-        const remaining = Math.max(0, DAILY_CAP - dailyEarned);
-        if (remaining === 0) {
-          return { awarded: 0, reason: "Daily cap reached" };
-        }
-        totalReward = remaining;
-      }
+      // No daily cap for PvP - limited by 10 matches/day instead
 
       // Award coins
       await ctx.db.patch(profile!._id, {
@@ -1056,17 +1048,8 @@ export const recordAttackResult = mutation({
       throw new Error("Daily PvP match limit reached");
     }
 
-    // Check daily cap BEFORE battle (prevent paying entry fee when at cap)
-    const dailyEarned = calculateDailyEarned(profile);
-    const remaining = DAILY_CAP - dailyEarned;
-    if (remaining <= 0) {
-      throw new Error(`Daily earning cap reached (${DAILY_CAP} $TESTVBMS). Come back tomorrow!`);
-    }
-    // Warn if remaining reward won't cover entry fee (would result in net loss)
-    const entryFee = args.entryFeePaid || 0;
-    if (remaining < entryFee) {
-      throw new Error(`Not enough daily cap remaining (${remaining} $TESTVBMS left, entry fee is ${entryFee}). Come back tomorrow to avoid losses!`);
-    }
+    // Note: No daily cap check for attack mode - 5 attacks/day limit is enough
+    // Daily cap only applies to PvE (which has 30 wins/day limit)
 
     // ===== STEP 2: Calculate ranking bonus =====
     const playerRank = await getOpponentRanking(ctx, normalizedPlayerAddress);
@@ -1111,14 +1094,7 @@ export const recordAttackResult = mutation({
         bonuses.push(`10-Win Streak +${BONUSES.streak10}`);
       }
 
-      // Check daily cap (cap the reward if it would exceed daily limit)
-      const currentDailyEarned = calculateDailyEarned(profile);
-      if (currentDailyEarned + totalReward > DAILY_CAP) {
-        const remainingCap = Math.max(0, DAILY_CAP - currentDailyEarned);
-        totalReward = remainingCap;
-        bonuses.push(`Daily cap reached, reward capped at ${remainingCap}`);
-      }
-
+      // No daily cap for attack mode - limited by 5 attacks/day instead
       newCoins = (profile.coins || 0) + totalReward;
     } else if (args.result === 'loss') {
       // LOSER: Deduct coins
