@@ -6,6 +6,126 @@
 
 ---
 
+## Fix #11 - Weekly Quests Not Tracking Progress ⚡
+
+**Date**: 2025-11-02
+**Reported By**: User ("weekly quests estão salvando progresso?")
+**Status**: ✅ FIXED (Partially - 2/4 quest types working)
+**Severity**: CRITICAL (Feature not functional, 1600 coins in rewards inaccessible)
+
+### Problem
+
+Weekly Personal Quests were not tracking player progress automatically:
+
+1. ❌ **Backend implemented** - `convex/quests.ts` had all quest types defined
+2. ❌ **Frontend implemented** - `app/page.tsx` showed quest UI
+3. ❌ **Progress stuck at 0** - All players had 0/target for all quests
+4. ❌ **No integration** - Battle system wasn't calling `updateWeeklyProgress`
+
+**Test Before Fix:**
+```bash
+npx convex run quests:getWeeklyProgress '{"address":"<TOP_PLAYER>"}'
+Result: ALL quests at 0/target ❌
+```
+
+### Root Cause
+
+No scheduler calls to `api.quests.updateWeeklyProgress` in battle mutations. The quest system was implemented standalone but never integrated with the core game loop.
+
+### Solution
+
+Added async quest tracking to all battle mutations in `convex/economy.ts`:
+
+**1. Import Convex API (line 14):**
+```typescript
+import { api, internal } from "./_generated/api";
+```
+
+**2. Track PvE Matches (lines 519-531 in `awardPvECoins`):**
+```typescript
+try {
+  await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+    address: address.toLowerCase(),
+    questId: "weekly_total_matches",
+    increment: 1,
+  });
+  console.log(`✅ Weekly quest tracked: PvE match`);
+} catch (error) {
+  console.error("❌ Failed to track weekly quest:", error);
+}
+```
+
+**3. Track PvP Matches (lines 662-673, 711-722 in `awardPvPCoins`):**
+- Same tracking added to both WIN and LOSS branches
+
+**4. Track Attack Matches + Wins (lines 1175-1196 in `recordAttackResult`):**
+```typescript
+try {
+  // Track total matches (always)
+  await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+    address: normalizedPlayerAddress,
+    questId: "weekly_total_matches",
+    increment: 1,
+  });
+
+  // Track attack wins (only if won)
+  if (won) {
+    await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+      address: normalizedPlayerAddress,
+      questId: "weekly_attack_wins",
+      increment: 1,
+    });
+  }
+  console.log(`✅ Weekly quests tracked: Attack ${args.result}`);
+} catch (error) {
+  console.error("❌ Failed to track weekly quests:", error);
+}
+```
+
+### Test Results
+
+**After Fix (2025-11-02):**
+```bash
+# Test 1: PvE Match
+npx convex run economy:awardPvECoins '{"address":"<PLAYER>","difficulty":"gey","won":true}'
+[LOG] '✅ Weekly quest tracked: PvE match for 0x2a...'
+Result: weekly_total_matches: 0 → 1 ✅
+
+# Test 2: Attack Win
+npx convex run economy:recordAttackResult '{...,"result":"win",...}'
+[LOG] '✅ Weekly quests tracked: Attack win for 0x2a...'
+Result:
+  weekly_total_matches: 1 → 2 ✅
+  weekly_attack_wins: 0 → 1 ✅
+```
+
+### What's Still Missing
+
+**2 quest types not yet implemented:**
+1. ❌ `weekly_defense_wins` - Needs to track when player successfully defends
+2. ❌ `weekly_pve_streak` - Needs special logic for consecutive wins
+
+**To be implemented in follow-up fix.**
+
+### Files Modified
+
+1. ✅ `convex/economy.ts` - Added quest tracking in 4 mutations (5 locations total)
+
+### Deployment
+
+- ✅ **Compilation**: Passed
+- ✅ **Deploy**: `npx convex dev --once` successful
+- ✅ **Integration Test**: PvE & Attack tracking verified
+- ✅ **Production Ready**: Yes
+
+### Impact
+
+**Before:** 1600 coins in quest rewards inaccessible
+**After:** Players can now complete 2/4 weekly quests (total_matches, attack_wins)
+**Engagement:** Expected increase with working quest system
+
+---
+
 ## Bug #10 - Hardcoded Portuguese Strings Mixed with English UI
 
 **Date**: 2025-11-02
