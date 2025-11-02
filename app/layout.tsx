@@ -72,15 +72,18 @@ export const metadata: Metadata = {
     images: ["https://www.vibemostwanted.xyz/screenshot.jpg"],
   },
   other: {
-    // Farcaster Mini App Meta Tag (NEW - REQUIRED FOR DISCOVERY)
-    // Only required fields - optional ones come from farcaster.json
+    // Farcaster Mini App Meta Tag (REQUIRED FOR DISCOVERY)
     "fc:miniapp": JSON.stringify({
       "version": "1",
       "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
       "button": {
         "title": "Play Now",
         "action": {
-          "type": "launch_miniapp"
+          "type": "launch_frame",
+          "name": "VIBE MOST WANTED",
+          "url": "https://www.vibemostwanted.xyz",
+          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
+          "splashBackgroundColor": "#FFD700"
         }
       }
     }),
@@ -91,7 +94,11 @@ export const metadata: Metadata = {
       "button": {
         "title": "Play Now",
         "action": {
-          "type": "launch_frame"
+          "type": "launch_frame",
+          "name": "VIBE MOST WANTED",
+          "url": "https://www.vibemostwanted.xyz",
+          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
+          "splashBackgroundColor": "#FFD700"
         }
       }
     }),
@@ -113,7 +120,11 @@ export default function RootLayout({
           button: {
             title: "Play Now",
             action: {
-              type: "launch_miniapp"
+              type: "launch_frame",
+              name: "VIBE MOST WANTED",
+              url: "https://www.vibemostwanted.xyz",
+              splashImageUrl: "https://www.vibemostwanted.xyz/splash.png",
+              splashBackgroundColor: "#FFD700"
             }
           }
         })} />
@@ -125,7 +136,11 @@ export default function RootLayout({
           button: {
             title: "Play Now",
             action: {
-              type: "launch_frame"
+              type: "launch_frame",
+              name: "VIBE MOST WANTED",
+              url: "https://www.vibemostwanted.xyz",
+              splashImageUrl: "https://www.vibemostwanted.xyz/splash.png",
+              splashBackgroundColor: "#FFD700"
             }
           }
         })} />
