@@ -664,16 +664,12 @@ export const awardPvPCoins = mutation({
         console.error("❌ Failed to track weekly quest:", error);
       }
 
-      const dailyEarnedAfter = dailyEarned + totalReward;
-
       return {
         awarded: totalReward,
         bonuses,
         winStreak: newStreak,
         opponentRank, // ✅ Include opponent rank in response
         rankingMultiplier, // ✅ Include multiplier in response
-        dailyEarned: dailyEarnedAfter,
-        remaining: DAILY_CAP - dailyEarnedAfter,
       };
     } else {
       // LOSER: Deduct coins (with ranking-based penalty reduction)
