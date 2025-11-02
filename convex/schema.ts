@@ -262,6 +262,14 @@ export default defineSchema({
   })
     .index("by_player_date", ["playerAddress", "questDate"]),
 
+  // Weekly Quest Progress (personal quests, reset every Sunday)
+  weeklyProgress: defineTable({
+    playerAddress: v.string(),
+    weekStart: v.string(), // "2025-10-27" (last Sunday)
+    quests: v.any(), // Object with quest progress { questId: { current, target, completed, claimed } }
+  })
+    .index("by_player_week", ["playerAddress", "weekStart"]),
+
   // Security: Nonces for replay attack prevention
   nonces: defineTable({
     address: v.string(), // Wallet address
