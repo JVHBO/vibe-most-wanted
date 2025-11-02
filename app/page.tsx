@@ -3894,7 +3894,7 @@ export default function TCGPage() {
                         }
                         // Note: Tie popup is already shown above
                       }, 100);
-                    }, 5500);
+                    }, 4500);
 
                   } catch (error: any) {
                     setErrorMessage('Error: ' + error.message);
