@@ -3800,13 +3800,12 @@ export default function TCGPage() {
                       let matchResult: 'win' | 'loss' | 'tie';
                       if (playerTotal > dealerTotal) {
                         matchResult = 'win';
-                        if (soundEnabled) AudioManager.win();
                       } else if (playerTotal < dealerTotal) {
                         matchResult = 'loss';
-                        if (soundEnabled) AudioManager.lose();
                       } else {
                         matchResult = 'tie';
                         setShowTiePopup(true);
+                        if (soundEnabled) AudioManager.tie();
                         setTimeout(() => setShowTiePopup(false), 3000);
                       }
 
@@ -3889,8 +3888,10 @@ export default function TCGPage() {
                       setTimeout(() => {
                         if (matchResult === 'win') {
                           setShowWinPopup(true);
+                          if (soundEnabled) AudioManager.win();
                         } else if (matchResult === 'loss') {
                           setShowLossPopup(true);
+                          if (soundEnabled) AudioManager.lose();
                         }
                         // Note: Tie popup is already shown above
                       }, 100);
