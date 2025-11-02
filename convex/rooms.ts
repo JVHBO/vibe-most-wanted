@@ -98,8 +98,9 @@ export const createRoom = mutation({
   args: {
     hostAddress: v.string(),
     hostUsername: v.string(),
+    mode: v.optional(v.union(v.literal("ranked"), v.literal("casual"))),
   },
-  handler: async (ctx, { hostAddress, hostUsername }) => {
+  handler: async (ctx, { hostAddress, hostUsername, mode = "ranked" }) => {
     // Generate random 6-character code
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -108,12 +109,13 @@ export const createRoom = mutation({
     const roomId = await ctx.db.insert("rooms", {
       roomId: code,
       status: "waiting",
+      mode,
       hostAddress: hostAddress.toLowerCase(),
       hostUsername,
       createdAt: now,
     });
 
-    console.log("✅ Room created in Convex:", code);
+    console.log(`✅ Room created in Convex: ${code} (${mode})`);
 
     return code;
   },
@@ -379,6 +381,7 @@ export const findMatch = mutation({
       await ctx.db.insert("rooms", {
         roomId: code,
         status: "ready",
+        mode: "ranked", // Auto-match is always ranked (costs coins, awards coins)
         hostAddress: normalizedAddress,
         hostUsername: playerUsername,
         guestAddress: opponent.playerAddress,

@@ -149,6 +149,12 @@ export default defineSchema({
       v.literal("cancelled")
     ),
 
+    // Room Mode
+    mode: v.optional(v.union(
+      v.literal("ranked"), // Costs coins, awards coins, counts for stats
+      v.literal("casual")  // Free, no coins, just for fun
+    )),
+
     // Players
     hostAddress: v.string(),
     hostUsername: v.string(),
