@@ -1,0 +1,74 @@
+SISTEMA DE ECONOMIA - $TESTVBMS - VIBE MOST WANTED
+POOL TOTAL,10000000,$TESTVBMS
+
+===== PvE REWARDS =====
+Difficulty,Coins per Win,Max Power,Daily Win Limit,Entry Fee,Daily Cap
+Gey,5,200,30,0,3500
+Goofy,15,400,30,0,3500
+Gooner,30,600,30,0,3500
+Gangster,60,800,30,0,3500
+Gigachad,120,1000,30,0,3500
+
+===== PvP MODES =====
+Mode,Entry Fee,Win Reward,Loss Penalty,Daily Limit,Daily Cap
+Ranked (Auto-Match),20,100,-20,10 matches,NONE
+Casual (Custom Room),0,0,0,Unlimited,NONE
+
+===== ATTACK MODE (LEADERBOARD) =====
+Mode,Entry Fee,Win Reward,Loss Penalty,Daily Limit,Daily Cap
+Attack,0,100,-20,5 attacks,NONE
+
+===== RANKING BONUS MULTIPLIERS =====
+Rank Difference,Win Multiplier,Example Win,Loss Reduction,Example Loss
+50+ ranks higher,2.0x,200 coins,60%,-8 coins
+20-49 ranks higher,1.5x,150 coins,50%,-10 coins
+10-19 ranks higher,1.3x,130 coins,35%,-13 coins
+5-9 ranks higher,1.15x,115 coins,20%,-16 coins
+Less than 5 ranks,1.0x,100 coins,0%,-20 coins
+
+===== DAILY BONUSES =====
+Bonus Type,Coins,Condition
+First PvE Win,50,First PvE victory of the day
+First PvP Match,100,First PvP match of the day
+Login Bonus,25,Daily login
+3-Win Streak,150,Win 3 matches in a row
+5-Win Streak,300,Win 5 matches in a row
+10-Win Streak,750,Win 10 matches in a row
+
+===== EXAMPLE SCENARIOS =====
+Scenario,Entry Fee,Win Result,Loss Result,Net Win,Net Loss
+Rank #50 attacks Rank #3,0,+200 coins,-8 coins,+200,-8
+Rank #10 attacks Rank #15,0,+100 coins,-20 coins,+100,-20
+PvP Ranked (similar ranks),-20,+100 coins,-20 coins,+80,-40
+PvE Gigachad (1 win),0,+120 coins,0,+120,0
+PvP Casual,0,0,0,0,0
+
+===== MAXIMUM DAILY EARNINGS =====
+Source,Max Amount,Notes
+PvE (30 wins),3500,Daily cap applies only to PvE
+Attack (5 wins),1000,Best case: 5 × 200 coins (vs top players)
+PvP Ranked (10 wins),800,Net after entry fees: 10 × 80 coins
+All Daily Bonuses,1425,Login + First PvE + First PvP + Streaks
+TOTAL MAXIMUM,6725,Theoretical maximum per day
+
+===== COST BREAKDOWN =====
+Activity,Entry Cost,Max Daily Cost,Max Daily Earnings,Net Potential
+PvE (30 matches),0,0,3500,+3500
+Attack (5 matches),0,0,1000,+1000
+PvP Ranked (10 matches),20 per match,200,1000,+800
+PvP Casual (unlimited),0,0,0,0
+
+===== DAILY LIMITS SUMMARY =====
+Mode,Entry Fee,Daily Limit Type,Limit Value,Daily Cap
+PvE,FREE,Wins,30,3500 coins
+PvP Ranked,20 coins,Matches,10,NONE
+PvP Casual,FREE,Matches,Unlimited,NONE
+Attack,FREE,Attacks,5,NONE
+
+===== ECONOMY CHANGES LOG =====
+Date,Change,Old Value,New Value,Reason
+2025-01-XX,Attack Entry Fee,50 coins,0 coins (FREE),Remove barrier for leaderboard competition
+2025-01-XX,PvP Entry Fee,40 coins,20 coins,Make PvP more accessible
+2025-01-XX,Attack Daily Cap,3500 coins,NONE,5 attacks/day limit is sufficient
+2025-01-XX,PvP Daily Cap,3500 coins,NONE,10 matches/day limit is sufficient
+2025-01-XX,Casual PvP Mode,N/A,Added,Free practice mode
