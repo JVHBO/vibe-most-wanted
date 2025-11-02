@@ -5100,7 +5100,7 @@ export default function TCGPage() {
               }`}
               title={unreadDefenses > 0 ? `${unreadDefenses} novos ataques recebidos` : 'Notificações'}
             >
-              <span className="text-lg">🛡</span>
+              <span className="text-lg text-vintage-gold">🔔</span>
               {unreadDefenses > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                   {unreadDefenses}
@@ -5117,7 +5117,7 @@ export default function TCGPage() {
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
             title={t('settings')}
           >
-            <span className="text-lg">⚙</span>
+            <span className="text-lg text-vintage-gold">⚙</span>
           </button>
 
           <button
