@@ -929,5 +929,229 @@ export const addCoins = mutation({
   },
 });
 
+/**
+ * ⚛️ ATOMIC: Record attack result with coins + match history
+ *
+ * Combines awardPvPCoins + recordMatch into ONE atomic transaction
+ * to prevent partial updates if one operation fails.
+ *
+ * This replaces the previous pattern of:
+ * 1. awardPvPCoins() - separate call
+ * 2. recordMatch() - separate call
+ * 3. getProfile() - separate call
+ *
+ * Problem: If recordMatch() failed, coins would be awarded but match not recorded
+ * Solution: Execute both operations in ONE transaction atomically
+ */
+export const recordAttackResult = mutation({
+  args: {
+    // Player info
+    playerAddress: v.string(),
+    playerPower: v.number(),
+    playerCards: v.array(v.any()),
+    playerUsername: v.string(),
+
+    // Match result
+    result: v.union(
+      v.literal("win"),
+      v.literal("loss"),
+      v.literal("tie")
+    ),
+
+    // Opponent info
+    opponentAddress: v.string(),
+    opponentUsername: v.string(),
+    opponentPower: v.number(),
+    opponentCards: v.array(v.any()),
+
+    // Economy
+    entryFeePaid: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const normalizedPlayerAddress = args.playerAddress.toLowerCase();
+    const normalizedOpponentAddress = args.opponentAddress.toLowerCase();
+
+    // ===== STEP 1: Get profile and initialize economy if needed =====
+    let profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedPlayerAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Player profile not found");
+    }
+
+    // Initialize economy if needed
+    if (profile.coins === undefined) {
+      const today = new Date().toISOString().split('T')[0];
+      await ctx.db.patch(profile._id, {
+        coins: 0,
+        lifetimeEarned: 0,
+        lifetimeSpent: 0,
+        dailyLimits: {
+          pveWins: 0,
+          pvpMatches: 0,
+          lastResetDate: today,
+          firstPveBonus: false,
+          firstPvpBonus: false,
+          loginBonus: false,
+          streakBonus: false,
+        },
+        winStreak: 0,
+        lastWinTimestamp: 0,
+      });
+      // Reload profile
+      const updatedProfile = await ctx.db.get(profile._id);
+      if (!updatedProfile) throw new Error("Failed to initialize economy");
+      profile = updatedProfile;
+    }
+
+    // Check and reset daily limits
+    const dailyLimits = await checkAndResetDailyLimits(ctx, profile);
+
+    // Check PvP match limit
+    if (dailyLimits.pvpMatches >= PVP_MATCH_LIMIT) {
+      throw new Error("Daily PvP match limit reached");
+    }
+
+    // ===== STEP 2: Calculate ranking bonus =====
+    const playerRank = await getOpponentRanking(ctx, normalizedPlayerAddress);
+    const opponentRank = await getOpponentRanking(ctx, normalizedOpponentAddress);
+    const won = args.result === 'win';
+    const rankingMultiplier = calculateRankingMultiplier(playerRank, opponentRank, won);
+
+    // ===== STEP 3: Calculate and award/deduct coins =====
+    let newStreak = profile.winStreak || 0;
+    const bonuses: string[] = [];
+    let totalReward = 0;
+    let newCoins = profile.coins || 0;
+
+    if (won) {
+      // WINNER: Award coins
+      newStreak++;
+      totalReward = Math.round(PVP_WIN_REWARD * rankingMultiplier);
+
+      // Add ranking bonus message
+      if (rankingMultiplier > 1.0) {
+        const bonusAmount = totalReward - PVP_WIN_REWARD;
+        bonuses.push(`Rank #${opponentRank} Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
+      }
+
+      // First PvP bonus
+      if (!dailyLimits.firstPvpBonus) {
+        totalReward += BONUSES.firstPvp;
+        bonuses.push(`First PvP +${BONUSES.firstPvp}`);
+        dailyLimits.firstPvpBonus = true;
+      }
+
+      // Streak bonuses
+      if (newStreak === 3 && !dailyLimits.streakBonus) {
+        totalReward += BONUSES.streak3;
+        bonuses.push(`3-Win Streak +${BONUSES.streak3}`);
+        dailyLimits.streakBonus = true;
+      } else if (newStreak === 5) {
+        totalReward += BONUSES.streak5;
+        bonuses.push(`5-Win Streak +${BONUSES.streak5}`);
+      } else if (newStreak === 10) {
+        totalReward += BONUSES.streak10;
+        bonuses.push(`10-Win Streak +${BONUSES.streak10}`);
+      }
+
+      // Check daily cap
+      const dailyEarned = calculateDailyEarned(profile);
+      if (dailyEarned + totalReward > DAILY_CAP) {
+        const remaining = Math.max(0, DAILY_CAP - dailyEarned);
+        if (remaining === 0) {
+          throw new Error("Daily cap reached");
+        }
+        totalReward = remaining;
+      }
+
+      newCoins = (profile.coins || 0) + totalReward;
+    } else if (args.result === 'loss') {
+      // LOSER: Deduct coins
+      newStreak = 0;
+      const basePenalty = PVP_LOSS_PENALTY; // -20
+      const penalty = Math.round(basePenalty * rankingMultiplier);
+      totalReward = penalty; // Negative value
+
+      // Add penalty reduction message
+      if (rankingMultiplier < 1.0) {
+        const reduction = Math.abs(penalty - basePenalty);
+        bonuses.push(`Rank #${opponentRank} Penalty Reduced -${reduction} (${(rankingMultiplier * 100).toFixed(0)}% penalty)`);
+      }
+
+      newCoins = Math.max(0, (profile.coins || 0) + penalty); // Can't go below 0
+    }
+
+    // ===== STEP 4: Record match history =====
+    const matchId = await ctx.db.insert("matches", {
+      playerAddress: normalizedPlayerAddress,
+      type: "attack",
+      result: args.result,
+      playerPower: args.playerPower,
+      opponentPower: args.opponentPower,
+      opponentAddress: normalizedOpponentAddress,
+      opponentUsername: args.opponentUsername,
+      timestamp: Date.now(),
+      playerCards: args.playerCards,
+      opponentCards: args.opponentCards,
+      coinsEarned: totalReward,
+      entryFeePaid: args.entryFeePaid,
+    });
+
+    // ===== STEP 5: Update profile stats (all at once) =====
+    const newStats = { ...profile.stats };
+
+    // Update attack win/loss stats
+    if (args.result === "win") {
+      newStats.attackWins = (newStats.attackWins || 0) + 1;
+      newStats.pvpWins = (newStats.pvpWins || 0) + 1;
+    } else if (args.result === "loss") {
+      newStats.attackLosses = (newStats.attackLosses || 0) + 1;
+      newStats.pvpLosses = (newStats.pvpLosses || 0) + 1;
+    }
+
+    // Update profile atomically (all fields at once)
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned: won ? (profile.lifetimeEarned || 0) + totalReward : profile.lifetimeEarned,
+      lifetimeSpent: !won && totalReward < 0 ? (profile.lifetimeSpent || 0) + Math.abs(totalReward) : profile.lifetimeSpent,
+      winStreak: newStreak,
+      lastWinTimestamp: Date.now(),
+      stats: newStats,
+      dailyLimits: {
+        ...dailyLimits,
+        pvpMatches: dailyLimits.pvpMatches + 1,
+      },
+      lastUpdated: Date.now(),
+    });
+
+    // ===== STEP 6: Get and return updated profile =====
+    const updatedProfile = await ctx.db.get(profile._id);
+
+    console.log("⚛️ ATOMIC: Attack result recorded successfully", {
+      matchId,
+      result: args.result,
+      coinsAwarded: totalReward,
+      newBalance: newCoins,
+      newStreak,
+    });
+
+    return {
+      success: true,
+      matchId,
+      coinsAwarded: totalReward,
+      bonuses,
+      winStreak: newStreak,
+      opponentRank,
+      rankingMultiplier,
+      profile: updatedProfile, // Return updated profile so no need for getProfile() call
+      dailyEarned: calculateDailyEarned(updatedProfile!),
+      remaining: DAILY_CAP - calculateDailyEarned(updatedProfile!),
+    };
+  },
+});
+
 // Export API reference (will be generated by Convex)
 import { api } from "./_generated/api";
