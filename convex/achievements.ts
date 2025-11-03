@@ -19,11 +19,12 @@ export const getPlayerAchievements = query({
   },
   handler: async (ctx, args) => {
     const { playerAddress } = args;
+    const normalizedAddress = playerAddress.toLowerCase();
 
     // Get all player's achievements from DB
     const playerAchievements = await ctx.db
       .query("achievements")
-      .withIndex("by_player", (q) => q.eq("playerAddress", playerAddress))
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
       .collect();
 
     // Create a map of existing achievements
@@ -60,6 +61,7 @@ export const checkAndUpdateAchievements = mutation({
   },
   handler: async (ctx, args) => {
     const { playerAddress, nfts } = args;
+    const normalizedAddress = playerAddress.toLowerCase();
 
     const newlyCompletedAchievements: string[] = [];
 
@@ -106,7 +108,7 @@ export const checkAndUpdateAchievements = mutation({
       const existing = await ctx.db
         .query("achievements")
         .withIndex("by_player_achievement", (q) =>
-          q.eq("playerAddress", playerAddress).eq("achievementId", id)
+          q.eq("playerAddress", normalizedAddress).eq("achievementId", id)
         )
         .first();
 
@@ -126,7 +128,7 @@ export const checkAndUpdateAchievements = mutation({
       } else {
         // Create new achievement record
         await ctx.db.insert("achievements", {
-          playerAddress,
+          playerAddress: normalizedAddress,
           achievementId: id,
           category: achievement.category,
           completed: isCompleted,
@@ -232,10 +234,11 @@ export const getAchievementStats = query({
   },
   handler: async (ctx, args) => {
     const { playerAddress } = args;
+    const normalizedAddress = playerAddress.toLowerCase();
 
     const achievements = await ctx.db
       .query("achievements")
-      .withIndex("by_player", (q) => q.eq("playerAddress", playerAddress))
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
       .collect();
 
     const totalAchievements = ALL_ACHIEVEMENTS.length;
@@ -298,10 +301,11 @@ export const getUnclaimedAchievements = query({
   },
   handler: async (ctx, args) => {
     const { playerAddress } = args;
+    const normalizedAddress = playerAddress.toLowerCase();
 
     const achievements = await ctx.db
       .query("achievements")
-      .withIndex("by_player", (q) => q.eq("playerAddress", playerAddress))
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
       .collect();
 
     const unclaimed = achievements
