@@ -27,7 +27,7 @@ export default function AchievementsView({
     autoNotify: true,
   });
 
-  const [filter, setFilter] = useState<string>("all"); // all, completed, unclaimed, rarity, wear, foil, progressive
+  const [filter, setFilter] = useState<string>("all");
   const [isClaiming, setIsClaiming] = useState(false);
 
   /**
@@ -75,23 +75,25 @@ export default function AchievementsView({
 
   if (!playerAddress) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-xl">🔒 Please connect your wallet to view achievements</p>
+      <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
+        <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-8 text-center max-w-md">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-display font-bold text-vintage-gold mb-2">Connect Wallet</h2>
+          <p className="text-vintage-burnt-gold">Please connect your wallet to view achievements</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black text-white py-8 px-4">
+    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
+          <h1 className="text-4xl md:text-5xl font-display font-bold mb-2 flex items-center gap-3 text-vintage-gold">
             🏆 Achievements
           </h1>
-          <p className="text-purple-300">
+          <p className="text-vintage-burnt-gold font-modern">
             Collect cards and unlock achievements to earn $TESTVBMS coins
           </p>
         </div>
@@ -99,39 +101,43 @@ export default function AchievementsView({
         {/* Stats Overview */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-              <div className="text-3xl mb-2">📊</div>
-              <div className="text-2xl font-bold">
+            {/* Completed Stats */}
+            <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
+              <div className="text-4xl mb-2">📊</div>
+              <div className="text-3xl font-bold text-vintage-gold font-modern">
                 {stats.completedCount}/{stats.totalAchievements}
               </div>
-              <div className="text-sm text-purple-300">Completed</div>
-              <div className="mt-2 bg-purple-900/50 rounded-full h-2">
+              <div className="text-sm text-vintage-burnt-gold font-modern">Completed</div>
+              <div className="mt-3 bg-vintage-black/50 rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
+                  className="bg-gradient-to-r from-vintage-gold to-vintage-gold-dark h-2 rounded-full transition-all duration-500"
                   style={{ width: `${stats.completionPercentage}%` }}
                 />
               </div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-              <div className="text-3xl mb-2">💰</div>
-              <div className="text-2xl font-bold">{stats.unclaimedRewards}</div>
-              <div className="text-sm text-purple-300">Coins to Claim</div>
-              <div className="text-xs text-yellow-400 mt-2">
+            {/* Coins to Claim */}
+            <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
+              <div className="text-4xl mb-2">💰</div>
+              <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.unclaimedRewards}</div>
+              <div className="text-sm text-vintage-burnt-gold font-modern">Coins to Claim</div>
+              <div className="text-xs text-vintage-gold/70 mt-2 font-modern">
                 {stats.unclaimedCount} unclaimed
               </div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-              <div className="text-3xl mb-2">🎯</div>
-              <div className="text-2xl font-bold">{stats.claimedCount}</div>
-              <div className="text-sm text-purple-300">Rewards Claimed</div>
+            {/* Rewards Claimed */}
+            <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
+              <div className="text-4xl mb-2">🎯</div>
+              <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.claimedCount}</div>
+              <div className="text-sm text-vintage-burnt-gold font-modern">Rewards Claimed</div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-              <div className="text-3xl mb-2">⭐</div>
-              <div className="text-2xl font-bold">{stats.completionPercentage}%</div>
-              <div className="text-sm text-purple-300">Completion</div>
+            {/* Completion % */}
+            <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
+              <div className="text-4xl mb-2">⭐</div>
+              <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.completionPercentage}%</div>
+              <div className="text-sm text-vintage-burnt-gold font-modern">Completion</div>
             </div>
           </div>
         )}
@@ -141,7 +147,7 @@ export default function AchievementsView({
           <button
             onClick={handleClaimAll}
             disabled={isClaiming || !unclaimed || unclaimed.length === 0}
-            className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark rounded-lg font-bold font-modern text-vintage-black hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-gold"
           >
             💰 Claim All ({stats?.unclaimedCount || 0})
           </button>
@@ -149,7 +155,7 @@ export default function AchievementsView({
           <button
             onClick={checkAchievements}
             disabled={isChecking}
-            className="px-6 py-3 bg-white/10 rounded-lg font-medium hover:bg-white/20 transition-colors disabled:opacity-50"
+            className="px-6 py-3 bg-vintage-charcoal/80 border-2 border-vintage-gold/30 rounded-lg font-medium font-modern text-vintage-gold hover:border-vintage-gold hover:bg-vintage-charcoal transition-colors disabled:opacity-50"
           >
             {isChecking ? "🔄 Checking..." : "🔍 Refresh Progress"}
           </button>
@@ -169,10 +175,10 @@ export default function AchievementsView({
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg font-medium font-modern transition-all ${
                 filter === f.id
-                  ? "bg-gradient-to-r from-purple-500 to-pink-500"
-                  : "bg-white/10 hover:bg-white/20"
+                  ? "bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black shadow-gold"
+                  : "bg-vintage-charcoal/60 border border-vintage-gold/20 text-vintage-gold hover:border-vintage-gold/50"
               }`}
             >
               {f.icon} {f.label}
@@ -192,12 +198,12 @@ export default function AchievementsView({
               return (
                 <div
                   key={achievement.id}
-                  className={`rounded-xl p-6 border-2 relative overflow-hidden ${
+                  className={`rounded-xl p-6 border-2 relative overflow-hidden backdrop-blur-md ${
                     isClaimed
-                      ? "bg-green-900/20 border-green-500/30"
+                      ? "bg-vintage-charcoal/40 border-vintage-gold-metallic/30"
                       : isCompleted
-                      ? "bg-yellow-900/20 border-yellow-500 animate-pulse"
-                      : "bg-white/5 border-white/10"
+                      ? "bg-vintage-charcoal/80 border-vintage-gold animate-pulse shadow-gold"
+                      : "bg-vintage-charcoal/60 border-vintage-gold/10"
                   }`}
                 >
                   {/* Background Icon */}
@@ -210,39 +216,39 @@ export default function AchievementsView({
                     <div className="flex items-start justify-between mb-3">
                       <div className="text-4xl">{achievement.icon}</div>
                       {isClaimed && (
-                        <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                        <div className="bg-vintage-gold-metallic text-vintage-black text-xs px-2 py-1 rounded-full font-bold font-modern">
                           ✓ CLAIMED
                         </div>
                       )}
                       {isCompleted && !isClaimed && (
-                        <div className="bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold animate-bounce">
+                        <div className="bg-vintage-gold text-vintage-black text-xs px-2 py-1 rounded-full font-bold font-modern animate-bounce">
                           🎉 READY!
                         </div>
                       )}
                     </div>
 
-                    <h3 className="text-xl font-bold mb-2">{achievement.name}</h3>
-                    <p className="text-sm text-purple-300 mb-4">
+                    <h3 className="text-xl font-bold mb-2 text-vintage-gold font-display">{achievement.name}</h3>
+                    <p className="text-sm text-vintage-burnt-gold mb-4 font-modern">
                       {achievement.description}
                     </p>
 
                     {/* Progress Bar */}
                     <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>
+                      <div className="flex justify-between text-sm mb-1 font-modern">
+                        <span className="text-vintage-ice">
                           {progress}/{target}
                         </span>
-                        <span className="text-yellow-400 font-bold">
+                        <span className="text-vintage-gold font-bold">
                           💰 {achievement.reward} coins
                         </span>
                       </div>
-                      <div className="bg-black/30 rounded-full h-3 overflow-hidden">
+                      <div className="bg-vintage-black/50 rounded-full h-3 overflow-hidden border border-vintage-gold/20">
                         <div
                           style={{ width: `${progressPercentage}%` }}
                           className={`h-3 rounded-full transition-all duration-500 ${
                             isCompleted
-                              ? "bg-gradient-to-r from-yellow-500 to-orange-500"
-                              : "bg-gradient-to-r from-purple-500 to-pink-500"
+                              ? "bg-gradient-to-r from-vintage-gold to-vintage-gold-dark shadow-gold"
+                              : "bg-gradient-to-r from-vintage-gold-metallic to-vintage-burnt-gold"
                           }`}
                         />
                       </div>
@@ -253,7 +259,7 @@ export default function AchievementsView({
                       <button
                         onClick={() => handleClaim(achievement.id)}
                         disabled={isClaiming}
-                        className="w-full py-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg font-bold hover:scale-105 transition-transform disabled:opacity-50"
+                        className="w-full py-2 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black rounded-lg font-bold font-modern hover:scale-105 transition-transform disabled:opacity-50 shadow-gold"
                       >
                         💰 Claim {achievement.reward} Coins
                       </button>
@@ -266,9 +272,9 @@ export default function AchievementsView({
 
         {/* Empty State */}
         {filteredAchievements.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-12 bg-vintage-charcoal/60 rounded-2xl border-2 border-vintage-gold/20">
             <div className="text-6xl mb-4">🏆</div>
-            <p className="text-xl text-purple-300">
+            <p className="text-xl text-vintage-burnt-gold font-modern">
               No achievements match this filter
             </p>
           </div>
