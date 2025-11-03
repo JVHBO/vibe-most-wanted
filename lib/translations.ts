@@ -6,7 +6,7 @@ export type TranslationKey = keyof typeof translations['pt-BR'];
 
 export const translations = {
   "pt-BR": {
-    title: 'Vibe Most Wanted',
+    title: 'Home',
     connectWallet: 'Conectar Carteira',
     reloadNfts: 'Recarregar NFTs',
     playerWins: 'Você venceu!',
@@ -229,7 +229,7 @@ export const translations = {
     twitterHint: 'Você pode adicionar seu Twitter depois na aba de perfil'
   },
   en: {
-    title: 'Vibe Most Wanted',
+    title: 'Home',
     connectWallet: 'Connect Wallet',
     reloadNfts: 'Reload NFTs',
     playerWins: 'You Win!',
@@ -451,7 +451,7 @@ export const translations = {
     twitterHint: 'You can add your Twitter later in the profile tab'
   },
   es: {
-    title: 'Vibe Most Wanted',
+    title: 'Home',
     connectWallet: 'Conectar Billetera',
     reloadNfts: 'Recargar NFTs',
     playerWins: '¡Ganaste!',
@@ -677,7 +677,7 @@ export const translations = {
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
-    title: 'Vibe Most Wanted',
+    title: 'Home',
     connectWallet: 'वॉलेट कनेक्ट करें',
     reloadNfts: 'NFTs रीलोड करें',
     playerWins: 'आप जीत गए!',

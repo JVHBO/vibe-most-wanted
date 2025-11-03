@@ -5662,11 +5662,11 @@ export default function TCGPage() {
                 {isInFarcaster ? (
                   <>
                     <span className="text-sm font-bold">Achievements</span>
-                    <span className="text-3xl leading-none">🏆</span>
+                    <span className="text-3xl leading-none">★</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-base md:text-lg">🏆</span>
+                    <span className="text-base md:text-lg">★</span>
                     <span className="hidden sm:inline">Achievements</span>
                   </>
                 )}
@@ -5719,33 +5719,33 @@ export default function TCGPage() {
           <>
           {/* Daily Quest Card */}
           {address && userProfile && questProgress && questProgress.quest && (
-            <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 backdrop-blur-lg rounded-2xl border-2 border-purple-500/50 p-4 md:p-6 mb-6 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
+            <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-4 md:p-6 mb-6 shadow-gold">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl md:text-4xl">◈</span>
                   <div>
-                    <h3 className="text-lg md:text-xl font-display font-bold text-purple-300">DAILY QUEST</h3>
-                    <p className="text-xs md:text-sm text-purple-400 font-modern capitalize">
+                    <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold">DAILY QUEST</h3>
+                    <p className="text-xs md:text-sm text-vintage-burnt-gold font-modern capitalize">
                       {questProgress.quest.difficulty} • +{questProgress.quest.reward} $TESTVBMS
                     </p>
                   </div>
                 </div>
                 {questProgress.claimed ? (
-                  <div className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg font-modern font-semibold text-xs md:text-sm">
+                  <div className="px-3 md:px-4 py-1.5 md:py-2 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg font-modern font-semibold text-xs md:text-sm">
                     ✓ {t('questClaimed')}
                   </div>
                 ) : questProgress.completed ? (
                   <button
                     onClick={handleClaimQuestReward}
                     disabled={isClaimingQuest}
-                    className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white border-2 border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
+                    className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border-2 border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg font-modern font-semibold text-xs md:text-sm transition-all shadow-gold hover:scale-105"
                   >
                     {isClaimingQuest ? '...' : `✦ ${t('claimReward')}`}
                   </button>
                 ) : null}
               </div>
 
-              <p className="text-white font-modern text-sm md:text-base mb-3">
+              <p className="text-vintage-ice font-modern text-sm md:text-base mb-3">
                 {questProgress.quest.description}
               </p>
 
@@ -5756,7 +5756,7 @@ export default function TCGPage() {
                   showPercentage={true}
                   showNumbers={true}
                   size="md"
-                  variant="purple"
+                  variant="gold"
                   animate={true}
                 />
               )}
@@ -6248,34 +6248,34 @@ export default function TCGPage() {
           {currentView === 'missions' && (
             <div className="max-w-6xl mx-auto space-y-6">
               {/* Weekly Quests Section */}
-              <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 backdrop-blur-lg rounded-2xl border-2 border-purple-500/50 p-6 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
+              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6 shadow-gold">
                 <div className="flex items-center gap-3 mb-6">
                   <span className="text-4xl">🎯</span>
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-display font-bold text-purple-300">WEEKLY MISSIONS</h2>
-                    <p className="text-sm text-purple-400 font-modern">Reset every Sunday 00:00 UTC</p>
+                    <h2 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold">WEEKLY MISSIONS</h2>
+                    <p className="text-sm text-vintage-burnt-gold font-modern">Reset every Sunday 00:00 UTC</p>
                   </div>
                 </div>
 
                 {!address || !userProfile ? (
                   <div className="text-center py-8">
-                    <p className="text-purple-300">Create a profile to track weekly missions</p>
+                    <p className="text-vintage-burnt-gold">Create a profile to track weekly missions</p>
                   </div>
                 ) : weeklyProgress ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Attack Master Quest */}
                     {weeklyProgress.quests.weekly_attack_wins && (
-                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-purple-500/30">
+                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-2xl">🏆</span>
                             <div>
-                              <h3 className="text-lg font-bold text-white">Attack Master</h3>
-                              <p className="text-xs text-purple-400">Win 20 attacks</p>
+                              <h3 className="text-lg font-bold text-vintage-gold">Attack Master</h3>
+                              <p className="text-xs text-vintage-burnt-gold">Win 20 attacks</p>
                             </div>
                           </div>
                           {weeklyProgress.quests.weekly_attack_wins.claimed ? (
-                            <div className="px-3 py-1.5 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg text-xs font-semibold">
+                            <div className="px-3 py-1.5 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg text-xs font-semibold">
                               ✓ Claimed
                             </div>
                           ) : weeklyProgress.quests.weekly_attack_wins.completed ? (
@@ -6289,7 +6289,7 @@ export default function TCGPage() {
                                   if (soundEnabled) AudioManager.buttonError();
                                 }
                               }}
-                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white border border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg text-xs font-semibold transition-all"
+                              className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
                               ✦ Claim 300 $TESTVBMS
                             </button>
@@ -6301,7 +6301,7 @@ export default function TCGPage() {
                           showPercentage={true}
                           showNumbers={true}
                           size="sm"
-                          variant="purple"
+                          variant="gold"
                           animate={true}
                         />
                       </div>
@@ -6309,17 +6309,17 @@ export default function TCGPage() {
 
                     {/* Active Player Quest */}
                     {weeklyProgress.quests.weekly_total_matches && (
-                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-purple-500/30">
+                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-2xl">🎲</span>
                             <div>
-                              <h3 className="text-lg font-bold text-white">Active Player</h3>
-                              <p className="text-xs text-purple-400">Play 30 matches (any mode)</p>
+                              <h3 className="text-lg font-bold text-vintage-gold">Active Player</h3>
+                              <p className="text-xs text-vintage-burnt-gold">Play 30 matches (any mode)</p>
                             </div>
                           </div>
                           {weeklyProgress.quests.weekly_total_matches.claimed ? (
-                            <div className="px-3 py-1.5 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg text-xs font-semibold">
+                            <div className="px-3 py-1.5 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg text-xs font-semibold">
                               ✓ Claimed
                             </div>
                           ) : weeklyProgress.quests.weekly_total_matches.completed ? (
@@ -6333,7 +6333,7 @@ export default function TCGPage() {
                                   if (soundEnabled) AudioManager.buttonError();
                                 }
                               }}
-                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white border border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg text-xs font-semibold transition-all"
+                              className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
                               ✦ Claim 200 $TESTVBMS
                             </button>
@@ -6345,7 +6345,7 @@ export default function TCGPage() {
                           showPercentage={true}
                           showNumbers={true}
                           size="sm"
-                          variant="purple"
+                          variant="gold"
                           animate={true}
                         />
                       </div>
@@ -6353,17 +6353,17 @@ export default function TCGPage() {
 
                     {/* Fortress Quest */}
                     {weeklyProgress.quests.weekly_defense_wins && (
-                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-purple-500/30">
+                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-2xl">🛡️</span>
                             <div>
-                              <h3 className="text-lg font-bold text-white">Fortress</h3>
-                              <p className="text-xs text-purple-400">Defend successfully 10 times</p>
+                              <h3 className="text-lg font-bold text-vintage-gold">Fortress</h3>
+                              <p className="text-xs text-vintage-burnt-gold">Defend successfully 10 times</p>
                             </div>
                           </div>
                           {weeklyProgress.quests.weekly_defense_wins.claimed ? (
-                            <div className="px-3 py-1.5 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg text-xs font-semibold">
+                            <div className="px-3 py-1.5 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg text-xs font-semibold">
                               ✓ Claimed
                             </div>
                           ) : weeklyProgress.quests.weekly_defense_wins.completed ? (
@@ -6377,7 +6377,7 @@ export default function TCGPage() {
                                   if (soundEnabled) AudioManager.buttonError();
                                 }
                               }}
-                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white border border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg text-xs font-semibold transition-all"
+                              className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
                               ✦ Claim 400 $TESTVBMS
                             </button>
@@ -6389,7 +6389,7 @@ export default function TCGPage() {
                           showPercentage={true}
                           showNumbers={true}
                           size="sm"
-                          variant="purple"
+                          variant="gold"
                           animate={true}
                         />
                       </div>
@@ -6397,17 +6397,17 @@ export default function TCGPage() {
 
                     {/* Unbeatable Quest */}
                     {weeklyProgress.quests.weekly_pve_streak && (
-                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-purple-500/30">
+                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-2xl">🔥</span>
                             <div>
-                              <h3 className="text-lg font-bold text-white">Unbeatable</h3>
-                              <p className="text-xs text-purple-400">Win 10 PvE battles in a row</p>
+                              <h3 className="text-lg font-bold text-vintage-gold">Unbeatable</h3>
+                              <p className="text-xs text-vintage-burnt-gold">Win 10 PvE battles in a row</p>
                             </div>
                           </div>
                           {weeklyProgress.quests.weekly_pve_streak.claimed ? (
-                            <div className="px-3 py-1.5 bg-gray-600/30 text-gray-400 border border-gray-500/30 rounded-lg text-xs font-semibold">
+                            <div className="px-3 py-1.5 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg text-xs font-semibold">
                               ✓ Claimed
                             </div>
                           ) : weeklyProgress.quests.weekly_pve_streak.completed ? (
@@ -6421,7 +6421,7 @@ export default function TCGPage() {
                                   if (soundEnabled) AudioManager.buttonError();
                                 }
                               }}
-                              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white border border-purple-400 hover:from-purple-500 hover:to-blue-500 rounded-lg text-xs font-semibold transition-all"
+                              className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
                               ✦ Claim 500 $TESTVBMS
                             </button>
@@ -6433,7 +6433,7 @@ export default function TCGPage() {
                           showPercentage={true}
                           showNumbers={true}
                           size="sm"
-                          variant="purple"
+                          variant="gold"
                           animate={true}
                         />
                       </div>
@@ -6441,24 +6441,24 @@ export default function TCGPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
-                    <p className="text-purple-300 mt-4">Loading missions...</p>
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-vintage-gold border-t-transparent"></div>
+                    <p className="text-vintage-burnt-gold mt-4">Loading missions...</p>
                   </div>
                 )}
               </div>
 
               {/* Weekly Rewards Status - Player's Current Standing */}
-              <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 backdrop-blur-lg rounded-2xl border-2 border-blue-500/50 p-6 shadow-[0_0_30px_rgba(59,130,246,0.3)] mb-6">
+              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6 shadow-gold mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">⏰</span>
                     <div>
-                      <h3 className="text-xl font-display font-bold text-blue-300">NEXT DISTRIBUTION</h3>
-                      <p className="text-sm text-blue-400 font-modern">Sunday 00:00 UTC</p>
+                      <h3 className="text-xl font-display font-bold text-vintage-gold">NEXT DISTRIBUTION</h3>
+                      <p className="text-sm text-vintage-burnt-gold font-modern">Sunday 00:00 UTC</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-display font-bold text-blue-300" id="weekly-countdown">
+                    <p className="text-2xl font-display font-bold text-vintage-gold" id="weekly-countdown">
                       {(() => {
                         const now = new Date();
                         const dayOfWeek = now.getUTCDay();
@@ -6474,7 +6474,7 @@ export default function TCGPage() {
                         return `${days}d ${hours}h`;
                       })()}
                     </p>
-                    <p className="text-xs text-blue-400">remaining</p>
+                    <p className="text-xs text-vintage-burnt-gold">remaining</p>
                   </div>
                 </div>
 
@@ -6501,11 +6501,11 @@ export default function TCGPage() {
                   }
 
                   return (
-                    <div className="bg-vintage-black/50 rounded-xl p-4 border border-blue-500/30">
+                    <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-blue-400 mb-1">Your Current Rank</p>
-                          <p className="text-2xl font-display font-bold text-blue-300">{rewardTier}</p>
+                          <p className="text-sm text-vintage-burnt-gold mb-1">Your Current Rank</p>
+                          <p className="text-2xl font-display font-bold text-vintage-gold">{rewardTier}</p>
                           {playerRank > 10 && (
                             <p className="text-xs text-orange-400 mt-1">Climb to TOP 10 to earn rewards!</p>
                           )}
@@ -6524,7 +6524,7 @@ export default function TCGPage() {
 
                 {/* TOP 10 Preview */}
                 <div className="mt-4">
-                  <h4 className="text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-vintage-gold mb-2 flex items-center gap-2">
                     <span>🏆</span>
                     CURRENT TOP 10
                   </h4>
@@ -6546,18 +6546,18 @@ export default function TCGPage() {
                           key={profile.address}
                           className={`flex items-center justify-between p-2 rounded ${
                             isCurrentUser
-                              ? 'bg-blue-500/30 border border-blue-400'
+                              ? 'bg-vintage-gold/20 border border-vintage-gold'
                               : 'bg-vintage-black/30'
                           }`}
                         >
                           <div className="flex items-center gap-2 flex-1">
                             <span className="text-lg w-8">{rankIcon}</span>
-                            <span className="text-xs text-gray-400 w-6">#{rank}</span>
+                            <span className="text-xs text-vintage-burnt-gold w-6">#{rank}</span>
                             <span className={`text-sm font-semibold truncate ${
-                              isCurrentUser ? 'text-blue-300' : 'text-gray-300'
+                              isCurrentUser ? 'text-vintage-gold' : 'text-vintage-ice'
                             }`}>
                               {profile.username}
-                              {isCurrentUser && <span className="text-xs text-blue-400 ml-1">(you)</span>}
+                              {isCurrentUser && <span className="text-xs text-vintage-burnt-gold ml-1">(you)</span>}
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
@@ -6572,76 +6572,76 @@ export default function TCGPage() {
               </div>
 
               {/* Weekly Leaderboard Rewards Section */}
-              <div className="bg-gradient-to-r from-yellow-900/40 to-orange-900/40 backdrop-blur-lg rounded-2xl border-2 border-yellow-500/50 p-6 shadow-[0_0_30px_rgba(234,179,8,0.3)]">
+              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6 shadow-gold">
                 <div className="flex items-center gap-3 mb-6">
                   <span className="text-4xl">🏅</span>
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-display font-bold text-yellow-300">WEEKLY LEADERBOARD REWARDS</h2>
-                    <p className="text-sm text-yellow-400 font-modern">Distributed every Sunday • TOP 10 ONLY</p>
+                    <h2 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold">WEEKLY LEADERBOARD REWARDS</h2>
+                    <p className="text-sm text-vintage-burnt-gold font-modern">Distributed every Sunday • TOP 10 ONLY</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-yellow-400">
+                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-vintage-gold">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">🥇</span>
                       <div>
-                        <p className="text-lg font-bold text-yellow-300">1st Place</p>
-                        <p className="text-xs text-yellow-400">Champion of the Week</p>
+                        <p className="text-lg font-bold text-vintage-gold">1st Place</p>
+                        <p className="text-xs text-vintage-burnt-gold">Champion of the Week</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-display font-bold text-yellow-300">1,000</p>
-                      <p className="text-xs text-yellow-400">$TESTVBMS</p>
+                      <p className="text-2xl font-display font-bold text-vintage-gold">1,000</p>
+                      <p className="text-xs text-vintage-burnt-gold">$TESTVBMS</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-gray-300">
+                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-vintage-gold-metallic">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">🥈</span>
                       <div>
-                        <p className="text-lg font-bold text-gray-200">2nd Place</p>
-                        <p className="text-xs text-gray-400">Runner-up</p>
+                        <p className="text-lg font-bold text-vintage-gold-metallic">2nd Place</p>
+                        <p className="text-xs text-vintage-burnt-gold">Runner-up</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-display font-bold text-gray-200">750</p>
-                      <p className="text-xs text-gray-400">$TESTVBMS</p>
+                      <p className="text-2xl font-display font-bold text-vintage-gold-metallic">750</p>
+                      <p className="text-xs text-vintage-burnt-gold">$TESTVBMS</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-orange-400">
+                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border-2 border-vintage-burnt-gold">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">🥉</span>
                       <div>
-                        <p className="text-lg font-bold text-orange-300">3rd Place</p>
-                        <p className="text-xs text-orange-400">Bronze Medal</p>
+                        <p className="text-lg font-bold text-vintage-burnt-gold">3rd Place</p>
+                        <p className="text-xs text-vintage-burnt-gold/70">Bronze Medal</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-display font-bold text-orange-300">500</p>
-                      <p className="text-xs text-orange-400">$TESTVBMS</p>
+                      <p className="text-2xl font-display font-bold text-vintage-burnt-gold">500</p>
+                      <p className="text-xs text-vintage-burnt-gold/70">$TESTVBMS</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border border-purple-500/30">
+                  <div className="flex items-center justify-between bg-vintage-black/50 rounded-lg p-4 border border-vintage-gold/20">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">⭐</span>
                       <div>
-                        <p className="text-base font-bold text-purple-300">4th - 10th Place</p>
-                        <p className="text-xs text-purple-400">Top 10 Finishers</p>
+                        <p className="text-base font-bold text-vintage-gold">4th - 10th Place</p>
+                        <p className="text-xs text-vintage-burnt-gold">Top 10 Finishers</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-display font-bold text-purple-300">300</p>
-                      <p className="text-xs text-purple-400">$TESTVBMS</p>
+                      <p className="text-xl font-display font-bold text-vintage-gold">300</p>
+                      <p className="text-xs text-vintage-burnt-gold">$TESTVBMS</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-blue-900/30 border border-blue-500/30 rounded-lg">
-                  <p className="text-sm text-blue-300 text-center">
-                    ℹ️ Rewards are automatically distributed every Sunday at 00:00 UTC based on <span className="font-bold">Total Power</span> ranking
+                <div className="mt-6 p-4 bg-vintage-black/50 border border-vintage-gold/20 rounded-lg">
+                  <p className="text-sm text-vintage-burnt-gold text-center">
+                    ℹ️ Rewards are automatically distributed every Sunday at 00:00 UTC based on <span className="font-bold text-vintage-gold">Total Power</span> ranking
                   </p>
                 </div>
               </div>

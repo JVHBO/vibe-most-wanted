@@ -7,7 +7,12 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { ALL_ACHIEVEMENTS, getAchievementById } from "./achievementDefinitions";
+import { ALL_ACHIEVEMENTS, getAchievementById, type AchievementDefinition } from "./achievementDefinitions";
+
+// Create a Map for fast lookup (convert array to Map for O(1) lookup)
+const ACHIEVEMENTS_MAP = new Map<string, AchievementDefinition>(
+  ALL_ACHIEVEMENTS.map((a) => [a.id, a])
+);
 
 /**
  * 🔍 GET PLAYER ACHIEVEMENTS
@@ -162,10 +167,10 @@ export const claimAchievementReward = mutation({
   handler: async (ctx, args) => {
     const { playerAddress, achievementId } = args;
 
-    // Get achievement definition
-    const definition = getAchievementById(achievementId);
+    // Get achievement definition from Map
+    const definition = ACHIEVEMENTS_MAP.get(achievementId);
     if (!definition) {
-      throw new Error(`Achievement ${achievementId} not found`);
+      throw new Error(`Achievement ${achievementId} not found in definitions`);
     }
 
     // Get achievement record
@@ -246,7 +251,7 @@ export const getAchievementStats = query({
     const unclaimedRewards = achievements
       .filter((a) => a.completed && !a.claimedAt)
       .reduce((sum, a) => {
-        const def = getAchievementById(a.achievementId);
+        const def = ACHIEVEMENTS_MAP.get(a.achievementId);
         return sum + (def?.reward || 0);
       }, 0);
 
@@ -306,7 +311,7 @@ export const getUnclaimedAchievements = query({
     const unclaimed = achievements
       .filter((a) => a.completed && !a.claimedAt)
       .map((a) => {
-        const definition = getAchievementById(a.achievementId);
+        const definition = ACHIEVEMENTS_MAP.get(a.achievementId);
         return {
           ...a,
           ...definition,
