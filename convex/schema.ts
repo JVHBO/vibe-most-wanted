@@ -313,4 +313,19 @@ export default defineSchema({
     nonce: v.number(), // Current nonce (increments with each signed action)
     lastUsed: v.number(), // Timestamp of last use
   }).index("by_address", ["address"]),
+
+  // Achievement System
+  achievements: defineTable({
+    playerAddress: v.string(),
+    achievementId: v.string(), // e.g. "rare_collector_1", "pristine_hoarder_10"
+    category: v.string(), // "rarity", "wear", "foil", "progressive"
+    completed: v.boolean(),
+    progress: v.number(), // Current progress (e.g. 5 of 10)
+    target: v.number(), // Target to complete (e.g. 10)
+    claimedAt: v.optional(v.number()), // When reward was claimed
+    completedAt: v.optional(v.number()), // When achievement was completed
+  })
+    .index("by_player", ["playerAddress"])
+    .index("by_player_achievement", ["playerAddress", "achievementId"])
+    .index("by_player_category", ["playerAddress", "category"]),
 });

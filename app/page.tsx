@@ -18,6 +18,7 @@ import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
 import { ProgressBar } from "@/components/ProgressBar";
+import AchievementsView from "@/components/AchievementsView";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
@@ -845,7 +846,7 @@ export default function TCGPage() {
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
   // Profile States
-  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions'>('game');
+  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'achievements'>('game');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
@@ -5650,6 +5651,29 @@ export default function TCGPage() {
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
+                  setCurrentView('achievements');
+                }}
+                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
+                  currentView === 'achievements'
+                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
+                }`}
+              >
+                {isInFarcaster ? (
+                  <>
+                    <span className="text-sm font-bold">Achievements</span>
+                    <span className="text-3xl leading-none">🏆</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-base md:text-lg">🏆</span>
+                    <span className="hidden sm:inline">Achievements</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('leaderboard');
                 }}
                 className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
@@ -6733,6 +6757,10 @@ export default function TCGPage() {
           </div>
           {/* End content wrapper */}
 
+          {/* 🏆 Achievements View */}
+          {currentView === 'achievements' && (
+            <AchievementsView playerAddress={address} nfts={nfts} />
+          )}
 
           {/* Create Profile Modal */}
           {showCreateProfile && !isCheckingFarcaster && (
