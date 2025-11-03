@@ -1,15 +1,19 @@
 /**
  * ADMIN FUNCTIONS
  *
+ * 🔒 SECURITY: All mutations are internal-only
+ * Cannot be called from client code - only from Convex dashboard or other mutations
+ *
  * Dangerous operations - run step by step
  */
 
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
 /**
  * Step 1: Reset all profiles (economy and stats)
+ * 🔒 INTERNAL ONLY - Cannot be called from client
  */
-export const resetProfiles = mutation({
+export const resetProfiles = internalMutation({
   args: {},
   handler: async (ctx) => {
     console.log("🚨 STEP 1: Resetting profiles...");
@@ -65,8 +69,9 @@ export const resetProfiles = mutation({
 
 /**
  * Step 2: Delete one batch of matches (run multiple times)
+ * 🔒 INTERNAL ONLY - Cannot be called from client
  */
-export const deleteMatchesBatch = mutation({
+export const deleteMatchesBatch = internalMutation({
   args: {},
   handler: async (ctx) => {
     // Delete 100 matches at a time
@@ -94,8 +99,9 @@ export const deleteMatchesBatch = mutation({
 
 /**
  * Step 3: Delete all quest progress
+ * 🔒 INTERNAL ONLY - Cannot be called from client
  */
-export const deleteQuestProgress = mutation({
+export const deleteQuestProgress = internalMutation({
   args: {},
   handler: async (ctx) => {
     const questProgress = await ctx.db.query("questProgress").collect();
@@ -112,8 +118,9 @@ export const deleteQuestProgress = mutation({
 /**
  * MIGRATION: Normalize all usernames to lowercase
  * Fixes profiles being inaccessible due to uppercase letters
+ * 🔒 INTERNAL ONLY - Cannot be called from client
  */
-export const normalizeUsernames = mutation({
+export const normalizeUsernames = internalMutation({
   args: {},
   handler: async (ctx) => {
     console.log("🔄 Starting username normalization migration...");
