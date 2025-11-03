@@ -132,71 +132,87 @@ if (Math.abs(now - timestamp) > fiveMinutes) {
 
 ---
 
-### 2. 🔴 Room Code Generation - CRITICAL
-- **File:** `convex/rooms.ts:105`
-- **Status:** ⏳ Pending
-- **Severity:** CRITICAL - Security Breach
-- **Impact:** Players can brute-force/guess room codes and enter private rooms
-- **Estimated Fix Time:** 1-2 hours
+### 2. ✅ Room Code Generation - **FIXED**
+- **File:** `convex/rooms.ts:105, 378`
+- **Status:** ✅ Fixed (2025-11-03)
+- **Issue:** Math.random() is not cryptographically secure, predictable room codes
+- **Fix:** Replaced with crypto.randomUUID() + uniqueness check with 10 retry attempts
+- **Time:** 1.5 hours
+- **Commit:** `921b312`
 
-**Problem:**
+**Before:**
 ```typescript
 const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 // Math.random() is NOT cryptographically secure!
 ```
 
-**Recommended Fix:**
+**After:**
 ```typescript
-import { randomUUID } from 'crypto';
-
+let code: string = "";
 let attempts = 0;
-while (attempts < 10) {
-  const code = randomUUID().substring(0, 8).toUpperCase();
+const maxAttempts = 10;
+
+while (attempts < maxAttempts) {
+  const uuid = crypto.randomUUID().replace(/-/g, '');
+  code = uuid.substring(0, 6).toUpperCase();
+
   const existing = await ctx.db
     .query("rooms")
-    .filter(q => q.eq(q.field("roomId"), code))
+    .filter((q) => q.eq(q.field("roomId"), code))
     .first();
 
-  if (!existing) return code;
+  if (!existing) break;
   attempts++;
 }
-throw new Error("Failed to generate unique room code");
+
+if (attempts >= maxAttempts) {
+  throw new Error("Failed to generate unique room code after 10 attempts");
+}
 ```
+
+**Applied to:**
+- createRoom mutation (line 105)
+- findMatch mutation (line 378)
 
 ---
 
-### 3. 🔴 Weekly Quest Mutation Unprotected - CRITICAL
+### 3. ✅ Weekly Quest Mutation Unprotected - **FIXED**
 - **File:** `convex/quests.ts:545-587`
-- **Status:** ⏳ Pending
-- **Severity:** CRITICAL - Economy Exploit
-- **Impact:** Players can farm unlimited quest rewards by calling directly from client
-- **Estimated Fix Time:** 2 hours
+- **Status:** ✅ Fixed (2025-11-03)
+- **Issue:** updateWeeklyProgress was public, allowing unlimited quest reward farming
+- **Fix:** Converted to internalMutation + updated all 7 calls to use internal.quests
+- **Time:** 2 hours
+- **Commit:** `634ce65`
 
-**Problem:**
+**Before:**
 ```typescript
 export const updateWeeklyProgress = mutation({ // PUBLIC!
   handler: async (ctx, { address, questType, increment }) => {
     // Anyone can call this!
   }
 });
+
+// Called from economy.ts
+await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, { ... });
 ```
 
-**Recommended Fix:**
+**After:**
 ```typescript
-// Make it internal
+// 🛡️ CRITICAL FIX: Converted to internalMutation
 export const updateWeeklyProgress = internalMutation({
   handler: async (ctx, { address, questType, increment }) => {
     // Now only callable from server
   }
 });
 
-// Call from economy mutations
-await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
-  address,
-  questType: "total_matches",
-  increment: 1,
-});
+// Updated all calls to use internal.quests
+await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, { ... });
 ```
+
+**Updated 7 calls in 3 files:**
+- convex/economy.ts: 6 calls (PvE, PvP wins/losses, attack results)
+- convex/matches.ts: 1 call (defense wins)
+- All now use `internal.quests` instead of `api.quests`
 
 ---
 
