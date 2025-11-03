@@ -13,7 +13,7 @@
 | **Features** | 0 | 0 | 1 | 1 | **2** |
 | **Technical Debt** | 0 | 0 | 1 | 2 | **3** |
 | **Migration** | 0 | 0 | 0 | 0 | **0** |
-| **TOTAL** | **0** | **0** | **4** | **3** | **7** |
+| **TOTAL** | **0** | **0** | **3** | **3** | **6** |
 
 ---
 
@@ -86,7 +86,7 @@ const dealerCardsPower = useTotalPower(dealerCards);
 
 ---
 
-## 🟡 MEDIUM PRIORITY (4 itens)
+## 🟡 MEDIUM PRIORITY (3 itens)
 
 ### 2. Weekly Rewards UI
 **Status**: ⏳ PENDING
@@ -115,16 +115,11 @@ const dealerCardsPower = useTotalPower(dealerCards);
 
 ---
 
-### 3. CardViewer Modal Pattern Inconsistency
-**Status**: ⏳ PENDING
-**Severity**: MEDIUM
-**Location**: `app/page.tsx` lines 4670-4700
+### 3. CardViewer Modal Pattern Inconsistency ❌
+**Status**: ❌ NOT APPLICABLE (modal doesn't exist)
+**Severity**: N/A
 
-**Problema**: CardViewer modal usa pattern diferente dos outros modals
-
-**Solução**: Padronizar com mesmo pattern usado em DifficultyModal, PvPModal, etc.
-
-**Estimativa**: 1 hora
+**Descoberta**: Durante Ultrathink Sprint, verificado que o CardViewer modal **não existe** no codebase. Item removido da lista de pendências.
 
 ---
 
