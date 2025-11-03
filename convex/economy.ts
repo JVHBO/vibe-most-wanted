@@ -1145,6 +1145,17 @@ export const recordAttackResult = mutation({
     // Check and reset daily limits
     const dailyLimits = await checkAndResetDailyLimits(ctx, profile);
 
+    // 🛡️ PHASE 2 SECURITY: Rate limiting for attacks (prevent spam)
+    const nowAttack = Date.now();
+    const lastPvPAward = profile.lastPvPAward || 0;
+    const timeSinceLastPvPAward = nowAttack - lastPvPAward;
+    const ATTACK_RATE_LIMIT_MS = 15000; // 15 seconds between attacks
+
+    if (timeSinceLastPvPAward < ATTACK_RATE_LIMIT_MS) {
+      const waitTime = Math.ceil((ATTACK_RATE_LIMIT_MS - timeSinceLastPvPAward) / 1000);
+      throw new Error(`Too fast! Please wait ${waitTime}s before next attack`);
+    }
+
     // Check PvP match limit
     if (dailyLimits.pvpMatches >= PVP_MATCH_LIMIT) {
       throw new Error("Daily PvP match limit reached");
@@ -1281,6 +1292,7 @@ export const recordAttackResult = mutation({
       lifetimeSpent: !won && totalReward < 0 ? (profile.lifetimeSpent || 0) + Math.abs(totalReward) : profile.lifetimeSpent,
       winStreak: newStreak,
       lastWinTimestamp: Date.now(),
+      lastPvPAward: nowAttack, // 🛡️ Update rate limit timestamp
       stats: newStats,
       dailyLimits: {
         ...dailyLimits,
