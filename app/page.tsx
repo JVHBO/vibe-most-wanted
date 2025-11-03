@@ -881,6 +881,11 @@ export default function TCGPage() {
   const [isAttacking, setIsAttacking] = useState<boolean>(false);
   const [isConfirmingCards, setIsConfirmingCards] = useState<boolean>(false);
 
+  // 🚀 Performance: Memoized battle card power totals (for UI display)
+  const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
+  const attackSelectedCardsPower = useTotalPower(attackSelectedCards);
+  const dealerCardsPower = useTotalPower(dealerCards);
+
   // ✅ PvP Preview States
   const [showPvPPreview, setShowPvPPreview] = useState<boolean>(false);
   const [pvpPreviewData, setPvpPreviewData] = useState<any>(null);
@@ -1566,8 +1571,8 @@ export default function TCGPage() {
 
     if (soundEnabled) AudioManager.playHand();
 
-    // 🚀 Performance: Use memoized total power calculation
-    const playerTotal = useTotalPower(cards);
+    // Calculate player power (one-time calculation per battle, no need for memoization)
+    const playerTotal = cards.reduce((sum, c) => sum + (c.power || 0), 0);
     // Use JC's deck for dealer cards
     const available = jcNfts;
 
@@ -3726,7 +3731,8 @@ export default function TCGPage() {
               <div className="mt-3 text-center">
                 <p className="text-xs text-vintage-burnt-gold">Total Power</p>
                 <p className="text-2xl font-bold text-vintage-neon-blue">
-                  {pveSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0)}
+                  {/* 🚀 Performance: Use memoized power total */}
+                  {pveSelectedCardsPower}
                 </p>
               </div>
             </div>
@@ -4169,7 +4175,8 @@ export default function TCGPage() {
               <div className="mt-2 text-center">
                 <p className="text-xs text-vintage-burnt-gold">Your Attack Power</p>
                 <p className="text-xl font-bold text-red-500">
-                  {attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0)}
+                  {/* 🚀 Performance: Use memoized power total */}
+                  {attackSelectedCardsPower}
                 </p>
               </div>
             </div>
@@ -5943,7 +5950,8 @@ export default function TCGPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-vintage-burnt-gold">{t('dealerTotalPower')}</p>
-                        <p className="text-2xl font-bold text-red-400">{dealerCards.reduce((sum, c) => sum + (c.power || 0), 0)}</p>
+                        {/* 🚀 Performance: Use memoized power total */}
+                        <p className="text-2xl font-bold text-red-400">{dealerCardsPower}</p>
                       </div>
                     </div>
                   )}
