@@ -10,10 +10,13 @@
 | Categoria | Critical | High | Medium | Low | Total |
 |-----------|----------|------|--------|-----|-------|
 | **Bugs** | 0 | 0 | 2 | 0 | **2** |
-| **Features** | 0 | 0 | 0 | 1 | **1** |
-| **Technical Debt** | 0 | 0 | 1 | 2 | **3** |
-| **Migration** | 0 | 0 | 0 | 0 | **0** |
-| **TOTAL** | **0** | **0** | **2** | **3** | **5** |
+| **Features** | 0 | 0 | 0 | 0 | **0** |
+| **Technical Debt** | 0 | 0 | 0 | 2 | **2** |
+| **Documentation** | 0 | 0 | 0 | 0 | **0** ✅ |
+| **TOTAL** | **0** | **0** | **2** | **2** | **4** |
+
+**Completado hoje (2025-11-03 tarde):**
+- ✅ Documentation Updates (1.5h)
 
 ---
 
@@ -210,17 +213,24 @@ await ctx.scheduler.runAfter(0, api.quests.updatePveStreak, {
 
 ## 🟢 LOW PRIORITY (3 itens)
 
-### 7. Documentation Updates
-**Status**: ⏳ PENDING
-**Severity**: LOW
+### 7. Documentation Updates ✅
+**Status**: ✅ COMPLETED (2025-11-03)
+**Severity**: N/A
 
-**O que falta**:
-- [ ] Update README.md com Weekly Rewards info
-- [ ] Update ECONOMY-GUIDE.md com Weekly Rewards
-- [ ] Add API documentation for new economy endpoints
-- [ ] Document performance hooks usage in README
+**O que foi feito**:
+- [x] Update README.md com Weekly Rewards info
+- [x] Update README.md com Achievement System (64 achievements)
+- [x] Update README.md com Test Page (/test)
+- [x] Update README.md com i18n support
+- [x] Update README.md com recent updates section
+- [x] Update ECONOMY-GUIDE.md com Weekly Rewards
+- [x] Update ECONOMY-GUIDE.md com Achievement System completo
+- [x] Update ECONOMY-GUIDE.md com maximum earnings (weekly + achievements)
+- [x] Update hooks/README.md com useAchievements documentation
+- [ ] Add API documentation for new economy endpoints (future)
 
-**Estimativa**: 1-2 horas
+**Completion Date**: 2025-11-03
+**Time Spent**: ~1.5 horas
 
 ---
 
