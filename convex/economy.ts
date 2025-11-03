@@ -474,6 +474,16 @@ export const awardPvECoins = mutation({
     // Check and reset daily limits
     const dailyLimits = await checkAndResetDailyLimits(ctx, profile);
 
+    // 🎯 Track PvE streak (ALWAYS, even on loss to reset streak)
+    try {
+      await ctx.scheduler.runAfter(0, api.quests.updatePveStreak, {
+        address: address.toLowerCase(),
+        won: won,
+      });
+    } catch (error) {
+      console.error("❌ Failed to track PvE streak:", error);
+    }
+
     // Only award if won
     if (!won) {
       return { awarded: 0, reason: "Lost the battle" };
@@ -1271,6 +1281,16 @@ export const recordAttackResult = mutation({
           questId: "weekly_attack_wins",
           increment: 1,
         });
+      }
+
+      // Track defense wins if defender won (attacker lost)
+      if (!won) {
+        await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+          address: normalizedOpponentAddress,
+          questId: "weekly_defense_wins",
+          increment: 1,
+        });
+        console.log(`🛡️ Weekly quest tracked: Defense win for ${normalizedOpponentAddress}`);
       }
 
       console.log(`✅ Weekly quests tracked: Attack ${args.result} for ${normalizedPlayerAddress}`);

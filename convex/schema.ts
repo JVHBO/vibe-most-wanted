@@ -273,6 +273,7 @@ export default defineSchema({
     playerAddress: v.string(),
     weekStart: v.string(), // "2025-10-27" (last Sunday)
     quests: v.any(), // Object with quest progress { questId: { current, target, completed, claimed } }
+    pveStreakCurrent: v.optional(v.number()), // Current PvE win streak this week (resets on loss)
   })
     .index("by_player_week", ["playerAddress", "weekStart"]),
 
