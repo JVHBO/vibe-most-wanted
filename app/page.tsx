@@ -858,6 +858,12 @@ export default function TCGPage() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
 
+  // Missions States
+  const [missions, setMissions] = useState<any[]>([]);
+  const [isLoadingMissions, setIsLoadingMissions] = useState<boolean>(false);
+  const [isClaimingMission, setIsClaimingMission] = useState<string | null>(null);
+  const [isClaimingAll, setIsClaimingAll] = useState<boolean>(false);
+
   // Defense Deck States
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
   const [defenseDeckSaveStatus, setDefenseDeckSaveStatus] = useState<string>(''); // For retry feedback
@@ -2478,6 +2484,136 @@ export default function TCGPage() {
       setShowCreateProfile(true);
     }
   }, [address, userProfile, isLoadingProfile]);
+
+  // Load missions when address changes or when viewing missions tab
+  useEffect(() => {
+    if (address && currentView === 'missions') {
+      loadMissions();
+    }
+  }, [address, currentView]);
+
+  // Helper function to get mission info
+  const getMissionInfo = (missionType: string) => {
+    const missionData: Record<string, { icon: string; title: string; description: string }> = {
+      daily_login: {
+        icon: '📅',
+        title: 'Daily Login',
+        description: 'Login bonus for today',
+      },
+      first_pve_win: {
+        icon: '🎯',
+        title: 'First PvE Victory',
+        description: 'Win your first PvE battle today',
+      },
+      first_pvp_match: {
+        icon: '⚔️',
+        title: 'First PvP Match',
+        description: 'Complete your first PvP match today',
+      },
+      streak_3: {
+        icon: '🔥',
+        title: '3-Win Streak',
+        description: 'Win 3 matches in a row',
+      },
+      streak_5: {
+        icon: '🔥🔥',
+        title: '5-Win Streak',
+        description: 'Win 5 matches in a row',
+      },
+      streak_10: {
+        icon: '🔥🔥🔥',
+        title: '10-Win Streak',
+        description: 'Win 10 matches in a row',
+      },
+      welcome_gift: {
+        icon: '🎁',
+        title: 'Welcome Gift',
+        description: 'Welcome to Vibe Most Wanted!',
+      },
+    };
+
+    return missionData[missionType] || {
+      icon: '❓',
+      title: 'Unknown Mission',
+      description: missionType,
+    };
+  };
+
+  // Function to load missions
+  const loadMissions = async () => {
+    if (!address) return;
+
+    setIsLoadingMissions(true);
+    try {
+      const playerMissions = await convex.query(api.missions.getPlayerMissions, {
+        playerAddress: address,
+      });
+      setMissions(playerMissions || []);
+      devLog('📋 Loaded missions:', playerMissions);
+    } catch (error) {
+      devError('Error loading missions:', error);
+    } finally {
+      setIsLoadingMissions(false);
+    }
+  };
+
+  // Function to claim individual mission
+  const claimMission = async (missionId: string) => {
+    if (!address) return;
+
+    setIsClaimingMission(missionId);
+    try {
+      const result = await convex.mutation(api.missions.claimMission, {
+        playerAddress: address,
+        missionId: missionId as any,
+      });
+
+      if (soundEnabled) AudioManager.buttonSuccess();
+      devLog('✅ Mission claimed:', result);
+
+      // Reload missions and profile
+      await loadMissions();
+      const updatedProfile = await ConvexProfileService.getProfile(address);
+      setUserProfile(updatedProfile);
+    } catch (error: any) {
+      devError('Error claiming mission:', error);
+      if (soundEnabled) AudioManager.buttonError();
+      alert(error.message || 'Failed to claim mission');
+    } finally {
+      setIsClaimingMission(null);
+    }
+  };
+
+  // Function to claim all missions
+  const claimAllMissions = async () => {
+    if (!address) return;
+
+    setIsClaimingAll(true);
+    try {
+      const result = await convex.mutation(api.missions.claimAllMissions, {
+        playerAddress: address,
+      });
+
+      if (result.claimed > 0) {
+        if (soundEnabled) AudioManager.buttonSuccess();
+        devLog(`✅ Claimed ${result.claimed} missions (+${result.totalReward} coins)`);
+
+        // Reload missions and profile
+        await loadMissions();
+        const updatedProfile = await ConvexProfileService.getProfile(address);
+        setUserProfile(updatedProfile);
+      } else {
+        if (soundEnabled) AudioManager.buttonClick();
+        alert('No missions to claim!');
+      }
+    } catch (error: any) {
+      devError('Error claiming all missions:', error);
+      if (soundEnabled) AudioManager.buttonError();
+      alert(error.message || 'Failed to claim missions');
+    } finally {
+      setIsClaimingAll(false);
+    }
+  };
 
   // Auto scroll to play buttons when 5 cards are selected
   useEffect(() => {
@@ -6312,6 +6448,113 @@ export default function TCGPage() {
                     ℹ️ Rewards are automatically distributed every Sunday at 00:00 UTC based on <span className="font-bold">Total Power</span> ranking
                   </p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Missions View */}
+          {currentView === 'missions' && (
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-4 md:p-8">
+                <div className="text-center mb-6">
+                  <h1 className="text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-2">
+                    🎁 Daily Missions
+                  </h1>
+                  <p className="text-vintage-burnt-gold font-modern text-sm md:text-base">
+                    Complete missions and claim your rewards!
+                  </p>
+                </div>
+
+                {isLoadingMissions ? (
+                  <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-vintage-gold border-t-transparent"></div>
+                  </div>
+                ) : missions.length === 0 ? (
+                  <div className="text-center py-20">
+                    <p className="text-2xl mb-4">🎯</p>
+                    <p className="text-vintage-burnt-gold font-modern">
+                      No missions available yet. Play some matches to unlock rewards!
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-4 mb-6">
+                      {missions.map((mission) => {
+                        const missionInfo = getMissionInfo(mission.missionType);
+                        const isClaimed = mission.claimed;
+                        const isCompleted = mission.completed;
+
+                        return (
+                          <div
+                            key={mission._id}
+                            className={`bg-vintage-black/50 rounded-xl p-4 md:p-6 border-2 transition-all ${
+                              isClaimed
+                                ? 'border-vintage-gold/20 opacity-60'
+                                : isCompleted
+                                ? 'border-vintage-gold shadow-gold'
+                                : 'border-vintage-gold/30'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              {/* Mission Info */}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-2xl">{missionInfo.icon}</span>
+                                  <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold">
+                                    {missionInfo.title}
+                                  </h3>
+                                </div>
+                                <p className="text-sm md:text-base text-vintage-burnt-gold font-modern mb-3">
+                                  {missionInfo.description}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-vintage-gold font-bold text-lg">
+                                    +{mission.reward}
+                                  </span>
+                                  <span className="text-vintage-burnt-gold text-sm">$TESTVBMS</span>
+                                </div>
+                              </div>
+
+                              {/* Claim Button */}
+                              <div className="flex-shrink-0">
+                                {isClaimed ? (
+                                  <div className="px-4 py-2 bg-green-600/20 border-2 border-green-500 rounded-lg text-green-400 font-bold text-sm md:text-base whitespace-nowrap">
+                                    ✓ Claimed
+                                  </div>
+                                ) : isCompleted ? (
+                                  <button
+                                    onClick={() => claimMission(mission._id)}
+                                    disabled={isClaimingMission === mission._id}
+                                    className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm md:text-base shadow-gold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                  >
+                                    {isClaimingMission === mission._id ? 'Claiming...' : 'Claim'}
+                                  </button>
+                                ) : (
+                                  <div className="px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg text-vintage-burnt-gold text-sm md:text-base whitespace-nowrap">
+                                    Locked
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Claim All Button */}
+                    {missions.some((m) => m.completed && !m.claimed) && (
+                      <div className="border-t-2 border-vintage-gold/20 pt-6">
+                        <button
+                          onClick={claimAllMissions}
+                          disabled={isClaimingAll}
+                          className="w-full px-8 py-4 bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-gold-dark hover:to-vintage-gold text-vintage-black rounded-xl font-display font-bold text-lg md:text-xl shadow-gold-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isClaimingAll ? 'Claiming All...' : `🎁 Claim All Rewards (${missions.filter((m) => m.completed && !m.claimed).length})`}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           )}
