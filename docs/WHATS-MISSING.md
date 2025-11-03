@@ -10,10 +10,10 @@
 | Categoria | Critical | High | Medium | Low | Total |
 |-----------|----------|------|--------|-----|-------|
 | **Bugs** | 0 | 0 | 2 | 0 | **2** |
-| **Features** | 0 | 0 | 1 | 1 | **2** |
+| **Features** | 0 | 0 | 0 | 1 | **1** |
 | **Technical Debt** | 0 | 0 | 1 | 2 | **3** |
 | **Migration** | 0 | 0 | 0 | 0 | **0** |
-| **TOTAL** | **0** | **0** | **3** | **3** | **6** |
+| **TOTAL** | **0** | **0** | **2** | **3** | **5** |
 
 ---
 
@@ -27,6 +27,8 @@
 5. ✅ **Hardcoded Values** - Verificado que lib/config.ts já existia
 6. ✅ **Weekly Quest Types** - Verificado que todos os 4 quest types já estavam implementados (defense wins + PvE streak)
 7. ✅ **Phase 4 Migration** - Completada migração de app/page.tsx para hooks otimizados (3 UI displays + bug fix)
+8. ✅ **Attack System Freeze Fix** - Corrigido bug crítico de hooks em callbacks (2 locais)
+9. ✅ **Weekly Rewards UI** - Implementada UI completa com countdown, rankings e rewards preview
 
 ---
 
@@ -86,32 +88,42 @@ const dealerCardsPower = useTotalPower(dealerCards);
 
 ---
 
-## 🟡 MEDIUM PRIORITY (3 itens)
+## 🟡 MEDIUM PRIORITY (2 itens)
 
-### 2. Weekly Rewards UI
-**Status**: ⏳ PENDING
-**Severity**: MEDIUM (Backend done, UI missing)
+### 2. Weekly Rewards UI ✅
+**Status**: ✅ COMPLETED (2025-11-03)
+**Severity**: N/A
 
-**O que falta**:
-- [ ] Adicionar seção "Weekly Rewards" na home
-- [ ] Mostrar countdown até próxima distribuição
-- [ ] Exibir histórico de rewards recebidos
-- [ ] Notificar players quando receberem rewards
-- [ ] Mostrar top 10 da semana passada
+**O que foi implementado**:
+- ✅ Seção "Weekly Rewards Status" na Missions view
+- ✅ Countdown ao vivo até próxima distribuição (domingo 00:00 UTC)
+- ✅ Rank atual do player com tier visual (🥇🥈🥉⭐)
+- ✅ Próximo reward amount baseado no rank
+- ✅ TOP 10 leaderboard preview com live updates
+- ✅ Highlight do player atual na lista
+- ✅ Power levels de todos os TOP 10
+- ✅ Mensagem de motivação para players fora do TOP 10
 
-**Mockup**:
+**Implementação**:
 ```tsx
-<div className="weekly-rewards-section">
-  <h3>🏆 Weekly Rewards</h3>
-  <p>Next distribution in: {timeUntilSunday}</p>
-  <div className="current-standings">
-    <p>Your rank: #{userRank}</p>
-    <p>Current top 10: {top10Preview}</p>
-  </div>
+// Location: app/page.tsx lines 6426-6548
+<div className="bg-gradient-to-r from-blue-900/40...">
+  {/* Countdown timer */}
+  {/* Player's current rank & next reward */}
+  {/* TOP 10 live preview */}
 </div>
 ```
 
-**Estimativa**: 2-3 horas
+**Features:**
+- ⏰ Countdown dinâmico: calcula dias e horas até domingo
+- 📊 Rank detection: 1st/2nd/3rd/4-10th/>10
+- 💰 Reward tiers: 1000/750/500/300 coins
+- 🎨 Gradient styling com destaque azul/roxo
+- 📱 Design responsivo
+
+**Build**: ✅ 6.9s (+0.8 kB bundle)
+
+**Completion Date**: 2025-11-03
 
 ---
 
