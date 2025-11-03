@@ -2468,12 +2468,12 @@ export default function TCGPage() {
     }
   }, [address]);
 
-  // Load missions when address changes or when viewing missions tab
+  // Load missions when address changes
   useEffect(() => {
-    if (address && currentView === 'missions') {
+    if (address) {
       loadMissions();
     }
-  }, [address, currentView]);
+  }, [address]);
 
   // Helper function to get mission info
   const getMissionInfo = (missionType: string) => {
@@ -2569,6 +2569,18 @@ export default function TCGPage() {
       devLog('📋 Loaded missions:', completeMissionsList);
     } catch (error) {
       devError('Error loading missions:', error);
+
+      // Fallback: Always show locked missions even on error
+      const fallbackMissions = [
+        { _id: 'placeholder_daily_login', missionType: 'daily_login', completed: false, claimed: false, reward: 25, date: 'today' },
+        { _id: 'placeholder_first_pve_win', missionType: 'first_pve_win', completed: false, claimed: false, reward: 50, date: 'today' },
+        { _id: 'placeholder_first_pvp_match', missionType: 'first_pvp_match', completed: false, claimed: false, reward: 100, date: 'today' },
+        { _id: 'placeholder_streak_3', missionType: 'streak_3', completed: false, claimed: false, reward: 150, date: 'today' },
+        { _id: 'placeholder_streak_5', missionType: 'streak_5', completed: false, claimed: false, reward: 300, date: 'today' },
+        { _id: 'placeholder_streak_10', missionType: 'streak_10', completed: false, claimed: false, reward: 750, date: 'today' },
+        { _id: 'placeholder_welcome_gift', missionType: 'welcome_gift', completed: false, claimed: false, reward: 500, date: 'once' },
+      ];
+      setMissions(fallbackMissions);
     } finally {
       setIsLoadingMissions(false);
     }
