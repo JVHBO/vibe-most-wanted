@@ -101,23 +101,46 @@ export const createRoom = mutation({
     mode: v.optional(v.union(v.literal("ranked"), v.literal("casual"))),
   },
   handler: async (ctx, { hostAddress, hostUsername, mode = "ranked" }) => {
-    // Generate random 6-character code
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // 🛡️ CRITICAL FIX: Use crypto.randomUUID() instead of Math.random()
+    // Generate secure random 6-character code with uniqueness check
+    let code: string;
+    let attempts = 0;
+    const maxAttempts = 10;
 
-    const now = Date.now();
+    while (attempts < maxAttempts) {
+      // Use crypto.randomUUID() for cryptographically secure randomness
+      const uuid = crypto.randomUUID().replace(/-/g, ''); // Remove dashes
+      code = uuid.substring(0, 6).toUpperCase();
 
-    const roomId = await ctx.db.insert("rooms", {
-      roomId: code,
-      status: "waiting",
-      mode,
-      hostAddress: hostAddress.toLowerCase(),
-      hostUsername,
-      createdAt: now,
-    });
+      // Check if code already exists
+      const existing = await ctx.db
+        .query("rooms")
+        .filter((q) => q.eq(q.field("roomId"), code))
+        .first();
 
-    console.log(`✅ Room created in Convex: ${code} (${mode})`);
+      if (!existing) {
+        // Code is unique, proceed with room creation
+        const now = Date.now();
 
-    return code;
+        const roomId = await ctx.db.insert("rooms", {
+          roomId: code,
+          status: "waiting",
+          mode,
+          hostAddress: hostAddress.toLowerCase(),
+          hostUsername,
+          createdAt: now,
+        });
+
+        console.log(`✅ Room created in Convex: ${code} (${mode})`);
+
+        return code;
+      }
+
+      attempts++;
+    }
+
+    // If we exhausted all attempts, throw error
+    throw new Error("Failed to generate unique room code after 10 attempts");
   },
 });
 
@@ -374,8 +397,36 @@ export const findMatch = mutation({
     if (waitingPlayers.length > 0) {
       const opponent = waitingPlayers[0];
 
-      // Create room
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // 🛡️ CRITICAL FIX: Use crypto.randomUUID() instead of Math.random()
+      // Generate secure random 6-character code with uniqueness check
+      let code: string = "";
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      while (attempts < maxAttempts) {
+        // Use crypto.randomUUID() for cryptographically secure randomness
+        const uuid = crypto.randomUUID().replace(/-/g, ''); // Remove dashes
+        code = uuid.substring(0, 6).toUpperCase();
+
+        // Check if code already exists
+        const existing = await ctx.db
+          .query("rooms")
+          .filter((q) => q.eq(q.field("roomId"), code))
+          .first();
+
+        if (!existing) {
+          // Code is unique, proceed with room creation
+          break;
+        }
+
+        attempts++;
+      }
+
+      // If we exhausted all attempts, throw error
+      if (attempts >= maxAttempts) {
+        throw new Error("Failed to generate unique room code after 10 attempts");
+      }
+
       const now = Date.now();
 
       await ctx.db.insert("rooms", {
