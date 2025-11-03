@@ -247,7 +247,7 @@ export const getAchievementStats = query({
     const unclaimedRewards = achievements
       .filter((a) => a.completed && !a.claimedAt)
       .reduce((sum, a) => {
-        const def = ACHIEVEMENTS_MAP.get(a.achievementId);
+        const def = ALL_ACHIEVEMENTS.find((ach) => ach.id === a.achievementId);
         return sum + (def?.reward || 0);
       }, 0);
 
@@ -307,7 +307,7 @@ export const getUnclaimedAchievements = query({
     const unclaimed = achievements
       .filter((a) => a.completed && !a.claimedAt)
       .map((a) => {
-        const definition = ACHIEVEMENTS_MAP.get(a.achievementId);
+        const definition = ALL_ACHIEVEMENTS.find((ach) => ach.id === a.achievementId);
         return {
           ...a,
           ...definition,
