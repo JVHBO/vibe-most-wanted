@@ -336,6 +336,141 @@ if (won) {
 
 ---
 
+## Bug #15 - Attack System Freeze (Hooks in onClick Callbacks) 🐛⚠️
+
+**Date**: 2025-11-03
+**Fixed By**: Claude Code (Ultrathink Sprint)
+**Status**: ✅ FIXED & DEPLOYED
+**Impact**: CRITICAL (Attack system completely frozen/broken)
+
+### Problem
+
+**User Report**: "problemano attack do leaderboard esta congelando no meio do attack"
+
+Attack system would freeze when user tried to attack from leaderboard, making the game unplayable in attack mode.
+
+### Root Cause
+
+During Phase 4 migration (performance optimization), accidentally introduced React Hooks **inside onClick event handlers** (callbacks), violating React's Rules of Hooks.
+
+**Affected Lines:**
+- `app/page.tsx:4007-4008` - First attack confirm handler
+- `app/page.tsx:4337-4338` - Duplicate attack handler
+
+```typescript
+// ❌ WRONG - Hooks cannot be called inside callbacks!
+onClick={async () => {
+  // ... state updates ...
+  const playerTotal = useTotalPower(attackSelectedCards); // BUG!
+  const dealerTotal = useTotalPower(defenderCards);       // BUG!
+  // ... rest of logic ...
+}}
+```
+
+**Why This Caused Freezing:**
+1. React Hooks can ONLY be called at component top-level
+2. Calling hooks inside callbacks/event handlers violates React rules
+3. React enters invalid state when hooks are called conditionally
+4. UI freezes because React's reconciliation breaks
+
+### Solution
+
+**Replace hooks with direct calculations inside callbacks:**
+
+```typescript
+// ✅ CORRECT - Direct calculation for one-time use
+onClick={async () => {
+  // ... state updates ...
+  const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+  const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+  // ... rest of logic ...
+}}
+```
+
+**Why This Works:**
+- One-time calculations inside callbacks don't need memoization
+- `reduce()` is a plain JavaScript operation, not a React Hook
+- Only values used across re-renders benefit from memoization
+- Event handlers execute once per click, so no performance issue
+
+### Implementation
+
+**Files Changed:**
+- `app/page.tsx` - Lines 4007-4008, 4337-4338
+
+**Changes:**
+```typescript
+// BEFORE
+const playerTotal = useTotalPower(attackSelectedCards);
+const dealerTotal = useTotalPower(defenderCards);
+
+// AFTER
+const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+```
+
+### Testing
+
+**Build Result:**
+```bash
+✓ Compiled successfully in 7.3s
+✓ No TypeScript errors
+✓ Build size: 546 kB (unchanged)
+```
+
+**Verification:**
+- ✅ Attack system no longer freezes
+- ✅ All power calculations work correctly
+- ✅ Performance unchanged (one-time calculations)
+- ✅ Follows React Rules of Hooks
+
+### Lesson Learned
+
+**React Rules of Hooks - Critical:**
+
+✅ **CORRECT - Component Top-Level:**
+```typescript
+function Component() {
+  const power = useTotalPower(cards); // ✅ OK - top level
+
+  const handleClick = () => {
+    console.log(power); // ✅ OK - using the value
+  };
+}
+```
+
+❌ **WRONG - Inside Callbacks:**
+```typescript
+function Component() {
+  const handleClick = () => {
+    const power = useTotalPower(cards); // ❌ ERROR - inside callback!
+  };
+}
+```
+
+**When to Memoize:**
+- ✅ Values used across **multiple re-renders** (component top-level)
+- ✅ Expensive calculations that depend on props/state
+- ❌ One-time calculations inside event handlers
+- ❌ Values only used once per user action
+
+**Similar Bugs Fixed:**
+- `app/page.tsx:1570` - PvE battle (fixed in Phase 4)
+- `app/page.tsx:4007-4008` - Attack system (fixed now)
+- `app/page.tsx:4337-4338` - Attack system duplicate (fixed now)
+
+### Prevention
+
+**Code Review Checklist:**
+1. ✅ All hooks at component top-level
+2. ✅ No hooks inside if/else, loops, or callbacks
+3. ✅ Only memoize values used across renders
+4. ✅ Direct calculations OK for one-time use
+
+**Commit:** `0bd7168 - fix: CRITICAL - Remove hooks from attack onClick callbacks`
+
+---
+
 ## Bug #6 - 23 Legendary Cards With Placeholder Image URLs 🖼️
 
 **Date**: 2025-11-03
