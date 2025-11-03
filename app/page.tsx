@@ -17,39 +17,22 @@ import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
+import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
-const HAND_SIZE_CONST = 5;
-const JC_WALLET_ADDRESS = '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728';
-const ADMIN_WALLETS = [
-  '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52', // joaovitoribeiro (you)
-  '0xBb4c7d8B2E32c7C99d358Be999377c208cCE53c2', // Claude's wallet
-]; // Admin wallets get 50 attacks
-const MAX_ATTACKS_DEFAULT = 5; // Increased from 3 to 5
-const MAX_ATTACKS_ADMIN = 50; // Increased from 40 to 50
-
-// Helper function to get max attacks for a user
-const getMaxAttacks = (walletAddress: string | null | undefined): number => {
-  if (!walletAddress) return MAX_ATTACKS_DEFAULT;
-  const isAdmin = ADMIN_WALLETS.some(
-    admin => admin.toLowerCase() === walletAddress.toLowerCase()
-  );
-  return isAdmin ? MAX_ATTACKS_ADMIN : MAX_ATTACKS_DEFAULT;
-};
 
 // Development logging helpers - only log in development mode
-const isDev = process.env.NODE_ENV === 'development';
 const devLog = (...args: any[]) => {
-  if (isDev) console.log(...args);
+  if (IS_DEV) console.log(...args);
 };
 const devWarn = (...args: any[]) => {
-  if (isDev) console.warn(...args);
+  if (IS_DEV) console.warn(...args);
 };
 const devError = (...args: any[]) => {
-  if (isDev) console.error(...args);
+  if (IS_DEV) console.error(...args);
 };
 
 const imageUrlCache = new Map();
@@ -877,7 +860,7 @@ export default function TCGPage() {
   const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
   const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
   const [targetPlayer, setTargetPlayer] = useState<UserProfile | null>(null);
-  const [attacksRemaining, setAttacksRemaining] = useState<number>(MAX_ATTACKS_DEFAULT);
+  const [attacksRemaining, setAttacksRemaining] = useState<number>(getMaxAttacks(null));
   const [isAttacking, setIsAttacking] = useState<boolean>(false);
   const [isConfirmingCards, setIsConfirmingCards] = useState<boolean>(false);
 
@@ -1429,12 +1412,12 @@ export default function TCGPage() {
       if (isSelected) {
         if (soundEnabled) AudioManager.deselectCard();
         return prev.filter(c => c.tokenId !== card.tokenId);
-      } else if (prev.length < HAND_SIZE_CONST) {
+      } else if (prev.length < HAND_SIZE) {
         if (soundEnabled) AudioManager.selectCard();
         const newSelection = [...prev, card];
 
         // Auto-scroll to battle button on mobile when 5 cards selected
-        if (newSelection.length === HAND_SIZE_CONST) {
+        if (newSelection.length === HAND_SIZE) {
           setTimeout(() => {
             const battleButton = document.getElementById('battle-button');
             if (battleButton && window.innerWidth < 768) {
@@ -1456,7 +1439,7 @@ export default function TCGPage() {
 
   const selectStrongest = useCallback(() => {
     const sorted = [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
-    const strongest = sorted.slice(0, HAND_SIZE_CONST);
+    const strongest = sorted.slice(0, HAND_SIZE);
     setSelectedCards(strongest);
     if (soundEnabled) AudioManager.selectCard();
 
@@ -1472,7 +1455,7 @@ export default function TCGPage() {
   // Generate AI hand with strategic ordering based on difficulty
   const generateAIHand = useCallback((difficulty: 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad') => {
     const available = jcNfts;
-    if (available.length < HAND_SIZE_CONST) {
+    if (available.length < HAND_SIZE) {
       alert('AI deck not ready yet...');
       return [];
     }
@@ -1484,33 +1467,33 @@ export default function TCGPage() {
     switch (difficulty) {
       case 'gey':
         const weakest = sorted.filter(c => (c.power || 0) === 15);
-        pickedCards = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        pickedCards = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         break;
       case 'goofy':
         const weak = sorted.filter(c => {
           const p = c.power || 0;
           return p === 18 || p === 21;
         });
-        pickedCards = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        pickedCards = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         break;
       case 'gooner':
         const medium = sorted.filter(c => {
           const p = c.power || 0;
           return p === 60 || p === 72;
         });
-        pickedCards = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        pickedCards = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         break;
       case 'gangster':
         const cards150 = sorted.filter(c => (c.power || 0) === 150);
-        if (cards150.length >= HAND_SIZE_CONST) {
-          pickedCards = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        if (cards150.length >= HAND_SIZE) {
+          pickedCards = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         } else {
           const legendaries = sorted.filter(c => (c.rarity || '').toLowerCase().includes('legend'));
-          pickedCards = legendaries.slice(0, HAND_SIZE_CONST);
+          pickedCards = legendaries.slice(0, HAND_SIZE);
         }
         break;
       case 'gigachad':
-        pickedCards = sorted.slice(0, HAND_SIZE_CONST);
+        pickedCards = sorted.slice(0, HAND_SIZE);
         break;
     }
 
@@ -1550,7 +1533,7 @@ export default function TCGPage() {
   const playHand = useCallback((cardsToPlay?: any[], battleDifficulty?: typeof aiDifficulty) => {
         const cards = cardsToPlay || selectedCards;
     const difficulty = battleDifficulty || aiDifficulty; // Use parameter if provided, otherwise state
-    if (cards.length !== HAND_SIZE_CONST || isBattling) return;
+    if (cards.length !== HAND_SIZE || isBattling) return;
     setIsBattling(true);
     setShowBattleScreen(true);
     setBattlePhase('cards');
@@ -1581,7 +1564,7 @@ export default function TCGPage() {
       devLog('  Bottom 5 weakest:', sorted.slice(-5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
     }
 
-    if (available.length < HAND_SIZE_CONST) {
+    if (available.length < HAND_SIZE) {
       devLog('! Mecha George Floyd deck not loaded yet - retrying in 2 seconds...');
 
       // Auto-retry after 2 seconds if deck not loaded
@@ -1614,7 +1597,7 @@ export default function TCGPage() {
       case 'gey':
         // GEY (Level 1): Weakest (15 PWR only), total = 75 PWR
         const weakest = sorted.filter(c => (c.power || 0) === 15);
-        pickedDealer = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        pickedDealer = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         console.log('~ GEY: 15 PWR only');
         console.log('  Available:', weakest.length);
         console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
@@ -1627,8 +1610,8 @@ export default function TCGPage() {
           const p = c.power || 0;
           return p === 18 || p === 21;
         });
-        if (weak.length >= HAND_SIZE_CONST) {
-          pickedDealer = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        if (weak.length >= HAND_SIZE) {
+          pickedDealer = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         } else {
           // Fallback: expand to include nearby power values (15-38 range)
           console.log('  ! Not enough 18-21 PWR cards, using expanded range');
@@ -1636,7 +1619,7 @@ export default function TCGPage() {
             const p = c.power || 0;
             return p >= 18 && p <= 38;
           });
-          pickedDealer = weakExpanded.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+          pickedDealer = weakExpanded.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         }
         console.log('∿ GOOFY: 18-21 PWR');
         console.log('  Available:', weak.length);
@@ -1650,7 +1633,7 @@ export default function TCGPage() {
           const p = c.power || 0;
           return p === 60 || p === 72;
         });
-        pickedDealer = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
+        pickedDealer = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         console.log('† GOONER: 60-72 PWR');
         console.log('  Available:', medium.length);
         console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
@@ -1668,10 +1651,10 @@ export default function TCGPage() {
           console.log('  First 3 cards with 150 PWR:', cards150.slice(0, 3).map(c => `#${c.tokenId} (${c.power} PWR, ${c.rarity})`));
         }
 
-        if (cards150.length >= HAND_SIZE_CONST) {
+        if (cards150.length >= HAND_SIZE) {
           // Randomize to add variety
-          pickedDealer = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE_CONST);
-          console.log('  ✓ Picked', HAND_SIZE_CONST, 'random cards from 150 PWR pool');
+          pickedDealer = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
+          console.log('  ✓ Picked', HAND_SIZE, 'random cards from 150 PWR pool');
         } else {
           // Fallback: pick legendaries
           console.log('  ! Not enough 150 PWR cards, using legendaries fallback');
@@ -1680,7 +1663,7 @@ export default function TCGPage() {
             return r.includes('legend');
           });
           console.log('  Legendaries found:', legendaries.length);
-          pickedDealer = legendaries.slice(0, HAND_SIZE_CONST);
+          pickedDealer = legendaries.slice(0, HAND_SIZE);
         }
         console.log('‡ GANGSTER FINAL:', pickedDealer.length, 'cards picked');
         console.log('  Cards:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
@@ -1689,7 +1672,7 @@ export default function TCGPage() {
 
       case 'gigachad':
         // GIGACHAD (Level 5): TOP 5 STRONGEST (always same cards, total ~855)
-        pickedDealer = sorted.slice(0, HAND_SIZE_CONST);
+        pickedDealer = sorted.slice(0, HAND_SIZE);
         console.log('§ GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
         console.log('§ GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
@@ -1988,7 +1971,7 @@ export default function TCGPage() {
   }, [selectedCards, nfts, t, soundEnabled, isBattling, aiDifficulty, address, userProfile]);
 
   const saveDefenseDeck = useCallback(async () => {
-    if (!address || !userProfile || selectedCards.length !== HAND_SIZE_CONST) return;
+    if (!address || !userProfile || selectedCards.length !== HAND_SIZE) return;
 
     try {
       // ✓ Verify profile exists in Convex first
@@ -3690,7 +3673,7 @@ export default function TCGPage() {
               {t('selectYourCardsTitle')}
             </h2>
             <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
-              Choose {HAND_SIZE_CONST} cards to battle vs AI ({pveSelectedCards.length}/{HAND_SIZE_CONST} selected)
+              Choose {HAND_SIZE} cards to battle vs AI ({pveSelectedCards.length}/{HAND_SIZE} selected)
             </p>
 
             {/* Selected Cards Display */}
@@ -3707,7 +3690,7 @@ export default function TCGPage() {
                     <div className="absolute top-0 left-0 bg-vintage-neon-blue text-vintage-black text-xs px-1 rounded-br font-bold">{card.power}</div>
                   </div>
                 ))}
-                {Array(HAND_SIZE_CONST - pveSelectedCards.length).fill(0).map((_, i) => (
+                {Array(HAND_SIZE - pveSelectedCards.length).fill(0).map((_, i) => (
                   <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-neon-blue/40 flex items-center justify-center text-vintage-neon-blue/50 bg-vintage-felt-green/30">
                     <span className="text-2xl font-bold">+</span>
                   </div>
@@ -3732,7 +3715,7 @@ export default function TCGPage() {
                       if (isSelected) {
                         setPveSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
                         if (soundEnabled) AudioManager.deselectCard();
-                      } else if (pveSelectedCards.length < HAND_SIZE_CONST) {
+                      } else if (pveSelectedCards.length < HAND_SIZE) {
                         setPveSelectedCards(prev => [...prev, nft]);
                         if (soundEnabled) AudioManager.selectCard();
                       }
@@ -3780,19 +3763,19 @@ export default function TCGPage() {
             <div className="space-y-3">
               <button
                 onClick={() => {
-                  if (pveSelectedCards.length === HAND_SIZE_CONST && jcNfts.length >= HAND_SIZE_CONST) {
+                  if (pveSelectedCards.length === HAND_SIZE && jcNfts.length >= HAND_SIZE) {
                     if (soundEnabled) AudioManager.buttonClick();
                     setIsDifficultyModalOpen(true);
                   }
                 }}
-                disabled={pveSelectedCards.length !== HAND_SIZE_CONST || jcNfts.length < HAND_SIZE_CONST}
+                disabled={pveSelectedCards.length !== HAND_SIZE || jcNfts.length < HAND_SIZE}
                 className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
-                  pveSelectedCards.length === HAND_SIZE_CONST && jcNfts.length >= HAND_SIZE_CONST
+                  pveSelectedCards.length === HAND_SIZE && jcNfts.length >= HAND_SIZE
                     ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                     : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                 }`}
               >
-                {jcNfts.length < HAND_SIZE_CONST ? t('loadingDealerDeck') : `✦ ${t('chooseDifficulty')} (${pveSelectedCards.length}/${HAND_SIZE_CONST})`}
+                {jcNfts.length < HAND_SIZE ? t('loadingDealerDeck') : `✦ ${t('chooseDifficulty')} (${pveSelectedCards.length}/${HAND_SIZE})`}
               </button>
 
               <button
@@ -4126,7 +4109,7 @@ export default function TCGPage() {
               † ATTACK {targetPlayer.username.toUpperCase()}
             </h2>
             <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
-              Choose {HAND_SIZE_CONST} cards to attack with ({attackSelectedCards.length}/{HAND_SIZE_CONST} selected)
+              Choose {HAND_SIZE} cards to attack with ({attackSelectedCards.length}/{HAND_SIZE} selected)
             </p>
 
             {/* Selected Cards Display */}
@@ -4138,7 +4121,7 @@ export default function TCGPage() {
                     <div className="absolute top-0 left-0 bg-red-600 text-white text-xs px-1 rounded-br font-bold">{card.power}</div>
                   </div>
                 ))}
-                {Array(HAND_SIZE_CONST - attackSelectedCards.length).fill(0).map((_, i) => (
+                {Array(HAND_SIZE - attackSelectedCards.length).fill(0).map((_, i) => (
                   <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-red-600/40 flex items-center justify-center text-red-600/50 bg-vintage-felt-green/30">
                     <span className="text-xl font-bold">+</span>
                   </div>
@@ -4186,7 +4169,7 @@ export default function TCGPage() {
                       if (isSelected) {
                         setAttackSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
                         if (soundEnabled) AudioManager.deselectCard();
-                      } else if (attackSelectedCards.length < HAND_SIZE_CONST) {
+                      } else if (attackSelectedCards.length < HAND_SIZE) {
                         setAttackSelectedCards(prev => [...prev, nft]);
                         if (soundEnabled) AudioManager.selectCard();
                       }
@@ -4232,7 +4215,7 @@ export default function TCGPage() {
             <div className="space-y-3">
               <button
                 onClick={async () => {
-                  if (attackSelectedCards.length !== HAND_SIZE_CONST || !targetPlayer || isAttacking) return;
+                  if (attackSelectedCards.length !== HAND_SIZE || !targetPlayer || isAttacking) return;
 
                   // ✅ NOVO: Mostrar preview de ganhos/perdas antes de atacar
                   if (address && targetPlayer.address) {
@@ -4417,9 +4400,9 @@ export default function TCGPage() {
                     }, 2000);
                   }, 4500);
                 }}
-                disabled={attackSelectedCards.length !== HAND_SIZE_CONST || isAttacking}
+                disabled={attackSelectedCards.length !== HAND_SIZE || isAttacking}
                 className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
-                  attackSelectedCards.length === HAND_SIZE_CONST && !isAttacking
+                  attackSelectedCards.length === HAND_SIZE && !isAttacking
                     ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/50 hover:scale-105'
                     : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                 }`}
@@ -4428,7 +4411,7 @@ export default function TCGPage() {
                   '... Attacking'
                 ) : (
                   <div className="flex items-center justify-between">
-                    <span>† Attack! ({attackSelectedCards.length}/{HAND_SIZE_CONST})</span>
+                    <span>† Attack! ({attackSelectedCards.length}/{HAND_SIZE})</span>
                     <span className="text-sm font-modern bg-green-500/30 px-2 py-1 rounded ml-2">FREE</span>
                   </div>
                 )}
@@ -5771,7 +5754,7 @@ export default function TCGPage() {
                     {t('yourHand')}
                   </h2>
                   <div className="flex gap-2">
-                    {nfts.length >= HAND_SIZE_CONST && selectedCards.length === 0 && (
+                    {nfts.length >= HAND_SIZE && selectedCards.length === 0 && (
                       <button onClick={selectStrongest} className="px-3 py-1 bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-gold/30 transition font-modern font-semibold">
                         {t('selectStrongest')}
                       </button>
@@ -5793,7 +5776,7 @@ export default function TCGPage() {
                         <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
                       </FoilCardEffect>
                     ))}
-                    {[...Array(HAND_SIZE_CONST - selectedCards.length)].map((_, i) => (
+                    {[...Array(HAND_SIZE - selectedCards.length)].map((_, i) => (
                       <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
                         <span className="text-2xl font-bold">+</span>
                       </div>
@@ -5807,18 +5790,18 @@ export default function TCGPage() {
                     <button
                       id="defense-deck-button"
                       onClick={saveDefenseDeck}
-                      disabled={selectedCards.length !== HAND_SIZE_CONST || !userProfile}
+                      disabled={selectedCards.length !== HAND_SIZE || !userProfile}
                       className={`w-full px-6 py-4 rounded-xl shadow-lg text-lg font-display font-bold transition-all uppercase tracking-wide ${
-                        selectedCards.length === HAND_SIZE_CONST && userProfile
+                        selectedCards.length === HAND_SIZE && userProfile
                           ? 'text-vintage-black hover:shadow-gold-lg'
                           : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                       }`}
-                      style={selectedCards.length === HAND_SIZE_CONST && userProfile ? {
+                      style={selectedCards.length === HAND_SIZE && userProfile ? {
                         background: 'linear-gradient(145deg, #FFD700, #C9A227)',
                         boxShadow: '0 0 20px rgba(255, 215, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)'
                       } : {}}
                     >
-                      Save Defense Deck ({selectedCards.length}/{HAND_SIZE_CONST})
+                      Save Defense Deck ({selectedCards.length}/{HAND_SIZE})
                     </button>
                     {showDefenseDeckSaved && (
                       <div className="mt-2 text-center text-green-400 font-modern font-semibold animate-pulse">
@@ -5839,7 +5822,7 @@ export default function TCGPage() {
                   <button
                     onClick={() => {
                       // Check if defense deck is set
-                      if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE_CONST) {
+                      if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE) {
                         alert('You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".');
                         if (soundEnabled) AudioManager.buttonError();
                         return;
@@ -5864,7 +5847,7 @@ export default function TCGPage() {
                   <button
                     onClick={() => {
                       // Check if defense deck is set
-                      if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE_CONST) {
+                      if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE) {
                         alert('You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".');
                         if (soundEnabled) AudioManager.buttonError();
                         return;
