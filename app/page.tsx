@@ -5105,7 +5105,7 @@ export default function TCGPage() {
 
       {showTutorial && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4" onClick={() => setShowTutorial(false)}>
-          <div className="bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-3 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)] max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className={`bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-3 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)] ${isInFarcaster ? 'max-h-[calc(100vh-160px)]' : 'max-h-[95vh]'} flex flex-col`} onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-3 md:mb-6 flex-shrink-0">
               <div>
                 <h2 className="text-xl md:text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
@@ -5329,13 +5329,15 @@ export default function TCGPage() {
       )}
 
       <header className={`flex flex-col items-center gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6 bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isInFarcaster ? 'mt-[70px]' : ''}`}>
-        <div className="text-center relative">
-          <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
-          <h1 className="relative text-3xl md:text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-1 md:mb-2" style={{textShadow: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'}}>
-            VIBE MOST WANTED
-          </h1>
-          <p className="relative text-xs md:text-sm text-vintage-burnt-gold font-modern tracking-[0.2em] md:tracking-[0.3em] uppercase">{t('cardBattle')}</p>
-        </div>
+        {!isInFarcaster && (
+          <div className="text-center relative">
+            <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
+            <h1 className="relative text-3xl md:text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-1 md:mb-2" style={{textShadow: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'}}>
+              VIBE MOST WANTED
+            </h1>
+            <p className="relative text-xs md:text-sm text-vintage-burnt-gold font-modern tracking-[0.2em] md:tracking-[0.3em] uppercase">{t('cardBattle')}</p>
+          </div>
+        )}
 
         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto">
           <a
@@ -5582,39 +5584,69 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('game');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-4 py-3' : 'px-2 md:px-6 py-2 md:py-3'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-base' : 'text-xs md:text-base'} ${
+                className={`flex-1 ${isInFarcaster ? 'px-4 py-2 flex flex-col items-center gap-1' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm' : 'text-xs md:text-base'} ${
                   currentView === 'game'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
-                <span className={isInFarcaster ? 'text-2xl' : 'text-base md:text-lg'}>♠</span> {isInFarcaster ? t('title') : <><span className="hidden sm:inline">{t('title')}</span></>}
+                {isInFarcaster ? (
+                  <>
+                    <span className="text-xs">{t('title')}</span>
+                    <span className="text-2xl">♠</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-base md:text-lg">♠</span>
+                    <span className="hidden sm:inline">{t('title')}</span>
+                  </>
+                )}
               </button>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('missions');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-4 py-3' : 'px-2 md:px-6 py-2 md:py-3'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-base' : 'text-xs md:text-base'} ${
+                className={`flex-1 ${isInFarcaster ? 'px-4 py-2 flex flex-col items-center gap-1' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm' : 'text-xs md:text-base'} ${
                   currentView === 'missions'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
-                <span className={isInFarcaster ? 'text-2xl' : 'text-base md:text-lg'}>◈</span> {isInFarcaster ? t('missions') : <><span className="hidden sm:inline">{t('missions')}</span></>}
+                {isInFarcaster ? (
+                  <>
+                    <span className="text-xs">{t('missions')}</span>
+                    <span className="text-2xl">◈</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-base md:text-lg">◈</span>
+                    <span className="hidden sm:inline">{t('missions')}</span>
+                  </>
+                )}
               </button>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('leaderboard');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-4 py-3' : 'px-2 md:px-6 py-2 md:py-3'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-base' : 'text-xs md:text-base'} ${
+                className={`flex-1 ${isInFarcaster ? 'px-4 py-2 flex flex-col items-center gap-1' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm' : 'text-xs md:text-base'} ${
                   currentView === 'leaderboard'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
-                <span className={isInFarcaster ? 'text-2xl' : 'text-base md:text-lg'}>♔</span> {isInFarcaster ? t('leaderboard') : <><span className="hidden sm:inline">{t('leaderboard')}</span></>}
+                {isInFarcaster ? (
+                  <>
+                    <span className="text-xs">{t('leaderboard')}</span>
+                    <span className="text-2xl">♔</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-base md:text-lg">♔</span>
+                    <span className="hidden sm:inline">{t('leaderboard')}</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
