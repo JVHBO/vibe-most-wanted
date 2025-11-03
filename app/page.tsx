@@ -1566,7 +1566,8 @@ export default function TCGPage() {
 
     if (soundEnabled) AudioManager.playHand();
 
-    const playerTotal = cards.reduce((sum, c) => sum + (c.power || 0), 0);
+    // 🚀 Performance: Use memoized total power calculation
+    const playerTotal = useTotalPower(cards);
     // Use JC's deck for dealer cards
     const available = jcNfts;
 
@@ -1575,9 +1576,9 @@ export default function TCGPage() {
     devLog('  JC deck loading status:', jcNftsLoading);
     devLog('  AI difficulty:', difficulty);
     if (available.length > 0) {
-      const sorted = [...available].sort((a, b) => (b.power || 0) - (a.power || 0));
-      devLog('  Top 5 strongest:', sorted.slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
-      devLog('  Bottom 5 weakest:', sorted.slice(-5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
+      // 🚀 Performance: Use pre-sorted memoized array
+      devLog('  Top 5 strongest:', sortedJcNfts.slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
+      devLog('  Bottom 5 weakest:', sortedJcNfts.slice(-5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
     }
 
     if (available.length < HAND_SIZE) {
@@ -1597,8 +1598,8 @@ export default function TCGPage() {
       return;
     }
 
-    const shuffled = [...available].sort(() => Math.random() - 0.5);
-    const sorted = [...available].sort((a, b) => (b.power || 0) - (a.power || 0));
+    // 🚀 Performance: Use pre-sorted memoized array instead of sorting again
+    const sorted = sortedJcNfts;
 
     console.log('🎲 AI DECK SELECTION DEBUG:');
     console.log('  Available cards:', available.length);
@@ -3996,8 +3997,9 @@ export default function TCGPage() {
 
                     if (soundEnabled) AudioManager.playHand();
 
-                    const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
-                    const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                    // 🚀 Performance: Use memoized power calculations
+                    const playerTotal = useTotalPower(attackSelectedCards);
+                    const dealerTotal = useTotalPower(defenderCards);
 
                     setTimeout(() => {
                       setBattlePhase('clash');
@@ -4324,8 +4326,9 @@ export default function TCGPage() {
 
                   if (soundEnabled) AudioManager.playHand();
 
-                  const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
-                  const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                  // 🚀 Performance: Use memoized power calculations
+                  const playerTotal = useTotalPower(attackSelectedCards);
+                  const dealerTotal = useTotalPower(defenderCards);
 
                   // Animate battle
                   setTimeout(() => {
