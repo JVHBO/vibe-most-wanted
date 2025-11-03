@@ -2,7 +2,152 @@
 
 **Propósito**: Base de conhecimento consolidada com soluções técnicas, patterns, aprendizados de automação e troubleshooting para evitar resolver os mesmos problemas múltiplas vezes.
 
-**Última atualização**: 2025-11-02
+**Última atualização**: 2025-11-03
+
+---
+
+## Feature #1 - Weekly Rewards System (Automated Leaderboard Rewards) 🏆
+
+**Date**: 2025-11-03
+**Implemented By**: Claude Code (Ultrathink Sprint)
+**Status**: ✅ COMPLETED & DEPLOYED
+**Impact**: HIGH (4,350 coins/week distributed to top players)
+
+### Implementation
+
+**Objective**: Automatically distribute weekly rewards to top 10 leaderboard players every Sunday at midnight UTC.
+
+### Components Created
+
+#### 1. Cron Job Configuration (`convex/crons.ts`)
+
+Created new file with scheduled task:
+
+```typescript
+import { cronJobs } from "convex/server";
+import { internal } from "./_generated/api";
+
+const crons = cronJobs();
+
+crons.weekly(
+  "distribute weekly rewards",
+  { dayOfWeek: "sunday", hourUTC: 0, minuteUTC: 0 },
+  internal.quests.distributeWeeklyRewards
+);
+
+export default crons;
+```
+
+**Schedule**: Every Sunday at 00:00 UTC
+**Function**: `internal.quests.distributeWeeklyRewards`
+
+#### 2. Security Enhancement (`convex/quests.ts` line 735)
+
+Converted `distributeWeeklyRewards` from public `mutation` to `internalMutation`:
+
+```typescript
+// BEFORE
+export const distributeWeeklyRewards = mutation({
+
+// AFTER
+export const distributeWeeklyRewards = internalMutation({
+  // 🛡️ Only callable from scheduled tasks, not from client
+```
+
+**Why**: Prevents client-side abuse - only cron jobs can trigger distribution.
+
+### Reward Structure
+
+| Rank | Reward | Players |
+|------|--------|---------|
+| 🥇 #1 | 1000 coins | 1 player |
+| 🥈 #2 | 750 coins | 1 player |
+| 🥉 #3 | 500 coins | 1 player |
+| 🏅 #4-10 | 300 coins each | 7 players |
+| **Total** | **4,350 coins/week** | **10 players** |
+
+**Note**: Originally proposed top20/top50 rewards, but final implementation is TOP 10 ONLY to focus rewards on most active players.
+
+### Test Results
+
+**Manual Test Run (2025-11-03)**:
+
+```bash
+npx convex run quests:distributeWeeklyRewards
+```
+
+**Output**:
+```json
+{
+  "distributed": 10,
+  "rewards": [
+    { "rank": 1, "username": "joaovitorhbo", "reward": 1000 },
+    { "rank": 2, "username": "account_test", "reward": 750 },
+    { "rank": 3, "username": "basednukem", "reward": 500 },
+    { "rank": 4, "username": "shiro", "reward": 300 },
+    { "rank": 5, "username": "claude", "reward": 300 },
+    { "rank": 6, "username": "jayabs", "reward": 300 },
+    { "rank": 7, "username": "sweet", "reward": 300 },
+    { "rank": 8, "username": "vipul", "reward": 300 },
+    { "rank": 9, "username": "0xstk", "reward": 300 },
+    { "rank": 10, "username": "ted binion", "reward": 300 }
+  ],
+  "timestamp": 1762194187305
+}
+```
+
+✅ All 10 players received correct rewards
+✅ Coins added to player balances
+✅ `lifetimeEarned` updated correctly
+
+### Deployment
+
+- ✅ **Files Created**: `convex/crons.ts`
+- ✅ **Files Modified**: `convex/quests.ts` (line 735: mutation → internalMutation)
+- ✅ **Compilation**: Passed
+- ✅ **Deploy**: Production (scintillating-crane-430.convex.cloud)
+- ✅ **Manual Test**: 4,350 coins distributed successfully
+
+### Monitoring
+
+**How to check if cron is working**:
+
+1. **Check Convex Dashboard**: https://dashboard.convex.dev → Scheduled Functions
+2. **Manual trigger**: `npx convex run quests:distributeWeeklyRewards`
+3. **Check logs**: Sunday 00:00 UTC - look for `"🏅 Starting weekly rewards distribution"`
+
+**Expected behavior**:
+- Runs every Sunday at midnight UTC
+- Distributes to current top 10 players
+- Awards 4,350 total coins
+- Logs each player's reward
+
+### Future Enhancements (Optional)
+
+**UI Components** (not implemented yet):
+- [ ] Weekly rewards history page
+- [ ] "Next rewards in X days" countdown
+- [ ] Weekly leaderboard snapshot (who won last week)
+- [ ] Notification when rewards are distributed
+
+**Backend Enhancements** (optional):
+- [ ] Store weekly snapshots of leaderboard
+- [ ] Track weekly reward history per player
+- [ ] Add notifications when rewards are distributed
+
+### Related Documentation
+
+- `docs/PENDING-TASKS.md` - Task #3 (Weekly Rewards) - NOW COMPLETED
+- `docs/ECONOMY-GUIDE.md` - Should be updated with weekly rewards info
+- `convex/quests.ts` lines 500-506 - Reward constants
+- `convex/quests.ts` lines 730-793 - Distribution logic
+
+### Lessons Learned
+
+1. **Always use `internalMutation` for cron jobs** - Prevents client-side abuse
+2. **Test manually before deploying** - Verified distribution works correctly
+3. **Document reward structure** - Clear table makes it easy to understand
+4. **Keep implementation simple** - TOP 10 is better than complex tiered system
 
 ---
 

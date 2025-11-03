@@ -730,8 +730,9 @@ export const claimWeeklyReward = mutation({
 /**
  * 🏅 Distribute weekly leaderboard rewards (TOP 10 ONLY!)
  * Called by cron job every Sunday at 00:00 UTC
+ * 🛡️ internalMutation: Only callable from scheduled tasks, not from client
  */
-export const distributeWeeklyRewards = mutation({
+export const distributeWeeklyRewards = internalMutation({
   args: {},
   handler: async (ctx) => {
     console.log("🏅 Starting weekly rewards distribution (TOP 10 ONLY)...");
