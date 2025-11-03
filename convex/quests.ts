@@ -587,6 +587,76 @@ export const updateWeeklyProgress = mutation({
 });
 
 /**
+ * Update PvE streak progress (special handling for consecutive wins)
+ */
+export const updatePveStreak = mutation({
+  args: {
+    address: v.string(),
+    won: v.boolean(),
+  },
+  handler: async (ctx, { address, won }) => {
+    const normalizedAddress = address.toLowerCase();
+    const lastSunday = getLastSunday();
+
+    let progress = await ctx.db
+      .query("weeklyProgress")
+      .withIndex("by_player_week", (q) =>
+        q.eq("playerAddress", normalizedAddress).eq("weekStart", lastSunday)
+      )
+      .first();
+
+    // Initialize if not exists
+    if (!progress) {
+      const progressId = await ctx.db.insert("weeklyProgress", {
+        playerAddress: normalizedAddress,
+        weekStart: lastSunday,
+        quests: initializeWeeklyQuests(),
+        pveStreakCurrent: 0,
+      });
+      progress = await ctx.db.get(progressId);
+      if (!progress) throw new Error("Failed to create weekly progress");
+    }
+
+    const quests = { ...progress.quests };
+    const questId = "weekly_pve_streak";
+
+    // Initialize pveStreakCurrent if not exists
+    let currentStreak = progress.pveStreakCurrent || 0;
+
+    if (won) {
+      // Increment streak
+      currentStreak += 1;
+
+      // Update quest with MAX streak achieved
+      if (quests[questId]) {
+        quests[questId].current = Math.max(
+          quests[questId].current || 0,
+          currentStreak
+        );
+        quests[questId].completed = quests[questId].current >= quests[questId].target;
+      }
+    } else {
+      // Reset streak on loss
+      currentStreak = 0;
+    }
+
+    // Update progress
+    await ctx.db.patch(progress._id, {
+      quests,
+      pveStreakCurrent: currentStreak,
+    });
+
+    console.log(`🔥 PvE Streak ${won ? 'continued' : 'reset'}: ${currentStreak} (max: ${quests[questId]?.current || 0})`);
+
+    return {
+      success: true,
+      currentStreak,
+      maxStreak: quests[questId]?.current || 0,
+    };
+  },
+});
+
+/**
  * Claim weekly quest reward
  */
 export const claimWeeklyReward = mutation({
