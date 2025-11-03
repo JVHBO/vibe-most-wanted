@@ -276,6 +276,28 @@ export default defineSchema({
   })
     .index("by_player_week", ["playerAddress", "weekStart"]),
 
+  // Personal Missions (daily bonuses that need to be claimed)
+  personalMissions: defineTable({
+    playerAddress: v.string(),
+    date: v.string(), // "2025-11-01" for daily missions, "once" for one-time missions
+    missionType: v.union(
+      v.literal("daily_login"),
+      v.literal("first_pve_win"),
+      v.literal("first_pvp_match"),
+      v.literal("welcome_gift"),
+      v.literal("streak_3"),
+      v.literal("streak_5"),
+      v.literal("streak_10")
+    ),
+    completed: v.boolean(), // Mission requirement completed
+    claimed: v.boolean(), // Reward claimed by player
+    reward: v.number(), // Coins to claim
+    completedAt: v.optional(v.number()),
+    claimedAt: v.optional(v.number()),
+  })
+    .index("by_player_date", ["playerAddress", "date"])
+    .index("by_player_type", ["playerAddress", "missionType"]),
+
   // Security: Nonces for replay attack prevention
   nonces: defineTable({
     address: v.string(), // Wallet address
