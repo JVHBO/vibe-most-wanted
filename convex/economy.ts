@@ -10,7 +10,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 
 // Constants
@@ -975,10 +975,12 @@ export const payEntryFee = mutation({
 });
 
 /**
- * Add coins to a player (admin/system use)
+ * Add coins to a player
+ * 🔒 INTERNAL ONLY - Cannot be called from client
  * Used for bonuses, compensation, and welcome gifts
+ * Only callable from internal mutations, scheduled tasks, or admin operations
  */
-export const addCoins = mutation({
+export const addCoins = internalMutation({
   args: {
     address: v.string(),
     amount: v.number(),
