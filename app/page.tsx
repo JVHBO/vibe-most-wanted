@@ -19,6 +19,8 @@ import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
 import { ProgressBar } from "@/components/ProgressBar";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
+// 🚀 Performance-optimized hooks
+import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -789,6 +791,16 @@ export default function TCGPage() {
   // Convex client for imperative queries
   const convex = useConvex();
 
+  // 🚀 Performance: Memoized NFT calculations (only recomputes when nfts change)
+  const totalNftPower = useTotalPower(nfts);
+  const openedCardsCount = useMemo(() => nfts.filter(nft => !isUnrevealed(nft)).length, [nfts]);
+  const unopenedCardsCount = useMemo(() => nfts.filter(nft => isUnrevealed(nft)).length, [nfts]);
+  const nftTokenIds = useMemo(() => nfts.map(nft => nft.tokenId), [nfts]);
+
+  // 🚀 Performance: Memoized sorted NFTs (for auto-select and AI)
+  const sortedNfts = useSortedByPower(nfts);
+  const strongestNfts = useStrongestCards(nfts, HAND_SIZE);
+
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
   const awardPvPCoins = useMutation(api.economy.awardPvPCoins);
@@ -1439,9 +1451,8 @@ export default function TCGPage() {
   }, [soundEnabled]);
 
   const selectStrongest = useCallback(() => {
-    const sorted = [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
-    const strongest = sorted.slice(0, HAND_SIZE);
-    setSelectedCards(strongest);
+    // 🚀 Performance: Using pre-sorted memoized NFTs
+    setSelectedCards(strongestNfts);
     if (soundEnabled) AudioManager.selectCard();
 
     // Auto-scroll to battle button on mobile
@@ -1451,7 +1462,7 @@ export default function TCGPage() {
         battleButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 300);
-  }, [nfts, soundEnabled]);
+  }, [strongestNfts, soundEnabled]);
 
   // Generate AI hand with strategic ordering based on difficulty
   const generateAIHand = useCallback((difficulty: 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad') => {
@@ -2089,18 +2100,19 @@ export default function TCGPage() {
     [selectedCards]
   );
 
-  const sortedNfts = useMemo(() => {
+  // 🚀 Performance: Use pre-sorted memoized NFTs when sortByPower is true
+  const sortedNftsForDisplay = useMemo(() => {
     if (!sortByPower) return nfts;
-    return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
-  }, [nfts, sortByPower]);
+    return sortedNfts; // Already memoized above
+  }, [nfts, sortByPower, sortedNfts]);
 
-  const totalPages = Math.ceil(sortedNfts.length / CARDS_PER_PAGE);
+  const totalPages = Math.ceil(sortedNftsForDisplay.length / CARDS_PER_PAGE);
 
   const displayNfts = useMemo(() => {
     const start = (currentPage - 1) * CARDS_PER_PAGE;
     const end = start + CARDS_PER_PAGE;
-    return sortedNfts.slice(start, end);
-  }, [sortedNfts, currentPage, CARDS_PER_PAGE]);
+    return sortedNftsForDisplay.slice(start, end);
+  }, [sortedNftsForDisplay, currentPage, CARDS_PER_PAGE]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -2671,15 +2683,11 @@ export default function TCGPage() {
     if (address && userProfile && nfts.length > 0) {
       updateStatsInProgress.current = true;
 
-      const totalPower = nfts.reduce((sum, nft) => sum + (nft.power || 0), 0);
-      const openedCards = nfts.filter(nft => !isUnrevealed(nft)).length;
-      const unopenedCards = nfts.filter(nft => isUnrevealed(nft)).length;
-      const tokenIds = nfts.map(nft => nft.tokenId); // ✅ Extract tokenIds for defense deck validation
-
-      devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards, totalPower, tokenIds: tokenIds.length });
+      // 🚀 Performance: Using pre-computed memoized values
+      devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards: openedCardsCount, totalPower: totalNftPower, tokenIds: nftTokenIds.length });
 
       // Update stats and reload profile to show updated values
-      ConvexProfileService.updateStats(address, nfts.length, openedCards, unopenedCards, totalPower, tokenIds)
+      ConvexProfileService.updateStats(address, nfts.length, openedCardsCount, unopenedCardsCount, totalNftPower, nftTokenIds)
         .then(() => {
           // Reload profile to get updated stats
           return ConvexProfileService.getProfile(address);
