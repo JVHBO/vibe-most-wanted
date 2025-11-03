@@ -9,11 +9,6 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { ALL_ACHIEVEMENTS, getAchievementById, type AchievementDefinition } from "./achievementDefinitions";
 
-// Create a Map for fast lookup (convert array to Map for O(1) lookup)
-const ACHIEVEMENTS_MAP = new Map<string, AchievementDefinition>(
-  ALL_ACHIEVEMENTS.map((a) => [a.id, a])
-);
-
 /**
  * 🔍 GET PLAYER ACHIEVEMENTS
  * Returns all achievements for a player with progress
@@ -168,8 +163,8 @@ export const claimAchievementReward = mutation({
     const { playerAddress, achievementId } = args;
     const normalizedAddress = playerAddress.toLowerCase();
 
-    // Get achievement definition from Map
-    const definition = ACHIEVEMENTS_MAP.get(achievementId);
+    // Get achievement definition (same pattern as missions)
+    const definition = ALL_ACHIEVEMENTS.find((a) => a.id === achievementId);
     if (!definition) {
       throw new Error(`Achievement ${achievementId} not found in definitions`);
     }
