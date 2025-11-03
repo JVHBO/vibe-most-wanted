@@ -209,14 +209,24 @@ export const claimAchievementReward = mutation({
 
     // Get player profile
     console.log(`🎯 [CLAIM] Querying profile for ${normalizedAddress}...`);
-    const profile = await ctx.db
+    let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
-    console.log(`🎯 [CLAIM] profile found: ${!!profile}`);
+    console.log(`🎯 [CLAIM] profile found with lowercase: ${!!profile}`);
+
+    // Fallback: try original address if lowercase not found (for old profiles)
+    if (!profile && playerAddress !== normalizedAddress) {
+      console.log(`🎯 [CLAIM] Trying original address: ${playerAddress}...`);
+      profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", playerAddress))
+        .first();
+      console.log(`🎯 [CLAIM] profile found with original: ${!!profile}`);
+    }
 
     if (!profile) {
-      console.error(`❌ [CLAIM] Profile not found for ${normalizedAddress}`);
+      console.error(`❌ [CLAIM] Profile not found for ${normalizedAddress} or ${playerAddress}`);
       throw new Error("Profile not found");
     }
 
