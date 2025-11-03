@@ -6423,6 +6423,130 @@ export default function TCGPage() {
                 )}
               </div>
 
+              {/* Weekly Rewards Status - Player's Current Standing */}
+              <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 backdrop-blur-lg rounded-2xl border-2 border-blue-500/50 p-6 shadow-[0_0_30px_rgba(59,130,246,0.3)] mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">⏰</span>
+                    <div>
+                      <h3 className="text-xl font-display font-bold text-blue-300">NEXT DISTRIBUTION</h3>
+                      <p className="text-sm text-blue-400 font-modern">Sunday 00:00 UTC</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-display font-bold text-blue-300" id="weekly-countdown">
+                      {(() => {
+                        const now = new Date();
+                        const dayOfWeek = now.getUTCDay();
+                        const daysUntilSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+                        const nextSunday = new Date(now);
+                        nextSunday.setUTCDate(now.getUTCDate() + daysUntilSunday);
+                        nextSunday.setUTCHours(0, 0, 0, 0);
+
+                        const diff = nextSunday.getTime() - now.getTime();
+                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+                        return `${days}d ${hours}h`;
+                      })()}
+                    </p>
+                    <p className="text-xs text-blue-400">remaining</p>
+                  </div>
+                </div>
+
+                {/* Current Rank & Reward */}
+                {userProfile && leaderboard.length > 0 && (() => {
+                  const playerRank = leaderboard.findIndex(p => p.address === userProfile.address) + 1;
+                  let nextReward = 0;
+                  let rewardTier = '';
+
+                  if (playerRank === 1) {
+                    nextReward = 1000;
+                    rewardTier = '🥇 1st Place';
+                  } else if (playerRank === 2) {
+                    nextReward = 750;
+                    rewardTier = '🥈 2nd Place';
+                  } else if (playerRank === 3) {
+                    nextReward = 500;
+                    rewardTier = '🥉 3rd Place';
+                  } else if (playerRank >= 4 && playerRank <= 10) {
+                    nextReward = 300;
+                    rewardTier = `⭐ ${playerRank}th Place`;
+                  } else if (playerRank > 10) {
+                    rewardTier = `📊 Rank #${playerRank}`;
+                  }
+
+                  return (
+                    <div className="bg-vintage-black/50 rounded-xl p-4 border border-blue-500/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-blue-400 mb-1">Your Current Rank</p>
+                          <p className="text-2xl font-display font-bold text-blue-300">{rewardTier}</p>
+                          {playerRank > 10 && (
+                            <p className="text-xs text-orange-400 mt-1">Climb to TOP 10 to earn rewards!</p>
+                          )}
+                        </div>
+                        {nextReward > 0 && (
+                          <div className="text-right">
+                            <p className="text-sm text-green-400 mb-1">Next Reward</p>
+                            <p className="text-3xl font-display font-bold text-green-300">+{nextReward.toLocaleString()}</p>
+                            <p className="text-xs text-green-400">$TESTVBMS</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* TOP 10 Preview */}
+                <div className="mt-4">
+                  <h4 className="text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
+                    <span>🏆</span>
+                    CURRENT TOP 10
+                  </h4>
+                  <div className="space-y-1 max-h-64 overflow-y-auto">
+                    {leaderboard.slice(0, 10).map((profile, index) => {
+                      const rank = index + 1;
+                      let rankIcon = '';
+                      let rewardAmount = 0;
+
+                      if (rank === 1) { rankIcon = '🥇'; rewardAmount = 1000; }
+                      else if (rank === 2) { rankIcon = '🥈'; rewardAmount = 750; }
+                      else if (rank === 3) { rankIcon = '🥉'; rewardAmount = 500; }
+                      else { rankIcon = '⭐'; rewardAmount = 300; }
+
+                      const isCurrentUser = profile.address === userProfile?.address;
+
+                      return (
+                        <div
+                          key={profile.address}
+                          className={`flex items-center justify-between p-2 rounded ${
+                            isCurrentUser
+                              ? 'bg-blue-500/30 border border-blue-400'
+                              : 'bg-vintage-black/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 flex-1">
+                            <span className="text-lg w-8">{rankIcon}</span>
+                            <span className="text-xs text-gray-400 w-6">#{rank}</span>
+                            <span className={`text-sm font-semibold truncate ${
+                              isCurrentUser ? 'text-blue-300' : 'text-gray-300'
+                            }`}>
+                              {profile.username}
+                              {isCurrentUser && <span className="text-xs text-blue-400 ml-1">(you)</span>}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-yellow-400">{(profile.stats?.totalPower || 0).toLocaleString()} PWR</span>
+                            <span className="text-xs text-green-400 font-bold min-w-[60px] text-right">+{rewardAmount}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
               {/* Weekly Leaderboard Rewards Section */}
               <div className="bg-gradient-to-r from-yellow-900/40 to-orange-900/40 backdrop-blur-lg rounded-2xl border-2 border-yellow-500/50 p-6 shadow-[0_0_30px_rgba(234,179,8,0.3)]">
                 <div className="flex items-center gap-3 mb-6">
