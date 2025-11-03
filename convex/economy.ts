@@ -485,6 +485,12 @@ export const awardPvECoins = mutation({
       throw new Error(`Too fast! Please wait ${waitTime}s before playing again`);
     }
 
+    // 🛡️ CRITICAL FIX: Update timestamp IMMEDIATELY after rate limit check
+    // This prevents spam retries on failed attempts (e.g., daily limit reached)
+    await ctx.db.patch(profile._id, {
+      lastPvEAward: now,
+    });
+
     // 🎯 Track PvE streak (ALWAYS, even on loss to reset streak)
     try {
       await ctx.scheduler.runAfter(0, api.quests.updatePveStreak, {
@@ -556,7 +562,7 @@ export const awardPvECoins = mutation({
         ...dailyLimits,
         pveWins: dailyLimits.pveWins + 1,
       },
-      lastPvEAward: now, // 🛡️ Update rate limit timestamp
+      // lastPvEAward already updated immediately after rate limit check (line 491)
     });
 
     // 🎯 Track weekly quest progress (async, non-blocking)
@@ -639,6 +645,12 @@ export const awardPvPCoins = mutation({
       const waitTime = Math.ceil((PVP_RATE_LIMIT_MS - timeSinceLastPvPAward) / 1000);
       throw new Error(`Too fast! Please wait ${waitTime}s before next match`);
     }
+
+    // 🛡️ CRITICAL FIX: Update timestamp IMMEDIATELY after rate limit check
+    // This prevents spam retries on failed attempts (e.g., daily limit reached)
+    await ctx.db.patch(profile._id, {
+      lastPvPAward: nowPvP,
+    });
 
     // Check PvP match limit
     if (dailyLimits.pvpMatches >= PVP_MATCH_LIMIT) {
@@ -735,7 +747,7 @@ export const awardPvPCoins = mutation({
           ...dailyLimits,
           pvpMatches: dailyLimits.pvpMatches + 1,
         },
-        lastPvPAward: nowPvP, // 🛡️ Update rate limit timestamp
+        // lastPvPAward already updated immediately after rate limit check (line 652)
       });
 
       // 🎯 Track weekly quest progress (async, non-blocking)
@@ -777,7 +789,7 @@ export const awardPvPCoins = mutation({
         lifetimeSpent: (profile.lifetimeSpent || 0) + Math.abs(penalty),
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
-        lastPvPAward: nowPvP, // 🛡️ Update rate limit timestamp
+        // lastPvPAward already updated immediately after rate limit check (line 652)
         dailyLimits: {
           ...dailyLimits,
           pvpMatches: dailyLimits.pvpMatches + 1,
@@ -1156,6 +1168,12 @@ export const recordAttackResult = mutation({
       throw new Error(`Too fast! Please wait ${waitTime}s before next attack`);
     }
 
+    // 🛡️ CRITICAL FIX: Update timestamp IMMEDIATELY after rate limit check
+    // This prevents spam retries on failed attempts (e.g., daily limit reached)
+    await ctx.db.patch(profile._id, {
+      lastPvPAward: nowAttack,
+    });
+
     // Check PvP match limit
     if (dailyLimits.pvpMatches >= PVP_MATCH_LIMIT) {
       throw new Error("Daily PvP match limit reached");
@@ -1292,7 +1310,7 @@ export const recordAttackResult = mutation({
       lifetimeSpent: !won && totalReward < 0 ? (profile.lifetimeSpent || 0) + Math.abs(totalReward) : profile.lifetimeSpent,
       winStreak: newStreak,
       lastWinTimestamp: Date.now(),
-      lastPvPAward: nowAttack, // 🛡️ Update rate limit timestamp
+      // lastPvPAward already updated immediately after rate limit check (line 1174)
       stats: newStats,
       dailyLimits: {
         ...dailyLimits,
