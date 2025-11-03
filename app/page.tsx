@@ -2673,11 +2673,12 @@ export default function TCGPage() {
       const totalPower = nfts.reduce((sum, nft) => sum + (nft.power || 0), 0);
       const openedCards = nfts.filter(nft => !isUnrevealed(nft)).length;
       const unopenedCards = nfts.filter(nft => isUnrevealed(nft)).length;
+      const tokenIds = nfts.map(nft => nft.tokenId); // ✅ Extract tokenIds for defense deck validation
 
-      devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards, totalPower });
+      devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards, totalPower, tokenIds: tokenIds.length });
 
       // Update stats and reload profile to show updated values
-      ConvexProfileService.updateStats(address, nfts.length, openedCards, unopenedCards, totalPower)
+      ConvexProfileService.updateStats(address, nfts.length, openedCards, unopenedCards, totalPower, tokenIds)
         .then(() => {
           // Reload profile to get updated stats
           return ConvexProfileService.getProfile(address);
@@ -3944,17 +3945,28 @@ export default function TCGPage() {
                     // Setup battle (código original continua aqui...)
                     devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     devLog(`✦ ATTACKING: ${targetPlayer.username}`);
-                    devLog(`◆ Using saved defense deck data`);
+                    devLog(`🛡️ Validating opponent's defense deck...`);
 
-                    const defenderCards = (targetPlayer.defenseDeck || [])
-                      .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } => typeof card === 'object')
-                      .map((card) => ({
-                        tokenId: card.tokenId,
-                        power: card.power,
-                        imageUrl: card.imageUrl,
-                        name: card.name,
-                        rarity: card.rarity,
-                      }));
+                    // ✅ SECURITY: Validate defense deck against owned NFTs
+                    const validatedDeck = await ConvexProfileService.getValidatedDefenseDeck(targetPlayer.address);
+
+                    if (validatedDeck.removedCards.length > 0) {
+                      devWarn(`⚠️ Removed ${validatedDeck.removedCards.length} invalid cards from ${targetPlayer.username}'s defense deck (no longer owned)`);
+                    }
+
+                    if (!validatedDeck.isValid) {
+                      devWarn(`⚠️ Could not validate ${targetPlayer.username}'s defense deck - using as-is`);
+                    }
+
+                    const defenderCards = validatedDeck.defenseDeck.map((card) => ({
+                      tokenId: card.tokenId,
+                      power: card.power,
+                      imageUrl: card.imageUrl,
+                      name: card.name,
+                      rarity: card.rarity,
+                    }));
+
+                    devLog(`✅ Defense deck validated: ${defenderCards.length} valid cards`);
                     devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                     setSelectedCards(attackSelectedCards);
