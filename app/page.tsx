@@ -5127,8 +5127,8 @@ export default function TCGPage() {
       )}
 
       {showTutorial && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4" onClick={() => setShowTutorial(false)}>
-          <div className={`bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-3 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)] ${isInFarcaster ? 'max-h-[calc(100vh-160px)]' : 'max-h-[95vh]'} flex flex-col`} onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-x-0 top-0 bottom-20 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4" onClick={() => setShowTutorial(false)}>
+          <div className={`bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-3 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)] ${isInFarcaster ? 'max-h-[calc(100vh-240px)]' : 'max-h-[calc(100vh-100px)]'} flex flex-col`} onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-3 md:mb-6 flex-shrink-0">
               <div>
                 <h2 className="text-xl md:text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
