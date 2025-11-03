@@ -166,6 +166,7 @@ export const claimAchievementReward = mutation({
   },
   handler: async (ctx, args) => {
     const { playerAddress, achievementId } = args;
+    const normalizedAddress = playerAddress.toLowerCase();
 
     // Get achievement definition from Map
     const definition = ACHIEVEMENTS_MAP.get(achievementId);
@@ -177,7 +178,7 @@ export const claimAchievementReward = mutation({
     const achievement = await ctx.db
       .query("achievements")
       .withIndex("by_player_achievement", (q) =>
-        q.eq("playerAddress", playerAddress).eq("achievementId", achievementId)
+        q.eq("playerAddress", normalizedAddress).eq("achievementId", achievementId)
       )
       .first();
 
@@ -196,7 +197,7 @@ export const claimAchievementReward = mutation({
     // Get player profile
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", playerAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     if (!profile) {
