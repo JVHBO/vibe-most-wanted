@@ -253,6 +253,170 @@ const legendaries = useFilterLegendaries(sorted);
 
 ---
 
+## Bug #6 - 23 Legendary Cards With Placeholder Image URLs 🖼️
+
+**Date**: 2025-11-03
+**Fixed By**: Claude Code + User
+**Status**: ✅ FIXED & TESTED
+**Impact**: CRITICAL (Gangster & Gigachad modes unplayable)
+
+### Problem
+
+**User Report**: "e no deck gangster nenhuma ta carregando a imagem ids # 4378 #6465 # 2927 # 6452 # 5225"
+
+23 Legendary cards in JC deck had **placeholder URLs** instead of real image URLs:
+
+```json
+// ❌ BROKEN
+"imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/[hash-placeholder-4378]"
+```
+
+**Affected Cards**:
+- Gangster deck (150 PWR): #4378, #6465, #2927, #6452, #5225
+- Gigachad deck (Top 5): #6070
+- 17 other Legendary cards
+
+**Impact**: Players couldn't see card images in Gangster/Gigachad difficulty modes.
+
+### Root Cause
+
+The `public/data/jc-deck.json` file had 23 cards with placeholder URLs that were never replaced with real Alchemy CDN URLs during initial data collection.
+
+### Solution Part 1: Automated Fix Script
+
+Created `scripts/fix-placeholder-images.js` to fetch real URLs from Alchemy API:
+
+```javascript
+const ALCHEMY_API_KEY = 'Y4XuYCtUIN1ArerfvN83lI2IgS8AJQyh';
+const FIXED_CARD_IDS = ['1866', '2347', '2435', ...]; // 23 IDs
+
+async function fetchNFTMetadata(tokenId) {
+  const url = `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTMetadata?` +
+    `contractAddress=${CONTRACT_ADDRESS}&tokenId=${tokenId}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  return data.image.cachedUrl || data.image.originalUrl;
+}
+
+// ✅ Result: 23/23 cards fixed successfully
+```
+
+**Execution**:
+```bash
+node scripts/fix-placeholder-images.js
+# ✅ Successfully fetched 23/23 image URLs
+# ✅ Updated jc-deck.json
+# ✅ Created backup: jc-deck.backup.json
+```
+
+### Solution Part 2: Local Images for Edge Cases
+
+**Problem Discovered**: 3 cards (#2486, #2761, #1866) loaded "closed card" images from Alchemy.
+
+**Cause**: These cards were burned before being revealed, so Alchemy only had unopened pack images.
+
+**Solution**: Host images locally
+```
+/public/images/cards/
+  ├── 1866.png (317KB)
+  ├── 2486.png (403KB)
+  └── 2761.png (317KB)
+```
+
+Updated `jc-deck.json`:
+```json
+// ❌ BEFORE: Wrong image from Alchemy
+"imageUrl": "https://nft-cdn.alchemy.com/.../bb1fccf1..."
+
+// ✅ AFTER: Correct local image
+"imageUrl": "/images/cards/2486.png"
+```
+
+### Files Modified
+
+**1. scripts/fix-placeholder-images.js** (NEW)
+- Automated script to fetch real URLs from Alchemy API
+- Rate limiting: 300ms between requests
+- Backup creation before modification
+- Reusable for future placeholder fixes
+
+**2. public/data/jc-deck.json**
+- 23 placeholder URLs replaced with real Alchemy CDN URLs
+- 3 URLs replaced with local image paths
+
+**3. public/images/cards/** (NEW)
+- Local directory for manually hosted card images
+- Currently: 3 images (1866.png, 2486.png, 2761.png)
+
+**4. public/test-fixed-cards.html** (NEW)
+- Test page to verify all 23 cards load correctly
+- Real-time status tracking (loaded/loading/failed)
+- Visual verification of images
+
+### Testing & Verification
+
+**Test Page**: `http://localhost:3000/test-fixed-cards.html`
+
+**Results**:
+```
+✅ Loaded: 23/23 cards
+⏳ Loading: 0
+❌ Failed: 0
+Success Rate: 100%
+```
+
+**Manual Verification**:
+- ✅ All Gangster deck cards visible (#4378, #6465, #2927, #6452, #5225)
+- ✅ Gigachad deck card visible (#6070)
+- ✅ Local images load correctly (#2486, #2761, #1866)
+- ✅ No console errors
+- ✅ Images display in browser
+
+### Key Learnings
+
+1. **Always verify placeholder URLs during data import**
+   - Use regex to detect `[hash-placeholder-*]` patterns
+   - Validate URLs return 200 status codes
+
+2. **Alchemy API edge cases**
+   - Some burned cards only have unopened pack images
+   - Fallback to local hosting when CDN images are incorrect
+
+3. **Automated testing for visual assets**
+   - Created test page to batch-verify card images
+   - Prevents manual checking of 700+ cards
+
+4. **Local image hosting pattern**
+   - `/public/images/cards/` for edge cases
+   - Use tokenId as filename for easy identification
+   - Keep original file sizes (300-400KB acceptable for card art)
+
+### Prevention
+
+**Add to future scripts**:
+```javascript
+// ✅ Validate image URLs after fetch
+if (imageUrl.includes('[hash-placeholder')) {
+  console.error(`⚠️ Placeholder detected for token ${tokenId}`);
+  // Fetch from API or fallback to local
+}
+```
+
+**Add to CI/CD**:
+```bash
+# Check for placeholders before deploy
+grep -r "hash-placeholder" public/data/*.json && exit 1
+```
+
+### Related Issues
+
+- Bug #5: Deployment environment mistake (similar data validation issue)
+- Feature #2: Performance optimization (affects image loading)
+
+---
+
 ## Feature #1 - Weekly Rewards System (Automated Leaderboard Rewards) 🏆
 
 **Date**: 2025-11-03
