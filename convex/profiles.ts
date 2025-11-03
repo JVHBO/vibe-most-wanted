@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 /**
  * PROFILE QUERIES & MUTATIONS
@@ -168,7 +168,7 @@ export const upsertProfile = mutation({
       });
 
       // Give 100 welcome coins to new users
-      await ctx.runMutation(api.economy.addCoins, {
+      await ctx.scheduler.runAfter(0, internal.economy.addCoins, {
         address,
         amount: 100,
         reason: "Welcome bonus"
