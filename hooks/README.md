@@ -49,6 +49,35 @@ Memoized NFT filtering, searching, and pagination.
 | `useSortedNFTs` | Custom sorting | `useSortedNFTs(nfts, 'power')` |
 | `useFindNFT` | Find by ID | `useFindNFT(nfts, '1234')` |
 
+### **4. useAchievements.ts** ⭐ NEW
+Real-time achievement tracking and management system.
+
+| Hook | Purpose | Example |
+|------|---------|---------|
+| `useAchievements` | Complete achievement system | `useAchievements({ playerAddress, nfts })` |
+
+**Features:**
+- 🏆 **64 achievements** tracked automatically (~302K total coins)
+- 🔄 **Auto-detection** when NFTs change
+- 📊 **Real-time progress** tracking
+- 💰 **One-click claiming** with animations
+- 🔔 **Toast notifications** on completion
+- 📈 **Stats dashboard** (completion %, unclaimed rewards)
+- 🎯 **Category filters** (Rarity, Wear, Foil, Progressive)
+
+**Returns:**
+```typescript
+{
+  achievements: Achievement[];    // All 64 with progress
+  stats: StatsObject;            // Completion stats
+  unclaimed: Achievement[];       // Ready to claim
+  isChecking: boolean;           // Loading state
+  claimAchievement: (id) => Promise;
+  claimAllUnclaimed: () => Promise;
+  checkAchievements: () => Promise;
+}
+```
+
 ---
 
 ## 🔥 Performance Impact
