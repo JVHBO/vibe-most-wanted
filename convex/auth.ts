@@ -69,6 +69,13 @@ export function verifyTimestamp(message: string): boolean {
     }
 
     const timestamp = parseInt(match[1]);
+
+    // 🛡️ CRITICAL FIX: Validate timestamp is a valid number
+    if (isNaN(timestamp)) {
+      console.error("❌ Invalid timestamp format (NaN)");
+      return false;
+    }
+
     const now = Date.now();
     const fiveMinutes = 5 * 60 * 1000;
 
