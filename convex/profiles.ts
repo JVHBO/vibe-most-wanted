@@ -503,6 +503,10 @@ export const updateStatsSecure = mutation({
       throw new Error("Invalid nonce - possible replay attack");
     }
 
+    // 🛡️ CRITICAL FIX: Increment nonce IMMEDIATELY after verification
+    // This prevents replay attacks even if mutation fails later
+    await incrementNonce(ctx, address);
+
     // 3. Perform the action (same as original mutation)
     const profile = await ctx.db
       .query("profiles")
@@ -518,8 +522,7 @@ export const updateStatsSecure = mutation({
       lastUpdated: Date.now(),
     });
 
-    // 4. Increment nonce for next action
-    await incrementNonce(ctx, address);
+    // Nonce already incremented immediately after verification (line 508)
 
     console.log("✅ SECURE: Stats updated for", address);
   },
@@ -557,6 +560,10 @@ export const updateDefenseDeckSecure = mutation({
       throw new Error("Invalid nonce - possible replay attack");
     }
 
+    // 🛡️ CRITICAL FIX: Increment nonce IMMEDIATELY after verification
+    // This prevents replay attacks even if mutation fails later
+    await incrementNonce(ctx, address);
+
     // 3. Perform action
     const profile = await ctx.db
       .query("profiles")
@@ -572,8 +579,7 @@ export const updateDefenseDeckSecure = mutation({
       lastUpdated: Date.now(),
     });
 
-    // 4. Increment nonce
-    await incrementNonce(ctx, address);
+    // Nonce already incremented immediately after verification (line 565)
 
     console.log("✅ SECURE: Defense deck updated for", address);
   },
@@ -609,6 +615,10 @@ export const incrementStatSecure = mutation({
       throw new Error("Invalid nonce - possible replay attack");
     }
 
+    // 🛡️ CRITICAL FIX: Increment nonce IMMEDIATELY after verification
+    // This prevents replay attacks even if mutation fails later
+    await incrementNonce(ctx, address);
+
     // 3. Perform action
     const profile = await ctx.db
       .query("profiles")
@@ -627,8 +637,7 @@ export const incrementStatSecure = mutation({
       lastUpdated: Date.now(),
     });
 
-    // 4. Increment nonce
-    await incrementNonce(ctx, address);
+    // Nonce already incremented immediately after verification (line 620)
 
     console.log(`✅ SECURE: ${stat} incremented for`, address);
   },
