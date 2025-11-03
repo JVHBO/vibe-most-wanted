@@ -4003,9 +4003,9 @@ export default function TCGPage() {
 
                     if (soundEnabled) AudioManager.playHand();
 
-                    // 🚀 Performance: Use memoized power calculations
-                    const playerTotal = useTotalPower(attackSelectedCards);
-                    const dealerTotal = useTotalPower(defenderCards);
+                    // Calculate power totals (one-time calculation per attack, no need for memoization)
+                    const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                    const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
 
                     setTimeout(() => {
                       setBattlePhase('clash');
@@ -4333,9 +4333,9 @@ export default function TCGPage() {
 
                   if (soundEnabled) AudioManager.playHand();
 
-                  // 🚀 Performance: Use memoized power calculations
-                  const playerTotal = useTotalPower(attackSelectedCards);
-                  const dealerTotal = useTotalPower(defenderCards);
+                  // Calculate power totals (one-time calculation per attack, no need for memoization)
+                  const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                  const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
 
                   // Animate battle
                   setTimeout(() => {
