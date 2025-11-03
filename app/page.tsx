@@ -5584,7 +5584,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('game');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-4 py-2 flex flex-col items-center gap-1' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm' : 'text-xs md:text-base'} ${
+                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'game'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
@@ -5592,8 +5592,8 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-xs">{t('title')}</span>
-                    <span className="text-2xl">♠</span>
+                    <span className="text-sm font-bold">{t('title')}</span>
+                    <span className="text-3xl leading-none">♠</span>
                   </>
                 ) : (
                   <>
@@ -5607,7 +5607,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('missions');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-4 py-2 flex flex-col items-center gap-1' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm' : 'text-xs md:text-base'} ${
+                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'missions'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
@@ -5615,8 +5615,8 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-xs">{t('missions')}</span>
-                    <span className="text-2xl">◈</span>
+                    <span className="text-sm font-bold">{t('missions')}</span>
+                    <span className="text-3xl leading-none">◈</span>
                   </>
                 ) : (
                   <>
@@ -5630,7 +5630,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('leaderboard');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-4 py-2 flex flex-col items-center gap-1' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm' : 'text-xs md:text-base'} ${
+                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'leaderboard'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
@@ -5638,8 +5638,8 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-xs">{t('leaderboard')}</span>
-                    <span className="text-2xl">♔</span>
+                    <span className="text-sm font-bold">{t('leaderboard')}</span>
+                    <span className="text-3xl leading-none">♔</span>
                   </>
                 ) : (
                   <>
