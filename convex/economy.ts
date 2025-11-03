@@ -489,11 +489,32 @@ export const awardPvECoins = mutation({
     let totalReward = baseReward;
     const bonuses: string[] = [];
 
-    // First PvE bonus
+    // Create first PvE win mission (player must claim manually)
     if (!dailyLimits.firstPveBonus) {
-      totalReward += BONUSES.firstPve;
-      bonuses.push(`First PvE +${BONUSES.firstPve}`);
-      dailyLimits.firstPveBonus = true;
+      const today = new Date().toISOString().split('T')[0];
+      const existingMission = await ctx.db
+        .query("personalMissions")
+        .withIndex("by_player_date", (q) => q.eq("playerAddress", address.toLowerCase()))
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("date"), today),
+            q.eq(q.field("missionType"), "first_pve_win")
+          )
+        )
+        .first();
+
+      if (!existingMission) {
+        await ctx.db.insert("personalMissions", {
+          playerAddress: address.toLowerCase(),
+          date: today,
+          missionType: "first_pve_win",
+          completed: true,
+          claimed: false,
+          reward: 50, // MISSION_REWARDS.first_pve_win
+          completedAt: Date.now(),
+        });
+      }
+      dailyLimits.firstPveBonus = true; // Mark as triggered (mission created)
     }
 
     // Check daily cap
@@ -617,24 +638,56 @@ export const awardPvPCoins = mutation({
         bonuses.push(`Rank #${opponentRank} Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
       }
 
-      // First PvP bonus
+      // Create first PvP match mission (player must claim manually)
       if (!dailyLimits.firstPvpBonus) {
-        totalReward += BONUSES.firstPvp;
-        bonuses.push(`First PvP +${BONUSES.firstPvp}`);
+        const today = new Date().toISOString().split('T')[0];
+        const existing = await ctx.db
+          .query("personalMissions")
+          .withIndex("by_player_date", (q) => q.eq("playerAddress", address.toLowerCase()))
+          .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), "first_pvp_match")))
+          .first();
+
+        if (!existing) {
+          await ctx.db.insert("personalMissions", {
+            playerAddress: address.toLowerCase(),
+            date: today,
+            missionType: "first_pvp_match",
+            completed: true,
+            claimed: false,
+            reward: 100,
+            completedAt: Date.now(),
+          });
+        }
         dailyLimits.firstPvpBonus = true;
       }
 
-      // Streak bonuses
-      if (newStreak === 3 && !dailyLimits.streakBonus) {
-        totalReward += BONUSES.streak3;
-        bonuses.push(`3-Win Streak +${BONUSES.streak3}`);
-        dailyLimits.streakBonus = true;
-      } else if (newStreak === 5) {
-        totalReward += BONUSES.streak5;
-        bonuses.push(`5-Win Streak +${BONUSES.streak5}`);
-      } else if (newStreak === 10) {
-        totalReward += BONUSES.streak10;
-        bonuses.push(`10-Win Streak +${BONUSES.streak10}`);
+      // Create streak missions (player must claim manually)
+      if (newStreak === 3 || newStreak === 5 || newStreak === 10) {
+        const today = new Date().toISOString().split('T')[0];
+        const missionType = `streak_${newStreak}` as "streak_3" | "streak_5" | "streak_10";
+        const rewards = { streak_3: 150, streak_5: 300, streak_10: 750 };
+
+        const existing = await ctx.db
+          .query("personalMissions")
+          .withIndex("by_player_date", (q) => q.eq("playerAddress", address.toLowerCase()))
+          .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), missionType)))
+          .first();
+
+        if (!existing) {
+          await ctx.db.insert("personalMissions", {
+            playerAddress: address.toLowerCase(),
+            date: today,
+            missionType,
+            completed: true,
+            claimed: false,
+            reward: rewards[missionType],
+            completedAt: Date.now(),
+          });
+        }
+
+        if (newStreak === 3) {
+          dailyLimits.streakBonus = true;
+        }
       }
 
       // No daily cap for PvP - limited by 10 matches/day instead
@@ -807,24 +860,40 @@ export const claimLoginBonus = mutation({
     // Check and reset daily limits
     const dailyLimits = await checkAndResetDailyLimits(ctx, profile);
 
-    // Check if already claimed
+    // Check if mission already created today
     if (dailyLimits.loginBonus) {
-      return { awarded: 0, reason: "Already claimed today" };
+      return { awarded: 0, reason: "Mission already created today" };
     }
 
-    // Award bonus
-    const bonus = BONUSES.login;
+    // Create daily login mission (player must claim manually)
+    const today = new Date().toISOString().split('T')[0];
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date", (q) => q.eq("playerAddress", address.toLowerCase()))
+      .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), "daily_login")))
+      .first();
 
+    if (!existing) {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: address.toLowerCase(),
+        date: today,
+        missionType: "daily_login",
+        completed: true,
+        claimed: false,
+        reward: 25,
+        completedAt: Date.now(),
+      });
+    }
+
+    // Mark as triggered
     await ctx.db.patch(profile!._id, {
-      coins: (profile.coins || 0) + bonus,
-      lifetimeEarned: (profile.lifetimeEarned || 0) + bonus,
       dailyLimits: {
         ...dailyLimits,
         loginBonus: true,
       },
     });
 
-    return { awarded: bonus, newBalance: (profile.coins || 0) + bonus };
+    return { awarded: 0, reason: "Mission created - check Missions tab to claim!", newBalance: profile.coins || 0 };
   },
 });
 
@@ -1070,24 +1139,56 @@ export const recordAttackResult = mutation({
         bonuses.push(`Rank #${opponentRank} Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
       }
 
-      // First PvP bonus
+      // Create first PvP match mission (player must claim manually)
       if (!dailyLimits.firstPvpBonus) {
-        totalReward += BONUSES.firstPvp;
-        bonuses.push(`First PvP +${BONUSES.firstPvp}`);
+        const today = new Date().toISOString().split('T')[0];
+        const existing = await ctx.db
+          .query("personalMissions")
+          .withIndex("by_player_date", (q) => q.eq("playerAddress", args.playerAddress.toLowerCase()))
+          .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), "first_pvp_match")))
+          .first();
+
+        if (!existing) {
+          await ctx.db.insert("personalMissions", {
+            playerAddress: args.playerAddress.toLowerCase(),
+            date: today,
+            missionType: "first_pvp_match",
+            completed: true,
+            claimed: false,
+            reward: 100,
+            completedAt: Date.now(),
+          });
+        }
         dailyLimits.firstPvpBonus = true;
       }
 
-      // Streak bonuses
-      if (newStreak === 3 && !dailyLimits.streakBonus) {
-        totalReward += BONUSES.streak3;
-        bonuses.push(`3-Win Streak +${BONUSES.streak3}`);
-        dailyLimits.streakBonus = true;
-      } else if (newStreak === 5) {
-        totalReward += BONUSES.streak5;
-        bonuses.push(`5-Win Streak +${BONUSES.streak5}`);
-      } else if (newStreak === 10) {
-        totalReward += BONUSES.streak10;
-        bonuses.push(`10-Win Streak +${BONUSES.streak10}`);
+      // Create streak missions (player must claim manually)
+      if (newStreak === 3 || newStreak === 5 || newStreak === 10) {
+        const today = new Date().toISOString().split('T')[0];
+        const missionType = `streak_${newStreak}` as "streak_3" | "streak_5" | "streak_10";
+        const rewards = { streak_3: 150, streak_5: 300, streak_10: 750 };
+
+        const existing = await ctx.db
+          .query("personalMissions")
+          .withIndex("by_player_date", (q) => q.eq("playerAddress", args.playerAddress.toLowerCase()))
+          .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), missionType)))
+          .first();
+
+        if (!existing) {
+          await ctx.db.insert("personalMissions", {
+            playerAddress: args.playerAddress.toLowerCase(),
+            date: today,
+            missionType,
+            completed: true,
+            claimed: false,
+            reward: rewards[missionType],
+            completedAt: Date.now(),
+          });
+        }
+
+        if (newStreak === 3) {
+          dailyLimits.streakBonus = true;
+        }
       }
 
       // No daily cap for attack mode - limited by 5 attacks/day instead
