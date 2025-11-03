@@ -2462,9 +2462,16 @@ export default function TCGPage() {
     if (address) {
       setIsLoadingProfile(true);
       ConvexProfileService.getProfile(address).then((profile) => {
-
         setUserProfile(profile);
         setIsLoadingProfile(false);
+
+        // Only show create profile if profile is actually null (not exists in DB)
+        if (!profile) {
+          devLog('🆕 New user detected - forcing profile creation');
+          setShowCreateProfile(true);
+        } else {
+          setShowCreateProfile(false);
+        }
 
         // Load match history
         if (profile) {
@@ -2474,16 +2481,9 @@ export default function TCGPage() {
     } else {
       setUserProfile(null);
       setMatchHistory([]);
+      setShowCreateProfile(false);
     }
   }, [address]);
-
-  // ✓ Force username creation for new users
-  useEffect(() => {
-    if (address && !userProfile && !isLoadingProfile) {
-      devLog('🆕 New user detected - forcing profile creation');
-      setShowCreateProfile(true);
-    }
-  }, [address, userProfile, isLoadingProfile]);
 
   // Load missions when address changes or when viewing missions tab
   useEffect(() => {
@@ -2545,11 +2545,45 @@ export default function TCGPage() {
 
     setIsLoadingMissions(true);
     try {
+      // Get completed missions from database
       const playerMissions = await convex.query(api.missions.getPlayerMissions, {
         playerAddress: address,
       });
-      setMissions(playerMissions || []);
-      devLog('📋 Loaded missions:', playerMissions);
+
+      // Define all possible missions
+      const allMissionTypes = [
+        { type: 'daily_login', reward: 25, date: 'today' },
+        { type: 'first_pve_win', reward: 50, date: 'today' },
+        { type: 'first_pvp_match', reward: 100, date: 'today' },
+        { type: 'streak_3', reward: 150, date: 'today' },
+        { type: 'streak_5', reward: 300, date: 'today' },
+        { type: 'streak_10', reward: 750, date: 'today' },
+        { type: 'welcome_gift', reward: 500, date: 'once' },
+      ];
+
+      // Merge with existing missions from DB
+      const completeMissionsList = allMissionTypes.map((missionDef) => {
+        const existingMission = (playerMissions || []).find(
+          (m: any) => m.missionType === missionDef.type
+        );
+
+        if (existingMission) {
+          return existingMission; // Return actual mission from DB
+        } else {
+          // Return placeholder for locked mission
+          return {
+            _id: `placeholder_${missionDef.type}`,
+            missionType: missionDef.type,
+            completed: false,
+            claimed: false,
+            reward: missionDef.reward,
+            date: missionDef.date,
+          };
+        }
+      });
+
+      setMissions(completeMissionsList);
+      devLog('📋 Loaded missions:', completeMissionsList);
     } catch (error) {
       devError('Error loading missions:', error);
     } finally {
@@ -2560,6 +2594,12 @@ export default function TCGPage() {
   // Function to claim individual mission
   const claimMission = async (missionId: string) => {
     if (!address) return;
+
+    // Don't try to claim placeholder missions
+    if (missionId.startsWith('placeholder_')) {
+      if (soundEnabled) AudioManager.buttonError();
+      return;
+    }
 
     setIsClaimingMission(missionId);
     try {
