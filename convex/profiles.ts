@@ -199,8 +199,9 @@ export const updateStats = mutation({
       defenseWins: v.number(),
       defenseLosses: v.number(),
     }),
+    tokenIds: v.optional(v.array(v.string())), // Array of owned tokenIds for validation
   },
-  handler: async (ctx, { address, stats }) => {
+  handler: async (ctx, { address, stats, tokenIds }) => {
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
@@ -210,10 +211,17 @@ export const updateStats = mutation({
       throw new Error(`Profile not found: ${address}`);
     }
 
-    await ctx.db.patch(profile._id, {
+    const updates: any = {
       stats,
       lastUpdated: Date.now(),
-    });
+    };
+
+    // Update ownedTokenIds if provided
+    if (tokenIds) {
+      updates.ownedTokenIds = tokenIds;
+    }
+
+    await ctx.db.patch(profile._id, updates);
   },
 });
 
@@ -300,6 +308,82 @@ export const updateDefenseDeck = mutation({
       });
       throw error;
     }
+  },
+});
+
+/**
+ * Get validated defense deck (removes cards player no longer owns)
+ * SECURITY: Prevents using cards from sold/transferred NFTs
+ */
+export const getValidatedDefenseDeck = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      return {
+        defenseDeck: [],
+        removedCards: [],
+        isValid: false,
+      };
+    }
+
+    // If no defense deck, return empty
+    if (!profile.defenseDeck || profile.defenseDeck.length === 0) {
+      return {
+        defenseDeck: [],
+        removedCards: [],
+        isValid: true,
+      };
+    }
+
+    // If no ownedTokenIds yet (legacy profiles), return deck as-is with warning
+    if (!profile.ownedTokenIds || profile.ownedTokenIds.length === 0) {
+      console.warn(`⚠️ Profile ${address} has no ownedTokenIds - cannot validate defense deck`);
+      const defenseDeck = profile.defenseDeck
+        .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } => typeof card === 'object');
+      return {
+        defenseDeck,
+        removedCards: [],
+        isValid: false, // Not validated
+        warning: "Defense deck not validated - ownedTokenIds missing",
+      };
+    }
+
+    // Validate each card in defense deck
+    const ownedTokenIdsSet = new Set(profile.ownedTokenIds);
+    const validCards: any[] = [];
+    const removedCards: any[] = [];
+
+    for (const card of profile.defenseDeck) {
+      if (typeof card === 'object' && card.tokenId) {
+        if (ownedTokenIdsSet.has(card.tokenId)) {
+          validCards.push(card);
+        } else {
+          removedCards.push(card);
+          console.log(`🗑️ Removed card ${card.tokenId} (${card.name}) from defense deck - no longer owned`);
+        }
+      }
+    }
+
+    // If cards were removed, update profile
+    if (removedCards.length > 0) {
+      await ctx.db.patch(profile._id, {
+        defenseDeck: validCards,
+        lastUpdated: Date.now(),
+      });
+
+      console.log(`✅ Defense deck validated for ${address}: ${validCards.length} valid, ${removedCards.length} removed`);
+    }
+
+    return {
+      defenseDeck: validCards,
+      removedCards,
+      isValid: true,
+    };
   },
 });
 

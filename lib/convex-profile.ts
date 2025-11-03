@@ -203,7 +203,8 @@ export class ConvexProfileService {
     totalCards: number,
     openedCards: number,
     unopenedCards: number,
-    totalPower: number
+    totalPower: number,
+    tokenIds?: string[] // Optional: owned token IDs for defense deck validation
   ): Promise<void> {
     try {
       const normalizedAddress = address.toLowerCase();
@@ -223,9 +224,32 @@ export class ConvexProfileService {
           unopenedCards,
           totalPower,
         },
+        tokenIds, // Pass tokenIds for validation
       });
     } catch (error: any) {
       console.error("❌ updateStats error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get validated defense deck (removes cards player no longer owns)
+   * SECURITY: Prevents using cards from sold/transferred NFTs
+   */
+  static async getValidatedDefenseDeck(address: string): Promise<{
+    defenseDeck: any[];
+    removedCards: any[];
+    isValid: boolean;
+    warning?: string;
+  }> {
+    try {
+      const normalizedAddress = address.toLowerCase();
+      const result = await convex.mutation(api.profiles.getValidatedDefenseDeck, {
+        address: normalizedAddress,
+      });
+      return result;
+    } catch (error: any) {
+      console.error("❌ getValidatedDefenseDeck error:", error);
       throw error;
     }
   }

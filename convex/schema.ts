@@ -54,6 +54,9 @@ export default defineSchema({
       )
     )),
 
+    // Owned Token IDs (for defense deck validation)
+    ownedTokenIds: v.optional(v.array(v.string())),
+
     // Attack limits
     attacksToday: v.number(),
     rematchesToday: v.number(),
