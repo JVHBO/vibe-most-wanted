@@ -253,6 +253,89 @@ const legendaries = useFilterLegendaries(sorted);
 
 ---
 
+## Note #1 - Weekly Quest Types Already Implemented ✅
+
+**Date**: 2025-11-03
+**Verified By**: Claude Code (Ultrathink Sprint)
+**Status**: ✅ VERIFIED
+**Impact**: MEDIUM (Documentation update needed)
+
+### Finding
+
+During Ultrathink Sprint, discovered that `docs/WHATS-MISSING.md` incorrectly listed 2 weekly quest types as missing. Both quest types were **already fully implemented** and working:
+
+### Quest Types Status
+
+**1. weekly_defense_wins** ✅
+- **Location**: `convex/matches.ts:133-142`
+- **Tracking**: Increments when defender wins a defense battle
+- **Reward**: 400 coins
+- **Target**: 10 defense wins
+
+```typescript
+// convex/matches.ts:133-142
+if (args.type === "defense" && args.result === "win") {
+  await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
+    address: normalizedPlayerAddress,
+    questId: "weekly_defense_wins",
+    increment: 1,
+  });
+}
+```
+
+**2. weekly_pve_streak** ✅
+- **Location**: `convex/quests.ts:593-658`
+- **Called From**: `convex/economy.ts:494-502`
+- **Tracking**: Increments on PvE wins, resets on losses
+- **Logic**: Tracks MAXIMUM streak achieved during the week (not just current)
+- **Reward**: 500 coins
+- **Target**: 10 consecutive wins
+
+```typescript
+// convex/economy.ts:494-502
+await ctx.scheduler.runAfter(0, api.quests.updatePveStreak, {
+  address: address.toLowerCase(),
+  won: won, // Increments streak on win, resets to 0 on loss
+});
+
+// convex/quests.ts:627-642
+if (won) {
+  currentStreak += 1;
+  // Update quest with MAX streak achieved
+  quests[questId].current = Math.max(
+    quests[questId].current || 0,
+    currentStreak
+  );
+} else {
+  currentStreak = 0; // Reset on loss
+}
+```
+
+### Implementation Details
+
+**All 4 weekly quest types are implemented:**
+1. ✅ `weekly_total_matches` - Tracks all matches (PvE, PvP, Attack, Defense)
+2. ✅ `weekly_attack_wins` - Tracks PvP attack wins
+3. ✅ `weekly_defense_wins` - Tracks successful defenses
+4. ✅ `weekly_pve_streak` - Tracks maximum consecutive PvE wins
+
+**Total Weekly Quest Rewards**: 1,400 coins (300 + 200 + 400 + 500)
+
+### Lesson Learned
+
+✅ **Always verify code before implementing** - Check if features exist before assuming they're missing
+✅ **Trust the codebase** - Implementation was solid, just undocumented
+✅ **Keep docs synced** - Updated WHATS-MISSING.md to reflect reality
+
+### Actions Taken
+
+1. ✅ Verified both quest implementations in codebase
+2. ✅ Updated `docs/WHATS-MISSING.md` item #6 to COMPLETED status
+3. ✅ Updated summary table (9 items → 8 items)
+4. ✅ Added to "Recently Implemented" section with verification note
+
+---
+
 ## Bug #6 - 23 Legendary Cards With Placeholder Image URLs 🖼️
 
 **Date**: 2025-11-03

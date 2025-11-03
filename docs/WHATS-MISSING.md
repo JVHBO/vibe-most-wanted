@@ -10,10 +10,10 @@
 | Categoria | Critical | High | Medium | Low | Total |
 |-----------|----------|------|--------|-----|-------|
 | **Bugs** | 0 | 0 | 2 | 0 | **2** |
-| **Features** | 0 | 0 | 2 | 1 | **3** |
+| **Features** | 0 | 0 | 1 | 1 | **2** |
 | **Technical Debt** | 0 | 0 | 1 | 2 | **3** |
 | **Migration** | 0 | 1 | 0 | 0 | **1** |
-| **TOTAL** | **0** | **1** | **5** | **3** | **9** |
+| **TOTAL** | **0** | **1** | **4** | **3** | **8** |
 
 ---
 
@@ -25,6 +25,7 @@
 3. ✅ **Race Condition Fix** - Verificado que já estava implementado
 4. ✅ **Error Handling** - Verificado que já estava implementado
 5. ✅ **Hardcoded Values** - Verificado que lib/config.ts já existia
+6. ✅ **Weekly Quest Types** - Verificado que todos os 4 quest types já estavam implementados (defense wins + PvE streak)
 
 ---
 
@@ -150,34 +151,40 @@ devLog(`💰 PvE ${aiDifficulty}: Awarded ${coinsEarned} $TESTVBMS`);
 
 ---
 
-### 6. Weekly Quests - 2 Quest Types Missing
-**Status**: ⏳ PENDING (2 de 4 implementados)
-**Severity**: MEDIUM
+### 6. Weekly Quests - All Quest Types Implemented ✅
+**Status**: ✅ COMPLETED (4 de 4 implementados)
+**Severity**: N/A
 
-**Quest Types Working**:
-- ✅ `weekly_total_matches` - Tracking PvE, PvP, Attack
-- ✅ `weekly_attack_wins` - Tracking attack wins
+**Quest Types Implemented**:
+- ✅ `weekly_total_matches` - Tracking PvE, PvP, Attack (convex/economy.ts)
+- ✅ `weekly_attack_wins` - Tracking attack wins (convex/matches.ts)
+- ✅ `weekly_defense_wins` - Tracking defense wins (convex/matches.ts:133-142)
+- ✅ `weekly_pve_streak` - Tracking consecutive PvE wins (convex/quests.ts:593-658, convex/economy.ts:494-502)
 
-**Quest Types Missing**:
-- ❌ `weekly_defense_wins` - Needs tracking when player defends successfully
-- ❌ `weekly_pve_streak` - Needs special logic for consecutive wins
-
-**Implementação necessária**:
+**Implementation Details**:
 ```typescript
-// In convex/matches.ts (defense wins)
+// Defense wins tracking - convex/matches.ts:133-142
 if (args.type === "defense" && args.result === "win") {
   await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
-    address: args.playerAddress,
+    address: normalizedPlayerAddress,
     questId: "weekly_defense_wins",
     increment: 1,
   });
 }
 
-// In convex/economy.ts (PvE streak tracking)
-// Track consecutive wins in profile, reset on loss
+// PvE streak tracking - convex/economy.ts:494-502
+await ctx.scheduler.runAfter(0, api.quests.updatePveStreak, {
+  address: address.toLowerCase(),
+  won: won, // Increments on win, resets on loss
+});
+
+// PvE streak logic - convex/quests.ts:593-658
+// Tracks MAXIMUM streak achieved during the week
+// Resets current streak to 0 on loss
+// Quest completes when max streak reaches 10
 ```
 
-**Estimativa**: 2 horas
+**Completion Date**: 2025-11-03
 
 ---
 
