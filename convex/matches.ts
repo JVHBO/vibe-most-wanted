@@ -7,7 +7,7 @@
 
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 /**
  * Get match history for a player
@@ -128,10 +128,11 @@ export const recordMatch = mutation({
     }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
+    // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
     try {
       // Track defense wins when defender wins
       if (args.type === "defense" && args.result === "win") {
-        await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+        await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
           address: normalizedPlayerAddress,
           questId: "weekly_defense_wins",
           increment: 1,

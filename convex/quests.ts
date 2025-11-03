@@ -10,7 +10,7 @@
  */
 
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { api } from "./_generated/api";
 
 // Quest pool with 10 different quest types
@@ -541,8 +541,9 @@ export const getWeeklyProgress = query({
 
 /**
  * Update weekly quest progress
+ * 🛡️ CRITICAL FIX: Converted to internalMutation to prevent client-side farming
  */
-export const updateWeeklyProgress = mutation({
+export const updateWeeklyProgress = internalMutation({
   args: {
     address: v.string(),
     questId: v.string(),

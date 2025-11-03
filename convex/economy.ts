@@ -566,8 +566,9 @@ export const awardPvECoins = mutation({
     });
 
     // 🎯 Track weekly quest progress (async, non-blocking)
+    // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
     try {
-      await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+      await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
         address: address.toLowerCase(),
         questId: "weekly_total_matches",
         increment: 1,
@@ -751,8 +752,9 @@ export const awardPvPCoins = mutation({
       });
 
       // 🎯 Track weekly quest progress (async, non-blocking)
+      // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
       try {
-        await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+        await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
           address: address.toLowerCase(),
           questId: "weekly_total_matches",
           increment: 1,
@@ -797,8 +799,9 @@ export const awardPvPCoins = mutation({
       });
 
       // 🎯 Track weekly quest progress (async, non-blocking)
+      // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
       try {
-        await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+        await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
           address: address.toLowerCase(),
           questId: "weekly_total_matches",
           increment: 1,
@@ -1323,9 +1326,10 @@ export const recordAttackResult = mutation({
     const updatedProfile = await ctx.db.get(profile._id);
 
     // ===== STEP 7: Track weekly quest progress (async, non-blocking) =====
+    // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
     try {
       // Track total matches
-      await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+      await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
         address: normalizedPlayerAddress,
         questId: "weekly_total_matches",
         increment: 1,
@@ -1333,7 +1337,7 @@ export const recordAttackResult = mutation({
 
       // Track attack wins if won
       if (won) {
-        await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+        await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
           address: normalizedPlayerAddress,
           questId: "weekly_attack_wins",
           increment: 1,
@@ -1342,7 +1346,7 @@ export const recordAttackResult = mutation({
 
       // Track defense wins if defender won (attacker lost)
       if (!won) {
-        await ctx.scheduler.runAfter(0, api.quests.updateWeeklyProgress, {
+        await ctx.scheduler.runAfter(0, internal.quests.updateWeeklyProgress, {
           address: normalizedOpponentAddress,
           questId: "weekly_defense_wins",
           increment: 1,
