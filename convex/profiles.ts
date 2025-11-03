@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 
 /**
@@ -417,7 +417,12 @@ export const updateAttacks = mutation({
 /**
  * Increment a stat (useful for wins/losses)
  */
-export const incrementStat = mutation({
+/**
+ * Increment a stat (wins/losses)
+ * 🔒 INTERNAL ONLY - Cannot be called from client
+ * Use incrementStatSecure for client calls with signature verification
+ */
+export const incrementStat = internalMutation({
   args: {
     address: v.string(),
     stat: v.union(

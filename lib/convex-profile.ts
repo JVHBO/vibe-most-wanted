@@ -411,22 +411,17 @@ export class ConvexProfileService {
 
   /**
    * Increment a stat (for wins/losses)
+   * @deprecated Use Web3AuthService.incrementStat() instead for secure signature verification
+   * This mutation is now internal-only for security reasons
    */
   static async incrementStat(
     address: string,
     stat: "pvpWins" | "pvpLosses" | "attackWins" | "attackLosses" | "defenseWins" | "defenseLosses"
   ): Promise<void> {
-    try {
-      const normalizedAddress = address.toLowerCase();
-
-      await convex.mutation(api.profiles.incrementStat, {
-        address: normalizedAddress,
-        stat,
-      });
-    } catch (error: any) {
-      console.error("❌ incrementStat error:", error);
-      throw error;
-    }
+    throw new Error(
+      "incrementStat is deprecated. Use Web3AuthService.incrementStat() for secure signature verification, " +
+      "or call internal.profiles.incrementStat from server-side mutations."
+    );
   }
 
   /**
