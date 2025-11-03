@@ -84,6 +84,11 @@ export default defineSchema({
     winStreak: v.optional(v.number()),
     lastWinTimestamp: v.optional(v.number()),
 
+    // Rate Limiting (Phase 2 Security)
+    lastPvEAward: v.optional(v.number()), // Timestamp of last PvE reward
+    lastPvPAward: v.optional(v.number()), // Timestamp of last PvP reward
+    lastStatUpdate: v.optional(v.number()), // Timestamp of last stat increment
+
     // Social
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),

@@ -474,6 +474,17 @@ export const awardPvECoins = mutation({
     // Check and reset daily limits
     const dailyLimits = await checkAndResetDailyLimits(ctx, profile);
 
+    // 🛡️ PHASE 2 SECURITY: Rate limiting (prevent spam/farming)
+    const now = Date.now();
+    const lastAward = profile.lastPvEAward || 0;
+    const timeSinceLastAward = now - lastAward;
+    const RATE_LIMIT_MS = 10000; // 10 seconds between awards
+
+    if (timeSinceLastAward < RATE_LIMIT_MS) {
+      const waitTime = Math.ceil((RATE_LIMIT_MS - timeSinceLastAward) / 1000);
+      throw new Error(`Too fast! Please wait ${waitTime}s before playing again`);
+    }
+
     // 🎯 Track PvE streak (ALWAYS, even on loss to reset streak)
     try {
       await ctx.scheduler.runAfter(0, api.quests.updatePveStreak, {
@@ -545,6 +556,7 @@ export const awardPvECoins = mutation({
         ...dailyLimits,
         pveWins: dailyLimits.pveWins + 1,
       },
+      lastPvEAward: now, // 🛡️ Update rate limit timestamp
     });
 
     // 🎯 Track weekly quest progress (async, non-blocking)
@@ -616,6 +628,17 @@ export const awardPvPCoins = mutation({
 
     // Check and reset daily limits
     const dailyLimits = await checkAndResetDailyLimits(ctx, profile);
+
+    // 🛡️ PHASE 2 SECURITY: Rate limiting (prevent spam/farming)
+    const nowPvP = Date.now();
+    const lastPvPAward = profile.lastPvPAward || 0;
+    const timeSinceLastPvPAward = nowPvP - lastPvPAward;
+    const PVP_RATE_LIMIT_MS = 15000; // 15 seconds between PvP awards
+
+    if (timeSinceLastPvPAward < PVP_RATE_LIMIT_MS) {
+      const waitTime = Math.ceil((PVP_RATE_LIMIT_MS - timeSinceLastPvPAward) / 1000);
+      throw new Error(`Too fast! Please wait ${waitTime}s before next match`);
+    }
 
     // Check PvP match limit
     if (dailyLimits.pvpMatches >= PVP_MATCH_LIMIT) {
@@ -712,6 +735,7 @@ export const awardPvPCoins = mutation({
           ...dailyLimits,
           pvpMatches: dailyLimits.pvpMatches + 1,
         },
+        lastPvPAward: nowPvP, // 🛡️ Update rate limit timestamp
       });
 
       // 🎯 Track weekly quest progress (async, non-blocking)
@@ -753,6 +777,7 @@ export const awardPvPCoins = mutation({
         lifetimeSpent: (profile.lifetimeSpent || 0) + Math.abs(penalty),
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
+        lastPvPAward: nowPvP, // 🛡️ Update rate limit timestamp
         dailyLimits: {
           ...dailyLimits,
           pvpMatches: dailyLimits.pvpMatches + 1,
