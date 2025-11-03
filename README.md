@@ -40,7 +40,27 @@ A competitive NFT card battle game built on Base blockchain, featuring PvE, PvP,
   - Welcome Gift: 500 coins (one-time)
 
 - **📊 Daily & Weekly Quests** - Progressive challenges
-- **🏆 Ranking Bonuses** - Up to 2.5x multiplier for defeating higher-ranked players
+  - Daily Quests: 3 rotating objectives (50-100 coins each)
+  - Weekly Quests: 4 major challenges (200-800 coins each)
+  - Quest types: Total matches, attack wins, defense wins, PvE streaks
+
+- **🏆 Achievement System** - 64 total achievements, ~302K coins available
+  - **Rarity Collectors**: Unlock by owning specific rarity cards (6 achievements)
+  - **Wear Collectors**: Collect cards in pristine condition (10 achievements)
+  - **Foil Collectors**: Hunt for shiny and prize foil variants (9 achievements)
+  - **Progressive Challenges**: Milestone-based collection goals (39 achievements)
+  - Rewards: 10-50,000 coins per achievement
+  - Track progress and claim rewards in the Achievements tab
+
+- **💸 Weekly Rewards** - Automated leaderboard rewards (Sundays 00:00 UTC)
+  - 🥇 1st Place: 1,000 coins
+  - 🥈 2nd Place: 750 coins
+  - 🥉 3rd Place: 500 coins
+  - 4th-10th: 300 coins
+  - 11th-20th: 150 coins
+  - 21st-50th: 75 coins
+
+- **🎯 Ranking Bonuses** - Up to 2.5x multiplier for defeating higher-ranked players
 - **💸 Entry Fees** - PvP: 20 coins | Attack: FREE
 
 See [ECONOMY-GUIDE.md](docs/ECONOMY-GUIDE.md) for complete details.
@@ -60,6 +80,7 @@ See [ECONOMY-GUIDE.md](docs/ECONOMY-GUIDE.md) for complete details.
 - **Multi-wallet Support** - MetaMask, Coinbase Wallet, WalletConnect
 - **Farcaster Integration** - Mini app with notifications
 - **Profile System** - Username, stats, defense deck
+- **Internationalization** - Multi-language support (Portuguese, English, Spanish, Hindi)
 
 ## 🚀 Getting Started
 
@@ -119,33 +140,45 @@ See [docs/setup/](docs/setup/) for detailed setup guides.
 vibe-most-wanted/
 ├── app/                    # Next.js App Router
 │   ├── page.tsx           # Main game page (6,694 lines)
+│   ├── test/              # Test page (no wallet required)
 │   ├── profile/           # User profiles
 │   ├── share/             # Match sharing
 │   └── api/               # API routes
 ├── components/            # React components
 │   ├── Badge.tsx
 │   ├── DifficultyModal.tsx
-│   └── FoilCardEffect.tsx
+│   ├── FoilCardEffect.tsx
+│   └── AchievementsView.tsx  # Achievement system UI
 ├── contexts/              # React contexts
 │   ├── LanguageContext.tsx
 │   ├── MusicContext.tsx
 │   └── Web3Provider.tsx
+├── hooks/                 # Performance-optimized hooks
+│   ├── useCardPower.ts    # Memoized power calculations
+│   ├── useCardSort.ts     # Optimized sorting
+│   ├── useAchievements.ts # Achievement tracking
+│   └── [33 more hooks]    # 50-70% performance boost
 ├── convex/                # Backend (Convex)
 │   ├── economy.ts         # Economy system
 │   ├── missions.ts        # Daily missions
 │   ├── quests.ts          # Daily/weekly quests
 │   ├── profiles.ts        # User profiles
 │   ├── matches.ts         # Match history
+│   ├── achievements.ts    # Achievement system
+│   ├── achievementDefinitions.ts  # 64 achievements
+│   ├── weeklyRewards.ts   # Automated reward distribution
 │   └── rooms.ts           # PvP rooms
 ├── lib/                   # Utilities & services
 │   ├── config.ts          # Centralized configuration
 │   ├── convex-profile.ts  # Profile service
 │   ├── convex-pvp.ts      # PvP service
 │   ├── nft-fetcher.ts     # NFT metadata
+│   ├── translations.ts    # i18n (4 languages)
 │   └── badges.ts          # Badge system
 ├── docs/                  # Documentation
 │   ├── ECONOMY-GUIDE.md
-│   ├── PENDING-TASKS.md
+│   ├── ACHIEVEMENTS-SYSTEM.md
+│   ├── WHATS-MISSING.md
 │   ├── CODE-KNOTS.md
 │   ├── setup/             # Setup guides
 │   └── guides/            # Implementation guides
@@ -194,10 +227,12 @@ vibe-most-wanted/
 ## 📚 Documentation
 
 - [Economy Guide](docs/ECONOMY-GUIDE.md) - Complete economy system breakdown
+- [Achievement System](docs/ACHIEVEMENTS-SYSTEM.md) - 64 achievements documentation
+- [What's Missing](docs/WHATS-MISSING.md) - Current development status & roadmap
 - [Elimination Mode](docs/ELIMINATION-MODE-NOTES.md) - Battle mechanics explained
-- [Pending Tasks](docs/PENDING-TASKS.md) - Development roadmap
 - [Code Knots](docs/CODE-KNOTS.md) - Technical debt documentation
 - [Farcaster Setup](docs/setup/FARCASTER-MINIAPP-CHECKLIST.md) - Integration guide
+- [Performance Hooks](hooks/README.md) - Optimized React hooks library (coming soon)
 
 ## 🚧 Development
 
@@ -209,6 +244,21 @@ npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
 ```
+
+### Testing Without Wallet
+
+For development and testing without connecting a wallet, visit the test page:
+
+```
+http://localhost:3000/test
+```
+
+Features:
+- ✅ No wallet connection required
+- ✅ Mock NFT data (8 test cards)
+- ✅ Full UI testing (Home, Missions, Achievements, Leaderboard)
+- ✅ Achievement system preview with progress tracking
+- ✅ Visual consistency verification
 
 ### Convex Development
 
@@ -246,5 +296,16 @@ Built with ❤️ by the Vibe team
 
 ---
 
-**Version**: 1.0.0
-**Last Updated**: 2025-01-02
+**Version**: 1.5.0
+**Last Updated**: 2025-11-03
+
+## 🎉 Recent Updates (Nov 2025)
+
+- ✅ **Achievement System** - 64 achievements with ~302K total coins
+- ✅ **Weekly Rewards** - Automated distribution every Sunday (cron job)
+- ✅ **Performance Hooks** - 36 optimized hooks (50-70% improvement)
+- ✅ **Test Page** - Development environment without wallet
+- ✅ **Visual Consistency** - Vintage casino gold theme across all UI
+- ✅ **i18n Support** - 4 languages (pt-BR, en, es, hi)
+- ✅ **Tutorial Fix** - Bottom navigation no longer blocked
+- ✅ **Bug Fixes** - Server error on achievement claim resolved

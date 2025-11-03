@@ -114,6 +114,107 @@
 
 ---
 
+## 🏆 WEEKLY REWARDS (Automated Distribution)
+
+**Distribution Time:** Every Sunday at 00:00 UTC (automated via cron job)
+
+| Rank Range | Reward | Requirements |
+|-----------|--------|--------------|
+| 🥇 **1st Place** | 1,000 coins | Top leaderboard position |
+| 🥈 **2nd Place** | 750 coins | 2nd on leaderboard |
+| 🥉 **3rd Place** | 500 coins | 3rd on leaderboard |
+| ⭐ **4th-10th** | 300 coins | Top 10 position |
+| ⭐ **11th-20th** | 150 coins | Top 20 position |
+| ⭐ **21st-50th** | 75 coins | Top 50 position |
+
+**How It Works:**
+- Rewards are **automatically distributed** every Sunday at midnight UTC
+- Based on your **leaderboard rank** at distribution time
+- Coins are **instantly added** to your balance
+- No action required - just maintain your rank!
+- View countdown and your projected reward in the **Missions** tab
+
+**Weekly Rewards UI:**
+- ⏰ Real-time countdown to next distribution
+- 📊 Your current rank and tier
+- 💰 Your projected reward amount
+- 🏅 TOP 10 leaderboard preview
+- 🎯 Live position tracking
+
+**Total Weekly Pool:** Up to 6,225 coins distributed to top 50 players
+
+**Strategy Tips:**
+- Grind on Saturday to secure your rank
+- Monitor the TOP 10 preview to see competition
+- Even TOP 50 earns rewards - stay active!
+- Rewards stack with daily earnings
+
+---
+
+## 🎯 ACHIEVEMENT SYSTEM
+
+**Total Available:** 64 achievements, ~302,000 coins
+
+### Achievement Categories
+
+#### 💎 Rarity Collectors (6 achievements)
+Unlock by owning specific rarity cards for the first time.
+
+| Achievement | Requirement | Reward |
+|------------|-------------|--------|
+| Common Collector | Own 1 Common | 50 coins |
+| Uncommon Collector | Own 1 Uncommon | 75 coins |
+| Rare Collector | Own 1 Rare | 100 coins |
+| Epic Collector | Own 1 Epic | 200 coins |
+| Legendary Collector | Own 1 Legendary | 500 coins |
+| Mythic Collector | Own 1 Mythic | 1,000 coins |
+
+#### ✨ Wear Collectors (10 achievements)
+Collect cards in pristine condition.
+
+| Achievement | Requirement | Reward |
+|------------|-------------|--------|
+| Pristine Collector | Own 1 Pristine | 300 coins |
+| Mint Collector | Own 1 Mint | 250 coins |
+| Pristine Hoarder | Own 10 Pristine | 1,000 coins |
+| Pristine Master | Own 50 Pristine | 5,000 coins |
+| Pristine Legend | Own 100 Pristine | 15,000 coins |
+| ... | ... | ... |
+
+#### 🎴 Foil Collectors (9 achievements)
+Hunt for shiny and prize foil variants.
+
+| Achievement | Requirement | Reward |
+|------------|-------------|--------|
+| Shiny Collector | Own 1 Standard Foil | 200 coins |
+| Prize Winner | Own 1 Prize Foil | 500 coins |
+| Foil Enthusiast | Own 10 Standard Foils | 1,000 coins |
+| Elite Collector | Own 10 Prize Foils | 2,000 coins |
+| Prize Legend | Own 50 Prize Foils | 10,000 coins |
+| ... | ... | ... |
+
+#### 📊 Progressive Challenges (39 achievements)
+Milestone-based collection goals across all rarities.
+
+**Examples:**
+- Common Beginner I-VI (1/5/10/25/50/100 Commons) - 10 to 1,000 coins each
+- Rare Beginner I-VI (1/5/10/25/50/100 Rares) - 50 to 5,000 coins each
+- Epic Beginner I-VI (1/5/10/25/50/100 Epics) - 100 to 10,000 coins each
+- Legendary series - 200 to 25,000 coins each
+- Mythic God (100 Mythics) - 50,000 coins 🏆
+
+**Achievement Features:**
+- ✅ Auto-detection when you collect new NFTs
+- ✅ Progress tracking for all 64 achievements
+- ✅ One-click claim for completed achievements
+- ✅ Claim all unclaimed rewards at once
+- ✅ Stats dashboard showing completion percentage
+- ✅ Filter by category (Rarity, Wear, Foil, Progressive)
+
+**Access:** Go to ★ **Achievements** tab in main navigation
+
+---
+
 ## 💡 EXAMPLE SCENARIOS
 
 ### Scenario 1: Rank #50 Attacks Rank #3 (Underdog Attack)
@@ -156,7 +257,9 @@ TOTAL:                            +6,725 coins/day
 
 ---
 
-## 📊 MAXIMUM DAILY EARNINGS
+## 📊 MAXIMUM EARNINGS
+
+### Daily Earnings
 
 | Source | Max Amount | Notes |
 |--------|------------|-------|
@@ -164,7 +267,26 @@ TOTAL:                            +6,725 coins/day
 | **Attack** | 1,000 | 5 attacks × 200 coins (vs top players) |
 | **PvP Ranked** | 800 | 10 matches × 80 net (after entry fees) |
 | **Daily Bonuses** | 1,425 | All bonuses achieved |
-| **TOTAL** | **6,725** | Theoretical maximum per day |
+| **TOTAL DAILY** | **6,725** | Theoretical maximum per day |
+
+### Weekly Earnings
+
+| Source | Max Amount | Notes |
+|--------|------------|-------|
+| **Daily Grind** | 47,075 | 6,725 × 7 days |
+| **Weekly Rewards** | 1,000 | If you're rank #1 |
+| **Achievements** | Variable | One-time claims as you collect NFTs |
+| **TOTAL WEEKLY** | **48,075+** | Without achievements |
+
+### Achievement Potential
+
+| Category | Total Coins | Notes |
+|----------|------------|-------|
+| **Rarity Collectors** | 1,925 | 6 achievements |
+| **Wear Collectors** | 24,950 | 10 achievements |
+| **Foil Collectors** | 23,950 | 9 achievements |
+| **Progressive** | ~251,000 | 39 milestone achievements |
+| **TOTAL** | **~302,000** | One-time collection rewards |
 
 ---
 
@@ -245,6 +367,10 @@ TOTAL:                            +6,725 coins/day
 
 | Date | Change | Old | New | Reason |
 |------|--------|-----|-----|--------|
+| 2025-11-03 | **Weekly Rewards** | N/A | Automated (cron) | Reward top 50 players |
+| 2025-11-03 | **Achievement System** | N/A | 64 achievements | ~302K coins available |
+| 2025-11-03 | **UI Consistency** | Mixed themes | Vintage casino gold | Consistent branding |
+| 2025-11-03 | **i18n Support** | English only | 4 languages | Global accessibility |
 | 2025-01 | Attack Entry Fee | 50 coins | 🆓 FREE | Remove barrier for competition |
 | 2025-01 | PvP Entry Fee | 40 coins | 20 coins | Make PvP more accessible |
 | 2025-01 | Attack Daily Cap | 3,500 | ❌ NONE | 5 attacks/day is enough |
@@ -262,9 +388,12 @@ TOTAL:                            +6,725 coins/day
 5. **Streaks** carry over between different game modes
 6. **Casual PvP** is perfect for testing decks without risk
 7. **Attack mode** is completely free - use all 5 daily attacks!
+8. **Weekly Rewards** are automatically distributed every Sunday 00:00 UTC
+9. **Achievements** auto-detect when you collect new NFTs - check the ★ Achievements tab!
+10. **Test Page** (`/test`) available for development without wallet connection
 
 ---
 
-**Generated:** 2025-01-02
-**Version:** 2.0
+**Generated:** 2025-11-03
+**Version:** 3.0 (Achievement & Weekly Rewards Update)
 **Status:** ✅ Active
