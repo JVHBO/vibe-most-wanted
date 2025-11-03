@@ -17,6 +17,7 @@ import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
+import { ProgressBar } from "@/components/ProgressBar";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -5671,26 +5672,15 @@ export default function TCGPage() {
               </p>
 
               {!questProgress.claimed && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs md:text-sm text-purple-300 font-modern">
-                    <span>{t('questProgress')}</span>
-                    <span className="font-bold">
-                      {questProgress.progress} / {questProgress.quest.requirement.count || 1}
-                    </span>
-                  </div>
-                  <div className="w-full bg-purple-950/50 rounded-full h-2.5 md:h-3 border border-purple-500/30">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        questProgress.completed
-                          ? 'bg-gradient-to-r from-purple-500 to-blue-500 shadow-[0_0_10px_rgba(168,85,247,0.8)]'
-                          : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
-                      }`}
-                      style={{
-                        width: `${Math.min(100, (questProgress.progress / (questProgress.quest.requirement.count || 1)) * 100)}%`
-                      }}
-                    />
-                  </div>
-                </div>
+                <ProgressBar
+                  current={questProgress.progress}
+                  target={questProgress.quest.requirement.count || 1}
+                  showPercentage={true}
+                  showNumbers={true}
+                  size="md"
+                  variant="purple"
+                  animate={true}
+                />
               )}
             </div>
           )}
@@ -6226,26 +6216,15 @@ export default function TCGPage() {
                             </button>
                           ) : null}
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs text-purple-300">
-                            <span>Progress</span>
-                            <span className="font-bold">
-                              {weeklyProgress.quests.weekly_attack_wins.current} / {weeklyProgress.quests.weekly_attack_wins.target}
-                            </span>
-                          </div>
-                          <div className="w-full bg-purple-950/50 rounded-full h-2 border border-purple-500/30">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                weeklyProgress.quests.weekly_attack_wins.completed
-                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
-                                  : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
-                              }`}
-                              style={{
-                                width: `${Math.min(100, (weeklyProgress.quests.weekly_attack_wins.current / weeklyProgress.quests.weekly_attack_wins.target) * 100)}%`
-                              }}
-                            />
-                          </div>
-                        </div>
+                        <ProgressBar
+                          current={weeklyProgress.quests.weekly_attack_wins.current}
+                          target={weeklyProgress.quests.weekly_attack_wins.target}
+                          showPercentage={true}
+                          showNumbers={true}
+                          size="sm"
+                          variant="purple"
+                          animate={true}
+                        />
                       </div>
                     )}
 
@@ -6281,26 +6260,15 @@ export default function TCGPage() {
                             </button>
                           ) : null}
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs text-purple-300">
-                            <span>Progress</span>
-                            <span className="font-bold">
-                              {weeklyProgress.quests.weekly_total_matches.current} / {weeklyProgress.quests.weekly_total_matches.target}
-                            </span>
-                          </div>
-                          <div className="w-full bg-purple-950/50 rounded-full h-2 border border-purple-500/30">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                weeklyProgress.quests.weekly_total_matches.completed
-                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
-                                  : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
-                              }`}
-                              style={{
-                                width: `${Math.min(100, (weeklyProgress.quests.weekly_total_matches.current / weeklyProgress.quests.weekly_total_matches.target) * 100)}%`
-                              }}
-                            />
-                          </div>
-                        </div>
+                        <ProgressBar
+                          current={weeklyProgress.quests.weekly_total_matches.current}
+                          target={weeklyProgress.quests.weekly_total_matches.target}
+                          showPercentage={true}
+                          showNumbers={true}
+                          size="sm"
+                          variant="purple"
+                          animate={true}
+                        />
                       </div>
                     )}
 
@@ -6336,26 +6304,15 @@ export default function TCGPage() {
                             </button>
                           ) : null}
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs text-purple-300">
-                            <span>Progress</span>
-                            <span className="font-bold">
-                              {weeklyProgress.quests.weekly_defense_wins.current} / {weeklyProgress.quests.weekly_defense_wins.target}
-                            </span>
-                          </div>
-                          <div className="w-full bg-purple-950/50 rounded-full h-2 border border-purple-500/30">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                weeklyProgress.quests.weekly_defense_wins.completed
-                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
-                                  : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
-                              }`}
-                              style={{
-                                width: `${Math.min(100, (weeklyProgress.quests.weekly_defense_wins.current / weeklyProgress.quests.weekly_defense_wins.target) * 100)}%`
-                              }}
-                            />
-                          </div>
-                        </div>
+                        <ProgressBar
+                          current={weeklyProgress.quests.weekly_defense_wins.current}
+                          target={weeklyProgress.quests.weekly_defense_wins.target}
+                          showPercentage={true}
+                          showNumbers={true}
+                          size="sm"
+                          variant="purple"
+                          animate={true}
+                        />
                       </div>
                     )}
 
@@ -6391,26 +6348,15 @@ export default function TCGPage() {
                             </button>
                           ) : null}
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs text-purple-300">
-                            <span>Progress</span>
-                            <span className="font-bold">
-                              {weeklyProgress.quests.weekly_pve_streak.current} / {weeklyProgress.quests.weekly_pve_streak.target}
-                            </span>
-                          </div>
-                          <div className="w-full bg-purple-950/50 rounded-full h-2 border border-purple-500/30">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                weeklyProgress.quests.weekly_pve_streak.completed
-                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
-                                  : 'bg-gradient-to-r from-purple-600/60 to-blue-600/60'
-                              }`}
-                              style={{
-                                width: `${Math.min(100, (weeklyProgress.quests.weekly_pve_streak.current / weeklyProgress.quests.weekly_pve_streak.target) * 100)}%`
-                              }}
-                            />
-                          </div>
-                        </div>
+                        <ProgressBar
+                          current={weeklyProgress.quests.weekly_pve_streak.current}
+                          target={weeklyProgress.quests.weekly_pve_streak.target}
+                          showPercentage={true}
+                          showNumbers={true}
+                          size="sm"
+                          variant="purple"
+                          animate={true}
+                        />
                       </div>
                     )}
                   </div>
