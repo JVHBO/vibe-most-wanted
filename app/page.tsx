@@ -801,6 +801,10 @@ export default function TCGPage() {
   const sortedNfts = useSortedByPower(nfts);
   const strongestNfts = useStrongestCards(nfts, HAND_SIZE);
 
+  // 🚀 Performance: Memoized JC NFTs (AI deck)
+  const sortedJcNfts = useSortedByPower(jcNfts);
+  const strongestJcNfts = useStrongestCards(jcNfts, HAND_SIZE);
+
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
   const awardPvPCoins = useMutation(api.economy.awardPvPCoins);
