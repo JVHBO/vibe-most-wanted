@@ -29,3 +29,41 @@ Place your music files in this directory according to the following naming conve
 - Missing files will result in console warnings but won't break the app
 - Files are loaded on demand when needed
 - The system ensures only one track plays at a time
+
+## ⚠️ COPYRIGHT WARNING:
+
+**IMPORTANT:** You must use royalty-free music for all files!
+
+### Current Status:
+- ✅ `default.mp3` - OK (already included)
+- ❌ Regional music files (en, es, hi, pt-br, ru, zh-cn) - **NOT INCLUDED** (copyright issues)
+
+### Where to Find Royalty-Free Music:
+
+1. **Pixabay Music** (https://pixabay.com/music/)
+   - 100% free, no attribution required
+   - Commercial use allowed
+   - Search by language/style
+
+2. **YouTube Audio Library** (https://www.youtube.com/audiolibrary/music)
+   - Filter by "No attribution required"
+   - Good selection of international music
+
+3. **Free Music Archive** (https://freemusicarchive.org/)
+   - Check license (CC0 or CC BY recommended)
+   - Various international styles
+
+4. **Incompetech** (https://incompetech.com/)
+   - Free with attribution
+   - Easy to credit in app
+
+### Recommendations by Language:
+- **English (en)**: Search for "country", "folk", "americana" on Pixabay
+- **Spanish (es)**: Search for "flamenco", "latin", "acoustic spanish"
+- **Hindi (hi)**: Search for "indian traditional", "sitar", "tabla"
+- **Portuguese (pt-br)**: Search for "bossa nova", "brazilian", "samba"
+- **Russian (ru)**: Search for "russian folk", "balalaika", "slavic"
+- **Chinese (zh-cn)**: Search for "chinese traditional", "guzheng", "erhu"
+
+### Legal Note:
+Never use music downloaded from YouTube (unless from official royalty-free channels), Spotify, or other streaming services without proper licensing. This can result in DMCA takedowns or legal issues.
