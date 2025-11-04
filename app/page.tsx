@@ -57,6 +57,20 @@ const setCache = (key: string, value: string): void => {
   imageUrlCache.set(key, { url: value, time: Date.now() });
 };
 
+// 🎨 Avatar URL helper with robust fallback
+const getAvatarUrl = (twitter?: string | null): string | null => {
+  if (!twitter) return null;
+  const username = twitter.replace('@', '');
+  return `https://unavatar.io/x/${username}`;
+};
+
+const getAvatarFallback = (twitter?: string | null): string => {
+  if (!twitter) return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2306b6d4"><circle cx="12" cy="12" r="10"/></svg>';
+  const username = twitter.replace('@', '');
+  // DiceBear avatars - always works, looks professional
+  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}&backgroundColor=1a1414`;
+};
+
 // Tornar AudioManager global para persistir entre páginas
 const getGlobalAudioManager = () => {
   if (typeof window === 'undefined') return null;
@@ -1564,7 +1578,7 @@ export default function TCGPage() {
     setBattlePlayerName(userProfile?.username || 'You'); // Show player username
     setBattleOpponentPfp(`/images/mecha-george-floyd.jpg?v=${Date.now()}`); // Mecha George pfp with cache bust
     // Player pfp from Twitter if available (same logic as profile/home)
-    setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/x/${userProfile.twitter}` : null);
+    setBattlePlayerPfp(getAvatarUrl(userProfile?.twitter));
     setShowLossPopup(false);
     setShowWinPopup(false);
     setResult('');
@@ -2237,9 +2251,9 @@ export default function TCGPage() {
             setBattleOpponentName(opponentName); // Show PvP opponent username
             setBattlePlayerName(playerName); // Show player username
             // Opponent pfp from Twitter if available
-            setBattleOpponentPfp(opponentTwitter ? `https://unavatar.io/x/${opponentTwitter}` : null);
+            setBattleOpponentPfp(getAvatarUrl(opponentTwitter));
             // Player pfp from Twitter if available
-            setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/x/${userProfile.twitter}` : null);
+            setBattlePlayerPfp(getAvatarUrl(userProfile?.twitter));
             setShowLossPopup(false);
             setShowWinPopup(false);
             setResult('');
@@ -3454,13 +3468,13 @@ export default function TCGPage() {
                   <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-cyan-500 shadow-lg shadow-cyan-500/50 mb-2 bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center relative">
                     {userProfile?.twitter ? (
                       <img
-                        src={`https://unavatar.io/x/${userProfile.twitter}`}
+                        src={getAvatarUrl(userProfile.twitter) || ''}
                         alt={battlePlayerName}
                         className="w-full h-full object-cover absolute inset-0"
                         onLoad={() => console.log('Player PFP loaded:', userProfile.twitter)}
                         onError={(e) => {
-                          console.log('Player PFP failed to load:', userProfile.twitter);
-                          (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2306b6d4"><circle cx="12" cy="12" r="10"/></svg>';
+                          console.log('Player PFP failed to load, using fallback:', userProfile.twitter);
+                          (e.target as HTMLImageElement).src = getAvatarFallback(userProfile.twitter);
                         }}
                       />
                     ) : null}
@@ -4016,8 +4030,8 @@ export default function TCGPage() {
                     setDealerCards(defenderCards);
                     setBattleOpponentName(targetPlayer.username);
                     setBattlePlayerName(userProfile?.username || 'You');
-                    setBattleOpponentPfp(targetPlayer.twitter ? `https://unavatar.io/x/${targetPlayer.twitter}` : null);
-                    setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/x/${userProfile.twitter}` : null);
+                    setBattleOpponentPfp(getAvatarUrl(targetPlayer.twitter));
+                    setBattlePlayerPfp(getAvatarUrl(userProfile?.twitter));
                     setShowAttackCardSelection(false);
                     setIsBattling(true);
                     setShowBattleScreen(true);
@@ -4345,9 +4359,9 @@ export default function TCGPage() {
                   setBattleOpponentName(targetPlayer.username); // Show enemy username
                   setBattlePlayerName(userProfile?.username || 'You'); // Show player username
                   // Opponent pfp from Twitter if available
-                  setBattleOpponentPfp(targetPlayer.twitter ? `https://unavatar.io/x/${targetPlayer.twitter}` : null);
+                  setBattleOpponentPfp(getAvatarUrl(targetPlayer.twitter));
                   // Player pfp from Twitter if available
-                  setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/x/${userProfile.twitter}` : null);
+                  setBattlePlayerPfp(getAvatarUrl(userProfile?.twitter));
                   setShowAttackCardSelection(false);
                   setIsBattling(true);
                   setShowBattleScreen(true);
@@ -5567,10 +5581,10 @@ export default function TCGPage() {
                     >
                       {userProfile.twitter ? (
                         <img
-                          src={`https://unavatar.io/x/${userProfile.twitter}`}
+                          src={getAvatarUrl(userProfile.twitter) || ''}
                           alt={userProfile.username}
                           className="w-6 h-6 rounded-full"
-                          onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23a855f7"><circle cx="12" cy="12" r="10"/></svg>'; }}
+                          onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(userProfile.twitter); }}
                         />
                       ) : (
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold flex items-center justify-center text-xs font-bold text-vintage-black">
