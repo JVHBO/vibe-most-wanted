@@ -745,3 +745,74 @@ export const getAvailableCards = query({
     };
   },
 });
+
+/**
+ * 🎴 UPDATE REVEALED CARDS CACHE
+ * Saves metadata of revealed cards to prevent disappearing when Alchemy fails
+ * Smart merge: only adds new cards, keeps existing cache
+ */
+export const updateRevealedCardsCache = mutation({
+  args: {
+    address: v.string(),
+    revealedCards: v.array(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      rarity: v.string(),
+      wear: v.optional(v.string()),
+      foil: v.optional(v.string()),
+      character: v.optional(v.string()),
+      power: v.optional(v.number()),
+      attributes: v.optional(v.any()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    const { address, revealedCards } = args;
+    const normalizedAddress = address.toLowerCase();
+
+    // Get existing profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Get existing cache or create new
+    const existingCache = profile.revealedCardsCache || [];
+
+    // Create map of existing cached cards by tokenId
+    const cacheMap = new Map(
+      existingCache.map(card => [card.tokenId, card])
+    );
+
+    // Merge: add new cards, update existing if needed
+    const now = Date.now();
+    for (const card of revealedCards) {
+      // Only add/update if card is actually revealed (has attributes)
+      if (card.wear || card.character || card.power) {
+        cacheMap.set(card.tokenId, {
+          ...card,
+          cachedAt: cacheMap.has(card.tokenId) ? cacheMap.get(card.tokenId)!.cachedAt : now,
+        });
+      }
+    }
+
+    // Convert back to array
+    const mergedCache = Array.from(cacheMap.values());
+
+    // Update profile with merged cache
+    await ctx.db.patch(profile._id, {
+      revealedCardsCache: mergedCache,
+      lastUpdated: now,
+    });
+
+    return {
+      success: true,
+      cachedCount: mergedCache.length,
+      newlyCached: mergedCache.length - existingCache.length,
+    };
+  },
+});

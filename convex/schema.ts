@@ -57,6 +57,20 @@ export default defineSchema({
     // Owned Token IDs (for defense deck validation)
     ownedTokenIds: v.optional(v.array(v.string())),
 
+    // Revealed Cards Cache (metadata cache for reliability when Alchemy fails)
+    revealedCardsCache: v.optional(v.array(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      rarity: v.string(),
+      wear: v.optional(v.string()),
+      foil: v.optional(v.string()),
+      character: v.optional(v.string()),
+      power: v.optional(v.number()),
+      attributes: v.optional(v.any()), // Full attributes array
+      cachedAt: v.number(), // Timestamp when cached
+    }))),
+
     // Attack limits
     attacksToday: v.number(),
     rematchesToday: v.number(),

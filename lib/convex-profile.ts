@@ -569,4 +569,35 @@ export class ConvexProfileService {
       throw new Error(`Erro ao atualizar username: ${error.message}`);
     }
   }
+
+  /**
+   * 🎴 UPDATE REVEALED CARDS CACHE
+   * Saves metadata of revealed cards to prevent disappearing when Alchemy fails
+   */
+  static async updateRevealedCardsCache(
+    address: string,
+    revealedCards: Array<{
+      tokenId: string;
+      name: string;
+      imageUrl: string;
+      rarity: string;
+      wear?: string;
+      foil?: string;
+      character?: string;
+      power?: number;
+      attributes?: any;
+    }>
+  ): Promise<{ success: boolean; cachedCount: number; newlyCached: number }> {
+    try {
+      const normalizedAddress = address.toLowerCase();
+      const result = await convex.mutation(api.profiles.updateRevealedCardsCache, {
+        address: normalizedAddress,
+        revealedCards,
+      });
+      return result;
+    } catch (error: any) {
+      console.error("❌ updateRevealedCardsCache error:", error);
+      throw error;
+    }
+  }
 }
