@@ -758,7 +758,7 @@ export default function TCGPage() {
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false); // Changed to false for testing
 
   // 🔧 DEV MODE: Force admin wallet for testing
-  const DEV_WALLET_BYPASS = true;
+  const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
   const address = DEV_WALLET_BYPASS
     ? '0xbb4c7d8b2e32c7c99d358be999377c208cce53c2'
     : (farcasterAddress || wagmiAddress);
@@ -2846,7 +2846,18 @@ export default function TCGPage() {
   // Load leaderboard with 5-minute refresh (usando Convex agora! 🚀)
   useEffect(() => {
     const loadLeaderboard = () => {
-      ConvexProfileService.getLeaderboard().then(setLeaderboard);
+      ConvexProfileService.getLeaderboard().then((data) => {
+        console.log('🏆 LEADERBOARD DATA FROM CONVEX:', data);
+        data.forEach((profile, index) => {
+          console.log(`  #${index + 1}: ${profile.displayName}`, {
+            address: profile.address,
+            stats: profile.stats,
+            openedCards: profile.stats?.openedCards,
+            totalPower: profile.stats?.totalPower
+          });
+        });
+        setLeaderboard(data);
+      });
     };
 
     loadLeaderboard();
