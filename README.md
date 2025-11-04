@@ -69,10 +69,10 @@ See [ECONOMY-GUIDE.md](docs/ECONOMY-GUIDE.md) for complete details.
 
 - **JC NFT Collection** (Base Mainnet)
 - **Contract**: `0xf14c1dc8ce5fe65413379f76c43fa1460c31e728`
-- Rarity system: Common, Uncommon, Rare, Epic, Legendary
-- Wear system: Mint, Near Mint, Slight Wear, Worn, Rekt
-- Foil effects for premium cards
-- Power calculation based on rarity + wear
+- Rarity system: Common, Rare, Epic, Legendary, Mythic
+- Wear system: Pristine, Mint, Lightly Played, Moderately Played, Heavily Played
+- Foil effects: Standard Foil (2.5x), Prize Foil (5x)
+- Power calculation based on rarity × wear × foil
 
 ### Web3 Features
 

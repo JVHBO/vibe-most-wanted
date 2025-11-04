@@ -345,21 +345,29 @@ function calcPower(nft: any): number {
   const foil = findAttr(nft, 'foil') || 'None';
   const rarity = findAttr(nft, 'rarity') || 'Common';
   const wear = findAttr(nft, 'wear') || 'Lightly Played';
+
+  // Base power by rarity (from tutorial)
   let base = 15;
   const r = rarity.toLowerCase();
-  if (r.includes('legend')) base = 150;
+  if (r.includes('mythic')) base = 350;
+  else if (r.includes('legend')) base = 150;
   else if (r.includes('epic')) base = 60;
   else if (r.includes('rare')) base = 15;
   else if (r.includes('common')) base = 15;
   else base = 15;
+
+  // Wear multiplier (from tutorial: Pristine=×1.4, Mint=×1.2, Others=×1.0)
   let wearMult = 1.0;
   const w = wear.toLowerCase();
-  if (w.includes('pristine')) wearMult = 1.25;
-  else if (w.includes('mint')) wearMult = 1.1;
+  if (w.includes('pristine')) wearMult = 1.4;
+  else if (w.includes('mint')) wearMult = 1.2;
+
+  // Foil multiplier (from tutorial: Prize=×15, Standard=×2.5)
   let foilMult = 1.0;
   const f = foil.toLowerCase();
   if (f.includes('prize')) foilMult = 15.0;
   else if (f.includes('standard')) foilMult = 2.5;
+
   const power = base * wearMult * foilMult;
   return Math.max(1, Math.round(power));
 }

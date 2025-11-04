@@ -157,13 +157,12 @@
 
 ### Achievement Categories
 
-#### 💎 Rarity Collectors (6 achievements)
+#### 💎 Rarity Collectors (5 achievements)
 Unlock by owning specific rarity cards for the first time.
 
 | Achievement | Requirement | Reward |
 |------------|-------------|--------|
 | Common Collector | Own 1 Common | 50 coins |
-| Uncommon Collector | Own 1 Uncommon | 75 coins |
 | Rare Collector | Own 1 Rare | 100 coins |
 | Epic Collector | Own 1 Epic | 200 coins |
 | Legendary Collector | Own 1 Legendary | 500 coins |
