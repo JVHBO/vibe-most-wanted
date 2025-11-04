@@ -23,6 +23,8 @@ import AchievementsView from "@/components/AchievementsView";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
+// 📝 Development logger (silent in production)
+import { devLog, devError } from "@/lib/utils/logger";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -31,13 +33,13 @@ const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 
 // Development logging helpers - only log in development mode
 const devLog = (...args: any[]) => {
-  if (IS_DEV) console.log(...args);
+  if (IS_DEV) devLog(...args);
 };
 const devWarn = (...args: any[]) => {
   if (IS_DEV) console.warn(...args);
 };
 const devError = (...args: any[]) => {
-  if (IS_DEV) console.error(...args);
+  if (IS_DEV) devError(...args);
 };
 
 const imageUrlCache = new Map();
@@ -1088,7 +1090,7 @@ export default function TCGPage() {
       // victory-2.jpg (Musculoso sorrindo) → Marvin vibes 🌈
       const audio = new Audio('/marvin-victory.mp3');
       audio.volume = 0.5;
-      audio.play().catch(err => console.log('Audio play failed:', err));
+      audio.play().catch(err => devLog('Audio play failed:', err));
     }
 
     setShowWinPopup(true);
@@ -1652,7 +1654,7 @@ export default function TCGPage() {
         break;
     }
 
-    console.log(`🤖 AI ordered cards for ${difficulty}:`, orderedCards.map(c => `#${c.tokenId} (${c.power} PWR)`));
+    devLog(`🤖 AI ordered cards for ${difficulty}:`, orderedCards.map(c => `#${c.tokenId} (${c.power} PWR)`));
     return orderedCards;
   }, [jcNfts]);
 
@@ -1711,10 +1713,10 @@ export default function TCGPage() {
     // 🚀 Performance: Use pre-sorted memoized array instead of sorting again
     const sorted = sortedJcNfts;
 
-    console.log('🎲 AI DECK SELECTION DEBUG:');
-    console.log('  Available cards:', available.length);
-    console.log('  Sorted top 5:', sorted.slice(0, 5).map(c => `#${c.tokenId} (${c.power} PWR)`));
-    console.log('  Difficulty:', difficulty);
+    devLog('🎲 AI DECK SELECTION DEBUG:');
+    devLog('  Available cards:', available.length);
+    devLog('  Sorted top 5:', sorted.slice(0, 5).map(c => `#${c.tokenId} (${c.power} PWR)`));
+    devLog('  Difficulty:', difficulty);
 
     let pickedDealer: any[] = [];
 
@@ -1725,10 +1727,10 @@ export default function TCGPage() {
         // GEY (Level 1): Weakest (15 PWR only), total = 75 PWR
         const weakest = sorted.filter(c => (c.power || 0) === 15);
         pickedDealer = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        console.log('~ GEY: 15 PWR only');
-        console.log('  Available:', weakest.length);
-        console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        console.log('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
+        devLog('~ GEY: 15 PWR only');
+        devLog('  Available:', weakest.length);
+        devLog('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'goofy':
@@ -1741,17 +1743,17 @@ export default function TCGPage() {
           pickedDealer = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         } else {
           // Fallback: expand to include nearby power values (15-38 range)
-          console.log('  ! Not enough 18-21 PWR cards, using expanded range');
+          devLog('  ! Not enough 18-21 PWR cards, using expanded range');
           const weakExpanded = sorted.filter(c => {
             const p = c.power || 0;
             return p >= 18 && p <= 38;
           });
           pickedDealer = weakExpanded.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         }
-        console.log('∿ GOOFY: 18-21 PWR');
-        console.log('  Available:', weak.length);
-        console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        console.log('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
+        devLog('∿ GOOFY: 18-21 PWR');
+        devLog('  Available:', weak.length);
+        devLog('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'gooner':
@@ -1761,47 +1763,47 @@ export default function TCGPage() {
           return p === 60 || p === 72;
         });
         pickedDealer = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        console.log('† GOONER: 60-72 PWR');
-        console.log('  Available:', medium.length);
-        console.log('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        console.log('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
+        devLog('† GOONER: 60-72 PWR');
+        devLog('  Available:', medium.length);
+        devLog('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'gangster':
         // GANGSTER (Level 4): Strong legendaries (150 PWR only, total 750)
         // Filter cards with exactly 150 power
         const cards150 = sorted.filter(c => (c.power || 0) === 150);
-        console.log('‡ GANGSTER DEBUG:');
-        console.log('  Total cards in sorted:', sorted.length);
-        console.log('  Cards with 150 PWR:', cards150.length);
+        devLog('‡ GANGSTER DEBUG:');
+        devLog('  Total cards in sorted:', sorted.length);
+        devLog('  Cards with 150 PWR:', cards150.length);
         if (cards150.length > 0) {
-          console.log('  First 3 cards with 150 PWR:', cards150.slice(0, 3).map(c => `#${c.tokenId} (${c.power} PWR, ${c.rarity})`));
+          devLog('  First 3 cards with 150 PWR:', cards150.slice(0, 3).map(c => `#${c.tokenId} (${c.power} PWR, ${c.rarity})`));
         }
 
         if (cards150.length >= HAND_SIZE) {
           // Randomize to add variety
           pickedDealer = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-          console.log('  ✓ Picked', HAND_SIZE, 'random cards from 150 PWR pool');
+          devLog('  ✓ Picked', HAND_SIZE, 'random cards from 150 PWR pool');
         } else {
           // Fallback: pick legendaries
-          console.log('  ! Not enough 150 PWR cards, using legendaries fallback');
+          devLog('  ! Not enough 150 PWR cards, using legendaries fallback');
           const legendaries = sorted.filter(c => {
             const r = (c.rarity || '').toLowerCase();
             return r.includes('legend');
           });
-          console.log('  Legendaries found:', legendaries.length);
+          devLog('  Legendaries found:', legendaries.length);
           pickedDealer = legendaries.slice(0, HAND_SIZE);
         }
-        console.log('‡ GANGSTER FINAL:', pickedDealer.length, 'cards picked');
-        console.log('  Cards:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        console.log('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
+        devLog('‡ GANGSTER FINAL:', pickedDealer.length, 'cards picked');
+        devLog('  Cards:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
 
       case 'gigachad':
         // GIGACHAD (Level 5): TOP 5 STRONGEST (always same cards, total ~855)
         pickedDealer = sorted.slice(0, HAND_SIZE);
-        console.log('§ GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        console.log('§ GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
+        devLog('§ GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        devLog('§ GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
     }
 
@@ -1822,7 +1824,7 @@ export default function TCGPage() {
         const opponentCard = orderedOpponentCards[currentRound - 1];
 
         if (!playerCard || !opponentCard) {
-          console.error('✗ Missing cards for elimination round!');
+          devError('✗ Missing cards for elimination round!');
           return;
         }
 
@@ -1862,7 +1864,7 @@ export default function TCGPage() {
         setEliminationOpponentScore(newOpponentScore);
         setRoundResults([...roundResults, roundResult]);
 
-        console.log(`✦ Round ${currentRound} result:`, roundResult, `Score: ${newPlayerScore}-${newOpponentScore}`);
+        devLog(`✦ Round ${currentRound} result:`, roundResult, `Score: ${newPlayerScore}-${newOpponentScore}`);
 
         // Check if match is over
         setTimeout(() => {
@@ -2327,9 +2329,9 @@ export default function TCGPage() {
               try {
                 const opponentProfile = await ConvexProfileService.getProfile(opponentAddress);
                 opponentTwitter = opponentProfile?.twitter;
-                console.log('Opponent profile loaded:', opponentProfile?.username, 'twitter:', opponentTwitter);
+                devLog('Opponent profile loaded:', opponentProfile?.username, 'twitter:', opponentTwitter);
               } catch (e) {
-                console.log('Failed to load opponent profile:', e);
+                devLog('Failed to load opponent profile:', e);
               }
             }
 
@@ -3646,9 +3648,9 @@ export default function TCGPage() {
                         src={getAvatarUrl({ twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl }) || ''}
                         alt={battlePlayerName}
                         className="w-full h-full object-cover absolute inset-0"
-                        onLoad={() => console.log('Player PFP loaded:', userProfile.twitter)}
+                        onLoad={() => devLog('Player PFP loaded:', userProfile.twitter)}
                         onError={(e) => {
-                          console.log('Player PFP failed to load, using fallback:', userProfile.twitter);
+                          devLog('Player PFP failed to load, using fallback:', userProfile.twitter);
                           (e.target as HTMLImageElement).src = getAvatarFallback({ twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl });
                         }}
                       />
@@ -4489,7 +4491,7 @@ export default function TCGPage() {
                       if (soundEnabled) AudioManager.buttonClick();
                       return; // Parar aqui - batalha só começa depois de confirmar no modal
                     } catch (error) {
-                      console.error('Error fetching PvP preview:', error);
+                      devError('Error fetching PvP preview:', error);
                       setIsLoadingPreview(false);
                       // Se preview falhar, continuar normalmente
                     }
@@ -6558,7 +6560,7 @@ export default function TCGPage() {
                                   await claimWeeklyReward({ address, questId: 'weekly_attack_wins' });
                                   if (soundEnabled) AudioManager.buttonSuccess();
                                 } catch (error) {
-                                  console.error('Error claiming reward:', error);
+                                  devError('Error claiming reward:', error);
                                   if (soundEnabled) AudioManager.buttonError();
                                 }
                               }}
@@ -6602,7 +6604,7 @@ export default function TCGPage() {
                                   await claimWeeklyReward({ address, questId: 'weekly_total_matches' });
                                   if (soundEnabled) AudioManager.buttonSuccess();
                                 } catch (error) {
-                                  console.error('Error claiming reward:', error);
+                                  devError('Error claiming reward:', error);
                                   if (soundEnabled) AudioManager.buttonError();
                                 }
                               }}
@@ -6646,7 +6648,7 @@ export default function TCGPage() {
                                   await claimWeeklyReward({ address, questId: 'weekly_defense_wins' });
                                   if (soundEnabled) AudioManager.buttonSuccess();
                                 } catch (error) {
-                                  console.error('Error claiming reward:', error);
+                                  devError('Error claiming reward:', error);
                                   if (soundEnabled) AudioManager.buttonError();
                                 }
                               }}
@@ -6690,7 +6692,7 @@ export default function TCGPage() {
                                   await claimWeeklyReward({ address, questId: 'weekly_pve_streak' });
                                   if (soundEnabled) AudioManager.buttonSuccess();
                                 } catch (error) {
-                                  console.error('Error claiming reward:', error);
+                                  devError('Error claiming reward:', error);
                                   if (soundEnabled) AudioManager.buttonError();
                                 }
                               }}
