@@ -824,6 +824,7 @@ export default function TCGPage() {
     '/victory-2.jpg', // Musculoso sorrindo
   ];
   const [currentVictoryImage, setCurrentVictoryImage] = useState<string>(VICTORY_IMAGES[0]);
+  const victoryAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
@@ -1101,6 +1102,9 @@ export default function TCGPage() {
       const audio = new Audio('/marvin-victory.mp3');
       audio.volume = 0.5;
       audio.play().catch(err => devLog('Audio play failed:', err));
+
+      // Store audio ref so we can stop it later
+      victoryAudioRef.current = audio;
     } else {
       // NORMAL VICTORY → victory-1.jpg (Gigachad)
       victoryImage = VICTORY_IMAGES[0]; // victory-1.jpg
@@ -1111,6 +1115,17 @@ export default function TCGPage() {
 
     setCurrentVictoryImage(victoryImage);
     setShowWinPopup(true);
+  };
+
+  // 🎵 Handler to close victory screen and stop audio
+  const handleCloseVictoryScreen = () => {
+    // Stop victory audio if playing
+    if (victoryAudioRef.current) {
+      victoryAudioRef.current.pause();
+      victoryAudioRef.current.currentTime = 0;
+      victoryAudioRef.current = null;
+    }
+    setShowWinPopup(false);
   };
 
   // 💰 Handler to claim daily login bonus
@@ -2924,11 +2939,11 @@ export default function TCGPage() {
   return (
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6 overflow-x-hidden">
       {showWinPopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowWinPopup(false)}>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseVictoryScreen}>
           {/* 🌈 GAY VIBES - Floating hearts effect for victory-2 */}
           {currentVictoryImage === '/victory-2.jpg' && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {[...Array(20)].map((_, i) => (
+              {[...Array(isInFarcaster ? 10 : 20)].map((_, i) => (
                 <div
                   key={i}
                   className="absolute animate-float-heart"
@@ -2945,18 +2960,20 @@ export default function TCGPage() {
                         <stop offset="50%" style={{ stopColor: '#ff1493', stopOpacity: 0.9 }} />
                         <stop offset="100%" style={{ stopColor: '#ff69b4', stopOpacity: 0.9 }} />
                       </linearGradient>
-                      <filter id={`glow-${i}`}>
-                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                        <feMerge>
-                          <feMergeNode in="coloredBlur"/>
-                          <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                      </filter>
+                      {!isInFarcaster && (
+                        <filter id={`glow-${i}`}>
+                          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                          <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                          </feMerge>
+                        </filter>
+                      )}
                     </defs>
                     <path
                       d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                       fill={`url(#rainbow-${i})`}
-                      filter={`url(#glow-${i})`}
+                      filter={isInFarcaster ? undefined : `url(#glow-${i})`}
                     />
                   </svg>
                 </div>
@@ -3032,7 +3049,7 @@ export default function TCGPage() {
               </a>
             </div>
             <button
-              onClick={() => setShowWinPopup(false)}
+              onClick={handleCloseVictoryScreen}
               className="absolute top-4 right-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-gold"
             >
               ×
