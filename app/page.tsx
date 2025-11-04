@@ -340,18 +340,18 @@ function calcPower(nft: any): number {
   // Base power by rarity (from tutorial)
   let base = 5;
   const r = rarity.toLowerCase();
-  if (r.includes('mythic')) base = 600;
+  if (r.includes('mythic')) base = 800;
   else if (r.includes('legend')) base = 240;
-  else if (r.includes('epic')) base = 60;
-  else if (r.includes('rare')) base = 15;
+  else if (r.includes('epic')) base = 80;
+  else if (r.includes('rare')) base = 20;
   else if (r.includes('common')) base = 5;
   else base = 5;
 
-  // Wear multiplier (from tutorial: Pristine=×1.4, Mint=×1.2, Others=×1.0)
+  // Wear multiplier (from tutorial: Pristine=×1.8, Mint=×1.4, Others=×1.0)
   let wearMult = 1.0;
   const w = wear.toLowerCase();
-  if (w.includes('pristine')) wearMult = 1.4;
-  else if (w.includes('mint')) wearMult = 1.2;
+  if (w.includes('pristine')) wearMult = 1.8;
+  else if (w.includes('mint')) wearMult = 1.4;
 
   // Foil multiplier (from tutorial: Prize=×15, Standard=×2.5)
   let foilMult = 1.0;
