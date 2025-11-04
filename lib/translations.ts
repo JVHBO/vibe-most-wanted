@@ -728,7 +728,7 @@ export const translations = {
     rarityBase: 'दुर्लभता के आधार पर',
     rarityValues: 'Common=5 • Rare=15 • Epic=60 • Legendary=150 • Mythic=350',
     wearMultiplier: 'घिसावट गुणक',
-    wearValues: 'Pristine=×1.5 • Excellent=×1.3 • Good=×1.1',
+    wearValues: 'Pristine=×1.4 • Mint=×1.2 • Others=×1.0',
     foilMultiplier: 'फ़ॉइल गुणक',
     foilValues: 'Prize=×5 • Standard=×2.5',
     formula: 'फॉर्मूला: शक्ति = दुर्लभता × घिसावट × फ़ॉइल',
