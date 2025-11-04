@@ -22,11 +22,11 @@ export const getAllMatches = query({
   },
 });
 
-// Backup de todos os achievements claims
-export const getAllAchievementClaims = query({
+// Backup de todos os achievements
+export const getAllAchievements = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("achievementClaims").collect();
+    return await ctx.db.query("achievements").collect();
   },
 });
 
@@ -42,7 +42,7 @@ export const getAllQuestProgress = query({
 export const getAllPvPRooms = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("pvpRooms").collect();
+    return await ctx.db.query("rooms").collect();
   },
 });
 
@@ -65,16 +65,16 @@ export const getCompleteBackup = query({
     const [
       profiles,
       matches,
-      achievementClaims,
+      achievements,
       questProgress,
-      pvpRooms,
+      rooms,
       weeklyRewards
     ] = await Promise.all([
       ctx.db.query("profiles").collect(),
       ctx.db.query("matches").collect(),
-      ctx.db.query("achievementClaims").collect(),
+      ctx.db.query("achievements").collect(),
       ctx.db.query("questProgress").collect(),
-      ctx.db.query("pvpRooms").collect(),
+      ctx.db.query("rooms").collect(),
       ctx.db.query("weeklyRewards").collect().catch(() => []),
     ]);
 
@@ -82,16 +82,16 @@ export const getCompleteBackup = query({
       timestamp: Date.now(),
       profiles,
       matches,
-      achievementClaims,
+      achievements,
       questProgress,
-      pvpRooms,
+      rooms,
       weeklyRewards,
       stats: {
         totalProfiles: profiles.length,
         totalMatches: matches.length,
-        totalAchievementClaims: achievementClaims.length,
+        totalAchievements: achievements.length,
         totalQuestProgress: questProgress.length,
-        totalPvPRooms: pvpRooms.length,
+        totalRooms: rooms.length,
         totalWeeklyRewards: weeklyRewards.length,
       }
     };
