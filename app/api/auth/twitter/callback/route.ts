@@ -86,14 +86,22 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ Token exchange successful');
 
-    // Get user info
+    // Get user info (request profile_image_url field)
     console.log('👤 Fetching user info...');
-    const { data: userObject } = await loggedClient.v2.me();
+    const { data: userObject } = await loggedClient.v2.me({
+      'user.fields': ['profile_image_url']
+    });
     console.log('✅ Got user:', userObject.username);
+    console.log('📸 Profile image URL:', userObject.profile_image_url);
 
-    // Save Twitter handle to Convex
+    // Save Twitter handle + profile image to Convex
     console.log('💾 Saving to Convex...');
-    await ConvexProfileService.updateTwitter(address, userObject.username);
+    await ConvexProfileService.updateTwitter(
+      address,
+      userObject.username,
+      undefined,
+      userObject.profile_image_url
+    );
     console.log('✅ Saved to Convex');
 
     // Redirect back to app with success
