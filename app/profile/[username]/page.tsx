@@ -386,6 +386,51 @@ export default function ProfilePage() {
             devWarn('⚠️ Fetched fewer cards than expected! Profile stats may be outdated or maxPages still too low.');
           }
 
+          // 🎴 HYBRID CACHE SYSTEM: Merge Alchemy data with cached metadata
+          // This ensures revealed cards don't disappear when Alchemy fails
+          try {
+            const cache = profileData.revealedCardsCache || [];
+            const cacheMap = new Map(cache.map(c => [c.tokenId, c]));
+            const ownedIds = new Set(enriched.map(nft => nft.tokenId));
+
+            // For each owned NFT, use cache if Alchemy data is missing
+            for (let i = 0; i < enriched.length; i++) {
+              const nft = enriched[i];
+              const fromCache = cacheMap.get(nft.tokenId);
+
+              // If Alchemy failed to load metadata but we have cache → use cache
+              if (fromCache && !nft.wear && !nft.character && !nft.power) {
+                devLog(`🎴 Using cached metadata for token ${nft.tokenId}`);
+                enriched[i] = { ...nft, ...fromCache };
+              }
+            }
+
+            // Collect newly revealed cards to update cache
+            const revealedCards = enriched
+              .filter(nft => nft.wear || nft.character || nft.power)
+              .map(nft => ({
+                tokenId: nft.tokenId,
+                name: nft.name || '',
+                imageUrl: nft.imageUrl || '',
+                rarity: nft.rarity || '',
+                wear: nft.wear,
+                foil: nft.foil,
+                character: nft.character,
+                power: nft.power,
+                attributes: nft.attributes,
+              }));
+
+            // Save to cache (non-blocking, fire and forget)
+            if (revealedCards.length > 0) {
+              ConvexProfileService.updateRevealedCardsCache(address, revealedCards)
+                .then(result => devLog(`✅ Cache updated: ${result.newlyCached} new cards`))
+                .catch(err => devWarn('⚠️ Failed to update cache:', err));
+            }
+          } catch (cacheErr: any) {
+            devWarn('⚠️ Cache merge failed:', cacheErr.message || cacheErr);
+            // Non-critical, continue with Alchemy data
+          }
+
           // ✅ UPDATE STATS: When someone visits a profile, update the database with fresh data
           // This keeps the leaderboard accurate even if the player sold/bought cards and never logged in
           try {
