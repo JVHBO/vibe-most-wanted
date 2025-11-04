@@ -1085,8 +1085,8 @@ export default function TCGPage() {
       // victory-1.jpg (Gigachad original) → som padrão
       if (soundEnabled) AudioManager.win();
     } else {
-      // victory-2.jpg (Musculoso sorrindo) → "Ai que delícia!"
-      const audio = new Audio('/victory-sound.mp3');
+      // victory-2.jpg (Musculoso sorrindo) → Marvin vibes 🌈
+      const audio = new Audio('/marvin-victory.mp3');
       audio.volume = 0.5;
       audio.play().catch(err => console.log('Audio play failed:', err));
     }
@@ -2906,11 +2906,54 @@ export default function TCGPage() {
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6 overflow-x-hidden">
       {showWinPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowWinPopup(false)}>
+          {/* 🌈 GAY VIBES - Floating hearts effect for victory-2 */}
+          {currentVictoryImage === '/victory-2.jpg' && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              {[...Array(20)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute animate-float-heart"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 3}s`,
+                    animationDuration: `${3 + Math.random() * 2}s`,
+                  }}
+                >
+                  <svg width="40" height="40" viewBox="0 0 24 24" className="drop-shadow-lg">
+                    <defs>
+                      <linearGradient id={`rainbow-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style={{ stopColor: '#ff6ec7', stopOpacity: 0.9 }} />
+                        <stop offset="50%" style={{ stopColor: '#ff1493', stopOpacity: 0.9 }} />
+                        <stop offset="100%" style={{ stopColor: '#ff69b4', stopOpacity: 0.9 }} />
+                      </linearGradient>
+                      <filter id={`glow-${i}`}>
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                        <feMerge>
+                          <feMergeNode in="coloredBlur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <path
+                      d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                      fill={`url(#rainbow-${i})`}
+                      filter={`url(#glow-${i})`}
+                    />
+                  </svg>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
             <img
               src={currentVictoryImage}
               alt="Victory!"
-              className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-yellow-500/50 border-4 border-yellow-400"
+              className={`max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl border-4 ${
+                currentVictoryImage === '/victory-2.jpg'
+                  ? 'shadow-pink-500/50 border-pink-400 animate-pulse-glow'
+                  : 'shadow-yellow-500/50 border-yellow-400'
+              }`}
             />
             <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
               {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
