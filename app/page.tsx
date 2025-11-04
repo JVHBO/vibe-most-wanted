@@ -819,6 +819,13 @@ export default function TCGPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const CARDS_PER_PAGE = 12;
 
+  // 🎉 Victory Images - Random selection on each win!
+  const VICTORY_IMAGES = [
+    '/victory-1.jpg', // Gigachad original
+    '/victory-2.jpg', // Musculoso sorrindo
+  ];
+  const [currentVictoryImage, setCurrentVictoryImage] = useState<string>(VICTORY_IMAGES[0]);
+
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
   const [pvpMode, setPvpMode] = useState<'menu' | 'pvpMenu' | 'autoMatch' | 'selectMode' | 'createRoom' | 'joinRoom' | 'inRoom' | null>(null);
@@ -1064,6 +1071,24 @@ export default function TCGPage() {
       devError('✗ Error enabling notifications:', error);
       if (soundEnabled) AudioManager.buttonError();
     }
+  };
+
+  // 🎉 Show victory popup with random image and optional special sound
+  const showVictory = () => {
+    // Select random victory image
+    const randomImage = VICTORY_IMAGES[Math.floor(Math.random() * VICTORY_IMAGES.length)];
+    setCurrentVictoryImage(randomImage);
+
+    // 50% chance to play special victory sound instead of default win sound
+    if (Math.random() < 0.5) {
+      const audio = new Audio('/victory-sound.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(err => console.log('Audio play failed:', err));
+    } else {
+      if (soundEnabled) AudioManager.win();
+    }
+
+    setShowWinPopup(true);
   };
 
   // 💰 Handler to claim daily login bonus
@@ -1917,8 +1942,7 @@ export default function TCGPage() {
                 // Show result popup after closing battle
                 setTimeout(() => {
                   if (finalResult === 'win') {
-                    setShowWinPopup(true);
-                    if (soundEnabled) AudioManager.win();
+                    showVictory();
                   } else if (finalResult === 'loss') {
                     setShowLossPopup(true);
                     if (soundEnabled) AudioManager.lose();
@@ -2056,8 +2080,7 @@ export default function TCGPage() {
           // Mostra popup DEPOIS de fechar batalha
           setTimeout(() => {
             if (matchResult === 'win') {
-              setShowWinPopup(true);
-              if (soundEnabled) AudioManager.win();
+              showVictory();
             } else if (matchResult === 'loss') {
               setShowLossPopup(true);
               if (soundEnabled) AudioManager.lose();
@@ -2444,8 +2467,7 @@ export default function TCGPage() {
                   // Mostra popup DEPOIS de fechar batalha
                   setTimeout(() => {
                     if (matchResult === 'win') {
-                      setShowWinPopup(true);
-                      if (soundEnabled) AudioManager.win();
+                      showVictory();
                     } else if (matchResult === 'loss') {
                       setShowLossPopup(true);
                       if (soundEnabled) AudioManager.lose();
@@ -2883,7 +2905,7 @@ export default function TCGPage() {
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowWinPopup(false)}>
           <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
             <img
-              src="https://pbs.twimg.com/media/G2cr8wQWMAADqE7.jpg"
+              src={currentVictoryImage}
               alt="Victory!"
               className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-yellow-500/50 border-4 border-yellow-400"
             />
@@ -4248,8 +4270,7 @@ export default function TCGPage() {
                       // 🎯 Show victory/loss popup after closing
                       setTimeout(() => {
                         if (matchResult === 'win') {
-                          setShowWinPopup(true);
-                          if (soundEnabled) AudioManager.win();
+                          showVictory();
                         } else if (matchResult === 'loss') {
                           setShowLossPopup(true);
                           if (soundEnabled) AudioManager.lose();
@@ -4574,8 +4595,7 @@ export default function TCGPage() {
                       // Show result popup after closing battle
                       setTimeout(() => {
                         if (matchResult === 'win') {
-                          setShowWinPopup(true);
-                          if (soundEnabled) AudioManager.win();
+                          showVictory();
                         } else if (matchResult === 'loss') {
                           setShowLossPopup(true);
                           if (soundEnabled) AudioManager.lose();
