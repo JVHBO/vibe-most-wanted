@@ -10,6 +10,7 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useMusic } from "@/contexts/MusicContext";
 import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery, useMutation, useConvex } from "convex/react";
@@ -727,6 +728,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
 
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
+  const { musicMode, setMusicMode, setVolume: syncMusicVolume } = useMusic();
   const router = useRouter();
   const playButtonsRef = useRef<HTMLDivElement>(null);
 
@@ -958,6 +960,11 @@ export default function TCGPage() {
       }
     }
   }, []);
+
+  // Sync music volume with MusicContext
+  useEffect(() => {
+    syncMusicVolume(musicVolume);
+  }, [musicVolume, syncMusicVolume]);
 
   // Auto-connect Farcaster wallet in miniapp context
   useEffect(() => {
@@ -3125,7 +3132,32 @@ export default function TCGPage() {
                   <option value="es" className="bg-vintage-charcoal text-vintage-ice">Español</option>
                   <option value="hi" className="bg-vintage-charcoal text-vintage-ice">हिन्दी</option>
                   <option value="ru" className="bg-vintage-charcoal text-vintage-ice">Русский</option>
+                  <option value="zh-CN" className="bg-vintage-charcoal text-vintage-ice">简体中文</option>
                 </select>
+              </div>
+
+              {/* Music Mode Selector */}
+              <div className="bg-vintage-black/50 p-5 rounded-xl border border-vintage-gold/50">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-3xl text-vintage-gold">♫</span>
+                  <p className="font-modern font-bold text-vintage-gold">BACKGROUND MUSIC</p>
+                </div>
+                <select
+                  onChange={(e) => {
+                    if (soundEnabled) AudioManager.buttonClick();
+                    setMusicMode(e.target.value as any);
+                  }}
+                  value={musicMode}
+                  className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
+                >
+                  <option value="default" className="bg-vintage-charcoal text-vintage-ice">🎵 Default Music</option>
+                  <option value="language" className="bg-vintage-charcoal text-vintage-ice">🌍 Language Music</option>
+                </select>
+                <p className="text-xs text-vintage-burnt-gold mt-2 font-modern">
+                  {musicMode === 'default'
+                    ? '🎵 Playing default background music'
+                    : '🌍 Playing music based on selected language'}
+                </p>
               </div>
 
               {/* Change Username */}
