@@ -490,7 +490,7 @@ function Component() {
 ```
 
 **Affected Cards**:
-- Gangster deck (150 PWR): #4378, #6465, #2927, #6452, #5225
+- Gangster deck (240 PWR): #4378, #6465, #2927, #6452, #5225
 - Gigachad deck (Top 5): #6070
 - 17 other Legendary cards
 
@@ -5438,7 +5438,7 @@ Power = Base(Rarity) × WearMultiplier × FoilMultiplier
 - Common: 15
 - Rare: 15
 - Epic: 60
-- Legendary: 150
+- Legendary: 240
 
 **Wear Multipliers:**
 - Pristine: 1.25×
@@ -5455,9 +5455,9 @@ Power = Base(Rarity) × WearMultiplier × FoilMultiplier
 - Common + Mint + None = 15 × 1.1 × 1.0 = **17 PWR**
 - Common + Pristine + None = 15 × 1.25 × 1.0 = **19 PWR**
 - Epic + Lightly Played + None = 60 × 1.0 × 1.0 = **60 PWR**
-- Legendary + Lightly Played + None = 150 × 1.0 × 1.0 = **150 PWR**
-- Legendary + Mint + None = 150 × 1.1 × 1.0 = **165 PWR**
-- Legendary + Lightly Played + Prize = 150 × 1.0 × 15.0 = **2250 PWR** (not in JC deck)
+- Legendary + Lightly Played + None = 240 × 1.0 × 1.0 = **240 PWR**
+- Legendary + Mint + None = 240 × 1.1 × 1.0 = **264 PWR**
+- Legendary + Lightly Played + Prize = 240 × 1.0 × 15.0 = **3600 PWR** (not in JC deck)
 
 ### AI Difficulty Levels (5 Levels)
 
@@ -5487,8 +5487,8 @@ type AIDifficulty = 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad';
    - Unlock: Win against GOOFY
 
 4. **GANGSTER (Level 4)** 🔫
-   - Power Range: 150 only
-   - Total Power: **750** (5 × 150)
+   - Power Range: 240 only
+   - Total Power: **1200** (5 × 240)
    - Strategy: Strong legendaries
    - Unlock: Win against GOONER
 
