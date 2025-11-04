@@ -18,11 +18,14 @@ export const BADGES_CONFIG = {
   // AI badge wallet - Claude
   AI_WALLET: '0xBb4c7d8B2E32c7C99d358Be999377c208cCE53c2',
 
+  // Big Dog badge wallet
+  BIGDOG_WALLET: '0xba918b37cd34cb8f123081a01c8f5733996a3682',
+
   // Número máximo de early testers por userIndex (fallback)
   MAX_EARLY_TESTERS: 9999,
 };
 
-export type BadgeType = 'dev' | 'early_tester' | 'gey' | 'ai';
+export type BadgeType = 'dev' | 'early_tester' | 'gey' | 'ai' | 'bigdog';
 
 export interface Badge {
   type: BadgeType;
@@ -71,6 +74,15 @@ export const BADGES: Record<BadgeType, Badge> = {
     borderColor: 'border-cyan-400',
     textColor: 'text-cyan-300',
   },
+  bigdog: {
+    type: 'bigdog',
+    label: 'BIG DOG',
+    description: 'Big Dog',
+    icon: '🐕',
+    color: 'bg-gradient-to-r from-orange-600/30 via-amber-500/30 to-yellow-500/30',
+    borderColor: 'border-orange-500',
+    textColor: 'text-orange-400',
+  },
 };
 
 // Check if address is the developer
@@ -100,6 +112,11 @@ export function isAI(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.AI_WALLET.toLowerCase();
 }
 
+// Check if address is Big Dog
+export function isBigDog(address: string): boolean {
+  return address.toLowerCase() === BADGES_CONFIG.BIGDOG_WALLET.toLowerCase();
+}
+
 // Get badges for a user
 export function getUserBadges(address: string, userIndex: number): Badge[] {
   const badges: Badge[] = [];
@@ -118,6 +135,10 @@ export function getUserBadges(address: string, userIndex: number): Badge[] {
 
   if (isAI(address)) {
     badges.push(BADGES.ai);
+  }
+
+  if (isBigDog(address)) {
+    badges.push(BADGES.bigdog);
   }
 
   return badges;
