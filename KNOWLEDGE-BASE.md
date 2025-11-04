@@ -5435,14 +5435,15 @@ Power = Base(Rarity) × WearMultiplier × FoilMultiplier
 ```
 
 **Rarity Base Power:**
-- Common: 15
-- Rare: 15
-- Epic: 60
+- Common: 5
+- Rare: 20
+- Epic: 80
 - Legendary: 240
+- Mythic: 800
 
 **Wear Multipliers:**
-- Pristine: 1.25×
-- Mint: 1.1×
+- Pristine: 1.8×
+- Mint: 1.4×
 - Others: 1.0×
 
 **Foil Multipliers:**
@@ -5451,12 +5452,12 @@ Power = Base(Rarity) × WearMultiplier × FoilMultiplier
 - None: 1×
 
 **Examples:**
-- Common + Lightly Played + None = 15 × 1.0 × 1.0 = **15 PWR**
-- Common + Mint + None = 15 × 1.1 × 1.0 = **17 PWR**
-- Common + Pristine + None = 15 × 1.25 × 1.0 = **19 PWR**
-- Epic + Lightly Played + None = 60 × 1.0 × 1.0 = **60 PWR**
+- Common + Lightly Played + None = 5 × 1.0 × 1.0 = **5 PWR**
+- Common + Mint + None = 5 × 1.4 × 1.0 = **7 PWR**
+- Common + Pristine + None = 5 × 1.8 × 1.0 = **9 PWR**
+- Epic + Lightly Played + None = 80 × 1.0 × 1.0 = **80 PWR**
 - Legendary + Lightly Played + None = 240 × 1.0 × 1.0 = **240 PWR**
-- Legendary + Mint + None = 240 × 1.1 × 1.0 = **264 PWR**
+- Legendary + Mint + None = 240 × 1.4 × 1.0 = **336 PWR**
 - Legendary + Lightly Played + Prize = 240 × 1.0 × 15.0 = **3600 PWR** (not in JC deck)
 
 ### AI Difficulty Levels (5 Levels)

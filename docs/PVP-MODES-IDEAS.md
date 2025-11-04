@@ -98,13 +98,13 @@ PRIZE DOUBLE:     2 Prize foils → +60%
 ```
 ROUND 1: RARITY SHOWDOWN
   → Soma base rarity values
-  → Mythic=600, Legendary=240, Epic=60, Rare=15, Common=5
+  → Mythic=800, Legendary=240, Epic=80, Rare=20, Common=5
 
 ROUND 2: FOIL FACE-OFF
   → Conta foils: Prize=3pts, Standard=1pt, None=0
 
 ROUND 3: WEAR WAR
-  → Soma wear quality: Pristine=1.4, Mint=1.2, etc
+  → Soma wear quality: Pristine=1.8, Mint=1.4, etc
 ```
 
 **Vantagens:**
