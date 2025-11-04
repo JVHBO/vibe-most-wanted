@@ -138,33 +138,33 @@ function findAttr(nft: any, trait: string): string {
   return '';
 }
 
-// Calculate power
+// Calculate power (matching tutorial system)
 function calcPower(nft: any): number {
-  const rarity = (findAttr(nft, 'rarity') || '').toLowerCase();
-  const wear = (findAttr(nft, 'wear') || '').toLowerCase();
-  const foil = (findAttr(nft, 'foil') || '').toLowerCase();
+  const foil = findAttr(nft, 'foil') || 'None';
+  const rarity = findAttr(nft, 'rarity') || 'Common';
+  const wear = findAttr(nft, 'wear') || 'Lightly Played';
 
-  const rarityMap: Record<string, number> = {
-    mythic: 350,
-    legendary: 250,
-    epic: 150,
-    rare: 75,
-    uncommon: 35,
-    common: 15,
-  };
+  // Base power by rarity (from tutorial)
+  let base = 15;
+  const r = rarity.toLowerCase();
+  if (r.includes('mythic')) base = 350;
+  else if (r.includes('legend')) base = 150;
+  else if (r.includes('epic')) base = 60;
+  else if (r.includes('rare')) base = 15;
+  else if (r.includes('common')) base = 15;
+  else base = 15;
 
-  let base = rarityMap[rarity] || 1;
+  // Wear multiplier (from tutorial: Pristine=×1.4, Mint=×1.2, Others=×1.0)
+  let wearMult = 1.0;
+  const w = wear.toLowerCase();
+  if (w.includes('pristine')) wearMult = 1.4;
+  else if (w.includes('mint')) wearMult = 1.2;
 
-  let wearMult = 1;
-  if (wear.includes('pristine')) wearMult = 1.5;
-  else if (wear.includes('excellent')) wearMult = 1.3;
-  else if (wear.includes('good')) wearMult = 1.1;
-  else if (wear.includes('fair')) wearMult = 0.9;
-  else if (wear.includes('poor')) wearMult = 0.7;
-
-  let foilMult = 1;
-  if (foil.includes('prize')) foilMult = 5;
-  else if (foil.includes('standard')) foilMult = 2.5;
+  // Foil multiplier (from tutorial: Prize=×15, Standard=×2.5)
+  let foilMult = 1.0;
+  const f = foil.toLowerCase();
+  if (f.includes('prize')) foilMult = 15.0;
+  else if (f.includes('standard')) foilMult = 2.5;
 
   const power = base * wearMult * foilMult;
   return Math.max(1, Math.round(power));

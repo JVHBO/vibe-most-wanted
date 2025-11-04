@@ -44,19 +44,6 @@ export const RARITY_ACHIEVEMENTS: AchievementDefinition[] = [
     reward: 50,
   },
   {
-    id: "uncommon_collector_1",
-    name: "Uncommon Collector",
-    description: "Own your first Uncommon card",
-    icon: "📗",
-    category: "rarity",
-    requirement: {
-      type: "have_rarity",
-      count: 1,
-      rarity: "Uncommon",
-    },
-    reward: 75,
-  },
-  {
     id: "rare_collector_1",
     name: "Rare Collector",
     description: "Own your first Rare card",

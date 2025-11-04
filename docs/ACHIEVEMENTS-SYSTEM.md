@@ -95,11 +95,10 @@ achievements: defineTable({
 
 ## 🏆 ACHIEVEMENT CATEGORIES
 
-### 📦 Rarity Achievements (6 total)
+### 📦 Rarity Achievements (5 total)
 | Achievement | Requirement | Reward |
 |-------------|-------------|--------|
 | Common Collector | 1 Common card | 50 coins |
-| Uncommon Collector | 1 Uncommon card | 75 coins |
 | Rare Collector | 1 Rare card | 100 coins |
 | Epic Collector | 1 Epic card | 200 coins |
 | Legendary Collector | 1 Legendary card | 500 coins |
