@@ -6062,9 +6062,23 @@ export default function TCGPage() {
                   </h1>
                   <div className="text-left md:text-right">
                     {userProfile && (
-                      <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold mb-1">
-                        ◈ <span className="hidden md:inline">Attacks Remaining:</span> <span className="text-vintage-neon-blue">{attacksRemaining}/{maxAttacks}</span>
-                      </p>
+                      <div>
+                        <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold mb-0">
+                          ◈ <span className="hidden md:inline">Attacks Remaining:</span> <span className="text-vintage-neon-blue">{attacksRemaining}/{maxAttacks}</span>
+                        </p>
+                        <p className="text-[10px] text-vintage-burnt-gold ml-3">
+                          {(() => {
+                            const now = new Date();
+                            const tomorrow = new Date(now);
+                            tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+                            tomorrow.setUTCHours(0, 0, 0, 0);
+                            const diff = tomorrow.getTime() - now.getTime();
+                            const hours = Math.floor(diff / (1000 * 60 * 60));
+                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                            return `Resets in ${hours}h ${minutes}m (00:00 UTC)`;
+                          })()}
+                        </p>
+                      </div>
                     )}
                     {/* 🔔 Farcaster Notifications Button */}
                     {isInFarcaster && userProfile && (
