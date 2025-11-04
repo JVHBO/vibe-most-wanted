@@ -3,8 +3,8 @@ import { ImageResponse } from 'next/og';
 export const runtime = 'edge';
 export const alt = 'Battle Result - VIBE Most Wanted';
 export const size = {
-  width: 1200,
-  height: 630,
+  width: 800,
+  height: 800,
 };
 export const contentType = 'image/png';
 
