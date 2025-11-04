@@ -755,10 +755,18 @@ export default function TCGPage() {
   // State for Farcaster address (when in miniapp)
   const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null);
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
-  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(true);
+  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false); // Changed to false for testing
 
-  // Use Farcaster address if available, otherwise Wagmi
-  const address = farcasterAddress || wagmiAddress;
+  // 🔧 DEV MODE: Force admin wallet for testing
+  const DEV_WALLET_BYPASS = true;
+  const address = DEV_WALLET_BYPASS
+    ? '0xbb4c7d8b2e32c7c99d358be999377c208cce53c2'
+    : (farcasterAddress || wagmiAddress);
+
+  // Debug bypass
+  useEffect(() => {
+    console.log('🔧 BYPASS ACTIVE:', { DEV_WALLET_BYPASS, address, wagmiAddress, farcasterAddress });
+  }, [address, wagmiAddress, farcasterAddress]);
 
   // Query player's economy data
   const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
@@ -6325,10 +6333,10 @@ export default function TCGPage() {
                                 </div>
                               </Link>
                             </td>
-                            <td className="p-2 md:p-4 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats.openedCards || 0}</td>
-                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats.totalPower || 0).toLocaleString()}</td>
-                            <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats.pveWins || 0) + (profile.stats.pvpWins || 0)}</td>
-                            <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats.pveLosses || 0) + (profile.stats.pvpLosses || 0)}</td>
+                            <td className="p-2 md:p-4 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
+                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
+                            <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
+                            <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveLosses || 0) + (profile.stats?.pvpLosses || 0)}</td>
                             <td className="p-2 md:p-4 text-center">
                               {/* Weekly Reward Claim Button (TOP 10 only) */}
                               {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
