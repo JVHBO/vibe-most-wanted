@@ -162,94 +162,67 @@ export const claimAchievementReward = mutation({
     achievementId: v.string(),
   },
   handler: async (ctx, args) => {
-    console.log("🎯 [CLAIM] Starting claim...");
     const { playerAddress, achievementId } = args;
-    console.log(`🎯 [CLAIM] playerAddress: ${playerAddress}`);
-    console.log(`🎯 [CLAIM] achievementId: ${achievementId}`);
-
     const normalizedAddress = playerAddress.toLowerCase();
-    console.log(`🎯 [CLAIM] normalizedAddress: ${normalizedAddress}`);
 
     // Get achievement definition (same pattern as missions)
-    console.log(`🎯 [CLAIM] Looking for achievement in ALL_ACHIEVEMENTS...`);
     const definition = ALL_ACHIEVEMENTS.find((a) => a.id === achievementId);
-    console.log(`🎯 [CLAIM] definition found: ${!!definition}`);
     if (!definition) {
-      console.error(`❌ [CLAIM] Achievement ${achievementId} not found in definitions`);
       throw new Error(`Achievement ${achievementId} not found in definitions`);
     }
-    console.log(`🎯 [CLAIM] definition.name: ${definition.name}, reward: ${definition.reward}`);
 
     // Get achievement record
-    console.log(`🎯 [CLAIM] Querying DB for achievement...`);
     const achievement = await ctx.db
       .query("achievements")
       .withIndex("by_player_achievement", (q) =>
         q.eq("playerAddress", normalizedAddress).eq("achievementId", achievementId)
       )
       .first();
-    console.log(`🎯 [CLAIM] achievement found in DB: ${!!achievement}`);
 
     if (!achievement) {
-      console.error(`❌ [CLAIM] Achievement not unlocked yet for ${normalizedAddress}`);
       throw new Error("Achievement not unlocked yet");
     }
 
-    console.log(`🎯 [CLAIM] achievement.completed: ${achievement.completed}`);
     if (!achievement.completed) {
-      console.error(`❌ [CLAIM] Achievement not completed yet`);
       throw new Error("Achievement not completed yet");
     }
 
-    console.log(`🎯 [CLAIM] achievement.claimedAt: ${achievement.claimedAt}`);
     if (achievement.claimedAt) {
-      console.error(`❌ [CLAIM] Achievement reward already claimed`);
       throw new Error("Achievement reward already claimed");
     }
 
     // Get player profile
-    console.log(`🎯 [CLAIM] Querying profile for ${normalizedAddress}...`);
     let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
-    console.log(`🎯 [CLAIM] profile found with lowercase: ${!!profile}`);
 
     // Fallback: try original address if lowercase not found (for old profiles)
     if (!profile && playerAddress !== normalizedAddress) {
-      console.log(`🎯 [CLAIM] Trying original address: ${playerAddress}...`);
       profile = await ctx.db
         .query("profiles")
         .withIndex("by_address", (q) => q.eq("address", playerAddress))
         .first();
-      console.log(`🎯 [CLAIM] profile found with original: ${!!profile}`);
     }
 
     if (!profile) {
-      console.error(`❌ [CLAIM] Profile not found for ${normalizedAddress} or ${playerAddress}`);
       throw new Error("Profile not found");
     }
 
     // Award coins
     const currentCoins = profile.coins || 0;
     const newCoins = currentCoins + definition.reward;
-    console.log(`🎯 [CLAIM] currentCoins: ${currentCoins}, adding: ${definition.reward}, newCoins: ${newCoins}`);
 
-    console.log(`🎯 [CLAIM] Updating profile...`);
     await ctx.db.patch(profile._id, {
       coins: newCoins,
       lifetimeEarned: (profile.lifetimeEarned || 0) + definition.reward,
     });
-    console.log(`🎯 [CLAIM] Profile updated!`);
 
     // Mark achievement as claimed
-    console.log(`🎯 [CLAIM] Marking achievement as claimed...`);
     await ctx.db.patch(achievement._id, {
       claimedAt: Date.now(),
     });
-    console.log(`🎯 [CLAIM] Achievement marked as claimed!`);
 
-    console.log(`✅ [CLAIM] Success! Returning result...`);
     return {
       success: true,
       reward: definition.reward,
