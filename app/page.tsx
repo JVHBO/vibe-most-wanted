@@ -347,14 +347,14 @@ function calcPower(nft: any): number {
   const wear = findAttr(nft, 'wear') || 'Lightly Played';
 
   // Base power by rarity (from tutorial)
-  let base = 15;
+  let base = 5;
   const r = rarity.toLowerCase();
   if (r.includes('mythic')) base = 350;
   else if (r.includes('legend')) base = 150;
   else if (r.includes('epic')) base = 60;
   else if (r.includes('rare')) base = 15;
-  else if (r.includes('common')) base = 15;
-  else base = 15;
+  else if (r.includes('common')) base = 5;
+  else base = 5;
 
   // Wear multiplier (from tutorial: Pristine=×1.4, Mint=×1.2, Others=×1.0)
   let wearMult = 1.0;
