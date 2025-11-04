@@ -1,7 +1,7 @@
 # 🎯 O QUE AINDA FALTA - Vibe Most Wanted
 
-**Data**: 2025-11-03 (após Ultrathink Sprint)
-**Status**: Atualizado com implementações recentes
+**Data**: 2025-11-03 (noite - após Bug Fix Sprint)
+**Status**: Atualizado com fixes de achievement system
 
 ---
 
@@ -9,20 +9,33 @@
 
 | Categoria | Critical | High | Medium | Low | Total |
 |-----------|----------|------|--------|-----|-------|
-| **Bugs** | 0 | 0 | 2 | 0 | **2** |
+| **Bugs** | 0 | 0 | 1 | 0 | **1** |
 | **Features** | 0 | 0 | 0 | 0 | **0** |
 | **Technical Debt** | 0 | 0 | 0 | 2 | **2** |
 | **Documentation** | 0 | 0 | 0 | 0 | **0** ✅ |
-| **TOTAL** | **0** | **0** | **2** | **2** | **4** |
+| **TOTAL** | **0** | **0** | **1** | **2** | **3** |
 
-**Completado hoje (2025-11-03 tarde):**
-- ✅ Documentation Updates (1.5h)
+**Completado hoje (2025-11-03 noite):**
+- ✅ Achievement Claim Bug Fix (3h) - CRITICAL
+- ✅ Custom Toast Notification System (1h)
 
 ---
 
 ## ✅ RECÉM-IMPLEMENTADO (2025-11-03)
 
-### Sprint Ultrathink - Completado Hoje
+### Bug Fix Sprint - Completado Hoje (Noite)
+10. ✅ **Achievement Claim Bug Fix** - Resolvido server error crítico (Bug #6)
+    - Root cause: playerAddress case mismatch no database
+    - Normalização completa de 5 funções em achievements.ts
+    - Fallback para profiles antigos (backward compatible)
+    - ~302K coins agora 100% claimable
+11. ✅ **Custom Toast Notification System** - Substituído alerts feios do navegador
+    - Popup dourado vintage com animação suave
+    - Callbacks onSuccess/onError com fallback
+    - Hidden automático no Farcaster miniapp
+    - Design consistente com outros modals do site
+
+### Sprint Ultrathink - Completado Hoje (Tarde)
 1. ✅ **Weekly Rewards System** - Cron job + distribuição automática
 2. ✅ **Performance Hooks Library** - 36 hooks otimizados (50-70% melhoria)
 3. ✅ **Race Condition Fix** - Verificado que já estava implementado
