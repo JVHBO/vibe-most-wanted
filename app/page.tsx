@@ -1564,7 +1564,7 @@ export default function TCGPage() {
     setBattlePlayerName(userProfile?.username || 'You'); // Show player username
     setBattleOpponentPfp(`/images/mecha-george-floyd.jpg?v=${Date.now()}`); // Mecha George pfp with cache bust
     // Player pfp from Twitter if available (same logic as profile/home)
-    setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
+    setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/x/${userProfile.twitter}` : null);
     setShowLossPopup(false);
     setShowWinPopup(false);
     setResult('');
@@ -2237,9 +2237,9 @@ export default function TCGPage() {
             setBattleOpponentName(opponentName); // Show PvP opponent username
             setBattlePlayerName(playerName); // Show player username
             // Opponent pfp from Twitter if available
-            setBattleOpponentPfp(opponentTwitter ? `https://unavatar.io/twitter/${opponentTwitter}` : null);
+            setBattleOpponentPfp(opponentTwitter ? `https://unavatar.io/x/${opponentTwitter}` : null);
             // Player pfp from Twitter if available
-            setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
+            setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/x/${userProfile.twitter}` : null);
             setShowLossPopup(false);
             setShowWinPopup(false);
             setResult('');
@@ -3454,7 +3454,7 @@ export default function TCGPage() {
                   <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-cyan-500 shadow-lg shadow-cyan-500/50 mb-2 bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center relative">
                     {userProfile?.twitter ? (
                       <img
-                        src={`https://unavatar.io/twitter/${userProfile.twitter}`}
+                        src={`https://unavatar.io/x/${userProfile.twitter}`}
                         alt={battlePlayerName}
                         className="w-full h-full object-cover absolute inset-0"
                         onLoad={() => console.log('Player PFP loaded:', userProfile.twitter)}
@@ -4016,8 +4016,8 @@ export default function TCGPage() {
                     setDealerCards(defenderCards);
                     setBattleOpponentName(targetPlayer.username);
                     setBattlePlayerName(userProfile?.username || 'You');
-                    setBattleOpponentPfp(targetPlayer.twitter ? `https://unavatar.io/twitter/${targetPlayer.twitter}` : null);
-                    setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
+                    setBattleOpponentPfp(targetPlayer.twitter ? `https://unavatar.io/x/${targetPlayer.twitter}` : null);
+                    setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/x/${userProfile.twitter}` : null);
                     setShowAttackCardSelection(false);
                     setIsBattling(true);
                     setShowBattleScreen(true);
@@ -4345,9 +4345,9 @@ export default function TCGPage() {
                   setBattleOpponentName(targetPlayer.username); // Show enemy username
                   setBattlePlayerName(userProfile?.username || 'You'); // Show player username
                   // Opponent pfp from Twitter if available
-                  setBattleOpponentPfp(targetPlayer.twitter ? `https://unavatar.io/twitter/${targetPlayer.twitter}` : null);
+                  setBattleOpponentPfp(targetPlayer.twitter ? `https://unavatar.io/x/${targetPlayer.twitter}` : null);
                   // Player pfp from Twitter if available
-                  setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/twitter/${userProfile.twitter}` : null);
+                  setBattlePlayerPfp(userProfile?.twitter ? `https://unavatar.io/x/${userProfile.twitter}` : null);
                   setShowAttackCardSelection(false);
                   setIsBattling(true);
                   setShowBattleScreen(true);
@@ -5567,7 +5567,7 @@ export default function TCGPage() {
                     >
                       {userProfile.twitter ? (
                         <img
-                          src={`https://unavatar.io/twitter/${userProfile.twitter}`}
+                          src={`https://unavatar.io/x/${userProfile.twitter}`}
                           alt={userProfile.username}
                           className="w-6 h-6 rounded-full"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23a855f7"><circle cx="12" cy="12" r="10"/></svg>'; }}
