@@ -121,7 +121,7 @@ async function getImage(nft: any): Promise<string> {
   return placeholder;
 }
 
-// Find attribute helper
+// Find attribute helper - Flexible matching for multiple NFT metadata formats
 function findAttr(nft: any, trait: string): string {
   const locs = [
     nft?.raw?.metadata?.attributes,
@@ -130,9 +130,17 @@ function findAttr(nft: any, trait: string): string {
     nft?.raw?.metadata?.traits
   ];
   for (const attrs of locs) {
-    if (Array.isArray(attrs)) {
-      const found = attrs.find((a: any) => a.trait_type?.toLowerCase() === trait.toLowerCase());
-      if (found?.value) return String(found.value);
+    if (!Array.isArray(attrs)) continue;
+    const found = attrs.find((a: any) => {
+      // Handle multiple property name variants: trait_type, traitType, name
+      const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
+      const searchTrait = trait.toLowerCase().trim();
+      // Flexible matching: exact match or includes
+      return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
+    });
+    if (found) {
+      // Handle multiple value property variants: value, trait_value, displayType
+      return String(found?.value || found?.trait_value || found?.displayType || '').trim();
     }
   }
   return '';
