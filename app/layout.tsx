@@ -78,6 +78,7 @@ export const metadata: Metadata = {
     "fc:miniapp": JSON.stringify({
       "version": "1",
       "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
+      "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
         "action": {
@@ -93,6 +94,7 @@ export const metadata: Metadata = {
     "fc:frame": JSON.stringify({
       "version": "1",
       "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
+      "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
         "action": {
