@@ -57,18 +57,19 @@ const setCache = (key: string, value: string): void => {
   imageUrlCache.set(key, { url: value, time: Date.now() });
 };
 
-// 🎨 Avatar URL helper with robust fallback
+// 🎨 Avatar URL helper - DiceBear avatars (reliable, fast, professional)
 const getAvatarUrl = (twitter?: string | null): string | null => {
   if (!twitter) return null;
   const username = twitter.replace('@', '');
-  return `https://unavatar.io/x/${username}`;
+  // DiceBear avatars - always works, looks professional, vintage background
+  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}&backgroundColor=1a1414`;
 };
 
 const getAvatarFallback = (twitter?: string | null): string => {
   if (!twitter) return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2306b6d4"><circle cx="12" cy="12" r="10"/></svg>';
   const username = twitter.replace('@', '');
-  // DiceBear avatars - always works, looks professional
-  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}&backgroundColor=1a1414`;
+  // Secondary fallback: initials-based DiceBear
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${username}&backgroundColor=1a1414`;
 };
 
 // Tornar AudioManager global para persistir entre páginas
