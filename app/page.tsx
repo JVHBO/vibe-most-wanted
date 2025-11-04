@@ -32,17 +32,6 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 
-// Development logging helpers - only log in development mode
-const devLog = (...args: any[]) => {
-  if (IS_DEV) devLog(...args);
-};
-const devWarn = (...args: any[]) => {
-  if (IS_DEV) console.warn(...args);
-};
-const devError = (...args: any[]) => {
-  if (IS_DEV) devError(...args);
-};
-
 const imageUrlCache = new Map();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60;
 
