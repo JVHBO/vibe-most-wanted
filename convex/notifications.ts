@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 /**
  * NOTIFICATION TOKENS - QUERIES & MUTATIONS
@@ -155,5 +156,95 @@ export const importTokens = mutation({
 
     console.log(`✅ Imported ${imported} tokens, updated ${updated} tokens`);
     return { imported, updated };
+  },
+});
+
+// ============================================================================
+// BROADCAST NOTIFICATIONS (internal functions)
+// ============================================================================
+
+/**
+ * Send daily login reminder to all users with notification tokens
+ * Called by scheduled function (cron job)
+ */
+export const sendDailyLoginReminder = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      // Get all notification tokens
+      const tokens = await ctx.db.query("notificationTokens").collect();
+
+      if (tokens.length === 0) {
+        console.log("⚠️ No notification tokens found");
+        return { sent: 0, failed: 0, total: 0 };
+      }
+
+      console.log(`📬 Sending daily login reminder to ${tokens.length} users...`);
+
+      let sent = 0;
+      let failed = 0;
+
+      // Send notification to each user
+      for (const tokenData of tokens) {
+        try {
+          const { token, url, fid } = tokenData;
+
+          // Notification content
+          const payload = {
+            notificationId: `daily_login_${new Date().toISOString().split('T')[0]}_${fid}`,
+            title: "💰 Daily Login Bonus!",
+            body: "Claim your free coins! Don't miss today's reward 🎁",
+            tokens: [token],
+            targetUrl: "https://www.vibemostwanted.xyz",
+          };
+
+          // Send notification via Farcaster API
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            console.error(`❌ Failed to send to FID ${fid}:`, response.statusText);
+            failed++;
+            continue;
+          }
+
+          const result = await response.json();
+
+          // Handle invalid tokens
+          if (result.invalidTokens?.includes(token)) {
+            await ctx.db.delete(tokenData._id);
+            console.log(`🗑️ Removed invalid token for FID ${fid}`);
+            failed++;
+            continue;
+          }
+
+          // Handle rate limits
+          if (result.rateLimitedTokens?.includes(token)) {
+            console.log(`⏱️ Rate limited for FID ${fid}`);
+            failed++;
+            continue;
+          }
+
+          sent++;
+          console.log(`✅ Sent to FID ${fid}`);
+
+        } catch (error: any) {
+          console.error(`❌ Error sending to FID ${tokenData.fid}:`, error.message);
+          failed++;
+        }
+      }
+
+      console.log(`📊 Daily login reminder: ${sent} sent, ${failed} failed, ${tokens.length} total`);
+      return { sent, failed, total: tokens.length };
+
+    } catch (error: any) {
+      console.error("❌ Error in sendDailyLoginReminder:", error);
+      throw error;
+    }
   },
 });

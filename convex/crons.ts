@@ -68,4 +68,21 @@ const crons = cronJobs();
  * Could be centralized here if we want to pre-reset all players.
  */
 
+// ============================================================================
+// DAILY NOTIFICATIONS
+// ============================================================================
+
+/**
+ * 📬 Send daily login reminder to all users
+ *
+ * Schedule: Every day at 12:00 UTC (noon)
+ * Content: "💰 Daily Login Bonus! Claim your free coins!"
+ * Target: All users with notification tokens enabled
+ */
+crons.daily(
+  "send daily login reminder",
+  { hourUTC: 12, minuteUTC: 0 },
+  internal.notifications.sendDailyLoginReminder
+);
+
 export default crons;
