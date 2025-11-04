@@ -16,13 +16,13 @@ function calcPower(attributes) {
   const rarity = rarityAttr?.value || 'Common';
   const wear = wearAttr?.value || 'Lightly Played';
 
-  let base = 15;
+  let base = 20;
   const r = rarity.toLowerCase();
   if (r.includes('legend')) base = 240;
-  else if (r.includes('epic')) base = 60;
-  else if (r.includes('rare')) base = 15;
-  else if (r.includes('common')) base = 15;
-  else base = 15;
+  else if (r.includes('epic')) base = 80;
+  else if (r.includes('rare')) base = 20;
+  else if (r.includes('common')) base = 20;
+  else base = 20;
 
   let wearMult = 1.0;
   const w = wear.toLowerCase();
