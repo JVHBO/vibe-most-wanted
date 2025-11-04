@@ -68,3 +68,16 @@ playwright-report/
 twitter-user-data/
 playwright-user-data/
 gemini-screenshots/
+
+# Backups
+.backups/
+backups/
+
+# Admin scripts
+scripts/admin/
+
+# Temporary scripts
+*.cjs
+
+# Windows junk
+nul
