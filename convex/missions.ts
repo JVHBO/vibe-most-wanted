@@ -11,6 +11,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { applyLanguageBoost } from "./languageBoost";
 
 // Mission rewards
 const MISSION_REWARDS = {
@@ -236,8 +237,16 @@ export const claimMission = mutation({
   args: {
     playerAddress: v.string(),
     missionId: v.id("personalMissions"),
+    language: v.optional(v.union(
+      v.literal("pt-BR"),
+      v.literal("en"),
+      v.literal("es"),
+      v.literal("hi"),
+      v.literal("ru"),
+      v.literal("zh-CN")
+    )),
   },
-  handler: async (ctx, { playerAddress, missionId }) => {
+  handler: async (ctx, { playerAddress, missionId, language }) => {
     const normalizedAddress = playerAddress.toLowerCase();
 
     // Get mission
@@ -271,9 +280,12 @@ export const claimMission = mutation({
       throw new Error("Profile not found");
     }
 
+    // 🇨🇳 Apply language boost to mission reward
+    const boostedReward = language ? applyLanguageBoost(mission.reward, language) : mission.reward;
+
     // Award coins
-    const newBalance = (profile.coins || 0) + mission.reward;
-    const newLifetimeEarned = (profile.lifetimeEarned || 0) + mission.reward;
+    const newBalance = (profile.coins || 0) + boostedReward;
+    const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
     await ctx.db.patch(profile._id, {
       coins: newBalance,
@@ -287,13 +299,13 @@ export const claimMission = mutation({
     });
 
     console.log(
-      `✅ Mission claimed: ${mission.missionType} (+${mission.reward} coins) for`,
+      `✅ Mission claimed: ${mission.missionType} (+${boostedReward} coins) for`,
       normalizedAddress
     );
 
     return {
       success: true,
-      reward: mission.reward,
+      reward: boostedReward,
       newBalance,
       missionType: mission.missionType,
     };
@@ -304,8 +316,18 @@ export const claimMission = mutation({
  * Claim all completed missions at once
  */
 export const claimAllMissions = mutation({
-  args: { playerAddress: v.string() },
-  handler: async (ctx, { playerAddress }) => {
+  args: {
+    playerAddress: v.string(),
+    language: v.optional(v.union(
+      v.literal("pt-BR"),
+      v.literal("en"),
+      v.literal("es"),
+      v.literal("hi"),
+      v.literal("ru"),
+      v.literal("zh-CN")
+    )),
+  },
+  handler: async (ctx, { playerAddress, language }) => {
     const normalizedAddress = playerAddress.toLowerCase();
     const today = new Date().toISOString().split('T')[0];
 
@@ -343,8 +365,11 @@ export const claimAllMissions = mutation({
       throw new Error("Profile not found");
     }
 
-    // Calculate total reward
-    const totalReward = missions.reduce((sum, m) => sum + m.reward, 0);
+    // 🇨🇳 Calculate total reward with language boost applied to each mission
+    const totalReward = missions.reduce((sum, m) => {
+      const boostedReward = language ? applyLanguageBoost(m.reward, language) : m.reward;
+      return sum + boostedReward;
+    }, 0);
 
     // Award coins
     const newBalance = (profile.coins || 0) + totalReward;

@@ -12,6 +12,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import { applyLanguageBoost } from "./languageBoost";
 
 // Constants
 const DAILY_CAP = 3500; // Max $TESTVBMS per day per player
@@ -435,8 +436,16 @@ export const awardPvECoins = mutation({
       v.literal("gigachad")
     ),
     won: v.boolean(),
+    language: v.optional(v.union(
+      v.literal("pt-BR"),
+      v.literal("en"),
+      v.literal("es"),
+      v.literal("hi"),
+      v.literal("ru"),
+      v.literal("zh-CN")
+    )),
   },
-  handler: async (ctx, { address, difficulty, won }) => {
+  handler: async (ctx, { address, difficulty, won, language }) => {
     let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
@@ -515,6 +524,11 @@ export const awardPvECoins = mutation({
     const baseReward = PVE_REWARDS[difficulty];
     let totalReward = baseReward;
     const bonuses: string[] = [];
+
+    // 🇨🇳 Apply language boost if Chinese language selected
+    if (language) {
+      totalReward = applyLanguageBoost(totalReward, language);
+    }
 
     // Create first PvE win mission (player must claim manually)
     if (!dailyLimits.firstPveBonus) {
@@ -597,8 +611,16 @@ export const awardPvPCoins = mutation({
     address: v.string(),
     won: v.boolean(),
     opponentAddress: v.optional(v.string()), // ✅ NEW: For ranking bonus calculation
+    language: v.optional(v.union(
+      v.literal("pt-BR"),
+      v.literal("en"),
+      v.literal("es"),
+      v.literal("hi"),
+      v.literal("ru"),
+      v.literal("zh-CN")
+    )),
   },
-  handler: async (ctx, { address, won, opponentAddress }) => {
+  handler: async (ctx, { address, won, opponentAddress, language }) => {
     let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
@@ -676,7 +698,9 @@ export const awardPvPCoins = mutation({
     if (won) {
       // WINNER: Award coins
       newStreak++;
-      totalReward = Math.round(PVP_WIN_REWARD * rankingMultiplier); // ✅ Apply ranking multiplier
+      // 🇨🇳 Apply language boost to base reward first, then ranking multiplier
+      const boostedBase = language ? applyLanguageBoost(PVP_WIN_REWARD, language) : PVP_WIN_REWARD;
+      totalReward = Math.round(boostedBase * rankingMultiplier); // ✅ Apply ranking multiplier
 
       // ✅ Add ranking bonus message
       if (rankingMultiplier > 1.0 && opponentAddress) {
@@ -1117,6 +1141,14 @@ export const recordAttackResult = mutation({
 
     // Economy
     entryFeePaid: v.optional(v.number()),
+    language: v.optional(v.union(
+      v.literal("pt-BR"),
+      v.literal("en"),
+      v.literal("es"),
+      v.literal("hi"),
+      v.literal("ru"),
+      v.literal("zh-CN")
+    )),
   },
   handler: async (ctx, args) => {
     const normalizedPlayerAddress = args.playerAddress.toLowerCase();
@@ -1200,7 +1232,9 @@ export const recordAttackResult = mutation({
     if (won) {
       // WINNER: Award coins
       newStreak++;
-      totalReward = Math.round(PVP_WIN_REWARD * rankingMultiplier);
+      // 🇨🇳 Apply language boost to base reward first, then ranking multiplier
+      const boostedBase = args.language ? applyLanguageBoost(PVP_WIN_REWARD, args.language) : PVP_WIN_REWARD;
+      totalReward = Math.round(boostedBase * rankingMultiplier);
 
       // Add ranking bonus message
       if (rankingMultiplier > 1.0) {

@@ -92,6 +92,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    * Load new audio and fade in
    */
   const loadAndFadeIn = useCallback((trackUrl: string, targetVolume: number) => {
+    // Stop old AudioManager music if it exists (prevent dual playback)
+    if (typeof window !== 'undefined' && (window as any).globalAudioManager) {
+      const oldManager = (window as any).globalAudioManager;
+      if (oldManager.backgroundSource) {
+        try {
+          oldManager.backgroundSource.stop();
+          oldManager.backgroundSource = null;
+          oldManager.isPlaying = false;
+        } catch (e) {
+          // Ignore errors
+        }
+      }
+    }
+
     // Create new audio element
     const newAudio = new Audio(trackUrl);
     newAudio.loop = true;
@@ -169,8 +183,21 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    * Handle music mode or language changes
    */
   useEffect(() => {
-    if (!isMusicEnabled) return;
+    // If music is disabled, stop any playing music
+    if (!isMusicEnabled) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+      }
+      currentTrackRef.current = null;
+      return;
+    }
 
+    // If enabled, play the appropriate track
     const trackUrl = musicMode === 'default'
       ? DEFAULT_MUSIC
       : LANGUAGE_MUSIC[lang];
