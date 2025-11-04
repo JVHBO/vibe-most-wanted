@@ -17,17 +17,22 @@ interface MusicContextType {
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
-// Music file paths for each language (you'll add these later)
-const LANGUAGE_MUSIC: Record<SupportedLanguage, string> = {
-  'pt-BR': '/music/pt-br.m4a',
-  'en': '/music/en.m4a',
-  'es': '/music/es.m4a',
-  'hi': '/music/hi.m4a',
-  'ru': '/music/ru.m4a',
-  'zh-CN': '/music/zh-cn.m4a',
+// Music file paths for each language - tries MP3 first, then M4A as fallback
+const getMusicPath = (basename: string): string => {
+  // Returns MP3 path (will try M4A automatically if MP3 fails to load)
+  return `/music/${basename}.mp3`;
 };
 
-const DEFAULT_MUSIC = '/music/default.m4a';
+const LANGUAGE_MUSIC: Record<SupportedLanguage, string> = {
+  'pt-BR': getMusicPath('pt-br'),
+  'en': getMusicPath('en'),
+  'es': getMusicPath('es'),
+  'hi': getMusicPath('hi'),
+  'ru': getMusicPath('ru'),
+  'zh-CN': getMusicPath('zh-cn'),
+};
+
+const DEFAULT_MUSIC = getMusicPath('default');
 const FADE_DURATION = 1500; // 1.5 seconds fade in/out
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
