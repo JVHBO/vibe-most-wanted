@@ -6,11 +6,15 @@ import { useAchievements } from "../hooks/useAchievements";
 interface AchievementsViewProps {
   playerAddress?: string;
   nfts?: any[];
+  onSuccess?: (message: string) => void;
+  onError?: (message: string) => void;
 }
 
 export default function AchievementsView({
   playerAddress,
   nfts = [],
+  onSuccess,
+  onError,
 }: AchievementsViewProps) {
   const {
     achievements,
@@ -25,6 +29,8 @@ export default function AchievementsView({
     nfts,
     autoCheck: true,
     autoNotify: true,
+    onSuccess,
+    onError,
   });
 
   const [filter, setFilter] = useState<string>("all");

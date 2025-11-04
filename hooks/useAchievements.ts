@@ -13,10 +13,12 @@ interface UseAchievementsOptions {
   nfts?: any[];
   autoCheck?: boolean; // Auto-check achievements when NFTs change
   autoNotify?: boolean; // Auto-notify when new achievements completed
+  onSuccess?: (message: string) => void; // Custom success handler
+  onError?: (message: string) => void; // Custom error handler
 }
 
 export function useAchievements(options: UseAchievementsOptions = {}) {
-  const { playerAddress, nfts = [], autoCheck = true, autoNotify = true } = options;
+  const { playerAddress, nfts = [], autoCheck = true, autoNotify = true, onSuccess, onError } = options;
 
   const [isChecking, setIsChecking] = useState(false);
   const lastCheckRef = useRef<string>(""); // Track last NFT state to avoid duplicate checks
@@ -98,13 +100,28 @@ export function useAchievements(options: UseAchievementsOptions = {}) {
         achievementId,
       });
 
-      console.log(`🎉 Claimed ${result.reward} coins from "${result.achievementName}"!`);
-      alert(`🎉 Claimed ${result.reward} coins from "${result.achievementName}"!`);
+      const successMsg = `🎉 Claimed ${result.reward} coins from "${result.achievementName}"!`;
+      console.log(successMsg);
+
+      // Use custom callback or fallback to alert
+      if (onSuccess) {
+        onSuccess(successMsg);
+      } else {
+        alert(successMsg);
+      }
 
       return result;
     } catch (error: any) {
-      console.error(error?.message || "Failed to claim reward");
-      alert(error?.message || "Failed to claim reward");
+      const errorMsg = error?.message || "Failed to claim reward";
+      console.error(errorMsg);
+
+      // Use custom callback or fallback to alert
+      if (onError) {
+        onError(errorMsg);
+      } else {
+        alert(errorMsg);
+      }
+
       throw error;
     }
   };
@@ -132,12 +149,17 @@ export function useAchievements(options: UseAchievementsOptions = {}) {
     }
 
     if (successCount > 0) {
-      console.log(`🎉 Claimed ${totalClaimed} coins from ${successCount} achievement${
+      const successMsg = `🎉 Claimed ${totalClaimed} coins from ${successCount} achievement${
           successCount > 1 ? "s" : ""
-        }!`);
-      alert(`🎉 Claimed ${totalClaimed} coins from ${successCount} achievement${
-          successCount > 1 ? "s" : ""
-        }!`);
+        }!`;
+      console.log(successMsg);
+
+      // Use custom callback or fallback to alert
+      if (onSuccess) {
+        onSuccess(successMsg);
+      } else {
+        alert(successMsg);
+      }
     }
 
     return {

@@ -915,6 +915,7 @@ export default function TCGPage() {
   const [showTiePopup, setShowTiePopup] = useState(false);
   const [tieGifLoaded, setTieGifLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showDailyClaimPopup, setShowDailyClaimPopup] = useState(false);
 
   // Preload tie.gif to prevent loading delay
@@ -2977,7 +2978,7 @@ export default function TCGPage() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setErrorMessage(null)}>
           <div className="bg-vintage-charcoal rounded-2xl border-4 border-red-500 max-w-md w-full p-6 shadow-2xl shadow-red-500/50" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="text-4xl">!</div>
+              <div className="text-4xl">⚠️</div>
               <h2 className="text-2xl font-display font-bold text-red-400">Error</h2>
             </div>
             <p className="text-vintage-ice whitespace-pre-line mb-6 font-modern">
@@ -2988,6 +2989,27 @@ export default function TCGPage() {
               className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all hover:scale-105"
             >
               OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Success Toast - Achievement rewards (hidden in Farcaster) */}
+      {successMessage && !isInFarcaster && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setSuccessMessage(null)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-md w-full p-6 shadow-2xl shadow-vintage-gold/50 animate-[fadeIn_0.3s_ease-out]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="text-4xl">🎉</div>
+              <h2 className="text-2xl font-display font-bold text-vintage-gold">Success!</h2>
+            </div>
+            <p className="text-vintage-ice whitespace-pre-line mb-6 font-modern text-lg">
+              {successMessage}
+            </p>
+            <button
+              onClick={() => setSuccessMessage(null)}
+              className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-semibold transition-all hover:scale-105 shadow-lg shadow-vintage-gold/30"
+            >
+              Awesome!
             </button>
           </div>
         </div>
@@ -6759,7 +6781,12 @@ export default function TCGPage() {
 
           {/* 🏆 Achievements View */}
           {currentView === 'achievements' && (
-            <AchievementsView playerAddress={address} nfts={nfts} />
+            <AchievementsView
+              playerAddress={address}
+              nfts={nfts}
+              onSuccess={setSuccessMessage}
+              onError={setErrorMessage}
+            />
           )}
 
           {/* Create Profile Modal */}
