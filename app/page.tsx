@@ -20,7 +20,6 @@ import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
 import { ProgressBar } from "@/components/ProgressBar";
 import AchievementsView from "@/components/AchievementsView";
-import { QuestPanel } from "@/components/QuestPanel";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
@@ -904,7 +903,6 @@ export default function TCGPage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
-  const [showQuests, setShowQuests] = useState<boolean>(false);
 
   // Missions States
   const [missions, setMissions] = useState<any[]>([]);
@@ -3514,15 +3512,6 @@ export default function TCGPage() {
         </div>
       )}
 
-      {/* Quest Panel */}
-      {showQuests && address && (
-        <QuestPanel
-          playerAddress={address}
-          soundEnabled={soundEnabled}
-          onClose={() => setShowQuests(false)}
-        />
-      )}
-
       {/* Elimination Mode - Card Ordering Screen */}
       {eliminationPhase === 'ordering' && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300] overflow-y-auto">
@@ -5655,17 +5644,6 @@ export default function TCGPage() {
             title={t('settings')}
           >
             <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
-          </button>
-
-          <button
-            onClick={() => {
-              if (soundEnabled) AudioManager.buttonClick();
-              setShowQuests(true);
-            }}
-            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base relative"
-            title="Daily Quests"
-          >
-            <span className="text-lg md:text-xl">📋</span>
           </button>
 
           <button
