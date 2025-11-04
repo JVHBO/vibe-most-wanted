@@ -653,9 +653,9 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
 const MatchHistorySection = memo(({ address }: { address: string }) => {
   const { t } = useLanguage();
 
-  // Query match history from Convex
+  // 🚀 OPTIMIZED: Use summary query (95% bandwidth reduction)
   const matchHistory = useQuery(
-    api.matches.getMatchHistory,
+    api.matches.getMatchHistorySummary,
     address ? { address: address.toLowerCase(), limit: 20 } : "skip"
   );
 

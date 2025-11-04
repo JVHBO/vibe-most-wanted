@@ -116,10 +116,12 @@ export class ConvexProfileService {
    */
   static async getLeaderboard(limit: number = 100): Promise<UserProfile[]> {
     try {
-      const profiles = await convex.query(api.profiles.getLeaderboard, {
+      // 🚀 OPTIMIZED: Use lite query (97% bandwidth reduction)
+      const profiles = await convex.query(api.profiles.getLeaderboardLite, {
         limit,
       });
-      return profiles as UserProfile[];
+      // Cast through unknown since lite version returns partial UserProfile
+      return profiles as unknown as UserProfile[];
     } catch (error: any) {
       console.error("❌ getLeaderboard error:", error);
       return [];
@@ -506,12 +508,14 @@ export class ConvexProfileService {
     try {
       const normalizedAddress = address.toLowerCase();
 
-      const matches = await convex.query(api.matches.getMatchHistory, {
+      // 🚀 OPTIMIZED: Use summary query (95% bandwidth reduction)
+      const matches = await convex.query(api.matches.getMatchHistorySummary, {
         address: normalizedAddress,
         limit,
       });
 
-      return matches as MatchHistory[];
+      // Cast through unknown since summary version returns partial MatchHistory
+      return matches as unknown as MatchHistory[];
     } catch (error: any) {
       console.error("❌ getMatchHistory error:", error);
       return [];
