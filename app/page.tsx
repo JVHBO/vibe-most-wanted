@@ -5597,10 +5597,13 @@ export default function TCGPage() {
             href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 md:px-8 py-2 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex items-center gap-2 text-sm md:text-base"
+            className="px-4 md:px-8 py-2 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center gap-0.5 text-sm md:text-base"
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
           >
-            <span className="text-base md:text-lg">◆</span> <span className="hidden md:inline">{t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}</span><span className="md:hidden">Buy Cards</span>
+            <div className="flex items-center gap-2">
+              <span className="text-base md:text-lg">◆</span> <span className="hidden md:inline">{t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}</span><span className="md:hidden">Buy Cards</span>
+            </div>
+            <span className="text-[10px] md:text-xs opacity-80 font-normal">{t('orOpenYourPacks') || 'or open your sealed packs'}</span>
           </a>
 
           {!isInFarcaster && (
@@ -6031,15 +6034,7 @@ export default function TCGPage() {
                 {unopenedCardsCount > 0 && (
                   <div className="mb-4 p-3 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg">
                     <p className="text-sm text-vintage-gold text-center">
-                      📦 {t('unopenedCardsNotice') || `You have ${unopenedCardsCount} unopened card${unopenedCardsCount !== 1 ? 's' : ''}. `}
-                      <a
-                        href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:text-white transition"
-                      >
-                        {t('openOnVibeMarket') || 'Open them on Vibe Market →'}
-                      </a>
+                      📦 {t('unopenedCardsNotice') || `You have ${unopenedCardsCount} unopened card${unopenedCardsCount !== 1 ? 's' : ''}.`}
                     </p>
                   </div>
                 )}
