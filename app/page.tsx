@@ -2846,18 +2846,7 @@ export default function TCGPage() {
   // Load leaderboard with 30-minute refresh (usando Convex agora! 🚀)
   useEffect(() => {
     const loadLeaderboard = () => {
-      ConvexProfileService.getLeaderboard().then((data) => {
-        console.log('🏆 LEADERBOARD DATA FROM CONVEX:', data);
-        data.forEach((profile, index) => {
-          console.log(`  #${index + 1}: ${profile.username}`, {
-            address: profile.address,
-            stats: profile.stats,
-            openedCards: profile.stats?.openedCards,
-            totalPower: profile.stats?.totalPower
-          });
-        });
-        setLeaderboard(data);
-      });
+      ConvexProfileService.getLeaderboard().then(setLeaderboard);
     };
 
     loadLeaderboard();
