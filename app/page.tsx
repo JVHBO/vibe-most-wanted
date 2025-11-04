@@ -6089,7 +6089,6 @@ export default function TCGPage() {
                         ◈ Enable Notifications
                       </button>
                     )}
-                    <p className="text-[10px] md:text-xs text-vintage-burnt-gold">※ Updates every 30 minutes</p>
                   </div>
                 </div>
 
