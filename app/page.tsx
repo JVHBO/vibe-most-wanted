@@ -2849,7 +2849,7 @@ export default function TCGPage() {
       ConvexProfileService.getLeaderboard().then((data) => {
         console.log('🏆 LEADERBOARD DATA FROM CONVEX:', data);
         data.forEach((profile, index) => {
-          console.log(`  #${index + 1}: ${profile.displayName}`, {
+          console.log(`  #${index + 1}: ${profile.username}`, {
             address: profile.address,
             stats: profile.stats,
             openedCards: profile.stats?.openedCards,
