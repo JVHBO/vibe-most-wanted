@@ -731,6 +731,9 @@ export const claimWeeklyReward = mutation({
  * 🏅 Distribute weekly leaderboard rewards (TOP 10 ONLY!)
  * Called by cron job every Sunday at 00:00 UTC
  * 🛡️ internalMutation: Only callable from scheduled tasks, not from client
+ *
+ * ⚠️ DEPRECATED: Substituído pelo sistema de claim manual (claimWeeklyLeaderboardReward)
+ * Mantido aqui caso precise re-ativar distribuição automática
  */
 export const distributeWeeklyRewards = internalMutation({
   args: {},
@@ -789,6 +792,170 @@ export const distributeWeeklyRewards = internalMutation({
       distributed: rewards.length,
       rewards,
       timestamp: Date.now(),
+    };
+  },
+});
+
+/**
+ * 🎁 Check if player can claim weekly leaderboard reward
+ * Returns eligibility status, rank, reward amount, and claim status
+ */
+export const checkWeeklyRewardEligibility = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    const currentWeek = getLastSunday();
+
+    // Get current leaderboard (TOP 10)
+    const topPlayers = await ctx.db
+      .query("profiles")
+      .withIndex("by_total_power")
+      .order("desc")
+      .take(10);
+
+    // Find player's rank
+    const playerIndex = topPlayers.findIndex(
+      (p) => p.address.toLowerCase() === normalizedAddress
+    );
+
+    if (playerIndex === -1) {
+      return {
+        eligible: false,
+        reason: "not_top_10",
+        rank: null,
+        reward: 0,
+        claimed: false,
+        nextResetDate: getNextSunday(),
+      };
+    }
+
+    const rank = playerIndex + 1;
+
+    // Calculate reward based on rank
+    let reward = 0;
+    if (rank === 1) {
+      reward = WEEKLY_LEADERBOARD_REWARDS.rank1;
+    } else if (rank === 2) {
+      reward = WEEKLY_LEADERBOARD_REWARDS.rank2;
+    } else if (rank === 3) {
+      reward = WEEKLY_LEADERBOARD_REWARDS.rank3;
+    } else if (rank <= 10) {
+      reward = WEEKLY_LEADERBOARD_REWARDS.rank4to10;
+    }
+
+    // Check if already claimed this week
+    const existingClaim = await ctx.db
+      .query("weeklyRewards")
+      .withIndex("by_player_week", (q) =>
+        q.eq("playerAddress", normalizedAddress).eq("weekStart", currentWeek)
+      )
+      .first();
+
+    if (existingClaim) {
+      return {
+        eligible: false,
+        reason: "already_claimed",
+        rank,
+        reward,
+        claimed: true,
+        claimedAt: existingClaim.claimedAt,
+        nextResetDate: getNextSunday(),
+      };
+    }
+
+    return {
+      eligible: true,
+      reason: "can_claim",
+      rank,
+      reward,
+      claimed: false,
+      nextResetDate: getNextSunday(),
+    };
+  },
+});
+
+/**
+ * 🎁 Claim weekly leaderboard reward (MANUAL CLAIM)
+ * Player must be in TOP 10 and can only claim once per week
+ */
+export const claimWeeklyLeaderboardReward = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    const currentWeek = getLastSunday();
+
+    // Get current leaderboard (TOP 10)
+    const topPlayers = await ctx.db
+      .query("profiles")
+      .withIndex("by_total_power")
+      .order("desc")
+      .take(10);
+
+    // Find player's rank
+    const playerIndex = topPlayers.findIndex(
+      (p) => p.address.toLowerCase() === normalizedAddress
+    );
+
+    if (playerIndex === -1) {
+      throw new Error("Not eligible: Must be in TOP 10 leaderboard");
+    }
+
+    const rank = playerIndex + 1;
+    const player = topPlayers[playerIndex];
+
+    // Calculate reward
+    let reward = 0;
+    if (rank === 1) {
+      reward = WEEKLY_LEADERBOARD_REWARDS.rank1;
+    } else if (rank === 2) {
+      reward = WEEKLY_LEADERBOARD_REWARDS.rank2;
+    } else if (rank === 3) {
+      reward = WEEKLY_LEADERBOARD_REWARDS.rank3;
+    } else if (rank <= 10) {
+      reward = WEEKLY_LEADERBOARD_REWARDS.rank4to10;
+    }
+
+    // Check if already claimed this week
+    const existingClaim = await ctx.db
+      .query("weeklyRewards")
+      .withIndex("by_player_week", (q) =>
+        q.eq("playerAddress", normalizedAddress).eq("weekStart", currentWeek)
+      )
+      .first();
+
+    if (existingClaim) {
+      throw new Error("Already claimed reward for this week");
+    }
+
+    // Award coins
+    const newCoins = (player.coins || 0) + reward;
+    const newLifetimeEarned = (player.lifetimeEarned || 0) + reward;
+
+    await ctx.db.patch(player._id, {
+      coins: newCoins,
+      lifetimeEarned: newLifetimeEarned,
+      lastUpdated: Date.now(),
+    });
+
+    // Record claim in weeklyRewards table
+    await ctx.db.insert("weeklyRewards", {
+      playerAddress: normalizedAddress,
+      username: player.username,
+      weekStart: currentWeek,
+      rank,
+      reward,
+      claimedAt: Date.now(),
+      method: "manual_claim", // vs "auto_distribution"
+    });
+
+    console.log(`🎁 Weekly reward claimed: Rank #${rank} ${player.username} → +${reward} $TESTVBMS`);
+
+    return {
+      success: true,
+      rank,
+      reward,
+      newBalance: newCoins,
+      nextResetDate: getNextSunday(),
     };
   },
 });

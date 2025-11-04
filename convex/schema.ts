@@ -300,6 +300,19 @@ export default defineSchema({
   })
     .index("by_player_week", ["playerAddress", "weekStart"]),
 
+  // Weekly Leaderboard Rewards (claim history)
+  weeklyRewards: defineTable({
+    playerAddress: v.string(),
+    username: v.string(),
+    weekStart: v.string(), // "2025-11-03" (Sunday when reward is for)
+    rank: v.number(), // Player's rank in leaderboard (1-10)
+    reward: v.number(), // Coins received
+    claimedAt: v.number(), // When player claimed
+    method: v.string(), // "manual_claim" or "auto_distribution"
+  })
+    .index("by_player_week", ["playerAddress", "weekStart"])
+    .index("by_week", ["weekStart", "claimedAt"]),
+
   // Personal Missions (daily bonuses that need to be claimed)
   personalMissions: defineTable({
     playerAddress: v.string(),

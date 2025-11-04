@@ -859,6 +859,11 @@ export default function TCGPage() {
   // 🎯 Weekly Quests mutations
   const claimWeeklyReward = useMutation(api.quests.claimWeeklyReward);
 
+  // 🏅 Weekly Leaderboard Rewards
+  const weeklyRewardEligibility = useQuery(api.quests.checkWeeklyRewardEligibility, address ? { address } : "skip");
+  const claimWeeklyLeaderboardReward = useMutation(api.quests.claimWeeklyLeaderboardReward);
+  const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState<boolean>(false);
+
   // 🔒 Defense Lock System - Get locked cards for Attack/PvP modes
   const attackLockedCards = useQuery(
     api.profiles.getAvailableCards,
@@ -1105,6 +1110,30 @@ export default function TCGPage() {
       if (soundEnabled) AudioManager.buttonError();
     } finally {
       setIsClaimingQuest(false);
+    }
+  };
+
+  // 🏅 Handler to claim weekly leaderboard reward
+  const handleClaimWeeklyLeaderboardReward = async () => {
+    if (!address || isClaimingWeeklyReward) return;
+
+    try {
+      setIsClaimingWeeklyReward(true);
+      devLog('🏅 Claiming weekly leaderboard reward...');
+
+      const result = await claimWeeklyLeaderboardReward({ address });
+
+      devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
+      if (soundEnabled) AudioManager.buttonClick();
+
+      // Show success alert
+      alert(`🎁 Weekly Reward Claimed!\n\nRank #${result.rank}: +${result.reward} $TESTVBMS\nNew Balance: ${result.newBalance.toLocaleString()} coins`);
+    } catch (error: any) {
+      devError('✗ Error claiming weekly reward:', error);
+      alert(error.message || 'Failed to claim weekly reward');
+      if (soundEnabled) AudioManager.buttonError();
+    } finally {
+      setIsClaimingWeeklyReward(false);
     }
   };
 
@@ -6181,6 +6210,7 @@ export default function TCGPage() {
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
+                          <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
                           <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
                         </tr>
                       </thead>
@@ -6216,6 +6246,54 @@ export default function TCGPage() {
                             <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats.totalPower || 0).toLocaleString()}</td>
                             <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats.pveWins || 0) + (profile.stats.pvpWins || 0)}</td>
                             <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats.pveLosses || 0) + (profile.stats.pvpLosses || 0)}</td>
+                            <td className="p-2 md:p-4 text-center">
+                              {/* Weekly Reward Claim Button (TOP 10 only) */}
+                              {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
+                                const rank = index + 1;
+                                let reward = 0;
+                                if (rank === 1) reward = 1000;
+                                else if (rank === 2) reward = 750;
+                                else if (rank === 3) reward = 500;
+                                else if (rank <= 10) reward = 300;
+
+                                const canClaim = weeklyRewardEligibility?.eligible && weeklyRewardEligibility?.rank === rank;
+                                const alreadyClaimed = weeklyRewardEligibility?.claimed;
+
+                                if (alreadyClaimed) {
+                                  return (
+                                    <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
+                                      <div>✓ Claimed</div>
+                                      <div className="text-green-400">{reward} coins</div>
+                                    </div>
+                                  );
+                                }
+
+                                if (canClaim) {
+                                  return (
+                                    <button
+                                      onClick={() => {
+                                        if (soundEnabled) AudioManager.buttonClick();
+                                        handleClaimWeeklyLeaderboardReward();
+                                      }}
+                                      disabled={isClaimingWeeklyReward}
+                                      className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-modern font-bold text-xs md:text-sm transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      {isClaimingWeeklyReward ? '...' : `🎁 Claim ${reward}`}
+                                    </button>
+                                  );
+                                }
+
+                                return (
+                                  <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
+                                    <div>{reward} coins</div>
+                                    <div className="text-gray-500">Next week</div>
+                                  </div>
+                                );
+                              })()}
+                              {index >= 10 && (
+                                <div className="text-[10px] md:text-xs text-gray-500">-</div>
+                              )}
+                            </td>
                             <td className="p-1 md:p-4 text-center">
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <button
