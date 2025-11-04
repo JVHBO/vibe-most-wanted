@@ -1073,19 +1073,22 @@ export default function TCGPage() {
     }
   };
 
-  // 🎉 Show victory popup with random image and optional special sound
+  // 🎉 Show victory popup with random image and matching audio
   const showVictory = () => {
     // Select random victory image
-    const randomImage = VICTORY_IMAGES[Math.floor(Math.random() * VICTORY_IMAGES.length)];
+    const randomIndex = Math.floor(Math.random() * VICTORY_IMAGES.length);
+    const randomImage = VICTORY_IMAGES[randomIndex];
     setCurrentVictoryImage(randomImage);
 
-    // 50% chance to play special victory sound instead of default win sound
-    if (Math.random() < 0.5) {
+    // Play audio based on which image was selected
+    if (randomIndex === 0) {
+      // victory-1.jpg (Gigachad original) → som padrão
+      if (soundEnabled) AudioManager.win();
+    } else {
+      // victory-2.jpg (Musculoso sorrindo) → "Ai que delícia!"
       const audio = new Audio('/victory-sound.mp3');
       audio.volume = 0.5;
       audio.play().catch(err => console.log('Audio play failed:', err));
-    } else {
-      if (soundEnabled) AudioManager.win();
     }
 
     setShowWinPopup(true);
