@@ -728,7 +728,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
 
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
-  const { musicMode, setMusicMode, setVolume: syncMusicVolume } = useMusic();
+  const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume } = useMusic();
   const router = useRouter();
   const playButtonsRef = useRef<HTMLDivElement>(null);
 
@@ -1084,19 +1084,15 @@ export default function TCGPage() {
   };
 
   // Salvar estado da música no localStorage e controlar reprodução
+  // ⚠️ DISABLED: Now using MusicContext instead of AudioManager
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('musicEnabled', musicEnabled.toString());
+      localStorage.setItem('musicEnabled', isMusicEnabled.toString());
 
-      if (musicEnabled) {
-        // Aplica volume ANTES de iniciar música para evitar bug de volume 0
-        AudioManager.setVolume(musicVolume);
-        AudioManager.startBackgroundMusic();
-      } else {
-        AudioManager.stopBackgroundMusic();
-      }
+      // Stop old AudioManager to prevent dual playback
+      AudioManager.stopBackgroundMusic();
     }
-  }, [musicEnabled]);
+  }, [isMusicEnabled]);
 
   // Atualiza e salva volume da música quando musicVolume muda
   useEffect(() => {
@@ -1212,13 +1208,16 @@ export default function TCGPage() {
   }, [address, nfts.length]);
 
   const toggleMusic = useCallback(async () => {
-    await AudioManager.init();
     if (soundEnabled) {
-      if (!musicEnabled) AudioManager.toggleOn();
+      await AudioManager.init();
+      if (!isMusicEnabled) AudioManager.toggleOn();
       else AudioManager.toggleOff();
     }
-    setMusicEnabled(!musicEnabled);
-  }, [musicEnabled, soundEnabled]);
+    // Update MusicContext state
+    setIsMusicEnabled(!isMusicEnabled);
+    // Keep local state in sync
+    setMusicEnabled(!isMusicEnabled);
+  }, [isMusicEnabled, soundEnabled, setIsMusicEnabled]);
 
   // Wallet connection is now handled by RainbowKit ConnectButton
   // No need for manual connectWallet function
@@ -1814,6 +1813,7 @@ export default function TCGPage() {
                   const reward = await awardPvECoins({
                     address,
                     difficulty: eliminationDifficulty,
+                    language: lang,
                     won: finalResult === 'win'
                   });
                   coinsEarned = reward?.awarded || 0;
@@ -1952,6 +1952,7 @@ export default function TCGPage() {
             const reward = await awardPvECoins({
               address,
               difficulty: aiDifficulty,
+              language: lang,
               won: matchResult === 'win'
             });
             coinsEarned = reward?.awarded || 0;
@@ -2318,6 +2319,7 @@ export default function TCGPage() {
                       const reward = await awardPvPCoins({
                         address,
                         won: matchResult === 'win',
+                        language: lang,
                         opponentAddress: opponentAddress // ✅ Pass opponent for ranking bonus
                       });
                       coinsEarned = reward?.awarded || 0;
@@ -2648,6 +2650,7 @@ export default function TCGPage() {
       const result = await convex.mutation(api.missions.claimMission, {
         playerAddress: address,
         missionId: missionId as any,
+        language: lang,
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
@@ -2674,6 +2677,7 @@ export default function TCGPage() {
     try {
       const result = await convex.mutation(api.missions.claimAllMissions, {
         playerAddress: address,
+        language: lang,
       });
 
       if (result.claimed > 0) {
@@ -3134,6 +3138,15 @@ export default function TCGPage() {
                   <option value="ru" className="bg-vintage-charcoal text-vintage-ice">Русский</option>
                   <option value="zh-CN" className="bg-vintage-charcoal text-vintage-ice">简体中文</option>
                 </select>
+                {/* 🇨🇳 Chinese Language Boost Warning */}
+                {lang === 'zh-CN' && (
+                  <div className="mt-3 p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
+                    <p className="text-sm text-red-300 font-modern font-semibold flex items-center gap-2">
+                      <span className="text-lg">🇨🇳</span>
+                      <span>+5% Social Credit Boost on all coin rewards!</span>
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Music Mode Selector */}
@@ -4118,6 +4131,7 @@ export default function TCGPage() {
                             opponentPower: dealerTotal,
                             opponentCards: defenderCards,
                             entryFeePaid: 0, // No entry fee for leaderboard attacks
+                            language: lang,
                           });
 
                           coinsEarned = result.coinsAwarded || 0;
@@ -4447,6 +4461,7 @@ export default function TCGPage() {
                           opponentPower: dealerTotal,
                           opponentCards: defenderCards,
                           entryFeePaid: 0, // No entry fee for leaderboard attacks
+                          language: lang,
                         });
 
                         coinsEarned = result.coinsAwarded || 0;
