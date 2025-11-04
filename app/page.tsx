@@ -6027,6 +6027,23 @@ export default function TCGPage() {
                   )}
                 </div>
 
+                {/* Unopened Cards Notice */}
+                {unopenedCardsCount > 0 && (
+                  <div className="mb-4 p-3 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg">
+                    <p className="text-sm text-vintage-gold text-center">
+                      📦 {t('unopenedCardsNotice') || `You have ${unopenedCardsCount} unopened card${unopenedCardsCount !== 1 ? 's' : ''}. `}
+                      <a
+                        href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-white transition"
+                      >
+                        {t('openOnVibeMarket') || 'Open them on Vibe Market →'}
+                      </a>
+                    </p>
+                  </div>
+                )}
+
                 {nfts.length === 0 && status !== 'fetching' && (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">∅</div>
