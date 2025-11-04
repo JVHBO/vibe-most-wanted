@@ -32,6 +32,18 @@ const LANGUAGE_MUSIC: Record<SupportedLanguage, string> = {
   'zh-CN': getMusicPath('zh-cn'),
 };
 
+// Volume normalization multipliers - adjust these to make all tracks sound equal at 100%
+// 1.0 = default volume, < 1.0 = quieter, > 1.0 = louder
+const VOLUME_NORMALIZATION: Record<string, number> = {
+  'default': 1.0,   // Reference track
+  'pt-br': 1.0,     // Adjust if needed
+  'en': 1.0,        // Adjust if needed
+  'es': 1.0,        // Adjust if needed
+  'hi': 0.85,       // Slightly quieter (adjust based on actual file)
+  'ru': 1.0,        // Adjust if needed
+  'zh-cn': 1.0,     // Adjust if needed
+};
+
 const DEFAULT_MUSIC = getMusicPath('default');
 const FADE_DURATION = 1500; // 1.5 seconds fade in/out
 
@@ -106,6 +118,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Extract track name from URL for normalization lookup
+    const trackName = trackUrl.split('/').pop()?.replace('.mp3', '') || 'default';
+    const normalizationMultiplier = VOLUME_NORMALIZATION[trackName] || 1.0;
+
+    // Apply normalization to target volume
+    const normalizedVolume = Math.min(1.0, targetVolume * normalizationMultiplier);
+
     // Create new audio element
     const newAudio = new Audio(trackUrl);
     newAudio.loop = true;
@@ -115,20 +134,21 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       // Fade in
       const fadeInSteps = 30;
       const fadeInInterval = FADE_DURATION / fadeInSteps;
-      const volumeIncrement = targetVolume / fadeInSteps;
+      const volumeIncrement = normalizedVolume / fadeInSteps;
 
       let step = 0;
       const fadeInTimer = setInterval(() => {
         step++;
         if (step >= fadeInSteps || !newAudio) {
           clearInterval(fadeInTimer);
-          if (newAudio) newAudio.volume = targetVolume;
+          if (newAudio) newAudio.volume = normalizedVolume;
         } else {
-          newAudio.volume = Math.min(targetVolume, newAudio.volume + volumeIncrement);
+          newAudio.volume = Math.min(normalizedVolume, newAudio.volume + volumeIncrement);
         }
       }, fadeInInterval);
     }).catch(err => {
-      console.warn('⚠️ Failed to play music:', err);
+      console.warn('⚠️ Failed to play music (MP3):', err);
+      console.log('📝 Note: File may be M4A format with .mp3 extension - this is OK, browsers support it');
     });
 
     audioRef.current = newAudio;
@@ -174,8 +194,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    * Sync volume changes to current audio
    */
   useEffect(() => {
-    if (audioRef.current && isMusicEnabled) {
-      audioRef.current.volume = volume;
+    if (audioRef.current && isMusicEnabled && currentTrackRef.current) {
+      // Extract track name for normalization
+      const trackName = currentTrackRef.current.split('/').pop()?.replace('.mp3', '') || 'default';
+      const normalizationMultiplier = VOLUME_NORMALIZATION[trackName] || 1.0;
+
+      // Apply normalized volume
+      audioRef.current.volume = Math.min(1.0, volume * normalizationMultiplier);
     }
   }, [volume, isMusicEnabled]);
 
