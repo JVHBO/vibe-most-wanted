@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cinzel_Decorative, Playfair_Display_SC, Rajdhani } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { MusicProvider } from "@/contexts/MusicContext";
 import { Web3Provider } from "@/contexts/Web3Provider";
 import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
 import { FarcasterNotificationRegistration } from "@/components/FarcasterNotificationRegistration";
@@ -118,8 +119,10 @@ export default function RootLayout({
         <ConvexClientProvider>
           <Web3Provider>
             <LanguageProvider>
-              <FarcasterNotificationRegistration />
-              {children}
+              <MusicProvider>
+                <FarcasterNotificationRegistration />
+                {children}
+              </MusicProvider>
             </LanguageProvider>
           </Web3Provider>
         </ConvexClientProvider>
