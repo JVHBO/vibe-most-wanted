@@ -648,22 +648,47 @@ export default function ProfilePage() {
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
             <div className="w-32 h-32 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex items-center justify-center text-6xl font-display font-bold shadow-gold overflow-hidden">
-              {profile.twitter ? (
-                <img
-                  src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`}
-                  alt={profile.username}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback to initials style
-                    const img = e.target as HTMLImageElement;
-                    if (!profile.twitter) return;
-                    const twitter = profile.twitter.replace('@', '');
-                    img.src = `https://api.dicebear.com/7.x/initials/svg?seed=${twitter}&backgroundColor=1a1414`;
-                  }}
-                />
-              ) : (
-                <span>{profile.username.substring(0, 2).toUpperCase()}</span>
-              )}
+              {(() => {
+                // Priority 1: Use real Twitter CDN URL if available (pbs.twimg.com)
+                if (profile.twitterProfileImageUrl && profile.twitterProfileImageUrl.includes('pbs.twimg.com')) {
+                  const highResUrl = profile.twitterProfileImageUrl.replace('_normal', '_400x400');
+                  return (
+                    <img
+                      src={highResUrl}
+                      alt={profile.username}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to DiceBear if Twitter CDN fails
+                        const img = e.target as HTMLImageElement;
+                        if (profile.twitter) {
+                          img.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`;
+                        }
+                      }}
+                    />
+                  );
+                }
+
+                // Priority 2: Use DiceBear with Twitter username if available
+                if (profile.twitter) {
+                  return (
+                    <img
+                      src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`}
+                      alt={profile.username}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to initials style
+                        const img = e.target as HTMLImageElement;
+                        if (!profile.twitter) return;
+                        const twitter = profile.twitter.replace('@', '');
+                        img.src = `https://api.dicebear.com/7.x/initials/svg?seed=${twitter}&backgroundColor=1a1414`;
+                      }}
+                    />
+                  );
+                }
+
+                // Priority 3: Use initials as final fallback
+                return <span>{profile.username.substring(0, 2).toUpperCase()}</span>;
+              })()}
             </div>
 
             {/* Profile Info */}
