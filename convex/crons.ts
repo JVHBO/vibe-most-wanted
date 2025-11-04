@@ -17,18 +17,21 @@ const crons = cronJobs();
 /**
  * 🏆 Distribute weekly leaderboard rewards
  *
- * Schedule: Every Sunday at 00:00 UTC
+ * ⚠️ DISABLED: Now using manual claim system (claimWeeklyLeaderboardReward)
+ * Players must claim rewards via the leaderboard UI
+ *
+ * Old schedule: Every Sunday at 00:00 UTC
  * Rewards: Top 10 players on leaderboard
  * - Rank #1: 1000 coins
  * - Rank #2: 750 coins
  * - Rank #3: 500 coins
  * - Rank #4-10: 300 coins each
  */
-crons.weekly(
-  "distribute weekly rewards",
-  { dayOfWeek: "sunday", hourUTC: 0, minuteUTC: 0 },
-  internal.quests.distributeWeeklyRewards
-);
+// crons.weekly(
+//   "distribute weekly rewards",
+//   { dayOfWeek: "sunday", hourUTC: 0, minuteUTC: 0 },
+//   internal.quests.distributeWeeklyRewards
+// );
 
 // ============================================================================
 // FUTURE SCHEDULED TASKS (Commented - ready to enable)
