@@ -1121,7 +1121,18 @@ export default function ProfilePage() {
           {profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
             <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold">
               ⚔️ {t('rematchesRemaining')}: <span className="text-vintage-neon-blue">{rematchesRemaining}/{MAX_REMATCHES}</span>
-              <span className="block text-[10px] text-vintage-burnt-gold">{t('resetsAtMidnight')}</span>
+              <span className="block text-[10px] text-vintage-burnt-gold">
+                {(() => {
+                  const now = new Date();
+                  const tomorrow = new Date(now);
+                  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+                  tomorrow.setUTCHours(0, 0, 0, 0);
+                  const diff = tomorrow.getTime() - now.getTime();
+                  const hours = Math.floor(diff / (1000 * 60 * 60));
+                  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                  return `Resets in ${hours}h ${minutes}m (00:00 UTC)`;
+                })()}
+              </span>
             </p>
           )}
         </div>
