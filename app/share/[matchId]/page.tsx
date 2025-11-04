@@ -43,8 +43,8 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
       images: [
         {
           url: imageUrl,
-          width: 1200,
-          height: 630,
+          width: 800,
+          height: 800,
           alt: 'Battle Result',
         },
       ],
