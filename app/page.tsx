@@ -65,8 +65,14 @@ const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterP
 
   // If it's an object with profile image URL, use that (real Twitter photo)
   if (typeof twitterData === 'object' && twitterData.twitterProfileImageUrl) {
-    // Twitter returns "_normal" size (48x48), replace with "_400x400" for better quality
-    return twitterData.twitterProfileImageUrl.replace('_normal', '_400x400');
+    // IMPORTANT: Only use real Twitter CDN URLs (pbs.twimg.com)
+    // Skip unavatar.io URLs as the service is unreliable (frequent 503 errors)
+    const profileImageUrl = twitterData.twitterProfileImageUrl;
+    if (profileImageUrl.includes('pbs.twimg.com')) {
+      // Twitter returns "_normal" size (48x48), replace with "_400x400" for better quality
+      return profileImageUrl.replace('_normal', '_400x400');
+    }
+    // If it's unavatar.io or other unreliable service, fall through to DiceBear
   }
 
   // Fall back to DiceBear generated avatar
