@@ -431,39 +431,37 @@ export default function ProfilePage() {
             // Non-critical, continue with Alchemy data
           }
 
-          // ✅ UPDATE STATS: When someone visits a profile, update the database with fresh data
-          // This keeps the leaderboard accurate even if the player sold/bought cards and never logged in
-          try {
-            const openedCards = enriched.filter(nft => !isUnrevealed(nft)).length;
-            const unopenedCards = enriched.filter(nft => isUnrevealed(nft)).length;
-            const totalPower = enriched.reduce((sum, nft) => sum + (nft.power || 0), 0);
+          // ✅ UPDATE STATS: Only update when the owner visits their own profile
+          // This prevents leaderboard spam and unnecessary re-renders
+          const isOwnProfile = currentUserAddress &&
+                               currentUserAddress.toLowerCase() === address.toLowerCase();
 
-            devLog('📊 Updating profile stats in database:', {
-              totalCards: enriched.length,
-              openedCards,
-              unopenedCards,
-              totalPower
-            });
+          if (isOwnProfile) {
+            try {
+              const openedCards = enriched.filter(nft => !isUnrevealed(nft)).length;
+              const unopenedCards = enriched.filter(nft => isUnrevealed(nft)).length;
+              const totalPower = enriched.reduce((sum, nft) => sum + (nft.power || 0), 0);
 
-            await ConvexProfileService.updateStats(
-              address,
-              enriched.length,
-              openedCards,
-              unopenedCards,
-              totalPower
-            );
+              devLog('📊 Updating own profile stats in database:', {
+                totalCards: enriched.length,
+                openedCards,
+                unopenedCards,
+                totalPower
+              });
 
-            // Update local profile data to reflect the fresh stats
-            profileData.stats.totalCards = enriched.length;
-            profileData.stats.openedCards = openedCards;
-            profileData.stats.unopenedCards = unopenedCards;
-            profileData.stats.totalPower = totalPower;
-            setProfile({...profileData}); // Trigger re-render with updated stats
+              // Fire-and-forget update (non-blocking, no re-render)
+              ConvexProfileService.updateStats(
+                address,
+                enriched.length,
+                openedCards,
+                unopenedCards,
+                totalPower
+              ).catch(err => devWarn('⚠️ Failed to update profile stats:', err));
 
-            devLog('✅ Profile stats updated successfully');
-          } catch (updateErr: any) {
-            devWarn('⚠️ Failed to update profile stats:', updateErr.message || updateErr);
-            // Non-critical error, continue showing the profile
+              devLog('✅ Profile stats update queued');
+            } catch (updateErr: any) {
+              devWarn('⚠️ Failed to queue profile stats update:', updateErr.message || updateErr);
+            }
           }
 
           setNfts(enriched);
