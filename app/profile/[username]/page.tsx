@@ -607,23 +607,15 @@ export default function ProfilePage() {
             <div className="w-32 h-32 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex items-center justify-center text-6xl font-display font-bold shadow-gold overflow-hidden">
               {profile.twitter ? (
                 <img
-                  src={`https://unavatar.io/x/${profile.twitter.replace('@', '')}`}
+                  src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`}
                   alt={profile.username}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    // Try alternative services as fallback
+                    // Fallback to initials style
                     const img = e.target as HTMLImageElement;
                     if (!profile.twitter) return;
                     const twitter = profile.twitter.replace('@', '');
-
-                    if (img.src.includes('unavatar.io')) {
-                      // Fallback to another service
-                      img.src = `https://avatars.githubusercontent.com/${twitter}`;
-                    } else if (img.src.includes('github')) {
-                      // Final fallback: show initials
-                      img.style.display = 'none';
-                      img.parentElement!.innerHTML = `<span class="text-6xl font-display font-bold">${profile.username.substring(0, 2).toUpperCase()}</span>`;
-                    }
+                    img.src = `https://api.dicebear.com/7.x/initials/svg?seed=${twitter}&backgroundColor=1a1414`;
                   }}
                 />
               ) : (
