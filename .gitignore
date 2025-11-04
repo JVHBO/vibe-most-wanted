@@ -68,11 +68,3 @@ playwright-report/
 twitter-user-data/
 playwright-user-data/
 gemini-screenshots/
-
-# Music files with copyright issues (need royalty-free replacements)
-public/music/en.mp3
-public/music/es.mp3
-public/music/hi.mp3
-public/music/pt-br.mp3
-public/music/ru.mp3
-public/music/zh-cn.mp3
