@@ -51,7 +51,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const { lang } = useLanguage();
   const [musicMode, setMusicModeState] = useState<MusicMode>('default');
   const [isMusicEnabled, setIsMusicEnabled] = useState(true);
-  const [volume, setVolume] = useState(0.5); // 0.0 to 1.0
+  const [volume, setVolume] = useState(0.1); // 0.0 to 1.0 (starts at 10%)
 
   // Audio references
   const audioRef = useRef<HTMLAudioElement | null>(null);
