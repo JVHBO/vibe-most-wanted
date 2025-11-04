@@ -2956,7 +2956,10 @@ export default function TCGPage() {
 
                   castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
+                  // Generate OG image URL with battle data
+                  const ogImageUrl = `${window.location.origin}/api/og?result=win&playerPower=${lastBattleResult.playerPower}&opponentPower=${lastBattleResult.opponentPower}&opponentName=${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}&type=${lastBattleResult.type || 'pve'}`;
+
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(ogImageUrl)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -3030,7 +3033,10 @@ export default function TCGPage() {
 
                   castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
+                  // Generate OG image URL with battle data
+                  const ogImageUrl = `${window.location.origin}/api/og?result=loss&playerPower=${lastBattleResult.playerPower}&opponentPower=${lastBattleResult.opponentPower}&opponentName=${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}&type=${lastBattleResult.type || 'pve'}`;
+
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(ogImageUrl)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
