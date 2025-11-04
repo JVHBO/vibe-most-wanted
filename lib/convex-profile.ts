@@ -73,6 +73,7 @@ export interface UserProfile {
 
   twitter?: string;
   twitterHandle?: string;
+  twitterProfileImageUrl?: string;
   fid?: string;
   userIndex?: number;
   createdAt: number;
@@ -324,7 +325,8 @@ export class ConvexProfileService {
   static async updateTwitter(
     address: string,
     twitter: string,
-    twitterHandle?: string
+    twitterHandle?: string,
+    twitterProfileImageUrl?: string
   ): Promise<void> {
     try {
       const normalizedAddress = address.toLowerCase();
@@ -339,6 +341,7 @@ export class ConvexProfileService {
         username: profile.username,
         twitter,
         twitterHandle,
+        twitterProfileImageUrl,
       });
     } catch (error: any) {
       console.error("❌ updateTwitter error:", error);
@@ -400,12 +403,13 @@ export class ConvexProfileService {
       }
 
       // Handle Twitter update
-      if (updates.twitter || updates.twitterHandle) {
+      if (updates.twitter || updates.twitterHandle || updates.twitterProfileImageUrl) {
         await convex.mutation(api.profiles.upsertProfile, {
           address: normalizedAddress,
           username: profile.username,
           twitter: updates.twitter,
           twitterHandle: updates.twitterHandle,
+          twitterProfileImageUrl: updates.twitterProfileImageUrl,
         });
       }
 
@@ -574,6 +578,7 @@ export class ConvexProfileService {
           : undefined,
         twitter: currentProfile.twitter,
         twitterHandle: currentProfile.twitterHandle,
+        twitterProfileImageUrl: currentProfile.twitterProfileImageUrl,
         fid: currentProfile.fid,
       });
 

@@ -106,6 +106,7 @@ export default defineSchema({
     // Social
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),
+    twitterProfileImageUrl: v.optional(v.string()), // Twitter profile picture URL
     fid: v.optional(v.string()), // Farcaster ID
 
     // Metadata
