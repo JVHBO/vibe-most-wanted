@@ -19,8 +19,8 @@ function calcPower(attributes) {
 
   let base = 1;
   const r = rarity.toLowerCase();
-  if (r.includes('mythic')) base = 350;
-  else if (r.includes('legend')) base = 150;
+  if (r.includes('mythic')) base = 600;
+  else if (r.includes('legend')) base = 240;
   else if (r.includes('epic')) base = 60;
   else if (r.includes('rare')) base = 15;
   else if (r.includes('uncommon')) base = 8;

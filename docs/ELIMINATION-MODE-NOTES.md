@@ -71,7 +71,7 @@ Função `generateAIHand(difficulty)`:
 - **GEY:** 5x cartas de 15 PWR (total: 75)
 - **GOOFY:** 5x cartas de 18-21 PWR (total: ~90-105)
 - **GOONER:** 5x cartas de 60-72 PWR (total: ~300-360)
-- **GANGSTER:** 5x cartas de 150 PWR (total: 750)
+- **GANGSTER:** 5x cartas de 240 PWR (total: 1200)
 - **GIGACHAD:** Top 5 cartas mais fortes (total: ~855)
 
 **Ordenação Estratégica (NOVO):**
