@@ -2843,7 +2843,7 @@ export default function TCGPage() {
     }
   }, [address, nfts]); // Removed userProfile to prevent infinite loop
 
-  // Load leaderboard with 5-minute refresh (usando Convex agora! 🚀)
+  // Load leaderboard with 30-minute refresh (usando Convex agora! 🚀)
   useEffect(() => {
     const loadLeaderboard = () => {
       ConvexProfileService.getLeaderboard().then((data) => {
