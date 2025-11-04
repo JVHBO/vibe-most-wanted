@@ -41,6 +41,20 @@ export interface UserProfile {
   lastAttackDate?: string;
   lastRematchDate?: string;
 
+  // Revealed Cards Cache (metadata cache for reliability when Alchemy fails)
+  revealedCardsCache?: Array<{
+    tokenId: string;
+    name: string;
+    imageUrl: string;
+    rarity: string;
+    wear?: string;
+    foil?: string;
+    character?: string;
+    power?: number;
+    attributes?: any;
+    cachedAt: number;
+  }>;
+
   // Economy fields
   coins?: number;
   lifetimeEarned?: number;
