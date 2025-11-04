@@ -3100,21 +3100,21 @@ export default function TCGPage() {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[250] p-4" onClick={() => setShowSettings(false)}>
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-8 max-w-md w-full shadow-gold" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-display font-bold text-vintage-gold flex items-center gap-2">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[250] p-2 sm:p-4" onClick={() => setShowSettings(false)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-4 sm:p-8 max-w-md w-full shadow-gold max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold flex items-center gap-2">
                 <span>§</span> {t('settings')}
               </h2>
-              <button onClick={() => setShowSettings(false)} className="text-vintage-gold hover:text-vintage-ice text-2xl transition">×</button>
+              <button onClick={() => setShowSettings(false)} className="text-vintage-gold hover:text-vintage-ice text-xl sm:text-2xl transition">×</button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-3 sm:space-y-6">
               {/* Music Toggle */}
-              <div className="bg-vintage-black/50 p-5 rounded-xl border border-vintage-gold/50">
+              <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl text-vintage-gold">♫</span>
+                    <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
                     <div>
                       <p className="font-modern font-bold text-vintage-gold">MUSIC</p>
                       <p className="text-xs text-vintage-burnt-gold">{musicEnabled ? t('musicOn') : t('musicOff')}</p>
@@ -3146,9 +3146,9 @@ export default function TCGPage() {
               </div>
 
               {/* Language Selector */}
-              <div className="bg-vintage-black/50 p-5 rounded-xl border border-vintage-gold/50">
+              <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl text-vintage-gold">◊</span>
+                  <span className="text-2xl sm:text-3xl text-vintage-gold">◊</span>
                   <p className="font-modern font-bold text-vintage-gold">{t('language').toUpperCase()}</p>
                 </div>
                 <select
@@ -3175,9 +3175,9 @@ export default function TCGPage() {
               </div>
 
               {/* Music Mode Selector */}
-              <div className="bg-vintage-black/50 p-5 rounded-xl border border-vintage-gold/50">
+              <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl text-vintage-gold">♫</span>
+                  <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
                   <p className="font-modern font-bold text-vintage-gold">BACKGROUND MUSIC</p>
                 </div>
                 <select
@@ -3200,9 +3200,9 @@ export default function TCGPage() {
 
               {/* Change Username */}
               {userProfile && (
-                <div className="bg-vintage-black/50 p-5 rounded-xl border border-vintage-gold/50">
+                <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="text-3xl text-vintage-gold">♔</span>
+                    <span className="text-2xl sm:text-3xl text-vintage-gold">♔</span>
                     <div className="flex-1">
                       <p className="font-modern font-bold text-vintage-gold">USERNAME</p>
                       <p className="text-xs text-vintage-burnt-gold">@{userProfile.username}</p>
@@ -3312,10 +3312,10 @@ export default function TCGPage() {
 
               {/* Twitter/X Connection */}
               {userProfile && (
-                <div className="bg-vintage-black/50 p-5 rounded-xl border border-vintage-gold/50">
+                <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl text-vintage-gold">𝕏</span>
+                      <span className="text-2xl sm:text-3xl text-vintage-gold">𝕏</span>
                       <div>
                         <p className="font-modern font-bold text-vintage-gold">X / TWITTER</p>
                         <p className="text-xs text-vintage-burnt-gold">
