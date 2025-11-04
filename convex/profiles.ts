@@ -70,12 +70,16 @@ export const getLeaderboardLite = query({
     return profiles.map(p => ({
       address: p.address,
       username: p.username,
-      totalPower: p.stats?.totalPower || 0,
-      // Optional: include rank display data
-      pveWins: p.stats?.pveWins || 0,
-      pvpWins: p.stats?.pvpWins || 0,
+      stats: {
+        totalPower: p.stats?.totalPower || 0,
+        openedCards: p.stats?.openedCards || 0,
+        pveWins: p.stats?.pveWins || 0,
+        pvpWins: p.stats?.pvpWins || 0,
+        pveLosses: p.stats?.pveLosses || 0,
+        pvpLosses: p.stats?.pvpLosses || 0,
+      },
       // 🚫 EXCLUDED: defenseDeck, revealedCardsCache, ownedTokenIds,
-      //              twitter, fid, economy data, full stats object
+      //              twitter, fid, economy data, other stats fields
     }));
   },
 });
