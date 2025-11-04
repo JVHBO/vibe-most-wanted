@@ -200,7 +200,7 @@ export default function DifficultyModal({
               </button>
               {onEliminationBattle && (
                 <div className="relative w-full sm:w-auto">
-                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-vintage-burnt-gold font-bold text-xs tracking-widest">
+                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-vintage-burnt-gold font-bold text-xs tracking-widest z-10">
                     SOON
                   </div>
                   <button
