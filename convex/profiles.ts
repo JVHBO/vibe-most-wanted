@@ -116,6 +116,7 @@ export const upsertProfile = mutation({
     )),
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),
+    twitterProfileImageUrl: v.optional(v.string()),
     fid: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
