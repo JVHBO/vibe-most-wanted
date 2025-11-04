@@ -3124,6 +3124,7 @@ export default function TCGPage() {
                   <option value="pt-BR" className="bg-vintage-charcoal text-vintage-ice">Português</option>
                   <option value="es" className="bg-vintage-charcoal text-vintage-ice">Español</option>
                   <option value="hi" className="bg-vintage-charcoal text-vintage-ice">हिन्दी</option>
+                  <option value="ru" className="bg-vintage-charcoal text-vintage-ice">Русский</option>
                 </select>
               </div>
 
