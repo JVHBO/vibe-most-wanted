@@ -6,6 +6,7 @@ import { MusicProvider } from "@/contexts/MusicContext";
 import { Web3Provider } from "@/contexts/Web3Provider";
 import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
 import { FarcasterNotificationRegistration } from "@/components/FarcasterNotificationRegistration";
+import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -126,6 +127,7 @@ export default function RootLayout({
             </LanguageProvider>
           </Web3Provider>
         </ConvexClientProvider>
+        <Analytics />
       </body>
     </html>
   );
