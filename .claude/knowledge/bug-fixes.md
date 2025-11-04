@@ -39,13 +39,15 @@ Used Playwright browser automation to:
 - `@claudeIAbyjvhbo`: `https://pbs.twimg.com/profile_images/1982225853766356992/0Bzwsidt_400x400.png`
 
 ### Files Modified
-- `app/page.tsx` - Updated avatar URL logic to skip unavatar.io
+- `app/page.tsx` - Updated avatar URL logic to skip unavatar.io (home page)
+- `app/profile/[username]/page.tsx:650-692` - Updated avatar URL logic to match home page (profile pages)
 - `update-all-pfps-final.cjs` - Script to update all profile pictures (temporary, can be deleted)
 
 ### Testing
 1. Verified all 4 users now have real `pbs.twimg.com` URLs in database
-2. Confirmed images load correctly from Twitter CDN
-3. Hard refresh (Ctrl+Shift+R) shows real profile pictures
+2. Confirmed images load correctly from Twitter CDN on home page
+3. Confirmed images load correctly from Twitter CDN on profile pages
+4. Hard refresh (Ctrl+Shift+R) shows real profile pictures everywhere
 
 ### Future OAuth Connections
 When new users connect Twitter (or existing users reconnect):
@@ -63,3 +65,4 @@ When new users connect Twitter (or existing users reconnect):
 - `039ff2d` - feat: Add regional language background music files
 - `2936573` - fix: Add twitterProfileImageUrl to upsertProfile mutation args
 - `c8046ca` - feat: Load real Twitter profile pictures instead of generated avatars
+- `d0003e3` - fix: Show real Twitter profile pictures on profile pages
