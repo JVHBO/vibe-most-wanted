@@ -4,22 +4,22 @@ Place your music files in this directory according to the following naming conve
 
 ## Required Files:
 
-- `default.mp3` - Default background music (plays when "Default Music" mode is selected)
-- `pt-br.mp3` - Portuguese (Brazil) music
-- `en.mp3` - English music
-- `es.mp3` - Spanish music
-- `hi.mp3` - Hindi music
-- `ru.mp3` - Russian music
-- `zh-cn.mp3` - Chinese Simplified music
+- `default.m4a` - Default background music (plays when "Default Music" mode is selected)
+- `pt-br.m4a` - Portuguese (Brazil) music
+- `en.m4a` - English music
+- `es.m4a` - Spanish music
+- `hi.m4a` - Hindi music
+- `ru.m4a` - Russian music
+- `zh-cn.m4a` - Chinese Simplified music
 
 ## Format:
-- All files should be in MP3 format
+- All files should be in M4A (AAC) format
 - Recommended bitrate: 128-192 kbps (to keep file size reasonable)
 - Files will loop automatically
 - Transitions between tracks use 1.5 second fade in/fade out
 
 ## How it works:
-1. When "Default Music" mode is selected, `default.mp3` plays continuously
+1. When "Default Music" mode is selected, `default.m4a` plays continuously
 2. When "Language Music" mode is selected, the music changes based on the selected language
 3. Volume is controlled by the existing music volume slider in Settings
 4. When changing language or music mode, tracks crossfade smoothly

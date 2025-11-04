@@ -19,15 +19,15 @@ const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
 // Music file paths for each language (you'll add these later)
 const LANGUAGE_MUSIC: Record<SupportedLanguage, string> = {
-  'pt-BR': '/music/pt-br.mp3',
-  'en': '/music/en.mp3',
-  'es': '/music/es.mp3',
-  'hi': '/music/hi.mp3',
-  'ru': '/music/ru.mp3',
-  'zh-CN': '/music/zh-cn.mp3',
+  'pt-BR': '/music/pt-br.m4a',
+  'en': '/music/en.m4a',
+  'es': '/music/es.m4a',
+  'hi': '/music/hi.m4a',
+  'ru': '/music/ru.m4a',
+  'zh-CN': '/music/zh-cn.m4a',
 };
 
-const DEFAULT_MUSIC = '/music/default.mp3';
+const DEFAULT_MUSIC = '/music/default.m4a';
 const FADE_DURATION = 1500; // 1.5 seconds fade in/out
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
