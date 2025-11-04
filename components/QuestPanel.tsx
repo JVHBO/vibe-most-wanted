@@ -16,7 +16,7 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
   // Fetch daily quest and progress
   const dailyQuest = useQuery(api.quests.getDailyQuest);
   const questProgress = useQuery(api.quests.getQuestProgress, {
-    playerAddress: playerAddress.toLowerCase(),
+    address: playerAddress.toLowerCase(),
   });
 
   const claimReward = useMutation(api.quests.claimQuestReward);
@@ -26,7 +26,7 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
 
     setIsClaiming(true);
     try {
-      await claimReward({ playerAddress: playerAddress.toLowerCase() });
+      await claimReward({ address: playerAddress.toLowerCase() });
       // Play success sound if enabled
       if (soundEnabled && typeof window !== 'undefined') {
         const audio = new Audio('/marvin-victory.mp3');

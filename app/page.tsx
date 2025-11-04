@@ -25,7 +25,7 @@ import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
 // 📝 Development logger (silent in production)
-import { devLog, devError } from "@/lib/utils/logger";
+import { devLog, devError, devWarn } from "@/lib/utils/logger";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -1066,24 +1066,44 @@ export default function TCGPage() {
     }
   };
 
-  // 🎉 Show victory popup with random image and matching audio
+  // 🎉 Show victory popup with smart image selection based on victory margin
   const showVictory = () => {
-    // Select random victory image
-    const randomIndex = Math.floor(Math.random() * VICTORY_IMAGES.length);
-    const randomImage = VICTORY_IMAGES[randomIndex];
-    setCurrentVictoryImage(randomImage);
+    let isOverwhelmingVictory = false;
 
-    // Play audio based on which image was selected
-    if (randomIndex === 0) {
-      // victory-1.jpg (Gigachad original) → som padrão
-      if (soundEnabled) AudioManager.win();
-    } else {
-      // victory-2.jpg (Musculoso sorrindo) → Marvin vibes 🌈
+    // Calculate if victory was overwhelming based on power difference
+    if (lastBattleResult?.playerPower && lastBattleResult?.opponentPower) {
+      const playerPower = lastBattleResult.playerPower;
+      const opponentPower = lastBattleResult.opponentPower;
+      const powerDifference = playerPower - opponentPower;
+      const victoryMargin = (powerDifference / opponentPower) * 100;
+
+      // Overwhelming victory = 50% or more power advantage
+      isOverwhelmingVictory = victoryMargin >= 50;
+
+      devLog(`🎯 Victory margin: ${victoryMargin.toFixed(1)}% (${playerPower} vs ${opponentPower})`);
+      devLog(`💪 ${isOverwhelmingVictory ? 'OVERWHELMING' : 'Normal'} victory!`);
+    }
+
+    // Select victory image based on victory type
+    let victoryImage: string;
+
+    if (isOverwhelmingVictory) {
+      // OVERWHELMING VICTORY → victory-2.jpg (Moreno musculoso + gay vibes)
+      victoryImage = VICTORY_IMAGES[1]; // victory-2.jpg
+
+      // Play Marvin audio for overwhelming victories
       const audio = new Audio('/marvin-victory.mp3');
       audio.volume = 0.5;
       audio.play().catch(err => devLog('Audio play failed:', err));
+    } else {
+      // NORMAL VICTORY → victory-1.jpg (Gigachad)
+      victoryImage = VICTORY_IMAGES[0]; // victory-1.jpg
+
+      // Play default win sound
+      if (soundEnabled) AudioManager.win();
     }
 
+    setCurrentVictoryImage(victoryImage);
     setShowWinPopup(true);
   };
 
