@@ -23,6 +23,10 @@
     ],
     "primaryCategory": "games",
     "tags": ["nft", "card-game", "battle", "pvp", "base"],
-    "tagline": "Battle with your NFT cards"
+    "heroImageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2",
+    "tagline": "Battle with your NFT cards",
+    "ogTitle": "VIBE MOST WANTED",
+    "ogDescription": "Battle with VIBE NFT cards in PvE and PvP modes on Base!",
+    "ogImageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2"
   }
 }
