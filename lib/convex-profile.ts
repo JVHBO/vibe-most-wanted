@@ -36,6 +36,7 @@ export interface UserProfile {
     rarity: string;
     foil?: string;
   })[];
+  hasDefenseDeck?: boolean; // Flag for leaderboard (true if defenseDeck has 5 cards)
   attacksToday: number;
   rematchesToday: number;
   lastAttackDate?: string;
