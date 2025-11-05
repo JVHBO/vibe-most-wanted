@@ -78,6 +78,8 @@ export const getLeaderboardLite = query({
         pveLosses: p.stats?.pveLosses || 0,
         pvpLosses: p.stats?.pvpLosses || 0,
       },
+      // Add hasDefenseDeck flag for Attack button (without sending full deck data)
+      hasDefenseDeck: p.defenseDeck && p.defenseDeck.length === 5,
       // 🚫 EXCLUDED: defenseDeck, revealedCardsCache, ownedTokenIds,
       //              twitter, fid, economy data, other stats fields
     }));
