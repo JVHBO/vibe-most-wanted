@@ -80,6 +80,7 @@ export const getLeaderboardLite = query({
       },
       // Add hasDefenseDeck flag for Attack button (without sending full deck data)
       hasDefenseDeck: p.defenseDeck && p.defenseDeck.length === 5,
+      userIndex: p.userIndex,
       // 🚫 EXCLUDED: defenseDeck, revealedCardsCache, ownedTokenIds,
       //              twitter, fid, economy data, other stats fields
     }));
