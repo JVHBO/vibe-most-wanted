@@ -9,7 +9,7 @@
     "name": "VIBE MOST WANTED",
     "iconUrl": "https://www.vibemostwanted.xyz/icon.png",
     "homeUrl": "https://www.vibemostwanted.xyz",
-    "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
+    "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2",
     "aspectRatio": "3:2",
     "buttonTitle": "Play Now",
     "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
@@ -19,14 +19,14 @@
     "subtitle": "NFT Card Battle Game",
     "description": "Battle with your VIBE NFT cards in PvE and PvP modes. Join the most wanted card game on Base!",
     "screenshotUrls": [
-      "https://www.vibemostwanted.xyz/screenshot.jpg"
+      "https://www.vibemostwanted.xyz/screenshot.jpg?v=2"
     ],
     "primaryCategory": "games",
     "tags": ["nft", "card-game", "battle", "pvp", "base"],
-    "heroImageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
+    "heroImageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2",
     "tagline": "Battle with your NFT cards",
     "ogTitle": "VIBE MOST WANTED",
     "ogDescription": "Battle with VIBE NFT cards in PvE and PvP modes on Base!",
-    "ogImageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg"
+    "ogImageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2"
   }
 }
