@@ -5911,13 +5911,13 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-sm font-bold">Achievements</span>
+                    <span className="text-sm font-bold">{t('achievements')}</span>
                     <span className="text-3xl leading-none">★</span>
                   </>
                 ) : (
                   <>
                     <span className="text-base md:text-lg">★</span>
-                    <span className="hidden sm:inline">Achievements</span>
+                    <span className="hidden sm:inline">{t('achievements')}</span>
                   </>
                 )}
               </button>
