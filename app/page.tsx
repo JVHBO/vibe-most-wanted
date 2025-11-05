@@ -6419,7 +6419,7 @@ export default function TCGPage() {
                                 <button
                                   onClick={() => {
                                     // Check if target has defense deck
-                                    if (!profile.defenseDeck || profile.defenseDeck.length !== 5) {
+                                    if (!profile.hasDefenseDeck) {
                                       alert('This player has not set up their defense deck yet.');
                                       if (soundEnabled) AudioManager.buttonError();
                                       return;
@@ -6442,9 +6442,9 @@ export default function TCGPage() {
                                     setShowAttackCardSelection(true);
                                     setAttackSelectedCards([]);
                                   }}
-                                  disabled={!userProfile || attacksRemaining <= 0 || !profile.defenseDeck}
+                                  disabled={!userProfile || attacksRemaining <= 0 || !profile.hasDefenseDeck}
                                   className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                                    userProfile && attacksRemaining > 0 && profile.defenseDeck
+                                    userProfile && attacksRemaining > 0 && profile.hasDefenseDeck
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
