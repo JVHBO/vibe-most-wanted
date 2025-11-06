@@ -198,6 +198,11 @@ export function GamePopups({
               <a
                 href={(() => {
                   if (!lastBattleResult) return '#';
+
+                  // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_type)
+                  const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}_${lastBattleResult.type || 'pve'}`;
+                  const shareUrl = `${window.location.origin}/share/${matchId}`;
+
                   let castText = t('castVictory', { power: lastBattleResult.playerPower });
 
                   if (lastBattleResult.type === 'attack') {
@@ -210,9 +215,7 @@ export function GamePopups({
 
                   castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
 
-                  const ogImageUrl = `${window.location.origin}/api/og?result=win&playerPower=${lastBattleResult.playerPower}&opponentPower=${lastBattleResult.opponentPower}&opponentName=${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}&type=${lastBattleResult.type || 'pve'}&v=2`;
-
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(ogImageUrl)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -275,6 +278,11 @@ export function GamePopups({
               <a
                 href={(() => {
                   if (!lastBattleResult) return '#';
+
+                  // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_type)
+                  const matchId = `loss_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}_${lastBattleResult.type || 'pve'}`;
+                  const shareUrl = `${window.location.origin}/share/${matchId}`;
+
                   let castText = t('castDefeat', { power: lastBattleResult.playerPower });
 
                   if (lastBattleResult.type === 'attack') {
@@ -287,9 +295,7 @@ export function GamePopups({
 
                   castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
 
-                  const ogImageUrl = `${window.location.origin}/api/og?result=loss&playerPower=${lastBattleResult.playerPower}&opponentPower=${lastBattleResult.opponentPower}&opponentName=${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}&type=${lastBattleResult.type || 'pve'}&v=2`;
-
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(ogImageUrl)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"

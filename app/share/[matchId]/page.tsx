@@ -29,8 +29,22 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
   const description = `${playerPower} vs ${opponentPower} Power - VIBE Most Wanted Battle Result`;
 
   // Explicitly set the OpenGraph image URL
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vibe-most-wanted.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vibemostwanted.xyz';
   const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image`;
+
+  // Farcaster miniapp embed metadata
+  const miniAppEmbed = {
+    version: '1',
+    imageUrl: imageUrl,
+    buttonTitle: 'Play VIBE Most Wanted',
+    action: {
+      type: 'launch_miniapp',
+      name: 'VIBE MOST WANTED',
+      url: baseUrl,
+      splashImageUrl: `${baseUrl}/splash.png`,
+      splashBackgroundColor: '#FFD700',
+    },
+  };
 
   return {
     title,
@@ -54,6 +68,10 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
       title,
       description,
       images: [imageUrl],
+    },
+    other: {
+      'fc:miniapp': JSON.stringify(miniAppEmbed),
+      'fc:frame': JSON.stringify(miniAppEmbed), // Backward compatibility
     },
   };
 }
