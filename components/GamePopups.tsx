@@ -210,7 +210,7 @@ export function GamePopups({
 
                   castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
 
-                  const ogImageUrl = `${window.location.origin}/api/og?result=win&playerPower=${lastBattleResult.playerPower}&opponentPower=${lastBattleResult.opponentPower}&opponentName=${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}&type=${lastBattleResult.type || 'pve'}`;
+                  const ogImageUrl = `${window.location.origin}/api/og?result=win&playerPower=${lastBattleResult.playerPower}&opponentPower=${lastBattleResult.opponentPower}&opponentName=${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}&type=${lastBattleResult.type || 'pve'}&v=2`;
 
                   return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(ogImageUrl)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
                 })()}
@@ -287,7 +287,7 @@ export function GamePopups({
 
                   castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
 
-                  const ogImageUrl = `${window.location.origin}/api/og?result=loss&playerPower=${lastBattleResult.playerPower}&opponentPower=${lastBattleResult.opponentPower}&opponentName=${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}&type=${lastBattleResult.type || 'pve'}`;
+                  const ogImageUrl = `${window.location.origin}/api/og?result=loss&playerPower=${lastBattleResult.playerPower}&opponentPower=${lastBattleResult.opponentPower}&opponentName=${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}&type=${lastBattleResult.type || 'pve'}&v=2`;
 
                   return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(ogImageUrl)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
                 })()}
