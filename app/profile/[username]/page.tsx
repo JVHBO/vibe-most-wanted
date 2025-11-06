@@ -254,6 +254,7 @@ export default function ProfilePage() {
   const NFT_PER_PAGE = 12;
   const [rematchesRemaining, setRematchesRemaining] = useState<number>(5);
   const MAX_REMATCHES = 5;
+  const [farcasterUsername, setFarcasterUsername] = useState<string>('');
 
   // 🚀 OPTIMIZED: Use summary query (95% bandwidth reduction)
   const matchHistory = useQuery(
@@ -368,6 +369,19 @@ export default function ProfilePage() {
         }
 
         setProfile(profileData);
+
+        // Busca username do Farcaster se tiver FID
+        if (profileData.fid) {
+          try {
+            const fcResponse = await fetch(`https://client.warpcast.com/v2/user-by-fid?fid=${profileData.fid}`);
+            if (fcResponse.ok) {
+              const fcData = await fcResponse.json();
+              setFarcasterUsername(fcData.result?.user?.username || '');
+            }
+          } catch (error) {
+            console.error('Error fetching Farcaster username:', error);
+          }
+        }
 
         // Carrega NFTs do jogador usando o fetcher unificado (OTIMIZADO)
         setLoadingNFTs(true);
@@ -742,7 +756,7 @@ export default function ProfilePage() {
                 )}
                 {profile.fid && (
                   <a
-                    href={`https://warpcast.com/~/profiles/${profile.fid}`}
+                    href={`https://warpcast.com/${farcasterUsername || profile.fid}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-purple-400 hover:text-vintage-gold inline-flex items-center gap-1 font-modern"
@@ -752,7 +766,7 @@ export default function ProfilePage() {
                       <path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.444H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z" fill="currentColor"/>
                       <path d="M675.556 746.667V351.111H700L728.889 253.333H551.111V746.667H524.444C512.171 746.667 502.222 756.616 502.222 768.889V795.556H497.778C485.505 795.556 475.556 805.505 475.556 817.778V844.444H724.444V817.778C724.444 805.505 714.495 795.556 702.222 795.556H697.778V768.889C697.778 756.616 687.828 746.667 675.556 746.667Z" fill="currentColor"/>
                     </svg>
-                    Farcaster
+                    @{farcasterUsername || `fid:${profile.fid}`}
                   </a>
                 )}
               </div>
