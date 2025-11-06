@@ -122,42 +122,37 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             </div>
           </div>
 
-          {/* PFP Circle - Only show if URL exists */}
-          {pfpUrl && (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginBottom: '15px',
-              }}
-            >
-              <img
-                src={pfpUrl}
-                style={{
-                  width: '180px',
-                  height: '180px',
-                  borderRadius: '50%',
-                  border: isLosing ? '5px solid #DC2626' : '5px solid #FFD700',
-                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
-                  objectFit: 'cover',
-                }}
-              />
-            </div>
-          )}
+          {/* Spacer to push content to bottom */}
+          <div style={{ flex: 1 }} />
 
-          {/* Username & Power at bottom */}
+          {/* Bottom section with PFP, Username & Power */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '8px',
-              marginTop: 'auto',
+              gap: '12px',
             }}
           >
+            {/* PFP Circle - Only show if URL exists */}
+            {pfpUrl && (
+              <img
+                src={pfpUrl}
+                style={{
+                  width: '150px',
+                  height: '150px',
+                  borderRadius: '50%',
+                  border: isLosing ? '4px solid #DC2626' : '4px solid #FFD700',
+                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.8)',
+                  objectFit: 'cover',
+                }}
+              />
+            )}
+
+            {/* Username */}
             <div
               style={{
-                fontSize: '28px',
+                fontSize: '26px',
                 fontWeight: 900,
                 color: '#FFD700',
                 textAlign: 'center',
@@ -170,9 +165,11 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             >
               {username}
             </div>
+
+            {/* Power */}
             <div
               style={{
-                fontSize: '48px',
+                fontSize: '52px',
                 fontWeight: 900,
                 color: '#FFD700',
                 textShadow: '0 3px 15px rgba(0, 0, 0, 0.8)',
