@@ -166,9 +166,10 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             background: 'linear-gradient(135deg, #1a1a1a 0%, #121212 100%)',
             position: 'relative',
+            padding: '25px 0',
           }}
         >
           {/* Subtle glow */}
@@ -187,14 +188,13 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           {/* Result badge at top */}
           <div
             style={{
-              position: 'absolute',
-              top: '25px',
               display: 'flex',
               background: 'rgba(18, 18, 18, 0.8)',
               padding: '12px 40px',
               borderRadius: '15px',
               border: '3px solid #FFD700',
               boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
+              zIndex: 2,
             }}
           >
             <div
@@ -217,7 +217,6 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               alignItems: 'center',
               gap: '60px',
               zIndex: 1,
-              marginTop: '40px',
             }}
           >
             {/* Player card */}
@@ -250,12 +249,11 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           {/* Branding at bottom */}
           <div
             style={{
-              position: 'absolute',
-              bottom: '25px',
-              fontSize: '24px',
-              fontWeight: 900,
-              color: 'rgba(255, 255, 255, 0.9)',
-              letterSpacing: '2px',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: 'rgba(255, 255, 255, 0.5)',
+              letterSpacing: '1px',
+              zIndex: 2,
             }}
           >
             VIBE MOST WANTED

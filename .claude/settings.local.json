@@ -27,7 +27,9 @@
       "Bash(npx playwright:*)",
       "Bash(git revert:*)",
       "Bash(npx convex dev:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(git reset:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
