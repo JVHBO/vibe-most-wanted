@@ -1,11 +1,31 @@
 import { Metadata } from 'next';
 
+async function getFarcasterPfp(username: string): Promise<string> {
+  try {
+    // Try Farcaster Hub API
+    const response = await fetch(`https://hub.farcaster.xyz/v1/userByUsername?username=${username}`, {
+      next: { revalidate: 3600 }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.pfp || '';
+    }
+  } catch (e) {
+    console.error('Failed to fetch Farcaster PFP:', e);
+  }
+  return '';
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vibemostwanted.xyz';
 
-  // Simple direct URL - all params as empty/zero, just show username
-  const imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}&twitter=&totalPower=0&wins=0&losses=0&ties=0&nftCount=0&winStreak=0&coins=0&v=1`;
+  // Try to get Farcaster profile picture
+  const pfpUrl = await getFarcasterPfp(username);
+
+  // Simple direct URL with PFP if available
+  const imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}&twitter=&totalPower=0&wins=0&losses=0&ties=0&nftCount=0&winStreak=0&coins=0&pfp=${encodeURIComponent(pfpUrl)}&v=1`;
 
   return {
     title: `${username}'s Profile - VIBE Most Wanted`,
