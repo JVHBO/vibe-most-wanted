@@ -204,7 +204,7 @@ export function GamePopups({
 
                   // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName)
                   const playerPfp = encodeURIComponent(userProfile.twitterProfileImageUrl || '');
-                  const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || lastBattleResult.playerPfpUrl || '');
+                  const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || '');
                   const playerName = encodeURIComponent(userProfile.username || 'Player');
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
 
@@ -289,7 +289,7 @@ export function GamePopups({
 
                   // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName)
                   const playerPfp = encodeURIComponent(userProfile.twitterProfileImageUrl || '');
-                  const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || lastBattleResult.playerPfpUrl || '');
+                  const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || '');
                   const playerName = encodeURIComponent(userProfile.username || 'Player');
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
 
