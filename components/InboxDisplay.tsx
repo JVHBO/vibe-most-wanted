@@ -30,7 +30,7 @@ export function InboxDisplay() {
         <div className="text-left">
           <div className="text-xs text-vintage-gold/60">Inbox</div>
           <div className="text-sm font-bold text-vintage-gold">
-            {inboxAmount.toLocaleString()} VBMS
+            {inboxAmount.toLocaleString()} TESTVBMS
           </div>
         </div>
 

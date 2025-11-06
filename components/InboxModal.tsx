@@ -28,7 +28,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     }
 
     if (!canClaim) {
-      toast.error("Mínimo de 100 VBMS para coletar");
+      toast.error("Mínimo de 100 TESTVBMS para coletar");
       return;
     }
 
@@ -36,7 +36,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       const result = await prepareInboxClaim({ address });
 
       toast.success(
-        `🎉 Preparado para coletar ${result.amount.toLocaleString()} VBMS!` +
+        `🎉 Preparado para coletar ${result.amount.toLocaleString()} TESTVBMS!` +
         (result.bonus > 0 ? ` (+${result.bonus} bonus)` : "")
       );
 
@@ -80,7 +80,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         <div className="text-center mb-6">
           <div className="text-5xl mb-2">📬</div>
           <h2 className="text-2xl font-bold text-vintage-gold mb-1">
-            Inbox VBMS
+            Inbox TESTVBMS
           </h2>
           <p className="text-sm text-vintage-gold/60">
             Acumule suas recompensas e colete depois
@@ -97,7 +97,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
               {inboxAmount.toLocaleString()}
             </div>
             <div className="text-xs text-vintage-gold/40">
-              VBMS tokens
+              TESTVBMS tokens
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
               Mínimo
             </div>
             <div className="text-sm font-bold text-vintage-gold">
-              100 VBMS
+              100 TESTVBMS
             </div>
           </div>
         </div>
@@ -132,7 +132,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
               : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed"
           }`}
         >
-          {canClaim ? "Preparar Claim" : `Precisa ${100 - inboxAmount} VBMS`}
+          {canClaim ? "Preparar Claim" : `Precisa ${100 - inboxAmount} TESTVBMS`}
         </button>
 
         {canClaim && (

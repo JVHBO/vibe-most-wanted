@@ -340,7 +340,15 @@ export const recordImmediateClaim = mutation({
 export const getPlayerEconomy = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
-    const profile = await getProfile(ctx, address);
+    // Try to get profile, return null if doesn't exist
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      return null;
+    }
 
     return {
       // Virtual balance (in-app spending)

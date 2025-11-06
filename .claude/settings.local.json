@@ -26,7 +26,8 @@
       "Bash(curl:*)",
       "Bash(npx playwright:*)",
       "Bash(git revert:*)",
-      "Bash(npx convex dev:*)"
+      "Bash(npx convex dev:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []
