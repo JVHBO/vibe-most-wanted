@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
+import { devLog, devError } from '@/lib/utils/logger';
 
 /**
  * API endpoint to send test notification to all users
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     const title = body.title || '🎮 Vibe Most Wanted';
     const message = body.body || 'Notifications are working! Ready to play?';
 
-    console.log('📢 Sending test notifications...');
+    devLog('📢 Sending test notifications...');
 
     // Initialize Convex
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log(`📱 Found ${tokens.length} users with notifications enabled`);
+    devLog(`📱 Found ${tokens.length} users with notifications enabled`);
 
     let sent = 0;
     let failed = 0;
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`📊 Results: ${sent} sent, ${failed} failed`);
+    devLog(`📊 Results: ${sent} sent, ${failed} failed`);
 
     return NextResponse.json({
       success: true,
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('❌ Error sending notifications:', error);
+    devError('❌ Error sending notifications:', error);
     return NextResponse.json(
       {
         success: false,
