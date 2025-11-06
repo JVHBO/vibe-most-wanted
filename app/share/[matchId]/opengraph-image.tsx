@@ -44,9 +44,9 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
         style={{
           width: '380px',
           height: '480px',
-          background: `url(${backgroundImage})`,
-          backgroundSize: '100% 100%',
-          backgroundPosition: 'center',
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
           borderRadius: '12px',
           border: isLosing ? '6px solid #DC2626' : '6px solid #FFD700',
@@ -69,7 +69,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'rgba(0, 0, 0, 0.15)',
+            background: 'rgba(0, 0, 0, 0.3)',
             display: 'flex',
           }}
         />
