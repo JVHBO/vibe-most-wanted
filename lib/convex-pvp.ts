@@ -7,6 +7,7 @@
 
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
+import { devLog, devError } from '@/lib/utils/logger';
 
 // Lazy initialization to avoid build-time errors
 let convex: ConvexHttpClient | null = null;
@@ -57,10 +58,10 @@ export class ConvexPvPService {
         mode: mode || "ranked", // Default to ranked if not specified
       });
 
-      console.log("✅ Room created:", code, `(${mode || 'ranked'})`);
+      devLog("✅ Room created:", code, `(${mode || 'ranked'})`);
       return code;
     } catch (error: any) {
-      console.error("❌ createRoom error:", error);
+      devError("❌ createRoom error:", error);
       throw new Error(`Erro ao criar sala: ${error.message}`);
     }
   }
@@ -82,10 +83,10 @@ export class ConvexPvPService {
         guestUsername: guestUsername || normalizedAddress.substring(0, 8),
       });
 
-      console.log("✅ Joined room:", code);
+      devLog("✅ Joined room:", code);
       return true;
     } catch (error: any) {
-      console.error("❌ joinRoom error:", error);
+      devError("❌ joinRoom error:", error);
       throw new Error(`Erro ao entrar na sala: ${error.message}`);
     }
   }
@@ -94,7 +95,7 @@ export class ConvexPvPService {
    * Find automatic match
    */
   static async findMatch(playerAddress: string, playerUsername?: string): Promise<string> {
-    console.log("🔍 findMatch called for:", playerAddress);
+    devLog("🔍 findMatch called for:", playerAddress);
 
     try {
       const normalizedAddress = playerAddress.toLowerCase();
@@ -105,16 +106,16 @@ export class ConvexPvPService {
       });
 
       if (roomCode) {
-        console.log("✅ Matched with room:", roomCode);
+        devLog("✅ Matched with room:", roomCode);
         return roomCode;
       } else {
-        console.log("⏳ Added to matchmaking queue");
+        devLog("⏳ Added to matchmaking queue");
         return "";
       }
     } catch (error: any) {
-      console.error("❌ findMatch ERROR:", error);
-      console.error("Error code:", error.code);
-      console.error("Error message:", error.message);
+      devError("❌ findMatch ERROR:", error);
+      devError("Error code:", error.code);
+      devError("Error message:", error.message);
       throw error;
     }
   }
@@ -130,9 +131,9 @@ export class ConvexPvPService {
         playerAddress: normalizedAddress,
       });
 
-      console.log("✅ Cancelled matchmaking:", normalizedAddress);
+      devLog("✅ Cancelled matchmaking:", normalizedAddress);
     } catch (error: any) {
-      console.error("❌ cancelMatchmaking error:", error);
+      devError("❌ cancelMatchmaking error:", error);
     }
   }
 
@@ -144,7 +145,7 @@ export class ConvexPvPService {
     playerAddress: string,
     cards: any[]
   ): Promise<void> {
-    console.log("🎯 updateCards called:", {
+    devLog("🎯 updateCards called:", {
       code,
       playerAddress,
       cardsCount: cards.length,
@@ -161,9 +162,9 @@ export class ConvexPvPService {
         power,
       });
 
-      console.log("✅ Cards updated");
+      devLog("✅ Cards updated");
     } catch (error: any) {
-      console.error("❌ updateCards error:", error);
+      devError("❌ updateCards error:", error);
       throw new Error(`Erro ao atualizar cartas: ${error.message}`);
     }
   }
@@ -176,7 +177,7 @@ export class ConvexPvPService {
       const room = await getConvex().query(api.rooms.getRoom, { code });
       return room as GameRoom | null;
     } catch (error: any) {
-      console.error("❌ getRoom error:", error);
+      devError("❌ getRoom error:", error);
       return null;
     }
   }
@@ -193,9 +194,9 @@ export class ConvexPvPService {
         playerAddress: normalizedAddress,
       });
 
-      console.log("✅ Left room:", code);
+      devLog("✅ Left room:", code);
     } catch (error: any) {
-      console.error("❌ leaveRoom error:", error);
+      devError("❌ leaveRoom error:", error);
     }
   }
 
@@ -209,9 +210,9 @@ export class ConvexPvPService {
         winnerId,
       });
 
-      console.log("✅ Room finished:", code, "winner:", winnerId);
+      devLog("✅ Room finished:", code, "winner:", winnerId);
     } catch (error: any) {
-      console.error("❌ finishRoom error:", error);
+      devError("❌ finishRoom error:", error);
     }
   }
 
@@ -238,7 +239,7 @@ export class ConvexPvPService {
           callback(room);
         }
       } catch (error) {
-        console.error("❌ watchRoom poll error:", error);
+        devError("❌ watchRoom poll error:", error);
       }
 
       if (isActive) {
@@ -284,7 +285,7 @@ export class ConvexPvPService {
             });
 
             if (room && room.roomId) {
-              console.log("✅ Match found! Room:", room.roomId);
+              devLog("✅ Match found! Room:", room.roomId);
               hasCalledBack = true;
               callback(room.roomId);
               return; // Stop polling
@@ -292,10 +293,10 @@ export class ConvexPvPService {
             else {
               // Matched but room not found yet - retry with faster polling
               retryCount++;
-              console.log(`⏳ Matched but room not ready yet, retry ${retryCount}/${MAX_RETRIES}`);
+              devLog(`⏳ Matched but room not ready yet, retry ${retryCount}/${MAX_RETRIES}`);
 
               if (retryCount >= MAX_RETRIES) {
-                console.error("❌ Max retries reached, room never appeared");
+                devError("❌ Max retries reached, room never appeared");
                 hasCalledBack = true;
                 callback(null); // Give up
                 return;
@@ -303,14 +304,14 @@ export class ConvexPvPService {
             }
           } else if (matchStatus.status === "cancelled") {
             // Matchmaking was cancelled
-            console.log("⚠️ Matchmaking cancelled");
+            devLog("⚠️ Matchmaking cancelled");
             hasCalledBack = true;
             callback(null);
             return; // Stop polling
           }
         }
       } catch (error) {
-        console.error("❌ Error polling matchmaking status:", error);
+        devError("❌ Error polling matchmaking status:", error);
       }
 
       if (isActive && !hasCalledBack) {
@@ -333,16 +334,16 @@ export class ConvexPvPService {
    * Cleanup old rooms (older than 5 minutes)
    */
   static async cleanupOldRooms(): Promise<void> {
-    console.log("🧹 Cleaning up old rooms...");
+    devLog("🧹 Cleaning up old rooms...");
 
     try {
       const deleted = await getConvex().mutation(api.rooms.cleanupOldRooms, {});
 
       if (deleted > 0) {
-        console.log(`✅ Deleted ${deleted} old rooms`);
+        devLog(`✅ Deleted ${deleted} old rooms`);
       }
     } catch (error: any) {
-      console.error("❌ cleanupOldRooms error:", error);
+      devError("❌ cleanupOldRooms error:", error);
     }
   }
 }

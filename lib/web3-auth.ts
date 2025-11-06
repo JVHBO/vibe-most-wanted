@@ -10,6 +10,7 @@
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 import { verifyMessage } from "ethers";
+import { devLog, devError } from '@/lib/utils/logger';
 
 // Lazy initialization to avoid build-time errors
 let convex: ConvexHttpClient | null = null;
@@ -48,7 +49,7 @@ export async function signMessage(
 
     throw new Error("Unsupported signer");
   } catch (error: any) {
-    console.error("❌ signMessage error:", error);
+    devError("❌ signMessage error:", error);
     throw new Error(`Failed to sign message: ${error.message}`);
   }
 }
@@ -61,7 +62,7 @@ export async function getNonce(address: string): Promise<number> {
     const nonce = await getConvex().query(api.auth.getNonce, { address });
     return nonce;
   } catch (error: any) {
-    console.error("❌ getNonce error:", error);
+    devError("❌ getNonce error:", error);
     return 0; // Default to 0 for new users
   }
 }
@@ -101,7 +102,7 @@ export async function createAuthPayload(
     );
   }
 
-  console.log("✅ Signature verified locally:", {
+  devLog("✅ Signature verified locally:", {
     address,
     recoveredAddress,
     match: recoveredAddress.toLowerCase() === address.toLowerCase(),

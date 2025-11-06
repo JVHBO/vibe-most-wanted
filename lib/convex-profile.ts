@@ -7,6 +7,7 @@
 
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
+import { devLog, devError } from '@/lib/utils/logger';
 
 // Lazy initialization to avoid build-time errors
 let convex: ConvexHttpClient | null = null;
@@ -116,7 +117,7 @@ export class ConvexProfileService {
       });
       return profile;
     } catch (error: any) {
-      console.error("❌ getProfile error:", error);
+      devError("❌ getProfile error:", error);
       return null;
     }
   }
@@ -133,7 +134,7 @@ export class ConvexProfileService {
       // Cast through unknown since lite version returns partial UserProfile
       return profiles as unknown as UserProfile[];
     } catch (error: any) {
-      console.error("❌ getLeaderboard error:", error);
+      devError("❌ getLeaderboard error:", error);
       return [];
     }
   }
@@ -149,7 +150,7 @@ export class ConvexProfileService {
       });
       return !available; // If available=false, then it exists
     } catch (error: any) {
-      console.error("❌ usernameExists error:", error);
+      devError("❌ usernameExists error:", error);
       return false;
     }
   }
@@ -165,7 +166,7 @@ export class ConvexProfileService {
       });
       return profile ? profile.address : null;
     } catch (error: any) {
-      console.error("❌ getAddressByUsername error:", error);
+      devError("❌ getAddressByUsername error:", error);
       return null;
     }
   }
@@ -215,9 +216,9 @@ export class ConvexProfileService {
         },
       });
 
-      console.log("✅ Profile created successfully:", username);
+      devLog("✅ Profile created successfully:", username);
     } catch (error: any) {
-      console.error("❌ createProfile error:", error);
+      devError("❌ createProfile error:", error);
       throw new Error(`Erro ao criar perfil: ${error.message}`);
     }
   }
@@ -254,7 +255,7 @@ export class ConvexProfileService {
         tokenIds, // Pass tokenIds for validation
       });
     } catch (error: any) {
-      console.error("❌ updateStats error:", error);
+      devError("❌ updateStats error:", error);
       throw error;
     }
   }
@@ -276,7 +277,7 @@ export class ConvexProfileService {
       });
       return result;
     } catch (error: any) {
-      console.error("❌ getValidatedDefenseDeck error:", error);
+      devError("❌ getValidatedDefenseDeck error:", error);
       throw error;
     }
   }
@@ -299,7 +300,7 @@ export class ConvexProfileService {
       const normalizedAddress = address.toLowerCase();
 
       // ✅ Additional validation and logging
-      console.log('📤 updateDefenseDeck called:', {
+      devLog('📤 updateDefenseDeck called:', {
         address: normalizedAddress,
         cardCount: defenseDeck.length,
         cards: defenseDeck.map(c => ({
@@ -319,10 +320,10 @@ export class ConvexProfileService {
         defenseDeck,
       });
 
-      console.log('✅ updateDefenseDeck succeeded');
+      devLog('✅ updateDefenseDeck succeeded');
     } catch (error: any) {
-      console.error("❌ updateDefenseDeck error:", error);
-      console.error("❌ Error details:", {
+      devError("❌ updateDefenseDeck error:", error);
+      devError("❌ Error details:", {
         message: error.message,
         stack: error.stack,
         data: error.data
@@ -356,7 +357,7 @@ export class ConvexProfileService {
         twitterProfileImageUrl,
       });
     } catch (error: any) {
-      console.error("❌ updateTwitter error:", error);
+      devError("❌ updateTwitter error:", error);
       throw error;
     }
   }
@@ -434,7 +435,7 @@ export class ConvexProfileService {
         });
       }
     } catch (error: any) {
-      console.error("❌ updateProfile error:", error);
+      devError("❌ updateProfile error:", error);
       throw error;
     }
   }
@@ -475,7 +476,7 @@ export class ConvexProfileService {
       const normalizedPlayerAddress = playerAddress.toLowerCase();
       const normalizedOpponentAddress = opponentAddress?.toLowerCase();
 
-      console.log("🎮 recordMatch called:", {
+      devLog("🎮 recordMatch called:", {
         playerAddress: normalizedPlayerAddress,
         type,
         result,
@@ -501,9 +502,9 @@ export class ConvexProfileService {
         difficulty,
       });
 
-      console.log("✅ Match recorded successfully");
+      devLog("✅ Match recorded successfully");
     } catch (error: any) {
-      console.error("❌ recordMatch error:", error);
+      devError("❌ recordMatch error:", error);
       throw error;
     }
   }
@@ -527,7 +528,7 @@ export class ConvexProfileService {
       // Cast through unknown since summary version returns partial MatchHistory
       return matches as unknown as MatchHistory[];
     } catch (error: any) {
-      console.error("❌ getMatchHistory error:", error);
+      devError("❌ getMatchHistory error:", error);
       return [];
     }
   }
@@ -596,9 +597,9 @@ export class ConvexProfileService {
         fid: currentProfile.fid,
       });
 
-      console.log("✅ Username updated successfully:", oldUsername, "->", normalizedUsername);
+      devLog("✅ Username updated successfully:", oldUsername, "->", normalizedUsername);
     } catch (error: any) {
-      console.error("❌ updateUsername error:", error);
+      devError("❌ updateUsername error:", error);
       throw new Error(`Erro ao atualizar username: ${error.message}`);
     }
   }
@@ -629,7 +630,7 @@ export class ConvexProfileService {
       });
       return result;
     } catch (error: any) {
-      console.error("❌ updateRevealedCardsCache error:", error);
+      devError("❌ updateRevealedCardsCache error:", error);
       throw error;
     }
   }

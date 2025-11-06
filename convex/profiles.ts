@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import { normalizeAddress, isValidAddress } from "./utils";
 
 /**
  * PROFILE QUERIES & MUTATIONS
@@ -18,9 +19,14 @@ import { api, internal } from "./_generated/api";
 export const getProfile = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
+    // Validate address format
+    if (!isValidAddress(address)) {
+      throw new Error('Invalid Ethereum address format');
+    }
+
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     return profile;
@@ -164,7 +170,12 @@ export const upsertProfile = mutation({
     fid: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const address = args.address.toLowerCase();
+    // Validate address format
+    if (!isValidAddress(args.address)) {
+      throw new Error('Invalid Ethereum address format');
+    }
+
+    const address = normalizeAddress(args.address);
     const username = args.username.toLowerCase();
 
     // Check if profile exists
@@ -249,7 +260,7 @@ export const updateStats = mutation({
   handler: async (ctx, { address, stats, tokenIds }) => {
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     if (!profile) {
@@ -289,35 +300,16 @@ export const updateDefenseDeck = mutation({
   },
   handler: async (ctx, { address, defenseDeck }) => {
     try {
-      console.log('🔍 updateDefenseDeck handler called:', {
-        address,
-        cardCount: defenseDeck.length,
-        cards: defenseDeck.map(c => ({
-          tokenId: c.tokenId,
-          power: c.power,
-          powerType: typeof c.power,
-          imageUrlLength: c.imageUrl?.length,
-          nameLength: c.name?.length,
-          rarity: c.rarity,
-          foil: c.foil,
-        }))
-      });
 
       const profile = await ctx.db
         .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+        .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
         .first();
 
       if (!profile) {
-        console.error('❌ Profile not found:', address);
+        // devError (server-side)('❌ Profile not found:', address);
         throw new Error(`Profile not found: ${address}`);
       }
-
-      console.log('✅ Profile found:', {
-        id: profile._id,
-        username: profile.username,
-        currentDefenseDeckLength: profile.defenseDeck?.length
-      });
 
       // Clean the defense deck data - remove undefined values
       const cleanedDefenseDeck = defenseDeck.map(card => {
@@ -337,20 +329,16 @@ export const updateDefenseDeck = mutation({
         return cleaned;
       });
 
-      console.log('🧹 Cleaned defense deck:', cleanedDefenseDeck);
+      // devLog (server-side)('🧹 Cleaned defense deck:', cleanedDefenseDeck);
 
       await ctx.db.patch(profile._id, {
         defenseDeck: cleanedDefenseDeck,
         lastUpdated: Date.now(),
       });
 
-      console.log('✅ Defense deck updated successfully');
+      // devLog (server-side)('✅ Defense deck updated successfully');
     } catch (error: any) {
-      console.error('❌ updateDefenseDeck handler error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-      });
+      // devError (server-side)('❌ updateDefenseDeck handler error:', error);
       throw error;
     }
   },
@@ -365,7 +353,7 @@ export const getValidatedDefenseDeck = mutation({
   handler: async (ctx, { address }) => {
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     if (!profile) {
@@ -387,7 +375,7 @@ export const getValidatedDefenseDeck = mutation({
 
     // If no ownedTokenIds yet (legacy profiles), return deck as-is with warning
     if (!profile.ownedTokenIds || profile.ownedTokenIds.length === 0) {
-      console.warn(`⚠️ Profile ${address} has no ownedTokenIds - cannot validate defense deck`);
+      // devWarn (server-side)(`⚠️ Profile ${address} has no ownedTokenIds - cannot validate defense deck`);
       const defenseDeck = profile.defenseDeck
         .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } => typeof card === 'object');
       return {
@@ -409,7 +397,7 @@ export const getValidatedDefenseDeck = mutation({
           validCards.push(card);
         } else {
           removedCards.push(card);
-          console.log(`🗑️ Removed card ${card.tokenId} (${card.name}) from defense deck - no longer owned`);
+          // devLog (server-side)(`🗑️ Removed card ${card.tokenId} (${card.name}) from defense deck - no longer owned`);
         }
       }
     }
@@ -421,7 +409,7 @@ export const getValidatedDefenseDeck = mutation({
         lastUpdated: Date.now(),
       });
 
-      console.log(`✅ Defense deck validated for ${address}: ${validCards.length} valid, ${removedCards.length} removed`);
+      // devLog (server-side)(`✅ Defense deck validated for ${address}: ${validCards.length} valid, ${removedCards.length} removed`);
     }
 
     return {
@@ -444,7 +432,7 @@ export const updateAttacks = mutation({
   handler: async (ctx, { address, attacksToday, lastAttackDate }) => {
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     if (!profile) {
@@ -482,7 +470,7 @@ export const incrementStat = internalMutation({
   handler: async (ctx, { address, stat }) => {
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     if (!profile) {
@@ -555,7 +543,7 @@ export const updateStatsSecure = mutation({
     // 3. Perform the action (same as original mutation)
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     if (!profile) {
@@ -569,7 +557,7 @@ export const updateStatsSecure = mutation({
 
     // Nonce already incremented immediately after verification (line 508)
 
-    console.log("✅ SECURE: Stats updated for", address);
+    // devLog (server-side)("✅ SECURE: Stats updated for", address);
   },
 });
 
@@ -612,7 +600,7 @@ export const updateDefenseDeckSecure = mutation({
     // 3. Perform action
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     if (!profile) {
@@ -626,7 +614,7 @@ export const updateDefenseDeckSecure = mutation({
 
     // Nonce already incremented immediately after verification (line 565)
 
-    console.log("✅ SECURE: Defense deck updated for", address);
+    // devLog (server-side)("✅ SECURE: Defense deck updated for", address);
   },
 });
 
@@ -667,7 +655,7 @@ export const incrementStatSecure = mutation({
     // 3. Perform action
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     if (!profile) {
@@ -684,7 +672,7 @@ export const incrementStatSecure = mutation({
 
     // Nonce already incremented immediately after verification (line 620)
 
-    console.log(`✅ SECURE: ${stat} incremented for`, address);
+    // devLog (server-side)(`✅ SECURE: ${stat} incremented for`, address);
   },
 });
 
@@ -713,7 +701,7 @@ export const cleanOldDefenseDecks = mutation({
       // Check if first element is a string (old format)
       const firstCard = profile.defenseDeck[0];
       if (typeof firstCard === 'string') {
-        console.log(`Cleaning old defense deck for ${profile.username} (${profile.address})`);
+        // devLog (server-side)(`Cleaning old defense deck for ${profile.username} (${profile.address})`);
 
         await ctx.db.patch(profile._id, {
           defenseDeck: undefined,
@@ -725,7 +713,7 @@ export const cleanOldDefenseDecks = mutation({
       }
     }
 
-    console.log(`✅ Migration complete: ${cleanedCount} cleaned, ${skippedCount} skipped`);
+    // devLog (server-side)(`✅ Migration complete: ${cleanedCount} cleaned, ${skippedCount} skipped`);
 
     return {
       cleanedCount,
@@ -756,7 +744,7 @@ export const getAvailableCards = query({
   handler: async (ctx, { address, mode }) => {
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
     if (!profile) {
@@ -813,7 +801,7 @@ export const updateRevealedCardsCache = mutation({
   },
   handler: async (ctx, args) => {
     const { address, revealedCards } = args;
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
 
     // Get existing profile
     const profile = await ctx.db
