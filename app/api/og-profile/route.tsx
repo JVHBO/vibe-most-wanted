@@ -49,12 +49,12 @@ export async function GET(request: Request) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #1a0f00 0%, #2d1810 50%, #1a0f00 100%)',
-            padding: '50px',
+            background: 'linear-gradient(135deg, #0f0a00 0%, #1a1410 30%, #2d2010 50%, #1a1410 70%, #0f0a00 100%)',
+            padding: '40px 60px',
             position: 'relative',
           }}
         >
-          {/* Background glow overlays */}
+          {/* Layered background effects */}
           <div
             style={{
               position: 'absolute',
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
               left: '0',
               width: '100%',
               height: '100%',
-              background: 'radial-gradient(circle at 30% 30%, rgba(255, 215, 0, 0.12) 0%, transparent 60%)',
+              background: 'radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 45%)',
               display: 'flex',
             }}
           />
@@ -73,7 +73,19 @@ export async function GET(request: Request) {
               right: '0',
               width: '100%',
               height: '100%',
-              background: 'radial-gradient(circle at 70% 70%, rgba(212, 175, 55, 0.08) 0%, transparent 60%)',
+              background: 'radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.12) 0%, transparent 45%)',
+              display: 'flex',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '100%',
+              height: '100%',
+              background: 'radial-gradient(ellipse at center, rgba(255, 215, 0, 0.06) 0%, transparent 60%)',
               display: 'flex',
             }}
           />
@@ -91,16 +103,16 @@ export async function GET(request: Request) {
             {/* Profile Picture */}
             <div
               style={{
-                width: '120px',
-                height: '120px',
+                width: '140px',
+                height: '140px',
                 borderRadius: '50%',
-                border: '4px solid #FFD700',
-                boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
-                background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
+                border: '5px solid #FFD700',
+                boxShadow: '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4), inset 0 0 20px rgba(255, 215, 0, 0.2)',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #D4AF37 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '48px',
+                fontSize: '56px',
                 fontWeight: 900,
                 color: '#1a0a00',
               }}
@@ -114,15 +126,16 @@ export async function GET(request: Request) {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '8px',
               }}
             >
               <div
                 style={{
-                  fontSize: '52px',
+                  fontSize: '56px',
                   fontWeight: 900,
                   color: '#FFD700',
-                  letterSpacing: '1px',
+                  letterSpacing: '2px',
+                  textShadow: '0 0 30px rgba(255, 215, 0, 0.8), 0 4px 15px rgba(0, 0, 0, 0.8)',
                 }}
               >
                 {username}
@@ -130,9 +143,10 @@ export async function GET(request: Request) {
               {twitter && (
                 <div
                   style={{
-                    fontSize: '24px',
+                    fontSize: '26px',
                     color: '#D4AF37',
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    letterSpacing: '1px',
                   }}
                 >
                   {twitter}
@@ -157,28 +171,31 @@ export async function GET(request: Request) {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '10px',
-                background: 'rgba(255, 215, 0, 0.1)',
-                border: '3px solid rgba(255, 215, 0, 0.4)',
-                borderRadius: '20px',
-                padding: '25px 70px',
+                gap: '12px',
+                background: 'rgba(59, 130, 246, 0.12)',
+                border: '4px solid rgba(59, 130, 246, 0.4)',
+                borderRadius: '25px',
+                padding: '30px 80px',
+                boxShadow: '0 0 40px rgba(59, 130, 246, 0.3), inset 0 0 30px rgba(59, 130, 246, 0.1)',
               }}
             >
               <div
                 style={{
-                  fontSize: '20px',
-                  color: '#D4AF37',
-                  fontWeight: 700,
-                  letterSpacing: '3px',
+                  fontSize: '22px',
+                  color: '#93C5FD',
+                  fontWeight: 800,
+                  letterSpacing: '4px',
                 }}
               >
                 TOTAL POWER
               </div>
               <div
                 style={{
-                  fontSize: '90px',
+                  fontSize: '100px',
                   fontWeight: 900,
                   color: '#3B82F6',
+                  textShadow: '0 0 35px rgba(59, 130, 246, 1), 0 4px 20px rgba(0, 0, 0, 0.9)',
+                  letterSpacing: '-2px',
                 }}
               >
                 {totalPower}
@@ -189,63 +206,41 @@ export async function GET(request: Request) {
             <div
               style={{
                 display: 'flex',
-                gap: '50px',
+                gap: '35px',
+                width: '100%',
+                justifyContent: 'center',
               }}
             >
-              {/* Ranking */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '16px',
-                    color: '#9CA3AF',
-                    fontWeight: 700,
-                    letterSpacing: '1px',
-                  }}
-                >
-                  RANK
-                </div>
-                <div
-                  style={{
-                    fontSize: '36px',
-                    fontWeight: 900,
-                    color: '#FFD700',
-                  }}
-                >
-                  {getRankingDisplay(ranking)}
-                </div>
-              </div>
-
               {/* Win Rate */}
               <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '10px',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '3px solid rgba(16, 185, 129, 0.3)',
+                  borderRadius: '15px',
+                  padding: '20px 30px',
+                  minWidth: '140px',
                 }}
               >
                 <div
                   style={{
                     fontSize: '16px',
-                    color: '#9CA3AF',
-                    fontWeight: 700,
-                    letterSpacing: '1px',
+                    color: '#6EE7B7',
+                    fontWeight: 800,
+                    letterSpacing: '2px',
                   }}
                 >
                   WIN RATE
                 </div>
                 <div
                   style={{
-                    fontSize: '36px',
+                    fontSize: '44px',
                     fontWeight: 900,
                     color: '#10B981',
+                    textShadow: '0 0 20px rgba(16, 185, 129, 0.8)',
                   }}
                 >
                   {winRate}%
@@ -258,27 +253,33 @@ export async function GET(request: Request) {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '10px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '3px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '15px',
+                  padding: '20px 30px',
+                  minWidth: '160px',
                 }}
               >
                 <div
                   style={{
                     fontSize: '16px',
-                    color: '#9CA3AF',
-                    fontWeight: 700,
-                    letterSpacing: '1px',
+                    color: '#D1D5DB',
+                    fontWeight: 800,
+                    letterSpacing: '2px',
                   }}
                 >
                   RECORD
                 </div>
                 <div
                   style={{
-                    fontSize: '30px',
-                    fontWeight: 800,
+                    fontSize: '36px',
+                    fontWeight: 900,
                     color: '#FFFFFF',
+                    textShadow: '0 0 20px rgba(255, 255, 255, 0.6)',
                   }}
                 >
-                  {wins}W-{losses}L-{ties}T
+                  {wins}W-{losses}L
                 </div>
               </div>
 
@@ -288,24 +289,30 @@ export async function GET(request: Request) {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '10px',
+                  background: 'rgba(168, 85, 247, 0.1)',
+                  border: '3px solid rgba(168, 85, 247, 0.3)',
+                  borderRadius: '15px',
+                  padding: '20px 30px',
+                  minWidth: '120px',
                 }}
               >
                 <div
                   style={{
                     fontSize: '16px',
-                    color: '#9CA3AF',
-                    fontWeight: 700,
-                    letterSpacing: '1px',
+                    color: '#C4B5FD',
+                    fontWeight: 800,
+                    letterSpacing: '2px',
                   }}
                 >
                   NFTs
                 </div>
                 <div
                   style={{
-                    fontSize: '36px',
+                    fontSize: '44px',
                     fontWeight: 900,
                     color: '#A855F7',
+                    textShadow: '0 0 20px rgba(168, 85, 247, 0.8)',
                   }}
                 >
                   {nftCount}
@@ -374,14 +381,35 @@ export async function GET(request: Request) {
           <div
             style={{
               display: 'flex',
-              fontSize: '36px',
-              fontWeight: 900,
-              color: '#FFD700',
-              letterSpacing: '3px',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '8px',
               zIndex: 1,
             }}
           >
-            VIBE MOST WANTED
+            <div
+              style={{
+                fontSize: '42px',
+                fontWeight: 900,
+                color: '#FFD700',
+                letterSpacing: '4px',
+                textShadow: '0 0 25px rgba(255, 215, 0, 0.8), 0 4px 15px rgba(0, 0, 0, 0.8)',
+                display: 'flex',
+              }}
+            >
+              VIBE MOST WANTED
+            </div>
+            <div
+              style={{
+                fontSize: '18px',
+                color: '#D4AF37',
+                fontWeight: 600,
+                letterSpacing: '1px',
+                display: 'flex',
+              }}
+            >
+              vibemostwanted.xyz
+            </div>
           </div>
         </div>
       ),
