@@ -14,6 +14,7 @@ import { useMusic } from "@/contexts/MusicContext";
 import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery, useMutation, useConvex } from "convex/react";
+import { toast } from "sonner";
 
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
@@ -28,6 +29,7 @@ import { PvPMenuModals } from "@/components/PvPMenuModals";
 import { GamePopups } from "@/components/GamePopups";
 import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
+import { InboxDisplay } from "@/components/InboxDisplay";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
@@ -663,6 +665,11 @@ export default function TCGPage() {
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
 
+  // VBMS Claim mutations
+  const claimBattleRewardsNow = useMutation(api.vbmsClaim.claimBattleRewardsNow);
+  const sendToInbox = useMutation(api.vbmsClaim.sendToInbox);
+  const recordImmediateClaim = useMutation(api.vbmsClaim.recordImmediateClaim);
+
   // 🎯 Weekly Quests mutations
   const claimWeeklyReward = useMutation(api.quests.claimWeeklyReward);
 
@@ -765,6 +772,7 @@ export default function TCGPage() {
     opponentTwitter?: string;
     type: 'pve' | 'pvp' | 'attack' | 'defense';
     coinsEarned?: number;
+    matchId?: string; // Convex match ID for VBMS claim
   } | null>(null);
   const [showTiePopup, setShowTiePopup] = useState(false);
   const [tieGifLoaded, setTieGifLoaded] = useState(false);
@@ -959,7 +967,23 @@ export default function TCGPage() {
   };
 
   // 🎵 Handler to close victory screen and stop audio
-  const handleCloseVictoryScreen = () => {
+  const handleCloseVictoryScreen = async () => {
+    // Se tem matchId e coins, enviar para inbox automaticamente
+    if (lastBattleResult?.matchId && lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0 && address) {
+      try {
+        await sendToInbox({
+          address,
+          matchId: lastBattleResult.matchId as any,
+        });
+        toast.success(`📬 ${lastBattleResult.coinsEarned} VBMS sent to inbox!`, { duration: 3000 });
+      } catch (error: any) {
+        // Se já foi claimed, ignora o erro silenciosamente
+        if (!error.message?.includes('already claimed')) {
+          console.error('Failed to send to inbox:', error);
+        }
+      }
+    }
+
     // Stop victory audio if playing
     if (victoryAudioRef.current) {
       victoryAudioRef.current.pause();
@@ -967,6 +991,74 @@ export default function TCGPage() {
       victoryAudioRef.current = null;
     }
     setShowWinPopup(false);
+  };
+
+  // 💰 Handler to claim VBMS now (immediate)
+  const handleClaimNow = async (matchId: string) => {
+    if (!address) return;
+
+    try {
+      toast.info("Preparing claim...");
+
+      const claimData = await claimBattleRewardsNow({
+        address,
+        matchId: matchId as any,
+      });
+
+      toast.info("Sending transaction...");
+
+      // TODO: Replace with actual contract call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const mockTxHash = `0x${Math.random().toString(16).substring(2)}`;
+
+      await recordImmediateClaim({
+        address,
+        amount: claimData.amount,
+        bonus: claimData.bonus,
+        bonusReasons: claimData.bonusReasons,
+        txHash: mockTxHash,
+      });
+
+      if (claimData.bonus > 0) {
+        toast.success(`✅ Claimed ${claimData.amount} VBMS! (+${claimData.bonus} bonus)`, { duration: 5000 });
+      } else {
+        toast.success(`✅ Claimed ${claimData.amount} VBMS to your wallet!`);
+      }
+
+      // Close victory screen after successful claim
+      handleCloseVictoryScreen();
+    } catch (error: any) {
+      console.error("Claim failed:", error);
+      toast.error(error.message || "Claim failed. Please try again.");
+    }
+  };
+
+  // 📬 Handler to send VBMS to inbox
+  const handleSendToInbox = async (matchId: string) => {
+    if (!address) return;
+
+    try {
+      const result = await sendToInbox({
+        address,
+        matchId: matchId as any,
+      });
+
+      toast.success(`📬 ${result.amountAdded} VBMS sent to inbox!`, { duration: 3000 });
+
+      // Close victory screen after sending to inbox
+      setTimeout(() => {
+        setShowWinPopup(false);
+        // Stop victory audio
+        if (victoryAudioRef.current) {
+          victoryAudioRef.current.pause();
+          victoryAudioRef.current.currentTime = 0;
+          victoryAudioRef.current = null;
+        }
+      }, 1000);
+    } catch (error: any) {
+      console.error("Send to inbox failed:", error);
+      toast.error(error.message || "Failed to send to inbox");
+    }
   };
 
   // 💰 Handler to claim daily login bonus
@@ -2781,7 +2873,24 @@ export default function TCGPage() {
   }, [address, userProfile]);
 
   return (
-    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6 overflow-x-hidden">
+    <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
+      {/* Ambient floating particles */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div
+            key={i}
+            className="floating-particle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDuration: `${15 + Math.random() * 20}s`,
+              animationDelay: `${Math.random() * 10}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Main content wrapper with z-index */}
+      <div className="relative z-10">
       {/* Game Popups (Victory, Loss, Tie, Error, Success, Daily Claim) */}
       <GamePopups
         showWinPopup={showWinPopup}
@@ -2791,6 +2900,9 @@ export default function TCGPage() {
         userProfile={userProfile}
         soundEnabled={soundEnabled}
         handleCloseVictoryScreen={handleCloseVictoryScreen}
+        playerAddress={address}
+        onClaimNow={handleClaimNow}
+        onSendToInbox={handleSendToInbox}
         sharesRemaining={sharesRemaining}
         onShareClick={handleShareClick}
         showLossPopup={showLossPopup}
@@ -3879,6 +3991,11 @@ export default function TCGPage() {
                 </span>
               )}
             </button>
+          )}
+
+          {/* VBMS Inbox */}
+          {address && userProfile && (
+            <InboxDisplay />
           )}
 
           <button
@@ -5296,6 +5413,7 @@ export default function TCGPage() {
         currentDifficulty={aiDifficulty}
         tempSelected={tempSelectedDifficulty}
       />
+      </div> {/* End of z-10 content wrapper */}
     </div>
   );
 }
