@@ -5,7 +5,8 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
   // Use Next.js opengraph-image route (same as victory shares)
-  const imageUrl = `${baseUrl}/share/profile/${encodeURIComponent(username)}/opengraph-image`;
+  // Add timestamp to bust Farcaster cache
+  const imageUrl = `${baseUrl}/share/profile/${encodeURIComponent(username)}/opengraph-image?v=2`;
 
   return {
     title: `${username}'s Profile - VIBE Most Wanted`,
