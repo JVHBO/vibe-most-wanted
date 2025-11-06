@@ -11,9 +11,47 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
 
+  // Fetch profile data from Convex
+  let profileData: any = null;
+  let pfpUrl = '';
+
+  try {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL!;
+    const response = await fetch(`${convexUrl}/api/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: 'profiles:getProfileByUsername',
+        args: { username: username.toLowerCase() },
+        format: 'json',
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      profileData = data.value;
+
+      // Fetch Farcaster PFP if we have fid
+      if (profileData?.fid) {
+        const fcResponse = await fetch(`https://client.warpcast.com/v2/user-by-fid?fid=${profileData.fid}`);
+        if (fcResponse.ok) {
+          const fcData = await fcResponse.json();
+          pfpUrl = fcData.result?.user?.pfp?.url || '';
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+  }
+
   const getInitials = (name: string) => {
     return name.substring(0, 2).toUpperCase();
   };
+
+  const stats = profileData?.stats || { totalPower: 0, wins: 0, losses: 0 };
+  const winRate = stats.wins + stats.losses > 0
+    ? Math.round((stats.wins / (stats.wins + stats.losses)) * 100)
+    : 0;
 
   return new ImageResponse(
     (
@@ -25,11 +63,11 @@ export default async function Image({ params }: { params: Promise<{ username: st
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #0f0a00 0%, #1a1410 30%, #2d2010 50%, #1a1410 70%, #0f0a00 100%)',
+          background: 'linear-gradient(135deg, #1a1a1a 0%, #121212 100%)',
           position: 'relative',
         }}
       >
-        {/* Background effects */}
+        {/* Background glow */}
         <div
           style={{
             position: 'absolute',
@@ -37,7 +75,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 45%)',
+            background: 'radial-gradient(circle at 50% 40%, rgba(255, 215, 0, 0.08) 0%, transparent 50%)',
             display: 'flex',
           }}
         />
@@ -48,54 +86,162 @@ export default async function Image({ params }: { params: Promise<{ username: st
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '30px',
+            gap: '25px',
             zIndex: 1,
           }}
         >
           {/* Avatar */}
-          <div
-            style={{
-              width: '140px',
-              height: '140px',
-              borderRadius: '50%',
-              border: '5px solid #FFD700',
-              boxShadow: '0 0 40px rgba(255, 215, 0, 0.8)',
-              background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #D4AF37 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '56px',
-              fontWeight: 900,
-              color: '#1a0a00',
-            }}
-          >
-            {getInitials(username)}
-          </div>
+          {pfpUrl ? (
+            <img
+              src={pfpUrl}
+              style={{
+                width: '180px',
+                height: '180px',
+                borderRadius: '50%',
+                border: '6px solid #FFD700',
+                boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: '180px',
+                height: '180px',
+                borderRadius: '50%',
+                border: '6px solid #FFD700',
+                boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
+                background: 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '72px',
+                fontWeight: 900,
+                color: '#121212',
+              }}
+            >
+              {getInitials(username)}
+            </div>
+          )}
 
           {/* Username */}
           <div
             style={{
-              fontSize: '56px',
+              fontSize: '52px',
               fontWeight: 900,
               color: '#FFD700',
-              letterSpacing: '2px',
-              textShadow: '0 0 30px rgba(255, 215, 0, 0.8)',
+              letterSpacing: '1px',
+              textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)',
               display: 'flex',
             }}
           >
             {username}
           </div>
 
+          {/* Stats */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '40px',
+              marginTop: '10px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '42px',
+                  fontWeight: 900,
+                  color: '#FFD700',
+                }}
+              >
+                {stats.totalPower}
+              </div>
+              <div
+                style={{
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Power
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '42px',
+                  fontWeight: 900,
+                  color: '#FFD700',
+                }}
+              >
+                {stats.wins}
+              </div>
+              <div
+                style={{
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Wins
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '42px',
+                  fontWeight: 900,
+                  color: '#FFD700',
+                }}
+              >
+                {winRate}%
+              </div>
+              <div
+                style={{
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Win Rate
+              </div>
+            </div>
+          </div>
+
           {/* Branding */}
           <div
             style={{
-              fontSize: '36px',
-              fontWeight: 900,
-              color: '#FFD700',
-              letterSpacing: '4px',
-              textShadow: '0 0 25px rgba(255, 215, 0, 0.8)',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: 'rgba(255, 255, 255, 0.5)',
+              letterSpacing: '1px',
+              marginTop: '15px',
               display: 'flex',
-              marginTop: '20px',
             }}
           >
             VIBE MOST WANTED
