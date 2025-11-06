@@ -729,16 +729,28 @@ export default function ProfilePage() {
                   {copiedAddress ? t('addressCopied') : t('copyAddress')}
                 </button>
               </div>
-              {profile.twitter && (
-                <a
-                  href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-vintage-neon-blue hover:text-vintage-gold inline-flex items-center gap-1 font-modern"
-                >
-                  𝕏 @{profile.twitter.replace('@', '')}
-                </a>
-              )}
+              <div className="flex flex-col gap-1">
+                {profile.twitter && (
+                  <a
+                    href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-vintage-neon-blue hover:text-vintage-gold inline-flex items-center gap-1 font-modern"
+                  >
+                    𝕏 @{profile.twitter.replace('@', '')}
+                  </a>
+                )}
+                {profile.fid && (
+                  <a
+                    href={`https://warpcast.com/~/profiles/${profile.fid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-400 hover:text-vintage-gold inline-flex items-center gap-1 font-modern"
+                  >
+                    🟪 FID: {profile.fid}
+                  </a>
+                )}
+              </div>
 
               {/* Share Incentive Banner - One-time bonus */}
               {!profile.hasSharedProfile && (
