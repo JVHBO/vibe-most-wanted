@@ -45,7 +45,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           width: '380px',
           height: '480px',
           background: `url(${backgroundImage})`,
-          backgroundSize: 'contain',
+          backgroundSize: '100% 100%',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           borderRadius: '12px',
