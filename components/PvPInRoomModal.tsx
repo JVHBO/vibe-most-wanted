@@ -14,6 +14,7 @@ interface Card {
   power: number;
   imageUrl: string;
   name: string;
+  rarity?: string;
 }
 
 interface PvPInRoomModalProps {
@@ -153,10 +154,16 @@ export function PvPInRoomModal({
                             }
                             if (isSelected) {
                               setSelectedCards(selectedCards.filter((c: any) => c.tokenId !== nft.tokenId));
+                              if (soundEnabled) {
+                                AudioManager.deselectCard();
+                                AudioManager.hapticFeedback('light');
+                              }
                             } else if (selectedCards.length < 5) {
                               setSelectedCards([...selectedCards, nft]);
+                              if (soundEnabled) {
+                                AudioManager.selectCardByRarity(nft.rarity);
+                              }
                             }
-                            if (soundEnabled) AudioManager.buttonClick();
                           }}
                           className={`relative rounded-lg overflow-hidden transition-all ${
                             isLocked

@@ -385,10 +385,15 @@ export function AttackCardSelectionModal({
                   }
                   if (isSelected) {
                     setAttackSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
-                    if (soundEnabled) AudioManager.deselectCard();
+                    if (soundEnabled) {
+                      AudioManager.deselectCard();
+                      AudioManager.hapticFeedback('light');
+                    }
                   } else if (attackSelectedCards.length < HAND_SIZE) {
                     setAttackSelectedCards(prev => [...prev, nft]);
-                    if (soundEnabled) AudioManager.selectCard();
+                    if (soundEnabled) {
+                      AudioManager.selectCardByRarity(nft.rarity);
+                    }
                   }
                 }}
                 className={`relative aspect-[2/3] rounded-lg overflow-hidden transition-all ${

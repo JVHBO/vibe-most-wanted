@@ -12,6 +12,7 @@ interface NFT {
   power?: number;
   imageUrl: string;
   foil?: string;
+  rarity?: string;
 }
 
 interface PveCardSelectionModalProps {
@@ -54,10 +55,16 @@ export function PveCardSelectionModal({
 
     if (isSelected) {
       setPveSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
-      if (soundEnabled) AudioManager.deselectCard();
+      if (soundEnabled) {
+        AudioManager.deselectCard();
+        AudioManager.hapticFeedback('light');
+      }
     } else if (pveSelectedCards.length < handSize) {
       setPveSelectedCards(prev => [...prev, nft]);
-      if (soundEnabled) AudioManager.selectCard();
+      if (soundEnabled) {
+        // Play sound based on card rarity with haptic feedback
+        AudioManager.selectCardByRarity(nft.rarity);
+      }
     }
   };
 

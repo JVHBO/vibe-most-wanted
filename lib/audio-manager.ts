@@ -145,7 +145,24 @@ export const AudioManager = {
       this.backgroundMusic = null;
     }
   },
+  // Card selection sounds - differentiated by rarity
   async selectCard() { await this.playTone(800, 0.1, 0.2); },
+  async selectCardCommon() { await this.playTone(600, 0.1, 0.2); },
+  async selectCardRare() {
+    await this.playTone(800, 0.1, 0.2);
+    setTimeout(() => this.playTone(900, 0.08, 0.15), 60);
+  },
+  async selectCardEpic() {
+    await this.playTone(1000, 0.1, 0.22);
+    setTimeout(() => this.playTone(1200, 0.08, 0.18), 50);
+    setTimeout(() => this.playTone(1400, 0.06, 0.15), 100);
+  },
+  async selectCardLegendary() {
+    await this.playTone(1200, 0.12, 0.25);
+    setTimeout(() => this.playTone(1500, 0.1, 0.22), 50);
+    setTimeout(() => this.playTone(1800, 0.08, 0.2), 100);
+    setTimeout(() => this.playTone(2000, 0.06, 0.18), 150);
+  },
   async deselectCard() { await this.playTone(400, 0.1, 0.2); },
   async shuffle() {
     for (let i = 0; i < 5; i++) {
@@ -213,5 +230,38 @@ export const AudioManager = {
   async toggleOff() {
     await this.playTone(800, 0.08, 0.12);
     setTimeout(() => this.playTone(600, 0.08, 0.12), 60);
+  },
+  // Haptic feedback for mobile devices
+  hapticFeedback(style: 'light' | 'medium' | 'heavy' = 'medium') {
+    if (typeof window === 'undefined' || !('vibrate' in navigator)) return;
+
+    const patterns = {
+      light: 10,
+      medium: 20,
+      heavy: [30, 10, 30]
+    };
+
+    try {
+      navigator.vibrate(patterns[style]);
+    } catch (e) {
+      // Ignore if vibration not supported
+    }
+  },
+  // Smart card selection sound based on rarity
+  async selectCardByRarity(rarity?: string) {
+    const r = (rarity || '').toLowerCase();
+    if (r.includes('legend')) {
+      await this.selectCardLegendary();
+      this.hapticFeedback('heavy');
+    } else if (r.includes('epic')) {
+      await this.selectCardEpic();
+      this.hapticFeedback('medium');
+    } else if (r.includes('rare')) {
+      await this.selectCardRare();
+      this.hapticFeedback('medium');
+    } else {
+      await this.selectCardCommon();
+      this.hapticFeedback('light');
+    }
   }
 };
