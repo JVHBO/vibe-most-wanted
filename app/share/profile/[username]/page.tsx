@@ -1,22 +1,5 @@
 import { Metadata } from 'next';
 
-async function getFarcasterPfp(username: string): Promise<string> {
-  try {
-    // Try Farcaster Hub API
-    const response = await fetch(`https://hub.farcaster.xyz/v1/userByUsername?username=${username}`, {
-      next: { revalidate: 3600 }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return data.pfp || '';
-    }
-  } catch (e) {
-    console.error('Failed to fetch Farcaster PFP:', e);
-  }
-  return '';
-}
-
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
   const baseUrl = 'https://www.vibemostwanted.xyz';
