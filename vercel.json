@@ -7,5 +7,11 @@
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily-reminders",
+      "schedule": "0 12 * * *"
+    }
   ]
 }
