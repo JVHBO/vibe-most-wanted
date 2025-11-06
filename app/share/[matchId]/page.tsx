@@ -28,9 +28,9 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
 
   const description = `${playerPower} vs ${opponentPower} Power - VIBE Most Wanted Battle Result`;
 
-  // Explicitly set the OpenGraph image URL
+  // Explicitly set the OpenGraph image URL with cache busting
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vibemostwanted.xyz';
-  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image`;
+  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image?v=6`;
 
   return {
     title,
