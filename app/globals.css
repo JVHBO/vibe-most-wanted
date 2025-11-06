@@ -309,3 +309,52 @@ html, body {
 .animate-pulse-glow {
   animation: pulseGlow 2s ease-in-out infinite;
 }
+
+/* 🎮 GAME VISUAL IMPROVEMENTS - Background & Particles */
+
+/* Animated gradient background */
+@keyframes subtleGradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.game-background {
+  background:
+    radial-gradient(ellipse at top, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(0, 198, 255, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, #0C0C0C 0%, #1A1A1A 50%, #121212 100%);
+  background-size: 200% 200%;
+  animation: subtleGradient 20s ease infinite;
+}
+
+/* Floating particles animation */
+@keyframes floatingParticles {
+  0% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(50px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.floating-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatingParticles linear infinite;
+}

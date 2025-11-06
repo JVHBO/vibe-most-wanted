@@ -2782,7 +2782,24 @@ export default function TCGPage() {
   }, [address, userProfile]);
 
   return (
-    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice p-4 lg:p-6 overflow-x-hidden">
+    <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
+      {/* Ambient floating particles */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div
+            key={i}
+            className="floating-particle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDuration: `${15 + Math.random() * 20}s`,
+              animationDelay: `${Math.random() * 10}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Content wrapper with z-index */}
+      <div className="relative z-10">
       {/* Game Popups (Victory, Loss, Tie, Error, Success, Daily Claim) */}
       <GamePopups
         showWinPopup={showWinPopup}
@@ -3882,8 +3899,8 @@ export default function TCGPage() {
             </button>
           )}
 
-          {/* Inbox Display */}
-          <InboxDisplay />
+          {/* TODO: Re-enable Inbox Display after fixing Convex deployment */}
+          {/* {userProfile && <InboxDisplay />} */}
 
           <button
             onClick={() => {
@@ -5300,6 +5317,7 @@ export default function TCGPage() {
         currentDifficulty={aiDifficulty}
         tempSelected={tempSelectedDifficulty}
       />
+      </div>
     </div>
   );
 }
