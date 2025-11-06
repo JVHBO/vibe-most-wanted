@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const ranking = searchParams.get('ranking') || '?';
     const winStreak = searchParams.get('winStreak') || '0';
     const coins = searchParams.get('coins') || '0';
-    const pfp = searchParams.get('pfp') || '';
+    const pfpUrl = searchParams.get('pfp') || '';
 
     // Calculate win rate
     const totalMatches = wins + losses + ties;
@@ -36,6 +36,20 @@ export async function GET(request: Request) {
       return name.substring(0, 2).toUpperCase();
     };
 
+    // Fetch and convert PFP to base64 if provided
+    let pfpBase64 = '';
+    if (pfpUrl) {
+      try {
+        const pfpResponse = await fetch(pfpUrl);
+        if (pfpResponse.ok) {
+          const pfpBuffer = await pfpResponse.arrayBuffer();
+          pfpBase64 = `data:image/jpeg;base64,${Buffer.from(pfpBuffer).toString('base64')}`;
+        }
+      } catch (e) {
+        console.log('Failed to fetch PFP:', e);
+      }
+    }
+
     return new ImageResponse(
       (
         <div
@@ -45,404 +59,363 @@ export async function GET(request: Request) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #1a0f00 0%, #2d1810 25%, #1a0a00 50%, #2d1810 75%, #1a0f00 100%)',
+            justifyContent: 'space-between',
+            background: 'linear-gradient(135deg, #1a0f00 0%, #2d1810 50%, #1a0f00 100%)',
+            padding: '50px',
             position: 'relative',
-            overflow: 'hidden',
           }}
         >
-          {/* Animated gradient overlays */}
+          {/* Background glow overlays */}
           <div
             style={{
               position: 'absolute',
-              top: '-50%',
-              left: '-50%',
-              width: '200%',
-              height: '200%',
-              background: 'radial-gradient(circle at 30% 30%, rgba(255, 215, 0, 0.15) 0%, transparent 50%)',
+              top: '0',
+              left: '0',
+              width: '100%',
+              height: '100%',
+              background: 'radial-gradient(circle at 30% 30%, rgba(255, 215, 0, 0.12) 0%, transparent 60%)',
               display: 'flex',
             }}
           />
           <div
             style={{
               position: 'absolute',
-              bottom: '-50%',
-              right: '-50%',
-              width: '200%',
-              height: '200%',
-              background: 'radial-gradient(circle at 70% 70%, rgba(212, 175, 55, 0.12) 0%, transparent 50%)',
-              display: 'flex',
-            }}
-          />
-
-          {/* Vintage card texture overlay */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundImage: 'repeating-linear-gradient(0deg, rgba(255, 215, 0, 0.03) 0px, transparent 2px, transparent 4px, rgba(255, 215, 0, 0.03) 6px)',
+              bottom: '0',
+              right: '0',
+              width: '100%',
+              height: '100%',
+              background: 'radial-gradient(circle at 70% 70%, rgba(212, 175, 55, 0.08) 0%, transparent 60%)',
               display: 'flex',
             }}
           />
 
-          {/* Main content container */}
+          {/* Top Section - PFP + Username */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              height: '100%',
-              width: '100%',
+              gap: '20px',
               zIndex: 1,
-              padding: '50px',
             }}
           >
-            {/* Top Section - PFP + Username */}
+            {/* Profile Picture */}
+            {pfpBase64 ? (
+              <img
+                src={pfpBase64}
+                alt={username}
+                width={120}
+                height={120}
+                style={{
+                  borderRadius: '50%',
+                  border: '4px solid #FFD700',
+                  boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  border: '4px solid #FFD700',
+                  boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
+                  background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '48px',
+                  fontWeight: 900,
+                  color: '#1a0a00',
+                }}
+              >
+                {getInitials(username)}
+              </div>
+            )}
+
+            {/* Username & Twitter */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '20px',
+                gap: '5px',
               }}
             >
-              {/* Profile Picture */}
-              {pfp ? (
-                <img
-                  src={pfp}
-                  alt={username}
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    border: '4px solid #FFD700',
-                    boxShadow: '0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3)',
-                    objectFit: 'cover',
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    border: '4px solid #FFD700',
-                    boxShadow: '0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3)',
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '48px',
-                    fontWeight: 900,
-                    color: '#1a0a00',
-                  }}
-                >
-                  {getInitials(username)}
-                </div>
-              )}
-
-              {/* Username & Twitter */}
               <div
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '5px',
+                  fontSize: '52px',
+                  fontWeight: 900,
+                  color: '#FFD700',
+                  letterSpacing: '1px',
                 }}
               >
+                {username}
+              </div>
+              {twitter && (
                 <div
                   style={{
-                    fontSize: '52px',
-                    fontWeight: 900,
-                    color: '#FFD700',
-                    textShadow: '0 0 40px rgba(255, 215, 0, 0.8), 0 4px 8px rgba(0, 0, 0, 0.5)',
-                    letterSpacing: '1px',
-                    display: 'flex',
+                    fontSize: '24px',
+                    color: '#D4AF37',
+                    fontWeight: 600,
                   }}
                 >
-                  {username}
+                  {twitter}
                 </div>
-                {twitter && (
-                  <div
-                    style={{
-                      fontSize: '20px',
-                      color: '#D4AF37',
-                      fontWeight: 600,
-                      display: 'flex',
-                    }}
-                  >
-                    {twitter}
-                  </div>
-                )}
+              )}
+            </div>
+          </div>
+
+          {/* Middle Section - Total Power + Stats */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '30px',
+              zIndex: 1,
+            }}
+          >
+            {/* Total Power - Hero stat */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                background: 'rgba(255, 215, 0, 0.1)',
+                border: '3px solid rgba(255, 215, 0, 0.4)',
+                borderRadius: '20px',
+                padding: '25px 70px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '20px',
+                  color: '#D4AF37',
+                  fontWeight: 700,
+                  letterSpacing: '3px',
+                }}
+              >
+                TOTAL POWER
+              </div>
+              <div
+                style={{
+                  fontSize: '90px',
+                  fontWeight: 900,
+                  color: '#3B82F6',
+                }}
+              >
+                {totalPower}
               </div>
             </div>
 
-            {/* Middle Section - Total Power + Stats */}
+            {/* Stats Grid */}
             <div
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '25px',
+                gap: '50px',
               }}
             >
-              {/* Total Power - Hero stat */}
+              {/* Ranking */}
               <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '8px',
-                  background: 'rgba(255, 215, 0, 0.08)',
-                  border: '2px solid rgba(255, 215, 0, 0.3)',
-                  borderRadius: '20px',
-                  padding: '20px 60px',
                 }}
               >
                 <div
                   style={{
-                    fontSize: '18px',
-                    color: '#D4AF37',
+                    fontSize: '16px',
+                    color: '#9CA3AF',
                     fontWeight: 700,
-                    letterSpacing: '3px',
-                    display: 'flex',
+                    letterSpacing: '1px',
                   }}
                 >
-                  TOTAL POWER
+                  RANK
                 </div>
                 <div
                   style={{
-                    fontSize: '80px',
+                    fontSize: '36px',
                     fontWeight: 900,
-                    background: 'linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%)',
-                    backgroundClip: 'text',
-                    color: 'transparent',
-                    textShadow: '0 0 40px rgba(59, 130, 246, 0.6)',
-                    display: 'flex',
+                    color: '#FFD700',
                   }}
                 >
-                  {totalPower}
+                  {getRankingDisplay(ranking)}
                 </div>
               </div>
 
-              {/* Stats Grid */}
+              {/* Win Rate */}
               <div
                 style={{
                   display: 'flex',
-                  gap: '45px',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
               >
-                {/* Ranking */}
                 <div
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '5px',
+                    fontSize: '16px',
+                    color: '#9CA3AF',
+                    fontWeight: 700,
+                    letterSpacing: '1px',
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: '13px',
-                      color: '#9CA3AF',
-                      fontWeight: 700,
-                      letterSpacing: '1px',
-                      display: 'flex',
-                    }}
-                  >
-                    RANK
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '32px',
-                      fontWeight: 900,
-                      color: '#FFD700',
-                      display: 'flex',
-                    }}
-                  >
-                    {getRankingDisplay(ranking)}
-                  </div>
+                  WIN RATE
                 </div>
-
-                {/* Win Rate */}
                 <div
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '5px',
+                    fontSize: '36px',
+                    fontWeight: 900,
+                    color: '#10B981',
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: '13px',
-                      color: '#9CA3AF',
-                      fontWeight: 700,
-                      letterSpacing: '1px',
-                      display: 'flex',
-                    }}
-                  >
-                    WIN RATE
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '32px',
-                      fontWeight: 900,
-                      color: '#10B981',
-                      display: 'flex',
-                    }}
-                  >
-                    {winRate}%
-                  </div>
-                </div>
-
-                {/* Record */}
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '13px',
-                      color: '#9CA3AF',
-                      fontWeight: 700,
-                      letterSpacing: '1px',
-                      display: 'flex',
-                    }}
-                  >
-                    RECORD
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '26px',
-                      fontWeight: 800,
-                      color: '#FFFFFF',
-                      display: 'flex',
-                    }}
-                  >
-                    {wins}W-{losses}L-{ties}T
-                  </div>
-                </div>
-
-                {/* NFTs */}
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '13px',
-                      color: '#9CA3AF',
-                      fontWeight: 700,
-                      letterSpacing: '1px',
-                      display: 'flex',
-                    }}
-                  >
-                    NFTs
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '32px',
-                      fontWeight: 900,
-                      color: '#A855F7',
-                      display: 'flex',
-                    }}
-                  >
-                    {nftCount}
-                  </div>
+                  {winRate}%
                 </div>
               </div>
 
-              {/* Secondary Stats */}
+              {/* Record */}
               <div
                 style={{
                   display: 'flex',
-                  gap: '35px',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
               >
-                {parseInt(winStreak) > 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: 'rgba(245, 158, 11, 0.15)',
-                      border: '1px solid rgba(245, 158, 11, 0.3)',
-                      borderRadius: '12px',
-                      padding: '8px 16px',
-                    }}
-                  >
-                    <div style={{ fontSize: '20px', display: 'flex' }}>🔥</div>
-                    <div
-                      style={{
-                        fontSize: '20px',
-                        fontWeight: 700,
-                        color: '#F59E0B',
-                        display: 'flex',
-                      }}
-                    >
-                      {winStreak} Win Streak
-                    </div>
-                  </div>
-                )}
-
                 <div
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: 'rgba(251, 191, 36, 0.15)',
-                    border: '1px solid rgba(251, 191, 36, 0.3)',
-                    borderRadius: '12px',
-                    padding: '8px 16px',
+                    fontSize: '16px',
+                    color: '#9CA3AF',
+                    fontWeight: 700,
+                    letterSpacing: '1px',
                   }}
                 >
-                  <div style={{ fontSize: '20px', display: 'flex' }}>💰</div>
-                  <div
-                    style={{
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      color: '#FBBF24',
-                      display: 'flex',
-                    }}
-                  >
-                    {coins} $TESTVBMS
-                  </div>
+                  RECORD
+                </div>
+                <div
+                  style={{
+                    fontSize: '30px',
+                    fontWeight: 800,
+                    color: '#FFFFFF',
+                  }}
+                >
+                  {wins}W-{losses}L-{ties}T
+                </div>
+              </div>
+
+              {/* NFTs */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '16px',
+                    color: '#9CA3AF',
+                    fontWeight: 700,
+                    letterSpacing: '1px',
+                  }}
+                >
+                  NFTs
+                </div>
+                <div
+                  style={{
+                    fontSize: '36px',
+                    fontWeight: 900,
+                    color: '#A855F7',
+                  }}
+                >
+                  {nftCount}
                 </div>
               </div>
             </div>
 
-            {/* Bottom Section - Branding */}
+            {/* Secondary Stats */}
             <div
               style={{
                 display: 'flex',
-                fontSize: '32px',
-                fontWeight: 900,
-                color: '#FFD700',
-                letterSpacing: '3px',
-                textShadow: '0 0 30px rgba(255, 215, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.5)',
+                gap: '40px',
               }}
             >
-              VIBE MOST WANTED
+              {parseInt(winStreak) > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'rgba(245, 158, 11, 0.2)',
+                    border: '2px solid rgba(245, 158, 11, 0.4)',
+                    borderRadius: '15px',
+                    padding: '10px 20px',
+                  }}
+                >
+                  <div style={{ fontSize: '24px' }}>🔥</div>
+                  <div
+                    style={{
+                      fontSize: '24px',
+                      fontWeight: 700,
+                      color: '#F59E0B',
+                    }}
+                  >
+                    {winStreak} Win Streak
+                  </div>
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'rgba(251, 191, 36, 0.2)',
+                  border: '2px solid rgba(251, 191, 36, 0.4)',
+                  borderRadius: '15px',
+                  padding: '10px 20px',
+                }}
+              >
+                <div style={{ fontSize: '24px' }}>💰</div>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    color: '#FBBF24',
+                  }}
+                >
+                  {coins} $TESTVBMS
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* Bottom Section - Branding */}
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '36px',
+              fontWeight: 900,
+              color: '#FFD700',
+              letterSpacing: '3px',
+              zIndex: 1,
+            }}
+          >
+            VIBE MOST WANTED
           </div>
         </div>
       ),
       {
         width: 1200,
-        height: 630,
+        height: 800,
+        headers: {
+          'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=86400',
+        },
       }
     );
   } catch (e: any) {

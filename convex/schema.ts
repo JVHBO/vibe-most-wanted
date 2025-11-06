@@ -77,9 +77,16 @@ export default defineSchema({
     lastAttackDate: v.optional(v.string()), // ISO date string YYYY-MM-DD
 
     // Economy System ($TESTVBMS)
-    coins: v.optional(v.number()), // Current balance
+    coins: v.optional(v.number()), // Current balance (for spending in-app)
     lifetimeEarned: v.optional(v.number()), // Total ever earned
     lifetimeSpent: v.optional(v.number()), // Total ever spent
+
+    // VBMS Token System (Real blockchain token)
+    inbox: v.optional(v.number()), // Uncollected VBMS tokens (correio)
+    claimedTokens: v.optional(v.number()), // Total VBMS claimed to wallet (lifetime)
+    poolDebt: v.optional(v.number()), // VBMS owed back to pool (circular economy)
+    lastClaimTimestamp: v.optional(v.number()), // Last time player claimed VBMS
+    lastDebtSettlement: v.optional(v.number()), // Last time debt was settled
 
     // Daily Limits for Economy
     dailyLimits: v.optional(v.object({
@@ -156,6 +163,11 @@ export default defineSchema({
     // Economy
     coinsEarned: v.optional(v.number()), // $TESTVBMS earned from this match
     entryFeePaid: v.optional(v.number()), // Entry fee paid (50 for attack, 80 for pvp)
+
+    // VBMS Rewards Tracking
+    rewardsClaimed: v.optional(v.boolean()), // Whether rewards were claimed/sent to inbox
+    claimedAt: v.optional(v.number()), // When rewards were claimed
+    claimType: v.optional(v.union(v.literal("immediate"), v.literal("inbox"))), // How player claimed
 
     // PvE specific data
     difficulty: v.optional(v.union(
@@ -367,4 +379,33 @@ export default defineSchema({
     .index("by_player", ["playerAddress"])
     .index("by_player_achievement", ["playerAddress", "achievementId"])
     .index("by_player_category", ["playerAddress", "category"]),
+
+  // VBMS Claim History (on-chain claims)
+  claimHistory: defineTable({
+    playerAddress: v.string(),
+    amount: v.number(), // VBMS amount claimed
+    bonus: v.optional(v.number()), // Bonus amount (if any)
+    bonusReasons: v.optional(v.array(v.string())), // Reasons for bonus
+    txHash: v.string(), // Blockchain transaction hash
+    timestamp: v.number(),
+    type: v.union(
+      v.literal("inbox_collect"), // Collected from inbox
+      v.literal("immediate"), // Claimed immediately after battle
+      v.literal("manual") // Manual claim
+    ),
+  })
+    .index("by_player", ["playerAddress", "timestamp"])
+    .index("by_timestamp", ["timestamp"]),
+
+  // Claim Analytics (track player behavior)
+  claimAnalytics: defineTable({
+    playerAddress: v.string(),
+    choice: v.union(v.literal("immediate"), v.literal("inbox")),
+    amount: v.number(), // Amount of VBMS
+    inboxTotal: v.number(), // Total in inbox at time of choice
+    bonusAvailable: v.optional(v.boolean()), // Whether bonus was available
+    timestamp: v.number(),
+  })
+    .index("by_player", ["playerAddress", "timestamp"])
+    .index("by_timestamp", ["timestamp"]),
 });
