@@ -201,7 +201,7 @@ export function GamePopups({
 
                   // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_type)
                   const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}_${lastBattleResult.type || 'pve'}`;
-                  const imageUrl = `${window.location.origin}/share/${matchId}/opengraph-image`;
+                  const shareUrl = `${window.location.origin}/share/${matchId}`;
 
                   let castText = t('castVictory', { power: lastBattleResult.playerPower });
 
@@ -215,7 +215,7 @@ export function GamePopups({
 
                   castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}\n\nvibemostwanted.xyz`;
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -281,7 +281,7 @@ export function GamePopups({
 
                   // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_type)
                   const matchId = `loss_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}_${lastBattleResult.type || 'pve'}`;
-                  const imageUrl = `${window.location.origin}/share/${matchId}/opengraph-image`;
+                  const shareUrl = `${window.location.origin}/share/${matchId}`;
 
                   let castText = t('castDefeat', { power: lastBattleResult.playerPower });
 
@@ -295,7 +295,7 @@ export function GamePopups({
 
                   castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}\n\nvibemostwanted.xyz`;
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
