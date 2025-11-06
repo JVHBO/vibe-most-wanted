@@ -19,10 +19,13 @@ interface BattleResult {
   opponentPower?: number;
   opponentName?: string;
   opponentTwitter?: string;
+  playerPfpUrl?: string;
+  opponentPfpUrl?: string;
 }
 
 interface UserProfile {
   username?: string;
+  twitterProfileImageUrl?: string;
 }
 
 interface GamePopupsProps {
@@ -197,10 +200,15 @@ export function GamePopups({
               </a>
               <a
                 href={(() => {
-                  if (!lastBattleResult) return '#';
+                  if (!lastBattleResult || !userProfile) return '#';
 
-                  // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_type)
-                  const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}_${lastBattleResult.type || 'pve'}`;
+                  // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName)
+                  const playerPfp = encodeURIComponent(userProfile.twitterProfileImageUrl || '');
+                  const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || lastBattleResult.playerPfpUrl || '');
+                  const playerName = encodeURIComponent(userProfile.username || 'Player');
+                  const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
+
+                  const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}`;
                   const shareUrl = `${window.location.origin}/share/${matchId}`;
 
                   let castText = t('castVictory', { power: lastBattleResult.playerPower });
@@ -277,10 +285,15 @@ export function GamePopups({
               </a>
               <a
                 href={(() => {
-                  if (!lastBattleResult) return '#';
+                  if (!lastBattleResult || !userProfile) return '#';
 
-                  // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_type)
-                  const matchId = `loss_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}_${lastBattleResult.type || 'pve'}`;
+                  // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName)
+                  const playerPfp = encodeURIComponent(userProfile.twitterProfileImageUrl || '');
+                  const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || lastBattleResult.playerPfpUrl || '');
+                  const playerName = encodeURIComponent(userProfile.username || 'Player');
+                  const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
+
+                  const matchId = `loss_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}`;
                   const shareUrl = `${window.location.origin}/share/${matchId}`;
 
                   let castText = t('castDefeat', { power: lastBattleResult.playerPower });
