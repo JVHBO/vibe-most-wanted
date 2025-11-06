@@ -69,7 +69,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'rgba(0, 0, 0, 0.4)',
+            background: 'rgba(0, 0, 0, 0.15)',
             display: 'flex',
           }}
         />
