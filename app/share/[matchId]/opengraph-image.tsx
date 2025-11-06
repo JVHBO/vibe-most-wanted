@@ -21,6 +21,8 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const playerPower = parts[1] || '0';
     const opponentPower = parts[2] || '0';
     const opponentName = parts[3] || 'Opponent';
+    const playerPfpUrl = parts[4] ? decodeURIComponent(parts[4]) : '';
+    const opponentPfpUrl = parts[5] ? decodeURIComponent(parts[5]) : '';
 
     const isWin = result === 'win';
 
@@ -30,7 +32,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const playerIsLosing = playerPowerNum < opponentPowerNum;
 
     // Playing card component
-    const Card = ({ username, power, isPlayer, isLosing }: { username: string; power: string; isPlayer: boolean; isLosing: boolean }) => (
+    const Card = ({ username, power, isPlayer, isLosing, pfpUrl }: { username: string; power: string; isPlayer: boolean; isLosing: boolean; pfpUrl?: string }) => (
       <div
         style={{
           width: '320px',
@@ -79,28 +81,43 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           {/* Large spade background */}
           <div style={{ fontSize: '120px', opacity: 0.15, position: 'absolute' }}>♠</div>
 
-          {/* Avatar circle with initials */}
-          <div
-            style={{
-              width: '160px',
-              height: '160px',
-              borderRadius: '50%',
-              border: isLosing ? '5px solid #DC2626' : '5px solid #FFD700',
-              background: isLosing
-                ? 'linear-gradient(135deg, #991b1b 0%, #DC2626 50%, #991b1b 100%)'
-                : 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '64px',
-              fontWeight: 900,
-              color: '#121212',
-              boxShadow: '0 4px 20px rgba(255, 215, 0, 0.5)',
-              zIndex: 1,
-            }}
-          >
-            {getInitials(username)}
-          </div>
+          {/* Avatar circle with PFP or initials */}
+          {pfpUrl ? (
+            <img
+              src={pfpUrl}
+              style={{
+                width: '160px',
+                height: '160px',
+                borderRadius: '50%',
+                border: isLosing ? '5px solid #DC2626' : '5px solid #FFD700',
+                boxShadow: '0 4px 20px rgba(255, 215, 0, 0.5)',
+                zIndex: 1,
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: '160px',
+                height: '160px',
+                borderRadius: '50%',
+                border: isLosing ? '5px solid #DC2626' : '5px solid #FFD700',
+                background: isLosing
+                  ? 'linear-gradient(135deg, #991b1b 0%, #DC2626 50%, #991b1b 100%)'
+                  : 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '64px',
+                fontWeight: 900,
+                color: '#121212',
+                boxShadow: '0 4px 20px rgba(255, 215, 0, 0.5)',
+                zIndex: 1,
+              }}
+            >
+              {getInitials(username)}
+            </div>
+          )}
 
           {/* Username */}
           <div
@@ -220,7 +237,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             }}
           >
             {/* Player card */}
-            <Card username="YOU" power={playerPower} isPlayer={true} isLosing={playerIsLosing} />
+            <Card username="YOU" power={playerPower} isPlayer={true} isLosing={playerIsLosing} pfpUrl={playerPfpUrl} />
 
             {/* VS badge */}
             <div
@@ -243,7 +260,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             </div>
 
             {/* Opponent card */}
-            <Card username={opponentName} power={opponentPower} isPlayer={false} isLosing={!playerIsLosing} />
+            <Card username={opponentName} power={opponentPower} isPlayer={false} isLosing={!playerIsLosing} pfpUrl={opponentPfpUrl} />
           </div>
 
           {/* Branding at bottom */}

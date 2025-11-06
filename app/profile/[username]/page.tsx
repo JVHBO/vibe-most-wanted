@@ -1334,7 +1334,20 @@ export default function ProfilePage() {
                     <div className="flex justify-between items-center">
                       {/* Farcaster Share Button */}
                       <a
-                        href={`https://warpcast.com/~/compose?text=${encodeURIComponent(`I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in VIBE Most Wanted!`)}&embeds[]=${encodeURIComponent(`https://vibe-most-wanted.vercel.app/share/${match.result}_${match.playerPower}_${match.opponentPower}_${match.opponentUsername || 'Opponent'}`)}`}
+                        href={(() => {
+                          // Get player PFP (current profile's PFP)
+                          const playerPfp = profile.twitterProfileImageUrl || '';
+
+                          // Try to get opponent PFP from match data (if available)
+                          const opponentPfp = ''; // We don't have this in match history
+
+                          // Build matchId with PFPs: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp
+                          const matchId = `${match.result}_${match.playerPower}_${match.opponentPower}_${match.opponentUsername || 'Opponent'}_${encodeURIComponent(playerPfp)}_${encodeURIComponent(opponentPfp)}`;
+                          const shareUrl = `https://vibe-most-wanted.vercel.app/share/${matchId}`;
+                          const text = `I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in VIBE Most Wanted!`;
+
+                          return `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                        })()}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 rounded-lg font-modern font-semibold text-sm transition-all flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white hover:scale-105"
