@@ -50,27 +50,43 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#0a0a0a',
-            backgroundImage: 'radial-gradient(circle at 25px 25px, #1a1a1a 2%, transparent 0%), radial-gradient(circle at 75px 75px, #1a1a1a 2%, transparent 0%)',
-            backgroundSize: '100px 100px',
+            background: isWin
+              ? 'linear-gradient(135deg, #1a1a0a 0%, #2d2410 30%, #1a1a0a 100%)'
+              : isTie
+              ? 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 30%, #1a1a1a 100%)'
+              : 'linear-gradient(135deg, #1a0a0a 0%, #2d1010 30%, #1a0a0a 100%)',
             position: 'relative',
           }}
         >
-          {/* Background glow */}
+          {/* Animated background effects */}
           <div
             style={{
               position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '600px',
-              height: '600px',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
               background: isWin
-                ? 'radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%)'
+                ? 'radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.15) 0%, transparent 50%)'
                 : isTie
-                ? 'radial-gradient(circle, rgba(192, 192, 192, 0.3) 0%, transparent 70%)'
-                : 'radial-gradient(circle, rgba(220, 38, 38, 0.3) 0%, transparent 70%)',
-              borderRadius: '50%',
+                ? 'radial-gradient(circle at 20% 30%, rgba(192, 192, 192, 0.15) 0%, transparent 50%)'
+                : 'radial-gradient(circle at 20% 30%, rgba(220, 38, 38, 0.15) 0%, transparent 50%)',
+              display: 'flex',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: '100%',
+              height: '100%',
+              background: isWin
+                ? 'radial-gradient(circle at 80% 70%, rgba(212, 175, 55, 0.12) 0%, transparent 50%)'
+                : isTie
+                ? 'radial-gradient(circle at 80% 70%, rgba(150, 150, 150, 0.12) 0%, transparent 50%)'
+                : 'radial-gradient(circle at 80% 70%, rgba(180, 30, 30, 0.12) 0%, transparent 50%)',
+              display: 'flex',
             }}
           />
 
@@ -81,48 +97,72 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '25px',
+              gap: '35px',
               zIndex: 1,
-              paddingBottom: '100px',
+              width: '100%',
+              padding: '0 60px 80px 60px',
             }}
           >
-            {/* Title */}
+            {/* Title with border */}
             <div
               style={{
-                fontSize: '68px',
-                fontWeight: 900,
-                color: isWin ? '#FFD700' : isTie ? '#C0C0C0' : '#DC2626',
-                textShadow: isWin
-                  ? '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4)'
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '15px',
+                background: isWin
+                  ? 'rgba(255, 215, 0, 0.08)'
                   : isTie
-                  ? '0 0 40px rgba(192, 192, 192, 0.8), 0 0 80px rgba(192, 192, 192, 0.4)'
-                  : '0 0 40px rgba(220, 38, 38, 0.8), 0 0 80px rgba(220, 38, 38, 0.4)',
-                letterSpacing: '3px',
-                display: 'flex',
+                  ? 'rgba(192, 192, 192, 0.08)'
+                  : 'rgba(220, 38, 38, 0.08)',
+                border: isWin
+                  ? '4px solid rgba(255, 215, 0, 0.3)'
+                  : isTie
+                  ? '4px solid rgba(192, 192, 192, 0.3)'
+                  : '4px solid rgba(220, 38, 38, 0.3)',
+                borderRadius: '20px',
+                padding: '30px 60px',
               }}
             >
-              {title}
-            </div>
+              <div
+                style={{
+                  fontSize: '80px',
+                  fontWeight: 900,
+                  color: isWin ? '#FFD700' : isTie ? '#C0C0C0' : '#DC2626',
+                  textShadow: isWin
+                    ? '0 0 30px rgba(255, 215, 0, 1), 0 4px 20px rgba(0, 0, 0, 0.8)'
+                    : isTie
+                    ? '0 0 30px rgba(192, 192, 192, 1), 0 4px 20px rgba(0, 0, 0, 0.8)'
+                    : '0 0 30px rgba(220, 38, 38, 1), 0 4px 20px rgba(0, 0, 0, 0.8)',
+                  letterSpacing: '4px',
+                  display: 'flex',
+                }}
+              >
+                {title}
+              </div>
 
-            {/* Subtitle */}
-            <div
-              style={{
-                fontSize: '30px',
-                fontWeight: 600,
-                color: '#D4AF37',
-                display: 'flex',
-              }}
-            >
-              {subtitle}
+              {/* Subtitle */}
+              <div
+                style={{
+                  fontSize: '32px',
+                  fontWeight: 700,
+                  color: '#D4AF37',
+                  display: 'flex',
+                  letterSpacing: '1px',
+                }}
+              >
+                {subtitle}
+              </div>
             </div>
 
             {/* Power comparison */}
             <div
               style={{
                 display: 'flex',
-                gap: '50px',
+                gap: '40px',
                 alignItems: 'center',
-                marginTop: '10px',
+                width: '100%',
+                justifyContent: 'center',
               }}
             >
               {/* Your Power */}
@@ -131,25 +171,31 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '12px',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '3px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: '15px',
+                  padding: '25px 40px',
+                  minWidth: '220px',
                 }}
               >
                 <div
                   style={{
-                    fontSize: '20px',
-                    color: '#9CA3AF',
-                    fontWeight: 600,
+                    fontSize: '18px',
+                    color: '#93C5FD',
+                    fontWeight: 700,
                     display: 'flex',
+                    letterSpacing: '2px',
                   }}
                 >
                   YOUR POWER
                 </div>
                 <div
                   style={{
-                    fontSize: '52px',
+                    fontSize: '64px',
                     fontWeight: 900,
                     color: '#3B82F6',
-                    textShadow: '0 0 20px rgba(59, 130, 246, 0.6)',
+                    textShadow: '0 0 25px rgba(59, 130, 246, 1), 0 4px 15px rgba(0, 0, 0, 0.8)',
                     display: 'flex',
                   }}
                 >
@@ -160,10 +206,12 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               {/* VS */}
               <div
                 style={{
-                  fontSize: '40px',
-                  fontWeight: 700,
-                  color: '#6B7280',
+                  fontSize: '48px',
+                  fontWeight: 900,
+                  color: '#D4AF37',
                   display: 'flex',
+                  textShadow: '0 0 20px rgba(212, 175, 55, 0.8)',
+                  letterSpacing: '3px',
                 }}
               >
                 VS
@@ -175,25 +223,32 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '12px',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '3px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '15px',
+                  padding: '25px 40px',
+                  minWidth: '220px',
                 }}
               >
                 <div
                   style={{
-                    fontSize: '20px',
-                    color: '#9CA3AF',
-                    fontWeight: 600,
+                    fontSize: '18px',
+                    color: '#FCA5A5',
+                    fontWeight: 700,
                     display: 'flex',
+                    letterSpacing: '2px',
+                    textAlign: 'center',
                   }}
                 >
                   {opponentName.toUpperCase()}
                 </div>
                 <div
                   style={{
-                    fontSize: '52px',
+                    fontSize: '64px',
                     fontWeight: 900,
                     color: '#EF4444',
-                    textShadow: '0 0 20px rgba(239, 68, 68, 0.6)',
+                    textShadow: '0 0 25px rgba(239, 68, 68, 1), 0 4px 15px rgba(0, 0, 0, 0.8)',
                     display: 'flex',
                   }}
                 >
