@@ -1,29 +1,11 @@
 import { Metadata } from 'next';
-import { ConvexProfileService } from '@/lib/convex-profile';
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vibemostwanted.xyz';
 
-  // Fetch profile data
-  let imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}&v=3`;
-
-  try {
-    const address = await ConvexProfileService.getAddressByUsername(username.toLowerCase());
-    if (address) {
-      const profile = await ConvexProfileService.getProfile(address);
-      if (profile) {
-        const wins = (profile.stats.pveWins || 0) + (profile.stats.pvpWins || 0);
-        const losses = (profile.stats.pveLosses || 0) + (profile.stats.pvpLosses || 0);
-        const ties = 0;
-        const pfpUrl = profile.twitterProfileImageUrl || '';
-
-        imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}&twitter=${encodeURIComponent(profile.twitter || '')}&totalPower=${profile.stats.totalPower || 0}&wins=${wins}&losses=${losses}&ties=${ties}&nftCount=${profile.stats.totalCards || 0}&ranking=?&winStreak=${profile.winStreak || 0}&coins=${profile.coins || 0}&pfp=${encodeURIComponent(pfpUrl)}&v=3`;
-      }
-    }
-  } catch (e) {
-    console.error('Failed to fetch profile data for OG image:', e);
-  }
+  // Simple image URL - let the API handle data fetching
+  const imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}&v=${Date.now()}`;
 
   return {
     title: `${username}'s Profile - VIBE Most Wanted`,
