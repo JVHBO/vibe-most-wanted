@@ -11,7 +11,17 @@ import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 import { verifyMessage } from "ethers";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+// Lazy initialization to avoid build-time errors
+let convex: ConvexHttpClient | null = null;
+const getConvex = () => {
+  if (!convex) {
+    if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+      throw new Error('NEXT_PUBLIC_CONVEX_URL is not defined');
+    }
+    convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+  }
+  return convex;
+};
 
 /**
  * Sign a message with the user's wallet
@@ -48,7 +58,7 @@ export async function signMessage(
  */
 export async function getNonce(address: string): Promise<number> {
   try {
-    const nonce = await convex.query(api.auth.getNonce, { address });
+    const nonce = await getConvex().query(api.auth.getNonce, { address });
     return nonce;
   } catch (error: any) {
     console.error("❌ getNonce error:", error);
@@ -145,7 +155,7 @@ export class SecureConvexClient {
       "Update stats"
     );
 
-    await convex.mutation(api.profiles.updateStatsSecure, {
+    await getConvex().mutation(api.profiles.updateStatsSecure, {
       address: this.address,
       signature: auth.signature,
       message: auth.message,
@@ -170,7 +180,7 @@ export class SecureConvexClient {
       "Update defense deck"
     );
 
-    await convex.mutation(api.profiles.updateDefenseDeckSecure, {
+    await getConvex().mutation(api.profiles.updateDefenseDeckSecure, {
       address: this.address,
       signature: auth.signature,
       message: auth.message,
@@ -196,7 +206,7 @@ export class SecureConvexClient {
       `Increment ${stat}`
     );
 
-    await convex.mutation(api.profiles.incrementStatSecure, {
+    await getConvex().mutation(api.profiles.incrementStatSecure, {
       address: this.address,
       signature: auth.signature,
       message: auth.message,

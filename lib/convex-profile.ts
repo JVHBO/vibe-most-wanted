@@ -8,8 +8,17 @@
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 
-// Client for server-side operations
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+// Lazy initialization to avoid build-time errors
+let convex: ConvexHttpClient | null = null;
+const getConvex = () => {
+  if (!convex) {
+    if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+      throw new Error('NEXT_PUBLIC_CONVEX_URL is not defined');
+    }
+    convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+  }
+  return convex;
+};
 
 export interface UserProfile {
   address: string;
@@ -102,7 +111,7 @@ export class ConvexProfileService {
   static async getProfile(address: string): Promise<UserProfile | null> {
     try {
       const normalizedAddress = address.toLowerCase();
-      const profile = await convex.query(api.profiles.getProfile, {
+      const profile = await getConvex().query(api.profiles.getProfile, {
         address: normalizedAddress,
       });
       return profile;
@@ -118,7 +127,7 @@ export class ConvexProfileService {
   static async getLeaderboard(limit: number = 100): Promise<UserProfile[]> {
     try {
       // 🚀 OPTIMIZED: Use lite query (97% bandwidth reduction)
-      const profiles = await convex.query(api.profiles.getLeaderboardLite, {
+      const profiles = await getConvex().query(api.profiles.getLeaderboardLite, {
         limit,
       });
       // Cast through unknown since lite version returns partial UserProfile
@@ -135,7 +144,7 @@ export class ConvexProfileService {
   static async usernameExists(username: string): Promise<boolean> {
     try {
       const normalizedUsername = username.toLowerCase();
-      const available = await convex.query(api.profiles.isUsernameAvailable, {
+      const available = await getConvex().query(api.profiles.isUsernameAvailable, {
         username: normalizedUsername,
       });
       return !available; // If available=false, then it exists
@@ -151,7 +160,7 @@ export class ConvexProfileService {
   static async getAddressByUsername(username: string): Promise<string | null> {
     try {
       const normalizedUsername = username.toLowerCase();
-      const profile = await convex.query(api.profiles.getProfileByUsername, {
+      const profile = await getConvex().query(api.profiles.getProfileByUsername, {
         username: normalizedUsername,
       });
       return profile ? profile.address : null;
@@ -187,7 +196,7 @@ export class ConvexProfileService {
       }
 
       // Create profile
-      await convex.mutation(api.profiles.upsertProfile, {
+      await getConvex().mutation(api.profiles.upsertProfile, {
         address: normalizedAddress,
         username,
         stats: {
@@ -233,7 +242,7 @@ export class ConvexProfileService {
         throw new Error("Profile not found");
       }
 
-      await convex.mutation(api.profiles.updateStats, {
+      await getConvex().mutation(api.profiles.updateStats, {
         address: normalizedAddress,
         stats: {
           ...profile.stats,
@@ -262,7 +271,7 @@ export class ConvexProfileService {
   }> {
     try {
       const normalizedAddress = address.toLowerCase();
-      const result = await convex.mutation(api.profiles.getValidatedDefenseDeck, {
+      const result = await getConvex().mutation(api.profiles.getValidatedDefenseDeck, {
         address: normalizedAddress,
       });
       return result;
@@ -305,7 +314,7 @@ export class ConvexProfileService {
         }))
       });
 
-      await convex.mutation(api.profiles.updateDefenseDeck, {
+      await getConvex().mutation(api.profiles.updateDefenseDeck, {
         address: normalizedAddress,
         defenseDeck,
       });
@@ -339,7 +348,7 @@ export class ConvexProfileService {
         throw new Error("Profile not found");
       }
 
-      await convex.mutation(api.profiles.upsertProfile, {
+      await getConvex().mutation(api.profiles.upsertProfile, {
         address: normalizedAddress,
         username: profile.username,
         twitter,
@@ -370,7 +379,7 @@ export class ConvexProfileService {
 
       // Handle stats update
       if (updates.stats) {
-        await convex.mutation(api.profiles.updateStats, {
+        await getConvex().mutation(api.profiles.updateStats, {
           address: normalizedAddress,
           stats: updates.stats,
         });
@@ -384,7 +393,7 @@ export class ConvexProfileService {
             typeof card === 'object' && card !== null
         );
 
-        await convex.mutation(api.profiles.updateDefenseDeck, {
+        await getConvex().mutation(api.profiles.updateDefenseDeck, {
           address: normalizedAddress,
           defenseDeck: validDefenseDeck,
         });
@@ -395,7 +404,7 @@ export class ConvexProfileService {
         updates.attacksToday !== undefined ||
         updates.lastAttackDate !== undefined
       ) {
-        await convex.mutation(api.profiles.updateAttacks, {
+        await getConvex().mutation(api.profiles.updateAttacks, {
           address: normalizedAddress,
           attacksToday: updates.attacksToday ?? profile.attacksToday,
           lastAttackDate:
@@ -407,7 +416,7 @@ export class ConvexProfileService {
 
       // Handle Twitter update
       if (updates.twitter || updates.twitterHandle || updates.twitterProfileImageUrl) {
-        await convex.mutation(api.profiles.upsertProfile, {
+        await getConvex().mutation(api.profiles.upsertProfile, {
           address: normalizedAddress,
           username: profile.username,
           twitter: updates.twitter,
@@ -418,7 +427,7 @@ export class ConvexProfileService {
 
       // Handle FID (Farcaster ID) update
       if (updates.fid) {
-        await convex.mutation(api.profiles.upsertProfile, {
+        await getConvex().mutation(api.profiles.upsertProfile, {
           address: normalizedAddress,
           username: profile.username,
           fid: updates.fid,
@@ -477,7 +486,7 @@ export class ConvexProfileService {
         difficulty,
       });
 
-      await convex.mutation(api.matches.recordMatch, {
+      await getConvex().mutation(api.matches.recordMatch, {
         playerAddress: normalizedPlayerAddress,
         type,
         result,
@@ -510,7 +519,7 @@ export class ConvexProfileService {
       const normalizedAddress = address.toLowerCase();
 
       // 🚀 OPTIMIZED: Use summary query (95% bandwidth reduction)
-      const matches = await convex.query(api.matches.getMatchHistorySummary, {
+      const matches = await getConvex().query(api.matches.getMatchHistorySummary, {
         address: normalizedAddress,
         limit,
       });
@@ -571,7 +580,7 @@ export class ConvexProfileService {
       }
 
       // Update profile with new username
-      await convex.mutation(api.profiles.upsertProfile, {
+      await getConvex().mutation(api.profiles.upsertProfile, {
         address: normalizedAddress,
         username: newUsername.trim(),
         stats: currentProfile.stats,
@@ -614,7 +623,7 @@ export class ConvexProfileService {
   ): Promise<{ success: boolean; cachedCount: number; newlyCached: number }> {
     try {
       const normalizedAddress = address.toLowerCase();
-      const result = await convex.mutation(api.profiles.updateRevealedCardsCache, {
+      const result = await getConvex().mutation(api.profiles.updateRevealedCardsCache, {
         address: normalizedAddress,
         revealedCards,
       });

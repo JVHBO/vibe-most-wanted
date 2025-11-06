@@ -8,8 +8,17 @@
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 
-// Client for server-side operations
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+// Lazy initialization to avoid build-time errors
+let convex: ConvexHttpClient | null = null;
+const getConvex = () => {
+  if (!convex) {
+    if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+      throw new Error('NEXT_PUBLIC_CONVEX_URL is not defined');
+    }
+    convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+  }
+  return convex;
+};
 
 export interface GameRoom {
   _id: string;
@@ -42,7 +51,7 @@ export class ConvexPvPService {
     try {
       const normalizedAddress = hostAddress.toLowerCase();
 
-      const code = await convex.mutation(api.rooms.createRoom, {
+      const code = await getConvex().mutation(api.rooms.createRoom, {
         hostAddress: normalizedAddress,
         hostUsername: hostUsername || normalizedAddress.substring(0, 8),
         mode: mode || "ranked", // Default to ranked if not specified
@@ -67,7 +76,7 @@ export class ConvexPvPService {
     try {
       const normalizedAddress = guestAddress.toLowerCase();
 
-      await convex.mutation(api.rooms.joinRoom, {
+      await getConvex().mutation(api.rooms.joinRoom, {
         code,
         guestAddress: normalizedAddress,
         guestUsername: guestUsername || normalizedAddress.substring(0, 8),
@@ -90,7 +99,7 @@ export class ConvexPvPService {
     try {
       const normalizedAddress = playerAddress.toLowerCase();
 
-      const roomCode = await convex.mutation(api.rooms.findMatch, {
+      const roomCode = await getConvex().mutation(api.rooms.findMatch, {
         playerAddress: normalizedAddress,
         playerUsername: playerUsername || normalizedAddress.substring(0, 8),
       });
@@ -117,7 +126,7 @@ export class ConvexPvPService {
     try {
       const normalizedAddress = playerAddress.toLowerCase();
 
-      await convex.mutation(api.rooms.cancelMatchmaking, {
+      await getConvex().mutation(api.rooms.cancelMatchmaking, {
         playerAddress: normalizedAddress,
       });
 
@@ -145,7 +154,7 @@ export class ConvexPvPService {
       const normalizedAddress = playerAddress.toLowerCase();
       const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
 
-      await convex.mutation(api.rooms.updateCards, {
+      await getConvex().mutation(api.rooms.updateCards, {
         code,
         playerAddress: normalizedAddress,
         cards,
@@ -164,7 +173,7 @@ export class ConvexPvPService {
    */
   static async getRoom(code: string): Promise<GameRoom | null> {
     try {
-      const room = await convex.query(api.rooms.getRoom, { code });
+      const room = await getConvex().query(api.rooms.getRoom, { code });
       return room as GameRoom | null;
     } catch (error: any) {
       console.error("❌ getRoom error:", error);
@@ -179,7 +188,7 @@ export class ConvexPvPService {
     try {
       const normalizedAddress = playerAddress.toLowerCase();
 
-      await convex.mutation(api.rooms.leaveRoom, {
+      await getConvex().mutation(api.rooms.leaveRoom, {
         code,
         playerAddress: normalizedAddress,
       });
@@ -195,7 +204,7 @@ export class ConvexPvPService {
    */
   static async finishRoom(code: string, winnerId: string): Promise<void> {
     try {
-      await convex.mutation(api.rooms.finishRoom, {
+      await getConvex().mutation(api.rooms.finishRoom, {
         code,
         winnerId,
       });
@@ -263,14 +272,14 @@ export class ConvexPvPService {
 
       try {
         // Check if player has been matched
-        const matchStatus = await convex.query(api.rooms.getMatchmakingStatus, {
+        const matchStatus = await getConvex().query(api.rooms.getMatchmakingStatus, {
           playerAddress: playerAddress.toLowerCase(),
         });
 
         if (matchStatus) {
           if (matchStatus.status === "matched") {
             // Player was matched! Find the room
-            const room = await convex.query(api.rooms.getRoomByPlayer, {
+            const room = await getConvex().query(api.rooms.getRoomByPlayer, {
               playerAddress: playerAddress.toLowerCase(),
             });
 
@@ -327,7 +336,7 @@ export class ConvexPvPService {
     console.log("🧹 Cleaning up old rooms...");
 
     try {
-      const deleted = await convex.mutation(api.rooms.cleanupOldRooms, {});
+      const deleted = await getConvex().mutation(api.rooms.cleanupOldRooms, {});
 
       if (deleted > 0) {
         console.log(`✅ Deleted ${deleted} old rooms`);
