@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
+import { devLog, devError, devWarn } from '@/lib/utils/logger';
 
 /**
  * Webhook endpoint para receber eventos do Farcaster miniapp
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    console.log('📬 Farcaster webhook received:', {
+    devLog('📬 Farcaster webhook received:', {
       event: body.event,
       fid: body.data?.fid,
     });
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
             url,
           });
 
-          console.log(`✅ Notification token saved for FID ${data.fid}`);
+          devLog(`✅ Notification token saved for FID ${data.fid}`);
         }
         break;
 
@@ -50,18 +51,18 @@ export async function POST(request: NextRequest) {
           await convex.mutation(api.notifications.removeToken, {
             fid: data.fid,
           });
-          console.log(`❌ Notification token removed for FID ${data.fid}`);
+          devLog(`❌ Notification token removed for FID ${data.fid}`);
         }
         break;
 
       default:
-        console.log(`⚠️ Unknown event: ${event}`);
+        devWarn(`⚠️ Unknown event: ${event}`);
     }
 
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
-    console.error('❌ Webhook error:', error);
+    devError('❌ Webhook error:', error);
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
