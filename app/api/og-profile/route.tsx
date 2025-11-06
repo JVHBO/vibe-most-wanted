@@ -66,90 +66,23 @@ export async function GET(request: Request) {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '20px',
+              justifyContent: 'space-between',
+              height: '100%',
+              width: '100%',
               zIndex: 1,
-              paddingTop: '40px',
+              padding: '40px',
             }}
           >
-            {/* Username */}
+            {/* Top Section - Username & Power */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '15px',
               }}
             >
-              <div
-                style={{
-                  fontSize: '56px',
-                  fontWeight: 900,
-                  color: '#FFD700',
-                  textShadow: '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4)',
-                  letterSpacing: '2px',
-                  display: 'flex',
-                }}
-              >
-                {username}
-              </div>
-              {twitter && (
-                <div
-                  style={{
-                    fontSize: '24px',
-                    color: '#9CA3AF',
-                    fontWeight: 500,
-                    display: 'flex',
-                  }}
-                >
-                  {twitter}
-                </div>
-              )}
-            </div>
-
-            {/* Total Power - Main stat */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '5px',
-                marginTop: '10px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '22px',
-                  color: '#D4AF37',
-                  fontWeight: 600,
-                  letterSpacing: '2px',
-                  display: 'flex',
-                }}
-              >
-                TOTAL POWER
-              </div>
-              <div
-                style={{
-                  fontSize: '80px',
-                  fontWeight: 900,
-                  color: '#3B82F6',
-                  textShadow: '0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.4)',
-                  display: 'flex',
-                }}
-              >
-                {totalPower}
-              </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '40px',
-                marginTop: '15px',
-              }}
-            >
-              {/* Ranking */}
+              {/* Username */}
               <div
                 style={{
                   display: 'flex',
@@ -160,27 +93,31 @@ export async function GET(request: Request) {
               >
                 <div
                   style={{
-                    fontSize: '16px',
-                    color: '#9CA3AF',
-                    fontWeight: 600,
-                    display: 'flex',
-                  }}
-                >
-                  RANKING
-                </div>
-                <div
-                  style={{
-                    fontSize: '36px',
-                    fontWeight: 800,
+                    fontSize: '48px',
+                    fontWeight: 900,
                     color: '#FFD700',
+                    textShadow: '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4)',
+                    letterSpacing: '2px',
                     display: 'flex',
                   }}
                 >
-                  {getRankingDisplay(ranking)}
+                  {username}
                 </div>
+                {twitter && (
+                  <div
+                    style={{
+                      fontSize: '20px',
+                      color: '#9CA3AF',
+                      fontWeight: 500,
+                      display: 'flex',
+                    }}
+                  >
+                    {twitter}
+                  </div>
+                )}
               </div>
 
-              {/* Win Rate */}
+              {/* Total Power - Main stat */}
               <div
                 style={{
                   display: 'flex',
@@ -191,170 +128,249 @@ export async function GET(request: Request) {
               >
                 <div
                   style={{
-                    fontSize: '16px',
-                    color: '#9CA3AF',
+                    fontSize: '20px',
+                    color: '#D4AF37',
                     fontWeight: 600,
+                    letterSpacing: '2px',
                     display: 'flex',
                   }}
                 >
-                  WIN RATE
+                  TOTAL POWER
                 </div>
                 <div
                   style={{
-                    fontSize: '36px',
-                    fontWeight: 800,
-                    color: '#10B981',
+                    fontSize: '72px',
+                    fontWeight: 900,
+                    color: '#3B82F6',
+                    textShadow: '0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.4)',
                     display: 'flex',
                   }}
                 >
-                  {winRate}%
-                </div>
-              </div>
-
-              {/* Record */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '5px',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '16px',
-                    color: '#9CA3AF',
-                    fontWeight: 600,
-                    display: 'flex',
-                  }}
-                >
-                  RECORD
-                </div>
-                <div
-                  style={{
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    color: '#FFFFFF',
-                    display: 'flex',
-                  }}
-                >
-                  {wins}W-{losses}L-{ties}T
-                </div>
-              </div>
-
-              {/* NFTs */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '5px',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '16px',
-                    color: '#9CA3AF',
-                    fontWeight: 600,
-                    display: 'flex',
-                  }}
-                >
-                  NFTs
-                </div>
-                <div
-                  style={{
-                    fontSize: '36px',
-                    fontWeight: 800,
-                    color: '#A855F7',
-                    display: 'flex',
-                  }}
-                >
-                  {nftCount}
+                  {totalPower}
                 </div>
               </div>
             </div>
 
-            {/* Secondary Stats Row */}
+            {/* Middle Section - Stats Grid */}
             <div
               style={{
                 display: 'flex',
-                gap: '50px',
-                marginTop: '5px',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '15px',
               }}
             >
-              {/* Streak */}
-              {parseInt(winStreak) > 0 && (
+              {/* Stats Grid */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '50px',
+                }}
+              >
+                {/* Ranking */}
                 <div
                   style={{
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: '5px',
                   }}
                 >
                   <div
                     style={{
-                      fontSize: '24px',
+                      fontSize: '14px',
+                      color: '#9CA3AF',
+                      fontWeight: 600,
                       display: 'flex',
                     }}
                   >
-                    🔥
+                    RANKING
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '32px',
+                      fontWeight: 800,
+                      color: '#FFD700',
+                      display: 'flex',
+                    }}
+                  >
+                    {getRankingDisplay(ranking)}
+                  </div>
+                </div>
+
+                {/* Win Rate */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '14px',
+                      color: '#9CA3AF',
+                      fontWeight: 600,
+                      display: 'flex',
+                    }}
+                  >
+                    WIN RATE
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '32px',
+                      fontWeight: 800,
+                      color: '#10B981',
+                      display: 'flex',
+                    }}
+                  >
+                    {winRate}%
+                  </div>
+                </div>
+
+                {/* Record */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '14px',
+                      color: '#9CA3AF',
+                      fontWeight: 600,
+                      display: 'flex',
+                    }}
+                  >
+                    RECORD
                   </div>
                   <div
                     style={{
                       fontSize: '26px',
                       fontWeight: 700,
-                      color: '#F59E0B',
+                      color: '#FFFFFF',
                       display: 'flex',
                     }}
                   >
-                    {winStreak} Win Streak
+                    {wins}W-{losses}L-{ties}T
                   </div>
                 </div>
-              )}
 
-              {/* Coins */}
+                {/* NFTs */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '14px',
+                      color: '#9CA3AF',
+                      fontWeight: 600,
+                      display: 'flex',
+                    }}
+                  >
+                    NFTs
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '32px',
+                      fontWeight: 800,
+                      color: '#A855F7',
+                      display: 'flex',
+                    }}
+                  >
+                    {nftCount}
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary Stats Row */}
               <div
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
+                  gap: '40px',
                 }}
               >
+                {/* Streak */}
+                {parseInt(winStreak) > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '20px',
+                        display: 'flex',
+                      }}
+                    >
+                      🔥
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '22px',
+                        fontWeight: 700,
+                        color: '#F59E0B',
+                        display: 'flex',
+                      }}
+                    >
+                      {winStreak} Win Streak
+                    </div>
+                  </div>
+                )}
+
+                {/* Coins */}
                 <div
                   style={{
-                    fontSize: '24px',
                     display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
                   }}
                 >
-                  💰
-                </div>
-                <div
-                  style={{
-                    fontSize: '26px',
-                    fontWeight: 700,
-                    color: '#FBBF24',
-                    display: 'flex',
-                  }}
-                >
-                  {coins} $TESTVBMS
+                  <div
+                    style={{
+                      fontSize: '20px',
+                      display: 'flex',
+                    }}
+                  >
+                    💰
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '22px',
+                      fontWeight: 700,
+                      color: '#FBBF24',
+                      display: 'flex',
+                    }}
+                  >
+                    {coins} $TESTVBMS
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Bottom Section - Footer */}
             <div
               style={{
-                position: 'absolute',
-                bottom: '40px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '5px',
               }}
             >
               <div
                 style={{
-                  fontSize: '32px',
+                  fontSize: '28px',
                   fontWeight: 900,
                   color: '#FFD700',
                   letterSpacing: '2px',
@@ -365,7 +381,7 @@ export async function GET(request: Request) {
               </div>
               <div
                 style={{
-                  fontSize: '18px',
+                  fontSize: '16px',
                   color: '#9CA3AF',
                   display: 'flex',
                 }}

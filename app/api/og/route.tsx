@@ -74,142 +74,154 @@ export async function GET(request: Request) {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '25px',
+              justifyContent: 'space-between',
+              height: '100%',
+              width: '100%',
               zIndex: 1,
-              paddingBottom: '100px',
+              padding: '40px',
             }}
           >
-            {/* Title */}
+            {/* Top Section - spacer */}
+            <div style={{ display: 'flex' }} />
+
+            {/* Middle Section - Battle Info */}
             <div
               style={{
-                fontSize: '68px',
-                fontWeight: 900,
-                color: isWin ? '#FFD700' : isTie ? '#C0C0C0' : '#DC2626',
-                textShadow: isWin
-                  ? '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4)'
-                  : isTie
-                  ? '0 0 40px rgba(192, 192, 192, 0.8), 0 0 80px rgba(192, 192, 192, 0.4)'
-                  : '0 0 40px rgba(220, 38, 38, 0.8), 0 0 80px rgba(220, 38, 38, 0.4)',
-                letterSpacing: '3px',
-                display: 'flex',
-              }}
-            >
-              {title}
-            </div>
-
-            {/* Subtitle */}
-            <div
-              style={{
-                fontSize: '30px',
-                fontWeight: 600,
-                color: '#D4AF37',
-                display: 'flex',
-              }}
-            >
-              {subtitle}
-            </div>
-
-            {/* Power comparison */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '50px',
-                alignItems: 'center',
-                marginTop: '10px',
-              }}
-            >
-              {/* Your Power */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '20px',
-                    color: '#9CA3AF',
-                    fontWeight: 600,
-                    display: 'flex',
-                  }}
-                >
-                  YOUR POWER
-                </div>
-                <div
-                  style={{
-                    fontSize: '52px',
-                    fontWeight: 900,
-                    color: '#3B82F6',
-                    textShadow: '0 0 20px rgba(59, 130, 246, 0.6)',
-                    display: 'flex',
-                  }}
-                >
-                  {playerPower}
-                </div>
-              </div>
-
-              {/* VS */}
-              <div
-                style={{
-                  fontSize: '40px',
-                  fontWeight: 700,
-                  color: '#6B7280',
-                  display: 'flex',
-                }}
-              >
-                VS
-              </div>
-
-              {/* Opponent Power */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '20px',
-                    color: '#9CA3AF',
-                    fontWeight: 600,
-                    display: 'flex',
-                  }}
-                >
-                  OPPONENT
-                </div>
-                <div
-                  style={{
-                    fontSize: '52px',
-                    fontWeight: 900,
-                    color: '#EF4444',
-                    textShadow: '0 0 20px rgba(239, 68, 68, 0.6)',
-                    display: 'flex',
-                  }}
-                >
-                  {opponentPower}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '40px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '25px',
+              }}
+            >
+              {/* Title */}
+              <div
+                style={{
+                  fontSize: '68px',
+                  fontWeight: 900,
+                  color: isWin ? '#FFD700' : isTie ? '#C0C0C0' : '#DC2626',
+                  textShadow: isWin
+                    ? '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4)'
+                    : isTie
+                    ? '0 0 40px rgba(192, 192, 192, 0.8), 0 0 80px rgba(192, 192, 192, 0.4)'
+                    : '0 0 40px rgba(220, 38, 38, 0.8), 0 0 80px rgba(220, 38, 38, 0.4)',
+                  letterSpacing: '3px',
+                  display: 'flex',
+                }}
+              >
+                {title}
+              </div>
+
+              {/* Subtitle */}
+              <div
+                style={{
+                  fontSize: '30px',
+                  fontWeight: 600,
+                  color: '#D4AF37',
+                  display: 'flex',
+                }}
+              >
+                {subtitle}
+              </div>
+
+              {/* Power comparison */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '50px',
+                  alignItems: 'center',
+                  marginTop: '10px',
+                }}
+              >
+                {/* Your Power */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '20px',
+                      color: '#9CA3AF',
+                      fontWeight: 600,
+                      display: 'flex',
+                    }}
+                  >
+                    YOUR POWER
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '52px',
+                      fontWeight: 900,
+                      color: '#3B82F6',
+                      textShadow: '0 0 20px rgba(59, 130, 246, 0.6)',
+                      display: 'flex',
+                    }}
+                  >
+                    {playerPower}
+                  </div>
+                </div>
+
+                {/* VS */}
+                <div
+                  style={{
+                    fontSize: '40px',
+                    fontWeight: 700,
+                    color: '#6B7280',
+                    display: 'flex',
+                  }}
+                >
+                  VS
+                </div>
+
+                {/* Opponent Power */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '20px',
+                      color: '#9CA3AF',
+                      fontWeight: 600,
+                      display: 'flex',
+                    }}
+                  >
+                    OPPONENT
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '52px',
+                      fontWeight: 900,
+                      color: '#EF4444',
+                      textShadow: '0 0 20px rgba(239, 68, 68, 0.6)',
+                      display: 'flex',
+                    }}
+                  >
+                    {opponentPower}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Section - Footer */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '5px',
               }}
             >
               <div
                 style={{
-                  fontSize: '32px',
+                  fontSize: '28px',
                   fontWeight: 900,
                   color: '#FFD700',
                   letterSpacing: '2px',
@@ -220,7 +232,7 @@ export async function GET(request: Request) {
               </div>
               <div
                 style={{
-                  fontSize: '18px',
+                  fontSize: '16px',
                   color: '#9CA3AF',
                   display: 'flex',
                 }}
