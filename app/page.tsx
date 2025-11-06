@@ -3850,7 +3850,7 @@ export default function TCGPage() {
             href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 md:px-8 py-2.5 md:py-3.5 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base"
+            className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base"
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
           >
             <div className="flex items-center justify-center gap-2">
@@ -3864,7 +3864,7 @@ export default function TCGPage() {
               href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 md:px-6 py-2 md:py-2.5 border-2 border-purple-500 text-purple-300 hover:text-purple-100 bg-purple-900/30 hover:bg-purple-800/40 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-xs md:text-sm"
+              className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-purple-500 text-purple-300 hover:text-purple-100 bg-purple-900/30 hover:bg-purple-800/40 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-sm md:text-base"
             >
               <span className="text-base md:text-lg">♦</span> {t('tryMiniapp')}
             </a>
