@@ -1759,6 +1759,17 @@ export default function TCGPage() {
                 }
               }
 
+              // ✅ FIX: Set battle result BEFORE closing battle screen
+              // This ensures the popup shows the correct coins earned
+              setLastBattleResult({
+                result: finalResult,
+                playerPower: newPlayerScore,
+                opponentPower: newOpponentScore,
+                opponentName: 'Mecha George Floyd',
+                type: 'pve',
+                coinsEarned
+              });
+
               // Close battle first
               setTimeout(() => {
                 setIsBattling(false);
@@ -1766,15 +1777,6 @@ export default function TCGPage() {
                 setBattlePhase('cards');
                 setBattleMode('normal');
                 setEliminationPhase(null);
-
-                setLastBattleResult({
-                  result: finalResult,
-                  playerPower: newPlayerScore,
-                  opponentPower: newOpponentScore,
-                  opponentName: 'Mecha George Floyd',
-                  type: 'pve',
-                  coinsEarned
-                });
 
                 // Show result popup after closing battle
                 setTimeout(() => {
@@ -1898,21 +1900,22 @@ export default function TCGPage() {
           }
         }
 
+        // ✅ FIX: Set battle result BEFORE closing battle screen
+        // This ensures the popup shows the correct coins earned
+        setLastBattleResult({
+          result: matchResult,
+          playerPower: playerTotal,
+          opponentPower: dealerTotal,
+          opponentName: 'Mecha George Floyd',
+          type: 'pve',
+          coinsEarned
+        });
+
         // Fecha a tela de batalha PRIMEIRO
         setTimeout(() => {
           setIsBattling(false);
           setShowBattleScreen(false);
           setBattlePhase('cards');
-
-          // Set last battle result for sharing
-          setLastBattleResult({
-            result: matchResult,
-            playerPower: playerTotal,
-            opponentPower: dealerTotal,
-            opponentName: 'Mecha George Floyd',
-            type: 'pve',
-            coinsEarned
-          });
 
           // Mostra popup DEPOIS de fechar batalha
           setTimeout(() => {
