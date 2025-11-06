@@ -762,7 +762,7 @@ export default function ProfilePage() {
                     const rankingPos = '?';
 
                     // Generate OG image URL with profile stats
-                    const ogImageUrl = `${window.location.origin}/api/og-profile?username=${encodeURIComponent(profile.username)}&twitter=${encodeURIComponent(profile.twitter || '')}&totalPower=${profile.stats.totalPower || 0}&wins=${wins}&losses=${losses}&ties=${ties}&nftCount=${nfts.length || profile.stats.totalCards}&ranking=${rankingPos}&winStreak=${profile.winStreak || 0}&coins=${profile.coins || 0}`;
+                    const ogImageUrl = `${window.location.origin}/api/og-profile?username=${encodeURIComponent(profile.username)}&twitter=${encodeURIComponent(profile.twitter || '')}&totalPower=${profile.stats.totalPower || 0}&wins=${wins}&losses=${losses}&ties=${ties}&nftCount=${nfts.length || profile.stats.totalCards}&ranking=${rankingPos}&winStreak=${profile.winStreak || 0}&coins=${profile.coins || 0}&v=2`;
 
                     // Farcaster cast text
                     const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
