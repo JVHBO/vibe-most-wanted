@@ -672,16 +672,20 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="w-32 h-32 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex items-center justify-center text-6xl font-display font-bold shadow-gold overflow-hidden">
               {(() => {
-                // Priority 1: Use real Twitter CDN URL if available (pbs.twimg.com)
-                if (profile.twitterProfileImageUrl && profile.twitterProfileImageUrl.includes('pbs.twimg.com')) {
-                  const highResUrl = profile.twitterProfileImageUrl.replace('_normal', '_400x400');
+                // Priority 1: Use twitterProfileImageUrl if available (Twitter CDN or local images)
+                if (profile.twitterProfileImageUrl) {
+                  // For Twitter CDN URLs, use high-res version
+                  const imageUrl = profile.twitterProfileImageUrl.includes('pbs.twimg.com')
+                    ? profile.twitterProfileImageUrl.replace('_normal', '_400x400')
+                    : profile.twitterProfileImageUrl;
+
                   return (
                     <img
-                      src={highResUrl}
+                      src={imageUrl}
                       alt={profile.username}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // Fallback to DiceBear if Twitter CDN fails
+                        // Fallback to DiceBear if image fails to load
                         const img = e.target as HTMLImageElement;
                         if (profile.twitter) {
                           img.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`;
