@@ -804,7 +804,7 @@ export default function ProfilePage() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm2 4v-2H3c0 1.1.9 2 2 2zM3 9h2V7H3v2zm12 12h2v-2h-2v2zm4-18H9c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 12H9V5h10v10zm-8 6h2v-2h-2v2zm-4 0h2v-2H7v2z"/>
                   </svg>
-                  Share on Farcaster
+                  <span>🎁</span>
                 </a>
 
                 <a
@@ -818,7 +818,8 @@ export default function ProfilePage() {
                   rel="noopener noreferrer"
                   className="px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-lg text-vintage-gold hover:text-vintage-ice transition-all font-modern font-semibold text-sm flex items-center gap-2"
                 >
-                  <span>𝕏</span> Share on Twitter
+                  <span>𝕏</span>
+                  <span>🎁</span>
                 </a>
               </div>
             </div>
@@ -1258,7 +1259,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {matchHistory.map((match) => {
+            {matchHistory.slice(0, 10).map((match) => {
               const isWin = match.result === 'win';
               const isTie = match.result === 'tie';
               const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
@@ -1329,10 +1330,25 @@ export default function ProfilePage() {
                       )}
                     </div>
 
-                    {/* Rematch Button - Only if LOST and has opponent */}
-                    {match.result === 'loss' && match.opponentAddress && (match.type === 'pvp' || match.type === 'attack' || match.type === 'defense') &&
-                     profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
-                      <div className="flex justify-end">
+                    {/* Action Buttons */}
+                    <div className="flex justify-between items-center">
+                      {/* Farcaster Share Button */}
+                      <a
+                        href={`https://warpcast.com/~/compose?text=${encodeURIComponent(`I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in VIBE Most Wanted!`)}&embeds[]=${encodeURIComponent(`https://vibe-most-wanted.vercel.app/share/${match.result}_${match.playerPower}_${match.opponentPower}_${match.opponentUsername || 'Opponent'}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 rounded-lg font-modern font-semibold text-sm transition-all flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white hover:scale-105"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 1000 1000" fill="none">
+                          <path d="M257.778 155.556H742.222V844.444H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.444H257.778V155.556Z" fill="white"/>
+                          <path d="M128.889 253.333L157.778 351.111H182.222L211.111 253.333H232.222V373.333H213.333V268.889H212.222L181.111 373.333H158.889L127.778 268.889H126.667V373.333H107.778V253.333H128.889Z" fill="white"/>
+                        </svg>
+                        <span>Share</span>
+                      </a>
+
+                      {/* Rematch Button - Only if LOST and has opponent */}
+                      {match.result === 'loss' && match.opponentAddress && (match.type === 'pvp' || match.type === 'attack' || match.type === 'defense') &&
+                       profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
                         <button
                           onClick={async () => {
                             if (rematchesRemaining <= 0) {
@@ -1385,8 +1401,8 @@ export default function ProfilePage() {
                           <span>{t('rematch')}</span>
                           <span className="text-xs opacity-75">({rematchesRemaining}/5)</span>
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               );
