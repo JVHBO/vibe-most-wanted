@@ -23,6 +23,11 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const opponentName = parts[3] || 'Opponent';
     const playerPfpUrl = parts[4] ? decodeURIComponent(parts[4]) : '';
     const opponentPfpUrl = parts[5] ? decodeURIComponent(parts[5]) : '';
+    const playerName = parts[6] ? decodeURIComponent(parts[6]) : 'YOU';
+
+    // Check if opponent is Mecha George Floyd and use his image
+    const mechaUrl = 'https://vibe-most-wanted.vercel.app/images/mecha-george-floyd.jpg';
+    const finalOpponentPfpUrl = opponentName.toLowerCase().includes('mecha') ? mechaUrl : opponentPfpUrl;
 
     const isWin = result === 'win';
 
@@ -246,7 +251,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           >
             {/* Player card */}
             <Card
-              username="YOU"
+              username={playerName}
               power={playerPower}
               isPlayer={true}
               isLosing={playerIsLosing}
@@ -281,7 +286,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               power={opponentPower}
               isPlayer={false}
               isLosing={!playerIsLosing}
-              pfpUrl={opponentPfpUrl}
+              pfpUrl={finalOpponentPfpUrl}
               backgroundImage="https://vibe-most-wanted.vercel.app/fundo2.jpg"
             />
           </div>
