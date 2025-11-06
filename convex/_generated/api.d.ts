@@ -26,6 +26,8 @@ import type * as notifications from "../notifications.js";
 import type * as profiles from "../profiles.js";
 import type * as quests from "../quests.js";
 import type * as rooms from "../rooms.js";
+import type * as utils from "../utils.js";
+import type * as vbmsClaim from "../vbmsClaim.js";
 
 import type {
   ApiFromModules,
@@ -60,6 +62,8 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   quests: typeof quests;
   rooms: typeof rooms;
+  utils: typeof utils;
+  vbmsClaim: typeof vbmsClaim;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
