@@ -19,7 +19,6 @@ interface BattleResult {
   opponentPower?: number;
   opponentName?: string;
   opponentTwitter?: string;
-  matchId?: string; // Convex match ID for claim
 }
 
 interface UserProfile {
@@ -35,11 +34,6 @@ interface GamePopupsProps {
   userProfile: UserProfile | null | undefined;
   soundEnabled: boolean;
   handleCloseVictoryScreen: () => void;
-
-  // VBMS Claim
-  playerAddress?: string; // Wallet address for claim
-  onClaimNow?: (matchId: string) => Promise<void>;
-  onSendToInbox?: (matchId: string) => Promise<void>;
 
   // Share incentives
   sharesRemaining?: number;
@@ -81,9 +75,6 @@ export function GamePopups({
   userProfile,
   soundEnabled,
   handleCloseVictoryScreen,
-  playerAddress,
-  onClaimNow,
-  onSendToInbox,
   sharesRemaining,
   onShareClick,
   showLossPopup,
@@ -163,34 +154,6 @@ export function GamePopups({
                 ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
                 : t('victoryPrize')}
             </p>
-
-            {/* VBMS Claim Buttons */}
-            {lastBattleResult?.matchId && lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0 && playerAddress && (
-              <div className="flex flex-col gap-2 w-full max-w-md px-4">
-                <button
-                  onClick={() => {
-                    if (soundEnabled) AudioManager.buttonClick();
-                    onClaimNow?.(lastBattleResult.matchId!);
-                  }}
-                  className="w-full py-3 px-6 rounded-xl font-bold font-display transition-all transform hover:scale-105 shadow-gold hover:shadow-gold-lg"
-                  style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
-                >
-                  <span className="text-vintage-black">💰 Claim Now</span>
-                  <span className="block text-xs text-vintage-black/70 font-modern">To your wallet (~$0.005 gas)</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (soundEnabled) AudioManager.buttonClick();
-                    onSendToInbox?.(lastBattleResult.matchId!);
-                  }}
-                  className="w-full py-3 px-6 rounded-xl font-bold font-display border-2 border-vintage-gold text-vintage-gold bg-vintage-deep-black hover:bg-vintage-gold/20 transition-all transform hover:scale-105"
-                >
-                  <span>📬 Send to Inbox</span>
-                  <span className="block text-xs text-vintage-burnt-gold font-modern">Collect later (0 gas now)</span>
-                </button>
-              </div>
-            )}
 
             {/* Share Incentive Banner */}
             {sharesRemaining !== undefined && sharesRemaining > 0 && (
