@@ -201,7 +201,7 @@ export function GamePopups({
 
                   // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_type)
                   const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}_${lastBattleResult.type || 'pve'}`;
-                  const shareUrl = `${window.location.origin}/share/${matchId}`;
+                  const imageUrl = `${window.location.origin}/share/${matchId}/opengraph-image`;
 
                   let castText = t('castVictory', { power: lastBattleResult.playerPower });
 
@@ -213,9 +213,9 @@ export function GamePopups({
                     castText += `\n\nDefeated ${lastBattleResult.opponentName}!`;
                   }
 
-                  castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
+                  castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}\n\nvibemostwanted.xyz`;
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -281,7 +281,7 @@ export function GamePopups({
 
                   // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_type)
                   const matchId = `loss_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${encodeURIComponent(lastBattleResult.opponentName || 'Opponent')}_${lastBattleResult.type || 'pve'}`;
-                  const shareUrl = `${window.location.origin}/share/${matchId}`;
+                  const imageUrl = `${window.location.origin}/share/${matchId}/opengraph-image`;
 
                   let castText = t('castDefeat', { power: lastBattleResult.playerPower });
 
@@ -293,9 +293,9 @@ export function GamePopups({
                     castText += `\n\nLost to ${lastBattleResult.opponentName}`;
                   }
 
-                  castText += `\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
+                  castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}\n\nvibemostwanted.xyz`;
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
