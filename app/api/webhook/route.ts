@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { devLog, devError } from '@/lib/utils/logger';
 
 // Webhook para Farcaster Frame
 export async function POST(req: NextRequest) {
@@ -6,7 +7,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Log do webhook recebido (útil para debug)
-    console.log('Farcaster webhook recebido:', body);
+    devLog('Farcaster webhook recebido:', body);
 
     // Aqui você pode processar eventos do Farcaster
     // Por exemplo: rastrear quando usuários abrem o frame, cliques, etc.
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
       message: 'Webhook recebido'
     });
   } catch (error) {
-    console.error('Erro no webhook:', error);
+    devError('Erro no webhook:', error);
     return NextResponse.json(
       { success: false, error: 'Erro ao processar webhook' },
       { status: 500 }
