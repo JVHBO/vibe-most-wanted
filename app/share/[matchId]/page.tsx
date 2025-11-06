@@ -56,13 +56,31 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
       images: [imageUrl],
     },
     other: {
-      // Farcaster Frame v2 format - shows OG image with action button
-      'fc:frame': 'vNext',
-      'fc:frame:image': imageUrl,
-      'fc:frame:image:aspect_ratio': '3:2',
-      'fc:frame:button:1': 'Play VIBE Most Wanted',
-      'fc:frame:button:1:action': 'link',
-      'fc:frame:button:1:target': baseUrl,
+      // Farcaster miniapp format with embedded image
+      'fc:miniapp': JSON.stringify({
+        version: '1',
+        imageUrl: imageUrl,
+        button: {
+          title: 'Play VIBE Most Wanted',
+          action: {
+            type: 'launch_miniapp',
+            name: 'VIBE MOST WANTED',
+            url: baseUrl,
+          },
+        },
+      }),
+      'fc:frame': JSON.stringify({
+        version: '1',
+        imageUrl: imageUrl,
+        button: {
+          title: 'Play VIBE Most Wanted',
+          action: {
+            type: 'launch_miniapp',
+            name: 'VIBE MOST WANTED',
+            url: baseUrl,
+          },
+        },
+      }),
     },
   };
 }
