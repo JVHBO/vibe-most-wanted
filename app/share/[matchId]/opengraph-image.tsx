@@ -122,49 +122,28 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             </div>
           </div>
 
-          {/* PFP Circle */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: '15px',
-            }}
-          >
-            {pfpUrl ? (
+          {/* PFP Circle - Only show if URL exists */}
+          {pfpUrl && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: '15px',
+              }}
+            >
               <img
                 src={pfpUrl}
                 style={{
-                  width: '280px',
-                  height: '280px',
+                  width: '180px',
+                  height: '180px',
                   borderRadius: '50%',
-                  border: isLosing ? '6px solid #DC2626' : '6px solid #FFD700',
+                  border: isLosing ? '5px solid #DC2626' : '5px solid #FFD700',
                   boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
                   objectFit: 'cover',
                 }}
               />
-            ) : (
-              <div
-                style={{
-                  width: '280px',
-                  height: '280px',
-                  borderRadius: '50%',
-                  border: isLosing ? '6px solid #DC2626' : '6px solid #FFD700',
-                  background: isLosing
-                    ? 'linear-gradient(135deg, #991b1b 0%, #DC2626 50%, #991b1b 100%)'
-                    : 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '100px',
-                  fontWeight: 900,
-                  color: '#121212',
-                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
-                }}
-              >
-                {getInitials(username)}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Username & Power at bottom */}
           <div
