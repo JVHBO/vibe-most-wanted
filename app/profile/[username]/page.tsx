@@ -771,15 +771,6 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Share Incentive Banner - One-time bonus */}
-              {!profile.hasSharedProfile && (
-                <div className="bg-green-500/20 border border-green-400 rounded-lg px-4 py-2 mt-3 text-center">
-                  <p className="text-green-400 font-bold text-sm">
-                    🎁 Share your profile once & earn +50 coins!
-                  </p>
-                </div>
-              )}
-
               {/* Share Profile Buttons */}
               <div className="flex gap-2 mt-3">
                 <a

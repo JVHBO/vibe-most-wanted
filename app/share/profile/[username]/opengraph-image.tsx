@@ -99,6 +99,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
                 borderRadius: '50%',
                 border: '6px solid #FFD700',
                 boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
+                objectFit: 'cover',
               }}
             />
           ) : (
