@@ -44,7 +44,7 @@ export const BADGES: Record<BadgeType, Badge> = {
     description: '',
     icon: '',
     color: 'bg-gradient-to-r from-vintage-gold/30 to-vintage-burnt-gold/30',
-    borderColor: 'border-vintage-gold',
+    borderColor: 'bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold',
     textColor: 'text-vintage-gold',
   },
   early_tester: {
@@ -53,7 +53,7 @@ export const BADGES: Record<BadgeType, Badge> = {
     description: '',
     icon: '',
     color: 'bg-gradient-to-r from-vintage-neon-blue/30 to-blue-400/30',
-    borderColor: 'border-vintage-neon-blue',
+    borderColor: 'bg-gradient-to-r from-vintage-neon-blue to-blue-400',
     textColor: 'text-vintage-neon-blue',
   },
   gey: {
@@ -62,7 +62,7 @@ export const BADGES: Record<BadgeType, Badge> = {
     description: '',
     icon: '',
     color: 'bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-blue-500/30',
-    borderColor: 'border-transparent',
+    borderColor: 'bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500',
     textColor: 'text-pink-400',
   },
   ai: {
@@ -71,7 +71,7 @@ export const BADGES: Record<BadgeType, Badge> = {
     description: 'Artificial Intelligence Player',
     icon: '🤖',
     color: 'bg-gradient-to-r from-purple-600/30 via-blue-500/30 to-cyan-500/30',
-    borderColor: 'border-cyan-400',
+    borderColor: 'bg-gradient-to-r from-purple-600 via-blue-500 to-cyan-500',
     textColor: 'text-cyan-300',
   },
   bigdog: {
@@ -80,7 +80,7 @@ export const BADGES: Record<BadgeType, Badge> = {
     description: 'Big Dog',
     icon: '🐕',
     color: 'bg-gradient-to-r from-orange-600/30 via-amber-500/30 to-yellow-500/30',
-    borderColor: 'border-orange-500',
+    borderColor: 'bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500',
     textColor: 'text-orange-400',
   },
 };
