@@ -11,9 +11,15 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
 
+  const getInitials = (name: string) => {
+    return name.substring(0, 2).toUpperCase();
+  };
+
   // Fetch profile data from Convex
   let profileData: any = null;
   let pfpUrl = '';
+  let stats = { totalPower: 0, wins: 0, losses: 0 };
+  let winRate = 0;
 
   try {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL!;
@@ -31,32 +37,20 @@ export default async function Image({ params }: { params: Promise<{ username: st
       const data = await response.json();
       profileData = data.value;
 
-      // Try to get PFP: Farcaster first, then Twitter, then fallback to initials
-      if (profileData?.fid) {
-        const fcResponse = await fetch(`https://client.warpcast.com/v2/user-by-fid?fid=${profileData.fid}`);
-        if (fcResponse.ok) {
-          const fcData = await fcResponse.json();
-          pfpUrl = fcData.result?.user?.pfp?.url || '';
-        }
-      }
+      if (profileData) {
+        // Use Twitter PFP if available
+        pfpUrl = profileData.twitterProfileImageUrl || '';
 
-      // If no Farcaster PFP, try Twitter
-      if (!pfpUrl && profileData?.twitterProfileImageUrl) {
-        pfpUrl = profileData.twitterProfileImageUrl;
+        // Get stats
+        stats = profileData.stats || stats;
+        winRate = stats.wins + stats.losses > 0
+          ? Math.round((stats.wins / (stats.wins + stats.losses)) * 100)
+          : 0;
       }
     }
   } catch (error) {
     console.error('Error fetching profile:', error);
   }
-
-  const getInitials = (name: string) => {
-    return name.substring(0, 2).toUpperCase();
-  };
-
-  const stats = profileData?.stats || { totalPower: 0, wins: 0, losses: 0 };
-  const winRate = stats.wins + stats.losses > 0
-    ? Math.round((stats.wins / (stats.wins + stats.losses)) * 100)
-    : 0;
 
   return new ImageResponse(
     (
