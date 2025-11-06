@@ -581,6 +581,7 @@ export default function ProfilePage() {
 
   const totalWins = (profile.stats.pveWins || 0) + (profile.stats.pvpWins || 0);
   const totalLosses = (profile.stats.pveLosses || 0) + (profile.stats.pvpLosses || 0);
+  const totalTies = 0; // Ties are not currently tracked in stats
   const totalMatches = totalWins + totalLosses;
   const winRate = totalMatches > 0 ? ((totalWins / totalMatches) * 100).toFixed(1) : '0';
 
@@ -738,6 +739,51 @@ export default function ProfilePage() {
                   𝕏 @{profile.twitter.replace('@', '')}
                 </a>
               )}
+
+              {/* Share Profile Buttons */}
+              <div className="flex gap-2 mt-3">
+                <a
+                  href={(() => {
+                    // Calculate win rate for profile
+                    const wins = totalWins || 0;
+                    const losses = totalLosses || 0;
+                    const ties = totalTies || 0;
+
+                    // Get ranking position (placeholder for now - ranking not yet implemented)
+                    const rankingPos = '?';
+
+                    // Generate OG image URL with profile stats
+                    const ogImageUrl = `${window.location.origin}/api/og-profile?username=${encodeURIComponent(profile.username)}&twitter=${encodeURIComponent(profile.twitter || '')}&totalPower=${profile.stats.totalPower || 0}&wins=${wins}&losses=${losses}&ties=${ties}&nftCount=${nfts.length || profile.stats.totalCards}&ranking=${rankingPos}&winStreak=${profile.winStreak || 0}&coins=${profile.coins || 0}`;
+
+                    // Farcaster cast text
+                    const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
+
+                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(ogImageUrl)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-vintage-neon-blue/20 hover:bg-vintage-neon-blue/30 border border-vintage-neon-blue rounded-lg text-vintage-neon-blue hover:text-white transition-all font-modern font-semibold text-sm flex items-center gap-2"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm2 4v-2H3c0 1.1.9 2 2 2zM3 9h2V7H3v2zm12 12h2v-2h-2v2zm4-18H9c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 12H9V5h10v10zm-8 6h2v-2h-2v2zm-4 0h2v-2H7v2z"/>
+                  </svg>
+                  Share on Farcaster
+                </a>
+
+                <a
+                  href={(() => {
+                    const profileUrl = `${window.location.origin}/profile/${profile.username}`;
+                    const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
+
+                    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-lg text-vintage-gold hover:text-vintage-ice transition-all font-modern font-semibold text-sm flex items-center gap-2"
+                >
+                  <span>𝕏</span> Share on Twitter
+                </a>
+              </div>
             </div>
 
             {/* Quick Stats */}
