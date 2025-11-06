@@ -36,8 +36,24 @@ export async function GET(request: Request) {
       return name.substring(0, 2).toUpperCase();
     };
 
-    // Note: Fetching external images can cause timeouts in Edge Runtime
-    // Using initials as fallback for better reliability
+    // Try to fetch PFP if provided (with timeout)
+    let pfpBase64 = '';
+    if (pfpUrl) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+
+        const pfpResponse = await fetch(pfpUrl, { signal: controller.signal });
+        clearTimeout(timeout);
+
+        if (pfpResponse.ok) {
+          const pfpBuffer = await pfpResponse.arrayBuffer();
+          pfpBase64 = `data:image/jpeg;base64,${Buffer.from(pfpBuffer).toString('base64')}`;
+        }
+      } catch (e) {
+        console.log('Failed to fetch PFP (timeout or error):', e);
+      }
+    }
 
     return new ImageResponse(
       (
@@ -101,24 +117,39 @@ export async function GET(request: Request) {
             }}
           >
             {/* Profile Picture */}
-            <div
-              style={{
-                width: '140px',
-                height: '140px',
-                borderRadius: '50%',
-                border: '5px solid #FFD700',
-                boxShadow: '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4), inset 0 0 20px rgba(255, 215, 0, 0.2)',
-                background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #D4AF37 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '56px',
-                fontWeight: 900,
-                color: '#1a0a00',
-              }}
-            >
-              {getInitials(username)}
-            </div>
+            {pfpBase64 ? (
+              <img
+                src={pfpBase64}
+                alt={username}
+                width={140}
+                height={140}
+                style={{
+                  borderRadius: '50%',
+                  border: '5px solid #FFD700',
+                  boxShadow: '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4)',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '140px',
+                  height: '140px',
+                  borderRadius: '50%',
+                  border: '5px solid #FFD700',
+                  boxShadow: '0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4), inset 0 0 20px rgba(255, 215, 0, 0.2)',
+                  background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #D4AF37 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '56px',
+                  fontWeight: 900,
+                  color: '#1a0a00',
+                }}
+              >
+                {getInitials(username)}
+              </div>
+            )}
 
             {/* Username & Twitter */}
             <div
