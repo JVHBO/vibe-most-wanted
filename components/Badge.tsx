@@ -24,30 +24,58 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
-      {/* Badge with gradient border */}
-      <div className="relative">
-        <div className={`absolute inset-0 ${badge.borderColor} rounded-md opacity-75`}></div>
-        <div
-          className={`
-            relative
-            ${badge.color}
-            ${badge.textColor}
-            ${sizeClasses[size]}
-            font-modern font-bold tracking-wider
-            rounded-md
-            flex items-center gap-1
-            cursor-pointer
-            transition-all duration-200
-            hover:scale-105 hover:shadow-lg
-            shadow-md
-            backdrop-blur-sm
-            m-[2px]
-          `}
-        >
-          {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
-          <span className="leading-none">{badge.label}</span>
+      {/* Badge */}
+      {badge.type === 'gey' ? (
+        // Special rainbow gradient border for gey badge
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-md opacity-75"></div>
+          <div
+            className={`
+              relative
+              ${badge.color}
+              ${badge.textColor}
+              ${sizeClasses[size]}
+              font-modern font-bold tracking-wider
+              rounded-md
+              flex items-center gap-1
+              cursor-pointer
+              transition-all duration-200
+              hover:scale-105 hover:shadow-lg
+              shadow-md
+              backdrop-blur-sm
+              m-[2px]
+            `}
+          >
+            {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
+            <span className="leading-none">{badge.label}</span>
+          </div>
         </div>
-      </div>
+      ) : (
+        // All other badges with gradient border
+        <div className="relative">
+          <div className={`absolute inset-0 ${badge.borderColor} rounded-md opacity-75`}></div>
+          <div
+            className={`
+              relative
+              ${badge.color}
+              ${badge.textColor}
+              ${sizeClasses[size]}
+              font-modern font-bold tracking-wider
+              rounded-md
+              flex items-center gap-1
+              cursor-pointer
+              transition-all duration-200
+              hover:scale-105 hover:shadow-lg
+              shadow-md
+              backdrop-blur-sm
+              m-[2px]
+            `}
+          >
+            {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
+            <span className="leading-none">{badge.label}</span>
+          </div>
+        </div>
+      )}
 
       {/* Tooltip */}
       {showTooltip && badge.description && (
