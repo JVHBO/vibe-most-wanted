@@ -1332,8 +1332,8 @@ export default function ProfilePage() {
                           // Try to get opponent PFP from match data (if available)
                           const opponentPfp = ''; // We don't have this in match history
 
-                          // Build matchId with PFPs: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp
-                          const matchId = `${match.result}_${match.playerPower}_${match.opponentPower}_${match.opponentUsername || 'Opponent'}_${encodeURIComponent(playerPfp)}_${encodeURIComponent(opponentPfp)}`;
+                          // Build matchId with PFPs: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName
+                          const matchId = `${match.result}_${match.playerPower}_${match.opponentPower}_${match.opponentUsername || 'Opponent'}_${encodeURIComponent(playerPfp)}_${encodeURIComponent(opponentPfp)}_${encodeURIComponent(profile.username)}`;
                           const shareUrl = `https://vibe-most-wanted.vercel.app/share/${matchId}`;
                           const text = `I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in VIBE Most Wanted!`;
 
