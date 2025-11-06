@@ -26,6 +26,7 @@ import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
 import { PvPMenuModals } from "@/components/PvPMenuModals";
 import { GamePopups } from "@/components/GamePopups";
+import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
@@ -3807,210 +3808,24 @@ export default function TCGPage() {
         t={t}
       />
 
-      {/* Modal de Sala (Aguardando/Jogando) */}
-      {pvpMode === 'inRoom' && roomCode && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-yellow-500 max-w-2xl w-full p-8">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-yellow-400">
-                  {t('room') || 'Room'}: {roomCode}
-                </h2>
-                {currentRoom && (
-                  <p className="text-sm font-modern mt-1">
-                    {currentRoom.mode === 'casual' ? (
-                      <span className="text-green-400">🎮 CASUAL - Free Match</span>
-                    ) : (
-                      <span className="text-vintage-gold">⚔️ RANKED - Entry Fee: 20 coins</span>
-                    )}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonNav();
-                  setPvpMode('pvpMenu');
-                  setRoomCode('');
-                  setCurrentRoom(null);
-                  ConvexPvPService.leaveRoom(roomCode, address || '');
-                }}
-                className="text-vintage-burnt-gold hover:text-white text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-
-            {currentRoom ? (
-              <div className="space-y-4">
-                {/* Host */}
-                <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-neon-blue/50">
-                  <p className="text-vintage-neon-blue font-bold mb-2 font-modern">Host</p>
-                  <p className="text-white text-sm font-mono">{currentRoom.hostUsername || `${currentRoom.hostAddress.slice(0, 10)}...`}</p>
-                  <p className="text-vintage-burnt-gold text-sm">
-                    {(currentRoom.hostCards && currentRoom.hostCards.length > 0) ? '✓ Ready' : '... Selecting cards'}
-                  </p>
-                </div>
-
-                {/* Guest */}
-                <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-gold/50">
-                  <p className="text-vintage-gold font-bold mb-2 font-modern">{t('opponent')}</p>
-                  {currentRoom.guestAddress ? (
-                    <>
-                      <p className="text-white text-sm font-mono">{currentRoom.guestUsername || `${currentRoom.guestAddress.slice(0, 10)}...`}</p>
-                      <p className="text-vintage-burnt-gold text-sm">
-                        {(currentRoom.guestCards && currentRoom.guestCards.length > 0) ? '✓ Ready' : '... Selecting cards'}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-vintage-burnt-gold text-sm">{t('waitingForOpponent')}</p>
-                  )}
-                </div>
-
-                {/* Grid de Seleção de Cartas */}
-                {currentRoom.guestAddress && (() => {
-                  const isHost = currentRoom.hostAddress === address?.toLowerCase();
-                  const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
-
-                  // Só mostra grid se o jogador atual NÃO estiver pronto ainda
-                  if (playerReady) return null;
-
-                  // Se não tem NFTs carregados, mostra loading
-                  if (nfts.length === 0) {
-                    return (
-                      <div className="mt-6 text-center">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent mb-4"></div>
-                        <p className="text-vintage-burnt-gold">Loading your cards...</p>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="mt-6">
-                      <h3 className="text-lg font-bold text-center text-white mb-4">
-                        {t('selectYourCards') || 'Select Your Cards'} ({selectedCards.length}/5)
-                      </h3>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto p-2">
-                        {nfts.map((nft, index) => {
-                          const isSelected = selectedCards.some((c: any) => c.tokenId === nft.tokenId);
-                          const isLocked = isCardLocked(nft.tokenId, 'pvp'); // 🔒 Check if locked in defense
-                          return (
-                            <div
-                              key={index}
-                              onClick={() => {
-                                if (isLocked) {
-                                  // 🔒 Locked cards can't be selected - play error sound
-                                  if (soundEnabled) AudioManager.buttonError();
-                                  return;
-                                }
-                                if (isSelected) {
-                                  setSelectedCards(selectedCards.filter((c: any) => c.tokenId !== nft.tokenId));
-                                } else if (selectedCards.length < 5) {
-                                  setSelectedCards([...selectedCards, nft]);
-                                }
-                                if (soundEnabled) AudioManager.buttonClick();
-                              }}
-                              className={`relative rounded-lg overflow-hidden transition-all ${
-                                isLocked
-                                  ? 'opacity-50 cursor-not-allowed' // 🔒 Locked appearance
-                                  : isSelected
-                                  ? 'ring-4 ring-green-500 scale-95 cursor-pointer'
-                                  : 'hover:scale-105 opacity-70 hover:opacity-100 cursor-pointer'
-                              }`}
-                              title={isLocked ? "🔒 This card is locked in your defense deck" : undefined}
-                            >
-                              <img
-                                src={nft.imageUrl}
-                                alt={nft.name}
-                                className="w-full h-auto"
-                                loading="lazy"
-                              />
-                              <div className="absolute top-1 right-1 bg-black/70 rounded-full px-2 py-0.5 text-xs font-bold text-white">
-                                {nft.power}
-                              </div>
-
-                              {/* 🔒 Locked Overlay */}
-                              {isLocked && (
-                                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
-                                  <div className="text-3xl mb-1">🔒</div>
-                                  <div className="text-[10px] text-white font-bold bg-black/50 px-1 rounded">
-                                    IN DEFENSE
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Selected Checkmark */}
-                              {isSelected && !isLocked && (
-                                <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
-                                  <span className="text-4xl">✓</span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Botão de Confirmar Cartas */}
-                {currentRoom.guestAddress && (() => {
-                  const isHost = currentRoom.hostAddress === address?.toLowerCase();
-                  const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
-
-                  // Só mostra botão se o jogador atual NÃO estiver pronto ainda
-                  if (playerReady) return null;
-
-                  return (
-                    <button
-                      onClick={async () => {
-                        if (isConfirmingCards || selectedCards.length !== 5) return;
-                        setIsConfirmingCards(true);
-
-                        if (soundEnabled) AudioManager.buttonSuccess();
-                        await ConvexPvPService.updateCards(roomCode, address || '', selectedCards);
-
-                        // Reset after 2 seconds in case of error
-                        setTimeout(() => setIsConfirmingCards(false), 2000);
-                      }}
-                      disabled={selectedCards.length !== 5 || isConfirmingCards}
-                      className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition mt-4"
-                    >
-                      {isConfirmingCards ? '... Confirming' : `${t('confirmCards') || 'Confirm Cards'} (${selectedCards.length}/5)`}
-                    </button>
-                  );
-                })()}
-
-                {/* Mensagem de aguardo */}
-                {currentRoom.guestAddress && (() => {
-                  const isHost = currentRoom.hostAddress === address?.toLowerCase();
-                  const playerReady = isHost ? (currentRoom.hostCards && currentRoom.hostCards.length > 0) : (currentRoom.guestCards && currentRoom.guestCards.length > 0);
-                  const opponentReady = isHost ? (currentRoom.guestCards && currentRoom.guestCards.length > 0) : (currentRoom.hostCards && currentRoom.hostCards.length > 0);
-
-                  // Mostra loading se pelo menos um jogador confirmou
-                  if (!playerReady && !opponentReady) return null;
-
-                  return (
-                    <div className="mt-4 text-center">
-                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent mb-2"></div>
-                      <p className="text-yellow-400 font-semibold">
-                        {playerReady && !opponentReady
-                          ? (t('waitingForOpponent') || 'Waiting for opponent...')
-                          : (t('waitingForBothPlayers') || 'Starting battle...')
-                        }
-                      </p>
-                    </div>
-                  );
-                })()}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-yellow-500 border-t-transparent mb-4"></div>
-                <p className="text-vintage-burnt-gold">{t('loading') || 'Loading room...'}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* PvP In Room Modal (waiting for opponent & card selection) */}
+      <PvPInRoomModal
+        pvpMode={pvpMode}
+        roomCode={roomCode}
+        currentRoom={currentRoom}
+        address={address}
+        soundEnabled={soundEnabled}
+        nfts={nfts}
+        selectedCards={selectedCards}
+        isConfirmingCards={isConfirmingCards}
+        setPvpMode={setPvpMode}
+        setRoomCode={setRoomCode}
+        setCurrentRoom={setCurrentRoom}
+        setSelectedCards={setSelectedCards}
+        setIsConfirmingCards={setIsConfirmingCards}
+        isCardLocked={isCardLocked}
+        t={t}
+      />
 
       {showTutorial && (
         <div className="fixed inset-x-0 top-0 bottom-20 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4" onClick={() => setShowTutorial(false)}>
