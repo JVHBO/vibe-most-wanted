@@ -45,8 +45,9 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           width: '380px',
           height: '480px',
           background: `url(${backgroundImage})`,
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           borderRadius: '12px',
           border: isLosing ? '6px solid #DC2626' : '6px solid #FFD700',
           boxShadow: isLosing
