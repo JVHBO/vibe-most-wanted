@@ -758,17 +758,13 @@ export default function ProfilePage() {
                     const losses = totalLosses || 0;
                     const ties = totalTies || 0;
 
-                    // Get ranking position (placeholder for now - ranking not yet implemented)
-                    const rankingPos = '?';
-
-                    // Generate OG image URL with profile stats
-                    const pfpUrl = profile.twitterProfileImageUrl || '';
-                    const ogImageUrl = `${window.location.origin}/api/og-profile?username=${encodeURIComponent(profile.username)}&twitter=${encodeURIComponent(profile.twitter || '')}&totalPower=${profile.stats.totalPower || 0}&wins=${wins}&losses=${losses}&ties=${ties}&nftCount=${nfts.length || profile.stats.totalCards}&ranking=${rankingPos}&winStreak=${profile.winStreak || 0}&coins=${profile.coins || 0}&pfp=${encodeURIComponent(pfpUrl)}&v=3`;
+                    // Share URL with meta tags
+                    const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}`;
 
                     // Farcaster cast text
                     const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
 
-                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(ogImageUrl)}&embeds[]=${encodeURIComponent('https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted')}`;
+                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                   })()}
                   target="_blank"
                   rel="noopener noreferrer"
