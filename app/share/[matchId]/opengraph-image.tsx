@@ -24,16 +24,23 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
 
     const isWin = result === 'win';
 
+    // Determine which card should be red (losing side)
+    const playerPowerNum = parseInt(playerPower);
+    const opponentPowerNum = parseInt(opponentPower);
+    const playerIsLosing = playerPowerNum < opponentPowerNum;
+
     // Playing card component
-    const Card = ({ username, power, isPlayer }: { username: string; power: string; isPlayer: boolean }) => (
+    const Card = ({ username, power, isPlayer, isLosing }: { username: string; power: string; isPlayer: boolean; isLosing: boolean }) => (
       <div
         style={{
           width: '320px',
           height: '450px',
           background: '#F5F5F5',
           borderRadius: '20px',
-          border: '5px solid #FFD700',
-          boxShadow: '0 10px 40px rgba(255, 215, 0, 0.4), 0 0 0 2px #121212',
+          border: isLosing ? '5px solid #DC2626' : '5px solid #FFD700',
+          boxShadow: isLosing
+            ? '0 10px 40px rgba(220, 38, 38, 0.4), 0 0 0 2px #121212'
+            : '0 10px 40px rgba(255, 215, 0, 0.4), 0 0 0 2px #121212',
           display: 'flex',
           flexDirection: 'column',
           padding: '20px',
@@ -78,8 +85,10 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               width: '160px',
               height: '160px',
               borderRadius: '50%',
-              border: '5px solid #FFD700',
-              background: 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
+              border: isLosing ? '5px solid #DC2626' : '5px solid #FFD700',
+              background: isLosing
+                ? 'linear-gradient(135deg, #991b1b 0%, #DC2626 50%, #991b1b 100%)'
+                : 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -155,13 +164,14 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             width: '100%',
             height: '100%',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#0d3d2d',
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #121212 100%)',
             position: 'relative',
           }}
         >
-          {/* Felt texture pattern */}
+          {/* Subtle glow */}
           <div
             style={{
               position: 'absolute',
@@ -169,18 +179,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               left: 0,
               width: '100%',
               height: '100%',
-              background: 'radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 60%)',
-              display: 'flex',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px)',
+              background: 'radial-gradient(circle at 50% 40%, rgba(255, 215, 0, 0.08) 0%, transparent 50%)',
               display: 'flex',
             }}
           />
@@ -218,10 +217,11 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               alignItems: 'center',
               gap: '60px',
               zIndex: 1,
+              marginTop: '40px',
             }}
           >
             {/* Player card */}
-            <Card username="YOU" power={playerPower} isPlayer={true} />
+            <Card username="YOU" power={playerPower} isPlayer={true} isLosing={playerIsLosing} />
 
             {/* VS badge */}
             <div
@@ -230,21 +230,21 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
                 height: '80px',
                 borderRadius: '50%',
                 background: '#FFD700',
-                border: '4px solid #000',
+                border: '4px solid #121212',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '36px',
                 fontWeight: 900,
-                color: '#000',
-                boxShadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
+                color: '#121212',
+                boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
               }}
             >
               VS
             </div>
 
             {/* Opponent card */}
-            <Card username={opponentName} power={opponentPower} isPlayer={false} />
+            <Card username={opponentName} power={opponentPower} isPlayer={false} isLosing={!playerIsLosing} />
           </div>
 
           {/* Branding at bottom */}
