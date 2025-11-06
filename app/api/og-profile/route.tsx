@@ -6,18 +6,40 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
 
-    // Get profile data from query params
+    // Get profile data from query params OR fetch from Convex if only username provided
     const username = searchParams.get('username') || 'Anonymous';
-    const twitter = searchParams.get('twitter') || '';
-    const totalPower = searchParams.get('totalPower') || '0';
-    const wins = parseInt(searchParams.get('wins') || '0');
-    const losses = parseInt(searchParams.get('losses') || '0');
-    const ties = parseInt(searchParams.get('ties') || '0');
-    const nftCount = searchParams.get('nftCount') || '0';
-    const ranking = searchParams.get('ranking') || '?';
-    const winStreak = searchParams.get('winStreak') || '0';
-    const coins = searchParams.get('coins') || '0';
-    const pfpUrl = searchParams.get('pfp') || '';
+    let twitter = searchParams.get('twitter') || '';
+    let totalPower = searchParams.get('totalPower') || '0';
+    let wins = parseInt(searchParams.get('wins') || '0');
+    let losses = parseInt(searchParams.get('losses') || '0');
+    let ties = parseInt(searchParams.get('ties') || '0');
+    let nftCount = searchParams.get('nftCount') || '0';
+    let ranking = searchParams.get('ranking') || '?';
+    let winStreak = searchParams.get('winStreak') || '0';
+    let coins = searchParams.get('coins') || '0';
+    let pfpUrl = searchParams.get('pfp') || '';
+
+    // If no stats provided, fetch from Convex
+    if (!searchParams.has('totalPower') && username !== 'Anonymous') {
+      try {
+        const { ConvexProfileService } = await import('@/lib/convex-profile');
+        const address = await ConvexProfileService.getAddressByUsername(username.toLowerCase());
+        if (address) {
+          const profile = await ConvexProfileService.getProfile(address);
+          if (profile) {
+            twitter = profile.twitter || '';
+            totalPower = String(profile.stats.totalPower || 0);
+            wins = (profile.stats.pveWins || 0) + (profile.stats.pvpWins || 0);
+            losses = (profile.stats.pveLosses || 0) + (profile.stats.pvpLosses || 0);
+            nftCount = String(profile.stats.totalCards || 0);
+            winStreak = String(profile.winStreak || 0);
+            coins = String(profile.coins || 0);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch profile from Convex:', e);
+      }
+    }
 
     // Calculate win rate
     const totalMatches = wins + losses + ties;
