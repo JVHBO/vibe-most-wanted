@@ -25,9 +25,16 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const opponentPfpUrl = parts[5] ? decodeURIComponent(parts[5]) : '';
     const playerName = parts[6] ? decodeURIComponent(parts[6]) : 'YOU';
 
-    // Check if opponent is Mecha George Floyd and use his image
+    // Check for special opponents and use their images
     const mechaUrl = 'https://vibe-most-wanted.vercel.app/images/mecha-george-floyd.jpg';
-    const finalOpponentPfpUrl = opponentName.toLowerCase().includes('mecha') ? mechaUrl : opponentPfpUrl;
+    const nicoUrl = 'https://vibe-most-wanted.vercel.app/images/nico.png';
+
+    let finalOpponentPfpUrl = opponentPfpUrl;
+    if (opponentName.toLowerCase().includes('mecha')) {
+      finalOpponentPfpUrl = mechaUrl;
+    } else if (opponentName.toLowerCase().includes('nico')) {
+      finalOpponentPfpUrl = nicoUrl;
+    }
 
     const isWin = result === 'win';
 

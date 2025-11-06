@@ -766,6 +766,8 @@ export default function TCGPage() {
     opponentTwitter?: string;
     type: 'pve' | 'pvp' | 'attack' | 'defense';
     coinsEarned?: number;
+    playerPfpUrl?: string;
+    opponentPfpUrl?: string;
   } | null>(null);
   const [showTiePopup, setShowTiePopup] = useState(false);
   const [tieGifLoaded, setTieGifLoaded] = useState(false);
@@ -1809,7 +1811,9 @@ export default function TCGPage() {
                 opponentPower: newOpponentScore,
                 opponentName: 'Mecha George Floyd',
                 type: 'pve',
-                coinsEarned
+                coinsEarned,
+                playerPfpUrl: userProfile?.twitterProfileImageUrl,
+                opponentPfpUrl: undefined, // PvE opponent has no PFP
               });
 
               // Close battle first
@@ -1950,7 +1954,9 @@ export default function TCGPage() {
           opponentPower: dealerTotal,
           opponentName: 'Mecha George Floyd',
           type: 'pve',
-          coinsEarned
+          coinsEarned,
+          playerPfpUrl: userProfile?.twitterProfileImageUrl,
+          opponentPfpUrl: undefined, // PvE opponent has no PFP
         });
 
         // Fecha a tela de batalha PRIMEIRO
@@ -2202,10 +2208,12 @@ export default function TCGPage() {
 
             // Busca perfil do oponente para pegar Twitter
             let opponentTwitter = undefined;
+            let opponentPfpUrl = undefined;
             if (opponentAddress) {
               try {
                 const opponentProfile = await ConvexProfileService.getProfile(opponentAddress);
                 opponentTwitter = opponentProfile?.twitter;
+                opponentPfpUrl = opponentProfile?.twitterProfileImageUrl;
                 devLog('Opponent profile loaded:', opponentProfile?.username, 'twitter:', opponentTwitter);
               } catch (e) {
                 devLog('Failed to load opponent profile:', e);
@@ -2343,7 +2351,9 @@ export default function TCGPage() {
                     opponentName: opponentName,
                     opponentTwitter: opponentTwitter,
                     type: 'pvp',
-                    coinsEarned
+                    coinsEarned,
+                    playerPfpUrl: userProfile?.twitterProfileImageUrl,
+                    opponentPfpUrl: opponentPfpUrl,
                   });
 
                   // Mostra popup DEPOIS de fechar batalha
@@ -3445,6 +3455,8 @@ export default function TCGPage() {
                         opponentTwitter: targetPlayer.twitter,
                         type: 'attack',
                         coinsEarned,
+                        playerPfpUrl: userProfile?.twitterProfileImageUrl,
+                        opponentPfpUrl: targetPlayer.twitterProfileImageUrl,
                       });
 
                       // 🔔 Send notification (outside atomic transaction - non-critical)
