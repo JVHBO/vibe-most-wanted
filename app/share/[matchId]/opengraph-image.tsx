@@ -240,7 +240,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
       {
         ...size,
         headers: {
-          'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate',
+          'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
         },
       }
     );
@@ -265,7 +265,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
       {
         ...size,
         headers: {
-          'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate',
+          'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
         },
       }
     );
