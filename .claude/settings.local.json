@@ -15,7 +15,13 @@
       "Bash(for file in quests.ts missions.ts matches.ts notifications.ts rooms.ts)",
       "Bash(do:*)",
       "Bash(done)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "WebFetch(domain:miniapps.farcaster.xyz)",
+      "WebFetch(domain:docs.farcaster.xyz)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
