@@ -20,11 +20,16 @@ import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
 import { ProgressBar } from "@/components/ProgressBar";
 import AchievementsView from "@/components/AchievementsView";
+import { CreateProfileModal } from "@/components/CreateProfileModal";
+import { SettingsModal } from "@/components/SettingsModal";
+import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
 // 📝 Development logger (silent in production)
 import { devLog, devError, devWarn } from "@/lib/utils/logger";
+// 🔊 Audio Manager
+import { AudioManager } from "@/lib/audio-manager";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -82,216 +87,6 @@ const getAvatarFallback = (twitterData?: string | null | { twitter?: string; twi
 };
 
 // Tornar AudioManager global para persistir entre páginas
-const getGlobalAudioManager = () => {
-  if (typeof window === 'undefined') return null;
-  if (!(window as any).globalAudioManager) {
-    (window as any).globalAudioManager = {
-      context: null as AudioContext | null,
-      musicGain: null as GainNode | null,
-      backgroundMusic: null as HTMLAudioElement | null,
-      backgroundSource: null as AudioBufferSourceNode | null,
-      currentVolume: 0.1,
-      isPlaying: false
-    };
-  }
-  return (window as any).globalAudioManager;
-};
-
-const AudioManager = {
-  get context() { return getGlobalAudioManager()?.context || null; },
-  set context(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.context = value; },
-  get musicGain() { return getGlobalAudioManager()?.musicGain || null; },
-  set musicGain(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.musicGain = value; },
-  get backgroundMusic() { return getGlobalAudioManager()?.backgroundMusic || null; },
-  set backgroundMusic(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.backgroundMusic = value; },
-  get backgroundSource() { return getGlobalAudioManager()?.backgroundSource || null; },
-  set backgroundSource(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.backgroundSource = value; },
-  get currentVolume() { return getGlobalAudioManager()?.currentVolume || 0.1; },
-  set currentVolume(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.currentVolume = value; },
-  get isPlaying() { return getGlobalAudioManager()?.isPlaying || false; },
-  set isPlaying(value) { const mgr = getGlobalAudioManager(); if (mgr) mgr.isPlaying = value; },
-  async init() {
-    if (typeof window === 'undefined') return;
-    if (!this.context) {
-      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-      if (Ctx) {
-        this.context = new Ctx();
-        this.musicGain = this.context.createGain();
-        this.musicGain.connect(this.context.destination);
-        // Usa o volume configurado ao invés de hardcoded 0.6
-        this.musicGain.gain.value = this.currentVolume;
-      }
-    }
-    if (this.context && this.context.state === 'suspended') {
-      await this.context.resume();
-    }
-  },
-  setVolume(volume: number) {
-    this.currentVolume = Math.max(0, Math.min(1, volume)); // Clamp entre 0 e 1
-    if (this.musicGain) {
-      // Define o valor do gain diretamente - 0 vai mutar completamente
-      this.musicGain.gain.value = this.currentVolume;
-      devLog(`🔊 Volume ajustado para: ${this.currentVolume} (${Math.round(this.currentVolume * 100)}%)`);
-    }
-  },
-  async playTone(freq: number, dur: number, vol: number = 0.3) {
-    if (!this.context) await this.init();
-    if (!this.context) return;
-    if (this.context.state === 'suspended') await this.context.resume();
-
-    const osc = this.context.createOscillator();
-    const gain = this.context.createGain();
-    osc.connect(gain);
-    gain.connect(this.context.destination);
-    osc.frequency.value = freq;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(vol, this.context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + dur);
-    osc.start(this.context.currentTime);
-    osc.stop(this.context.currentTime + dur);
-  },
-  async startBackgroundMusic() {
-    await this.init();
-    if (!this.context || !this.musicGain) return;
-
-    // Se já estiver tocando, apenas retoma o contexto se necessário
-    if (this.isPlaying && this.backgroundSource) {
-      if (this.context.state === 'suspended') {
-        await this.context.resume();
-      }
-      return;
-    }
-
-    if (this.context.state === 'suspended') {
-      await this.context.resume();
-    }
-
-    // Apenas para a source antiga, não destroi o musicGain
-    if (this.backgroundSource) {
-      try {
-        this.backgroundSource.stop();
-        this.backgroundSource.disconnect();
-      } catch (e) {
-        // Ignora erro se já estiver parado
-      }
-      this.backgroundSource = null;
-      this.isPlaying = false;
-    }
-
-    try {
-      // Loop sem interrupções usando AudioContext
-      const response = await fetch('/jazz-background.mp3');
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-
-      this.backgroundSource = this.context.createBufferSource();
-      this.backgroundSource.buffer = audioBuffer;
-      this.backgroundSource.loop = true;
-      this.backgroundSource.loopStart = 0;
-      this.backgroundSource.loopEnd = audioBuffer.duration;
-
-      // NÃO cria um novo musicGain, usa o existente do init()
-      // Garante que o volume está correto antes de conectar
-      this.musicGain.gain.value = this.currentVolume;
-      devLog(`🎵 Iniciando música de fundo com volume: ${this.currentVolume} (${Math.round(this.currentVolume * 100)}%)`);
-
-      // Conecta: source -> gain -> destination
-      this.backgroundSource.connect(this.musicGain);
-
-      this.backgroundSource.start(0);
-      this.isPlaying = true;
-    } catch (e) {
-      devLog('Erro ao tocar música de fundo:', e);
-    }
-  },
-  stopBackgroundMusic() {
-    if (this.backgroundSource) {
-      try {
-        this.backgroundSource.stop();
-      } catch (e) {
-        // Ignora erro se já estiver parado
-      }
-      this.backgroundSource.disconnect();
-      this.backgroundSource = null;
-      this.isPlaying = false;
-    }
-    if (this.backgroundMusic) {
-      this.backgroundMusic.pause();
-      this.backgroundMusic.currentTime = 0;
-      this.backgroundMusic = null;
-    }
-  },
-  async selectCard() { await this.playTone(800, 0.1, 0.2); },
-  async deselectCard() { await this.playTone(400, 0.1, 0.2); },
-  async shuffle() {
-    for (let i = 0; i < 5; i++) {
-      setTimeout(() => this.playTone(300 + Math.random() * 200, 0.05, 0.15), i * 50);
-    }
-  },
-  async cardBattle() {
-    await this.playTone(600, 0.1, 0.3);
-    setTimeout(() => this.playTone(700, 0.1, 0.3), 100);
-    setTimeout(() => this.playTone(400, 0.15, 0.35), 200);
-  },
-  async playHand() {
-    await this.playTone(600, 0.15, 0.25);
-    setTimeout(() => this.playTone(900, 0.15, 0.25), 100);
-  },
-  async win() {
-    await this.init();
-    if (this.context && this.context.state === 'suspended') {
-      await this.context.resume();
-    }
-    try {
-      const audio = new Audio('https://www.myinstants.com/media/sounds/anime-wow.mp3');
-      audio.volume = 0.7;
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        await playPromise;
-      }
-    } catch (e) {
-      devLog('Erro ao tocar som de vitória:', e);
-    }
-  },
-  async lose() {
-    await this.init();
-    if (this.context && this.context.state === 'suspended') {
-      await this.context.resume();
-    }
-    try {
-      const audio = new Audio('https://www.myinstants.com/media/sounds/zoeira-efeito-loss.mp3');
-      audio.volume = 0.7;
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        await playPromise;
-      }
-    } catch (e) {
-      devLog('Erro ao tocar som de derrota:', e);
-    }
-  },
-  async tie() { await this.playTone(500, 0.3, 0.25); },
-  // Sons para botões
-  async buttonClick() { await this.playTone(600, 0.08, 0.12); },
-  async buttonHover() { await this.playTone(500, 0.04, 0.08); },
-  async buttonSuccess() {
-    await this.playTone(700, 0.08, 0.15);
-    setTimeout(() => this.playTone(900, 0.08, 0.15), 80);
-  },
-  async buttonError() {
-    await this.playTone(300, 0.1, 0.2);
-    setTimeout(() => this.playTone(250, 0.1, 0.2), 100);
-  },
-  async buttonNav() { await this.playTone(550, 0.06, 0.1); },
-  async toggleOn() {
-    await this.playTone(600, 0.08, 0.12);
-    setTimeout(() => this.playTone(800, 0.08, 0.12), 60);
-  },
-  async toggleOff() {
-    await this.playTone(800, 0.08, 0.12);
-    setTimeout(() => this.playTone(600, 0.08, 0.12), 60);
-  }
-};
-
 
 function findAttr(nft: any, trait: string): string {
   const locs = [nft?.raw?.metadata?.attributes, nft?.metadata?.attributes, nft?.metadata?.traits, nft?.raw?.metadata?.traits];
@@ -2793,7 +2588,7 @@ export default function TCGPage() {
         language: lang,
       });
 
-      if (result.claimed > 0) {
+      if (result && result.claimed > 0) {
         if (soundEnabled) AudioManager.buttonSuccess();
         devLog(`✅ Claimed ${result.claimed} missions (+${result.totalReward} coins)`);
 
@@ -3238,304 +3033,30 @@ export default function TCGPage() {
       )}
 
       {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[250] p-2 sm:p-4" onClick={() => setShowSettings(false)}>
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-4 sm:p-8 max-w-md w-full shadow-gold max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4 sm:mb-6">
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold flex items-center gap-2">
-                <span>§</span> {t('settings')}
-              </h2>
-              <button onClick={() => setShowSettings(false)} className="text-vintage-gold hover:text-vintage-ice text-xl sm:text-2xl transition">×</button>
-            </div>
-
-            <div className="space-y-3 sm:space-y-6">
-              {/* Music Toggle */}
-              <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
-                    <div>
-                      <p className="font-modern font-bold text-vintage-gold">MUSIC</p>
-                      <p className="text-xs text-vintage-burnt-gold">{musicEnabled ? t('musicOn') : t('musicOff')}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={toggleMusic}
-                    className={`relative w-16 h-8 rounded-full transition-all border-2 ${musicEnabled ? 'bg-vintage-gold border-vintage-gold' : 'bg-vintage-black border-vintage-gold/50'}`}
-                  >
-                    <div className={`absolute top-1 left-1 w-6 h-6 ${musicEnabled ? 'bg-vintage-black' : 'bg-vintage-gold'} rounded-full transition-transform ${musicEnabled ? 'translate-x-7' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-                {musicEnabled && (
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-vintage-burnt-gold font-modern">VOLUME</span>
-                      <span className="text-sm text-vintage-gold font-bold">{Math.round(musicVolume * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={musicVolume * 100}
-                      onChange={(e) => setMusicVolume(Number(e.target.value) / 100)}
-                      className="w-full h-2 bg-vintage-black rounded-lg appearance-none cursor-pointer accent-vintage-gold border border-vintage-gold/30"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Language Selector */}
-              <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl sm:text-3xl text-vintage-gold">◊</span>
-                  <p className="font-modern font-bold text-vintage-gold">{t('language').toUpperCase()}</p>
-                </div>
-                <select
-                  onChange={(e) => setLang(e.target.value as any)}
-                  value={lang}
-                  className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
-                >
-                  <option value="en" className="bg-vintage-charcoal text-vintage-ice">English</option>
-                  <option value="pt-BR" className="bg-vintage-charcoal text-vintage-ice">Português</option>
-                  <option value="es" className="bg-vintage-charcoal text-vintage-ice">Español</option>
-                  <option value="hi" className="bg-vintage-charcoal text-vintage-ice">हिन्दी</option>
-                  <option value="ru" className="bg-vintage-charcoal text-vintage-ice">Русский</option>
-                  <option value="zh-CN" className="bg-vintage-charcoal text-vintage-ice">简体中文</option>
-                </select>
-                {/* 🇨🇳 Chinese Language Boost Warning */}
-                {lang === 'zh-CN' && (
-                  <div className="mt-3 p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
-                    <p className="text-sm text-red-300 font-modern font-semibold flex items-center gap-2">
-                      <span className="text-lg">🇨🇳</span>
-                      <span>+5% Social Credit Boost on all coin rewards!</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Music Mode Selector */}
-              <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
-                  <p className="font-modern font-bold text-vintage-gold">BACKGROUND MUSIC</p>
-                </div>
-                <select
-                  onChange={(e) => {
-                    if (soundEnabled) AudioManager.buttonClick();
-                    setMusicMode(e.target.value as any);
-                  }}
-                  value={musicMode}
-                  className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
-                >
-                  <option value="default" className="bg-vintage-charcoal text-vintage-ice">🎵 Default Music</option>
-                  <option value="language" className="bg-vintage-charcoal text-vintage-ice">🌍 Language Music</option>
-                </select>
-                <p className="text-xs text-vintage-burnt-gold mt-2 font-modern">
-                  {musicMode === 'default'
-                    ? '🎵 Playing default background music'
-                    : '🌍 Playing music based on selected language'}
-                </p>
-              </div>
-
-              {/* Change Username */}
-              {userProfile && (
-                <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-2xl sm:text-3xl text-vintage-gold">♔</span>
-                    <div className="flex-1">
-                      <p className="font-modern font-bold text-vintage-gold">USERNAME</p>
-                      <p className="text-xs text-vintage-burnt-gold">@{userProfile.username}</p>
-                    </div>
-                    {!showChangeUsername && (
-                      <button
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          setShowChangeUsername(true);
-                          setNewUsername('');
-                        }}
-                        className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-modern font-semibold transition text-sm"
-                      >
-                        Change
-                      </button>
-                    )}
-                  </div>
-
-                  {showChangeUsername && (
-                    <div className="mt-4 space-y-3">
-                      <div className="bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg p-3">
-                        <p className="text-vintage-gold text-sm font-modern font-semibold mb-1">◆ IMPORTANT</p>
-                        <p className="text-vintage-burnt-gold text-xs">
-                          Changing your username will change your profile URL from<br />
-                          <span className="font-mono bg-vintage-black/30 px-1 rounded">/profile/{userProfile.username}</span> to<br />
-                          <span className="font-mono bg-vintage-black/30 px-1 rounded">/profile/{newUsername || 'new_username'}</span>
-                        </p>
-                      </div>
-
-                      <input
-                        type="text"
-                        value={newUsername}
-                        onChange={(e) => setNewUsername(e.target.value.toLowerCase())}
-                        placeholder="New username"
-                        className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 focus:border-vintage-gold focus:outline-none font-modern font-medium"
-                        maxLength={20}
-                      />
-                      <p className="text-xs text-vintage-burnt-gold">
-                        3-20 characters, only letters, numbers and underscore
-                      </p>
-
-                      <div className="flex gap-2">
-                        <button
-                          onClick={async () => {
-                            if (soundEnabled) AudioManager.buttonClick();
-
-                            if (!newUsername || newUsername.length < 3) {
-                              alert('Username must have at least 3 characters');
-                              return;
-                            }
-
-                            if (!/^[a-z0-9_]+$/.test(newUsername)) {
-                              alert('Username can only contain letters, numbers and underscore');
-                              return;
-                            }
-
-                            const confirmed = confirm(
-                              `Are you sure you want to change your username to @${newUsername}?\n\n` +
-                              `Your profile URL will change from:\n/profile/${userProfile.username}\nto:\n/profile/${newUsername}\n\n` +
-                              `This action cannot be undone easily.`
-                            );
-
-                            if (!confirmed) return;
-
-                            setIsChangingUsername(true);
-                            try {
-                              await ConvexProfileService.updateUsername(address!, newUsername);
-
-                              // Recarrega o perfil
-                              const updatedProfile = await ConvexProfileService.getProfile(address!);
-                              setUserProfile(updatedProfile);
-
-                              setShowChangeUsername(false);
-                              setNewUsername('');
-
-                              if (soundEnabled) AudioManager.buttonSuccess();
-                              alert(`Username successfully changed to @${newUsername}!`);
-                            } catch (err: any) {
-                              devError('Error changing username:', err);
-                              if (soundEnabled) AudioManager.buttonError();
-                              alert(`Error: ${err.message || 'Failed to change username'}`);
-                            } finally {
-                              setIsChangingUsername(false);
-                            }
-                          }}
-                          disabled={isChangingUsername}
-                          className="flex-1 px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark disabled:bg-vintage-black/50 text-vintage-black rounded-lg font-modern font-semibold transition"
-                        >
-                          {isChangingUsername ? 'Changing...' : 'Confirm'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (soundEnabled) AudioManager.buttonNav();
-                            setShowChangeUsername(false);
-                            setNewUsername('');
-                          }}
-                          disabled={isChangingUsername}
-                          className="flex-1 px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 disabled:bg-vintage-black/30 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern font-semibold transition"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Twitter/X Connection */}
-              {userProfile && (
-                <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl sm:text-3xl text-vintage-gold">𝕏</span>
-                      <div>
-                        <p className="font-modern font-bold text-vintage-gold">X / TWITTER</p>
-                        <p className="text-xs text-vintage-burnt-gold">
-                          {userProfile.twitter ? `@${userProfile.twitter}` : 'Not connected'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={async () => {
-                        if (soundEnabled) AudioManager.buttonClick();
-
-                        if (!address) {
-                          alert('Please connect your wallet first');
-                          return;
-                        }
-
-                        try {
-                          devLog('🔵 Calling Twitter OAuth API...');
-
-                          // Call our API to get Twitter OAuth URL
-                          const response = await fetch(`/api/auth/twitter?address=${address}`);
-                          devLog('📡 Response status:', response.status);
-
-                          const data = await response.json();
-                          devLog('📦 Response data:', data);
-
-                          if (data.url) {
-                            devLog('✓ Got OAuth URL, opening popup...');
-                            devLog('🔗 URL:', data.url);
-
-                            // Open Twitter OAuth in a popup
-                            const width = 600;
-                            const height = 700;
-                            const left = (window.screen.width - width) / 2;
-                            const top = (window.screen.height - height) / 2;
-
-                            const popup = window.open(
-                              data.url,
-                              'Twitter OAuth',
-                              `width=${width},height=${height},left=${left},top=${top}`
-                            );
-
-                            if (!popup) {
-                              setErrorMessage('Popup blocked! Please allow popups for this site.');
-                            }
-                          } else {
-                            devError('✗ No URL in response');
-                            throw new Error('Failed to get OAuth URL');
-                          }
-                        } catch (error) {
-                          devError('✗ Twitter OAuth error:', error);
-                          alert('Failed to connect Twitter. Check console for details.');
-                        }
-                      }}
-                      className="px-4 py-2 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-lg text-sm font-modern font-semibold transition flex items-center gap-2"
-                    >
-                      <span>𝕏</span> {userProfile.twitter ? 'Reconnect' : 'Connect'}
-                    </button>
-                  </div>
-
-                  {/* Easter egg message to Vibe Market */}
-                  <div className="mt-3 pt-3 border-t border-vintage-gold/30">
-                    <p className="text-xs text-vintage-burnt-gold italic text-center">
-                      {t('vibeMarketEasterEgg')}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Close Button */}
-              <button
-                onClick={() => setShowSettings(false)}
-                className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold hover:shadow-gold-lg transition-all"
-              >
-                {t('understood')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        t={t}
+        musicEnabled={musicEnabled}
+        toggleMusic={toggleMusic}
+        musicVolume={musicVolume}
+        setMusicVolume={setMusicVolume}
+        lang={lang}
+        setLang={setLang}
+        soundEnabled={soundEnabled}
+        musicMode={musicMode}
+        setMusicMode={setMusicMode}
+        userProfile={userProfile}
+        showChangeUsername={showChangeUsername}
+        setShowChangeUsername={setShowChangeUsername}
+        newUsername={newUsername}
+        setNewUsername={setNewUsername}
+        isChangingUsername={isChangingUsername}
+        setIsChangingUsername={setIsChangingUsername}
+        address={address}
+        setUserProfile={setUserProfile}
+        setErrorMessage={setErrorMessage}
+      />
 
       {/* Elimination Mode - Card Ordering Screen */}
       {eliminationPhase === 'ordering' && (
@@ -3946,133 +3467,22 @@ export default function TCGPage() {
       )}
 
       {/* PvE Card Selection Modal */}
-      {showPveCardSelection && !isDifficultyModalOpen && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto" onClick={() => setShowPveCardSelection(false)}>
-          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-8 shadow-neon my-8 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-neon-blue">
-              {t('selectYourCardsTitle')}
-            </h2>
-            <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
-              Choose {HAND_SIZE} cards to battle vs AI ({pveSelectedCards.length}/{HAND_SIZE} selected)
-            </p>
-
-            {/* Selected Cards Display */}
-            <div className="mb-6 p-4 bg-vintage-black/50 rounded-xl border border-vintage-neon-blue/50">
-              <div className="grid grid-cols-5 gap-2">
-                {pveSelectedCards.map((card, i) => (
-                  <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-neon-blue shadow-lg">
-                    <FoilCardEffect
-                      foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null}
-                      className="w-full h-full"
-                    >
-                      <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
-                    </FoilCardEffect>
-                    <div className="absolute top-0 left-0 bg-vintage-neon-blue text-vintage-black text-xs px-1 rounded-br font-bold">{card.power}</div>
-                  </div>
-                ))}
-                {Array(HAND_SIZE - pveSelectedCards.length).fill(0).map((_, i) => (
-                  <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-neon-blue/40 flex items-center justify-center text-vintage-neon-blue/50 bg-vintage-felt-green/30">
-                    <span className="text-2xl font-bold">+</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 text-center">
-                <p className="text-xs text-vintage-burnt-gold">Total Power</p>
-                <p className="text-2xl font-bold text-vintage-neon-blue">
-                  {/* 🚀 Performance: Use memoized power total */}
-                  {pveSelectedCardsPower}
-                </p>
-              </div>
-            </div>
-
-            {/* Available Cards Grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto p-2">
-              {sortedPveNfts.map((nft) => {
-                const isSelected = pveSelectedCards.find(c => c.tokenId === nft.tokenId);
-                return (
-                  <div
-                    key={nft.tokenId}
-                    onClick={() => {
-                      if (isSelected) {
-                        setPveSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
-                        if (soundEnabled) AudioManager.deselectCard();
-                      } else if (pveSelectedCards.length < HAND_SIZE) {
-                        setPveSelectedCards(prev => [...prev, nft]);
-                        if (soundEnabled) AudioManager.selectCard();
-                      }
-                    }}
-                    className={`relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer transition-all ${
-                      isSelected
-                        ? 'ring-4 ring-vintage-neon-blue scale-95'
-                        : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50'
-                    }`}
-                  >
-                    <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
-                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
-                      {nft.power}
-                    </div>
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-vintage-neon-blue/20 flex items-center justify-center">
-                        <div className="bg-vintage-neon-blue text-vintage-black rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                          ✓
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Sort Button */}
-            <div className="mb-4 flex justify-center">
-              <button
-                onClick={() => {
-                  setPveSortByPower(!pveSortByPower);
-                  if (soundEnabled) AudioManager.buttonClick();
-                }}
-                className={`px-4 py-2 rounded-xl font-modern font-semibold transition-all ${
-                  pveSortByPower
-                    ? 'bg-vintage-neon-blue text-vintage-black shadow-neon'
-                    : 'bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 hover:bg-vintage-gold/10'
-                }`}
-              >
-                {pveSortByPower ? '↓ Sorted by Power' : '⇄ Sort by Power'}
-              </button>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              <button
-                onClick={() => {
-                  if (pveSelectedCards.length === HAND_SIZE && jcNfts.length >= HAND_SIZE) {
-                    if (soundEnabled) AudioManager.buttonClick();
-                    setIsDifficultyModalOpen(true);
-                  }
-                }}
-                disabled={pveSelectedCards.length !== HAND_SIZE || jcNfts.length < HAND_SIZE}
-                className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
-                  pveSelectedCards.length === HAND_SIZE && jcNfts.length >= HAND_SIZE
-                    ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
-                    : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                }`}
-              >
-                {jcNfts.length < HAND_SIZE ? t('loadingDealerDeck') : `✦ ${t('chooseDifficulty')} (${pveSelectedCards.length}/${HAND_SIZE})`}
-              </button>
-
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonNav();
-                  setShowPveCardSelection(false);
-                  setPveSelectedCards([]);
-                }}
-                className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PveCardSelectionModal
+        isOpen={showPveCardSelection}
+        onClose={() => setShowPveCardSelection(false)}
+        isDifficultyModalOpen={isDifficultyModalOpen}
+        t={t}
+        handSize={HAND_SIZE}
+        pveSelectedCards={pveSelectedCards}
+        setPveSelectedCards={setPveSelectedCards}
+        sortedPveNfts={sortedPveNfts}
+        pveSortByPower={pveSortByPower}
+        setPveSortByPower={setPveSortByPower}
+        soundEnabled={soundEnabled}
+        jcNfts={jcNfts}
+        setIsDifficultyModalOpen={setIsDifficultyModalOpen}
+        pveSelectedCardsPower={pveSelectedCardsPower}
+      />
 
       {/* ✅ PvP Preview Modal - Shows potential gains/losses before battle */}
       {showPvPPreview && pvpPreviewData && targetPlayer && (
@@ -7014,82 +6424,19 @@ export default function TCGPage() {
           )}
 
           {/* Create Profile Modal */}
-          {showCreateProfile && !isCheckingFarcaster && (
-            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setShowCreateProfile(false)}>
-              <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-gold max-w-md w-full p-8" onClick={(e) => e.stopPropagation()}>
-                <h2 className="text-3xl font-bold text-center mb-2 text-vintage-gold font-display">
-                  {t('createProfile')}
-                </h2>
-                <p className="text-center text-vintage-burnt-gold mb-6 text-sm">
-                  {t('noProfile')}
-                </p>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">{t('username')}</label>
-                    <input
-                      type="text"
-                      value={profileUsername}
-                      onChange={(e) => setProfileUsername(e.target.value)}
-                      placeholder={t('usernamePlaceholder')}
-                      maxLength={20}
-                      className="w-full px-4 py-3 bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
-                    />
-                    <p className="text-xs text-yellow-400 mt-2">! Don't include @ symbol - just enter your username</p>
-                    <p className="text-xs text-gray-500 mt-1">※ {t('twitterHint')}</p>
-                  </div>
-
-                  <button
-                    onClick={async () => {
-                      if (isCreatingProfile || !profileUsername.trim()) {
-                        if (!profileUsername.trim() && soundEnabled) AudioManager.buttonError();
-                        return;
-                      }
-
-                      setIsCreatingProfile(true);
-
-                      if (soundEnabled) AudioManager.buttonClick();
-
-                      try {
-                        await ConvexProfileService.createProfile(address!, profileUsername.trim());
-                        devLog('✓ Profile created successfully!');
-
-                        const profile = await ConvexProfileService.getProfile(address!);
-                        devLog('📊 Profile retrieved:', profile);
-
-                        setUserProfile(profile);
-                        setShowCreateProfile(false);
-                        setProfileUsername('');
-                        setCurrentView('game');
-
-                        if (soundEnabled) AudioManager.buttonSuccess();
-                      } catch (error: any) {
-                        if (soundEnabled) AudioManager.buttonError();
-                        devError('✗ Error creating profile:', error.code, error.message);
-                      } finally {
-                        setIsCreatingProfile(false);
-                      }
-                    }}
-                    disabled={isCreatingProfile || !profileUsername.trim()}
-                    className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark shadow-gold text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isCreatingProfile ? '... Creating' : t('save')}
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonNav();
-                      setShowCreateProfile(false);
-                      setProfileUsername('');
-                    }}
-                    className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-semibold transition"
-                  >
-                    {t('cancel')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          <CreateProfileModal
+            isOpen={showCreateProfile && !isCheckingFarcaster}
+            onClose={() => setShowCreateProfile(false)}
+            address={address}
+            profileUsername={profileUsername}
+            setProfileUsername={setProfileUsername}
+            isCreatingProfile={isCreatingProfile}
+            setIsCreatingProfile={setIsCreatingProfile}
+            setUserProfile={setUserProfile}
+            setCurrentView={setCurrentView}
+            soundEnabled={soundEnabled}
+            t={t}
+          />
 
         </>
       )}

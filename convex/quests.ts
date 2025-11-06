@@ -12,6 +12,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { api } from "./_generated/api";
+import { normalizeAddress } from "./utils";
 
 // Quest pool with 10 different quest types
 const QUEST_POOL = [
@@ -126,7 +127,7 @@ export const generateDailyQuest = mutation({
       .first();
 
     if (existing) {
-      console.log("✅ Daily quest already exists for", today);
+      // devLog (server-side)("✅ Daily quest already exists for", today);
       return existing._id;
     }
 
@@ -145,7 +146,7 @@ export const generateDailyQuest = mutation({
       createdAt: Date.now(),
     });
 
-    console.log("✅ Generated daily quest:", questTemplate.type, "for", today);
+    // devLog (server-side)("✅ Generated daily quest:", questTemplate.type, "for", today);
     return questId;
   },
 });
@@ -157,7 +158,7 @@ export const getQuestProgress = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const today = new Date().toISOString().split('T')[0];
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
 
     // Get today's quest
     const quest = await ctx.db
@@ -298,7 +299,7 @@ export const claimQuestReward = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const today = new Date().toISOString().split('T')[0];
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
 
     // Get today's quest
     const quest = await ctx.db
@@ -447,7 +448,7 @@ export const claimQuestReward = mutation({
       });
     }
 
-    console.log(`✅ Quest reward claimed: ${quest.reward} coins for ${normalizedAddress}`);
+    // devLog (server-side)(`✅ Quest reward claimed: ${quest.reward} coins for ${normalizedAddress}`);
 
     return {
       reward: quest.reward,
@@ -511,7 +512,7 @@ export const WEEKLY_LEADERBOARD_REWARDS = {
 export const getWeeklyProgress = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
     const lastSunday = getLastSunday();
 
     // Get player's weekly progress
@@ -550,7 +551,7 @@ export const updateWeeklyProgress = internalMutation({
     increment: v.optional(v.number()),
   },
   handler: async (ctx, { address, questId, increment = 1 }) => {
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
     const lastSunday = getLastSunday();
 
     let progress = await ctx.db
@@ -596,7 +597,7 @@ export const updatePveStreak = mutation({
     won: v.boolean(),
   },
   handler: async (ctx, { address, won }) => {
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
     const lastSunday = getLastSunday();
 
     let progress = await ctx.db
@@ -647,7 +648,7 @@ export const updatePveStreak = mutation({
       pveStreakCurrent: currentStreak,
     });
 
-    console.log(`🔥 PvE Streak ${won ? 'continued' : 'reset'}: ${currentStreak} (max: ${quests[questId]?.current || 0})`);
+    // devLog (server-side)(`🔥 PvE Streak ${won ? 'continued' : 'reset'}: ${currentStreak} (max: ${quests[questId]?.current || 0})`);
 
     return {
       success: true,
@@ -666,7 +667,7 @@ export const claimWeeklyReward = mutation({
     questId: v.string(),
   },
   handler: async (ctx, { address, questId }) => {
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
     const lastSunday = getLastSunday();
 
     const progress = await ctx.db
@@ -717,7 +718,7 @@ export const claimWeeklyReward = mutation({
     updatedQuests[questId].claimed = true;
     await ctx.db.patch(progress._id, { quests: updatedQuests });
 
-    console.log(`✅ Weekly quest reward claimed: ${questId} → ${reward} coins`);
+    // devLog (server-side)(`✅ Weekly quest reward claimed: ${questId} → ${reward} coins`);
 
     return {
       success: true,
@@ -738,7 +739,7 @@ export const claimWeeklyReward = mutation({
 export const distributeWeeklyRewards = internalMutation({
   args: {},
   handler: async (ctx) => {
-    console.log("🏅 Starting weekly rewards distribution (TOP 10 ONLY)...");
+    // devLog (server-side)("🏅 Starting weekly rewards distribution (TOP 10 ONLY)...");
 
     // Get top 10 players by total power
     const topPlayers = await ctx.db
@@ -748,7 +749,7 @@ export const distributeWeeklyRewards = internalMutation({
       .take(10); // APENAS TOP 10!
 
     if (topPlayers.length === 0) {
-      console.log("⚠️ No players found");
+      // devLog (server-side)("⚠️ No players found");
       return { distributed: 0, rewards: [] };
     }
 
@@ -782,11 +783,11 @@ export const distributeWeeklyRewards = internalMutation({
           reward,
         });
 
-        console.log(`💰 Rank #${rank} ${player.username}: +${reward} $TESTVBMS`);
+        // devLog (server-side)(`💰 Rank #${rank} ${player.username}: +${reward} $TESTVBMS`);
       }
     }
 
-    console.log(`✅ Weekly rewards distributed to ${rewards.length} players (TOP 10)`);
+    // devLog (server-side)(`✅ Weekly rewards distributed to ${rewards.length} players (TOP 10)`);
 
     return {
       distributed: rewards.length,
@@ -803,7 +804,7 @@ export const distributeWeeklyRewards = internalMutation({
 export const checkWeeklyRewardEligibility = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
     const currentWeek = getLastSunday();
 
     // Get current leaderboard (TOP 10)
@@ -815,7 +816,7 @@ export const checkWeeklyRewardEligibility = query({
 
     // Find player's rank
     const playerIndex = topPlayers.findIndex(
-      (p) => p.address.toLowerCase() === normalizedAddress
+      (p) => normalizeAddress(p.address) === normalizedAddress
     );
 
     if (playerIndex === -1) {
@@ -881,7 +882,7 @@ export const checkWeeklyRewardEligibility = query({
 export const claimWeeklyLeaderboardReward = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = normalizeAddress(address);
     const currentWeek = getLastSunday();
 
     // Get current leaderboard (TOP 10)
@@ -893,7 +894,7 @@ export const claimWeeklyLeaderboardReward = mutation({
 
     // Find player's rank
     const playerIndex = topPlayers.findIndex(
-      (p) => p.address.toLowerCase() === normalizedAddress
+      (p) => normalizeAddress(p.address) === normalizedAddress
     );
 
     if (playerIndex === -1) {
@@ -948,7 +949,7 @@ export const claimWeeklyLeaderboardReward = mutation({
       method: "manual_claim", // vs "auto_distribution"
     });
 
-    console.log(`🎁 Weekly reward claimed: Rank #${rank} ${player.username} → +${reward} $TESTVBMS`);
+    // devLog (server-side)(`🎁 Weekly reward claimed: Rank #${rank} ${player.username} → +${reward} $TESTVBMS`);
 
     return {
       success: true,

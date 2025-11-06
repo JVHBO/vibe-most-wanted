@@ -81,7 +81,7 @@ export const markDailyLogin = mutation({
         completedAt: Date.now(),
       });
 
-      console.log("✅ Daily login mission created for", normalizedAddress);
+      // devLog (server-side)("✅ Daily login mission created for", normalizedAddress);
     }
   },
 });
@@ -117,7 +117,7 @@ export const markFirstPveWin = mutation({
         completedAt: Date.now(),
       });
 
-      console.log("✅ First PvE win mission created for", normalizedAddress);
+      // devLog (server-side)("✅ First PvE win mission created for", normalizedAddress);
     }
   },
 });
@@ -153,7 +153,7 @@ export const markFirstPvpMatch = mutation({
         completedAt: Date.now(),
       });
 
-      console.log("✅ First PvP match mission created for", normalizedAddress);
+      // devLog (server-side)("✅ First PvP match mission created for", normalizedAddress);
     }
   },
 });
@@ -185,7 +185,7 @@ export const createWelcomeGift = mutation({
         completedAt: Date.now(),
       });
 
-      console.log("🎁 Welcome gift created for", normalizedAddress);
+      // devLog (server-side)("🎁 Welcome gift created for", normalizedAddress);
     }
   },
 });
@@ -225,7 +225,7 @@ export const markWinStreak = mutation({
         completedAt: Date.now(),
       });
 
-      console.log(`🔥 ${streak}-win streak mission created for`, normalizedAddress);
+      // devLog (server-side)(`🔥 ${streak}-win streak mission created for`, normalizedAddress);
     }
   },
 });
@@ -298,10 +298,6 @@ export const claimMission = mutation({
       claimedAt: Date.now(),
     });
 
-    console.log(
-      `✅ Mission claimed: ${mission.missionType} (+${boostedReward} coins) for`,
-      normalizedAddress
-    );
 
     return {
       success: true,
@@ -389,10 +385,6 @@ export const claimAllMissions = mutation({
       });
     }
 
-    console.log(
-      `✅ Claimed ${missions.length} missions (+${totalReward} coins) for`,
-      normalizedAddress
-    );
 
     return {
       success: true,

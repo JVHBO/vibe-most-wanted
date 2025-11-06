@@ -8,6 +8,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import { normalizeAddress } from "./utils";
 
 /**
  * Get match history for a player
@@ -20,7 +21,7 @@ export const getMatchHistory = query({
   handler: async (ctx, { address, limit = 50 }) => {
     const matches = await ctx.db
       .query("matches")
-      .withIndex("by_player", (q) => q.eq("playerAddress", address.toLowerCase()))
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizeAddress(address)))
       .order("desc")
       .take(limit);
 
@@ -44,7 +45,7 @@ export const getMatchHistorySummary = query({
   handler: async (ctx, { address, limit = 50 }) => {
     const matches = await ctx.db
       .query("matches")
-      .withIndex("by_player", (q) => q.eq("playerAddress", address.toLowerCase()))
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizeAddress(address)))
       .order("desc")
       .take(limit);
 
@@ -103,14 +104,6 @@ export const recordMatch = mutation({
     const normalizedPlayerAddress = args.playerAddress.toLowerCase();
     const normalizedOpponentAddress = args.opponentAddress?.toLowerCase();
 
-    console.log("🎮 recordMatch called:", {
-      playerAddress: normalizedPlayerAddress,
-      type: args.type,
-      result: args.result,
-      playerPower: args.playerPower,
-      opponentPower: args.opponentPower,
-    });
-
     // Insert match record
     const matchId = await ctx.db.insert("matches", {
       playerAddress: normalizedPlayerAddress,
@@ -128,7 +121,7 @@ export const recordMatch = mutation({
       difficulty: args.difficulty,
     });
 
-    console.log("✅ Match saved to Convex:", matchId);
+    // devLog (server-side)("✅ Match saved to Convex:", matchId);
 
     // Update profile stats
     const profile = await ctx.db
@@ -162,7 +155,7 @@ export const recordMatch = mutation({
         lastUpdated: Date.now(),
       });
 
-      console.log("✅ Profile stats updated");
+      // devLog (server-side)("✅ Profile stats updated");
     }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
@@ -176,10 +169,10 @@ export const recordMatch = mutation({
           increment: 1,
         });
 
-        console.log(`✅ Weekly quest tracked: Defense win for ${normalizedPlayerAddress}`);
+        // devLog (server-side)(`✅ Weekly quest tracked: Defense win for ${normalizedPlayerAddress}`);
       }
     } catch (error) {
-      console.error("❌ Failed to track weekly quest:", error);
+      // devError (server-side)("❌ Failed to track weekly quest:", error);
     }
 
     return matchId;
@@ -227,7 +220,7 @@ export const getMatchStats = query({
     // Stream and aggregate instead of collect
     const matches = ctx.db
       .query("matches")
-      .withIndex("by_player", (q) => q.eq("playerAddress", address.toLowerCase()));
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizeAddress(address)));
 
     // Process each match without loading full arrays
     for await (const match of matches) {
