@@ -4,26 +4,8 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const { username } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vibemostwanted.xyz';
 
-  // Fetch profile data via HTTP (not Convex direct import)
-  let imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}`;
-
-  try {
-    // Fetch profile data from your existing API
-    const profileResponse = await fetch(`${baseUrl}/api/user-profile?username=${encodeURIComponent(username)}`, {
-      next: { revalidate: 300 } // Cache for 5 minutes
-    });
-
-    if (profileResponse.ok) {
-      const profile = await profileResponse.json();
-      const wins = (profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0);
-      const losses = (profile.stats?.pveLosses || 0) + (profile.stats?.pvpLosses || 0);
-
-      imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}&twitter=${encodeURIComponent(profile.twitter || '')}&totalPower=${profile.stats?.totalPower || 0}&wins=${wins}&losses=${losses}&ties=0&nftCount=${profile.stats?.totalCards || 0}&winStreak=${profile.winStreak || 0}&coins=${profile.coins || 0}`;
-    }
-  } catch (e) {
-    console.error('Failed to fetch profile data:', e);
-    // Use default image URL with just username
-  }
+  // Simple direct URL - all params as empty/zero, just show username
+  const imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}&twitter=&totalPower=0&wins=0&losses=0&ties=0&nftCount=0&winStreak=0&coins=0&v=1`;
 
   return {
     title: `${username}'s Profile - VIBE Most Wanted`,
