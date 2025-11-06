@@ -21,7 +21,12 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebFetch(domain:www.vibemostwanted.xyz)",
+      "Bash(curl:*)",
+      "Bash(npx playwright:*)",
+      "Bash(git revert:*)",
+      "Bash(npx convex dev:*)"
     ],
     "deny": [],
     "ask": []

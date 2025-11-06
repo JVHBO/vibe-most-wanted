@@ -22,6 +22,7 @@ import { ProgressBar } from "@/components/ProgressBar";
 import AchievementsView from "@/components/AchievementsView";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { InboxDisplay } from "@/components/InboxDisplay";
 import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
 import { PvPMenuModals } from "@/components/PvPMenuModals";
@@ -3880,6 +3881,9 @@ export default function TCGPage() {
               )}
             </button>
           )}
+
+          {/* Inbox Display */}
+          <InboxDisplay />
 
           <button
             onClick={() => {
