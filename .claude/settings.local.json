@@ -11,7 +11,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(echo:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(for file in quests.ts missions.ts matches.ts notifications.ts rooms.ts)",
+      "Bash(do:*)",
+      "Bash(done)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []
