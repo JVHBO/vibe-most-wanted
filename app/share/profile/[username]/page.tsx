@@ -19,7 +19,7 @@ async function getFarcasterPfp(username: string): Promise<string> {
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vibemostwanted.xyz';
+  const baseUrl = 'https://www.vibemostwanted.xyz';
 
   // Try to get Farcaster profile picture
   const pfpUrl = await getFarcasterPfp(username);
