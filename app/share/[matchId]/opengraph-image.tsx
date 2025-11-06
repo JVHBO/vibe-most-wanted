@@ -31,10 +31,6 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const opponentPowerNum = parseInt(opponentPower);
     const playerIsLosing = playerPowerNum < opponentPowerNum;
 
-    // Background images as data URLs (embedded for Edge Runtime)
-    const fundo1 = 'data:image/jpeg;base64,' + await (await fetch(new URL('/fundo1.jpg', 'https://vibe-most-wanted.vercel.app'))).arrayBuffer().then(buf => Buffer.from(buf).toString('base64'));
-    const fundo2 = 'data:image/jpeg;base64,' + await (await fetch(new URL('/fundo2.jpg', 'https://vibe-most-wanted.vercel.app'))).arrayBuffer().then(buf => Buffer.from(buf).toString('base64'));
-
     // Playing card component (tilted rectangle style like foto.jpg)
     const Card = ({ username, power, isPlayer, isLosing, pfpUrl, backgroundImage }: {
       username: string;
@@ -265,7 +261,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               isPlayer={true}
               isLosing={playerIsLosing}
               pfpUrl={playerPfpUrl}
-              backgroundImage={fundo1}
+              backgroundImage="https://vibe-most-wanted.vercel.app/fundo1.jpg"
             />
 
             {/* VS badge */}
@@ -296,7 +292,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               isPlayer={false}
               isLosing={!playerIsLosing}
               pfpUrl={opponentPfpUrl}
-              backgroundImage={fundo2}
+              backgroundImage="https://vibe-most-wanted.vercel.app/fundo2.jpg"
             />
           </div>
 
