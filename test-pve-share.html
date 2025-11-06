@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test PvE Share URL Generation</title>
+</head>
+<body>
+    <h1>Test PvE Share URL</h1>
+    <div id="result"></div>
+
+    <script>
+        // Simulate what happens in GamePopups.tsx for a PvE win
+        const userProfile = {
+            username: 'nico',
+            twitterProfileImageUrl: 'https://vibe-most-wanted.vercel.app/images/nico.png'
+        };
+
+        const lastBattleResult = {
+            playerPower: 1118,
+            opponentPower: 584,
+            opponentName: 'Mecha George Floyd',
+            type: 'pve',
+            playerPfpUrl: 'https://vibe-most-wanted.vercel.app/images/nico.png',
+            opponentPfpUrl: undefined, // PvE has no opponent PFP
+        };
+
+        // Generate matchId (same logic as GamePopups.tsx line 206-211)
+        const playerPfp = encodeURIComponent(userProfile.twitterProfileImageUrl || '');
+        const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || lastBattleResult.playerPfpUrl || '');
+        const playerName = encodeURIComponent(userProfile.username || 'Player');
+        const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
+
+        const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}`;
+        const shareUrl = `https://vibemostwanted.xyz/share/${matchId}`;
+        const ogImageUrl = `${shareUrl}/opengraph-image`;
+
+        document.getElementById('result').innerHTML = `
+            <h2>Generated URLs:</h2>
+            <p><strong>Match ID:</strong><br><code>${matchId}</code></p>
+            <p><strong>Share URL:</strong><br><a href="${shareUrl}" target="_blank">${shareUrl}</a></p>
+            <p><strong>OG Image URL:</strong><br><a href="${ogImageUrl}" target="_blank">${ogImageUrl}</a></p>
+
+            <h2>URL Parts:</h2>
+            <ul>
+                <li>Result: win</li>
+                <li>Player Power: ${lastBattleResult.playerPower}</li>
+                <li>Opponent Power: ${lastBattleResult.opponentPower}</li>
+                <li>Opponent Name: ${opponentName}</li>
+                <li>Player PFP: ${playerPfp}</li>
+                <li>Opponent PFP: ${opponentPfp}</li>
+                <li>Player Name: ${playerName}</li>
+            </ul>
+
+            <h2>Issue Found:</h2>
+            <p style="color: red;">❌ <strong>PROBLEMA:</strong> opponentPfp está usando playerPfpUrl como fallback!</p>
+            <p>Linha 207 em GamePopups.tsx:</p>
+            <code>const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || lastBattleResult.playerPfpUrl || '');</code>
+            <p>Isso faz com que o opponent tenha a mesma PFP do player quando opponentPfpUrl é undefined!</p>
+        `;
+    </script>
+</body>
+</html>
