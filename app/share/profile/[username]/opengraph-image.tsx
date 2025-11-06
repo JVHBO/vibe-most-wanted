@@ -22,7 +22,8 @@ export default async function Image({ params }: { params: Promise<{ username: st
   let winRate = 0;
 
   try {
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL!;
+    // Use production Convex URL for OG images
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
     const response = await fetch(`${convexUrl}/api/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
