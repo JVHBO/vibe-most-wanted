@@ -30,17 +30,17 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
         style={{
           width: '320px',
           height: '450px',
-          background: 'white',
+          background: '#F5F5F5',
           borderRadius: '20px',
-          border: '4px solid #000',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          border: '5px solid #FFD700',
+          boxShadow: '0 10px 40px rgba(255, 215, 0, 0.4), 0 0 0 2px #121212',
           display: 'flex',
           flexDirection: 'column',
           padding: '20px',
           position: 'relative',
         }}
       >
-        {/* Top left suit symbol */}
+        {/* Top left corner */}
         <div
           style={{
             position: 'absolute',
@@ -52,13 +52,13 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             gap: '5px',
           }}
         >
-          <div style={{ fontSize: '32px', fontWeight: 900 }}>
+          <div style={{ fontSize: '28px', fontWeight: 900, color: '#121212' }}>
             {isPlayer ? 'YOU' : 'OPP'}
           </div>
-          <div style={{ fontSize: '36px' }}>♠️</div>
+          <div style={{ fontSize: '32px' }}>♠</div>
         </div>
 
-        {/* Center - Avatar */}
+        {/* Center - Avatar on top of spade */}
         <div
           style={{
             display: 'flex',
@@ -66,25 +66,28 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             alignItems: 'center',
             justifyContent: 'center',
             flex: 1,
-            gap: '15px',
+            gap: '12px',
           }}
         >
+          {/* Large spade background */}
+          <div style={{ fontSize: '120px', opacity: 0.15, position: 'absolute' }}>♠</div>
+
           {/* Avatar circle with initials */}
           <div
             style={{
-              width: '180px',
-              height: '180px',
-              borderRadius: '15px',
-              border: '4px solid #000',
-              background: isPlayer
-                ? 'linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%)'
-                : 'linear-gradient(135deg, #EF4444 0%, #F87171 100%)',
+              width: '160px',
+              height: '160px',
+              borderRadius: '50%',
+              border: '5px solid #FFD700',
+              background: 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '72px',
+              fontSize: '64px',
               fontWeight: 900,
-              color: 'white',
+              color: '#121212',
+              boxShadow: '0 4px 20px rgba(255, 215, 0, 0.5)',
+              zIndex: 1,
             }}
           >
             {getInitials(username)}
@@ -93,14 +96,15 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           {/* Username */}
           <div
             style={{
-              fontSize: '24px',
-              fontWeight: 700,
-              color: '#000',
+              fontSize: '22px',
+              fontWeight: 800,
+              color: '#121212',
               textAlign: 'center',
               maxWidth: '280px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              zIndex: 1,
             }}
           >
             {username}
@@ -109,19 +113,21 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           {/* Power */}
           <div
             style={{
-              fontSize: '36px',
+              fontSize: '42px',
               fontWeight: 900,
-              color: isPlayer ? '#3B82F6' : '#EF4444',
+              color: '#FFD700',
+              textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
+              zIndex: 1,
             }}
           >
-            💪 {power}
+            {power}
           </div>
         </div>
 
-        {/* Bottom right suit symbol (upside down) */}
+        {/* Bottom right corner (upside down) */}
         <div
           style={{
             position: 'absolute',
@@ -134,10 +140,10 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             transform: 'rotate(180deg)',
           }}
         >
-          <div style={{ fontSize: '32px', fontWeight: 900 }}>
+          <div style={{ fontSize: '28px', fontWeight: 900, color: '#121212' }}>
             {isPlayer ? 'YOU' : 'OPP'}
           </div>
-          <div style={{ fontSize: '36px' }}>♠️</div>
+          <div style={{ fontSize: '32px' }}>♠</div>
         </div>
       </div>
     );
@@ -151,13 +157,11 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: isWin
-              ? 'linear-gradient(135deg, #065f46 0%, #047857 50%, #065f46 100%)'
-              : 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%)',
+            background: '#0d3d2d',
             position: 'relative',
           }}
         >
-          {/* Background pattern */}
+          {/* Felt texture pattern */}
           <div
             style={{
               position: 'absolute',
@@ -165,7 +169,18 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               left: 0,
               width: '100%',
               height: '100%',
-              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.05) 35px, rgba(255,255,255,.05) 70px)',
+              background: 'radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 60%)',
+              display: 'flex',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px)',
               display: 'flex',
             }}
           />
@@ -174,20 +189,22 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           <div
             style={{
               position: 'absolute',
-              top: '30px',
+              top: '25px',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '10px',
+              background: 'rgba(18, 18, 18, 0.8)',
+              padding: '12px 40px',
+              borderRadius: '15px',
+              border: '3px solid #FFD700',
+              boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
             }}
           >
             <div
               style={{
-                fontSize: '56px',
+                fontSize: '48px',
                 fontWeight: 900,
                 color: '#FFD700',
-                textShadow: '0 4px 20px rgba(0, 0, 0, 0.8)',
-                letterSpacing: '4px',
+                textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)',
+                letterSpacing: '3px',
               }}
             >
               {isWin ? '🏆 VICTORY' : '💀 DEFEAT'}
