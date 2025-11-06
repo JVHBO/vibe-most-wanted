@@ -1415,3 +1415,106 @@ export const recordAttackResult = mutation({
     };
   },
 });
+
+/**
+ * SHARE BONUS SYSTEM
+ *
+ * Awards coins for sharing victories and profile
+ * - Victory share: +10 coins (max 3x/day)
+ * - Profile share: +50 coins (one-time only)
+ */
+export const awardShareBonus = mutation({
+  args: {
+    address: v.string(),
+    type: v.union(v.literal("victory"), v.literal("profile")),
+  },
+  handler: async (ctx, args) => {
+    const { address, type } = args;
+
+    // Get profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Get today's date (YYYY-MM-DD format)
+    const today = new Date().toISOString().split('T')[0];
+
+    // Check eligibility
+    if (type === "profile") {
+      // One-time profile share bonus
+      if (profile.hasSharedProfile) {
+        return {
+          success: false,
+          message: "Profile share bonus already claimed",
+          coinsAwarded: 0,
+        };
+      }
+
+      // Award profile share bonus: +50 coins
+      const bonus = 50;
+      const newCoins = (profile.coins || 0) + bonus;
+      const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
+      const newTotalShareBonus = (profile.totalShareBonus || 0) + bonus;
+
+      await ctx.db.patch(profile._id, {
+        coins: newCoins,
+        lifetimeEarned: newLifetimeEarned,
+        totalShareBonus: newTotalShareBonus,
+        hasSharedProfile: true,
+        lastUpdated: Date.now(),
+      });
+
+      return {
+        success: true,
+        message: "Profile share bonus claimed!",
+        coinsAwarded: bonus,
+        newBalance: newCoins,
+      };
+    }
+
+    if (type === "victory") {
+      // Daily victory share bonus (3x/day max)
+      const dailyShares = profile.lastShareDate === today ? (profile.dailyShares || 0) : 0;
+
+      if (dailyShares >= 3) {
+        return {
+          success: false,
+          message: "Daily share limit reached (3/3)",
+          coinsAwarded: 0,
+          remaining: 0,
+        };
+      }
+
+      // Award victory share bonus: +10 coins
+      const bonus = 10;
+      const newCoins = (profile.coins || 0) + bonus;
+      const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
+      const newTotalShareBonus = (profile.totalShareBonus || 0) + bonus;
+      const newDailyShares = dailyShares + 1;
+
+      await ctx.db.patch(profile._id, {
+        coins: newCoins,
+        lifetimeEarned: newLifetimeEarned,
+        totalShareBonus: newTotalShareBonus,
+        dailyShares: newDailyShares,
+        lastShareDate: today,
+        lastUpdated: Date.now(),
+      });
+
+      return {
+        success: true,
+        message: `Share bonus claimed! (+${bonus} coins)`,
+        coinsAwarded: bonus,
+        newBalance: newCoins,
+        remaining: 3 - newDailyShares,
+      };
+    }
+
+    throw new Error("Invalid share type");
+  },
+});

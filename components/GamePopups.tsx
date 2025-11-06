@@ -35,6 +35,10 @@ interface GamePopupsProps {
   soundEnabled: boolean;
   handleCloseVictoryScreen: () => void;
 
+  // Share incentives
+  sharesRemaining?: number;
+  onShareClick?: (platform: 'twitter' | 'farcaster') => void;
+
   // Loss popup
   showLossPopup: boolean;
   setShowLossPopup: (show: boolean) => void;
@@ -71,6 +75,8 @@ export function GamePopups({
   userProfile,
   soundEnabled,
   handleCloseVictoryScreen,
+  sharesRemaining,
+  onShareClick,
   showLossPopup,
   setShowLossPopup,
   showTiePopup,
@@ -148,6 +154,23 @@ export function GamePopups({
                 ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
                 : t('victoryPrize')}
             </p>
+
+            {/* Share Incentive Banner */}
+            {sharesRemaining !== undefined && sharesRemaining > 0 && (
+              <div className="bg-green-500/20 border border-green-400 rounded-lg px-4 py-2 text-center">
+                <p className="text-green-400 font-bold text-sm animate-pulse">
+                  💰 Share & earn +10 coins! ({sharesRemaining}/3 today)
+                </p>
+              </div>
+            )}
+            {sharesRemaining === 0 && (
+              <div className="bg-gray-500/20 border border-gray-400 rounded-lg px-4 py-2 text-center">
+                <p className="text-gray-400 font-semibold text-sm">
+                  Daily share limit reached (3/3)
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-3">
               <a
                 href={(() => {
@@ -164,7 +187,10 @@ export function GamePopups({
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonSuccess();
+                  if (onShareClick) onShareClick('twitter');
+                }}
                 className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
               >
                 <span>𝕏</span> {t('shareVictory')}
@@ -190,7 +216,10 @@ export function GamePopups({
                 })()}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonSuccess();
+                  if (onShareClick) onShareClick('farcaster');
+                }}
                 className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
               >
                 <span>♦</span> Farcaster

@@ -108,6 +108,17 @@ export default defineSchema({
     twitterHandle: v.optional(v.string()),
     twitterProfileImageUrl: v.optional(v.string()), // Twitter profile picture URL
     fid: v.optional(v.string()), // Farcaster ID
+    farcasterFid: v.optional(v.number()), // Farcaster numeric FID for notifications
+
+    // Share Incentives
+    dailyShares: v.optional(v.number()), // Shares today (resets daily)
+    lastShareDate: v.optional(v.string()), // ISO date YYYY-MM-DD
+    hasSharedProfile: v.optional(v.boolean()), // One-time profile share bonus claimed
+    totalShareBonus: v.optional(v.number()), // Lifetime share bonus earned
+
+    // Daily Reminders
+    lastActiveDate: v.optional(v.number()), // Last time player was active (for reminder eligibility)
+    notificationsEnabled: v.optional(v.boolean()), // Opt-out flag (default true)
 
     // Metadata
     userIndex: v.optional(v.number()),

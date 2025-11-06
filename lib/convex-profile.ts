@@ -82,10 +82,17 @@ export interface UserProfile {
   winStreak?: number;
   lastWinTimestamp?: number;
 
+  // Share incentives
+  dailyShares?: number;
+  lastShareDate?: string;
+  hasSharedProfile?: boolean;
+  totalShareBonus?: number;
+
   twitter?: string;
   twitterHandle?: string;
   twitterProfileImageUrl?: string;
   fid?: string;
+  farcasterFid?: number;
   userIndex?: number;
   createdAt: number;
   lastUpdated: number;

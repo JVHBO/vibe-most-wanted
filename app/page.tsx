@@ -772,6 +772,47 @@ export default function TCGPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showDailyClaimPopup, setShowDailyClaimPopup] = useState(false);
 
+  // Share incentives
+  const [sharesRemaining, setSharesRemaining] = useState<number | undefined>(undefined);
+
+  // Update shares remaining when profile changes
+  useEffect(() => {
+    if (userProfile) {
+      const today = new Date().toISOString().split('T')[0];
+      const dailyShares = userProfile.lastShareDate === today ? (userProfile.dailyShares || 0) : 0;
+      setSharesRemaining(3 - dailyShares);
+    }
+  }, [userProfile]);
+
+  // Handle share button click - award bonus
+  const handleShareClick = async (platform: 'twitter' | 'farcaster') => {
+    if (!address || !userProfile) return;
+
+    try {
+      const result = await convex.mutation(api.economy.awardShareBonus, {
+        address,
+        type: 'victory',
+      });
+
+      if (result.success) {
+        setSuccessMessage(result.message);
+        setSharesRemaining(result.remaining);
+        // Refresh profile to update coins
+        const updatedProfile = await ConvexProfileService.getProfile(address);
+        if (updatedProfile) {
+          setUserProfile(updatedProfile);
+        }
+      } else {
+        // Already claimed or limit reached - just show message
+        if (result.message) {
+          setErrorMessage(result.message);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error awarding share bonus:', error);
+    }
+  };
+
   // Preload tie.gif to prevent loading delay
   useEffect(() => {
     const img = new Image();
@@ -2750,6 +2791,8 @@ export default function TCGPage() {
         userProfile={userProfile}
         soundEnabled={soundEnabled}
         handleCloseVictoryScreen={handleCloseVictoryScreen}
+        sharesRemaining={sharesRemaining}
+        onShareClick={handleShareClick}
         showLossPopup={showLossPopup}
         setShowLossPopup={setShowLossPopup}
         showTiePopup={showTiePopup}
