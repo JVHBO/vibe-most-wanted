@@ -7,6 +7,7 @@ import { Web3Provider } from "@/contexts/Web3Provider";
 import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
 import { FarcasterNotificationRegistration } from "@/components/FarcasterNotificationRegistration";
 import { Analytics } from "@vercel/analytics/react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -119,16 +120,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased overflow-x-hidden`}
       >
-        <ConvexClientProvider>
-          <Web3Provider>
-            <LanguageProvider>
-              <MusicProvider>
-                <FarcasterNotificationRegistration />
-                {children}
-              </MusicProvider>
-            </LanguageProvider>
-          </Web3Provider>
-        </ConvexClientProvider>
+        <ErrorBoundary>
+          <ConvexClientProvider>
+            <Web3Provider>
+              <LanguageProvider>
+                <MusicProvider>
+                  <FarcasterNotificationRegistration />
+                  {children}
+                </MusicProvider>
+              </LanguageProvider>
+            </Web3Provider>
+          </ConvexClientProvider>
+        </ErrorBoundary>
         <Analytics />
       </body>
     </html>
