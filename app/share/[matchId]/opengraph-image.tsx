@@ -44,10 +44,6 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
         style={{
           width: '380px',
           height: '480px',
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center',
-          backgroundRepeat: 'no-repeat',
           borderRadius: '12px',
           border: isLosing ? '6px solid #DC2626' : '6px solid #FFD700',
           boxShadow: isLosing
@@ -59,8 +55,25 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
           position: 'relative',
           transform: isPlayer ? 'rotate(-3deg)' : 'rotate(3deg)',
           overflow: 'hidden',
+          background: '#000',
         }}
       >
+        {/* Background image */}
+        {backgroundImage && (
+          <img
+            src={backgroundImage}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+            }}
+          />
+        )}
+
         {/* Dark overlay */}
         <div
           style={{
