@@ -31,13 +31,18 @@ export default async function Image({ params }: { params: Promise<{ username: st
       const data = await response.json();
       profileData = data.value;
 
-      // Fetch Farcaster PFP if we have fid
+      // Try to get PFP: Farcaster first, then Twitter, then fallback to initials
       if (profileData?.fid) {
         const fcResponse = await fetch(`https://client.warpcast.com/v2/user-by-fid?fid=${profileData.fid}`);
         if (fcResponse.ok) {
           const fcData = await fcResponse.json();
           pfpUrl = fcData.result?.user?.pfp?.url || '';
         }
+      }
+
+      // If no Farcaster PFP, try Twitter
+      if (!pfpUrl && profileData?.twitterProfileImageUrl) {
+        pfpUrl = profileData.twitterProfileImageUrl;
       }
     }
   } catch (error) {
