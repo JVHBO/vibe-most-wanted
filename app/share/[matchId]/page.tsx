@@ -32,20 +32,6 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vibemostwanted.xyz';
   const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image`;
 
-  // Farcaster miniapp embed metadata
-  const miniAppEmbed = {
-    version: '1',
-    imageUrl: imageUrl,
-    buttonTitle: 'Play VIBE Most Wanted',
-    action: {
-      type: 'launch_miniapp',
-      name: 'VIBE MOST WANTED',
-      url: baseUrl,
-      splashImageUrl: `${baseUrl}/splash.png`,
-      splashBackgroundColor: '#FFD700',
-    },
-  };
-
   return {
     title,
     description,
@@ -70,8 +56,13 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
       images: [imageUrl],
     },
     other: {
-      'fc:miniapp': JSON.stringify(miniAppEmbed),
-      'fc:frame': JSON.stringify(miniAppEmbed), // Backward compatibility
+      // Farcaster Frame v2 format - shows OG image with action button
+      'fc:frame': 'vNext',
+      'fc:frame:image': imageUrl,
+      'fc:frame:image:aspect_ratio': '3:2',
+      'fc:frame:button:1': 'Play VIBE Most Wanted',
+      'fc:frame:button:1:action': 'link',
+      'fc:frame:button:1:target': baseUrl,
     },
   };
 }
