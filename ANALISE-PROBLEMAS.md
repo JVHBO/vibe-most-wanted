@@ -47,34 +47,7 @@ try {
 
 ## 🟠 **PROBLEMAS MAIORES**
 
-### 3. **Algoritmo de Embaralhamento Incorreto** (LÓGICA/FAIRNESS)
-- **Severidade**: MAIOR - Afeta a lógica do jogo
-- **Arquivos**:
-  - `app/page.tsx`: Linhas 1630, 1637, 1644, 1649, 1666, 1761, 1775, 1783, 1797, 1817
-  - `hooks/useBattleOptimizations.ts`: Linhas 34, 43, 52, 59, 234
-  - `hooks/useCardCalculations.ts`: Linha 154
-- **Problema**: Usando `Math.random() - 0.5` como comparador de sort
-- **Exemplo**:
-```javascript
-pickedCards = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-```
-- **Impacto**:
-  - Randomização do jogo comprometida
-  - Certas cartas têm probabilidade injusta de seleção
-  - Não é uma distribuição uniforme verdadeira
-- **Solução**: Usar algoritmo Fisher-Yates ou implementar shuffle adequado:
-```javascript
-function shuffle(array) {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-```
-
-### 4. **Arquivo de Componente Gigante** (MANUTENIBILIDADE)
+### 3. **Arquivo de Componente Gigante** (MANUTENIBILIDADE)
 - **Severidade**: MAIOR
 - **Arquivo**: `app/page.tsx` com **7.145 linhas**
 - **Problema**: Deveria ter máximo 300-500 linhas por arquivo
@@ -94,7 +67,7 @@ function shuffle(array) {
   - `AudioManager.tsx`
   - etc.
 
-### 5. **Excesso de !important no CSS** (CODE QUALITY)
+### 4. **Excesso de !important no CSS** (CODE QUALITY)
 - **Severidade**: MAIOR
 - **Count**: **56 instâncias** de `!important` no código
 - **Problema**: Alto número indica problemas na cascata/arquitetura do CSS
@@ -105,7 +78,7 @@ function shuffle(array) {
   - Indica dívida técnica no CSS
 - **Solução**: Refatorar arquitetura CSS para reduzir dependência de `!important`
 
-### 6. **Excesso de Console Logging** (PERFORMANCE/SECURITY)
+### 5. **Excesso de Console Logging** (PERFORMANCE/SECURITY)
 - **Severidade**: MAIOR
 - **Count**: **247 console statements** no código de produção
 - **Arquivos afetados**:
@@ -124,7 +97,7 @@ function shuffle(array) {
 
 ## 🟡 **PROBLEMAS SIGNIFICATIVOS**
 
-### 7. **Falta de Type Safety (Tipos `any`)** (CODE QUALITY)
+### 6. **Falta de Type Safety (Tipos `any`)** (CODE QUALITY)
 - **Severidade**: SIGNIFICATIVA
 - **Count**: 25+ usos do tipo `any`
 - **Arquivos**:
@@ -143,7 +116,7 @@ function shuffle(array) {
 - **Impacto**: Perda de type safety, mais difícil detectar bugs em compile time
 - **Solução**: Substituir `any` por definições de tipo adequadas
 
-### 8. **Tratamento de Erro Inadequado** (ERROR HANDLING)
+### 7. **Tratamento de Erro Inadequado** (ERROR HANDLING)
 - **Severidade**: SIGNIFICATIVA
 - **Arquivos**:
   - `app/api/auth/twitter/route.ts:70` - `catch (error: any)`
@@ -161,7 +134,7 @@ function shuffle(array) {
   - Adicionar Error Boundaries no React tree
   - Implementar middleware de error handling
 
-### 9. **Endereços de Wallet Hardcoded** (CONFIGURATION)
+### 8. **Endereços de Wallet Hardcoded** (CONFIGURATION)
 - **Severidade**: SIGNIFICATIVA
 - **Arquivos**:
   - `lib/config.ts`: Linhas 33-36 (ADMIN_WALLETS)
@@ -171,7 +144,7 @@ function shuffle(array) {
 - **Problema**: Apesar de intencionais, deveriam estar em variáveis de ambiente para flexibilidade
 - **Solução**: Mover para configuração `.env.local`
 
-### 10. **TODO Não Implementado** (INCOMPLETE FEATURE)
+### 9. **TODO Não Implementado** (INCOMPLETE FEATURE)
 - **Severidade**: SIGNIFICATIVA
 - **Arquivo**: `convex/quests.ts:470`
 - **Código**: `reward: 300, // TODO: Ajustar valores depois`
@@ -182,7 +155,7 @@ function shuffle(array) {
 
 ## 🟡 **PROBLEMAS MODERADOS**
 
-### 11. **Múltiplas Instâncias de Type Casts `(window as any)`**
+### 10. **Múltiplas Instâncias de Type Casts `(window as any)`**
 - **Severidade**: MODERADA
 - **Arquivos**:
   - `app/page.tsx:87,116`
@@ -190,7 +163,7 @@ function shuffle(array) {
 - **Problema**: Bypass do type checking do TypeScript
 - **Solução**: Usar extensão adequada da interface window ou augmentation
 
-### 12. **Validação Faltando em API Routes** (VALIDATION)
+### 11. **Validação Faltando em API Routes** (VALIDATION)
 - **Severidade**: MODERADA
 - **Arquivos**:
   - `app/api/webhook/route.ts` - Sem validação de input
@@ -199,7 +172,7 @@ function shuffle(array) {
 - **Problema**: Falta validação do request body, pode aceitar dados malformados
 - **Solução**: Adicionar schemas de validação (zod/yup)
 
-### 13. **Código de Teste/Desenvolvimento Não Usado** (CODE CLEANLINESS)
+### 12. **Código de Teste/Desenvolvimento Não Usado** (CODE CLEANLINESS)
 - **Severidade**: MODERADA
 - **Arquivos**:
   - `check-room.js` (3 variantes)
@@ -208,18 +181,18 @@ function shuffle(array) {
 - **Problema**: Arquivos antigos/não usados poluindo o repositório
 - **Solução**: Limpar e remover ou organizar adequadamente scripts de desenvolvimento
 
-### 14. **API Endpoints Placeholder** (INCOMPLETE)
+### 13. **API Endpoints Placeholder** (INCOMPLETE)
 - **Severidade**: MODERADA
 - **Arquivo**: `app/api/og/route.tsx` - Comentários indicam implementação incompleta
 - **Problema**: Alguns scripts ainda têm logging que deveria ser removido
 
-### 15. **Cleanup Inadequado em setInterval/setTimeout** (MEMORY LEAKS)
+### 14. **Cleanup Inadequado em setInterval/setTimeout** (MEMORY LEAKS)
 - **Severidade**: MODERADA
 - **Problema**: Alguns setTimeout calls no AudioManager podem potencialmente vazar memória
 - **Exemplo**: `app/page.tsx` - Audio playback timers
 - **Solução**: Garantir que todos os timers são adequadamente tracked e cleaned up
 
-### 16. **Features de Acessibilidade Faltando** (ACCESSIBILITY)
+### 15. **Features de Acessibilidade Faltando** (ACCESSIBILITY)
 - **Severidade**: MODERADA
 - **Problemas**:
   - Apenas 1 atributo ARIA encontrado no codebase (`aria-hidden: true`)
@@ -228,7 +201,7 @@ function shuffle(array) {
   - Sem focus management em modals
 - **Solução**: Adicionar ARIA labels, roles e focus management adequados
 
-### 17. **URLs Externas Não Validadas** (CONFIGURATION)
+### 16. **URLs Externas Não Validadas** (CONFIGURATION)
 - **Severidade**: MODERADA
 - **Problemas**:
   - Múltiplas URLs hardcoded em componentes
@@ -240,43 +213,43 @@ function shuffle(array) {
 
 ## 🔵 **PROBLEMAS MENORES**
 
-### 18. **Links Quebrados/Arquivos Faltando** (DOCUMENTATION)
+### 17. **Links Quebrados/Arquivos Faltando** (DOCUMENTATION)
 - **Severidade**: MENOR
 - **Problema**: Algumas referências de documentação podem estar incompletas
 - **Solução**: Verificar que todos os arquivos linkados existem e são acessíveis
 
-### 19. **Convenções de Nomenclatura Inconsistentes** (CODE QUALITY)
+### 18. **Convenções de Nomenclatura Inconsistentes** (CODE QUALITY)
 - **Severidade**: MENOR
 - **Problemas**:
   - Mix de camelCase e snake_case em alguns lugares
   - Convenções de nomenclatura de arquivo inconsistentes
 - **Solução**: Enforçar nomenclatura consistente
 
-### 20. **Console.log em Código de Produção** (CODE QUALITY)
+### 19. **Console.log em Código de Produção** (CODE QUALITY)
 - **Severidade**: MENOR
 - **Frequência**: 247 instâncias
 - **Problema**: Apesar do wrapper devLog existir, algumas chamadas diretas de console.log permanecem
 - **Solução**: Substituir todas as chamadas diretas com devLog/devError/devWarn
 
-### 21. **Documentação de Variável de Ambiente Faltando** (DOCUMENTATION)
+### 20. **Documentação de Variável de Ambiente Faltando** (DOCUMENTATION)
 - **Severidade**: MENOR
 - **Arquivo**: README.md menciona `.env.example` mas arquivo não encontrado
 - **Problema**: Sem arquivo `.env.example` fornecido para referência
 - **Solução**: Criar `.env.example` com todas as variáveis necessárias
 
-### 22. **Indexes de Database Poderiam Ser Otimizados** (PERFORMANCE)
+### 21. **Indexes de Database Poderiam Ser Otimizados** (PERFORMANCE)
 - **Severidade**: MENOR
 - **Arquivo**: `convex/schema.ts`
 - **Problema**: Algumas queries podem não ter indexes otimizados (by_player index na tabela matches)
 - **Solução**: Revisar e adicionar indexes faltando para campos comumente consultados
 
-### 23. **Sanitização de Input Faltando** (SECURITY)
+### 22. **Sanitização de Input Faltando** (SECURITY)
 - **Severidade**: MENOR
 - **Problema**: Alguns inputs de usuário não são adequadamente sanitizados antes do uso
 - **Arquivos**: Várias API routes
 - **Solução**: Adicionar middleware de sanitização de input
 
-### 24. **Mensagens de Erro Genéricas em Produção** (UX/SECURITY)
+### 23. **Mensagens de Erro Genéricas em Produção** (UX/SECURITY)
 - **Severidade**: MENOR
 - **Problema**: Mensagens de erro podem expor detalhes internos aos usuários
 - **Arquivos**: Várias API routes e funções Convex
@@ -289,7 +262,6 @@ function shuffle(array) {
 | Categoria | Count | Severidade |
 |-----------|-------|----------|
 | Security Issues | 2 | 🔴 CRÍTICA |
-| Algorithm/Logic Flaws | 1 | 🟠 MAIOR |
 | Code Quality | 8 | 🟠-🟡 MAIOR-SIGNIFICATIVA |
 | Error Handling | 4 | 🟠-🟡 MAIOR-SIGNIFICATIVA |
 | Type Safety | 1 | 🟡 SIGNIFICATIVA |
@@ -297,7 +269,7 @@ function shuffle(array) {
 | Accessibility | 1 | 🟡 SIGNIFICATIVA |
 | Documentation | 2 | 🔵 MENOR |
 | Configuration | 1 | 🟡 SIGNIFICATIVA |
-| **TOTAL** | **23+** | **Vários** |
+| **TOTAL** | **22+** | **Vários** |
 
 ---
 
@@ -308,20 +280,19 @@ function shuffle(array) {
 2. 🔴 Proteger JSON.parse no OAuth callback
 
 ### Prioridade 2 - ALTA (Fazer Esta Semana)
-3. 🟠 Corrigir algoritmo de embaralhamento com viés (afeta justiça do jogo)
-4. 🟠 Quebrar componente page.tsx de 7.145 linhas
-5. 🟠 Substituir todos os tipos `any` por TypeScript adequado
+3. 🟠 Quebrar componente page.tsx de 7.145 linhas
+4. 🟠 Substituir todos os tipos `any` por TypeScript adequado
 
 ### Prioridade 3 - MÉDIA (Fazer Este Mês)
-6. 🟡 Corrigir excesso de console.log (usar devLog wrapper)
-7. 🟡 Reduzir declarações !important no CSS
-8. 🟡 Adicionar Error Boundaries adequados
-9. 🟡 Melhorar acessibilidade com ARIA labels
+5. 🟡 Corrigir excesso de console.log (usar devLog wrapper)
+6. 🟡 Reduzir declarações !important no CSS
+7. 🟡 Adicionar Error Boundaries adequados
+8. 🟡 Melhorar acessibilidade com ARIA labels
 
 ### Prioridade 4 - BAIXA (Backlog)
-10. 🔵 Limpar scripts e arquivos não usados
-11. 🔵 Criar documentação de variáveis de ambiente
-12. 🔵 Consistência de nomenclatura
+9. 🔵 Limpar scripts e arquivos não usados
+10. 🔵 Criar documentação de variáveis de ambiente
+11. 🔵 Consistência de nomenclatura
 
 ---
 
