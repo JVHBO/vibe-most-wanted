@@ -21,11 +21,8 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const { username } = await params;
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
-  // Try to get Farcaster profile picture
-  const pfpUrl = await getFarcasterPfp(username);
-
-  // Simple direct URL with PFP if available
-  const imageUrl = `${baseUrl}/api/og-profile?username=${encodeURIComponent(username)}&twitter=&totalPower=0&wins=0&losses=0&ties=0&nftCount=0&winStreak=0&coins=0&pfp=${encodeURIComponent(pfpUrl)}&v=1`;
+  // Use Next.js opengraph-image route (same as victory shares)
+  const imageUrl = `${baseUrl}/share/profile/${encodeURIComponent(username)}/opengraph-image`;
 
   return {
     title: `${username}'s Profile - VIBE Most Wanted`,
