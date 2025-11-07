@@ -11,8 +11,13 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
 
-  // Try to fetch PFP from Convex
+  // Try to fetch profile data from Convex
   let pfpUrl = '';
+  let totalPower = 0;
+  let totalWins = 0;
+  let totalLosses = 0;
+  let winRate = '0';
+
   try {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
     const controller = new AbortController();
@@ -33,7 +38,14 @@ export default async function Image({ params }: { params: Promise<{ username: st
 
     if (response.ok) {
       const data = await response.json();
-      pfpUrl = data.value?.twitterProfileImageUrl || '';
+      if (data.value) {
+        pfpUrl = data.value.twitterProfileImageUrl || '';
+        totalPower = data.value.stats?.totalPower || 0;
+        totalWins = (data.value.stats?.pveWins || 0) + (data.value.stats?.pvpWins || 0);
+        totalLosses = (data.value.stats?.pveLosses || 0) + (data.value.stats?.pvpLosses || 0);
+        const totalMatches = totalWins + totalLosses;
+        winRate = totalMatches > 0 ? ((totalWins / totalMatches) * 100).toFixed(1) : '0';
+      }
     }
   } catch (e) {
     // Ignore errors
@@ -114,6 +126,95 @@ export default async function Image({ params }: { params: Promise<{ username: st
             {username}
           </div>
 
+          {/* Stats */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '30px',
+              marginTop: '15px',
+            }}
+          >
+            {/* Total Power */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                background: 'rgba(18, 18, 18, 0.8)',
+                padding: '15px 30px',
+                borderRadius: '12px',
+                border: '3px solid #FFD700',
+              }}
+            >
+              <div style={{ fontSize: '36px', fontWeight: 900, color: '#FFD700' }}>
+                {totalPower.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'rgba(255, 215, 0, 0.7)' }}>
+                POWER
+              </div>
+            </div>
+
+            {/* Wins */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                background: 'rgba(18, 18, 18, 0.8)',
+                padding: '15px 30px',
+                borderRadius: '12px',
+                border: '3px solid #FFD700',
+              }}
+            >
+              <div style={{ fontSize: '36px', fontWeight: 900, color: '#FFD700' }}>
+                {totalWins}
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'rgba(255, 215, 0, 0.7)' }}>
+                WINS
+              </div>
+            </div>
+
+            {/* Losses */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                background: 'rgba(18, 18, 18, 0.8)',
+                padding: '15px 30px',
+                borderRadius: '12px',
+                border: '3px solid #C0C0C0',
+              }}
+            >
+              <div style={{ fontSize: '36px', fontWeight: 900, color: '#C0C0C0' }}>
+                {totalLosses}
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'rgba(192, 192, 192, 0.7)' }}>
+                LOSSES
+              </div>
+            </div>
+
+            {/* Win Rate */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                background: 'rgba(18, 18, 18, 0.8)',
+                padding: '15px 30px',
+                borderRadius: '12px',
+                border: '3px solid #FFD700',
+              }}
+            >
+              <div style={{ fontSize: '36px', fontWeight: 900, color: '#FFD700' }}>
+                {winRate}%
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'rgba(255, 215, 0, 0.7)' }}>
+                WIN RATE
+              </div>
+            </div>
+          </div>
+
           {/* Branding */}
           <div
             style={{
@@ -121,7 +222,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
               fontWeight: 700,
               color: 'rgba(255, 255, 255, 0.5)',
               letterSpacing: '1px',
-              marginTop: '15px',
+              marginTop: '25px',
               display: 'flex',
             }}
           >
