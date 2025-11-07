@@ -4,6 +4,7 @@
  * Modal for user settings including music, language, username, and Twitter connection
  */
 
+import Link from 'next/link';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
