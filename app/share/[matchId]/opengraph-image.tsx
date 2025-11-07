@@ -32,14 +32,75 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     let finalPlayerPfpUrl = playerPfpUrl;
     let finalOpponentPfpUrl = opponentPfpUrl;
 
-    // Special handling for known users
-    if (playerName.toLowerCase() === 'nico') {
+    // If PFP URL is empty, try to fetch from Convex
+    if (!finalPlayerPfpUrl && playerName && playerName !== 'YOU' && playerName !== 'Player') {
+      try {
+        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+        const response = await fetch(`${convexUrl}/api/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: 'profiles:getProfileByUsername',
+            args: { username: playerName.toLowerCase() },
+            format: 'json',
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.value?.twitterProfileImageUrl) {
+            finalPlayerPfpUrl = data.value.twitterProfileImageUrl;
+          }
+        }
+      } catch (e) {
+        // Ignore errors, will use fallback
+      }
+    }
+
+    if (!finalOpponentPfpUrl && opponentName && opponentName !== 'Opponent') {
+      try {
+        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+        const response = await fetch(`${convexUrl}/api/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: 'profiles:getProfileByUsername',
+            args: { username: opponentName.toLowerCase() },
+            format: 'json',
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.value?.twitterProfileImageUrl) {
+            finalOpponentPfpUrl = data.value.twitterProfileImageUrl;
+          }
+        }
+      } catch (e) {
+        // Ignore errors, will use fallback
+      }
+    }
+
+    // Special handling for known users (hardcoded fallbacks)
+    if (playerName.toLowerCase() === 'nico' && !finalPlayerPfpUrl) {
       finalPlayerPfpUrl = nicoUrl;
     }
 
     if (opponentName.toLowerCase().includes('mecha')) {
       finalOpponentPfpUrl = mechaUrl;
-    } else if (opponentName.toLowerCase().includes('nico')) {
+    } else if (opponentName.toLowerCase().includes('nico') && !finalOpponentPfpUrl) {
       finalOpponentPfpUrl = nicoUrl;
     }
 
