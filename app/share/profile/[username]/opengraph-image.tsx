@@ -54,8 +54,9 @@ export default async function Image({ params }: { params: Promise<{ username: st
   // Convert external URLs to use proxy for Edge Runtime compatibility
   const proxyUrl = (url: string) => {
     if (!url) return '';
+    if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
     if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
-    return `https://vibe-most-wanted.vercel.app/api/proxy-image?url=${encodeURIComponent(url)}`;
+    return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
   };
 
   pfpUrl = proxyUrl(pfpUrl);
@@ -76,7 +77,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
       >
         {/* Background image */}
         <img
-          src="https://vibe-most-wanted.vercel.app/profile-bg.jpg"
+          src="https://www.vibemostwanted.xyz/profile-bg.jpg"
           style={{
             position: 'absolute',
             top: 0,
