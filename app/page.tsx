@@ -3960,9 +3960,6 @@ export default function TCGPage() {
             </button>
           )}
 
-          {/* Unified Inbox - Both VBMS Tokens and Coins */}
-          {userProfile && <CoinsInboxDisplay />}
-
           <button
             onClick={() => {
               if (soundEnabled) AudioManager.buttonClick();
@@ -4146,6 +4143,9 @@ export default function TCGPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Unified Inbox - Both VBMS Tokens and Coins */}
+                  {userProfile && <CoinsInboxDisplay />}
 
                   <button
                     onClick={disconnectWallet}
