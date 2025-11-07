@@ -209,7 +209,7 @@ export function GamePopups({
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
 
                   const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}`;
-                  const shareUrl = `${window.location.origin}/share/${matchId}`;
+                  const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                   let castText = t('castVictory', { power: lastBattleResult.playerPower });
 
@@ -294,7 +294,7 @@ export function GamePopups({
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
 
                   const matchId = `loss_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}`;
-                  const shareUrl = `${window.location.origin}/share/${matchId}`;
+                  const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                   let castText = t('castDefeat', { power: lastBattleResult.playerPower });
 
