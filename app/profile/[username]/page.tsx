@@ -1050,7 +1050,13 @@ export default function ProfilePage() {
           <CardLoadingSpinner text="Loading cards..." />
         ) : nfts.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
-            <p className="text-gray-400">{t('noCardsInCollection')}</p>
+            <p className="text-gray-400 mb-6">{t('noCardsInCollection')}</p>
+            <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-xl p-4 max-w-md mx-auto">
+              <p className="text-sm text-vintage-gold font-semibold mb-2">⏱️ NEWLY OPENED CARDS TAKE TIME TO APPEAR</p>
+              <p className="text-xs text-vintage-burnt-gold">
+                Cards you just opened may take 5-10 minutes to show up on the site. This is because metadata needs to be indexed. This is normal and always happens! Refresh the page after a few minutes if your new cards don't appear immediately.
+              </p>
+            </div>
           </div>
         ) : filteredNfts.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
