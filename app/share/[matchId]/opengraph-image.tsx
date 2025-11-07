@@ -33,8 +33,9 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     let finalPlayerPfpUrl = playerPfpUrl;
     let finalOpponentPfpUrl = opponentPfpUrl;
 
-    // If PFP URL is empty, try to fetch from Convex (same strategy as profile OG)
-    if (!finalPlayerPfpUrl && playerName && playerName !== 'YOU' && playerName !== 'Player') {
+    // Always try to fetch from Convex if we have a valid playerName (like profile OG does)
+    // This ensures we get the freshest PFP and handles cases where URL encoding fails
+    if (playerName && playerName !== 'YOU' && playerName !== 'Player') {
       try {
         const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
         const response = await fetch(`${convexUrl}/api/query`, {
