@@ -784,8 +784,8 @@ export default function ProfilePage() {
                     const losses = totalLosses || 0;
                     const ties = totalTies || 0;
 
-                    // Share URL with meta tags
-                    const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}`;
+                    // Share URL with meta tags (add version param to bust Farcaster cache)
+                    const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
 
                     // Farcaster cast text
                     const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
