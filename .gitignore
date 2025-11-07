@@ -81,3 +81,9 @@ scripts/admin/
 
 # Windows junk
 nul
+
+# Convex config (contains deployment names)
+.convex/
+
+# Scripts with hardcoded keys (not needed for production)
+scripts/
