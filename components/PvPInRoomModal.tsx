@@ -8,6 +8,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexPvPService, type GameRoom } from '@/lib/convex-pvp';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface Card {
   tokenId: string;
@@ -129,8 +130,7 @@ export function PvPInRoomModal({
               if (nfts.length === 0) {
                 return (
                   <div className="mt-6 text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent mb-4"></div>
-                    <p className="text-vintage-burnt-gold">Loading your cards...</p>
+                    <LoadingSpinner size="lg" variant="purple" text="Loading your cards..." />
                   </div>
                 );
               }
@@ -247,21 +247,21 @@ export function PvPInRoomModal({
 
               return (
                 <div className="mt-4 text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent mb-2"></div>
-                  <p className="text-yellow-400 font-semibold">
-                    {playerReady && !opponentReady
+                  <LoadingSpinner
+                    size="md"
+                    variant="gold"
+                    text={playerReady && !opponentReady
                       ? (t('waitingForOpponent') || 'Waiting for opponent...')
                       : (t('waitingForBothPlayers') || 'Starting battle...')
                     }
-                  </p>
+                  />
                 </div>
               );
             })()}
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-yellow-500 border-t-transparent mb-4"></div>
-            <p className="text-vintage-burnt-gold">{t('loading') || 'Loading room...'}</p>
+            <LoadingSpinner size="lg" variant="gold" text={t('loading') || 'Loading room...'} />
           </div>
         )}
       </div>

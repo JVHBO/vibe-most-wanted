@@ -11,6 +11,7 @@ import { getUserBadges } from '@/lib/badges';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAccount } from 'wagmi';
 import FoilCardEffect from '@/components/FoilCardEffect';
+import { CardLoadingSpinner } from '@/components/LoadingSpinner';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -1046,10 +1047,7 @@ export default function ProfilePage() {
           )}
         </div>
         {loadingNFTs ? (
-          <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mb-4"></div>
-            <p className="text-gray-400">Loading cards...</p>
-          </div>
+          <CardLoadingSpinner text="Loading cards..." />
         ) : nfts.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
             <p className="text-gray-400">{t('noCardsInCollection')}</p>

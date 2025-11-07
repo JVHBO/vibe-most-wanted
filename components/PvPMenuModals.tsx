@@ -13,6 +13,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexPvPService } from '@/lib/convex-pvp';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface UnlockedDifficulties {
   has: (difficulty: string) => boolean;
@@ -382,7 +383,7 @@ export function PvPMenuModals({
         <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold">
           <div className="text-center">
             <div className="mb-6">
-              <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-vintage-gold border-t-transparent"></div>
+              <LoadingSpinner size="xl" variant="gold" />
             </div>
             <h2 className="text-2xl font-display font-bold text-vintage-gold mb-2">
               {t('searching')}

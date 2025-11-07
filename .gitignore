@@ -87,3 +87,6 @@ nul
 
 # Scripts with hardcoded keys (not needed for production)
 scripts/
+
+# Internal documentation (future plans, internal info - keep private)
+internal-docs/
