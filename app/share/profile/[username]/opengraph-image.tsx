@@ -11,6 +11,39 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
 
+  // Try to fetch PFP from Convex
+  let pfpUrl = '';
+  try {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+    const response = await fetch(`${convexUrl}/api/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: 'profiles:getProfileByUsername',
+        args: { username: username.toLowerCase() },
+        format: 'json',
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+      pfpUrl = data.value?.twitterProfileImageUrl || '';
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+
+  // If no PFP, use DiceBear as fallback
+  if (!pfpUrl) {
+    pfpUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(username)}`;
+  }
+
   return new ImageResponse(
     (
       <div
@@ -48,25 +81,18 @@ export default async function Image({ params }: { params: Promise<{ username: st
             zIndex: 1,
           }}
         >
-          {/* Avatar with initials */}
-          <div
+          {/* Avatar */}
+          <img
+            src={pfpUrl}
             style={{
               width: '180px',
               height: '180px',
               borderRadius: '50%',
               border: '6px solid #FFD700',
               boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
-              background: 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '72px',
-              fontWeight: 900,
-              color: '#121212',
+              objectFit: 'cover',
             }}
-          >
-            {username.substring(0, 2).toUpperCase()}
-          </div>
+          />
 
           {/* Username */}
           <div
