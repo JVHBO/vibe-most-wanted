@@ -68,7 +68,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
   };
 
   const finalPfpUrl = proxyUrl(pfpUrl);
-  const backgroundUrl = 'https://vibe-most-wanted.vercel.app/fundo1.jpg';
+  const backgroundUrl = 'https://www.vibemostwanted.xyz/profile-bg.jpg';
 
   return new ImageResponse(
     (
