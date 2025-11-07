@@ -221,7 +221,7 @@ export function GamePopups({
                     castText += `\n\nDefeated ${lastBattleResult.opponentName}!`;
                   }
 
-                  castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}\n\nvibemostwanted.xyz`;
+                  castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
 
                   return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                 })()}
@@ -306,7 +306,7 @@ export function GamePopups({
                     castText += `\n\nLost to ${lastBattleResult.opponentName}`;
                   }
 
-                  castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}\n\nvibemostwanted.xyz`;
+                  castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}`;
 
                   return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                 })()}
