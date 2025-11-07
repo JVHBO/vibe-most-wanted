@@ -4,7 +4,7 @@ import SharePageClient from './SharePageClient';
 export async function generateMetadata({ params }: { params: Promise<{ matchId: string }> }): Promise<Metadata> {
   const { matchId } = await params;
 
-  // Decode match data from matchId (format: result|playerPower|opponentPower|opponentName|playerPfp|opponentPfp|playerName|type)
+  // Decode match data from matchId (format: result|playerPower|opponentPower|opponentName|playerName|type)
   const decoded = decodeURIComponent(matchId);
   // Support both old format (_) and new format (|)
   const parts = decoded.includes('|') ? decoded.split('|') : decoded.split('_');
@@ -12,8 +12,8 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
   const playerPower = parts[1] || '0';
   const opponentPower = parts[2] || '0';
   const opponentName = parts[3] || 'Opponent';
-  // parts[4] = playerPfp, parts[5] = opponentPfp, parts[6] = playerName
-  const type = parts[7] || 'pve'; // Get type from URL
+  const playerName = parts[4] || 'Player';
+  const type = parts[5] || 'pve';
 
   const isWin = result === 'win';
   const isTie = result === 'tie';
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
 
   // Explicitly set the OpenGraph image URL with cache busting
   const baseUrl = 'https://www.vibemostwanted.xyz';
-  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image?v=11`;
+  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image?v=12`;
 
   return {
     title,

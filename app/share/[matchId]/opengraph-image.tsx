@@ -22,21 +22,18 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const result = parts[0] || 'win';
     const playerPower = parts[1] || '0';
     const opponentPower = parts[2] || '0';
-    const opponentName = parts[3] || 'Opponent';
-    const playerPfpUrl = parts[4] ? decodeURIComponent(parts[4]) : '';
-    const opponentPfpUrl = parts[5] ? decodeURIComponent(parts[5]) : '';
-    const playerName = parts[6] ? decodeURIComponent(parts[6]) : 'YOU';
-    const battleType = parts[7] || 'pve'; // New: battle type from URL
+    const opponentName = parts[3] ? decodeURIComponent(parts[3]) : 'Opponent';
+    const playerName = parts[4] ? decodeURIComponent(parts[4]) : 'YOU';
+    const battleType = parts[5] || 'pve';
 
     // Check for special opponents and use their images
     const mechaUrl = 'https://www.vibemostwanted.xyz/images/mecha-george-floyd.jpg';
     const nicoUrl = 'https://www.vibemostwanted.xyz/images/nico.png';
 
-    let finalPlayerPfpUrl = playerPfpUrl;
-    let finalOpponentPfpUrl = opponentPfpUrl;
+    let finalPlayerPfpUrl = '';
+    let finalOpponentPfpUrl = '';
 
-    // Always try to fetch from Convex if we have a valid playerName (like profile OG does)
-    // This ensures we get the freshest PFP and handles cases where URL encoding fails
+    // Fetch player PFP from Convex (like profile OG does)
     if (playerName && playerName !== 'YOU' && playerName !== 'Player') {
       try {
         const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
@@ -61,7 +58,8 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
       }
     }
 
-    if (!finalOpponentPfpUrl && opponentName && opponentName !== 'Opponent') {
+    // Fetch opponent PFP from Convex (like player)
+    if (opponentName && opponentName !== 'Opponent') {
       try {
         const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
         const response = await fetch(`${convexUrl}/api/query`, {
