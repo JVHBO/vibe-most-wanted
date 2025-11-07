@@ -278,7 +278,7 @@ function AchievementsDocs() {
           Sistema de Conquistas
         </h2>
         <p className="mb-4 leading-relaxed">
-          Complete conquistas para ganhar moedas extras! Mais de <span className="text-vintage-gold font-bold">302.000 moedas</span> disponíveis através de <span className="text-vintage-gold font-bold">64 conquistas</span>.
+          Complete conquistas para ganhar moedas extras! Mais de <span className="text-vintage-gold font-bold">302.000 moedas</span> disponíveis através de <span className="text-vintage-gold font-bold">63 conquistas</span>.
         </p>
       </div>
 
@@ -306,7 +306,6 @@ function AchievementsDocs() {
           <p className="text-sm mb-3 leading-relaxed">Colete cartas em condições pristinas</p>
           <ul className="list-disc list-inside space-y-1.5 text-xs leading-relaxed">
             <li>Pristine Collector (1) - 300 moedas</li>
-            <li>Mint Collector (1) - 250 moedas</li>
             <li>Pristine Hoarder (10) - 1.000 moedas</li>
             <li>Pristine Master (50) - 5.000 moedas</li>
             <li>Pristine Legend (100) - 15.000 moedas</li>
@@ -331,7 +330,7 @@ function AchievementsDocs() {
             <NextImage src="/images/icons/stats.svg" alt="Progressive" width={20} height={20} />
             Conquistas Progressivas
           </h3>
-          <p className="text-sm leading-relaxed">39 conquistas baseadas em milestones de coleção (5, 10, 25, 50, 100, 250, 500 cartas)</p>
+          <p className="text-sm leading-relaxed">48 conquistas baseadas em milestones de coleção - 6 por categoria (Common, Rare, Epic, Legendary, Mythic, Pristine, Standard Foil, Prize Foil)</p>
         </div>
       </div>
     </div>
@@ -530,9 +529,9 @@ function FAQDocs() {
         <div className="bg-vintage-deep-black/60 border-2 border-vintage-gold/20 p-5 rounded-lg hover:border-vintage-gold/40 transition-colors">
           <h3 className="text-lg font-display font-bold mb-2 text-vintage-gold">Posso perder moedas jogando?</h3>
           <p className="text-sm leading-relaxed">
-            Sim. Em partidas <strong>PvP ranqueadas</strong>, você perde 20 moedas se for derrotado.
-            Em <strong>PvE</strong> e <strong>Modo Ataque</strong>, você também perde 20 moedas por derrota.
-            Por isso é importante escolher bem suas cartas!
+            Sim, mas apenas em modos competitivos. Em <strong>PvP ranqueadas</strong> e <strong>Modo Ataque</strong>, você perde 20 moedas por derrota.
+            Em <strong>PvE</strong> (contra IA), você <strong className="text-green-400">não perde moedas</strong> - apenas não ganha nada se perder.
+            Por isso PvE é ótimo para treinar sem riscos!
           </p>
         </div>
 
