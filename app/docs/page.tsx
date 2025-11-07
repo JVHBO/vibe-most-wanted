@@ -1,23 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
-type DocSection = "economy" | "inbox" | "battles" | "achievements" | "quests";
+type DocSection = "economy" | "battles" | "achievements" | "quests";
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState<DocSection>("economy");
 
   const sections = [
-    { id: "economy" as DocSection, label: "💰 Economia", icon: "💰" },
-    { id: "inbox" as DocSection, label: "📥 Inbox de Moedas", icon: "📥" },
-    { id: "battles" as DocSection, label: "⚔️ Batalhas", icon: "⚔️" },
-    { id: "achievements" as DocSection, label: "🏆 Conquistas", icon: "🏆" },
-    { id: "quests" as DocSection, label: "🎯 Missões", icon: "🎯" },
+    { id: "economy" as DocSection, label: "Economia", icon: "💰" },
+    { id: "battles" as DocSection, label: "Batalhas", icon: "⚔️" },
+    { id: "achievements" as DocSection, label: "Conquistas", icon: "🏆" },
+    { id: "quests" as DocSection, label: "Missões", icon: "🎯" },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-vintage-rich-black via-vintage-deep-black to-vintage-rich-black p-4">
       <div className="max-w-6xl mx-auto">
+        {/* Back Button */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-vintage-gold hover:text-vintage-orange transition mb-6"
+        >
+          <span className="text-xl">←</span>
+          <span>Voltar ao Jogo</span>
+        </Link>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-vintage-gold mb-2">
@@ -56,7 +65,6 @@ export default function DocsPage() {
           <div className="lg:col-span-3">
             <div className="bg-vintage-deep-black/50 border border-vintage-gold/30 rounded-lg p-6">
               {activeSection === "economy" && <EconomyDocs />}
-              {activeSection === "inbox" && <InboxDocs />}
               {activeSection === "battles" && <BattlesDocs />}
               {activeSection === "achievements" && <AchievementsDocs />}
               {activeSection === "quests" && <QuestsDocs />}
@@ -141,77 +149,6 @@ function EconomyDocs() {
             <li>🔥 Sequência de 5 vitórias: +300 moedas</li>
             <li>🔥 Sequência de 10 vitórias: +750 moedas</li>
             <li>🏆 Recompensas semanais do Leaderboard (até 1.000 moedas)</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InboxDocs() {
-  return (
-    <div className="space-y-6 text-vintage-gold/90">
-      <div>
-        <h2 className="text-2xl font-bold text-vintage-gold mb-4">
-          📥 Sistema de Inbox de Moedas
-        </h2>
-        <p className="mb-4">
-          O Inbox permite que você acumule suas recompensas e as colete quando
-          quiser, ao invés de recebê-las imediatamente após cada batalha.
-        </p>
-      </div>
-
-      <div>
-        <h3 className="text-xl font-bold text-vintage-gold mb-3">
-          Como Funciona
-        </h3>
-        <div className="space-y-3">
-          <div className="bg-vintage-deep-black/30 p-4 rounded-lg">
-            <h4 className="font-bold mb-2">1️⃣ Ganhe uma Batalha</h4>
-            <p className="text-sm">
-              Após vencer uma batalha PvE, PvP, ou Ataque, você verá uma tela
-              de escolha com duas opções.
-            </p>
-          </div>
-
-          <div className="bg-vintage-deep-black/30 p-4 rounded-lg">
-            <h4 className="font-bold mb-2">2️⃣ Escolha Como Receber</h4>
-            <ul className="list-disc list-inside space-y-1 text-sm">
-              <li>
-                <strong>💰 Coletar Agora:</strong> As moedas vão direto para
-                seu saldo disponível
-              </li>
-              <li>
-                <strong>📥 Guardar para Depois:</strong> As moedas vão para seu
-                Inbox
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-vintage-deep-black/30 p-4 rounded-lg">
-            <h4 className="font-bold mb-2">3️⃣ Colete do Inbox Quando Quiser</h4>
-            <p className="text-sm mb-2">
-              Clique no ícone 💰 no topo da tela para ver seu Inbox. Quando
-              estiver pronto, colete todas as moedas de uma vez!
-            </p>
-            <p className="text-xs text-vintage-gold/60">
-              💡 As moedas ficam seguras no Inbox até você decidir coletá-las
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-xl font-bold text-vintage-gold mb-3">
-          ✨ Vantagens do Inbox
-        </h3>
-        <div className="bg-vintage-deep-black/30 p-4 rounded-lg">
-          <ul className="space-y-2 text-sm">
-            <li>✅ Acumule recompensas de múltiplas batalhas</li>
-            <li>✅ Colete tudo de uma vez quando precisar</li>
-            <li>✅ Visualize facilmente quanto você acumulou</li>
-            <li>✅ Controle total sobre quando usar suas moedas</li>
-            <li>✅ Notificação visual quando há moedas no Inbox</li>
           </ul>
         </div>
       </div>

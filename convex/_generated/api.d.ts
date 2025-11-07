@@ -13,6 +13,7 @@ import type * as achievements from "../achievements.js";
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as backup from "../backup.js";
+import type * as coinsInbox from "../coinsInbox.js";
 import type * as crons from "../crons.js";
 import type * as cryptoActions from "../cryptoActions.js";
 import type * as economy from "../economy.js";
@@ -25,7 +26,9 @@ import type * as missions from "../missions.js";
 import type * as notifications from "../notifications.js";
 import type * as profiles from "../profiles.js";
 import type * as quests from "../quests.js";
+import type * as rewardsChoice from "../rewardsChoice.js";
 import type * as rooms from "../rooms.js";
+import type * as scheduledTips from "../scheduledTips.js";
 import type * as utils from "../utils.js";
 import type * as vbmsClaim from "../vbmsClaim.js";
 
@@ -49,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   auth: typeof auth;
   backup: typeof backup;
+  coinsInbox: typeof coinsInbox;
   crons: typeof crons;
   cryptoActions: typeof cryptoActions;
   economy: typeof economy;
@@ -61,7 +65,9 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   profiles: typeof profiles;
   quests: typeof quests;
+  rewardsChoice: typeof rewardsChoice;
   rooms: typeof rooms;
+  scheduledTips: typeof scheduledTips;
   utils: typeof utils;
   vbmsClaim: typeof vbmsClaim;
 }>;
