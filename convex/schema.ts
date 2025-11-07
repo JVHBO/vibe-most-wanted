@@ -244,6 +244,12 @@ export default defineSchema({
   })
     .index("by_fid", ["fid"]),
 
+  // Tip Rotation State (tracks which tip to send next)
+  tipRotationState: defineTable({
+    currentTipIndex: v.number(), // Index of the next tip to send
+    lastSentAt: v.number(), // Timestamp of last tip sent
+  }),
+
   // Future: Betting System (for Web3 integration)
   bets: defineTable({
     // Bet Info

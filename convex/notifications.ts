@@ -248,3 +248,134 @@ export const sendDailyLoginReminder = internalMutation({
     }
   },
 });
+
+// ============================================================================
+// PERIODIC GAMING TIPS
+// ============================================================================
+
+// Array of gaming tips to rotate through
+const GAMING_TIPS = [
+  {
+    title: "💡 VIBE Most Wanted Tip",
+    body: "Did you know? Playing in Chinese (中文) gives you more coins AND changes the music! Try it now! 🎵"
+  },
+  {
+    title: "🎯 Pro Tip",
+    body: "Attack players from the leaderboard to steal their coins! The higher their rank, the bigger the reward! 👑"
+  },
+  {
+    title: "🛡️ Defense Strategy",
+    body: "Set up your Defense Deck to protect your coins when offline! Choose your 5 best cards wisely! 🃏"
+  },
+  {
+    title: "⚡ Power Boost Tip",
+    body: "Open more packs to get stronger cards! Higher power = more wins = more coins! 💰"
+  },
+  {
+    title: "🎮 PvP Master Tip",
+    body: "Challenge other players in PvP rooms for epic battles! Win or lose, you always earn coins! 🏆"
+  },
+  {
+    title: "💎 Daily Rewards",
+    body: "Log in every day to claim your daily coins! The more you play, the more you earn! 🎁"
+  },
+  {
+    title: "🃏 Card Collection Tip",
+    body: "Collect all rare cards to dominate battles! Each card has unique power - find your favorites! ✨"
+  },
+  {
+    title: "🎵 Music Easter Egg",
+    body: "Switch languages to discover different music tracks! Each language has its own vibe! 🌍"
+  },
+];
+
+/**
+ * Send a periodic gaming tip to all users (called by cron job)
+ * Rotates through tips to keep them fresh
+ */
+export const sendPeriodicTip = internalMutation({
+  handler: async (ctx) => {
+    try {
+      console.log("💡 Starting periodic tip notification...");
+
+      // Get all notification tokens
+      const tokens = await ctx.db.query("notificationTokens").collect();
+
+      if (tokens.length === 0) {
+        console.log("⚠️ No notification tokens found");
+        return { sent: 0, failed: 0, total: 0 };
+      }
+
+      // Get or create tip rotation state
+      let tipState = await ctx.db
+        .query("tipRotationState")
+        .first();
+
+      if (!tipState) {
+        // Initialize tip state
+        tipState = await ctx.db.insert("tipRotationState", {
+          currentTipIndex: 0,
+          lastSentAt: Date.now(),
+        });
+        tipState = await ctx.db.get(tipState);
+      }
+
+      // Get current tip
+      const currentTip = GAMING_TIPS[tipState!.currentTipIndex % GAMING_TIPS.length];
+
+      // Send to all users
+      let sent = 0;
+      let failed = 0;
+
+      for (const tokenData of tokens) {
+        try {
+          const payload = {
+            notificationId: `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`,
+            title: currentTip.title,
+            body: currentTip.body,
+            tokens: [tokenData.token],
+            targetUrl: "https://www.vibemostwanted.xyz",
+          };
+
+          const response = await fetch(tokenData.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (!result.invalidTokens?.includes(tokenData.token) &&
+                !result.rateLimitedTokens?.includes(tokenData.token)) {
+              sent++;
+            } else {
+              failed++;
+            }
+          } else {
+            failed++;
+          }
+        } catch (error) {
+          console.error(`Failed to send to ${tokenData.fid}:`, error);
+          failed++;
+        }
+      }
+
+      // Update tip rotation state
+      await ctx.db.patch(tipState!._id, {
+        currentTipIndex: (tipState!.currentTipIndex + 1) % GAMING_TIPS.length,
+        lastSentAt: Date.now(),
+      });
+
+      console.log(`📊 Periodic tip sent: ${sent} successful, ${failed} failed out of ${tokens.length} total`);
+      console.log(`📝 Sent tip ${tipState!.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
+
+      return { sent, failed, total: tokens.length, tipIndex: tipState!.currentTipIndex };
+
+    } catch (error: any) {
+      console.error("❌ Error in sendPeriodicTip:", error);
+      throw error;
+    }
+  },
+});
