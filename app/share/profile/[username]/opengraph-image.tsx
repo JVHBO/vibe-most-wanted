@@ -39,10 +39,14 @@ export default async function Image({ params }: { params: Promise<{ username: st
     // Ignore errors
   }
 
-  // If no PFP, use DiceBear as fallback
-  if (!pfpUrl) {
-    pfpUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(username)}`;
-  }
+  // Convert external URLs to use proxy for Edge Runtime compatibility
+  const proxyUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
+    return `https://vibe-most-wanted.vercel.app/api/proxy-image?url=${encodeURIComponent(url)}`;
+  };
+
+  pfpUrl = proxyUrl(pfpUrl);
 
   return new ImageResponse(
     (
@@ -81,18 +85,20 @@ export default async function Image({ params }: { params: Promise<{ username: st
             zIndex: 1,
           }}
         >
-          {/* Avatar */}
-          <img
-            src={pfpUrl}
-            style={{
-              width: '180px',
-              height: '180px',
-              borderRadius: '50%',
-              border: '6px solid #FFD700',
-              boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
-              objectFit: 'cover',
-            }}
-          />
+          {/* Avatar - Only show if URL exists */}
+          {pfpUrl && (
+            <img
+              src={pfpUrl}
+              style={{
+                width: '180px',
+                height: '180px',
+                borderRadius: '50%',
+                border: '6px solid #FFD700',
+                boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
+                objectFit: 'cover',
+              }}
+            />
+          )}
 
           {/* Username */}
           <div
