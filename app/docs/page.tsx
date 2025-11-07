@@ -92,7 +92,7 @@ export default function DocsPage() {
           <div className="lg:col-span-3">
             <div className="bg-vintage-charcoal/80 backdrop-blur-lg border-2 border-vintage-gold/30 rounded-xl p-6 shadow-gold">
               {activeSection === "economy" && <EconomyDocs t={t} />}
-              {activeSection === "battles" && <BattlesDocs t={t} />}
+              {activeSection === "battles" && <BattlesDocs t={t} getCoinsWord={getCoinsWord} />}
               {activeSection === "achievements" && <AchievementsDocs t={t} />}
               {activeSection === "quests" && <QuestsDocs t={t} />}
               {activeSection === "cards" && <CardsDocs t={t} />}
@@ -188,7 +188,7 @@ function EconomyDocs({ t }: { t: (key: DocsTranslationKey) => string }) {
 }
 
 // Battles Section
-function BattlesDocs({ t }: { t: (key: DocsTranslationKey) => string }) {
+function BattlesDocs({ t, getCoinsWord }: { t: (key: DocsTranslationKey) => string; getCoinsWord: () => string }) {
   return (
     <div className="space-y-6 text-vintage-ice font-modern">
       <div>
