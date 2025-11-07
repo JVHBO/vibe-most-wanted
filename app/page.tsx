@@ -3985,6 +3985,9 @@ export default function TCGPage() {
             <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
+          {/* Unified Inbox - Both VBMS Tokens and Coins */}
+          {userProfile && <CoinsInboxDisplay />}
+
           <Link
             href="/docs"
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
@@ -4152,14 +4155,11 @@ export default function TCGPage() {
                           {(playerEconomy.coins || 0).toLocaleString()}
                         </span>
                         <span className="text-vintage-burnt-gold font-modern text-[8px] md:text-[10px] leading-none mt-0.5">
-                          VBMS
+                          $TESTVBMS
                         </span>
                       </div>
                     </div>
                   )}
-
-                  {/* Unified Inbox - Both VBMS Tokens and Coins */}
-                  {userProfile && <CoinsInboxDisplay />}
 
                   <button
                     onClick={disconnectWallet}
@@ -4386,7 +4386,13 @@ export default function TCGPage() {
                 {nfts.length === 0 && status !== 'fetching' && (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">∅</div>
-                    <p className="text-vintage-burnt-gold">{t('noNfts')}</p>
+                    <p className="text-vintage-burnt-gold mb-6">{t('noNfts')}</p>
+                    <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-xl p-4 max-w-md mx-auto">
+                      <p className="text-sm text-vintage-gold font-semibold mb-2">⏱️ NEWLY OPENED CARDS TAKE TIME TO APPEAR</p>
+                      <p className="text-xs text-vintage-burnt-gold">
+                        Cards you just opened may take 5-10 minutes to show up on the site. This is because metadata needs to be indexed. This is normal and always happens! Refresh the page after a few minutes if your new cards don't appear immediately.
+                      </p>
+                    </div>
                   </div>
                 )}
 
