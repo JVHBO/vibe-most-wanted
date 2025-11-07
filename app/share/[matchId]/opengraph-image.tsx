@@ -24,6 +24,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const playerPfpUrl = parts[4] ? decodeURIComponent(parts[4]) : '';
     const opponentPfpUrl = parts[5] ? decodeURIComponent(parts[5]) : '';
     const playerName = parts[6] ? decodeURIComponent(parts[6]) : 'YOU';
+    const battleType = parts[7] || 'pve'; // New: battle type from URL
 
     // Check for special opponents and use their images
     const mechaUrl = 'https://www.vibemostwanted.xyz/images/mecha-george-floyd.jpg';
