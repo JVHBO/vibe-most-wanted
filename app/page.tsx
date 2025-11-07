@@ -3971,13 +3971,13 @@ export default function TCGPage() {
             <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
-          <button
-            onClick={() => setShowTutorial(true)}
-            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
-            title={t('tutorial')}
+          <Link
+            href="/docs"
+            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
+            title="Documentação"
           >
             <NextImage src="/images/icons/help.svg" alt="Help" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
-          </button>
+          </Link>
         </div>
       </header>
 
