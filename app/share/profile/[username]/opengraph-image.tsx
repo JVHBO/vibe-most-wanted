@@ -70,11 +70,25 @@ export default async function Image({ params }: { params: Promise<{ username: st
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #1a1a1a 0%, #121212 100%)',
+          background: '#000',
           position: 'relative',
         }}
       >
-        {/* Background glow */}
+        {/* Background image */}
+        <img
+          src="https://vibe-most-wanted.vercel.app/profile-bg.jpg"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center',
+          }}
+        />
+
+        {/* Dark overlay */}
         <div
           style={{
             position: 'absolute',
@@ -82,7 +96,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'radial-gradient(circle at 50% 40%, rgba(255, 215, 0, 0.08) 0%, transparent 50%)',
+            background: 'rgba(0, 0, 0, 0.7)',
             display: 'flex',
           }}
         />
