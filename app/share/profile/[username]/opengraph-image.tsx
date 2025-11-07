@@ -11,36 +11,13 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
 
-  // Fetch profile data from API route (which calls Convex)
-  let pfpUrl = '';
-  let totalPower = 0;
-  let totalWins = 0;
-  let totalLosses = 0;
-  let winRate = '0';
-
-  try {
-    const response = await fetch(`https://www.vibemostwanted.xyz/api/profile-data/${username}`);
-    if (response.ok) {
-      const data = await response.json();
-      pfpUrl = data.pfpUrl || '';
-      totalPower = data.totalPower || 0;
-      totalWins = data.totalWins || 0;
-      totalLosses = data.totalLosses || 0;
-      winRate = data.winRate || '0';
-    }
-  } catch (e) {
-    // Use defaults on error
-  }
-
-  // Convert external URLs to use proxy
-  const proxyUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
-    if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
-    return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
-  };
-
-  pfpUrl = proxyUrl(pfpUrl);
+  // Simplified version - no Convex fetch (causing issues in Edge Runtime)
+  // Just show username and background for now
+  const pfpUrl = '';
+  const totalPower = 0;
+  const totalWins = 0;
+  const totalLosses = 0;
+  const winRate = '0';
 
   return new ImageResponse(
     (
