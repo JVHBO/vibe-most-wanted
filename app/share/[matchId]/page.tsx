@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
 
   // Explicitly set the OpenGraph image URL with cache busting
   const baseUrl = 'https://www.vibemostwanted.xyz';
-  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image?v=12`;
+  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image?v=13`;
 
   return {
     title,
