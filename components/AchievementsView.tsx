@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import NextImage from "next/image";
 import { useAchievements } from "../hooks/useAchievements";
 
 interface AchievementsViewProps {
@@ -97,7 +98,7 @@ export default function AchievementsView({
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-2 flex items-center gap-3 text-vintage-gold">
-            🏆 Achievements
+            <NextImage src="/images/icons/achievement.svg" alt="Achievement" width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" /> Achievements
           </h1>
           <p className="text-vintage-burnt-gold font-modern">
             Collect cards and unlock achievements to earn $TESTVBMS coins
@@ -124,7 +125,7 @@ export default function AchievementsView({
 
             {/* Coins to Claim */}
             <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
-              <div className="text-4xl mb-2">💰</div>
+              <NextImage src="/images/icons/coins.svg" alt="Coins" width={48} height={48} />
               <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.unclaimedRewards}</div>
               <div className="text-sm text-vintage-burnt-gold font-modern">Coins to Claim</div>
               <div className="text-xs text-vintage-gold/70 mt-2 font-modern">
@@ -134,14 +135,14 @@ export default function AchievementsView({
 
             {/* Rewards Claimed */}
             <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
-              <div className="text-4xl mb-2">🎯</div>
+              <NextImage src="/images/icons/mission.svg" alt="Mission" width={48} height={48} />
               <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.claimedCount}</div>
               <div className="text-sm text-vintage-burnt-gold font-modern">Rewards Claimed</div>
             </div>
 
             {/* Completion % */}
             <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
-              <div className="text-4xl mb-2">⭐</div>
+              <NextImage src="/images/icons/achievement.svg" alt="Achievement" width={48} height={48} />
               <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.completionPercentage}%</div>
               <div className="text-sm text-vintage-burnt-gold font-modern">Completion</div>
             </div>
@@ -155,7 +156,7 @@ export default function AchievementsView({
             disabled={isClaiming || !unclaimed || unclaimed.length === 0}
             className="px-6 py-3 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark rounded-lg font-bold font-modern text-vintage-black hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-gold"
           >
-            💰 Claim All ({stats?.unclaimedCount || 0})
+            <NextImage src="/images/icons/coins.svg" alt="Coins" width={20} height={20} className="inline mr-2" /> Claim All ({stats?.unclaimedCount || 0})
           </button>
 
           <button
@@ -170,13 +171,13 @@ export default function AchievementsView({
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-6">
           {[
-            { id: "all", label: "All", icon: "🎯" },
-            { id: "unclaimed", label: "Unclaimed", icon: "💰" },
-            { id: "completed", label: "Completed", icon: "✅" },
-            { id: "rarity", label: "Rarity", icon: "💎" },
-            { id: "wear", label: "Pristine", icon: "✨" },
-            { id: "foil", label: "Foil", icon: "🎴" },
-            { id: "progressive", label: "Progressive", icon: "📊" },
+            { id: "all", label: "All", icon: "/images/icons/mission.svg" },
+            { id: "unclaimed", label: "Unclaimed", icon: "/images/icons/coins.svg" },
+            { id: "completed", label: "Completed", icon: "/images/icons/achievement.svg" },
+            { id: "rarity", label: "Rarity", icon: "/images/icons/cards.svg" },
+            { id: "wear", label: "Pristine", icon: "/images/icons/victory.svg" },
+            { id: "foil", label: "Foil", icon: "/images/icons/cards.svg" },
+            { id: "progressive", label: "Progressive", icon: "/images/icons/stats.svg" },
           ].map((f) => (
             <button
               key={f.id}
@@ -187,7 +188,7 @@ export default function AchievementsView({
                   : "bg-vintage-charcoal/60 border border-vintage-gold/20 text-vintage-gold hover:border-vintage-gold/50"
               }`}
             >
-              {f.icon} {f.label}
+              <NextImage src={f.icon} alt={f.label} width={16} height={16} className="inline mr-2" /> {f.label}
             </button>
           ))}
         </div>
@@ -244,8 +245,8 @@ export default function AchievementsView({
                         <span className="text-vintage-ice">
                           {progress}/{target}
                         </span>
-                        <span className="text-vintage-gold font-bold">
-                          💰 {achievement.reward} coins
+                        <span className="text-vintage-gold font-bold flex items-center gap-1">
+                          <NextImage src="/images/icons/coins.svg" alt="Coins" width={16} height={16} /> {achievement.reward} coins
                         </span>
                       </div>
                       <div className="bg-vintage-black/50 rounded-full h-3 overflow-hidden border border-vintage-gold/20">
@@ -267,7 +268,7 @@ export default function AchievementsView({
                         disabled={isClaiming}
                         className="w-full py-2 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black rounded-lg font-bold font-modern hover:scale-105 transition-transform disabled:opacity-50 shadow-gold"
                       >
-                        💰 Claim {achievement.reward} Coins
+                        <NextImage src="/images/icons/coins.svg" alt="Coins" width={16} height={16} className="inline mr-2" /> Claim {achievement.reward} Coins
                       </button>
                     )}
                   </div>
@@ -279,7 +280,9 @@ export default function AchievementsView({
         {/* Empty State */}
         {filteredAchievements.length === 0 && (
           <div className="text-center py-12 bg-vintage-charcoal/60 rounded-2xl border-2 border-vintage-gold/20">
-            <div className="text-6xl mb-4">🏆</div>
+            <div className="mb-4 flex justify-center">
+              <NextImage src="/images/icons/achievement.svg" alt="Achievement" width={64} height={64} />
+            </div>
             <p className="text-xl text-vintage-burnt-gold font-modern">
               No achievements match this filter
             </p>

@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import NextImage from "next/image";
 import AchievementsView from "../../components/AchievementsView";
+import { RewardChoiceModal } from "../../components/RewardChoiceModal";
+import { CoinsInboxModal } from "../../components/CoinsInboxModal";
 
 /**
  * 🧪 TEST PAGE - No Wallet Required
@@ -25,7 +28,24 @@ const mockNFTs = [
 const mockAddress = "0x1234567890123456789012345678901234567890";
 
 export default function TestPage() {
-  const [currentView, setCurrentView] = useState<'home' | 'missions' | 'achievements' | 'leaderboard'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'missions' | 'achievements' | 'leaderboard' | 'modals'>('home');
+
+  // Modal states
+  const [showRewardChoice, setShowRewardChoice] = useState(false);
+  const [showCoinsInbox, setShowCoinsInbox] = useState(false);
+  const [rewardAmount, setRewardAmount] = useState(150);
+
+  // Customization states for testing
+  const [inboxAmount, setInboxAmount] = useState(450);
+  const [currentBalance, setCurrentBalance] = useState(1250);
+  const [lifetimeEarned, setLifetimeEarned] = useState(5800);
+
+  // Mock inbox data (now dynamic)
+  const mockInboxData = {
+    coinsInbox: inboxAmount,
+    coins: currentBalance,
+    lifetimeEarned: lifetimeEarned,
+  };
 
   return (
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice">
@@ -80,6 +100,16 @@ export default function TestPage() {
             >
               ⭐ Leaderboard
             </button>
+            <button
+              onClick={() => setCurrentView('modals')}
+              className={`flex-1 px-6 py-3 rounded-lg font-modern font-semibold transition-all ${
+                currentView === 'modals'
+                  ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                  : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
+              }`}
+            >
+              🎨 UI/Modals
+            </button>
           </div>
         </div>
 
@@ -133,8 +163,287 @@ export default function TestPage() {
               </p>
             </div>
           )}
+
+          {currentView === 'modals' && (
+            <div className="space-y-6">
+              {/* Modal Testing Section */}
+              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-8">
+                <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2 text-center">
+                  🎨 UI & Modal Testing
+                </h1>
+                <p className="text-vintage-burnt-gold text-center mb-8">
+                  Test and adjust UI components, modals, and styling
+                </p>
+
+                {/* Reward Choice Modal Test */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-vintage-black/50 p-6 rounded-xl border border-vintage-gold/20">
+                    <h3 className="text-xl font-bold text-vintage-gold mb-4">💰 Reward Choice Modal</h3>
+                    <p className="text-vintage-burnt-gold text-sm mb-4">
+                      Modal que aparece após vitórias. Teste com diferentes valores de moedas.
+                    </p>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <label className="text-vintage-gold text-sm flex items-center justify-between">
+                          <span>Moedas: {rewardAmount}</span>
+                        </label>
+                        <input
+                          type="range"
+                          min="10"
+                          max="1000"
+                          step="10"
+                          value={rewardAmount}
+                          onChange={(e) => setRewardAmount(Number(e.target.value))}
+                          className="w-full h-2 bg-vintage-deep-black rounded-lg appearance-none cursor-pointer accent-vintage-gold"
+                        />
+                        <div className="flex gap-2">
+                          {[50, 150, 500, 1000].map((amount) => (
+                            <button
+                              key={amount}
+                              onClick={() => setRewardAmount(amount)}
+                              className="flex-1 bg-vintage-deep-black/50 text-vintage-gold text-xs py-1 rounded border border-vintage-gold/20 hover:border-vintage-gold/50 transition"
+                            >
+                              {amount}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowRewardChoice(true)}
+                        className="w-full bg-gradient-to-r from-vintage-gold to-vintage-orange text-vintage-deep-black font-bold py-3 rounded-lg hover:scale-105 transition"
+                      >
+                        Abrir Modal (PvE)
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowRewardChoice(true);
+                        }}
+                        className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold py-3 rounded-lg hover:scale-105 transition"
+                      >
+                        Abrir Modal (PvP)
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-vintage-black/50 p-6 rounded-xl border border-vintage-gold/20">
+                    <h3 className="text-xl font-bold text-vintage-gold mb-4">📥 Coins Inbox Modal</h3>
+                    <p className="text-vintage-burnt-gold text-sm mb-4">
+                      Modal do inbox de moedas. Teste com diferentes valores.
+                    </p>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <label className="text-vintage-gold text-xs">Inbox: {inboxAmount}</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="10000"
+                          step="50"
+                          value={inboxAmount}
+                          onChange={(e) => setInboxAmount(Number(e.target.value))}
+                          className="w-full h-2 bg-vintage-deep-black rounded-lg appearance-none cursor-pointer accent-vintage-gold"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-vintage-gold text-xs">Saldo Atual: {currentBalance}</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="50000"
+                          step="100"
+                          value={currentBalance}
+                          onChange={(e) => setCurrentBalance(Number(e.target.value))}
+                          className="w-full h-2 bg-vintage-deep-black rounded-lg appearance-none cursor-pointer accent-vintage-gold"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-vintage-gold text-xs">Total Ganho: {lifetimeEarned}</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100000"
+                          step="500"
+                          value={lifetimeEarned}
+                          onChange={(e) => setLifetimeEarned(Number(e.target.value))}
+                          className="w-full h-2 bg-vintage-deep-black rounded-lg appearance-none cursor-pointer accent-vintage-gold"
+                        />
+                      </div>
+                      <button
+                        onClick={() => setShowCoinsInbox(true)}
+                        className="w-full bg-gradient-to-r from-vintage-gold to-vintage-orange text-vintage-deep-black font-bold py-3 rounded-lg hover:scale-105 transition"
+                      >
+                        Abrir Inbox Modal
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Icon Standardization Section */}
+                <div className="bg-vintage-black/50 p-6 rounded-xl border border-vintage-gold/20 mb-8">
+                  <h3 className="text-xl font-bold text-vintage-gold mb-4">🎭 Padronização de Ícones</h3>
+                  <p className="text-vintage-burnt-gold text-sm mb-4">
+                    Ícones padrão usados no jogo. Manter consistência é importante!
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/coins.svg" alt="Coins" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Coins/Money</p>
+                      <p className="text-vintage-gold/50 text-xs">Moedas</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/battle.svg" alt="Battle" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Battle/Fight</p>
+                      <p className="text-vintage-gold/50 text-xs">Batalhas</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/achievement.svg" alt="Achievement" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Achievement</p>
+                      <p className="text-vintage-gold/50 text-xs">Conquistas</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/mission.svg" alt="Mission" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Mission/Quest</p>
+                      <p className="text-vintage-gold/50 text-xs">Missões</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/stats.svg" alt="Stats" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Stats/Ranking</p>
+                      <p className="text-vintage-gold/50 text-xs">Estatísticas</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/settings.svg" alt="Settings" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Settings</p>
+                      <p className="text-vintage-gold/50 text-xs">Configurações</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/help.svg" alt="Help" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Help/Tutorial</p>
+                      <p className="text-vintage-gold/50 text-xs">Ajuda</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/notification.svg" alt="Notifications" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Notifications</p>
+                      <p className="text-vintage-gold/50 text-xs">Notificações</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/inbox.svg" alt="Inbox" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Inbox</p>
+                      <p className="text-vintage-gold/50 text-xs">Caixa de entrada</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/victory.svg" alt="Victory" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Victory</p>
+                      <p className="text-vintage-gold/50 text-xs">Vitória</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/defeat.svg" alt="Defeat" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Defeat</p>
+                      <p className="text-vintage-gold/50 text-xs">Derrota</p>
+                    </div>
+                    <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
+                      <div className="flex justify-center mb-2">
+                        <NextImage src="/images/icons/cards.svg" alt="Cards" width={48} height={48} />
+                      </div>
+                      <p className="text-vintage-gold text-sm font-bold">Cards/NFT</p>
+                      <p className="text-vintage-gold/50 text-xs">Cartas</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Color Palette Section */}
+                <div className="bg-vintage-black/50 p-6 rounded-xl border border-vintage-gold/20">
+                  <h3 className="text-xl font-bold text-vintage-gold mb-4">🎨 Paleta de Cores</h3>
+                  <p className="text-vintage-burnt-gold text-sm mb-4">
+                    Cores do tema vintage/cassino usado no jogo.
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <div className="bg-vintage-gold h-16 rounded-lg border-2 border-vintage-gold"></div>
+                      <p className="text-vintage-gold text-sm font-bold">vintage-gold</p>
+                      <p className="text-vintage-gold/50 text-xs">#D4AF37</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-vintage-orange h-16 rounded-lg border-2 border-vintage-orange"></div>
+                      <p className="text-vintage-gold text-sm font-bold">vintage-orange</p>
+                      <p className="text-vintage-gold/50 text-xs">#FF8C42</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-vintage-burnt-gold h-16 rounded-lg border-2 border-vintage-burnt-gold"></div>
+                      <p className="text-vintage-gold text-sm font-bold">vintage-burnt-gold</p>
+                      <p className="text-vintage-gold/50 text-xs">#B8860B</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-vintage-deep-black h-16 rounded-lg border-2 border-vintage-gold/30"></div>
+                      <p className="text-vintage-gold text-sm font-bold">vintage-deep-black</p>
+                      <p className="text-vintage-gold/50 text-xs">#0F0F0F</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-vintage-charcoal h-16 rounded-lg border-2 border-vintage-gold/30"></div>
+                      <p className="text-vintage-gold text-sm font-bold">vintage-charcoal</p>
+                      <p className="text-vintage-gold/50 text-xs">#1C1C1C</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-vintage-rich-black h-16 rounded-lg border-2 border-vintage-gold/30"></div>
+                      <p className="text-vintage-gold text-sm font-bold">vintage-rich-black</p>
+                      <p className="text-vintage-gold/50 text-xs">#010101</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-vintage-ice h-16 rounded-lg border-2 border-vintage-ice"></div>
+                      <p className="text-vintage-gold text-sm font-bold">vintage-ice</p>
+                      <p className="text-vintage-gold/50 text-xs">#F5F5F5</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-red-500 h-16 rounded-lg border-2 border-red-500"></div>
+                      <p className="text-vintage-gold text-sm font-bold">Accent Red</p>
+                      <p className="text-vintage-gold/50 text-xs">Errors</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Modals */}
+      {showRewardChoice && (
+        <RewardChoiceModal
+          amount={rewardAmount}
+          source="pve"
+          onClose={() => setShowRewardChoice(false)}
+          onChoiceMade={(choice) => {
+            console.log("Choice made:", choice);
+          }}
+        />
+      )}
+
+      {showCoinsInbox && (
+        <CoinsInboxModal
+          inboxStatus={mockInboxData}
+          onClose={() => setShowCoinsInbox(false)}
+        />
+      )}
     </div>
   );
 }
