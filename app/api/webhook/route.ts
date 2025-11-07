@@ -1,34 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { devLog, devError } from '@/lib/utils/logger';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
 
-// Webhook para Farcaster Frame
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await request.json();
+    const { event, data } = body;
 
-    // Log do webhook recebido (útil para debug)
-    devLog('Farcaster webhook recebido:', body);
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+    const convex = new ConvexHttpClient(convexUrl);
 
-    // Aqui você pode processar eventos do Farcaster
-    // Por exemplo: rastrear quando usuários abrem o frame, cliques, etc.
+    if ((event === 'miniapp_added' || event === 'notifications_enabled') && data?.fid && data?.notificationDetails) {
+      const { token, url } = data.notificationDetails;
+      await convex.mutation(api.notifications.saveToken, {
+        fid: data.fid,
+        token,
+        url,
+      });
+      console.log(`✅ Token saved for FID ${data.fid}`);
+    }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Webhook recebido'
-    });
-  } catch (error) {
-    devError('Erro no webhook:', error);
-    return NextResponse.json(
-      { success: false, error: 'Erro ao processar webhook' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ Webhook error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
-
-// GET para verificar se o endpoint está ativo
-export async function GET() {
-  return NextResponse.json({
-    status: 'ok',
-    message: 'Farcaster webhook endpoint está ativo'
-  });
 }
