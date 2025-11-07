@@ -11,16 +11,6 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
 
-  const getInitials = (name: string) => {
-    return name.substring(0, 2).toUpperCase();
-  };
-
-  // Don't fetch from Convex - it's too slow for OG images
-  // Just show username and placeholder stats
-  let pfpUrl = '';
-  let stats = { totalPower: 0, wins: 0, losses: 0 };
-  let winRate = 0;
-
   return new ImageResponse(
     (
       <div
@@ -58,39 +48,25 @@ export default async function Image({ params }: { params: Promise<{ username: st
             zIndex: 1,
           }}
         >
-          {/* Avatar */}
-          {pfpUrl ? (
-            <img
-              src={pfpUrl}
-              style={{
-                width: '180px',
-                height: '180px',
-                borderRadius: '50%',
-                border: '6px solid #FFD700',
-                boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
-                objectFit: 'cover',
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: '180px',
-                height: '180px',
-                borderRadius: '50%',
-                border: '6px solid #FFD700',
-                boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
-                background: 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '72px',
-                fontWeight: 900,
-                color: '#121212',
-              }}
-            >
-              {getInitials(username)}
-            </div>
-          )}
+          {/* Avatar with initials */}
+          <div
+            style={{
+              width: '180px',
+              height: '180px',
+              borderRadius: '50%',
+              border: '6px solid #FFD700',
+              boxShadow: '0 0 40px rgba(255, 215, 0, 0.6)',
+              background: 'linear-gradient(135deg, #C9A227 0%, #FFD700 50%, #C9A227 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '72px',
+              fontWeight: 900,
+              color: '#121212',
+            }}
+          >
+            {username.substring(0, 2).toUpperCase()}
+          </div>
 
           {/* Username */}
           <div
@@ -104,102 +80,6 @@ export default async function Image({ params }: { params: Promise<{ username: st
             }}
           >
             {username}
-          </div>
-
-          {/* Stats */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '40px',
-              marginTop: '10px',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '42px',
-                  fontWeight: 900,
-                  color: '#FFD700',
-                }}
-              >
-                {stats.totalPower}
-              </div>
-              <div
-                style={{
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Power
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '42px',
-                  fontWeight: 900,
-                  color: '#FFD700',
-                }}
-              >
-                {stats.wins}
-              </div>
-              <div
-                style={{
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Wins
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '42px',
-                  fontWeight: 900,
-                  color: '#FFD700',
-                }}
-              >
-                {winRate}%
-              </div>
-              <div
-                style={{
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Win Rate
-              </div>
-            </div>
           </div>
 
           {/* Branding */}
@@ -220,9 +100,6 @@ export default async function Image({ params }: { params: Promise<{ username: st
     ),
     {
       ...size,
-      headers: {
-        'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
-      },
     }
   );
 }
