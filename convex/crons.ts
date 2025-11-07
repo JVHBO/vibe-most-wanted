@@ -75,13 +75,13 @@ const crons = cronJobs();
 /**
  * 📬 Send daily login reminder to all users
  *
- * Schedule: Every day at 12:00 UTC (noon)
+ * Schedule: Every day at 04:00 UTC (01:00 BRT)
  * Content: "💰 Daily Login Bonus! Claim your free coins!"
  * Target: All users with notification tokens enabled
  */
 crons.daily(
   "send daily login reminder",
-  { hourUTC: 12, minuteUTC: 0 },
+  { hourUTC: 4, minuteUTC: 5 },
   internal.notifications.sendDailyLoginReminder
 );
 
