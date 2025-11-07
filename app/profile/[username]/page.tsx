@@ -383,6 +383,9 @@ export default function ProfilePage() {
           }
         }
 
+        // ✅ Profile is loaded - show page immediately
+        setLoading(false);
+
         // Carrega NFTs do jogador usando o fetcher unificado (OTIMIZADO)
         setLoadingNFTs(true);
         try {
@@ -493,8 +496,6 @@ export default function ProfilePage() {
           setNfts([]);
         }
         setLoadingNFTs(false);
-
-        setLoading(false);
       } catch (err: any) {
         devError('Error loading profile:', err);
         setError(t('failedToLoadProfile'));

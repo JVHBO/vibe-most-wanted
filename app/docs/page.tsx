@@ -17,6 +17,18 @@ export default function DocsPage() {
     return (docsTranslations as any)[lang as DocsSupportedLanguage]?.[key] || (docsTranslations as any)['en'][key] || key;
   };
 
+  // Helper to get "coins" word in the current language
+  const getCoinsWord = (): string => {
+    switch (lang) {
+      case 'pt-BR': return 'moedas';
+      case 'es': return 'monedas';
+      case 'zh-CN': return '金币';
+      case 'ru': return 'монет';
+      case 'hi': return 'सिक्के';
+      default: return 'coins';
+    }
+  };
+
   const sections = [
     { id: "economy" as DocSection, label: t("economy"), icon: "/images/icons/coins.svg" },
     { id: "battles" as DocSection, label: t("battles"), icon: "/images/icons/battle.svg" },
@@ -196,11 +208,11 @@ function BattlesDocs({ t }: { t: (key: DocsTranslationKey) => string }) {
         <div className="pl-4">
           <p className="font-bold text-vintage-gold mb-2">{t("pveDifficulties")}:</p>
           <ul className="space-y-1">
-            <li>• {t("pveGey")}: +5 {lang === 'pt-BR' ? 'moedas' : lang === 'es' ? 'monedas' : lang === 'zh-CN' ? '金币' : lang === 'ru' ? 'монет' : lang === 'hi' ? 'सिक्के' : 'coins'}</li>
-            <li>• {t("pveTop")}: +10 {lang === 'pt-BR' ? 'moedas' : lang === 'es' ? 'monedas' : lang === 'zh-CN' ? '金币' : lang === 'ru' ? 'монет' : lang === 'hi' ? 'सिक्के' : 'coins'}</li>
-            <li>• {t("pveG")}: +15 {lang === 'pt-BR' ? 'moedas' : lang === 'es' ? 'monedas' : lang === 'zh-CN' ? '金币' : lang === 'ru' ? 'монет' : lang === 'hi' ? 'सिक्के' : 'coins'}</li>
-            <li>• {t("pveMid")}: +20 {lang === 'pt-BR' ? 'moedas' : lang === 'es' ? 'monedas' : lang === 'zh-CN' ? '金币' : lang === 'ru' ? 'монет' : lang === 'hi' ? 'सिक्के' : 'coins'}</li>
-            <li>• {t("pveGigachad")}: +120 {lang === 'pt-BR' ? 'moedas' : lang === 'es' ? 'monedas' : lang === 'zh-CN' ? '金币' : lang === 'ru' ? 'монет' : lang === 'hi' ? 'सिक्के' : 'coins'}</li>
+            <li>• {t("pveGey")}: +5 {getCoinsWord()}</li>
+            <li>• {t("pveTop")}: +10 {getCoinsWord()}</li>
+            <li>• {t("pveG")}: +15 {getCoinsWord()}</li>
+            <li>• {t("pveMid")}: +20 {getCoinsWord()}</li>
+            <li>• {t("pveGigachad")}: +120 {getCoinsWord()}</li>
           </ul>
         </div>
       </div>
