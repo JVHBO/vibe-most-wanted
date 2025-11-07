@@ -33,8 +33,8 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     let finalPlayerPfpUrl = '';
     let finalOpponentPfpUrl = '';
 
-    // Fetch player PFP from Convex (like profile OG does)
-    if (playerName && playerName !== 'YOU' && playerName !== 'Player') {
+    // Fetch player PFP from Convex (same logic as profile OG)
+    if (playerName) {
       try {
         const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
         const response = await fetch(`${convexUrl}/api/query`, {
@@ -58,8 +58,8 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
       }
     }
 
-    // Fetch opponent PFP from Convex (like player)
-    if (opponentName && opponentName !== 'Opponent') {
+    // Fetch opponent PFP from Convex (same logic as player)
+    if (opponentName) {
       try {
         const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
         const response = await fetch(`${convexUrl}/api/query`, {
