@@ -44,7 +44,7 @@ interface GamePopupsProps {
 
   // Loss popup
   showLossPopup: boolean;
-  setShowLossPopup: (show: boolean) => void;
+  handleCloseDefeatScreen: () => void;
 
   // Tie popup
   showTiePopup: boolean;
@@ -81,7 +81,7 @@ export function GamePopups({
   sharesRemaining,
   onShareClick,
   showLossPopup,
-  setShowLossPopup,
+  handleCloseDefeatScreen,
   showTiePopup,
   setShowTiePopup,
   tieGifLoaded,
@@ -248,7 +248,7 @@ export function GamePopups({
 
       {/* Loss Popup */}
       {showLossPopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowLossPopup(false)}>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseDefeatScreen}>
           <div className="relative flex flex-col items-center gap-4">
             <img
               src="https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26"
@@ -319,7 +319,7 @@ export function GamePopups({
               </a>
             </div>
             <button
-              onClick={() => setShowLossPopup(false)}
+              onClick={handleCloseDefeatScreen}
               className="absolute top-4 right-4 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
             >
               ×

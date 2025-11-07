@@ -979,18 +979,17 @@ export default function TCGPage() {
 
     setCurrentVictoryImage(victoryImage);
 
-    // Check if there are coins earned to show reward choice
+    // Check if there are coins earned to save for later reward choice
     if (lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0) {
-      // Show reward choice modal instead of win popup directly
+      // Save reward data to show reward choice modal AFTER victory screen closes
       setPendingReward({
         amount: lastBattleResult.coinsEarned,
         source: lastBattleResult.type,
       });
-      setShowRewardChoice(true);
-    } else {
-      // No coins earned, show regular win popup
-      setShowWinPopup(true);
     }
+
+    // Always show victory popup first
+    setShowWinPopup(true);
   };
 
   // 🎵 Handler to close victory screen and stop audio
@@ -1002,6 +1001,21 @@ export default function TCGPage() {
       victoryAudioRef.current = null;
     }
     setShowWinPopup(false);
+
+    // After closing victory screen, show reward choice modal if there are pending rewards
+    if (pendingReward && pendingReward.amount > 0) {
+      setShowRewardChoice(true);
+    }
+  };
+
+  // 🎵 Handler to close defeat screen
+  const handleCloseDefeatScreen = () => {
+    setShowLossPopup(false);
+
+    // After closing defeat screen, show reward choice modal if there are pending rewards
+    if (pendingReward && pendingReward.amount > 0) {
+      setShowRewardChoice(true);
+    }
   };
 
   // 💰 Handler to claim daily login bonus
@@ -2854,7 +2868,7 @@ export default function TCGPage() {
         sharesRemaining={sharesRemaining}
         onShareClick={handleShareClick}
         showLossPopup={showLossPopup}
-        setShowLossPopup={setShowLossPopup}
+        handleCloseDefeatScreen={handleCloseDefeatScreen}
         showTiePopup={showTiePopup}
         setShowTiePopup={setShowTiePopup}
         tieGifLoaded={tieGifLoaded}
@@ -2878,8 +2892,6 @@ export default function TCGPage() {
           onClose={() => {
             setShowRewardChoice(false);
             setPendingReward(null);
-            // Show win popup after choice is made
-            setShowWinPopup(true);
           }}
           onChoiceMade={(choice) => {
             devLog(`🎯 Player chose: ${choice} for ${pendingReward.amount} coins`);
