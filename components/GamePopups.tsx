@@ -209,7 +209,7 @@ export function GamePopups({
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
                   const battleType = lastBattleResult.type || 'pve';
 
-                  const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}_${battleType}`;
+                  const matchId = `win|${lastBattleResult.playerPower}|${lastBattleResult.opponentPower}|${opponentName}|${playerPfp}|${opponentPfp}|${playerName}|${battleType}`;
                   const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                   let castText = t('castVictory', { power: lastBattleResult.playerPower });
@@ -295,7 +295,7 @@ export function GamePopups({
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
                   const battleType = lastBattleResult.type || 'pve';
 
-                  const matchId = `loss_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}_${battleType}`;
+                  const matchId = `loss|${lastBattleResult.playerPower}|${lastBattleResult.opponentPower}|${opponentName}|${playerPfp}|${opponentPfp}|${playerName}|${battleType}`;
                   const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                   let castText = t('castDefeat', { power: lastBattleResult.playerPower });
