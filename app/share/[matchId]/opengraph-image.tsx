@@ -29,7 +29,14 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const mechaUrl = 'https://vibe-most-wanted.vercel.app/images/mecha-george-floyd.jpg';
     const nicoUrl = 'https://vibe-most-wanted.vercel.app/images/nico.png';
 
+    let finalPlayerPfpUrl = playerPfpUrl;
     let finalOpponentPfpUrl = opponentPfpUrl;
+
+    // Special handling for known users
+    if (playerName.toLowerCase() === 'nico') {
+      finalPlayerPfpUrl = nicoUrl;
+    }
+
     if (opponentName.toLowerCase().includes('mecha')) {
       finalOpponentPfpUrl = mechaUrl;
     } else if (opponentName.toLowerCase().includes('nico')) {
@@ -262,7 +269,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               power={playerPower}
               isPlayer={true}
               isLosing={playerIsLosing}
-              pfpUrl={playerPfpUrl}
+              pfpUrl={finalPlayerPfpUrl}
               backgroundImage="https://vibe-most-wanted.vercel.app/fundo1.jpg"
             />
 
