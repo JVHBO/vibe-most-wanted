@@ -21,7 +21,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
   try {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1500);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     const response = await fetch(`${convexUrl}/api/query`, {
       method: 'POST',
