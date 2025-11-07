@@ -16,7 +16,9 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
   const { matchId } = await params;
 
   try {
-    const parts = decodeURIComponent(matchId).split('_');
+    const decoded = decodeURIComponent(matchId);
+    // Support both old format (_) and new format (|)
+    const parts = decoded.includes('|') ? decoded.split('|') : decoded.split('_');
     const result = parts[0] || 'win';
     const playerPower = parts[1] || '0';
     const opponentPower = parts[2] || '0';

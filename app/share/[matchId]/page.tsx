@@ -4,8 +4,10 @@ import SharePageClient from './SharePageClient';
 export async function generateMetadata({ params }: { params: Promise<{ matchId: string }> }): Promise<Metadata> {
   const { matchId } = await params;
 
-  // Decode match data from matchId (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName_type)
-  const parts = decodeURIComponent(matchId).split('_');
+  // Decode match data from matchId (format: result|playerPower|opponentPower|opponentName|playerPfp|opponentPfp|playerName|type)
+  const decoded = decodeURIComponent(matchId);
+  // Support both old format (_) and new format (|)
+  const parts = decoded.includes('|') ? decoded.split('|') : decoded.split('_');
   const result = parts[0] || 'win';
   const playerPower = parts[1] || '0';
   const opponentPower = parts[2] || '0';
