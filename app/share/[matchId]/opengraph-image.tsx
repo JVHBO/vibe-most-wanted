@@ -32,13 +32,10 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     let finalPlayerPfpUrl = playerPfpUrl;
     let finalOpponentPfpUrl = opponentPfpUrl;
 
-    // If PFP URL is empty, try to fetch from Convex
+    // If PFP URL is empty, try to fetch from Convex (same strategy as profile OG)
     if (!finalPlayerPfpUrl && playerName && playerName !== 'YOU' && playerName !== 'Player') {
       try {
         const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-
         const response = await fetch(`${convexUrl}/api/query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -47,10 +44,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             args: { username: playerName.toLowerCase() },
             format: 'json',
           }),
-          signal: controller.signal,
         });
-
-        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
@@ -66,9 +60,6 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     if (!finalOpponentPfpUrl && opponentName && opponentName !== 'Opponent') {
       try {
         const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-
         const response = await fetch(`${convexUrl}/api/query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -77,10 +68,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
             args: { username: opponentName.toLowerCase() },
             format: 'json',
           }),
-          signal: controller.signal,
         });
-
-        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
