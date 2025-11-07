@@ -87,8 +87,11 @@ export const getLeaderboardLite = query({
       // Add hasDefenseDeck flag for Attack button (without sending full deck data)
       hasDefenseDeck: p.defenseDeck && p.defenseDeck.length === 5,
       userIndex: p.userIndex,
+      // Include twitter fields for battle shares (needed for opponent PFP in OG images)
+      twitter: p.twitter,
+      twitterProfileImageUrl: p.twitterProfileImageUrl,
       // 🚫 EXCLUDED: defenseDeck, revealedCardsCache, ownedTokenIds,
-      //              twitter, fid, economy data, other stats fields
+      //              fid, economy data, other stats fields
     }));
   },
 });
