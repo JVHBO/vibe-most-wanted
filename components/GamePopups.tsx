@@ -200,12 +200,12 @@ export function GamePopups({
               </a>
               <a
                 href={(() => {
-                  if (!lastBattleResult || !userProfile) return '#';
+                  if (!lastBattleResult) return '#';
 
                   // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName)
-                  const playerPfp = encodeURIComponent(userProfile.twitterProfileImageUrl || '');
+                  const playerPfp = encodeURIComponent(userProfile?.twitterProfileImageUrl || '');
                   const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || '');
-                  const playerName = encodeURIComponent(userProfile.username || 'Player');
+                  const playerName = encodeURIComponent(userProfile?.username || 'Player');
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
 
                   const matchId = `win_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}`;
@@ -285,12 +285,12 @@ export function GamePopups({
               </a>
               <a
                 href={(() => {
-                  if (!lastBattleResult || !userProfile) return '#';
+                  if (!lastBattleResult) return '#';
 
                   // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName)
-                  const playerPfp = encodeURIComponent(userProfile.twitterProfileImageUrl || '');
+                  const playerPfp = encodeURIComponent(userProfile?.twitterProfileImageUrl || '');
                   const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || '');
-                  const playerName = encodeURIComponent(userProfile.username || 'Player');
+                  const playerName = encodeURIComponent(userProfile?.username || 'Player');
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
 
                   const matchId = `loss_${lastBattleResult.playerPower}_${lastBattleResult.opponentPower}_${opponentName}_${playerPfp}_${opponentPfp}_${playerName}`;
