@@ -78,6 +78,7 @@ export default defineSchema({
 
     // Economy System ($TESTVBMS)
     coins: v.optional(v.number()), // Current balance (for spending in-app)
+    coinsInbox: v.optional(v.number()), // Unclaimed coins (inbox/correio) - claim later option
     lifetimeEarned: v.optional(v.number()), // Total ever earned
     lifetimeSpent: v.optional(v.number()), // Total ever spent
 

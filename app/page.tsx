@@ -23,6 +23,8 @@ import AchievementsView from "@/components/AchievementsView";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { InboxDisplay } from "@/components/InboxDisplay";
+import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
+import { RewardChoiceModal } from "@/components/RewardChoiceModal";
 import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
 import { PvPMenuModals } from "@/components/PvPMenuModals";
@@ -775,6 +777,13 @@ export default function TCGPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showDailyClaimPopup, setShowDailyClaimPopup] = useState(false);
 
+  // Reward Choice Modal State
+  const [showRewardChoice, setShowRewardChoice] = useState(false);
+  const [pendingReward, setPendingReward] = useState<{
+    amount: number;
+    source: "pve" | "pvp" | "attack" | "defense" | "leaderboard";
+  } | null>(null);
+
   // Share incentives
   const [sharesRemaining, setSharesRemaining] = useState<number | undefined>(undefined);
 
@@ -958,7 +967,19 @@ export default function TCGPage() {
     }
 
     setCurrentVictoryImage(victoryImage);
-    setShowWinPopup(true);
+
+    // Check if there are coins earned to show reward choice
+    if (lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0) {
+      // Show reward choice modal instead of win popup directly
+      setPendingReward({
+        amount: lastBattleResult.coinsEarned,
+        source: lastBattleResult.type,
+      });
+      setShowRewardChoice(true);
+    } else {
+      // No coins earned, show regular win popup
+      setShowWinPopup(true);
+    }
   };
 
   // 🎵 Handler to close victory screen and stop audio
@@ -2838,6 +2859,23 @@ export default function TCGPage() {
         t={t}
       />
 
+      {/* Reward Choice Modal */}
+      {showRewardChoice && pendingReward && (
+        <RewardChoiceModal
+          amount={pendingReward.amount}
+          source={pendingReward.source}
+          onClose={() => {
+            setShowRewardChoice(false);
+            setPendingReward(null);
+            // Show win popup after choice is made
+            setShowWinPopup(true);
+          }}
+          onChoiceMade={(choice) => {
+            devLog(`🎯 Player chose: ${choice} for ${pendingReward.amount} coins`);
+          }}
+        />
+      )}
+
       {/* Settings Modal */}
       <SettingsModal
         isOpen={showSettings}
@@ -3911,8 +3949,20 @@ export default function TCGPage() {
             </button>
           )}
 
-          {/* TODO: Re-enable Inbox Display after fixing Convex deployment */}
-          {/* {userProfile && <InboxDisplay />} */}
+          {/* Inbox Displays - VBMS Tokens and Coins */}
+          {userProfile && <InboxDisplay />}
+          {userProfile && <CoinsInboxDisplay />}
+
+          {/* Docs Link */}
+          {userProfile && (
+            <Link
+              href="/docs"
+              className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
+              title="Documentação"
+            >
+              <span className="text-lg">📚</span>
+            </Link>
+          )}
 
           <button
             onClick={() => {
