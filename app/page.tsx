@@ -428,7 +428,11 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
               <div className="flex items-center justify-between">
                 <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{nft.power || 0} PWR</span>
-                {selected && <span className="text-vintage-gold text-2xl drop-shadow-lg font-bold">✓</span>}
+                {selected && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="drop-shadow-lg">
+                    <path d="M20 6L9 17L4 12" stroke="#D4AF37" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
               </div>
             </div>
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-3 pointer-events-none z-20">
@@ -465,7 +469,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
     return (
       <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6">
         <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-          <span className="text-3xl">§</span> {t('matchHistory')}
+          <NextImage src="/images/icons/battle.svg" alt="Battle" width={32} height={32} /> {t('matchHistory')}
         </h2>
         <div className="bg-vintage-black/50 border border-vintage-gold/20 rounded-xl p-8 text-center">
           <p className="text-vintage-burnt-gold">{t('noMatches')}</p>
@@ -477,7 +481,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
   return (
     <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6">
       <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-        <span className="text-3xl">§</span> {t('matchHistory')}
+        <NextImage src="/images/icons/battle.svg" alt="Battle" width={32} height={32} /> {t('matchHistory')}
       </h2>
       <div className="space-y-3">
         {matchHistory.map((match, index) => {
@@ -485,7 +489,8 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
           const isTie = match.result === 'tie';
           const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
           const resultColor = isWin ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-red-400';
-          const resultText = isWin ? `♔ ${t('victory').toUpperCase()}` : isTie ? `♦ ${t('tie').toUpperCase()}` : `♠ ${t('defeat').toUpperCase()}`;
+          const resultIcon = isWin ? '/images/icons/victory.svg' : isTie ? '/images/icons/cards.svg' : '/images/icons/defeat.svg';
+          const resultText = isWin ? t('victory').toUpperCase() : isTie ? t('tie').toUpperCase() : t('defeat').toUpperCase();
 
           return (
             <div
@@ -495,11 +500,17 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 {/* Match Type & Result */}
                 <div className="flex items-center gap-4">
-                  <div className="text-3xl text-vintage-gold">
-                    {match.type === 'pvp' ? '♥' : match.type === 'attack' ? '†' : match.type === 'defense' ? '◆' : '♣'}
-                  </div>
+                  <NextImage
+                    src={resultIcon}
+                    alt={resultText}
+                    width={48}
+                    height={48}
+                    className="text-vintage-gold"
+                  />
                   <div>
-                    <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
+                    <p className={`font-display font-bold text-lg ${resultColor} flex items-center gap-2`}>
+                      {resultText}
+                    </p>
                     <p className="text-xs text-vintage-burnt-gold font-modern">
                       {match.type === 'pvp' ? t('playerVsPlayer') :
                        match.type === 'attack' ? t('attack') :
@@ -2517,44 +2528,44 @@ export default function TCGPage() {
   const getMissionInfo = (missionType: string) => {
     const missionData: Record<string, { icon: string; title: string; description: string }> = {
       daily_login: {
-        icon: '📅',
+        icon: '/images/icons/mission.svg',
         title: 'Daily Login',
         description: 'Login bonus for today',
       },
       first_pve_win: {
-        icon: '🎯',
+        icon: '/images/icons/victory.svg',
         title: 'First PvE Victory',
         description: 'Win your first PvE battle today',
       },
       first_pvp_match: {
-        icon: '⚔️',
+        icon: '/images/icons/battle.svg',
         title: 'First PvP Match',
         description: 'Complete your first PvP match today',
       },
       streak_3: {
-        icon: '🔥',
+        icon: '/images/icons/achievement.svg',
         title: '3-Win Streak',
         description: 'Win 3 matches in a row',
       },
       streak_5: {
-        icon: '🔥🔥',
+        icon: '/images/icons/achievement.svg',
         title: '5-Win Streak',
         description: 'Win 5 matches in a row',
       },
       streak_10: {
-        icon: '🔥🔥🔥',
+        icon: '/images/icons/achievement.svg',
         title: '10-Win Streak',
         description: 'Win 10 matches in a row',
       },
       welcome_gift: {
-        icon: '🎁',
+        icon: '/images/icons/coins.svg',
         title: 'Welcome Gift',
         description: 'Welcome to Vibe Most Wanted!',
       },
     };
 
     return missionData[missionType] || {
-      icon: '❓',
+      icon: '/images/icons/help.svg',
       title: 'Unknown Mission',
       description: missionType,
     };
@@ -2830,7 +2841,7 @@ export default function TCGPage() {
       </div>
 
       {/* Content wrapper with z-index */}
-      <div className="relative z-10">
+      <div className={`relative z-10 ${!isInFarcaster ? 'max-w-7xl mx-auto' : ''}`}>
       {/* Game Popups (Victory, Loss, Tie, Error, Success, Daily Claim) */}
       <GamePopups
         showWinPopup={showWinPopup}
@@ -3275,7 +3286,7 @@ export default function TCGPage() {
               {/* Win Scenario */}
               <div className="bg-green-900/20 border-2 border-green-500/50 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">🏆</span>
+                  <NextImage src="/images/icons/victory.svg" alt="Victory" width={32} height={32} />
                   <h3 className="text-xl font-bold text-green-400 font-display">IF YOU WIN</h3>
                 </div>
 
@@ -3324,7 +3335,7 @@ export default function TCGPage() {
               {/* Loss Scenario */}
               <div className="bg-red-900/20 border-2 border-red-500/50 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">💀</span>
+                  <NextImage src="/images/icons/defeat.svg" alt="Defeat" width={32} height={32} />
                   <h3 className="text-xl font-bold text-red-400 font-display">IF YOU LOSE</h3>
                 </div>
 
@@ -3940,7 +3951,7 @@ export default function TCGPage() {
               }`}
               title={unreadDefenses > 0 ? `${unreadDefenses} novos ataques recebidos` : 'Notificações'}
             >
-              <span className="text-lg text-vintage-gold">🔔</span>
+              <NextImage src="/images/icons/notification.svg" alt="Notifications" width={20} height={20} />
               {unreadDefenses > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                   {unreadDefenses}
@@ -3968,7 +3979,7 @@ export default function TCGPage() {
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
             title={t('tutorial')}
           >
-            <span className="text-lg">?</span>
+            <NextImage src="/images/icons/help.svg" alt="Help" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           </button>
         </div>
       </header>
@@ -4037,7 +4048,11 @@ export default function TCGPage() {
           {/* Claude AI Disclaimer */}
           <div className="mb-4 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 border-2 border-purple-400/30 rounded-xl p-3 md:p-4">
             <div className="flex items-start gap-3">
-              <div className="text-2xl md:text-3xl flex-shrink-0">◊</div>
+              <div className="flex-shrink-0">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#A855F7" strokeWidth="2" fill="#A855F7" fillOpacity="0.2"/>
+                </svg>
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-purple-300 font-bold text-sm md:text-base mb-1">
                   {t('claudeDisclaimerTitle')}
@@ -4059,7 +4074,13 @@ export default function TCGPage() {
           {/* Metadata Delay Warning Banner */}
           <div className="mb-4 bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-xl p-3 md:p-4">
             <div className="flex items-start gap-3">
-              <div className="text-2xl md:text-3xl flex-shrink-0">!</div>
+              <div className="flex-shrink-0">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="#EAB308" strokeWidth="2" fill="#EAB308" fillOpacity="0.2"/>
+                  <path d="M12 8V12" stroke="#EAB308" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="16" r="1" fill="#EAB308"/>
+                </svg>
+              </div>
               <div className="flex-1">
                 <p className="text-yellow-300 font-bold text-sm md:text-base mb-1">
                   {t('metadataWarningTitle')}
@@ -4114,7 +4135,7 @@ export default function TCGPage() {
                   {/* Coin Balance Display */}
                   {address && userProfile && playerEconomy && (
                     <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-1.5 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-                      <span className="text-lg md:text-xl font-display">$</span>
+                      <NextImage src="/images/icons/coins.svg" alt="Coins" width={20} height={20} className="md:w-6 md:h-6" />
                       <div className="flex flex-col">
                         <span className="text-vintage-gold font-display font-bold text-xs md:text-sm leading-none">
                           {(playerEconomy.coins || 0).toLocaleString()}
@@ -4128,10 +4149,13 @@ export default function TCGPage() {
 
                   <button
                     onClick={disconnectWallet}
-                    className="px-3 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 text-vintage-gold rounded-lg text-xl border border-vintage-gold/50 font-modern font-semibold transition-all"
+                    className="px-3 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 text-vintage-gold rounded-lg border border-vintage-gold/50 font-modern font-semibold transition-all"
                     title={t('disconnect')}
                   >
-                    ⏏
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M16 17l5-5-5-5M21 12H9" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -4860,7 +4884,7 @@ export default function TCGPage() {
               {/* Weekly Quests Section */}
               <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6 shadow-gold">
                 <div className="flex items-center gap-3 mb-6">
-                  <span className="text-4xl">🎯</span>
+                  <NextImage src="/images/icons/mission.svg" alt="Missions" width={48} height={48} />
                   <div>
                     <h2 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold">WEEKLY MISSIONS</h2>
                     <p className="text-sm text-vintage-burnt-gold font-modern">Reset every Sunday 00:00 UTC</p>
@@ -4878,7 +4902,7 @@ export default function TCGPage() {
                       <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl">🏆</span>
+                            <NextImage src="/images/icons/victory.svg" alt="Victory" width={32} height={32} />
                             <div>
                               <h3 className="text-lg font-bold text-vintage-gold">Attack Master</h3>
                               <p className="text-xs text-vintage-burnt-gold">Win 20 attacks</p>
@@ -4922,7 +4946,7 @@ export default function TCGPage() {
                       <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl">🎲</span>
+                            <NextImage src="/images/icons/battle.svg" alt="Battle" width={32} height={32} />
                             <div>
                               <h3 className="text-lg font-bold text-vintage-gold">Active Player</h3>
                               <p className="text-xs text-vintage-burnt-gold">Play 30 matches (any mode)</p>
@@ -4966,7 +4990,7 @@ export default function TCGPage() {
                       <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl">🛡️</span>
+                            <NextImage src="/images/icons/cards.svg" alt="Defense" width={32} height={32} />
                             <div>
                               <h3 className="text-lg font-bold text-vintage-gold">Fortress</h3>
                               <p className="text-xs text-vintage-burnt-gold">Defend successfully 10 times</p>
@@ -5230,7 +5254,7 @@ export default function TCGPage() {
                               {/* Mission Info */}
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <span className="text-2xl">{missionInfo.icon}</span>
+                                  <NextImage src={missionInfo.icon} alt={missionInfo.title} width={32} height={32} />
                                   <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold">
                                     {missionInfo.title}
                                   </h3>
