@@ -24,6 +24,11 @@ export default async function Image({ params }: { params: Promise<{ username: st
   try {
     // Use production Convex URL for OG images
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
     const response = await fetch(`${convexUrl}/api/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -32,7 +37,10 @@ export default async function Image({ params }: { params: Promise<{ username: st
         args: { username: username.toLowerCase() },
         format: 'json',
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (response.ok) {
       const data = await response.json();
