@@ -104,14 +104,15 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
       finalOpponentPfpUrl = nicoUrl;
     }
 
-    // Ultimate fallback: use DiceBear for any username without PFP
-    if (!finalPlayerPfpUrl && playerName && playerName !== 'YOU' && playerName !== 'Player') {
-      finalPlayerPfpUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(playerName)}`;
-    }
+    // Convert external URLs to use proxy for Edge Runtime compatibility
+    const proxyUrl = (url: string) => {
+      if (!url) return '';
+      if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
+      return `https://vibe-most-wanted.vercel.app/api/proxy-image?url=${encodeURIComponent(url)}`;
+    };
 
-    if (!finalOpponentPfpUrl && opponentName && opponentName !== 'Opponent' && !opponentName.toLowerCase().includes('mecha')) {
-      finalOpponentPfpUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(opponentName)}`;
-    }
+    finalPlayerPfpUrl = proxyUrl(finalPlayerPfpUrl);
+    finalOpponentPfpUrl = proxyUrl(finalOpponentPfpUrl);
 
     const isWin = result === 'win';
 
