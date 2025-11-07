@@ -313,11 +313,11 @@ export const sendPeriodicTip = internalMutation({
 
       if (!tipState) {
         // Initialize tip state
-        tipState = await ctx.db.insert("tipRotationState", {
+        const tipStateId = await ctx.db.insert("tipRotationState", {
           currentTipIndex: 0,
           lastSentAt: Date.now(),
         });
-        tipState = await ctx.db.get(tipState);
+        tipState = await ctx.db.get(tipStateId);
       }
 
       // Get current tip
