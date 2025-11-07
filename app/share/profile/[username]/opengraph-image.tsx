@@ -11,12 +11,49 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
 
-  // Mock data for testing - remove Convex fetch temporarily
+  // Fetch profile data from Convex
   let pfpUrl = '';
-  let totalPower = 1234;
-  let totalWins = 45;
-  let totalLosses = 12;
-  let winRate = '78.9';
+  let totalPower = 0;
+  let totalWins = 0;
+  let totalLosses = 0;
+  let winRate = '0';
+
+  try {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+    const response = await fetch(`${convexUrl}/api/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: 'profiles:getProfileByUsername',
+        args: { username: username.toLowerCase() },
+        format: 'json',
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.value) {
+        pfpUrl = data.value.twitterProfileImageUrl || '';
+        totalPower = data.value.stats?.totalPower || 0;
+        totalWins = (data.value.stats?.pveWins || 0) + (data.value.stats?.pvpWins || 0);
+        totalLosses = (data.value.stats?.pveLosses || 0) + (data.value.stats?.pvpLosses || 0);
+        const totalMatches = totalWins + totalLosses;
+        winRate = totalMatches > 0 ? ((totalWins / totalMatches) * 100).toFixed(1) : '0';
+      }
+    }
+  } catch (e) {
+    // Use defaults on error
+  }
+
+  // Convert external URLs to use proxy
+  const proxyUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
+    if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
+    return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
+  };
+
+  pfpUrl = proxyUrl(pfpUrl);
 
   return new ImageResponse(
     (
