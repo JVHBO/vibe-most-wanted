@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
 
   // Explicitly set the OpenGraph image URL with cache busting
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vibemostwanted.xyz';
-  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image?v=6`;
+  const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image?v=${Date.now()}`;
 
   return {
     title,
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
         {
           url: imageUrl,
           width: 1200,
-          height: 800,
+          height: 630,
           alt: 'Battle Result',
         },
       ],
