@@ -202,15 +202,13 @@ export function GamePopups({
                 href={(() => {
                   if (!lastBattleResult) return '#';
 
-                  // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName_type)
-                  // Use userProfile PFP as primary source, fallback to lastBattleResult
-                  const playerPfp = encodeURIComponent(userProfile?.twitterProfileImageUrl || lastBattleResult.playerPfpUrl || '');
-                  const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || '');
+                  // Generate matchId for share URL (format: result|playerPower|opponentPower|opponentName|playerName|type)
+                  // PFPs will be fetched from Convex by the OG image generator using usernames
                   const playerName = encodeURIComponent(userProfile?.username || 'Player');
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
                   const battleType = lastBattleResult.type || 'pve';
 
-                  const matchId = `win|${lastBattleResult.playerPower}|${lastBattleResult.opponentPower}|${opponentName}|${playerPfp}|${opponentPfp}|${playerName}|${battleType}`;
+                  const matchId = `win|${lastBattleResult.playerPower}|${lastBattleResult.opponentPower}|${opponentName}|${playerName}|${battleType}`;
                   const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                   let castText = t('castVictory', { power: lastBattleResult.playerPower });
@@ -289,15 +287,13 @@ export function GamePopups({
                 href={(() => {
                   if (!lastBattleResult) return '#';
 
-                  // Generate matchId for share URL (format: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName_type)
-                  // Use userProfile PFP as primary source, fallback to lastBattleResult
-                  const playerPfp = encodeURIComponent(userProfile?.twitterProfileImageUrl || lastBattleResult.playerPfpUrl || '');
-                  const opponentPfp = encodeURIComponent(lastBattleResult.opponentPfpUrl || '');
+                  // Generate matchId for share URL (format: result|playerPower|opponentPower|opponentName|playerName|type)
+                  // PFPs will be fetched from Convex by the OG image generator using usernames
                   const playerName = encodeURIComponent(userProfile?.username || 'Player');
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
                   const battleType = lastBattleResult.type || 'pve';
 
-                  const matchId = `loss|${lastBattleResult.playerPower}|${lastBattleResult.opponentPower}|${opponentName}|${playerPfp}|${opponentPfp}|${playerName}|${battleType}`;
+                  const matchId = `loss|${lastBattleResult.playerPower}|${lastBattleResult.opponentPower}|${opponentName}|${playerName}|${battleType}`;
                   const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                   let castText = t('castDefeat', { power: lastBattleResult.playerPower });
