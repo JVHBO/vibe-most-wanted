@@ -38,6 +38,8 @@ import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useC
 import { devLog, devError, devWarn } from "@/lib/utils/logger";
 // 🔊 Audio Manager
 import { AudioManager } from "@/lib/audio-manager";
+// 🎨 Loading Spinner
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -4284,7 +4286,7 @@ export default function TCGPage() {
 
           {status === 'fetching' && (
             <div className="flex items-center justify-center gap-3 text-vintage-neon-blue mb-6 bg-vintage-charcoal/50 p-6 rounded-xl border border-vintage-gold/30">
-              <div className="animate-spin h-8 w-8 border-4 border-cyan-400 border-t-transparent rounded-full" />
+              <LoadingSpinner size="md" variant="purple" />
               <p className="font-medium text-lg">{t('loading')}</p>
             </div>
           )}
@@ -5087,8 +5089,7 @@ export default function TCGPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-vintage-gold border-t-transparent"></div>
-                    <p className="text-vintage-burnt-gold mt-4">Loading missions...</p>
+                    <LoadingSpinner size="lg" variant="gold" text="Loading missions..." />
                   </div>
                 )}
               </div>
@@ -5234,7 +5235,7 @@ export default function TCGPage() {
 
                 {isLoadingMissions ? (
                   <div className="flex justify-center items-center py-20">
-                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-vintage-gold border-t-transparent"></div>
+                    <LoadingSpinner size="xl" variant="gold" />
                   </div>
                 ) : missions.length === 0 ? (
                   <div className="text-center py-20">

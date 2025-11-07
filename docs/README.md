@@ -35,8 +35,6 @@ New to the project? Start here:
 | [Farcaster Miniapp Checklist](./setup/FARCASTER-MINIAPP-CHECKLIST.md) | Deployment checklist (Portuguese) |
 | [Farcaster Fix Summary](./setup/FARCASTER-FIX-SUMMARY.md) | Common fixes (Portuguese) |
 | [Foil Effects Implementation](./guides/FOIL-EFFECTS-IMPLEMENTATION.md) | How to implement foil card effects |
-| [Visual Upgrade Guide](./guides/VISUAL-UPGRADE-GUIDE.md) | UI/UX improvements guide |
-| [Design Versions](./guides/DESIGN-VERSIONS.md) | Design iteration history |
 
 ### 🔧 Technical Documentation
 
@@ -62,22 +60,10 @@ New to the project? Start here:
 
 | Document | Description |
 |----------|-------------|
-| [Wagering System Proposal](./WAGERING-SYSTEM-PROPOSAL.md) | PvP betting system design |
 | [Circular Economy VBMS](./CIRCULAR-ECONOMY-VBMS.md) | Token circulation model |
-| [VBMS Token Migration Plan](./VBMS-TOKEN-MIGRATION-PLAN.md) | Token migration strategy |
 | [Inbox Implementation Guide](./INBOX-IMPLEMENTATION-GUIDE.md) | Coins inbox system |
 | [Coins Inbox Integration](./COINS-INBOX-INTEGRATION-GUIDE.md) | Integration steps |
 | [Elimination Mode Notes](./ELIMINATION-MODE-NOTES.md) | Battle mode concept |
-| [PvP Modes Ideas](./PVP-MODES-IDEAS.md) | Future PvP features |
-
-### 📊 Reports & Summaries
-
-| Document | Description |
-|----------|-------------|
-| [Session Summary 2025-10-26](./reports/SESSION-SUMMARY-2025-10-26.md) | Development session notes |
-| [AI Decks Report](./reports/AI-DECKS-REPORT.md) | AI opponent analysis |
-| [Share OG Image Fix](./reports/SHARE-OG-IMAGE-FIX-2025-11-07.md) | Social sharing fix |
-| [Daily Tips System](./reports/DAILY-TIPS-SYSTEM-2025-11-07.md) | Daily tips implementation |
 
 ### 📝 Setup & Configuration
 
@@ -141,20 +127,13 @@ docs/
 ├── README.md                          # This file - documentation index
 ├── guides/                            # Step-by-step guides
 │   ├── FARCASTER-MINIAPP-DEVELOPMENT-GUIDE.md  # 🎯 Featured
-│   ├── FOIL-EFFECTS-IMPLEMENTATION.md
-│   ├── VISUAL-UPGRADE-GUIDE.md
-│   └── DESIGN-VERSIONS.md
+│   └── FOIL-EFFECTS-IMPLEMENTATION.md
 ├── setup/                             # Configuration guides
 │   ├── FARCASTER-MINIAPP-CHECKLIST.md
 │   ├── FARCASTER-FIX-SUMMARY.md
 │   ├── LEIA-ISTO-FARCASTER.md
 │   ├── COMO-CONFIGURAR-SIMPLEHASH.md
 │   └── RESIZE-IMAGE-INSTRUCTIONS.md
-├── reports/                           # Session reports & fixes
-│   ├── SESSION-SUMMARY-2025-10-26.md
-│   ├── AI-DECKS-REPORT.md
-│   ├── SHARE-OG-IMAGE-FIX-2025-11-07.md
-│   └── DAILY-TIPS-SYSTEM-2025-11-07.md
 └── [root docs]                        # Core documentation
     ├── ECONOMY-GUIDE.md
     ├── ACHIEVEMENTS-SYSTEM.md
@@ -231,9 +210,8 @@ Use GitHub's search or your editor's search functionality:
 ### Documentation Issues
 
 If you find outdated documentation or errors:
-1. Check if there's a newer version in [reports/](./reports/)
-2. Search for related issues in [KNOWN-BUGS.md](./KNOWN-BUGS.md)
-3. Create an issue on GitHub
+1. Search for related issues in [KNOWN-BUGS.md](./KNOWN-BUGS.md)
+2. Create an issue on GitHub
 
 ### Technical Issues
 
@@ -245,7 +223,6 @@ If you find outdated documentation or errors:
 
 1. Check [What's Missing](./WHATS-MISSING.md) to see if it's planned
 2. Review [Pending Tasks](./PENDING-TASKS.md)
-3. Check [PvP Modes Ideas](./PVP-MODES-IDEAS.md) for future features
 
 ---
 
@@ -264,7 +241,6 @@ If you find outdated documentation or errors:
 ```
 guides/           # How-to guides (step-by-step)
 setup/           # Configuration instructions
-reports/         # Session summaries and fixes
 [root]/          # Core reference documentation
 ```
 
@@ -306,11 +282,10 @@ reports/         # Session summaries and fixes
 
 ## 📊 Documentation Stats
 
-- **Total Documents**: 38
-- **Guides**: 5
+- **Total Documents**: 29
+- **Guides**: 2
 - **Setup Docs**: 4
-- **Reports**: 4
-- **Core Docs**: 25
+- **Core Docs**: 23
 - **Last Major Update**: 2025-11-07
 
 ---
