@@ -284,27 +284,27 @@ export default function TestPage() {
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
-                      <div className="text-4xl mb-2">💰</div>
+                      <div className="text-4xl mb-2">🪙</div>
                       <p className="text-vintage-gold text-sm font-bold">Coins/Money</p>
                       <p className="text-vintage-gold/50 text-xs">Moedas</p>
                     </div>
                     <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
-                      <div className="text-4xl mb-2">⚔️</div>
+                      <div className="text-4xl mb-2">🎲</div>
                       <p className="text-vintage-gold text-sm font-bold">Battle/Fight</p>
                       <p className="text-vintage-gold/50 text-xs">Batalhas</p>
                     </div>
                     <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
-                      <div className="text-4xl mb-2">🏆</div>
+                      <div className="text-4xl mb-2">👑</div>
                       <p className="text-vintage-gold text-sm font-bold">Achievement</p>
                       <p className="text-vintage-gold/50 text-xs">Conquistas</p>
                     </div>
                     <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
-                      <div className="text-4xl mb-2">🎯</div>
+                      <div className="text-4xl mb-2">🎰</div>
                       <p className="text-vintage-gold text-sm font-bold">Mission/Quest</p>
                       <p className="text-vintage-gold/50 text-xs">Missões</p>
                     </div>
                     <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
-                      <div className="text-4xl mb-2">📊</div>
+                      <div className="text-4xl mb-2">📈</div>
                       <p className="text-vintage-gold text-sm font-bold">Stats/Ranking</p>
                       <p className="text-vintage-gold/50 text-xs">Estatísticas</p>
                     </div>
@@ -314,7 +314,7 @@ export default function TestPage() {
                       <p className="text-vintage-gold/50 text-xs">Configurações</p>
                     </div>
                     <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
-                      <div className="text-4xl mb-2">❓</div>
+                      <div className="text-4xl mb-2">📖</div>
                       <p className="text-vintage-gold text-sm font-bold">Help/Tutorial</p>
                       <p className="text-vintage-gold/50 text-xs">Ajuda</p>
                     </div>
@@ -324,12 +324,12 @@ export default function TestPage() {
                       <p className="text-vintage-gold/50 text-xs">Notificações</p>
                     </div>
                     <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
-                      <div className="text-4xl mb-2">📥</div>
+                      <div className="text-4xl mb-2">💌</div>
                       <p className="text-vintage-gold text-sm font-bold">Inbox</p>
                       <p className="text-vintage-gold/50 text-xs">Caixa de entrada</p>
                     </div>
                     <div className="bg-vintage-deep-black p-4 rounded-lg text-center hover:bg-vintage-deep-black/70 transition cursor-pointer">
-                      <div className="text-4xl mb-2">🎉</div>
+                      <div className="text-4xl mb-2">⭐</div>
                       <p className="text-vintage-gold text-sm font-bold">Victory</p>
                       <p className="text-vintage-gold/50 text-xs">Vitória</p>
                     </div>
