@@ -104,6 +104,15 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
       finalOpponentPfpUrl = nicoUrl;
     }
 
+    // Ultimate fallback: use DiceBear for any username without PFP
+    if (!finalPlayerPfpUrl && playerName && playerName !== 'YOU' && playerName !== 'Player') {
+      finalPlayerPfpUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(playerName)}`;
+    }
+
+    if (!finalOpponentPfpUrl && opponentName && opponentName !== 'Opponent' && !opponentName.toLowerCase().includes('mecha')) {
+      finalOpponentPfpUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(opponentName)}`;
+    }
+
     const isWin = result === 'win';
 
     // Determine which card should be red (losing side)
