@@ -10,8 +10,8 @@ interface Card {
   name?: string; // Optional for NFTs
   image?: string;
   imageUrl?: string; // NFTs use imageUrl
-  power: number;
-  rarity: string;
+  power?: number; // Optional for NFTs (some may not have power calculated yet)
+  rarity?: string; // Optional for NFTs
   foil?: string; // Optional for NFTs
   wear?: string; // Optional for NFTs
 }
