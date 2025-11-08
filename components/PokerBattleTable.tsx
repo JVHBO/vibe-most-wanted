@@ -64,7 +64,7 @@ export function PokerBattleTable({
   const resolveRoundMutation = useMutation(api.pokerBattle.resolveRound);
 
   // Game state
-  const [phase, setPhase] = useState<GamePhase>(isCPUMode ? 'card-selection' : 'deck-building');
+  const [phase, setPhase] = useState<GamePhase>('deck-building');
   const [currentRound, setCurrentRound] = useState(1);
   const [pot, setPot] = useState(0);
 
@@ -80,40 +80,6 @@ export function PokerBattleTable({
   const [opponentSelectedCard, setOpponentSelectedCard] = useState<Card | null>(null);
   const [playerAction, setPlayerAction] = useState<CardAction | null>(null);
   const [opponentAction, setOpponentAction] = useState<CardAction | null>(null);
-
-  // Auto-start CPU mode
-  useEffect(() => {
-    if (isCPUMode && playerCards.length >= 10 && opponentDeck.length >= 10) {
-      // Auto-select player's top 10 strongest cards
-      const playerTop10 = [...playerCards]
-        .sort((a, b) => (b.power || 0) - (a.power || 0))
-        .slice(0, 10);
-
-      setSelectedDeck(playerTop10);
-
-      // Shuffle and deal
-      const shuffledPlayer = [...playerTop10].sort(() => Math.random() - 0.5);
-      const playerHandCards = shuffledPlayer.slice(0, 5);
-      const playerDeckCards = shuffledPlayer.slice(5);
-
-      setPlayerHand(playerHandCards);
-      setPlayerDeckRemaining(playerDeckCards);
-
-      // Use opponent deck (already selected by difficulty)
-      const shuffledOpponent = [...opponentDeck].sort(() => Math.random() - 0.5);
-      const opponentHandCards = shuffledOpponent.slice(0, 5);
-      const opponentDeckCards = shuffledOpponent.slice(5);
-
-      setOpponentHand(opponentHandCards);
-      setOpponentDeckRemaining(opponentDeckCards);
-
-      // Set CPU mode defaults
-      setPot(100);
-      setPlayerBankroll(500);
-      setOpponentBankroll(500);
-      setPhase('card-selection');
-    }
-  }, [isCPUMode, playerCards, opponentDeck]);
 
   // Timer countdown for actions
   useEffect(() => {
@@ -207,19 +173,24 @@ export function PokerBattleTable({
     setPlayerHand(hand);
     setPlayerDeckRemaining(deck);
 
-    // AI opponent: randomly select 10 from available cards, shuffle
-    const aiCards = [...playerCards]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 10);
-    const aiHand = aiCards.slice(0, 5);
-    const aiDeck = aiCards.slice(5);
+    if (isCPUMode) {
+      // CPU mode: use the opponent deck passed as prop (already selected based on difficulty)
+      if (opponentDeck.length >= 10) {
+        const shuffledOpponent = [...opponentDeck].sort(() => Math.random() - 0.5);
+        const aiHand = shuffledOpponent.slice(0, 5);
+        const aiDeck = shuffledOpponent.slice(5);
 
-    setOpponentHand(aiHand);
-    setOpponentDeckRemaining(aiDeck);
+        setOpponentHand(aiHand);
+        setOpponentDeckRemaining(aiDeck);
+      }
+    } else {
+      // PvP mode: opponent deck will be set when they join
+      // This is handled by real-time sync from server
+    }
 
-    setPot(100);
-    setPlayerBankroll(500);
-    setOpponentBankroll(500);
+    setPot(isCPUMode ? 100 : selectedAnte * 2);
+    setPlayerBankroll(isCPUMode ? 500 : selectedAnte * 50);
+    setOpponentBankroll(isCPUMode ? 500 : selectedAnte * 50);
     setPhase('card-selection');
   };
 
