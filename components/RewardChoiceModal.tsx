@@ -23,6 +23,9 @@ export function RewardChoiceModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const processReward = useMutation(api.rewardsChoice.processRewardChoice);
 
+  // Debug: log when modal renders
+  console.log('[RewardChoiceModal] Rendered with:', { amount, source, address, isProcessing });
+
   const sourceLabels = {
     pve: "PvE",
     pvp: "PvP",
@@ -32,14 +35,19 @@ export function RewardChoiceModal({
   };
 
   const handleChoice = async (choice: "claim_now" | "claim_later") => {
+    console.log('[RewardChoiceModal] handleChoice called', { choice, address, amount, source, isProcessing });
+
     if (!address) {
+      console.error('[RewardChoiceModal] No address found');
       toast.error("Conecte sua carteira");
       return;
     }
 
     setIsProcessing(true);
+    console.log('[RewardChoiceModal] Processing started');
 
     try {
+      console.log('[RewardChoiceModal] Calling processReward mutation');
       const result = await processReward({
         address,
         amount,
@@ -47,25 +55,40 @@ export function RewardChoiceModal({
         source,
       });
 
+      console.log('[RewardChoiceModal] Mutation result:', result);
       toast.success(result.message);
 
       if (onChoiceMade) {
+        console.log('[RewardChoiceModal] Calling onChoiceMade callback');
         onChoiceMade(choice);
       }
 
       // Close modal after a brief delay
       setTimeout(() => {
+        console.log('[RewardChoiceModal] Closing modal');
         onClose();
       }, 500);
     } catch (error: any) {
+      console.error('[RewardChoiceModal] Error processing reward:', error);
       toast.error(error.message || "Erro ao processar recompensa");
       setIsProcessing(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[99998] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-lg w-full mx-4">
+    <div
+      className="fixed inset-0 z-[99998] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={(e) => {
+        console.log('[RewardChoiceModal] Backdrop clicked', e.target);
+      }}
+    >
+      <div
+        className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-lg w-full mx-4"
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('[RewardChoiceModal] Modal content clicked');
+        }}
+      >
         {/* Header */}
         <div className="text-center mb-6">
           <div className="text-6xl mb-3">🎉</div>
@@ -103,7 +126,10 @@ export function RewardChoiceModal({
         {/* Choice buttons */}
         <div className="grid grid-cols-1 gap-4">
           <button
-            onClick={() => handleChoice("claim_now")}
+            onClick={() => {
+              console.log('[RewardChoiceModal] Claim Now button clicked');
+              handleChoice("claim_now");
+            }}
             disabled={isProcessing}
             className="relative group py-4 px-6 rounded-lg bg-gradient-to-r from-vintage-gold to-vintage-orange text-vintage-deep-black font-bold text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -119,7 +145,10 @@ export function RewardChoiceModal({
           </button>
 
           <button
-            onClick={() => handleChoice("claim_later")}
+            onClick={() => {
+              console.log('[RewardChoiceModal] Claim Later (Guardar) button clicked');
+              handleChoice("claim_later");
+            }}
             disabled={isProcessing}
             className="relative group py-4 px-6 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
