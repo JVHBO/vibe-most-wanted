@@ -9,13 +9,13 @@ import { PokerWaitingRoom } from './PokerWaitingRoom';
 
 interface Card {
   tokenId: string;
-  name: string;
+  name?: string; // Optional for NFTs
   image?: string;
   imageUrl?: string; // NFTs use imageUrl
   power: number;
   rarity: string;
-  foil: string;
-  wear: string;
+  foil?: string; // Optional for NFTs
+  wear?: string; // Optional for NFTs
 }
 
 interface PokerBattleTableProps {
