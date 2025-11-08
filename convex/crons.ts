@@ -39,15 +39,21 @@ const crons = cronJobs();
 
 /**
  * 🧹 Cleanup old PvP rooms (every hour)
- *
- * Uncomment when needed:
- *
- * crons.hourly(
- *   "cleanup old pvp rooms",
- *   { minuteUTC: 0 },
- *   internal.rooms.cleanupOldRooms
- * );
  */
+crons.hourly(
+  "cleanup old pvp rooms",
+  { minuteUTC: 0 },
+  internal.rooms.cleanupOldRooms
+);
+
+/**
+ * 🧹 Cleanup old Poker Battle rooms (every 15 minutes)
+ */
+crons.interval(
+  "cleanup old poker rooms",
+  { minutes: 15 },
+  internal.pokerBattle.cleanupOldPokerRooms
+);
 
 /**
  * 📊 Generate daily quest rotation (every day at 00:00 UTC)
