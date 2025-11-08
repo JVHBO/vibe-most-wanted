@@ -1857,7 +1857,7 @@ export function PokerBattleTable({
                 <button
                   onClick={() => {
                     const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
-                    const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+                    const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const tweetText = selectedToken === 'VIBE_NFT'
                       ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only - no blockchain)`
@@ -1873,7 +1873,7 @@ export function PokerBattleTable({
                 <button
                   onClick={() => {
                     const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
-                    const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+                    const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const castText = selectedToken === 'VIBE_NFT'
                       ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only)`
@@ -1921,7 +1921,7 @@ export function PokerBattleTable({
                 <button
                   onClick={() => {
                     const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
-                    const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+                    const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const tweetText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nI want a rematch!`;
 
@@ -1935,7 +1935,7 @@ export function PokerBattleTable({
                 <button
                   onClick={() => {
                     const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
-                    const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+                    const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const castText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nRevenge time!`;
 

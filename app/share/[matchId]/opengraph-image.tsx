@@ -93,6 +93,11 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     } else if (opponentName.toLowerCase().includes('nico') && !finalOpponentPfpUrl) {
       finalOpponentPfpUrl = nicoUrl;
     }
+    
+    // Fallback for generic AI opponent
+    if (opponentName.toLowerCase() === 'opponent' && !finalOpponentPfpUrl) {
+      finalOpponentPfpUrl = mechaUrl;
+    }
 
     // Convert external URLs to use proxy for Edge Runtime compatibility
     const proxyUrl = (url: string) => {
