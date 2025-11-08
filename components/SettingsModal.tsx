@@ -292,41 +292,6 @@ export function SettingsModal({
             </p>
           </div>
 
-          {/* Quick Links - Inbox & Docs */}
-          <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-2xl sm:text-3xl text-vintage-gold">◈</span>
-              <p className="font-modern font-bold text-vintage-gold">QUICK LINKS</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Inbox Link */}
-              <Link
-                href="/inbox"
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonNav();
-                  onClose();
-                }}
-                className="flex flex-col items-center justify-center gap-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/50 hover:border-vintage-gold rounded-lg p-4 transition group"
-              >
-                <span className="text-3xl group-hover:scale-110 transition-transform">📬</span>
-                <span className="text-vintage-gold font-modern font-semibold text-sm">Inbox</span>
-              </Link>
-
-              {/* Docs Link */}
-              <Link
-                href="/docs"
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonNav();
-                  onClose();
-                }}
-                className="flex flex-col items-center justify-center gap-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/50 hover:border-vintage-gold rounded-lg p-4 transition group"
-              >
-                <span className="text-3xl group-hover:scale-110 transition-transform">📖</span>
-                <span className="text-vintage-gold font-modern font-semibold text-sm">Docs</span>
-              </Link>
-            </div>
-          </div>
-
           {/* Change Username */}
           {userProfile && (
             <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
