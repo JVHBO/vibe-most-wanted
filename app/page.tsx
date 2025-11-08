@@ -672,6 +672,7 @@ export default function TCGPage() {
   // 🚀 Performance: Memoized JC NFTs (AI deck)
   const sortedJcNfts = useSortedByPower(jcNfts);
   const strongestJcNfts = useStrongestCards(jcNfts, HAND_SIZE);
+  const strongestJcNftsForPoker = useStrongestCards(jcNfts, 10); // Poker Battle needs 10 cards
 
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
@@ -3653,7 +3654,7 @@ export default function TCGPage() {
           onClose={() => setShowPokerBattle(false)}
           playerCards={sortedNfts}
           isCPUMode={pokerMode === 'cpu'}
-          opponentDeck={pokerMode === 'cpu' ? strongestJcNfts : []}
+          opponentDeck={pokerMode === 'cpu' ? strongestJcNftsForPoker : []}
           difficulty={pokerMode === 'cpu' ? "goofy" : undefined}
           playerAddress={address || ''}
           playerUsername={userProfile?.username || ''}
