@@ -3985,8 +3985,8 @@ export default function TCGPage() {
             <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
-          {/* Coins Inbox - Only show here in miniapp */}
-          {userProfile && isInFarcaster && <CoinsInboxDisplay />}
+          {/* Coins Inbox - Only show here in miniapp (compact mode) */}
+          {userProfile && isInFarcaster && <CoinsInboxDisplay compact />}
 
           <Link
             href="/docs"

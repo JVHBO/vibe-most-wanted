@@ -6,7 +6,11 @@ import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { CoinsInboxModal } from "./CoinsInboxModal";
 
-export function CoinsInboxDisplay() {
+interface CoinsInboxDisplayProps {
+  compact?: boolean; // For miniapp/mobile view
+}
+
+export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
   const { address } = useAccount();
   const [showModal, setShowModal] = useState(false);
 
@@ -20,6 +24,32 @@ export function CoinsInboxDisplay() {
   const coinsInbox = inboxStatus.coinsInbox || 0;
   const hasUncollected = coinsInbox > 0;
 
+  // Compact version for miniapp (icon only, like other buttons)
+  if (compact) {
+    return (
+      <>
+        <button
+          onClick={() => setShowModal(true)}
+          className="relative bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base flex items-center justify-center"
+          title="Coins Inbox"
+        >
+          <span className="text-xl">💰</span>
+          {hasUncollected && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-vintage-orange rounded-full animate-notification-pulse" />
+          )}
+        </button>
+
+        {showModal && (
+          <CoinsInboxModal
+            inboxStatus={inboxStatus}
+            onClose={() => setShowModal(false)}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Full version for website header
   return (
     <>
       <button
