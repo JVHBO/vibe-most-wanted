@@ -7,6 +7,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import { PokerMatchmaking } from './PokerMatchmaking';
 import { PokerWaitingRoom } from './PokerWaitingRoom';
 import FoilCardEffect from './FoilCardEffect';
+import { SwordIcon, ShieldIcon, BoltIcon, HandIcon, TrophyIcon, SkullIcon, ChatIcon, EyeIcon, ClockIcon, CloseIcon } from './PokerIcons';
 
 interface Card {
   tokenId: string;
@@ -1273,7 +1274,7 @@ export function PokerBattleTable({
                   ROUND {currentRound}/7 • Score: {playerScore}-{opponentScore}
                 </div>
                 <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse">
-                  <span>👁️</span> SPECTATOR MODE
+                  <EyeIcon className="inline-block text-blue-400" size={16} /> SPECTATOR MODE
                 </div>
                 <div className="text-vintage-gold font-display font-bold">
                   POT: {pot} {selectedToken}
@@ -1335,9 +1336,11 @@ export function PokerBattleTable({
                             <div className="text-white text-lg font-bold">{Math.round(playerSelectedCard.power || 0)}</div>
                           </div>
                         )}
-                        <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-blue-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'}`}>
+                        <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-blue-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'} flex items-center justify-center gap-0.5`}>
                           {Math.round((playerSelectedCard.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1))}
-                          {playerAction === 'BOOST' && ' ⚔️'}{playerAction === 'DOUBLE' && ' 💥'}{playerAction === 'SHIELD' && ' 🛡️'}
+                          {playerAction === 'BOOST' && <SwordIcon className="inline-block text-blue-300" size={12} />}
+                          {playerAction === 'DOUBLE' && <BoltIcon className="inline-block text-blue-300" size={12} />}
+                          {playerAction === 'SHIELD' && <ShieldIcon className="inline-block text-blue-300" size={12} />}
                         </div>
                       </div>
                     ) : playerSelectedCard ? (
@@ -1414,9 +1417,11 @@ export function PokerBattleTable({
                             <div className="text-white text-lg font-bold">{Math.round(opponentSelectedCard.power || 0)}</div>
                           </div>
                         )}
-                        <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-red-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'}`}>
+                        <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-red-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'} flex items-center justify-center gap-0.5`}>
                           {Math.round((opponentSelectedCard.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1))}
-                          {opponentAction === 'BOOST' && ' ⚔️'}{opponentAction === 'DOUBLE' && ' 💥'}{opponentAction === 'SHIELD' && ' 🛡️'}
+                          {opponentAction === 'BOOST' && <SwordIcon className="inline-block text-red-300" size={12} />}
+                          {opponentAction === 'DOUBLE' && <BoltIcon className="inline-block text-red-300" size={12} />}
+                          {opponentAction === 'SHIELD' && <ShieldIcon className="inline-block text-red-300" size={12} />}
                         </div>
                       </div>
                     ) : opponentSelectedCard ? (
@@ -1460,7 +1465,7 @@ export function PokerBattleTable({
                 </div>
                 {(selectedAnte === 0 || isSpectator) && (
                   <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse">
-                    <span>👁️</span> SPECTATOR
+                    <EyeIcon className="inline-block text-blue-400" size={16} /> SPECTATOR
                   </div>
                 )}
               </div>
@@ -1535,13 +1540,15 @@ export function PokerBattleTable({
                           )}
                           <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold text-center">
                             {opponentSelectedCard.name}<br/>
-                            {Math.round((opponentSelectedCard.power || 0) * (
-                              opponentAction === 'BOOST' ? 1.3 :
-                              opponentAction === 'DOUBLE' ? 2 : 1
-                            )).toLocaleString()}
-                            {opponentAction === 'BOOST' && ' ⚔️'}
-                            {opponentAction === 'DOUBLE' && ' 💥'}
-                            {opponentAction === 'SHIELD' && ' 🛡️'}
+                            <div className="flex items-center justify-center gap-1">
+                              {Math.round((opponentSelectedCard.power || 0) * (
+                                opponentAction === 'BOOST' ? 1.3 :
+                                opponentAction === 'DOUBLE' ? 2 : 1
+                              )).toLocaleString()}
+                              {opponentAction === 'BOOST' && <SwordIcon className="inline-block text-vintage-gold" size={14} />}
+                              {opponentAction === 'DOUBLE' && <BoltIcon className="inline-block text-vintage-gold" size={14} />}
+                              {opponentAction === 'SHIELD' && <ShieldIcon className="inline-block text-vintage-gold" size={14} />}
+                            </div>
                           </div>
                         </div>
                       ) : opponentSelectedCard ? (
@@ -1556,10 +1563,10 @@ export function PokerBattleTable({
                     </div>
                     {opponentAction && opponentAction !== 'PASS' && phase === 'resolution' && (
                       <div className="mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500">
-                        <span className="text-red-300 text-sm font-bold">
-                          {opponentAction === 'BOOST' && '⚔️ Opponent used BOOST (+30%)'}
-                          {opponentAction === 'SHIELD' && '🛡️ Opponent used SHIELD (Block Boost)'}
-                          {opponentAction === 'DOUBLE' && '💥 Opponent used CRITICAL (x2)'}
+                        <span className="text-red-300 text-sm font-bold flex items-center justify-center gap-1">
+                          {opponentAction === 'BOOST' && <><SwordIcon className="inline-block text-red-300" size={16} /> Opponent used BOOST (+30%)</>}
+                          {opponentAction === 'SHIELD' && <><ShieldIcon className="inline-block text-red-300" size={16} /> Opponent used SHIELD (Block Boost)</>}
+                          {opponentAction === 'DOUBLE' && <><BoltIcon className="inline-block text-red-300" size={16} /> Opponent used CRITICAL (x2)</>}
                         </span>
                       </div>
                     )}
@@ -1591,7 +1598,7 @@ export function PokerBattleTable({
                             ? 'text-yellow-300'
                             : 'text-vintage-gold'
                         }`}>
-                          ⏱️ {timeRemaining}s
+                          <ClockIcon className="inline-block" size={24} /> {timeRemaining}s
                         </div>
                       </div>
                     </div>
@@ -1616,7 +1623,10 @@ export function PokerBattleTable({
                           </span>
                         )}
                         {phase === 'reveal' && (isCPUMode || !playerAction) && (
-                          isInFarcaster ? '⚔️ CHOOSE ACTION' : '⚔️ CHOOSE YOUR ACTION'
+                          <span className="flex items-center justify-center gap-2">
+                            <SwordIcon className="inline-block text-vintage-gold" size={20} />
+                            {isInFarcaster ? 'CHOOSE ACTION' : 'CHOOSE YOUR ACTION'}
+                          </span>
                         )}
 
                         {phase === 'resolution' && (
@@ -1697,7 +1707,7 @@ export function PokerBattleTable({
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <div className="text-xl sm:text-3xl md:text-4xl">⚔️</div>
+                          <SwordIcon className={playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator ? "text-black" : "text-gray-500"} size={48} />
                           <div className="text-xs sm:text-base md:text-lg font-bold">BOOST</div>
                           <span className="text-[10px] sm:text-sm">+30%</span>
                           <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('BOOST')}</span>
@@ -1712,7 +1722,7 @@ export function PokerBattleTable({
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <div className="text-xl sm:text-3xl md:text-4xl">🛡️</div>
+                          <ShieldIcon className={playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={48} />
                           <div className="text-xs sm:text-base md:text-lg font-bold">SHIELD</div>
                           <span className="text-[10px] sm:text-sm">Block</span>
                           <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('SHIELD')}</span>
@@ -1727,7 +1737,7 @@ export function PokerBattleTable({
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <div className="text-xl sm:text-3xl md:text-4xl">💥</div>
+                          <BoltIcon className={playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={48} />
                           <div className="text-xs sm:text-base md:text-lg font-bold">CRIT</div>
                           <span className="text-[10px] sm:text-sm">x2</span>
                           <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('DOUBLE')}</span>
@@ -1738,7 +1748,7 @@ export function PokerBattleTable({
                           disabled={selectedAnte === 0 || isSpectator}
                           className="px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 bg-gray-600 text-white font-bold text-base sm:text-lg md:text-xl rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
                         >
-                          <div className="text-xl sm:text-3xl md:text-4xl">✋</div>
+                          <HandIcon className={selectedAnte === 0 || isSpectator ? "text-gray-500" : "text-white"} size={48} />
                           <div className="text-xs sm:text-base md:text-lg font-bold">PASS</div>
                           <span className="text-[10px] sm:text-sm">Free</span>
                           <span className="text-[9px] sm:text-xs opacity-80">Save $</span>
@@ -1761,7 +1771,7 @@ export function PokerBattleTable({
               {/* Winner Badge */}
               <div className="mb-6">
                 {playerScore > opponentScore ? (
-                  <div className="text-6xl sm:text-7xl mb-2 animate-bounce">🏆</div>
+                  <div className="mb-2 animate-bounce flex justify-center"><TrophyIcon className="text-vintage-gold" size={80} /></div>
                 ) : playerScore < opponentScore ? (
                   <div className="text-6xl sm:text-7xl mb-2 animate-bounce">👑</div>
                 ) : (
@@ -1899,8 +1909,8 @@ export function PokerBattleTable({
               />
 
               {/* Defeat Text */}
-              <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
-                💀 You Lost! Score: {playerScore} - {opponentScore}
+              <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center flex items-center justify-center gap-2">
+                <SkullIcon className="text-red-400" size={32} /> You Lost! Score: {playerScore} - {opponentScore}
               </p>
               <p className="text-xl md:text-2xl font-bold text-red-300 px-4 text-center">
                 Loss: {playerBankroll - (selectedAnte * 50)} {selectedToken}
@@ -1993,8 +2003,8 @@ export function PokerBattleTable({
                 ? 'from-green-900/95 to-green-950/95 border-green-500'
                 : 'from-red-900/95 to-red-950/95 border-red-500'
             }`}>
-              <div className="text-5xl mb-3 animate-bounce">
-                {roundWinner === 'player' ? '🏆' : '💀'}
+              <div className="mb-3 animate-bounce flex justify-center">
+                {roundWinner === 'player' ? <TrophyIcon className="text-vintage-gold" size={64} /> : <SkullIcon className="text-red-400" size={64} />}
               </div>
               <h2 className={`text-3xl font-display font-bold mb-1 ${
                 roundWinner === 'player' ? 'text-green-400' : 'text-red-400'
@@ -2022,11 +2032,11 @@ export function PokerBattleTable({
                   pendingAction === 'DOUBLE' ? 'bg-red-500/20 border-2 border-red-500' :
                   'bg-gray-500/20 border-2 border-gray-500'
                 }`}>
-                  <div className="text-3xl mb-2">
-                    {pendingAction === 'BOOST' && '⚔️'}
-                    {pendingAction === 'SHIELD' && '🛡️'}
-                    {pendingAction === 'DOUBLE' && '💥'}
-                    {pendingAction === 'PASS' && '✋'}
+                  <div className="mb-2 flex justify-center">
+                    {pendingAction === 'BOOST' && <SwordIcon className="text-yellow-300" size={48} />}
+                    {pendingAction === 'SHIELD' && <ShieldIcon className="text-blue-300" size={48} />}
+                    {pendingAction === 'DOUBLE' && <BoltIcon className="text-red-300" size={48} />}
+                    {pendingAction === 'PASS' && <HandIcon className="text-gray-300" size={48} />}
                   </div>
                   <div className={`font-bold text-xl ${
                     pendingAction === 'BOOST' ? 'text-yellow-300' :
@@ -2085,7 +2095,7 @@ export function PokerBattleTable({
               } hover:bg-vintage-gold text-vintage-black rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center font-bold text-lg sm:text-xl shadow-2xl transition-all hover:scale-110 active:scale-95`}
               title="Toggle Chat"
             >
-              {isChatOpen ? '✕' : '💬'}
+              {isChatOpen ? <CloseIcon className="text-vintage-black" size={24} /> : <ChatIcon className="text-vintage-black" size={24} />}
             </button>
 
             {/* Chat Panel */}
@@ -2095,8 +2105,8 @@ export function PokerBattleTable({
               } flex flex-col`}>
                 {/* Chat Header */}
                 <div className="bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold p-2 rounded-t-lg">
-                  <h3 className="font-display font-bold text-vintage-black text-center text-sm sm:text-base">
-                    💬 Match Chat
+                  <h3 className="font-display font-bold text-vintage-black text-center text-sm sm:text-base flex items-center justify-center gap-2">
+                    <ChatIcon className="text-vintage-black" size={18} /> Match Chat
                   </h3>
                 </div>
 
