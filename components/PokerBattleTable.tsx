@@ -991,66 +991,66 @@ export function PokerBattleTable({
 
 
                   {phase === 'reveal' && !isSpectator && selectedAnte !== 0 && (
-                    <div className="space-y-3 sm:space-y-4 animate-in fade-in slide-in-from-bottom duration-500 w-full max-w-md mx-auto">
-                      <div className="text-center text-vintage-burnt-gold text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4">
+                    <div className="space-y-2 sm:space-y-4 animate-in fade-in slide-in-from-bottom duration-500 w-full max-w-md mx-auto">
+                      <div className="text-center text-vintage-burnt-gold text-sm sm:text-lg md:text-xl font-bold mb-2 sm:mb-4">
                         💰 BOOST SHOP - {playerBankroll} {selectedToken}
                       </div>
                       {/* Mobile: 2x2 Grid, Desktop: 4 buttons in row */}
-                      <div className="grid grid-cols-2 md:flex md:justify-center gap-3 sm:gap-4">
+                      <div className="grid grid-cols-2 md:flex md:justify-center gap-2 sm:gap-4">
                         <button
                           onClick={() => showConfirmAction('BOOST')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('BOOST')}
-                          className={`px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-xl transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
                             playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black hover:from-yellow-600 hover:to-yellow-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <div className="text-2xl sm:text-3xl md:text-4xl mb-1">⚔️</div>
-                          <div className="text-sm sm:text-base md:text-lg font-bold">BOOST</div>
-                          <span className="text-xs sm:text-sm mt-1">+30%</span>
-                          <span className="text-xs opacity-80">{getBoostPrice('BOOST')} {selectedToken}</span>
+                          <div className="text-xl sm:text-3xl md:text-4xl">⚔️</div>
+                          <div className="text-xs sm:text-base md:text-lg font-bold">BOOST</div>
+                          <span className="text-[10px] sm:text-sm">+30%</span>
+                          <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('BOOST')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('SHIELD')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('SHIELD')}
-                          className={`px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-xl transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
                             playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <div className="text-2xl sm:text-3xl md:text-4xl mb-1">🛡️</div>
-                          <div className="text-sm sm:text-base md:text-lg font-bold">SHIELD</div>
-                          <span className="text-xs sm:text-sm mt-1">Block</span>
-                          <span className="text-xs opacity-80">{getBoostPrice('SHIELD')} {selectedToken}</span>
+                          <div className="text-xl sm:text-3xl md:text-4xl">🛡️</div>
+                          <div className="text-xs sm:text-base md:text-lg font-bold">SHIELD</div>
+                          <span className="text-[10px] sm:text-sm">Block</span>
+                          <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('SHIELD')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('DOUBLE')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('DOUBLE')}
-                          className={`px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-xl transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
                             playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <div className="text-2xl sm:text-3xl md:text-4xl mb-1">💥</div>
-                          <div className="text-sm sm:text-base md:text-lg font-bold">CRITICAL</div>
-                          <span className="text-xs sm:text-sm mt-1">x2 Power</span>
-                          <span className="text-xs opacity-80">{getBoostPrice('DOUBLE')} {selectedToken}</span>
+                          <div className="text-xl sm:text-3xl md:text-4xl">💥</div>
+                          <div className="text-xs sm:text-base md:text-lg font-bold">CRIT</div>
+                          <span className="text-[10px] sm:text-sm">x2</span>
+                          <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('DOUBLE')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('PASS')}
                           disabled={selectedAnte === 0 || isSpectator}
-                          className="px-6 sm:px-8 md:px-10 py-4 sm:py-5 md:py-6 bg-gray-600 text-white font-bold text-base sm:text-lg md:text-xl rounded-xl hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                          className="px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 bg-gray-600 text-white font-bold text-base sm:text-lg md:text-xl rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
                         >
-                          <div className="text-2xl sm:text-3xl md:text-4xl mb-1">✋</div>
-                          <div className="text-sm sm:text-base md:text-lg font-bold">PASS</div>
-                          <span className="text-xs sm:text-sm mt-1">Free</span>
-                          <span className="text-xs opacity-80">Save Money</span>
+                          <div className="text-xl sm:text-3xl md:text-4xl">✋</div>
+                          <div className="text-xs sm:text-base md:text-lg font-bold">PASS</div>
+                          <span className="text-[10px] sm:text-sm">Free</span>
+                          <span className="text-[9px] sm:text-xs opacity-80">Save $</span>
                         </button>
                       </div>
                     </div>
