@@ -12,7 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAccount } from 'wagmi';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardLoadingSpinner } from '@/components/LoadingSpinner';
-import { GiftIcon } from '@/components/PokerIcons';
+import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -799,10 +799,8 @@ export default function ProfilePage() {
                   rel="noopener noreferrer"
                   className="px-4 py-2 bg-vintage-neon-blue/20 hover:bg-vintage-neon-blue/30 border border-vintage-neon-blue rounded-lg text-vintage-neon-blue hover:text-white transition-all font-modern font-semibold text-sm flex items-center gap-2"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm2 4v-2H3c0 1.1.9 2 2 2zM3 9h2V7H3v2zm12 12h2v-2h-2v2zm4-18H9c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 12H9V5h10v10zm-8 6h2v-2h-2v2zm-4 0h2v-2H7v2z"/>
-                  </svg>
-                  <GiftIcon className="text-vintage-gold" size={16} />
+                  <FarcasterIcon size={16} />
+                  <span>Share</span>
                 </a>
 
                 <a
@@ -817,7 +815,7 @@ export default function ProfilePage() {
                   className="px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-lg text-vintage-gold hover:text-vintage-ice transition-all font-modern font-semibold text-sm flex items-center gap-2"
                 >
                   <span>𝕏</span>
-                  <GiftIcon className="text-vintage-gold" size={16} />
+                  <span>Share</span>
                 </a>
               </div>
             </div>
