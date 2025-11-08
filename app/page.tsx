@@ -4616,7 +4616,7 @@ export default function TCGPage() {
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    ♠️ Poker Battle CPU
+                    Poker Battle CPU
                   </button>
                 </div>
 
@@ -4635,7 +4635,7 @@ export default function TCGPage() {
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    ♠️ Poker Battle PvP
+                    Poker Battle PvP
                   </button>
                 </div>
 
