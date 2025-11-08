@@ -635,6 +635,20 @@ export function PokerBattleTable({
     }
   }, [room, isCPUMode, isHost, currentView]);
 
+  // Play audio when game ends
+  useEffect(() => {
+    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectator) {
+      // Play appropriate sound based on result
+      if (playerScore > opponentScore) {
+        AudioManager.win(); // Victory sound
+      } else if (playerScore < opponentScore) {
+        AudioManager.lose(); // Defeat sound
+      } else {
+        AudioManager.tie(); // Tie sound
+      }
+    }
+  }, [phase, playerScore, opponentScore, selectedAnte, isSpectator]);
+
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
     return (
