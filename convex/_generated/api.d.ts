@@ -25,6 +25,7 @@ import type * as migrations_normalizeUsernames from "../migrations/normalizeUser
 import type * as missions from "../missions.js";
 import type * as notifications from "../notifications.js";
 import type * as pokerBattle from "../pokerBattle.js";
+import type * as pokerChat from "../pokerChat.js";
 import type * as profiles from "../profiles.js";
 import type * as quests from "../quests.js";
 import type * as rewardsChoice from "../rewardsChoice.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   missions: typeof missions;
   notifications: typeof notifications;
   pokerBattle: typeof pokerBattle;
+  pokerChat: typeof pokerChat;
   profiles: typeof profiles;
   quests: typeof quests;
   rewardsChoice: typeof rewardsChoice;
