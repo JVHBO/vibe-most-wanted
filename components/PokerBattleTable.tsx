@@ -355,7 +355,7 @@ export function PokerBattleTable({
   };
 
   // Action Selection with cost
-  const selectAction = (action: CardAction) => {
+  const selectAction = async (action: CardAction) => {
     const cost = getBoostPrice(action);
 
     // Check if player can afford it
@@ -389,57 +389,80 @@ export function PokerBattleTable({
           setPhase('post-reveal-betting');
         }, 800);
       }, 1000);
+    } else {
+      // PvP mode - send to server
+      try {
+        await useCardActionMutation({
+          roomId,
+          address: playerAddress,
+          action,
+        });
+      } catch (error) {
+        console.error('Error using card action:', error);
+      }
     }
   };
 
   // Calculate winner
-  const resolveRound = () => {
+  const resolveRound = async () => {
     if (!playerSelectedCard || !opponentSelectedCard) return;
     AudioManager.buttonClick();
 
     setPhase('resolution');
 
-    setTimeout(() => {
-      let playerPower = playerSelectedCard.power;
-      let opponentPower = opponentSelectedCard.power;
-
-      // Apply actions with shield logic
-      const playerHasShield = playerAction === 'SHIELD';
-      const opponentHasShield = opponentAction === 'SHIELD';
-
-      // Apply BOOST (+30%)
-      if (playerAction === 'BOOST' && !opponentHasShield) {
-        playerPower *= 1.3;
-      }
-      if (opponentAction === 'BOOST' && !playerHasShield) {
-        opponentPower *= 1.3;
-      }
-
-      // Apply DOUBLE (x2)
-      if (playerAction === 'DOUBLE') playerPower *= 2;
-      if (opponentAction === 'DOUBLE') opponentPower *= 2;
-
-      const playerWins = playerPower > opponentPower;
-
-      if (playerWins) {
-        setPlayerBankroll(prev => prev + pot);
-        setPlayerScore(prev => prev + 1);
-      } else {
-        setOpponentBankroll(prev => prev + pot);
-        setOpponentScore(prev => prev + 1);
-      }
-
-      setPot(0);
-
-      // Check win condition with delay
+    if (isCPUMode) {
       setTimeout(() => {
-        if (playerScore + (playerWins ? 1 : 0) >= 4 || opponentScore + (playerWins ? 0 : 1) >= 4) {
-          setPhase('game-over');
-        } else {
-          nextRound();
+        let playerPower = playerSelectedCard.power;
+        let opponentPower = opponentSelectedCard.power;
+
+        // Apply actions with shield logic
+        const playerHasShield = playerAction === 'SHIELD';
+        const opponentHasShield = opponentAction === 'SHIELD';
+
+        // Apply BOOST (+30%)
+        if (playerAction === 'BOOST' && !opponentHasShield) {
+          playerPower *= 1.3;
         }
-      }, 1500);
-    }, 1000);
+        if (opponentAction === 'BOOST' && !playerHasShield) {
+          opponentPower *= 1.3;
+        }
+
+        // Apply DOUBLE (x2)
+        if (playerAction === 'DOUBLE') playerPower *= 2;
+        if (opponentAction === 'DOUBLE') opponentPower *= 2;
+
+        const playerWins = playerPower > opponentPower;
+
+        if (playerWins) {
+          setPlayerBankroll(prev => prev + pot);
+          setPlayerScore(prev => prev + 1);
+        } else {
+          setOpponentBankroll(prev => prev + pot);
+          setOpponentScore(prev => prev + 1);
+        }
+
+        setPot(0);
+
+        // Check win condition with delay
+        setTimeout(() => {
+          if (playerScore + (playerWins ? 1 : 0) >= 4 || opponentScore + (playerWins ? 0 : 1) >= 4) {
+            setPhase('game-over');
+          } else {
+            nextRound();
+          }
+        }, 1500);
+      }, 1000);
+    } else {
+      // PvP mode - send to server for resolution
+      try {
+        await resolveRoundMutation({
+          roomId,
+          address: playerAddress,
+        });
+      } catch (error) {
+        console.error('Error resolving round:', error);
+      }
+    }
   };
 
   const nextRound = () => {
