@@ -76,6 +76,21 @@ export function PokerBattleTable({
   const [chatInput, setChatInput] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  // Betting system
+  const placeBetMutation = useMutation(api.pokerBattle.placeBet);
+  const resolveBetsMutation = useMutation(api.pokerBattle.resolveBets);
+  const [placingBet, setPlacingBet] = useState(false);
+
+  // Get player profiles for avatars
+  const hostProfile = useQuery(
+    api.profiles.getProfile,
+    room?.hostAddress ? { address: room.hostAddress } : "skip"
+  );
+  const guestProfile = useQuery(
+    api.profiles.getProfile,
+    room?.guestAddress ? { address: room.guestAddress } : "skip"
+  );
+
   // Game state
   const [phase, setPhase] = useState<GamePhase>('deck-building');
   const [currentRound, setCurrentRound] = useState(1);
@@ -871,6 +886,29 @@ export function PokerBattleTable({
     }
   };
 
+  // Handle placing a bet
+  const handlePlaceBet = async (betOnAddress: string, amount: number) => {
+    if (!roomId || placingBet) return;
+
+    try {
+      setPlacingBet(true);
+      await placeBetMutation({
+        roomId,
+        bettor: playerAddress,
+        bettorUsername: playerUsername,
+        betOn: betOnAddress,
+        amount,
+      });
+      AudioManager.buttonSuccess();
+    } catch (error: any) {
+      console.error('[PokerBattle] Failed to place bet:', error);
+      alert(error.message || 'Failed to place bet');
+      AudioManager.buttonError();
+    } finally {
+      setPlacingBet(false);
+    }
+  };
+
   // Matchmaking callbacks
   const handleRoomJoined = (newRoomId: string, host: boolean, ante: number, token: string, spectator: boolean = false) => {
     setRoomId(newRoomId);
@@ -1008,6 +1046,28 @@ export function PokerBattleTable({
       }
     }
   }, [phase, playerScore, opponentScore, selectedAnte, isSpectator, soundEnabled]);
+
+  // Resolve bets when game ends (PvP mode only)
+  useEffect(() => {
+    if (phase === 'game-over' && !isCPUMode && roomId && room) {
+      // Determine winner
+      const winnerId = playerScore > opponentScore
+        ? (isHost ? room.hostAddress : room.guestAddress)
+        : (isHost ? room.guestAddress : room.hostAddress);
+
+      if (winnerId) {
+        // Resolve all bets for this room
+        resolveBetsMutation({
+          roomId,
+          winnerId,
+        }).then((result) => {
+          console.log(`💰 Bets resolved: ${result.resolved} bets, ${result.totalPaidOut} total paid out`);
+        }).catch((error) => {
+          console.error('[PokerBattle] Failed to resolve bets:', error);
+        });
+      }
+    }
+  }, [phase, playerScore, opponentScore, isCPUMode, roomId, room, isHost, resolveBetsMutation]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
@@ -1225,9 +1285,41 @@ export function PokerBattleTable({
             <div className="flex-1 grid grid-cols-2 gap-2 p-2 bg-vintage-deep-black rounded-b-2xl border-2 border-vintage-gold border-t-0">
               {/* HOST SIDE */}
               <div className="bg-gradient-to-br from-blue-900/30 to-blue-950/30 rounded-xl border-2 border-blue-500/50 p-3 flex flex-col">
+                {/* Host Profile */}
                 <div className="text-center mb-3">
-                  <div className="text-blue-400 font-display font-bold mb-1">HOST</div>
-                  <div className="text-vintage-gold text-sm">{playerBankroll} {selectedToken}</div>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    {hostProfile?.twitterProfileImageUrl ? (
+                      <img
+                        src={hostProfile.twitterProfileImageUrl}
+                        alt={room?.hostUsername}
+                        className="w-10 h-10 rounded-full border-2 border-blue-400"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-blue-600 border-2 border-blue-400 flex items-center justify-center text-white font-bold">
+                        {room?.hostUsername?.charAt(0).toUpperCase() || 'H'}
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-blue-400 font-display font-bold text-sm">{room?.hostUsername || 'HOST'}</div>
+                      <div className="text-vintage-gold text-xs">{playerBankroll} {selectedToken}</div>
+                    </div>
+                  </div>
+
+                  {/* Bet Buttons - Only show for spectators */}
+                  {isSpectator && room?.hostAddress && (
+                    <div className="flex gap-1 justify-center mt-2">
+                      {[10, 25, 50, 100].map((amount) => (
+                        <button
+                          key={amount}
+                          onClick={() => handlePlaceBet(room.hostAddress, amount)}
+                          disabled={placingBet}
+                          className="px-2 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white text-xs font-bold rounded transition-all hover:scale-105 active:scale-95"
+                        >
+                          {amount}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Host's selected card */}
@@ -1272,9 +1364,41 @@ export function PokerBattleTable({
 
               {/* GUEST SIDE */}
               <div className="bg-gradient-to-br from-red-900/30 to-red-950/30 rounded-xl border-2 border-red-500/50 p-3 flex flex-col">
+                {/* Guest Profile */}
                 <div className="text-center mb-3">
-                  <div className="text-red-400 font-display font-bold mb-1">GUEST</div>
-                  <div className="text-vintage-gold text-sm">{opponentBankroll} {selectedToken}</div>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    {guestProfile?.twitterProfileImageUrl ? (
+                      <img
+                        src={guestProfile.twitterProfileImageUrl}
+                        alt={room?.guestUsername}
+                        className="w-10 h-10 rounded-full border-2 border-red-400"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-red-600 border-2 border-red-400 flex items-center justify-center text-white font-bold">
+                        {room?.guestUsername?.charAt(0).toUpperCase() || 'G'}
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-red-400 font-display font-bold text-sm">{room?.guestUsername || 'GUEST'}</div>
+                      <div className="text-vintage-gold text-xs">{opponentBankroll} {selectedToken}</div>
+                    </div>
+                  </div>
+
+                  {/* Bet Buttons - Only show for spectators */}
+                  {isSpectator && room?.guestAddress && (
+                    <div className="flex gap-1 justify-center mt-2">
+                      {[10, 25, 50, 100].map((amount) => (
+                        <button
+                          key={amount}
+                          onClick={() => handlePlaceBet(room.guestAddress!, amount)}
+                          disabled={placingBet}
+                          className="px-2 py-1 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white text-xs font-bold rounded transition-all hover:scale-105 active:scale-95"
+                        >
+                          {amount}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Guest's selected card */}
@@ -2006,35 +2130,6 @@ export function PokerBattleTable({
                       No messages yet. Say hi! 👋
                     </div>
                   )}
-                </div>
-
-                {/* Quick Bet Buttons */}
-                <div className="px-2 py-1 border-t border-vintage-gold/30 bg-vintage-charcoal/50">
-                  <p className="text-xs text-vintage-gold/60 mb-1">Quick Bets:</p>
-                  <div className="flex gap-1 flex-wrap">
-                    {[10, 25, 50, 100].map((amount) => (
-                      <button
-                        key={amount}
-                        onClick={async () => {
-                          const opponentName = room?.hostAddress === playerAddress ? room?.guestUsername : room?.hostUsername;
-                          const betMessage = `💰 Bid ${amount} ${selectedToken} on ${opponentName}`;
-                          try {
-                            await sendMessageMutation({
-                              roomId,
-                              sender: playerAddress,
-                              senderUsername: playerUsername,
-                              message: betMessage,
-                            });
-                          } catch (error) {
-                            console.error('[PokerBattle] Error sending bet message:', error);
-                          }
-                        }}
-                        className="px-2 py-1 bg-green-600/80 hover:bg-green-600 text-white text-xs rounded font-bold transition-all hover:scale-105 active:scale-95"
-                      >
-                        {amount}
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Input */}

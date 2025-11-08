@@ -500,4 +500,31 @@ export default defineSchema({
     timestamp: v.number(), // When message was sent
   })
     .index("by_room", ["roomId", "timestamp"]), // For fetching messages by room chronologically
+
+  // Poker Battle Spectator Bets
+  pokerBets: defineTable({
+    roomId: v.string(), // Which poker room this bet is for
+    bettor: v.string(), // Spectator's wallet address (lowercase)
+    bettorUsername: v.string(), // Display name
+    betOn: v.string(), // Address of player being bet on (hostAddress or guestAddress)
+    betOnUsername: v.string(), // Username of player being bet on
+    amount: v.number(), // Bet amount in tokens
+    token: v.union(
+      v.literal("TESTVBMS"),
+      v.literal("testUSDC"),
+      v.literal("VIBE_NFT")
+    ),
+    status: v.union(
+      v.literal("active"), // Bet placed, game in progress
+      v.literal("won"), // Bet won, payout sent
+      v.literal("lost"), // Bet lost, tokens gone
+      v.literal("refunded") // Game cancelled, bet refunded
+    ),
+    payout: v.optional(v.number()), // Amount paid out if won
+    timestamp: v.number(), // When bet was placed
+    resolvedAt: v.optional(v.number()), // When bet was resolved
+  })
+    .index("by_room", ["roomId", "timestamp"])
+    .index("by_bettor", ["bettor", "timestamp"])
+    .index("by_status", ["status", "timestamp"]),
 });
