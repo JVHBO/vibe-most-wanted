@@ -6,7 +6,7 @@ import NextImage from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { docsTranslations, type DocsSupportedLanguage, type DocsTranslationKey } from "@/lib/docs-translations";
 
-type DocSection = "economy" | "battles" | "achievements" | "quests" | "cards" | "faq";
+type DocSection = "economy" | "battles" | "poker" | "achievements" | "quests" | "cards" | "faq";
 
 export default function DocsPage() {
   const { lang } = useLanguage();
@@ -32,6 +32,7 @@ export default function DocsPage() {
   const sections = [
     { id: "economy" as DocSection, label: t("economy"), icon: "/images/icons/coins.svg" },
     { id: "battles" as DocSection, label: t("battles"), icon: "/images/icons/battle.svg" },
+    { id: "poker" as DocSection, label: "Poker Battle", icon: "/images/icons/cards.svg" },
     { id: "achievements" as DocSection, label: t("achievements"), icon: "/images/icons/achievement.svg" },
     { id: "quests" as DocSection, label: t("quests"), icon: "/images/icons/mission.svg" },
     { id: "cards" as DocSection, label: t("cards"), icon: "/images/icons/cards.svg" },
@@ -93,6 +94,7 @@ export default function DocsPage() {
             <div className="bg-vintage-charcoal/80 backdrop-blur-lg border-2 border-vintage-gold/30 rounded-xl p-6 shadow-gold">
               {activeSection === "economy" && <EconomyDocs t={t} />}
               {activeSection === "battles" && <BattlesDocs t={t} getCoinsWord={getCoinsWord} />}
+              {activeSection === "poker" && <PokerBattleDocs />}
               {activeSection === "achievements" && <AchievementsDocs t={t} />}
               {activeSection === "quests" && <QuestsDocs t={t} />}
               {activeSection === "cards" && <CardsDocs t={t} />}
@@ -420,6 +422,123 @@ function CardsDocs({ t }: { t: (key: DocsTranslationKey) => string }) {
       <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
         <h3 className="text-xl font-bold text-vintage-gold mb-2">{t("defenseDeck")}</h3>
         <p>{t("defenseDeckDesc")}</p>
+      </div>
+    </div>
+  );
+}
+
+// Poker Battle Section
+function PokerBattleDocs() {
+  return (
+    <div className="space-y-6 text-vintage-ice font-modern">
+      <div>
+        <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4 flex items-center gap-2">
+          <NextImage src="/images/icons/cards.svg" alt="Poker Battle" width={32} height={32} />
+          🎴 Poker Battle
+        </h2>
+        <p className="mb-4 leading-relaxed">
+          A strategic card battle mode where you face opponents in intense poker-style rounds. Build your deck, select cards wisely, and use powerful boosts to dominate!
+        </p>
+      </div>
+
+      {/* How to Play */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">🎯 How to Play</h3>
+        <ol className="space-y-2">
+          <li><strong className="text-vintage-gold">1. Build Your Deck:</strong> Select 10 cards from your collection</li>
+          <li><strong className="text-vintage-gold">2. Each Round:</strong> Pick 1 card from your hand to play</li>
+          <li><strong className="text-vintage-gold">3. Use Boosts:</strong> Enhance your cards with special abilities</li>
+          <li><strong className="text-vintage-gold">4. Win Rounds:</strong> Higher power wins the round and the pot</li>
+          <li><strong className="text-vintage-gold">5. Best of 10:</strong> Win more rounds than your opponent to victory!</li>
+        </ol>
+      </div>
+
+      {/* Game Modes */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">🎮 Game Modes</h3>
+        <div className="space-y-3">
+          <div>
+            <p className="font-bold text-blue-400">⚔️ PvE - vs CPU</p>
+            <p className="text-sm">Practice against AI opponents with 5 difficulty levels. No entry fee!</p>
+          </div>
+          <div>
+            <p className="font-bold text-purple-400">👥 PvP - Multiplayer</p>
+            <p className="text-sm">Challenge real players! Create or join rooms with customizable stakes.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Boosts */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">💥 Boosts & Actions</h3>
+        <div className="space-y-2">
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">⚔️</span>
+            <div>
+              <strong className="text-yellow-400">BOOST:</strong> +30% power to your card (Cost: 2x ante)
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">🛡️</span>
+            <div>
+              <strong className="text-blue-400">SHIELD:</strong> Block opponent's boost (Cost: 2x ante)
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">💥</span>
+            <div>
+              <strong className="text-red-400">CRITICAL:</strong> x2 card power! (Cost: 4x ante)
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">✋</span>
+            <div>
+              <strong className="text-gray-400">PASS:</strong> Play without boost (Free - Save your coins!)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stakes & Rewards */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">💰 Stakes & Rewards</h3>
+        <div className="space-y-2">
+          <p><strong className="text-vintage-gold">Ante Options:</strong> 25, 50, 100, or 250 coins per round</p>
+          <p><strong className="text-vintage-gold">Starting Bankroll:</strong> 50x the ante you choose</p>
+          <p><strong className="text-vintage-gold">Winner Takes All:</strong> Keep your final bankroll as profit!</p>
+          <p className="text-sm text-vintage-burnt-gold mt-3">💡 Tip: Higher antes = bigger risks & rewards!</p>
+        </div>
+      </div>
+
+      {/* Token Types */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">🪙 Token Types</h3>
+        <ul className="space-y-2">
+          <li className="flex items-center gap-2">
+            <span className="text-vintage-gold">💎</span>
+            <strong>TESTVBMS:</strong> Main game currency (default)
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-green-400">💵</span>
+            <strong>testUSDC:</strong> Stable coin betting
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-purple-400">🎴</span>
+            <strong>VIBE_NFT:</strong> Wager your NFT cards! (For fun only)
+          </li>
+        </ul>
+      </div>
+
+      {/* Tips */}
+      <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-4 border border-blue-500/30">
+        <h3 className="text-xl font-bold text-blue-300 mb-3">💡 Pro Tips</h3>
+        <ul className="space-y-1 text-sm">
+          <li>• Save your strongest cards for crucial rounds</li>
+          <li>• Use SHIELD to counter opponent's BOOST attempts</li>
+          <li>• CRITICAL is expensive but can turn the game around!</li>
+          <li>• Watch your bankroll - don't run out of coins</li>
+          <li>• Winning 6+ rounds guarantees victory in best-of-10</li>
+        </ul>
       </div>
     </div>
   );
