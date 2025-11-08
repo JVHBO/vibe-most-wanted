@@ -988,24 +988,58 @@ export function PokerBattleTable({
                   {/* Action buttons */}
                   {phase === 'pre-reveal-betting' && !isSpectator && selectedAnte !== 0 && (
                     <div className="flex justify-center gap-3 animate-in fade-in slide-in-from-bottom duration-500">
-                      <button
-                        onClick={() => handleBet(Math.round(selectedAnte * 0.4))}
-                        disabled={selectedAnte === 0 || isSpectator}
-                        className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        BET {Math.round(selectedAnte * 0.4)}
-                      </button>
-                      <button
-                        onClick={() => handleBet(selectedAnte)}
-                        disabled={selectedAnte === 0 || isSpectator}
-                        className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        BET {selectedAnte}
-                      </button>
+                      {/* No bet yet - show CHECK and BET */}
+                      {currentBet === 0 ? (
+                        <>
+                          <button
+                            onClick={handleCheck}
+                            className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+                          >
+                            CHECK
+                          </button>
+                          <button
+                            onClick={() => handleBet(Math.round(selectedAnte * 0.4))}
+                            className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+                          >
+                            BET {Math.round(selectedAnte * 0.4)}
+                          </button>
+                          <button
+                            onClick={() => handleBet(selectedAnte)}
+                            className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+                          >
+                            BET {selectedAnte}
+                          </button>
+                        </>
+                      ) : (
+                        /* Bet exists - show CALL, RAISE, FOLD */
+                        <>
+                          <button
+                            onClick={handleCall}
+                            disabled={currentBet > playerBankroll}
+                            className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            CALL {currentBet - playerBetThisRound}
+                          </button>
+                          <button
+                            onClick={() => handleBet(Math.round(selectedAnte * 0.4))}
+                            disabled={Math.round(selectedAnte * 0.4) > playerBankroll}
+                            className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            RAISE {Math.round(selectedAnte * 0.4)}
+                          </button>
+                          <button
+                            onClick={() => handleBet(selectedAnte)}
+                            disabled={selectedAnte > playerBankroll}
+                            className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            RAISE {selectedAnte}
+                          </button>
+                        </>
+                      )}
+                      {/* FOLD always available */}
                       <button
                         onClick={handleFold}
-                        disabled={selectedAnte === 0 || isSpectator}
-                        className="px-6 py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
                       >
                         FOLD
                       </button>
@@ -1070,14 +1104,78 @@ export function PokerBattleTable({
                   )}
 
                   {phase === 'post-reveal-betting' && !isSpectator && selectedAnte !== 0 && (
-                    <div className="flex justify-center gap-3 animate-in fade-in zoom-in duration-700">
-                      <button
-                        onClick={resolveRound}
-                        disabled={selectedAnte === 0 || isSpectator}
-                        className="px-8 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-2xl active:scale-95 animate-pulse disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        RESOLVE ROUND
-                      </button>
+                    <div className="space-y-3">
+                      {/* Betting buttons */}
+                      <div className="flex justify-center gap-3 animate-in fade-in slide-in-from-bottom duration-500">
+                        {/* No bet yet - show CHECK and BET */}
+                        {currentBet === 0 ? (
+                          <>
+                            <button
+                              onClick={handleCheck}
+                              className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+                            >
+                              CHECK
+                            </button>
+                            <button
+                              onClick={() => handleBet(Math.round(selectedAnte * 0.4))}
+                              className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+                            >
+                              BET {Math.round(selectedAnte * 0.4)}
+                            </button>
+                            <button
+                              onClick={() => handleBet(selectedAnte)}
+                              className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+                            >
+                              BET {selectedAnte}
+                            </button>
+                          </>
+                        ) : (
+                          /* Bet exists - show CALL, RAISE, FOLD */
+                          <>
+                            <button
+                              onClick={handleCall}
+                              disabled={currentBet > playerBankroll}
+                              className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              CALL {currentBet - playerBetThisRound}
+                            </button>
+                            <button
+                              onClick={() => handleBet(Math.round(selectedAnte * 0.4))}
+                              disabled={Math.round(selectedAnte * 0.4) > playerBankroll}
+                              className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              RAISE {Math.round(selectedAnte * 0.4)}
+                            </button>
+                            <button
+                              onClick={() => handleBet(selectedAnte)}
+                              disabled={selectedAnte > playerBankroll}
+                              className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              RAISE {selectedAnte}
+                            </button>
+                          </>
+                        )}
+                        {/* FOLD always available */}
+                        <button
+                          onClick={handleFold}
+                          className="px-6 py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+                        >
+                          FOLD
+                        </button>
+                      </div>
+
+                      {/* Or resolve directly */}
+                      <div className="text-center text-xs text-vintage-burnt-gold">
+                        - or -
+                      </div>
+                      <div className="flex justify-center">
+                        <button
+                          onClick={resolveRound}
+                          className="px-8 py-4 bg-vintage-gold/80 text-vintage-black font-bold text-xl rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-2xl active:scale-95"
+                        >
+                          RESOLVE NOW
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
