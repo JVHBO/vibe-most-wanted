@@ -1906,6 +1906,93 @@ export function PokerBattleTable({
           </div>
         )}
 
+        {/* CHAT SYSTEM - Only show in PvP mode, not in CPU mode or spectator */}
+        {!isCPUMode && currentView === 'game' && roomId && !isSpectator && (
+          <>
+            {/* Chat Toggle Button */}
+            <button
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              className={`fixed ${isInFarcaster ? 'bottom-4 right-4' : 'bottom-6 right-6'} z-[300] ${
+                isChatOpen ? 'bg-vintage-gold' : 'bg-vintage-gold/80'
+              } hover:bg-vintage-gold text-vintage-black rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center font-bold text-lg sm:text-xl shadow-2xl transition-all hover:scale-110 active:scale-95`}
+              title="Toggle Chat"
+            >
+              {isChatOpen ? '✕' : '💬'}
+            </button>
+
+            {/* Chat Panel */}
+            {isChatOpen && (
+              <div className={`fixed ${isInFarcaster ? 'bottom-20 right-4' : 'bottom-24 right-6'} z-[250] bg-vintage-charcoal border-2 border-vintage-gold rounded-xl shadow-2xl ${
+                isInFarcaster ? 'w-[280px] h-[300px]' : 'w-80 h-96'
+              } flex flex-col`}>
+                {/* Chat Header */}
+                <div className="bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold p-2 rounded-t-lg">
+                  <h3 className="font-display font-bold text-vintage-black text-center text-sm sm:text-base">
+                    💬 Match Chat
+                  </h3>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 bg-vintage-deep-black/50">
+                  {messages && messages.length > 0 ? (
+                    messages.map((msg, idx) => {
+                      const isOwnMessage = msg.sender.toLowerCase() === playerAddress.toLowerCase();
+                      return (
+                        <div
+                          key={idx}
+                          className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}
+                        >
+                          <span className="text-xs text-vintage-gold/70 px-1">
+                            {isOwnMessage ? 'You' : msg.senderUsername}
+                          </span>
+                          <div
+                            className={`max-w-[80%] px-3 py-1.5 rounded-lg text-sm ${
+                              isOwnMessage
+                                ? 'bg-vintage-gold text-vintage-black'
+                                : 'bg-vintage-charcoal/80 text-vintage-gold border border-vintage-gold/30'
+                            }`}
+                          >
+                            {msg.message}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center text-vintage-gold/50 text-sm mt-8">
+                      No messages yet. Say hi! 👋
+                    </div>
+                  )}
+                </div>
+
+                {/* Input */}
+                <div className="p-2 border-t border-vintage-gold/30 bg-vintage-charcoal">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyPress={handleChatKeyPress}
+                      placeholder="Type a message..."
+                      maxLength={500}
+                      className="flex-1 bg-vintage-deep-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold placeholder-vintage-gold/40 text-sm focus:outline-none focus:border-vintage-gold"
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!chatInput.trim()}
+                      className="bg-vintage-gold hover:bg-vintage-burnt-gold disabled:bg-vintage-gold/30 disabled:cursor-not-allowed text-vintage-black px-3 py-2 rounded-lg font-bold text-sm transition-all hover:scale-105 active:scale-95"
+                    >
+                      ▶
+                    </button>
+                  </div>
+                  <p className="text-xs text-vintage-gold/40 mt-1 text-right">
+                    {chatInput.length}/500
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
       </div>
     </div>
   );
