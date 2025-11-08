@@ -555,7 +555,6 @@ export const resolveRound = mutation({
   args: {
     roomId: v.string(),
     address: v.string(),
-    winner: v.union(v.literal("host"), v.literal("guest")),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db
@@ -576,12 +575,54 @@ export const resolveRound = mutation({
 
     const gameState = { ...room.gameState };
 
-    // Update score
-    if (args.winner === "host") {
+    // Get selected cards and actions
+    const hostCard = gameState.hostSelectedCard;
+    const guestCard = gameState.guestSelectedCard;
+    const hostAction = gameState.hostAction;
+    const guestAction = gameState.guestAction;
+
+    if (!hostCard || !guestCard) {
+      throw new Error("Both players must select cards before resolving");
+    }
+
+    // Calculate winner server-side
+    let hostPower = hostCard.power;
+    let guestPower = guestCard.power;
+
+    // Apply actions with shield logic
+    const hostHasShield = hostAction === 'SHIELD';
+    const guestHasShield = guestAction === 'SHIELD';
+
+    // Apply BOOST (+30%)
+    if (hostAction === 'BOOST' && !guestHasShield) {
+      hostPower *= 1.3;
+    }
+    if (guestAction === 'BOOST' && !hostHasShield) {
+      guestPower *= 1.3;
+    }
+
+    // Apply DOUBLE (x2)
+    if (hostAction === 'DOUBLE') hostPower *= 2;
+    if (guestAction === 'DOUBLE') guestPower *= 2;
+
+    // Determine winner
+    const hostWins = hostPower > guestPower;
+
+    // Update score and bankroll
+    if (hostWins) {
       gameState.hostScore += 1;
+      await ctx.db.patch(room._id, {
+        hostBankroll: room.hostBankroll! + gameState.pot,
+      });
     } else {
       gameState.guestScore += 1;
+      await ctx.db.patch(room._id, {
+        guestBankroll: room.guestBankroll! + gameState.pot,
+      });
     }
+
+    // Reset pot
+    gameState.pot = 0;
 
     // Check if game is over (best of 7 = first to 4)
     if (gameState.hostScore >= 4 || gameState.guestScore >= 4) {
