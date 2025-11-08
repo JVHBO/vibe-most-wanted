@@ -617,10 +617,10 @@ export function PokerBattleTable({
           console.log('[PokerBattle] CPU Mode - Showing tie message, waiting 2.5s before next round');
 
           setTimeout(() => {
-            console.log('[PokerBattle] CPU Mode - 2.5s timeout for tie completed, proceeding to next round');
+            console.log('[PokerBattle] CPU Mode - 3.5s timeout for tie completed, proceeding to next round');
             setShowRoundWinner(false);
             nextRound();
-          }, 2500);
+          }, 3500);
         } else if (playerWins) {
           setPlayerBankroll(prev => {
             const newBankroll = prev + pot;
@@ -653,11 +653,11 @@ export function PokerBattleTable({
 
         // Show round winner message
         setShowRoundWinner(true);
-        console.log('[PokerBattle] CPU Mode - Showing round winner, waiting 2.5s');
+        console.log('[PokerBattle] CPU Mode - Showing round winner, waiting 3.5s');
 
         // Hide message and check win condition after delay
         setTimeout(() => {
-          console.log('[PokerBattle] CPU Mode - 2.5s timeout completed, checking win condition');
+          console.log('[PokerBattle] CPU Mode - 3.5s timeout completed, checking win condition');
           setShowRoundWinner(false);
           setRoundWinner(null);
 
@@ -679,7 +679,7 @@ export function PokerBattleTable({
             console.log('[PokerBattle] CPU Mode - Proceeding to next round');
             nextRound();
           }
-        }, 2500);
+        }, 3500);
       }, 1000);
     } else {
       // PvP mode - send to server for resolution
@@ -783,7 +783,7 @@ export function PokerBattleTable({
               setPlayerAction(null);
               setOpponentAction(null);
             }
-          }, 2500);
+          }, 3500);
         }, 1000);
       } catch (error) {
         console.error('[PokerBattle] PvP Mode - Error resolving round:', error);
@@ -1281,8 +1281,8 @@ export function PokerBattleTable({
               </div>
             </div>
 
-            {/* Split screen - Both players side by side */}
-            <div className="flex-1 grid grid-cols-2 gap-2 p-2 bg-vintage-deep-black rounded-b-2xl border-2 border-vintage-gold border-t-0">
+            {/* Split screen - Both players side by side (or vertical on mobile) */}
+            <div className={`flex-1 p-2 bg-vintage-deep-black rounded-b-2xl border-2 border-vintage-gold border-t-0 ${isInFarcaster ? 'flex flex-col gap-3' : 'grid grid-cols-2 gap-2'}`}>
               {/* HOST SIDE */}
               <div className="bg-gradient-to-br from-blue-900/30 to-blue-950/30 rounded-xl border-2 border-blue-500/50 p-3 flex flex-col">
                 {/* Host Profile */}
@@ -1292,28 +1292,28 @@ export function PokerBattleTable({
                       <img
                         src={hostProfile.twitterProfileImageUrl}
                         alt={room?.hostUsername}
-                        className="w-10 h-10 rounded-full border-2 border-blue-400"
+                        className={isInFarcaster ? "w-12 h-12 rounded-full border-2 border-blue-400" : "w-10 h-10 rounded-full border-2 border-blue-400"}
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-blue-600 border-2 border-blue-400 flex items-center justify-center text-white font-bold">
+                      <div className={`${isInFarcaster ? 'w-12 h-12' : 'w-10 h-10'} rounded-full bg-blue-600 border-2 border-blue-400 flex items-center justify-center text-white font-bold`}>
                         {room?.hostUsername?.charAt(0).toUpperCase() || 'H'}
                       </div>
                     )}
                     <div>
-                      <div className="text-blue-400 font-display font-bold text-sm">{room?.hostUsername || 'HOST'}</div>
-                      <div className="text-vintage-gold text-xs">{playerBankroll} {selectedToken}</div>
+                      <div className={`text-blue-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>{room?.hostUsername || 'HOST'}</div>
+                      <div className={`text-vintage-gold ${isInFarcaster ? 'text-sm' : 'text-xs'}`}>{playerBankroll} {selectedToken}</div>
                     </div>
                   </div>
 
                   {/* Bet Buttons - Only show for spectators */}
                   {isSpectator && room?.hostAddress && (
-                    <div className="flex gap-1 justify-center mt-2">
+                    <div className="flex gap-2 justify-center mt-2">
                       {[10, 25, 50, 100].map((amount) => (
                         <button
                           key={amount}
                           onClick={() => handlePlaceBet(room.hostAddress, amount)}
                           disabled={placingBet}
-                          className="px-2 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white text-xs font-bold rounded transition-all hover:scale-105 active:scale-95"
+                          className={`bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-bold rounded transition-all hover:scale-105 active:scale-95 ${isInFarcaster ? 'px-4 py-3 text-sm min-h-[44px] min-w-[44px]' : 'px-2 py-1 text-xs'}`}
                         >
                           {amount}
                         </button>
@@ -1335,7 +1335,7 @@ export function PokerBattleTable({
                             <div className="text-white text-lg font-bold">{Math.round(playerSelectedCard.power || 0)}</div>
                           </div>
                         )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-[10px] text-center text-blue-300">
+                        <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-blue-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'}`}>
                           {Math.round((playerSelectedCard.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1))}
                           {playerAction === 'BOOST' && ' ⚔️'}{playerAction === 'DOUBLE' && ' 💥'}{playerAction === 'SHIELD' && ' 🛡️'}
                         </div>
@@ -1355,7 +1355,7 @@ export function PokerBattleTable({
                       {card.imageUrl || card.image ? (
                         <img src={card.imageUrl || card.image} alt={card.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[8px] text-white">{Math.round(card.power || 0)}</div>
+                        <div className={`w-full h-full flex items-center justify-center text-white ${isInFarcaster ? 'text-[10px]' : 'text-[8px]'}`}>{Math.round(card.power || 0)}</div>
                       )}
                     </div>
                   ))}
@@ -1371,28 +1371,28 @@ export function PokerBattleTable({
                       <img
                         src={guestProfile.twitterProfileImageUrl}
                         alt={room?.guestUsername}
-                        className="w-10 h-10 rounded-full border-2 border-red-400"
+                        className={isInFarcaster ? "w-12 h-12 rounded-full border-2 border-red-400" : "w-10 h-10 rounded-full border-2 border-red-400"}
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-red-600 border-2 border-red-400 flex items-center justify-center text-white font-bold">
+                      <div className={`${isInFarcaster ? 'w-12 h-12' : 'w-10 h-10'} rounded-full bg-red-600 border-2 border-red-400 flex items-center justify-center text-white font-bold`}>
                         {room?.guestUsername?.charAt(0).toUpperCase() || 'G'}
                       </div>
                     )}
                     <div>
-                      <div className="text-red-400 font-display font-bold text-sm">{room?.guestUsername || 'GUEST'}</div>
-                      <div className="text-vintage-gold text-xs">{opponentBankroll} {selectedToken}</div>
+                      <div className={`text-red-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>{room?.guestUsername || 'GUEST'}</div>
+                      <div className={`text-vintage-gold ${isInFarcaster ? 'text-sm' : 'text-xs'}`}>{opponentBankroll} {selectedToken}</div>
                     </div>
                   </div>
 
                   {/* Bet Buttons - Only show for spectators */}
                   {isSpectator && room?.guestAddress && (
-                    <div className="flex gap-1 justify-center mt-2">
+                    <div className="flex gap-2 justify-center mt-2">
                       {[10, 25, 50, 100].map((amount) => (
                         <button
                           key={amount}
                           onClick={() => handlePlaceBet(room.guestAddress!, amount)}
                           disabled={placingBet}
-                          className="px-2 py-1 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white text-xs font-bold rounded transition-all hover:scale-105 active:scale-95"
+                          className={`bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white font-bold rounded transition-all hover:scale-105 active:scale-95 ${isInFarcaster ? 'px-4 py-3 text-sm min-h-[44px] min-w-[44px]' : 'px-2 py-1 text-xs'}`}
                         >
                           {amount}
                         </button>
@@ -1414,7 +1414,7 @@ export function PokerBattleTable({
                             <div className="text-white text-lg font-bold">{Math.round(opponentSelectedCard.power || 0)}</div>
                           </div>
                         )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-[10px] text-center text-red-300">
+                        <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-red-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'}`}>
                           {Math.round((opponentSelectedCard.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1))}
                           {opponentAction === 'BOOST' && ' ⚔️'}{opponentAction === 'DOUBLE' && ' 💥'}{opponentAction === 'SHIELD' && ' 🛡️'}
                         </div>
@@ -1434,7 +1434,7 @@ export function PokerBattleTable({
                       {card.imageUrl || card.image ? (
                         <img src={card.imageUrl || card.image} alt={card.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[8px] text-white">{Math.round(card.power || 0)}</div>
+                        <div className={`w-full h-full flex items-center justify-center text-white ${isInFarcaster ? 'text-[10px]' : 'text-[8px]'}`}>{Math.round(card.power || 0)}</div>
                       )}
                     </div>
                   ))}
@@ -1985,23 +1985,23 @@ export function PokerBattleTable({
           </div>
         )}
 
-        {/* ROUND WINNER ANNOUNCEMENT */}
+        {/* ROUND WINNER ANNOUNCEMENT - Semi-transparent overlay positioned at top */}
         {showRoundWinner && roundWinner && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[240] animate-in fade-in duration-300 pointer-events-none">
-            <div className={`bg-gradient-to-b rounded-2xl border-4 p-8 text-center shadow-2xl animate-in zoom-in duration-500 ${
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] flex items-start justify-center pt-12 z-[240] animate-in fade-in duration-300 pointer-events-none">
+            <div className={`bg-gradient-to-b rounded-2xl border-4 p-6 text-center shadow-2xl animate-in slide-in-from-top duration-500 ${
               roundWinner === 'player'
-                ? 'from-green-900 to-green-950 border-green-500'
-                : 'from-red-900 to-red-950 border-red-500'
+                ? 'from-green-900/95 to-green-950/95 border-green-500'
+                : 'from-red-900/95 to-red-950/95 border-red-500'
             }`}>
-              <div className="text-6xl mb-4 animate-bounce">
+              <div className="text-5xl mb-3 animate-bounce">
                 {roundWinner === 'player' ? '🏆' : '💀'}
               </div>
-              <h2 className={`text-4xl font-display font-bold mb-2 ${
+              <h2 className={`text-3xl font-display font-bold mb-1 ${
                 roundWinner === 'player' ? 'text-green-400' : 'text-red-400'
               }`}>
                 {roundWinner === 'player' ? 'YOU WIN!' : 'YOU LOSE!'}
               </h2>
-              <p className="text-vintage-gold text-xl">
+              <p className="text-vintage-gold text-lg">
                 Round {currentRound}
               </p>
             </div>
@@ -2090,8 +2090,8 @@ export function PokerBattleTable({
 
             {/* Chat Panel */}
             {isChatOpen && (
-              <div className={`fixed ${isInFarcaster ? 'bottom-20 right-4' : 'bottom-24 right-6'} z-[250] bg-vintage-charcoal border-2 border-vintage-gold rounded-xl shadow-2xl ${
-                isInFarcaster ? 'w-[280px] h-[300px]' : 'w-80 h-96'
+              <div className={`fixed ${isInFarcaster ? 'bottom-20 right-2 left-2' : 'bottom-24 right-6'} z-[250] bg-vintage-charcoal border-2 border-vintage-gold rounded-xl shadow-2xl ${
+                isInFarcaster ? 'h-[250px]' : 'w-80 h-96'
               } flex flex-col`}>
                 {/* Chat Header */}
                 <div className="bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold p-2 rounded-t-lg">
