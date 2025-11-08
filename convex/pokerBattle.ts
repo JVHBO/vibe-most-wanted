@@ -307,12 +307,11 @@ export const spectateRoom = mutation({
   },
 });
 
-// Update game state (called by players during the game)
-export const updateGameState = mutation({
+// Initialize game state when both players are ready
+export const initializeGame = mutation({
   args: {
     roomId: v.string(),
     address: v.string(),
-    gameState: v.any(),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db
@@ -331,12 +330,288 @@ export const updateGameState = mutation({
       throw new Error("You are not a player in this room");
     }
 
+    // Initialize game state
     await ctx.db.patch(room._id, {
-      gameState: args.gameState,
+      gameState: {
+        currentRound: 1,
+        hostScore: 0,
+        guestScore: 0,
+        pot: room.ante * 2, // Both players ante
+        currentBet: 0,
+        phase: "card-selection",
+        hostBet: room.ante,
+        guestBet: room.ante,
+      },
       status: "in-progress",
     });
 
+    console.log(`🎮 Game initialized: ${args.roomId} - Round 1`);
+
     return { success: true };
+  },
+});
+
+// Player selects a card for the round
+export const selectCard = mutation({
+  args: {
+    roomId: v.string(),
+    address: v.string(),
+    card: v.any(),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .first();
+
+    if (!room || !room.gameState) {
+      throw new Error("Room not found or game not started");
+    }
+
+    const isHost = room.hostAddress === args.address.toLowerCase();
+    const isGuest = room.guestAddress === args.address.toLowerCase();
+
+    if (!isHost && !isGuest) {
+      throw new Error("You are not a player in this room");
+    }
+
+    if (room.gameState.phase !== "card-selection") {
+      throw new Error("Not in card selection phase");
+    }
+
+    // Update the appropriate player's card
+    const gameState = { ...room.gameState };
+    if (isHost) {
+      gameState.hostSelectedCard = args.card;
+    } else {
+      gameState.guestSelectedCard = args.card;
+    }
+
+    // If both players have selected, move to betting
+    if (gameState.hostSelectedCard && gameState.guestSelectedCard) {
+      gameState.phase = "pre-reveal-betting";
+      gameState.currentBet = 0;
+    }
+
+    await ctx.db.patch(room._id, { gameState });
+
+    console.log(`🎴 Card selected: ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
+
+    return { success: true };
+  },
+});
+
+// Player makes a betting action
+export const makeBet = mutation({
+  args: {
+    roomId: v.string(),
+    address: v.string(),
+    action: v.union(v.literal("CHECK"), v.literal("BET"), v.literal("CALL"), v.literal("RAISE"), v.literal("FOLD")),
+    amount: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .first();
+
+    if (!room || !room.gameState) {
+      throw new Error("Room not found or game not started");
+    }
+
+    const isHost = room.hostAddress === args.address.toLowerCase();
+    const isGuest = room.guestAddress === args.address.toLowerCase();
+
+    if (!isHost && !isGuest) {
+      throw new Error("You are not a player in this room");
+    }
+
+    const gameState = { ...room.gameState };
+    const currentBankroll = isHost ? room.hostBankroll : room.guestBankroll;
+
+    // Process betting action
+    if (args.action === "FOLD") {
+      // Opponent wins the pot
+      const winner = isHost ? room.guestAddress : room.hostAddress;
+      gameState.phase = "resolution";
+      gameState.lastAction = `${isHost ? 'host' : 'guest'}_fold`;
+    } else if (args.action === "CHECK") {
+      // Move to next phase if both checked
+      gameState.lastAction = `${isHost ? 'host' : 'guest'}_check`;
+      if (gameState.phase === "pre-reveal-betting") {
+        gameState.phase = "reveal";
+      } else {
+        gameState.phase = "resolution";
+      }
+    } else if (args.action === "BET" && args.amount) {
+      if (args.amount > currentBankroll!) {
+        throw new Error("Insufficient bankroll");
+      }
+      gameState.currentBet = args.amount;
+      gameState.pot += args.amount;
+      if (isHost) {
+        gameState.hostBet = (gameState.hostBet || 0) + args.amount;
+      } else {
+        gameState.guestBet = (gameState.guestBet || 0) + args.amount;
+      }
+      gameState.lastAction = `${isHost ? 'host' : 'guest'}_bet`;
+    } else if (args.action === "CALL") {
+      const toCall = gameState.currentBet;
+      if (toCall > currentBankroll!) {
+        throw new Error("Insufficient bankroll");
+      }
+      gameState.pot += toCall;
+      if (isHost) {
+        gameState.hostBet = (gameState.hostBet || 0) + toCall;
+      } else {
+        gameState.guestBet = (gameState.guestBet || 0) + toCall;
+      }
+      gameState.lastAction = `${isHost ? 'host' : 'guest'}_call`;
+      // Move to reveal after call
+      if (gameState.phase === "pre-reveal-betting") {
+        gameState.phase = "reveal";
+      } else {
+        gameState.phase = "resolution";
+      }
+    } else if (args.action === "RAISE" && args.amount) {
+      if (args.amount > currentBankroll!) {
+        throw new Error("Insufficient bankroll");
+      }
+      gameState.currentBet += args.amount;
+      gameState.pot += args.amount;
+      if (isHost) {
+        gameState.hostBet = (gameState.hostBet || 0) + args.amount;
+      } else {
+        gameState.guestBet = (gameState.guestBet || 0) + args.amount;
+      }
+      gameState.lastAction = `${isHost ? 'host' : 'guest'}_raise`;
+    }
+
+    // Update bankrolls
+    const betThisAction = args.amount || 0;
+    const newBankroll = currentBankroll! - betThisAction;
+
+    await ctx.db.patch(room._id, {
+      gameState,
+      ...(isHost ? { hostBankroll: newBankroll } : { guestBankroll: newBankroll }),
+    });
+
+    console.log(`💰 Bet action: ${args.action} by ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
+
+    return { success: true };
+  },
+});
+
+// Player uses a card action (BOOST, SHIELD, etc.)
+export const useCardAction = mutation({
+  args: {
+    roomId: v.string(),
+    address: v.string(),
+    action: v.union(v.literal("BOOST"), v.literal("SHIELD"), v.literal("DOUBLE"), v.literal("SWAP"), v.literal("PASS")),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .first();
+
+    if (!room || !room.gameState) {
+      throw new Error("Room not found or game not started");
+    }
+
+    const isHost = room.hostAddress === args.address.toLowerCase();
+    const isGuest = room.guestAddress === args.address.toLowerCase();
+
+    if (!isHost && !isGuest) {
+      throw new Error("You are not a player in this room");
+    }
+
+    if (room.gameState.phase !== "reveal") {
+      throw new Error("Not in reveal phase");
+    }
+
+    const gameState = { ...room.gameState };
+    if (isHost) {
+      gameState.hostAction = args.action;
+    } else {
+      gameState.guestAction = args.action;
+    }
+
+    // If both players have acted, move to post-reveal betting
+    if (gameState.hostAction && gameState.guestAction) {
+      gameState.phase = "post-reveal-betting";
+    }
+
+    await ctx.db.patch(room._id, { gameState });
+
+    console.log(`⚡ Card action: ${args.action} by ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
+
+    return { success: true };
+  },
+});
+
+// Resolve round and move to next
+export const resolveRound = mutation({
+  args: {
+    roomId: v.string(),
+    address: v.string(),
+    winner: v.union(v.literal("host"), v.literal("guest")),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .first();
+
+    if (!room || !room.gameState) {
+      throw new Error("Room not found or game not started");
+    }
+
+    const isHost = room.hostAddress === args.address.toLowerCase();
+    const isGuest = room.guestAddress === args.address.toLowerCase();
+
+    if (!isHost && !isGuest) {
+      throw new Error("You are not a player in this room");
+    }
+
+    const gameState = { ...room.gameState };
+
+    // Update score
+    if (args.winner === "host") {
+      gameState.hostScore += 1;
+    } else {
+      gameState.guestScore += 1;
+    }
+
+    // Check if game is over (best of 7 = first to 4)
+    if (gameState.hostScore >= 4 || gameState.guestScore >= 4) {
+      gameState.phase = "game-over";
+      await ctx.db.patch(room._id, { gameState });
+      return { success: true, gameOver: true };
+    }
+
+    // Move to next round
+    gameState.currentRound += 1;
+    gameState.phase = "card-selection";
+    gameState.currentBet = 0;
+    gameState.hostSelectedCard = undefined;
+    gameState.guestSelectedCard = undefined;
+    gameState.hostAction = undefined;
+    gameState.guestAction = undefined;
+    gameState.hostBet = room.ante;
+    gameState.guestBet = room.ante;
+    gameState.pot += room.ante * 2; // Ante for next round
+
+    // Update bankrolls for ante
+    await ctx.db.patch(room._id, {
+      gameState,
+      hostBankroll: room.hostBankroll! - room.ante,
+      guestBankroll: room.guestBankroll! - room.ante,
+    });
+
+    console.log(`🏁 Round ${gameState.currentRound - 1} resolved in ${args.roomId}`);
+
+    return { success: true, gameOver: false };
   },
 });
 
