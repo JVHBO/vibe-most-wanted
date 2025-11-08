@@ -47,7 +47,7 @@ export function CoinsInboxModal({ inboxStatus, onClose }: CoinsInboxModalProps) 
 
   return (
     <div
-      className="fixed inset-0 z-[100001] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
