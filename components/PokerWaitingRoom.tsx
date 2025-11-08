@@ -24,7 +24,7 @@ interface PokerWaitingRoomProps {
   playerAddress: string;
   playerUsername: string;
   playerCards: Card[];
-  onGameStart: (selectedDeck: Card[]) => void;
+  onGameStart: (selectedDeck: Card[], opponentDeck?: Card[]) => void;
   onLeave: () => void;
 }
 
@@ -42,6 +42,7 @@ export function PokerWaitingRoom({
   const [selectedDeck, setSelectedDeck] = useState<Card[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [isReady, setIsReady] = useState(false);
+  const [sortByPower, setSortByPower] = useState(true); // Sort by power by default
 
   const CARDS_PER_PAGE = 50;
 
@@ -64,8 +65,14 @@ export function PokerWaitingRoom({
       default: return 'linear-gradient(135deg, #6c757d 0%, #495057 100%)';
     }
   };
-  const totalPages = Math.ceil(playerCards.length / CARDS_PER_PAGE);
-  const paginatedCards = playerCards.slice(
+
+  // Sort cards by power if enabled
+  const sortedCards = sortByPower
+    ? [...playerCards].sort((a, b) => b.power - a.power)
+    : playerCards;
+
+  const totalPages = Math.ceil(sortedCards.length / CARDS_PER_PAGE);
+  const paginatedCards = sortedCards.slice(
     currentPage * CARDS_PER_PAGE,
     (currentPage + 1) * CARDS_PER_PAGE
   );
@@ -233,9 +240,25 @@ export function PokerWaitingRoom({
           {/* Deck Selection - Always shown */}
           <>
               <div className="mb-6">
-                <h2 className="text-2xl font-display font-bold text-vintage-gold mb-4">
-                  ♠️ SELECT YOUR DECK (10 cards)
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-display font-bold text-vintage-gold">
+                    ♠️ SELECT YOUR DECK (10 cards)
+                  </h2>
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonNav();
+                      setSortByPower(!sortByPower);
+                      setCurrentPage(0); // Reset to first page when sorting changes
+                    }}
+                    className={`px-4 py-2 rounded-lg font-bold transition-all ${
+                      sortByPower
+                        ? 'bg-vintage-gold/20 text-vintage-gold border-2 border-vintage-gold/50'
+                        : 'bg-vintage-black/50 text-vintage-burnt-gold border-2 border-vintage-gold/30'
+                    }`}
+                  >
+                    {sortByPower ? '⚡ POWER ↓' : '📋 DEFAULT'}
+                  </button>
+                </div>
 
                 {/* Selected Deck Display */}
                 <div className="bg-green-900/40 border-2 border-vintage-gold/50 rounded-xl p-4">
