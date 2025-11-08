@@ -64,7 +64,7 @@ export function RewardChoiceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9997] flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-lg w-full mx-4">
         {/* Header */}
         <div className="text-center mb-6">
