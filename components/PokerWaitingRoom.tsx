@@ -56,7 +56,8 @@ export function PokerWaitingRoom({
   }, [playerCards]);
 
   // Get rarity color for fallback cards
-  const getRarityGradient = (rarity: string): string => {
+  const getRarityGradient = (rarity?: string): string => {
+    if (!rarity) return 'linear-gradient(135deg, #6c757d 0%, #495057 100%)';
     switch (rarity.toLowerCase()) {
       case 'mythic': return 'linear-gradient(135deg, #ff00ff 0%, #8b00ff 100%)';
       case 'legendary': return 'linear-gradient(135deg, #ffd700 0%, #ff8c00 100%)';
@@ -310,7 +311,7 @@ export function PokerWaitingRoom({
                             style={{ background: getRarityGradient(selectedWagers[i].rarity) }}
                           >
                             <div className="text-white text-[0.5rem] font-bold text-center mb-0.5">{selectedWagers[i].name}</div>
-                            <div className="text-white text-sm font-bold">{Math.round(selectedWagers[i].power).toLocaleString()}</div>
+                            <div className="text-white text-sm font-bold">{Math.round(selectedWagers[i].power || 0).toLocaleString()}</div>
                           </div>
                         )
                       ) : (
@@ -367,7 +368,7 @@ export function PokerWaitingRoom({
                               style={{ background: getRarityGradient(selectedDeck[i].rarity) }}
                             >
                               <div className="text-white text-[0.5rem] font-bold text-center mb-0.5">{selectedDeck[i].name}</div>
-                              <div className="text-white text-sm font-bold">{Math.round(selectedDeck[i].power).toLocaleString()}</div>
+                              <div className="text-white text-sm font-bold">{Math.round(selectedDeck[i].power || 0).toLocaleString()}</div>
                             </div>
                           )
                         ) : (
@@ -420,7 +421,7 @@ export function PokerWaitingRoom({
                           style={{ background: getRarityGradient(card.rarity) }}
                         >
                           <div className="text-white text-[0.4rem] font-bold text-center mb-0.5">{card.name}</div>
-                          <div className="text-white text-xs font-bold">{Math.round(card.power).toLocaleString()}</div>
+                          <div className="text-white text-xs font-bold">{Math.round(card.power || 0).toLocaleString()}</div>
                         </div>
                       )}
                       {isSelected && (
