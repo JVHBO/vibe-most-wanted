@@ -67,8 +67,7 @@ See [ECONOMY-GUIDE.md](docs/ECONOMY-GUIDE.md) for complete details.
 
 ### NFT Integration
 
-- **JC NFT Collection** (Base Mainnet)
-- **Contract**: `0xf14c1dc8ce5fe65413379f76c43fa1460c31e728`
+- **NFT Collection** on Base Mainnet
 - Rarity system: Common, Rare, Epic, Legendary, Mythic
 - Wear system: Pristine, Mint, Lightly Played, Moderately Played, Heavily Played
 - Foil effects: Standard Foil (2.5x), Prize Foil (5x)
@@ -110,29 +109,9 @@ npm run dev
 
 ### Environment Variables
 
-Create `.env.local` with the following:
+Create `.env.local` with the required environment variables.
 
-```env
-# Convex
-NEXT_PUBLIC_CONVEX_URL=https://your-convex-deployment.convex.cloud
-
-# Alchemy (NFT data)
-NEXT_PUBLIC_ALCHEMY_API_KEY=your_alchemy_key
-NEXT_PUBLIC_ALCHEMY_CHAIN=base-mainnet
-
-# Contracts
-NEXT_PUBLIC_VIBE_CONTRACT=0xf14c1dc8ce5fe65413379f76c43fa1460c31e728
-NEXT_PUBLIC_JC_CONTRACT=0xf14c1dc8ce5fe65413379f76c43fa1460c31e728
-
-# WalletConnect
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
-
-# Twitter OAuth (optional)
-TWITTER_CLIENT_ID=your_client_id
-TWITTER_CLIENT_SECRET=your_client_secret
-```
-
-See [docs/setup/](docs/setup/) for detailed setup guides.
+See [docs/setup/](docs/setup/) for detailed setup guides and configuration.
 
 ## 📁 Project Structure
 
@@ -245,27 +224,7 @@ npm run start        # Start production server
 npm run lint         # Run ESLint
 ```
 
-### Testing Without Wallet
-
-For development and testing without connecting a wallet, visit the test page:
-
-```
-http://localhost:3000/test
-```
-
-Features:
-- ✅ No wallet connection required
-- ✅ Mock NFT data (8 test cards)
-- ✅ Full UI testing (Home, Missions, Achievements, Leaderboard)
-- ✅ Achievement system preview with progress tracking
-- ✅ Visual consistency verification
-
-### Convex Development
-
-```bash
-npx convex dev       # Start Convex dev server
-npx convex deploy    # Deploy to production
-```
+See [docs/setup/](docs/setup/) for detailed development guides.
 
 ## 🔒 Security
 
@@ -287,8 +246,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 - **Live App**: [https://vibemostwanted.xyz](https://vibemostwanted.xyz)
-- **Farcaster Frame**: [https://warpcast.com/vibegame](https://warpcast.com/vibegame)
-- **Contract**: [Base Scan](https://basescan.org/address/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728)
+- **Farcaster**: [https://warpcast.com/vibegame](https://warpcast.com/vibegame)
 
 ## 👥 Team
 
