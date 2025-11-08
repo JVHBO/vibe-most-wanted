@@ -4008,6 +4008,22 @@ export default function TCGPage() {
           {/* Coins Inbox - Only show here in miniapp (compact mode) */}
           {isInFarcaster && <CoinsInboxDisplay compact />}
 
+          {/* Inbox Button - Only in Farcaster */}
+          {isInFarcaster && (
+            <button
+              onClick={() => setShowInbox(true)}
+              className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center relative"
+              title="Inbox"
+            >
+              <span className="text-xl md:text-2xl">📬</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+
           <Link
             href="/docs"
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
