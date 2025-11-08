@@ -43,6 +43,7 @@ export function PokerWaitingRoom({
   const [currentPage, setCurrentPage] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [sortByPower, setSortByPower] = useState(true); // Sort by power by default
+  const [selectedWagers, setSelectedWagers] = useState<Card[]>([]);
 
   const CARDS_PER_PAGE = 50;
 
@@ -98,6 +99,12 @@ export function PokerWaitingRoom({
     AudioManager.selectCardByRarity(card.rarity);
 
     const isAlreadySelected = selectedDeck.find(c => c.tokenId === card.tokenId);
+    const isWagered = selectedWagers.find(c => c.tokenId === card.tokenId);
+
+    // Can't select a card that's wagered
+    if (isWagered) {
+      return;
+    }
 
     if (isAlreadySelected) {
       setSelectedDeck(prev => prev.filter(c => c.tokenId !== card.tokenId));
@@ -106,8 +113,33 @@ export function PokerWaitingRoom({
     }
   };
 
+  const toggleCardInWagers = (card: Card) => {
+    AudioManager.selectCardByRarity(card.rarity);
+
+    const isAlreadyWagered = selectedWagers.find(c => c.tokenId === card.tokenId);
+    const isInDeck = selectedDeck.find(c => c.tokenId === card.tokenId);
+
+    // Can't wager a card that's in the deck
+    if (isInDeck) {
+      return;
+    }
+
+    if (isAlreadyWagered) {
+      setSelectedWagers(prev => prev.filter(c => c.tokenId !== card.tokenId));
+    } else if (selectedWagers.length < 5) {
+      setSelectedWagers(prev => [...prev, card]);
+    }
+  };
+
   const handleReady = async () => {
+    // Validate deck selection
     if (selectedDeck.length !== 10 || isReady) return;
+
+    // Validate wagering for VIBE_NFT mode
+    if (token === "VIBE_NFT" && selectedWagers.length < 1) {
+      AudioManager.buttonError();
+      return;
+    }
 
     AudioManager.buttonSuccess();
     setIsReady(true);
@@ -117,6 +149,7 @@ export function PokerWaitingRoom({
         roomId,
         address: playerAddress,
         deck: selectedDeck,
+        wagers: token === "VIBE_NFT" ? selectedWagers : undefined,
       });
     } catch (error) {
       console.error("Error setting ready:", error);
@@ -237,6 +270,59 @@ export function PokerWaitingRoom({
             </div>
           )}
 
+          {/* NFT WAGERING - Only show if VIBE_NFT mode */}
+          {token === "VIBE_NFT" && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-display font-bold text-purple-400">
+                  🎴 SELECT CARDS TO WAGER (1-5)
+                </h2>
+                <div className="text-purple-300 text-sm">
+                  {selectedWagers.length}/5 selected
+                </div>
+              </div>
+
+              {/* Warning Banner */}
+              <div className="mb-4 bg-yellow-500/20 border border-yellow-400 rounded-xl p-3 text-center">
+                <p className="text-yellow-400 text-xs font-bold">
+                  ⚠️ FOR FUN ONLY - No blockchain transfers • Winner gets fake "card transfer" animation
+                </p>
+              </div>
+
+              {/* Selected Wagers Display */}
+              <div className="bg-purple-900/40 border-2 border-purple-500/50 rounded-xl p-4 mb-4">
+                <div className="grid grid-cols-5 gap-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="aspect-[2/3] border-2 border-dashed border-purple-400/50 rounded-lg flex items-center justify-center overflow-hidden"
+                    >
+                      {selectedWagers[i] ? (
+                        (selectedWagers[i].imageUrl || selectedWagers[i].image) ? (
+                          <img
+                            src={(selectedWagers[i].imageUrl || selectedWagers[i].image)}
+                            alt={selectedWagers[i].name}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                        ) : (
+                          <div
+                            className="w-full h-full flex flex-col items-center justify-center p-1 rounded-lg"
+                            style={{ background: getRarityGradient(selectedWagers[i].rarity) }}
+                          >
+                            <div className="text-white text-[0.5rem] font-bold text-center mb-0.5">{selectedWagers[i].name}</div>
+                            <div className="text-white text-sm font-bold">{Math.round(selectedWagers[i].power).toLocaleString()}</div>
+                          </div>
+                        )
+                      ) : (
+                        <span className="text-purple-400 text-3xl">+</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Deck Selection - Always shown */}
           <>
               <div className="mb-6">
@@ -302,13 +388,23 @@ export function PokerWaitingRoom({
               <div className="grid grid-cols-10 gap-2 mb-4">
                 {paginatedCards.map((card) => {
                   const isSelected = selectedDeck.find(c => c.tokenId === card.tokenId);
+                  const isWagered = selectedWagers.find(c => c.tokenId === card.tokenId);
                   return (
                     <button
                       key={card.tokenId}
-                      onClick={() => toggleCardInDeck(card)}
+                      onClick={(e) => {
+                        // Check for shift-click to toggle wager selection (only in VIBE_NFT mode)
+                        if (token === "VIBE_NFT" && e.shiftKey) {
+                          toggleCardInWagers(card);
+                        } else {
+                          toggleCardInDeck(card);
+                        }
+                      }}
                       className={`aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition ${
                         isSelected
                           ? 'border-vintage-gold shadow-gold'
+                          : isWagered
+                          ? 'border-purple-500 shadow-lg shadow-purple-500/50'
                           : 'border-vintage-gold/30 hover:border-vintage-gold/60'
                       }`}
                     >
@@ -330,6 +426,11 @@ export function PokerWaitingRoom({
                       {isSelected && (
                         <div className="absolute inset-0 bg-vintage-gold/20 flex items-center justify-center">
                           <span className="text-4xl">✓</span>
+                        </div>
+                      )}
+                      {isWagered && (
+                        <div className="absolute inset-0 bg-purple-500/30 flex items-center justify-center">
+                          <span className="text-4xl">🎴</span>
                         </div>
                       )}
                     </button>
@@ -370,11 +471,20 @@ export function PokerWaitingRoom({
 
               {/* Ready Button */}
               <div className="text-center">
+                {/* Validation message for VIBE_NFT wagering */}
+                {token === "VIBE_NFT" && selectedDeck.length === 10 && selectedWagers.length < 1 && !isReady && (
+                  <div className="mb-4 bg-purple-500/20 border border-purple-400 rounded-xl p-3">
+                    <p className="text-purple-300 text-sm font-bold">
+                      🎴 Select at least 1 card to wager (Shift+Click cards)
+                    </p>
+                  </div>
+                )}
+
                 <button
                   onClick={handleReady}
-                  disabled={selectedDeck.length !== 10 || isReady}
+                  disabled={selectedDeck.length !== 10 || isReady || (token === "VIBE_NFT" && selectedWagers.length < 1)}
                   className={`px-12 py-6 rounded-2xl font-display font-bold text-2xl transition-all shadow-2xl ${
-                    selectedDeck.length === 10 && !isReady
+                    selectedDeck.length === 10 && !isReady && (token !== "VIBE_NFT" || selectedWagers.length >= 1)
                       ? 'bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-4 border-green-400 hover:scale-105 active:scale-95 shadow-green-500/50'
                       : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border-4 border-vintage-gold/20'
                   }`}
@@ -383,6 +493,10 @@ export function PokerWaitingRoom({
                     <span className="flex items-center gap-3">
                       <span className="animate-pulse">⏳</span>
                       WAITING FOR OPPONENT...
+                    </span>
+                  ) : token === "VIBE_NFT" ? (
+                    <span>
+                      ✓ READY ({selectedDeck.length}/10 deck, {selectedWagers.length}/5 wagers)
                     </span>
                   ) : (
                     <span>

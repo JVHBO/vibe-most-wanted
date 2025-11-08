@@ -20,7 +20,7 @@ export function PokerMatchmaking({
 }: PokerMatchmakingProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAnte, setSelectedAnte] = useState(25);
-  const [selectedToken, setSelectedToken] = useState<"TESTVBMS" | "testUSDC">("TESTVBMS");
+  const [selectedToken, setSelectedToken] = useState<"TESTVBMS" | "testUSDC" | "VIBE_NFT">("TESTVBMS");
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isAutoMatching, setIsAutoMatching] = useState(false);
@@ -244,28 +244,51 @@ export function PokerMatchmaking({
                 <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
                   TOKEN
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={() => setSelectedToken("TESTVBMS")}
-                    className={`p-4 rounded-xl border-2 font-bold transition-all ${
+                    className={`px-6 py-3 rounded-xl font-bold transition-all ${
                       selectedToken === "TESTVBMS"
-                        ? "bg-vintage-gold text-vintage-black border-vintage-gold shadow-gold"
-                        : "bg-vintage-charcoal text-vintage-gold border-vintage-gold/30 hover:border-vintage-gold/60"
+                        ? "bg-vintage-gold text-vintage-black border-2 border-vintage-gold shadow-gold"
+                        : "bg-vintage-charcoal text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
                     }`}
                   >
                     $TESTVBMS
                   </button>
                   <button
                     onClick={() => setSelectedToken("testUSDC")}
-                    className={`p-4 rounded-xl border-2 font-bold transition-all ${
+                    className={`px-6 py-3 rounded-xl font-bold transition-all ${
                       selectedToken === "testUSDC"
-                        ? "bg-green-500 text-white border-green-400 shadow-lg shadow-green-500/30"
-                        : "bg-vintage-charcoal text-vintage-gold border-vintage-gold/30 hover:border-vintage-gold/60"
+                        ? "bg-green-500 text-white border-2 border-green-400 shadow-lg shadow-green-500/30"
+                        : "bg-vintage-charcoal text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
                     }`}
                   >
                     testUSDC
                   </button>
+                  <button
+                    onClick={() => setSelectedToken("VIBE_NFT")}
+                    className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                      selectedToken === "VIBE_NFT"
+                        ? "bg-purple-600 text-white border-2 border-purple-400 shadow-lg shadow-purple-500/30"
+                        : "bg-vintage-charcoal text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
+                    }`}
+                  >
+                    🎴 VIBE NFT
+                  </button>
                 </div>
+                {selectedToken === "VIBE_NFT" && (
+                  <div className="mt-3 bg-purple-900/30 border border-purple-500 rounded-xl p-3 text-center">
+                    <p className="text-purple-300 text-sm font-bold mb-1">
+                      🎴 NFT WAGERING MODE
+                    </p>
+                    <p className="text-purple-200 text-xs">
+                      Select NFT cards to wager + use coins for boosts
+                    </p>
+                    <p className="text-yellow-400 text-xs mt-1">
+                      ⚠️ FOR FUN ONLY - No blockchain transfers
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Ante Selection */}
@@ -422,28 +445,51 @@ export function PokerMatchmaking({
               <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
                 TOKEN
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <button
                   onClick={() => setSelectedToken("TESTVBMS")}
-                  className={`p-4 rounded-xl border-2 font-bold transition-all ${
+                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
                     selectedToken === "TESTVBMS"
-                      ? "bg-vintage-gold text-vintage-black border-vintage-gold shadow-gold"
-                      : "bg-vintage-deep-black text-vintage-gold border-vintage-gold/30 hover:border-vintage-gold/60"
+                      ? "bg-vintage-gold text-vintage-black border-2 border-vintage-gold shadow-gold"
+                      : "bg-vintage-deep-black text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
                   }`}
                 >
                   $TESTVBMS
                 </button>
                 <button
                   onClick={() => setSelectedToken("testUSDC")}
-                  className={`p-4 rounded-xl border-2 font-bold transition-all ${
+                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
                     selectedToken === "testUSDC"
-                      ? "bg-green-500 text-white border-green-400 shadow-lg shadow-green-500/30"
-                      : "bg-vintage-deep-black text-vintage-gold border-vintage-gold/30 hover:border-vintage-gold/60"
+                      ? "bg-green-500 text-white border-2 border-green-400 shadow-lg shadow-green-500/30"
+                      : "bg-vintage-deep-black text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
                   }`}
                 >
                   testUSDC
                 </button>
+                <button
+                  onClick={() => setSelectedToken("VIBE_NFT")}
+                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                    selectedToken === "VIBE_NFT"
+                      ? "bg-purple-600 text-white border-2 border-purple-400 shadow-lg shadow-purple-500/30"
+                      : "bg-vintage-deep-black text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
+                  }`}
+                >
+                  🎴 VIBE NFT
+                </button>
               </div>
+              {selectedToken === "VIBE_NFT" && (
+                <div className="mt-3 bg-purple-900/30 border border-purple-500 rounded-xl p-3 text-center">
+                  <p className="text-purple-300 text-sm font-bold mb-1">
+                    🎴 NFT WAGERING MODE
+                  </p>
+                  <p className="text-purple-200 text-xs">
+                    Select NFT cards to wager + use coins for boosts
+                  </p>
+                  <p className="text-yellow-400 text-xs mt-1">
+                    ⚠️ FOR FUN ONLY - No blockchain transfers
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Stakes Selection */}
