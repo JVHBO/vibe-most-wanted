@@ -92,6 +92,48 @@ export function PokerBattleTable({
   const [playerAction, setPlayerAction] = useState<CardAction | null>(null);
   const [opponentAction, setOpponentAction] = useState<CardAction | null>(null);
 
+  // Monitor room state changes in PvP mode
+  useEffect(() => {
+    if (isCPUMode || !room) return;
+
+    console.log('[PokerBattle] Room state updated', {
+      roomId: room.roomId,
+      status: room.status,
+      gameState: room.gameState,
+      phase,
+      playerSelectedCard: !!playerSelectedCard,
+      opponentSelectedCard: !!opponentSelectedCard,
+      playerAction,
+      opponentAction
+    });
+
+    // Check if both players have selected cards and actions - time to resolve
+    if (room.gameState) {
+      const { hostSelectedCard, guestSelectedCard, hostAction, guestAction, phase: serverPhase } = room.gameState;
+
+      console.log('[PokerBattle] Server game state', {
+        serverPhase,
+        hostSelectedCard: !!hostSelectedCard,
+        guestSelectedCard: !!guestSelectedCard,
+        hostAction,
+        guestAction
+      });
+
+      // If server is in reveal/resolution phase and both have acted, resolve
+      if (serverPhase === 'reveal' || serverPhase === 'resolution') {
+        if (hostSelectedCard && guestSelectedCard && hostAction && guestAction) {
+          console.log('[PokerBattle] Both players ready - should resolve round now');
+
+          // Sync local state with server
+          if (phase !== 'resolution' && phase !== 'game-over') {
+            console.log('[PokerBattle] Calling resolveRound from room sync');
+            resolveRound();
+          }
+        }
+      }
+    }
+  }, [room, isCPUMode]);
+
   // Timer countdown for actions
   useEffect(() => {
     // Reset timer when phase changes or when player makes action
