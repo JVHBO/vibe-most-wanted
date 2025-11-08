@@ -9,13 +9,13 @@ import { PokerWaitingRoom } from './PokerWaitingRoom';
 
 interface Card {
   tokenId: string;
-  name?: string; // Optional for NFTs
+  name: string;
   image?: string;
   imageUrl?: string; // NFTs use imageUrl
-  power?: number; // Optional for NFTs (some may not have power calculated yet)
-  rarity?: string; // Optional for NFTs
-  foil?: string; // Optional for NFTs
-  wear?: string; // Optional for NFTs
+  power: number;
+  rarity: string;
+  foil: string;
+  wear: string;
 }
 
 interface PokerBattleTableProps {
@@ -29,7 +29,8 @@ interface PokerBattleTableProps {
   isSpectator?: boolean; // If true, view-only mode (no interactions)
 }
 
-type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'resolution' | 'game-over';
+type GamePhase = 'deck-building' | 'card-selection' | 'pre-reveal-betting' | 'reveal' | 'post-reveal-betting' | 'resolution' | 'game-over';
+type BettingAction = 'CHECK' | 'BET' | 'CALL' | 'RAISE' | 'FOLD';
 type CardAction = 'BOOST' | 'SHIELD' | 'DOUBLE' | 'SWAP' | 'PASS';
 type ViewMode = 'matchmaking' | 'waiting' | 'game';
 
@@ -59,6 +60,7 @@ export function PokerBattleTable({
   // Mutations for game actions
   const initializeGameMutation = useMutation(api.pokerBattle.initializeGame);
   const selectCardMutation = useMutation(api.pokerBattle.selectCard);
+  const makeBetMutation = useMutation(api.pokerBattle.makeBet);
   const useCardActionMutation = useMutation(api.pokerBattle.useCardAction);
   const resolveRoundMutation = useMutation(api.pokerBattle.resolveRound);
 
@@ -117,6 +119,9 @@ export function PokerBattleTable({
   // Betting
   const [playerBankroll, setPlayerBankroll] = useState(0);
   const [opponentBankroll, setOpponentBankroll] = useState(0);
+  const [currentBet, setCurrentBet] = useState(0);
+  const [playerBetThisRound, setPlayerBetThisRound] = useState(0);
+  const [opponentBetThisRound, setOpponentBetThisRound] = useState(0);
 
   // Score
   const [playerScore, setPlayerScore] = useState(0);
@@ -192,9 +197,9 @@ export function PokerBattleTable({
       // AI randomly selects a card
       const aiCard = opponentHand[Math.floor(Math.random() * opponentHand.length)];
       setOpponentSelectedCard(aiCard);
-      // Delay before moving to reveal phase
+      // Delay before moving to betting phase
       setTimeout(() => {
-        setPhase('reveal');
+        setPhase('pre-reveal-betting');
       }, 800);
     } else {
       // PvP mode - send to server
@@ -210,6 +215,76 @@ export function PokerBattleTable({
     }
   };
 
+  // Betting Actions
+  const handleBet = (amount: number) => {
+    if (amount > playerBankroll) return;
+    AudioManager.buttonClick();
+
+    setPlayerBankroll(prev => prev - amount);
+    setPlayerBetThisRound(prev => prev + amount);
+    setPot(prev => prev + amount);
+    setCurrentBet(amount);
+
+    if (isCPUMode) {
+      // AI responds (simple AI for now) with delay
+      setTimeout(() => {
+        aiRespondToBet(amount);
+      }, 1200);
+    }
+  };
+
+  const handleCall = () => {
+    const toCall = currentBet;
+    if (toCall > playerBankroll) return;
+    AudioManager.buttonClick();
+
+    setPlayerBankroll(prev => prev - toCall);
+    setPlayerBetThisRound(prev => prev + toCall);
+    setPot(prev => prev + toCall);
+
+    setTimeout(() => {
+      setPhase('reveal');
+    }, 800);
+  };
+
+  const handleFold = () => {
+    AudioManager.buttonClick();
+    // Player folds - opponent wins pot
+    setOpponentBankroll(prev => prev + pot);
+    setPot(0);
+    setOpponentScore(prev => prev + 1);
+
+    setTimeout(() => {
+      if (opponentScore + 1 >= 4) {
+        setPhase('game-over');
+      } else {
+        nextRound();
+      }
+    }, 1000);
+  };
+
+  const aiRespondToBet = (amount: number) => {
+    // Simple AI: 70% chance to call, 30% to fold
+    if (Math.random() < 0.7) {
+      setOpponentBankroll(prev => prev - amount);
+      setOpponentBetThisRound(prev => prev + amount);
+      setPot(prev => prev + amount);
+      setTimeout(() => setPhase('reveal'), 1500);
+    } else {
+      // AI folds
+      setPlayerBankroll(prev => prev + pot);
+      setPot(0);
+      setPlayerScore(prev => prev + 1);
+
+      setTimeout(() => {
+        if (playerScore + 1 >= 4) {
+          setPhase('game-over');
+        } else {
+          nextRound();
+        }
+      }, 1000);
+    }
+  };
 
   // Boost shop prices (based on ante for scaling)
   const getBoostPrice = (boostType: CardAction): number => {
@@ -223,7 +298,7 @@ export function PokerBattleTable({
   };
 
   // Action Selection with cost
-  const selectAction = async (action: CardAction) => {
+  const selectAction = (action: CardAction) => {
     const cost = getBoostPrice(action);
 
     // Check if player can afford it
@@ -254,83 +329,60 @@ export function PokerBattleTable({
         }
 
         setTimeout(() => {
-          setPhase('resolution');
+          setPhase('post-reveal-betting');
         }, 800);
       }, 1000);
-    } else {
-      // PvP mode - send to server
-      try {
-        await useCardActionMutation({
-          roomId,
-          address: playerAddress,
-          action,
-        });
-      } catch (error) {
-        console.error('Error using card action:', error);
-      }
     }
   };
 
   // Calculate winner
-  const resolveRound = async () => {
+  const resolveRound = () => {
     if (!playerSelectedCard || !opponentSelectedCard) return;
     AudioManager.buttonClick();
 
     setPhase('resolution');
 
-    if (isCPUMode) {
-      setTimeout(() => {
-        let playerPower = playerSelectedCard.power;
-        let opponentPower = opponentSelectedCard.power;
+    setTimeout(() => {
+      let playerPower = playerSelectedCard.power;
+      let opponentPower = opponentSelectedCard.power;
 
-        // Apply actions with shield logic
-        const playerHasShield = playerAction === 'SHIELD';
-        const opponentHasShield = opponentAction === 'SHIELD';
+      // Apply actions with shield logic
+      const playerHasShield = playerAction === 'SHIELD';
+      const opponentHasShield = opponentAction === 'SHIELD';
 
-        // Apply BOOST (+30%)
-        if (playerAction === 'BOOST' && !opponentHasShield) {
-          playerPower *= 1.3;
-        }
-        if (opponentAction === 'BOOST' && !playerHasShield) {
-          opponentPower *= 1.3;
-        }
-
-        // Apply DOUBLE (x2)
-        if (playerAction === 'DOUBLE') playerPower *= 2;
-        if (opponentAction === 'DOUBLE') opponentPower *= 2;
-
-        const playerWins = playerPower > opponentPower;
-
-        if (playerWins) {
-          setPlayerBankroll(prev => prev + pot);
-          setPlayerScore(prev => prev + 1);
-        } else {
-          setOpponentBankroll(prev => prev + pot);
-          setOpponentScore(prev => prev + 1);
-        }
-
-        setPot(0);
-
-        // Check win condition with delay
-        setTimeout(() => {
-          if (playerScore + (playerWins ? 1 : 0) >= 4 || opponentScore + (playerWins ? 0 : 1) >= 4) {
-            setPhase('game-over');
-          } else {
-            nextRound();
-          }
-        }, 1500);
-      }, 1000);
-    } else {
-      // PvP mode - send to server for resolution
-      try {
-        await resolveRoundMutation({
-          roomId,
-          address: playerAddress,
-        });
-      } catch (error) {
-        console.error('Error resolving round:', error);
+      // Apply BOOST (+30%)
+      if (playerAction === 'BOOST' && !opponentHasShield) {
+        playerPower *= 1.3;
       }
-    }
+      if (opponentAction === 'BOOST' && !playerHasShield) {
+        opponentPower *= 1.3;
+      }
+
+      // Apply DOUBLE (x2)
+      if (playerAction === 'DOUBLE') playerPower *= 2;
+      if (opponentAction === 'DOUBLE') opponentPower *= 2;
+
+      const playerWins = playerPower > opponentPower;
+
+      if (playerWins) {
+        setPlayerBankroll(prev => prev + pot);
+        setPlayerScore(prev => prev + 1);
+      } else {
+        setOpponentBankroll(prev => prev + pot);
+        setOpponentScore(prev => prev + 1);
+      }
+
+      setPot(0);
+
+      // Check win condition with delay
+      setTimeout(() => {
+        if (playerScore + (playerWins ? 1 : 0) >= 4 || opponentScore + (playerWins ? 0 : 1) >= 4) {
+          setPhase('game-over');
+        } else {
+          nextRound();
+        }
+      }, 1500);
+    }, 1000);
   };
 
   const nextRound = () => {
@@ -356,6 +408,9 @@ export function PokerBattleTable({
     setOpponentSelectedCard(null);
     setPlayerAction(null);
     setOpponentAction(null);
+    setCurrentBet(0);
+    setPlayerBetThisRound(0);
+    setOpponentBetThisRound(0);
 
     const anteAmount = isCPUMode ? 50 : selectedAnte;
     setPot(anteAmount * 2);
@@ -461,6 +516,9 @@ export function PokerBattleTable({
           setOpponentScore(gs.hostScore);
         }
       }
+
+      // Sync current bet
+      if (gs.currentBet !== undefined) setCurrentBet(gs.currentBet);
 
       // Sync opponent's selected card (only show after they select)
       if (isHost && gs.guestSelectedCard) {
@@ -724,7 +782,12 @@ export function PokerBattleTable({
                   {/* Opponent's selected card (hidden until reveal) */}
                   <div className="flex flex-col items-center mb-4">
                     <div className="w-32 aspect-[2/3] border-2 border-dashed border-vintage-gold rounded-lg flex flex-col items-center justify-center bg-vintage-deep-black/30 transition-all duration-500">
-                      {opponentSelectedCard ? (
+                      {phase === 'pre-reveal-betting' ? (
+                        <div className="text-center animate-pulse">
+                          <span className="text-vintage-gold text-6xl mb-2">🂠</span>
+                          <p className="text-vintage-burnt-gold text-sm">Card Hidden</p>
+                        </div>
+                      ) : opponentSelectedCard ? (
                         <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
                           {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
                             <img
@@ -756,7 +819,7 @@ export function PokerBattleTable({
                         <span className="text-vintage-gold text-4xl animate-pulse">?</span>
                       )}
                     </div>
-                    {opponentAction && opponentAction !== 'PASS' && (
+                    {phase !== 'pre-reveal-betting' && opponentAction && opponentAction !== 'PASS' && (
                       <div className="mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500">
                         <span className="text-red-300 text-sm font-bold">
                           {opponentAction === 'BOOST' && '⚔️ Opponent used BOOST (+30%)'}
@@ -781,15 +844,12 @@ export function PokerBattleTable({
                     <div className="inline-block bg-vintage-gold/20 border-2 border-vintage-gold px-6 py-2 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
                       <div className="text-vintage-gold font-display font-bold text-lg">
                         {phase === 'card-selection' && !isCPUMode && playerSelectedCard && !opponentSelectedCard && (
-                          <span className="animate-pulse">⏳ WAITING FOR OPPONENT TO SELECT CARD...</span>
+                          <span className="animate-pulse">⏳ WAITING FOR OPPONENT...</span>
                         )}
                         {phase === 'card-selection' && (isCPUMode || !playerSelectedCard) && '📋 SELECT A CARD FROM YOUR HAND'}
-
-                        {phase === 'reveal' && !isCPUMode && playerAction && !opponentAction && (
-                          <span className="animate-pulse">⏳ WAITING FOR OPPONENT TO CHOOSE ACTION...</span>
-                        )}
-                        {phase === 'reveal' && (isCPUMode || !playerAction) && '⚔️ CARDS REVEALED - CHOOSE YOUR ACTION'}
-
+                        {phase === 'pre-reveal-betting' && '💰 PRE-REVEAL BETTING ROUND'}
+                        {phase === 'reveal' && '⚔️ CARDS REVEALED - CHOOSE YOUR ACTION'}
+                        {phase === 'post-reveal-betting' && '🎲 FINAL BETTING ROUND'}
                         {phase === 'resolution' && <span className="animate-pulse">⏳ CALCULATING WINNER...</span>}
                       </div>
                     </div>
@@ -845,6 +905,32 @@ export function PokerBattleTable({
                     ))}
                   </div>
 
+                  {/* Action buttons */}
+                  {phase === 'pre-reveal-betting' && !isSpectator && selectedAnte !== 0 && (
+                    <div className="flex justify-center gap-3 animate-in fade-in slide-in-from-bottom duration-500">
+                      <button
+                        onClick={() => handleBet(Math.round(selectedAnte * 0.4))}
+                        disabled={selectedAnte === 0 || isSpectator}
+                        className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        BET {Math.round(selectedAnte * 0.4)}
+                      </button>
+                      <button
+                        onClick={() => handleBet(selectedAnte)}
+                        disabled={selectedAnte === 0 || isSpectator}
+                        className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        BET {selectedAnte}
+                      </button>
+                      <button
+                        onClick={handleFold}
+                        disabled={selectedAnte === 0 || isSpectator}
+                        className="px-6 py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        FOLD
+                      </button>
+                    </div>
+                  )}
 
                   {phase === 'reveal' && !isSpectator && selectedAnte !== 0 && (
                     <div className="space-y-3 animate-in fade-in slide-in-from-bottom duration-500">
@@ -903,6 +989,17 @@ export function PokerBattleTable({
                     </div>
                   )}
 
+                  {phase === 'post-reveal-betting' && !isSpectator && selectedAnte !== 0 && (
+                    <div className="flex justify-center gap-3 animate-in fade-in zoom-in duration-700">
+                      <button
+                        onClick={resolveRound}
+                        disabled={selectedAnte === 0 || isSpectator}
+                        className="px-8 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-lg hover:bg-vintage-burnt-gold transition-all duration-300 hover:scale-110 hover:shadow-2xl active:scale-95 animate-pulse disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        RESOLVE ROUND
+                      </button>
+                    </div>
+                  )}
                 </div>
 
               </div>

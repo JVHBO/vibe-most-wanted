@@ -423,10 +423,9 @@ export const selectCard = mutation({
       gameState.guestSelectedCard = args.card;
     }
 
-    // If both players have selected, move to betting
+    // If both players have selected, move to reveal (skip betting)
     if (gameState.hostSelectedCard && gameState.guestSelectedCard) {
-      gameState.phase = "pre-reveal-betting";
-      gameState.currentBet = 0;
+      gameState.phase = "reveal";
     }
 
     await ctx.db.patch(room._id, { gameState });
@@ -437,106 +436,7 @@ export const selectCard = mutation({
   },
 });
 
-// Player makes a betting action
-export const makeBet = mutation({
-  args: {
-    roomId: v.string(),
-    address: v.string(),
-    action: v.union(v.literal("CHECK"), v.literal("BET"), v.literal("CALL"), v.literal("RAISE"), v.literal("FOLD")),
-    amount: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const room = await ctx.db
-      .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
-      .first();
-
-    if (!room || !room.gameState) {
-      throw new Error("Room not found or game not started");
-    }
-
-    const isHost = room.hostAddress === args.address.toLowerCase();
-    const isGuest = room.guestAddress === args.address.toLowerCase();
-
-    if (!isHost && !isGuest) {
-      throw new Error("You are not a player in this room");
-    }
-
-    const gameState = { ...room.gameState };
-    const currentBankroll = isHost ? room.hostBankroll : room.guestBankroll;
-
-    // Process betting action
-    if (args.action === "FOLD") {
-      // Opponent wins the pot
-      const winner = isHost ? room.guestAddress : room.hostAddress;
-      gameState.phase = "resolution";
-      gameState.lastAction = `${isHost ? 'host' : 'guest'}_fold`;
-    } else if (args.action === "CHECK") {
-      // Move to next phase if both checked
-      gameState.lastAction = `${isHost ? 'host' : 'guest'}_check`;
-      if (gameState.phase === "pre-reveal-betting") {
-        gameState.phase = "reveal";
-      } else {
-        gameState.phase = "resolution";
-      }
-    } else if (args.action === "BET" && args.amount) {
-      if (args.amount > currentBankroll!) {
-        throw new Error("Insufficient bankroll");
-      }
-      gameState.currentBet = args.amount;
-      gameState.pot += args.amount;
-      if (isHost) {
-        gameState.hostBet = (gameState.hostBet || 0) + args.amount;
-      } else {
-        gameState.guestBet = (gameState.guestBet || 0) + args.amount;
-      }
-      gameState.lastAction = `${isHost ? 'host' : 'guest'}_bet`;
-    } else if (args.action === "CALL") {
-      const toCall = gameState.currentBet;
-      if (toCall > currentBankroll!) {
-        throw new Error("Insufficient bankroll");
-      }
-      gameState.pot += toCall;
-      if (isHost) {
-        gameState.hostBet = (gameState.hostBet || 0) + toCall;
-      } else {
-        gameState.guestBet = (gameState.guestBet || 0) + toCall;
-      }
-      gameState.lastAction = `${isHost ? 'host' : 'guest'}_call`;
-      // Move to reveal after call
-      if (gameState.phase === "pre-reveal-betting") {
-        gameState.phase = "reveal";
-      } else {
-        gameState.phase = "resolution";
-      }
-    } else if (args.action === "RAISE" && args.amount) {
-      if (args.amount > currentBankroll!) {
-        throw new Error("Insufficient bankroll");
-      }
-      gameState.currentBet += args.amount;
-      gameState.pot += args.amount;
-      if (isHost) {
-        gameState.hostBet = (gameState.hostBet || 0) + args.amount;
-      } else {
-        gameState.guestBet = (gameState.guestBet || 0) + args.amount;
-      }
-      gameState.lastAction = `${isHost ? 'host' : 'guest'}_raise`;
-    }
-
-    // Update bankrolls
-    const betThisAction = args.amount || 0;
-    const newBankroll = currentBankroll! - betThisAction;
-
-    await ctx.db.patch(room._id, {
-      gameState,
-      ...(isHost ? { hostBankroll: newBankroll } : { guestBankroll: newBankroll }),
-    });
-
-    console.log(`💰 Bet action: ${args.action} by ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
-
-    return { success: true };
-  },
-});
+// REMOVED: makeBet mutation - betting phases eliminated in simplified system
 
 // Player uses a card action (BOOST, SHIELD, etc.)
 export const useCardAction = mutation({
@@ -573,12 +473,37 @@ export const useCardAction = mutation({
       gameState.guestAction = args.action;
     }
 
-    // If both players have acted, move to post-reveal betting
-    if (gameState.hostAction && gameState.guestAction) {
-      gameState.phase = "post-reveal-betting";
+    // Deduct boost costs from bankroll
+    const boostCosts: Record<string, number> = {
+      BOOST: Math.round(room.ante * 1.6),
+      SHIELD: Math.round(room.ante * 1.2),
+      DOUBLE: Math.round(room.ante * 3.2),
+      SWAP: 0,
+      PASS: 0,
+    };
+
+    let newHostBankroll = room.hostBankroll!;
+    let newGuestBankroll = room.guestBankroll!;
+
+    if (isHost && args.action !== 'PASS' && args.action !== 'SWAP') {
+      const cost = boostCosts[args.action] || 0;
+      newHostBankroll -= cost;
+    }
+    if (isGuest && args.action !== 'PASS' && args.action !== 'SWAP') {
+      const cost = boostCosts[args.action] || 0;
+      newGuestBankroll -= cost;
     }
 
-    await ctx.db.patch(room._id, { gameState });
+    // If both players have acted, move to resolution (skip post-reveal betting)
+    if (gameState.hostAction && gameState.guestAction) {
+      gameState.phase = "resolution";
+    }
+
+    await ctx.db.patch(room._id, {
+      gameState,
+      hostBankroll: newHostBankroll,
+      guestBankroll: newGuestBankroll,
+    });
 
     console.log(`⚡ Card action: ${args.action} by ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
 
