@@ -93,49 +93,6 @@ export function PvPMenuModals({
           </p>
 
           <div className="space-y-4">
-            {/* Difficulty Selector Button */}
-            <button
-              onClick={() => {
-                if (soundEnabled) AudioManager.buttonClick();
-                setIsDifficultyModalOpen(true);
-              }}
-              className="w-full bg-vintage-charcoal/50 rounded-xl p-4 border-2 border-vintage-gold/50 hover:border-vintage-gold hover:shadow-lg hover:shadow-vintage-gold/20 transition-all"
-            >
-              <p className="text-center text-vintage-gold text-sm font-modern mb-2">✦ SELECT DIFFICULTY ✦</p>
-              <div className="flex items-center justify-center gap-3 mb-2">
-                {(['gey', 'goofy', 'gooner', 'gangster', 'gigachad'] as const).map((diff) => {
-                  const diffEmoji = {
-                    gey: '~',
-                    goofy: '∿',
-                    gooner: '†',
-                    gangster: '‡',
-                    gigachad: '§'
-                  };
-                  const isUnlocked = unlockedDifficulties.has(diff);
-                  const isCurrent = aiDifficulty === diff;
-
-                  return (
-                    <div
-                      key={diff}
-                      className={`text-xl transition-all ${
-                        !isUnlocked ? 'opacity-20 grayscale' :
-                        isCurrent ? 'scale-125 drop-shadow-lg' : 'opacity-50'
-                      }`}
-                    >
-                      {diffEmoji[diff]}
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-center text-vintage-burnt-gold text-xs">
-                Current: {aiDifficulty === 'gey' && '~ GEY (75 PWR)'}
-                {aiDifficulty === 'goofy' && '∿ GOOFY (~105 PWR)'}
-                {aiDifficulty === 'gooner' && '† GOONER (~360 PWR)'}
-                {aiDifficulty === 'gangster' && '‡ GANGSTER (750 PWR)'}
-                {aiDifficulty === 'gigachad' && '§ GIGACHAD (855 PWR)'}
-              </p>
-            </button>
-
             {/* Jogar vs IA */}
             <button
               onClick={() => {
