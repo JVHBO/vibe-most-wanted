@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { CoinsInboxModal } from "./CoinsInboxModal";
+import NextImage from "next/image";
 
 interface CoinsInboxDisplayProps {
   compact?: boolean; // For miniapp/mobile view
@@ -33,7 +34,7 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
           className="relative bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base flex items-center justify-center"
           title="Coins Inbox"
         >
-          <span className="text-xl">💰</span>
+          <NextImage src="/images/icons/inbox.svg" alt="Inbox" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           {hasUncollected && (
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-vintage-orange rounded-full animate-notification-pulse" />
           )}
@@ -56,7 +57,7 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
         onClick={() => setShowModal(true)}
         className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-vintage-deep-black/50 border border-vintage-gold/30 hover:border-vintage-gold/60 transition-all"
       >
-        <span className="text-2xl">💰</span>
+        <NextImage src="/images/icons/inbox.svg" alt="Inbox" width={24} height={24} className="w-6 h-6" />
         <div className="text-left">
           <div className="text-xs text-vintage-gold/60">Coins Inbox</div>
           <div className="text-sm font-bold text-vintage-gold">
