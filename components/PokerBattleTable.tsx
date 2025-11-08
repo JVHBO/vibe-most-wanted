@@ -256,7 +256,7 @@ export function PokerBattleTable({
         }
 
         setTimeout(() => {
-          setPhase('resolution');
+          resolveRound();
         }, 800);
       }, 1000);
     } else {
@@ -726,7 +726,7 @@ export function PokerBattleTable({
                   {/* Opponent's selected card (hidden until reveal) */}
                   <div className="flex flex-col items-center mb-4">
                     <div className="w-32 aspect-[2/3] border-2 border-dashed border-vintage-gold rounded-lg flex flex-col items-center justify-center bg-vintage-deep-black/30 transition-all duration-500">
-                      {opponentSelectedCard ? (
+                      {opponentSelectedCard && phase === 'reveal' ? (
                         <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
                           {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
                             <img
