@@ -155,7 +155,22 @@ export function PokerBattleTable({
   // Pagination for deck building
   const [currentPage, setCurrentPage] = useState(0);
   const [sortByPower, setSortByPower] = useState(false);
-  const CARDS_PER_PAGE = 50;
+
+  // Responsive cards per page - fewer on mobile for better visibility
+  const [cardsPerPage, setCardsPerPage] = useState(50);
+
+  useEffect(() => {
+    const updateCardsPerPage = () => {
+      // Mobile/Farcaster: 20 cards, Desktop: 50 cards
+      setCardsPerPage(window.innerWidth < 768 ? 20 : 50);
+    };
+
+    updateCardsPerPage();
+    window.addEventListener('resize', updateCardsPerPage);
+    return () => window.removeEventListener('resize', updateCardsPerPage);
+  }, []);
+
+  const CARDS_PER_PAGE = cardsPerPage;
 
   // Sort cards by power if enabled
   const sortedPlayerCards = sortByPower
@@ -593,8 +608,8 @@ export function PokerBattleTable({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-2 md:p-4">
-      <div className="w-full max-w-7xl h-[95vh] max-h-[900px] relative">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-1 sm:p-2 md:p-4">
+      <div className="w-full max-w-7xl h-[98vh] sm:h-[95vh] max-h-[900px] relative">
 
         {/* Close button */}
         <button
@@ -606,12 +621,12 @@ export function PokerBattleTable({
 
         {/* DECK BUILDING PHASE */}
         {phase === 'deck-building' && (
-          <div className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold p-4 md:p-6 h-full overflow-y-auto">
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-3 text-center">
+          <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-2 sm:p-4 md:p-6 h-full overflow-y-auto">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-2 sm:mb-3 text-center">
               BUILD YOUR DECK
             </h2>
-            <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2">
-              <p className="text-vintage-burnt-gold text-center">
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-2 sm:mb-4 gap-2">
+              <p className="text-vintage-burnt-gold text-center text-sm sm:text-base">
                 Select 10 cards ({selectedDeck.length}/10)
               </p>
               <button
@@ -874,23 +889,23 @@ export function PokerBattleTable({
 
                 {/* CENTER - POT & ACTIONS */}
                 <div className="text-center">
-                  <div className="inline-block bg-vintage-deep-black/50 border-2 border-vintage-gold px-8 py-4 rounded-full transition-all duration-500 hover:scale-105">
-                    <div className="text-vintage-gold font-display font-bold text-3xl">
+                  <div className="inline-block bg-vintage-deep-black/50 border-2 border-vintage-gold px-4 sm:px-8 py-2 sm:py-4 rounded-full transition-all duration-500 hover:scale-105">
+                    <div className="text-vintage-gold font-display font-bold text-xl sm:text-3xl">
                       💰 {pot} {selectedToken}
                     </div>
                   </div>
 
                   {/* Timer Display */}
                   {(phase === 'card-selection' || phase === 'reveal') && (
-                    <div className="mt-3">
-                      <div className={`inline-block px-6 py-2 rounded-lg border-2 transition-all ${
+                    <div className="mt-2 sm:mt-3">
+                      <div className={`inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
                         timeRemaining <= 5
                           ? 'bg-red-900/50 border-red-500 animate-pulse'
                           : timeRemaining <= 10
                           ? 'bg-yellow-900/50 border-yellow-500'
                           : 'bg-vintage-deep-black/50 border-vintage-gold'
                       }`}>
-                        <div className={`font-display font-bold text-2xl ${
+                        <div className={`font-display font-bold text-lg sm:text-2xl ${
                           timeRemaining <= 5
                             ? 'text-red-300'
                             : timeRemaining <= 10
@@ -904,9 +919,9 @@ export function PokerBattleTable({
                   )}
 
                   {/* Phase indicator */}
-                  <div className="mt-4">
-                    <div className="inline-block bg-vintage-gold/20 border-2 border-vintage-gold px-6 py-2 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
-                      <div className="text-vintage-gold font-display font-bold text-lg">
+                  <div className="mt-2 sm:mt-4">
+                    <div className="inline-block bg-vintage-gold/20 border-2 border-vintage-gold px-3 sm:px-6 py-1 sm:py-2 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
+                      <div className="text-vintage-gold font-display font-bold text-sm sm:text-lg">
                         {phase === 'card-selection' && !isCPUMode && playerSelectedCard && !opponentSelectedCard && (
                           <span className="animate-pulse">⏳ WAITING FOR OPPONENT TO SELECT CARD...</span>
                         )}
@@ -976,57 +991,61 @@ export function PokerBattleTable({
 
 
                   {phase === 'reveal' && !isSpectator && selectedAnte !== 0 && (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-bottom duration-500">
-                      <div className="text-center text-vintage-burnt-gold text-sm font-bold mb-2">
-                        💰 BOOST SHOP - Your Bankroll: {playerBankroll} {selectedToken}
+                    <div className="space-y-3 sm:space-y-4 animate-in fade-in slide-in-from-bottom duration-500">
+                      <div className="text-center text-vintage-burnt-gold text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">
+                        💰 BOOST SHOP - {playerBankroll} {selectedToken}
                       </div>
-                      <div className="flex justify-center gap-2 flex-wrap">
+                      <div className="flex justify-center gap-2 sm:gap-3 flex-wrap">
                         <button
                           onClick={() => showConfirmAction('BOOST')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('BOOST')}
-                          className={`px-4 py-3 font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
+                          className={`px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 font-bold text-sm sm:text-base md:text-lg rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
                             playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black hover:from-yellow-600 hover:to-yellow-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          ⚔️ BOOST<br/>
-                          <span className="text-xs">+30% • {getBoostPrice('BOOST')} {selectedToken}</span>
+                          <div className="text-lg sm:text-xl md:text-2xl">⚔️</div>
+                          <div className="text-xs sm:text-sm md:text-base">BOOST</div>
+                          <span className="text-xs sm:text-sm">+30% • {getBoostPrice('BOOST')} {selectedToken}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('SHIELD')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('SHIELD')}
-                          className={`px-4 py-3 font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
+                          className={`px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 font-bold text-sm sm:text-base md:text-lg rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
                             playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          🛡️ SHIELD<br/>
-                          <span className="text-xs">Block Boost • {getBoostPrice('SHIELD')} {selectedToken}</span>
+                          <div className="text-lg sm:text-xl md:text-2xl">🛡️</div>
+                          <div className="text-xs sm:text-sm md:text-base">SHIELD</div>
+                          <span className="text-xs sm:text-sm">Block • {getBoostPrice('SHIELD')} {selectedToken}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('DOUBLE')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('DOUBLE')}
-                          className={`px-4 py-3 font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
+                          className={`px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 font-bold text-sm sm:text-base md:text-lg rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
                             playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          💥 CRITICAL<br/>
-                          <span className="text-xs">x2 Power • {getBoostPrice('DOUBLE')} {selectedToken}</span>
+                          <div className="text-lg sm:text-xl md:text-2xl">💥</div>
+                          <div className="text-xs sm:text-sm md:text-base">CRITICAL</div>
+                          <span className="text-xs sm:text-sm">x2 • {getBoostPrice('DOUBLE')} {selectedToken}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('PASS')}
                           disabled={selectedAnte === 0 || isSpectator}
-                          className="px-4 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 bg-gray-600 text-white font-bold text-sm sm:text-base md:text-lg rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          ✋ PASS<br/>
-                          <span className="text-xs">Free • Save Money</span>
+                          <div className="text-lg sm:text-xl md:text-2xl">✋</div>
+                          <div className="text-xs sm:text-sm md:text-base">PASS</div>
+                          <span className="text-xs sm:text-sm">Free • Save Money</span>
                         </button>
                       </div>
                     </div>
