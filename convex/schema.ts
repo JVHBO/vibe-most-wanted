@@ -415,4 +415,78 @@ export default defineSchema({
   })
     .index("by_player", ["playerAddress", "timestamp"])
     .index("by_timestamp", ["timestamp"]),
+
+  // Poker Battle Rooms (for Poker Battle Mode matchmaking)
+  pokerRooms: defineTable({
+    // Room Info
+    roomId: v.string(),
+    status: v.union(
+      v.literal("waiting"),     // Waiting for opponent
+      v.literal("ready"),       // Both players joined and selected decks
+      v.literal("in-progress"), // Game in progress
+      v.literal("finished"),    // Game finished
+      v.literal("cancelled")    // Room cancelled
+    ),
+
+    // Stakes & Token
+    ante: v.number(), // Ante amount per round (10, 25, 50, 100)
+    token: v.union(
+      v.literal("TESTVBMS"),
+      v.literal("testUSDC")
+    ),
+
+    // Players
+    hostAddress: v.string(),
+    hostUsername: v.string(),
+    hostDeck: v.optional(v.array(v.any())), // Host's 10 selected cards
+    hostReady: v.boolean(),
+    hostBankroll: v.number(), // Starting bankroll for host
+
+    guestAddress: v.optional(v.string()),
+    guestUsername: v.optional(v.string()),
+    guestDeck: v.optional(v.array(v.any())), // Guest's 10 selected cards
+    guestReady: v.optional(v.boolean()),
+    guestBankroll: v.optional(v.number()), // Starting bankroll for guest
+
+    // Spectators
+    spectators: v.optional(v.array(v.object({
+      address: v.string(),
+      username: v.string(),
+      joinedAt: v.number(),
+    }))),
+
+    // Game State (updated in real-time during match)
+    gameState: v.optional(v.object({
+      currentRound: v.number(), // 1-7
+      hostScore: v.number(), // Rounds won by host
+      guestScore: v.number(), // Rounds won by guest
+      pot: v.number(), // Current pot size
+      currentBet: v.number(), // Current bet to match
+      phase: v.string(), // 'card-selection', 'pre-reveal-betting', 'reveal', etc.
+
+      // Current round state
+      hostSelectedCard: v.optional(v.any()),
+      guestSelectedCard: v.optional(v.any()),
+      hostAction: v.optional(v.string()), // 'BOOST', 'PASS', etc.
+      guestAction: v.optional(v.string()),
+      hostBet: v.optional(v.number()),
+      guestBet: v.optional(v.number()),
+      lastAction: v.optional(v.string()), // Last player action for turn order
+    })),
+
+    // Winner
+    winnerId: v.optional(v.string()), // Address of winner
+    winnerUsername: v.optional(v.string()),
+    finalPot: v.optional(v.number()), // Final pot amount won
+
+    // Timestamps
+    createdAt: v.number(),
+    startedAt: v.optional(v.number()), // When game actually started
+    finishedAt: v.optional(v.number()),
+    expiresAt: v.number(), // Auto-cancel if not started within 10 minutes
+  })
+    .index("by_status", ["status", "createdAt"])
+    .index("by_host", ["hostAddress"])
+    .index("by_guest", ["guestAddress"])
+    .index("by_token_ante", ["token", "ante", "status"]), // For auto-match filtering
 });
