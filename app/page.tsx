@@ -3985,9 +3985,6 @@ export default function TCGPage() {
             <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
-          {/* Unified Inbox - Both VBMS Tokens and Coins */}
-          {userProfile && <CoinsInboxDisplay />}
-
           <Link
             href="/docs"
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
@@ -4146,6 +4143,18 @@ export default function TCGPage() {
                     </button>
                   )}
 
+                  {/* Disconnect Button */}
+                  <button
+                    onClick={disconnectWallet}
+                    className="px-3 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 text-vintage-gold rounded-lg border border-vintage-gold/50 font-modern font-semibold transition-all"
+                    title={t('disconnect')}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M16 17l5-5-5-5M21 12H9" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+
                   {/* Coin Balance Display */}
                   {address && userProfile && playerEconomy && (
                     <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
@@ -4161,16 +4170,8 @@ export default function TCGPage() {
                     </div>
                   )}
 
-                  <button
-                    onClick={disconnectWallet}
-                    className="px-3 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 text-vintage-gold rounded-lg border border-vintage-gold/50 font-modern font-semibold transition-all"
-                    title={t('disconnect')}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round"/>
-                      <path d="M16 17l5-5-5-5M21 12H9" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
+                  {/* Coins Inbox */}
+                  {userProfile && <CoinsInboxDisplay />}
                 </div>
               </div>
             </div>
