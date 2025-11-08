@@ -415,12 +415,66 @@ export function PokerBattleTable({
     } else {
       // PvP mode - send to server for resolution
       try {
-        await resolveRoundMutation({
+        const result = await resolveRoundMutation({
           roomId,
           address: playerAddress,
         });
+
+        // Calculate winner locally to show correct animation
+        let playerPower = playerSelectedCard.power || 0;
+        let opponentPower = opponentSelectedCard.power || 0;
+
+        // Apply actions with shield logic
+        const playerHasShield = playerAction === 'SHIELD';
+        const opponentHasShield = opponentAction === 'SHIELD';
+
+        // Apply BOOST (+30%)
+        if (playerAction === 'BOOST' && !opponentHasShield) {
+          playerPower *= 1.3;
+        }
+        if (opponentAction === 'BOOST' && !playerHasShield) {
+          opponentPower *= 1.3;
+        }
+
+        // Apply DOUBLE (x2)
+        if (playerAction === 'DOUBLE') playerPower *= 2;
+        if (opponentAction === 'DOUBLE') opponentPower *= 2;
+
+        const playerWins = playerPower > opponentPower;
+
+        // Show round winner and handle game state transition
+        setTimeout(() => {
+          // Set round winner for display
+          setRoundWinner(playerWins ? 'player' : 'opponent');
+          setShowRoundWinner(true);
+
+          // Play sound
+          if (playerWins) {
+            AudioManager.buttonSuccess();
+          } else {
+            AudioManager.buttonError();
+          }
+
+          setTimeout(() => {
+            setShowRoundWinner(false);
+            setRoundWinner(null);
+
+            // Check if game is over based on server response
+            if (result.gameOver) {
+              setPhase('game-over');
+            } else {
+              // Server already moved to next round, sync will happen via useEffect
+              // But we can manually reset local state to be ready
+              setPlayerSelectedCard(null);
+              setOpponentSelectedCard(null);
+              setPlayerAction(null);
+              setOpponentAction(null);
+            }
+          }, 2500);
+        }, 1000);
       } catch (error) {
         console.error('Error resolving round:', error);
+        AudioManager.buttonError();
       }
     }
   };
@@ -877,7 +931,7 @@ export function PokerBattleTable({
                         </div>
                       ) : opponentSelectedCard ? (
                         <img
-                          src="/proxy.png"
+                          src="/images/card-back.png"
                           alt="Hidden Card"
                           className="w-full h-full object-cover rounded-lg"
                         />
