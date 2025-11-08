@@ -109,6 +109,7 @@ export const setPlayerReady = mutation({
     roomId: v.string(),
     address: v.string(),
     deck: v.array(v.any()), // Array of 10 cards
+    wagers: v.optional(v.array(v.any())), // Optional array of wagered NFT cards (1-5)
   },
   handler: async (ctx, args) => {
     const room = await ctx.db
