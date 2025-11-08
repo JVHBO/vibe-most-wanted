@@ -201,7 +201,7 @@ export const autoMatch = mutation({
     address: v.string(),
     username: v.string(),
     ante: v.number(),
-    token: v.union(v.literal("TESTVBMS"), v.literal("testUSDC")),
+    token: v.union(v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
