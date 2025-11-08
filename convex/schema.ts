@@ -490,4 +490,14 @@ export default defineSchema({
     .index("by_host", ["hostAddress"])
     .index("by_guest", ["guestAddress"])
     .index("by_token_ante", ["token", "ante", "status"]), // For auto-match filtering
+
+  // Poker Chat Messages (for in-match communication)
+  pokerChatMessages: defineTable({
+    roomId: v.string(), // Which poker room this message belongs to
+    sender: v.string(), // Wallet address (lowercase)
+    senderUsername: v.string(), // Display name
+    message: v.string(), // Chat message content (max 500 chars)
+    timestamp: v.number(), // When message was sent
+  })
+    .index("by_room", ["roomId", "timestamp"]), // For fetching messages by room chronologically
 });
