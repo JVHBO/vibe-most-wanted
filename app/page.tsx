@@ -3986,7 +3986,7 @@ export default function TCGPage() {
           </button>
 
           {/* Coins Inbox - Only show here in miniapp (compact mode) */}
-          {address && isInFarcaster && <CoinsInboxDisplay compact />}
+          {isInFarcaster && <CoinsInboxDisplay compact />}
 
           <Link
             href="/docs"
