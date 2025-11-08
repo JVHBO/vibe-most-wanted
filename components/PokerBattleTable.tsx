@@ -29,6 +29,7 @@ interface PokerBattleTableProps {
   playerUsername?: string; // For multiplayer matchmaking
   isSpectator?: boolean; // If true, view-only mode (no interactions)
   isInFarcaster?: boolean; // If true, optimize UI for Farcaster miniapp
+  soundEnabled?: boolean; // Sound effects enabled
 }
 
 type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'resolution' | 'game-over';
@@ -45,6 +46,7 @@ export function PokerBattleTable({
   playerUsername = 'Player',
   isSpectator = false,
   isInFarcaster = false,
+  soundEnabled = true,
 }: PokerBattleTableProps) {
   // View Mode state
   const [currentView, setCurrentView] = useState<ViewMode>(isCPUMode ? 'game' : 'matchmaking');
@@ -995,7 +997,7 @@ export function PokerBattleTable({
 
   // Play audio when game ends
   useEffect(() => {
-    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectator) {
+    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectator && soundEnabled) {
       // Play appropriate sound based on result
       if (playerScore > opponentScore) {
         AudioManager.win(); // Victory sound
@@ -1005,7 +1007,7 @@ export function PokerBattleTable({
         AudioManager.tie(); // Tie sound
       }
     }
-  }, [phase, playerScore, opponentScore, selectedAnte, isSpectator]);
+  }, [phase, playerScore, opponentScore, selectedAnte, isSpectator, soundEnabled]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {

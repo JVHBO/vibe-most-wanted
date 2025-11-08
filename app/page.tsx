@@ -3683,6 +3683,7 @@ export default function TCGPage() {
           playerAddress={address || ''}
           playerUsername={userProfile?.username || ''}
           isInFarcaster={isInFarcaster}
+          soundEnabled={soundEnabled}
         />
       )}
 
