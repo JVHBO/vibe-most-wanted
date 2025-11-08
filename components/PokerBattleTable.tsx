@@ -105,7 +105,24 @@ export function PokerBattleTable({
             const randomCard = playerHand[Math.floor(Math.random() * playerHand.length)];
             selectCard(randomCard);
           } else if (phase === 'reveal' && !playerAction) {
-            selectAction('PASS');
+            // Auto-pass without confirmation
+            setPendingAction('PASS');
+            setPlayerAction('PASS');
+
+            if (isCPUMode) {
+              setTimeout(() => {
+                const actions: CardAction[] = ['BOOST', 'PASS', 'PASS', 'PASS'];
+                const aiAction = actions[Math.floor(Math.random() * actions.length)];
+                setOpponentAction(aiAction);
+                const aiCost = getBoostPrice(aiAction);
+                if (aiCost > 0) {
+                  setOpponentBankroll(prev => prev - aiCost);
+                }
+                setTimeout(() => {
+                  resolveRound();
+                }, 800);
+              }, 1000);
+            }
           }
           return 30;
         }
@@ -127,11 +144,26 @@ export function PokerBattleTable({
   // Action Timer
   const [timeRemaining, setTimeRemaining] = useState(30); // 30 seconds per action
 
+  // Confirmation dialog for actions
+  const [showActionConfirm, setShowActionConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<CardAction | null>(null);
+
+  // Round winner display
+  const [showRoundWinner, setShowRoundWinner] = useState(false);
+  const [roundWinner, setRoundWinner] = useState<'player' | 'opponent' | null>(null);
+
   // Pagination for deck building
   const [currentPage, setCurrentPage] = useState(0);
+  const [sortByPower, setSortByPower] = useState(false);
   const CARDS_PER_PAGE = 50;
-  const totalPages = Math.ceil(playerCards.length / CARDS_PER_PAGE);
-  const paginatedCards = playerCards.slice(
+
+  // Sort cards by power if enabled
+  const sortedPlayerCards = sortByPower
+    ? [...playerCards].sort((a, b) => (b.power || 0) - (a.power || 0))
+    : playerCards;
+
+  const totalPages = Math.ceil(sortedPlayerCards.length / CARDS_PER_PAGE);
+  const paginatedCards = sortedPlayerCards.slice(
     currentPage * CARDS_PER_PAGE,
     (currentPage + 1) * CARDS_PER_PAGE
   );
@@ -233,8 +265,8 @@ export function PokerBattleTable({
     }
   };
 
-  // Action Selection with cost
-  const selectAction = async (action: CardAction) => {
+  // Show confirmation dialog for action
+  const showConfirmAction = (action: CardAction) => {
     const cost = getBoostPrice(action);
 
     // Check if player can afford it
@@ -243,13 +275,28 @@ export function PokerBattleTable({
       return;
     }
 
+    setPendingAction(action);
+    setShowActionConfirm(true);
+  };
+
+  // Confirm and execute action
+  const confirmAction = async () => {
+    if (!pendingAction) return;
+
     AudioManager.buttonClick();
+    setShowActionConfirm(false);
+
+    const action = pendingAction;
+    const cost = getBoostPrice(action);
+
     setPlayerAction(action);
 
     // Deduct cost from bankroll
     if (cost > 0) {
       setPlayerBankroll(prev => prev - cost);
     }
+
+    setPendingAction(null);
 
     if (isCPUMode) {
       // AI randomly selects action with delay
@@ -280,6 +327,13 @@ export function PokerBattleTable({
         console.error('Error using card action:', error);
       }
     }
+  };
+
+  // Cancel action
+  const cancelAction = () => {
+    setShowActionConfirm(false);
+    setPendingAction(null);
+    AudioManager.buttonClick();
   };
 
   // Calculate winner
@@ -315,21 +369,31 @@ export function PokerBattleTable({
         if (playerWins) {
           setPlayerBankroll(prev => prev + pot);
           setPlayerScore(prev => prev + 1);
+          setRoundWinner('player');
+          AudioManager.buttonSuccess(); // Victory sound
         } else {
           setOpponentBankroll(prev => prev + pot);
           setOpponentScore(prev => prev + 1);
+          setRoundWinner('opponent');
+          AudioManager.buttonError(); // Defeat sound
         }
 
         setPot(0);
 
-        // Check win condition with delay
+        // Show round winner message
+        setShowRoundWinner(true);
+
+        // Hide message and check win condition after delay
         setTimeout(() => {
+          setShowRoundWinner(false);
+          setRoundWinner(null);
+
           if (playerScore + (playerWins ? 1 : 0) >= 4 || opponentScore + (playerWins ? 0 : 1) >= 4) {
             setPhase('game-over');
           } else {
             nextRound();
           }
-        }, 1500);
+        }, 2500);
       }, 1000);
     } else {
       // PvP mode - send to server for resolution
@@ -529,8 +593,8 @@ export function PokerBattleTable({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl h-[90vh] relative">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-2 md:p-4">
+      <div className="w-full max-w-7xl h-[95vh] max-h-[900px] relative">
 
         {/* Close button */}
         <button
@@ -542,38 +606,58 @@ export function PokerBattleTable({
 
         {/* DECK BUILDING PHASE */}
         {phase === 'deck-building' && (
-          <div className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold p-6 h-full overflow-y-auto">
-            <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4 text-center">
+          <div className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold p-4 md:p-6 h-full overflow-y-auto">
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-3 text-center">
               BUILD YOUR DECK
             </h2>
-            <p className="text-vintage-burnt-gold text-center mb-6">
-              Select 10 cards from your collection ({selectedDeck.length}/10)
-            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2">
+              <p className="text-vintage-burnt-gold text-center">
+                Select 10 cards ({selectedDeck.length}/10)
+              </p>
+              <button
+                onClick={() => {
+                  setSortByPower(!sortByPower);
+                  setCurrentPage(0);
+                }}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                  sortByPower
+                    ? 'bg-vintage-gold text-vintage-black'
+                    : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
+                }`}
+              >
+                {sortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+              </button>
+            </div>
 
             {/* Selected Deck Display */}
-            <div className="mb-6 bg-green-900/40 border-2 border-vintage-gold/50 rounded-xl p-4">
+            <div className="mb-4 bg-green-900/40 border-2 border-vintage-gold/50 rounded-xl p-3">
               <div className="grid grid-cols-5 gap-2">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
-                    className="aspect-[2/3] border-2 border-dashed border-vintage-gold/50 rounded-lg flex items-center justify-center overflow-hidden"
+                    className="aspect-[2/3] border-2 border-dashed border-vintage-gold/50 rounded-lg flex flex-col items-center justify-center overflow-hidden relative"
                   >
                     {selectedDeck[i] ? (
-                      (selectedDeck[i].imageUrl || selectedDeck[i].image) ? (
-                        <img
-                          src={(selectedDeck[i].imageUrl || selectedDeck[i].image)}
-                          alt={selectedDeck[i].name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div
-                          className="w-full h-full rounded-lg flex flex-col items-center justify-center p-2"
-                          style={{ background: getRarityGradient(selectedDeck[i].rarity) }}
-                        >
-                          <div className="text-white text-xs font-bold text-center mb-1">{selectedDeck[i].name}</div>
-                          <div className="text-white text-lg font-bold">{Math.round(selectedDeck[i].power || 0).toLocaleString()}</div>
+                      <>
+                        {(selectedDeck[i].imageUrl || selectedDeck[i].image) ? (
+                          <img
+                            src={(selectedDeck[i].imageUrl || selectedDeck[i].image)}
+                            alt={selectedDeck[i].name}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                        ) : (
+                          <div
+                            className="w-full h-full rounded-lg flex flex-col items-center justify-center p-2"
+                            style={{ background: getRarityGradient(selectedDeck[i].rarity) }}
+                          >
+                            <div className="text-white text-xs font-bold text-center mb-1">{selectedDeck[i].name}</div>
+                            <div className="text-white text-lg font-bold">{Math.round(selectedDeck[i].power || 0).toLocaleString()}</div>
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-vintage-gold text-xs font-bold text-center">
+                          {Math.round(selectedDeck[i].power || 0).toLocaleString()}
                         </div>
-                      )
+                      </>
                     ) : (
                       <span className="text-vintage-gold text-3xl">+</span>
                     )}
@@ -583,7 +667,7 @@ export function PokerBattleTable({
             </div>
 
             {/* Available Cards */}
-            <div className="grid grid-cols-10 gap-2 mb-4">
+            <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mb-4">
               {paginatedCards.map((card) => {
                 const isSelected = selectedDeck.find(c => c.tokenId === card.tokenId);
                 return (
@@ -611,6 +695,9 @@ export function PokerBattleTable({
                         <div className="text-white text-sm font-bold">{Math.round(card.power || 0).toLocaleString()}</div>
                       </div>
                     )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-vintage-gold text-[0.6rem] font-bold text-center">
+                      {Math.round(card.power || 0).toLocaleString()}
+                    </div>
                     {isSelected && (
                       <div className="absolute inset-0 bg-vintage-gold/20 flex items-center justify-center">
                         <span className="text-4xl">✓</span>
@@ -672,7 +759,7 @@ export function PokerBattleTable({
           <div className="h-full flex flex-col">
 
             {/* Game info header */}
-            <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-4 flex justify-between items-center">
+            <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-2 md:p-3 flex justify-between items-center text-sm md:text-base">
               <div className="flex items-center gap-3">
                 <div className="text-vintage-gold font-display font-bold">
                   ROUND {currentRound}/7 • Score: {playerScore}-{opponentScore}
@@ -724,7 +811,7 @@ export function PokerBattleTable({
               <div className="absolute inset-0 border-4 border-vintage-gold rounded-b-2xl pointer-events-none" />
 
               {/* Table content */}
-              <div className="relative h-full p-8 flex flex-col justify-between">
+              <div className="relative h-full p-4 md:p-6 flex flex-col justify-between">
 
                 {/* OPPONENT SECTION */}
                 <div className="text-center">
@@ -732,10 +819,10 @@ export function PokerBattleTable({
                     OPPONENT • {opponentBankroll} {selectedToken}
                   </div>
 
-                  {/* Opponent's selected card (hidden until reveal) */}
+                  {/* Opponent's selected card (hidden until resolution) */}
                   <div className="flex flex-col items-center mb-4">
                     <div className="w-32 aspect-[2/3] border-2 border-dashed border-vintage-gold rounded-lg flex flex-col items-center justify-center bg-vintage-deep-black/30 transition-all duration-500">
-                      {opponentSelectedCard && phase === 'reveal' ? (
+                      {opponentSelectedCard && phase === 'resolution' ? (
                         <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
                           {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
                             <img
@@ -773,7 +860,7 @@ export function PokerBattleTable({
                         <span className="text-vintage-gold text-4xl animate-pulse">?</span>
                       )}
                     </div>
-                    {opponentAction && opponentAction !== 'PASS' && (
+                    {opponentAction && opponentAction !== 'PASS' && phase === 'resolution' && (
                       <div className="mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500">
                         <span className="text-red-300 text-sm font-bold">
                           {opponentAction === 'BOOST' && '⚔️ Opponent used BOOST (+30%)'}
@@ -828,12 +915,12 @@ export function PokerBattleTable({
                         {phase === 'reveal' && !isCPUMode && playerAction && !opponentAction && (
                           <span className="animate-pulse">⏳ WAITING FOR OPPONENT TO CHOOSE ACTION...</span>
                         )}
-                        {phase === 'reveal' && (isCPUMode || !playerAction) && '⚔️ CARDS REVEALED - CHOOSE YOUR ACTION'}
+                        {phase === 'reveal' && (isCPUMode || !playerAction) && '⚔️ CHOOSE YOUR ACTION'}
 
                         {phase === 'resolution' && <span className="animate-pulse">⏳ CALCULATING WINNER...</span>}
                       </div>
                     </div>
-                    {phase === 'reveal' && playerSelectedCard && opponentSelectedCard && (
+                    {phase === 'resolution' && playerSelectedCard && opponentSelectedCard && (
                       <div className="mt-3 text-vintage-burnt-gold font-modern text-sm">
                         Your card: {playerSelectedCard.name} ({Math.round(playerSelectedCard.power || 0).toLocaleString()})
                         <br/>
@@ -895,7 +982,7 @@ export function PokerBattleTable({
                       </div>
                       <div className="flex justify-center gap-2 flex-wrap">
                         <button
-                          onClick={() => selectAction('BOOST')}
+                          onClick={() => showConfirmAction('BOOST')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('BOOST')}
                           className={`px-4 py-3 font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
                             playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator
@@ -908,7 +995,7 @@ export function PokerBattleTable({
                         </button>
 
                         <button
-                          onClick={() => selectAction('SHIELD')}
+                          onClick={() => showConfirmAction('SHIELD')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('SHIELD')}
                           className={`px-4 py-3 font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
                             playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator
@@ -921,7 +1008,7 @@ export function PokerBattleTable({
                         </button>
 
                         <button
-                          onClick={() => selectAction('DOUBLE')}
+                          onClick={() => showConfirmAction('DOUBLE')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('DOUBLE')}
                           className={`px-4 py-3 font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${
                             playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator
@@ -934,7 +1021,7 @@ export function PokerBattleTable({
                         </button>
 
                         <button
-                          onClick={() => selectAction('PASS')}
+                          onClick={() => showConfirmAction('PASS')}
                           disabled={selectedAnte === 0 || isSpectator}
                           className="px-4 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -1140,6 +1227,95 @@ export function PokerBattleTable({
                   className="px-8 py-4 bg-yellow-600 text-white font-bold text-xl rounded-lg hover:bg-yellow-700 transition-all hover:scale-105 active:scale-95"
                 >
                   CLOSE
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ROUND WINNER ANNOUNCEMENT */}
+        {showRoundWinner && roundWinner && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[240] animate-in fade-in duration-300 pointer-events-none">
+            <div className={`bg-gradient-to-b rounded-2xl border-4 p-8 text-center shadow-2xl animate-in zoom-in duration-500 ${
+              roundWinner === 'player'
+                ? 'from-green-900 to-green-950 border-green-500'
+                : 'from-red-900 to-red-950 border-red-500'
+            }`}>
+              <div className="text-6xl mb-4 animate-bounce">
+                {roundWinner === 'player' ? '🏆' : '💀'}
+              </div>
+              <h2 className={`text-4xl font-display font-bold mb-2 ${
+                roundWinner === 'player' ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {roundWinner === 'player' ? 'YOU WIN!' : 'YOU LOSE!'}
+              </h2>
+              <p className="text-vintage-gold text-xl">
+                Round {currentRound}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ACTION CONFIRMATION DIALOG */}
+        {showActionConfirm && pendingAction && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[250] animate-in fade-in duration-300">
+            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-6 text-center shadow-2xl max-w-md mx-4">
+              <h3 className="text-2xl font-display font-bold text-vintage-gold mb-4">
+                Confirm Action
+              </h3>
+              <div className="mb-6">
+                <div className={`inline-block px-6 py-4 rounded-xl mb-4 ${
+                  pendingAction === 'BOOST' ? 'bg-yellow-500/20 border-2 border-yellow-500' :
+                  pendingAction === 'SHIELD' ? 'bg-blue-500/20 border-2 border-blue-500' :
+                  pendingAction === 'DOUBLE' ? 'bg-red-500/20 border-2 border-red-500' :
+                  'bg-gray-500/20 border-2 border-gray-500'
+                }`}>
+                  <div className="text-3xl mb-2">
+                    {pendingAction === 'BOOST' && '⚔️'}
+                    {pendingAction === 'SHIELD' && '🛡️'}
+                    {pendingAction === 'DOUBLE' && '💥'}
+                    {pendingAction === 'PASS' && '✋'}
+                  </div>
+                  <div className={`font-bold text-xl ${
+                    pendingAction === 'BOOST' ? 'text-yellow-300' :
+                    pendingAction === 'SHIELD' ? 'text-blue-300' :
+                    pendingAction === 'DOUBLE' ? 'text-red-300' :
+                    'text-gray-300'
+                  }`}>
+                    {pendingAction === 'BOOST' && 'BOOST (+30%)'}
+                    {pendingAction === 'SHIELD' && 'SHIELD (Block)'}
+                    {pendingAction === 'DOUBLE' && 'CRITICAL (x2)'}
+                    {pendingAction === 'PASS' && 'PASS'}
+                  </div>
+                </div>
+                <p className="text-vintage-burnt-gold text-lg mb-2">
+                  {pendingAction === 'PASS' ? (
+                    'Save your coins and continue?'
+                  ) : (
+                    <>Cost: <span className="text-vintage-gold font-bold">{getBoostPrice(pendingAction)} {selectedToken}</span></>
+                  )}
+                </p>
+                <p className="text-vintage-gold/70 text-sm">
+                  Remaining: {playerBankroll - getBoostPrice(pendingAction)} {selectedToken}
+                </p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={cancelAction}
+                  className="px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-all hover:scale-105 active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmAction}
+                  className={`px-6 py-3 font-bold rounded-lg transition-all hover:scale-105 active:scale-95 ${
+                    pendingAction === 'BOOST' ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black' :
+                    pendingAction === 'SHIELD' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' :
+                    pendingAction === 'DOUBLE' ? 'bg-gradient-to-br from-red-500 to-red-600 text-white' :
+                    'bg-vintage-gold text-vintage-black'
+                  }`}
+                >
+                  Confirm
                 </button>
               </div>
             </div>
