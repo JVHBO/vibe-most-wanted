@@ -3658,6 +3658,7 @@ export default function TCGPage() {
           difficulty={pokerMode === 'cpu' ? "goofy" : undefined}
           playerAddress={address || ''}
           playerUsername={userProfile?.username || ''}
+          isInFarcaster={isInFarcaster}
         />
       )}
 

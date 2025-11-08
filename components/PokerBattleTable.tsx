@@ -28,6 +28,7 @@ interface PokerBattleTableProps {
   playerAddress?: string; // For multiplayer matchmaking
   playerUsername?: string; // For multiplayer matchmaking
   isSpectator?: boolean; // If true, view-only mode (no interactions)
+  isInFarcaster?: boolean; // If true, optimize UI for Farcaster miniapp
 }
 
 type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'resolution' | 'game-over';
@@ -43,6 +44,7 @@ export function PokerBattleTable({
   playerAddress = '',
   playerUsername = 'Player',
   isSpectator = false,
+  isInFarcaster = false,
 }: PokerBattleTableProps) {
   // View Mode state
   const [currentView, setCurrentView] = useState<ViewMode>(isCPUMode ? 'game' : 'matchmaking');
@@ -646,7 +648,7 @@ export function PokerBattleTable({
 
             {/* Selected Deck Display */}
             <div className="mb-4 bg-green-900/40 border-2 border-vintage-gold/50 rounded-xl p-3">
-              <div className="grid grid-cols-5 gap-2">
+              <div className={`grid ${isInFarcaster ? 'grid-cols-2 gap-1.5' : 'grid-cols-5 gap-2'}`}>
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
@@ -682,7 +684,11 @@ export function PokerBattleTable({
             </div>
 
             {/* Available Cards */}
-            <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mb-4">
+            <div className={`grid ${
+              isInFarcaster
+                ? 'grid-cols-3 gap-1.5'
+                : 'grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2'
+            } mb-4`}>
               {paginatedCards.map((card) => {
                 const isSelected = selectedDeck.find(c => c.tokenId === card.tokenId);
                 return (
@@ -774,7 +780,11 @@ export function PokerBattleTable({
           <div className="h-full flex flex-col">
 
             {/* Game info header */}
-            <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-2 md:p-3 flex justify-between items-center text-sm md:text-base">
+            <div className={`bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-2 md:p-3 ${
+              isInFarcaster
+                ? 'flex flex-col gap-1.5 text-xs'
+                : 'flex justify-between items-center text-sm md:text-base'
+            }`}>
               <div className="flex items-center gap-3">
                 <div className="text-vintage-gold font-display font-bold">
                   ROUND {currentRound}/7 • Score: {playerScore}-{opponentScore}
@@ -923,16 +933,28 @@ export function PokerBattleTable({
                     <div className="inline-block bg-vintage-gold/20 border-2 border-vintage-gold px-3 sm:px-6 py-1 sm:py-2 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
                       <div className="text-vintage-gold font-display font-bold text-sm sm:text-lg">
                         {phase === 'card-selection' && !isCPUMode && playerSelectedCard && !opponentSelectedCard && (
-                          <span className="animate-pulse">⏳ WAITING FOR OPPONENT TO SELECT CARD...</span>
+                          <span className="animate-pulse">
+                            {isInFarcaster ? '⏳ WAITING...' : '⏳ WAITING FOR OPPONENT TO SELECT CARD...'}
+                          </span>
                         )}
-                        {phase === 'card-selection' && (isCPUMode || !playerSelectedCard) && '📋 SELECT A CARD FROM YOUR HAND'}
+                        {phase === 'card-selection' && (isCPUMode || !playerSelectedCard) && (
+                          isInFarcaster ? '📋 SELECT CARD' : '📋 SELECT A CARD FROM YOUR HAND'
+                        )}
 
                         {phase === 'reveal' && !isCPUMode && playerAction && !opponentAction && (
-                          <span className="animate-pulse">⏳ WAITING FOR OPPONENT TO CHOOSE ACTION...</span>
+                          <span className="animate-pulse">
+                            {isInFarcaster ? '⏳ WAITING...' : '⏳ WAITING FOR OPPONENT TO CHOOSE ACTION...'}
+                          </span>
                         )}
-                        {phase === 'reveal' && (isCPUMode || !playerAction) && '⚔️ CHOOSE YOUR ACTION'}
+                        {phase === 'reveal' && (isCPUMode || !playerAction) && (
+                          isInFarcaster ? '⚔️ CHOOSE ACTION' : '⚔️ CHOOSE YOUR ACTION'
+                        )}
 
-                        {phase === 'resolution' && <span className="animate-pulse">⏳ CALCULATING WINNER...</span>}
+                        {phase === 'resolution' && (
+                          <span className="animate-pulse">
+                            {isInFarcaster ? '⏳ CALCULATING...' : '⏳ CALCULATING WINNER...'}
+                          </span>
+                        )}
                       </div>
                     </div>
                     {phase === 'resolution' && playerSelectedCard && opponentSelectedCard && (
@@ -959,7 +981,7 @@ export function PokerBattleTable({
                         onClick={() => phase === 'card-selection' && selectCard(card)}
                         disabled={phase !== 'card-selection' || selectedAnte === 0 || isSpectator}
                         style={{ animationDelay: `${index * 100}ms` }}
-                        className={`w-24 aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
+                        className={`${isInFarcaster ? 'w-16' : 'w-20 sm:w-24'} aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
                           playerSelectedCard?.tokenId === card.tokenId
                             ? 'border-vintage-gold shadow-gold scale-110 -translate-y-2'
                             : 'border-vintage-gold/50 hover:border-vintage-gold hover:scale-105 hover:-translate-y-1'
