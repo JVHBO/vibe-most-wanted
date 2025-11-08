@@ -655,6 +655,7 @@ export default function TCGPage() {
   // AI Difficulty (5 levels with progressive unlock)
   const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
   const [eliminationDifficulty, setEliminationDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
+  const [pokerCpuDifficulty, setPokerCpuDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
 
   // Convex client for imperative queries
   const convex = useConvex();
@@ -3679,7 +3680,7 @@ export default function TCGPage() {
           playerCards={sortedNfts}
           isCPUMode={pokerMode === 'cpu'}
           opponentDeck={pokerMode === 'cpu' ? strongestJcNftsForPoker : []}
-          difficulty={pokerMode === 'cpu' ? "goofy" : undefined}
+          difficulty={pokerMode === 'cpu' ? pokerCpuDifficulty : undefined}
           playerAddress={address || ''}
           playerUsername={userProfile?.username || ''}
           isInFarcaster={isInFarcaster}
@@ -4607,7 +4608,8 @@ export default function TCGPage() {
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
                       setPokerMode('cpu');
-                      setShowPokerBattle(true);
+                      setTempSelectedDifficulty(pokerCpuDifficulty);
+                      setIsDifficultyModalOpen(true);
                     }}
                     disabled={!userProfile}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
@@ -5463,20 +5465,29 @@ export default function TCGPage() {
           setTempSelectedDifficulty(difficulty);
         }}
         onBattle={(difficulty) => {
-          // Don't play sound here - playHand() will play AudioManager.playHand()
-          setAiDifficulty(difficulty);
-          setIsDifficultyModalOpen(false);
-          setTempSelectedDifficulty(null);
+          // Check if this is Poker CPU mode
+          if (pokerMode === 'cpu') {
+            if (soundEnabled) AudioManager.buttonClick();
+            setPokerCpuDifficulty(difficulty);
+            setIsDifficultyModalOpen(false);
+            setTempSelectedDifficulty(null);
+            setShowPokerBattle(true);
+          } else {
+            // Don't play sound here - playHand() will play AudioManager.playHand()
+            setAiDifficulty(difficulty);
+            setIsDifficultyModalOpen(false);
+            setTempSelectedDifficulty(null);
 
-          // Start the battle with selected cards and difficulty
-          setShowPveCardSelection(false);
-          setGameMode('ai');
-          setPvpMode(null);
-          setSelectedCards(pveSelectedCards);
-          setBattleMode('normal');
+            // Start the battle with selected cards and difficulty
+            setShowPveCardSelection(false);
+            setGameMode('ai');
+            setPvpMode(null);
+            setSelectedCards(pveSelectedCards);
+            setBattleMode('normal');
 
-          // Pass difficulty directly to playHand to avoid state timing issues
-          playHand(pveSelectedCards, difficulty);
+            // Pass difficulty directly to playHand to avoid state timing issues
+            playHand(pveSelectedCards, difficulty);
+          }
         }}
         onEliminationBattle={(difficulty) => {
           if (soundEnabled) AudioManager.buttonClick();

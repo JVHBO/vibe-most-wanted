@@ -25,7 +25,7 @@ interface PokerBattleTableProps {
   playerCards: Card[]; // Player's full collection
   isCPUMode?: boolean; // If true, auto-select deck and start immediately
   opponentDeck?: Card[]; // Opponent's deck (for CPU mode)
-  difficulty?: 'gey' | 'goofy' | 'gooner' | 'gangster' | 'god'; // CPU difficulty
+  difficulty?: 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'; // CPU difficulty
   playerAddress?: string; // For multiplayer matchmaking
   playerUsername?: string; // For multiplayer matchmaking
   isSpectator?: boolean; // If true, view-only mode (no interactions)
