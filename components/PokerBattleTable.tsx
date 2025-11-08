@@ -209,7 +209,17 @@ export function PokerBattleTable({
   };
 
   const startGame = () => {
-    if (selectedDeck.length !== 10) return;
+    console.log('[PokerBattle] startGame called', {
+      selectedDeckLength: selectedDeck.length,
+      isCPUMode,
+      selectedAnte,
+      opponentDeckLength: opponentDeck.length
+    });
+
+    if (selectedDeck.length !== 10) {
+      console.error('[PokerBattle] Cannot start game - deck must have 10 cards, currently has:', selectedDeck.length);
+      return;
+    }
     AudioManager.buttonSuccess();
 
     // Shuffle deck
@@ -218,6 +228,12 @@ export function PokerBattleTable({
     // Deal 5 cards to hand, 5 remain in deck
     const hand = shuffled.slice(0, 5);
     const deck = shuffled.slice(5);
+
+    console.log('[PokerBattle] Player deck shuffled and dealt', {
+      handSize: hand.length,
+      deckRemainingSize: deck.length,
+      hand: hand.map(c => ({ tokenId: c.tokenId, power: c.power }))
+    });
 
     setPlayerHand(hand);
     setPlayerDeckRemaining(deck);
@@ -229,43 +245,85 @@ export function PokerBattleTable({
         const aiHand = shuffledOpponent.slice(0, 5);
         const aiDeck = shuffledOpponent.slice(5);
 
+        console.log('[PokerBattle] AI deck shuffled and dealt', {
+          aiHandSize: aiHand.length,
+          aiDeckRemainingSize: aiDeck.length,
+          aiHand: aiHand.map(c => ({ tokenId: c.tokenId, power: c.power }))
+        });
+
         setOpponentHand(aiHand);
         setOpponentDeckRemaining(aiDeck);
+      } else {
+        console.error('[PokerBattle] AI deck invalid - must have at least 10 cards, has:', opponentDeck.length);
       }
     } else {
-      // PvP mode: opponent deck will be set when they join
-      // This is handled by real-time sync from server
+      console.log('[PokerBattle] PvP mode - waiting for opponent deck from server');
     }
 
-    setPot(isCPUMode ? 100 : selectedAnte * 2);
-    setPlayerBankroll(isCPUMode ? 500 : selectedAnte * 50);
-    setOpponentBankroll(isCPUMode ? 500 : selectedAnte * 50);
+    const initialPot = isCPUMode ? 100 : selectedAnte * 2;
+    const initialBankroll = isCPUMode ? 500 : selectedAnte * 50;
+
+    console.log('[PokerBattle] Setting initial game state', {
+      pot: initialPot,
+      playerBankroll: initialBankroll,
+      opponentBankroll: initialBankroll,
+      phase: 'card-selection'
+    });
+
+    setPot(initialPot);
+    setPlayerBankroll(initialBankroll);
+    setOpponentBankroll(initialBankroll);
     setPhase('card-selection');
   };
 
   // Card Selection Phase
   const selectCard = async (card: Card) => {
+    console.log('[PokerBattle] selectCard called', {
+      card: { tokenId: card.tokenId, power: card.power, name: card.name },
+      phase,
+      isCPUMode,
+      playerHandSize: playerHand.length,
+      opponentHandSize: opponentHand.length
+    });
+
     AudioManager.buttonClick();
     setPlayerSelectedCard(card);
 
     if (isCPUMode) {
       // AI randomly selects a card
-      const aiCard = opponentHand[Math.floor(Math.random() * opponentHand.length)];
+      if (opponentHand.length === 0) {
+        console.error('[PokerBattle] AI cannot select card - hand is empty!');
+        return;
+      }
+
+      const aiCardIndex = Math.floor(Math.random() * opponentHand.length);
+      const aiCard = opponentHand[aiCardIndex];
+
+      console.log('[PokerBattle] AI selected card', {
+        aiCard: { tokenId: aiCard.tokenId, power: aiCard.power, name: aiCard.name },
+        aiCardIndex,
+        aiHandSize: opponentHand.length
+      });
+
       setOpponentSelectedCard(aiCard);
+
       // Delay before moving to reveal phase
       setTimeout(() => {
+        console.log('[PokerBattle] Moving to reveal phase after card selection');
         setPhase('reveal');
       }, 800);
     } else {
       // PvP mode - send to server
+      console.log('[PokerBattle] Sending card selection to server', { roomId, playerAddress });
       try {
         await selectCardMutation({
           roomId,
           address: playerAddress,
           card,
         });
+        console.log('[PokerBattle] Card selection sent to server successfully');
       } catch (error) {
-        console.error('Error selecting card:', error);
+        console.error('[PokerBattle] Error selecting card:', error);
       }
     }
   };
@@ -298,7 +356,16 @@ export function PokerBattleTable({
 
   // Confirm and execute action
   const confirmAction = async () => {
-    if (!pendingAction) return;
+    console.log('[PokerBattle] confirmAction called', {
+      pendingAction,
+      playerBankroll,
+      phase
+    });
+
+    if (!pendingAction) {
+      console.error('[PokerBattle] No pending action to confirm');
+      return;
+    }
 
     AudioManager.buttonClick();
     setShowActionConfirm(false);
@@ -306,33 +373,50 @@ export function PokerBattleTable({
     const action = pendingAction;
     const cost = getBoostPrice(action);
 
+    console.log('[PokerBattle] Confirming action', { action, cost });
+
     setPlayerAction(action);
 
     // Deduct cost from bankroll
     if (cost > 0) {
-      setPlayerBankroll(prev => prev - cost);
+      setPlayerBankroll(prev => {
+        const newBankroll = prev - cost;
+        console.log('[PokerBattle] Player paid for action', { prev, cost, newBankroll });
+        return newBankroll;
+      });
     }
 
     setPendingAction(null);
 
     if (isCPUMode) {
+      console.log('[PokerBattle] CPU Mode - AI selecting action');
       // AI randomly selects action with delay
       setTimeout(() => {
         const actions: CardAction[] = ['BOOST', 'PASS', 'PASS', 'PASS']; // AI mostly passes
-        const aiAction = actions[Math.floor(Math.random() * actions.length)];
+        const aiActionIndex = Math.floor(Math.random() * actions.length);
+        const aiAction = actions[aiActionIndex];
+
+        console.log('[PokerBattle] CPU Mode - AI selected action', { aiAction, aiActionIndex });
+
         setOpponentAction(aiAction);
 
         // AI pays for boost
         const aiCost = getBoostPrice(aiAction);
         if (aiCost > 0) {
-          setOpponentBankroll(prev => prev - aiCost);
+          setOpponentBankroll(prev => {
+            const newBankroll = prev - aiCost;
+            console.log('[PokerBattle] CPU Mode - AI paid for action', { prev, aiCost, newBankroll });
+            return newBankroll;
+          });
         }
 
         setTimeout(() => {
+          console.log('[PokerBattle] CPU Mode - Calling resolveRound after AI action');
           resolveRound();
         }, 800);
       }, 1000);
     } else {
+      console.log('[PokerBattle] PvP Mode - Sending action to server', { roomId, playerAddress, action });
       // PvP mode - send to server
       try {
         await useCardActionMutation({
@@ -340,8 +424,9 @@ export function PokerBattleTable({
           address: playerAddress,
           action,
         });
+        console.log('[PokerBattle] PvP Mode - Action sent to server successfully');
       } catch (error) {
-        console.error('Error using card action:', error);
+        console.error('[PokerBattle] PvP Mode - Error using card action:', error);
       }
     }
   };
@@ -355,42 +440,102 @@ export function PokerBattleTable({
 
   // Calculate winner
   const resolveRound = async () => {
-    if (!playerSelectedCard || !opponentSelectedCard) return;
-    AudioManager.buttonClick();
+    console.log('[PokerBattle] resolveRound called', {
+      playerSelectedCard: playerSelectedCard ? { tokenId: playerSelectedCard.tokenId, power: playerSelectedCard.power } : null,
+      opponentSelectedCard: opponentSelectedCard ? { tokenId: opponentSelectedCard.tokenId, power: opponentSelectedCard.power } : null,
+      playerAction,
+      opponentAction,
+      phase,
+      currentRound,
+      playerScore,
+      opponentScore,
+      pot
+    });
 
+    if (!playerSelectedCard || !opponentSelectedCard) {
+      console.error('[PokerBattle] Cannot resolve round - missing selected cards', {
+        hasPlayerCard: !!playerSelectedCard,
+        hasOpponentCard: !!opponentSelectedCard
+      });
+      return;
+    }
+
+    AudioManager.buttonClick();
     setPhase('resolution');
+    console.log('[PokerBattle] Phase set to resolution');
 
     if (isCPUMode) {
       setTimeout(() => {
         let playerPower = playerSelectedCard.power || 0;
         let opponentPower = opponentSelectedCard.power || 0;
 
+        console.log('[PokerBattle] CPU Mode - Base powers', {
+          playerBasePower: playerPower,
+          opponentBasePower: opponentPower
+        });
+
         // Apply actions with shield logic
         const playerHasShield = playerAction === 'SHIELD';
         const opponentHasShield = opponentAction === 'SHIELD';
 
+        console.log('[PokerBattle] CPU Mode - Shield check', {
+          playerHasShield,
+          opponentHasShield
+        });
+
         // Apply BOOST (+30%)
         if (playerAction === 'BOOST' && !opponentHasShield) {
           playerPower *= 1.3;
+          console.log('[PokerBattle] CPU Mode - Player BOOST applied:', playerPower);
         }
         if (opponentAction === 'BOOST' && !playerHasShield) {
           opponentPower *= 1.3;
+          console.log('[PokerBattle] CPU Mode - Opponent BOOST applied:', opponentPower);
         }
 
         // Apply DOUBLE (x2)
-        if (playerAction === 'DOUBLE') playerPower *= 2;
-        if (opponentAction === 'DOUBLE') opponentPower *= 2;
+        if (playerAction === 'DOUBLE') {
+          playerPower *= 2;
+          console.log('[PokerBattle] CPU Mode - Player DOUBLE applied:', playerPower);
+        }
+        if (opponentAction === 'DOUBLE') {
+          opponentPower *= 2;
+          console.log('[PokerBattle] CPU Mode - Opponent DOUBLE applied:', opponentPower);
+        }
 
         const playerWins = playerPower > opponentPower;
 
+        console.log('[PokerBattle] CPU Mode - Round resolution', {
+          finalPlayerPower: playerPower,
+          finalOpponentPower: opponentPower,
+          playerWins,
+          pot
+        });
+
         if (playerWins) {
-          setPlayerBankroll(prev => prev + pot);
-          setPlayerScore(prev => prev + 1);
+          setPlayerBankroll(prev => {
+            const newBankroll = prev + pot;
+            console.log('[PokerBattle] CPU Mode - Player won pot', { prev, pot, newBankroll });
+            return newBankroll;
+          });
+          setPlayerScore(prev => {
+            const newScore = prev + 1;
+            console.log('[PokerBattle] CPU Mode - Player score increased', { prev, newScore });
+            return newScore;
+          });
           setRoundWinner('player');
           AudioManager.buttonSuccess(); // Victory sound
         } else {
-          setOpponentBankroll(prev => prev + pot);
-          setOpponentScore(prev => prev + 1);
+          setOpponentBankroll(prev => {
+            const newBankroll = prev + pot;
+            console.log('[PokerBattle] CPU Mode - Opponent won pot', { prev, pot, newBankroll });
+            return newBankroll;
+          });
+          setOpponentScore(prev => {
+            const newScore = prev + 1;
+            console.log('[PokerBattle] CPU Mode - Opponent score increased', { prev, newScore });
+            return newScore;
+          });
           setRoundWinner('opponent');
           AudioManager.buttonError(); // Defeat sound
         }
@@ -405,53 +550,97 @@ export function PokerBattleTable({
           setShowRoundWinner(false);
           setRoundWinner(null);
 
-          if (playerScore + (playerWins ? 1 : 0) >= 4 || opponentScore + (playerWins ? 0 : 1) >= 4) {
+          const newPlayerScore = playerScore + (playerWins ? 1 : 0);
+          const newOpponentScore = opponentScore + (playerWins ? 0 : 1);
+
+          console.log('[PokerBattle] CPU Mode - Checking win condition', {
+            newPlayerScore,
+            newOpponentScore,
+            gameOver: newPlayerScore >= 4 || newOpponentScore >= 4
+          });
+
+          if (newPlayerScore >= 4 || newOpponentScore >= 4) {
+            console.log('[PokerBattle] CPU Mode - Game over!', {
+              winner: newPlayerScore >= 4 ? 'player' : 'opponent'
+            });
             setPhase('game-over');
           } else {
+            console.log('[PokerBattle] CPU Mode - Proceeding to next round');
             nextRound();
           }
         }, 2500);
       }, 1000);
     } else {
       // PvP mode - send to server for resolution
+      console.log('[PokerBattle] PvP Mode - Sending resolution to server', { roomId, playerAddress });
       try {
         const result = await resolveRoundMutation({
           roomId,
           address: playerAddress,
         });
 
+        console.log('[PokerBattle] PvP Mode - Server response received', result);
+
         // Calculate winner locally to show correct animation
         if (!playerSelectedCard || !opponentSelectedCard) {
-          console.error('Missing selected cards for resolution');
+          console.error('[PokerBattle] PvP Mode - Missing selected cards for resolution');
           return;
         }
 
         let playerPower = playerSelectedCard.power || 0;
         let opponentPower = opponentSelectedCard.power || 0;
 
+        console.log('[PokerBattle] PvP Mode - Base powers', {
+          playerBasePower: playerPower,
+          opponentBasePower: opponentPower
+        });
+
         // Apply actions with shield logic
         const playerHasShield = playerAction === 'SHIELD';
         const opponentHasShield = opponentAction === 'SHIELD';
 
+        console.log('[PokerBattle] PvP Mode - Shield check', {
+          playerHasShield,
+          opponentHasShield
+        });
+
         // Apply BOOST (+30%)
         if (playerAction === 'BOOST' && !opponentHasShield) {
           playerPower *= 1.3;
+          console.log('[PokerBattle] PvP Mode - Player BOOST applied:', playerPower);
         }
         if (opponentAction === 'BOOST' && !playerHasShield) {
           opponentPower *= 1.3;
+          console.log('[PokerBattle] PvP Mode - Opponent BOOST applied:', opponentPower);
         }
 
         // Apply DOUBLE (x2)
-        if (playerAction === 'DOUBLE') playerPower *= 2;
-        if (opponentAction === 'DOUBLE') opponentPower *= 2;
+        if (playerAction === 'DOUBLE') {
+          playerPower *= 2;
+          console.log('[PokerBattle] PvP Mode - Player DOUBLE applied:', playerPower);
+        }
+        if (opponentAction === 'DOUBLE') {
+          opponentPower *= 2;
+          console.log('[PokerBattle] PvP Mode - Opponent DOUBLE applied:', opponentPower);
+        }
 
         const playerWins = playerPower > opponentPower;
+
+        console.log('[PokerBattle] PvP Mode - Round resolution', {
+          finalPlayerPower: playerPower,
+          finalOpponentPower: opponentPower,
+          playerWins
+        });
 
         // Show round winner and handle game state transition
         setTimeout(() => {
           // Set round winner for display
           setRoundWinner(playerWins ? 'player' : 'opponent');
           setShowRoundWinner(true);
+
+          console.log('[PokerBattle] PvP Mode - Showing round winner', {
+            winner: playerWins ? 'player' : 'opponent'
+          });
 
           // Play sound
           if (playerWins) {
@@ -464,10 +653,16 @@ export function PokerBattleTable({
             setShowRoundWinner(false);
             setRoundWinner(null);
 
+            console.log('[PokerBattle] PvP Mode - Checking game over', {
+              gameOver: result.gameOver
+            });
+
             // Check if game is over based on server response
             if (result.gameOver) {
+              console.log('[PokerBattle] PvP Mode - Game over!');
               setPhase('game-over');
             } else {
+              console.log('[PokerBattle] PvP Mode - Resetting for next round');
               // Server already moved to next round, sync will happen via useEffect
               // But we can manually reset local state to be ready
               setPlayerSelectedCard(null);
@@ -478,29 +673,59 @@ export function PokerBattleTable({
           }, 2500);
         }, 1000);
       } catch (error) {
-        console.error('Error resolving round:', error);
+        console.error('[PokerBattle] PvP Mode - Error resolving round:', error);
         AudioManager.buttonError();
       }
     }
   };
 
   const nextRound = () => {
+    console.log('[PokerBattle] nextRound called', {
+      currentRound,
+      playerDeckRemainingSize: playerDeckRemaining.length,
+      opponentDeckRemainingSize: opponentDeckRemaining.length,
+      playerHandSize: playerHand.length,
+      opponentHandSize: opponentHand.length
+    });
+
     // Draw new cards
     if (playerDeckRemaining.length > 0) {
       const newCard = playerDeckRemaining[0];
+      console.log('[PokerBattle] Drawing new card for player', {
+        newCard: { tokenId: newCard.tokenId, power: newCard.power },
+        removingCard: playerSelectedCard ? { tokenId: playerSelectedCard.tokenId, power: playerSelectedCard.power } : null
+      });
       setPlayerHand(prev => [...prev.filter(c => c.tokenId !== playerSelectedCard?.tokenId), newCard]);
       setPlayerDeckRemaining(prev => prev.slice(1));
     } else {
+      console.log('[PokerBattle] No cards left in player deck - removing selected card from hand');
       setPlayerHand(prev => prev.filter(c => c.tokenId !== playerSelectedCard?.tokenId));
     }
 
     if (opponentDeckRemaining.length > 0) {
       const newCard = opponentDeckRemaining[0];
+      console.log('[PokerBattle] Drawing new card for opponent', {
+        newCard: { tokenId: newCard.tokenId, power: newCard.power },
+        removingCard: opponentSelectedCard ? { tokenId: opponentSelectedCard.tokenId, power: opponentSelectedCard.power } : null
+      });
       setOpponentHand(prev => [...prev.filter(c => c.tokenId !== opponentSelectedCard?.tokenId), newCard]);
       setOpponentDeckRemaining(prev => prev.slice(1));
     } else {
+      console.log('[PokerBattle] No cards left in opponent deck - removing selected card from hand');
       setOpponentHand(prev => prev.filter(c => c.tokenId !== opponentSelectedCard?.tokenId));
     }
+
+    const newRound = currentRound + 1;
+    const anteAmount = isCPUMode ? 50 : selectedAnte;
+    const newPot = anteAmount * 2;
+
+    console.log('[PokerBattle] Advancing to next round', {
+      newRound,
+      anteAmount,
+      newPot,
+      playerBankrollBefore: playerBankroll,
+      opponentBankrollBefore: opponentBankroll
+    });
 
     setCurrentRound(prev => prev + 1);
     setPlayerSelectedCard(null);
@@ -508,11 +733,19 @@ export function PokerBattleTable({
     setPlayerAction(null);
     setOpponentAction(null);
 
-    const anteAmount = isCPUMode ? 50 : selectedAnte;
-    setPot(anteAmount * 2);
-    setPlayerBankroll(prev => prev - anteAmount);
-    setOpponentBankroll(prev => prev - anteAmount);
+    setPot(newPot);
+    setPlayerBankroll(prev => {
+      const newBankroll = prev - anteAmount;
+      console.log('[PokerBattle] Player paid ante', { prev, anteAmount, newBankroll });
+      return newBankroll;
+    });
+    setOpponentBankroll(prev => {
+      const newBankroll = prev - anteAmount;
+      console.log('[PokerBattle] Opponent paid ante', { prev, anteAmount, newBankroll });
+      return newBankroll;
+    });
 
+    console.log('[PokerBattle] Moving to card-selection phase for round', newRound);
     setPhase('card-selection');
   };
 
@@ -848,8 +1081,125 @@ export function PokerBattleTable({
           </div>
         )}
 
-        {/* GAME TABLE - POKER FELT DESIGN */}
-        {phase !== 'deck-building' && phase !== 'game-over' && (
+        {/* SPECTATOR VIEW - Split Screen showing both players */}
+        {phase !== 'deck-building' && phase !== 'game-over' && (selectedAnte === 0 || isSpectator) && (
+          <div className="h-full flex flex-col">
+            {/* Header */}
+            <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-2 md:p-3">
+              <div className="flex justify-between items-center text-sm md:text-base">
+                <div className="text-vintage-gold font-display font-bold">
+                  ROUND {currentRound}/7 • Score: {playerScore}-{opponentScore}
+                </div>
+                <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse">
+                  <span>👁️</span> SPECTATOR MODE
+                </div>
+                <div className="text-vintage-gold font-display font-bold">
+                  POT: {pot} {selectedToken}
+                </div>
+              </div>
+            </div>
+
+            {/* Split screen - Both players side by side */}
+            <div className="flex-1 grid grid-cols-2 gap-2 p-2 bg-vintage-deep-black rounded-b-2xl border-2 border-vintage-gold border-t-0">
+              {/* HOST SIDE */}
+              <div className="bg-gradient-to-br from-blue-900/30 to-blue-950/30 rounded-xl border-2 border-blue-500/50 p-3 flex flex-col">
+                <div className="text-center mb-3">
+                  <div className="text-blue-400 font-display font-bold mb-1">HOST</div>
+                  <div className="text-vintage-gold text-sm">{playerBankroll} {selectedToken}</div>
+                </div>
+
+                {/* Host's selected card */}
+                <div className="flex-1 flex items-center justify-center mb-3">
+                  <div className="w-24 sm:w-32 aspect-[2/3] border-2 border-dashed border-blue-400 rounded-lg flex items-center justify-center bg-black/30">
+                    {playerSelectedCard && phase === 'resolution' ? (
+                      <div className="relative w-full h-full">
+                        {playerSelectedCard.imageUrl || playerSelectedCard.image ? (
+                          <img src={playerSelectedCard.imageUrl || playerSelectedCard.image} alt={playerSelectedCard.name} className="w-full h-full object-cover rounded-lg" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(playerSelectedCard.rarity) }}>
+                            <div className="text-white text-xs font-bold text-center">{playerSelectedCard.name}</div>
+                            <div className="text-white text-lg font-bold">{Math.round(playerSelectedCard.power || 0)}</div>
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-[10px] text-center text-blue-300">
+                          {Math.round((playerSelectedCard.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1))}
+                          {playerAction === 'BOOST' && ' ⚔️'}{playerAction === 'DOUBLE' && ' 💥'}{playerAction === 'SHIELD' && ' 🛡️'}
+                        </div>
+                      </div>
+                    ) : playerSelectedCard ? (
+                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover rounded-lg" />
+                    ) : (
+                      <span className="text-blue-400 text-2xl animate-pulse">?</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Host's hand (small cards) */}
+                <div className="grid grid-cols-5 gap-1">
+                  {playerHand.map((card, i) => (
+                    <div key={i} className={`aspect-[2/3] rounded border ${playerSelectedCard?.tokenId === card.tokenId ? 'border-2 border-yellow-400 ring-2 ring-yellow-400' : 'border border-blue-500/30'} overflow-hidden bg-black/50`}>
+                      {card.imageUrl || card.image ? (
+                        <img src={card.imageUrl || card.image} alt={card.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[8px] text-white">{Math.round(card.power || 0)}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* GUEST SIDE */}
+              <div className="bg-gradient-to-br from-red-900/30 to-red-950/30 rounded-xl border-2 border-red-500/50 p-3 flex flex-col">
+                <div className="text-center mb-3">
+                  <div className="text-red-400 font-display font-bold mb-1">GUEST</div>
+                  <div className="text-vintage-gold text-sm">{opponentBankroll} {selectedToken}</div>
+                </div>
+
+                {/* Guest's selected card */}
+                <div className="flex-1 flex items-center justify-center mb-3">
+                  <div className="w-24 sm:w-32 aspect-[2/3] border-2 border-dashed border-red-400 rounded-lg flex items-center justify-center bg-black/30">
+                    {opponentSelectedCard && phase === 'resolution' ? (
+                      <div className="relative w-full h-full">
+                        {opponentSelectedCard.imageUrl || opponentSelectedCard.image ? (
+                          <img src={opponentSelectedCard.imageUrl || opponentSelectedCard.image} alt={opponentSelectedCard.name} className="w-full h-full object-cover rounded-lg" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(opponentSelectedCard.rarity) }}>
+                            <div className="text-white text-xs font-bold text-center">{opponentSelectedCard.name}</div>
+                            <div className="text-white text-lg font-bold">{Math.round(opponentSelectedCard.power || 0)}</div>
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-[10px] text-center text-red-300">
+                          {Math.round((opponentSelectedCard.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1))}
+                          {opponentAction === 'BOOST' && ' ⚔️'}{opponentAction === 'DOUBLE' && ' 💥'}{opponentAction === 'SHIELD' && ' 🛡️'}
+                        </div>
+                      </div>
+                    ) : opponentSelectedCard ? (
+                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover rounded-lg" />
+                    ) : (
+                      <span className="text-red-400 text-2xl animate-pulse">?</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Guest's hand (small cards) */}
+                <div className="grid grid-cols-5 gap-1">
+                  {opponentHand.map((card, i) => (
+                    <div key={i} className={`aspect-[2/3] rounded border ${opponentSelectedCard?.tokenId === card.tokenId ? 'border-2 border-yellow-400 ring-2 ring-yellow-400' : 'border border-red-500/30'} overflow-hidden bg-black/50`}>
+                      {card.imageUrl || card.image ? (
+                        <img src={card.imageUrl || card.image} alt={card.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[8px] text-white">{Math.round(card.power || 0)}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* REGULAR GAME TABLE - POKER FELT DESIGN (for players) */}
+        {phase !== 'deck-building' && phase !== 'game-over' && selectedAnte !== 0 && !isSpectator && (
           <div className="h-full flex flex-col">
 
             {/* Game info header */}

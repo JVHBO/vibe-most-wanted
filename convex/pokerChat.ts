@@ -1,0 +1,48 @@
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+
+// Send a chat message
+export const sendMessage = mutation({
+  args: {
+    roomId: v.string(),
+    sender: v.string(), // address
+    senderUsername: v.string(),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Validate message length
+    if (args.message.length > 500) {
+      throw new Error("Message too long (max 500 characters)");
+    }
+
+    if (args.message.trim().length === 0) {
+      throw new Error("Message cannot be empty");
+    }
+
+    await ctx.db.insert("pokerChatMessages", {
+      roomId: args.roomId,
+      sender: args.sender.toLowerCase(),
+      senderUsername: args.senderUsername,
+      message: args.message.trim(),
+      timestamp: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// Get chat messages for a room
+export const getMessages = query({
+  args: {
+    roomId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const messages = await ctx.db
+      .query("pokerChatMessages")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .order("desc")
+      .take(50); // Last 50 messages
+
+    return messages.reverse(); // Show oldest first
+  },
+});
