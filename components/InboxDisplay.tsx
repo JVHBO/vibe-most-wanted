@@ -47,7 +47,7 @@ export function InboxDisplay({ compact = false }: InboxDisplayProps) {
           )}
         </button>
 
-        {showModal && economy && (
+        {showModal && economy && !isLoading && (
           <InboxModal
             economy={economy}
             onClose={() => setShowModal(false)}
@@ -77,7 +77,7 @@ export function InboxDisplay({ compact = false }: InboxDisplayProps) {
         )}
       </button>
 
-      {showModal && (
+      {showModal && economy && !isLoading && (
         <InboxModal
           economy={economy}
           onClose={() => setShowModal(false)}

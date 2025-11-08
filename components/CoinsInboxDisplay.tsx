@@ -54,7 +54,7 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
           )}
         </button>
 
-        {showModal && inboxStatus && (
+        {showModal && inboxStatus && !isLoading && (
           <CoinsInboxModal
             inboxStatus={inboxStatus}
             onClose={() => setShowModal(false)}
@@ -84,7 +84,7 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
         )}
       </button>
 
-      {showModal && (
+      {showModal && inboxStatus && !isLoading && (
         <CoinsInboxModal
           inboxStatus={inboxStatus}
           onClose={() => setShowModal(false)}
