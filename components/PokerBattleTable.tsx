@@ -1083,133 +1083,124 @@ export function PokerBattleTable({
 
         {/* VICTORY POPUP */}
         {phase === 'game-over' && selectedAnte !== 0 && !isSpectator && playerScore > opponentScore && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-500">
-            <div className="relative max-w-2xl w-full mx-4">
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={onClose}>
+            <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
               {/* Victory Image */}
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-4 border-4 border-vintage-gold shadow-2xl">
-                <img
-                  src="/victory-1.jpg"
-                  alt="Victory"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <img
+                src="/victory-1.jpg"
+                alt="Victory!"
+                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-yellow-500/50 border-4 border-yellow-400"
+              />
 
               {/* Victory Text */}
-              <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-8 text-center shadow-2xl">
-                <h2 className="text-5xl font-display font-bold text-vintage-gold mb-4 animate-in zoom-in duration-700">
-                  🎉 VICTORY! 🎉
-                </h2>
-                <p className="text-2xl text-vintage-burnt-gold mb-4">
-                  Final Score: {playerScore} - {opponentScore}
-                </p>
-                <p className="text-xl text-green-400 font-bold mb-2">
-                  Final Bankroll: {playerBankroll} {selectedToken}
-                </p>
-                <p className="text-lg text-green-300 mb-6">
-                  Profit: +{playerBankroll - (selectedAnte * 50)} {selectedToken}
-                </p>
+              <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
+                🎉 You Won! Score: {playerScore} - {opponentScore}
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-green-400 px-4 text-center">
+                Profit: +{playerBankroll - (selectedAnte * 50)} {selectedToken}
+              </p>
 
-                {/* NFT CARDS WON (Mock Transfer) - Only in VIBE_NFT mode */}
-                {selectedToken === "VIBE_NFT" && playerScore > opponentScore && (
-                  <div className="bg-purple-900/50 border-2 border-purple-500 rounded-xl p-4 mb-4">
-                    <h3 className="text-purple-300 font-bold text-lg mb-3 text-center">
-                      🎴 CARDS WON (Mock Transfer)
-                    </h3>
-                    <div className="grid grid-cols-5 gap-2 mb-3">
-                      {/* Show fake opponent wagered cards - for now just show 3 placeholder cards */}
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="aspect-[2/3] bg-purple-800/30 border-2 border-purple-400 rounded-lg flex items-center justify-center animate-bounce" style={{ animationDelay: `${i * 200}ms` }}>
-                          <span className="text-4xl">🎴</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-yellow-400 text-xs text-center font-bold">
-                      ⚠️ FOR FUN ONLY - No blockchain transfers occurred
-                    </p>
-                  </div>
-                )}
-
-                {/* SHARE BUTTONS */}
-                <div className="flex gap-3 justify-center mb-4">
-                  <button
-                    onClick={() => {
-                      const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
-                      const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
-
-                      const tweetText = selectedToken === 'VIBE_NFT'
-                        ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only - no blockchain)`
-                        : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nStakes: ${selectedAnte} ${selectedToken}\nProfit: +${playerBankroll - (selectedAnte * 50)} ${selectedToken}`;
-
-                      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
-                      window.open(twitterUrl, '_blank');
-                    }}
-                    className="px-6 py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
-                  >
-                    <span>𝕏</span> Share Victory
-                  </button>
-                  <button
-                    onClick={() => {
-                      const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
-                      const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
-
-                      const castText = selectedToken === 'VIBE_NFT'
-                        ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only)`
-                        : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nStakes: ${selectedAnte} ${selectedToken}\nProfit: +${playerBankroll - (selectedAnte * 50)} ${selectedToken}`;
-
-                      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                      window.open(farcasterUrl, '_blank');
-                    }}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-display font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
-                  >
-                    <span>♦</span> Farcaster
-                  </button>
-                </div>
-
+              {/* SHARE BUTTONS */}
+              <div className="flex gap-3">
                 <button
-                  onClick={onClose}
-                  className="px-8 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 active:scale-95"
+                  onClick={() => {
+                    const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                    const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+
+                    const tweetText = selectedToken === 'VIBE_NFT'
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only - no blockchain)`
+                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nStakes: ${selectedAnte} ${selectedToken}\nProfit: +${playerBankroll - (selectedAnte * 50)} ${selectedToken}`;
+
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                    window.open(twitterUrl, '_blank');
+                  }}
+                  className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
                 >
-                  CLOSE
+                  <span>𝕏</span> Share Victory
+                </button>
+                <button
+                  onClick={() => {
+                    const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                    const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+
+                    const castText = selectedToken === 'VIBE_NFT'
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only)`
+                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nStakes: ${selectedAnte} ${selectedToken}\nProfit: +${playerBankroll - (selectedAnte * 50)} ${selectedToken}`;
+
+                    const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                    window.open(farcasterUrl, '_blank');
+                  }}
+                  className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                >
+                  <span>♦</span> Farcaster
                 </button>
               </div>
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-gold"
+              >
+                ×
+              </button>
             </div>
           </div>
         )}
 
         {/* DEFEAT POPUP */}
         {phase === 'game-over' && selectedAnte !== 0 && !isSpectator && playerScore < opponentScore && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-500">
-            <div className="relative max-w-2xl w-full mx-4">
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={onClose}>
+            <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
               {/* Defeat Image */}
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-4 border-4 border-red-600 shadow-2xl">
-                <img
-                  src="/defeat.gif"
-                  alt="Defeat"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <img
+                src="https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26"
+                alt="You Lost"
+                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
+              />
 
               {/* Defeat Text */}
-              <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-red-600 p-8 text-center shadow-2xl">
-                <h2 className="text-5xl font-display font-bold text-red-500 mb-4 animate-in zoom-in duration-700">
-                  💀 DEFEAT 💀
-                </h2>
-                <p className="text-2xl text-vintage-burnt-gold mb-4">
-                  Final Score: {playerScore} - {opponentScore}
-                </p>
-                <p className="text-xl text-red-400 font-bold mb-2">
-                  Final Bankroll: {playerBankroll} {selectedToken}
-                </p>
-                <p className="text-lg text-red-300 mb-6">
-                  Loss: {playerBankroll - (selectedAnte * 50)} {selectedToken}
-                </p>
+              <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
+                💀 You Lost! Score: {playerScore} - {opponentScore}
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-red-300 px-4 text-center">
+                Loss: {playerBankroll - (selectedAnte * 50)} {selectedToken}
+              </p>
+
+              {/* SHARE BUTTONS */}
+              <div className="flex gap-3">
                 <button
-                  onClick={onClose}
-                  className="px-8 py-4 bg-red-600 text-white font-bold text-xl rounded-lg hover:bg-red-700 transition-all hover:scale-105 active:scale-95"
+                  onClick={() => {
+                    const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                    const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+
+                    const tweetText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nI want a rematch!`;
+
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                    window.open(twitterUrl, '_blank');
+                  }}
+                  className="px-6 py-3 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-display font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
                 >
-                  CLOSE
+                  <span>𝕏</span> Share Defeat
+                </button>
+                <button
+                  onClick={() => {
+                    const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                    const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+
+                    const castText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nRevenge time!`;
+
+                    const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                    window.open(farcasterUrl, '_blank');
+                  }}
+                  className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                >
+                  <span>♦</span> Farcaster
                 </button>
               </div>
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
+              >
+                ×
+              </button>
             </div>
           </div>
         )}
