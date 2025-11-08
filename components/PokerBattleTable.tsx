@@ -465,7 +465,18 @@ export function PokerBattleTable({
     console.log('[PokerBattle] Phase set to resolution');
 
     if (isCPUMode) {
+      console.log('[PokerBattle] CPU Mode - Starting 1s delay before resolution calculation');
       setTimeout(() => {
+        console.log('[PokerBattle] CPU Mode - Timeout executed, calculating winner now');
+
+        if (!playerSelectedCard || !opponentSelectedCard) {
+          console.error('[PokerBattle] CPU Mode - Cards disappeared during timeout!', {
+            hasPlayerCard: !!playerSelectedCard,
+            hasOpponentCard: !!opponentSelectedCard
+          });
+          return;
+        }
+
         let playerPower = playerSelectedCard.power || 0;
         let opponentPower = opponentSelectedCard.power || 0;
 
@@ -503,16 +514,46 @@ export function PokerBattleTable({
           console.log('[PokerBattle] CPU Mode - Opponent DOUBLE applied:', opponentPower);
         }
 
+        const isTie = playerPower === opponentPower;
         const playerWins = playerPower > opponentPower;
 
         console.log('[PokerBattle] CPU Mode - Round resolution', {
           finalPlayerPower: playerPower,
           finalOpponentPower: opponentPower,
+          isTie,
           playerWins,
           pot
         });
 
-        if (playerWins) {
+        if (isTie) {
+          // TIE - both players get their ante back, no winner
+          console.log('[PokerBattle] CPU Mode - Round is a TIE!', { playerPower, opponentPower });
+          setPlayerBankroll(prev => {
+            const anteAmount = isCPUMode ? 50 : selectedAnte;
+            const newBankroll = prev + anteAmount;
+            console.log('[PokerBattle] CPU Mode - Player gets ante back (tie)', { prev, anteAmount, newBankroll });
+            return newBankroll;
+          });
+          setOpponentBankroll(prev => {
+            const anteAmount = isCPUMode ? 50 : selectedAnte;
+            const newBankroll = prev + anteAmount;
+            console.log('[PokerBattle] CPU Mode - Opponent gets ante back (tie)', { prev, anteAmount, newBankroll });
+            return newBankroll;
+          });
+          setPot(0);
+          setRoundWinner(null);
+          AudioManager.tie(); // Tie sound
+
+          // Show tie message
+          setShowRoundWinner(true);
+          console.log('[PokerBattle] CPU Mode - Showing tie message, waiting 2.5s before next round');
+
+          setTimeout(() => {
+            console.log('[PokerBattle] CPU Mode - 2.5s timeout for tie completed, proceeding to next round');
+            setShowRoundWinner(false);
+            nextRound();
+          }, 2500);
+        } else if (playerWins) {
           setPlayerBankroll(prev => {
             const newBankroll = prev + pot;
             console.log('[PokerBattle] CPU Mode - Player won pot', { prev, pot, newBankroll });
@@ -544,9 +585,11 @@ export function PokerBattleTable({
 
         // Show round winner message
         setShowRoundWinner(true);
+        console.log('[PokerBattle] CPU Mode - Showing round winner, waiting 2.5s');
 
         // Hide message and check win condition after delay
         setTimeout(() => {
+          console.log('[PokerBattle] CPU Mode - 2.5s timeout completed, checking win condition');
           setShowRoundWinner(false);
           setRoundWinner(null);
 
@@ -624,11 +667,13 @@ export function PokerBattleTable({
           console.log('[PokerBattle] PvP Mode - Opponent DOUBLE applied:', opponentPower);
         }
 
+        const isTie = playerPower === opponentPower;
         const playerWins = playerPower > opponentPower;
 
         console.log('[PokerBattle] PvP Mode - Round resolution', {
           finalPlayerPower: playerPower,
           finalOpponentPower: opponentPower,
+          isTie,
           playerWins
         });
 
