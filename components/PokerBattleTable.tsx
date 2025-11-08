@@ -924,12 +924,15 @@ export function PokerBattleTable({
                     <div className="inline-block bg-vintage-gold/20 border-2 border-vintage-gold px-6 py-2 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
                       <div className="text-vintage-gold font-display font-bold text-lg">
                         {phase === 'card-selection' && !isCPUMode && playerSelectedCard && !opponentSelectedCard && (
-                          <span className="animate-pulse">⏳ WAITING FOR OPPONENT...</span>
+                          <span className="animate-pulse">⏳ WAITING FOR OPPONENT TO SELECT CARD...</span>
                         )}
                         {phase === 'card-selection' && (isCPUMode || !playerSelectedCard) && '📋 SELECT A CARD FROM YOUR HAND'}
-                        {phase === 'pre-reveal-betting' && '💰 PRE-REVEAL BETTING ROUND'}
-                        {phase === 'reveal' && '⚔️ CARDS REVEALED - CHOOSE YOUR ACTION'}
-                        {phase === 'post-reveal-betting' && '🎲 FINAL BETTING ROUND'}
+                        {phase === 'pre-reveal-betting' && '💰 PRE-REVEAL BETTING ROUND - MAKE YOUR BET'}
+                        {phase === 'reveal' && !isCPUMode && playerAction && !opponentAction && (
+                          <span className="animate-pulse">⏳ WAITING FOR OPPONENT TO CHOOSE ACTION...</span>
+                        )}
+                        {phase === 'reveal' && (isCPUMode || !playerAction) && '⚔️ CARDS REVEALED - CHOOSE YOUR ACTION'}
+                        {phase === 'post-reveal-betting' && '🎲 FINAL BETTING ROUND - MAKE YOUR BET'}
                         {phase === 'resolution' && <span className="animate-pulse">⏳ CALCULATING WINNER...</span>}
                       </div>
                     </div>
