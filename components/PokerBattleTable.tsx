@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { AudioManager } from '@/lib/audio-manager';
 import { PokerMatchmaking } from './PokerMatchmaking';
 import { PokerWaitingRoom } from './PokerWaitingRoom';
+import FoilCardEffect from './FoilCardEffect';
 
 interface Card {
   tokenId: string;
@@ -79,7 +80,7 @@ export function PokerBattleTable({
     if (isCPUMode && playerCards.length >= 10 && opponentDeck.length >= 10) {
       // Auto-select player's top 10 strongest cards
       const playerTop10 = [...playerCards]
-        .sort((a, b) => b.power - a.power)
+        .sort((a, b) => (b.power || 0) - (a.power || 0))
         .slice(0, 10);
 
       setSelectedDeck(playerTop10);
@@ -823,23 +824,25 @@ export function PokerBattleTable({
                             : 'border-vintage-gold/50 hover:border-vintage-gold hover:scale-105 hover:-translate-y-1'
                         } ${phase !== 'card-selection' || selectedAnte === 0 || isSpectator ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}`}
                       >
-                        {(card.imageUrl || card.image) ? (
-                          <img
-                            src={(card.imageUrl || card.image)}
-                            alt={card.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className="w-full h-full flex flex-col items-center justify-center p-1"
-                            style={{ background: getRarityGradient(card.rarity) }}
-                          >
-                            <div className="text-white text-[0.5rem] font-bold text-center mb-1">{card.name}</div>
-                            <div className="text-white text-sm font-bold">{Math.round(card.power).toLocaleString()}</div>
-                          </div>
-                        )}
+                        <FoilCardEffect foilType={card.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
+                          {(card.imageUrl || card.image) ? (
+                            <img
+                              src={(card.imageUrl || card.image)}
+                              alt={card.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="w-full h-full flex flex-col items-center justify-center p-1"
+                              style={{ background: getRarityGradient(card.rarity) }}
+                            >
+                              <div className="text-white text-[0.5rem] font-bold text-center mb-1">{card.name}</div>
+                              <div className="text-white text-sm font-bold">{Math.round(card.power || 0).toLocaleString()}</div>
+                            </div>
+                          )}
+                        </FoilCardEffect>
                         <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold transition-colors">
-                          {Math.round(card.power).toLocaleString()}
+                          {Math.round(card.power || 0).toLocaleString()}
                         </div>
                       </button>
                     ))}
