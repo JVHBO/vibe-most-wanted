@@ -25,9 +25,9 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
     console.log('[CoinsInboxDisplay] address:', address, 'inboxStatus:', inboxStatus, 'compact:', compact);
   }
 
-  if (!address || !inboxStatus) return null;
-
-  const coinsInbox = inboxStatus.coinsInbox || 0;
+  // Always render, even if data is loading (don't return null!)
+  const isLoading = !address || !inboxStatus;
+  const coinsInbox = inboxStatus?.coinsInbox || 0;
   const hasUncollected = coinsInbox > 0;
 
   // Compact version for miniapp (icon only, like other buttons)
@@ -35,17 +35,26 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
     return (
       <>
         <button
-          onClick={() => setShowModal(true)}
-          className="relative bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base flex items-center justify-center"
-          title="Coins Inbox"
+          onClick={() => !isLoading && setShowModal(true)}
+          disabled={isLoading}
+          className={`relative bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base flex items-center justify-center ${
+            isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'
+          }`}
+          title={isLoading ? "Loading..." : "Coins Inbox"}
         >
-          <NextImage src="/images/icons/inbox.svg" alt="Inbox" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
-          {hasUncollected && (
+          <NextImage
+            src="/images/icons/inbox.svg"
+            alt="Inbox"
+            width={20}
+            height={20}
+            className={`w-5 h-5 md:w-6 md:h-6 ${isLoading ? 'animate-pulse' : ''}`}
+          />
+          {!isLoading && hasUncollected && (
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-vintage-orange rounded-full animate-notification-pulse" />
           )}
         </button>
 
-        {showModal && (
+        {showModal && inboxStatus && (
           <CoinsInboxModal
             inboxStatus={inboxStatus}
             onClose={() => setShowModal(false)}

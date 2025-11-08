@@ -24,9 +24,9 @@ export function InboxDisplay({ compact = false }: InboxDisplayProps) {
     console.log('[InboxDisplay] address:', address, 'economy:', economy, 'compact:', compact);
   }
 
-  if (!address || !economy) return null;
-
-  const inboxAmount = economy.inbox || 0;
+  // Always render, even if data is loading (don't return null!)
+  const isLoading = !address || !economy;
+  const inboxAmount = economy?.inbox || 0;
   const hasUncollected = inboxAmount >= 100;
 
   // Compact version for miniapp (icon only, like other buttons)
@@ -34,17 +34,20 @@ export function InboxDisplay({ compact = false }: InboxDisplayProps) {
     return (
       <>
         <button
-          onClick={() => setShowModal(true)}
-          className="relative bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base flex items-center justify-center"
-          title={`Inbox: ${inboxAmount.toLocaleString()} TESTVBMS`}
+          onClick={() => !isLoading && setShowModal(true)}
+          disabled={isLoading}
+          className={`relative bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base flex items-center justify-center ${
+            isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'
+          }`}
+          title={isLoading ? "Loading..." : `Inbox: ${inboxAmount.toLocaleString()} TESTVBMS`}
         >
-          <span className="text-xl md:text-2xl">📬</span>
-          {hasUncollected && (
+          <span className={`text-xl md:text-2xl ${isLoading ? 'animate-pulse' : ''}`}>📬</span>
+          {!isLoading && hasUncollected && (
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-vintage-orange rounded-full animate-notification-pulse" />
           )}
         </button>
 
-        {showModal && (
+        {showModal && economy && (
           <InboxModal
             economy={economy}
             onClose={() => setShowModal(false)}
