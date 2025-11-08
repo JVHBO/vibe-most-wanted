@@ -1871,6 +1871,14 @@ export default function TCGPage() {
                 opponentPfpUrl: undefined, // PvE opponent has no PFP
               });
 
+              // Set pending reward to show RewardChoiceModal after victory/defeat screen
+              if (coinsEarned > 0) {
+                setPendingReward({
+                  amount: coinsEarned,
+                  source: 'pve'
+                });
+              }
+
               // Close battle first
               setTimeout(() => {
                 setIsBattling(false);
@@ -2013,6 +2021,14 @@ export default function TCGPage() {
           playerPfpUrl: userProfile?.twitterProfileImageUrl,
           opponentPfpUrl: undefined, // PvE opponent has no PFP
         });
+
+        // Set pending reward to show RewardChoiceModal after victory/defeat screen
+        if (coinsEarned > 0) {
+          setPendingReward({
+            amount: coinsEarned,
+            source: 'pve'
+          });
+        }
 
         // Fecha a tela de batalha PRIMEIRO
         setTimeout(() => {
@@ -2410,6 +2426,14 @@ export default function TCGPage() {
                     playerPfpUrl: userProfile?.twitterProfileImageUrl,
                     opponentPfpUrl: opponentPfpUrl,
                   });
+
+                  // Set pending reward to show RewardChoiceModal after victory/defeat screen
+                  if (coinsEarned > 0) {
+                    setPendingReward({
+                      amount: coinsEarned,
+                      source: 'pvp'
+                    });
+                  }
 
                   // Mostra popup DEPOIS de fechar batalha
                   setTimeout(() => {
