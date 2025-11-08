@@ -754,6 +754,12 @@ export function PokerBattleTable({
                             {opponentAction === 'SHIELD' && ' 🛡️'}
                           </div>
                         </div>
+                      ) : opponentSelectedCard ? (
+                        <img
+                          src="/proxy.png"
+                          alt="Hidden Card"
+                          className="w-full h-full object-cover rounded-lg"
+                        />
                       ) : (
                         <span className="text-vintage-gold text-4xl animate-pulse">?</span>
                       )}
