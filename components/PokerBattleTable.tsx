@@ -133,7 +133,8 @@ export function PokerBattleTable({
   );
 
   // Get rarity color for fallback cards
-  const getRarityGradient = (rarity: string): string => {
+  const getRarityGradient = (rarity?: string): string => {
+    if (!rarity) return 'linear-gradient(135deg, #6c757d 0%, #495057 100%)';
     switch (rarity.toLowerCase()) {
       case 'mythic': return 'linear-gradient(135deg, #ff00ff 0%, #8b00ff 100%)';
       case 'legendary': return 'linear-gradient(135deg, #ffd700 0%, #ff8c00 100%)';
@@ -146,7 +147,7 @@ export function PokerBattleTable({
 
   // Deck Building Phase
   const toggleCardInDeck = (card: Card) => {
-    AudioManager.selectCardByRarity(card.rarity);
+    AudioManager.selectCardByRarity(card.rarity || 'common');
     if (selectedDeck.find(c => c.tokenId === card.tokenId)) {
       setSelectedDeck(selectedDeck.filter(c => c.tokenId !== card.tokenId));
     } else if (selectedDeck.length < 10) {
