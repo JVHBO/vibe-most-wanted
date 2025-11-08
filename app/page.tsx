@@ -4009,9 +4009,6 @@ export default function TCGPage() {
           {/* Coins Inbox - Only show here in miniapp (compact mode) */}
           {isInFarcaster && <CoinsInboxDisplay compact />}
 
-          {/* Inbox - Only in Farcaster (compact mode for miniapp) */}
-          {isInFarcaster && <InboxDisplay compact />}
-
           <Link
             href="/docs"
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
