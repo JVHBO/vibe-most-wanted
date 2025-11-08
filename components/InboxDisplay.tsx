@@ -19,6 +19,11 @@ export function InboxDisplay({ compact = false }: InboxDisplayProps) {
     address ? { address } : "skip"
   );
 
+  // Debug logging
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('[InboxDisplay] address:', address, 'economy:', economy, 'compact:', compact);
+  }
+
   if (!address || !economy) return null;
 
   const inboxAmount = economy.inbox || 0;
