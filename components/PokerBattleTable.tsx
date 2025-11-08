@@ -2008,6 +2008,35 @@ export function PokerBattleTable({
                   )}
                 </div>
 
+                {/* Quick Bet Buttons */}
+                <div className="px-2 py-1 border-t border-vintage-gold/30 bg-vintage-charcoal/50">
+                  <p className="text-xs text-vintage-gold/60 mb-1">Quick Bets:</p>
+                  <div className="flex gap-1 flex-wrap">
+                    {[10, 25, 50, 100].map((amount) => (
+                      <button
+                        key={amount}
+                        onClick={async () => {
+                          const opponentName = room?.hostAddress === playerAddress ? room?.guestUsername : room?.hostUsername;
+                          const betMessage = `💰 Bid ${amount} ${selectedToken} on ${opponentName}`;
+                          try {
+                            await sendMessageMutation({
+                              roomId,
+                              sender: playerAddress,
+                              senderUsername: playerUsername,
+                              message: betMessage,
+                            });
+                          } catch (error) {
+                            console.error('[PokerBattle] Error sending bet message:', error);
+                          }
+                        }}
+                        className="px-2 py-1 bg-green-600/80 hover:bg-green-600 text-white text-xs rounded font-bold transition-all hover:scale-105 active:scale-95"
+                      >
+                        {amount}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Input */}
                 <div className="p-2 border-t border-vintage-gold/30 bg-vintage-charcoal">
                   <div className="flex gap-2">
