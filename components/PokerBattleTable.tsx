@@ -48,7 +48,7 @@ export function PokerBattleTable({
   const [roomId, setRoomId] = useState<string>('');
   const [isHost, setIsHost] = useState(false);
   const [selectedAnte, setSelectedAnte] = useState(25);
-  const [selectedToken, setSelectedToken] = useState<'TESTVBMS' | 'testUSDC'>('TESTVBMS');
+  const [selectedToken, setSelectedToken] = useState<'TESTVBMS' | 'testUSDC' | 'VIBE_NFT'>('TESTVBMS');
 
   // Real-time room data for multiplayer
   const room = useQuery(
@@ -370,7 +370,7 @@ export function PokerBattleTable({
     setRoomId(newRoomId);
     setIsHost(host);
     setSelectedAnte(ante);
-    setSelectedToken(token as 'TESTVBMS' | 'testUSDC');
+    setSelectedToken(token as 'TESTVBMS' | 'testUSDC' | 'VIBE_NFT');
     setCurrentView(spectator ? 'game' : 'waiting');
   };
 
@@ -960,6 +960,63 @@ export function PokerBattleTable({
                 <p className="text-lg text-green-300 mb-6">
                   Profit: +{playerBankroll - (selectedAnte * 50)} {selectedToken}
                 </p>
+
+                {/* NFT CARDS WON (Mock Transfer) - Only in VIBE_NFT mode */}
+                {selectedToken === "VIBE_NFT" && playerScore > opponentScore && (
+                  <div className="bg-purple-900/50 border-2 border-purple-500 rounded-xl p-4 mb-4">
+                    <h3 className="text-purple-300 font-bold text-lg mb-3 text-center">
+                      🎴 CARDS WON (Mock Transfer)
+                    </h3>
+                    <div className="grid grid-cols-5 gap-2 mb-3">
+                      {/* Show fake opponent wagered cards - for now just show 3 placeholder cards */}
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="aspect-[2/3] bg-purple-800/30 border-2 border-purple-400 rounded-lg flex items-center justify-center animate-bounce" style={{ animationDelay: `${i * 200}ms` }}>
+                          <span className="text-4xl">🎴</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-yellow-400 text-xs text-center font-bold">
+                      ⚠️ FOR FUN ONLY - No blockchain transfers occurred
+                    </p>
+                  </div>
+                )}
+
+                {/* SHARE BUTTONS */}
+                <div className="flex gap-3 justify-center mb-4">
+                  <button
+                    onClick={() => {
+                      const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                      const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+
+                      const tweetText = selectedToken === 'VIBE_NFT'
+                        ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only - no blockchain)`
+                        : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nStakes: ${selectedAnte} ${selectedToken}\nProfit: +${playerBankroll - (selectedAnte * 50)} ${selectedToken}`;
+
+                      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                      window.open(twitterUrl, '_blank');
+                    }}
+                    className="px-6 py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                  >
+                    <span>𝕏</span> Share Victory
+                  </button>
+                  <button
+                    onClick={() => {
+                      const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                      const shareUrl = `${window.location.origin}/share/poker/${matchId}?v=${Date.now()}`;
+
+                      const castText = selectedToken === 'VIBE_NFT'
+                        ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only)`
+                        : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nStakes: ${selectedAnte} ${selectedToken}\nProfit: +${playerBankroll - (selectedAnte * 50)} ${selectedToken}`;
+
+                      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                      window.open(farcasterUrl, '_blank');
+                    }}
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-display font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+                  >
+                    <span>♦</span> Farcaster
+                  </button>
+                </div>
+
                 <button
                   onClick={onClose}
                   className="px-8 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 active:scale-95"
