@@ -3986,7 +3986,7 @@ export default function TCGPage() {
           </button>
 
           {/* Coins Inbox - Only show here in miniapp (compact mode) */}
-          {userProfile && isInFarcaster && <CoinsInboxDisplay compact />}
+          {address && isInFarcaster && <CoinsInboxDisplay compact />}
 
           <Link
             href="/docs"
@@ -4161,7 +4161,7 @@ export default function TCGPage() {
                   {/* Coin Balance Display */}
                   {address && userProfile && playerEconomy && (
                     <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-                      <span className="text-black text-xl md:text-2xl font-bold">$</span>
+                      <span className="text-vintage-gold text-xl md:text-2xl font-bold">$</span>
                       <div className="flex flex-col">
                         <span className="text-vintage-gold font-display font-bold text-xs md:text-sm leading-none">
                           {(playerEconomy.coins || 0).toLocaleString()}
