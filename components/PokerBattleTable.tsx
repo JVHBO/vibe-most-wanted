@@ -75,6 +75,12 @@ export function PokerBattleTable({
   const [playerDeckRemaining, setPlayerDeckRemaining] = useState<Card[]>([]);
   const [opponentDeckRemaining, setOpponentDeckRemaining] = useState<Card[]>([]);
 
+  // Current round states (must be before useEffect that uses them)
+  const [playerSelectedCard, setPlayerSelectedCard] = useState<Card | null>(null);
+  const [opponentSelectedCard, setOpponentSelectedCard] = useState<Card | null>(null);
+  const [playerAction, setPlayerAction] = useState<CardAction | null>(null);
+  const [opponentAction, setOpponentAction] = useState<CardAction | null>(null);
+
   // Auto-start CPU mode
   useEffect(() => {
     if (isCPUMode && playerCards.length >= 10 && opponentDeck.length >= 10) {
@@ -109,11 +115,40 @@ export function PokerBattleTable({
     }
   }, [isCPUMode, playerCards, opponentDeck]);
 
-  // Current round
-  const [playerSelectedCard, setPlayerSelectedCard] = useState<Card | null>(null);
-  const [opponentSelectedCard, setOpponentSelectedCard] = useState<Card | null>(null);
-  const [playerAction, setPlayerAction] = useState<CardAction | null>(null);
-  const [opponentAction, setOpponentAction] = useState<CardAction | null>(null);
+  // Timer countdown for actions
+  useEffect(() => {
+    // Reset timer when phase changes or when player makes action
+    if (phase === 'card-selection' || phase === 'reveal') {
+      setTimeRemaining(30);
+    }
+
+    // Only run timer during active phases
+    if (phase !== 'card-selection' && phase !== 'reveal') {
+      return;
+    }
+
+    // Don't count down if player has already acted
+    if (phase === 'card-selection' && playerSelectedCard) return;
+    if (phase === 'reveal' && playerAction) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          // Time's up! Auto-select random action
+          if (phase === 'card-selection' && !playerSelectedCard && playerHand.length > 0) {
+            const randomCard = playerHand[Math.floor(Math.random() * playerHand.length)];
+            selectCard(randomCard);
+          } else if (phase === 'reveal' && !playerAction) {
+            selectAction('PASS');
+          }
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [phase, playerSelectedCard, playerAction, playerHand]);
 
   // Betting
   const [playerBankroll, setPlayerBankroll] = useState(0);
@@ -122,6 +157,9 @@ export function PokerBattleTable({
   // Score
   const [playerScore, setPlayerScore] = useState(0);
   const [opponentScore, setOpponentScore] = useState(0);
+
+  // Action Timer
+  const [timeRemaining, setTimeRemaining] = useState(30); // 30 seconds per action
 
   // Pagination for deck building
   const [currentPage, setCurrentPage] = useState(0);
@@ -783,6 +821,29 @@ export function PokerBattleTable({
                       💰 {pot} {selectedToken}
                     </div>
                   </div>
+
+                  {/* Timer Display */}
+                  {(phase === 'card-selection' || phase === 'reveal') && (
+                    <div className="mt-3">
+                      <div className={`inline-block px-6 py-2 rounded-lg border-2 transition-all ${
+                        timeRemaining <= 5
+                          ? 'bg-red-900/50 border-red-500 animate-pulse'
+                          : timeRemaining <= 10
+                          ? 'bg-yellow-900/50 border-yellow-500'
+                          : 'bg-vintage-deep-black/50 border-vintage-gold'
+                      }`}>
+                        <div className={`font-display font-bold text-2xl ${
+                          timeRemaining <= 5
+                            ? 'text-red-300'
+                            : timeRemaining <= 10
+                            ? 'text-yellow-300'
+                            : 'text-vintage-gold'
+                        }`}>
+                          ⏱️ {timeRemaining}s
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Phase indicator */}
                   <div className="mt-4">
