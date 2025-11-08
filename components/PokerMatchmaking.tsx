@@ -59,7 +59,7 @@ export function PokerMatchmaking({
         address: playerAddress,
         username: playerUsername,
         ante: selectedAnte,
-        token: selectedToken,
+        token: selectedToken as 'TESTVBMS' | 'testUSDC',
       });
 
       if (result.success) {
