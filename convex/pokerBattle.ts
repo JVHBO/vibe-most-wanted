@@ -754,3 +754,190 @@ export const cleanupOldPokerRooms = mutation({
     return { deleted };
   },
 });
+
+// Place a bet on a player (spectators only)
+export const placeBet = mutation({
+  args: {
+    roomId: v.string(),
+    bettor: v.string(),
+    bettorUsername: v.string(),
+    betOn: v.string(), // Address of player to bet on
+    amount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Find the room
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .first();
+
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    if (room.status === "finished" || room.status === "cancelled") {
+      throw new Error("Cannot bet on finished or cancelled games");
+    }
+
+    // Verify betOn is a player in the room
+    const isHost = room.hostAddress === args.betOn.toLowerCase();
+    const isGuest = room.guestAddress === args.betOn.toLowerCase();
+
+    if (!isHost && !isGuest) {
+      throw new Error("Can only bet on players in the room");
+    }
+
+    // Cannot bet if you're a player in the room
+    const bettorAddr = args.bettor.toLowerCase();
+    if (bettorAddr === room.hostAddress || bettorAddr === room.guestAddress) {
+      throw new Error("Players cannot bet on their own games");
+    }
+
+    // Get bettor's profile to deduct coins
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", bettorAddr))
+      .first();
+
+    if (!profile) {
+      throw new Error("Bettor profile not found");
+    }
+
+    // Check if bettor has enough coins
+    const currentCoins = profile.coins || 0;
+    if (currentCoins < args.amount) {
+      throw new Error(`Insufficient funds. Need ${args.amount} but only have ${currentCoins}`);
+    }
+
+    // Deduct coins from bettor
+    await ctx.db.patch(profile._id, {
+      coins: currentCoins - args.amount,
+      lifetimeSpent: (profile.lifetimeSpent || 0) + args.amount,
+    });
+
+    // Create bet
+    await ctx.db.insert("pokerBets", {
+      roomId: args.roomId,
+      bettor: bettorAddr,
+      bettorUsername: args.bettorUsername,
+      betOn: args.betOn.toLowerCase(),
+      betOnUsername: isHost ? room.hostUsername : (room.guestUsername || ""),
+      amount: args.amount,
+      token: room.token,
+      status: "active",
+      timestamp: Date.now(),
+    });
+
+    console.log(`💰 Bet placed: ${args.bettorUsername} bet ${args.amount} on ${isHost ? room.hostUsername : room.guestUsername} in ${args.roomId}`);
+
+    return {
+      success: true,
+      newBalance: currentCoins - args.amount,
+    };
+  },
+});
+
+// Resolve all bets for a room when game finishes
+export const resolveBets = mutation({
+  args: {
+    roomId: v.string(),
+    winnerId: v.string(), // Address of the winner
+  },
+  handler: async (ctx, args) => {
+    // Get all active bets for this room
+    const bets = await ctx.db
+      .query("pokerBets")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    if (bets.length === 0) {
+      return { resolved: 0, totalPaidOut: 0 };
+    }
+
+    let totalPaidOut = 0;
+    const winnerAddr = args.winnerId.toLowerCase();
+
+    for (const bet of bets) {
+      const won = bet.betOn === winnerAddr;
+
+      if (won) {
+        // Winner gets 2x their bet (1x return + 1x profit)
+        const payout = bet.amount * 2;
+
+        // Get bettor's profile
+        const profile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q) => q.eq("address", bet.bettor))
+          .first();
+
+        if (profile) {
+          // Pay out winnings
+          await ctx.db.patch(profile._id, {
+            coins: (profile.coins || 0) + payout,
+            lifetimeEarned: (profile.lifetimeEarned || 0) + payout,
+          });
+
+          totalPaidOut += payout;
+        }
+
+        // Update bet status
+        await ctx.db.patch(bet._id, {
+          status: "won",
+          payout,
+          resolvedAt: Date.now(),
+        });
+
+        console.log(`✅ Bet won: ${bet.bettorUsername} won ${payout} (bet ${bet.amount} on ${bet.betOnUsername})`);
+      } else {
+        // Loser - bet already deducted, just mark as lost
+        await ctx.db.patch(bet._id, {
+          status: "lost",
+          resolvedAt: Date.now(),
+        });
+
+        console.log(`❌ Bet lost: ${bet.bettorUsername} lost ${bet.amount} (bet on ${bet.betOnUsername})`);
+      }
+    }
+
+    console.log(`🎰 Resolved ${bets.length} bets for room ${args.roomId} - Total paid out: ${totalPaidOut}`);
+
+    return {
+      resolved: bets.length,
+      totalPaidOut,
+    };
+  },
+});
+
+// Get all bets for a room
+export const getRoomBets = query({
+  args: {
+    roomId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const bets = await ctx.db
+      .query("pokerBets")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .order("desc")
+      .take(100);
+
+    return bets;
+  },
+});
+
+// Get a user's bets for a room
+export const getUserRoomBets = query({
+  args: {
+    roomId: v.string(),
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const bets = await ctx.db
+      .query("pokerBets")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .filter((q) => q.eq(q.field("bettor"), args.address.toLowerCase()))
+      .collect();
+
+    return bets;
+  },
+});
