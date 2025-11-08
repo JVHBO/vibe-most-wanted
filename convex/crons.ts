@@ -39,21 +39,23 @@ const crons = cronJobs();
 
 /**
  * 🧹 Cleanup old PvP rooms (every hour)
+ * Note: Poker Battle rooms don't need cleanup - they expire automatically
  */
-crons.hourly(
-  "cleanup old pvp rooms",
-  { minuteUTC: 0 },
-  internal.rooms.cleanupOldRooms
-);
+// crons.hourly(
+//   "cleanup old pvp rooms",
+//   { minuteUTC: 0 },
+//   internal.pokerBattle.cleanupOldPokerRooms
+// );
 
 /**
  * 🧹 Cleanup old Poker Battle rooms (every 15 minutes)
+ * Note: Currently disabled - rooms are cleaned up on-demand
  */
-crons.interval(
-  "cleanup old poker rooms",
-  { minutes: 15 },
-  internal.pokerBattle.cleanupOldPokerRooms
-);
+// crons.interval(
+//   "cleanup old poker rooms",
+//   { minutes: 15 },
+//   internal.pokerBattle.cleanupOldPokerRooms
+// );
 
 /**
  * 📊 Generate daily quest rotation (every day at 00:00 UTC)

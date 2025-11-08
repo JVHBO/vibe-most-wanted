@@ -432,7 +432,8 @@ export default defineSchema({
     ante: v.number(), // Ante amount per round (10, 25, 50, 100)
     token: v.union(
       v.literal("TESTVBMS"),
-      v.literal("testUSDC")
+      v.literal("testUSDC"),
+      v.literal("VIBE_NFT")
     ),
 
     // Players
