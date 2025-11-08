@@ -4008,8 +4008,8 @@ export default function TCGPage() {
           {/* Coins Inbox - Only show here in miniapp (compact mode) */}
           {isInFarcaster && <CoinsInboxDisplay compact />}
 
-          {/* Inbox - Only in Farcaster */}
-          {isInFarcaster && <InboxDisplay />}
+          {/* Inbox - Only in Farcaster (compact mode for miniapp) */}
+          {isInFarcaster && <InboxDisplay compact />}
 
           <Link
             href="/docs"
