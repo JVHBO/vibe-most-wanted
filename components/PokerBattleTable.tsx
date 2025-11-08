@@ -421,6 +421,11 @@ export function PokerBattleTable({
         });
 
         // Calculate winner locally to show correct animation
+        if (!playerSelectedCard || !opponentSelectedCard) {
+          console.error('Missing selected cards for resolution');
+          return;
+        }
+
         let playerPower = playerSelectedCard.power || 0;
         let opponentPower = opponentSelectedCard.power || 0;
 
@@ -1155,20 +1160,66 @@ export function PokerBattleTable({
 
         {/* SPECTATOR GAME OVER */}
         {phase === 'game-over' && (selectedAnte === 0 || isSpectator) && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-8 text-center shadow-2xl max-w-md">
-              <h2 className="text-4xl font-display font-bold text-vintage-gold mb-4">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]">
+            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-6 sm:p-8 text-center shadow-2xl max-w-lg mx-4">
+              {/* Winner Badge */}
+              <div className="mb-6">
+                {playerScore > opponentScore ? (
+                  <div className="text-6xl sm:text-7xl mb-2 animate-bounce">🏆</div>
+                ) : playerScore < opponentScore ? (
+                  <div className="text-6xl sm:text-7xl mb-2 animate-bounce">👑</div>
+                ) : (
+                  <div className="text-6xl sm:text-7xl mb-2">🤝</div>
+                )}
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-display font-bold text-vintage-gold mb-4">
                 GAME OVER
               </h2>
-              <p className="text-2xl text-vintage-burnt-gold mb-4">
-                Final Score: {playerScore} - {opponentScore}
-              </p>
-              <p className="text-xl text-vintage-gold mb-6">
-                {playerScore > opponentScore ? "Host Wins!" : playerScore < opponentScore ? "Guest Wins!" : "It's a Tie!"}
-              </p>
+
+              {/* Score Display */}
+              <div className="bg-vintage-deep-black/50 rounded-xl p-4 sm:p-6 mb-4 border-2 border-vintage-gold/30">
+                <p className="text-lg sm:text-xl text-vintage-burnt-gold mb-3">Final Score</p>
+                <div className="flex justify-center items-center gap-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-xs text-vintage-gold/60 mb-1">HOST</p>
+                    <p className={`text-4xl sm:text-5xl font-bold ${playerScore > opponentScore ? 'text-green-400' : playerScore < opponentScore ? 'text-red-400' : 'text-vintage-gold'}`}>
+                      {playerScore}
+                    </p>
+                  </div>
+                  <span className="text-2xl text-vintage-gold">-</span>
+                  <div className="text-center">
+                    <p className="text-xs text-vintage-gold/60 mb-1">GUEST</p>
+                    <p className={`text-4xl sm:text-5xl font-bold ${opponentScore > playerScore ? 'text-green-400' : opponentScore < playerScore ? 'text-red-400' : 'text-vintage-gold'}`}>
+                      {opponentScore}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xl sm:text-2xl font-bold text-vintage-gold">
+                  {playerScore > opponentScore ? "🎉 Host Wins!" : playerScore < opponentScore ? "🎉 Guest Wins!" : "🤝 It's a Tie!"}
+                </p>
+              </div>
+
+              {/* Game Stats */}
+              {selectedAnte > 0 && (
+                <div className="bg-vintage-gold/10 rounded-lg p-3 sm:p-4 mb-6 border border-vintage-gold/30">
+                  <p className="text-sm text-vintage-gold/80 mb-2">Game Info</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-vintage-gold/60">Ante</p>
+                      <p className="text-vintage-gold font-bold">{selectedAnte} {selectedToken}</p>
+                    </div>
+                    <div>
+                      <p className="text-vintage-gold/60">Total Pot</p>
+                      <p className="text-vintage-gold font-bold">{playerBankroll + opponentBankroll} {selectedToken}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={onClose}
-                className="px-8 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 active:scale-95"
+                className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-lg sm:text-xl rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 active:scale-95 shadow-lg"
               >
                 CLOSE
               </button>
