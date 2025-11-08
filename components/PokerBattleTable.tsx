@@ -647,8 +647,8 @@ export function PokerBattleTable({
             </div>
 
             {/* Selected Deck Display */}
-            <div className="mb-4 bg-green-900/40 border-2 border-vintage-gold/50 rounded-xl p-3">
-              <div className={`grid ${isInFarcaster ? 'grid-cols-2 gap-1.5' : 'grid-cols-5 gap-2'}`}>
+            <div className="mb-3 sm:mb-4 bg-green-900/40 border-2 border-vintage-gold/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
+              <div className={`grid ${isInFarcaster ? 'grid-cols-3 gap-1' : 'grid-cols-5 gap-2'}`}>
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
@@ -686,9 +686,9 @@ export function PokerBattleTable({
             {/* Available Cards */}
             <div className={`grid ${
               isInFarcaster
-                ? 'grid-cols-3 gap-1.5'
+                ? 'grid-cols-4 gap-1'
                 : 'grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2'
-            } mb-4`}>
+            } mb-3 sm:mb-4`}>
               {paginatedCards.map((card) => {
                 const isSelected = selectedDeck.find(c => c.tokenId === card.tokenId);
                 return (
