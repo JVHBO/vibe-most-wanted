@@ -69,7 +69,7 @@ export function PokerWaitingRoom({
 
   // Sort cards by power if enabled
   const sortedCards = sortByPower
-    ? [...playerCards].sort((a, b) => b.power - a.power)
+    ? [...playerCards].sort((a, b) => (b.power || 0) - (a.power || 0))
     : playerCards;
 
   const totalPages = Math.ceil(sortedCards.length / CARDS_PER_PAGE);
