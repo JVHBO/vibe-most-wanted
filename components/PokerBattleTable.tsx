@@ -65,6 +65,15 @@ export function PokerBattleTable({
   const useCardActionMutation = useMutation(api.pokerBattle.useCardAction);
   const resolveRoundMutation = useMutation(api.pokerBattle.resolveRound);
 
+  // Chat system
+  const messages = useQuery(
+    api.pokerChat.getMessages,
+    roomId && !isCPUMode ? { roomId } : "skip"
+  );
+  const sendMessageMutation = useMutation(api.pokerChat.sendMessage);
+  const [chatInput, setChatInput] = useState('');
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   // Game state
   const [phase, setPhase] = useState<GamePhase>('deck-building');
   const [currentRound, setCurrentRound] = useState(1);
@@ -792,6 +801,30 @@ export function PokerBattleTable({
 
     console.log('[PokerBattle] Moving to card-selection phase for round', newRound);
     setPhase('card-selection');
+  };
+
+  // Chat functions
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || !roomId || isCPUMode) return;
+
+    try {
+      await sendMessageMutation({
+        roomId,
+        sender: playerAddress,
+        senderUsername: playerUsername,
+        message: chatInput.trim(),
+      });
+      setChatInput('');
+    } catch (error) {
+      console.error('[PokerBattle] Error sending chat message:', error);
+    }
+  };
+
+  const handleChatKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   // Matchmaking callbacks
