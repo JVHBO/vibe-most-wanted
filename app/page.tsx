@@ -31,6 +31,8 @@ import { PvPMenuModals } from "@/components/PvPMenuModals";
 import { GamePopups } from "@/components/GamePopups";
 import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
+import { PokerBattleTable } from "@/components/PokerBattleTable";
+import { PokerMatchmaking } from "@/components/PokerMatchmaking";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
@@ -751,6 +753,10 @@ export default function TCGPage() {
   const [attacksRemaining, setAttacksRemaining] = useState<number>(getMaxAttacks(null));
   const [isAttacking, setIsAttacking] = useState<boolean>(false);
   const [isConfirmingCards, setIsConfirmingCards] = useState<boolean>(false);
+
+  // Poker Battle States
+  const [showPokerBattle, setShowPokerBattle] = useState<boolean>(false);
+  const [pokerMode, setPokerMode] = useState<'cpu' | 'pvp'>('pvp');
 
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
@@ -3641,6 +3647,19 @@ export default function TCGPage() {
         api={api}
       />
 
+      {/* Poker Battle - handles both CPU and PvP modes */}
+      {showPokerBattle && (
+        <PokerBattleTable
+          onClose={() => setShowPokerBattle(false)}
+          playerCards={sortedNfts}
+          isCPUMode={pokerMode === 'cpu'}
+          opponentDeck={pokerMode === 'cpu' ? strongestJcNfts : []}
+          difficulty={pokerMode === 'cpu' ? "goofy" : undefined}
+          playerAddress={address || ''}
+          playerUsername={userProfile?.username || ''}
+        />
+      )}
+
       {/* PvP Menu Modals (Game mode selection, PvP menu, Create/Join room, Auto-match) */}
       <PvPMenuModals
         pvpMode={pvpMode}
@@ -4552,6 +4571,44 @@ export default function TCGPage() {
                     }`}
                   >
                     Battle vs Player
+                  </button>
+                </div>
+
+                {/* Poker Battle CPU Button */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      setPokerMode('cpu');
+                      setShowPokerBattle(true);
+                    }}
+                    disabled={!userProfile}
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                      userProfile
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-neon hover:scale-105'
+                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                    }`}
+                  >
+                    ♠️ Poker Battle CPU
+                  </button>
+                </div>
+
+                {/* Poker Battle PvP Button */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      setPokerMode('pvp');
+                      setShowPokerBattle(true);
+                    }}
+                    disabled={!userProfile}
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                      userProfile
+                        ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white shadow-neon hover:scale-105'
+                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                    }`}
+                  >
+                    ♠️ Poker Battle PvP
                   </button>
                 </div>
 
