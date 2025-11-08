@@ -178,10 +178,8 @@ export const leavePokerRoom = mutation({
     const isGuest = room.guestAddress === args.address.toLowerCase();
 
     if (isHost) {
-      // Host leaving - cancel the entire room
-      await ctx.db.patch(room._id, {
-        status: "cancelled",
-      });
+      // Host leaving - DELETE the entire room immediately
+      await ctx.db.delete(room._id);
     } else if (isGuest) {
       // Guest leaving - remove them from room
       await ctx.db.patch(room._id, {
@@ -206,14 +204,18 @@ export const autoMatch = mutation({
     token: v.union(v.literal("TESTVBMS"), v.literal("testUSDC")),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
+    const addr = args.address.toLowerCase();
+
     // Look for an available room with same stakes
     const availableRoom = await ctx.db
       .query("pokerRooms")
       .withIndex("by_token_ante", (q) =>
         q.eq("token", args.token).eq("ante", args.ante).eq("status", "waiting")
       )
-      .filter((q) => q.neq(q.field("guestAddress"), args.address.toLowerCase()))
-      .filter((q) => q.neq(q.field("hostAddress"), args.address.toLowerCase()))
+      .filter((q) => q.neq(q.field("hostAddress"), addr)) // Not my room
+      .filter((q) => q.gt(q.field("expiresAt"), now)) // Not expired
+      .order("asc") // Get oldest room first
       .first();
 
     if (availableRoom && !availableRoom.guestAddress) {
@@ -221,11 +223,13 @@ export const autoMatch = mutation({
       const startingBankroll = availableRoom.ante * 50;
 
       await ctx.db.patch(availableRoom._id, {
-        guestAddress: args.address.toLowerCase(),
+        guestAddress: addr,
         guestUsername: args.username,
         guestReady: false,
         guestBankroll: startingBankroll,
       });
+
+      console.log(`🎮 Auto-match: ${args.username} joined room ${availableRoom.roomId}`);
 
       return {
         success: true,
@@ -236,8 +240,7 @@ export const autoMatch = mutation({
     }
 
     // No room found - create a new one
-    const now = Date.now();
-    const roomId = `poker_${args.address}_${now}`;
+    const roomId = `poker_${addr}_${now}`;
     const startingBankroll = args.ante * 50;
 
     await ctx.db.insert("pokerRooms", {
@@ -245,13 +248,15 @@ export const autoMatch = mutation({
       status: "waiting",
       ante: args.ante,
       token: args.token,
-      hostAddress: args.address.toLowerCase(),
+      hostAddress: addr,
       hostUsername: args.username,
       hostReady: false,
       hostBankroll: startingBankroll,
       createdAt: now,
       expiresAt: now + 10 * 60 * 1000,
     });
+
+    console.log(`🎮 Auto-match: ${args.username} created room ${roomId}`);
 
     return {
       success: true,
