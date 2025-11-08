@@ -281,8 +281,8 @@ export function PokerBattleTable({
 
     if (isCPUMode) {
       setTimeout(() => {
-        let playerPower = playerSelectedCard.power;
-        let opponentPower = opponentSelectedCard.power;
+        let playerPower = playerSelectedCard.power || 0;
+        let opponentPower = opponentSelectedCard.power || 0;
 
         // Apply actions with shield logic
         const playerHasShield = playerAction === 'SHIELD';
@@ -561,7 +561,7 @@ export function PokerBattleTable({
                           style={{ background: getRarityGradient(selectedDeck[i].rarity) }}
                         >
                           <div className="text-white text-xs font-bold text-center mb-1">{selectedDeck[i].name}</div>
-                          <div className="text-white text-lg font-bold">{Math.round(selectedDeck[i].power).toLocaleString()}</div>
+                          <div className="text-white text-lg font-bold">{Math.round(selectedDeck[i].power || 0).toLocaleString()}</div>
                         </div>
                       )
                     ) : (
@@ -598,7 +598,7 @@ export function PokerBattleTable({
                         style={{ background: getRarityGradient(card.rarity) }}
                       >
                         <div className="text-white text-[0.5rem] font-bold text-center mb-0.5 leading-tight">{card.name}</div>
-                        <div className="text-white text-sm font-bold">{Math.round(card.power).toLocaleString()}</div>
+                        <div className="text-white text-sm font-bold">{Math.round(card.power || 0).toLocaleString()}</div>
                       </div>
                     )}
                     {isSelected && (
@@ -739,12 +739,12 @@ export function PokerBattleTable({
                               style={{ background: getRarityGradient(opponentSelectedCard.rarity) }}
                             >
                               <div className="text-white text-xs font-bold text-center mb-1">{opponentSelectedCard.name}</div>
-                              <div className="text-white text-2xl font-bold">{Math.round(opponentSelectedCard.power).toLocaleString()}</div>
+                              <div className="text-white text-2xl font-bold">{Math.round(opponentSelectedCard.power || 0).toLocaleString()}</div>
                             </div>
                           )}
                           <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold text-center">
                             {opponentSelectedCard.name}<br/>
-                            {Math.round(opponentSelectedCard.power * (
+                            {Math.round((opponentSelectedCard.power || 0) * (
                               opponentAction === 'BOOST' ? 1.3 :
                               opponentAction === 'DOUBLE' ? 2 : 1
                             )).toLocaleString()}
@@ -796,9 +796,9 @@ export function PokerBattleTable({
                     </div>
                     {phase === 'reveal' && playerSelectedCard && opponentSelectedCard && (
                       <div className="mt-3 text-vintage-burnt-gold font-modern text-sm">
-                        Your card: {playerSelectedCard.name} ({Math.round(playerSelectedCard.power).toLocaleString()})
+                        Your card: {playerSelectedCard.name} ({Math.round(playerSelectedCard.power || 0).toLocaleString()})
                         <br/>
-                        vs Opponent: {opponentSelectedCard.name} ({Math.round(opponentSelectedCard.power).toLocaleString()})
+                        vs Opponent: {opponentSelectedCard.name} ({Math.round(opponentSelectedCard.power || 0).toLocaleString()})
                       </div>
                     )}
                   </div>
