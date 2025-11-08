@@ -20,6 +20,11 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
     address ? { address } : "skip"
   );
 
+  // Debug logging
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('[CoinsInboxDisplay] address:', address, 'inboxStatus:', inboxStatus, 'compact:', compact);
+  }
+
   if (!address || !inboxStatus) return null;
 
   const coinsInbox = inboxStatus.coinsInbox || 0;
