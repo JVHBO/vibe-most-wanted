@@ -1856,7 +1856,7 @@ export function PokerBattleTable({
               <div className="flex gap-3">
                 <button
                   onClick={() => {
-                    const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                    const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
                     const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const tweetText = selectedToken === 'VIBE_NFT'
@@ -1872,7 +1872,7 @@ export function PokerBattleTable({
                 </button>
                 <button
                   onClick={() => {
-                    const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                    const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
                     const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const castText = selectedToken === 'VIBE_NFT'
@@ -1920,7 +1920,7 @@ export function PokerBattleTable({
               <div className="flex gap-3">
                 <button
                   onClick={() => {
-                    const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                    const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
                     const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const tweetText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nI want a rematch!`;
@@ -1934,7 +1934,7 @@ export function PokerBattleTable({
                 </button>
                 <button
                   onClick={() => {
-                    const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent(playerUsername)}|${encodeURIComponent('Opponent')}|${selectedAnte}|${selectedToken}`;
+                    const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
                     const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const castText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nRevenge time!`;
