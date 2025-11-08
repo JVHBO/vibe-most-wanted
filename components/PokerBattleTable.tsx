@@ -380,7 +380,7 @@ export function PokerBattleTable({
       setTimeout(() => {
         console.log('[PokerBattle] Moving to reveal phase after card selection');
         setPhase('reveal');
-      }, 800);
+      }, 3000);
     } else {
       // PvP mode - send to server
       console.log('[PokerBattle] Sending card selection to server', { roomId, playerAddress });
@@ -482,7 +482,7 @@ export function PokerBattleTable({
         setTimeout(() => {
           console.log('[PokerBattle] CPU Mode - Calling resolveRound after AI action');
           resolveRound();
-        }, 800);
+        }, 3000);
       }, 1000);
     } else {
       console.log('[PokerBattle] PvP Mode - Sending action to server', { roomId, playerAddress, action });
@@ -618,10 +618,10 @@ export function PokerBattleTable({
           console.log('[PokerBattle] CPU Mode - Showing tie message, waiting 2.5s before next round');
 
           setTimeout(() => {
-            console.log('[PokerBattle] CPU Mode - 3.5s timeout for tie completed, proceeding to next round');
+            console.log('[PokerBattle] CPU Mode - 3s timeout for tie completed, proceeding to next round');
             setShowRoundWinner(false);
             nextRound();
-          }, 3500);
+          }, 3000);
         } else if (playerWins) {
           setPlayerBankroll(prev => {
             const newBankroll = prev + pot;
@@ -658,7 +658,7 @@ export function PokerBattleTable({
 
         // Hide message and check win condition after delay
         setTimeout(() => {
-          console.log('[PokerBattle] CPU Mode - 3.5s timeout completed, checking win condition');
+          console.log('[PokerBattle] CPU Mode - 3s timeout completed, checking win condition');
           setShowRoundWinner(false);
           setRoundWinner(null);
 
@@ -680,7 +680,7 @@ export function PokerBattleTable({
             console.log('[PokerBattle] CPU Mode - Proceeding to next round');
             nextRound();
           }
-        }, 3500);
+        }, 3000);
       }, 1000);
     } else {
       // PvP mode - send to server for resolution
@@ -784,7 +784,7 @@ export function PokerBattleTable({
               setPlayerAction(null);
               setOpponentAction(null);
             }
-          }, 3500);
+          }, 3000);
         }, 1000);
       } catch (error) {
         console.error('[PokerBattle] PvP Mode - Error resolving round:', error);
@@ -1273,8 +1273,19 @@ export function PokerBattleTable({
                 <div className="text-vintage-gold font-display font-bold">
                   ROUND {currentRound}/7 • Score: {playerScore}-{opponentScore}
                 </div>
-                <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse">
-                  <EyeIcon className="inline-block text-blue-400" size={16} /> SPECTATOR MODE
+                <div className="flex flex-col items-center gap-1">
+                  <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse">
+                    <EyeIcon className="inline-block text-blue-400" size={16} /> SPECTATOR MODE
+                  </div>
+                  {phase === 'card-selection' && (
+                    <div className="text-vintage-burnt-gold text-xs animate-pulse">Players selecting cards...</div>
+                  )}
+                  {phase === 'reveal' && (
+                    <div className="text-yellow-400 text-xs animate-pulse">Cards revealed! Players choosing actions...</div>
+                  )}
+                  {phase === 'resolution' && (
+                    <div className="text-green-400 text-xs font-bold animate-pulse">Battle in progress!</div>
+                  )}
                 </div>
                 <div className="text-vintage-gold font-display font-bold">
                   POT: {pot} {selectedToken}
@@ -1283,7 +1294,29 @@ export function PokerBattleTable({
             </div>
 
             {/* Split screen - Both players side by side (or vertical on mobile) */}
-            <div className={`flex-1 p-2 bg-vintage-deep-black rounded-b-2xl border-2 border-vintage-gold border-t-0 ${isInFarcaster ? 'flex flex-col gap-3' : 'grid grid-cols-2 gap-2'}`}>
+            <div className={`flex-1 p-2 bg-vintage-deep-black rounded-b-2xl border-2 border-vintage-gold border-t-0 ${isInFarcaster ? 'flex flex-col gap-3' : 'grid grid-cols-2 gap-2'} relative`}>
+              {/* VS Indicator - Shows in center when cards are revealed */}
+              {playerSelectedCard && opponentSelectedCard && (phase === 'reveal' || phase === 'resolution') && (
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                  <div className="bg-vintage-deep-black/90 border-4 border-vintage-gold rounded-full w-24 h-24 flex items-center justify-center shadow-2xl animate-in zoom-in duration-500">
+                    <div className="text-center">
+                      <div className="text-vintage-gold font-display font-bold text-2xl">VS</div>
+                      {phase === 'resolution' && (() => {
+                        const playerPower = (playerSelectedCard.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1);
+                        const opponentPower = (opponentSelectedCard.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1);
+                        if (playerPower > opponentPower) {
+                          return <div className="text-blue-400 text-xs mt-1">HOST+</div>;
+                        } else if (opponentPower > playerPower) {
+                          return <div className="text-red-400 text-xs mt-1">GUEST+</div>;
+                        } else {
+                          return <div className="text-yellow-400 text-xs mt-1">TIE</div>;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* HOST SIDE */}
               <div className="bg-gradient-to-br from-blue-900/30 to-blue-950/30 rounded-xl border-2 border-blue-500/50 p-3 flex flex-col">
                 {/* Host Profile */}
@@ -1326,7 +1359,7 @@ export function PokerBattleTable({
                 {/* Host's selected card */}
                 <div className="flex-1 flex items-center justify-center mb-3">
                   <div className="w-24 sm:w-32 aspect-[2/3] border-2 border-dashed border-blue-400 rounded-lg flex items-center justify-center bg-black/30">
-                    {playerSelectedCard && phase === 'resolution' ? (
+                    {playerSelectedCard && (phase === 'resolution' || phase === 'reveal') ? (
                       <div className="relative w-full h-full">
                         {playerSelectedCard.imageUrl || playerSelectedCard.image ? (
                           <img src={playerSelectedCard.imageUrl || playerSelectedCard.image} alt={playerSelectedCard.name} className="w-full h-full object-cover rounded-lg" />
@@ -1407,7 +1440,7 @@ export function PokerBattleTable({
                 {/* Guest's selected card */}
                 <div className="flex-1 flex items-center justify-center mb-3">
                   <div className="w-24 sm:w-32 aspect-[2/3] border-2 border-dashed border-red-400 rounded-lg flex items-center justify-center bg-black/30">
-                    {opponentSelectedCard && phase === 'resolution' ? (
+                    {opponentSelectedCard && (phase === 'resolution' || phase === 'reveal') ? (
                       <div className="relative w-full h-full">
                         {opponentSelectedCard.imageUrl || opponentSelectedCard.image ? (
                           <img src={opponentSelectedCard.imageUrl || opponentSelectedCard.image} alt={opponentSelectedCard.name} className="w-full h-full object-cover rounded-lg" />
