@@ -611,7 +611,6 @@ export function PokerBattleTable({
           });
           setPot(0);
           setRoundWinner(null);
-          AudioManager.tie(); // Tie sound
 
           // Show tie message
           setShowRoundWinner(true);
@@ -634,7 +633,6 @@ export function PokerBattleTable({
             return newScore;
           });
           setRoundWinner('player');
-          AudioManager.buttonSuccess(); // Victory sound
         } else {
           setOpponentBankroll(prev => {
             const newBankroll = prev + pot;
@@ -647,7 +645,6 @@ export function PokerBattleTable({
             return newScore;
           });
           setRoundWinner('opponent');
-          AudioManager.buttonError(); // Defeat sound
         }
 
         setPot(0);
@@ -755,13 +752,6 @@ export function PokerBattleTable({
           console.log('[PokerBattle] PvP Mode - Showing round winner', {
             winner: playerWins ? 'player' : 'opponent'
           });
-
-          // Play sound
-          if (playerWins) {
-            AudioManager.buttonSuccess();
-          } else {
-            AudioManager.buttonError();
-          }
 
           setTimeout(() => {
             setShowRoundWinner(false);

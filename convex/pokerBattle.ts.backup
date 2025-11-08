@@ -570,22 +570,17 @@ export const resolveRound = mutation({
     // Determine winner
     const hostWins = hostPower > guestPower;
 
-    // Update score and bankroll with 5% house fee
-    const houseFee = Math.floor(gameState.pot * 0.05); // 5% fee
-    const winnerPayout = gameState.pot - houseFee;
-
+    // Update score and bankroll
     if (hostWins) {
       gameState.hostScore += 1;
       await ctx.db.patch(room._id, {
-        hostBankroll: room.hostBankroll! + winnerPayout,
+        hostBankroll: room.hostBankroll! + gameState.pot,
       });
-      console.log(`💰 Host wins pot: ${winnerPayout} (fee: ${houseFee})`);
     } else {
       gameState.guestScore += 1;
       await ctx.db.patch(room._id, {
-        guestBankroll: room.guestBankroll! + winnerPayout,
+        guestBankroll: room.guestBankroll! + gameState.pot,
       });
-      console.log(`💰 Guest wins pot: ${winnerPayout} (fee: ${houseFee})`);
     }
 
     // Reset pot
@@ -606,11 +601,15 @@ export const resolveRound = mutation({
     gameState.guestSelectedCard = undefined;
     gameState.hostAction = undefined;
     gameState.guestAction = undefined;
-    // Pot stays 0 - no ante deduction on subsequent rounds
-    // Players only pay ante once at game start (line 376)
+    gameState.hostBet = room.ante;
+    gameState.guestBet = room.ante;
+    gameState.pot += room.ante * 2; // Ante for next round
 
+    // Update bankrolls for ante
     await ctx.db.patch(room._id, {
       gameState,
+      hostBankroll: room.hostBankroll! - room.ante,
+      guestBankroll: room.guestBankroll! - room.ante,
     });
 
     console.log(`🏁 Round ${gameState.currentRound - 1} resolved in ${args.roomId}`);
@@ -863,8 +862,8 @@ export const resolveBets = mutation({
       const won = bet.betOn === winnerAddr;
 
       if (won) {
-        // Winner gets 3x their bet (1x return + 2x profit)
-        const payout = bet.amount * 3;
+        // Winner gets 2x their bet (1x return + 1x profit)
+        const payout = bet.amount * 2;
 
         // Get bettor's profile
         const profile = await ctx.db
