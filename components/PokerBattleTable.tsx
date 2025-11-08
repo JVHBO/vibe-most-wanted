@@ -216,51 +216,108 @@ export function PokerBattleTable({
   };
 
   // Betting Actions
-  const handleBet = (amount: number) => {
+  const handleBet = async (amount: number) => {
     if (amount > playerBankroll) return;
     AudioManager.buttonClick();
 
-    setPlayerBankroll(prev => prev - amount);
-    setPlayerBetThisRound(prev => prev + amount);
-    setPot(prev => prev + amount);
-    setCurrentBet(amount);
-
     if (isCPUMode) {
+      setPlayerBankroll(prev => prev - amount);
+      setPlayerBetThisRound(prev => prev + amount);
+      setPot(prev => prev + amount);
+      setCurrentBet(amount);
+
       // AI responds (simple AI for now) with delay
       setTimeout(() => {
         aiRespondToBet(amount);
       }, 1200);
+    } else {
+      // PvP mode - send to server
+      try {
+        await makeBetMutation({
+          roomId,
+          address: playerAddress,
+          action: currentBet > 0 ? "RAISE" : "BET",
+          amount,
+        });
+      } catch (error) {
+        console.error('Error making bet:', error);
+      }
     }
   };
 
-  const handleCall = () => {
-    const toCall = currentBet;
+  const handleCall = async () => {
+    const toCall = currentBet - playerBetThisRound;
     if (toCall > playerBankroll) return;
     AudioManager.buttonClick();
 
-    setPlayerBankroll(prev => prev - toCall);
-    setPlayerBetThisRound(prev => prev + toCall);
-    setPot(prev => prev + toCall);
+    if (isCPUMode) {
+      setPlayerBankroll(prev => prev - toCall);
+      setPlayerBetThisRound(prev => prev + toCall);
+      setPot(prev => prev + toCall);
 
-    setTimeout(() => {
-      setPhase('reveal');
-    }, 800);
+      setTimeout(() => {
+        setPhase('reveal');
+      }, 800);
+    } else {
+      try {
+        await makeBetMutation({
+          roomId,
+          address: playerAddress,
+          action: "CALL",
+        });
+      } catch (error) {
+        console.error('Error calling:', error);
+      }
+    }
   };
 
-  const handleFold = () => {
+  const handleCheck = async () => {
     AudioManager.buttonClick();
-    // Player folds - opponent wins pot
-    setOpponentBankroll(prev => prev + pot);
-    setPot(0);
-    setOpponentScore(prev => prev + 1);
 
-    setTimeout(() => {
-      if (opponentScore + 1 >= 4) {
-        setPhase('game-over');
-      } else {
-        nextRound();
+    if (isCPUMode) {
+      setTimeout(() => {
+        setPhase('reveal');
+      }, 800);
+    } else {
+      try {
+        await makeBetMutation({
+          roomId,
+          address: playerAddress,
+          action: "CHECK",
+        });
+      } catch (error) {
+        console.error('Error checking:', error);
       }
-    }, 1000);
+    }
+  };
+
+  const handleFold = async () => {
+    AudioManager.buttonClick();
+
+    if (isCPUMode) {
+      // Player folds - opponent wins pot
+      setOpponentBankroll(prev => prev + pot);
+      setPot(0);
+      setOpponentScore(prev => prev + 1);
+
+      setTimeout(() => {
+        if (opponentScore + 1 >= 4) {
+          setPhase('game-over');
+        } else {
+          nextRound();
+        }
+      }, 1000);
+    } else {
+      try {
+        await makeBetMutation({
+          roomId,
+          address: playerAddress,
+          action: "FOLD",
+        });
+      } catch (error) {
+        console.error('Error folding:', error);
+      }
+    }
   };
 
   const aiRespondToBet = (amount: number) => {
