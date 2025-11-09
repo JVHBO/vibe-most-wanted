@@ -955,3 +955,18 @@ export const getUserRoomBets = query({
     return bets;
   },
 });
+
+// ============================================================================
+// PUBLIC QUERIES (for external scripts/monitoring)
+// ============================================================================
+
+/**
+ * Get all poker rooms (for monitoring/admin tools)
+ */
+export const listAllRooms = query({
+  args: {},
+  handler: async (ctx) => {
+    const rooms = await ctx.db.query("pokerRooms").collect();
+    return rooms;
+  },
+});

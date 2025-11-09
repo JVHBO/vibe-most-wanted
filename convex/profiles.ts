@@ -852,3 +852,18 @@ export const updateRevealedCardsCache = mutation({
     };
   },
 });
+
+// ============================================================================
+// PUBLIC QUERIES (for external scripts/monitoring)
+// ============================================================================
+
+/**
+ * Get all profiles (for economy monitoring/admin tools)
+ */
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("profiles").collect();
+    return profiles;
+  },
+});
