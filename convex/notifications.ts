@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalAction, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 /**
@@ -166,13 +166,14 @@ export const importTokens = mutation({
 /**
  * Send daily login reminder to all users with notification tokens
  * Called by scheduled function (cron job)
+ * NOW USING ACTION (not mutation) to allow sleep() delays
  */
-export const sendDailyLoginReminder = internalMutation({
+export const sendDailyLoginReminder = internalAction({
   args: {},
   handler: async (ctx) => {
     try {
       // Get all notification tokens
-      const tokens = await ctx.db.query("notificationTokens").collect();
+      const tokens = await ctx.runQuery(internal.notifications.getAllTokens);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
@@ -183,19 +184,22 @@ export const sendDailyLoginReminder = internalMutation({
 
       let sent = 0;
       let failed = 0;
+      const DELAY_MS = 100; // 100ms delay between each notification
 
-      // Send notification to each user
-      for (const tokenData of tokens) {
+      // Send notification to each user WITH DELAY
+      for (let i = 0; i < tokens.length; i++) {
+        const tokenData = tokens[i];
+
         try {
           const { token, url, fid } = tokenData;
 
-          // Notification content
+          // Notification content with size validation
           const payload = {
-            notificationId: `daily_login_${new Date().toISOString().split('T')[0]}_${fid}`,
-            title: "💰 Daily Login Bonus!",
-            body: "Claim your free coins! Don't miss today's reward 🎁",
+            notificationId: `daily_login_${new Date().toISOString().split('T')[0]}_${fid}`.slice(0, 128),
+            title: "💰 Daily Login Bonus!".slice(0, 32),
+            body: "Claim your free coins! Don't miss today's reward 🎁".slice(0, 128),
             tokens: [token],
-            targetUrl: "https://www.vibemostwanted.xyz",
+            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
           };
 
           // Send notification via Farcaster API
@@ -215,10 +219,9 @@ export const sendDailyLoginReminder = internalMutation({
 
           const result = await response.json();
 
-          // Handle invalid tokens
+          // Handle invalid tokens (note: can't delete from Action, just mark as failed)
           if (result.invalidTokens?.includes(token)) {
-            await ctx.db.delete(tokenData._id);
-            console.log(`🗑️ Removed invalid token for FID ${fid}`);
+            console.log(`❌ Invalid token for FID ${fid}`);
             failed++;
             continue;
           }
@@ -231,11 +234,18 @@ export const sendDailyLoginReminder = internalMutation({
           }
 
           sent++;
-          console.log(`✅ Sent to FID ${fid}`);
+          if (i % 10 === 0) {
+            console.log(`✅ Progress: ${sent}/${tokens.length} sent`);
+          }
 
         } catch (error: any) {
           console.error(`❌ Error sending to FID ${tokenData.fid}:`, error.message);
           failed++;
+        }
+
+        // Add delay between notifications to avoid rate limiting
+        if (i < tokens.length - 1) {
+          await sleep(DELAY_MS);
         }
       }
 
@@ -254,6 +264,11 @@ export const sendDailyLoginReminder = internalMutation({
 // ============================================================================
 
 // Array of gaming tips to rotate through
+// Helper function for delays in actions (NOT available in mutations!)
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 const GAMING_TIPS = [
   {
     title: "🚀 Coming Soon: Real $VBMS!",
@@ -327,21 +342,11 @@ export const sendPeriodicTip = internalMutation({
       // Get current tip
       const currentTip = GAMING_TIPS[tipState!.currentTipIndex % GAMING_TIPS.length];
 
-      // Send to all users (with rate limiting to avoid spam detection)
+      // Send to all users
       let sent = 0;
       let failed = 0;
-      const BATCH_SIZE = 10; // Send 10 at a time
-      const DELAY_MS = 500; // 500ms delay between batches
 
-      // Process in batches
-      for (let i = 0; i < tokens.length; i++) {
-        const tokenData = tokens[i];
-
-        // Add delay every BATCH_SIZE notifications
-        if (i > 0 && i % BATCH_SIZE === 0) {
-          console.log(`⏱️  Rate limit pause after ${i} notifications (${sent} sent, ${failed} failed)`);
-          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-        }
+      for (const tokenData of tokens) {
         try {
           // Validar tamanhos conforme limites do Farcaster (title: 32, body: 128, notificationId: 128)
           const notificationId = `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
@@ -441,21 +446,11 @@ export const triggerPeriodicTip = mutation({
       // Get current tip
       const currentTip = GAMING_TIPS[tipState!.currentTipIndex % GAMING_TIPS.length];
 
-      // Send to all users (with rate limiting to avoid spam detection)
+      // Send to all users
       let sent = 0;
       let failed = 0;
-      const BATCH_SIZE = 10; // Send 10 at a time
-      const DELAY_MS = 500; // 500ms delay between batches
 
-      // Process in batches
-      for (let i = 0; i < tokens.length; i++) {
-        const tokenData = tokens[i];
-
-        // Add delay every BATCH_SIZE notifications
-        if (i > 0 && i % BATCH_SIZE === 0) {
-          console.log(`⏱️  Rate limit pause after ${i} notifications (${sent} sent, ${failed} failed)`);
-          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-        }
+      for (const tokenData of tokens) {
         try {
           // Validar tamanhos conforme limites do Farcaster (title: 32, body: 128, notificationId: 128)
           const notificationId = `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
@@ -611,21 +606,11 @@ export const sendCustomNotification = mutation({
         return { sent: 0, failed: 0, total: 0 };
       }
 
-      // Send to all users (with rate limiting to avoid spam detection)
+      // Send to all users
       let sent = 0;
       let failed = 0;
-      const BATCH_SIZE = 10; // Send 10 at a time
-      const DELAY_MS = 500; // 500ms delay between batches
 
-      // Process in batches
-      for (let i = 0; i < tokens.length; i++) {
-        const tokenData = tokens[i];
-
-        // Add delay every BATCH_SIZE notifications
-        if (i > 0 && i % BATCH_SIZE === 0) {
-          console.log(`⏱️  Rate limit pause after ${i} notifications (${sent} sent, ${failed} failed)`);
-          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-        }
+      for (const tokenData of tokens) {
         try {
           // Validar tamanhos conforme limites do Farcaster
           const notificationId = `custom_${tokenData.fid}_${Date.now()}`.slice(0, 128);
