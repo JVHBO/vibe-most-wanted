@@ -1084,15 +1084,13 @@ export function PokerBattleTable({
         }
       }
 
-      // Sync boost coins from room
-      if (room.hostBoostCoins !== undefined && room.guestBoostCoins !== undefined) {
-        if (isHost) {
-          setPlayerBoostCoins(room.hostBoostCoins);
-          setOpponentBoostCoins(room.guestBoostCoins);
-        } else {
-          setPlayerBoostCoins(room.guestBoostCoins);
-          setOpponentBoostCoins(room.hostBoostCoins);
-        }
+      // Sync boost coins from room (default to 1000 if not set for old rooms)
+      if (isHost) {
+        setPlayerBoostCoins(room.hostBoostCoins ?? 1000);
+        setOpponentBoostCoins(room.guestBoostCoins ?? 1000);
+      } else {
+        setPlayerBoostCoins(room.guestBoostCoins ?? 1000);
+        setOpponentBoostCoins(room.hostBoostCoins ?? 1000);
       }
     }
   }, [room, isCPUMode, isHost, currentView]);
