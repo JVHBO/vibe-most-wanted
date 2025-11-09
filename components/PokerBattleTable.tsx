@@ -234,6 +234,10 @@ export function PokerBattleTable({
   const [playerBankroll, setPlayerBankroll] = useState(0);
   const [opponentBankroll, setOpponentBankroll] = useState(0);
 
+  // Boost Coins (Virtual currency for PvP only - used to buy boosts during match)
+  const [playerBoostCoins, setPlayerBoostCoins] = useState(0);
+  const [opponentBoostCoins, setOpponentBoostCoins] = useState(0);
+
   // Score
   const [playerScore, setPlayerScore] = useState(0);
   const [opponentScore, setOpponentScore] = useState(0);
@@ -356,19 +360,38 @@ export function PokerBattleTable({
       console.log('[PokerBattle] PvP mode - waiting for opponent deck from server');
     }
 
-    const initialPot = isCPUMode ? 100 : selectedAnte * 2;
-    const initialBankroll = isCPUMode ? 500 : selectedAnte * 50;
+    // CPU Mode: Pot based on difficulty (player doesn't pay anything)
+    // PvP Mode: Pot based on ante (player pays ante)
+    let initialPot = selectedAnte * 2; // Default for PvP
+    if (isCPUMode) {
+      // Difficulty-based rewards (no cost to player) - reduced to extend pool
+      switch (difficulty) {
+        case 'gey': initialPot = 15; break;       // Easy = 15 coins (was 50)
+        case 'goofy': initialPot = 30; break;     // Medium-Easy = 30 coins (was 100)
+        case 'gooner': initialPot = 60; break;    // Medium = 60 coins (was 200)
+        case 'gangster': initialPot = 120; break; // Hard = 120 coins (was 400)
+        case 'gigachad': initialPot = 240; break; // Very Hard = 240 coins (was 800)
+        default: initialPot = 30;
+      }
+    }
+
+    const initialBankroll = isCPUMode ? 0 : selectedAnte * 50; // CPU: no bankroll tracking
+    const initialBoostCoins = 1000; // Both CPU and PvP: 1000 virtual boost coins to start
 
     console.log('[PokerBattle] Setting initial game state', {
       pot: initialPot,
       playerBankroll: initialBankroll,
       opponentBankroll: initialBankroll,
+      playerBoostCoins: initialBoostCoins,
+      opponentBoostCoins: initialBoostCoins,
       phase: 'card-selection'
     });
 
     setPot(initialPot);
     setPlayerBankroll(initialBankroll);
     setOpponentBankroll(initialBankroll);
+    setPlayerBoostCoins(initialBoostCoins);
+    setOpponentBoostCoins(initialBoostCoins);
     setPhase('card-selection');
   };
 
@@ -426,13 +449,12 @@ export function PokerBattleTable({
   };
 
 
-  // Boost shop prices (based on ante for scaling)
+  // Boost shop prices (same for both CPU and PvP - always uses boost coins)
   const getBoostPrice = (boostType: CardAction): number => {
-    const baseAnte = isCPUMode ? 50 : selectedAnte;
     switch (boostType) {
-      case 'BOOST': return Math.round(baseAnte * 1.6); // +30% power
-      case 'SHIELD': return Math.round(baseAnte * 1.2); // Block opponent boost
-      case 'DOUBLE': return Math.round(baseAnte * 3.2); // x2 power
+      case 'BOOST': return 100; // +30% power
+      case 'SHIELD': return 80;  // Block opponent boost
+      case 'DOUBLE': return 200; // x2 power (expensive!)
       default: return 0;
     }
   };
@@ -441,8 +463,8 @@ export function PokerBattleTable({
   const showConfirmAction = (action: CardAction) => {
     const cost = getBoostPrice(action);
 
-    // Check if player can afford it
-    if (cost > 0 && cost > playerBankroll) {
+    // Check if player can afford it (always use boost coins)
+    if (cost > 0 && cost > playerBoostCoins) {
       AudioManager.buttonError();
       return;
     }
@@ -474,12 +496,12 @@ export function PokerBattleTable({
 
     setPlayerAction(action);
 
-    // Deduct cost from bankroll
+    // Deduct cost from boost coins (both CPU and PvP mode use boost coins)
     if (cost > 0) {
-      setPlayerBankroll(prev => {
-        const newBankroll = prev - cost;
-        console.log('[PokerBattle] Player paid for action', { prev, cost, newBankroll });
-        return newBankroll;
+      setPlayerBoostCoins(prev => {
+        const newBoostCoins = prev - cost;
+        console.log('[PokerBattle] Player paid for action (boost coins)', { prev, cost, newBoostCoins });
+        return newBoostCoins;
       });
     }
 
@@ -497,13 +519,13 @@ export function PokerBattleTable({
 
         setOpponentAction(aiAction);
 
-        // AI pays for boost
+        // AI pays for boost using boost coins
         const aiCost = getBoostPrice(aiAction);
         if (aiCost > 0) {
-          setOpponentBankroll(prev => {
-            const newBankroll = prev - aiCost;
-            console.log('[PokerBattle] CPU Mode - AI paid for action', { prev, aiCost, newBankroll });
-            return newBankroll;
+          setOpponentBoostCoins(prev => {
+            const newBoostCoins = prev - aiCost;
+            console.log('[PokerBattle] CPU Mode - AI paid for action (boost coins)', { prev, aiCost, newBoostCoins });
+            return newBoostCoins;
           });
         }
 
@@ -657,27 +679,31 @@ export function PokerBattleTable({
             nextRound();
           }, 3000);
         } else if (playerWins) {
+          // Winner gets pot (no fee on frontend, just display)
           setPlayerBankroll(prev => {
             const newBankroll = prev + pot;
-            console.log('[PokerBattle] CPU Mode - Player won pot', { prev, pot, newBankroll });
+            console.log('[PokerBattle] Player won pot', { prev, pot, newBankroll });
             return newBankroll;
           });
+
           setPlayerScore(prev => {
             const newScore = prev + 1;
-            console.log('[PokerBattle] CPU Mode - Player score increased', { prev, newScore });
+            console.log('[PokerBattle] Player score increased', { prev, newScore });
             return newScore;
           });
           setRoundWinner('player');
           AudioManager.buttonSuccess(); // Victory sound
         } else {
+          // Winner gets pot (no fee on frontend, just display)
           setOpponentBankroll(prev => {
             const newBankroll = prev + pot;
-            console.log('[PokerBattle] CPU Mode - Opponent won pot', { prev, pot, newBankroll });
+            console.log('[PokerBattle] Opponent won pot', { prev, pot, newBankroll });
             return newBankroll;
           });
+
           setOpponentScore(prev => {
             const newScore = prev + 1;
-            console.log('[PokerBattle] CPU Mode - Opponent score increased', { prev, newScore });
+            console.log('[PokerBattle] Opponent score increased', { prev, newScore });
             return newScore;
           });
           setRoundWinner('opponent');
@@ -864,15 +890,12 @@ export function PokerBattleTable({
     }
 
     const newRound = currentRound + 1;
-    const anteAmount = isCPUMode ? 50 : selectedAnte;
-    const newPot = anteAmount * 2;
 
     console.log('[PokerBattle] Advancing to next round', {
       newRound,
-      anteAmount,
-      newPot,
       playerBankrollBefore: playerBankroll,
-      opponentBankrollBefore: opponentBankroll
+      opponentBankrollBefore: opponentBankroll,
+      note: 'Ante only deducted at game start, not per round'
     });
 
     setCurrentRound(prev => prev + 1);
@@ -881,17 +904,9 @@ export function PokerBattleTable({
     setPlayerAction(null);
     setOpponentAction(null);
 
-    setPot(newPot);
-    setPlayerBankroll(prev => {
-      const newBankroll = prev - anteAmount;
-      console.log('[PokerBattle] Player paid ante', { prev, anteAmount, newBankroll });
-      return newBankroll;
-    });
-    setOpponentBankroll(prev => {
-      const newBankroll = prev - anteAmount;
-      console.log('[PokerBattle] Opponent paid ante', { prev, anteAmount, newBankroll });
-      return newBankroll;
-    });
+    // Pool remains at 0 - no ante deducted between rounds
+    // Ante was already deducted at game start
+    setPot(0);
 
     console.log('[PokerBattle] Moving to card-selection phase for round', newRound);
     setPhase('card-selection');
@@ -1537,14 +1552,10 @@ export function PokerBattleTable({
                 )}
               </div>
               <div className="text-vintage-gold font-display font-bold text-2xl">
-                POT: {pot} {selectedToken}
+                POT: {pot} {isCPUMode ? 'coins' : selectedToken}
               </div>
-              <div className="text-vintage-burnt-gold font-modern">
-                {isSpectator || selectedAnte === 0 ? (
-                  <>Host: {playerBankroll} | Guest: {opponentBankroll} {selectedToken}</>
-                ) : (
-                  <>Bankroll: {playerBankroll} {selectedToken}</>
-                )}
+              <div className="text-vintage-neon-blue font-modern font-bold">
+                🪙 Boost Coins: {playerBoostCoins}
               </div>
             </div>
 
@@ -1838,21 +1849,21 @@ export function PokerBattleTable({
 
                   {phase === 'reveal' && !isSpectator && selectedAnte !== 0 && (
                     <div className="space-y-1 sm:space-y-2 animate-in fade-in slide-in-from-bottom duration-500 w-full max-w-md mx-auto">
-                      <div className="text-center text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">
-                        💰 BOOST SHOP - {playerBankroll} {selectedToken}
+                      <div className="text-center text-vintage-neon-blue text-xs sm:text-sm font-bold mb-1">
+                        🪙 BOOST SHOP - {playerBoostCoins} Coins
                       </div>
                       {/* Mobile: 2x2 Grid, Desktop: 4 buttons in row */}
                       <div className="grid grid-cols-2 md:flex md:justify-center gap-1 sm:gap-2">
                         <button
                           onClick={() => showConfirmAction('BOOST')}
-                          disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('BOOST')}
+                          disabled={selectedAnte === 0 || isSpectator || playerBoostCoins < getBoostPrice('BOOST')}
                           className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
-                            playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator
+                            playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black hover:from-yellow-600 hover:to-yellow-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <SwordIcon className={playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator ? "text-black" : "text-gray-500"} size={24} />
+                          <SwordIcon className={playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator ? "text-black" : "text-gray-500"} size={24} />
                           <div className="text-[10px] sm:text-xs font-bold">BOOST</div>
                           <span className="text-[8px] sm:text-[10px]">+30%</span>
                           <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('BOOST')}</span>
@@ -1860,14 +1871,14 @@ export function PokerBattleTable({
 
                         <button
                           onClick={() => showConfirmAction('SHIELD')}
-                          disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('SHIELD')}
+                          disabled={selectedAnte === 0 || isSpectator || playerBoostCoins < getBoostPrice('SHIELD')}
                           className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
-                            playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator
+                            playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <ShieldIcon className={playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={24} />
+                          <ShieldIcon className={playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={24} />
                           <div className="text-[10px] sm:text-xs font-bold">SHIELD</div>
                           <span className="text-[8px] sm:text-[10px]">Block</span>
                           <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('SHIELD')}</span>
@@ -1875,14 +1886,14 @@ export function PokerBattleTable({
 
                         <button
                           onClick={() => showConfirmAction('DOUBLE')}
-                          disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('DOUBLE')}
+                          disabled={selectedAnte === 0 || isSpectator || playerBoostCoins < getBoostPrice('DOUBLE')}
                           className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
-                            playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator
+                            playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <BoltIcon className={playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={24} />
+                          <BoltIcon className={playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={24} />
                           <div className="text-[10px] sm:text-xs font-bold">CRIT</div>
                           <span className="text-[8px] sm:text-[10px]">x2</span>
                           <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('DOUBLE')}</span>
@@ -1994,7 +2005,7 @@ export function PokerBattleTable({
                 🎉 You Won! Score: {playerScore} - {opponentScore}
               </p>
               <p className="text-xl md:text-2xl font-bold text-green-400 px-4 text-center">
-                Profit: +{playerBankroll - (selectedAnte * 50)} {selectedToken}
+                Prize: {pot} {isCPUMode ? 'coins' : selectedToken}
               </p>
 
               {/* SHARE BUTTONS */}
@@ -2004,9 +2015,11 @@ export function PokerBattleTable({
                     const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
                     const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
-                    const tweetText = selectedToken === 'VIBE_NFT'
+                    const tweetText = isCPUMode
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} against CPU! 🤖\n\nPrize: ${pot} coins`
+                      : selectedToken === 'VIBE_NFT'
                       ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only - no blockchain)`
-                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nStakes: ${selectedAnte} ${selectedToken}\nProfit: +${playerBankroll - (selectedAnte * 50)} ${selectedToken}`;
+                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nPrize: ${pot} ${selectedToken}`;
 
                     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
                     window.open(twitterUrl, '_blank');
@@ -2020,9 +2033,11 @@ export function PokerBattleTable({
                     const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
                     const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
-                    const castText = selectedToken === 'VIBE_NFT'
+                    const castText = isCPUMode
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} against CPU! 🤖\n\nPrize: ${pot} coins`
+                      : selectedToken === 'VIBE_NFT'
                       ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only)`
-                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nStakes: ${selectedAnte} ${selectedToken}\nProfit: +${playerBankroll - (selectedAnte * 50)} ${selectedToken}`;
+                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nPrize: ${pot} ${selectedToken}`;
 
                     const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                     window.open(farcasterUrl, '_blank');
@@ -2123,11 +2138,8 @@ export function PokerBattleTable({
                 <p className="text-2xl text-vintage-burnt-gold mb-4">
                   Final Score: {playerScore} - {opponentScore}
                 </p>
-                <p className="text-xl text-yellow-400 font-bold mb-2">
-                  Final Bankroll: {playerBankroll} {selectedToken}
-                </p>
-                <p className="text-lg text-yellow-300 mb-6">
-                  Result: {playerBankroll - (selectedAnte * 50) >= 0 ? '+' : ''}{playerBankroll - (selectedAnte * 50)} {selectedToken}
+                <p className="text-xl text-yellow-400 font-bold mb-6">
+                  No winner - it's a tie!
                 </p>
                 <button
                   onClick={onClose}

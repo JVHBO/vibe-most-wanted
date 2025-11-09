@@ -15,17 +15,17 @@ import { api, internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
 
 // Constants
-const DAILY_CAP = 3500; // Max $TESTVBMS per day per player
+const DAILY_CAP = 1500; // Max $TESTVBMS per day per player (reduced from 3500)
 const PVE_WIN_LIMIT = 30; // Max PvE wins per day
 const PVP_MATCH_LIMIT = 10; // Max PvP matches per day
 
-// PvE Rewards by Difficulty
+// PvE Rewards by Difficulty (reduced ~70% to extend pool longevity)
 const PVE_REWARDS = {
-  gey: 5,
-  goofy: 15,
-  gooner: 30,
-  gangster: 60,
-  gigachad: 120,
+  gey: 2,      // was 5
+  goofy: 5,    // was 15
+  gooner: 10,  // was 30
+  gangster: 20, // was 60
+  gigachad: 40, // was 120
 };
 
 // PvP Rewards

@@ -570,20 +570,26 @@ export const resolveRound = mutation({
     // Determine winner
     const hostWins = hostPower > guestPower;
 
+    // Calculate prize (pot minus 5% house fee)
+    const houseFee = Math.round(gameState.pot * 0.05);
+    const prize = gameState.pot - houseFee;
+
     // Update score and bankroll
     if (hostWins) {
       gameState.hostScore += 1;
       await ctx.db.patch(room._id, {
-        hostBankroll: room.hostBankroll! + gameState.pot,
+        hostBankroll: room.hostBankroll! + prize,
       });
+      console.log(`💰 Host won ${prize} (pot: ${gameState.pot}, fee: ${houseFee})`);
     } else {
       gameState.guestScore += 1;
       await ctx.db.patch(room._id, {
-        guestBankroll: room.guestBankroll! + gameState.pot,
+        guestBankroll: room.guestBankroll! + prize,
       });
+      console.log(`💰 Guest won ${prize} (pot: ${gameState.pot}, fee: ${houseFee})`);
     }
 
-    // Reset pot
+    // Reset pot (no ante added for next round)
     gameState.pot = 0;
 
     // Check if game is over (best of 7 = first to 4)
@@ -601,18 +607,16 @@ export const resolveRound = mutation({
     gameState.guestSelectedCard = undefined;
     gameState.hostAction = undefined;
     gameState.guestAction = undefined;
-    gameState.hostBet = room.ante;
-    gameState.guestBet = room.ante;
-    gameState.pot += room.ante * 2; // Ante for next round
+    gameState.hostBet = 0;
+    gameState.guestBet = 0;
+    // Pot remains 0 - ante only deducted at game start, not per round
 
-    // Update bankrolls for ante
+    // Update game state (no bankroll changes between rounds)
     await ctx.db.patch(room._id, {
       gameState,
-      hostBankroll: room.hostBankroll! - room.ante,
-      guestBankroll: room.guestBankroll! - room.ante,
     });
 
-    console.log(`🏁 Round ${gameState.currentRound - 1} resolved in ${args.roomId}`);
+    console.log(`🏁 Round ${gameState.currentRound - 1} resolved in ${args.roomId} - No ante deducted for next round`);
 
     return { success: true, gameOver: false };
   },
@@ -862,8 +866,8 @@ export const resolveBets = mutation({
       const won = bet.betOn === winnerAddr;
 
       if (won) {
-        // Winner gets 2x their bet (1x return + 1x profit)
-        const payout = bet.amount * 2;
+        // Winner gets 3x their bet (1x return + 2x profit)
+        const payout = bet.amount * 3;
 
         // Get bettor's profile
         const profile = await ctx.db

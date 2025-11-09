@@ -41,7 +41,7 @@ export const RARITY_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 1,
       rarity: "Common",
     },
-    reward: 15,
+    reward: 50,
   },
   {
     id: "rare_collector_1",
@@ -54,7 +54,7 @@ export const RARITY_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 1,
       rarity: "Rare",
     },
-    reward: 30,
+    reward: 100,
   },
   {
     id: "epic_collector_1",
@@ -67,7 +67,7 @@ export const RARITY_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 1,
       rarity: "Epic",
     },
-    reward: 60,
+    reward: 200,
   },
   {
     id: "legendary_collector_1",
@@ -80,7 +80,7 @@ export const RARITY_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 1,
       rarity: "Legendary",
     },
-    reward: 150,
+    reward: 500,
   },
   {
     id: "mythic_collector_1",
@@ -93,7 +93,7 @@ export const RARITY_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 1,
       rarity: "Mythic",
     },
-    reward: 300,
+    reward: 1000,
   },
 ];
 
@@ -113,7 +113,7 @@ export const WEAR_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 1,
       wear: "Pristine",
     },
-    reward: 100,
+    reward: 300,
   },
   {
     id: "pristine_10",
@@ -126,7 +126,7 @@ export const WEAR_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 10,
       wear: "Pristine",
     },
-    reward: 300,
+    reward: 1000,
   },
   {
     id: "pristine_50",
@@ -139,7 +139,7 @@ export const WEAR_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 50,
       wear: "Pristine",
     },
-    reward: 1500,
+    reward: 5000,
   },
   {
     id: "pristine_100",
@@ -152,7 +152,7 @@ export const WEAR_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 100,
       wear: "Pristine",
     },
-    reward: 5000,
+    reward: 15000,
   },
 ];
 
@@ -172,7 +172,7 @@ export const FOIL_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 1,
       foil: "Standard",
     },
-    reward: 60,
+    reward: 200,
   },
   {
     id: "standard_foil_10",
@@ -185,7 +185,7 @@ export const FOIL_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 10,
       foil: "Standard",
     },
-    reward: 300,
+    reward: 1000,
   },
   {
     id: "standard_foil_50",
@@ -198,7 +198,7 @@ export const FOIL_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 50,
       foil: "Standard",
     },
-    reward: 1500,
+    reward: 5000,
   },
   {
     id: "prize_foil_1",
@@ -211,7 +211,7 @@ export const FOIL_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 1,
       foil: "Prize",
     },
-    reward: 150,
+    reward: 500,
   },
   {
     id: "prize_foil_10",
@@ -224,7 +224,7 @@ export const FOIL_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 10,
       foil: "Prize",
     },
-    reward: 600,
+    reward: 2000,
   },
   {
     id: "prize_foil_50",
@@ -237,7 +237,7 @@ export const FOIL_ACHIEVEMENTS: AchievementDefinition[] = [
       count: 50,
       foil: "Prize",
     },
-    reward: 3000,
+    reward: 10000,
   },
 ];
 
@@ -255,7 +255,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "📦",
     category: "progressive",
     requirement: { type: "collect_count", count: 1, rarity: "Common" },
-    reward: 3,
+    reward: 10,
     tier: 1,
   },
   {
@@ -265,7 +265,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "📦",
     category: "progressive",
     requirement: { type: "collect_count", count: 5, rarity: "Common" },
-    reward: 15,
+    reward: 50,
     tier: 5,
   },
   {
@@ -275,7 +275,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "📦",
     category: "progressive",
     requirement: { type: "collect_count", count: 10, rarity: "Common" },
-    reward: 30,
+    reward: 100,
     tier: 10,
   },
   {
@@ -285,7 +285,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "📦",
     category: "progressive",
     requirement: { type: "collect_count", count: 25, rarity: "Common" },
-    reward: 83,
+    reward: 250,
     tier: 25,
   },
   {
@@ -295,7 +295,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "📦",
     category: "progressive",
     requirement: { type: "collect_count", count: 50, rarity: "Common" },
-    reward: 150,
+    reward: 500,
     tier: 50,
   },
   {
@@ -305,7 +305,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "📦",
     category: "progressive",
     requirement: { type: "collect_count", count: 100, rarity: "Common" },
-    reward: 300,
+    reward: 1000,
     tier: 100,
   },
 
@@ -317,7 +317,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "💎",
     category: "progressive",
     requirement: { type: "collect_count", count: 1, rarity: "Rare" },
-    reward: 15,
+    reward: 50,
     tier: 1,
   },
   {
@@ -327,7 +327,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "💎",
     category: "progressive",
     requirement: { type: "collect_count", count: 5, rarity: "Rare" },
-    reward: 83,
+    reward: 250,
     tier: 5,
   },
   {
@@ -337,7 +337,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "💎",
     category: "progressive",
     requirement: { type: "collect_count", count: 10, rarity: "Rare" },
-    reward: 150,
+    reward: 500,
     tier: 10,
   },
   {
@@ -347,7 +347,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "💎",
     category: "progressive",
     requirement: { type: "collect_count", count: 25, rarity: "Rare" },
-    reward: 400,
+    reward: 1250,
     tier: 25,
   },
   {
@@ -357,7 +357,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "💎",
     category: "progressive",
     requirement: { type: "collect_count", count: 50, rarity: "Rare" },
-    reward: 750,
+    reward: 2500,
     tier: 50,
   },
   {
@@ -367,7 +367,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "💎",
     category: "progressive",
     requirement: { type: "collect_count", count: 100, rarity: "Rare" },
-    reward: 1500,
+    reward: 5000,
     tier: 100,
   },
 
@@ -379,7 +379,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🔮",
     category: "progressive",
     requirement: { type: "collect_count", count: 1, rarity: "Epic" },
-    reward: 30,
+    reward: 100,
     tier: 1,
   },
   {
@@ -389,7 +389,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🔮",
     category: "progressive",
     requirement: { type: "collect_count", count: 5, rarity: "Epic" },
-    reward: 150,
+    reward: 500,
     tier: 5,
   },
   {
@@ -399,7 +399,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🔮",
     category: "progressive",
     requirement: { type: "collect_count", count: 10, rarity: "Epic" },
-    reward: 300,
+    reward: 1000,
     tier: 10,
   },
   {
@@ -409,7 +409,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🔮",
     category: "progressive",
     requirement: { type: "collect_count", count: 25, rarity: "Epic" },
-    reward: 750,
+    reward: 2500,
     tier: 25,
   },
   {
@@ -419,7 +419,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🔮",
     category: "progressive",
     requirement: { type: "collect_count", count: 50, rarity: "Epic" },
-    reward: 1500,
+    reward: 5000,
     tier: 50,
   },
   {
@@ -429,7 +429,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🔮",
     category: "progressive",
     requirement: { type: "collect_count", count: 100, rarity: "Epic" },
-    reward: 3000,
+    reward: 10000,
     tier: 100,
   },
 
@@ -441,7 +441,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "⭐",
     category: "progressive",
     requirement: { type: "collect_count", count: 1, rarity: "Legendary" },
-    reward: 60,
+    reward: 200,
     tier: 1,
   },
   {
@@ -451,7 +451,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "⭐",
     category: "progressive",
     requirement: { type: "collect_count", count: 5, rarity: "Legendary" },
-    reward: 300,
+    reward: 1000,
     tier: 5,
   },
   {
@@ -461,7 +461,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "⭐",
     category: "progressive",
     requirement: { type: "collect_count", count: 10, rarity: "Legendary" },
-    reward: 600,
+    reward: 2000,
     tier: 10,
   },
   {
@@ -471,7 +471,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "⭐",
     category: "progressive",
     requirement: { type: "collect_count", count: 25, rarity: "Legendary" },
-    reward: 1500,
+    reward: 5000,
     tier: 25,
   },
   {
@@ -481,7 +481,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "⭐",
     category: "progressive",
     requirement: { type: "collect_count", count: 50, rarity: "Legendary" },
-    reward: 3000,
+    reward: 10000,
     tier: 50,
   },
   {
@@ -491,7 +491,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "⭐",
     category: "progressive",
     requirement: { type: "collect_count", count: 100, rarity: "Legendary" },
-    reward: 8000,
+    reward: 25000,
     tier: 100,
   },
 
@@ -503,7 +503,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🌟",
     category: "progressive",
     requirement: { type: "collect_count", count: 1, rarity: "Mythic" },
-    reward: 150,
+    reward: 500,
     tier: 1,
   },
   {
@@ -513,7 +513,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🌟",
     category: "progressive",
     requirement: { type: "collect_count", count: 5, rarity: "Mythic" },
-    reward: 750,
+    reward: 2500,
     tier: 5,
   },
   {
@@ -523,7 +523,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🌟",
     category: "progressive",
     requirement: { type: "collect_count", count: 10, rarity: "Mythic" },
-    reward: 1500,
+    reward: 5000,
     tier: 10,
   },
   {
@@ -533,7 +533,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🌟",
     category: "progressive",
     requirement: { type: "collect_count", count: 25, rarity: "Mythic" },
-    reward: 4000,
+    reward: 12500,
     tier: 25,
   },
   {
@@ -543,7 +543,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🌟",
     category: "progressive",
     requirement: { type: "collect_count", count: 50, rarity: "Mythic" },
-    reward: 8000,
+    reward: 25000,
     tier: 50,
   },
   {
@@ -553,7 +553,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🌟",
     category: "progressive",
     requirement: { type: "collect_count", count: 100, rarity: "Mythic" },
-    reward: 15000,
+    reward: 50000,
     tier: 100,
   },
 
@@ -565,7 +565,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "✨",
     category: "progressive",
     requirement: { type: "collect_count", count: 1, wear: "Pristine" },
-    reward: 30,
+    reward: 100,
     tier: 1,
   },
   {
@@ -575,7 +575,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "✨",
     category: "progressive",
     requirement: { type: "collect_count", count: 5, wear: "Pristine" },
-    reward: 150,
+    reward: 500,
     tier: 5,
   },
   {
@@ -585,7 +585,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "💫",
     category: "progressive",
     requirement: { type: "collect_count", count: 10, wear: "Pristine" },
-    reward: 300,
+    reward: 1000,
     tier: 10,
   },
   {
@@ -595,7 +595,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "💫",
     category: "progressive",
     requirement: { type: "collect_count", count: 25, wear: "Pristine" },
-    reward: 750,
+    reward: 2500,
     tier: 25,
   },
   {
@@ -605,7 +605,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🌠",
     category: "progressive",
     requirement: { type: "collect_count", count: 50, wear: "Pristine" },
-    reward: 1500,
+    reward: 5000,
     tier: 50,
   },
   {
@@ -615,7 +615,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "👑",
     category: "progressive",
     requirement: { type: "collect_count", count: 100, wear: "Pristine" },
-    reward: 5000,
+    reward: 15000,
     tier: 100,
   },
 
@@ -627,7 +627,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🎴",
     category: "progressive",
     requirement: { type: "collect_count", count: 1, foil: "Standard" },
-    reward: 30,
+    reward: 100,
     tier: 1,
   },
   {
@@ -637,7 +637,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🎴",
     category: "progressive",
     requirement: { type: "collect_count", count: 5, foil: "Standard" },
-    reward: 150,
+    reward: 500,
     tier: 5,
   },
   {
@@ -647,7 +647,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🃏",
     category: "progressive",
     requirement: { type: "collect_count", count: 10, foil: "Standard" },
-    reward: 300,
+    reward: 1000,
     tier: 10,
   },
   {
@@ -657,7 +657,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🃏",
     category: "progressive",
     requirement: { type: "collect_count", count: 25, foil: "Standard" },
-    reward: 750,
+    reward: 2500,
     tier: 25,
   },
   {
@@ -667,7 +667,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🎰",
     category: "progressive",
     requirement: { type: "collect_count", count: 50, foil: "Standard" },
-    reward: 1500,
+    reward: 5000,
     tier: 50,
   },
   {
@@ -677,7 +677,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🎰",
     category: "progressive",
     requirement: { type: "collect_count", count: 100, foil: "Standard" },
-    reward: 3000,
+    reward: 10000,
     tier: 100,
   },
 
@@ -689,7 +689,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🏆",
     category: "progressive",
     requirement: { type: "collect_count", count: 1, foil: "Prize" },
-    reward: 83,
+    reward: 250,
     tier: 1,
   },
   {
@@ -699,7 +699,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🏆",
     category: "progressive",
     requirement: { type: "collect_count", count: 5, foil: "Prize" },
-    reward: 400,
+    reward: 1250,
     tier: 5,
   },
   {
@@ -709,7 +709,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🥇",
     category: "progressive",
     requirement: { type: "collect_count", count: 10, foil: "Prize" },
-    reward: 750,
+    reward: 2500,
     tier: 10,
   },
   {
@@ -719,7 +719,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "🥇",
     category: "progressive",
     requirement: { type: "collect_count", count: 25, foil: "Prize" },
-    reward: 2000,
+    reward: 6250,
     tier: 25,
   },
   {
@@ -729,7 +729,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "👑",
     category: "progressive",
     requirement: { type: "collect_count", count: 50, foil: "Prize" },
-    reward: 4000,
+    reward: 12500,
     tier: 50,
   },
   {
@@ -739,7 +739,7 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "👑",
     category: "progressive",
     requirement: { type: "collect_count", count: 100, foil: "Prize" },
-    reward: 8000,
+    reward: 25000,
     tier: 100,
   },
 ];
