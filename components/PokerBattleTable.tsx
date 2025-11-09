@@ -2291,7 +2291,7 @@ export function PokerBattleTable({
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 bg-vintage-deep-black/50">
                   {messages && messages.length > 0 ? (
-                    messages.map((msg, idx) => {
+                    messages.map((msg: any, idx: number) => {
                       const isOwnMessage = msg.sender.toLowerCase() === playerAddress.toLowerCase();
                       return (
                         <div
