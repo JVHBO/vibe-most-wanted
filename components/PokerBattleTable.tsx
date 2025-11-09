@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from '@/lib/audio-manager';
@@ -33,7 +33,7 @@ interface PokerBattleTableProps {
   soundEnabled?: boolean; // Sound effects enabled
 }
 
-type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'resolution' | 'game-over';
+type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'card-reveal-animation' | 'resolution' | 'game-over';
 type CardAction = 'BOOST' | 'SHIELD' | 'DOUBLE' | 'SWAP' | 'PASS';
 type ViewMode = 'matchmaking' | 'waiting' | 'game';
 
@@ -137,26 +137,45 @@ export function PokerBattleTable({
         guestAction
       });
 
-      // If server is in reveal/resolution phase and both have acted, resolve
+      // If server is in reveal/resolution phase and both have acted, reveal cards first
       if (serverPhase === 'reveal' || serverPhase === 'resolution') {
         if (hostSelectedCard && guestSelectedCard && hostAction && guestAction) {
-          console.log('[PokerBattle] Both players ready - should resolve round now');
+          console.log('[PokerBattle] Both players ready - revealing cards first');
 
-          // Sync local state with server
-          if (phase !== 'resolution' && phase !== 'game-over') {
-            console.log('[PokerBattle] Calling resolveRound from room sync');
-            resolveRound();
+          // Move to card reveal animation if not already there or in resolution
+          if (phase !== 'card-reveal-animation' && phase !== 'resolution' && phase !== 'game-over') {
+            console.log('[PokerBattle] Moving to card-reveal-animation phase');
+            setPhase('card-reveal-animation');
+            AudioManager.buttonSuccess();
+
+            // Dramatic pause before resolving (2.5 seconds)
+            setTimeout(() => {
+              console.log('[PokerBattle] Cards revealed! Calling resolveRound from room sync');
+              resolveRound();
+            }, 2500);
           }
         }
       }
     }
   }, [room, isCPUMode]);
 
+  // Reset timer when phase changes (separate effect to ensure it runs)
+  useEffect(() => {
+    if (phase === 'card-selection') {
+      console.log('[PokerBattle] Timer reset to 30s for card-selection phase');
+      setTimeRemaining(30);
+    } else if (phase === 'reveal') {
+      console.log('[PokerBattle] Timer reset to 90s for reveal phase');
+      setTimeRemaining(90); // More time for choosing boost action (increased to 90s for testing)
+    }
+  }, [phase]); // Only depend on phase
+
   // Timer countdown for actions
   useEffect(() => {
-    // Reset timer when phase changes or when player makes action
-    if (phase === 'card-selection' || phase === 'reveal') {
-      setTimeRemaining(30);
+    // Clear any existing timer when effect runs
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
 
     // Only run timer during active phases
@@ -168,7 +187,9 @@ export function PokerBattleTable({
     if (phase === 'card-selection' && playerSelectedCard) return;
     if (phase === 'reveal' && playerAction) return;
 
-    const timer = setInterval(() => {
+    console.log(`[PokerBattle] Starting timer countdown for phase: ${phase}, initial time: ${timeRemaining}s`);
+
+    timerRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           // Time's up! Auto-select random action
@@ -195,14 +216,19 @@ export function PokerBattleTable({
               }, 1000);
             }
           }
-          return 30;
+          return phase === 'reveal' ? 90 : 30;
         }
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [phase, playerSelectedCard, playerAction, playerHand]);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [phase, playerSelectedCard, playerAction]);
 
   // Betting
   const [playerBankroll, setPlayerBankroll] = useState(0);
@@ -214,6 +240,7 @@ export function PokerBattleTable({
 
   // Action Timer
   const [timeRemaining, setTimeRemaining] = useState(30); // 30 seconds per action
+  const timerRef = useRef<NodeJS.Timeout | null>(null); // Ref to control timer interval
 
   // Confirmation dialog for actions
   const [showActionConfirm, setShowActionConfirm] = useState(false);
@@ -380,6 +407,7 @@ export function PokerBattleTable({
       setTimeout(() => {
         console.log('[PokerBattle] Moving to reveal phase after card selection');
         setPhase('reveal');
+        setTimeRemaining(90); // Reset timer for reveal phase
       }, 3000);
     } else {
       // PvP mode - send to server
@@ -479,10 +507,16 @@ export function PokerBattleTable({
           });
         }
 
+        // Move to card reveal animation phase
+        console.log('[PokerBattle] CPU Mode - Moving to card-reveal-animation phase');
+        setPhase('card-reveal-animation');
+        AudioManager.buttonSuccess();
+
+        // Auto-resolve after animation (2.5s)
         setTimeout(() => {
-          console.log('[PokerBattle] CPU Mode - Calling resolveRound after AI action');
+          console.log('[PokerBattle] CPU Mode - Auto-resolving after card reveal animation');
           resolveRound();
-        }, 3000);
+        }, 2500);
       }, 1000);
     } else {
       console.log('[PokerBattle] PvP Mode - Sending action to server', { roomId, playerAddress, action });
@@ -1545,72 +1579,144 @@ export function PokerBattleTable({
               {/* Table content */}
               <div className="relative h-full p-4 md:p-6 flex flex-col justify-between">
 
-                {/* OPPONENT SECTION */}
+                {/* OPPONENT SECTION - Bankroll only */}
                 <div className="text-center">
                   <div className="text-vintage-gold font-display font-bold mb-4">
                     OPPONENT • {opponentBankroll} {selectedToken}
                   </div>
-
-                  {/* Opponent's selected card (hidden until resolution) */}
-                  <div className="flex flex-col items-center mb-4">
-                    <div className="w-32 aspect-[2/3] border-2 border-dashed border-vintage-gold rounded-lg flex flex-col items-center justify-center bg-vintage-deep-black/30 transition-all duration-500">
-                      {opponentSelectedCard && (phase === 'resolution' || showRoundWinner) ? (
-                        <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
-                          {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
-                            <img
-                              src={(opponentSelectedCard.imageUrl || opponentSelectedCard.image)}
-                              alt={opponentSelectedCard.name}
-                              className="w-full h-full object-cover rounded-lg"
-                            />
-                          ) : (
-                            <div
-                              className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg"
-                              style={{ background: getRarityGradient(opponentSelectedCard.rarity) }}
-                            >
-                              <div className="text-white text-xs font-bold text-center mb-1">{opponentSelectedCard.name}</div>
-                              <div className="text-white text-2xl font-bold">{Math.round(opponentSelectedCard.power || 0).toLocaleString()}</div>
-                            </div>
-                          )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold text-center">
-                            {opponentSelectedCard.name}<br/>
-                            <div className="flex items-center justify-center gap-1">
-                              {Math.round((opponentSelectedCard.power || 0) * (
-                                opponentAction === 'BOOST' ? 1.3 :
-                                opponentAction === 'DOUBLE' ? 2 : 1
-                              )).toLocaleString()}
-                              {opponentAction === 'BOOST' && <SwordIcon className="inline-block text-vintage-gold" size={14} />}
-                              {opponentAction === 'DOUBLE' && <BoltIcon className="inline-block text-vintage-gold" size={14} />}
-                              {opponentAction === 'SHIELD' && <ShieldIcon className="inline-block text-vintage-gold" size={14} />}
-                            </div>
-                          </div>
-                        </div>
-                      ) : opponentSelectedCard ? (
-                        <img
-                          src="/images/card-back.png"
-                          alt="Hidden Card"
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <span className="text-vintage-gold text-4xl animate-pulse">?</span>
-                      )}
-                    </div>
-                    {opponentAction && opponentAction !== 'PASS' && phase === 'resolution' && (
-                      <div className="mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500">
-                        <span className="text-red-300 text-sm font-bold flex items-center justify-center gap-1">
-                          {opponentAction === 'BOOST' && <><SwordIcon className="inline-block text-red-300" size={16} /> Opponent used BOOST (+30%)</>}
-                          {opponentAction === 'SHIELD' && <><ShieldIcon className="inline-block text-red-300" size={16} /> Opponent used SHIELD (Block Boost)</>}
-                          {opponentAction === 'DOUBLE' && <><BoltIcon className="inline-block text-red-300" size={16} /> Opponent used CRITICAL (x2)</>}
-                        </span>
-                      </div>
-                    )}
-                  </div>
                 </div>
 
-                {/* CENTER - POT & ACTIONS */}
-                <div className="text-center">
-                  <div className="inline-block bg-vintage-deep-black/50 border-2 border-vintage-gold px-4 sm:px-8 py-2 sm:py-4 rounded-full transition-all duration-500 hover:scale-105">
-                    <div className="text-vintage-gold font-display font-bold text-xl sm:text-3xl">
-                      💰 {pot} {selectedToken}
+                {/* CENTER - CARD BATTLE AREA */}
+                <div className="text-center flex-1 flex flex-col items-center justify-center">
+                  {/* BATTLE CARDS - Always visible */}
+                  <div className="flex items-center justify-center gap-3 sm:gap-6 mb-3">
+                    {/* Opponent Card */}
+                    <div className="flex flex-col items-center">
+                      <div className="text-vintage-gold text-xs sm:text-sm mb-1 font-bold">OPPONENT</div>
+                      <div className={`w-24 sm:w-28 md:w-32 aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
+                        phase === 'card-reveal-animation' || phase === 'resolution'
+                          ? 'border-red-500 shadow-lg shadow-red-500/50'
+                          : 'border-vintage-gold/50'
+                      }`}>
+                        {opponentSelectedCard && (phase === 'card-reveal-animation' || phase === 'resolution' || showRoundWinner) ? (
+                          <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
+                            <FoilCardEffect foilType={opponentSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
+                              {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
+                                <img
+                                  src={(opponentSelectedCard.imageUrl || opponentSelectedCard.image)}
+                                  alt={opponentSelectedCard.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div
+                                  className="w-full h-full flex flex-col items-center justify-center p-2"
+                                  style={{ background: getRarityGradient(opponentSelectedCard.rarity) }}
+                                >
+                                  <div className="text-white text-xs font-bold text-center mb-1">{opponentSelectedCard.name}</div>
+                                  <div className="text-white text-2xl font-bold">{Math.round(opponentSelectedCard.power || 0).toLocaleString()}</div>
+                                </div>
+                              )}
+                            </FoilCardEffect>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                {Math.round((opponentSelectedCard.power || 0) * (
+                                  opponentAction === 'BOOST' ? 1.3 :
+                                  opponentAction === 'DOUBLE' ? 2 : 1
+                                )).toLocaleString()}
+                                {opponentAction === 'BOOST' && <SwordIcon className="inline-block text-yellow-400 animate-pulse" size={14} />}
+                                {opponentAction === 'DOUBLE' && <BoltIcon className="inline-block text-red-400 animate-pulse" size={14} />}
+                                {opponentAction === 'SHIELD' && <ShieldIcon className="inline-block text-blue-400 animate-pulse" size={14} />}
+                              </div>
+                            </div>
+                          </div>
+                        ) : opponentSelectedCard ? (
+                          <img
+                            src="/images/card-back.png"
+                            alt="Hidden Card"
+                            className="w-full h-full object-cover animate-pulse"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-vintage-deep-black/30 border-2 border-dashed border-vintage-gold/30 flex items-center justify-center">
+                            <span className="text-vintage-gold text-4xl animate-pulse">?</span>
+                          </div>
+                        )}
+                      </div>
+                      {opponentAction && opponentAction !== 'PASS' && (phase === 'card-reveal-animation' || phase === 'resolution') && (
+                        <div className="mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500">
+                          <span className="text-red-300 text-xs font-bold flex items-center justify-center gap-1">
+                            {opponentAction === 'BOOST' && <><SwordIcon className="inline-block text-yellow-400" size={12} /> BOOST</>}
+                            {opponentAction === 'SHIELD' && <><ShieldIcon className="inline-block text-blue-400" size={12} /> SHIELD</>}
+                            {opponentAction === 'DOUBLE' && <><BoltIcon className="inline-block text-red-400" size={12} /> CRIT</>}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* VS Indicator */}
+                    <div className="text-vintage-gold font-display font-bold text-2xl sm:text-4xl animate-pulse">
+                      VS
+                    </div>
+
+                    {/* Player Card */}
+                    <div className="flex flex-col items-center">
+                      <div className="text-vintage-gold text-xs sm:text-sm mb-2 font-bold">YOU</div>
+                      <div className={`w-32 sm:w-40 md:w-48 aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
+                        phase === 'card-reveal-animation' || phase === 'resolution'
+                          ? 'border-green-500 shadow-lg shadow-green-500/50'
+                          : 'border-vintage-gold/50'
+                      }`}>
+                        {playerSelectedCard && (phase === 'card-reveal-animation' || phase === 'resolution' || showRoundWinner) ? (
+                          <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
+                            <FoilCardEffect foilType={playerSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
+                              {(playerSelectedCard.imageUrl || playerSelectedCard.image) ? (
+                                <img
+                                  src={(playerSelectedCard.imageUrl || playerSelectedCard.image)}
+                                  alt={playerSelectedCard.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div
+                                  className="w-full h-full flex flex-col items-center justify-center p-2"
+                                  style={{ background: getRarityGradient(playerSelectedCard.rarity) }}
+                                >
+                                  <div className="text-white text-xs font-bold text-center mb-1">{playerSelectedCard.name}</div>
+                                  <div className="text-white text-2xl font-bold">{Math.round(playerSelectedCard.power || 0).toLocaleString()}</div>
+                                </div>
+                              )}
+                            </FoilCardEffect>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                {Math.round((playerSelectedCard.power || 0) * (
+                                  playerAction === 'BOOST' ? 1.3 :
+                                  playerAction === 'DOUBLE' ? 2 : 1
+                                )).toLocaleString()}
+                                {playerAction === 'BOOST' && <SwordIcon className="inline-block text-yellow-400 animate-pulse" size={14} />}
+                                {playerAction === 'DOUBLE' && <BoltIcon className="inline-block text-red-400 animate-pulse" size={14} />}
+                                {playerAction === 'SHIELD' && <ShieldIcon className="inline-block text-blue-400 animate-pulse" size={14} />}
+                              </div>
+                            </div>
+                          </div>
+                        ) : playerSelectedCard ? (
+                          <img
+                            src="/images/card-back.png"
+                            alt="Hidden Card"
+                            className="w-full h-full object-cover animate-pulse"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-vintage-deep-black/30 border-2 border-dashed border-vintage-gold/30 flex items-center justify-center">
+                            <span className="text-vintage-gold text-4xl animate-pulse">?</span>
+                          </div>
+                        )}
+                      </div>
+                      {playerAction && playerAction !== 'PASS' && (phase === 'card-reveal-animation' || phase === 'resolution') && (
+                        <div className="mt-2 bg-green-900/50 border border-green-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500">
+                          <span className="text-green-300 text-xs font-bold flex items-center justify-center gap-1">
+                            {playerAction === 'BOOST' && <><SwordIcon className="inline-block text-yellow-400" size={12} /> BOOST</>}
+                            {playerAction === 'SHIELD' && <><ShieldIcon className="inline-block text-blue-400" size={12} /> SHIELD</>}
+                            {playerAction === 'DOUBLE' && <><BoltIcon className="inline-block text-red-400" size={12} /> CRIT</>}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1662,6 +1768,12 @@ export function PokerBattleTable({
                           </span>
                         )}
 
+                        {phase === 'card-reveal-animation' && (
+                          <span className="animate-pulse text-xl sm:text-2xl">
+                            🎴 REVEALING CARDS...
+                          </span>
+                        )}
+
                         {phase === 'resolution' && (
                           <span className="animate-pulse">
                             {isInFarcaster ? '⏳ CALCULATING...' : '⏳ CALCULATING WINNER...'}
@@ -1681,19 +1793,19 @@ export function PokerBattleTable({
 
                 {/* PLAYER SECTION - YOUR HAND */}
                 <div className="text-center">
-                  <div className="text-vintage-gold font-display font-bold mb-4">
+                  <div className="text-vintage-gold font-display font-bold mb-2 text-sm">
                     YOUR HAND
                   </div>
 
                   {/* Hand cards */}
-                  <div className="flex justify-center gap-2 mb-6">
+                  <div className="flex justify-center gap-1 sm:gap-2 mb-2">
                     {playerHand.map((card, index) => (
                       <button
                         key={card.tokenId}
                         onClick={() => phase === 'card-selection' && selectCard(card)}
                         disabled={phase !== 'card-selection' || selectedAnte === 0 || isSpectator}
                         style={{ animationDelay: `${index * 100}ms` }}
-                        className={`${isInFarcaster ? 'w-16' : 'w-20 sm:w-24'} aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
+                        className={`${isInFarcaster ? 'w-14' : 'w-16 sm:w-20'} aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
                           playerSelectedCard?.tokenId === card.tokenId
                             ? 'border-vintage-gold shadow-gold scale-110 -translate-y-2'
                             : 'border-vintage-gold/50 hover:border-vintage-gold hover:scale-105 hover:-translate-y-1'
@@ -1725,66 +1837,66 @@ export function PokerBattleTable({
 
 
                   {phase === 'reveal' && !isSpectator && selectedAnte !== 0 && (
-                    <div className="space-y-2 sm:space-y-4 animate-in fade-in slide-in-from-bottom duration-500 w-full max-w-md mx-auto">
-                      <div className="text-center text-vintage-burnt-gold text-sm sm:text-lg md:text-xl font-bold mb-2 sm:mb-4">
+                    <div className="space-y-1 sm:space-y-2 animate-in fade-in slide-in-from-bottom duration-500 w-full max-w-md mx-auto">
+                      <div className="text-center text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">
                         💰 BOOST SHOP - {playerBankroll} {selectedToken}
                       </div>
                       {/* Mobile: 2x2 Grid, Desktop: 4 buttons in row */}
-                      <div className="grid grid-cols-2 md:flex md:justify-center gap-2 sm:gap-4">
+                      <div className="grid grid-cols-2 md:flex md:justify-center gap-1 sm:gap-2">
                         <button
                           onClick={() => showConfirmAction('BOOST')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('BOOST')}
-                          className={`px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
                             playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black hover:from-yellow-600 hover:to-yellow-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <SwordIcon className={playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator ? "text-black" : "text-gray-500"} size={48} />
-                          <div className="text-xs sm:text-base md:text-lg font-bold">BOOST</div>
-                          <span className="text-[10px] sm:text-sm">+30%</span>
-                          <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('BOOST')}</span>
+                          <SwordIcon className={playerBankroll >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator ? "text-black" : "text-gray-500"} size={24} />
+                          <div className="text-[10px] sm:text-xs font-bold">BOOST</div>
+                          <span className="text-[8px] sm:text-[10px]">+30%</span>
+                          <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('BOOST')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('SHIELD')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('SHIELD')}
-                          className={`px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
                             playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <ShieldIcon className={playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={48} />
-                          <div className="text-xs sm:text-base md:text-lg font-bold">SHIELD</div>
-                          <span className="text-[10px] sm:text-sm">Block</span>
-                          <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('SHIELD')}</span>
+                          <ShieldIcon className={playerBankroll >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={24} />
+                          <div className="text-[10px] sm:text-xs font-bold">SHIELD</div>
+                          <span className="text-[8px] sm:text-[10px]">Block</span>
+                          <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('SHIELD')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('DOUBLE')}
                           disabled={selectedAnte === 0 || isSpectator || playerBankroll < getBoostPrice('DOUBLE')}
-                          className={`px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 font-bold text-base sm:text-lg md:text-xl rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
                             playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator
                               ? 'bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <BoltIcon className={playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={48} />
-                          <div className="text-xs sm:text-base md:text-lg font-bold">CRIT</div>
-                          <span className="text-[10px] sm:text-sm">x2</span>
-                          <span className="text-[9px] sm:text-xs opacity-80">{getBoostPrice('DOUBLE')}</span>
+                          <BoltIcon className={playerBankroll >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={24} />
+                          <div className="text-[10px] sm:text-xs font-bold">CRIT</div>
+                          <span className="text-[8px] sm:text-[10px]">x2</span>
+                          <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('DOUBLE')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('PASS')}
                           disabled={selectedAnte === 0 || isSpectator}
-                          className="px-3 sm:px-8 md:px-10 py-2 sm:py-5 md:py-6 bg-gray-600 text-white font-bold text-base sm:text-lg md:text-xl rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                          className="px-2 sm:px-4 py-1 sm:py-2 bg-gray-600 text-white font-bold text-xs sm:text-sm rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
                         >
-                          <HandIcon className={selectedAnte === 0 || isSpectator ? "text-gray-500" : "text-white"} size={48} />
-                          <div className="text-xs sm:text-base md:text-lg font-bold">PASS</div>
-                          <span className="text-[10px] sm:text-sm">Free</span>
-                          <span className="text-[9px] sm:text-xs opacity-80">Save $</span>
+                          <HandIcon className={selectedAnte === 0 || isSpectator ? "text-gray-500" : "text-white"} size={24} />
+                          <div className="text-[10px] sm:text-xs font-bold">PASS</div>
+                          <span className="text-[8px] sm:text-[10px]">Free</span>
+                          <span className="text-[7px] sm:text-[9px] opacity-80">Save $</span>
                         </button>
                       </div>
                     </div>
