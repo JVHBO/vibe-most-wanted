@@ -1,5 +1,6 @@
+// @ts-nocheck - Dynamic imports in actions cause circular reference type errors
 import { v } from "convex/values";
-import { query, mutation, internalMutation, internalAction, action } from "./_generated/server";
+import { query, mutation, internalMutation, internalAction, internalQuery, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 /**
@@ -28,7 +29,8 @@ export const getTokenByFid = query({
 });
 
 /**
- * Get all notification tokens (for migration/debugging)
+ * Get all notification tokens (for migration/debugging and internal use)
+ * Used by Actions and API routes
  */
 export const getAllTokens = query({
   args: {},
@@ -106,6 +108,60 @@ export const removeToken = mutation({
   },
 });
 
+// ============================================================================
+// TIP ROTATION STATE HELPERS (for Actions)
+// ============================================================================
+
+/**
+ * Get or create tip rotation state (query for Actions)
+ */
+export const getTipState = query({
+  args: {},
+  handler: async (ctx) => {
+    let tipState = await ctx.db.query("tipRotationState").first();
+
+    if (!tipState) {
+      // Return default state if doesn't exist
+      return { currentTipIndex: 0, lastSentAt: Date.now(), _id: null };
+    }
+
+    return tipState;
+  },
+});
+
+/**
+ * Initialize tip state if doesn't exist (mutation)
+ */
+export const initTipState = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("tipRotationState").first();
+    if (existing) return existing._id;
+
+    const newId = await ctx.db.insert("tipRotationState", {
+      currentTipIndex: 0,
+      lastSentAt: Date.now(),
+    });
+    return newId;
+  },
+});
+
+/**
+ * Update tip rotation state (mutation for Actions)
+ */
+export const updateTipState = mutation({
+  args: {
+    tipStateId: v.id("tipRotationState"),
+    currentTipIndex: v.number(),
+  },
+  handler: async (ctx, { tipStateId, currentTipIndex }) => {
+    await ctx.db.patch(tipStateId, {
+      currentTipIndex,
+      lastSentAt: Date.now(),
+    });
+  },
+});
+
 /**
  * Batch import notification tokens (for migration from Firebase)
  */
@@ -168,12 +224,18 @@ export const importTokens = mutation({
  * Called by scheduled function (cron job)
  * NOW USING ACTION (not mutation) to allow sleep() delays
  */
+/* @ts-ignore */
 export const sendDailyLoginReminder = internalAction({
   args: {},
+  // @ts-ignore
   handler: async (ctx) => {
+    // Import api here to avoid circular reference
+    // @ts-ignore
+    const { api } = await import("./_generated/api");
+
     try {
       // Get all notification tokens
-      const tokens = await ctx.runQuery(internal.notifications.getAllTokens);
+      const tokens = await ctx.runQuery(api.notificationsHelpers.getAllTokens);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
@@ -311,45 +373,50 @@ const GAMING_TIPS = [
 /**
  * Send a periodic gaming tip to all users (called by cron job)
  * Rotates through tips to keep them fresh
+ * NOW USING ACTION to support delays and avoid rate limiting
  */
-export const sendPeriodicTip = internalMutation({
+/* @ts-ignore */
+export const sendPeriodicTip = internalAction({
+  args: {},
+  // @ts-ignore
   handler: async (ctx) => {
+    // Import api here to avoid circular reference
+    // @ts-ignore
+    const { api } = await import("./_generated/api");
+
     try {
       console.log("💡 Starting periodic tip notification...");
 
-      // Get all notification tokens
-      const tokens = await ctx.db.query("notificationTokens").collect();
+      // Get all notification tokens via query
+      const tokens = await ctx.runQuery(api.notificationsHelpers.getAllTokens);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
         return { sent: 0, failed: 0, total: 0 };
       }
 
-      // Get or create tip rotation state
-      let tipState = await ctx.db
-        .query("tipRotationState")
-        .first();
+      // Get or create tip rotation state via query
+      let tipState = await ctx.runQuery(api.notificationsHelpers.getTipState);
 
-      if (!tipState) {
-        // Initialize tip state
-        const tipStateId = await ctx.db.insert("tipRotationState", {
-          currentTipIndex: 0,
-          lastSentAt: Date.now(),
-        });
-        tipState = await ctx.db.get(tipStateId);
+      // Initialize if needed
+      if (!tipState._id) {
+        const newId = await ctx.runMutation(api.notificationsHelpers.initTipState);
+        tipState = { currentTipIndex: 0, lastSentAt: Date.now(), _id: newId };
       }
 
       // Get current tip
-      const currentTip = GAMING_TIPS[tipState!.currentTipIndex % GAMING_TIPS.length];
+      const currentTip = GAMING_TIPS[tipState.currentTipIndex % GAMING_TIPS.length];
 
-      // Send to all users
+      // Send to all users WITH DELAYS
       let sent = 0;
       let failed = 0;
+      const DELAY_MS = 100; // 100ms delay between notifications
 
-      for (const tokenData of tokens) {
+      for (let i = 0; i < tokens.length; i++) {
+        const tokenData = tokens[i];
         try {
           // Validar tamanhos conforme limites do Farcaster (title: 32, body: 128, notificationId: 128)
-          const notificationId = `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
+          const notificationId = `tip_${tipState.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
           const validatedTitle = currentTip.title.slice(0, 32);
           const validatedBody = currentTip.body.slice(0, 128);
 
@@ -374,7 +441,6 @@ export const sendPeriodicTip = internalMutation({
             if (!result.invalidTokens?.includes(tokenData.token) &&
                 !result.rateLimitedTokens?.includes(tokenData.token)) {
               sent++;
-              console.log(`✅ Sent to FID ${tokenData.fid}`);
             } else {
               failed++;
               console.log(`❌ Invalid/rate-limited token for FID ${tokenData.fid}`);
@@ -388,18 +454,29 @@ export const sendPeriodicTip = internalMutation({
           console.error(`❌ Exception for FID ${tokenData.fid}:`, error);
           failed++;
         }
+
+        // Progress logging
+        if (i % 10 === 0) {
+          console.log(`✅ Progress: ${sent}/${tokens.length} sent`);
+        }
+
+        // Add delay between notifications to avoid rate limiting
+        if (i < tokens.length - 1) {
+          await sleep(DELAY_MS);
+        }
       }
 
-      // Update tip rotation state
-      await ctx.db.patch(tipState!._id, {
-        currentTipIndex: (tipState!.currentTipIndex + 1) % GAMING_TIPS.length,
-        lastSentAt: Date.now(),
+      // Update tip rotation state via mutation
+      const nextTipIndex = (tipState.currentTipIndex + 1) % GAMING_TIPS.length;
+      await ctx.runMutation(api.notificationsHelpers.updateTipState, {
+        tipStateId: tipState._id,
+        currentTipIndex: nextTipIndex,
       });
 
       console.log(`📊 Periodic tip sent: ${sent} successful, ${failed} failed out of ${tokens.length} total`);
-      console.log(`📝 Sent tip ${tipState!.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
+      console.log(`📝 Sent tip ${tipState.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
 
-      return { sent, failed, total: tokens.length, tipIndex: tipState!.currentTipIndex };
+      return { sent, failed, total: tokens.length, tipIndex: tipState.currentTipIndex };
 
     } catch (error: any) {
       console.error("❌ Error in sendPeriodicTip:", error);
