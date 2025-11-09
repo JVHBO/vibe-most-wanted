@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
+import { createPortal } from "react-dom";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -150,9 +151,12 @@ export function SettingsModal({
     }
   };
 
-  return (
+  // SSR check
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[250] p-2 sm:p-4"
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-2 sm:p-4"
       onClick={onClose}
     >
       <div
@@ -412,6 +416,7 @@ export function SettingsModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
+import { createPortal } from "react-dom";
 
 interface RewardChoiceModalProps {
   amount: number;
@@ -75,9 +76,12 @@ export function RewardChoiceModal({
     }
   };
 
-  return (
+  // SSR check
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[500] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={(e) => {
         console.log('[RewardChoiceModal] Backdrop clicked', e.target);
       }}
@@ -171,6 +175,7 @@ export function RewardChoiceModal({
           Decidir depois
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
