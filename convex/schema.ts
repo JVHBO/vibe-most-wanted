@@ -93,6 +93,7 @@ export default defineSchema({
     dailyLimits: v.optional(v.object({
       pveWins: v.number(), // PvE wins today
       pvpMatches: v.number(), // PvP matches today
+      pokerCpuAttempts: v.optional(v.number()), // CPU Poker attempts today
       lastResetDate: v.string(), // "2025-10-31" format
 
       // Daily bonuses claimed

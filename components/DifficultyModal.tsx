@@ -14,6 +14,8 @@ interface DifficultyModalProps {
   unlockedDifficulties: Set<Difficulty>;
   currentDifficulty?: Difficulty;
   tempSelected?: Difficulty | null;
+  remainingAttempts?: number; // Daily attempts remaining
+  totalAttempts?: number; // Total daily attempts allowed
 }
 
 const DIFFICULTY_INFO = {
@@ -69,10 +71,14 @@ export default function DifficultyModal({
   onEliminationBattle,
   unlockedDifficulties,
   currentDifficulty,
-  tempSelected
+  tempSelected,
+  remainingAttempts = 10,
+  totalAttempts = 10
 }: DifficultyModalProps) {
   const { t } = useLanguage();
   const [hoveredDiff, setHoveredDiff] = useState<Difficulty | null>(null);
+
+  const hasAttemptsLeft = remainingAttempts > 0;
 
   useEffect(() => {
     if (isOpen) {
@@ -102,6 +108,34 @@ export default function DifficultyModal({
           <h2 className="text-xl md:text-4xl font-bold text-vintage-gold font-display text-center drop-shadow-lg uppercase tracking-wider">
             <span className="text-vintage-neon-blue">▸</span> SELECT YOUR DIFFICULTY <span className="text-vintage-neon-blue">◂</span>
           </h2>
+
+          {/* Daily Attempts Counter */}
+          <div className={`mt-4 text-center ${hasAttemptsLeft ? '' : 'animate-pulse'}`}>
+            <div className={`inline-block px-6 py-3 rounded-xl border-2 ${
+              hasAttemptsLeft
+                ? 'bg-vintage-charcoal/80 border-vintage-gold/50'
+                : 'bg-red-900/30 border-red-500/50'
+            }`}>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{hasAttemptsLeft ? '🎮' : '⏰'}</span>
+                <div className="text-left">
+                  <div className={`font-display font-bold text-lg ${
+                    hasAttemptsLeft ? 'text-vintage-gold' : 'text-red-400'
+                  }`}>
+                    {hasAttemptsLeft
+                      ? `${remainingAttempts}/${totalAttempts} Daily Attempts Left`
+                      : 'No Attempts Left Today'
+                    }
+                  </div>
+                  {!hasAttemptsLeft && (
+                    <div className="text-vintage-burnt-gold text-sm font-modern">
+                      Come back tomorrow for more attempts!
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Cards Grid - Responsive */}
@@ -193,10 +227,17 @@ export default function DifficultyModal({
           {tempSelected && (
             <>
               <button
-                onClick={() => onBattle(tempSelected)}
-                className="relative w-full sm:w-auto px-8 lg:px-12 py-3 lg:py-4 bg-gradient-to-r from-vintage-neon-blue to-vintage-neon-blue/90 hover:from-vintage-neon-blue/90 hover:to-vintage-neon-blue text-vintage-black rounded-lg font-display font-bold text-base lg:text-2xl shadow-neon transition-all hover:shadow-gold uppercase tracking-wider border-2 border-vintage-neon-blue/30"
+                onClick={() => hasAttemptsLeft && onBattle(tempSelected)}
+                disabled={!hasAttemptsLeft}
+                className={`relative w-full sm:w-auto px-8 lg:px-12 py-3 lg:py-4 rounded-lg font-display font-bold text-base lg:text-2xl transition-all uppercase tracking-wider border-2 ${
+                  hasAttemptsLeft
+                    ? 'bg-gradient-to-r from-vintage-neon-blue to-vintage-neon-blue/90 hover:from-vintage-neon-blue/90 hover:to-vintage-neon-blue text-vintage-black shadow-neon hover:shadow-gold border-vintage-neon-blue/30 cursor-pointer'
+                    : 'bg-gray-600/30 text-gray-500 border-gray-500/30 cursor-not-allowed'
+                }`}
               >
-                <span className="drop-shadow-lg">{t('startBattle')}</span>
+                <span className="drop-shadow-lg">
+                  {hasAttemptsLeft ? t('startBattle') : '🔒 No Attempts Left'}
+                </span>
               </button>
               {onEliminationBattle && (
                 <div className="relative w-full sm:w-auto">
