@@ -327,11 +327,21 @@ export const sendPeriodicTip = internalMutation({
       // Get current tip
       const currentTip = GAMING_TIPS[tipState!.currentTipIndex % GAMING_TIPS.length];
 
-      // Send to all users
+      // Send to all users (with rate limiting to avoid spam detection)
       let sent = 0;
       let failed = 0;
+      const BATCH_SIZE = 10; // Send 10 at a time
+      const DELAY_MS = 500; // 500ms delay between batches
 
-      for (const tokenData of tokens) {
+      // Process in batches
+      for (let i = 0; i < tokens.length; i++) {
+        const tokenData = tokens[i];
+
+        // Add delay every BATCH_SIZE notifications
+        if (i > 0 && i % BATCH_SIZE === 0) {
+          console.log(`⏱️  Rate limit pause after ${i} notifications (${sent} sent, ${failed} failed)`);
+          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        }
         try {
           // Validar tamanhos conforme limites do Farcaster (title: 32, body: 128, notificationId: 128)
           const notificationId = `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
@@ -431,11 +441,21 @@ export const triggerPeriodicTip = mutation({
       // Get current tip
       const currentTip = GAMING_TIPS[tipState!.currentTipIndex % GAMING_TIPS.length];
 
-      // Send to all users
+      // Send to all users (with rate limiting to avoid spam detection)
       let sent = 0;
       let failed = 0;
+      const BATCH_SIZE = 10; // Send 10 at a time
+      const DELAY_MS = 500; // 500ms delay between batches
 
-      for (const tokenData of tokens) {
+      // Process in batches
+      for (let i = 0; i < tokens.length; i++) {
+        const tokenData = tokens[i];
+
+        // Add delay every BATCH_SIZE notifications
+        if (i > 0 && i % BATCH_SIZE === 0) {
+          console.log(`⏱️  Rate limit pause after ${i} notifications (${sent} sent, ${failed} failed)`);
+          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        }
         try {
           // Validar tamanhos conforme limites do Farcaster (title: 32, body: 128, notificationId: 128)
           const notificationId = `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
@@ -591,11 +611,21 @@ export const sendCustomNotification = mutation({
         return { sent: 0, failed: 0, total: 0 };
       }
 
-      // Send to all users
+      // Send to all users (with rate limiting to avoid spam detection)
       let sent = 0;
       let failed = 0;
+      const BATCH_SIZE = 10; // Send 10 at a time
+      const DELAY_MS = 500; // 500ms delay between batches
 
-      for (const tokenData of tokens) {
+      // Process in batches
+      for (let i = 0; i < tokens.length; i++) {
+        const tokenData = tokens[i];
+
+        // Add delay every BATCH_SIZE notifications
+        if (i > 0 && i % BATCH_SIZE === 0) {
+          console.log(`⏱️  Rate limit pause after ${i} notifications (${sent} sent, ${failed} failed)`);
+          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        }
         try {
           // Validar tamanhos conforme limites do Farcaster
           const notificationId = `custom_${tokenData.fid}_${Date.now()}`.slice(0, 128);
