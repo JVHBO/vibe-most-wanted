@@ -1363,8 +1363,8 @@ export function PokerBattleTable({
                     <div className="text-center">
                       <div className="text-vintage-gold font-display font-bold text-2xl">VS</div>
                       {phase === 'resolution' && (() => {
-                        const playerPower = (playerSelectedCard.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1);
-                        const opponentPower = (opponentSelectedCard.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1);
+                        const playerPower = (playerSelectedCard?.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1);
+                        const opponentPower = (opponentSelectedCard?.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1);
                         if (playerPower > opponentPower) {
                           return <div className="text-blue-400 text-xs mt-1">HOST+</div>;
                         } else if (opponentPower > playerPower) {
