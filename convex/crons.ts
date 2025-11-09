@@ -93,4 +93,17 @@ crons.daily(
   internal.notifications.sendDailyLoginReminder
 );
 
+/**
+ * 💡 Send periodic gaming tips to all users
+ *
+ * Schedule: Every 12 hours (00:00 and 12:00 UTC)
+ * Content: Rotates through gaming tips array (including real $VBMS announcement)
+ * Target: All users with notification tokens enabled
+ */
+crons.interval(
+  "send periodic gaming tips",
+  { hours: 12 },
+  internal.notifications.sendPeriodicTip
+);
+
 export default crons;
