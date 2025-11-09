@@ -383,3 +383,100 @@ export const sendPeriodicTip = internalMutation({
     }
   },
 });
+
+// ============================================================================
+// PUBLIC MUTATIONS (for external scripts/testing)
+// ============================================================================
+
+/**
+ * PUBLIC: Manually trigger periodic tip notification
+ * (Wrapper for internalMutation that can be called externally)
+ */
+export const triggerPeriodicTip = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Call the internal mutation
+    return await ctx.scheduler.runAfter(0, internal.notifications.sendPeriodicTip);
+  },
+});
+
+/**
+ * PUBLIC: Manually trigger daily login reminder
+ * (Wrapper for internalMutation that can be called externally)
+ */
+export const triggerDailyLoginReminder = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Call the internal mutation
+    return await ctx.scheduler.runAfter(0, internal.notifications.sendDailyLoginReminder);
+  },
+});
+
+/**
+ * PUBLIC: Send custom notification to all users
+ */
+export const sendCustomNotification = mutation({
+  args: {
+    title: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, { title, body }) => {
+    try {
+      console.log(`📬 Sending custom notification: "${title}"`);
+
+      // Get all notification tokens
+      const tokens = await ctx.db.query("notificationTokens").collect();
+
+      if (tokens.length === 0) {
+        console.log("⚠️ No notification tokens found");
+        return { sent: 0, failed: 0, total: 0 };
+      }
+
+      // Send to all users
+      let sent = 0;
+      let failed = 0;
+
+      for (const tokenData of tokens) {
+        try {
+          const payload = {
+            notificationId: `custom_${tokenData.fid}_${Date.now()}`,
+            title,
+            body,
+            tokens: [tokenData.token],
+            targetUrl: "https://www.vibemostwanted.xyz",
+          };
+
+          const response = await fetch(tokenData.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (!result.invalidTokens?.includes(tokenData.token) &&
+                !result.rateLimitedTokens?.includes(tokenData.token)) {
+              sent++;
+            } else {
+              failed++;
+            }
+          } else {
+            failed++;
+          }
+        } catch (error) {
+          console.error(`Failed to send to ${tokenData.fid}:`, error);
+          failed++;
+        }
+      }
+
+      console.log(`📊 Custom notification sent: ${sent} successful, ${failed} failed out of ${tokens.length} total`);
+
+      return { sent, failed, total: tokens.length };
+    } catch (error: any) {
+      console.error("❌ Error in sendCustomNotification:", error);
+      throw error;
+    }
+  },
+});
