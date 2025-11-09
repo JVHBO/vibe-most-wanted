@@ -1258,7 +1258,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {matchHistory.slice(0, 10).map((match) => {
+            {matchHistory.slice(0, 10).map((match: any) => {
               const isWin = match.result === 'win';
               const isTie = match.result === 'tie';
               const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
