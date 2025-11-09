@@ -4,7 +4,6 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
-import { createPortal } from "react-dom";
 
 interface CoinsInboxModalProps {
   inboxStatus: {
@@ -46,12 +45,9 @@ export function CoinsInboxModal({ inboxStatus, onClose }: CoinsInboxModalProps) 
     }
   };
 
-  // SSR check
-  if (typeof window === 'undefined') return null;
-
-  return createPortal(
+  return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[99999999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -140,7 +136,6 @@ export function CoinsInboxModal({ inboxStatus, onClose }: CoinsInboxModalProps) 
           </p>
         )}
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
