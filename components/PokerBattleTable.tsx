@@ -1296,7 +1296,7 @@ export function PokerBattleTable({
             {/* Split screen - Both players side by side (or vertical on mobile) */}
             <div className={`flex-1 p-2 bg-vintage-deep-black rounded-b-2xl border-2 border-vintage-gold border-t-0 ${isInFarcaster ? 'flex flex-col gap-3' : 'grid grid-cols-2 gap-2'} relative`}>
               {/* VS Indicator - Shows in center when cards are revealed */}
-              {playerSelectedCard && opponentSelectedCard && (phase === 'reveal' || phase === 'resolution') && (
+              {playerSelectedCard && opponentSelectedCard && (phase === 'resolution') && (
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
                   <div className="bg-vintage-deep-black/90 border-4 border-vintage-gold rounded-full w-24 h-24 flex items-center justify-center shadow-2xl animate-in zoom-in duration-500">
                     <div className="text-center">
@@ -1440,7 +1440,7 @@ export function PokerBattleTable({
                 {/* Guest's selected card */}
                 <div className="flex-1 flex items-center justify-center mb-3">
                   <div className="w-24 sm:w-32 aspect-[2/3] border-2 border-dashed border-red-400 rounded-lg flex items-center justify-center bg-black/30">
-                    {opponentSelectedCard && (phase === 'resolution' || phase === 'reveal') ? (
+                    {opponentSelectedCard && (phase === 'resolution') ? (
                       <div className="relative w-full h-full">
                         {opponentSelectedCard.imageUrl || opponentSelectedCard.image ? (
                           <img src={opponentSelectedCard.imageUrl || opponentSelectedCard.image} alt={opponentSelectedCard.name} className="w-full h-full object-cover rounded-lg" />
