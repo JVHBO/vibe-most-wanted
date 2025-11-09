@@ -333,12 +333,17 @@ export const sendPeriodicTip = internalMutation({
 
       for (const tokenData of tokens) {
         try {
+          // Validar tamanhos conforme limites do Farcaster (title: 32, body: 128, notificationId: 128)
+          const notificationId = `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
+          const validatedTitle = currentTip.title.slice(0, 32);
+          const validatedBody = currentTip.body.slice(0, 128);
+
           const payload = {
-            notificationId: `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`,
-            title: currentTip.title,
-            body: currentTip.body,
+            notificationId,
+            title: validatedTitle,
+            body: validatedBody,
             tokens: [tokenData.token],
-            targetUrl: "https://www.vibemostwanted.xyz",
+            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
           };
 
           const response = await fetch(tokenData.url, {
@@ -354,14 +359,18 @@ export const sendPeriodicTip = internalMutation({
             if (!result.invalidTokens?.includes(tokenData.token) &&
                 !result.rateLimitedTokens?.includes(tokenData.token)) {
               sent++;
+              console.log(`✅ Sent to FID ${tokenData.fid}`);
             } else {
               failed++;
+              console.log(`❌ Invalid/rate-limited token for FID ${tokenData.fid}`);
             }
           } else {
+            const errorText = await response.text();
+            console.error(`❌ Failed for FID ${tokenData.fid}: ${response.status} - ${errorText}`);
             failed++;
           }
         } catch (error) {
-          console.error(`Failed to send to ${tokenData.fid}:`, error);
+          console.error(`❌ Exception for FID ${tokenData.fid}:`, error);
           failed++;
         }
       }
@@ -428,12 +437,17 @@ export const triggerPeriodicTip = mutation({
 
       for (const tokenData of tokens) {
         try {
+          // Validar tamanhos conforme limites do Farcaster (title: 32, body: 128, notificationId: 128)
+          const notificationId = `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
+          const validatedTitle = currentTip.title.slice(0, 32);
+          const validatedBody = currentTip.body.slice(0, 128);
+
           const payload = {
-            notificationId: `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`,
-            title: currentTip.title,
-            body: currentTip.body,
+            notificationId,
+            title: validatedTitle,
+            body: validatedBody,
             tokens: [tokenData.token],
-            targetUrl: "https://www.vibemostwanted.xyz",
+            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
           };
 
           const response = await fetch(tokenData.url, {
@@ -449,14 +463,18 @@ export const triggerPeriodicTip = mutation({
             if (!result.invalidTokens?.includes(tokenData.token) &&
                 !result.rateLimitedTokens?.includes(tokenData.token)) {
               sent++;
+              console.log(`✅ Sent to FID ${tokenData.fid}`);
             } else {
               failed++;
+              console.log(`❌ Invalid/rate-limited token for FID ${tokenData.fid}`);
             }
           } else {
+            const errorText = await response.text();
+            console.error(`❌ Failed for FID ${tokenData.fid}: ${response.status} - ${errorText}`);
             failed++;
           }
         } catch (error) {
-          console.error(`Failed to send to ${tokenData.fid}:`, error);
+          console.error(`❌ Exception for FID ${tokenData.fid}:`, error);
           failed++;
         }
       }
@@ -501,12 +519,17 @@ export const triggerDailyLoginReminder = mutation({
       // Send to all users
       for (const tokenData of tokens) {
         try {
+          // Validar tamanhos conforme limites do Farcaster
+          const notificationId = `daily_login_${tokenData.fid}_${Date.now()}`.slice(0, 128);
+          const validatedTitle = "💰 Daily Login Bonus!".slice(0, 32);
+          const validatedBody = "Don't forget to claim your free coins! Log in to Vibe Most Wanted now! 🎮".slice(0, 128);
+
           const payload = {
-            notificationId: `daily_login_${tokenData.fid}_${Date.now()}`,
-            title: "💰 Daily Login Bonus!",
-            body: "Don't forget to claim your free coins! Log in to Vibe Most Wanted now! 🎮",
+            notificationId,
+            title: validatedTitle,
+            body: validatedBody,
             tokens: [tokenData.token],
-            targetUrl: "https://www.vibemostwanted.xyz",
+            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
           };
 
           const response = await fetch(tokenData.url, {
@@ -522,14 +545,18 @@ export const triggerDailyLoginReminder = mutation({
             if (!result.invalidTokens?.includes(tokenData.token) &&
                 !result.rateLimitedTokens?.includes(tokenData.token)) {
               sent++;
+              console.log(`✅ Sent to FID ${tokenData.fid}`);
             } else {
               failed++;
+              console.log(`❌ Invalid/rate-limited token for FID ${tokenData.fid}`);
             }
           } else {
+            const errorText = await response.text();
+            console.error(`❌ Failed for FID ${tokenData.fid}: ${response.status} - ${errorText}`);
             failed++;
           }
         } catch (error) {
-          console.error(`Failed to send to ${tokenData.fid}:`, error);
+          console.error(`❌ Exception for FID ${tokenData.fid}:`, error);
           failed++;
         }
       }
@@ -570,12 +597,17 @@ export const sendCustomNotification = mutation({
 
       for (const tokenData of tokens) {
         try {
+          // Validar tamanhos conforme limites do Farcaster
+          const notificationId = `custom_${tokenData.fid}_${Date.now()}`.slice(0, 128);
+          const validatedTitle = title.slice(0, 32);
+          const validatedBody = body.slice(0, 128);
+
           const payload = {
-            notificationId: `custom_${tokenData.fid}_${Date.now()}`,
-            title,
-            body,
+            notificationId,
+            title: validatedTitle,
+            body: validatedBody,
             tokens: [tokenData.token],
-            targetUrl: "https://www.vibemostwanted.xyz",
+            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
           };
 
           const response = await fetch(tokenData.url, {
@@ -591,14 +623,18 @@ export const sendCustomNotification = mutation({
             if (!result.invalidTokens?.includes(tokenData.token) &&
                 !result.rateLimitedTokens?.includes(tokenData.token)) {
               sent++;
+              console.log(`✅ Sent to FID ${tokenData.fid}`);
             } else {
               failed++;
+              console.log(`❌ Invalid/rate-limited token for FID ${tokenData.fid}`);
             }
           } else {
+            const errorText = await response.text();
+            console.error(`❌ Failed for FID ${tokenData.fid}: ${response.status} - ${errorText}`);
             failed++;
           }
         } catch (error) {
-          console.error(`Failed to send to ${tokenData.fid}:`, error);
+          console.error(`❌ Exception for FID ${tokenData.fid}:`, error);
           failed++;
         }
       }
