@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
+import { createPortal } from "react-dom";
 
 interface InboxModalProps {
   economy: {
@@ -59,9 +60,12 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     ? new Date(economy.lastClaimTimestamp).toLocaleDateString()
     : "Nunca";
 
-  return (
+  // SSR check
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -141,6 +145,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
           </p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
