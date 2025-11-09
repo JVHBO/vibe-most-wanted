@@ -993,10 +993,13 @@ export function PokerBattleTable({
       setOpponentDeckRemaining(opponentDeckCards);
     }
 
-    // Initialize bankrolls based on ante
+    // Initialize bankrolls and boost coins based on ante
     const startingBankroll = selectedAnte * 50;
+    const startingBoostCoins = 1000;
     setPlayerBankroll(startingBankroll);
     setOpponentBankroll(startingBankroll);
+    setPlayerBoostCoins(startingBoostCoins);
+    setOpponentBoostCoins(startingBoostCoins);
     setPot(selectedAnte * 2);
 
     // Initialize game state in database for PvP mode
@@ -1070,7 +1073,7 @@ export function PokerBattleTable({
         setOpponentAction(gs.hostAction as CardAction);
       }
 
-      // Sync bankrolls from room
+      // Sync bankrolls and boost coins from room
       if (room.hostBankroll !== undefined && room.guestBankroll !== undefined) {
         if (isHost) {
           setPlayerBankroll(room.hostBankroll);
@@ -1078,6 +1081,17 @@ export function PokerBattleTable({
         } else {
           setPlayerBankroll(room.guestBankroll);
           setOpponentBankroll(room.hostBankroll);
+        }
+      }
+
+      // Sync boost coins from room
+      if (room.hostBoostCoins !== undefined && room.guestBoostCoins !== undefined) {
+        if (isHost) {
+          setPlayerBoostCoins(room.hostBoostCoins);
+          setOpponentBoostCoins(room.guestBoostCoins);
+        } else {
+          setPlayerBoostCoins(room.guestBoostCoins);
+          setOpponentBoostCoins(room.hostBoostCoins);
         }
       }
     }
@@ -1407,7 +1421,11 @@ export function PokerBattleTable({
 
                 {/* Host's selected card */}
                 <div className="flex-1 flex items-center justify-center mb-3">
-                  <div className="w-24 sm:w-32 aspect-[2/3] border-2 border-dashed border-blue-400 rounded-lg flex items-center justify-center bg-black/30">
+                  <button
+                    onClick={() => room?.hostAddress && handlePlaceBet(room.hostAddress, 25)}
+                    disabled={!playerSelectedCard || placingBet}
+                    className={`w-24 sm:w-32 aspect-[2/3] border-2 border-dashed ${playerSelectedCard ? 'border-blue-400 hover:border-blue-300 hover:scale-105 cursor-pointer' : 'border-blue-400/30'} rounded-lg flex items-center justify-center bg-black/30 transition-all ${placingBet ? 'opacity-50' : ''}`}
+                  >
                     {playerSelectedCard && (phase === 'resolution' || phase === 'reveal') ? (
                       <div className="relative w-full h-full">
                         {playerSelectedCard.imageUrl || playerSelectedCard.image ? (
@@ -1430,18 +1448,15 @@ export function PokerBattleTable({
                     ) : (
                       <span className="text-blue-400 text-2xl animate-pulse">?</span>
                     )}
-                  </div>
+                  </button>
                 </div>
 
-                {/* Host's hand (small cards) */}
+                {/* Host's hand (hidden for spectators) */}
                 <div className="grid grid-cols-5 gap-1">
                   {playerHand.map((card, i) => (
                     <div key={i} className={`aspect-[2/3] rounded border ${playerSelectedCard?.tokenId === card.tokenId ? 'border-2 border-yellow-400 ring-2 ring-yellow-400' : 'border border-blue-500/30'} overflow-hidden bg-black/50`}>
-                      {card.imageUrl || card.image ? (
-                        <img src={card.imageUrl || card.image} alt={card.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className={`w-full h-full flex items-center justify-center text-white ${isInFarcaster ? 'text-[10px]' : 'text-[8px]'}`}>{Math.round(card.power || 0)}</div>
-                      )}
+                      {/* Show card back for spectators, real cards for players */}
+                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
@@ -1488,7 +1503,11 @@ export function PokerBattleTable({
 
                 {/* Guest's selected card */}
                 <div className="flex-1 flex items-center justify-center mb-3">
-                  <div className="w-24 sm:w-32 aspect-[2/3] border-2 border-dashed border-red-400 rounded-lg flex items-center justify-center bg-black/30">
+                  <button
+                    onClick={() => room?.guestAddress && handlePlaceBet(room.guestAddress, 25)}
+                    disabled={!opponentSelectedCard || placingBet}
+                    className={`w-24 sm:w-32 aspect-[2/3] border-2 border-dashed ${opponentSelectedCard ? 'border-red-400 hover:border-red-300 hover:scale-105 cursor-pointer' : 'border-red-400/30'} rounded-lg flex items-center justify-center bg-black/30 transition-all ${placingBet ? 'opacity-50' : ''}`}
+                  >
                     {opponentSelectedCard && (phase === 'resolution' || showRoundWinner) ? (
                       <div className="relative w-full h-full">
                         {opponentSelectedCard.imageUrl || opponentSelectedCard.image ? (
@@ -1511,18 +1530,15 @@ export function PokerBattleTable({
                     ) : (
                       <span className="text-red-400 text-2xl animate-pulse">?</span>
                     )}
-                  </div>
+                  </button>
                 </div>
 
-                {/* Guest's hand (small cards) */}
+                {/* Guest's hand (hidden for spectators) */}
                 <div className="grid grid-cols-5 gap-1">
                   {opponentHand.map((card, i) => (
                     <div key={i} className={`aspect-[2/3] rounded border ${opponentSelectedCard?.tokenId === card.tokenId ? 'border-2 border-yellow-400 ring-2 ring-yellow-400' : 'border border-red-500/30'} overflow-hidden bg-black/50`}>
-                      {card.imageUrl || card.image ? (
-                        <img src={card.imageUrl || card.image} alt={card.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className={`w-full h-full flex items-center justify-center text-white ${isInFarcaster ? 'text-[10px]' : 'text-[8px]'}`}>{Math.round(card.power || 0)}</div>
-                      )}
+                      {/* Show card back for spectators, real cards for players */}
+                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>

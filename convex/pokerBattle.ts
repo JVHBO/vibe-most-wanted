@@ -27,6 +27,8 @@ export const createPokerRoom = mutation({
 
     // Starting bankroll = ante * 50 (enough for full game)
     const startingBankroll = args.ante * 50;
+    // Starting boost coins = 1000 (for buying boosts during match)
+    const startingBoostCoins = 1000;
 
     const roomDocId = await ctx.db.insert("pokerRooms", {
       roomId,
@@ -37,6 +39,7 @@ export const createPokerRoom = mutation({
       hostUsername: args.username,
       hostReady: false,
       hostBankroll: startingBankroll,
+      hostBoostCoins: startingBoostCoins,
       createdAt: now,
       expiresAt: now + 10 * 60 * 1000, // Expires in 10 minutes
     });
@@ -82,6 +85,8 @@ export const joinPokerRoom = mutation({
 
     // Starting bankroll = ante * 50
     const startingBankroll = room.ante * 50;
+    // Starting boost coins = 1000
+    const startingBoostCoins = 1000;
 
     // Update room with guest
     await ctx.db.patch(room._id, {
@@ -89,6 +94,7 @@ export const joinPokerRoom = mutation({
       guestUsername: args.username,
       guestReady: false,
       guestBankroll: startingBankroll,
+      guestBoostCoins: startingBoostCoins,
     });
 
     return {
@@ -257,12 +263,14 @@ export const autoMatch = mutation({
       } else {
         // Found a room - join it atomically
         const startingBankroll = availableRoom.ante * 50;
+        const startingBoostCoins = 1000;
 
         await ctx.db.patch(availableRoom._id, {
           guestAddress: addr,
           guestUsername: args.username,
           guestReady: false,
           guestBankroll: startingBankroll,
+          guestBoostCoins: startingBoostCoins,
         });
 
         console.log(`🎮 Auto-match: ${args.username} joined room ${availableRoom.roomId}`);
@@ -279,6 +287,7 @@ export const autoMatch = mutation({
     // No room found or race condition - create a new one
     const roomId = `poker_${addr}_${now}`;
     const startingBankroll = args.ante * 50;
+    const startingBoostCoins = 1000;
 
     await ctx.db.insert("pokerRooms", {
       roomId,
@@ -289,6 +298,7 @@ export const autoMatch = mutation({
       hostUsername: args.username,
       hostReady: false,
       hostBankroll: startingBankroll,
+      hostBoostCoins: startingBoostCoins,
       createdAt: now,
       expiresAt: now + 10 * 60 * 1000,
     });
