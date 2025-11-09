@@ -443,7 +443,7 @@ export default defineSchema({
     hostDeck: v.optional(v.array(v.any())), // Host's 10 selected cards
     hostReady: v.boolean(),
     hostBankroll: v.number(), // Starting bankroll for host
-    hostBoostCoins: v.number(), // Boost coins for host (virtual currency for boosts)
+    hostBoostCoins: v.optional(v.number()), // Boost coins for host (virtual currency for boosts)
 
     guestAddress: v.optional(v.string()),
     guestUsername: v.optional(v.string()),
