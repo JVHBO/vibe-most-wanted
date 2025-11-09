@@ -488,7 +488,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
         <NextImage src="/images/icons/battle.svg" alt="Battle" width={32} height={32} /> {t('matchHistory')}
       </h2>
       <div className="space-y-3">
-        {matchHistory.map((match, index) => {
+        {matchHistory.map((match: any, index: number) => {
           const isWin = match.result === 'win';
           const isTie = match.result === 'tie';
           const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
