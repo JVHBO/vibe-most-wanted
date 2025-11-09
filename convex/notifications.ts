@@ -256,6 +256,10 @@ export const sendDailyLoginReminder = internalMutation({
 // Array of gaming tips to rotate through
 const GAMING_TIPS = [
   {
+    title: "🚀 Coming Soon: Real $VBMS!",
+    body: "Get ready! Real $VBMS tokens are coming to Vibe Most Wanted! Keep playing to maximize your rewards! 💰"
+  },
+  {
     title: "💡 VIBE Most Wanted Tip",
     body: "Did you know? Playing in Chinese (中文) gives you more coins AND changes the music! Try it now! 🎵"
   },
