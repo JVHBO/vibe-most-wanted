@@ -390,25 +390,157 @@ export const sendPeriodicTip = internalMutation({
 
 /**
  * PUBLIC: Manually trigger periodic tip notification
- * (Wrapper for internalMutation that can be called externally)
  */
 export const triggerPeriodicTip = mutation({
   args: {},
   handler: async (ctx) => {
-    // Call the internal mutation
-    return await ctx.scheduler.runAfter(0, internal.notifications.sendPeriodicTip);
+    try {
+      console.log("💡 Starting periodic tip notification (manual trigger)...");
+
+      // Get all notification tokens
+      const tokens = await ctx.db.query("notificationTokens").collect();
+
+      if (tokens.length === 0) {
+        console.log("⚠️ No notification tokens found");
+        return { sent: 0, failed: 0, total: 0 };
+      }
+
+      // Get or create tip rotation state
+      let tipState = await ctx.db
+        .query("tipRotationState")
+        .first();
+
+      if (!tipState) {
+        // Initialize tip state
+        const tipStateId = await ctx.db.insert("tipRotationState", {
+          currentTipIndex: 0,
+          lastSentAt: Date.now(),
+        });
+        tipState = await ctx.db.get(tipStateId);
+      }
+
+      // Get current tip
+      const currentTip = GAMING_TIPS[tipState!.currentTipIndex % GAMING_TIPS.length];
+
+      // Send to all users
+      let sent = 0;
+      let failed = 0;
+
+      for (const tokenData of tokens) {
+        try {
+          const payload = {
+            notificationId: `tip_${tipState!.currentTipIndex}_${tokenData.fid}_${Date.now()}`,
+            title: currentTip.title,
+            body: currentTip.body,
+            tokens: [tokenData.token],
+            targetUrl: "https://www.vibemostwanted.xyz",
+          };
+
+          const response = await fetch(tokenData.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (!result.invalidTokens?.includes(tokenData.token) &&
+                !result.rateLimitedTokens?.includes(tokenData.token)) {
+              sent++;
+            } else {
+              failed++;
+            }
+          } else {
+            failed++;
+          }
+        } catch (error) {
+          console.error(`Failed to send to ${tokenData.fid}:`, error);
+          failed++;
+        }
+      }
+
+      // Update tip rotation state
+      await ctx.db.patch(tipState!._id, {
+        currentTipIndex: (tipState!.currentTipIndex + 1) % GAMING_TIPS.length,
+        lastSentAt: Date.now(),
+      });
+
+      console.log(`📊 Periodic tip sent: ${sent} successful, ${failed} failed out of ${tokens.length} total`);
+      console.log(`📝 Sent tip ${tipState!.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
+
+      return { sent, failed, total: tokens.length, tipIndex: tipState!.currentTipIndex };
+    } catch (error: any) {
+      console.error("❌ Error in triggerPeriodicTip:", error);
+      throw error;
+    }
   },
 });
 
 /**
  * PUBLIC: Manually trigger daily login reminder
- * (Wrapper for internalMutation that can be called externally)
  */
 export const triggerDailyLoginReminder = mutation({
   args: {},
   handler: async (ctx) => {
-    // Call the internal mutation
-    return await ctx.scheduler.runAfter(0, internal.notifications.sendDailyLoginReminder);
+    try {
+      console.log("💰 Starting daily login reminder (manual trigger)...");
+
+      // Get all notification tokens
+      const tokens = await ctx.db.query("notificationTokens").collect();
+
+      if (tokens.length === 0) {
+        console.log("⚠️ No notification tokens found");
+        return { sent: 0, failed: 0, total: 0 };
+      }
+
+      let sent = 0;
+      let failed = 0;
+
+      // Send to all users
+      for (const tokenData of tokens) {
+        try {
+          const payload = {
+            notificationId: `daily_login_${tokenData.fid}_${Date.now()}`,
+            title: "💰 Daily Login Bonus!",
+            body: "Don't forget to claim your free coins! Log in to Vibe Most Wanted now! 🎮",
+            tokens: [tokenData.token],
+            targetUrl: "https://www.vibemostwanted.xyz",
+          };
+
+          const response = await fetch(tokenData.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (!result.invalidTokens?.includes(tokenData.token) &&
+                !result.rateLimitedTokens?.includes(tokenData.token)) {
+              sent++;
+            } else {
+              failed++;
+            }
+          } else {
+            failed++;
+          }
+        } catch (error) {
+          console.error(`Failed to send to ${tokenData.fid}:`, error);
+          failed++;
+        }
+      }
+
+      console.log(`📊 Daily login reminder sent: ${sent} successful, ${failed} failed out of ${tokens.length} total`);
+
+      return { sent, failed, total: tokens.length };
+    } catch (error: any) {
+      console.error("❌ Error in triggerDailyLoginReminder:", error);
+      throw error;
+    }
   },
 });
 
