@@ -1385,7 +1385,7 @@ export function PokerBattleTable({
                   <div className="flex items-center justify-center gap-2 mb-2">
                     {hostProfile?.twitterProfileImageUrl ? (
                       <img
-                        src={hostProfile.twitterProfileImageUrl}
+                        src={hostProfile?.twitterProfileImageUrl}
                         alt={room?.hostUsername}
                         className={isInFarcaster ? "w-12 h-12 rounded-full border-2 border-blue-400" : "w-10 h-10 rounded-full border-2 border-blue-400"}
                       />
@@ -1406,7 +1406,7 @@ export function PokerBattleTable({
                       {[10, 25, 50, 100].map((amount) => (
                         <button
                           key={amount}
-                          onClick={() => handlePlaceBet(room.hostAddress, amount)}
+                          onClick={() => room?.hostAddress && handlePlaceBet(room.hostAddress, amount)}
                           disabled={placingBet}
                           className={`bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-bold rounded transition-all hover:scale-105 active:scale-95 ${isInFarcaster ? 'px-4 py-3 text-sm min-h-[44px] min-w-[44px]' : 'px-2 py-1 text-xs'}`}
                         >
@@ -1426,16 +1426,16 @@ export function PokerBattleTable({
                   >
                     {playerSelectedCard && (phase === 'resolution' || phase === 'reveal') ? (
                       <div className="relative w-full h-full">
-                        {playerSelectedCard.imageUrl || playerSelectedCard.image ? (
-                          <img src={playerSelectedCard.imageUrl || playerSelectedCard.image} alt={playerSelectedCard.name} className="w-full h-full object-cover rounded-lg" />
+                        {playerSelectedCard?.imageUrl || playerSelectedCard?.image ? (
+                          <img src={playerSelectedCard?.imageUrl || playerSelectedCard?.image} alt={playerSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(playerSelectedCard.rarity) }}>
-                            <div className="text-white text-xs font-bold text-center">{playerSelectedCard.name}</div>
-                            <div className="text-white text-lg font-bold">{Math.round(playerSelectedCard.power || 0)}</div>
+                          <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(playerSelectedCard?.rarity) }}>
+                            <div className="text-white text-xs font-bold text-center">{playerSelectedCard?.name}</div>
+                            <div className="text-white text-lg font-bold">{Math.round(playerSelectedCard?.power || 0)}</div>
                           </div>
                         )}
                         <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-blue-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'} flex items-center justify-center gap-0.5`}>
-                          {Math.round((playerSelectedCard.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1))}
+                          {Math.round((playerSelectedCard?.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1))}
                           {playerAction === 'BOOST' && <SwordIcon className="inline-block text-blue-300" size={12} />}
                           {playerAction === 'DOUBLE' && <BoltIcon className="inline-block text-blue-300" size={12} />}
                           {playerAction === 'SHIELD' && <ShieldIcon className="inline-block text-blue-300" size={12} />}
@@ -1467,7 +1467,7 @@ export function PokerBattleTable({
                   <div className="flex items-center justify-center gap-2 mb-2">
                     {guestProfile?.twitterProfileImageUrl ? (
                       <img
-                        src={guestProfile.twitterProfileImageUrl}
+                        src={guestProfile?.twitterProfileImageUrl}
                         alt={room?.guestUsername}
                         className={isInFarcaster ? "w-12 h-12 rounded-full border-2 border-red-400" : "w-10 h-10 rounded-full border-2 border-red-400"}
                       />
@@ -1488,7 +1488,7 @@ export function PokerBattleTable({
                       {[10, 25, 50, 100].map((amount) => (
                         <button
                           key={amount}
-                          onClick={() => handlePlaceBet(room.guestAddress!, amount)}
+                          onClick={() => room?.guestAddress && handlePlaceBet(room.guestAddress, amount)}
                           disabled={placingBet}
                           className={`bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white font-bold rounded transition-all hover:scale-105 active:scale-95 ${isInFarcaster ? 'px-4 py-3 text-sm min-h-[44px] min-w-[44px]' : 'px-2 py-1 text-xs'}`}
                         >
@@ -1508,16 +1508,16 @@ export function PokerBattleTable({
                   >
                     {opponentSelectedCard && (phase === 'resolution' || showRoundWinner) ? (
                       <div className="relative w-full h-full">
-                        {opponentSelectedCard.imageUrl || opponentSelectedCard.image ? (
-                          <img src={opponentSelectedCard.imageUrl || opponentSelectedCard.image} alt={opponentSelectedCard.name} className="w-full h-full object-cover rounded-lg" />
+                        {opponentSelectedCard?.imageUrl || opponentSelectedCard?.image ? (
+                          <img src={opponentSelectedCard?.imageUrl || opponentSelectedCard?.image} alt={opponentSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(opponentSelectedCard.rarity) }}>
-                            <div className="text-white text-xs font-bold text-center">{opponentSelectedCard.name}</div>
-                            <div className="text-white text-lg font-bold">{Math.round(opponentSelectedCard.power || 0)}</div>
+                          <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(opponentSelectedCard?.rarity) }}>
+                            <div className="text-white text-xs font-bold text-center">{opponentSelectedCard?.name}</div>
+                            <div className="text-white text-lg font-bold">{Math.round(opponentSelectedCard?.power || 0)}</div>
                           </div>
                         )}
                         <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-red-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'} flex items-center justify-center gap-0.5`}>
-                          {Math.round((opponentSelectedCard.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1))}
+                          {Math.round((opponentSelectedCard?.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1))}
                           {opponentAction === 'BOOST' && <SwordIcon className="inline-block text-red-300" size={12} />}
                           {opponentAction === 'DOUBLE' && <BoltIcon className="inline-block text-red-300" size={12} />}
                           {opponentAction === 'SHIELD' && <ShieldIcon className="inline-block text-red-300" size={12} />}
