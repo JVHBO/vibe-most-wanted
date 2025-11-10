@@ -1143,7 +1143,57 @@ export function PokerBattleTable({
     );
   }
 
-  if (currentView === 'waiting' && !isSpectator) {
+  if (currentView === 'waiting') {
+    if (isSpectator) {
+      // Spectator view for waiting room
+      return (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-3xl border-4 border-vintage-gold/50 max-w-2xl w-full p-8 shadow-2xl shadow-vintage-gold/20">
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 z-10 bg-vintage-gold text-vintage-black w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-vintage-burnt-gold transition"
+            >
+              ×
+            </button>
+
+            <div className="text-center">
+              <div className="text-6xl mb-4">👁️</div>
+              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">
+                SPECTATING
+              </h2>
+              <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-xl p-6 mb-6">
+                <p className="text-vintage-burnt-gold text-lg mb-2">
+                  Waiting for the game to start...
+                </p>
+                <div className="flex items-center justify-center gap-2 text-blue-400">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm">Game will begin when both players are ready</span>
+                </div>
+              </div>
+              {room && (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center bg-vintage-black/30 rounded-lg p-3">
+                    <span className="text-vintage-burnt-gold">Host:</span>
+                    <span className="text-vintage-gold font-bold">{room.hostUsername || 'Player 1'}</span>
+                  </div>
+                  {room.guestUsername && (
+                    <div className="flex justify-between items-center bg-vintage-black/30 rounded-lg p-3">
+                      <span className="text-vintage-burnt-gold">Guest:</span>
+                      <span className="text-vintage-gold font-bold">{room.guestUsername}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center bg-vintage-black/30 rounded-lg p-3">
+                    <span className="text-vintage-burnt-gold">Stakes:</span>
+                    <span className="text-vintage-gold font-bold">{room.ante} {room.token}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <PokerWaitingRoom
         roomId={roomId}
