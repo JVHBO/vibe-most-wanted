@@ -456,7 +456,7 @@ export function PokerBattleTable({
         console.log('[PokerBattle] Moving to reveal phase after card selection');
         setPhase('reveal');
         setTimeRemaining(90); // Reset timer for reveal phase
-      }, 3000);
+      }, 5000);
     } else {
       // PvP mode - send to server
       console.log('[PokerBattle] Sending card selection to server', { roomId, playerAddress });
@@ -702,7 +702,7 @@ export function PokerBattleTable({
             console.log('[PokerBattle] CPU Mode - 3s timeout for tie completed, proceeding to next round');
             setShowRoundWinner(false);
             nextRound();
-          }, 3000);
+          }, 5000);
         } else if (playerWins) {
           // Winner gets pot (no fee on frontend, just display)
           setPlayerBankroll(prev => {
@@ -765,7 +765,7 @@ export function PokerBattleTable({
             console.log('[PokerBattle] CPU Mode - Proceeding to next round');
             nextRound();
           }
-        }, 3000);
+        }, 5000);
       }, 1000);
     } else {
       // PvP mode - send to server for resolution
@@ -869,7 +869,7 @@ export function PokerBattleTable({
               setPlayerAction(null);
               setOpponentAction(null);
             }
-          }, 3000);
+          }, 5000);
         }, 1000);
       } catch (error) {
         console.error('[PokerBattle] PvP Mode - Error resolving round:', error);
@@ -1086,14 +1086,22 @@ export function PokerBattleTable({
       }
 
       // Sync opponent's selected card (only show after they select)
-      if (isHost && gs.guestSelectedCard) {
+      if (isSpectatorMode) {
+        // Spectators see both cards
+        setPlayerSelectedCard(gs.hostSelectedCard);
+        setOpponentSelectedCard(gs.guestSelectedCard);
+      } else if (isHost && gs.guestSelectedCard) {
         setOpponentSelectedCard(gs.guestSelectedCard);
       } else if (!isHost && gs.hostSelectedCard) {
         setOpponentSelectedCard(gs.hostSelectedCard);
       }
 
       // Sync opponent's action
-      if (isHost && gs.guestAction) {
+      if (isSpectatorMode) {
+        // Spectators see both actions
+        setPlayerAction(gs.hostAction as CardAction);
+        setOpponentAction(gs.guestAction as CardAction);
+      } else if (isHost && gs.guestAction) {
         setOpponentAction(gs.guestAction as CardAction);
       } else if (!isHost && gs.hostAction) {
         setOpponentAction(gs.hostAction as CardAction);
@@ -1717,6 +1725,24 @@ export function PokerBattleTable({
                   <div className="text-vintage-gold font-display font-bold mb-4">
                     OPPONENT • {opponentBankroll} {selectedToken}
                   </div>
+
+                  {/* Spectator Bet Buttons - Opponent Side */}
+                  {isSpectatorMode && room?.guestAddress && (
+                    <div className="flex gap-2 justify-center mt-3">
+                      <div className="text-xs text-vintage-gold/70 mr-2 flex items-center">Bet on {room.guestUsername}:</div>
+                      {[10, 25, 50, 100].map((amount) => (
+                        <button
+                          key={amount}
+                          onClick={() => handlePlaceBet(room.guestAddress!, amount)}
+                          disabled={placingBet}
+                          className="bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white font-bold rounded px-3 py-1.5 text-sm transition-all hover:scale-105 active:scale-95"
+                        >
+                          {amount}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                 </div>
 
                 {/* CENTER - CARD BATTLE AREA */}
