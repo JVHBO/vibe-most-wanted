@@ -54,6 +54,7 @@ export function PokerBattleTable({
   const [roomId, setRoomId] = useState<string>('');
   const [isHost, setIsHost] = useState(false);
   const [selectedAnte, setSelectedAnte] = useState(25);
+  const [isSpectatorMode, setIsSpectatorMode] = useState(isSpectator);
   const [selectedToken, setSelectedToken] = useState<'TESTVBMS' | 'testUSDC' | 'VIBE_NFT'>('TESTVBMS');
 
   // Real-time room data for multiplayer
@@ -966,6 +967,7 @@ export function PokerBattleTable({
     setSelectedAnte(ante);
     setSelectedToken(token as 'TESTVBMS' | 'testUSDC' | 'VIBE_NFT');
     setCurrentView(spectator ? 'game' : 'waiting');
+    setIsSpectatorMode(spectator);
   };
 
   const handleGameStart = async (deck: Card[], opponentDeckData?: Card[]) => {
@@ -1097,7 +1099,7 @@ export function PokerBattleTable({
 
   // Play audio when game ends
   useEffect(() => {
-    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectator && soundEnabled) {
+    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && soundEnabled) {
       // Play appropriate sound based on result
       if (playerScore > opponentScore) {
         AudioManager.win(); // Victory sound
@@ -1107,7 +1109,7 @@ export function PokerBattleTable({
         AudioManager.tie(); // Tie sound
       }
     }
-  }, [phase, playerScore, opponentScore, selectedAnte, isSpectator, soundEnabled]);
+  }, [phase, playerScore, opponentScore, selectedAnte, isSpectatorMode, soundEnabled]);
 
   // Resolve bets when game ends (PvP mode only)
   useEffect(() => {
@@ -1144,7 +1146,7 @@ export function PokerBattleTable({
   }
 
   if (currentView === 'waiting') {
-    if (isSpectator) {
+    if (isSpectatorMode) {
       // Spectator view for waiting room
       return (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
@@ -1222,7 +1224,7 @@ export function PokerBattleTable({
         </button>
 
         {/* SPECTATOR VIEW - Deck Building Phase */}
-        {phase === 'deck-building' && isSpectator && (
+        {phase === 'deck-building' && isSpectatorMode && (
           <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-8 h-full flex items-center justify-center">
             <div className="text-center">
               <div className="text-7xl mb-6 animate-pulse">👁️</div>
@@ -1254,7 +1256,7 @@ export function PokerBattleTable({
         )}
 
         {/* DECK BUILDING PHASE - Skip for spectators */}
-        {phase === 'deck-building' && !isSpectator && (
+        {phase === 'deck-building' && !isSpectatorMode && (
           <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-2 sm:p-4 md:p-6 h-full overflow-y-auto">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-2 sm:mb-3 text-center">
               BUILD YOUR DECK
@@ -1408,7 +1410,7 @@ export function PokerBattleTable({
         )}
 
         {/* SPECTATOR VIEW - Active during gameplay */}
-        {phase !== 'deck-building' && phase !== 'game-over' && isSpectator && (
+        {phase !== 'deck-building' && phase !== 'game-over' && isSpectatorMode && (
           <div className="h-full flex flex-col">
             {/* Header */}
             <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-2 md:p-3">
@@ -1483,7 +1485,7 @@ export function PokerBattleTable({
                   </div>
 
                   {/* Bet Buttons - Only show for spectators */}
-                  {isSpectator && room?.hostAddress && (
+                  {isSpectatorMode && room?.hostAddress && (
                     <div className="flex gap-2 justify-center mt-2">
                       {[10, 25, 50, 100].map((amount) => (
                         <button
@@ -1565,7 +1567,7 @@ export function PokerBattleTable({
                   </div>
 
                   {/* Bet Buttons - Only show for spectators */}
-                  {isSpectator && room?.guestAddress && (
+                  {isSpectatorMode && room?.guestAddress && (
                     <div className="flex gap-2 justify-center mt-2">
                       {[10, 25, 50, 100].map((amount) => (
                         <button
@@ -1641,7 +1643,7 @@ export function PokerBattleTable({
                 <div className="text-vintage-gold font-display font-bold">
                   ROUND {currentRound}/7 • Score: {playerScore}-{opponentScore}
                 </div>
-                {(selectedAnte === 0 || isSpectator) && (
+                {(selectedAnte === 0 || isSpectatorMode) && (
                   <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse">
                     <EyeIcon className="inline-block text-blue-400" size={16} /> SPECTATOR
                   </div>
@@ -1910,15 +1912,15 @@ export function PokerBattleTable({
                       <button
                         key={card.tokenId}
                         onClick={() => phase === 'card-selection' && selectCard(card)}
-                        disabled={phase !== 'card-selection' || selectedAnte === 0 || isSpectator}
+                        disabled={phase !== 'card-selection' || selectedAnte === 0 || isSpectatorMode}
                         style={{ animationDelay: `${index * 100}ms` }}
                         className={`${isInFarcaster ? 'w-14' : 'w-16 sm:w-20'} aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
                           playerSelectedCard?.tokenId === card.tokenId
                             ? 'border-vintage-gold shadow-gold scale-110 -translate-y-2'
                             : 'border-vintage-gold/50 hover:border-vintage-gold hover:scale-105 hover:-translate-y-1'
-                        } ${phase !== 'card-selection' || selectedAnte === 0 || isSpectator ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}`}
+                        } ${phase !== 'card-selection' || selectedAnte === 0 || isSpectatorMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}`}
                       >
-                        {isSpectator ? (
+                        {isSpectatorMode ? (
                           // Show card back for spectators
                           <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
                         ) : (
@@ -1940,7 +1942,7 @@ export function PokerBattleTable({
                             )}
                           </FoilCardEffect>
                         )}
-                        {!isSpectator && (
+                        {!isSpectatorMode && (
                           <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold transition-colors">
                             {Math.round(card.power || 0).toLocaleString()}
                           </div>
@@ -1950,7 +1952,7 @@ export function PokerBattleTable({
                   </div>
 
 
-                  {phase === 'reveal' && !isSpectator && selectedAnte !== 0 && (
+                  {phase === 'reveal' && !isSpectatorMode && selectedAnte !== 0 && (
                     <div className="space-y-1 sm:space-y-2 animate-in fade-in slide-in-from-bottom duration-500 w-full max-w-md mx-auto">
                       <div className="text-center text-vintage-neon-blue text-xs sm:text-sm font-bold mb-1">
                         🪙 BOOST SHOP - {playerBoostCoins} Coins
@@ -1959,14 +1961,14 @@ export function PokerBattleTable({
                       <div className="grid grid-cols-2 md:flex md:justify-center gap-1 sm:gap-2">
                         <button
                           onClick={() => showConfirmAction('BOOST')}
-                          disabled={selectedAnte === 0 || isSpectator || playerBoostCoins < getBoostPrice('BOOST')}
+                          disabled={selectedAnte === 0 || isSpectatorMode || playerBoostCoins < getBoostPrice('BOOST')}
                           className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
-                            playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator
+                            playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectatorMode
                               ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black hover:from-yellow-600 hover:to-yellow-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <SwordIcon className={playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectator ? "text-black" : "text-gray-500"} size={24} />
+                          <SwordIcon className={playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectatorMode ? "text-black" : "text-gray-500"} size={24} />
                           <div className="text-[10px] sm:text-xs font-bold">BOOST</div>
                           <span className="text-[8px] sm:text-[10px]">+30%</span>
                           <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('BOOST')}</span>
@@ -1974,14 +1976,14 @@ export function PokerBattleTable({
 
                         <button
                           onClick={() => showConfirmAction('SHIELD')}
-                          disabled={selectedAnte === 0 || isSpectator || playerBoostCoins < getBoostPrice('SHIELD')}
+                          disabled={selectedAnte === 0 || isSpectatorMode || playerBoostCoins < getBoostPrice('SHIELD')}
                           className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
-                            playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator
+                            playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectatorMode
                               ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <ShieldIcon className={playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={24} />
+                          <ShieldIcon className={playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectatorMode ? "text-white" : "text-gray-500"} size={24} />
                           <div className="text-[10px] sm:text-xs font-bold">SHIELD</div>
                           <span className="text-[8px] sm:text-[10px]">Block</span>
                           <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('SHIELD')}</span>
@@ -1989,14 +1991,14 @@ export function PokerBattleTable({
 
                         <button
                           onClick={() => showConfirmAction('DOUBLE')}
-                          disabled={selectedAnte === 0 || isSpectator || playerBoostCoins < getBoostPrice('DOUBLE')}
+                          disabled={selectedAnte === 0 || isSpectatorMode || playerBoostCoins < getBoostPrice('DOUBLE')}
                           className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
-                            playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator
+                            playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectatorMode
                               ? 'bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <BoltIcon className={playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectator ? "text-white" : "text-gray-500"} size={24} />
+                          <BoltIcon className={playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectatorMode ? "text-white" : "text-gray-500"} size={24} />
                           <div className="text-[10px] sm:text-xs font-bold">CRIT</div>
                           <span className="text-[8px] sm:text-[10px]">x2</span>
                           <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('DOUBLE')}</span>
@@ -2004,10 +2006,10 @@ export function PokerBattleTable({
 
                         <button
                           onClick={() => showConfirmAction('PASS')}
-                          disabled={selectedAnte === 0 || isSpectator}
+                          disabled={selectedAnte === 0 || isSpectatorMode}
                           className="px-2 sm:px-4 py-1 sm:py-2 bg-gray-600 text-white font-bold text-xs sm:text-sm rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
                         >
-                          <HandIcon className={selectedAnte === 0 || isSpectator ? "text-gray-500" : "text-white"} size={24} />
+                          <HandIcon className={selectedAnte === 0 || isSpectatorMode ? "text-gray-500" : "text-white"} size={24} />
                           <div className="text-[10px] sm:text-xs font-bold">PASS</div>
                           <span className="text-[8px] sm:text-[10px]">Free</span>
                           <span className="text-[7px] sm:text-[9px] opacity-80">Save $</span>
@@ -2024,7 +2026,7 @@ export function PokerBattleTable({
         )}
 
         {/* SPECTATOR GAME OVER */}
-        {phase === 'game-over' && (selectedAnte === 0 || isSpectator) && (
+        {phase === 'game-over' && (selectedAnte === 0 || isSpectatorMode) && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]">
             <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-6 sm:p-8 text-center shadow-2xl max-w-lg mx-4">
               {/* Winner Badge */}
@@ -2093,7 +2095,7 @@ export function PokerBattleTable({
         )}
 
         {/* VICTORY POPUP */}
-        {phase === 'game-over' && selectedAnte !== 0 && !isSpectator && playerScore > opponentScore && (
+        {phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore > opponentScore && (
           <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={onClose}>
             <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
               {/* Victory Image */}
@@ -2161,7 +2163,7 @@ export function PokerBattleTable({
         )}
 
         {/* DEFEAT POPUP */}
-        {phase === 'game-over' && selectedAnte !== 0 && !isSpectator && playerScore < opponentScore && (
+        {phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore < opponentScore && (
           <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={onClose}>
             <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
               {/* Defeat Image */}
@@ -2221,7 +2223,7 @@ export function PokerBattleTable({
         )}
 
         {/* TIE POPUP */}
-        {phase === 'game-over' && selectedAnte !== 0 && !isSpectator && playerScore === opponentScore && (
+        {phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore === opponentScore && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-500">
             <div className="relative max-w-2xl w-full mx-4">
               {/* Defeat Image (reusing for tie) */}
@@ -2345,7 +2347,7 @@ export function PokerBattleTable({
         )}
 
         {/* CHAT SYSTEM - Only show in PvP mode, not in CPU mode or spectator */}
-        {!isCPUMode && currentView === 'game' && roomId && !isSpectator && (
+        {!isCPUMode && currentView === 'game' && roomId && !isSpectatorMode && (
           <>
             {/* Chat Toggle Button */}
             <button
