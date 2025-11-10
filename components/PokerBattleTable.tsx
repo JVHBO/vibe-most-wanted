@@ -861,13 +861,10 @@ export function PokerBattleTable({
               console.log('[PokerBattle] PvP Mode - Game over!');
               setPhase('game-over');
             } else {
-              console.log('[PokerBattle] PvP Mode - Resetting for next round');
-              // Server already moved to next round, sync will happen via useEffect
-              // But we can manually reset local state to be ready
-              setPlayerSelectedCard(null);
-              setOpponentSelectedCard(null);
-              setPlayerAction(null);
-              setOpponentAction(null);
+              console.log('[PokerBattle] PvP Mode - Moving to next round');
+              // Call nextRound to remove played cards from hands and draw new ones
+              // Server already updated gameState, which will be synced via useEffect
+              nextRound();
             }
           }, 5000);
         }, 1000);
