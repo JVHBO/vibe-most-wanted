@@ -180,62 +180,30 @@ export function PokerMatchmaking({
         </div>
 
         <div className="p-6">
-          {/* Main Action Buttons */}
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
+          {/* Main Action Button */}
+          <div className="flex justify-center mb-8">
             {/* Create Room */}
             <button
               onClick={() => {
                 AudioManager.buttonClick();
                 setShowCreateModal(true);
               }}
-              className="group bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold p-6 rounded-2xl border-2 border-vintage-gold hover:shadow-2xl hover:shadow-vintage-gold/30 transition-all duration-300 hover:scale-105 active:scale-95"
+              className="group bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold p-8 rounded-2xl border-2 border-vintage-gold hover:shadow-2xl hover:shadow-vintage-gold/30 transition-all duration-300 hover:scale-105 active:scale-95 max-w-md w-full"
             >
-              <div className="text-6xl mb-3">🎰</div>
-              <h3 className="text-2xl font-display font-bold text-vintage-black mb-2">
+              <div className="text-7xl mb-4">🎰</div>
+              <h3 className="text-3xl font-display font-bold text-vintage-black mb-3">
                 CREATE ROOM
               </h3>
-              <p className="text-sm text-vintage-deep-black/80 font-modern">
+              <p className="text-base text-vintage-deep-black/80 font-modern">
                 Set your own stakes and wait for opponent
-              </p>
-            </button>
-
-            {/* Auto Match */}
-            <button
-              onClick={handleAutoMatch}
-              disabled={isAutoMatching}
-              className="group bg-gradient-to-br from-green-600 to-green-700 p-6 rounded-2xl border-2 border-green-500 hover:shadow-2xl hover:shadow-green-500/30 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="text-6xl mb-3">⚡</div>
-              <h3 className="text-2xl font-display font-bold text-white mb-2">
-                {isAutoMatching ? "MATCHING..." : "AUTO MATCH"}
-              </h3>
-              <p className="text-sm text-white/80 font-modern">
-                Find or create room automatically
-              </p>
-            </button>
-
-            {/* Browse Rooms */}
-            <button
-              onClick={() => {
-                AudioManager.buttonClick();
-                document.getElementById("rooms-list")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="group bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-2xl border-2 border-blue-500 hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:scale-105 active:scale-95"
-            >
-              <div className="text-6xl mb-3">🚪</div>
-              <h3 className="text-2xl font-display font-bold text-white mb-2">
-                JOIN ROOM
-              </h3>
-              <p className="text-sm text-white/80 font-modern">
-                Browse and join available rooms below
               </p>
             </button>
           </div>
 
-          {/* Stakes Selection for Auto Match */}
+          {/* Room Settings */}
           <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-2xl p-6 mb-8">
             <h3 className="text-xl font-display font-bold text-vintage-gold mb-4">
-              ⚙️ QUICK SETTINGS
+              ⚙️ ROOM SETTINGS
             </h3>
 
             <div className="grid md:grid-cols-2 gap-6">
