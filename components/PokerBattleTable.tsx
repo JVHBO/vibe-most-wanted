@@ -1410,7 +1410,7 @@ export function PokerBattleTable({
         )}
 
         {/* SPECTATOR VIEW - Active during gameplay */}
-        {phase !== 'deck-building' && phase !== 'game-over' && isSpectatorMode && (
+        {false && phase !== 'deck-building' && phase !== 'game-over' && isSpectatorMode && (
           <div className="h-full flex flex-col">
             {/* Header */}
             <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-2 md:p-3">
@@ -1630,7 +1630,7 @@ export function PokerBattleTable({
         )}
 
         {/* REGULAR GAME TABLE - POKER FELT DESIGN (for players AND spectators) */}
-        {phase !== 'deck-building' && phase !== 'game-over' && selectedAnte !== 0 && (
+        {phase !== 'deck-building' && phase !== 'game-over' && (selectedAnte !== 0 || isSpectatorMode) && (
           <div className="h-full flex flex-col">
 
             {/* Game info header */}
@@ -2347,7 +2347,7 @@ export function PokerBattleTable({
         )}
 
         {/* CHAT SYSTEM - Only show in PvP mode, not in CPU mode or spectator */}
-        {!isCPUMode && currentView === 'game' && roomId && !isSpectatorMode && (
+        {!isCPUMode && currentView === 'game' && roomId && (
           <>
             {/* Chat Toggle Button */}
             <button
