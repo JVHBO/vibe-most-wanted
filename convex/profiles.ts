@@ -34,11 +34,11 @@ export const getProfile = query({
 });
 
 /**
- * Get leaderboard (top 100 by total power)
+ * Get leaderboard (top 1000 by total power)
  */
 export const getLeaderboard = query({
   args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 100 }) => {
+  handler: async (ctx, { limit = 1000 }) => {
     const profiles = await ctx.db
       .query("profiles")
       .withIndex("by_total_power")
@@ -65,7 +65,7 @@ export const getLeaderboard = query({
  */
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 100 }) => {
+  handler: async (ctx, { limit = 1000 }) => {
     const profiles = await ctx.db
       .query("profiles")
       .withIndex("by_total_power")
