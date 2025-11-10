@@ -33,7 +33,7 @@ interface PokerBattleTableProps {
   soundEnabled?: boolean; // Sound effects enabled
 }
 
-type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'card-reveal-animation' | 'resolution' | 'game-over';
+type GamePhase = 'deck-building' | 'card-selection' | 'spectator-betting' | 'reveal' | 'card-reveal-animation' | 'resolution' | 'game-over';
 type CardAction = 'BOOST' | 'SHIELD' | 'DOUBLE' | 'SWAP' | 'PASS';
 type ViewMode = 'matchmaking' | 'waiting' | 'game';
 
@@ -105,6 +105,7 @@ export function PokerBattleTable({
   // Betting system
   const placeBetMutation = useMutation(api.pokerBattle.placeBet);
   const resolveBetsMutation = useMutation(api.pokerBattle.resolveBets);
+  const endSpectatorBettingMutation = useMutation(api.pokerBattle.endSpectatorBetting);
   const [placingBet, setPlacingBet] = useState(false);
 
   // Get player profiles for avatars
@@ -270,6 +271,10 @@ export function PokerBattleTable({
   // Action Timer
   const [timeRemaining, setTimeRemaining] = useState(30); // 30 seconds per action
   const timerRef = useRef<NodeJS.Timeout | null>(null); // Ref to control timer interval
+
+  // Spectator betting timer
+  const [bettingTimeRemaining, setBettingTimeRemaining] = useState(15); // 15 seconds for betting
+  const bettingTimerRef = useRef<NodeJS.Timeout | null>(null); // Ref to control betting timer
 
   // Confirmation dialog for actions
   const [showActionConfirm, setShowActionConfirm] = useState(false);
@@ -739,11 +744,11 @@ export function PokerBattleTable({
 
         // Show round winner message
         setShowRoundWinner(true);
-        console.log('[PokerBattle] CPU Mode - Showing round winner, waiting 3.5s');
+        console.log('[PokerBattle] CPU Mode - Showing round winner, waiting 8s for reveal');
 
         // Hide message and check win condition after delay
         setTimeout(() => {
-          console.log('[PokerBattle] CPU Mode - 3s timeout completed, checking win condition');
+          console.log('[PokerBattle] CPU Mode - 8s timeout completed, checking win condition');
           setShowRoundWinner(false);
           setRoundWinner(null);
 
@@ -765,7 +770,7 @@ export function PokerBattleTable({
             console.log('[PokerBattle] CPU Mode - Proceeding to next round');
             nextRound();
           }
-        }, 5000);
+        }, 8000);
       }, 1000);
     } else {
       // PvP mode - send to server for resolution
@@ -866,7 +871,7 @@ export function PokerBattleTable({
               // Server already updated gameState, which will be synced via useEffect
               nextRound();
             }
-          }, 5000);
+          }, 8000);
         }, 1000);
       } catch (error) {
         console.error('[PokerBattle] PvP Mode - Error resolving round:', error);
@@ -1165,6 +1170,46 @@ export function PokerBattleTable({
       }
     }
   }, [phase, playerScore, opponentScore, isCPUMode, roomId, room, isHost, resolveBetsMutation]);
+
+  // Handle spectator betting phase timer
+  useEffect(() => {
+    if (phase === 'spectator-betting' && !isCPUMode && roomId) {
+      console.log('[PokerBattle] Entering spectator betting phase - starting 15s timer');
+
+      // Reset timer
+      setBettingTimeRemaining(15);
+
+      // Start countdown
+      bettingTimerRef.current = setInterval(() => {
+        setBettingTimeRemaining((prev) => {
+          if (prev <= 1) {
+            // Time's up - end betting phase
+            console.log('[PokerBattle] Betting time expired - moving to resolution');
+            if (bettingTimerRef.current) {
+              clearInterval(bettingTimerRef.current);
+              bettingTimerRef.current = null;
+            }
+
+            // Call mutation to end betting
+            endSpectatorBettingMutation({ roomId }).catch((error) => {
+              console.error('[PokerBattle] Failed to end betting phase:', error);
+            });
+
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Cleanup on unmount or phase change
+      return () => {
+        if (bettingTimerRef.current) {
+          clearInterval(bettingTimerRef.current);
+          bettingTimerRef.current = null;
+        }
+      };
+    }
+  }, [phase, isCPUMode, roomId, endSpectatorBettingMutation]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
@@ -1903,6 +1948,29 @@ export function PokerBattleTable({
                     </div>
                   )}
 
+                  {/* Spectator Betting Timer */}
+                  {phase === 'spectator-betting' && (
+                    <div className="mt-2 sm:mt-3">
+                      <div className={`inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
+                        bettingTimeRemaining <= 5
+                          ? 'bg-red-900/30 border-red-500 animate-pulse'
+                          : bettingTimeRemaining <= 10
+                          ? 'bg-yellow-900/30 border-yellow-500'
+                          : 'bg-blue-900/30 border-blue-500'
+                      }`}>
+                        <div className={`text-xl sm:text-3xl font-bold font-display flex items-center gap-2 ${
+                          bettingTimeRemaining <= 5
+                            ? 'text-red-300'
+                            : bettingTimeRemaining <= 10
+                            ? 'text-yellow-300'
+                            : 'text-blue-300'
+                        }`}>
+                          <ClockIcon className="inline-block" size={24} /> 💰 BETTING: {bettingTimeRemaining}s
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Phase indicator */}
                   <div className="mt-2 sm:mt-4">
                     <div className="inline-block bg-vintage-gold/20 border-2 border-vintage-gold px-3 sm:px-6 py-1 sm:py-2 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
@@ -1931,6 +1999,12 @@ export function PokerBattleTable({
                         {phase === 'card-reveal-animation' && (
                           <span className="animate-pulse text-xl sm:text-2xl">
                             🎴 REVEALING CARDS...
+                          </span>
+                        )}
+
+                        {phase === 'spectator-betting' && (
+                          <span className="animate-pulse text-xl sm:text-2xl flex items-center justify-center gap-2">
+                            💰 SPECTATORS BETTING...
                           </span>
                         )}
 
