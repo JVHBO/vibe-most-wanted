@@ -12,7 +12,7 @@
     "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2",
     "aspectRatio": "3:2",
     "buttonTitle": "Play Now",
-    "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
+    "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png?v=3",
     "splashBackgroundColor": "#FFD700",
     "webhookUrl": "https://www.vibemostwanted.xyz/api/farcaster/webhook",
     "castShareUrl": "https://www.vibemostwanted.xyz",
