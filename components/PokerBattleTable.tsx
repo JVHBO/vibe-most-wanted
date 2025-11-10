@@ -68,6 +68,7 @@ export function PokerBattleTable({
   const selectCardMutation = useMutation(api.pokerBattle.selectCard);
   const useCardActionMutation = useMutation(api.pokerBattle.useCardAction);
   const resolveRoundMutation = useMutation(api.pokerBattle.resolveRound);
+  const recordMatchMutation = useMutation(api.matches.recordMatch);
 
   // Chat system
   const messages = useQuery(
@@ -1165,6 +1166,36 @@ export function PokerBattleTable({
       };
     }
   }, [phase, isCPUMode, roomId, endSpectatorBettingMutation]);
+
+  // Record match when game ends
+  useEffect(() => {
+    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore !== opponentScore) {
+      const result = playerScore > opponentScore ? 'win' : 'loss';
+      const matchType = isCPUMode ? 'poker-cpu' : 'poker-pvp';
+
+      // Record match to history
+      recordMatchMutation({
+        playerAddress,
+        type: matchType,
+        result,
+        playerPower: 0, // Poker doesn't use power
+        opponentPower: 0,
+        playerCards: playerDeck.slice(0, 3), // First 3 cards of deck as sample
+        opponentCards: opponentDeck.slice(0, 3),
+        opponentAddress: isCPUMode ? undefined : (isHost ? room?.guestAddress : room?.hostAddress),
+        opponentUsername: isCPUMode ? 'CPU' : (isHost ? room?.guestUsername : room?.hostUsername),
+        coinsEarned: result === 'win' ? Math.round((selectedAnte * 2) * 0.95) : 0,
+        entryFeePaid: selectedAnte,
+        difficulty: isCPUMode ? difficulty : undefined,
+        playerScore,
+        opponentScore,
+      }).then(() => {
+        console.log('[PokerBattle] Match recorded to history');
+      }).catch((error) => {
+        console.error('[PokerBattle] Failed to record match:', error);
+      });
+    }
+  }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerDeck, opponentDeck, isHost, room, difficulty]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {

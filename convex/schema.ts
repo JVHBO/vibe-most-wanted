@@ -50,6 +50,7 @@ export default defineSchema({
           name: v.string(),
           rarity: v.string(),
           foil: v.optional(v.string()),
+          collection: v.optional(v.string()), // NEW: Collection ID ('vibe', 'custom', etc.)
         })
       )
     )),
@@ -60,6 +61,7 @@ export default defineSchema({
     // Revealed Cards Cache (metadata cache for reliability when Alchemy fails)
     revealedCardsCache: v.optional(v.array(v.object({
       tokenId: v.string(),
+      collection: v.optional(v.string()), // NEW: Collection ID ('vibe', 'custom', etc.)
       name: v.string(),
       imageUrl: v.string(),
       rarity: v.string(),
@@ -112,6 +114,10 @@ export default defineSchema({
     lastPvPAward: v.optional(v.number()), // Timestamp of last PvP reward
     lastStatUpdate: v.optional(v.number()), // Timestamp of last stat increment
 
+    // Collection Preferences
+    preferredCollection: v.optional(v.string()), // NEW: User's preferred collection ('vibe', 'custom', etc.)
+    enabledCollections: v.optional(v.array(v.string())), // NEW: Collections user wants to see/use
+
     // Social
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),
@@ -147,7 +153,9 @@ export default defineSchema({
       v.literal("pve"),
       v.literal("pvp"),
       v.literal("attack"),
-      v.literal("defense")
+      v.literal("defense"),
+      v.literal("poker-pvp"),
+      v.literal("poker-cpu")
     ),
     result: v.union(v.literal("win"), v.literal("loss"), v.literal("tie")),
 
@@ -179,6 +187,10 @@ export default defineSchema({
       v.literal("gangster"),
       v.literal("gigachad")
     )), // AI difficulty for PvE matches
+
+    // Poker specific data
+    playerScore: v.optional(v.number()), // Player's score (rounds won) in poker
+    opponentScore: v.optional(v.number()), // Opponent's score (rounds won) in poker
 
     // Legacy field from Firebase migration
     matchId: v.optional(v.string()),

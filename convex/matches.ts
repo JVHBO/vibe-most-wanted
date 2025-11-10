@@ -77,7 +77,9 @@ export const recordMatch = mutation({
       v.literal("pve"),
       v.literal("pvp"),
       v.literal("attack"),
-      v.literal("defense")
+      v.literal("defense"),
+      v.literal("poker-pvp"),
+      v.literal("poker-cpu")
     ),
     result: v.union(
       v.literal("win"),
@@ -99,6 +101,8 @@ export const recordMatch = mutation({
       v.literal("gangster"),
       v.literal("gigachad")
     )), // AI difficulty for PvE
+    playerScore: v.optional(v.number()), // Player's score in poker
+    opponentScore: v.optional(v.number()), // Opponent's score in poker
   },
   handler: async (ctx, args) => {
     const normalizedPlayerAddress = args.playerAddress.toLowerCase();
@@ -119,6 +123,8 @@ export const recordMatch = mutation({
       coinsEarned: args.coinsEarned,
       entryFeePaid: args.entryFeePaid,
       difficulty: args.difficulty,
+      playerScore: args.playerScore,
+      opponentScore: args.opponentScore,
     });
 
     // devLog (server-side)("✅ Match saved to Convex:", matchId);
@@ -135,14 +141,14 @@ export const recordMatch = mutation({
       const newStats = { ...profile.stats };
 
       // Update appropriate stat based on type and result
-      if (args.type === "pve") {
+      if (args.type === "pve" || args.type === "poker-cpu") {
         if (args.result === "win") {
           newStats.pveWins = (newStats.pveWins || 0) + 1;
         } else if (args.result === "loss") {
           newStats.pveLosses = (newStats.pveLosses || 0) + 1;
         }
       } else {
-        // PvP, attack, or defense
+        // PvP, attack, defense, or poker-pvp
         if (args.result === "win") {
           newStats.pvpWins = (newStats.pvpWins || 0) + 1;
         } else if (args.result === "loss") {
