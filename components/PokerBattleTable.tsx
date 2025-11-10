@@ -1221,8 +1221,40 @@ export function PokerBattleTable({
           ×
         </button>
 
-        {/* DECK BUILDING PHASE */}
-        {phase === 'deck-building' && (
+        {/* SPECTATOR VIEW - Deck Building Phase */}
+        {phase === 'deck-building' && isSpectator && (
+          <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-8 h-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-7xl mb-6 animate-pulse">👁️</div>
+              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">
+                SPECTATING
+              </h2>
+              <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-xl p-6 mb-4">
+                <p className="text-vintage-burnt-gold text-xl mb-3">
+                  Players are building their decks...
+                </p>
+                <div className="flex items-center justify-center gap-2 text-blue-400">
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce"></div>
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              </div>
+              {room && (
+                <div className="space-y-2 text-sm">
+                  <div className="text-vintage-gold">
+                    <span className="text-vintage-burnt-gold">Stakes:</span> {room.ante} {room.token}
+                  </div>
+                  <div className="text-vintage-gold">
+                    <span className="text-vintage-burnt-gold">Players:</span> {room.hostUsername} vs {room.guestUsername}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* DECK BUILDING PHASE - Skip for spectators */}
+        {phase === 'deck-building' && !isSpectator && (
           <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-2 sm:p-4 md:p-6 h-full overflow-y-auto">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-2 sm:mb-3 text-center">
               BUILD YOUR DECK
@@ -1375,8 +1407,8 @@ export function PokerBattleTable({
           </div>
         )}
 
-        {/* OLD SPECTATOR VIEW - DISABLED - Now using poker table view */}
-        {phase !== 'deck-building' && phase !== 'game-over' && (selectedAnte === 0 || isSpectator) && false && (
+        {/* SPECTATOR VIEW - Active during gameplay */}
+        {phase !== 'deck-building' && phase !== 'game-over' && isSpectator && (
           <div className="h-full flex flex-col">
             {/* Header */}
             <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-2 md:p-3">
