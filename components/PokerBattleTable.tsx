@@ -77,6 +77,30 @@ export function PokerBattleTable({
   const sendMessageMutation = useMutation(api.pokerChat.sendMessage);
   const [chatInput, setChatInput] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [floatingMessages, setFloatingMessages] = useState<Array<{id: number, sender: string, message: string, isOwnMessage: boolean}>>([]);
+
+  // Show floating messages for new chat messages
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    const isOwnMessage = lastMessage.sender.toLowerCase() === playerAddress.toLowerCase();
+    
+    // Add to floating messages
+    const newFloating = {
+      id: Date.now(),
+      sender: isOwnMessage ? 'You' : lastMessage.senderUsername,
+      message: lastMessage.message,
+      isOwnMessage
+    };
+    
+    setFloatingMessages(prev => [...prev, newFloating]);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+      setFloatingMessages(prev => prev.filter(m => m.id !== newFloating.id));
+    }, 5000);
+  }, [messages]);
 
   // Betting system
   const placeBetMutation = useMutation(api.pokerBattle.placeBet);
@@ -2347,6 +2371,27 @@ export function PokerBattleTable({
         )}
 
         {/* CHAT SYSTEM - Only show in PvP mode, not in CPU mode or spectator */}
+                {/* Floating Chat Messages on Table */}
+        {!isCPUMode && currentView === 'game' && roomId && floatingMessages.length > 0 && (
+          <div className="fixed bottom-24 right-24 z-[240] space-y-2 pointer-events-none">
+            {floatingMessages.map((msg) => (
+              <div
+                key={msg.id}
+                className="animate-in slide-in-from-right duration-300 pointer-events-auto"
+              >
+                <div className={`px-4 py-2 rounded-xl shadow-2xl border-2 max-w-xs ${
+                  msg.isOwnMessage
+                    ? 'bg-vintage-gold text-vintage-black border-vintage-gold'
+                    : 'bg-vintage-charcoal/95 text-vintage-gold border-vintage-gold/50'
+                }`}>
+                  <div className="text-xs font-bold mb-1 opacity-70">{msg.sender}</div>
+                  <div className="text-sm">{msg.message}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {!isCPUMode && currentView === 'game' && roomId && (
           <>
             {/* Chat Toggle Button */}
