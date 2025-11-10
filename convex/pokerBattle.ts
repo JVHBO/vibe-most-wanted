@@ -599,8 +599,8 @@ export const resolveRound = mutation({
       console.log(`💰 Guest won ${prize} (pot: ${gameState.pot}, fee: ${houseFee})`);
     }
 
-    // Reset pot (no ante added for next round)
-    gameState.pot = 0;
+    // Reset pot and add ante for next round (both players ante up again)
+    gameState.pot = room.ante * 2;
 
     // Check if game is over (best of 7 = first to 4)
     if (gameState.hostScore >= 4 || gameState.guestScore >= 4) {

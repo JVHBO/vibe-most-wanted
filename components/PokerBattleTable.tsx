@@ -929,9 +929,13 @@ export function PokerBattleTable({
     setPlayerAction(null);
     setOpponentAction(null);
 
-    // Pool remains at 0 - no ante deducted between rounds
-    // Ante was already deducted at game start
-    setPot(0);
+    // Reset pot to ante * 2 for next round (both players ante up again in PvP)
+    // In CPU mode, pot stays at 0 (no ante system)
+    if (!isCPUMode) {
+      setPot(selectedAnte * 2);
+    } else {
+      setPot(0);
+    }
 
     console.log('[PokerBattle] Moving to card-selection phase for round', newRound);
     setPhase('card-selection');
