@@ -63,11 +63,11 @@ function getRarityBase(rarity: CardRarity, collection?: CollectionId): number {
   const config = collection ? getCollectionPowerConfig(collection) : DEFAULT_POWER_CONFIG;
 
   const rarityMap: Record<CardRarity, number> = {
-    'Mythic': config.rarityBase.mythic || 800,
-    'Legendary': config.rarityBase.legendary || 240,
-    'Epic': config.rarityBase.epic || 80,
-    'Rare': config.rarityBase.rare || 20,
-    'Common': config.rarityBase.common || 5,
+    'Mythic': config.rarityBase?.mythic || 800,
+    'Legendary': config.rarityBase?.legendary || 240,
+    'Epic': config.rarityBase?.epic || 80,
+    'Rare': config.rarityBase?.rare || 20,
+    'Common': config.rarityBase?.common || 5,
   };
 
   return rarityMap[rarity] || 5;
@@ -82,11 +82,11 @@ function getWearMultiplier(wear: CardWear | undefined, collection?: CollectionId
   const config = collection ? getCollectionPowerConfig(collection) : DEFAULT_POWER_CONFIG;
 
   const wearMap: Record<CardWear, number> = {
-    'Pristine': config.wearMultiplier.pristine || 1.8,
-    'Mint': config.wearMultiplier.mint || 1.4,
-    'Lightly Played': config.wearMultiplier.default || 1.0,
-    'Moderately Played': config.wearMultiplier.default || 1.0,
-    'Heavily Played': config.wearMultiplier.default || 1.0,
+    'Pristine': config.wearMultiplier?.pristine || 1.8,
+    'Mint': config.wearMultiplier?.mint || 1.4,
+    'Lightly Played': config.wearMultiplier?.default || 1.0,
+    'Moderately Played': config.wearMultiplier?.default || 1.0,
+    'Heavily Played': config.wearMultiplier?.default || 1.0,
   };
 
   return wearMap[wear] || 1.0;
@@ -101,9 +101,9 @@ function getFoilMultiplier(foil: CardFoil | undefined, collection?: CollectionId
   const config = collection ? getCollectionPowerConfig(collection) : DEFAULT_POWER_CONFIG;
 
   const foilMap: Record<CardFoil, number> = {
-    'Prize': config.foilMultiplier.prize || 15.0,
-    'Standard': config.foilMultiplier.standard || 2.5,
-    'None': config.foilMultiplier.none || 1.0,
+    'Prize': config.foilMultiplier?.prize || 15.0,
+    'Standard': config.foilMultiplier?.standard || 2.5,
+    'None': config.foilMultiplier?.none || 1.0,
   };
 
   return foilMap[foil] || 1.0;
