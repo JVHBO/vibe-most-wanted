@@ -484,25 +484,27 @@ export const useCardAction = mutation({
       gameState.guestAction = args.action;
     }
 
-    // Deduct boost costs from bankroll
+    // Deduct boost costs from boost coins (virtual currency)
     const boostCosts: Record<string, number> = {
-      BOOST: Math.round(room.ante * 1.6),
-      SHIELD: Math.round(room.ante * 1.2),
-      DOUBLE: Math.round(room.ante * 3.2),
+      BOOST: 100,  // +30% power
+      SHIELD: 80,  // Block opponent boost
+      DOUBLE: 200, // x2 power (expensive!)
       SWAP: 0,
       PASS: 0,
     };
 
-    let newHostBankroll = room.hostBankroll!;
-    let newGuestBankroll = room.guestBankroll!;
+    let newHostBoostCoins = room.hostBoostCoins ?? 1000;
+    let newGuestBoostCoins = room.guestBoostCoins ?? 1000;
 
     if (isHost && args.action !== 'PASS' && args.action !== 'SWAP') {
       const cost = boostCosts[args.action] || 0;
-      newHostBankroll -= cost;
+      newHostBoostCoins -= cost;
+      console.log(`💰 Host paid ${cost} boost coins for ${args.action}. New balance: ${newHostBoostCoins}`);
     }
     if (isGuest && args.action !== 'PASS' && args.action !== 'SWAP') {
       const cost = boostCosts[args.action] || 0;
-      newGuestBankroll -= cost;
+      newGuestBoostCoins -= cost;
+      console.log(`💰 Guest paid ${cost} boost coins for ${args.action}. New balance: ${newGuestBoostCoins}`);
     }
 
     // If both players have acted, check if there are spectators
@@ -522,8 +524,8 @@ export const useCardAction = mutation({
 
     await ctx.db.patch(room._id, {
       gameState,
-      hostBankroll: newHostBankroll,
-      guestBankroll: newGuestBankroll,
+      hostBoostCoins: newHostBoostCoins,
+      guestBoostCoins: newGuestBoostCoins,
     });
 
     console.log(`⚡ Card action: ${args.action} by ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
