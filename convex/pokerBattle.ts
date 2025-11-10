@@ -505,9 +505,19 @@ export const useCardAction = mutation({
       newGuestBankroll -= cost;
     }
 
-    // If both players have acted, move to resolution (skip post-reveal betting)
+    // If both players have acted, check if there are spectators
     if (gameState.hostAction && gameState.guestAction) {
-      gameState.phase = "resolution";
+      const hasSpectators = room.spectators && room.spectators.length > 0;
+
+      if (hasSpectators) {
+        // Move to spectator betting phase
+        gameState.phase = "spectator-betting";
+        console.log(`👀 ${room.spectators!.length} spectators present - entering betting phase`);
+      } else {
+        // No spectators, skip betting and go straight to resolution
+        gameState.phase = "resolution";
+        console.log('🎲 No spectators - skipping betting phase');
+      }
     }
 
     await ctx.db.patch(room._id, {
@@ -848,6 +858,36 @@ export const placeBet = mutation({
       success: true,
       newBalance: currentCoins - args.amount,
     };
+  },
+});
+
+// End spectator betting phase and move to resolution
+export const endSpectatorBetting = mutation({
+  args: {
+    roomId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .first();
+
+    if (!room || !room.gameState) {
+      throw new Error("Room not found or game not started");
+    }
+
+    if (room.gameState.phase !== "spectator-betting") {
+      throw new Error("Not in spectator betting phase");
+    }
+
+    const gameState = { ...room.gameState };
+    gameState.phase = "resolution";
+
+    await ctx.db.patch(room._id, { gameState });
+
+    console.log(`🎲 Spectator betting ended for ${args.roomId} - moving to resolution`);
+
+    return { success: true };
   },
 });
 
