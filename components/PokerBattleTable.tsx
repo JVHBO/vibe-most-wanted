@@ -1180,8 +1180,8 @@ export function PokerBattleTable({
         result,
         playerPower: 0, // Poker doesn't use power
         opponentPower: 0,
-        playerCards: playerDeck.slice(0, 3), // First 3 cards of deck as sample
-        opponentCards: opponentDeck.slice(0, 3),
+        playerCards: playerHand.slice(0, 3), // First 3 cards of hand as sample
+        opponentCards: opponentHand.slice(0, 3),
         opponentAddress: isCPUMode ? undefined : (isHost ? room?.guestAddress : room?.hostAddress),
         opponentUsername: isCPUMode ? 'CPU' : (isHost ? room?.guestUsername : room?.hostUsername),
         coinsEarned: result === 'win' ? Math.round((selectedAnte * 2) * 0.95) : 0,
@@ -1195,7 +1195,7 @@ export function PokerBattleTable({
         console.error('[PokerBattle] Failed to record match:', error);
       });
     }
-  }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerDeck, opponentDeck, isHost, room, difficulty]);
+  }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
