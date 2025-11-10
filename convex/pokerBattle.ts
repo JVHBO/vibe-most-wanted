@@ -590,32 +590,39 @@ export const resolveRound = mutation({
     // Determine winner
     const hostWins = hostPower > guestPower;
 
-    // Calculate prize (pot minus 5% house fee)
-    const houseFee = Math.round(gameState.pot * 0.05);
-    const prize = gameState.pot - houseFee;
-
-    // Update score and bankroll
+    // Update score (pot stays the same throughout the game)
     if (hostWins) {
       gameState.hostScore += 1;
-      await ctx.db.patch(room._id, {
-        hostBankroll: room.hostBankroll! + prize,
-      });
-      console.log(`💰 Host won ${prize} (pot: ${gameState.pot}, fee: ${houseFee})`);
+      console.log(`🎯 Host won round ${gameState.currentRound}`);
     } else {
       gameState.guestScore += 1;
-      await ctx.db.patch(room._id, {
-        guestBankroll: room.guestBankroll! + prize,
-      });
-      console.log(`💰 Guest won ${prize} (pot: ${gameState.pot}, fee: ${houseFee})`);
+      console.log(`🎯 Guest won round ${gameState.currentRound}`);
     }
 
-    // Reset pot and add ante for next round (both players ante up again)
-    gameState.pot = room.ante * 2;
+    // Pot stays fixed at ante * 2 throughout the entire game
+    // Winner only receives pot at the end of the match (game-over)
 
     // Check if game is over (best of 7 = first to 4)
     if (gameState.hostScore >= 4 || gameState.guestScore >= 4) {
       gameState.phase = "game-over";
-      await ctx.db.patch(room._id, { gameState });
+
+      // Determine final winner and award pot
+      const finalWinnerId = gameState.hostScore >= 4 ? room.hostAddress : room.guestAddress;
+      const finalWinnerUsername = gameState.hostScore >= 4 ? room.hostUsername : room.guestUsername;
+
+      // Calculate prize (pot minus 5% house fee)
+      const houseFee = Math.round(gameState.pot * 0.05);
+      const finalPrize = gameState.pot - houseFee;
+
+      console.log(`🏆 Game Over! Winner: ${finalWinnerUsername}, Prize: ${finalPrize} (pot: ${gameState.pot}, fee: ${houseFee})`);
+
+      await ctx.db.patch(room._id, {
+        gameState,
+        winnerId: finalWinnerId,
+        winnerUsername: finalWinnerUsername,
+        finalPot: finalPrize,
+      });
+
       return { success: true, gameOver: true };
     }
 

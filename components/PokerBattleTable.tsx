@@ -390,36 +390,19 @@ export function PokerBattleTable({
       console.log('[PokerBattle] PvP mode - waiting for opponent deck from server');
     }
 
-    // CPU Mode: Pot based on difficulty (player doesn't pay anything)
-    // PvP Mode: Pot based on ante (player pays ante)
-    let initialPot = selectedAnte * 2; // Default for PvP
-    if (isCPUMode) {
-      // Difficulty-based rewards (no cost to player) - reduced to extend pool
-      switch (difficulty) {
-        case 'gey': initialPot = 15; break;       // Easy = 15 coins (was 50)
-        case 'goofy': initialPot = 30; break;     // Medium-Easy = 30 coins (was 100)
-        case 'gooner': initialPot = 60; break;    // Medium = 60 coins (was 200)
-        case 'gangster': initialPot = 120; break; // Hard = 120 coins (was 400)
-        case 'gigachad': initialPot = 240; break; // Very Hard = 240 coins (was 800)
-        default: initialPot = 30;
-      }
-    }
-
-    const initialBankroll = isCPUMode ? 0 : selectedAnte * 50; // CPU: no bankroll tracking
+    // Both CPU and PvP: Same pot system (ante * 2)
+    // Winner takes the pot at the end of the match
+    const initialPot = selectedAnte * 2;
     const initialBoostCoins = 1000; // Both CPU and PvP: 1000 virtual boost coins to start
 
     console.log('[PokerBattle] Setting initial game state', {
       pot: initialPot,
-      playerBankroll: initialBankroll,
-      opponentBankroll: initialBankroll,
       playerBoostCoins: initialBoostCoins,
       opponentBoostCoins: initialBoostCoins,
       phase: 'card-selection'
     });
 
     setPot(initialPot);
-    setPlayerBankroll(initialBankroll);
-    setOpponentBankroll(initialBankroll);
     setPlayerBoostCoins(initialBoostCoins);
     setOpponentBoostCoins(initialBoostCoins);
     setPhase('card-selection');
@@ -683,39 +666,22 @@ export function PokerBattleTable({
         if (isTie) {
           // TIE - both players get their ante back, no winner
           console.log('[PokerBattle] CPU Mode - Round is a TIE!', { playerPower, opponentPower });
-          setPlayerBankroll(prev => {
-            const anteAmount = isCPUMode ? 50 : selectedAnte;
-            const newBankroll = prev + anteAmount;
-            console.log('[PokerBattle] CPU Mode - Player gets ante back (tie)', { prev, anteAmount, newBankroll });
-            return newBankroll;
-          });
-          setOpponentBankroll(prev => {
-            const anteAmount = isCPUMode ? 50 : selectedAnte;
-            const newBankroll = prev + anteAmount;
-            console.log('[PokerBattle] CPU Mode - Opponent gets ante back (tie)', { prev, anteAmount, newBankroll });
-            return newBankroll;
-          });
-          setPot(0);
+          // Tie: no score change, pot stays the same
           setRoundWinner(null);
           AudioManager.tie(); // Tie sound
+          console.log('[PokerBattle] CPU Mode - Round tied, pot stays at', pot);
 
           // Show tie message
           setShowRoundWinner(true);
-          console.log('[PokerBattle] CPU Mode - Showing tie message, waiting 2.5s before next round');
+          console.log('[PokerBattle] CPU Mode - Showing tie message, waiting 5s before next round');
 
           setTimeout(() => {
-            console.log('[PokerBattle] CPU Mode - 3s timeout for tie completed, proceeding to next round');
+            console.log('[PokerBattle] CPU Mode - 5s timeout for tie completed, proceeding to next round');
             setShowRoundWinner(false);
             nextRound();
           }, 5000);
         } else if (playerWins) {
-          // Winner gets pot (no fee on frontend, just display)
-          setPlayerBankroll(prev => {
-            const newBankroll = prev + pot;
-            console.log('[PokerBattle] Player won pot', { prev, pot, newBankroll });
-            return newBankroll;
-          });
-
+          // Player wins round: score increases, pot stays the same
           setPlayerScore(prev => {
             const newScore = prev + 1;
             console.log('[PokerBattle] Player score increased', { prev, newScore });
@@ -724,13 +690,7 @@ export function PokerBattleTable({
           setRoundWinner('player');
           AudioManager.buttonSuccess(); // Victory sound
         } else {
-          // Winner gets pot (no fee on frontend, just display)
-          setOpponentBankroll(prev => {
-            const newBankroll = prev + pot;
-            console.log('[PokerBattle] Opponent won pot', { prev, pot, newBankroll });
-            return newBankroll;
-          });
-
+          // Opponent wins round: score increases, pot stays the same
           setOpponentScore(prev => {
             const newScore = prev + 1;
             console.log('[PokerBattle] Opponent score increased', { prev, newScore });
@@ -740,7 +700,7 @@ export function PokerBattleTable({
           AudioManager.buttonError(); // Defeat sound
         }
 
-        setPot(0);
+        // Pot stays fixed throughout the game
 
         // Show round winner message
         setShowRoundWinner(true);
@@ -931,13 +891,8 @@ export function PokerBattleTable({
     setPlayerAction(null);
     setOpponentAction(null);
 
-    // Reset pot to ante * 2 for next round (both players ante up again in PvP)
-    // In CPU mode, pot stays at 0 (no ante system)
-    if (!isCPUMode) {
-      setPot(selectedAnte * 2);
-    } else {
-      setPot(0);
-    }
+    // Pot stays fixed at ante * 2 throughout the entire game
+    // Winner receives pot only at game-over
 
     console.log('[PokerBattle] Moving to card-selection phase for round', newRound);
     setPhase('card-selection');
@@ -2235,7 +2190,10 @@ export function PokerBattleTable({
                 🎉 You Won! Score: {playerScore} - {opponentScore}
               </p>
               <p className="text-xl md:text-2xl font-bold text-green-400 px-4 text-center">
-                Total Winnings: {playerBankroll - (selectedAnte * 50)} {isCPUMode ? 'coins' : selectedToken}
+                Prize: {Math.round((selectedAnte * 2) * 0.95)} {isCPUMode ? 'coins' : selectedToken}
+              </p>
+              <p className="text-sm text-green-300/70 px-4 text-center">
+                (Pot: {selectedAnte * 2}, Fee: {Math.round((selectedAnte * 2) * 0.05)})
               </p>
 
               {/* SHARE BUTTONS */}
@@ -2303,7 +2261,7 @@ export function PokerBattleTable({
                 <SkullIcon className="text-red-400" size={32} /> You Lost! Score: {playerScore} - {opponentScore}
               </p>
               <p className="text-xl md:text-2xl font-bold text-red-300 px-4 text-center">
-                Loss: {(selectedAnte * 50) - playerBankroll} {selectedToken}
+                Loss: {selectedAnte} {selectedToken}
               </p>
 
               {/* SHARE BUTTONS */}
