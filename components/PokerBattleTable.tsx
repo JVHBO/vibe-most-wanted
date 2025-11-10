@@ -2235,7 +2235,7 @@ export function PokerBattleTable({
                 🎉 You Won! Score: {playerScore} - {opponentScore}
               </p>
               <p className="text-xl md:text-2xl font-bold text-green-400 px-4 text-center">
-                Prize: {pot} {isCPUMode ? 'coins' : selectedToken}
+                Total Winnings: {playerBankroll - (selectedAnte * 50)} {isCPUMode ? 'coins' : selectedToken}
               </p>
 
               {/* SHARE BUTTONS */}
@@ -2303,7 +2303,7 @@ export function PokerBattleTable({
                 <SkullIcon className="text-red-400" size={32} /> You Lost! Score: {playerScore} - {opponentScore}
               </p>
               <p className="text-xl md:text-2xl font-bold text-red-300 px-4 text-center">
-                Loss: {playerBankroll - (selectedAnte * 50)} {selectedToken}
+                Loss: {(selectedAnte * 50) - playerBankroll} {selectedToken}
               </p>
 
               {/* SHARE BUTTONS */}
