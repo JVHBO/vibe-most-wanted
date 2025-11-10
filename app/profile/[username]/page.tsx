@@ -1358,8 +1358,9 @@ export default function ProfilePage() {
                         <span>Share</span>
                       </a>
 
-                      {/* Rematch Button - Only if LOST and has opponent */}
+                      {/* Rematch Button - Only if LOST and has opponent (EXCLUDING poker matches) */}
                       {match.result === 'loss' && match.opponentAddress && (match.type === 'pvp' || match.type === 'attack' || match.type === 'defense') &&
+                       match.type !== 'poker-pvp' && match.type !== 'poker-cpu' &&
                        profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
                         <button
                           onClick={async () => {
