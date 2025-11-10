@@ -1783,7 +1783,9 @@ export function PokerBattleTable({
                   <div className="flex items-center justify-center gap-3 sm:gap-6 mb-3">
                     {/* Opponent Card */}
                     <div className="flex flex-col items-center">
-                      <div className="text-vintage-gold text-xs sm:text-sm mb-1 font-bold">OPPONENT</div>
+                      <div className="text-vintage-gold text-xs sm:text-sm mb-1 font-bold">
+                        {isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}
+                      </div>
                       <div className={`w-24 sm:w-28 md:w-32 aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
                           ? 'border-red-500 shadow-lg shadow-red-500/50'
@@ -1850,7 +1852,9 @@ export function PokerBattleTable({
 
                     {/* Player Card */}
                     <div className="flex flex-col items-center">
-                      <div className="text-vintage-gold text-xs sm:text-sm mb-2 font-bold">YOU</div>
+                      <div className="text-vintage-gold text-xs sm:text-sm mb-2 font-bold">
+                        {isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}
+                      </div>
                       <div className={`w-32 sm:w-40 md:w-48 aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
                           ? 'border-green-500 shadow-lg shadow-green-500/50'
