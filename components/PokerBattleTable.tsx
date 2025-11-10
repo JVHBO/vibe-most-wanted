@@ -2175,15 +2175,51 @@ export function PokerBattleTable({
         )}
 
         {/* VICTORY POPUP */}
-        {phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore > opponentScore && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={onClose}>
-            <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
-              {/* Victory Image */}
-              <img
-                src="/victory-1.jpg"
-                alt="Victory!"
-                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-yellow-500/50 border-4 border-yellow-400"
-              />
+        {phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore > opponentScore && (() => {
+          // Determine victory type: Overwhelming (4-0 or 4-1) vs Normal
+          const isOverwhelmingVictory = opponentScore <= 1;
+          const victoryImage = isOverwhelmingVictory ? '/victory-2.jpg' : '/victory-1.jpg';
+
+          return (
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={onClose}>
+              {/* 🌈 GAY VIBES - Floating hearts effect for overwhelming victory */}
+              {isOverwhelmingVictory && (
+                <>
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {[...Array(isInFarcaster ? 10 : 20)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute animate-float-heart"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 3}s`,
+                          animationDuration: `${4 + Math.random() * 2}s`
+                        }}
+                      >
+                        {['💖', '💗', '💓', '💕', '💘', '❤️', '🧡', '💛', '💚', '💙', '💜'][Math.floor(Math.random() * 11)]}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Marvin Victory Music */}
+                  {soundEnabled && (
+                    <audio autoPlay loop>
+                      <source src="/marvin-victory.mp3" type="audio/mpeg" />
+                    </audio>
+                  )}
+                </>
+              )}
+
+              <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                {/* Victory Image */}
+                <img
+                  src={victoryImage}
+                  alt="Victory!"
+                  className={`max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl border-4 ${
+                    isOverwhelmingVictory
+                      ? 'shadow-pink-500/50 border-pink-400 animate-pulse-glow'
+                      : 'shadow-yellow-500/50 border-yellow-400'
+                  }`}
+                />
 
               {/* Victory Text */}
               <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
@@ -2243,7 +2279,8 @@ export function PokerBattleTable({
               </button>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* DEFEAT POPUP */}
         {phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore < opponentScore && (
