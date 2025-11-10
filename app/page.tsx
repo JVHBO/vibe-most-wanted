@@ -4563,6 +4563,7 @@ export default function TCGPage() {
                         return;
                       }
                       if (soundEnabled) AudioManager.buttonClick();
+                      setPokerMode('pvp'); // Reset poker mode to prevent confusion with poker CPU
                       setShowPveCardSelection(true);
                       setPveSelectedCards([]);
                     }}
@@ -4588,6 +4589,7 @@ export default function TCGPage() {
                         return;
                       }
                       if (soundEnabled) AudioManager.buttonClick();
+                      setPokerMode('pvp'); // Reset poker mode to prevent confusion with poker CPU
                       setGameMode('pvp');
                       setPvpMode('pvpMenu');
                     }}
