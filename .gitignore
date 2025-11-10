@@ -90,3 +90,10 @@ scripts/
 
 # Internal documentation (future plans, internal info - keep private)
 internal-docs/
+
+# Collections System Documentation (private - internal use only)
+COLLECTIONS_SYSTEM.md
+COLLECTIONS_README.md
+COLLECTIONS_SUMMARY.txt
+MIGRATION_GUIDE.md
+examples/collection-usage-example.tsx
