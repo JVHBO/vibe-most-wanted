@@ -183,7 +183,7 @@ function generateRandomCard(rarity: string) {
     rank: fileName.replace('.png', ''), // Image name as rank
     variant: "default",
     rarity,
-    imageUrl: `${imageUrl}${fileName}`,
+    image: `${imageUrl}${fileName}`,
     badgeType: "FREE_CARD" as const,
     foil: foil !== "None" ? foil : undefined, // Only include if special
     wear,
@@ -549,6 +549,77 @@ export const updateAllCardImages = mutation({
       updatedCards: updatedCount,
       totalCards: allCards.length,
       message: `Updated ${updatedCount} cards with new images!`,
+    };
+  },
+});
+
+/**
+ * ADMIN: Delete FREE cards for a specific username and give compensation pack
+ */
+export const resetUserFreeCards = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, { username }) => {
+    // Find user profile by username
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_username", (q) => q.eq("username", username.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      return {
+        success: false,
+        error: `Profile not found for username: ${username}`,
+      };
+    }
+
+    const address = profile.address;
+    console.log("🔍 Found profile:", { username, address });
+
+    // Get user's cards
+    const userCards = await ctx.db
+      .query("cardInventory")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .collect();
+
+    console.log("🎴 User has", userCards.length, "cards");
+
+    // Delete all user's cards
+    let deletedCount = 0;
+    for (const card of userCards) {
+      await ctx.db.delete(card._id);
+      deletedCount++;
+    }
+    console.log("🗑️ Deleted", deletedCount, "cards");
+
+    // Give compensation pack
+    const existingPack = await ctx.db
+      .query("cardPacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .filter((q) => q.eq(q.field("packType"), "basic"))
+      .first();
+
+    if (existingPack) {
+      await ctx.db.patch(existingPack._id, {
+        unopened: existingPack.unopened + 1,
+      });
+      console.log("🎁 Added 1 pack to existing pack (total:", existingPack.unopened + 1, ")");
+    } else {
+      await ctx.db.insert("cardPacks", {
+        address,
+        packType: "basic",
+        unopened: 1,
+        sourceId: "reset_compensation",
+        earnedAt: Date.now(),
+      });
+      console.log("🎁 Created new pack with 1 unopened");
+    }
+
+    return {
+      success: true,
+      username,
+      address,
+      cardsDeleted: deletedCount,
+      packGiven: true,
     };
   },
 });
