@@ -277,6 +277,58 @@ export const getFreeCardsStats = query({
   },
 });
 
+/**
+ * DEBUG: Get ALL cards with full details
+ */
+export const debugAllCards = query({
+  args: {},
+  handler: async (ctx) => {
+    const allCards = await ctx.db.query("cardInventory").collect();
+    return {
+      totalRecords: allCards.length,
+      cards: allCards.slice(0, 20).map(card => ({
+        id: card._id,
+        address: card.address,
+        cardId: card.cardId,
+        rarity: card.rarity,
+        imageUrl: card.imageUrl,
+        quantity: card.quantity,
+        power: card.power,
+      })),
+    };
+  },
+});
+
+/**
+ * MIGRATION: Normalize all addresses to lowercase in cardInventory
+ */
+export const normalizeCardAddresses = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allCards = await ctx.db.query("cardInventory").collect();
+    let updatedCount = 0;
+
+    for (const card of allCards) {
+      const lowercaseAddress = card.address.toLowerCase();
+
+      // Only update if address is not already lowercase
+      if (card.address !== lowercaseAddress) {
+        await ctx.db.patch(card._id, {
+          address: lowercaseAddress,
+        });
+        updatedCount++;
+      }
+    }
+
+    return {
+      success: true,
+      totalCards: allCards.length,
+      updatedCards: updatedCount,
+      message: `Normalized ${updatedCount} card addresses to lowercase!`,
+    };
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MUTATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
