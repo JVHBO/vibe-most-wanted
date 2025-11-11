@@ -614,6 +614,7 @@ export default function TCGPage() {
   const TUTORIAL_PAGES = 4; // Total number of tutorial pages
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
+  const [cardTypeFilter, setCardTypeFilter] = useState<'all' | 'free' | 'nft'>('all');
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
   const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
@@ -2234,23 +2235,33 @@ export default function TCGPage() {
     [selectedCards]
   );
 
-  // 🚀 Performance: Use pre-sorted memoized NFTs when sortByPower is true
-  const sortedNftsForDisplay = useMemo(() => {
-    if (!sortByPower) return nfts;
-    return sortedNfts; // Already memoized above
-  }, [nfts, sortByPower, sortedNfts]);
+  // 🚀 Performance: Filter by card type (FREE/NFT) and sort
+  const filteredAndSortedNfts = useMemo(() => {
+    let filtered = nfts;
 
-  const totalPages = Math.ceil(sortedNftsForDisplay.length / CARDS_PER_PAGE);
+    // Apply type filter
+    if (cardTypeFilter === 'free') {
+      filtered = nfts.filter(card => card.badgeType === 'FREE_CARD');
+    } else if (cardTypeFilter === 'nft') {
+      filtered = nfts.filter(card => card.badgeType !== 'FREE_CARD');
+    }
+
+    // Apply sort
+    if (!sortByPower) return filtered;
+    return [...filtered].sort((a, b) => (b.power || 0) - (a.power || 0));
+  }, [nfts, sortByPower, cardTypeFilter, sortedNfts]);
+
+  const totalPages = Math.ceil(filteredAndSortedNfts.length / CARDS_PER_PAGE);
 
   const displayNfts = useMemo(() => {
     const start = (currentPage - 1) * CARDS_PER_PAGE;
     const end = start + CARDS_PER_PAGE;
-    return sortedNftsForDisplay.slice(start, end);
-  }, [sortedNftsForDisplay, currentPage, CARDS_PER_PAGE]);
+    return filteredAndSortedNfts.slice(start, end);
+  }, [filteredAndSortedNfts, currentPage, CARDS_PER_PAGE]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [sortByPower, nfts.length]);
+  }, [sortByPower, cardTypeFilter, nfts.length]);
 
   // 🔒 Sorted NFTs for attack modal (show locked cards but mark them)
   const sortedAttackNfts = useMemo(() => {
@@ -4491,7 +4502,7 @@ export default function TCGPage() {
                   </h2>
 
                   {nfts.length > 0 && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <button
                         onClick={loadNFTs}
                         disabled={status === 'fetching'}
@@ -4509,6 +4520,16 @@ export default function TCGPage() {
                         }`}
                       >
                         {sortByPower ? '↓ ' + t('sortByPower') : '⇄ ' + t('sortDefault')}
+                      </button>
+                      <button
+                        onClick={() => setCardTypeFilter(cardTypeFilter === 'all' ? 'free' : cardTypeFilter === 'free' ? 'nft' : 'all')}
+                        className={`px-4 py-2 rounded-lg text-sm font-modern font-medium transition-all ${
+                          cardTypeFilter !== 'all'
+                            ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        {cardTypeFilter === 'all' ? '⊞ All Cards' : cardTypeFilter === 'free' ? '◈ FREE Only' : '🎴 NFT Only'}
                       </button>
                     </div>
                   )}
