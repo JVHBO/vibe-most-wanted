@@ -1103,8 +1103,8 @@ export default function ProfilePage() {
 
             {/* Filtro de Coleção */}
             <div>
-              <label className="block text-sm font-modern font-semibold text-vintage-gold mb-2 flex items-center gap-1">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <label className="block text-xs sm:text-sm font-modern font-semibold text-vintage-gold mb-2 flex items-center gap-1">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
                   <line x1="8" y1="21" x2="16" y2="21"/>
                   <line x1="12" y1="17" x2="12" y2="21"/>
@@ -1121,7 +1121,7 @@ export default function ProfilePage() {
                   }
                   setCurrentNFTPage(1);
                 }}
-                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern [&>option]:bg-vintage-black [&>option]:text-vintage-gold"
+                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern [&>option]:bg-vintage-black [&>option]:text-vintage-gold"
               >
                 <option value="all" className="bg-vintage-black text-vintage-gold">All</option>
                 <option value="vibe" className="bg-vintage-black text-vintage-gold">VBMS</option>
