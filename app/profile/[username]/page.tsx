@@ -13,6 +13,8 @@ import { useAccount } from 'wagmi';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardLoadingSpinner } from '@/components/LoadingSpinner';
 import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
+import { CollectionFilter } from "@/components/CollectionFilter";
+import { filterCardsByCollections, type CollectionId } from "@/lib/collections/index";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -253,6 +255,7 @@ export default function ProfilePage() {
   const [loadingNFTs, setLoadingNFTs] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [currentNFTPage, setCurrentNFTPage] = useState(1);
+  const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const NFT_PER_PAGE = 12;
   const [rematchesRemaining, setRematchesRemaining] = useState<number>(5);
   const MAX_REMATCHES = 5;
@@ -636,7 +639,7 @@ export default function ProfilePage() {
   };
 
   // Filtrar NFTs
-  const filteredNfts = nfts.filter(nft => {
+  let filteredNfts = nfts.filter(nft => {
     // Use enriched data directly
     const rarity = nft.rarity || '';
     const foilTrait = nft.foil || '';
@@ -660,6 +663,11 @@ export default function ProfilePage() {
 
     return true;
   });
+
+  // Apply collection filter (if any collections are selected)
+  if (selectedCollections.length > 0) {
+    filteredNfts = filterCardsByCollections(filteredNfts, selectedCollections);
+  }
 
   return (
     <div className="min-h-screen bg-vintage-black text-vintage-ice p-4 lg:p-8 overflow-x-hidden">
@@ -1073,9 +1081,10 @@ export default function ProfilePage() {
               </select>
             </div>
           </div>
+            {/* Collection Filter */}            <div className="sm:col-span-3">              <label className="block text-sm font-modern font-semibold text-vintage-gold mb-2">🎴 COLLECTION</label>              <CollectionFilter                selectedCollections={selectedCollections}                onCollectionsChange={setSelectedCollections}                className="w-full"              />            </div>
 
           {/* Reset Filters Button */}
-          {(filterRarity !== 'all' || filterFoil !== 'all' || filterRevealed !== 'revealed') && (
+          {(filterRarity !== 'all' || filterFoil !== 'all' || filterRevealed !== 'revealed' || selectedCollections.length > 0) && (
             <button
               onClick={() => {
                 setFilterRarity('all');
@@ -1094,6 +1103,7 @@ export default function ProfilePage() {
         ) : nfts.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
             <p className="text-gray-400 mb-6">{t('noCardsInCollection')}</p>
+                setSelectedCollections([]);
             <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-xl p-4 max-w-md mx-auto">
               <p className="text-sm text-vintage-gold font-semibold mb-2">⏱️ NEWLY OPENED CARDS TAKE TIME TO APPEAR</p>
               <p className="text-xs text-vintage-burnt-gold">

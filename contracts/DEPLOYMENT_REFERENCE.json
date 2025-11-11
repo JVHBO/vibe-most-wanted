@@ -9,9 +9,9 @@
     "vbmsToken": "0xb03439567cd22f278b21e1ffcdfb8e1696763827",
     "ownerWallet": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52",
     "backendSigner": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52",
-    "vbmsPoolTroll": "PREENCHER_APÓS_DEPLOY",
-    "vbmsPokerBattle": "PREENCHER_APÓS_DEPLOY",
-    "vbmsBetting": "PREENCHER_APÓS_DEPLOY"
+    "vbmsPoolTroll": "0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b",
+    "vbmsPokerBattle": "0x954af331cc23642978Cbdbdbd7c28B13A510952E",
+    "vbmsBetting": "0x668c8d288b8670fdb9005fa91be046e4c2585af4"
   },
   "deployOrder": [
     {
@@ -21,28 +21,28 @@
         "_vbmsToken": "0xb03439567cd22f278b21e1ffcdfb8e1696763827",
         "_backendSigner": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52"
       },
-      "notes": "Deploy primeiro. Anote o endereço!"
+      "notes": "✅ DEPLOYED - 0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b"
     },
     {
       "step": 2,
       "contract": "VBMSPokerBattle",
       "constructorParams": {
         "_vbmsToken": "0xb03439567cd22f278b21e1ffcdfb8e1696763827",
-        "_poolAddress": "USAR_ENDEREÇO_VBMSPoolTroll",
+        "_poolAddress": "0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b",
         "_backendSigner": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52"
       },
-      "notes": "Deploy segundo. Precisa do endereço do Pool!"
+      "notes": "✅ DEPLOYED - 0x954af331cc23642978Cbdbdbd7c28B13A510952E"
     },
     {
       "step": 3,
       "contract": "VBMSBetting",
       "constructorParams": {
         "_vbmsToken": "0xb03439567cd22f278b21e1ffcdfb8e1696763827",
-        "_poolAddress": "USAR_ENDEREÇO_VBMSPoolTroll",
+        "_poolAddress": "0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b",
         "_backendSigner": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52",
-        "_pokerBattleContract": "USAR_ENDEREÇO_VBMSPokerBattle"
+        "_pokerBattleContract": "0x954af331cc23642978Cbdbdbd7c28B13A510952E"
       },
-      "notes": "Deploy terceiro. Precisa dos endereços do Pool e Battle!"
+      "notes": "✅ DEPLOYED - 0x668c8d288b8670fdb9005fa91be046e4c2585af4"
     }
   ],
   "postDeployTasks": [
@@ -52,19 +52,24 @@
       "contract": "VBMS Token",
       "function": "transfer",
       "params": {
-        "to": "ENDEREÇO_VBMSPoolTroll",
+        "to": "0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b",
         "amount": "10000000000000000000000"
       },
       "notes": "10000 VBMS = 10000 * 10^18 wei"
     },
     {
       "task": "Verify contracts",
-      "description": "Verificar todos os contratos no Basescan",
+      "description": "✅ COMPLETO - Todos os contratos verificados no Basescan",
       "url": "https://basescan.org"
     },
     {
       "task": "Update frontend .env",
-      "description": "Adicionar endereços dos contratos no .env.local"
+      "description": "Adicionar endereços dos contratos no .env.local",
+      "variables": {
+        "NEXT_PUBLIC_VBMS_POOL_TROLL": "0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b",
+        "NEXT_PUBLIC_VBMS_POKER_BATTLE": "0x954af331cc23642978Cbdbdbd7c28B13A510952E",
+        "NEXT_PUBLIC_VBMS_BETTING": "0x668c8d288b8670fdb9005fa91be046e4c2585af4"
+      }
     }
   ],
   "configurationOptions": {
@@ -97,5 +102,12 @@
     "optimizerEnabled": true,
     "runs": 200,
     "license": "MIT"
+  },
+  "deploymentDate": "2025-11-11",
+  "basescanLinks": {
+    "vbmsToken": "https://basescan.org/address/0xb03439567cd22f278b21e1ffcdfb8e1696763827",
+    "vbmsPoolTroll": "https://basescan.org/address/0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b",
+    "vbmsPokerBattle": "https://basescan.org/address/0x954af331cc23642978Cbdbdbd7c28B13A510952E",
+    "vbmsBetting": "https://basescan.org/address/0x668c8d288b8670fdb9005fa91be046e4c2585af4"
   }
 }
