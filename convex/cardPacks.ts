@@ -581,6 +581,7 @@ export const rewardProfileShare = mutation({
 
 /**
  * ADMIN: Fix existing FREE card image URLs with proper encoding
+ * Corrects old URLs without %20 encoding to properly encoded URLs
  */
 export const updateAllCardImages = mutation({
   args: {},
@@ -594,21 +595,30 @@ export const updateAllCardImages = mutation({
 
     const allCards = await ctx.db.query("cardInventory").collect();
     let updatedCount = 0;
+    const updates: string[] = [];
 
     for (const card of allCards) {
       const rarity = card.rarity.toLowerCase();
       const newImages = newImageMapping[rarity as keyof typeof newImageMapping];
 
       if (newImages && newImages.length > 0) {
-        // Pick a random new image for this rarity
-        const randomIndex = Math.floor(Math.random() * newImages.length);
-        const newImageFile = newImages[randomIndex];
-        const newImageUrl = `/cards/${rarity}/${encodeURIComponent(newImageFile)}`;
+        // Check if URL needs fixing (contains unencoded spaces or wrong filename)
+        const needsUpdate = card.imageUrl.includes(' ') ||
+                           !card.imageUrl.includes('%20') ||
+                           card.imageUrl.includes('proxy-');
 
-        await ctx.db.patch(card._id, {
-          imageUrl: newImageUrl,
-        });
-        updatedCount++;
+        if (needsUpdate) {
+          // Pick a random new image for this rarity
+          const randomIndex = Math.floor(Math.random() * newImages.length);
+          const newImageFile = newImages[randomIndex];
+          const newImageUrl = `/cards/${rarity}/${encodeURIComponent(newImageFile)}`;
+
+          await ctx.db.patch(card._id, {
+            imageUrl: newImageUrl,
+          });
+          updates.push(`${card.cardId}: ${card.imageUrl} -> ${newImageUrl}`);
+          updatedCount++;
+        }
       }
     }
 
@@ -616,7 +626,10 @@ export const updateAllCardImages = mutation({
       success: true,
       updatedCards: updatedCount,
       totalCards: allCards.length,
-      message: `Updated ${updatedCount} cards with new images!`,
+      updates: updates.slice(0, 10), // First 10 updates for logging
+      message: updatedCount > 0
+        ? `Updated ${updatedCount} cards with corrected image URLs!`
+        : `All ${allCards.length} cards already have correct URLs!`,
     };
   },
 });
