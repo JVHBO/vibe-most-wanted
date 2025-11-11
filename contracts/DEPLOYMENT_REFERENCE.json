@@ -71,6 +71,7 @@
     "VBMSPoolTroll": {
       "minClaimAmount": "1000000000000000000",
       "maxClaimAmount": "100000000000000000000000",
+      "dailyClaimLimit": "100000000000000000000000",
       "claimsPaused": false
     },
     "VBMSPokerBattle": {
