@@ -2,13 +2,12 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { usePrivy } from "@privy-io/react-auth";
+import { useAccount } from "wagmi";
 import { useState } from "react";
 import { Id } from "@/convex/_generated/dataModel";
 
 export default function ShopPage() {
-  const { user } = usePrivy();
-  const address = user?.wallet?.address;
+  const { address } = useAccount();
 
   // Fetch data
   const shopPacks = useQuery(api.cardPacks.getShopPacks);
