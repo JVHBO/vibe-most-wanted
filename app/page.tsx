@@ -684,6 +684,10 @@ export default function TCGPage() {
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
 
+  // 🎁 Welcome Pack
+  const hasReceivedWelcomePack = useQuery(api.welcomePack.hasReceivedWelcomePack, address ? { address } : "skip");
+  const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
+
   // 🎯 Weekly Quests mutations
   const claimWeeklyReward = useMutation(api.quests.claimWeeklyReward);
 
@@ -703,6 +707,8 @@ export default function TCGPage() {
   );
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
+  const [showWelcomePackPopup, setShowWelcomePackPopup] = useState<boolean>(false);
+  const [isClaimingWelcomePack, setIsClaimingWelcomePack] = useState<boolean>(false);
   const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
   const [isDifficultyModalOpen, setIsDifficultyModalOpen] = useState(false);
@@ -1055,6 +1061,28 @@ export default function TCGPage() {
     }
   };
 
+  // 🎁 Handler to claim welcome pack
+  const handleClaimWelcomePack = async () => {
+    if (!address || isClaimingWelcomePack) return;
+
+    try {
+      setIsClaimingWelcomePack(true);
+      devLog('🎁 Claiming welcome pack...');
+
+      const result = await claimWelcomePack({ address });
+
+      devLog('✓ Welcome pack claimed: 1 Basic Pack!');
+      setShowWelcomePackPopup(false);
+      if (soundEnabled) AudioManager.buttonClick();
+    } catch (error: any) {
+      devError('✗ Error claiming welcome pack:', error);
+      alert(error.message || 'Failed to claim welcome pack');
+      if (soundEnabled) AudioManager.buttonError();
+    } finally {
+      setIsClaimingWelcomePack(false);
+    }
+  };
+
   // 🎯 Handler to claim daily quest reward
   const handleClaimQuestReward = async () => {
     if (!address || isClaimingQuest) return;
@@ -1125,6 +1153,13 @@ export default function TCGPage() {
       (window as any).sdk.actions.ready();
     }
   }, []);
+
+  // 🎁 Show welcome pack popup if user hasn't received it
+  useEffect(() => {
+    if (address && hasReceivedWelcomePack === false) {
+      setShowWelcomePackPopup(true);
+    }
+  }, [address, hasReceivedWelcomePack]);
 
   // Sync login bonus claimed status and show popup on login
   useEffect(() => {
@@ -2916,7 +2951,7 @@ export default function TCGPage() {
 
       {/* Content wrapper with z-index */}
       <div className={`relative z-10 ${!isInFarcaster ? 'max-w-7xl mx-auto' : ''}`}>
-      {/* Game Popups (Victory, Loss, Tie, Error, Success, Daily Claim) */}
+      {/* Game Popups (Victory, Loss, Tie, Error, Success, Daily Claim, Welcome Pack) */}
       <GamePopups
         showWinPopup={showWinPopup}
         currentVictoryImage={currentVictoryImage}
@@ -2941,6 +2976,10 @@ export default function TCGPage() {
         loginBonusClaimed={loginBonusClaimed}
         isClaimingBonus={isClaimingBonus}
         handleClaimLoginBonus={handleClaimLoginBonus}
+        showWelcomePackPopup={showWelcomePackPopup}
+        setShowWelcomePackPopup={setShowWelcomePackPopup}
+        isClaimingWelcomePack={isClaimingWelcomePack}
+        handleClaimWelcomePack={handleClaimWelcomePack}
         t={t}
       />
 

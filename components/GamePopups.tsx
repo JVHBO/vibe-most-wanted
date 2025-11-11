@@ -66,6 +66,12 @@ interface GamePopupsProps {
   isClaimingBonus: boolean;
   handleClaimLoginBonus: () => void;
 
+  // Welcome pack popup
+  showWelcomePackPopup: boolean;
+  setShowWelcomePackPopup: (show: boolean) => void;
+  isClaimingWelcomePack: boolean;
+  handleClaimWelcomePack: () => void;
+
   // Translation
   t: any;
 }
@@ -94,6 +100,10 @@ export function GamePopups({
   loginBonusClaimed,
   isClaimingBonus,
   handleClaimLoginBonus,
+  showWelcomePackPopup,
+  setShowWelcomePackPopup,
+  isClaimingWelcomePack,
+  handleClaimWelcomePack,
   t,
 }: GamePopupsProps) {
   return (
@@ -421,6 +431,39 @@ export function GamePopups({
               </button>
               <button
                 onClick={() => setShowDailyClaimPopup(false)}
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all hover:scale-105"
+              >
+                Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome Pack Popup - Shows ONCE on first login */}
+      {showWelcomePackPopup && !isInFarcaster && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setShowWelcomePackPopup(false)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-md w-full p-6 shadow-2xl shadow-vintage-gold/50" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-4xl">🎁</span>
+              <h2 className="text-2xl font-display font-bold text-vintage-gold">Welcome Gift!</h2>
+            </div>
+            <p className="text-vintage-ice mb-6 font-modern text-lg">
+              Welcome to Vibe Most Wanted! As a gift, you receive <span className="text-vintage-gold font-bold">1 FREE Basic Pack</span> to start your collection!
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  handleClaimWelcomePack();
+                  setShowWelcomePackPopup(false);
+                }}
+                disabled={isClaimingWelcomePack}
+                className="flex-1 px-6 py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-vintage-gold/30"
+              >
+                {isClaimingWelcomePack ? 'Claiming...' : 'Claim Gift!'}
+              </button>
+              <button
+                onClick={() => setShowWelcomePackPopup(false)}
                 className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all hover:scale-105"
               >
                 Later
