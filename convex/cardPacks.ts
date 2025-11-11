@@ -22,28 +22,28 @@ const PACK_TYPES = {
     description: "Welcome pack for new players",
     cards: 3,
     price: 0, // Free
-    rarityOdds: { Common: 85, Rare: 13, Epic: 2, Legendary: 0 },
+    rarityOdds: { Common: 90, Rare: 9, Epic: 1, Legendary: 0 },
   },
   basic: {
     name: "Basic Pack",
-    description: "Standard card pack",
+    description: "Cheapest pack with mostly commons",
     cards: 5,
-    price: 1500, // 1500 coins (era 500)
-    rarityOdds: { Common: 80, Rare: 17, Epic: 2, Legendary: 1 },
+    price: 2000, // 2k coins - acessível
+    rarityOdds: { Common: 88, Rare: 10, Epic: 1.5, Legendary: 0.5 },
   },
   premium: {
     name: "Premium Pack",
-    description: "Better chance for epic cards",
+    description: "Better odds for rare and epic",
     cards: 5,
-    price: 5000, // 5000 coins (era 1200)
-    rarityOdds: { Common: 65, Rare: 28, Epic: 5, Legendary: 2 },
+    price: 10000, // 10k coins - 5x mais caro
+    rarityOdds: { Common: 70, Rare: 25, Epic: 4, Legendary: 1 },
   },
   elite: {
     name: "Elite Pack",
-    description: "Guaranteed epic or better",
+    description: "Best odds - Guaranteed rare or better",
     cards: 5,
-    price: 15000, // 15000 coins (era 2500)
-    rarityOdds: { Common: 0, Rare: 55, Epic: 40, Legendary: 5 },
+    price: 100000, // 100k coins - EQUIVALENTE A 1 PACK NFT REAL!
+    rarityOdds: { Common: 0, Rare: 70, Epic: 25, Legendary: 5 },
   },
   mission: {
     name: "Mission Reward",
