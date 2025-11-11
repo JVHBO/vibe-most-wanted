@@ -798,6 +798,8 @@ export const placeBet = mutation({
     amount: v.number(),
   },
   handler: async (ctx, args) => {
+    console.log(`🎲 placeBet called:`, { roomId: args.roomId, bettor: args.bettor, betOn: args.betOn, amount: args.amount });
+
     // Find the room
     const room = await ctx.db
       .query("pokerRooms")
@@ -805,11 +807,19 @@ export const placeBet = mutation({
       .first();
 
     if (!room) {
+      console.error(`❌ Room not found: ${args.roomId}`);
       throw new Error("Room not found");
     }
 
     if (room.status === "finished" || room.status === "cancelled") {
+      console.error(`❌ Cannot bet on ${room.status} game`);
       throw new Error("Cannot bet on finished or cancelled games");
+    }
+
+    // Only allow betting during spectator-betting phase
+    if (room.gameState?.phase !== "spectator-betting") {
+      console.error(`❌ Wrong phase for betting: ${room.gameState?.phase}`);
+      throw new Error(`Betting is only allowed during the betting phase. Current phase: ${room.gameState?.phase || 'unknown'}`);
     }
 
     // Verify betOn is a player in the room
@@ -817,12 +827,14 @@ export const placeBet = mutation({
     const isGuest = room.guestAddress === args.betOn.toLowerCase();
 
     if (!isHost && !isGuest) {
+      console.error(`❌ Invalid bet target: ${args.betOn}`);
       throw new Error("Can only bet on players in the room");
     }
 
     // Cannot bet if you're a player in the room
     const bettorAddr = args.bettor.toLowerCase();
     if (bettorAddr === room.hostAddress || bettorAddr === room.guestAddress) {
+      console.error(`❌ Player trying to bet on own game: ${bettorAddr}`);
       throw new Error("Players cannot bet on their own games");
     }
 
@@ -833,7 +845,8 @@ export const placeBet = mutation({
       .first();
 
     if (!profile) {
-      throw new Error("Bettor profile not found");
+      console.error(`❌ Profile not found for bettor: ${bettorAddr}`);
+      throw new Error("Bettor profile not found. Please create a profile first.");
     }
 
     // Check if bettor has enough coins
