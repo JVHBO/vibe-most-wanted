@@ -93,11 +93,11 @@ function rollRarity(odds: Record<string, number>): string {
   return "common"; // Fallback
 }
 
-// Available card images per rarity
+// Available card images per rarity (only real item images, no proxies)
 const CARD_IMAGES = {
-  common: 10,    // item-58 to item-62, proxy to proxy(4)
+  common: 5,     // item-58, 59, 60, 61, 62
   rare: 4,       // item-37, 38, 40, 42
-  epic: 6,       // item-43, 44, 46, 47, 49, proxy
+  epic: 5,       // item-43, 44, 46, 47, 49
   legendary: 6,  // item-39, 50, 52, 55, 56, 57
 };
 
@@ -164,12 +164,12 @@ function generateRandomCard(rarity: string) {
   const cardId = `${rarity}_${imageIndex}_${foil}_${wear}_${Date.now()}`;
   const imageUrl = `/cards/${rarity.toLowerCase()}/`; // Lowercase folder names
 
-  // Map image files
+  // Map image files (only real item images, no proxies)
   const imageFiles: Record<string, string[]> = {
-    common: ["item-58.png", "item-59.png", "item-60.png", "item-61.png", "item-62.png", "proxy.png", "proxy-1.png", "proxy-2.png", "proxy-3.png", "proxy-4.png", "proxy-5.png", "proxy-6.png", "proxy-7.png"],
-    rare: ["item-37.png", "item-38.png", "item-40.png", "item-42.png", "proxy-rare.png", "proxy-rare-1.png", "proxy-rare-8.png"],
-    epic: ["item-43.png", "item-44.png", "item-46.png", "item-47.png", "item-49.png", "proxy.png", "proxy-epic.png", "proxy-epic-1.png", "proxy-epic-2.png", "proxy-epic-3.png"],
-    legendary: ["item-39.png", "item-50.png", "item-52.png", "item-55.png", "item-56.png", "item-57.png", "proxy-legendary.png", "proxy-legendary-4.png"],
+    common: ["item-58.png", "item-59.png", "item-60.png", "item-61.png", "item-62.png"],
+    rare: ["item-37.png", "item-38.png", "item-40.png", "item-42.png"],
+    epic: ["item-43.png", "item-44.png", "item-46.png", "item-47.png", "item-49.png"],
+    legendary: ["item-39.png", "item-50.png", "item-52.png", "item-55.png", "item-56.png", "item-57.png"],
   };
 
   const fileName = imageFiles[rarity as keyof typeof imageFiles]?.[imageIndex] || "proxy.png";
