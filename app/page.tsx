@@ -1331,11 +1331,36 @@ export default function TCGPage() {
           })
         );
         processed.push(...enriched);
-        setNfts([...processed]);
       }
 
+      // Load FREE cards from cardInventory
+      try {
+        const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
+        devLog('🆓 FREE cards loaded:', freeCards?.length || 0);
+
+        if (freeCards && freeCards.length > 0) {
+          const freeCardsFormatted = freeCards.map((card: any) => ({
+            tokenId: card.cardId,
+            title: `FREE ${card.rarity} Card`,
+            description: `Free card from pack opening`,
+            imageUrl: card.imageUrl,
+            rarity: card.rarity,
+            status: 'revealed',
+            wear: card.wear,
+            foil: card.foil || 'None',
+            power: card.power,
+            badgeType: card.badgeType, // 'FREE_CARD'
+            isFreeCard: true,
+          }));
+          processed.push(...freeCardsFormatted);
+        }
+      } catch (error) {
+        devWarn('⚠️ Failed to load FREE cards:', error);
+      }
+
+      setNfts([...processed]);
       setStatus("loaded");
-      devLog('🎉 NFTs loaded successfully:', processed.length);
+      devLog('🎉 Cards loaded successfully (NFTs + FREE):', processed.length);
     } catch (e: any) {
       devLog('✗ Error loading NFTs:', e);
       setStatus("failed");
