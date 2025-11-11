@@ -162,7 +162,7 @@ function generateRandomCard(rarity: string) {
 
   // Generate unique card ID with traits
   const cardId = `${rarity}_${imageIndex}_${foil}_${wear}_${Date.now()}`;
-  const imageUrl = `/cards/${rarity}/`;
+  const imageUrl = `/cards/${rarity.toLowerCase()}/`; // Lowercase folder names
 
   // Map image files
   const imageFiles: Record<string, string[]> = {
