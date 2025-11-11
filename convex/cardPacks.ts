@@ -151,7 +151,8 @@ function calculateCardPower(rarity: string, wear: string, foil?: string): number
  */
 function generateRandomCard(rarity: string) {
   // Pick random card image from the rarity pool
-  const imageCount = CARD_IMAGES[rarity as keyof typeof CARD_IMAGES] || 1;
+  const rarityLower = rarity.toLowerCase();
+  const imageCount = CARD_IMAGES[rarityLower as keyof typeof CARD_IMAGES] || 1;
   const imageIndex = Math.floor(Math.random() * imageCount);
 
   // Roll foil type
@@ -172,7 +173,7 @@ function generateRandomCard(rarity: string) {
     legendary: ["proxy.png", "proxy (4).png"],
   };
 
-  const fileName = imageFiles[rarity as keyof typeof imageFiles]?.[imageIndex] || imageFiles[rarity as keyof typeof imageFiles]?.[0] || "proxy (5).png";
+  const fileName = imageFiles[rarityLower as keyof typeof imageFiles]?.[imageIndex] || imageFiles[rarityLower as keyof typeof imageFiles]?.[0] || "proxy (5).png";
 
   // Calculate power (EXACTLY same as NFT cards)
   const power = calculateCardPower(rarity, wear, foil !== "None" ? foil : undefined);
