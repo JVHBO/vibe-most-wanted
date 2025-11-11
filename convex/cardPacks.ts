@@ -172,7 +172,7 @@ function generateRandomCard(rarity: string) {
     legendary: ["item-39.png", "item-50.png", "item-52.png", "item-55.png", "item-56.png", "item-57.png", "proxy-legendary.png", "proxy-legendary-4.png", "proxy (4).png"],
   };
 
-  const fileName = imageFiles[rarity as keyof typeof imageFiles]?.[imageIndex] || "proxy.png";
+  const fileName = imageFiles[rarity as keyof typeof imageFiles]?.[imageIndex] || imageFiles[rarity as keyof typeof imageFiles]?.[0] || "item-58.png";
 
   // Calculate power (EXACTLY same as NFT cards)
   const power = calculateCardPower(rarity, wear, foil !== "None" ? foil : undefined);
