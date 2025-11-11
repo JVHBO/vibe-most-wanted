@@ -1115,10 +1115,10 @@ export default function ProfilePage() {
                   }
                   setCurrentNFTPage(1);
                 }}
-                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
+                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern [&>option]:bg-vintage-black [&>option]:text-vintage-gold"
               >
-                <option value="all">All</option>
-                <option value="vibe">VBMS</option>
+                <option value="all" className="bg-vintage-black text-vintage-gold">All</option>
+                <option value="vibe" className="bg-vintage-black text-vintage-gold">VBMS</option>
               </select>
             </div>
 
