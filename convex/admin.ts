@@ -175,3 +175,66 @@ export const normalizeUsernames = internalMutation({
     };
   },
 });
+
+/**
+ * ADMIN: Reset all FREE cards and give new packs
+ * 🔒 INTERNAL ONLY - Cannot be called from client
+ */
+export const resetFreeCards = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("🚨 Resetting all FREE cards...");
+
+    // Get all cards
+    const allCards = await ctx.db.query("cardInventory").collect();
+    console.log(`📊 Found ${allCards.length} FREE cards`);
+
+    // Get unique addresses
+    const uniqueAddresses = new Set(allCards.map(c => c.address));
+    console.log(`👥 From ${uniqueAddresses.size} players`);
+
+    // Delete all cards
+    let deletedCount = 0;
+    for (const card of allCards) {
+      await ctx.db.delete(card._id);
+      deletedCount++;
+    }
+    console.log(`🗑️ Deleted ${deletedCount} cards`);
+
+    // Give new pack to each player
+    let packsGiven = 0;
+    for (const address of uniqueAddresses) {
+      // Check if player already has a pack
+      const existingPack = await ctx.db
+        .query("cardPacks")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .filter((q) => q.eq(q.field("packType"), "basic"))
+        .first();
+
+      if (existingPack) {
+        // Increment existing pack
+        await ctx.db.patch(existingPack._id, {
+          unopened: existingPack.unopened + 1,
+        });
+      } else {
+        // Create new pack
+        await ctx.db.insert("cardPacks", {
+          address,
+          packType: "basic",
+          unopened: 1,
+          sourceId: "reset_compensation",
+          earnedAt: Date.now(),
+        });
+      }
+      packsGiven++;
+    }
+    console.log(`🎁 Gave ${packsGiven} compensation packs`);
+
+    return {
+      success: true,
+      cardsDeleted: deletedCount,
+      playersAffected: uniqueAddresses.size,
+      packsGiven,
+    };
+  },
+});
