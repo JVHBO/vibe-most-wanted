@@ -18,7 +18,7 @@ const MISSION_REWARDS = {
   daily_login: { type: "coins", amount: 100 },
   first_pve_win: { type: "coins", amount: 50 },
   first_pvp_match: { type: "pack", packType: "mission", amount: 1 }, // Changed to pack!
-  welcome_gift: { type: "pack", packType: "starter", amount: 1 }, // Changed to pack!
+  welcome_gift: { type: "pack", packType: "basic", amount: 1 }, // Basic pack de boas-vindas!
   play_3_games: { type: "pack", packType: "mission", amount: 1 }, // NEW
   win_5_games: { type: "pack", packType: "mission", amount: 2 }, // NEW
   streak_3: { type: "coins", amount: 150 },
