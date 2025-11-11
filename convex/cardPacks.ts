@@ -166,7 +166,7 @@ function generateRandomCard(rarity: string) {
 
   // Map image files
   const imageFiles: Record<string, string[]> = {
-    common: ["item-58.png", "item-59.png", "item-60.png", "item-61.png", "item-62.png", "proxy.png", "proxy (1).png", "proxy (2).png", "proxy (3).png", "proxy (4).png"],
+    common: ["item-58.png", "item-59.png", "item-60.png", "item-61.png", "item-62.png", "proxy.png", "proxy-1.png", "proxy-2.png", "proxy-3.png", "proxy-4.png"],
     rare: ["item-37.png", "item-38.png", "item-40.png", "item-42.png"],
     epic: ["item-43.png", "item-44.png", "item-46.png", "item-47.png", "item-49.png", "proxy.png"],
     legendary: ["item-39.png", "item-50.png", "item-52.png", "item-55.png", "item-56.png", "item-57.png"],
