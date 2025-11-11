@@ -129,6 +129,7 @@ export default defineSchema({
     dailyShares: v.optional(v.number()), // Shares today (resets daily)
     lastShareDate: v.optional(v.string()), // ISO date YYYY-MM-DD
     hasSharedProfile: v.optional(v.boolean()), // One-time profile share bonus claimed
+    hasClaimedSharePack: v.optional(v.boolean()), // One-time FREE pack for sharing profile
     totalShareBonus: v.optional(v.number()), // Lifetime share bonus earned
     hasReceivedWelcomePack: v.optional(v.boolean()), // One-time welcome pack (1 Basic Pack)
 
