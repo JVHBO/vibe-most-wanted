@@ -7,7 +7,7 @@
  * Dangerous operations - run step by step
  */
 
-import { internalMutation } from "./_generated/server";
+import { internalMutation, mutation } from "./_generated/server";
 
 /**
  * Step 1: Reset all profiles (economy and stats)
@@ -229,6 +229,58 @@ export const resetFreeCards = internalMutation({
       packsGiven++;
     }
     console.log(`🎁 Gave ${packsGiven} compensation packs`);
+
+    return {
+      success: true,
+      cardsDeleted: deletedCount,
+      playersAffected: uniqueAddresses.size,
+      packsGiven,
+    };
+  },
+});
+
+/**
+ * PUBLIC: Execute the reset FREE cards operation
+ * This is a public wrapper to call the internal mutation
+ */
+export const executeResetFreeCards = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Call the internal mutation directly
+    const allCards = await ctx.db.query("cardInventory").collect();
+    const uniqueAddresses = new Set(allCards.map(c => c.address));
+
+    // Delete all cards
+    let deletedCount = 0;
+    for (const card of allCards) {
+      await ctx.db.delete(card._id);
+      deletedCount++;
+    }
+
+    // Give new pack to each player
+    let packsGiven = 0;
+    for (const address of uniqueAddresses) {
+      const existingPack = await ctx.db
+        .query("cardPacks")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .filter((q) => q.eq(q.field("packType"), "basic"))
+        .first();
+
+      if (existingPack) {
+        await ctx.db.patch(existingPack._id, {
+          unopened: existingPack.unopened + 1,
+        });
+      } else {
+        await ctx.db.insert("cardPacks", {
+          address,
+          packType: "basic",
+          unopened: 1,
+          sourceId: "reset_compensation",
+          earnedAt: Date.now(),
+        });
+      }
+      packsGiven++;
+    }
 
     return {
       success: true,
