@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ConvexProfileService, type UserProfile, type MatchHistory } from '@/lib/convex-profile';
-import { useQuery } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import sdk from '@farcaster/miniapp-sdk';
 import { BadgeList } from '@/components/Badge';
@@ -263,6 +263,11 @@ export default function ProfilePage() {
     api.matches.getMatchHistorySummary,
     profile?.address ? { address: profile.address, limit: 20 } : "skip"
   ) || [];
+
+  // Share Reward System
+  const rewardProfileShare = useMutation(api.cardPacks.rewardProfileShare);
+  const [showShareReward, setShowShareReward] = useState(false);
+  const [shareRewardMessage, setShareRewardMessage] = useState('');
 
   // Attack Modal States
   const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
@@ -779,44 +784,83 @@ export default function ProfilePage() {
               </div>
 
               {/* Share Profile Buttons */}
-              <div className="flex gap-2 mt-3">
-                <a
-                  href={(() => {
-                    // Calculate win rate for profile
-                    const wins = totalWins || 0;
-                    const losses = totalLosses || 0;
-                    const ties = totalTies || 0;
+              <div className="flex flex-col gap-2 mt-3">
+                {/* Share Reward Notice */}
+                {currentUserAddress?.toLowerCase() === profile.address.toLowerCase() && (
+                  <p className="text-xs text-vintage-gold font-modern text-center bg-vintage-gold/10 border border-vintage-gold/30 rounded px-2 py-1">
+                    🎁 Share your profile to earn 1 FREE pack daily!
+                  </p>
+                )}
 
-                    // Share URL with meta tags (add version param to bust Farcaster cache)
-                    const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      // Calculate win rate for profile
+                      const wins = totalWins || 0;
+                      const losses = totalLosses || 0;
+                      const ties = totalTies || 0;
 
-                    // Farcaster cast text
-                    const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
+                      // Share URL with meta tags (add version param to bust Farcaster cache)
+                      const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
 
-                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                  })()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-vintage-neon-blue/20 hover:bg-vintage-neon-blue/30 border border-vintage-neon-blue rounded-lg text-vintage-neon-blue hover:text-white transition-all font-modern font-semibold text-sm flex items-center gap-2"
-                >
-                  <FarcasterIcon size={16} />
-                  <span>Share</span>
-                </a>
+                      // Farcaster cast text
+                      const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 Share your profile daily for a FREE pack!`;
 
-                <a
-                  href={(() => {
-                    const profileUrl = `${window.location.origin}/profile/${profile.username}`;
-                    const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
+                      const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
-                    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
-                  })()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-lg text-vintage-gold hover:text-vintage-ice transition-all font-modern font-semibold text-sm flex items-center gap-2"
-                >
-                  <span>𝕏</span>
-                  <span>Share</span>
-                </a>
+                      // Open share in new tab
+                      window.open(url, '_blank');
+
+                      // Award pack reward if it's the user's own profile
+                      if (currentUserAddress?.toLowerCase() === profile.address.toLowerCase()) {
+                        try {
+                          const result = await rewardProfileShare({ address: profile.address });
+                          setShareRewardMessage(result.message);
+                          setShowShareReward(true);
+
+                          // Auto-hide after 5 seconds
+                          setTimeout(() => setShowShareReward(false), 5000);
+                        } catch (error: any) {
+                          console.error('Share reward error:', error);
+                        }
+                      }
+                    }}
+                    className="px-4 py-2 bg-vintage-neon-blue/20 hover:bg-vintage-neon-blue/30 border border-vintage-neon-blue rounded-lg text-vintage-neon-blue hover:text-white transition-all font-modern font-semibold text-sm flex items-center gap-2 cursor-pointer"
+                  >
+                    <FarcasterIcon size={16} />
+                    <span>Share</span>
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      const profileUrl = `${window.location.origin}/profile/${profile.username}`;
+                      const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
+
+                      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
+
+                      // Open share in new tab
+                      window.open(url, '_blank');
+
+                      // Award pack reward if it's the user's own profile
+                      if (currentUserAddress?.toLowerCase() === profile.address.toLowerCase()) {
+                        try {
+                          const result = await rewardProfileShare({ address: profile.address });
+                          setShareRewardMessage(result.message);
+                          setShowShareReward(true);
+
+                          // Auto-hide after 5 seconds
+                          setTimeout(() => setShowShareReward(false), 5000);
+                        } catch (error: any) {
+                          console.error('Share reward error:', error);
+                        }
+                      }
+                    }}
+                    className="px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-lg text-vintage-gold hover:text-vintage-ice transition-all font-modern font-semibold text-sm flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>𝕏</span>
+                    <span>Share</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1523,6 +1567,29 @@ export default function ProfilePage() {
                 className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Reward Popup */}
+      {showShareReward && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">
+          <div className="bg-vintage-charcoal border-4 border-vintage-gold rounded-2xl p-8 max-w-md mx-4 shadow-[0_0_50px_rgba(255,215,0,0.5)] animate-[scale-in_0.3s_ease-out]">
+            <div className="text-center">
+              <div className="text-6xl mb-4 animate-bounce">🎁</div>
+              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">
+                Share Reward!
+              </h2>
+              <p className="text-vintage-ice font-modern text-lg mb-6">
+                {shareRewardMessage}
+              </p>
+              <button
+                onClick={() => setShowShareReward(false)}
+                className="px-8 py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-modern font-bold rounded-xl transition-all transform hover:scale-105"
+              >
+                Awesome!
               </button>
             </div>
           </div>

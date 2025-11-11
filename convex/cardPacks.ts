@@ -512,6 +512,73 @@ export const giveStarterPack = mutation({
 });
 
 /**
+ * Give FREE pack reward for sharing profile
+ * - 1 FREE pack per day (resets at midnight)
+ * - Prevents spam by limiting to 1 share reward per 24h
+ */
+export const rewardProfileShare = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+    const now = Date.now();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Get profile to check last share date
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!profile) {
+      return { success: false, message: "Profile not found" };
+    }
+
+    // Check if already shared today
+    if (profile.lastShareDate === today) {
+      return {
+        success: false,
+        message: "You already received a share reward today! Come back tomorrow."
+      };
+    }
+
+    // Award FREE pack
+    const existingPack = await ctx.db
+      .query("cardPacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .filter((q) => q.eq(q.field("packType"), "basic"))
+      .first();
+
+    if (existingPack) {
+      // Increment existing pack
+      await ctx.db.patch(existingPack._id, {
+        unopened: existingPack.unopened + 1,
+      });
+    } else {
+      // Create new pack
+      await ctx.db.insert("cardPacks", {
+        address,
+        packType: "basic",
+        unopened: 1,
+        earnedAt: now,
+      });
+    }
+
+    // Update profile with share tracking
+    await ctx.db.patch(profile._id, {
+      lastShareDate: today,
+      dailyShares: (profile.dailyShares || 0) + 1,
+      hasSharedProfile: true,
+      totalShareBonus: (profile.totalShareBonus || 0) + 1,
+    });
+
+    return {
+      success: true,
+      message: "FREE pack awarded for sharing! Open it in the Packs tab."
+    };
+  },
+});
+
+/**
  * ADMIN: Update all existing FREE card images to new ones (same rarity)
  */
 export const updateAllCardImages = mutation({
