@@ -1761,24 +1761,6 @@ export function PokerBattleTable({
                   <div className="text-vintage-gold font-display font-bold mb-4">
                     OPPONENT • {opponentBankroll} {selectedToken}
                   </div>
-
-                  {/* Spectator Bet Buttons - Opponent Side */}
-                  {isSpectatorMode && room?.guestAddress && (
-                    <div className="flex gap-2 justify-center mt-3">
-                      <div className="text-xs text-vintage-gold/70 mr-2 flex items-center">Bet on {room.guestUsername}:</div>
-                      {[10, 25, 50, 100].map((amount) => (
-                        <button
-                          key={amount}
-                          onClick={() => handlePlaceBet(room.guestAddress!, amount)}
-                          disabled={placingBet}
-                          className="bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white font-bold rounded px-3 py-1.5 text-sm transition-all hover:scale-105 active:scale-95"
-                        >
-                          {amount}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
                 </div>
 
                 {/* CENTER - CARD BATTLE AREA */}
@@ -1954,24 +1936,75 @@ export function PokerBattleTable({
                     </div>
                   )}
 
-                  {/* Spectator Betting Timer */}
-                  {phase === 'spectator-betting' && (
-                    <div className="mt-2 sm:mt-3">
-                      <div className={`inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
-                        bettingTimeRemaining <= 5
-                          ? 'bg-red-900/30 border-red-500 animate-pulse'
-                          : bettingTimeRemaining <= 10
-                          ? 'bg-yellow-900/30 border-yellow-500'
-                          : 'bg-blue-900/30 border-blue-500'
-                      }`}>
-                        <div className={`text-xl sm:text-3xl font-bold font-display flex items-center gap-2 ${
+                  {/* Spectator Betting Section */}
+                  {phase === 'spectator-betting' && isSpectatorMode && room && (
+                    <div className="mt-2 sm:mt-4 w-full max-w-2xl mx-auto">
+                      {/* Timer */}
+                      <div className="mb-3">
+                        <div className={`inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
                           bettingTimeRemaining <= 5
-                            ? 'text-red-300'
+                            ? 'bg-red-900/30 border-red-500 animate-pulse'
                             : bettingTimeRemaining <= 10
-                            ? 'text-yellow-300'
-                            : 'text-blue-300'
+                            ? 'bg-yellow-900/30 border-yellow-500'
+                            : 'bg-blue-900/30 border-blue-500'
                         }`}>
-                          <ClockIcon className="inline-block" size={24} /> 💰 BETTING: {bettingTimeRemaining}s
+                          <div className={`text-xl sm:text-3xl font-bold font-display flex items-center gap-2 ${
+                            bettingTimeRemaining <= 5
+                              ? 'text-red-300'
+                              : bettingTimeRemaining <= 10
+                              ? 'text-yellow-300'
+                              : 'text-blue-300'
+                          }`}>
+                            <ClockIcon className="inline-block" size={24} /> 💰 BETTING: {bettingTimeRemaining}s
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bet Options */}
+                      <div className="bg-vintage-charcoal/80 border-2 border-vintage-gold rounded-xl p-4">
+                        <div className="text-center text-vintage-gold font-bold mb-3">Choose Player to Bet On:</div>
+
+                        {/* Player Selection Grid */}
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          {/* Host */}
+                          <div className="bg-blue-900/30 border-2 border-blue-500 rounded-lg p-3 text-center">
+                            <div className="text-blue-400 font-bold mb-2">{room.hostUsername}</div>
+                            <div className="text-xs text-blue-300/70 mb-2">Host</div>
+                            <div className="grid grid-cols-2 gap-1">
+                              {[10, 25, 50, 100].map((amount) => (
+                                <button
+                                  key={amount}
+                                  onClick={() => handlePlaceBet(room.hostAddress, amount)}
+                                  disabled={placingBet}
+                                  className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-bold rounded px-2 py-1 text-xs transition-all hover:scale-105 active:scale-95"
+                                >
+                                  {amount}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Guest */}
+                          <div className="bg-red-900/30 border-2 border-red-500 rounded-lg p-3 text-center">
+                            <div className="text-red-400 font-bold mb-2">{room.guestUsername}</div>
+                            <div className="text-xs text-red-300/70 mb-2">Guest</div>
+                            <div className="grid grid-cols-2 gap-1">
+                              {[10, 25, 50, 100].map((amount) => (
+                                <button
+                                  key={amount}
+                                  onClick={() => handlePlaceBet(room.guestAddress!, amount)}
+                                  disabled={placingBet}
+                                  className="bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white font-bold rounded px-2 py-1 text-xs transition-all hover:scale-105 active:scale-95"
+                                >
+                                  {amount}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-center text-vintage-gold/70 text-xs">
+                          Choose a player and bet amount
                         </div>
                       </div>
                     </div>
