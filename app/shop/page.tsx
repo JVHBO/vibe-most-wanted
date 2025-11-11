@@ -115,7 +115,7 @@ export default function ShopPage() {
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-white mb-6">💰 Buy Packs</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {shopPacks?.map((pack) => (
+            {shopPacks?.map((pack: any) => (
               <div
                 key={pack.type}
                 className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-purple-500/30 rounded-xl p-6 hover:border-purple-500 transition-all hover:scale-105"
@@ -184,7 +184,7 @@ export default function ShopPage() {
           <div>
             <h2 className="text-3xl font-bold text-white mb-6">📦 Your Packs</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {playerPacks.map((pack) => (
+              {playerPacks.map((pack: any) => (
                 <div
                   key={pack._id}
                   className="bg-gradient-to-br from-blue-900 to-purple-900 border-2 border-blue-500/50 rounded-xl p-6"
@@ -212,7 +212,7 @@ export default function ShopPage() {
                 🎉 Pack Opened!
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {revealedCards.map((card, i) => (
+                {revealedCards.map((card: any, i: number) => (
                   <div
                     key={i}
                     className={`relative bg-gradient-to-br ${
