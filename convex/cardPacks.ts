@@ -510,3 +510,45 @@ export const giveStarterPack = mutation({
     return { success: true, message: "Starter pack awarded!" };
   },
 });
+
+/**
+ * ADMIN: Update all existing FREE card images to new ones (same rarity)
+ */
+export const updateAllCardImages = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const newImageMapping: Record<string, string[]> = {
+      common: ["proxy-5.png", "proxy-6.png", "proxy-7.png"],
+      rare: ["proxy-rare.png", "proxy-rare-1.png", "proxy-rare-8.png"],
+      epic: ["proxy-epic.png", "proxy-epic-1.png", "proxy-epic-2.png", "proxy-epic-3.png"],
+      legendary: ["proxy-legendary.png", "proxy-legendary-4.png"],
+    };
+
+    const allCards = await ctx.db.query("cardInventory").collect();
+    let updatedCount = 0;
+
+    for (const card of allCards) {
+      const rarity = card.rarity.toLowerCase();
+      const newImages = newImageMapping[rarity as keyof typeof newImageMapping];
+
+      if (newImages && newImages.length > 0) {
+        // Pick a random new image for this rarity
+        const randomIndex = Math.floor(Math.random() * newImages.length);
+        const newImageFile = newImages[randomIndex];
+        const newImageUrl = `/cards/${rarity}/${newImageFile}`;
+
+        await ctx.db.patch(card._id, {
+          imageUrl: newImageUrl,
+        });
+        updatedCount++;
+      }
+    }
+
+    return {
+      success: true,
+      updatedCards: updatedCount,
+      totalCards: allCards.length,
+      message: `Updated ${updatedCount} cards with new images!`,
+    };
+  },
+});
