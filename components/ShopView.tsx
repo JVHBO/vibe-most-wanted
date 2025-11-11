@@ -75,7 +75,10 @@ export function ShopView({ address }: ShopViewProps) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">🏪 Card Shop</h2>
+          <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4"><svg className="inline-block w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>Card Shop</h2>
           <p className="text-vintage-ice/70">Please connect your wallet to access the shop</p>
         </div>
       </div>
@@ -86,7 +89,10 @@ export function ShopView({ address }: ShopViewProps) {
     <div className="space-y-6 pb-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-4xl md:text-5xl font-display font-bold text-vintage-gold mb-2">🏪 Card Shop</h1>
+        <h1 className="text-4xl md:text-5xl font-display font-bold text-vintage-gold mb-2"><svg className="inline-block w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>Card Shop</h1>
         <p className="text-vintage-ice/70">Buy packs with coins, open to get random cards!</p>
       </div>
 
@@ -110,7 +116,10 @@ export function ShopView({ address }: ShopViewProps) {
 
       {/* Shop Grid */}
       <div>
-        <h2 className="text-3xl font-display font-bold text-vintage-gold mb-6">💰 Buy Packs</h2>
+        <h2 className="text-3xl font-display font-bold text-vintage-gold mb-6"><svg className="inline-block w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v12M6 12h12" />
+          </svg>Buy Packs</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {shopPacks?.map((pack: any) => (
             <div
@@ -179,7 +188,11 @@ export function ShopView({ address }: ShopViewProps) {
       {/* Your Packs */}
       {playerPacks && playerPacks.length > 0 && (
         <div>
-          <h2 className="text-3xl font-display font-bold text-vintage-gold mb-6">📦 Your Packs</h2>
+          <h2 className="text-3xl font-display font-bold text-vintage-gold mb-6"><svg className="inline-block w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+            <line x1="12" y1="22.08" x2="12" y2="12" />
+          </svg>Your Packs</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {playerPacks.map((pack: any) => (
               <div
