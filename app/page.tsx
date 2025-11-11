@@ -735,7 +735,7 @@ export default function TCGPage() {
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
-  const LEADERBOARD_PER_PAGE = 100;
+  const LEADERBOARD_PER_PAGE = 10;
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -4952,7 +4952,7 @@ export default function TCGPage() {
                       </tbody>
                     </table>
 
-                    {/* Pagination Controls - only show if more than 100 players */}
+                    {/* Pagination Controls - shows up to 1000 players (100 pages) */}
                     {leaderboard.length > LEADERBOARD_PER_PAGE && (
                       <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
                         <button
