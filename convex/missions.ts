@@ -15,7 +15,7 @@ import { applyLanguageBoost } from "./languageBoost";
 
 // Mission rewards (coins OR packs)
 const MISSION_REWARDS = {
-  daily_login: { type: "coins", amount: 25 },
+  daily_login: { type: "coins", amount: 100 },
   first_pve_win: { type: "coins", amount: 50 },
   first_pvp_match: { type: "pack", packType: "mission", amount: 1 }, // Changed to pack!
   welcome_gift: { type: "pack", packType: "starter", amount: 1 }, // Changed to pack!

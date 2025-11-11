@@ -1455,8 +1455,8 @@ export const awardShareBonus = mutation({
         };
       }
 
-      // Award profile share bonus: +50 coins
-      const bonus = 50;
+      // Award profile share bonus: +250 coins
+      const bonus = 250;
       const newCoins = (profile.coins || 0) + bonus;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
       const newTotalShareBonus = (profile.totalShareBonus || 0) + bonus;
