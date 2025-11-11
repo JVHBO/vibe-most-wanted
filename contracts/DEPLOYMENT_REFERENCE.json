@@ -1,0 +1,100 @@
+{
+  "network": {
+    "name": "Base Mainnet",
+    "chainId": 8453,
+    "rpcUrl": "https://mainnet.base.org",
+    "explorer": "https://basescan.org"
+  },
+  "addresses": {
+    "vbmsToken": "0xb03439567cd22f278b21e1ffcdfb8e1696763827",
+    "ownerWallet": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52",
+    "backendSigner": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52",
+    "vbmsPoolTroll": "PREENCHER_APÓS_DEPLOY",
+    "vbmsPokerBattle": "PREENCHER_APÓS_DEPLOY",
+    "vbmsBetting": "PREENCHER_APÓS_DEPLOY"
+  },
+  "deployOrder": [
+    {
+      "step": 1,
+      "contract": "VBMSPoolTroll",
+      "constructorParams": {
+        "_vbmsToken": "0xb03439567cd22f278b21e1ffcdfb8e1696763827",
+        "_backendSigner": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52"
+      },
+      "notes": "Deploy primeiro. Anote o endereço!"
+    },
+    {
+      "step": 2,
+      "contract": "VBMSPokerBattle",
+      "constructorParams": {
+        "_vbmsToken": "0xb03439567cd22f278b21e1ffcdfb8e1696763827",
+        "_poolAddress": "USAR_ENDEREÇO_VBMSPoolTroll",
+        "_backendSigner": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52"
+      },
+      "notes": "Deploy segundo. Precisa do endereço do Pool!"
+    },
+    {
+      "step": 3,
+      "contract": "VBMSBetting",
+      "constructorParams": {
+        "_vbmsToken": "0xb03439567cd22f278b21e1ffcdfb8e1696763827",
+        "_poolAddress": "USAR_ENDEREÇO_VBMSPoolTroll",
+        "_backendSigner": "0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52",
+        "_pokerBattleContract": "USAR_ENDEREÇO_VBMSPokerBattle"
+      },
+      "notes": "Deploy terceiro. Precisa dos endereços do Pool e Battle!"
+    }
+  ],
+  "postDeployTasks": [
+    {
+      "task": "Fund VBMSPoolTroll",
+      "description": "Transfer $VBMS para o pool",
+      "contract": "VBMS Token",
+      "function": "transfer",
+      "params": {
+        "to": "ENDEREÇO_VBMSPoolTroll",
+        "amount": "10000000000000000000000"
+      },
+      "notes": "10000 VBMS = 10000 * 10^18 wei"
+    },
+    {
+      "task": "Verify contracts",
+      "description": "Verificar todos os contratos no Basescan",
+      "url": "https://basescan.org"
+    },
+    {
+      "task": "Update frontend .env",
+      "description": "Adicionar endereços dos contratos no .env.local"
+    }
+  ],
+  "configurationOptions": {
+    "VBMSPoolTroll": {
+      "minClaimAmount": "1000000000000000000",
+      "maxClaimAmount": "100000000000000000000000",
+      "claimsPaused": false
+    },
+    "VBMSPokerBattle": {
+      "minStake": "1000000000000000000",
+      "maxStake": "10000000000000000000000",
+      "feePercentage": 500
+    },
+    "VBMSBetting": {
+      "minBet": "1000000000000000000",
+      "maxBet": "1000000000000000000000",
+      "poolFeePercentage": 1000,
+      "payoutMultiplier": 3
+    }
+  },
+  "estimatedGasCosts": {
+    "VBMSPoolTroll": "~0.002 ETH",
+    "VBMSPokerBattle": "~0.0015 ETH",
+    "VBMSBetting": "~0.0015 ETH",
+    "total": "~0.005 ETH (~$20 USD)"
+  },
+  "remixSetup": {
+    "compilerVersion": "0.8.20",
+    "optimizerEnabled": true,
+    "runs": 200,
+    "license": "MIT"
+  }
+}
