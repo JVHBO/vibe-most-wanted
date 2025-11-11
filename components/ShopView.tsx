@@ -151,7 +151,7 @@ export function ShopView({ address }: ShopViewProps) {
             >
               {/* Pack Image */}
               <div className="flex justify-center mb-4">
-                <img src="/pack-closed.png" alt="Card Pack" className="w-32 h-32 object-contain" />
+                <img src="/pack-cover.png" alt="Card Pack" className="w-32 h-32 object-contain" />
               </div>
 
               <div className="text-center mb-4">
