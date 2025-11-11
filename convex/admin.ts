@@ -8,6 +8,7 @@
  */
 
 import { internalMutation, mutation } from "./_generated/server";
+import { v } from "convex/values";
 
 /**
  * Step 1: Reset all profiles (economy and stats)
@@ -240,6 +241,97 @@ export const resetFreeCards = internalMutation({
 });
 
 /**
+ * DEBUG: Check how many FREE cards exist
+ */
+export const debugCountFreeCards = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allCards = await ctx.db.query("cardInventory").collect();
+    console.log("📊 Total cards in cardInventory:", allCards.length);
+
+    if (allCards.length > 0) {
+      console.log("🎴 Sample card:", allCards[0]);
+    }
+
+    return {
+      totalCards: allCards.length,
+      sampleCard: allCards[0] || null,
+    };
+  },
+});
+
+/**
+ * ADMIN: Delete FREE cards for a specific username and give compensation pack
+ */
+export const resetUserFreeCards = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, { username }) => {
+    // Find user profile by username
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_username", (q) => q.eq("username", username.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      return {
+        success: false,
+        error: `Profile not found for username: ${username}`,
+      };
+    }
+
+    const address = profile.address;
+    console.log("🔍 Found profile:", { username, address });
+
+    // Get user's cards
+    const userCards = await ctx.db
+      .query("cardInventory")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .collect();
+
+    console.log("🎴 User has", userCards.length, "cards");
+
+    // Delete all user's cards
+    let deletedCount = 0;
+    for (const card of userCards) {
+      await ctx.db.delete(card._id);
+      deletedCount++;
+    }
+    console.log("🗑️ Deleted", deletedCount, "cards");
+
+    // Give compensation pack
+    const existingPack = await ctx.db
+      .query("cardPacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .filter((q) => q.eq(q.field("packType"), "basic"))
+      .first();
+
+    if (existingPack) {
+      await ctx.db.patch(existingPack._id, {
+        unopened: existingPack.unopened + 1,
+      });
+      console.log("🎁 Added 1 pack to existing pack (total:", existingPack.unopened + 1, ")");
+    } else {
+      await ctx.db.insert("cardPacks", {
+        address,
+        packType: "basic",
+        unopened: 1,
+        sourceId: "reset_compensation",
+        earnedAt: Date.now(),
+      });
+      console.log("🎁 Created new pack with 1 unopened");
+    }
+
+    return {
+      success: true,
+      username,
+      address,
+      cardsDeleted: deletedCount,
+      packGiven: true,
+    };
+  },
+});
+
+/**
  * PUBLIC: Execute the reset FREE cards operation
  * This is a public wrapper to call the internal mutation
  */
@@ -248,7 +340,10 @@ export const executeResetFreeCards = mutation({
   handler: async (ctx) => {
     // Call the internal mutation directly
     const allCards = await ctx.db.query("cardInventory").collect();
+    console.log("🔍 Found cards to delete:", allCards.length);
+
     const uniqueAddresses = new Set(allCards.map(c => c.address));
+    console.log("👥 Unique addresses:", uniqueAddresses.size);
 
     // Delete all cards
     let deletedCount = 0;
@@ -256,6 +351,7 @@ export const executeResetFreeCards = mutation({
       await ctx.db.delete(card._id);
       deletedCount++;
     }
+    console.log("🗑️ Deleted cards:", deletedCount);
 
     // Give new pack to each player
     let packsGiven = 0;
@@ -281,6 +377,7 @@ export const executeResetFreeCards = mutation({
       }
       packsGiven++;
     }
+    console.log("🎁 Packs given:", packsGiven);
 
     return {
       success: true,
