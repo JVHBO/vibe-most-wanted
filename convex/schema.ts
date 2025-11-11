@@ -130,6 +130,7 @@ export default defineSchema({
     lastShareDate: v.optional(v.string()), // ISO date YYYY-MM-DD
     hasSharedProfile: v.optional(v.boolean()), // One-time profile share bonus claimed
     totalShareBonus: v.optional(v.number()), // Lifetime share bonus earned
+    hasReceivedWelcomePack: v.optional(v.boolean()), // One-time welcome pack (1 Basic Pack)
 
     // Daily Reminders
     lastActiveDate: v.optional(v.number()), // Last time player was active (for reminder eligibility)
