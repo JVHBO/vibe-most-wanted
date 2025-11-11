@@ -602,10 +602,11 @@ export const updateAllCardImages = mutation({
       const newImages = newImageMapping[rarity as keyof typeof newImageMapping];
 
       if (newImages && newImages.length > 0) {
-        // Check if URL needs fixing (contains unencoded spaces or wrong filename)
-        const needsUpdate = card.imageUrl.includes(' ') ||
-                           !card.imageUrl.includes('%20') ||
-                           card.imageUrl.includes('proxy-');
+        // Check if URL needs fixing (unencoded spaces or old proxy- format)
+        // Correct URLs should have %20, not literal spaces
+        const hasUnencodedSpace = card.imageUrl.includes(' ');
+        const hasOldFormat = card.imageUrl.includes('proxy-');
+        const needsUpdate = hasUnencodedSpace || hasOldFormat;
 
         if (needsUpdate) {
           // Pick a random new image for this rarity
