@@ -325,7 +325,8 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
     });
     if (nft?.metadata?.image) allUrls.push(String(nft.metadata.image));
     allUrls.push(`https://via.placeholder.com/300x420/6366f1/ffffff?text=NFT+%23${tid}`);
-    return [...new Set(allUrls)].filter(url => url && !url.includes('undefined') && url.startsWith('http'));
+    // Allow both absolute URLs (http/https) and relative paths (for FREE cards)
+    return [...new Set(allUrls)].filter(url => url && !url.includes('undefined') && (url.startsWith('http') || url.startsWith('/')));
   }, [nft, tid]);
 
   const currentSrc = fallbacks[imgError] || fallbacks[fallbacks.length - 1];
@@ -4644,12 +4645,6 @@ export default function TCGPage() {
                 <div className="mb-4">
                   <button
                     onClick={() => {
-                      // Check if defense deck is set
-                      if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE) {
-                        alert('You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".');
-                        if (soundEnabled) AudioManager.buttonError();
-                        return;
-                      }
                       if (soundEnabled) AudioManager.buttonClick();
                       setPokerMode('pvp'); // Reset poker mode to prevent confusion with poker CPU
                       setShowPveCardSelection(true);
@@ -4670,12 +4665,6 @@ export default function TCGPage() {
                 <div className="mb-4">
                   <button
                     onClick={() => {
-                      // Check if defense deck is set
-                      if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== HAND_SIZE) {
-                        alert('You must set your Defense Deck first! Select 5 cards above and click "Save Defense Deck".');
-                        if (soundEnabled) AudioManager.buttonError();
-                        return;
-                      }
                       if (soundEnabled) AudioManager.buttonClick();
                       setPokerMode('pvp'); // Reset poker mode to prevent confusion with poker CPU
                       setGameMode('pvp');
@@ -4931,18 +4920,6 @@ export default function TCGPage() {
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <button
                                   onClick={() => {
-                                    // Check if target has defense deck
-                                    if (!profile.hasDefenseDeck) {
-                                      alert('This player has not set up their defense deck yet.');
-                                      if (soundEnabled) AudioManager.buttonError();
-                                      return;
-                                    }
-                                    // Check if you have defense deck
-                                    if (!userProfile?.defenseDeck || userProfile.defenseDeck.length !== 5) {
-                                      alert('You must set your Defense Deck first!');
-                                      if (soundEnabled) AudioManager.buttonError();
-                                      return;
-                                    }
                                     // Check attack limit
                                     if (attacksRemaining <= 0) {
                                       alert(`You have used all ${maxAttacks} attacks for today. Attacks reset at midnight UTC.`);
@@ -4955,9 +4932,9 @@ export default function TCGPage() {
                                     setShowAttackCardSelection(true);
                                     setAttackSelectedCards([]);
                                   }}
-                                  disabled={!userProfile || attacksRemaining <= 0 || !profile.hasDefenseDeck}
+                                  disabled={!userProfile || attacksRemaining <= 0}
                                   className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                                    userProfile && attacksRemaining > 0 && profile.hasDefenseDeck
+                                    userProfile && attacksRemaining > 0
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
