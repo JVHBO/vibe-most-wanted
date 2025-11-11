@@ -183,7 +183,7 @@ function generateRandomCard(rarity: string) {
     rank: fileName.replace('.png', ''), // Image name as rank
     variant: "default",
     rarity,
-    imageUrl: `${imageUrl}${fileName}`,
+    imageUrl: `${imageUrl}${encodeURIComponent(fileName)}`,
     badgeType: "FREE_CARD" as const,
     foil: foil !== "None" ? foil : undefined, // Only include if special
     wear,
@@ -512,9 +512,10 @@ export const giveStarterPack = mutation({
 });
 
 /**
- * Give FREE pack reward for sharing profile
- * - 1 FREE pack per day (resets at midnight)
- * - Prevents spam by limiting to 1 share reward per 24h
+ * Give FREE pack reward for sharing profile (ONE-TIME ONLY)
+ * - First time sharing your profile = 1 FREE pack
+ * - Can only be claimed once per account
+ * - Daily shares give tokens instead (see economy.ts)
  */
 export const rewardProfileShare = mutation({
   args: { address: v.string() },
@@ -533,11 +534,11 @@ export const rewardProfileShare = mutation({
       return { success: false, message: "Profile not found" };
     }
 
-    // Check if already shared today
-    if (profile.lastShareDate === today) {
+    // Check if already claimed FREE pack
+    if (profile.hasClaimedSharePack) {
       return {
         success: false,
-        message: "You already received a share reward today! Come back tomorrow."
+        message: "You already claimed your FREE pack for sharing! Daily shares give tokens instead."
       };
     }
 
@@ -563,17 +564,16 @@ export const rewardProfileShare = mutation({
       });
     }
 
-    // Update profile with share tracking
+    // Update profile - mark pack as claimed
     await ctx.db.patch(profile._id, {
-      lastShareDate: today,
-      dailyShares: (profile.dailyShares || 0) + 1,
+      hasClaimedSharePack: true,
       hasSharedProfile: true,
-      totalShareBonus: (profile.totalShareBonus || 0) + 1,
+      lastShareDate: today,
     });
 
     return {
       success: true,
-      message: "FREE pack awarded for sharing! Open it in the Shop."
+      message: "FREE pack awarded for sharing! Open it in the Shop. Daily shares give tokens."
     };
   },
 });
