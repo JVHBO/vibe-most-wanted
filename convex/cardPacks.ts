@@ -573,7 +573,7 @@ export const rewardProfileShare = mutation({
 
     return {
       success: true,
-      message: "FREE pack awarded for sharing! Open it in the Packs tab."
+      message: "FREE pack awarded for sharing! Open it in the Shop."
     };
   },
 });
