@@ -93,12 +93,12 @@ function rollRarity(odds: Record<string, number>): string {
   return "common"; // Fallback
 }
 
-// Available card images per rarity (all available images, excluding bad proxy.png)
+// Available card images per rarity (only proxy variations)
 const CARD_IMAGES = {
-  common: 15,     // item-58 to item-62 + all proxy variations (excluding proxy.png)
-  rare: 9,        // item-37, 38, 40, 42 + all proxy variations (excluding proxy.png)
-  epic: 12,       // item-43, 44, 46, 47, 49 + all proxy variations (excluding proxy.png)
-  legendary: 9,   // item-39, 50, 52, 55, 56, 57 + all proxy variations (excluding proxy.png)
+  common: 10,     // proxy-1 to proxy-7 + proxy (5) to proxy (7)
+  rare: 5,        // proxy-rare variations
+  epic: 7,        // proxy-epic variations
+  legendary: 3,   // proxy-legendary variations
 };
 
 // Foil types (EXACTLY like NFTs)
@@ -164,15 +164,15 @@ function generateRandomCard(rarity: string) {
   const cardId = `${rarity}_${imageIndex}_${foil}_${wear}_${Date.now()}`;
   const imageUrl = `/cards/${rarity.toLowerCase()}/`; // Lowercase folder names
 
-  // Map image files (all available card images, excluding bad proxy.png)
+  // Map image files (only proxy variations, no item-*.png)
   const imageFiles: Record<string, string[]> = {
-    common: ["item-58.png", "item-59.png", "item-60.png", "item-61.png", "item-62.png", "proxy-1.png", "proxy-2.png", "proxy-3.png", "proxy-4.png", "proxy-5.png", "proxy-6.png", "proxy-7.png", "proxy (5).png", "proxy (6).png", "proxy (7).png"],
-    rare: ["item-37.png", "item-38.png", "item-40.png", "item-42.png", "proxy-rare.png", "proxy-rare-1.png", "proxy-rare-8.png", "proxy (1).png", "proxy (8).png"],
-    epic: ["item-43.png", "item-44.png", "item-46.png", "item-47.png", "item-49.png", "proxy-epic.png", "proxy-epic-1.png", "proxy-epic-2.png", "proxy-epic-3.png", "proxy (1).png", "proxy (2).png", "proxy (3).png"],
-    legendary: ["item-39.png", "item-50.png", "item-52.png", "item-55.png", "item-56.png", "item-57.png", "proxy-legendary.png", "proxy-legendary-4.png", "proxy (4).png"],
+    common: ["proxy-1.png", "proxy-2.png", "proxy-3.png", "proxy-4.png", "proxy-5.png", "proxy-6.png", "proxy-7.png", "proxy (5).png", "proxy (6).png", "proxy (7).png"],
+    rare: ["proxy-rare.png", "proxy-rare-1.png", "proxy-rare-8.png", "proxy (1).png", "proxy (8).png"],
+    epic: ["proxy-epic.png", "proxy-epic-1.png", "proxy-epic-2.png", "proxy-epic-3.png", "proxy (1).png", "proxy (2).png", "proxy (3).png"],
+    legendary: ["proxy-legendary.png", "proxy-legendary-4.png", "proxy (4).png"],
   };
 
-  const fileName = imageFiles[rarity as keyof typeof imageFiles]?.[imageIndex] || imageFiles[rarity as keyof typeof imageFiles]?.[0] || "item-58.png";
+  const fileName = imageFiles[rarity as keyof typeof imageFiles]?.[imageIndex] || imageFiles[rarity as keyof typeof imageFiles]?.[0] || "proxy-1.png";
 
   // Calculate power (EXACTLY same as NFT cards)
   const power = calculateCardPower(rarity, wear, foil !== "None" ? foil : undefined);
