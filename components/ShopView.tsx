@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState } from "react";
 import { Id } from "@/convex/_generated/dataModel";
+import { ShopNotification } from "./ShopNotification";
 
 interface ShopViewProps {
   address: string | undefined;
@@ -24,13 +25,17 @@ export function ShopView({ address }: ShopViewProps) {
   const [loading, setLoading] = useState(false);
   const [openingPack, setOpeningPack] = useState(false);
   const [revealedCards, setRevealedCards] = useState<any[]>([]);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const coins = profile?.coins || 0;
 
   // Handle purchase
   const handleBuy = async (packType: string) => {
     if (!address) {
-      alert("Please connect wallet");
+      setNotification({
+        type: 'error',
+        message: "Please connect your wallet to buy packs"
+      });
       return;
     }
 
@@ -42,10 +47,16 @@ export function ShopView({ address }: ShopViewProps) {
         quantity,
       });
 
-      alert(`Success! Bought ${result.packsReceived} ${packType} pack(s) for ${result.coinsSpent} coins`);
+      setNotification({
+        type: 'success',
+        message: `Bought ${result.packsReceived} ${packType} pack(s) for ${result.coinsSpent} coins!`
+      });
       setQuantity(1);
     } catch (error: any) {
-      alert(error.message || "Failed to buy pack");
+      setNotification({
+        type: 'error',
+        message: error.message || "Failed to buy pack"
+      });
     } finally {
       setLoading(false);
     }
@@ -65,7 +76,10 @@ export function ShopView({ address }: ShopViewProps) {
       setRevealedCards(result.cards);
       setTimeout(() => setRevealedCards([]), 5000);
     } catch (error: any) {
-      alert(error.message || "Failed to open pack");
+      setNotification({
+        type: 'error',
+        message: error.message || "Failed to open pack"
+      });
     } finally {
       setOpeningPack(false);
     }
@@ -94,6 +108,15 @@ export function ShopView({ address }: ShopViewProps) {
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>Card Shop</h1>
         <p className="text-vintage-ice/70">Buy packs with coins, open to get random cards!</p>
+
+      {/* Custom Notification */}
+      {notification && (
+        <ShopNotification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
       </div>
 
       {/* Coins Balance */}
