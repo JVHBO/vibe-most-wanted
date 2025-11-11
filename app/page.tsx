@@ -4305,14 +4305,14 @@ export default function TCGPage() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100]' : 'mb-3 md:mb-6 relative z-40'}>
-            <div className={`bg-vintage-charcoal backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/50 p-2 flex gap-2`}>
+          <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom' : 'mb-3 md:mb-6 relative z-40'}>
+            <div className={`bg-vintage-charcoal backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/50 ${isInFarcaster ? 'p-1' : 'p-2'} flex gap-1`}>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('game');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'game'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
@@ -4320,8 +4320,8 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-sm font-bold">{t('title')}</span>
-                    <span className="text-3xl leading-none">♠</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap">{t('title')}</span>
+                    <span className="text-xl leading-none">♠</span>
                   </>
                 ) : (
                   <>
@@ -4335,7 +4335,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('missions');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'missions'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
@@ -4343,8 +4343,8 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-sm font-bold">{t('missions')}</span>
-                    <span className="text-3xl leading-none">◈</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap">{t('missions')}</span>
+                    <span className="text-xl leading-none">◈</span>
                   </>
                 ) : (
                   <>
@@ -4358,7 +4358,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('achievements');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'achievements'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
@@ -4366,8 +4366,8 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-sm font-bold">{t('achievements')}</span>
-                    <span className="text-3xl leading-none">★</span>
+                    <span className="text-[9px] font-bold whitespace-nowrap">{t('achievements')}</span>
+                    <span className="text-xl leading-none">★</span>
                   </>
                 ) : (
                   <>
@@ -4381,7 +4381,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('leaderboard');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'leaderboard'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
@@ -4389,8 +4389,8 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-sm font-bold">{t('leaderboard')}</span>
-                    <span className="text-3xl leading-none">♔</span>
+                    <span className="text-[9px] font-bold whitespace-nowrap">{t('leaderboard')}</span>
+                    <span className="text-xl leading-none">♔</span>
                   </>
                 ) : (
                   <>
@@ -4404,7 +4404,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('shop');
                 }}
-                className={`flex-1 ${isInFarcaster ? 'px-3 py-3 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-sm leading-tight' : 'text-xs md:text-base'} ${
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'shop'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
@@ -4412,8 +4412,8 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-sm font-bold">Shop</span>
-                    <span className="text-3xl leading-none">🏪</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap">Shop</span>
+                    <span className="text-xl leading-none">🏪</span>
                   </>
                 ) : (
                   <>
@@ -4426,7 +4426,7 @@ export default function TCGPage() {
           </div>
 
           {/* Content wrapper with padding for fixed bars in miniapp */}
-          <div className={isInFarcaster ? 'pt-[70px] pb-[80px]' : ''}>
+          <div className={isInFarcaster ? 'pt-[70px] pb-[65px]' : ''}>
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
               <p className="text-red-400 font-bold">✗ {t('error')}</p>
