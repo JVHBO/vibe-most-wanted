@@ -542,4 +542,70 @@ export default defineSchema({
     .index("by_room", ["roomId", "timestamp"])
     .index("by_bettor", ["bettor", "timestamp"])
     .index("by_status", ["status", "timestamp"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // CARD PACKS SYSTEM (Non-NFT Free Cards)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Card Packs (Free gacha system)
+  cardPacks: defineTable({
+    address: v.string(), // Owner's wallet address
+    packType: v.string(), // "starter", "mission", "achievement", "daily"
+    unopened: v.number(), // Number of unopened packs
+    sourceId: v.optional(v.string()), // Mission/Achievement ID that gave this pack
+    earnedAt: v.number(), // Timestamp when earned
+    expiresAt: v.optional(v.number()), // Optional expiration (for limited events)
+  })
+    .index("by_address", ["address"])
+    .index("by_address_unopened", ["address", "unopened"]),
+
+  // Card Inventory (Free cards from packs)
+  cardInventory: defineTable({
+    address: v.string(), // Owner's wallet address
+    cardId: v.string(), // Unique card identifier (suit_rank_variant)
+
+    // Card Properties
+    suit: v.string(), // "hearts", "diamonds", "clubs", "spades"
+    rank: v.string(), // "A", "2"-"10", "J", "Q", "K"
+    variant: v.string(), // "default", "gold", "neon", "pixel", etc.
+    rarity: v.string(), // "common", "rare", "epic", "legendary"
+
+    // Visual
+    imageUrl: v.string(), // CDN URL for card image
+    badgeType: v.literal("FREE_CARD"), // Badge shown on card
+
+    // Traits (similar to NFTs)
+    foil: v.optional(v.string()), // "holo", "reverse", "galaxy", etc
+    wear: v.string(), // "mint", "good", "worn", "battle-scarred"
+    power: v.number(), // Card power (calculated same as NFT cards)
+
+    // Metadata
+    quantity: v.number(), // How many of this card (for duplicates)
+    equipped: v.boolean(), // Currently equipped in deck
+    obtainedAt: v.number(), // Timestamp when first obtained
+    lastUsed: v.optional(v.number()), // Last time used in game
+  })
+    .index("by_address", ["address"])
+    .index("by_address_equipped", ["address", "equipped"])
+    .index("by_rarity", ["rarity"])
+    .index("by_card", ["cardId"]),
+
+  // Card Collection Progress (Achievements for collecting all cards)
+  cardCollections: defineTable({
+    address: v.string(),
+    collectionName: v.string(), // "standard_52", "gold_set", "season_1", etc.
+
+    // Progress
+    cardsOwned: v.number(), // How many unique cards from this collection
+    cardsTotal: v.number(), // Total cards in collection
+    completedAt: v.optional(v.number()), // When completed (null if incomplete)
+
+    // Rewards
+    rewardClaimed: v.boolean(), // If completion reward was claimed
+    rewardType: v.optional(v.string()), // "coins", "pack", "special_card"
+    rewardAmount: v.optional(v.number()),
+  })
+    .index("by_address", ["address"])
+    .index("by_collection", ["collectionName"])
+    .index("by_completed", ["completedAt"]),
 });

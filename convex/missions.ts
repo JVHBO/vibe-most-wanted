@@ -13,15 +13,17 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { applyLanguageBoost } from "./languageBoost";
 
-// Mission rewards
+// Mission rewards (coins OR packs)
 const MISSION_REWARDS = {
-  daily_login: 25,
-  first_pve_win: 50,
-  first_pvp_match: 100,
-  welcome_gift: 500,
-  streak_3: 150,
-  streak_5: 300,
-  streak_10: 750,
+  daily_login: { type: "coins", amount: 25 },
+  first_pve_win: { type: "coins", amount: 50 },
+  first_pvp_match: { type: "pack", packType: "mission", amount: 1 }, // Changed to pack!
+  welcome_gift: { type: "pack", packType: "starter", amount: 1 }, // Changed to pack!
+  play_3_games: { type: "pack", packType: "mission", amount: 1 }, // NEW
+  win_5_games: { type: "pack", packType: "mission", amount: 2 }, // NEW
+  streak_3: { type: "coins", amount: 150 },
+  streak_5: { type: "pack", packType: "achievement", amount: 1 }, // Changed to pack!
+  streak_10: { type: "pack", packType: "achievement", amount: 3 }, // Changed to pack!
 };
 
 /**
@@ -77,7 +79,7 @@ export const markDailyLogin = mutation({
         missionType: "daily_login",
         completed: true,
         claimed: false,
-        reward: MISSION_REWARDS.daily_login,
+        reward: MISSION_REWARDS.daily_login.amount,
         completedAt: Date.now(),
       });
 
@@ -113,7 +115,7 @@ export const markFirstPveWin = mutation({
         missionType: "first_pve_win",
         completed: true,
         claimed: false,
-        reward: MISSION_REWARDS.first_pve_win,
+        reward: MISSION_REWARDS.first_pve_win.amount,
         completedAt: Date.now(),
       });
 
@@ -149,7 +151,7 @@ export const markFirstPvpMatch = mutation({
         missionType: "first_pvp_match",
         completed: true,
         claimed: false,
-        reward: MISSION_REWARDS.first_pvp_match,
+        reward: MISSION_REWARDS.first_pvp_match.amount,
         completedAt: Date.now(),
       });
 
@@ -181,7 +183,7 @@ export const createWelcomeGift = mutation({
         missionType: "welcome_gift",
         completed: true, // Immediately available
         claimed: false,
-        reward: MISSION_REWARDS.welcome_gift,
+        reward: MISSION_REWARDS.welcome_gift.amount,
         completedAt: Date.now(),
       });
 
@@ -221,7 +223,7 @@ export const markWinStreak = mutation({
         missionType,
         completed: true,
         claimed: false,
-        reward: MISSION_REWARDS[missionType],
+        reward: MISSION_REWARDS[missionType].amount,
         completedAt: Date.now(),
       });
 
@@ -280,17 +282,43 @@ export const claimMission = mutation({
       throw new Error("Profile not found");
     }
 
-    // 🇨🇳 Apply language boost to mission reward
-    const boostedReward = language ? applyLanguageBoost(mission.reward, language) : mission.reward;
+    // Get reward info
+    const rewardInfo = MISSION_REWARDS[mission.missionType as keyof typeof MISSION_REWARDS];
 
-    // Award coins
-    const newBalance = (profile.coins || 0) + boostedReward;
-    const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
+    if (rewardInfo.type === "coins") {
+      // 🇨🇳 Apply language boost to mission reward
+      const boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
 
-    await ctx.db.patch(profile._id, {
-      coins: newBalance,
-      lifetimeEarned: newLifetimeEarned,
-    });
+      // Award coins
+      const newBalance = (profile.coins || 0) + boostedReward;
+      const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
+
+      await ctx.db.patch(profile._id, {
+        coins: newBalance,
+        lifetimeEarned: newLifetimeEarned,
+      });
+    } else if (rewardInfo.type === "pack") {
+      // Award pack(s)
+      const existingPack = await ctx.db
+        .query("cardPacks")
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+        .filter((q) => q.eq(q.field("packType"), rewardInfo.packType))
+        .first();
+
+      if (existingPack) {
+        await ctx.db.patch(existingPack._id, {
+          unopened: existingPack.unopened + rewardInfo.amount,
+        });
+      } else {
+        await ctx.db.insert("cardPacks", {
+          address: normalizedAddress,
+          packType: rewardInfo.packType,
+          unopened: rewardInfo.amount,
+          sourceId: mission.missionType,
+          earnedAt: Date.now(),
+        });
+      }
+    }
 
     // Mark mission as claimed
     await ctx.db.patch(missionId, {
