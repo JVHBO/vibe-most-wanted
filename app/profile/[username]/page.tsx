@@ -268,6 +268,7 @@ export default function ProfilePage() {
 
   // Share Reward System
   const rewardProfileShare = useMutation(api.cardPacks.rewardProfileShare);
+  const claimShareBonus = useMutation(api.economy.claimShareBonus);
   const [showShareReward, setShowShareReward] = useState(false);
   const [shareRewardMessage, setShareRewardMessage] = useState('');
 
@@ -795,7 +796,7 @@ export default function ProfilePage() {
                 {/* Share Reward Notice */}
                 {currentUserAddress?.toLowerCase() === profile.address.toLowerCase() && (
                   <p className="text-xs text-vintage-gold font-modern text-center bg-vintage-gold/10 border border-vintage-gold/30 rounded px-2 py-1">
-                    🎁 Share your profile to earn 1 FREE pack daily!
+                    🎁 Share once = FREE pack! Daily shares = tokens!
                   </p>
                 )}
 
@@ -811,22 +812,32 @@ export default function ProfilePage() {
                       const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
 
                       // Farcaster cast text
-                      const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 Share your profile daily for a FREE pack!`;
+                      const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!`;
 
                       const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
                       // Open share in new tab
                       window.open(url, '_blank');
 
-                      // Award pack reward if it's the user's own profile
+                      // Award reward if it's the user's own profile
                       if (currentUserAddress?.toLowerCase() === profile.address.toLowerCase()) {
                         try {
-                          const result = await rewardProfileShare({ address: profile.address });
-                          setShareRewardMessage(result.message);
-                          setShowShareReward(true);
-
-                          // Auto-hide after 5 seconds
-                          setTimeout(() => setShowShareReward(false), 5000);
+                          // Try FREE pack first (one-time)
+                          const packResult = await rewardProfileShare({ address: profile.address });
+                          if (packResult.success) {
+                            setShareRewardMessage(packResult.message);
+                            setShowShareReward(true);
+                            setTimeout(() => setShowShareReward(false), 5000);
+                          } else {
+                            // Pack already claimed, give daily tokens instead
+                            const tokenResult = await claimShareBonus({
+                              address: profile.address,
+                              type: "dailyShare"
+                            });
+                            setShareRewardMessage(tokenResult.message);
+                            setShowShareReward(true);
+                            setTimeout(() => setShowShareReward(false), 5000);
+                          }
                         } catch (error: any) {
                           console.error('Share reward error:', error);
                         }
@@ -848,15 +859,25 @@ export default function ProfilePage() {
                       // Open share in new tab
                       window.open(url, '_blank');
 
-                      // Award pack reward if it's the user's own profile
+                      // Award reward if it's the user's own profile
                       if (currentUserAddress?.toLowerCase() === profile.address.toLowerCase()) {
                         try {
-                          const result = await rewardProfileShare({ address: profile.address });
-                          setShareRewardMessage(result.message);
-                          setShowShareReward(true);
-
-                          // Auto-hide after 5 seconds
-                          setTimeout(() => setShowShareReward(false), 5000);
+                          // Try FREE pack first (one-time)
+                          const packResult = await rewardProfileShare({ address: profile.address });
+                          if (packResult.success) {
+                            setShareRewardMessage(packResult.message);
+                            setShowShareReward(true);
+                            setTimeout(() => setShowShareReward(false), 5000);
+                          } else {
+                            // Pack already claimed, give daily tokens instead
+                            const tokenResult = await claimShareBonus({
+                              address: profile.address,
+                              type: "dailyShare"
+                            });
+                            setShareRewardMessage(tokenResult.message);
+                            setShowShareReward(true);
+                            setTimeout(() => setShowShareReward(false), 5000);
+                          }
                         } catch (error: any) {
                           console.error('Share reward error:', error);
                         }

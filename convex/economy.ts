@@ -1477,6 +1477,39 @@ export const awardShareBonus = mutation({
       };
     }
 
+    if (type === "dailyShare") {
+      // Daily share bonus: +50 coins per day
+      if (profile.lastShareDate === today) {
+        return {
+          success: false,
+          message: "Daily share bonus already claimed today",
+          coinsAwarded: 0,
+        };
+      }
+
+      // Award daily share bonus: +50 coins
+      const bonus = 50;
+      const newCoins = (profile.coins || 0) + bonus;
+      const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
+      const newTotalShareBonus = (profile.totalShareBonus || 0) + bonus;
+
+      await ctx.db.patch(profile._id, {
+        coins: newCoins,
+        lifetimeEarned: newLifetimeEarned,
+        totalShareBonus: newTotalShareBonus,
+        lastShareDate: today,
+        dailyShares: (profile.dailyShares || 0) + 1,
+        lastUpdated: Date.now(),
+      });
+
+      return {
+        success: true,
+        message: "Daily share bonus claimed! +50 coins",
+        coinsAwarded: bonus,
+        newBalance: newCoins,
+      };
+    }
+
     if (type === "victory") {
       // Daily victory share bonus (3x/day max)
       const dailyShares = profile.lastShareDate === today ? (profile.dailyShares || 0) : 0;
