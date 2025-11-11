@@ -1698,26 +1698,28 @@ export function PokerBattleTable({
           <div className="h-full flex flex-col">
 
             {/* Game info header */}
-            <div className={`bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl p-2 md:p-3 ${
+            <div className={`bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl ${
               isInFarcaster
-                ? 'flex flex-col gap-1.5 text-xs'
-                : 'flex justify-between items-center text-sm md:text-base'
+                ? 'p-1.5 flex flex-col gap-1 text-[11px]'
+                : 'p-2 md:p-3 flex justify-between items-center text-sm md:text-base'
             }`}>
-              <div className="flex items-center gap-3">
-                <div className="text-vintage-gold font-display font-bold">
-                  ROUND {currentRound}/7 • Score: {playerScore}-{opponentScore}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-[11px]' : ''}`}>
+                  ROUND {currentRound}/7 • {playerScore}-{opponentScore}
                 </div>
                 {(selectedAnte === 0 || isSpectatorMode) && (
-                  <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse">
-                    <EyeIcon className="inline-block text-blue-400" size={16} /> SPECTATOR
+                  <div className={`bg-blue-500/20 text-blue-400 font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse ${
+                    isInFarcaster ? 'px-1.5 py-0.5 text-[9px]' : 'px-3 py-1 text-xs'
+                  }`}>
+                    <EyeIcon className="inline-block text-blue-400" size={isInFarcaster ? 12 : 16} /> SPEC
                   </div>
                 )}
               </div>
-              <div className="text-vintage-gold font-display font-bold text-2xl">
+              <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-sm' : 'text-2xl'}`}>
                 POT: {pot} {isCPUMode ? 'coins' : selectedToken}
               </div>
-              <div className="text-vintage-neon-blue font-modern font-bold">
-                🪙 Boost Coins: {playerBoostCoins}
+              <div className={`text-vintage-neon-blue font-modern font-bold ${isInFarcaster ? 'text-[10px]' : ''}`}>
+                🪙 Boost: {playerBoostCoins}
               </div>
             </div>
 
@@ -1750,7 +1752,9 @@ export function PokerBattleTable({
               <div className="absolute inset-0 border-4 border-vintage-gold rounded-b-2xl pointer-events-none" />
 
               {/* Table content */}
-              <div className="relative h-full p-4 md:p-6 flex flex-col justify-between">
+              <div className={`relative h-full flex flex-col justify-between ${
+                isInFarcaster ? 'p-2' : 'p-4 md:p-6'
+              }`}>
 
                 {/* OPPONENT SECTION - Bankroll only */}
                 <div className="text-center">
@@ -1780,13 +1784,19 @@ export function PokerBattleTable({
                 {/* CENTER - CARD BATTLE AREA */}
                 <div className="text-center flex-1 flex flex-col items-center justify-center">
                   {/* BATTLE CARDS - Always visible */}
-                  <div className="flex items-center justify-center gap-3 sm:gap-6 mb-3">
+                  <div className={`flex items-center justify-center mb-2 ${
+                    isInFarcaster ? 'gap-2' : 'gap-3 sm:gap-6 mb-3'
+                  }`}>
                     {/* Opponent Card */}
                     <div className="flex flex-col items-center">
-                      <div className="text-vintage-gold text-xs sm:text-sm mb-1 font-bold">
+                      <div className={`text-vintage-gold font-bold mb-1 ${
+                        isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm'
+                      }`}>
                         {isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}
                       </div>
-                      <div className={`w-24 sm:w-28 md:w-32 aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
+                      <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
+                        isInFarcaster ? 'w-20' : 'w-24 sm:w-28 md:w-32'
+                      } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
                           ? 'border-red-500 shadow-lg shadow-red-500/50'
                           : 'border-vintage-gold/50'
@@ -1846,16 +1856,22 @@ export function PokerBattleTable({
                     </div>
 
                     {/* VS Indicator */}
-                    <div className="text-vintage-gold font-display font-bold text-2xl sm:text-4xl animate-pulse">
+                    <div className={`text-vintage-gold font-display font-bold animate-pulse ${
+                      isInFarcaster ? 'text-xl' : 'text-2xl sm:text-4xl'
+                    }`}>
                       VS
                     </div>
 
                     {/* Player Card */}
                     <div className="flex flex-col items-center">
-                      <div className="text-vintage-gold text-xs sm:text-sm mb-2 font-bold">
+                      <div className={`text-vintage-gold font-bold mb-1 ${
+                        isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm mb-2'
+                      }`}>
                         {isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}
                       </div>
-                      <div className={`w-32 sm:w-40 md:w-48 aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
+                      <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
+                        isInFarcaster ? 'w-20' : 'w-32 sm:w-40 md:w-48'
+                      } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
                           ? 'border-green-500 shadow-lg shadow-green-500/50'
                           : 'border-vintage-gold/50'
@@ -2068,66 +2084,80 @@ export function PokerBattleTable({
 
 
                   {phase === 'reveal' && !isSpectatorMode && selectedAnte !== 0 && (
-                    <div className="space-y-1 sm:space-y-2 animate-in fade-in slide-in-from-bottom duration-500 w-full max-w-md mx-auto">
-                      <div className="text-center text-vintage-neon-blue text-xs sm:text-sm font-bold mb-1">
+                    <div className={`animate-in fade-in slide-in-from-bottom duration-500 w-full mx-auto ${
+                      isInFarcaster ? 'space-y-1' : 'space-y-1 sm:space-y-2 max-w-md'
+                    }`}>
+                      <div className={`text-center text-vintage-neon-blue font-bold mb-1 ${
+                        isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm'
+                      }`}>
                         🪙 BOOST SHOP - {playerBoostCoins} Coins
                       </div>
-                      {/* Mobile: 2x2 Grid, Desktop: 4 buttons in row */}
-                      <div className="grid grid-cols-2 md:flex md:justify-center gap-1 sm:gap-2">
+                      {/* Mobile/Farcaster: 2x2 Grid, Desktop: 4 buttons in row */}
+                      <div className={`grid gap-1 ${
+                        isInFarcaster ? 'grid-cols-2' : 'grid-cols-2 md:flex md:justify-center sm:gap-2'
+                      }`}>
                         <button
                           onClick={() => showConfirmAction('BOOST')}
                           disabled={selectedAnte === 0 || isSpectatorMode || playerBoostCoins < getBoostPrice('BOOST')}
-                          className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                            isInFarcaster ? 'px-2 py-2 min-h-[60px]' : 'px-2 sm:px-4 py-1 sm:py-2'
+                          } ${
                             playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectatorMode
                               ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black hover:from-yellow-600 hover:to-yellow-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <SwordIcon className={playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectatorMode ? "text-black" : "text-gray-500"} size={24} />
-                          <div className="text-[10px] sm:text-xs font-bold">BOOST</div>
-                          <span className="text-[8px] sm:text-[10px]">+30%</span>
-                          <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('BOOST')}</span>
+                          <SwordIcon className={playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectatorMode ? "text-black" : "text-gray-500"} size={isInFarcaster ? 20 : 24} />
+                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>BOOST</div>
+                          <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>+30%</span>
+                          <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>{getBoostPrice('BOOST')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('SHIELD')}
                           disabled={selectedAnte === 0 || isSpectatorMode || playerBoostCoins < getBoostPrice('SHIELD')}
-                          className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                            isInFarcaster ? 'px-2 py-2 min-h-[60px]' : 'px-2 sm:px-4 py-1 sm:py-2'
+                          } ${
                             playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectatorMode
                               ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <ShieldIcon className={playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectatorMode ? "text-white" : "text-gray-500"} size={24} />
-                          <div className="text-[10px] sm:text-xs font-bold">SHIELD</div>
-                          <span className="text-[8px] sm:text-[10px]">Block</span>
-                          <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('SHIELD')}</span>
+                          <ShieldIcon className={playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectatorMode ? "text-white" : "text-gray-500"} size={isInFarcaster ? 20 : 24} />
+                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>SHIELD</div>
+                          <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>Block</span>
+                          <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>{getBoostPrice('SHIELD')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('DOUBLE')}
                           disabled={selectedAnte === 0 || isSpectatorMode || playerBoostCoins < getBoostPrice('DOUBLE')}
-                          className={`px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                          className={`font-bold rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center ${
+                            isInFarcaster ? 'px-2 py-2 min-h-[60px]' : 'px-2 sm:px-4 py-1 sm:py-2'
+                          } ${
                             playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectatorMode
                               ? 'bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700'
                               : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <BoltIcon className={playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectatorMode ? "text-white" : "text-gray-500"} size={24} />
-                          <div className="text-[10px] sm:text-xs font-bold">CRIT</div>
-                          <span className="text-[8px] sm:text-[10px]">x2</span>
-                          <span className="text-[7px] sm:text-[9px] opacity-80">{getBoostPrice('DOUBLE')}</span>
+                          <BoltIcon className={playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectatorMode ? "text-white" : "text-gray-500"} size={isInFarcaster ? 20 : 24} />
+                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>CRIT</div>
+                          <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>x2</span>
+                          <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>{getBoostPrice('DOUBLE')}</span>
                         </button>
 
                         <button
                           onClick={() => showConfirmAction('PASS')}
                           disabled={selectedAnte === 0 || isSpectatorMode}
-                          className="px-2 sm:px-4 py-1 sm:py-2 bg-gray-600 text-white font-bold text-xs sm:text-sm rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                          className={`bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center ${
+                            isInFarcaster ? 'px-2 py-2 min-h-[60px]' : 'px-2 sm:px-4 py-1 sm:py-2'
+                          }`}
                         >
-                          <HandIcon className={selectedAnte === 0 || isSpectatorMode ? "text-gray-500" : "text-white"} size={24} />
-                          <div className="text-[10px] sm:text-xs font-bold">PASS</div>
-                          <span className="text-[8px] sm:text-[10px]">Free</span>
-                          <span className="text-[7px] sm:text-[9px] opacity-80">Save $</span>
+                          <HandIcon className={selectedAnte === 0 || isSpectatorMode ? "text-gray-500" : "text-white"} size={isInFarcaster ? 20 : 24} />
+                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>PASS</div>
+                          <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>Free</span>
+                          <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>Save $</span>
                         </button>
                       </div>
                     </div>
