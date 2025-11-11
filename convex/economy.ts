@@ -1426,7 +1426,7 @@ export const recordAttackResult = mutation({
 export const awardShareBonus = mutation({
   args: {
     address: v.string(),
-    type: v.union(v.literal("victory"), v.literal("profile")),
+    type: v.union(v.literal("victory"), v.literal("profile"), v.literal("dailyShare")),
   },
   handler: async (ctx, args) => {
     const { address, type } = args;
