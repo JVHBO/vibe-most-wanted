@@ -279,6 +279,7 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
           wear: findAttr(nft, 'wear'),
           foil: findAttr(nft, 'foil'),
           power: calcPower(nft),
+          collection: 'vibe', // All NFTs belong to VBMS collection
         };
       })
     );
