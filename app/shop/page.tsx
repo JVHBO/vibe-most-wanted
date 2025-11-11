@@ -105,7 +105,7 @@ export default function ShopPage() {
             <div className="text-right">
               <p className="text-gray-400 text-sm">Unopened Packs</p>
               <p className="text-3xl font-bold text-blue-400">
-                {playerPacks?.reduce((sum, p) => sum + p.unopened, 0) || 0}
+                {playerPacks?.reduce((sum: number, p) => sum + p.unopened, 0) || 0}
               </p>
             </div>
           </div>
