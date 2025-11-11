@@ -34,6 +34,7 @@ import type * as quests from "../quests.js";
 import type * as rewardsChoice from "../rewardsChoice.js";
 import type * as rooms from "../rooms.js";
 import type * as scheduledTips from "../scheduledTips.js";
+import type * as shopAnnouncement from "../shopAnnouncement.js";
 import type * as utils from "../utils.js";
 import type * as vbmsClaim from "../vbmsClaim.js";
 
@@ -78,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   rewardsChoice: typeof rewardsChoice;
   rooms: typeof rooms;
   scheduledTips: typeof scheduledTips;
+  shopAnnouncement: typeof shopAnnouncement;
   utils: typeof utils;
   vbmsClaim: typeof vbmsClaim;
 }>;

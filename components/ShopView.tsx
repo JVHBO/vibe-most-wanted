@@ -132,10 +132,10 @@ export function ShopView({ address }: ShopViewProps) {
               <div className="bg-vintage-black/30 rounded-lg p-3 mb-4 border border-vintage-gold/20">
                 <p className="text-xs text-vintage-ice/70 mb-2">Drop Rates:</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="text-vintage-ice/70">Common: <span className="text-vintage-ice font-bold">{pack.rarityOdds.Common}%</span></div>
-                  <div className="text-blue-400">Rare: <span className="text-vintage-ice font-bold">{pack.rarityOdds.Rare}%</span></div>
-                  <div className="text-purple-400">Epic: <span className="text-vintage-ice font-bold">{pack.rarityOdds.Epic}%</span></div>
-                  <div className="text-vintage-gold">Legendary: <span className="text-vintage-ice font-bold">{pack.rarityOdds.Legendary}%</span></div>
+                  <div className="text-vintage-ice/70">Common: <span className="text-vintage-ice font-bold">{pack.rarityOdds?.Common || 0}%</span></div>
+                  <div className="text-blue-400">Rare: <span className="text-vintage-ice font-bold">{pack.rarityOdds?.Rare || 0}%</span></div>
+                  <div className="text-purple-400">Epic: <span className="text-vintage-ice font-bold">{pack.rarityOdds?.Epic || 0}%</span></div>
+                  <div className="text-vintage-gold">Legendary: <span className="text-vintage-ice font-bold">{pack.rarityOdds?.Legendary || 0}%</span></div>
                 </div>
               </div>
 
