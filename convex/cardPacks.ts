@@ -580,16 +580,16 @@ export const rewardProfileShare = mutation({
 });
 
 /**
- * ADMIN: Update all existing FREE card images to new ones (same rarity)
+ * ADMIN: Fix existing FREE card image URLs with proper encoding
  */
 export const updateAllCardImages = mutation({
   args: {},
   handler: async (ctx) => {
     const newImageMapping: Record<string, string[]> = {
-      common: ["proxy-5.png", "proxy-6.png", "proxy-7.png"],
-      rare: ["proxy-rare.png", "proxy-rare-1.png", "proxy-rare-8.png"],
-      epic: ["proxy-epic.png", "proxy-epic-1.png", "proxy-epic-2.png", "proxy-epic-3.png"],
-      legendary: ["proxy-legendary.png", "proxy-legendary-4.png"],
+      common: ["proxy (5).png", "proxy (6).png", "proxy (7).png"],
+      rare: ["proxy.png", "proxy (1).png", "proxy (8).png"],
+      epic: ["proxy (1).png", "proxy (2).png", "proxy (3).png"],
+      legendary: ["proxy.png", "proxy (4).png"],
     };
 
     const allCards = await ctx.db.query("cardInventory").collect();
@@ -603,7 +603,7 @@ export const updateAllCardImages = mutation({
         // Pick a random new image for this rarity
         const randomIndex = Math.floor(Math.random() * newImages.length);
         const newImageFile = newImages[randomIndex];
-        const newImageUrl = `/cards/${rarity}/${newImageFile}`;
+        const newImageUrl = `/cards/${rarity}/${encodeURIComponent(newImageFile)}`;
 
         await ctx.db.patch(card._id, {
           imageUrl: newImageUrl,
