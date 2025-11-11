@@ -183,7 +183,7 @@ function generateRandomCard(rarity: string) {
     rank: fileName.replace('.png', ''), // Image name as rank
     variant: "default",
     rarity,
-    image: `${imageUrl}${fileName}`,
+    imageUrl: `${imageUrl}${fileName}`,
     badgeType: "FREE_CARD" as const,
     foil: foil !== "None" ? foil : undefined, // Only include if special
     wear,
