@@ -285,12 +285,15 @@ export const claimMission = mutation({
     // Get reward info
     const rewardInfo = MISSION_REWARDS[mission.missionType as keyof typeof MISSION_REWARDS];
 
+    let boostedReward = 0;
+    let newBalance = profile.coins || 0;
+
     if (rewardInfo.type === "coins") {
       // 🇨🇳 Apply language boost to mission reward
-      const boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+      boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
 
       // Award coins
-      const newBalance = (profile.coins || 0) + boostedReward;
+      newBalance = (profile.coins || 0) + boostedReward;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
       await ctx.db.patch(profile._id, {
@@ -299,6 +302,10 @@ export const claimMission = mutation({
       });
     } else if (rewardInfo.type === "pack") {
       // Award pack(s)
+      if (!("packType" in rewardInfo)) {
+        throw new Error("Pack reward missing packType");
+      }
+
       const existingPack = await ctx.db
         .query("cardPacks")
         .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
