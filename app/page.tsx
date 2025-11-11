@@ -44,6 +44,8 @@ import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
 
+import { CollectionFilter } from "@/components/CollectionFilter";
+import { filterCardsByCollections, type CollectionId } from "@/lib/collections/index";
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
@@ -615,6 +617,7 @@ export default function TCGPage() {
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
   const [cardTypeFilter, setCardTypeFilter] = useState<'all' | 'free' | 'nft'>('all');
+  const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
   const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
@@ -2235,7 +2238,7 @@ export default function TCGPage() {
     [selectedCards]
   );
 
-  // 🚀 Performance: Filter by card type (FREE/NFT) and sort
+  // 🚀 Performance: Filter by card type (FREE/NFT), collection, and sort
   const filteredAndSortedNfts = useMemo(() => {
     let filtered = nfts;
 
@@ -2244,12 +2247,17 @@ export default function TCGPage() {
       filtered = nfts.filter(card => card.badgeType === 'FREE_CARD');
     } else if (cardTypeFilter === 'nft') {
       filtered = nfts.filter(card => card.badgeType !== 'FREE_CARD');
+
+    // Apply collection filter (if any collections are selected)
+    if (selectedCollections.length > 0) {
+      filtered = filterCardsByCollections(filtered, selectedCollections);
+    }
     }
 
     // Apply sort
     if (!sortByPower) return filtered;
     return [...filtered].sort((a, b) => (b.power || 0) - (a.power || 0));
-  }, [nfts, sortByPower, cardTypeFilter, sortedNfts]);
+  }, [nfts, sortByPower, cardTypeFilter, selectedCollections, sortedNfts]);
 
   const totalPages = Math.ceil(filteredAndSortedNfts.length / CARDS_PER_PAGE);
 
@@ -4511,6 +4519,10 @@ export default function TCGPage() {
                       >
                         ↻
                       </button>
+                      <CollectionFilter
+                        selectedCollections={selectedCollections}
+                        onCollectionsChange={setSelectedCollections}
+                      />
                       <button
                         onClick={() => setSortByPower(!sortByPower)}
                         className={`px-4 py-2 rounded-lg text-sm font-modern font-medium transition-all ${
