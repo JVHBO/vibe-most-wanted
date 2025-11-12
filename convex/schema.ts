@@ -624,4 +624,25 @@ export default defineSchema({
     .index("by_collection_id", ["collectionId"])
     .index("by_active", ["active"])
     .index("by_contract", ["contractAddress"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // WEBRTC VOICE CHAT SIGNALING
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // WebRTC Signaling (for voice chat in poker battles)
+  voiceSignaling: defineTable({
+    roomId: v.string(), // Poker room ID
+    sender: v.string(), // Sender's wallet address
+    recipient: v.string(), // Recipient's wallet address
+    type: v.union(
+      v.literal("offer"),
+      v.literal("answer"),
+      v.literal("ice-candidate")
+    ),
+    data: v.any(), // SDP or ICE candidate data
+    timestamp: v.number(),
+    processed: v.boolean(), // Whether recipient has processed this signal
+  })
+    .index("by_room", ["roomId", "timestamp"])
+    .index("by_recipient", ["recipient", "processed", "timestamp"]),
 });

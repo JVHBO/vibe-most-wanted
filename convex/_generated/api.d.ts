@@ -38,6 +38,7 @@ import type * as scheduledTips from "../scheduledTips.js";
 import type * as shopAnnouncement from "../shopAnnouncement.js";
 import type * as utils from "../utils.js";
 import type * as vbmsClaim from "../vbmsClaim.js";
+import type * as voiceChat from "../voiceChat.js";
 import type * as welcomePack from "../welcomePack.js";
 
 import type {
@@ -85,6 +86,7 @@ declare const fullApi: ApiFromModules<{
   shopAnnouncement: typeof shopAnnouncement;
   utils: typeof utils;
   vbmsClaim: typeof vbmsClaim;
+  voiceChat: typeof voiceChat;
   welcomePack: typeof welcomePack;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
