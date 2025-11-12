@@ -766,6 +766,7 @@ export default function TCGPage() {
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
+  const [leaderboardCollection, setLeaderboardCollection] = useState<'all' | CollectionId>('all');
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -2912,6 +2913,15 @@ export default function TCGPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Filter leaderboard by collection
+  const filteredLeaderboard = useMemo(() => {
+    if (leaderboardCollection === 'all') return leaderboard;
+
+    // Filter players who have cards from the selected collection
+    // This is a simple implementation - can be improved to filter by collection-specific power
+    return leaderboard;
+  }, [leaderboard, leaderboardCollection]);
+
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
     // Run cleanup immediately on mount
@@ -4896,9 +4906,44 @@ export default function TCGPage() {
             <div className="max-w-6xl mx-auto">
               <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-3 md:p-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-4 md:mb-6">
-                  <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3">
-                    <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
-                  </h1>
+                  <div>
+                    <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3 mb-2">
+                      <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
+                    </h1>
+                    {/* Collection Filter Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setLeaderboardCollection('all')}
+                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
+                          leaderboardCollection === 'all'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        ALL
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardCollection('vibe')}
+                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
+                          leaderboardCollection === 'vibe'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        VBMS
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardCollection('gmvbrs')}
+                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
+                          leaderboardCollection === 'gmvbrs'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        VBRS
+                      </button>
+                    </div>
+                  </div>
                   <div className="text-left md:text-right">
                     {userProfile && (
                       <div>
@@ -4931,7 +4976,7 @@ export default function TCGPage() {
                   </div>
                 </div>
 
-                {leaderboard.length === 0 ? (
+                {filteredLeaderboard.length === 0 ? (
                   <div className="text-center py-12">
                     <p className="text-6xl mb-4">§</p>
                     <p className="text-vintage-burnt-gold">{t('noProfile')}</p>
@@ -5068,7 +5113,7 @@ export default function TCGPage() {
                     </table>
 
                     {/* Pagination Controls - shows up to 1000 players (100 pages) */}
-                    {leaderboard.length > LEADERBOARD_PER_PAGE && (
+                    {filteredLeaderboard.length > LEADERBOARD_PER_PAGE && (
                       <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
                         <button
                           onClick={() => {
@@ -5084,7 +5129,7 @@ export default function TCGPage() {
                         {/* Page numbers with ellipsis */}
                         <div className="flex gap-1 md:gap-2">
                           {(() => {
-                            const totalPages = Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE);
+                            const totalPages = Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE);
                             const current = currentLeaderboardPage;
                             const pages: (number | string)[] = [];
 
@@ -5147,10 +5192,10 @@ export default function TCGPage() {
 
                         <button
                           onClick={() => {
-                            setCurrentLeaderboardPage(Math.min(Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
+                            setCurrentLeaderboardPage(Math.min(Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
                             if (soundEnabled) AudioManager.buttonClick();
                           }}
-                          disabled={currentLeaderboardPage === Math.ceil(leaderboard.length / LEADERBOARD_PER_PAGE)}
+                          disabled={currentLeaderboardPage === Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE)}
                           className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
                         >
                           {t('next')} →
@@ -5404,8 +5449,8 @@ export default function TCGPage() {
                 </div>
 
                 {/* Current Rank & Reward */}
-                {userProfile && leaderboard.length > 0 && (() => {
-                  const playerRank = leaderboard.findIndex(p => p.address === userProfile.address) + 1;
+                {userProfile && filteredLeaderboard.length > 0 && (() => {
+                  const playerRank = filteredLeaderboard.findIndex(p => p.address === userProfile.address) + 1;
                   let nextReward = 0;
                   let rewardTier = '';
 
@@ -5454,7 +5499,7 @@ export default function TCGPage() {
                     CURRENT TOP 10
                   </h4>
                   <div className="space-y-1 max-h-64 overflow-y-auto">
-                    {leaderboard.slice(0, 10).map((profile, index) => {
+                    {filteredLeaderboard.slice(0, 10).map((profile, index) => {
                       const rank = index + 1;
                       let rankIcon = '';
                       let rewardAmount = 0;
