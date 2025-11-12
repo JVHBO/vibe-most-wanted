@@ -757,3 +757,73 @@ export const resetUserFreeCards = mutation({
     };
   },
 });
+
+/**
+ * ADMIN: Restore cards from backup data
+ * Used to restore cards with normalized addresses and proper URLs
+ */
+export const restoreCards = mutation({
+  args: {
+    cards: v.array(v.object({
+      address: v.string(),
+      cardId: v.string(),
+      suit: v.string(),
+      rank: v.string(),
+      variant: v.string(),
+      rarity: v.string(),
+      imageUrl: v.string(),
+      badgeType: v.string(),
+      foil: v.optional(v.string()),
+      wear: v.string(),
+      power: v.number(),
+      quantity: v.number(),
+    })),
+  },
+  handler: async (ctx, args) => {
+    let restoredCount = 0;
+    const restored: any[] = [];
+
+    for (const cardData of args.cards) {
+      // Normalize address to lowercase
+      const address = cardData.address.toLowerCase();
+
+      // Ensure imageUrl is properly encoded
+      const imageUrl = cardData.imageUrl.includes('%20')
+        ? cardData.imageUrl
+        : cardData.imageUrl.replace(/ /g, '%20');
+
+      // Insert card into inventory
+      const cardId = await ctx.db.insert("cardInventory", {
+        address,
+        cardId: cardData.cardId,
+        suit: cardData.suit,
+        rank: cardData.rank,
+        variant: cardData.variant,
+        rarity: cardData.rarity,
+        imageUrl,
+        badgeType: cardData.badgeType as "FREE_CARD",
+        foil: cardData.foil,
+        wear: cardData.wear,
+        power: cardData.power,
+        quantity: cardData.quantity,
+        equipped: false,
+        obtainedAt: Date.now(),
+      });
+
+      restored.push({
+        cardId,
+        rarity: cardData.rarity,
+        power: cardData.power,
+        address
+      });
+      restoredCount++;
+    }
+
+    return {
+      success: true,
+      restoredCount,
+      cards: restored,
+      message: `Successfully restored ${restoredCount} cards!`,
+    };
+  },
+});
