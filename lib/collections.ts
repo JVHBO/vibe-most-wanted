@@ -17,6 +17,7 @@ export interface CollectionConfig {
   ownerAddress?: string;
   enabled: boolean;
   marketplaceUrl?: string; // Link para o marketplace da coleção
+  buttonText?: string; // Texto customizado do botão (ex: "BUY GM VBRS PACKS")
 
   // Configurações específicas de cálculo de power
   powerCalculation?: {

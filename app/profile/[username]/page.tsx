@@ -1179,7 +1179,7 @@ export default function ProfilePage() {
                 >
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-base md:text-lg">◆</span>
-                    <span>BUY {COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS</span>
+                    <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
                   </div>
                 </a>
               </div>
