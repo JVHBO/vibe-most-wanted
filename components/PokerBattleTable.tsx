@@ -8,6 +8,7 @@ import { PokerMatchmaking } from './PokerMatchmaking';
 import { PokerWaitingRoom } from './PokerWaitingRoom';
 import FoilCardEffect from './FoilCardEffect';
 import { SwordIcon, ShieldIcon, BoltIcon, HandIcon, TrophyIcon, SkullIcon, ChatIcon, EyeIcon, ClockIcon, CloseIcon } from './PokerIcons';
+import { useVoiceChat } from '@/lib/hooks/useVoiceChat';
 
 interface Card {
   tokenId: string;
@@ -117,6 +118,15 @@ export function PokerBattleTable({
   const guestProfile = useQuery(
     api.profiles.getProfile,
     room?.guestAddress ? { address: room.guestAddress } : "skip"
+  );
+
+  // Voice chat for PvP mode
+  const opponentAddress = isHost ? room?.guestAddress : room?.hostAddress;
+  const voiceChat = useVoiceChat(
+    roomId && !isCPUMode ? roomId : null,
+    isHost,
+    playerAddress,
+    opponentAddress || ''
   );
 
   // Game state
@@ -1795,19 +1805,60 @@ export function PokerBattleTable({
                 </div>
                 {/* Voice Chat - Only in PvP mode */}
                 {!isCPUMode && (
-                  <div className="border-t border-vintage-gold/30 pt-2">
-                    <button
-                      onClick={() => {
-                        alert('Voice chat feature coming soon! 🎤\n\nPress and hold to record a short voice message for your opponent.');
-                        AudioManager.buttonClick();
-                      }}
-                      className="w-full px-2 py-2 bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/50 rounded text-[10px] font-bold text-purple-400 transition flex items-center justify-center gap-1"
-                    >
-                      🎤 VOICE
-                    </button>
-                    <div className="text-[8px] text-vintage-burnt-gold text-center mt-1">
-                      Hold to talk
-                    </div>
+                  <div className="border-t border-vintage-gold/30 pt-2 space-y-1">
+                    {!voiceChat.isCallActive ? (
+                      <button
+                        onClick={() => {
+                          if (isHost) {
+                            voiceChat.startCall();
+                          }
+                          AudioManager.buttonClick();
+                        }}
+                        disabled={!isHost || !opponentAddress}
+                        className={`w-full px-2 py-2 border rounded text-[10px] font-bold transition flex items-center justify-center gap-1 ${
+                          !isHost || !opponentAddress
+                            ? 'bg-gray-500/20 border-gray-500/50 text-gray-400 cursor-not-allowed'
+                            : 'bg-green-500/20 hover:bg-green-500/40 border-green-500/50 text-green-400'
+                        }`}
+                      >
+                        📞 {voiceChat.isConnected ? 'CONNECTING...' : 'START CALL'}
+                      </button>
+                    ) : (
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => {
+                            voiceChat.toggleMute();
+                            AudioManager.buttonClick();
+                          }}
+                          className={`w-full px-2 py-2 border rounded text-[10px] font-bold transition flex items-center justify-center gap-1 ${
+                            voiceChat.isMuted
+                              ? 'bg-red-500/20 hover:bg-red-500/40 border-red-500/50 text-red-400'
+                              : 'bg-green-500/20 hover:bg-green-500/40 border-green-500/50 text-green-400'
+                          }`}
+                        >
+                          {voiceChat.isMuted ? '🔇 UNMUTE' : '🎤 MUTE'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            voiceChat.endCall();
+                            AudioManager.buttonClick();
+                          }}
+                          className="w-full px-2 py-2 bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 rounded text-[10px] font-bold text-red-400 transition flex items-center justify-center gap-1"
+                        >
+                          📵 END CALL
+                        </button>
+                      </div>
+                    )}
+                    {voiceChat.error && (
+                      <div className="text-[8px] text-red-400 text-center">
+                        {voiceChat.error}
+                      </div>
+                    )}
+                    {!voiceChat.isCallActive && !isHost && (
+                      <div className="text-[8px] text-vintage-burnt-gold text-center">
+                        Waiting for host to start call
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
