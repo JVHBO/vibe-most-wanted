@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'ptard' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -154,3 +154,5 @@ export function getCollectionContract(id: CollectionId): string {
 export function getCollectionPowerConfig(id: CollectionId) {
   return COLLECTIONS[id]?.powerCalculation || DEFAULT_POWER_CONFIG;
 }
+
+
