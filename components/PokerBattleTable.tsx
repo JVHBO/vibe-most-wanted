@@ -1761,6 +1761,41 @@ export function PokerBattleTable({
               </div>
             )}
 
+            {/* Quick Sounds Panel - Floating on left side */}
+            {!isInFarcaster && phase !== 'deck-building' && (
+              <div className="absolute left-4 top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl">
+                <div className="text-vintage-gold font-display font-bold text-xs mb-2 text-center border-b border-vintage-gold/30 pb-1">
+                  QUICK SOUNDS
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    onClick={() => AudioManager.buttonSuccess()}
+                    className="px-2 py-1.5 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded text-[10px] font-bold text-green-400 transition"
+                  >
+                    🎉 GG
+                  </button>
+                  <button
+                    onClick={() => AudioManager.buttonError()}
+                    className="px-2 py-1.5 bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 rounded text-[10px] font-bold text-red-400 transition"
+                  >
+                    😤 OUCH
+                  </button>
+                  <button
+                    onClick={() => AudioManager.buttonClick()}
+                    className="px-2 py-1.5 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded text-[10px] font-bold text-blue-400 transition"
+                  >
+                    👋 HI
+                  </button>
+                  <button
+                    onClick={() => AudioManager.tie()}
+                    className="px-2 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-500/50 rounded text-[10px] font-bold text-yellow-400 transition"
+                  >
+                    🤝 WP
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Game info header */}
             <div className={`bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl ${
               isInFarcaster
