@@ -87,6 +87,18 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
+  // Coleção Protardio
+  ptard: {
+    id: 'ptard',
+    name: 'ptard',
+    displayName: 'Protardio',
+    description: 'Coleção Protardio NFT',
+    contractAddress: '0x4b51ef08f6dd3a7379dc1706f78fba9c44f8e1dc',
+    chain: 'base-mainnet',
+    enabled: true,
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
   // Template para nova coleção customizada
   custom: {
     id: 'custom',
@@ -154,5 +166,7 @@ export function getCollectionContract(id: CollectionId): string {
 export function getCollectionPowerConfig(id: CollectionId) {
   return COLLECTIONS[id]?.powerCalculation || DEFAULT_POWER_CONFIG;
 }
+
+
 
 
