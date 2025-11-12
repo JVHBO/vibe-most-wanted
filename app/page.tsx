@@ -4562,15 +4562,6 @@ export default function TCGPage() {
                   )}
                 </div>
 
-                {/* Unopened Cards Notice */}
-                {unopenedCardsCount > 0 && (
-                  <div className="mb-4 p-3 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg">
-                    <p className="text-sm text-vintage-gold text-center">
-                      📦 You have {unopenedCardsCount} unopened card{unopenedCardsCount !== 1 ? 's' : ''}.
-                    </p>
-                  </div>
-                )}
-
                 {nfts.length === 0 && status !== 'fetching' && (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">∅</div>
