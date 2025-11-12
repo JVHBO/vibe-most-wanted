@@ -13,7 +13,7 @@ import { useAccount } from 'wagmi';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardLoadingSpinner } from '@/components/LoadingSpinner';
 import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
-import { filterCardsByCollections, type CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, COLLECTIONS, type CollectionId } from "@/lib/collections/index";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -1161,6 +1161,29 @@ export default function ProfilePage() {
         ) : filteredNfts.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
             <p className="text-gray-400">{t('noCardsMatchFilters')}</p>
+
+            {/* Buy Collection Button - Show when filtered by collection with no NFTs */}
+            {selectedCollections.length > 0 &&
+             nfts.length > 0 &&
+             (() => {
+               const collection = COLLECTIONS[selectedCollections[0]];
+               return collection?.marketplaceUrl;
+             })() && (
+              <div className="mt-6">
+                <a
+                  href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                  style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-base md:text-lg">◆</span>
+                    <span>BUY {COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS</span>
+                  </div>
+                </a>
+              </div>
+            )}
           </div>
         ) : (
           <>

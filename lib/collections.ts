@@ -97,6 +97,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     contractAddress: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
     chain: 'base-mainnet',
     enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 

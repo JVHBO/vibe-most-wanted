@@ -44,7 +44,7 @@ import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-import { filterCardsByCollections, getEnabledCollections, type CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, type CollectionId } from "@/lib/collections/index";
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
@@ -4600,6 +4600,31 @@ export default function TCGPage() {
                         Cards you just opened may take 5-10 minutes to show up on the site. This is because metadata needs to be indexed. This is normal and always happens! Refresh the page after a few minutes if your new cards don't appear immediately.
                       </p>
                     </div>
+                  </div>
+                )}
+
+                {/* Buy Collection Button - Show when filtered by collection with no NFTs */}
+                {selectedCollections.length > 0 &&
+                 filteredAndSortedNfts.length === 0 &&
+                 nfts.length > 0 &&
+                 (() => {
+                   const collection = COLLECTIONS[selectedCollections[0]];
+                   return collection?.marketplaceUrl;
+                 })() && (
+                  <div className="text-center py-8 mb-6">
+                    <p className="text-vintage-burnt-gold mb-4">You don't have any NFTs from this collection yet</p>
+                    <a
+                      href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                      style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-base md:text-lg">◆</span>
+                        <span>BUY {COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS</span>
+                      </div>
+                    </a>
                   </div>
                 )}
 
