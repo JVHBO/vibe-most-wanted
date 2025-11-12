@@ -4564,6 +4564,7 @@ export default function TCGPage() {
                       >
                         <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
                         <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
+                        <option value="ptard" className="bg-vintage-charcoal text-vintage-gold">PTARD</option>
                       </select>
                       <button
                         onClick={() => setSortByPower(!sortByPower)}
