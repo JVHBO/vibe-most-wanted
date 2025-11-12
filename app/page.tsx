@@ -617,10 +617,6 @@ export default function TCGPage() {
   const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
   const [cardTypeFilter, setCardTypeFilter] = useState<'all' | 'free' | 'nft'>('all');
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
-
-  // ✅ Fetch active collections from Convex database
-  const activeCollections = useQuery(api.nftCollections.getActiveCollections) || [];
-
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
   const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
@@ -4540,15 +4536,7 @@ export default function TCGPage() {
                         className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
                       >
                         <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
-                        {activeCollections.map((collection: any) => (
-                          <option
-                            key={collection.collectionId}
-                            value={collection.collectionId}
-                            className="bg-vintage-charcoal text-vintage-gold"
-                          >
-                            {collection.shortName}
-                          </option>
-                        ))}
+                        <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
                       </select>
                       <button
                         onClick={() => setSortByPower(!sortByPower)}
