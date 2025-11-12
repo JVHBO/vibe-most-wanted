@@ -610,4 +610,18 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_collection", ["collectionName"])
     .index("by_completed", ["completedAt"]),
+
+  // NFT Collections Registry (VBMS, custom collections, etc.)
+  nftCollections: defineTable({
+    collectionId: v.string(), // Unique ID like "vbms", "pooltroll", etc.
+    name: v.string(), // Full name "Vibe Most Wanted"
+    shortName: v.string(), // Short name for UI "VBMS"
+    contractAddress: v.string(), // Base network contract
+    chain: v.string(), // "base", "ethereum", etc.
+    active: v.boolean(), // If collection is active
+    createdAt: v.number(),
+  })
+    .index("by_collection_id", ["collectionId"])
+    .index("by_active", ["active"])
+    .index("by_contract", ["contractAddress"]),
 });

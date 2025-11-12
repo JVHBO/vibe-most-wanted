@@ -24,6 +24,7 @@ import type * as matches from "../matches.js";
 import type * as migrations_cleanDefenseDecks from "../migrations/cleanDefenseDecks.js";
 import type * as migrations_normalizeUsernames from "../migrations/normalizeUsernames.js";
 import type * as missions from "../missions.js";
+import type * as nftCollections from "../nftCollections.js";
 import type * as notifications from "../notifications.js";
 import type * as notificationsHelpers from "../notificationsHelpers.js";
 import type * as pokerBattle from "../pokerBattle.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/cleanDefenseDecks": typeof migrations_cleanDefenseDecks;
   "migrations/normalizeUsernames": typeof migrations_normalizeUsernames;
   missions: typeof missions;
+  nftCollections: typeof nftCollections;
   notifications: typeof notifications;
   notificationsHelpers: typeof notificationsHelpers;
   pokerBattle: typeof pokerBattle;
