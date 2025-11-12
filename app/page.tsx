@@ -2283,7 +2283,7 @@ export default function TCGPage() {
     // Apply sort
     if (!sortByPower) return filtered;
     return [...filtered].sort((a, b) => (b.power || 0) - (a.power || 0));
-  }, [nfts, sortByPower, cardTypeFilter, selectedCollections, sortedNfts]);
+  }, [nfts, sortByPower, cardTypeFilter, selectedCollections]);
 
   const totalPages = Math.ceil(filteredAndSortedNfts.length / CARDS_PER_PAGE);
 
