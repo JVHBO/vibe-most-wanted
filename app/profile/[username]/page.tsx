@@ -1137,6 +1137,7 @@ export default function ProfilePage() {
                 setFilterRarity('all');
                 setFilterFoil('all');
                 setFilterRevealed('revealed');
+                setSelectedCollections([]);
                 setCurrentNFTPage(1);
               }}
               className="mt-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black px-4 py-2 rounded-lg text-sm font-modern font-semibold transition-all"
@@ -1274,6 +1275,29 @@ export default function ProfilePage() {
                     </div>
                   );
                 })}
+
+              {/* Buy Collection Button - Show as grid item when filtering by collection */}
+              {selectedCollections.length > 0 &&
+               filteredNfts.slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE).length < NFT_PER_PAGE &&
+               (() => {
+                 const collection = COLLECTIONS[selectedCollections[0]];
+                 return collection?.marketplaceUrl;
+               })() && (
+                <a
+                  href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                  style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                >
+                  <div className="flex flex-col items-center justify-center gap-2 text-center">
+                    <span className="text-2xl md:text-3xl">◆</span>
+                    <span className="text-xs md:text-sm leading-tight">
+                      {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
+                    </span>
+                  </div>
+                </a>
+              )}
             </div>
 
             {/* Pagination */}
