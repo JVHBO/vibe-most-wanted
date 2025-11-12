@@ -1762,12 +1762,12 @@ export function PokerBattleTable({
             )}
 
             {/* Quick Sounds Panel - Floating on left side */}
-            {!isInFarcaster && phase !== 'deck-building' && (
+            {!isInFarcaster && (
               <div className="absolute left-4 top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl">
                 <div className="text-vintage-gold font-display font-bold text-xs mb-2 text-center border-b border-vintage-gold/30 pb-1">
                   QUICK SOUNDS
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-2 gap-1.5 mb-2">
                   <button
                     onClick={() => AudioManager.buttonSuccess()}
                     className="px-2 py-1.5 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded text-[10px] font-bold text-green-400 transition"
@@ -1793,6 +1793,23 @@ export function PokerBattleTable({
                     🤝 WP
                   </button>
                 </div>
+                {/* Voice Chat - Only in PvP mode */}
+                {!isCPUMode && (
+                  <div className="border-t border-vintage-gold/30 pt-2">
+                    <button
+                      onClick={() => {
+                        alert('Voice chat feature coming soon! 🎤\n\nPress and hold to record a short voice message for your opponent.');
+                        AudioManager.buttonClick();
+                      }}
+                      className="w-full px-2 py-2 bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/50 rounded text-[10px] font-bold text-purple-400 transition flex items-center justify-center gap-1"
+                    >
+                      🎤 VOICE
+                    </button>
+                    <div className="text-[8px] text-vintage-burnt-gold text-center mt-1">
+                      Hold to talk
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
