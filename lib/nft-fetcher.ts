@@ -266,6 +266,19 @@ async function refreshMetadata(nfts: any[], batchSize: number = 50): Promise<any
 async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<any[]> {
   const enriched = [];
 
+  // Helper function to determine collection from contract address
+  const getCollectionFromContract = (nft: any): string => {
+    const contractAddr = nft?.contract?.address?.toLowerCase();
+
+    // GM VBRS collection
+    if (contractAddr === '0xefe512e73ca7356c20a21aa9433bad5fc9342d46') {
+      return 'gmvbrs';
+    }
+
+    // Default to VBMS collection
+    return 'vibe';
+  };
+
   for (let i = 0; i < nfts.length; i += batchSize) {
     const batch = nfts.slice(i, i + batchSize);
     const batchEnriched = await Promise.all(
@@ -279,7 +292,7 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
           wear: findAttr(nft, 'wear'),
           foil: findAttr(nft, 'foil'),
           power: calcPower(nft),
-          collection: 'vibe', // All NFTs belong to VBMS collection
+          collection: getCollectionFromContract(nft),
         };
       })
     );
