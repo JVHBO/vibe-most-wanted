@@ -10,9 +10,9 @@ export async function GET(request: Request) {
     const username = searchParams.get('username') || 'Anonymous';
     const twitter = searchParams.get('twitter') || '';
     const totalPower = searchParams.get('totalPower') || '0';
-    const wins = parseInt(searchParams.get('wins') || '0');
-    const losses = parseInt(searchParams.get('losses') || '0');
-    const ties = parseInt(searchParams.get('ties') || '0');
+    const wins = parseInt(searchParams.get('wins') || '0', 10);
+    const losses = parseInt(searchParams.get('losses') || '0', 10);
+    const ties = parseInt(searchParams.get('ties') || '0', 10);
     const nftCount = searchParams.get('nftCount') || '0';
     const ranking = searchParams.get('ranking') || '?';
     const winStreak = searchParams.get('winStreak') || '0';

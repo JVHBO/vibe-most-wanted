@@ -58,6 +58,9 @@ wallet-setup.bak/
 .cache-synpress/
 metamask-v13/
 *.bak
+*.backup
+*.backup-*
+*.orig
 
 # Old files archive (histórico de desenvolvimento)
 old/

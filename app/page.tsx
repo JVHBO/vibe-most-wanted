@@ -2970,7 +2970,7 @@ export default function TCGPage() {
 
       // Check localStorage for last seen timestamp
       const lastSeenKey = `defenses_last_seen_${address.toLowerCase()}`;
-      const lastSeen = parseInt(localStorage.getItem(lastSeenKey) || '0');
+      const lastSeen = parseInt(localStorage.getItem(lastSeenKey) || '0', 10);
 
       // Count unread defenses (newer than last seen)
       const unread = defenses.filter(d => d.timestamp > lastSeen).length;

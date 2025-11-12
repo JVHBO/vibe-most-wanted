@@ -113,8 +113,8 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const isWin = result === 'win';
 
     // Determine which card should be red (losing side)
-    const playerPowerNum = parseInt(playerPower);
-    const opponentPowerNum = parseInt(opponentPower);
+    const playerPowerNum = parseInt(playerPower, 10);
+    const opponentPowerNum = parseInt(opponentPower, 10);
     const playerIsLosing = playerPowerNum < opponentPowerNum;
 
     // Playing card component (tilted rectangle style like foto.jpg)

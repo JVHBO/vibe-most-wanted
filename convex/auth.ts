@@ -68,7 +68,7 @@ export function verifyTimestamp(message: string): boolean {
       return false;
     }
 
-    const timestamp = parseInt(match[1]);
+    const timestamp = parseInt(match[1], 10);
 
     // 🛡️ CRITICAL FIX: Validate timestamp is a valid number
     if (isNaN(timestamp)) {
@@ -248,7 +248,14 @@ export async function verifyNonce(
       return false;
     }
 
-    const messageNonce = parseInt(match[1]);
+    const messageNonce = parseInt(match[1], 10);
+
+    // 🛡️ CRITICAL FIX: Validate nonce is a valid number
+    if (isNaN(messageNonce)) {
+      console.error("❌ Invalid nonce format (NaN)");
+      return false;
+    }
+
     const normalizedAddress = address.toLowerCase();
 
     // Get current nonce from database
