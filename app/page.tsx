@@ -2273,11 +2273,11 @@ export default function TCGPage() {
       filtered = nfts.filter(card => card.badgeType === 'FREE_CARD');
     } else if (cardTypeFilter === 'nft') {
       filtered = nfts.filter(card => card.badgeType !== 'FREE_CARD');
+    }
 
     // Apply collection filter (if any collections are selected)
     if (selectedCollections.length > 0) {
       filtered = filterCardsByCollections(filtered, selectedCollections);
-    }
     }
 
     // Apply sort
