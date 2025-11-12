@@ -2356,10 +2356,10 @@ export function PokerBattleTable({
                     const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                     const castText = isCPUMode
-                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} against CPU! 🤖\n\nPrize: ${pot} coins`
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} against CPU! 🤖\n\nPrize: ${pot} coins\n\n@jvhbo`
                       : selectedToken === 'VIBE_NFT'
-                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only)`
-                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nPrize: ${pot} ${selectedToken}`;
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only)\n\n@jvhbo`
+                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nPrize: ${pot} ${selectedToken}\n\n@jvhbo`;
 
                     const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                     window.open(farcasterUrl, '_blank');
@@ -2420,7 +2420,7 @@ export function PokerBattleTable({
                     const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
                     const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
-                    const castText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nRevenge time!`;
+                    const castText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nRevenge time!\n\n@jvhbo`;
 
                     const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                     window.open(farcasterUrl, '_blank');

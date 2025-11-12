@@ -812,7 +812,7 @@ export default function ProfilePage() {
                       const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
 
                       // Farcaster cast text
-                      const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!`;
+                      const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
 
                       const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
@@ -1491,7 +1491,7 @@ export default function ProfilePage() {
                           // Build matchId with PFPs: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName
                           const matchId = `${match.result}_${match.playerPower}_${match.opponentPower}_${match.opponentUsername || 'Opponent'}_${encodeURIComponent(playerPfp)}_${encodeURIComponent(opponentPfp)}_${encodeURIComponent(profile.username)}`;
                           const shareUrl = `https://vibe-most-wanted.vercel.app/share/${matchId}`;
-                          const text = `I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in VIBE Most Wanted!`;
+                          const text = `I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in VIBE Most Wanted!\n\n@jvhbo`;
 
                           return `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                         })()}
