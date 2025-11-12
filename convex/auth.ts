@@ -249,6 +249,13 @@ export async function verifyNonce(
     }
 
     const messageNonce = parseInt(match[1]);
+
+    // 🛡️ SECURITY: Validate nonce is a valid number
+    if (isNaN(messageNonce)) {
+      console.error("❌ Invalid nonce format (NaN)");
+      return false;
+    }
+
     const normalizedAddress = address.toLowerCase();
 
     // Get current nonce from database
