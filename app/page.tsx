@@ -44,7 +44,7 @@ import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-import { filterCardsByCollections, type CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, getEnabledCollections, type CollectionId } from "@/lib/collections/index";
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
@@ -294,6 +294,33 @@ async function fetchNFTs(owner: string, contractAddress?: string, onProgress?: (
     pageKey = json.pageKey;
   } while (pageKey && pageCount < maxPages);
 
+  return allNfts;
+}
+
+/**
+ * Fetch NFTs from all enabled collections
+ * Returns all NFTs with collection property set
+ */
+async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
+  const enabledCollections = getEnabledCollections();
+  devLog('🎴 Fetching NFTs from', enabledCollections.length, 'enabled collections');
+
+  const allNfts: any[] = [];
+
+  for (const collection of enabledCollections) {
+    try {
+      devLog(`📡 Fetching from ${collection.displayName} (${collection.contractAddress})`);
+      const nfts = await fetchNFTs(owner, collection.contractAddress, onProgress);
+      // Tag each NFT with its collection
+      const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+      allNfts.push(...tagged);
+      devLog(`✓ Found ${nfts.length} NFTs from ${collection.displayName}`);
+    } catch (error) {
+      devError(`✗ Failed to fetch from ${collection.displayName}:`, error);
+    }
+  }
+
+  devLog(`✅ Total NFTs from all collections: ${allNfts.length}`);
   return allNfts;
 }
 
@@ -1306,9 +1333,9 @@ export default function TCGPage() {
     try {
       setStatus("fetching");
       setErrorMsg(null);
-      devLog('📡 Fetching NFTs from Alchemy...');
-      const raw = await fetchNFTs(address);
-      devLog('✓ Received NFTs from Alchemy:', raw.length);
+      devLog('📡 Fetching NFTs from all enabled collections...');
+      const raw = await fetchNFTsFromAllCollections(address);
+      devLog('✓ Received NFTs from all collections:', raw.length);
 
       const METADATA_BATCH_SIZE = 50;
       const enrichedRaw = [];
@@ -4537,6 +4564,7 @@ export default function TCGPage() {
                       >
                         <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
                         <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
+                        <option value="ptard" className="bg-vintage-charcoal text-vintage-gold">PTARD</option>
                       </select>
                       <button
                         onClick={() => setSortByPower(!sortByPower)}

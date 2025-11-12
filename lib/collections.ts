@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'ptard' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -83,6 +83,18 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     contractAddress: process.env.NEXT_PUBLIC_VIBE_CONTRACT || '0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728',
     chain: 'base-mainnet',
     ownerAddress: process.env.NEXT_PUBLIC_JC_CONTRACT || '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
+    enabled: true,
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+  // Coleção Protardio
+  ptard: {
+    id: 'ptard',
+    name: 'ptard',
+    displayName: 'Protardio',
+    description: 'Coleção Protardio NFT',
+    contractAddress: '0x4b51ef08f6dd3a7379dc1706f78fba9c44f8e1dc',
+    chain: 'base-mainnet',
     enabled: true,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
