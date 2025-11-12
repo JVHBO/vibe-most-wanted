@@ -1125,6 +1125,7 @@ export default function ProfilePage() {
               >
                 <option value="all" className="bg-vintage-black text-vintage-gold">All</option>
                 <option value="vibe" className="bg-vintage-black text-vintage-gold">VBMS</option>
+                <option value="gmvbrs" className="bg-vintage-black text-vintage-gold">VBRS</option>
               </select>
             </div>
           </div>
