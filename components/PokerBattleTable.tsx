@@ -285,6 +285,14 @@ export function PokerBattleTable({
   const [showRoundWinner, setShowRoundWinner] = useState(false);
   const [roundWinner, setRoundWinner] = useState<'player' | 'opponent' | null>(null);
 
+  // Round history for display
+  const [roundHistory, setRoundHistory] = useState<Array<{
+    round: number;
+    winner: 'player' | 'opponent' | 'tie';
+    playerScore: number;
+    opponentScore: number;
+  }>>([]);
+
   // Pagination for deck building
   const [currentPage, setCurrentPage] = useState(0);
   const [sortByPower, setSortByPower] = useState(false);
@@ -406,6 +414,7 @@ export function PokerBattleTable({
     setPot(initialPot);
     setPlayerBoostCoins(initialBoostCoins);
     setOpponentBoostCoins(initialBoostCoins);
+    setRoundHistory([]); // Reset round history
     setPhase('card-selection');
   };
 
@@ -672,6 +681,14 @@ export function PokerBattleTable({
           AudioManager.tie(); // Tie sound
           console.log('[PokerBattle] CPU Mode - Round tied, pot stays at', pot);
 
+          // Add tie to history
+          setRoundHistory(history => [...history, {
+            round: currentRound,
+            winner: 'tie',
+            playerScore: playerScore,
+            opponentScore: opponentScore
+          }]);
+
           // Show tie message
           setShowRoundWinner(true);
           console.log('[PokerBattle] CPU Mode - Showing tie message, waiting 5s before next round');
@@ -686,6 +703,13 @@ export function PokerBattleTable({
           setPlayerScore(prev => {
             const newScore = prev + 1;
             console.log('[PokerBattle] Player score increased', { prev, newScore });
+            // Add to history
+            setRoundHistory(history => [...history, {
+              round: currentRound,
+              winner: 'player',
+              playerScore: newScore,
+              opponentScore: opponentScore
+            }]);
             return newScore;
           });
           setRoundWinner('player');
@@ -695,6 +719,13 @@ export function PokerBattleTable({
           setOpponentScore(prev => {
             const newScore = prev + 1;
             console.log('[PokerBattle] Opponent score increased', { prev, newScore });
+            // Add to history
+            setRoundHistory(history => [...history, {
+              round: currentRound,
+              winner: 'opponent',
+              playerScore: playerScore,
+              opponentScore: newScore
+            }]);
             return newScore;
           });
           setRoundWinner('opponent');
@@ -1695,7 +1726,40 @@ export function PokerBattleTable({
 
         {/* REGULAR GAME TABLE - POKER FELT DESIGN (for players AND spectators) */}
         {phase !== 'deck-building' && phase !== 'game-over' && (selectedAnte !== 0 || isSpectatorMode) && (
-          <div className="h-full flex flex-col">
+          <div className="h-full flex flex-col relative">
+
+            {/* Round History Panel - Floating on right side */}
+            {!isInFarcaster && roundHistory.length > 0 && (
+              <div className="absolute right-4 top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-3 shadow-xl max-w-[200px]">
+                <div className="text-vintage-gold font-display font-bold text-sm mb-2 text-center border-b border-vintage-gold/30 pb-2">
+                  ROUND HISTORY
+                </div>
+                <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar">
+                  {roundHistory.map((entry, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-center justify-between px-2 py-1.5 rounded text-xs font-modern ${
+                        entry.winner === 'player'
+                          ? 'bg-green-500/20 border border-green-500/50'
+                          : entry.winner === 'opponent'
+                          ? 'bg-red-500/20 border border-red-500/50'
+                          : 'bg-yellow-500/20 border border-yellow-500/50'
+                      }`}
+                    >
+                      <span className="font-bold text-vintage-burnt-gold">R{entry.round}</span>
+                      <span className={`font-bold ${
+                        entry.winner === 'player' ? 'text-green-400' :
+                        entry.winner === 'opponent' ? 'text-red-400' :
+                        'text-yellow-400'
+                      }`}>
+                        {entry.winner === 'player' ? 'WIN' : entry.winner === 'opponent' ? 'LOSS' : 'TIE'}
+                      </span>
+                      <span className="text-vintage-ice">{entry.playerScore}-{entry.opponentScore}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Game info header */}
             <div className={`bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl ${
