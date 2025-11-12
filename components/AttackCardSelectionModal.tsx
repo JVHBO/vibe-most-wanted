@@ -199,7 +199,7 @@ export function AttackCardSelectionModal({
     setDealerCards(defenderCards);
     setBattleOpponentName(targetPlayer.username);
     setBattlePlayerName(userProfile?.username || 'You');
-    setBattleOpponentPfp(getAvatarUrl(targetPlayer.twitter));
+    setBattleOpponentPfp(getAvatarUrl({ twitter: targetPlayer.twitter, twitterProfileImageUrl: targetPlayer.twitterProfileImageUrl }));
     setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl } : null));
     setShowAttackCardSelection(false);
     setIsBattling(true);
