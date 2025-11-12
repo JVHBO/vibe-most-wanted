@@ -16,6 +16,7 @@ export interface CollectionConfig {
   chain: string;
   ownerAddress?: string;
   enabled: boolean;
+  marketplaceUrl?: string; // Link para o marketplace da coleção
 
   // Configurações específicas de cálculo de power
   powerCalculation?: {
@@ -83,6 +84,18 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     contractAddress: process.env.NEXT_PUBLIC_VIBE_CONTRACT || '0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728',
     chain: 'base-mainnet',
     ownerAddress: process.env.NEXT_PUBLIC_JC_CONTRACT || '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
+    enabled: true,
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+  // Coleção GM VBRS
+  gmvbrs: {
+    id: 'gmvbrs',
+    name: 'gmvbrs',
+    displayName: 'GM VBRS',
+    description: 'Coleção GM VBRS NFT',
+    contractAddress: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
+    chain: 'base-mainnet',
     enabled: true,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
