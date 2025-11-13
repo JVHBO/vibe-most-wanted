@@ -1417,32 +1417,32 @@ export function PokerBattleTable({
 
         {/* DECK BUILDING PHASE - Skip for spectators */}
         {phase === 'deck-building' && !isSpectatorMode && (
-          <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-2 sm:p-3 md:p-4 h-full flex flex-col">
-            <h2 className={`font-display font-bold text-vintage-gold text-center ${isInFarcaster ? 'text-lg mb-1' : 'text-xl sm:text-2xl mb-2'}`}>
+          <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-2 sm:p-4 md:p-6 h-full overflow-y-auto">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-2 sm:mb-3 text-center">
               BUILD YOUR DECK
             </h2>
-            <div className={`flex items-center justify-between ${isInFarcaster ? 'mb-1' : 'mb-2'}`}>
-              <p className={`text-vintage-burnt-gold ${isInFarcaster ? 'text-xs' : 'text-sm'}`}>
-                {selectedDeck.length}/10 cards
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-2 sm:mb-4 gap-2">
+              <p className="text-vintage-burnt-gold text-center text-sm sm:text-base">
+                Select 10 cards ({selectedDeck.length}/10)
               </p>
               <button
                 onClick={() => {
                   setSortByPower(!sortByPower);
                   setCurrentPage(0);
                 }}
-                className={`px-2 py-1 rounded-lg font-bold transition-all ${isInFarcaster ? 'text-[10px]' : 'text-xs'} ${
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
                   sortByPower
                     ? 'bg-vintage-gold text-vintage-black'
-                    : 'bg-vintage-gold/20 text-vintage-gold'
+                    : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
                 }`}
               >
-                {sortByPower ? '⚡ Power' : '⚡ Sort'}
+                {sortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
               </button>
             </div>
 
             {/* Selected Deck Display */}
-            <div className={`bg-green-900/40 border-2 border-vintage-gold/50 rounded-lg flex-shrink-0 ${isInFarcaster ? 'mb-1 p-1' : 'mb-2 p-2'}`}>
-              <div className={`grid ${isInFarcaster ? 'grid-cols-5 gap-0.5' : 'grid-cols-5 gap-1.5'}`}>
+            <div className="mb-3 sm:mb-4 bg-green-900/40 border-2 border-vintage-gold/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
+              <div className={`grid ${isInFarcaster ? 'grid-cols-3 gap-1' : 'grid-cols-5 gap-2'}`}>
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
@@ -1478,11 +1478,11 @@ export function PokerBattleTable({
             </div>
 
             {/* Available Cards */}
-            <div className={`grid flex-1 overflow-hidden ${
+            <div className={`grid ${
               isInFarcaster
-                ? 'grid-cols-5 gap-0.5 grid-rows-2'
-                : 'grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-1 sm:gap-1.5'
-            } ${isInFarcaster ? 'mb-1' : 'mb-2'}`}>
+                ? 'grid-cols-4 gap-1'
+                : 'grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2'
+            } mb-3 sm:mb-4`}>
               {paginatedCards.map((card) => {
                 const isSelected = selectedDeck.find(c => c.tokenId === card.tokenId);
                 return (
@@ -1525,28 +1525,28 @@ export function PokerBattleTable({
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className={`flex items-center justify-center gap-1 sm:gap-2 flex-shrink-0 ${isInFarcaster ? 'mb-1' : 'mb-2'}`}>
+              <div className="flex items-center justify-center gap-2 mb-4">
                 <button
                   onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
                   disabled={currentPage === 0}
-                  className={`rounded-lg font-bold transition ${isInFarcaster ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} ${
+                  className={`px-4 py-2 rounded-lg font-bold transition ${
                     currentPage === 0
                       ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-vintage-gold/20 text-vintage-gold'
+                      : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
                   }`}
                 >
                   ← Previous
                 </button>
-                <span className={`text-vintage-gold font-bold ${isInFarcaster ? 'text-xs' : 'text-sm'}`}>
-                  {currentPage + 1}/{totalPages}
+                <span className="text-vintage-gold font-bold">
+                  Page {currentPage + 1} of {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
                   disabled={currentPage === totalPages - 1}
-                  className={`rounded-lg font-bold transition ${isInFarcaster ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} ${
+                  className={`px-4 py-2 rounded-lg font-bold transition ${
                     currentPage === totalPages - 1
                       ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-vintage-gold/20 text-vintage-gold'
+                      : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
                   }`}
                 >
                   Next →
@@ -1558,13 +1558,13 @@ export function PokerBattleTable({
             <button
               onClick={startGame}
               disabled={selectedDeck.length !== 10}
-              className={`w-full rounded-xl font-display font-bold transition flex-shrink-0 ${isInFarcaster ? 'py-2 text-base' : 'py-3 text-lg'} ${
+              className={`w-full py-4 rounded-xl font-display font-bold text-xl transition ${
                 selectedDeck.length === 10
-                  ? 'bg-vintage-gold text-vintage-black'
+                  ? 'bg-vintage-gold text-vintage-black hover:bg-vintage-burnt-gold'
                   : 'bg-gray-600 text-gray-400 cursor-not-allowed'
               }`}
             >
-              {selectedDeck.length === 10 ? 'START GAME' : `SELECT ${10 - selectedDeck.length} MORE`}
+              {selectedDeck.length === 10 ? 'START GAME' : `SELECT ${10 - selectedDeck.length} MORE CARDS`}
             </button>
           </div>
         )}
