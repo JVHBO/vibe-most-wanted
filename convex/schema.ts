@@ -230,6 +230,14 @@ export default defineSchema({
     guestPower: v.optional(v.number()),
     winnerId: v.optional(v.string()),
 
+    // Poker Battle State (for poker mode)
+    roundHistory: v.optional(v.array(v.object({
+      round: v.number(),
+      winner: v.union(v.literal("player"), v.literal("opponent"), v.literal("tie")),
+      playerScore: v.number(),
+      opponentScore: v.number(),
+    }))),
+
     // Timestamps
     createdAt: v.number(),
     startedAt: v.optional(v.number()),
@@ -491,6 +499,14 @@ export default defineSchema({
       guestBet: v.optional(v.number()),
       lastAction: v.optional(v.string()), // Last player action for turn order
     })),
+
+    // Round History (for displaying all 7 rounds to all players/spectators)
+    roundHistory: v.optional(v.array(v.object({
+      round: v.number(),
+      winner: v.union(v.literal("player"), v.literal("opponent"), v.literal("tie")),
+      playerScore: v.number(),
+      opponentScore: v.number(),
+    }))),
 
     // Winner
     winnerId: v.optional(v.string()), // Address of winner
