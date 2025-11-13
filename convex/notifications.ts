@@ -666,7 +666,7 @@ export const triggerDailyLoginReminder = mutation({
 /**
  * PUBLIC: Send custom notification to all users
  */
-export const sendCustomNotification = mutation({
+export const sendCustomNotification = action({
   args: {
     title: v.string(),
     body: v.string(),
@@ -675,13 +675,15 @@ export const sendCustomNotification = mutation({
     try {
       console.log(`📬 Sending custom notification: "${title}"`);
 
-      // Get all notification tokens
-      const tokens = await ctx.db.query("notificationTokens").collect();
+      // Get all notification tokens using internal query
+      const tokens = await ctx.runQuery(internal.notifications.getAllTokens);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
         return { sent: 0, failed: 0, total: 0 };
       }
+
+      console.log(`📊 Found ${tokens.length} notification tokens`);
 
       // Send to all users
       let sent = 0;
