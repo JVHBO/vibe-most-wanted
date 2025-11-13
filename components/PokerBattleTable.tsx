@@ -1838,36 +1838,56 @@ export function PokerBattleTable({
               </div>
             )}
 
-            {/* Quick Sounds Panel - Floating on left side */}
+            {/* Meme Sound Panel - Floating on left side */}
             {!isInFarcaster && (
-              <div className="absolute left-4 top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl">
-                <div className="text-vintage-gold font-display font-bold text-xs mb-2 text-center border-b border-vintage-gold/30 pb-1">
-                  QUICK SOUNDS
+              <div className="absolute left-2 sm:left-4 top-2 sm:top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[140px] sm:max-w-none">
+                <div className="text-vintage-gold font-display font-bold text-[10px] mb-1.5 text-center border-b border-vintage-gold/30 pb-1">
+                  🔊 MEME SOUNDS
                 </div>
-                <div className="grid grid-cols-2 gap-1.5 mb-2">
+                <div className="grid grid-cols-2 gap-1">
                   <button
-                    onClick={() => AudioManager.buttonSuccess()}
-                    className="px-2 py-1.5 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded text-[10px] font-bold text-green-400 transition"
+                    onClick={() => {
+                      const audio = new Audio('/let-him-cook-now.mp3');
+                      audio.volume = 0.7;
+                      audio.play().catch(() => {});
+                    }}
+                    className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 hover:from-orange-500/40 hover:to-orange-600/40 border border-orange-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
-                    🎉 GG
+                    <div className="font-bold text-orange-400 text-[11px]">👨‍🍳</div>
+                    <div className="text-orange-300 text-[7px] leading-tight">LET HIM COOK</div>
                   </button>
                   <button
-                    onClick={() => AudioManager.buttonError()}
-                    className="px-2 py-1.5 bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 rounded text-[10px] font-bold text-red-400 transition"
+                    onClick={() => {
+                      const audio = new Audio('/nya_ZtXOXLx.mp3');
+                      audio.volume = 0.7;
+                      audio.play().catch(() => {});
+                    }}
+                    className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 hover:from-pink-500/40 hover:to-pink-600/40 border border-pink-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
-                    😤 OUCH
+                    <div className="font-bold text-pink-400 text-[11px]">😺</div>
+                    <div className="text-pink-300 text-[7px] leading-tight">NYA~</div>
                   </button>
                   <button
-                    onClick={() => AudioManager.buttonClick()}
-                    className="px-2 py-1.5 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded text-[10px] font-bold text-blue-400 transition"
+                    onClick={() => {
+                      const audio = new Audio('/quandale-dingle-meme.mp3');
+                      audio.volume = 0.7;
+                      audio.play().catch(() => {});
+                    }}
+                    className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 hover:from-purple-500/40 hover:to-purple-600/40 border border-purple-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
-                    👋 HI
+                    <div className="font-bold text-purple-400 text-[11px]">🤪</div>
+                    <div className="text-purple-300 text-[7px] leading-tight">QUANDALE</div>
                   </button>
                   <button
-                    onClick={() => AudioManager.tie()}
-                    className="px-2 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-500/50 rounded text-[10px] font-bold text-yellow-400 transition"
+                    onClick={() => {
+                      const audio = new Audio('/this-is-not-poker.mp3');
+                      audio.volume = 0.7;
+                      audio.play().catch(() => {});
+                    }}
+                    className="bg-gradient-to-br from-red-500/20 to-red-600/20 hover:from-red-500/40 hover:to-red-600/40 border border-red-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
-                    🤝 WP
+                    <div className="font-bold text-red-400 text-[11px]">🃏</div>
+                    <div className="text-red-300 text-[7px] leading-tight">NOT POKER</div>
                   </button>
                 </div>
                 {/* Voice Chat - Only in PvP mode */}
