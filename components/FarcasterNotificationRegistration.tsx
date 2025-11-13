@@ -19,7 +19,6 @@ export function FarcasterNotificationRegistration() {
         const context = await sdk.context;
 
         if (!context?.user?.fid) {
-          console.log('Not running in Farcaster or no FID available');
           return;
         }
 
@@ -37,8 +36,6 @@ export function FarcasterNotificationRegistration() {
             token,
             url,
           });
-
-          console.log(`✅ Notification token registered for FID ${fid}`);
         }
       } catch (error) {
         console.error('Error registering notification token:', error);

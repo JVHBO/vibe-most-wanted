@@ -406,10 +406,7 @@ export default function TCGPage() {
     ? '0xbb4c7d8b2e32c7c99d358be999377c208cce53c2'
     : (farcasterAddress || wagmiAddress);
 
-  // Debug bypass
-  useEffect(() => {
-    console.log('🔧 BYPASS ACTIVE:', { DEV_WALLET_BYPASS, address, wagmiAddress, farcasterAddress });
-  }, [address, wagmiAddress, farcasterAddress]);
+  // Debug bypass (removed console.log for production)
 
   // Query player's economy data
   const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
