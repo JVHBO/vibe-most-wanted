@@ -577,6 +577,42 @@ export default function ProfilePage() {
     };
   }, []);
 
+  // 🔧 FIX: Filtrar NFTs ANTES dos early returns para seguir as regras dos hooks
+  // Filtrar NFTs com useMemo para evitar recalcular em todo render
+  const filteredNfts = useMemo(() => {
+    let filtered = nfts.filter(nft => {
+      // Use enriched data directly
+      const rarity = nft.rarity || '';
+      const foilTrait = nft.foil || '';
+      const revealed = !isUnrevealed(nft);
+
+      // Filtro de revelação
+      if (filterRevealed === 'revealed' && !revealed) return false;
+      if (filterRevealed === 'unrevealed' && revealed) return false;
+
+      // Filtro de raridade (só aplica em cartas reveladas)
+      if (revealed && filterRarity !== 'all') {
+        if (!rarity.toLowerCase().includes(filterRarity.toLowerCase())) return false;
+      }
+
+      // Filtro de foil (só aplica em cartas reveladas)
+      if (revealed && filterFoil !== 'all') {
+        if (filterFoil === 'none' && foilTrait) return false;
+        if (filterFoil === 'standard' && !foilTrait.toLowerCase().includes('standard')) return false;
+        if (filterFoil === 'prize' && !foilTrait.toLowerCase().includes('prize')) return false;
+      }
+
+      return true;
+    });
+
+    // Apply collection filter (if any collections are selected)
+    if (selectedCollections.length > 0) {
+      filtered = filterCardsByCollections(filtered, selectedCollections);
+    }
+
+    return filtered;
+  }, [nfts, filterRevealed, filterRarity, filterFoil, selectedCollections]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-vintage-black flex items-center justify-center">
@@ -637,41 +673,6 @@ export default function ProfilePage() {
     if (f.includes('standard')) return 'standard-foil';
     return '';
   };
-
-  // Filtrar NFTs com useMemo para evitar recalcular em todo render
-  const filteredNfts = useMemo(() => {
-    let filtered = nfts.filter(nft => {
-      // Use enriched data directly
-      const rarity = nft.rarity || '';
-      const foilTrait = nft.foil || '';
-      const revealed = !isUnrevealed(nft);
-
-      // Filtro de revelação
-      if (filterRevealed === 'revealed' && !revealed) return false;
-      if (filterRevealed === 'unrevealed' && revealed) return false;
-
-      // Filtro de raridade (só aplica em cartas reveladas)
-      if (revealed && filterRarity !== 'all') {
-        if (!rarity.toLowerCase().includes(filterRarity.toLowerCase())) return false;
-      }
-
-      // Filtro de foil (só aplica em cartas reveladas)
-      if (revealed && filterFoil !== 'all') {
-        if (filterFoil === 'none' && foilTrait) return false;
-        if (filterFoil === 'standard' && !foilTrait.toLowerCase().includes('standard')) return false;
-        if (filterFoil === 'prize' && !foilTrait.toLowerCase().includes('prize')) return false;
-      }
-
-      return true;
-    });
-
-    // Apply collection filter (if any collections are selected)
-    if (selectedCollections.length > 0) {
-      filtered = filterCardsByCollections(filtered, selectedCollections);
-    }
-
-    return filtered;
-  }, [nfts, filterRevealed, filterRarity, filterFoil, selectedCollections]);
 
   return (
     <div className="min-h-screen bg-vintage-black text-vintage-ice p-4 lg:p-8 overflow-x-hidden">
