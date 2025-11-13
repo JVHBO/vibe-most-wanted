@@ -18,6 +18,7 @@ export interface VoiceUser {
   username: string;
   isSpeaking: boolean;
   isMutedByMe: boolean;
+  volume: number; // 0-100
 }
 
 export interface GroupVoiceChatState {
@@ -46,6 +47,7 @@ export function useGroupVoiceChat(
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
   const remoteAudios = useRef<Map<string, HTMLAudioElement>>(new Map());
   const locallyMutedUsers = useRef<Set<string>>(new Set());
+  const userVolumes = useRef<Map<string, number>>(new Map()); // Store volumes 0-100
 
   // Convex mutations and queries
   const sendSignal = useMutation(api.voiceChat.sendSignal);
@@ -130,6 +132,10 @@ export function useGroupVoiceChat(
         // Apply local mute if user was muted
         if (locallyMutedUsers.current.has(remoteAddress)) {
           audio.volume = 0;
+        } else {
+          // Apply saved volume or default to 100%
+          const savedVolume = userVolumes.current.get(remoteAddress) ?? 100;
+          audio.volume = savedVolume / 100;
         }
 
         // Update speaking indicator
@@ -234,7 +240,8 @@ export function useGroupVoiceChat(
           address: p.address,
           username: p.username,
           isSpeaking: false,
-          isMutedByMe: false
+          isMutedByMe: false,
+          volume: userVolumes.current.get(p.address) ?? 100
         }))
     }));
 
@@ -299,7 +306,8 @@ export function useGroupVoiceChat(
 
     if (isMuted) {
       locallyMutedUsers.current.delete(userAddress);
-      audio.volume = 1;
+      const savedVolume = userVolumes.current.get(userAddress) ?? 100;
+      audio.volume = savedVolume / 100;
     } else {
       locallyMutedUsers.current.add(userAddress);
       audio.volume = 0;
@@ -315,6 +323,34 @@ export function useGroupVoiceChat(
     }));
 
     devLog('[GroupVoice] User mute toggled:', userAddress, !isMuted);
+  }, []);
+
+  // Set volume for specific user (0-100)
+  const setUserVolume = useCallback((userAddress: string, volume: number) => {
+    const audio = remoteAudios.current.get(userAddress);
+    if (!audio) return;
+
+    // Clamp volume between 0-100
+    const clampedVolume = Math.max(0, Math.min(100, volume));
+
+    // Save volume preference
+    userVolumes.current.set(userAddress, clampedVolume);
+
+    // Apply volume if not muted
+    if (!locallyMutedUsers.current.has(userAddress)) {
+      audio.volume = clampedVolume / 100;
+    }
+
+    setState(prev => ({
+      ...prev,
+      users: prev.users.map(u =>
+        u.address === userAddress
+          ? { ...u, volume: clampedVolume }
+          : u
+      )
+    }));
+
+    devLog('[GroupVoice] User volume set:', userAddress, clampedVolume);
   }, []);
 
   // Process incoming signals
@@ -383,6 +419,7 @@ export function useGroupVoiceChat(
     joinChannel,
     leaveChannel,
     toggleMute,
-    toggleUserMute
+    toggleUserMute,
+    setUserVolume
   };
 }

@@ -13,6 +13,7 @@ interface VoiceChannelPanelProps {
   onLeaveChannel: () => void;
   onToggleMute: () => void;
   onToggleUserMute: (userAddress: string) => void;
+  onSetUserVolume: (userAddress: string, volume: number) => void;
 }
 
 export function VoiceChannelPanel({
@@ -20,7 +21,8 @@ export function VoiceChannelPanel({
   onJoinChannel,
   onLeaveChannel,
   onToggleMute,
-  onToggleUserMute
+  onToggleUserMute,
+  onSetUserVolume
 }: VoiceChannelPanelProps) {
   if (!voiceState.isInChannel) {
     return (
@@ -71,32 +73,53 @@ export function VoiceChannelPanel({
           {voiceState.users.map((user) => (
             <div
               key={user.address}
-              className="flex items-center gap-1 px-1.5 py-1 bg-vintage-charcoal/50 rounded border border-vintage-gold/20"
+              className="bg-vintage-charcoal/50 rounded border border-vintage-gold/20 p-1.5 space-y-1"
             >
-              {/* Speaking indicator */}
-              <div
-                className={`w-1.5 h-1.5 rounded-full ${
-                  user.isSpeaking ? 'bg-green-400 animate-pulse' : 'bg-gray-600'
-                }`}
-              />
+              {/* User info row */}
+              <div className="flex items-center gap-1">
+                {/* Speaking indicator */}
+                <div
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    user.isSpeaking ? 'bg-green-400 animate-pulse' : 'bg-gray-600'
+                  }`}
+                />
 
-              {/* Username */}
-              <span className="flex-1 text-[9px] text-vintage-ice truncate">
-                {user.username}
-              </span>
+                {/* Username */}
+                <span className="flex-1 text-[9px] text-vintage-ice truncate">
+                  {user.username}
+                </span>
 
-              {/* Mute button */}
-              <button
-                onClick={() => onToggleUserMute(user.address)}
-                className={`px-1 py-0.5 rounded text-[10px] transition ${
-                  user.isMutedByMe
-                    ? 'text-red-400 hover:text-red-300'
-                    : 'text-gray-400 hover:text-gray-300'
-                }`}
-                title={user.isMutedByMe ? 'Unmute' : 'Mute'}
-              >
-                {user.isMutedByMe ? '🔇' : '🔊'}
-              </button>
+                {/* Mute button */}
+                <button
+                  onClick={() => onToggleUserMute(user.address)}
+                  className={`px-1 py-0.5 rounded text-[10px] transition ${
+                    user.isMutedByMe
+                      ? 'text-red-400 hover:text-red-300'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                  title={user.isMutedByMe ? 'Unmute' : 'Mute'}
+                >
+                  {user.isMutedByMe ? '🔇' : '🔊'}
+                </button>
+              </div>
+
+              {/* Volume slider */}
+              <div className="flex items-center gap-1">
+                <span className="text-[8px] text-vintage-burnt-gold">Vol:</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={user.volume}
+                  onChange={(e) => onSetUserVolume(user.address, parseInt(e.target.value))}
+                  className="flex-1 h-1 bg-vintage-charcoal rounded appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #d4af37 0%, #d4af37 ${user.volume}%, #2a2a2a ${user.volume}%, #2a2a2a 100%)`
+                  }}
+                  disabled={user.isMutedByMe}
+                />
+                <span className="text-[8px] text-vintage-ice w-6 text-right">{user.volume}%</span>
+              </div>
             </div>
           ))}
         </div>
