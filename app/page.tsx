@@ -44,7 +44,7 @@ import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, type CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, type CollectionId } from "@/lib/collections/index";
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
@@ -2913,22 +2913,159 @@ export default function TCGPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Filter leaderboard by collection
+  // Cache for collection-based power calculations
+  const [collectionPowerCache, setCollectionPowerCache] = useState<Map<string, Map<string, number>>>(new Map());
+  const [isCalculatingCollectionPower, setIsCalculatingCollectionPower] = useState(false);
+
+  // Helper to calculate power from NFT attributes (matches nft-fetcher.ts logic)
+  const calculateCardPowerFromAttributes = useCallback((nft: any): number => {
+    const findAttr = (trait: string): string => {
+      const locs = [
+        nft?.raw?.metadata?.attributes,
+        nft?.metadata?.attributes,
+        nft?.metadata?.traits,
+        nft?.raw?.metadata?.traits
+      ];
+      for (const attrs of locs) {
+        if (!Array.isArray(attrs)) continue;
+        const found = attrs.find((a: any) => {
+          const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
+          const searchTrait = trait.toLowerCase().trim();
+          return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
+        });
+        if (found) {
+          return String(found?.value || found?.trait_value || found?.displayType || '').trim();
+        }
+      }
+      return '';
+    };
+
+    const foil = findAttr('foil') || 'None';
+    const rarity = findAttr('rarity') || 'Common';
+    const wear = findAttr('wear') || 'Lightly Played';
+
+    // Base power by rarity
+    let base = 5;
+    const r = rarity.toLowerCase();
+    if (r.includes('mythic')) base = 800;
+    else if (r.includes('legend')) base = 240;
+    else if (r.includes('epic')) base = 80;
+    else if (r.includes('rare')) base = 20;
+    else if (r.includes('common')) base = 5;
+
+    // Wear multiplier
+    let wearMult = 1.0;
+    const w = wear.toLowerCase();
+    if (w.includes('pristine')) wearMult = 1.8;
+    else if (w.includes('mint')) wearMult = 1.4;
+
+    // Foil multiplier
+    let foilMult = 1.0;
+    const f = foil.toLowerCase();
+    if (f.includes('prize')) foilMult = 15.0;
+    else if (f.includes('standard')) foilMult = 2.5;
+
+    const power = base * wearMult * foilMult;
+    return Math.max(1, Math.round(power));
+  }, []);
+
+  // Calculate power for a specific collection (smart approach: use Alchemy API)
+  const calculateCollectionPower = useCallback(async (address: string, collectionId: CollectionId): Promise<number> => {
+    // Check cache first
+    const addressCache = collectionPowerCache.get(address);
+    if (addressCache?.has(collectionId)) {
+      return addressCache.get(collectionId)!;
+    }
+
+    try {
+      // Get collection contract address from collections config
+      const contractAddress = getCollectionContract(collectionId);
+
+      if (!contractAddress) return 0;
+
+      // Fetch NFTs for this collection from Alchemy
+      const response = await fetch(
+        `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${address}&contractAddresses[]=${contractAddress}&withMetadata=true`
+      );
+
+      if (!response.ok) throw new Error('Alchemy API error');
+
+      const data = await response.json();
+      const nfts = data.ownedNfts || [];
+
+      // Calculate total power from attributes
+      let totalPower = 0;
+      for (const nft of nfts) {
+        const power = calculateCardPowerFromAttributes(nft);
+        totalPower += power;
+      }
+
+      // Update cache
+      setCollectionPowerCache(prev => {
+        const newCache = new Map(prev);
+        const addressCache = newCache.get(address) || new Map();
+        addressCache.set(collectionId, totalPower);
+        newCache.set(address, addressCache);
+        return newCache;
+      });
+
+      return totalPower;
+    } catch (error) {
+      devError('[Leaderboard] Error calculating collection power:', error);
+      return 0;
+    }
+  }, [collectionPowerCache]);
+
+  // Filter and re-rank leaderboard by collection
   const filteredLeaderboard = useMemo(() => {
     if (leaderboardCollection === 'all') return leaderboard;
 
-    // TODO: Implement collection-based leaderboard filtering
-    // Current limitation: leaderboard only has totalPower, not per-collection power
-    // Options:
-    // 1. Add collection-specific power tracking in profiles schema
-    // 2. Create separate leaderboard query per collection (expensive)
-    // 3. Client-side filter but re-rank based on collection cards only
+    // If we're already calculating, return current leaderboard
+    if (isCalculatingCollectionPower) return leaderboard;
 
-    // For now, show all players when collection filter is active
-    // They need to manually check which cards are from which collection
-    console.warn('[Leaderboard] Collection filtering not yet implemented - showing all players');
-    return leaderboard;
-  }, [leaderboard, leaderboardCollection]);
+    // For collection filter: show players ranked by their collection-specific power
+    // This uses cached data when available, or triggers async calculation
+    const leaderboardWithCollectionPower = leaderboard.map(player => {
+      const cachedPower = collectionPowerCache.get(player.address)?.get(leaderboardCollection);
+      return {
+        ...player,
+        collectionPower: cachedPower ?? player.stats.totalPower, // Fallback to total power while calculating
+        needsCalculation: cachedPower === undefined
+      };
+    });
+
+    // Trigger async calculation for players that need it (but don't block render)
+    const playersNeedingCalculation = leaderboardWithCollectionPower
+      .filter(p => p.needsCalculation)
+      .slice(0, 20); // Only calculate top 20 to avoid overwhelming API
+
+    if (playersNeedingCalculation.length > 0 && !isCalculatingCollectionPower) {
+      setIsCalculatingCollectionPower(true);
+
+      // Calculate in background
+      Promise.all(
+        playersNeedingCalculation.map(p =>
+          calculateCollectionPower(p.address, leaderboardCollection)
+        )
+      ).then(() => {
+        setIsCalculatingCollectionPower(false);
+      }).catch(err => {
+        devError('[Leaderboard] Batch calculation error:', err);
+        setIsCalculatingCollectionPower(false);
+      });
+    }
+
+    // Sort by collection power (desc)
+    return leaderboardWithCollectionPower
+      .sort((a, b) => b.collectionPower - a.collectionPower)
+      .map(({ needsCalculation, collectionPower, ...player }) => ({
+        ...player,
+        stats: {
+          ...player.stats,
+          totalPower: collectionPower // Override display power with collection power
+        }
+      }));
+  }, [leaderboard, leaderboardCollection, collectionPowerCache, isCalculatingCollectionPower, calculateCollectionPower]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
