@@ -807,7 +807,28 @@ export const checkWeeklyRewardEligibility = query({
     const normalizedAddress = normalizeAddress(address);
     const currentWeek = getLastSunday();
 
-    // Get current leaderboard (TOP 10)
+    // 🚀 OPTIMIZATION: Check claim first (cheap query)
+    // If already claimed, return immediately without fetching top 10
+    const existingClaim = await ctx.db
+      .query("weeklyRewards")
+      .withIndex("by_player_week", (q) =>
+        q.eq("playerAddress", normalizedAddress).eq("weekStart", currentWeek)
+      )
+      .first();
+
+    if (existingClaim) {
+      return {
+        eligible: false,
+        reason: "already_claimed",
+        rank: existingClaim.rank,
+        reward: existingClaim.reward,
+        claimed: true,
+        claimedAt: existingClaim.claimedAt,
+        nextResetDate: getNextSunday(),
+      };
+    }
+
+    // Only fetch top 10 if not claimed yet
     const topPlayers = await ctx.db
       .query("profiles")
       .withIndex("by_total_power")
@@ -842,26 +863,6 @@ export const checkWeeklyRewardEligibility = query({
       reward = WEEKLY_LEADERBOARD_REWARDS.rank3;
     } else if (rank <= 10) {
       reward = WEEKLY_LEADERBOARD_REWARDS.rank4to10;
-    }
-
-    // Check if already claimed this week
-    const existingClaim = await ctx.db
-      .query("weeklyRewards")
-      .withIndex("by_player_week", (q) =>
-        q.eq("playerAddress", normalizedAddress).eq("weekStart", currentWeek)
-      )
-      .first();
-
-    if (existingClaim) {
-      return {
-        eligible: false,
-        reason: "already_claimed",
-        rank,
-        reward,
-        claimed: true,
-        claimedAt: existingClaim.claimedAt,
-        nextResetDate: getNextSunday(),
-      };
     }
 
     return {

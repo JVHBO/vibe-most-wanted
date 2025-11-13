@@ -65,12 +65,17 @@ export const getLeaderboard = query({
  */
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 1000 }) => {
+  handler: async (ctx, { limit = 100 }) => {
+    // 🚀 OPTIMIZATION: Reduced default from 1000 to 100
+    // Most users only see top 10-20, no need to fetch 1000
+    // If needed, frontend can request more with explicit limit
+    const cappedLimit = Math.min(limit, 500); // Cap at 500 max
+
     const profiles = await ctx.db
       .query("profiles")
       .withIndex("by_total_power")
       .order("desc")
-      .take(limit);
+      .take(cappedLimit);
 
     // Return ONLY display fields for leaderboard
     return profiles.map(p => ({
