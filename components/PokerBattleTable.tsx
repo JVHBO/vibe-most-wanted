@@ -841,18 +841,49 @@ export function PokerBattleTable({
         // Show round winner and handle game state transition
         setTimeout(() => {
           // Set round winner for display
-          setRoundWinner(playerWins ? 'player' : 'opponent');
+          setRoundWinner(isTie ? null : (playerWins ? 'player' : 'opponent'));
           setShowRoundWinner(true);
 
           console.log('[PokerBattle] PvP Mode - Showing round winner', {
-            winner: playerWins ? 'player' : 'opponent'
+            winner: isTie ? 'tie' : (playerWins ? 'player' : 'opponent')
           });
 
-          // Play sound
-          if (playerWins) {
-            AudioManager.buttonSuccess();
+          // Add to round history
+          if (isTie) {
+            setRoundHistory(history => [...history, {
+              round: currentRound,
+              winner: 'tie',
+              playerScore: playerScore,
+              opponentScore: opponentScore
+            }]);
+            AudioManager.tie();
           } else {
-            AudioManager.buttonError();
+            // Update scores
+            if (playerWins) {
+              setPlayerScore(prev => {
+                const newScore = prev + 1;
+                setRoundHistory(history => [...history, {
+                  round: currentRound,
+                  winner: 'player',
+                  playerScore: newScore,
+                  opponentScore: opponentScore
+                }]);
+                return newScore;
+              });
+              AudioManager.buttonSuccess();
+            } else {
+              setOpponentScore(prev => {
+                const newScore = prev + 1;
+                setRoundHistory(history => [...history, {
+                  round: currentRound,
+                  winner: 'opponent',
+                  playerScore: playerScore,
+                  opponentScore: newScore
+                }]);
+                return newScore;
+              });
+              AudioManager.buttonError();
+            }
           }
 
           setTimeout(() => {
