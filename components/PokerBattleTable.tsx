@@ -316,13 +316,16 @@ export function PokerBattleTable({
   const [showRoundWinner, setShowRoundWinner] = useState(false);
   const [roundWinner, setRoundWinner] = useState<'player' | 'opponent' | null>(null);
 
-  // Round history for display
-  const [roundHistory, setRoundHistory] = useState<Array<{
+  // Round history - for CPU mode (local state), for PvP mode (synced from room)
+  const [cpuRoundHistory, setCpuRoundHistory] = useState<Array<{
     round: number;
     winner: 'player' | 'opponent' | 'tie';
     playerScore: number;
     opponentScore: number;
   }>>([]);
+
+  // Use room's roundHistory for PvP, local state for CPU
+  const roundHistory = !isCPUMode && room?.roundHistory ? room.roundHistory : cpuRoundHistory;
 
   // Pagination for deck building
   const [currentPage, setCurrentPage] = useState(0);
@@ -445,7 +448,7 @@ export function PokerBattleTable({
     setPot(initialPot);
     setPlayerBoostCoins(initialBoostCoins);
     setOpponentBoostCoins(initialBoostCoins);
-    setRoundHistory([]); // Reset round history
+    setCpuRoundHistory([]); // Reset CPU round history
     setPhase('card-selection');
   };
 
@@ -713,7 +716,7 @@ export function PokerBattleTable({
           console.log('[PokerBattle] CPU Mode - Round tied, pot stays at', pot);
 
           // Add tie to history
-          setRoundHistory(history => [...history, {
+          setCpuRoundHistory(history => [...history, {
             round: currentRound,
             winner: 'tie',
             playerScore: playerScore,
@@ -735,7 +738,7 @@ export function PokerBattleTable({
             const newScore = prev + 1;
             console.log('[PokerBattle] Player score increased', { prev, newScore });
             // Add to history
-            setRoundHistory(history => [...history, {
+            setCpuRoundHistory(history => [...history, {
               round: currentRound,
               winner: 'player',
               playerScore: newScore,
@@ -751,7 +754,7 @@ export function PokerBattleTable({
             const newScore = prev + 1;
             console.log('[PokerBattle] Opponent score increased', { prev, newScore });
             // Add to history
-            setRoundHistory(history => [...history, {
+            setCpuRoundHistory(history => [...history, {
               round: currentRound,
               winner: 'opponent',
               playerScore: playerScore,
@@ -871,7 +874,7 @@ export function PokerBattleTable({
 
           // Add to round history
           if (isTie) {
-            setRoundHistory(history => [...history, {
+            setCpuRoundHistory(history => [...history, {
               round: currentRound,
               winner: 'tie',
               playerScore: playerScore,
@@ -883,7 +886,7 @@ export function PokerBattleTable({
             if (playerWins) {
               setPlayerScore(prev => {
                 const newScore = prev + 1;
-                setRoundHistory(history => [...history, {
+                setCpuRoundHistory(history => [...history, {
                   round: currentRound,
                   winner: 'player',
                   playerScore: newScore,
@@ -895,7 +898,7 @@ export function PokerBattleTable({
             } else {
               setOpponentScore(prev => {
                 const newScore = prev + 1;
-                setRoundHistory(history => [...history, {
+                setCpuRoundHistory(history => [...history, {
                   round: currentRound,
                   winner: 'opponent',
                   playerScore: playerScore,
@@ -1798,7 +1801,7 @@ export function PokerBattleTable({
                 </div>
                 <div className="space-y-0.5">
                   {[1, 2, 3, 4, 5, 6, 7].map((roundNum) => {
-                    const entry = roundHistory.find(h => h.round === roundNum);
+                    const entry = roundHistory.find((h: any) => h.round === roundNum);
                     const isPlayed = !!entry;
 
                     return (

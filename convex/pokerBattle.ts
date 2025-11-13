@@ -590,15 +590,41 @@ export const resolveRound = mutation({
     if (guestAction === 'DOUBLE') guestPower *= 2;
 
     // Determine winner
+    const isTie = hostPower === guestPower;
     const hostWins = hostPower > guestPower;
 
+    // Update round history
+    const roundHistory = room.roundHistory || [];
+    const currentRound = gameState.currentRound;
+
     // Update score (pot stays the same throughout the game)
-    if (hostWins) {
+    if (isTie) {
+      // Add tie to history
+      roundHistory.push({
+        round: currentRound,
+        winner: "tie",
+        playerScore: gameState.hostScore,
+        opponentScore: gameState.guestScore,
+      });
+      console.log(`🤝 Tie in round ${currentRound}`);
+    } else if (hostWins) {
       gameState.hostScore += 1;
-      console.log(`🎯 Host won round ${gameState.currentRound}`);
+      roundHistory.push({
+        round: currentRound,
+        winner: "player",
+        playerScore: gameState.hostScore,
+        opponentScore: gameState.guestScore,
+      });
+      console.log(`🎯 Host won round ${currentRound}`);
     } else {
       gameState.guestScore += 1;
-      console.log(`🎯 Guest won round ${gameState.currentRound}`);
+      roundHistory.push({
+        round: currentRound,
+        winner: "opponent",
+        playerScore: gameState.hostScore,
+        opponentScore: gameState.guestScore,
+      });
+      console.log(`🎯 Guest won round ${currentRound}`);
     }
 
     // Pot stays fixed at ante * 2 throughout the entire game
@@ -620,6 +646,7 @@ export const resolveRound = mutation({
 
       await ctx.db.patch(room._id, {
         gameState,
+        roundHistory,
         winnerId: finalWinnerId,
         winnerUsername: finalWinnerUsername,
         finalPot: finalPrize,
@@ -640,9 +667,10 @@ export const resolveRound = mutation({
     gameState.guestBet = 0;
     // Pot remains 0 - ante only deducted at game start, not per round
 
-    // Update game state (no bankroll changes between rounds)
+    // Update game state (no bankroll changes between rounds) + round history
     await ctx.db.patch(room._id, {
       gameState,
+      roundHistory,
     });
 
     console.log(`🏁 Round ${gameState.currentRound - 1} resolved in ${args.roomId} - No ante deducted for next round`);
