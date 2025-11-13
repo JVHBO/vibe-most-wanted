@@ -8,7 +8,8 @@ import { PokerMatchmaking } from './PokerMatchmaking';
 import { PokerWaitingRoom } from './PokerWaitingRoom';
 import FoilCardEffect from './FoilCardEffect';
 import { SwordIcon, ShieldIcon, BoltIcon, HandIcon, TrophyIcon, SkullIcon, ChatIcon, EyeIcon, ClockIcon, CloseIcon } from './PokerIcons';
-import { useVoiceChat } from '@/lib/hooks/useVoiceChat';
+import { useGroupVoiceChat } from '@/lib/hooks/useGroupVoiceChat';
+import { VoiceChannelPanel } from './VoiceChannelPanel';
 
 interface Card {
   tokenId: string;
@@ -120,14 +121,34 @@ export function PokerBattleTable({
     room?.guestAddress ? { address: room.guestAddress } : "skip"
   );
 
-  // Voice chat for PvP mode
-  const opponentAddress = isHost ? room?.guestAddress : room?.hostAddress;
-  const voiceChat = useVoiceChat(
+  // Group voice chat for PvP mode
+  const groupVoice = useGroupVoiceChat(
     roomId && !isCPUMode ? roomId : null,
-    isHost,
     playerAddress,
-    opponentAddress || ''
+    playerUsername
   );
+
+  // Join voice channel handler
+  const handleJoinVoice = () => {
+    if (!room) return;
+
+    const participants: Array<{ address: string; username: string }> = [
+      { address: room.hostAddress, username: room.hostUsername }
+    ];
+
+    if (room.guestAddress && room.guestUsername) {
+      participants.push({ address: room.guestAddress, username: room.guestUsername });
+    }
+
+    // Add spectators if any
+    if (room.spectators) {
+      room.spectators.forEach((spec: any) => {
+        participants.push({ address: spec.address, username: spec.username });
+      });
+    }
+
+    groupVoice.joinChannel(participants);
+  };
 
   // Game state
   const [phase, setPhase] = useState<GamePhase>('deck-building');
@@ -1836,61 +1857,13 @@ export function PokerBattleTable({
                 </div>
                 {/* Voice Chat - Only in PvP mode */}
                 {!isCPUMode && (
-                  <div className="border-t border-vintage-gold/30 pt-2 space-y-1">
-                    {!voiceChat.isCallActive ? (
-                      <button
-                        onClick={() => {
-                          if (isHost) {
-                            voiceChat.startCall();
-                          }
-                          AudioManager.buttonClick();
-                        }}
-                        disabled={!isHost || !opponentAddress}
-                        className={`w-full px-2 py-2 border rounded text-[10px] font-bold transition flex items-center justify-center gap-1 ${
-                          !isHost || !opponentAddress
-                            ? 'bg-gray-500/20 border-gray-500/50 text-gray-400 cursor-not-allowed'
-                            : 'bg-green-500/20 hover:bg-green-500/40 border-green-500/50 text-green-400'
-                        }`}
-                      >
-                        📞 {voiceChat.isConnected ? 'CONNECTING...' : 'START CALL'}
-                      </button>
-                    ) : (
-                      <div className="space-y-1">
-                        <button
-                          onClick={() => {
-                            voiceChat.toggleMute();
-                            AudioManager.buttonClick();
-                          }}
-                          className={`w-full px-2 py-2 border rounded text-[10px] font-bold transition flex items-center justify-center gap-1 ${
-                            voiceChat.isMuted
-                              ? 'bg-red-500/20 hover:bg-red-500/40 border-red-500/50 text-red-400'
-                              : 'bg-green-500/20 hover:bg-green-500/40 border-green-500/50 text-green-400'
-                          }`}
-                        >
-                          {voiceChat.isMuted ? '🔇 UNMUTE' : '🎤 MUTE'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            voiceChat.endCall();
-                            AudioManager.buttonClick();
-                          }}
-                          className="w-full px-2 py-2 bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 rounded text-[10px] font-bold text-red-400 transition flex items-center justify-center gap-1"
-                        >
-                          📵 END CALL
-                        </button>
-                      </div>
-                    )}
-                    {voiceChat.error && (
-                      <div className="text-[8px] text-red-400 text-center">
-                        {voiceChat.error}
-                      </div>
-                    )}
-                    {!voiceChat.isCallActive && !isHost && (
-                      <div className="text-[8px] text-vintage-burnt-gold text-center">
-                        Waiting for host to start call
-                      </div>
-                    )}
-                  </div>
+                  <VoiceChannelPanel
+                    voiceState={groupVoice}
+                    onJoinChannel={handleJoinVoice}
+                    onLeaveChannel={groupVoice.leaveChannel}
+                    onToggleMute={groupVoice.toggleMute}
+                    onToggleUserMute={groupVoice.toggleUserMute}
+                  />
                 )}
               </div>
             )}
