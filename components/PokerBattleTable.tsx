@@ -1790,35 +1790,50 @@ export function PokerBattleTable({
         {phase !== 'deck-building' && phase !== 'game-over' && (selectedAnte !== 0 || isSpectatorMode) && (
           <div className="h-full flex flex-col relative">
 
-            {/* Round History Panel - Floating on right side */}
-            {!isInFarcaster && roundHistory.length > 0 && (
-              <div className="absolute right-4 top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-3 shadow-xl max-w-[200px]">
-                <div className="text-vintage-gold font-display font-bold text-sm mb-2 text-center border-b border-vintage-gold/30 pb-2">
-                  ROUND HISTORY
+            {/* Round History Panel - Inside green table */}
+            {!isInFarcaster && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-vintage-charcoal/90 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl w-[140px]">
+                <div className="text-vintage-gold font-display font-bold text-[10px] mb-1 text-center border-b border-vintage-gold/30 pb-1">
+                  ROUNDS
                 </div>
-                <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar">
-                  {roundHistory.map((entry, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex items-center justify-between px-2 py-1.5 rounded text-xs font-modern ${
-                        entry.winner === 'player'
-                          ? 'bg-green-500/20 border border-green-500/50'
-                          : entry.winner === 'opponent'
-                          ? 'bg-red-500/20 border border-red-500/50'
-                          : 'bg-yellow-500/20 border border-yellow-500/50'
-                      }`}
-                    >
-                      <span className="font-bold text-vintage-burnt-gold">R{entry.round}</span>
-                      <span className={`font-bold ${
-                        entry.winner === 'player' ? 'text-green-400' :
-                        entry.winner === 'opponent' ? 'text-red-400' :
-                        'text-yellow-400'
-                      }`}>
-                        {entry.winner === 'player' ? 'WIN' : entry.winner === 'opponent' ? 'LOSS' : 'TIE'}
-                      </span>
-                      <span className="text-vintage-ice">{entry.playerScore}-{entry.opponentScore}</span>
-                    </div>
-                  ))}
+                <div className="space-y-0.5">
+                  {[1, 2, 3, 4, 5, 6, 7].map((roundNum) => {
+                    const entry = roundHistory.find(h => h.round === roundNum);
+                    const isPlayed = !!entry;
+
+                    return (
+                      <div
+                        key={roundNum}
+                        className={`flex items-center justify-between px-1.5 py-0.5 rounded text-[9px] font-modern ${
+                          !isPlayed
+                            ? 'bg-gray-800/30 border border-gray-600/30'
+                            : entry.winner === 'player'
+                            ? 'bg-green-500/20 border border-green-500/50'
+                            : entry.winner === 'opponent'
+                            ? 'bg-red-500/20 border border-red-500/50'
+                            : 'bg-yellow-500/20 border border-yellow-500/50'
+                        }`}
+                      >
+                        <span className={`font-bold ${isPlayed ? 'text-vintage-burnt-gold' : 'text-gray-600'}`}>
+                          R{roundNum}
+                        </span>
+                        {isPlayed ? (
+                          <>
+                            <span className={`font-bold text-[8px] ${
+                              entry.winner === 'player' ? 'text-green-400' :
+                              entry.winner === 'opponent' ? 'text-red-400' :
+                              'text-yellow-400'
+                            }`}>
+                              {entry.winner === 'player' ? 'WIN' : entry.winner === 'opponent' ? 'LOSS' : 'TIE'}
+                            </span>
+                            <span className="text-vintage-ice text-[8px]">{entry.playerScore}-{entry.opponentScore}</span>
+                          </>
+                        ) : (
+                          <span className="text-gray-600 text-[8px]">-</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
