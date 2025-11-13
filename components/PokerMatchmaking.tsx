@@ -152,19 +152,19 @@ export function PokerMatchmaking({
   ];
 
   return (
-    <div className="fixed inset-0 bg-vintage-deep-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-3xl border-4 border-vintage-gold/50 max-w-6xl w-full max-h-[95vh] overflow-y-auto shadow-2xl shadow-vintage-gold/20">
+    <div className="fixed inset-0 bg-vintage-deep-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 pb-20 sm:pb-4">
+      <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-vintage-gold/50 max-w-6xl w-full max-h-[92vh] sm:max-h-[95vh] overflow-y-auto shadow-2xl shadow-vintage-gold/20">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-vintage-gold/20 via-vintage-burnt-gold/20 to-vintage-gold/20 border-b-2 border-vintage-gold/30 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-3">
-                <span className="text-5xl">♠️</span>
-                POKER BATTLE MATCHMAKING
+        <div className="bg-gradient-to-r from-vintage-gold/20 via-vintage-burnt-gold/20 to-vintage-gold/20 border-b-2 border-vintage-gold/30 p-3 sm:p-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
+                <span className="text-2xl sm:text-4xl md:text-5xl flex-shrink-0">♠️</span>
+                <span className="truncate">POKER BATTLE</span>
               </h1>
-              <p className="text-vintage-burnt-gold font-modern">
-                Choose your stakes and find an opponent
+              <p className="text-xs sm:text-base text-vintage-burnt-gold font-modern">
+                Choose stakes & find opponent
               </p>
             </div>
             <button
@@ -172,41 +172,41 @@ export function PokerMatchmaking({
                 AudioManager.buttonNav();
                 onClose();
               }}
-              className="text-vintage-gold hover:text-vintage-burnt-gold transition text-4xl leading-none"
+              className="text-vintage-gold hover:text-vintage-burnt-gold transition text-3xl sm:text-4xl leading-none flex-shrink-0"
             >
               ×
             </button>
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           {/* Main Action Button */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-4 sm:mb-8">
             {/* Create Room */}
             <button
               onClick={() => {
                 AudioManager.buttonClick();
                 setShowCreateModal(true);
               }}
-              className="group bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold p-8 rounded-2xl border-2 border-vintage-gold hover:shadow-2xl hover:shadow-vintage-gold/30 transition-all duration-300 hover:scale-105 active:scale-95 max-w-md w-full"
+              className="group bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold p-4 sm:p-8 rounded-xl sm:rounded-2xl border-2 border-vintage-gold hover:shadow-2xl hover:shadow-vintage-gold/30 transition-all duration-300 hover:scale-105 active:scale-95 max-w-md w-full"
             >
-              <div className="text-7xl mb-4">🎰</div>
-              <h3 className="text-3xl font-display font-bold text-vintage-black mb-3">
+              <div className="text-4xl sm:text-7xl mb-2 sm:mb-4">🎰</div>
+              <h3 className="text-xl sm:text-3xl font-display font-bold text-vintage-black mb-2 sm:mb-3">
                 CREATE ROOM
               </h3>
-              <p className="text-base text-vintage-deep-black/80 font-modern">
+              <p className="text-xs sm:text-base text-vintage-deep-black/80 font-modern">
                 Set your own stakes and wait for opponent
               </p>
             </button>
           </div>
 
           {/* Room Settings */}
-          <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-2xl p-6 mb-8">
-            <h3 className="text-xl font-display font-bold text-vintage-gold mb-4">
+          <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-xl sm:rounded-2xl p-3 sm:p-6 mb-4 sm:mb-8">
+            <h3 className="text-base sm:text-xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">
               ⚙️ ROOM SETTINGS
             </h3>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-3 sm:gap-6">
               {/* Token Selection */}
               <div>
                 <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
