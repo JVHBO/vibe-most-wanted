@@ -145,10 +145,10 @@ export function PokerMatchmaking({
   };
 
   const anteOptions = [
-    { value: 3, label: "Nano", color: "from-gray-600 to-gray-700" },
-    { value: 5, label: "Micro", color: "from-green-600 to-green-700" },
-    { value: 10, label: "Low", color: "from-yellow-600 to-yellow-700" },
-    { value: 25, label: "Mid", color: "from-orange-600 to-orange-700" },
+    { value: 2, label: "Micro", color: "from-gray-600 to-gray-700" },
+    { value: 10, label: "Low", color: "from-green-600 to-green-700" },
+    { value: 50, label: "Mid", color: "from-yellow-600 to-yellow-700" },
+    { value: 200, label: "High", color: "from-red-600 to-red-700" },
   ];
 
   return (
@@ -210,59 +210,43 @@ export function PokerMatchmaking({
               {/* Token Selection */}
               <div>
                 <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                  TOKEN
+                  BETTING TOKEN
                 </label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setSelectedToken("TESTVBMS")}
-                    className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                    className={`px-6 py-4 rounded-xl font-bold transition-all ${
                       selectedToken === "TESTVBMS"
                         ? "bg-vintage-gold text-vintage-black border-2 border-vintage-gold shadow-gold"
                         : "bg-vintage-charcoal text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
                     }`}
                   >
-                    $TESTVBMS
+                    <div className="text-lg">$TESTVBMS</div>
+                    <div className="text-[10px] text-vintage-burnt-gold mt-1">Main Token</div>
                   </button>
                   <button
                     onClick={() => setSelectedToken("testUSDC")}
-                    className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                    className={`px-6 py-4 rounded-xl font-bold transition-all ${
                       selectedToken === "testUSDC"
                         ? "bg-green-500 text-white border-2 border-green-400 shadow-lg shadow-green-500/30"
                         : "bg-vintage-charcoal text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
                     }`}
                   >
-                    testUSDC
-                  </button>
-                  <button
-                    onClick={() => setSelectedToken("VIBE_NFT")}
-                    className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                      selectedToken === "VIBE_NFT"
-                        ? "bg-purple-600 text-white border-2 border-purple-400 shadow-lg shadow-purple-500/30"
-                        : "bg-vintage-charcoal text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
-                    }`}
-                  >
-                    🎴 VIBE NFT
+                    <div className="text-lg">testUSDC</div>
+                    <div className="text-[10px] opacity-70 mt-1">Stablecoin</div>
                   </button>
                 </div>
-                {selectedToken === "VIBE_NFT" && (
-                  <div className="mt-3 bg-purple-900/30 border border-purple-500 rounded-xl p-3 text-center">
-                    <p className="text-purple-300 text-sm font-bold mb-1">
-                      🎴 NFT WAGERING MODE
-                    </p>
-                    <p className="text-purple-200 text-xs">
-                      Select NFT cards to wager + use coins for boosts
-                    </p>
-                    <p className="text-yellow-400 text-xs mt-1">
-                      ⚠️ FOR FUN ONLY - No blockchain transfers
-                    </p>
-                  </div>
-                )}
+                <div className="mt-3 bg-blue-900/20 border border-blue-500/30 rounded-xl p-3">
+                  <p className="text-blue-300 text-xs">
+                    💡 NFT cards are used for gameplay power - coins are bet for prizes
+                  </p>
+                </div>
               </div>
 
               {/* Ante Selection */}
               <div>
                 <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                  STAKES (Ante per round)
+                  STAKES (Entry Fee)
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {anteOptions.map((option) => (
@@ -411,59 +395,43 @@ export function PokerMatchmaking({
             {/* Token Selection */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                TOKEN
+                BETTING TOKEN
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setSelectedToken("TESTVBMS")}
-                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                  className={`px-6 py-4 rounded-xl font-bold transition-all ${
                     selectedToken === "TESTVBMS"
                       ? "bg-vintage-gold text-vintage-black border-2 border-vintage-gold shadow-gold"
                       : "bg-vintage-deep-black text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
                   }`}
                 >
-                  $TESTVBMS
+                  <div className="text-lg">$TESTVBMS</div>
+                  <div className="text-[10px] text-vintage-burnt-gold mt-1">Main Token</div>
                 </button>
                 <button
                   onClick={() => setSelectedToken("testUSDC")}
-                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                  className={`px-6 py-4 rounded-xl font-bold transition-all ${
                     selectedToken === "testUSDC"
                       ? "bg-green-500 text-white border-2 border-green-400 shadow-lg shadow-green-500/30"
                       : "bg-vintage-deep-black text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
                   }`}
                 >
-                  testUSDC
-                </button>
-                <button
-                  onClick={() => setSelectedToken("VIBE_NFT")}
-                  className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                    selectedToken === "VIBE_NFT"
-                      ? "bg-purple-600 text-white border-2 border-purple-400 shadow-lg shadow-purple-500/30"
-                      : "bg-vintage-deep-black text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
-                  }`}
-                >
-                  🎴 VIBE NFT
+                  <div className="text-lg">testUSDC</div>
+                  <div className="text-[10px] opacity-70 mt-1">Stablecoin</div>
                 </button>
               </div>
-              {selectedToken === "VIBE_NFT" && (
-                <div className="mt-3 bg-purple-900/30 border border-purple-500 rounded-xl p-3 text-center">
-                  <p className="text-purple-300 text-sm font-bold mb-1">
-                    🎴 NFT WAGERING MODE
-                  </p>
-                  <p className="text-purple-200 text-xs">
-                    Select NFT cards to wager + use coins for boosts
-                  </p>
-                  <p className="text-yellow-400 text-xs mt-1">
-                    ⚠️ FOR FUN ONLY - No blockchain transfers
-                  </p>
-                </div>
-              )}
+              <div className="mt-3 bg-blue-900/20 border border-blue-500/30 rounded-xl p-3">
+                <p className="text-blue-300 text-xs">
+                  💡 NFT cards are used for gameplay power - coins are bet for prizes
+                </p>
+              </div>
             </div>
 
             {/* Stakes Selection */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                STAKES (Ante per round)
+                STAKES (Entry Fee)
               </label>
               <div className="grid grid-cols-2 gap-3">
                 {anteOptions.map((option) => (

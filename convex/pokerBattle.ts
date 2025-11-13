@@ -18,7 +18,7 @@ export const createPokerRoom = mutation({
   args: {
     address: v.string(),
     username: v.string(),
-    ante: v.number(), // 3, 5, 10, or 25
+    ante: v.number(), // 2, 10, 50, or 200
     token: v.union(v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
   },
   handler: async (ctx, args) => {
