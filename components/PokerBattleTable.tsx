@@ -1863,6 +1863,7 @@ export function PokerBattleTable({
                     onLeaveChannel={groupVoice.leaveChannel}
                     onToggleMute={groupVoice.toggleMute}
                     onToggleUserMute={groupVoice.toggleUserMute}
+                    onSetUserVolume={groupVoice.setUserVolume}
                   />
                 )}
               </div>
