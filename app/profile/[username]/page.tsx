@@ -264,7 +264,7 @@ export default function ProfilePage() {
   const matchHistory = useQuery(
     api.matches.getMatchHistorySummary,
     profile?.address ? { address: profile.address, limit: 20 } : "skip"
-  ) || [];
+  );
 
   // Share Reward System
   const rewardProfileShare = useMutation(api.cardPacks.rewardProfileShare);
@@ -325,7 +325,7 @@ export default function ProfilePage() {
       (typeof window !== 'undefined' && window.location.hash === '#match-history') ||
       searchParams.get('scrollTo') === 'match-history';
 
-    if (shouldScroll && matchHistory && matchHistory.length >= 0) {
+    if (shouldScroll && matchHistory && Array.isArray(matchHistory) && matchHistory.length >= 0) {
       // Retry scroll with exponential backoff
       let attempts = 0;
       const maxAttempts = 5;
@@ -1404,7 +1404,7 @@ export default function ProfilePage() {
             </p>
           )}
         </div>
-        {matchHistory.length === 0 ? (
+        {!matchHistory || matchHistory.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
             <p className="text-gray-400">{t('noMatches')}</p>
           </div>
