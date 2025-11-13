@@ -45,28 +45,15 @@ import { AudioManager } from "@/lib/audio-manager";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, type CollectionId } from "@/lib/collections/index";
+import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
+import { getImage, fetchNFTs } from "@/lib/nft/fetcher";
+
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 
-const imageUrlCache = new Map();
-const IMAGE_CACHE_TIME = 1000 * 60 * 60;
-
-const getFromCache = (key: string): string | null => {
-  const item = imageUrlCache.get(key);
-  if (!item) return null;
-  const timeDiff = Date.now() - item.time;
-  if (timeDiff > IMAGE_CACHE_TIME) {
-    imageUrlCache.delete(key);
-    return null;
-  }
-  return item.url;
-};
-
-const setCache = (key: string, value: string): void => {
-  imageUrlCache.set(key, { url: value, time: Date.now() });
-};
+// ✅ Image caching moved to lib/nft/fetcher.ts
 
 // 🎨 Avatar URL helper - Uses real Twitter profile pic when available, DiceBear as fallback
 const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterProfileImageUrl?: string }): string | null => {
@@ -102,200 +89,8 @@ const getAvatarFallback = (twitterData?: string | null | { twitter?: string; twi
 
 // Tornar AudioManager global para persistir entre páginas
 
-function findAttr(nft: any, trait: string): string {
-  const locs = [nft?.raw?.metadata?.attributes, nft?.metadata?.attributes, nft?.metadata?.traits, nft?.raw?.metadata?.traits];
-  for (const attrs of locs) {
-    if (!Array.isArray(attrs)) continue;
-    const found = attrs.find((a: any) => {
-      const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
-      const searchTrait = trait.toLowerCase().trim();
-      return traitType === searchTrait || traitType.includes(searchTrait);
-    });
-    if (found) {
-      const value = found.value !== undefined ? found.value : found.trait_value;
-      if (value !== undefined && value !== null) return String(value).trim();
-    }
-  }
-  return '';
-}
-
-function isUnrevealed(nft: any): boolean {
-  const hasAttrs = !!(nft?.raw?.metadata?.attributes?.length || nft?.metadata?.attributes?.length || nft?.raw?.metadata?.traits?.length || nft?.metadata?.traits?.length);
-
-  // Se não tem atributos, é não revelada
-  if (!hasAttrs) return true;
-
-  const r = (findAttr(nft, 'rarity') || '').toLowerCase();
-  const s = (findAttr(nft, 'status') || '').toLowerCase();
-  const n = String(nft?.name || '').toLowerCase();
-
-  // Verifica se tem indicadores explícitos de não revelada
-  if (r === 'unopened' || s === 'unopened' || n === 'unopened' || n.includes('sealed pack')) {
-    return true;
-  }
-
-  // Se tem imagem OU tem rarity, considera revelada
-  const hasImage = !!(nft?.image?.cachedUrl || nft?.image?.originalUrl || nft?.metadata?.image || nft?.raw?.metadata?.image);
-  const hasRarity = r !== '';
-
-  return !(hasImage || hasRarity);
-}
-
-function calcPower(nft: any): number {
-  const foil = findAttr(nft, 'foil') || 'None';
-  const rarity = findAttr(nft, 'rarity') || 'Common';
-  const wear = findAttr(nft, 'wear') || 'Lightly Played';
-
-  // Base power by rarity (from tutorial)
-  let base = 5;
-  const r = rarity.toLowerCase();
-  if (r.includes('mythic')) base = 800;
-  else if (r.includes('legend')) base = 240;
-  else if (r.includes('epic')) base = 80;
-  else if (r.includes('rare')) base = 20;
-  else if (r.includes('common')) base = 5;
-  else base = 5;
-
-  // Wear multiplier (from tutorial: Pristine=×1.8, Mint=×1.4, Others=×1.0)
-  let wearMult = 1.0;
-  const w = wear.toLowerCase();
-  if (w.includes('pristine')) wearMult = 1.8;
-  else if (w.includes('mint')) wearMult = 1.4;
-
-  // Foil multiplier (from tutorial: Prize=×15, Standard=×2.5)
-  let foilMult = 1.0;
-  const f = foil.toLowerCase();
-  if (f.includes('prize')) foilMult = 15.0;
-  else if (f.includes('standard')) foilMult = 2.5;
-
-  const power = base * wearMult * foilMult;
-  return Math.max(1, Math.round(power));
-}
-
-function normalizeUrl(url: string): string {
-  if (!url) return '';
-  let u = url.trim();
-  if (u.startsWith('ipfs://')) u = 'https://ipfs.io/ipfs/' + u.slice(7);
-  else if (u.startsWith('ipfs/')) u = 'https://ipfs.io/ipfs/' + u.slice(5);
-  u = u.replace(/^http:\/\//i, 'https://');
-  return u;
-}
-
-async function getImage(nft: any): Promise<string> {
-  const tid = nft.tokenId;
-  const cached = getFromCache(tid);
-  if (cached) return cached;
-
-  const extractUrl = (value: any): string | null => {
-    if (!value) return null;
-    if (typeof value === 'string') return value;
-    if (typeof value === 'object') return value.url || value.cachedUrl || value.originalUrl || value.gateway || null;
-    return null;
-  };
-
-  try {
-    const uri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
-    if (uri) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(uri, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const json = await res.json();
-        const imageFromUri = json?.image || json?.image_url || json?.imageUrl;
-        if (imageFromUri) {
-          let imageUrl = String(imageFromUri);
-          if (imageUrl.includes('wieldcd.net')) {
-            const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(imageUrl)}`;
-            setCache(tid, proxyUrl);
-            return proxyUrl;
-          }
-          imageUrl = normalizeUrl(imageUrl);
-          if (imageUrl && !imageUrl.includes('undefined')) {
-            setCache(tid, imageUrl);
-            return imageUrl;
-          }
-        }
-      }
-    }
-  } catch (error) {
-    devWarn(`⚠️ Failed to fetch image from tokenUri for NFT #${tid}:`, error);
-  }
-
-  let rawImage = extractUrl(nft?.raw?.metadata?.image);
-  if (rawImage) {
-    if (rawImage.includes('wieldcd.net')) {
-      const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(rawImage)}`;
-      setCache(tid, proxyUrl);
-      return proxyUrl;
-    }
-    rawImage = normalizeUrl(rawImage);
-    if (rawImage && !rawImage.includes('undefined')) {
-      setCache(tid, rawImage);
-      return rawImage;
-    }
-  }
-
-  const alchemyUrls = [
-    extractUrl(nft?.image?.cachedUrl),
-    extractUrl(nft?.image?.thumbnailUrl),
-    extractUrl(nft?.image?.pngUrl),
-    extractUrl(nft?.image?.originalUrl),
-  ].filter(Boolean);
-
-  for (const url of alchemyUrls) {
-    if (url) {
-      if (url.includes('wieldcd.net')) {
-        const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(url)}`;
-        setCache(tid, proxyUrl);
-        return proxyUrl;
-      }
-      const norm = normalizeUrl(String(url));
-      if (norm && !norm.includes("undefined")) {
-        setCache(tid, norm);
-        return norm;
-      }
-    }
-  }
-
-  const placeholder = `https://via.placeholder.com/300x420/6366f1/ffffff?text=NFT+%23${tid}`;
-  setCache(tid, placeholder);
-  return placeholder;
-}
-
-async function fetchNFTs(owner: string, contractAddress?: string, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
-  if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
-  if (!CHAIN) throw new Error("Chain não configurada");
-  const contract = contractAddress || CONTRACT_ADDRESS;
-  if (!contract) throw new Error("Contract address não configurado");
-
-  let allNfts: any[] = [];
-  let pageKey: string | undefined = undefined;
-  let pageCount = 0;
-  const maxPages = 20; // Reduced from 70 - most users have < 2000 NFTs
-
-  do {
-    pageCount++;
-    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`API falhou: ${res.status}`);
-    const json = await res.json();
-
-    // Don't filter here - some NFTs don't have attributes cached in Alchemy
-    // Filter after metadata refresh instead (like profile page does)
-    const pageNfts = json.ownedNfts || [];
-    allNfts = allNfts.concat(pageNfts);
-
-    // Report progress
-    if (onProgress) {
-      onProgress(pageCount, allNfts.length);
-    }
-
-    pageKey = json.pageKey;
-  } while (pageKey && pageCount < maxPages);
-
-  return allNfts;
-}
+// ✅ NFT attribute functions moved to lib/nft/attributes.ts
+// ✅ NFT fetching functions moved to lib/nft/fetcher.ts
 
 /**
  * Fetch NFTs from all enabled collections
