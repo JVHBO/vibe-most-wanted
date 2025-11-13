@@ -503,7 +503,7 @@ function PokerBattleDocs() {
       <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
         <h3 className="text-xl font-bold text-vintage-gold mb-3">💰 Stakes & Rewards</h3>
         <div className="space-y-2">
-          <p><strong className="text-vintage-gold">Ante Options:</strong> 25, 50, 100, or 250 coins per round</p>
+          <p><strong className="text-vintage-gold">Ante Options:</strong> 3, 5, 10, or 25 coins per round</p>
           <p><strong className="text-vintage-gold">Starting Bankroll:</strong> 50x the ante you choose</p>
           <p><strong className="text-vintage-gold">Winner Takes All:</strong> Keep your final bankroll as profit!</p>
           <p className="text-sm text-vintage-burnt-gold mt-3">💡 Tip: Higher antes = bigger risks & rewards!</p>

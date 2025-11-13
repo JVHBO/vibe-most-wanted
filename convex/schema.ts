@@ -452,7 +452,7 @@ export default defineSchema({
     ),
 
     // Stakes & Token
-    ante: v.number(), // Ante amount per round (10, 25, 50, 100)
+    ante: v.number(), // Ante amount per round (3, 5, 10, 25)
     token: v.union(
       v.literal("TESTVBMS"),
       v.literal("testUSDC"),

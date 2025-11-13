@@ -145,10 +145,10 @@ export function PokerMatchmaking({
   };
 
   const anteOptions = [
-    { value: 10, label: "Micro", color: "from-gray-600 to-gray-700" },
-    { value: 25, label: "Low", color: "from-green-600 to-green-700" },
-    { value: 50, label: "Medium", color: "from-yellow-600 to-yellow-700" },
-    { value: 100, label: "High", color: "from-red-600 to-red-700" },
+    { value: 3, label: "Nano", color: "from-gray-600 to-gray-700" },
+    { value: 5, label: "Micro", color: "from-green-600 to-green-700" },
+    { value: 10, label: "Low", color: "from-yellow-600 to-yellow-700" },
+    { value: 25, label: "Mid", color: "from-orange-600 to-orange-700" },
   ];
 
   return (

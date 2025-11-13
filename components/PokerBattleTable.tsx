@@ -1647,7 +1647,7 @@ export function PokerBattleTable({
                   {/* Bet Buttons - Only show for spectators */}
                   {isSpectatorMode && room?.hostAddress && (
                     <div className="flex gap-2 justify-center mt-2">
-                      {[10, 25, 50, 100].map((amount) => (
+                      {[3, 5, 10, 25].map((amount) => (
                         <button
                           key={amount}
                           onClick={() => room?.hostAddress && handlePlaceBet(room.hostAddress, amount)}
@@ -1729,7 +1729,7 @@ export function PokerBattleTable({
                   {/* Bet Buttons - Only show for spectators */}
                   {isSpectatorMode && room?.guestAddress && (
                     <div className="flex gap-2 justify-center mt-2">
-                      {[10, 25, 50, 100].map((amount) => (
+                      {[3, 5, 10, 25].map((amount) => (
                         <button
                           key={amount}
                           onClick={() => room?.guestAddress && handlePlaceBet(room.guestAddress, amount)}
@@ -2181,7 +2181,7 @@ export function PokerBattleTable({
                             <div className="text-blue-400 font-bold mb-2">{room.hostUsername}</div>
                             <div className="text-xs text-blue-300/70 mb-2">Host</div>
                             <div className="grid grid-cols-2 gap-1">
-                              {[10, 25, 50, 100].map((amount) => (
+                              {[3, 5, 10, 25].map((amount) => (
                                 <button
                                   key={amount}
                                   onClick={() => handlePlaceBet(room.hostAddress, amount)}
@@ -2199,7 +2199,7 @@ export function PokerBattleTable({
                             <div className="text-red-400 font-bold mb-2">{room.guestUsername}</div>
                             <div className="text-xs text-red-300/70 mb-2">Guest</div>
                             <div className="grid grid-cols-2 gap-1">
-                              {[10, 25, 50, 100].map((amount) => (
+                              {[3, 5, 10, 25].map((amount) => (
                                 <button
                                   key={amount}
                                   onClick={() => handlePlaceBet(room.guestAddress!, amount)}
