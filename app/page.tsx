@@ -2917,8 +2917,16 @@ export default function TCGPage() {
   const filteredLeaderboard = useMemo(() => {
     if (leaderboardCollection === 'all') return leaderboard;
 
-    // Filter players who have cards from the selected collection
-    // This is a simple implementation - can be improved to filter by collection-specific power
+    // TODO: Implement collection-based leaderboard filtering
+    // Current limitation: leaderboard only has totalPower, not per-collection power
+    // Options:
+    // 1. Add collection-specific power tracking in profiles schema
+    // 2. Create separate leaderboard query per collection (expensive)
+    // 3. Client-side filter but re-rank based on collection cards only
+
+    // For now, show all players when collection filter is active
+    // They need to manually check which cards are from which collection
+    console.warn('[Leaderboard] Collection filtering not yet implemented - showing all players');
     return leaderboard;
   }, [leaderboard, leaderboardCollection]);
 
