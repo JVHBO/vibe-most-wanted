@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -99,6 +99,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+  // Coleção American Football
+  americanfootball: {
+    id: 'americanfootball',
+    name: 'americanfootball',
+    displayName: 'American Football',
+    description: 'Coleção American Football NFT',
+    contractAddress: '0xe3910325daaef5d969e6db5eca1ff0117bb160ae',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/american-football?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY AFCL PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
