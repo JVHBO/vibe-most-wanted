@@ -97,3 +97,44 @@ COLLECTIONS_README.md
 COLLECTIONS_SUMMARY.txt
 MIGRATION_GUIDE.md
 examples/collection-usage-example.tsx
+
+# ============================================================
+# TODO CLAUDE: VBMS POKER BETTING SYSTEM - WORK IN PROGRESS
+# ============================================================
+# Sistema de apostas com VBMS ainda não está funcionando
+# NÃO DEPLOYAR AINDA - manter local até funcionar 100%
+# Remover esta seção quando o sistema estiver pronto
+# ============================================================
+
+# VBMS Poker Components
+components/VBMSClaimChoiceModal.tsx
+components/ConversionModal.tsx
+
+# VBMS Poker API
+app/api/poker/
+
+# VBMS Poker Contracts
+contracts/VBMSPokerBattleV3.sol
+contracts/DEPLOY_V3.md
+contracts/UPDATE_TO_V3.md
+hardhat.config.js
+
+# VBMS Poker Backend
+convex/conversion.ts
+
+# VBMS Poker Hooks & Utils
+lib/contracts.ts
+lib/hooks/useVBMSContracts.ts
+
+# VBMS Poker Assets
+public/victory/
+
+# VBMS Poker Tests
+api-test/
+
+# VBMS Poker Docs
+DEPLOY_POKER_V2.md
+DEPLOY_REMIX.md
+
+# XSS Fix Script
+fix_xss.py
