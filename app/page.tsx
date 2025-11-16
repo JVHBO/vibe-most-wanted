@@ -26,7 +26,6 @@ import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { InboxDisplay } from "@/components/InboxDisplay";
 import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
-import { RewardChoiceModal } from "@/components/RewardChoiceModal";
 import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
 import { PvPMenuModals } from "@/components/PvPMenuModals";
@@ -661,12 +660,6 @@ export default function TCGPage() {
   const [showDailyClaimPopup, setShowDailyClaimPopup] = useState(false);
 
   // Reward Choice Modal State
-  const [showRewardChoice, setShowRewardChoice] = useState(false);
-  const [pendingReward, setPendingReward] = useState<{
-    amount: number;
-    source: "pve" | "pvp" | "attack" | "defense" | "leaderboard";
-  } | null>(null);
-
   // Share incentives
   const [sharesRemaining, setSharesRemaining] = useState<number | undefined>(undefined);
 
@@ -917,21 +910,13 @@ export default function TCGPage() {
       victoryAudioRef.current = null;
     }
     setShowWinPopup(false);
-
-    // After closing victory screen, show reward choice modal if there are pending rewards
-    if (pendingReward && pendingReward.amount > 0) {
-      setShowRewardChoice(true);
-    }
+    // TESTVBMS already added - no modal
   };
 
   // 🎵 Handler to close defeat screen
   const handleCloseDefeatScreen = () => {
     setShowLossPopup(false);
-
-    // After closing defeat screen, show reward choice modal if there are pending rewards
-    if (pendingReward && pendingReward.amount > 0) {
-      setShowRewardChoice(true);
-    }
+    // TESTVBMS already added - no modal
   };
 
   // 💰 Handler to claim daily login bonus
@@ -971,14 +956,8 @@ export default function TCGPage() {
       const result = await claimLoginBonus({ address });
 
       if (result.reason?.includes('Mission created')) {
-        devLog('✓ Daily mission created, showing reward choice modal');
-
-        // Show RewardChoiceModal for 25 VBMS
-        setPendingReward({
-          amount: 25,
-          source: 'leaderboard', // Using leaderboard as generic reward source
-        });
-        setShowRewardChoice(true);
+        devLog('✓ Daily mission created - TESTVBMS added');
+        // TESTVBMS already added - no modal
         setLoginBonusClaimed(true);
       } else {
         devLog(`! ${result.reason}`);
@@ -1045,15 +1024,6 @@ export default function TCGPage() {
 
       devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
-
-      // TESTVBMS added to balance - show modal to choose claim now or later
-      if (result && result.success) {
-        setPendingReward({
-          amount: result.reward,
-          source: 'leaderboard'
-        });
-        setShowRewardChoice(true);
-      }
     } catch (error: any) {
       devError('✗ Error claiming weekly reward:', error);
       alert(error.message || 'Failed to claim weekly reward');
@@ -1074,15 +1044,6 @@ export default function TCGPage() {
 
       if (soundEnabled) AudioManager.buttonSuccess();
       devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
-
-      // TESTVBMS added to balance - show modal to choose claim now or later
-      if (result && result.success) {
-        setPendingReward({
-          amount: result.reward,
-          source: 'pve' // Weekly quests count as PvE
-        });
-        setShowRewardChoice(true);
-      }
     } catch (error: any) {
       devError('Error claiming reward:', error);
       if (soundEnabled) AudioManager.buttonError();
@@ -2795,16 +2756,9 @@ export default function TCGPage() {
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog('✅ Mission claimed (pending reward choice):', result);
+      devLog('✅ Mission claimed - TESTVBMS added:', result);
 
-      // Show Reward Choice Modal if coins reward
-      if (result.reward && result.reward > 0) {
-        setPendingReward({
-          amount: result.reward,
-          source: 'leaderboard', // Missions count as leaderboard rewards
-        });
-        setShowRewardChoice(true);
-      }
+      // TESTVBMS already added - no modal
 
       // Reload missions
       await loadMissions();
@@ -3218,26 +3172,6 @@ export default function TCGPage() {
         }}
         entryFeeAmount={20}
       />
-
-      {/* Reward Choice Modal */}
-      {showRewardChoice && pendingReward && (
-        <RewardChoiceModal
-          amount={pendingReward.amount}
-          source={pendingReward.source}
-          onClose={() => {
-            setShowRewardChoice(false);
-            setPendingReward(null);
-          }}
-          onChoiceMade={async (choice) => {
-            devLog(`🎯 Player chose: ${choice} for ${pendingReward.amount} coins`);
-            // Reload profile to reflect updated balance
-            if (address) {
-              const updated = await ConvexProfileService.getProfile(address);
-              setUserProfile(updated);
-            }
-          }}
-        />
-      )}
 
       {/* Settings Modal */}
       <SettingsModal

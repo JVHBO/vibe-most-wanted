@@ -935,8 +935,16 @@ export const claimWeeklyLeaderboardReward = mutation({
     }
 
     // Add coins (TESTVBMS)
-    const newCoins = (player.coins || 0) + reward;
+    const oldCoins = player.coins || 0;
+    const newCoins = oldCoins + reward;
     const newLifetimeEarned = (player.lifetimeEarned || 0) + reward;
+
+    console.log('[claimWeeklyLeaderboardReward] Adding coins:', {
+      address: normalizedAddress,
+      oldCoins,
+      reward,
+      newCoins
+    });
 
     await ctx.db.patch(player._id, {
       coins: newCoins,

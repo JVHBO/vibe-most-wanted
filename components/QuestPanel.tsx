@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { RewardChoiceModal } from "./RewardChoiceModal";
 
 interface QuestPanelProps {
   playerAddress: string;
@@ -13,11 +12,6 @@ interface QuestPanelProps {
 
 export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelProps) {
   const [isClaiming, setIsClaiming] = useState(false);
-  const [showRewardChoice, setShowRewardChoice] = useState(false);
-  const [pendingReward, setPendingReward] = useState<{
-    amount: number;
-    source: string;
-  } | null>(null);
 
   // Fetch daily quest and progress
   const dailyQuest = useQuery(api.quests.getDailyQuest);
@@ -41,13 +35,11 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
         audio.play().catch(() => {});
       }
 
-      // TESTVBMS added to balance - show modal to choose claim now or later
+      // TESTVBMS added to balance - close panel
       if (result && result.success) {
-        setPendingReward({
-          amount: result.reward,
-          source: 'pve' // Daily quest
-        });
-        setShowRewardChoice(true);
+        setTimeout(() => {
+          onClose();
+        }, 1000);
       }
     } catch (error) {
       console.error("Failed to claim quest reward:", error);
@@ -153,22 +145,6 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
           Quests reset daily at 00:00 UTC
         </div>
       </div>
-
-      {/* Reward Choice Modal */}
-      {showRewardChoice && pendingReward && (
-        <RewardChoiceModal
-          amount={pendingReward.amount}
-          source={pendingReward.source as "pve" | "pvp" | "attack" | "defense" | "leaderboard"}
-          onClose={() => {
-            setShowRewardChoice(false);
-            onClose(); // Close quest panel after choice
-          }}
-          onChoiceMade={(choice) => {
-            setShowRewardChoice(false);
-            onClose(); // Close quest panel after choice
-          }}
-        />
-      )}
     </div>
   );
 }
