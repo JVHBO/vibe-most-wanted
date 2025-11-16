@@ -75,6 +75,7 @@ export function CoinsInboxDisplay({ compact = false, userAddress }: CoinsInboxDi
           <CoinsInboxModal
             inboxStatus={inboxStatus}
             onClose={() => setShowModal(false)}
+            userAddress={address}
           />
         )}
       </>
@@ -105,6 +106,7 @@ export function CoinsInboxDisplay({ compact = false, userAddress }: CoinsInboxDi
         <CoinsInboxModal
           inboxStatus={inboxStatus}
           onClose={() => setShowModal(false)}
+          userAddress={address}
         />
       )}
     </>
