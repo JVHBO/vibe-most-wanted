@@ -131,7 +131,7 @@ export const sendPvPRewardToInbox = mutation({
     const normalizedAddress = address.toLowerCase();
 
     // Send TESTVBMS to inbox
-    await ctx.db.insert("vbmsInbox", {
+    await ctx.db.insert("vbmsInbox" as any, {
       address: normalizedAddress,
       amount: rewardAmount,
       source: "pvp_win",

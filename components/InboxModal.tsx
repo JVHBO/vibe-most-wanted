@@ -99,7 +99,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       await recordInboxClaim({
         address,
         amount: result.amount,
-        txHash: txHash as string,
+        txHash: txHash as unknown as string,
       });
 
       console.log('[InboxModal] Step 6: Inbox zeroed successfully!');
@@ -153,7 +153,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       await recordTESTVBMSConversion({
         address,
         amount: result.amount,
-        txHash: txHash as string,
+        txHash: txHash as unknown as string,
       });
 
       toast.success(`✅ ${result.amount.toLocaleString()} TESTVBMS convertidos para VBMS!`);

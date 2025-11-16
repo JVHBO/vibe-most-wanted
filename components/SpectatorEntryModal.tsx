@@ -53,7 +53,7 @@ export function SpectatorEntryModal({
 
       // Step 2: Transfer
       setStep("transferring");
-      const txHash = await transfer(CONTRACTS.VBMSBetting as `0x${string}`, amount);
+      const txHash = await transfer(CONTRACTS.VBMSBetting as `0x${string}`, BigInt(amount));
 
       console.log("✅ Deposited to betting:", txHash);
 

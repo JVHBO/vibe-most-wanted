@@ -88,7 +88,7 @@ export function SettingsModal({
         address: CONTRACTS.VBMSToken as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [CONTRACTS.VBMSPokerBattle as `0x${string}`, 0n],
+        args: [CONTRACTS.VBMSPokerBattle as `0x${string}`, BigInt(0)],
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();

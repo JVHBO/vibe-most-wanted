@@ -40,7 +40,7 @@ export function PvPEntryFeeModal({
       setStep("transferring");
       const txHash = await transfer(
         CONTRACTS.VBMSPoolTroll as `0x${string}`,
-        entryFeeAmount.toString()
+        BigInt(entryFeeAmount)
       );
 
       console.log("✅ Entry fee transferred:", txHash);
