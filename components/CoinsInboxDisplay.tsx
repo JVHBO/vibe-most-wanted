@@ -11,10 +11,14 @@ import { useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
 
 interface CoinsInboxDisplayProps {
   compact?: boolean; // For miniapp/mobile view
+  userAddress?: string; // Optional override for miniapp (when wagmi fails)
 }
 
-export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
-  const { address } = useAccount();
+export function CoinsInboxDisplay({ compact = false, userAddress }: CoinsInboxDisplayProps) {
+  const { address: wagmiAddress } = useAccount();
+  // In compact mode, prefer userAddress prop (from userProfile) over wagmi
+  // because wagmi may not work properly in Farcaster miniapp
+  const address = compact && userAddress ? userAddress : wagmiAddress;
   const [showModal, setShowModal] = useState(false);
   const { t } = useLanguage();
 
@@ -23,18 +27,21 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
     address ? { address } : "skip"
   );
 
-  // Get actual VBMS wallet balance from blockchain
-  const { balance: vbmsWalletBalance, isLoading: isBalanceLoading } = useVBMSBalance(address);
+  // Get actual VBMS wallet balance from blockchain (only for website mode)
+  const { balance: vbmsWalletBalance, isLoading: isBalanceLoading } = compact
+    ? { balance: '0', isLoading: false } // Skip blockchain query in miniapp
+    : useVBMSBalance(address);
 
-  // Debug logging
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.log('[CoinsInboxDisplay] address:', address, 'inboxStatus:', inboxStatus, 'vbmsWalletBalance:', vbmsWalletBalance, 'compact:', compact);
+  // Debug logging (keep in production to diagnose miniapp issues)
+  if (typeof window !== 'undefined') {
+    console.log('[CoinsInboxDisplay] compact:', compact, 'address:', address, 'inboxStatus:', inboxStatus, 'vbmsWalletBalance:', vbmsWalletBalance, 'isBalanceLoading:', isBalanceLoading);
   }
 
   // Always render, even if data is loading (don't return null!)
   // In compact mode (miniapp), don't wait for blockchain balance - it may hang in Farcaster
+  // Also, in compact mode, only check inboxStatus (address may not load properly in Farcaster)
   const isLoading = compact
-    ? (!address || !inboxStatus)
+    ? (inboxStatus === undefined) // Only wait for Convex query, not wallet address
     : (!address || !inboxStatus || isBalanceLoading);
   const vbmsInbox = inboxStatus?.inbox || 0; // VBMS inbox (auto-converted from TESTVBMS)
   const vbmsBalance = parseFloat(vbmsWalletBalance || '0'); // Actual VBMS token balance
