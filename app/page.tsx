@@ -4519,7 +4519,7 @@ export default function TCGPage() {
           </div>
 
           {/* Content wrapper with padding for fixed bars in miniapp */}
-          <div className={isInFarcaster ? 'pt-[70px] pb-[65px]' : ''}>
+          <div className={isInFarcaster ? 'pt-[80px] pb-[75px]' : ''}>
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
               <p className="text-red-400 font-bold">✗ {t('error')}</p>
