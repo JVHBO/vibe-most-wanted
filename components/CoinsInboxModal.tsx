@@ -16,10 +16,13 @@ interface CoinsInboxModalProps {
     lifetimeEarned: number;
   };
   onClose: () => void;
+  userAddress?: string; // Pass address from parent (for Farcaster mobile)
 }
 
-export function CoinsInboxModal({ inboxStatus, onClose }: CoinsInboxModalProps) {
-  const { address } = useAccount();
+export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInboxModalProps) {
+  const { address: wagmiAddress } = useAccount();
+  // Use userAddress prop if provided (Farcaster mobile), otherwise wagmi
+  const address = userAddress || wagmiAddress;
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
 

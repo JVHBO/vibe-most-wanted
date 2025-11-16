@@ -138,7 +138,7 @@ export function RewardChoiceModal({
             </span>
           </p>
           <p className="text-sm text-vintage-gold/60">
-            {t('from')} {sourceLabels[source]}
+            de {sourceLabels[source]}
           </p>
         </div>
 
