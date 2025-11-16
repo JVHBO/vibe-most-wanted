@@ -240,13 +240,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         <div className="bg-gradient-to-br from-vintage-gold/20 to-vintage-orange/10 rounded-xl p-5 mb-4 border-2 border-vintage-gold/50">
           <div className="text-center">
             <div className="text-xs font-bold text-vintage-gold/80 mb-2 uppercase tracking-wide">
-              📬 VBMS Inbox
+              VBMS
             </div>
             <div className="text-5xl font-bold text-vintage-gold mb-2">
               {vbmsInbox.toLocaleString()}
-            </div>
-            <div className="text-xs text-vintage-gold/60">
-              Ready to claim
             </div>
           </div>
         </div>
@@ -255,13 +252,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-400/50 rounded-xl p-5 mb-6">
           <div className="text-center">
             <div className="text-xs font-bold text-purple-300 mb-2 uppercase tracking-wide">
-              🎮 TESTVBMS Balance
+              TESTVBMS
             </div>
             <div className="text-5xl font-bold text-purple-100 mb-2">
               {inboxStatus.coins.toLocaleString()}
-            </div>
-            <div className="text-xs text-purple-300/80">
-              In-game currency
             </div>
           </div>
         </div>
@@ -296,23 +290,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             </button>
           )}
 
-          {!canClaimInbox && vbmsInbox > 0 && (
-            <p className="text-xs text-center text-vintage-gold/60">
-              ℹ️ Precisa {100 - vbmsInbox} VBMS para claim (mínimo 100)
-            </p>
-          )}
-
-          {testvbmsBalance > 0 && !canConvertTESTVBMS && (
-            <p className="text-xs text-center text-purple-400/60">
-              ℹ️ Precisa {100 - testvbmsBalance} TESTVBMS para converter (mínimo 100)
-            </p>
-          )}
-
-          {canClaimInbox && (
-            <p className="text-xs text-center text-vintage-gold/60">
-              💎 Blockchain VBMS = Real tokens on Base
-            </p>
-          )}
+          {/* Message to use miniapp */}
+          <p className="text-xs text-center text-vintage-gold/60 mt-4">
+            You need to access the miniapp to claim
+          </p>
         </div>
       </div>
     </div>,
