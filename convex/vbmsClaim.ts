@@ -150,7 +150,7 @@ export const signClaimMessage = action({
 
 // ========== MUTATION: Claim Battle Rewards Now (Immediate) ==========
 
-export const claimBattleRewardsNow = mutation({
+export const claimBattleRewardsNow = action({
   args: {
     address: v.string(),
     matchId: v.id("matches"),
