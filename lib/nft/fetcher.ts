@@ -148,7 +148,7 @@ export async function fetchNFTs(
     const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
 
     // Retry logic for rate limiting (429)
-    let res;
+    let res: Response;
     let retries = 0;
     const maxRetries = 3;
 
@@ -167,8 +167,8 @@ export async function fetchNFTs(
       break;
     }
 
-    if (!res.ok) throw new Error(`API falhou: ${res.status}`);
-    const json = await res.json();
+    if (!res!.ok) throw new Error(`API falhou: ${res!.status}`);
+    const json = await res!.json();
 
     // Don't filter here - some NFTs don't have attributes cached in Alchemy
     // Filter after metadata refresh instead (like profile page does)
