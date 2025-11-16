@@ -31,10 +31,8 @@ export function filterCardsByCollections(cards: Card[], collectionIds: Collectio
       return true;
     }
 
-    // Filter NFT cards by their collection
-    const cardCollection = card.collection;
-    if (!cardCollection) return false; // No collection = exclude from collection filter
-
+    // Filter NFT cards by their collection (default to 'vibe' if not set)
+    const cardCollection = card.collection || 'vibe';
     return collectionIds.includes(cardCollection as CollectionId);
   });
 }
