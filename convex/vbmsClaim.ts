@@ -148,13 +148,41 @@ export const signClaimMessage = action({
   }
 });
 
-// ========== DISABLED: Claim Battle Rewards Now (Immediate) ==========
-// TODO: Refactor to use internal mutations pattern like convertTESTVBMStoVBMS
-// This function needs to be converted from action to use internal mutations
-// because actions cannot access ctx.db directly
+// ========== ACTION: Claim Battle Rewards Now (Immediate) ==========
 
-/*
-export const claimBattleRewardsNow_DISABLED = action({
+export const claimBattleRewardsNow = action({
+  args: {
+    address: v.string(),
+    matchId: v.id("matches"),
+  },
+  handler: async (ctx, { address, matchId }) => {
+    // Get profile and match data, calculate bonus via internal mutation
+    const result = await ctx.runMutation(internal.vbmsClaim.claimBattleRewardsNowInternal, {
+      address,
+      matchId
+    });
+
+    // Generate signature for blockchain claim
+    const nonce = generateNonce();
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+      address,
+      amount: result.totalAmount,
+      nonce
+    });
+
+    return {
+      amount: result.totalAmount,
+      baseAmount: result.baseAmount,
+      bonus: result.bonus,
+      bonusReasons: result.bonusReasons,
+      nonce,
+      signature,
+      message: `Claim ${result.totalAmount} VBMS`,
+    };
+  },
+});
+
+export const claimBattleRewardsNowInternal = internalMutation({
   args: {
     address: v.string(),
     matchId: v.id("matches"),
@@ -188,10 +216,6 @@ export const claimBattleRewardsNow_DISABLED = action({
     const inboxAmount = profile.inbox || 0;
     const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
 
-    // Generate signature for smart contract
-    const nonce = generateNonce();
-    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
-
     // Mark match as claimed (will be finalized after blockchain confirmation)
     await ctx.db.patch(matchId, {
       rewardsClaimed: true,
@@ -210,17 +234,13 @@ export const claimBattleRewardsNow_DISABLED = action({
     });
 
     return {
-      amount: bonusData.totalAmount,
+      totalAmount: bonusData.totalAmount,
       baseAmount: bonusData.baseAmount,
       bonus: bonusData.bonus,
       bonusReasons: bonusData.bonusReasons,
-      nonce,
-      signature,
-      message: `Claim ${bonusData.totalAmount} VBMS`,
     };
   },
 });
-*/
 
 // ========== MUTATION: Send to Inbox (Deferred) ==========
 
