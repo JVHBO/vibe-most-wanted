@@ -65,17 +65,46 @@ export const checkAndUpdateAchievements = mutation({
 
     const newlyCompletedAchievements: string[] = [];
 
-    // Helper: Count NFTs by rarity
+    // 🔒 FILTER: Only count cards from "Vibe Most Wanted" collection
+    // Exclude "feature" collection and free cards
+    const isVibeCard = (nft: any) => {
+      // Must be from Vibe Most Wanted collection explicitly
+      const isVibeMostWanted =
+        nft.collection === "vibe" ||
+        nft.collection === "Vibe Most Wanted" ||
+        nft.collection === "vbms" ||
+        nft.collection === "VBMS" ||
+        !nft.collection; // Legacy cards without collection field (default to Vibe)
+
+      if (!isVibeMostWanted) {
+        return false;
+      }
+
+      // Filter out feature collection
+      if (nft.collection === "feature" || nft.collection === "Feature Collection") {
+        return false;
+      }
+
+      // Filter out free cards (cards with tokenId < 10000 or marked as free)
+      if (nft.free === true || nft.isFree === true) {
+        return false;
+      }
+
+      // Include only Vibe Most Wanted cards
+      return true;
+    };
+
+    // Helper: Count NFTs by rarity (only Vibe Most Wanted collection)
     const countByRarity = (rarity: string) =>
-      nfts.filter((nft) => nft.rarity === rarity).length;
+      nfts.filter((nft) => isVibeCard(nft) && nft.rarity === rarity).length;
 
-    // Helper: Count NFTs by wear
+    // Helper: Count NFTs by wear (only Vibe Most Wanted collection)
     const countByWear = (wear: string) =>
-      nfts.filter((nft) => nft.wear === wear).length;
+      nfts.filter((nft) => isVibeCard(nft) && nft.wear === wear).length;
 
-    // Helper: Count NFTs by foil
+    // Helper: Count NFTs by foil (only Vibe Most Wanted collection)
     const countByFoil = (foil: string) =>
-      nfts.filter((nft) => nft.foil === foil).length;
+      nfts.filter((nft) => isVibeCard(nft) && nft.foil === foil).length;
 
     // Check each achievement
     for (const achievement of ALL_ACHIEVEMENTS) {
@@ -209,14 +238,9 @@ export const claimAchievementReward = mutation({
       throw new Error("Profile not found");
     }
 
-    // Award coins
-    const currentCoins = profile.coins || 0;
-    const newCoins = currentCoins + definition.reward;
-
-    await ctx.db.patch(profile._id, {
-      coins: newCoins,
-      lifetimeEarned: (profile.lifetimeEarned || 0) + definition.reward,
-    });
+    // MIGRATED TO VBMS: Rewards are now claimed via VBMSPoolTroll
+    // This mutation only marks achievement as claimed
+    // Frontend handles the actual VBMS claim (immediate or inbox)
 
     // Mark achievement as claimed
     await ctx.db.patch(achievement._id, {
@@ -226,8 +250,8 @@ export const claimAchievementReward = mutation({
     return {
       success: true,
       reward: definition.reward,
-      newBalance: newCoins,
       achievementName: definition.name,
+      achievementId: definition.id,
     };
   },
 });

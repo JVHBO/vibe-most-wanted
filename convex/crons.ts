@@ -49,13 +49,13 @@ const crons = cronJobs();
 
 /**
  * 🧹 Cleanup old Poker Battle rooms (every 15 minutes)
- * Note: Currently disabled - rooms are cleaned up on-demand
+ * Removes expired, cancelled (>1 min old), and finished (>5 min old) rooms
  */
-// crons.interval(
-//   "cleanup old poker rooms",
-//   { minutes: 15 },
-//   internal.pokerBattle.cleanupOldPokerRooms
-// );
+crons.interval(
+  "cleanup old poker rooms",
+  { minutes: 15 },
+  internal.pokerBattle.cleanupOldPokerRooms
+);
 
 /**
  * 📊 Generate daily quest rotation (every day at 00:00 UTC)

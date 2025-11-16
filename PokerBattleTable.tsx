@@ -14,7 +14,6 @@ import { VoiceChannelPanel } from './VoiceChannelPanel';
 import { useFinishVBMSBattle } from '@/lib/hooks/useVBMSContracts';
 import { SpectatorEntryModal } from './SpectatorEntryModal';
 import { BettingInterface } from './BettingInterface';
-import { GamePopups } from './GamePopups';
 
 interface Card {
   tokenId: string;
@@ -219,20 +218,6 @@ export function PokerBattleTable({
   const [claimChoiceMade, setClaimChoiceMade] = useState(false);
   const [createdMatchId, setCreatedMatchId] = useState<Id<"matches"> | null>(null);
 
-  // GamePopups control states
-  const [showWinPopup, setShowWinPopup] = useState(false);
-  const [showLossPopup, setShowLossPopup] = useState(false);
-  const [showTiePopup, setShowTiePopup] = useState(false);
-  const [currentVictoryImage, setCurrentVictoryImage] = useState('/victory-1.jpg');
-  const [lastBattleResult, setLastBattleResult] = useState<{
-    coinsEarned?: number;
-    type?: string;
-    playerPower?: number;
-    opponentPower?: number;
-    opponentName?: string;
-    opponentTwitter?: string;
-  } | null>(null);
-
   // Deck & Hand
   const [selectedDeck, setSelectedDeck] = useState<Card[]>([]);
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
@@ -270,47 +255,13 @@ export function PokerBattleTable({
         hostSelectedCard: !!hostSelectedCard,
         guestSelectedCard: !!guestSelectedCard,
         hostAction,
-        guestAction,
-        localPhase: phase
+        guestAction
       });
-
-      // SYNC phase from server to prevent desync issues
-      if (serverPhase && serverPhase !== phase && phase !== 'card-reveal-animation') {
-        console.log(`[PokerBattle] Syncing phase from server: ${phase} -> ${serverPhase}`);
-        setPhase(serverPhase as GamePhase);
-      }
 
       // If server is in reveal/resolution phase and both have acted, reveal cards first
       if (serverPhase === 'reveal' || serverPhase === 'resolution') {
         if (hostSelectedCard && guestSelectedCard && hostAction && guestAction) {
           console.log('[PokerBattle] Both players ready - revealing cards first');
-
-          // Sync server state to local BEFORE resolving (for Round 2+)
-          const myCard = isHost ? hostSelectedCard : guestSelectedCard;
-          const opCard = isHost ? guestSelectedCard : hostSelectedCard;
-          const myAct = isHost ? hostAction : guestAction;
-          const opAct = isHost ? guestAction : hostAction;
-
-          console.log('[PokerBattle] Syncing from server', {
-            hasLocalPlayerCard: !!playerSelectedCard,
-            hasLocalOpponentCard: !!opponentSelectedCard,
-            serverPlayerCard: myCard,
-            serverOpponentCard: opCard
-          });
-
-          // Always sync from server to ensure we have the latest
-          if (!playerSelectedCard) {
-            setPlayerSelectedCard(myCard);
-          }
-          if (!opponentSelectedCard) {
-            setOpponentSelectedCard(opCard);
-          }
-          if (!playerAction) {
-            setPlayerAction(myAct);
-          }
-          if (!opponentAction) {
-            setOpponentAction(opAct);
-          }
 
           // Move to card reveal animation if not already there or in resolution
           if (phase !== 'card-reveal-animation' && phase !== 'resolution' && phase !== 'game-over') {
@@ -1240,23 +1191,6 @@ export function PokerBattleTable({
     setIsHost(false);
   };
 
-  // Handler for closing victory screen
-  const handleCloseVictoryScreen = () => {
-    setShowWinPopup(false);
-    // If there was a stake, show claim dialog instead of closing
-    if (selectedAnte > 0 && !isSpectatorMode) {
-      setShowClaimChoice(true);
-    } else {
-      onClose();
-    }
-  };
-
-  // Handler for closing defeat screen
-  const handleCloseDefeatScreen = () => {
-    setShowLossPopup(false);
-    onClose();
-  };
-
   // Load opponent deck when both players ready (multiplayer only)
   useEffect(() => {
     if (!isCPUMode && room && room.status === 'ready' && currentView === 'waiting') {
@@ -1506,51 +1440,14 @@ export function PokerBattleTable({
     }
   }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, selectedToken, selectedAnte, createdMatchId, sendToInboxMutation, playerAddress]);
 
-  // Set gameOverShown flag when phase becomes game-over and configure GamePopups
+  // Set gameOverShown flag when phase becomes game-over
   useEffect(() => {
     if (phase === 'game-over' && !gameOverShown) {
       setGameOverShown(true);
-      console.log('[PokerBattle] Game over - configuring popups');
-
-      // Configure victory/defeat/tie popups
-      if (playerScore > opponentScore) {
-        // Victory - select random victory image
-        const victoryIndex = (playerScore + opponentScore) % VICTORY_CONFIGS.length;
-        const victoryConfig = VICTORY_CONFIGS[victoryIndex];
-        setCurrentVictoryImage(victoryConfig.image);
-        setShowWinPopup(true);
-
-        // Set battle result data
-        setLastBattleResult({
-          coinsEarned: selectedAnte > 0 ? Math.round((selectedAnte * 2) * 0.95) : 0,
-          type: isCPUMode ? 'pve' : 'pvp',
-          playerPower: playerScore,
-          opponentPower: opponentScore,
-          opponentName: room?.guestUsername || room?.hostUsername || 'Opponent',
-        });
-      } else if (playerScore < opponentScore) {
-        // Defeat
-        setShowLossPopup(true);
-        setLastBattleResult({
-          coinsEarned: 0,
-          type: isCPUMode ? 'pve' : 'pvp',
-          playerPower: playerScore,
-          opponentPower: opponentScore,
-          opponentName: room?.guestUsername || room?.hostUsername || 'Opponent',
-        });
-      } else {
-        // Tie
-        setShowTiePopup(true);
-        setLastBattleResult({
-          coinsEarned: selectedAnte, // Return stake on tie
-          type: isCPUMode ? 'pve' : 'pvp',
-          playerPower: playerScore,
-          opponentPower: opponentScore,
-          opponentName: room?.guestUsername || room?.hostUsername || 'Opponent',
-        });
-      }
+      console.log('[PokerBattle] Game over - screens will render once');
+      // Claim dialog now shows AFTER victory screen is closed (not automatically)
     }
-  }, [phase, gameOverShown, playerScore, opponentScore, selectedAnte, isCPUMode, room]);
+  }, [phase, gameOverShown]);
 
   // Safety timeout: Auto-save VBMS to inbox if player doesn't choose within 30 seconds
   useEffect(() => {
@@ -1957,10 +1854,7 @@ export function PokerBattleTable({
                       </div>
                     )}
                     <div>
-                      <div className={`text-blue-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>
-                        {room?.hostUsername || 'HOST'}
-                        {isHost && <span className="text-yellow-400 ml-1">(YOU)</span>}
-                      </div>
+                      <div className={`text-blue-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>{room?.hostUsername || 'HOST'}</div>
                       <div className={`text-vintage-gold ${isInFarcaster ? 'text-sm' : 'text-xs'}`}>{isHost ? playerBankroll : opponentBankroll} {selectedToken}</div>
                     </div>
                   </div>
@@ -2024,10 +1918,7 @@ export function PokerBattleTable({
                       </div>
                     )}
                     <div>
-                      <div className={`text-red-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>
-                        {room?.guestUsername || 'GUEST'}
-                        {!isHost && <span className="text-yellow-400 ml-1">(YOU)</span>}
-                      </div>
+                      <div className={`text-red-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>{room?.guestUsername || 'GUEST'}</div>
                       <div className={`text-vintage-gold ${isInFarcaster ? 'text-sm' : 'text-xs'}`}>{isHost ? opponentBankroll : playerBankroll} {selectedToken}</div>
                     </div>
                   </div>
@@ -2681,6 +2572,276 @@ export function PokerBattleTable({
           </div>
         )}
 
+        {/* VICTORY SCREEN - Unified for all modes (CPU, PvP) - Shows first, then claim dialog */}
+        {phase === 'game-over' && gameOverShown && !isSpectatorMode && playerScore > opponentScore && !showClaimChoice && (() => {
+          // Randomly select a victory config (consistent per match using score as seed)
+          const victoryIndex = (playerScore + opponentScore) % VICTORY_CONFIGS.length;
+          const victoryConfig = VICTORY_CONFIGS[victoryIndex];
+          const isSpecialVictory = victoryConfig.audio !== null;
+
+          const handleCloseVictory = () => {
+            // If there was a stake, show claim dialog instead of closing
+            if (selectedAnte > 0) {
+              setShowClaimChoice(true);
+            } else {
+              onClose();
+            }
+          };
+
+          return (
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseVictory}>
+              {/* 🌈 GAY VIBES - Floating hearts effect for victory-2 */}
+              {victoryIndex === 1 && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  {[...Array(isInFarcaster ? 10 : 20)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute animate-float-heart"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        animationDelay: `${Math.random() * 3}s`,
+                        animationDuration: `${4 + Math.random() * 2}s`
+                      }}
+                    >
+                      {['💖', '💗', '💓', '💕', '💘', '❤️', '🧡', '💛', '💚', '💙', '💜'][Math.floor(Math.random() * 11)]}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ⚡ VICTORY 3 - Floating golden coins and lightning bolts effect */}
+              {victoryIndex === 2 && (
+                <>
+                  {/* Audio for victory-3 */}
+                  <audio autoPlay loop>
+                    <source src="/victory-3.mp3" type="audio/mpeg" />
+                  </audio>
+
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {/* Golden coins floating up */}
+                    {[...Array(isInFarcaster ? 8 : 15)].map((_, i) => (
+                      <div
+                        key={`coin-${i}`}
+                        className="absolute animate-float-heart text-4xl"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 3}s`,
+                          animationDuration: `${3 + Math.random() * 2}s`,
+                        }}
+                      >
+                        💰
+                      </div>
+                    ))}
+
+                    {/* Lightning bolts */}
+                    {[...Array(isInFarcaster ? 5 : 10)].map((_, i) => (
+                      <div
+                        key={`lightning-${i}`}
+                        className="absolute animate-pulse text-5xl"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          top: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 2}s`,
+                          animationDuration: `${1 + Math.random() * 1}s`,
+                        }}
+                      >
+                        ⚡
+                      </div>
+                    ))}
+
+                    {/* Sparkles */}
+                    {[...Array(isInFarcaster ? 10 : 20)].map((_, i) => (
+                      <div
+                        key={`sparkle-${i}`}
+                        className="absolute animate-ping text-3xl"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          top: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 3}s`,
+                          animationDuration: `${2 + Math.random() * 2}s`,
+                        }}
+                      >
+                        ✨
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                {/* Victory Image */}
+                <img
+                  src={victoryConfig.image}
+                  alt="Victory!"
+                  className={`max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl border-4 ${
+                    isSpecialVictory
+                      ? 'shadow-pink-500/50 border-pink-400 animate-pulse-glow'
+                      : 'shadow-yellow-500/50 border-yellow-400'
+                  }`}
+                />
+
+              {/* Victory Text */}
+              <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
+                🎉 You Won! Score: {playerScore} - {opponentScore}
+              </p>
+              {selectedAnte > 0 && (
+                <>
+                  <p className="text-xl md:text-2xl font-bold text-green-400 px-4 text-center">
+                    Prize: {Math.round((selectedAnte * 2) * 0.95)} {isCPUMode ? 'VBMS' : selectedToken}
+                  </p>
+                  <p className="text-sm text-green-300/70 px-4 text-center">
+                    (Pot: {selectedAnte * 2}, Fee: {Math.round((selectedAnte * 2) * 0.05)})
+                  </p>
+                </>
+              )}
+
+              {/* SHARE BUTTONS */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
+                    const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
+
+                    const tweetText = isCPUMode
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} against CPU! 🤖\n\nPrize: ${pot} coins`
+                      : selectedToken === 'VIBE_NFT'
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only - no blockchain)`
+                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nPrize: ${pot} ${selectedToken}`;
+
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                    window.open(twitterUrl, '_blank');
+                  }}
+                  className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                >
+                  <span>𝕏</span> Share Victory
+                </button>
+                <button
+                  onClick={() => {
+                    const matchId = `win|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
+                    const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
+
+                    const castText = isCPUMode
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} against CPU! 🤖\n\nPrize: ${pot} coins\n\n@jvhbo`
+                      : selectedToken === 'VIBE_NFT'
+                      ? `Just won a Poker Battle ${playerScore}-${opponentScore} and took 3 NFT cards! 🎴\n\nStakes: ${selectedAnte} coins + NFTs\n(For fun only)\n\n@jvhbo`
+                      : `Just won a Poker Battle ${playerScore}-${opponentScore}!\n\nPrize: ${pot} ${selectedToken}\n\n@jvhbo`;
+
+                    const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                    window.open(farcasterUrl, '_blank');
+                  }}
+                  className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                >
+                  <span>♦</span> Farcaster
+                </button>
+              </div>
+              <button
+                onClick={handleCloseVictory}
+                className="absolute top-4 right-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-gold"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          );
+        })()}
+
+        {/* DEFEAT SCREEN - Unified for all modes */}
+        {phase === 'game-over' && gameOverShown && !isSpectatorMode && playerScore < opponentScore && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={onClose}>
+            <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+              {/* Defeat Image */}
+              <img
+                src="https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26"
+                alt="You Lost"
+                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
+              />
+
+              {/* Defeat Text */}
+              <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center flex items-center justify-center gap-2">
+                <SkullIcon className="text-red-400" size={32} /> You Lost! Score: {playerScore} - {opponentScore}
+              </p>
+              {selectedAnte > 0 && (
+                <p className="text-xl md:text-2xl font-bold text-red-300 px-4 text-center">
+                  Loss: {selectedAnte} {isCPUMode ? 'VBMS' : selectedToken}
+                </p>
+              )}
+
+              {/* SHARE BUTTONS */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
+                    const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
+
+                    const tweetText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nI want a rematch!`;
+
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+                    window.open(twitterUrl, '_blank');
+                  }}
+                  className="px-6 py-3 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-display font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+                >
+                  <span>𝕏</span> Share Defeat
+                </button>
+                <button
+                  onClick={() => {
+                    const matchId = `loss|${playerScore}|${opponentScore}|${encodeURIComponent('Opponent')}|${encodeURIComponent(playerUsername)}|${selectedAnte}|${selectedToken}`;
+                    const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
+
+                    const castText = `Lost a Poker Battle ${playerScore}-${opponentScore}\n\nStakes: ${selectedAnte} ${selectedToken}\nRevenge time!\n\n@jvhbo`;
+
+                    const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                    window.open(farcasterUrl, '_blank');
+                  }}
+                  className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                >
+                  <span>♦</span> Farcaster
+                </button>
+              </div>
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* TIE SCREEN - Unified for all modes */}
+        {phase === 'game-over' && gameOverShown && !isSpectatorMode && playerScore === opponentScore && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-500">
+            <div className="relative max-w-2xl w-full mx-4">
+              {/* Defeat Image (reusing for tie) */}
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-4 border-4 border-yellow-600 shadow-2xl">
+                <img
+                  src="/defeat.gif"
+                  alt="Tie"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Tie Text */}
+              <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-yellow-600 p-8 text-center shadow-2xl">
+                <h2 className="text-5xl font-display font-bold text-yellow-500 mb-4 animate-in zoom-in duration-700">
+                  🤝 TIE! 🤝
+                </h2>
+                <p className="text-2xl text-vintage-burnt-gold mb-4">
+                  Final Score: {playerScore} - {opponentScore}
+                </p>
+                <p className="text-xl text-yellow-400 font-bold mb-6">
+                  No winner - it's a tie!
+                </p>
+                <button
+                  onClick={onClose}
+                  className="px-8 py-4 bg-yellow-600 text-white font-bold text-xl rounded-lg hover:bg-yellow-700 transition-all hover:scale-105 active:scale-95"
+                >
+                  CLOSE
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* CLAIM CHOICE DIALOG - Appears after victory screen for all modes with stakes */}
         {showClaimChoice && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[500]">
@@ -2741,9 +2902,7 @@ export function PokerBattleTable({
                         // Trigger blockchain claim for VBMS battles only
                         if (selectedToken === 'VBMS' && !battleFinalized && room && room.blockchainBattleId) {
                           try {
-                            // Determine winner address (player won, so it's playerAddress)
-                            const winnerAddress = playerAddress as `0x${string}`;
-                            await finishVBMSBattle(room.blockchainBattleId, winnerAddress);
+                            await finishVBMSBattle({ battleId: room.blockchainBattleId });
                             console.log('[PokerBattle] ✅ VBMS battle finished, tokens claimed to wallet');
                           } catch (error) {
                             console.error('[PokerBattle] ❌ Failed to claim to wallet:', error);
@@ -3035,36 +3194,6 @@ export function PokerBattleTable({
           />
         </div>
       )}
-
-      {/* Game result popups - Victory/Defeat/Tie */}
-      <GamePopups
-        showWinPopup={showWinPopup}
-        currentVictoryImage={currentVictoryImage}
-        isInFarcaster={isInFarcaster}
-        lastBattleResult={lastBattleResult}
-        userProfile={null}
-        soundEnabled={soundEnabled}
-        handleCloseVictoryScreen={handleCloseVictoryScreen}
-        showLossPopup={showLossPopup}
-        handleCloseDefeatScreen={handleCloseDefeatScreen}
-        showTiePopup={showTiePopup}
-        setShowTiePopup={setShowTiePopup}
-        tieGifLoaded={false}
-        errorMessage={null}
-        setErrorMessage={() => {}}
-        successMessage={null}
-        setSuccessMessage={() => {}}
-        showDailyClaimPopup={false}
-        setShowDailyClaimPopup={() => {}}
-        loginBonusClaimed={false}
-        isClaimingBonus={false}
-        handleClaimLoginBonus={() => {}}
-        showWelcomePackPopup={false}
-        setShowWelcomePackPopup={() => {}}
-        isClaimingWelcomePack={false}
-        handleClaimWelcomePack={() => {}}
-        t={(key: string) => key} // Simple mock translation
-      />
     </div>
   );
 }

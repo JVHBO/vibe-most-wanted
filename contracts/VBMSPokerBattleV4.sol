@@ -1,15 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-/**
- * ⚠️ DEPRECATED - This is V2 contract code (not deployed)
- *
- * Current deployed version: V3
- * Deployed at: 0xD72A5B7139224D5041d0eE2a8AD837747E24Ec37
- * See: VBMSPokerBattleV3.sol for the actual deployed code
- *
- * Main difference: V3 has NO cancel cooldown (can cancel immediately)
- */
+pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -17,11 +7,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
- * @title VBMSPokerBattle (V2 - DEPRECATED)
+ * @title VBMSPokerBattleV4
  * @notice Gerencia poker battles com stakes em $VBMS
- * @dev Cada partida gera múltiplas transações on-chain para aumentar engagement
+ * @dev V4 Improvements:
+ *  - No cancel cooldown
+ *  - Admin emergency functions to cleanup orphaned battles
+ *  - Better event emissions
+ *  - Guaranteed cleanup in all code paths
+ *  - Emergency withdraw function for stuck tokens
  */
-contract VBMSPokerBattle is Ownable, ReentrancyGuard {
+contract VBMSPokerBattleV4 is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable vbmsToken;
@@ -55,22 +50,22 @@ contract VBMSPokerBattle is Ownable, ReentrancyGuard {
     mapping(address => uint256) public totalWins;
     mapping(address => uint256) public totalEarned;
 
-    // Events para tracking on-chain
+    // Events
     event BattleCreated(uint256 indexed battleId, address indexed player1, uint256 stake);
     event BattleJoined(uint256 indexed battleId, address indexed player2);
     event BattleFinished(uint256 indexed battleId, address indexed winner, uint256 winnings);
     event BattleCancelled(uint256 indexed battleId, address indexed player1);
-    event WinningsClaimed(uint256 indexed battleId, address indexed winner, uint256 amount);
+    event EmergencyCleanup(address indexed player, uint256 indexed battleId, string reason);
+    event EmergencyWithdraw(address indexed token, address indexed to, uint256 amount);
 
     error InvalidStakeAmount();
     error BattleNotFound();
     error BattleNotWaiting();
-    error BattleNotFinished();
+    error BattleNotActive();
     error AlreadyInBattle();
     error NotBattlePlayer();
     error InvalidSignature();
     error CannotJoinOwnBattle();
-    error WinningsAlreadyClaimed();
 
     constructor(
         address _vbmsToken,
@@ -152,7 +147,7 @@ contract VBMSPokerBattle is Ownable, ReentrancyGuard {
         Battle storage battle = battles[battleId];
 
         if (battle.id == 0) revert BattleNotFound();
-        if (battle.status != BattleStatus.ACTIVE) revert BattleNotWaiting();
+        if (battle.status != BattleStatus.ACTIVE) revert BattleNotActive();
         if (winner != battle.player1 && winner != battle.player2) revert NotBattlePlayer();
 
         // Verificar assinatura do backend
@@ -170,7 +165,7 @@ contract VBMSPokerBattle is Ownable, ReentrancyGuard {
         battle.status = BattleStatus.FINISHED;
         battle.winner = winner;
 
-        // Limpar active battles
+        // ALWAYS cleanup active battles mapping - critical!
         delete activeBattles[battle.player1];
         delete activeBattles[battle.player2];
 
@@ -191,7 +186,7 @@ contract VBMSPokerBattle is Ownable, ReentrancyGuard {
 
     /**
      * @notice Cancela battle se ninguém entrar
-     * @dev Só pode cancelar se ainda WAITING e passou 10 minutos
+     * @dev NO COOLDOWN - Can cancel immediately
      * @param battleId ID da battle
      */
     function cancelBattle(uint256 battleId) external nonReentrant {
@@ -200,9 +195,6 @@ contract VBMSPokerBattle is Ownable, ReentrancyGuard {
         if (battle.id == 0) revert BattleNotFound();
         if (battle.player1 != msg.sender) revert NotBattlePlayer();
         if (battle.status != BattleStatus.WAITING) revert BattleNotWaiting();
-
-        // Precisa esperar pelo menos 10 minutos
-        require(block.timestamp >= battle.createdAt + 10 minutes, "Must wait 10 minutes");
 
         battle.status = BattleStatus.CANCELLED;
         delete activeBattles[msg.sender];
@@ -213,13 +205,103 @@ contract VBMSPokerBattle is Ownable, ReentrancyGuard {
         emit BattleCancelled(battleId, msg.sender);
     }
 
+    // ============================================================================
+    // EMERGENCY ADMIN FUNCTIONS - V3+
+    // ============================================================================
+
+    /**
+     * @notice Force finish a stuck battle (admin only)
+     * @dev Use para limpar battles órfãs que nunca foram finalizadas
+     * @param battleId ID da battle
+     * @param winner Endereço do vencedor (pode ser address(0) para empate)
+     */
+    function forceFinishBattle(uint256 battleId, address winner) external onlyOwner nonReentrant {
+        Battle storage battle = battles[battleId];
+
+        if (battle.id == 0) revert BattleNotFound();
+
+        // Se winner = address(0), é empate - devolve stakes
+        if (winner == address(0)) {
+            // Empate - devolver stakes
+            if (battle.player1 != address(0)) {
+                vbmsToken.safeTransfer(battle.player1, battle.stake);
+            }
+            if (battle.player2 != address(0)) {
+                vbmsToken.safeTransfer(battle.player2, battle.stake);
+            }
+        } else {
+            // Tem vencedor - calcular winnings
+            uint256 totalPot = battle.player2 != address(0) ? battle.stake * 2 : battle.stake;
+            uint256 fee = (totalPot * feePercentage) / 10_000;
+            uint256 winnings = totalPot - fee;
+
+            if (fee > 0) {
+                vbmsToken.safeTransfer(poolAddress, fee);
+            }
+            vbmsToken.safeTransfer(winner, winnings);
+
+            totalWins[winner]++;
+            totalEarned[winner] += winnings;
+            battle.winner = winner;
+        }
+
+        battle.status = BattleStatus.FINISHED;
+
+        // CRITICAL: Always cleanup mappings
+        delete activeBattles[battle.player1];
+        if (battle.player2 != address(0)) {
+            delete activeBattles[battle.player2];
+        }
+
+        emit EmergencyCleanup(battle.player1, battleId, "Force finished by admin");
+        if (battle.player2 != address(0)) {
+            emit EmergencyCleanup(battle.player2, battleId, "Force finished by admin");
+        }
+    }
+
+    /**
+     * @notice Force cleanup orphaned activeBattles mapping (admin only)
+     * @dev Use quando um player está travado com activeBattle órfão
+     * @param player Endereço do jogador travado
+     */
+    function forceCleanupActiveBattle(address player) external onlyOwner {
+        uint256 battleId = activeBattles[player];
+        delete activeBattles[player];
+        emit EmergencyCleanup(player, battleId, "Forced cleanup by admin");
+    }
+
+    /**
+     * @notice Emergency withdraw of tokens (owner only) - V4 NEW
+     * @dev Use para sacar tokens em caso de emergência ou acúmulo anormal
+     * @param token Endereço do token ERC20 (use address(vbmsToken) para VBMS)
+     * @param amount Quantidade a sacar (use 0 para sacar tudo)
+     */
+    function emergencyWithdraw(address token, uint256 amount) external onlyOwner nonReentrant {
+        require(token != address(0), "Zero address");
+
+        IERC20 tokenContract = IERC20(token);
+        uint256 balance = tokenContract.balanceOf(address(this));
+
+        require(balance > 0, "No balance");
+
+        uint256 withdrawAmount = amount == 0 ? balance : amount;
+        require(withdrawAmount <= balance, "Insufficient balance");
+
+        tokenContract.safeTransfer(owner(), withdrawAmount);
+
+        emit EmergencyWithdraw(token, owner(), withdrawAmount);
+    }
+
+    // ============================================================================
+    // VIEW FUNCTIONS
+    // ============================================================================
+
     /**
      * @notice Retorna battles ativas (waiting)
      */
     function getActiveBattles(uint256 limit) external view returns (Battle[] memory) {
         uint256 count = 0;
 
-        // Contar battles WAITING
         for (uint256 i = 1; i <= battleIdCounter && count < limit; i++) {
             if (battles[i].status == BattleStatus.WAITING) {
                 count++;
@@ -254,9 +336,12 @@ contract VBMSPokerBattle is Ownable, ReentrancyGuard {
         );
     }
 
-    // Admin functions
+    // ============================================================================
+    // ADMIN FUNCTIONS
+    // ============================================================================
+
     function setFeePercentage(uint256 newFee) external onlyOwner {
-        require(newFee <= 1000, "Max 10%"); // Máximo 10%
+        require(newFee <= 1000, "Max 10%");
         feePercentage = newFee;
     }
 
@@ -276,7 +361,10 @@ contract VBMSPokerBattle is Ownable, ReentrancyGuard {
         backendSigner = newSigner;
     }
 
-    // Helper function para recuperar signer
+    // ============================================================================
+    // INTERNAL HELPERS
+    // ============================================================================
+
     function recoverSigner(bytes32 ethSignedHash, bytes memory signature) internal pure returns (address) {
         (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature);
         return ecrecover(ethSignedHash, v, r, s);

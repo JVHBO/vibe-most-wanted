@@ -100,16 +100,9 @@ export function useAchievements(options: UseAchievementsOptions = {}) {
         achievementId,
       });
 
-      const successMsg = `🎉 Claimed ${result.reward} coins from "${result.achievementName}"!`;
-      console.log(successMsg);
+      console.log(`✅ Achievement marked as claimed: "${result.achievementName}" - ${result.reward} VBMS`);
 
-      // Use custom callback or fallback to alert
-      if (onSuccess) {
-        onSuccess(successMsg);
-      } else {
-        alert(successMsg);
-      }
-
+      // Return data for claim dialog (AchievementsView will show claim options)
       return result;
     } catch (error: any) {
       const errorMsg = error?.message || "Failed to claim reward";

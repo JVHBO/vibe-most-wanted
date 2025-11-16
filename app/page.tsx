@@ -1,5 +1,5 @@
 "use client";
-
+// Updated: Removed warning banners
 import React, { useEffect, useState, useCallback, useMemo, memo, useRef } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
@@ -29,6 +29,7 @@ import { RewardChoiceModal } from "@/components/RewardChoiceModal";
 import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
 import { PvPMenuModals } from "@/components/PvPMenuModals";
+import { PvPEntryFeeModal } from "@/components/PvPEntryFeeModal";
 import { GamePopups } from "@/components/GamePopups";
 import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
@@ -43,10 +44,14 @@ import { devLog, devError, devWarn } from "@/lib/utils/logger";
 import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
+// 💎 VBMS Blockchain Contracts
+import { useVBMSBalance, useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
+import { CONTRACTS } from "@/lib/contracts";
 
 import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, type CollectionId } from "@/lib/collections/index";
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
 import { getImage, fetchNFTs } from "@/lib/nft/fetcher";
+import { RunawayEasterEgg } from "@/components/RunawayEasterEgg";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -435,6 +440,7 @@ export default function TCGPage() {
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
   const [cardTypeFilter, setCardTypeFilter] = useState<'all' | 'free' | 'nft'>('all');
+  const [isMounted, setIsMounted] = useState<boolean>(false);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
@@ -458,15 +464,18 @@ export default function TCGPage() {
   const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
   const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const CARDS_PER_PAGE = 12;
+  // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
+  const CARDS_PER_PAGE = isInFarcaster ? 12 : 24;
 
-  // 🎉 Victory Images - Random selection on each win!
+  // 🎉 Victory Images - 3 tiers based on victory margin!
   const VICTORY_IMAGES = [
-    '/victory-1.jpg', // Gigachad original
-    '/victory-2.jpg', // Musculoso sorrindo
+    '/victory-1.jpg', // Gigachad original (normal wins)
+    '/victory-2.jpg', // Musculoso sorrindo (overwhelming wins)
+    '/victory-3.jpg', // Golden victory (dominating wins)
   ];
   const [currentVictoryImage, setCurrentVictoryImage] = useState<string>(VICTORY_IMAGES[0]);
   const victoryAudioRef = useRef<HTMLAudioElement | null>(null);
+  const lastVictoryIndexRef = useRef<number>(-1); // Track last victory screen to prevent consecutive duplicates
 
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
@@ -506,6 +515,23 @@ export default function TCGPage() {
   const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
+
+  // VBMS Economy mutations (PvP with real VBMS)
+  const chargeVBMSEntryFee = useMutation(api.economyVBMS.chargeVBMSEntryFee);
+  const awardPvPVBMS = useMutation(api.economyVBMS.awardPvPVBMS);
+  const getVBMSBalance = useQuery(api.economyVBMS.getVBMSBalance, address ? { address } : "skip");
+
+  // PvP Entry Fee & Reward System (VBMS entry → TESTVBMS inbox rewards)
+  const useEntryFee = useMutation(api.pvp.useEntryFee);
+  const sendPvPRewardToInbox = useMutation(api.pvp.sendPvPRewardToInbox);
+
+  // 💎 VBMS Blockchain Contract Hooks
+  const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useVBMSBalance(address as `0x${string}`);
+  const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
+  const { createBattle, isPending: isCreatingBattle } = useCreateBattle();
+  const { joinBattle, isPending: isJoiningBattle } = useJoinBattle();
+  const { finishBattle: finishVBMSBattle } = useFinishVBMSBattle();
+  const { battleId: activeBattleId, refetch: refetchActiveBattle } = useActiveBattle(address as `0x${string}`);
 
   // 🎁 Welcome Pack
   const hasReceivedWelcomePack = useQuery(api.welcomePack.hasReceivedWelcomePack, address ? { address } : "skip");
@@ -558,7 +584,7 @@ export default function TCGPage() {
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
-  const [leaderboardCollection, setLeaderboardCollection] = useState<'all' | CollectionId>('all');
+  const [leaderboardCollection, setLeaderboardCollection] = useState<CollectionId>('vibe');
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -578,6 +604,9 @@ export default function TCGPage() {
   const [pveSortByPower, setPveSortByPower] = useState<boolean>(false);
   const [newUsername, setNewUsername] = useState<string>('');
   const [isChangingUsername, setIsChangingUsername] = useState<boolean>(false);
+
+  // PvP Entry Fee Modal
+  const [showPvPEntryFeeModal, setShowPvPEntryFeeModal] = useState<boolean>(false);
 
   // Attack States
   const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
@@ -684,6 +713,20 @@ export default function TCGPage() {
     img.onload = () => setTieGifLoaded(true);
   }, []);
 
+  // Set mounted state to prevent hydration errors
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Generate particle configurations once to prevent hydration errors
+  const particleConfigs = useMemo(() => {
+    return Array.from({ length: 20 }).map(() => ({
+      left: Math.random() * 100,
+      duration: 15 + Math.random() * 20,
+      delay: Math.random() * 10,
+    }));
+  }, []);
+
   // Carregar estado da música do localStorage na montagem
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -778,45 +821,37 @@ export default function TCGPage() {
     }
   };
 
-  // 🎉 Show victory popup with smart image selection based on victory margin
+  // 🎉 Show victory popup with RANDOM image selection
   const showVictory = () => {
-    let isOverwhelmingVictory = false;
+    // RANDOMLY select one of the 3 victory screens, avoiding consecutive duplicates
+    let randomIndex = Math.floor(Math.random() * VICTORY_IMAGES.length);
 
-    // Calculate if victory was overwhelming based on power difference
-    if (lastBattleResult?.playerPower && lastBattleResult?.opponentPower) {
-      const playerPower = lastBattleResult.playerPower;
-      const opponentPower = lastBattleResult.opponentPower;
-      const powerDifference = playerPower - opponentPower;
-      const victoryMargin = (powerDifference / opponentPower) * 100;
-
-      // Overwhelming victory = 50% or more power advantage
-      isOverwhelmingVictory = victoryMargin >= 50;
-
-      devLog(`🎯 Victory margin: ${victoryMargin.toFixed(1)}% (${playerPower} vs ${opponentPower})`);
-      devLog(`💪 ${isOverwhelmingVictory ? 'OVERWHELMING' : 'Normal'} victory!`);
+    // If we got the same index as last time AND we have more than 1 option, pick a different one
+    if (randomIndex === lastVictoryIndexRef.current && VICTORY_IMAGES.length > 1) {
+      // Pick a different random index
+      const availableIndices = [0, 1, 2].filter(i => i !== lastVictoryIndexRef.current);
+      randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+      devLog(`🔄 Avoided duplicate victory screen, changed from ${lastVictoryIndexRef.current} to ${randomIndex}`);
     }
 
-    // Select victory image based on victory type
-    let victoryImage: string;
+    // Remember this index for next time
+    lastVictoryIndexRef.current = randomIndex;
+    const victoryImage = VICTORY_IMAGES[randomIndex];
 
-    if (isOverwhelmingVictory) {
-      // OVERWHELMING VICTORY → victory-2.jpg (Moreno musculoso + gay vibes)
-      victoryImage = VICTORY_IMAGES[1]; // victory-2.jpg
+    devLog(`🎲 Random victory screen selected: ${victoryImage} (index: ${randomIndex})`);
 
-      // Play Marvin audio for overwhelming victories
+    // Play audio based on which screen was selected
+    if (randomIndex === 1) {
+      // victory-2.jpg - Play Marvin audio
       const audio = new Audio('/marvin-victory.mp3');
       audio.volume = 0.5;
       audio.play().catch(err => devLog('Audio play failed:', err));
-
-      // Store audio ref so we can stop it later
       victoryAudioRef.current = audio;
-    } else {
-      // NORMAL VICTORY → victory-1.jpg (Gigachad)
-      victoryImage = VICTORY_IMAGES[0]; // victory-1.jpg
-
-      // Play default win sound
+    } else if (randomIndex === 0) {
+      // victory-1.jpg - Play default win sound
       if (soundEnabled) AudioManager.win();
     }
+    // victory-3.jpg audio plays automatically via GamePopups component
 
     setCurrentVictoryImage(victoryImage);
 
@@ -885,6 +920,36 @@ export default function TCGPage() {
     }
   };
 
+  // 💎 Handler to claim daily bonus with blockchain TX
+  const handleDailyClaimNow = async () => {
+    if (!address || loginBonusClaimed) return;
+
+    try {
+      devLog('💎 Daily claim - creating mission and triggering reward choice modal...');
+
+      // Create the daily login mission
+      const result = await claimLoginBonus({ address });
+
+      if (result.reason?.includes('Mission created')) {
+        devLog('✓ Daily mission created, showing reward choice modal');
+
+        // Show RewardChoiceModal for 25 VBMS
+        setPendingReward({
+          amount: 25,
+          source: 'leaderboard', // Using leaderboard as generic reward source
+        });
+        setShowRewardChoice(true);
+        setLoginBonusClaimed(true);
+      } else {
+        devLog(`! ${result.reason}`);
+        if (soundEnabled) AudioManager.buttonError();
+      }
+    } catch (error) {
+      devError('✗ Error claiming daily bonus:', error);
+      if (soundEnabled) AudioManager.buttonError();
+    }
+  };
+
   // 🎁 Handler to claim welcome pack
   const handleClaimWelcomePack = async () => {
     if (!address || isClaimingWelcomePack) return;
@@ -949,6 +1014,44 @@ export default function TCGPage() {
       if (soundEnabled) AudioManager.buttonError();
     } finally {
       setIsClaimingWeeklyReward(false);
+    }
+  };
+
+  // Export top 10 leaderboard data
+  const handleExportLeaderboard = () => {
+    try {
+      if (soundEnabled) AudioManager.buttonClick();
+
+      // Get top 10 from filtered leaderboard
+      const top10 = filteredLeaderboard.slice(0, 10).map((player, index) => ({
+        rank: index + 1,
+        username: player.username,
+        address: player.address,
+        power: player.stats?.totalPower || 0,
+        openedCards: player.stats?.openedCards || 0,
+        wins: (player.stats?.pveWins || 0) + (player.stats?.pvpWins || 0),
+        losses: (player.stats?.pveLosses || 0) + (player.stats?.pvpLosses || 0),
+        collection: leaderboardCollection
+      }));
+
+      // Create JSON blob
+      const jsonData = JSON.stringify(top10, null, 2);
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      // Create download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `leaderboard-top10-${leaderboardCollection}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      devLog('✓ Leaderboard exported successfully');
+    } catch (error) {
+      devError('✗ Error exporting leaderboard:', error);
+      if (soundEnabled) AudioManager.buttonError();
     }
   };
 
@@ -1710,12 +1813,13 @@ export default function TCGPage() {
 
               if (userProfile && address) {
                 try {
-                  // Award economy coins for PvE Elimination
+                  // Calculate PvE Elimination reward (coins NOT added yet - player will choose)
                   const reward = await awardPvECoins({
                     address,
                     difficulty: eliminationDifficulty,
                     language: lang,
-                    won: finalResult === 'win'
+                    won: finalResult === 'win',
+                    skipCoins: true // Only calculate, don't add coins yet
                   });
                   coinsEarned = reward?.awarded || 0;
                   if (coinsEarned > 0) {
@@ -1758,11 +1862,15 @@ export default function TCGPage() {
               });
 
               // Set pending reward to show RewardChoiceModal after victory/defeat screen
+              console.log('[DEBUG PvE Elimination] coinsEarned:', coinsEarned, 'finalResult:', finalResult);
               if (coinsEarned > 0) {
+                console.log('[DEBUG PvE Elimination] Setting pendingReward:', { amount: coinsEarned, source: 'pve' });
                 setPendingReward({
                   amount: coinsEarned,
                   source: 'pve'
                 });
+              } else {
+                console.log('[DEBUG PvE Elimination] NOT setting pendingReward - coinsEarned is 0 or negative');
               }
 
               // Close battle first
@@ -1859,13 +1967,14 @@ export default function TCGPage() {
 
         if (userProfile && address) {
           try {
-            // Award economy coins for PvE
+            // Calculate PvE reward (coins NOT added yet - player will choose)
             devLog(`🎯 PvE Difficulty: ${aiDifficulty}`); // Debug log
             const reward = await awardPvECoins({
               address,
               difficulty: aiDifficulty,
               language: lang,
-              won: matchResult === 'win'
+              won: matchResult === 'win',
+              skipCoins: true // Only calculate, don't add coins yet
             });
             coinsEarned = reward?.awarded || 0;
             if (coinsEarned > 0) {
@@ -2088,7 +2197,7 @@ export default function TCGPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [sortByPower, cardTypeFilter, nfts.length]);
+  }, [sortByPower, cardTypeFilter, nfts.length, CARDS_PER_PAGE]);
 
   // 🔒 Sorted NFTs for attack modal (show locked cards but mark them)
   const sortedAttackNfts = useMemo(() => {
@@ -2154,18 +2263,23 @@ export default function TCGPage() {
             battleProcessing = true;
             devLog('✓ Ambos jogadores prontos! Iniciando batalha única:', battleId);
 
-            // Pay entry fee only for ranked matches (casual is free)
+            // Use pre-paid entry fee only for ranked matches (casual is free)
             const isRanked = room.mode === 'ranked' || room.mode === undefined; // Default to ranked for legacy rooms
             if (isRanked) {
               try {
-                await payEntryFee({ address: address || '', mode: 'pvp' });
-                devLog('💰 PvP entry fee paid: 20 $TESTVBMS (ranked match)');
+                const feeResult = await useEntryFee({ address: address || '' });
+                if (feeResult.success) {
+                  devLog(`✅ PvP entry fee used: ${feeResult.amount} VBMS`);
+                } else {
+                  throw new Error('No valid entry fee found');
+                }
               } catch (error: any) {
-                devError('❌ Failed to pay PvP entry fee:', error);
-                // Continue with battle even if payment fails (already committed to battle)
+                devError('❌ Failed to use entry fee:', error);
+                toast.error(`No valid entry fee! Please pay 20 VBMS entry fee first.`);
+                return; // Stop battle if can't use entry fee
               }
             } else {
-              devLog('🎮 Casual match - no entry fee required');
+              devLog('🎮 Casual match - free entry');
             }
 
             // Determina quem é o jogador local e quem é o oponente
@@ -2253,21 +2367,24 @@ export default function TCGPage() {
 
                 if (userProfile && address) {
                   try {
-                    // ✅ Award economy coins for ranked PvP only (casual is free)
-                    if (isRanked) {
-                      const reward = await awardPvPCoins({
+                    // ✅ Award TESTVBMS to inbox for ranked PvP winners
+                    if (isRanked && matchResult === 'win') {
+                      // Ranked PvP Winner: Send TESTVBMS to inbox
+                      const TESTVBMS_REWARD = 40; // 40 TESTVBMS reward for winning
+                      const reward = await sendPvPRewardToInbox({
                         address,
-                        won: matchResult === 'win',
-                        language: lang,
-                        opponentAddress: opponentAddress // ✅ Pass opponent for ranking bonus
+                        rewardAmount: TESTVBMS_REWARD,
+                        roomCode: roomCode || undefined
                       });
-                      coinsEarned = reward?.awarded || 0;
-                      if (coinsEarned > 0) {
-                        devLog(`💰 PvP: Awarded ${coinsEarned} $TESTVBMS`, reward);
-                        if (reward?.bonuses && reward.bonuses.length > 0) {
-                          devLog(`🎁 Bonuses: ${reward.bonuses.join(', ')}`);
-                        }
+
+                      if (reward?.success) {
+                        coinsEarned = TESTVBMS_REWARD;
+                        devLog(`🏆 PvP Win: ${TESTVBMS_REWARD} TESTVBMS sent to inbox`);
+                        toast.success(`Victory! ${TESTVBMS_REWARD} TESTVBMS sent to your inbox!`);
                       }
+                    } else if (isRanked && matchResult !== 'win') {
+                      // Ranked PvP Loser/Tie: No reward (VBMS stays in pool)
+                      devLog(`💸 PvP ${matchResult}: VBMS entry fee stays in pool`);
                     } else {
                       devLog('🎮 Casual match - no coins awarded');
                     }
@@ -2595,19 +2712,28 @@ export default function TCGPage() {
 
     setIsClaimingMission(missionId);
     try {
+      // Mark mission as claimed and get reward amount (coins NOT added yet)
       const result = await convex.mutation(api.missions.claimMission, {
         playerAddress: address,
         missionId: missionId as any,
         language: lang,
+        skipCoins: true, // Only calculate, don't add coins yet
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog('✅ Mission claimed:', result);
+      devLog('✅ Mission claimed (pending reward choice):', result);
 
-      // Reload missions and profile
+      // Show Reward Choice Modal if coins reward
+      if (result.reward && result.reward > 0) {
+        setPendingReward({
+          amount: result.reward,
+          source: 'leaderboard', // Missions count as leaderboard rewards
+        });
+        setShowRewardChoice(true);
+      }
+
+      // Reload missions
       await loadMissions();
-      const updatedProfile = await ConvexProfileService.getProfile(address);
-      setUserProfile(updatedProfile);
     } catch (error: any) {
       devError('Error claiming mission:', error);
       if (soundEnabled) AudioManager.buttonError();
@@ -2732,9 +2858,20 @@ export default function TCGPage() {
       return '';
     };
 
+    // Check if this is a free card - exclude from power calculation
+    const badgeType = findAttr('badgetype') || findAttr('badge_type') || findAttr('badge');
+    if (badgeType.toLowerCase().includes('free')) {
+      return 0; // Free cards don't contribute to power
+    }
+
     const foil = findAttr('foil') || 'None';
     const rarity = findAttr('rarity') || 'Common';
     const wear = findAttr('wear') || 'Lightly Played';
+
+    // Also check if rarity is explicitly "free"
+    if (rarity.toLowerCase().includes('free')) {
+      return 0;
+    }
 
     // Base power by rarity
     let base = 5;
@@ -2810,12 +2947,10 @@ export default function TCGPage() {
 
   // Filter and re-rank leaderboard by collection
   const filteredLeaderboard = useMemo(() => {
-    if (leaderboardCollection === 'all') return leaderboard;
-
     // If we're already calculating, return current leaderboard
     if (isCalculatingCollectionPower) return leaderboard;
 
-    // For collection filter: show players ranked by their collection-specific power
+    // Show players ranked by their collection-specific power
     // This uses cached data when available, or triggers async calculation
     const leaderboardWithCollectionPower = leaderboard.map(player => {
       const cachedPower = collectionPowerCache.get(player.address)?.get(leaderboardCollection);
@@ -2928,19 +3063,21 @@ export default function TCGPage() {
   return (
     <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
       {/* Ambient floating particles */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="floating-particle"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDuration: `${15 + Math.random() * 20}s`,
-              animationDelay: `${Math.random() * 10}s`,
-            }}
-          />
-        ))}
-      </div>
+      {isMounted && (
+        <div className="fixed inset-0 pointer-events-none z-0">
+          {particleConfigs.map((config, i) => (
+            <div
+              key={i}
+              className="floating-particle"
+              style={{
+                left: `${config.left}%`,
+                animationDuration: `${config.duration}s`,
+                animationDelay: `${config.delay}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Content wrapper with z-index */}
       <div className={`relative z-10 ${!isInFarcaster ? 'max-w-7xl mx-auto' : ''}`}>
@@ -2969,11 +3106,23 @@ export default function TCGPage() {
         loginBonusClaimed={loginBonusClaimed}
         isClaimingBonus={isClaimingBonus}
         handleClaimLoginBonus={handleClaimLoginBonus}
+        onDailyClaimNow={handleDailyClaimNow}
         showWelcomePackPopup={showWelcomePackPopup}
         setShowWelcomePackPopup={setShowWelcomePackPopup}
         isClaimingWelcomePack={isClaimingWelcomePack}
         handleClaimWelcomePack={handleClaimWelcomePack}
         t={t}
+      />
+
+      {/* PvP Entry Fee Modal */}
+      <PvPEntryFeeModal
+        isOpen={showPvPEntryFeeModal}
+        onClose={() => setShowPvPEntryFeeModal(false)}
+        onSuccess={() => {
+          setShowPvPEntryFeeModal(false);
+          setPvpMode('pvpMenu'); // Reopen PvP menu after payment
+        }}
+        entryFeeAmount={20}
       />
 
       {/* Reward Choice Modal */}
@@ -2985,8 +3134,13 @@ export default function TCGPage() {
             setShowRewardChoice(false);
             setPendingReward(null);
           }}
-          onChoiceMade={(choice) => {
+          onChoiceMade={async (choice) => {
             devLog(`🎯 Player chose: ${choice} for ${pendingReward.amount} coins`);
+            // Reload profile to reflect updated balance
+            if (address) {
+              const updated = await ConvexProfileService.getProfile(address);
+              setUserProfile(updated);
+            }
           }}
         />
       )}
@@ -3729,6 +3883,8 @@ export default function TCGPage() {
         maxAttacks={maxAttacks}
         convex={convex}
         api={api}
+        setPendingReward={setPendingReward}
+        setShowRewardChoice={setShowRewardChoice}
       />
 
       {/* Poker Battle - handles both CPU and PvP modes */}
@@ -3767,6 +3923,7 @@ export default function TCGPage() {
         setPveSelectedCards={setPveSelectedCards}
         setErrorMessage={setErrorMessage}
         setIsDifficultyModalOpen={setIsDifficultyModalOpen}
+        setShowEntryFeeModal={setShowPvPEntryFeeModal}
         t={t}
       />
 
@@ -4164,53 +4321,6 @@ export default function TCGPage() {
         </div>
       ) : (
         <>
-          {/* Claude AI Disclaimer */}
-          <div className="mb-4 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 border-2 border-purple-400/30 rounded-xl p-3 md:p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#A855F7" strokeWidth="2" fill="#A855F7" fillOpacity="0.2"/>
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-purple-300 font-bold text-sm md:text-base mb-1">
-                  {t('claudeDisclaimerTitle')}
-                </p>
-                {/* Desktop: normal text */}
-                <p className="hidden md:block text-purple-200/90 text-xs md:text-sm leading-relaxed">
-                  {t('claudeDisclaimerText')}
-                </p>
-                {/* Mobile: scrolling marquee */}
-                <div className="md:hidden overflow-hidden">
-                  <p className="text-purple-200/90 text-xs leading-relaxed animate-marquee whitespace-nowrap inline-block">
-                    {t('claudeDisclaimerText')}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Metadata Delay Warning Banner */}
-          <div className="mb-4 bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-xl p-3 md:p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="#EAB308" strokeWidth="2" fill="#EAB308" fillOpacity="0.2"/>
-                  <path d="M12 8V12" stroke="#EAB308" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="12" cy="16" r="1" fill="#EAB308"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-yellow-300 font-bold text-sm md:text-base mb-1">
-                  {t('metadataWarningTitle')}
-                </p>
-                <p className="text-yellow-200/90 text-xs md:text-sm leading-relaxed">
-                  {t('metadataWarningText')}
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`}>
             <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-2 md:p-4 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30 shadow-gold`}>
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
@@ -4542,12 +4652,6 @@ export default function TCGPage() {
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">∅</div>
                     <p className="text-vintage-burnt-gold mb-6">{t('noNfts')}</p>
-                    <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-xl p-4 max-w-md mx-auto">
-                      <p className="text-sm text-vintage-gold font-semibold mb-2">⏱️ NEWLY OPENED CARDS TAKE TIME TO APPEAR</p>
-                      <p className="text-xs text-vintage-burnt-gold">
-                        Cards you just opened may take 5-10 minutes to show up on the site. This is because metadata needs to be indexed. This is normal and always happens! Refresh the page after a few minutes if your new cards don't appear immediately.
-                      </p>
-                    </div>
                   </div>
                 )}
 
@@ -4636,74 +4740,6 @@ export default function TCGPage() {
 
             <div>
               <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{boxShadow: '0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5)'}}>
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
-                    {t('yourHand')}
-                  </h2>
-                  <div className="flex gap-2">
-                    {nfts.length >= HAND_SIZE && selectedCards.length === 0 && (
-                      <button onClick={selectStrongest} className="px-3 py-1 bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-gold/30 transition font-modern font-semibold">
-                        {t('selectStrongest')}
-                      </button>
-                    )}
-                    {selectedCards.length > 0 && (
-                      <button onClick={clearSelection} className="px-3 py-1 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-black/70 transition font-modern">
-                        {t('clearSelection')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Felt Table Surface */}
-                <div className="bg-vintage-felt-green p-4 rounded-xl border-2 border-vintage-gold/40 mb-4" style={{boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.6)', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,.05) 2px, rgba(0,0,0,.05) 4px)'}}>
-                  <div className="grid grid-cols-5 gap-2 min-h-[120px]">
-                    {selectedCards.map((c, i) => (
-                      <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
-                        <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
-                      </FoilCardEffect>
-                    ))}
-                    {[...Array(HAND_SIZE - selectedCards.length)].map((_, i) => (
-                      <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
-                        <span className="text-2xl font-bold">+</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Illuminated Casino Panel for Defense Deck Button */}
-                <div ref={playButtonsRef} className="relative p-1 rounded-xl mb-4" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(255, 215, 0, 0.3)'}}>
-                  <div className="bg-vintage-black/90 p-4 rounded-lg">
-                    <button
-                      id="defense-deck-button"
-                      onClick={saveDefenseDeck}
-                      disabled={selectedCards.length !== HAND_SIZE || !userProfile}
-                      className={`w-full px-6 py-4 rounded-xl shadow-lg text-lg font-display font-bold transition-all uppercase tracking-wide ${
-                        selectedCards.length === HAND_SIZE && userProfile
-                          ? 'text-vintage-black hover:shadow-gold-lg'
-                          : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                      }`}
-                      style={selectedCards.length === HAND_SIZE && userProfile ? {
-                        background: 'linear-gradient(145deg, #FFD700, #C9A227)',
-                        boxShadow: '0 0 20px rgba(255, 215, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)'
-                      } : {}}
-                    >
-                      Save Defense Deck ({selectedCards.length}/{HAND_SIZE})
-                    </button>
-                    {showDefenseDeckSaved && (
-                      <div className="mt-2 text-center text-green-400 font-modern font-semibold animate-pulse">
-                        ✓ Defense Deck Saved!
-                      </div>
-                    )}
-                    {/* Defense Deck Save Status (retry feedback) */}
-                    {defenseDeckSaveStatus && (
-                      <div className="mt-2 text-center text-yellow-400 font-modern font-semibold animate-pulse">
-                        {defenseDeckSaveStatus}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 {/* Battle vs AI Button */}
                 <div className="mb-4">
                   <button
@@ -4783,6 +4819,74 @@ export default function TCGPage() {
                   </button>
                 </div>
 
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
+                    {t('yourHand')}
+                  </h2>
+                  <div className="flex gap-2">
+                    {nfts.length >= HAND_SIZE && selectedCards.length === 0 && (
+                      <button onClick={selectStrongest} className="px-3 py-1 bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-gold/30 transition font-modern font-semibold">
+                        {t('selectStrongest')}
+                      </button>
+                    )}
+                    {selectedCards.length > 0 && (
+                      <button onClick={clearSelection} className="px-3 py-1 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-black/70 transition font-modern">
+                        {t('clearSelection')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Felt Table Surface */}
+                <div className="bg-vintage-felt-green p-4 rounded-xl border-2 border-vintage-gold/40 mb-4" style={{boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.6)', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,.05) 2px, rgba(0,0,0,.05) 4px)'}}>
+                  <div className="grid grid-cols-5 gap-2 min-h-[120px]">
+                    {selectedCards.map((c, i) => (
+                      <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
+                        <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
+                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
+                      </FoilCardEffect>
+                    ))}
+                    {[...Array(HAND_SIZE - selectedCards.length)].map((_, i) => (
+                      <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
+                        <span className="text-2xl font-bold">+</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Illuminated Casino Panel for Defense Deck Button */}
+                <div ref={playButtonsRef} className="relative p-1 rounded-xl mb-4" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(255, 215, 0, 0.3)'}}>
+                  <div className="bg-vintage-black/90 p-4 rounded-lg">
+                    <button
+                      id="defense-deck-button"
+                      onClick={saveDefenseDeck}
+                      disabled={selectedCards.length !== HAND_SIZE || !userProfile}
+                      className={`w-full px-6 py-4 rounded-xl shadow-lg text-lg font-display font-bold transition-all uppercase tracking-wide ${
+                        selectedCards.length === HAND_SIZE && userProfile
+                          ? 'text-vintage-black hover:shadow-gold-lg'
+                          : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                      }`}
+                      style={selectedCards.length === HAND_SIZE && userProfile ? {
+                        background: 'linear-gradient(145deg, #FFD700, #C9A227)',
+                        boxShadow: '0 0 20px rgba(255, 215, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)'
+                      } : {}}
+                    >
+                      Save Defense Deck ({selectedCards.length}/{HAND_SIZE})
+                    </button>
+                    {showDefenseDeckSaved && (
+                      <div className="mt-2 text-center text-green-400 font-modern font-semibold animate-pulse">
+                        ✓ Defense Deck Saved!
+                      </div>
+                    )}
+                    {/* Defense Deck Save Status (retry feedback) */}
+                    {defenseDeckSaveStatus && (
+                      <div className="mt-2 text-center text-yellow-400 font-modern font-semibold animate-pulse">
+                        {defenseDeckSaveStatus}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="mt-6 space-y-4">
                   {dealerCards.length > 0 && !showBattleScreen && (
                     <div className="bg-gradient-to-br from-vintage-wine to-vintage-black backdrop-blur p-4 rounded-xl border-2 border-vintage-gold/50">
@@ -4849,17 +4953,7 @@ export default function TCGPage() {
                       <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
                     </h1>
                     {/* Collection Filter Buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setLeaderboardCollection('all')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'all'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        ALL
-                      </button>
+                    <div className="flex gap-2 items-center">
                       <button
                         onClick={() => setLeaderboardCollection('vibe')}
                         className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
@@ -4879,6 +4973,14 @@ export default function TCGPage() {
                         }`}
                       >
                         VBRS
+                      </button>
+                      {/* Export Top 10 Button */}
+                      <button
+                        onClick={handleExportLeaderboard}
+                        className="px-3 py-1 rounded-lg text-xs font-modern font-semibold transition bg-vintage-charcoal border border-green-500/50 text-green-400 hover:bg-green-500/10 hover:border-green-500 flex items-center gap-1"
+                        title="Export Top 10 to JSON"
+                      >
+                        <span>↓</span> Export
                       </button>
                     </div>
                   </div>
@@ -4930,7 +5032,9 @@ export default function TCGPage() {
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
-                          <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
+                          {leaderboardCollection === 'vibe' && (
+                            <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
+                          )}
                           <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
                         </tr>
                       </thead>
@@ -4966,54 +5070,56 @@ export default function TCGPage() {
                             <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
                             <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
                             <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveLosses || 0) + (profile.stats?.pvpLosses || 0)}</td>
-                            <td className="p-2 md:p-4 text-center">
-                              {/* Weekly Reward Claim Button (TOP 10 only) */}
-                              {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
-                                const rank = index + 1;
-                                let reward = 0;
-                                if (rank === 1) reward = 1000;
-                                else if (rank === 2) reward = 750;
-                                else if (rank === 3) reward = 500;
-                                else if (rank <= 10) reward = 300;
+                            {leaderboardCollection === 'vibe' && (
+                              <td className="p-2 md:p-4 text-center">
+                                {/* Weekly Reward Claim Button (TOP 10 only) */}
+                                {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
+                                  const rank = index + 1;
+                                  let reward = 0;
+                                  if (rank === 1) reward = 1000;
+                                  else if (rank === 2) reward = 750;
+                                  else if (rank === 3) reward = 500;
+                                  else if (rank <= 10) reward = 300;
 
-                                const canClaim = weeklyRewardEligibility?.eligible && weeklyRewardEligibility?.rank === rank;
-                                const alreadyClaimed = weeklyRewardEligibility?.claimed;
+                                  const canClaim = weeklyRewardEligibility?.eligible && weeklyRewardEligibility?.rank === rank;
+                                  const alreadyClaimed = weeklyRewardEligibility?.claimed;
 
-                                if (alreadyClaimed) {
+                                  if (alreadyClaimed) {
+                                    return (
+                                      <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
+                                        <div>✓ Claimed</div>
+                                        <div className="text-green-400">{reward} coins</div>
+                                      </div>
+                                    );
+                                  }
+
+                                  if (canClaim) {
+                                    return (
+                                      <button
+                                        onClick={() => {
+                                          if (soundEnabled) AudioManager.buttonClick();
+                                          handleClaimWeeklyLeaderboardReward();
+                                        }}
+                                        disabled={isClaimingWeeklyReward}
+                                        className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-modern font-bold text-xs md:text-sm transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        {isClaimingWeeklyReward ? '...' : `🎁 Claim ${reward}`}
+                                      </button>
+                                    );
+                                  }
+
                                   return (
                                     <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
-                                      <div>✓ Claimed</div>
-                                      <div className="text-green-400">{reward} coins</div>
+                                      <div>{reward} coins</div>
+                                      <div className="text-gray-500">Next week</div>
                                     </div>
                                   );
-                                }
-
-                                if (canClaim) {
-                                  return (
-                                    <button
-                                      onClick={() => {
-                                        if (soundEnabled) AudioManager.buttonClick();
-                                        handleClaimWeeklyLeaderboardReward();
-                                      }}
-                                      disabled={isClaimingWeeklyReward}
-                                      className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-modern font-bold text-xs md:text-sm transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      {isClaimingWeeklyReward ? '...' : `🎁 Claim ${reward}`}
-                                    </button>
-                                  );
-                                }
-
-                                return (
-                                  <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
-                                    <div>{reward} coins</div>
-                                    <div className="text-gray-500">Next week</div>
-                                  </div>
-                                );
-                              })()}
-                              {index >= 10 && (
-                                <div className="text-[10px] md:text-xs text-gray-500">-</div>
-                              )}
-                            </td>
+                                })()}
+                                {index >= 10 && (
+                                  <div className="text-[10px] md:text-xs text-gray-500">-</div>
+                                )}
+                              </td>
+                            )}
                             <td className="p-1 md:p-4 text-center">
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <button
@@ -5677,7 +5783,33 @@ export default function TCGPage() {
         currentDifficulty={aiDifficulty}
         tempSelected={tempSelectedDifficulty}
       />
+
+      {/* Claude AI Disclaimer - Footer */}
+      <div className="mt-8 mb-4 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 border-2 border-purple-400/30 rounded-xl p-3 md:p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#A855F7" strokeWidth="2" fill="#A855F7" fillOpacity="0.2"/>
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-purple-300 font-bold text-sm md:text-base mb-1">
+              {t('claudeDisclaimerTitle')}
+            </p>
+            <p className="text-purple-200/90 text-xs md:text-sm leading-relaxed">
+              {t('claudeDisclaimerText')}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Easter Egg - Runaway Image */}
+      <RunawayEasterEgg />
+
       </div>
     </div>
   );
 }
+ 
+
+

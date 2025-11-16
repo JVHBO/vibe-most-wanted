@@ -48,14 +48,14 @@ const PACK_TYPES = {
   mission: {
     name: "Mission Reward",
     description: "Earned from completing missions",
-    cards: 3,
+    cards: 2, // Reduced from 3 (-40%)
     price: 0, // Earned, not bought
     rarityOdds: { Common: 65, Rare: 27, Epic: 6, Legendary: 2 },
   },
   achievement: {
     name: "Achievement Pack",
     description: "Special achievement reward",
-    cards: 5,
+    cards: 3, // Reduced from 5 (-40%)
     price: 0, // Earned, not bought
     rarityOdds: { Common: 50, Rare: 35, Epic: 12, Legendary: 3 },
   },
@@ -110,8 +110,8 @@ const WEAR_LEVELS = ["Pristine", "Mint", "Lightly Played", "Moderately Played", 
 const WEAR_ODDS = { Pristine: 5, Mint: 20, "Lightly Played": 40, "Moderately Played": 25, "Heavily Played": 10 };
 
 /**
- * Calculate card power (EXACTLY same as NFT cards)
- * Formula: power = rarity_base × wear_multiplier × foil_multiplier
+ * Calculate card power (FREE cards have 20% less power than NFTs)
+ * Formula: power = rarity_base × wear_multiplier × foil_multiplier × 0.8 (FREE penalty)
  */
 function calculateCardPower(rarity: string, wear: string, foil?: string): number {
   // Base power by rarity (exact NFT values)
@@ -143,7 +143,10 @@ function calculateCardPower(rarity: string, wear: string, foil?: string): number
   const wearMult = wearMultiplier[wear] || 1.0;
   const foilMult = foil ? (foilMultiplier[foil] || 1.0) : 1.0;
 
-  return Math.max(1, Math.round(base * wearMult * foilMult));
+  // FREE cards have 20% less power (×0.8)
+  const power = base * wearMult * foilMult * 0.8;
+
+  return Math.max(1, Math.round(power));
 }
 
 /**
@@ -404,6 +407,68 @@ export const buyPack = mutation({
       packsReceived: args.quantity,
       coinsSpent: totalCost,
       remainingCoins: coins - totalCost,
+    };
+  },
+});
+
+/**
+ * BUY pack with VBMS from blockchain
+ * Called by API after VBMS transfer is confirmed on-chain
+ */
+export const buyPackWithVBMS = mutation({
+  args: {
+    address: v.string(),
+    packType: v.union(v.literal("basic"), v.literal("premium"), v.literal("elite")),
+    quantity: v.number(),
+    txHash: v.string(), // Transaction hash for verification
+  },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    // Get pack info
+    const packInfo = PACK_TYPES[args.packType];
+    if (!packInfo || packInfo.price === 0) {
+      throw new Error("This pack type cannot be purchased");
+    }
+
+    // Get player profile (create if doesn't exist)
+    let profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Give packs to player
+    const existingPack = await ctx.db
+      .query("cardPacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .filter((q) => q.eq(q.field("packType"), args.packType))
+      .first();
+
+    if (existingPack) {
+      // Add to existing pack count
+      await ctx.db.patch(existingPack._id, {
+        unopened: existingPack.unopened + args.quantity,
+      });
+    } else {
+      // Create new pack entry
+      await ctx.db.insert("cardPacks", {
+        address,
+        packType: args.packType,
+        unopened: args.quantity,
+        earnedAt: Date.now(),
+      });
+    }
+
+    console.log(`💎 VBMS Purchase: ${address} bought ${args.quantity}x ${args.packType} packs (tx: ${args.txHash.slice(0, 10)}...)`);
+
+    return {
+      success: true,
+      packsReceived: args.quantity,
+      txHash: args.txHash,
     };
   },
 });
@@ -827,3 +892,4 @@ export const restoreCards = mutation({
     };
   },
 });
+

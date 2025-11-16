@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
+import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
 
 interface RewardChoiceModalProps {
   amount: number;
@@ -23,6 +24,7 @@ export function RewardChoiceModal({
   const { address } = useAccount();
   const [isProcessing, setIsProcessing] = useState(false);
   const processReward = useMutation(api.rewardsChoice.processRewardChoice);
+  const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
 
   // Debug: log when modal renders
   console.log('[RewardChoiceModal] Rendered with:', { amount, source, address, isProcessing });
@@ -48,16 +50,44 @@ export function RewardChoiceModal({
     console.log('[RewardChoiceModal] Processing started');
 
     try {
-      console.log('[RewardChoiceModal] Calling processReward mutation');
-      const result = await processReward({
-        address,
-        amount,
-        choice,
-        source,
-      });
+      if (choice === "claim_now") {
+        // CLAIM NOW: Get signature from backend and call blockchain
+        console.log('[RewardChoiceModal] Getting signature for blockchain claim');
+        const result = await processReward({
+          address,
+          amount,
+          choice: "claim_now",
+          source,
+        });
 
-      console.log('[RewardChoiceModal] Mutation result:', result);
-      toast.success(result.message);
+        console.log('[RewardChoiceModal] Signature received:', result);
+
+        // Call VBMS smart contract
+        if (result.signature && result.nonce) {
+          toast.info("🔐 Aguardando assinatura da carteira...");
+
+          const txHash = await claimVBMS(
+            amount.toString(),
+            result.nonce as `0x${string}`,
+            result.signature as `0x${string}`
+          );
+
+          console.log('[RewardChoiceModal] Blockchain TX:', txHash);
+          toast.success(`✅ ${amount} VBMS claimed via blockchain!`);
+        }
+      } else {
+        // CLAIM LATER: Send to inbox
+        console.log('[RewardChoiceModal] Sending to inbox');
+        const result = await processReward({
+          address,
+          amount,
+          choice: "claim_later",
+          source,
+        });
+
+        console.log('[RewardChoiceModal] Inbox result:', result);
+        toast.success(result.message);
+      }
 
       if (onChoiceMade) {
         console.log('[RewardChoiceModal] Calling onChoiceMade callback');
@@ -68,7 +98,7 @@ export function RewardChoiceModal({
       setTimeout(() => {
         console.log('[RewardChoiceModal] Closing modal');
         onClose();
-      }, 500);
+      }, 1000);
     } catch (error: any) {
       console.error('[RewardChoiceModal] Error processing reward:', error);
       toast.error(error.message || "Erro ao processar recompensa");
@@ -87,16 +117,16 @@ export function RewardChoiceModal({
       }}
     >
       <div
-        className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-lg w-full mx-4"
+        className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-4 md:p-6 max-w-lg w-full mx-4 my-4 max-h-[95vh] overflow-y-auto"
         onClick={(e) => {
           e.stopPropagation();
           console.log('[RewardChoiceModal] Modal content clicked');
         }}
       >
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="text-6xl mb-3">🎉</div>
-          <h2 className="text-3xl font-bold text-vintage-gold mb-2">
+        <div className="text-center mb-4 md:mb-6">
+          <div className="text-5xl md:text-6xl mb-2 md:mb-3">🎉</div>
+          <h2 className="text-2xl md:text-3xl font-bold text-vintage-gold mb-2">
             Vitória!
           </h2>
           <p className="text-lg text-vintage-gold/80 mb-1">
@@ -111,8 +141,8 @@ export function RewardChoiceModal({
         </div>
 
         {/* Choice explanation */}
-        <div className="bg-vintage-deep-black/50 rounded-lg p-4 mb-6">
-          <p className="text-sm text-vintage-gold/80 text-center mb-2">
+        <div className="bg-vintage-deep-black/50 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+          <p className="text-xs md:text-sm text-vintage-gold/80 text-center mb-2">
             💡 Escolha como receber suas moedas:
           </p>
           <ul className="text-xs text-vintage-gold/60 space-y-1">
@@ -128,17 +158,17 @@ export function RewardChoiceModal({
         </div>
 
         {/* Choice buttons */}
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-3 md:gap-4">
           <button
             onClick={() => {
               console.log('[RewardChoiceModal] Claim Now button clicked');
               handleChoice("claim_now");
             }}
             disabled={isProcessing}
-            className="relative group py-4 px-6 rounded-lg bg-gradient-to-r from-vintage-gold to-vintage-orange text-vintage-deep-black font-bold text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative group py-3 md:py-4 px-4 md:px-6 rounded-lg bg-gradient-to-r from-vintage-gold to-vintage-orange text-vintage-deep-black font-bold text-base md:text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-2xl">💰</span>
+            <div className="flex items-center justify-center gap-2 md:gap-3">
+              <span className="text-xl md:text-2xl">💰</span>
               <div>
                 <div>Coletar Agora</div>
                 <div className="text-xs opacity-80">
@@ -154,10 +184,10 @@ export function RewardChoiceModal({
               handleChoice("claim_later");
             }}
             disabled={isProcessing}
-            className="relative group py-4 px-6 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative group py-3 md:py-4 px-4 md:px-6 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold text-base md:text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-2xl">📥</span>
+            <div className="flex items-center justify-center gap-2 md:gap-3">
+              <span className="text-xl md:text-2xl">📥</span>
               <div>
                 <div>Guardar para Depois</div>
                 <div className="text-xs opacity-80">Vai para o Inbox</div>

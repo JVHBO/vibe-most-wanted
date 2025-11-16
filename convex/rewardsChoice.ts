@@ -7,6 +7,54 @@
 
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
+import { ethers } from "ethers";
+
+// ========== HELPERS ==========
+
+function generateNonce(): string {
+  // Generate bytes32 nonce (64 hex characters)
+  const timestamp = Date.now().toString(16).padStart(16, '0');
+  const random1 = Math.random().toString(16).substring(2).padStart(16, '0');
+  const random2 = Math.random().toString(16).substring(2).padStart(16, '0');
+  const random3 = Math.random().toString(16).substring(2).padStart(16, '0');
+  return `0x${timestamp}${random1}${random2}${random3}`.substring(0, 66); // 0x + 64 chars
+}
+
+async function signClaimMessage(
+  address: string,
+  amount: number,
+  nonce: string
+): Promise<string> {
+  // Get private key from environment variable
+  const SIGNER_PRIVATE_KEY = process.env.VBMS_SIGNER_PRIVATE_KEY;
+
+  if (!SIGNER_PRIVATE_KEY) {
+    throw new Error('VBMS_SIGNER_PRIVATE_KEY not configured in environment variables');
+  }
+
+  // Create wallet from private key
+  const wallet = new ethers.Wallet(SIGNER_PRIVATE_KEY);
+
+  // Encode message: keccak256(abi.encodePacked(address, uint256, bytes32))
+  // Amount needs to be converted to wei (18 decimals)
+  const amountInWei = ethers.parseEther(amount.toString());
+
+  const messageHash = ethers.solidityPackedKeccak256(
+    ['address', 'uint256', 'bytes32'],
+    [address, amountInWei, nonce]
+  );
+
+  // Sign the message hash WITH Ethereum Signed Message prefix
+  // Contract expects: keccak256("\x19Ethereum Signed Message:\n32" + messageHash)
+  const signature = await wallet.signMessage(ethers.getBytes(messageHash));
+
+  console.log(`[Rewards Signature] Address: ${address}, Amount: ${amount} VBMS (${amountInWei} wei), Nonce: ${nonce}`);
+  console.log(`[Rewards Signature] Message Hash: ${messageHash}`);
+  console.log(`[Rewards Signature] Signature: ${signature}`);
+  console.log(`[Rewards Signature] Signer Address: ${wallet.address}`);
+
+  return signature;
+}
 
 /**
  * Process reward choice after battle - Claim Now or Send to Inbox
@@ -35,30 +83,35 @@ export const processRewardChoice = mutation({
     }
 
     if (choice === "claim_now") {
-      // Add coins immediately to balance
-      const currentCoins = profile.coins || 0;
-      const newCoinsBalance = currentCoins + amount;
+      // Generate signature for blockchain claim (VBMS on-chain)
+      const nonce = generateNonce();
+      const signature = await signClaimMessage(address, amount, nonce);
 
-      await ctx.db.patch(profile._id, {
-        coins: newCoinsBalance,
-        lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
-        lastUpdated: Date.now(),
+      // Track analytics
+      await ctx.db.insert("claimAnalytics", {
+        playerAddress: address.toLowerCase(),
+        choice: "immediate",
+        amount,
+        inboxTotal: profile.inbox || 0,
+        bonusAvailable: false,
+        timestamp: Date.now(),
       });
 
       return {
         success: true,
         choice: "claim_now",
         amount: amount,
-        newBalance: newCoinsBalance,
-        message: `${amount} coins claimed successfully!`,
+        nonce: nonce,
+        signature: signature,
+        message: `💳 Claim ${amount} VBMS via blockchain transaction`,
       };
     } else {
-      // Send to inbox for later claim
-      const currentInbox = profile.coinsInbox || 0;
+      // Send to VBMS inbox for later blockchain claim
+      const currentInbox = profile.inbox || 0;
       const newInboxBalance = currentInbox + amount;
 
       await ctx.db.patch(profile._id, {
-        coinsInbox: newInboxBalance,
+        inbox: newInboxBalance,
         lastUpdated: Date.now(),
       });
 
@@ -67,7 +120,7 @@ export const processRewardChoice = mutation({
         choice: "claim_later",
         amount: amount,
         newInboxBalance: newInboxBalance,
-        message: `${amount} coins sent to inbox! Claim anytime from the inbox menu.`,
+        message: `📬 ${amount} VBMS enviado para o inbox! Colete quando quiser e pague gas apenas 1 vez.`,
       };
     }
   },

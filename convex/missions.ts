@@ -214,8 +214,9 @@ export const claimMission = mutation({
       v.literal("ru"),
       v.literal("zh-CN")
     )),
+    skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins
   },
-  handler: async (ctx, { playerAddress, missionId, language }) => {
+  handler: async (ctx, { playerAddress, missionId, language, skipCoins }) => {
     const normalizedAddress = playerAddress.toLowerCase();
 
     // Get mission
@@ -259,14 +260,18 @@ export const claimMission = mutation({
       // 🇨🇳 Apply language boost to mission reward
       boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
 
-      // Award coins
-      newBalance = (profile.coins || 0) + boostedReward;
-      const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
+      // Award coins (or just calculate if skipCoins)
+      if (!skipCoins) {
+        newBalance = (profile.coins || 0) + boostedReward;
+        const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
-      await ctx.db.patch(profile._id, {
-        coins: newBalance,
-        lifetimeEarned: newLifetimeEarned,
-      });
+        await ctx.db.patch(profile._id, {
+          coins: newBalance,
+          lifetimeEarned: newLifetimeEarned,
+        });
+      } else {
+        newBalance = profile.coins || 0;
+      }
     } else if (rewardInfo.type === "pack") {
       // Award pack(s)
       if (!("packType" in rewardInfo)) {
