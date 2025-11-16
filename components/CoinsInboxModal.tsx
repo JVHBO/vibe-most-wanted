@@ -113,7 +113,7 @@ export function CoinsInboxModal({ inboxStatus, onClose }: CoinsInboxModalProps) 
       await recordInboxClaim({
         address,
         amount: result.amount,
-        txHash: txHash as string,
+        txHash: txHash as unknown as string,
       });
 
       toast.success(`✅ ${result.amount.toLocaleString()} VBMS coletados!`);

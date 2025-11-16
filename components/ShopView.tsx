@@ -64,7 +64,7 @@ export function ShopView({ address }: ShopViewProps) {
         message: 'Transferring VBMS to pool... Please confirm in your wallet'
       });
 
-      const txHash = await transfer(CONTRACTS.VBMSPoolTroll as `0x${string}`, totalVBMS);
+      const txHash = await transfer(CONTRACTS.VBMSPoolTroll as `0x${string}`, BigInt(totalVBMS));
       console.log('✅ Transfer confirmed:', txHash);
 
       // Step 2: Call backend to verify and mint packs

@@ -561,8 +561,8 @@ export function useFinishVBMSBattle() {
       writeContract({
         address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
         abi: POKER_BATTLE_ABI,
-        functionName: 'finishBattle',
-        args: [BigInt(battleId), winnerAddress, signature as `0x${string}`],
+        functionName: 'finishBattle' as any,
+        args: [BigInt(battleId), winnerAddress, signature as `0x${string}`] as any,
         chainId: CONTRACTS.CHAIN_ID,
       });
     } catch (err: any) {
@@ -592,11 +592,11 @@ export function useTransferVBMS() {
     console.log("💸 Transferring VBMS:", {
       to,
       amount: amount.toString(),
-      contractAddress: CONTRACTS.VBMS_TOKEN,
+      contractAddress: CONTRACTS.VBMSToken,
     });
 
     writeContract({
-      address: CONTRACTS.VBMS_TOKEN as `0x${string}`,
+      address: CONTRACTS.VBMSToken as `0x${string}`,
       abi: ERC20_ABI,
       functionName: 'transfer',
       args: [to, amount],

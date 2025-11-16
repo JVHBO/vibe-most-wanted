@@ -235,7 +235,7 @@ export const resolveBets = mutation({
 
       // Send total TESTVBMS to inbox (winnings + remaining credits)
       if (totalToInbox > 0) {
-        await ctx.db.insert("vbmsInbox", {
+        await ctx.db.insert("vbmsInbox" as any, {
           address: bet.bettor,
           amount: totalToInbox,
           source: "betting_win",
@@ -285,7 +285,7 @@ export const resolveBets = mutation({
 
       // Send remaining credits to inbox as TESTVBMS (if any)
       if (remainingCredits > 0) {
-        await ctx.db.insert("vbmsInbox", {
+        await ctx.db.insert("vbmsInbox" as any, {
           address: bet.bettor,
           amount: remainingCredits,
           source: "betting_refund",

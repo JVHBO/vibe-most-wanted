@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { toast } from "sonner";
 import { AudioManager } from '@/lib/audio-manager';
 import { PokerMatchmaking } from './PokerMatchmaking';
 import { PokerWaitingRoom } from './PokerWaitingRoom';
@@ -3031,7 +3032,7 @@ export function PokerBattleTable({
             player2Address={room.guestAddress || ''}
             player2Username={room.guestUsername || 'Player 2'}
             isGameStarted={phase !== 'deck-building' && phase !== 'card-selection'}
-            isGameOver={phase === 'game-over'}
+            isGameOver={false}
           />
         </div>
       )}

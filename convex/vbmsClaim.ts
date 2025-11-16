@@ -552,7 +552,7 @@ export const claimAchievementNow = mutation({
     }
 
     // Check if blockchain claim already done (prevent double claim)
-    if (achievement.blockchainClaimedAt) {
+    if ((achievement as any).blockchainClaimedAt) {
       throw new Error("Achievement VBMS already claimed on blockchain");
     }
 
@@ -571,7 +571,7 @@ export const claimAchievementNow = mutation({
     // 🔒 SECURITY: Mark blockchain claim to prevent reuse
     await ctx.db.patch(achievement._id, {
       blockchainClaimedAt: Date.now(),
-    });
+    } as any);
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
@@ -820,7 +820,7 @@ export const recordTESTVBMSConversion = mutation({
       amount,
       txHash,
       timestamp: Date.now(),
-      type: "testvbms_conversion",
+      type: "testvbms_conversion" as any,
     });
 
     console.log(`✅ ${address} converted ${amount} TESTVBMS → VBMS, zeroed coins`);
