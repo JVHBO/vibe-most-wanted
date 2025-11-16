@@ -1274,13 +1274,6 @@ export default function TCGPage() {
       setFilteredCount(filtered);
       devLog(`📊 NFT Stats: Total=${enrichedRaw.length}, Revealed=${revealed.length}, Filtered=${filtered}`);
 
-      // DEBUG: Count NFTs by collection
-      const collectionCounts: Record<string, number> = {};
-      revealed.forEach((nft) => {
-        const col = nft.collection || 'no-collection';
-        collectionCounts[col] = (collectionCounts[col] || 0) + 1;
-      });
-      console.log('📦 NFTs by collection:', collectionCounts);
 
       const IMAGE_BATCH_SIZE = 50;
       const processed = [];
@@ -2181,14 +2174,6 @@ export default function TCGPage() {
   const filteredAndSortedNfts = useMemo(() => {
     let filtered = nfts;
 
-    console.log('🔍 FILTER DEBUG:', {
-      totalCards: nfts.length,
-      freeCards: nfts.filter(c => c.badgeType === 'FREE_CARD').length,
-      nftCards: nfts.filter(c => c.badgeType === 'NFT').length,
-      cardTypeFilter,
-      selectedCollections,
-    });
-
     // Apply type filter
     if (cardTypeFilter === 'free') {
       filtered = nfts.filter(card => card.badgeType === 'FREE_CARD');
@@ -2196,12 +2181,9 @@ export default function TCGPage() {
       filtered = nfts.filter(card => card.badgeType !== 'FREE_CARD');
     }
 
-    console.log('🔍 After type filter:', filtered.length);
-
     // Apply collection filter (if any collections are selected)
     if (selectedCollections.length > 0) {
       filtered = filterCardsByCollections(filtered, selectedCollections);
-      console.log('🔍 After collection filter:', filtered.length);
     }
 
     // Apply sort
