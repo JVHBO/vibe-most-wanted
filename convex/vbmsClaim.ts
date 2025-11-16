@@ -103,7 +103,7 @@ export const signClaimMessage = internalAction({
   },
   handler: async (ctx, args): Promise<string> => {
     const { address, amount, nonce } = args;
-    const apiUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const apiUrl = 'https://vibe-most-wanted.vercel.app';
 
     console.log(`[VBMS Sign Claim] Calling API at: ${apiUrl}/api/vbms/sign-claim`);
     console.log(`[VBMS Sign Claim] Request: address=${address}, amount=${amount}, nonce=${nonce}`);
