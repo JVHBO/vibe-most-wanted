@@ -92,10 +92,10 @@ function generateNonce(): string {
   return `0x${timestamp}${random1}${random2}${random3}`.substring(0, 66); // 0x + 64 chars
 }
 
-// ========== ACTION: Sign Message (ECDSA Real Signature) ==========
+// ========== INTERNAL ACTION: Sign Message (ECDSA Real Signature) ==========
 // Calls Next.js API route to sign the message (needs to be action because of fetch)
 
-export const signClaimMessage = action({
+export const signClaimMessage = internalAction({
   args: {
     address: v.string(),
     amount: v.number(),

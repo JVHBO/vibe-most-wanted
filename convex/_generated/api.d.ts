@@ -20,6 +20,7 @@ import type * as crons from "../crons.js";
 import type * as cryptoActions from "../cryptoActions.js";
 import type * as economy from "../economy.js";
 import type * as economyVBMS from "../economyVBMS.js";
+import type * as emergencyRestore from "../emergencyRestore.js";
 import type * as importData from "../importData.js";
 import type * as languageBoost from "../languageBoost.js";
 import type * as matches from "../matches.js";
@@ -72,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   cryptoActions: typeof cryptoActions;
   economy: typeof economy;
   economyVBMS: typeof economyVBMS;
+  emergencyRestore: typeof emergencyRestore;
   importData: typeof importData;
   languageBoost: typeof languageBoost;
   matches: typeof matches;
