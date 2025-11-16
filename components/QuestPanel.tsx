@@ -41,11 +41,11 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
         audio.play().catch(() => {});
       }
 
-      // Show RewardChoiceModal
+      // TESTVBMS added to balance - show modal to choose claim now or later
       if (result && result.success) {
         setPendingReward({
           amount: result.reward,
-          source: 'pve' // Daily quests count as PvE
+          source: 'pve' // Daily quest
         });
         setShowRewardChoice(true);
       }
@@ -159,10 +159,13 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
         <RewardChoiceModal
           amount={pendingReward.amount}
           source={pendingReward.source as "pve" | "pvp" | "attack" | "defense" | "leaderboard"}
-          onClose={() => setShowRewardChoice(false)}
+          onClose={() => {
+            setShowRewardChoice(false);
+            onClose(); // Close quest panel after choice
+          }}
           onChoiceMade={(choice) => {
             setShowRewardChoice(false);
-            // Modal closed - user made their choice
+            onClose(); // Close quest panel after choice
           }}
         />
       )}

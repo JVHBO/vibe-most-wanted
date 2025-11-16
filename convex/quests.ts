@@ -421,7 +421,18 @@ export const claimQuestReward = mutation({
       throw new Error("Quest not completed yet");
     }
 
-    // Mark as claimed (but don't add coins - let frontend handle via RewardChoiceModal)
+    // Add coins (TESTVBMS) - player can convert later if they want
+    const currentCoins = profile.coins || 0;
+    const newCoins = currentCoins + quest.reward;
+    const lifetimeEarned = (profile.lifetimeEarned || 0) + quest.reward;
+
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned,
+      lastUpdated: Date.now(),
+    });
+
+    // Mark as claimed
     if (existingProgress) {
       await ctx.db.patch(existingProgress._id, {
         claimed: true,
@@ -437,10 +448,11 @@ export const claimQuestReward = mutation({
       });
     }
 
-    // Return reward for frontend to show RewardChoiceModal
+    // Return reward info for frontend to show modal
     return {
       success: true,
       reward: quest.reward,
+      newBalance: newCoins,
       questName: quest.description,
     };
   },
@@ -686,15 +698,36 @@ export const claimWeeklyReward = mutation({
       throw new Error("Quest definition not found");
     }
 
-    // Mark as claimed (but don't add coins - let frontend handle via RewardChoiceModal)
+    // Get profile and add coins (TESTVBMS)
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const reward = questDef.reward;
+    const newCoins = (profile.coins || 0) + reward;
+    const newLifetimeEarned = (profile.lifetimeEarned || 0) + reward;
+
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned: newLifetimeEarned,
+      lastUpdated: Date.now(),
+    });
+
+    // Mark as claimed
     const updatedQuests = { ...progress.quests };
     updatedQuests[questId].claimed = true;
     await ctx.db.patch(progress._id, { quests: updatedQuests });
 
-    // Return reward for frontend to show RewardChoiceModal
+    // Return reward info for frontend to show modal
     return {
       success: true,
-      reward: questDef.reward,
+      reward,
+      newBalance: newCoins,
       questName: questDef.description,
     };
   },
@@ -901,7 +934,17 @@ export const claimWeeklyLeaderboardReward = mutation({
       throw new Error("Already claimed reward for this week");
     }
 
-    // Record claim in weeklyRewards table (but don't add coins - let frontend handle via RewardChoiceModal)
+    // Add coins (TESTVBMS)
+    const newCoins = (player.coins || 0) + reward;
+    const newLifetimeEarned = (player.lifetimeEarned || 0) + reward;
+
+    await ctx.db.patch(player._id, {
+      coins: newCoins,
+      lifetimeEarned: newLifetimeEarned,
+      lastUpdated: Date.now(),
+    });
+
+    // Record claim in weeklyRewards table
     await ctx.db.insert("weeklyRewards", {
       playerAddress: normalizedAddress,
       username: player.username,
@@ -912,11 +955,12 @@ export const claimWeeklyLeaderboardReward = mutation({
       method: "manual_claim", // vs "auto_distribution"
     });
 
-    // Return reward for frontend to show RewardChoiceModal
+    // Return reward info for frontend to show modal
     return {
       success: true,
       rank,
       reward,
+      newBalance: newCoins,
       rewardName: `Leaderboard Rank #${rank}`,
       nextResetDate: getNextSunday(),
     };
