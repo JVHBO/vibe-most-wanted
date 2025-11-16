@@ -19,6 +19,7 @@ import { GamePopups } from './GamePopups';
 
 interface Card {
   tokenId: string;
+  collection?: string; // NFT collection
   name?: string; // Optional for NFTs
   image?: string;
   imageUrl?: string; // NFTs use imageUrl
@@ -612,7 +613,16 @@ export function PokerBattleTable({
         await selectCardMutation({
           roomId,
           address: playerAddress,
-          card,
+          card: {
+            tokenId: card.tokenId,
+            collection: card.collection,
+            power: card.power || 0,
+            imageUrl: card.imageUrl || card.image || '',
+            name: card.name || 'Unknown',
+            rarity: card.rarity || 'common',
+            foil: card.foil,
+            wear: card.wear,
+          },
         });
         console.log('[PokerBattle] Card selection sent to server successfully');
       } catch (error) {
