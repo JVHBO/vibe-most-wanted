@@ -888,16 +888,7 @@ export default function TCGPage() {
 
     setCurrentVictoryImage(victoryImage);
 
-    // Check if there are coins earned to save for later reward choice
-    if (lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0) {
-      // Save reward data to show reward choice modal AFTER victory screen closes
-      setPendingReward({
-        amount: lastBattleResult.coinsEarned,
-        source: lastBattleResult.type,
-      });
-    }
-
-    // Always show victory popup first
+    // TESTVBMS already added - just show victory
     setShowWinPopup(true);
   };
 
@@ -1896,17 +1887,8 @@ export default function TCGPage() {
                 opponentPfpUrl: undefined, // PvE opponent has no PFP
               });
 
-              // Set pending reward to show RewardChoiceModal after victory/defeat screen
+              // TESTVBMS already added - no modal needed
               console.log('[DEBUG PvE Elimination] coinsEarned:', coinsEarned, 'finalResult:', finalResult);
-              if (coinsEarned > 0) {
-                console.log('[DEBUG PvE Elimination] Setting pendingReward:', { amount: coinsEarned, source: 'pve' });
-                setPendingReward({
-                  amount: coinsEarned,
-                  source: 'pve'
-                });
-              } else {
-                console.log('[DEBUG PvE Elimination] NOT setting pendingReward - coinsEarned is 0 or negative');
-              }
 
               // Close battle first
               setTimeout(() => {
@@ -2052,13 +2034,7 @@ export default function TCGPage() {
           opponentPfpUrl: undefined, // PvE opponent has no PFP
         });
 
-        // Set pending reward to show RewardChoiceModal after victory/defeat screen
-        if (coinsEarned > 0) {
-          setPendingReward({
-            amount: coinsEarned,
-            source: 'pve'
-          });
-        }
+        // TESTVBMS already added - no modal
 
         // Fecha a tela de batalha PRIMEIRO
         setTimeout(() => {
@@ -2480,13 +2456,7 @@ export default function TCGPage() {
                     opponentPfpUrl: opponentPfpUrl,
                   });
 
-                  // Set pending reward to show RewardChoiceModal after victory/defeat screen
-                  if (coinsEarned > 0) {
-                    setPendingReward({
-                      amount: coinsEarned,
-                      source: 'pvp'
-                    });
-                  }
+                  // TESTVBMS already added - no modal
 
                   // Mostra popup DEPOIS de fechar batalha
                   setTimeout(() => {
@@ -3911,8 +3881,6 @@ export default function TCGPage() {
         maxAttacks={maxAttacks}
         convex={convex}
         api={api}
-        setPendingReward={setPendingReward}
-        setShowRewardChoice={setShowRewardChoice}
       />
 
       {/* Poker Battle - handles both CPU and PvP modes */}
