@@ -608,25 +608,35 @@ export function PokerBattleTable({
       }, 5000);
     } else {
       // PvP mode - send to server
-      console.log('[PokerBattle] Sending card selection to server', { roomId, playerAddress });
+      console.log('[PokerBattle] Sending card selection to server', {
+        roomId,
+        playerAddress,
+        rawCard: card
+      });
+
+      const cardData = {
+        tokenId: card.tokenId,
+        collection: card.collection,
+        power: card.power || 0,
+        imageUrl: card.imageUrl || card.image || '',
+        name: card.name || 'Unknown',
+        rarity: card.rarity || 'common',
+        foil: card.foil,
+        wear: card.wear,
+      };
+
+      console.log('[PokerBattle] Prepared card data:', cardData);
+
       try {
         await selectCardMutation({
           roomId,
           address: playerAddress,
-          card: {
-            tokenId: card.tokenId,
-            collection: card.collection,
-            power: card.power || 0,
-            imageUrl: card.imageUrl || card.image || '',
-            name: card.name || 'Unknown',
-            rarity: card.rarity || 'common',
-            foil: card.foil,
-            wear: card.wear,
-          },
+          card: cardData,
         });
         console.log('[PokerBattle] Card selection sent to server successfully');
       } catch (error) {
         console.error('[PokerBattle] Error selecting card:', error);
+        console.error('[PokerBattle] Failed card data:', cardData);
       }
     }
   };
