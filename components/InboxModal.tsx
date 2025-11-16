@@ -182,7 +182,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       onClick={onClose}
     >
       <div
-        className="relative bg-gradient-to-br from-vintage-charcoal via-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold/50 rounded-2xl shadow-2xl shadow-vintage-gold/20 max-w-lg w-full overflow-hidden"
+        className="relative bg-gradient-to-br from-vintage-charcoal via-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold/50 rounded-2xl shadow-2xl shadow-vintage-gold/20 max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Decorative top border */}
