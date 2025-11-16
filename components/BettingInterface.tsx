@@ -50,13 +50,13 @@ export function BettingInterface({
   const placeBet = useMutation(api.bettingCredits.placeBetWithCredits);
 
   // Calculate betting stats
-  const betsOnPlayer1 = roomBets?.filter(b => b.betOn.toLowerCase() === player1Address.toLowerCase()) || [];
-  const betsOnPlayer2 = roomBets?.filter(b => b.betOn.toLowerCase() === player2Address.toLowerCase()) || [];
-  const totalOnPlayer1 = betsOnPlayer1.reduce((sum, b) => sum + b.amount, 0);
-  const totalOnPlayer2 = betsOnPlayer2.reduce((sum, b) => sum + b.amount, 0);
+  const betsOnPlayer1 = roomBets?.filter((b: any) => b.betOn.toLowerCase() === player1Address.toLowerCase()) || [];
+  const betsOnPlayer2 = roomBets?.filter((b: any) => b.betOn.toLowerCase() === player2Address.toLowerCase()) || [];
+  const totalOnPlayer1 = betsOnPlayer1.reduce((sum: number, b: any) => sum + b.amount, 0);
+  const totalOnPlayer2 = betsOnPlayer2.reduce((sum: number, b: any) => sum + b.amount, 0);
 
   // Check if user already bet
-  const userBet = roomBets?.find(b => b.bettor.toLowerCase() === address?.toLowerCase());
+  const userBet = roomBets?.find((b: any) => b.bettor.toLowerCase() === address?.toLowerCase());
 
   // Handle place bet
   const handlePlaceBet = async () => {
