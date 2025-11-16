@@ -146,7 +146,27 @@ export async function fetchNFTs(
   do {
     pageCount++;
     const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
-    const res = await fetch(url);
+
+    // Retry logic for rate limiting (429)
+    let res;
+    let retries = 0;
+    const maxRetries = 3;
+
+    while (retries <= maxRetries) {
+      res = await fetch(url);
+
+      if (res.status === 429 && retries < maxRetries) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, retries) * 1000;
+        console.log(`⏳ Rate limited, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        retries++;
+        continue;
+      }
+
+      break;
+    }
+
     if (!res.ok) throw new Error(`API falhou: ${res.status}`);
     const json = await res.json();
 
