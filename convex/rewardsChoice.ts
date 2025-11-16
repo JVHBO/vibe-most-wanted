@@ -73,29 +73,51 @@ export const processRewardChoice = mutation({
     ),
   },
   handler: async (ctx, { address, amount, choice, source }) => {
+    console.log('[processRewardChoice] Called with:', { address, amount, choice, source });
+
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .first();
 
     if (!profile) {
+      console.error('[processRewardChoice] Profile not found for address:', address);
       throw new Error("Profile not found");
     }
+
+    console.log('[processRewardChoice] Profile found:', {
+      coins: profile.coins,
+      inbox: profile.inbox
+    });
 
     if (choice === "claim_now") {
       // CLAIM NOW: Convert TESTVBMS to VBMS blockchain
       const currentCoins = profile.coins || 0;
 
+      console.log('[processRewardChoice] Checking balance:', { currentCoins, amount });
+
       if (currentCoins < amount) {
-        throw new Error(`Saldo insuficiente. Você tem ${currentCoins} TESTVBMS, precisa de ${amount}`);
+        const error = `Saldo insuficiente. Você tem ${currentCoins} TESTVBMS, precisa de ${amount}`;
+        console.error('[processRewardChoice]', error);
+        throw new Error(error);
       }
 
       // Deduct TESTVBMS
       const newCoinsBalance = currentCoins - amount;
 
+      console.log('[processRewardChoice] Generating signature...');
+
       // Generate signature for blockchain claim
       const nonce = generateNonce();
-      const signature = await signClaimMessage(address, amount, nonce);
+      let signature: string;
+
+      try {
+        signature = await signClaimMessage(address, amount, nonce);
+        console.log('[processRewardChoice] Signature generated successfully');
+      } catch (signError: any) {
+        console.error('[processRewardChoice] Signature generation failed:', signError);
+        throw new Error(`Failed to generate signature: ${signError.message}`);
+      }
 
       // Update profile - remove TESTVBMS
       await ctx.db.patch(profile._id, {
