@@ -139,3 +139,49 @@ export const VBMS_POKER_BATTLE_ABI = [
     "type": "function"
   }
 ] as const;
+
+// VBMSPoolTroll ABI - Claim functions
+export const VBMS_POOL_TROLL_ABI = [
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "amount", "type": "uint256"},
+      {"internalType": "bytes32", "name": "nonce", "type": "bytes32"},
+      {"internalType": "bytes", "name": "signature", "type": "bytes"}
+    ],
+    "name": "claimVBMS",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPoolBalance",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "getRemainingDailyAllowance",
+    "outputs": [{"internalType": "uint256", "name": "remaining", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes32", "name": "nonce", "type": "bytes32"}],
+    "name": "usedNonces",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+      {"indexed": false, "internalType": "bytes32", "name": "nonce", "type": "bytes32"}
+    ],
+    "name": "VBMSClaimed",
+    "type": "event"
+  }
+] as const;

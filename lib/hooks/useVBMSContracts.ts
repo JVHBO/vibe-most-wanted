@@ -7,7 +7,7 @@
 
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther, formatEther, type Address } from 'viem';
-import { CONTRACTS, ERC20_ABI, VBMS_POKER_BATTLE_ABI } from '@/lib/contracts';
+import { CONTRACTS, ERC20_ABI, VBMS_POKER_BATTLE_ABI, VBMS_POOL_TROLL_ABI } from '@/lib/contracts';
 import { useState, useEffect } from 'react';
 
 /**
@@ -249,35 +249,43 @@ export function useBattle(battleId: bigint | undefined) {
 }
 
 /**
- * Claim VBMS from pool/troll contract
- * Note: This is a placeholder - actual claim function depends on the contract ABI
+ * Claim VBMS from VBMSPoolTroll contract
+ *
+ * @param amount - Amount in VBMS (as string, will be converted to wei)
+ * @param nonce - Unique nonce from backend (bytes32 hex string)
+ * @param signature - Backend signature (hex string)
+ * @returns Transaction hash
  */
 export function useClaimVBMS() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
-  const [claimError, setClaimError] = useState<string | null>(null);
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
 
-  const claim = async (amount: bigint, signature?: `0x${string}`) => {
-    try {
-      setClaimError(null);
-      // This is a placeholder implementation
-      // The actual claim function will depend on the VBMSPoolTroll contract ABI
-      writeContract({
-        address: CONTRACTS.VBMSPoolTroll as Address,
-        abi: ERC20_ABI, // Replace with actual VBMSPoolTroll ABI when available
-        functionName: 'transfer', // Replace with actual claim function
-        args: [CONTRACTS.VBMSToken as Address, amount],
-      });
-    } catch (err) {
-      setClaimError(err instanceof Error ? err.message : 'Claim failed');
-    }
+  const claimVBMS = async (
+    amount: string,
+    nonce: `0x${string}`,
+    signature: `0x${string}`
+  ): Promise<`0x${string}`> => {
+    // Convert amount to wei (18 decimals)
+    const amountInWei = parseEther(amount);
+
+    console.log('[useClaimVBMS] Claiming:', { amount, amountInWei: amountInWei.toString(), nonce, signature });
+
+    // Call claimVBMS on VBMSPoolTroll contract
+    const txHash = await writeContractAsync({
+      address: CONTRACTS.VBMSPoolTroll as Address,
+      abi: VBMS_POOL_TROLL_ABI,
+      functionName: 'claimVBMS',
+      args: [amountInWei, nonce, signature as `0x${string}`],
+    });
+
+    console.log('[useClaimVBMS] Transaction sent:', txHash);
+    return txHash;
   };
 
   return {
-    claim,
+    claimVBMS,
     hash,
     isPending: isPending || isConfirming,
-    isSuccess,
-    error: error || claimError,
+    error,
   };
 }
