@@ -30,7 +30,7 @@ export function CoinsInboxDisplay({ compact = false, userAddress }: CoinsInboxDi
   // Get actual VBMS wallet balance from blockchain (only for website mode)
   const { balance: vbmsWalletBalance, isLoading: isBalanceLoading } = compact
     ? { balance: '0', isLoading: false } // Skip blockchain query in miniapp
-    : useVBMSBalance(address);
+    : useVBMSBalance(address as `0x${string}` | undefined);
 
   // Debug logging (keep in production to diagnose miniapp issues)
   if (typeof window !== 'undefined') {
