@@ -26,15 +26,6 @@ export function useVBMSBalance(address?: `0x${string}`) {
     },
   });
 
-  console.log("🔍 useVBMSBalance Hook:", {
-    contractAddress: CONTRACTS.VBMSToken,
-    userAddress: address,
-    balance,
-    isLoading,
-    error,
-    chainId: CONTRACTS.CHAIN_ID,
-  });
-
   return {
     balance: balance ? formatEther(balance as bigint) : '0',
     balanceRaw: balance as bigint | undefined,
@@ -73,15 +64,6 @@ export function useVBMSAllowance(owner?: `0x${string}`, spender?: `0x${string}`)
 export function useApproveVBMS() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
-
-  console.log("🔍 useApproveVBMS Hook State:", {
-    hash,
-    isPending,
-    isConfirming,
-    isSuccess,
-    error,
-    hasHash: !!hash,
-  });
 
   const approve = async (spender: `0x${string}`, amount: string) => {
     console.log("📝 Calling approve with:", {
@@ -124,14 +106,6 @@ export function usePoolBalance() {
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: [CONTRACTS.VBMSPoolTroll as `0x${string}`],
-    chainId: CONTRACTS.CHAIN_ID,
-  });
-
-  console.log("🔍 usePoolBalance Hook:", {
-    poolAddress: CONTRACTS.VBMSPoolTroll,
-    tokenAddress: CONTRACTS.VBMSToken,
-    balance,
-    isLoading,
     chainId: CONTRACTS.CHAIN_ID,
   });
 
@@ -216,14 +190,6 @@ export function useBattle(battleId?: number) {
 
   const battle = data as [bigint, `0x${string}`, `0x${string}`, bigint, bigint, number, `0x${string}`] | undefined;
 
-  console.log("🔍 useBattle Hook:", {
-    battleId,
-    data,
-    battle,
-    isLoading,
-    error,
-  });
-
   return {
     battle: battle ? {
       id: Number(battle[0]),
@@ -256,14 +222,6 @@ export function useActiveBattle(address?: `0x${string}`) {
     },
   });
 
-  console.log("🔍 useActiveBattle Hook:", {
-    address,
-    battleId,
-    battleIdNumber: battleId ? Number(battleId) : 0,
-    isLoading,
-    error,
-  });
-
   return {
     battleId: battleId ? Number(battleId) : 0,
     isLoading,
@@ -277,16 +235,6 @@ export function useActiveBattle(address?: `0x${string}`) {
 export function useCreateBattle() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash });
-
-  console.log("🔍 useCreateBattle Hook State:", {
-    hash,
-    isPending,
-    isConfirming,
-    isSuccess,
-    error,
-    hasHash: !!hash,
-    receipt,
-  });
 
   const createBattle = async (stake: string) => {
     console.log("📝 Creating battle with:", {
@@ -349,15 +297,6 @@ export function useJoinBattle() {
 export function useCancelBattle() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
-
-  console.log("🔍 useCancelBattle Hook State:", {
-    hash,
-    isPending,
-    isConfirming,
-    isSuccess,
-    error,
-    hasHash: !!hash,
-  });
 
   const cancelBattle = async (battleId: number) => {
     console.log("📝 Cancelling battle:", {
