@@ -12,7 +12,7 @@ import FoilCardEffect from './FoilCardEffect';
 import { SwordIcon, ShieldIcon, BoltIcon, HandIcon, TrophyIcon, SkullIcon, ChatIcon, EyeIcon, ClockIcon, CloseIcon } from './PokerIcons';
 import { useGroupVoiceChat } from '@/lib/hooks/useGroupVoiceChat';
 import { VoiceChannelPanel } from './VoiceChannelPanel';
-import { useFinishVBMSBattle } from '@/lib/hooks/useVBMSContracts';
+import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { SpectatorEntryModal } from './SpectatorEntryModal';
 import { BettingInterface } from './BettingInterface';
 import { GamePopups } from './GamePopups';
@@ -95,9 +95,13 @@ export function PokerBattleTable({
   // PvE claim mutations
   const sendPveRewardToInbox = useMutation(api.vbmsClaim.sendPveRewardToInbox);
   const claimPveRewardNow = useMutation(api.vbmsClaim.claimPveRewardNow);
+  const recordImmediateClaim = useMutation(api.vbmsClaim.recordImmediateClaim);
 
   // VBMS Battle finalization hook
   const { finishBattle: finishVBMSBattle, isPending: isFinishingVBMS, isSuccess: vbmsFinished } = useFinishVBMSBattle();
+
+  // VBMS Claim hook (for PvE rewards)
+  const { claimVBMS, isPending: isClaimingVBMS } = useClaimVBMS();
 
   // Betting mutations
   const resolveBetsMutation = useMutation(api.bettingCredits.resolveBets);
@@ -2716,15 +2720,36 @@ export function PokerBattleTable({
                         const rewardAmount = Math.round((selectedAnte * 2) * 0.95);
 
                         try {
-                          await claimPveRewardNow({
+                          // Step 1: Get signature from backend
+                          const result = await claimPveRewardNow({
                             address: playerAddress,
                             amount: rewardAmount,
                             difficulty,
                           });
-                          console.log('[PokerBattle] ✅ PvE reward claim prepared');
-                          // TODO: Trigger blockchain TX with signature
-                        } catch (error) {
+                          console.log('[PokerBattle] ✅ PvE reward claim prepared, signature obtained');
+
+                          // Step 2: Execute blockchain transaction
+                          toast.info("🔐 Aguardando assinatura da carteira...");
+                          const txHash = await claimVBMS(
+                            result.amount.toString(),
+                            result.nonce as `0x${string}`,
+                            result.signature as `0x${string}`
+                          );
+                          console.log('[PokerBattle] ✅ PvE reward TX successful:', txHash);
+
+                          // Step 3: Record claim in history
+                          await recordImmediateClaim({
+                            address: playerAddress,
+                            amount: result.amount,
+                            bonus: result.bonus,
+                            bonusReasons: result.bonusReasons,
+                            txHash: txHash as unknown as string,
+                          });
+
+                          toast.success(`✅ ${result.amount.toLocaleString()} VBMS claimed!`);
+                        } catch (error: any) {
                           console.error('[PokerBattle] ❌ Failed to claim PvE reward:', error);
+                          toast.error(error.message || "Erro ao coletar VBMS");
                         }
                         onClose();
                       }}
