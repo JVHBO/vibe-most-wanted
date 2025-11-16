@@ -580,7 +580,7 @@ export default function TCGPage() {
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
   // Profile States
-  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'achievements' | 'shop'>('game');
+  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'achievements' | 'shop' | 'inbox'>('game');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
