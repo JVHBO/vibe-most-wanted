@@ -546,6 +546,9 @@ export default function TCGPage() {
   const claimWeeklyLeaderboardReward = useMutation(api.quests.claimWeeklyLeaderboardReward);
   const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState<boolean>(false);
 
+  // 💰 Coins Inbox Status
+  const inboxStatus = useQuery(api.coinsInbox.getInboxStatus, address ? { address } : "skip");
+
   // 🔒 Defense Lock System - Get locked cards for Attack/PvP modes
   const attackLockedCards = useQuery(
     api.profiles.getAvailableCards,
@@ -4243,6 +4246,20 @@ export default function TCGPage() {
             </button>
           )}
 
+          {/* Missions Button */}
+          <button
+            onClick={() => {
+              if (soundEnabled) AudioManager.buttonClick();
+              setCurrentView('missions');
+            }}
+            className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base ${
+              currentView === 'missions' ? 'border-vintage-gold bg-vintage-gold/20' : 'border-vintage-gold'
+            }`}
+            title={t('missions')}
+          >
+            <span className="text-base md:text-lg">◈</span>
+          </button>
+
           <button
             onClick={() => {
               if (soundEnabled) AudioManager.buttonClick();
@@ -4431,29 +4448,6 @@ export default function TCGPage() {
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
-                  setCurrentView('missions');
-                }}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
-                  currentView === 'missions'
-                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
-                }`}
-              >
-                {isInFarcaster ? (
-                  <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">{t('missions')}</span>
-                    <span className="text-xl leading-none">◈</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-base md:text-lg">◈</span>
-                    <span className="hidden sm:inline">{t('missions')}</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('achievements');
                 }}
                 className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
@@ -4471,6 +4465,29 @@ export default function TCGPage() {
                   <>
                     <span className="text-base md:text-lg">★</span>
                     <span className="hidden sm:inline">{t('achievements')}</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setCurrentView('inbox');
+                }}
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
+                  currentView === 'inbox'
+                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
+                }`}
+              >
+                {isInFarcaster ? (
+                  <>
+                    <span className="text-[10px] font-bold whitespace-nowrap">Claim</span>
+                    <span className="text-xl leading-none">💰</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-base md:text-lg">💰</span>
+                    <span className="hidden sm:inline">Claim</span>
                   </>
                 )}
               </button>
@@ -5679,6 +5696,17 @@ export default function TCGPage() {
               onSuccess={setSuccessMessage}
               onError={setErrorMessage}
             />
+          )}
+
+          {/* 💰 Inbox/Claim View */}
+          {currentView === 'inbox' && inboxStatus && (
+            <div className="max-w-2xl mx-auto">
+              <CoinsInboxModal
+                inboxStatus={inboxStatus}
+                onClose={() => setCurrentView('game')}
+                userAddress={address}
+              />
+            </div>
           )}
 
           {/* 🏪 Shop View */}
