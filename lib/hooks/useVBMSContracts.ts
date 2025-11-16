@@ -478,7 +478,7 @@ export function useUserBettingStats(address?: `0x${string}`) {
  * Calls the backend to sign the result, then submits to blockchain
  */
 export function useFinishVBMSBattle() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const finishBattle = async (battleId: number, winnerAddress: `0x${string}`) => {
@@ -509,13 +509,16 @@ export function useFinishVBMSBattle() {
       console.log('✅ Got signature from backend:', signature);
 
       // Call contract with signature
-      writeContract({
+      const txHash = await writeContractAsync({
         address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
         abi: POKER_BATTLE_ABI,
         functionName: 'finishBattle' as any,
         args: [BigInt(battleId), winnerAddress, signature as `0x${string}`] as any,
         chainId: CONTRACTS.CHAIN_ID,
       });
+
+      console.log('✅ TX Hash:', txHash);
+      return txHash;
     } catch (err: any) {
       console.error('❌ Error finishing battle:', err);
       throw err;
