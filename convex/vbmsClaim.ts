@@ -11,7 +11,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
-import { ethers } from "ethers";
 
 // ========== HELPER: Get Profile ==========
 
@@ -93,41 +92,39 @@ function generateNonce(): string {
 }
 
 // ========== HELPER: Sign Message (ECDSA Real Signature) ==========
+// Calls Next.js API route to sign the message (ethers.js doesn't work in Convex runtime)
 
 async function signClaimMessage(
   address: string,
   amount: number,
   nonce: string
 ): Promise<string> {
-  // Get private key from environment variable
-  const SIGNER_PRIVATE_KEY = process.env.VBMS_SIGNER_PRIVATE_KEY;
+  // Call Next.js API to sign the message
+  // We can't use ethers.js directly in Convex because it doesn't work in the Convex runtime
+  const apiUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-  if (!SIGNER_PRIVATE_KEY) {
-    throw new Error('VBMS_SIGNER_PRIVATE_KEY not configured in environment variables');
+  try {
+    const response = await fetch(`${apiUrl}/api/vbms/sign-claim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address, amount, nonce }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(`Failed to sign claim: ${errorData.error || response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    console.log(`[VBMS Signature] Address: ${address}, Amount: ${amount} VBMS, Nonce: ${nonce}`);
+    console.log(`[VBMS Signature] Signature: ${data.signature}`);
+
+    return data.signature;
+  } catch (error: any) {
+    console.error(`[VBMS Signature Error]`, error);
+    throw new Error(`Failed to sign claim message: ${error.message}`);
   }
-
-  // Create wallet from private key
-  const wallet = new ethers.Wallet(SIGNER_PRIVATE_KEY);
-
-  // Encode message: keccak256(abi.encodePacked(address, uint256, bytes32))
-  // Amount needs to be converted to wei (18 decimals)
-  const amountInWei = ethers.parseEther(amount.toString());
-
-  const messageHash = ethers.solidityPackedKeccak256(
-    ['address', 'uint256', 'bytes32'],
-    [address, amountInWei, nonce]
-  );
-
-  // Sign the message hash WITH Ethereum Signed Message prefix
-  // Contract expects: keccak256("\x19Ethereum Signed Message:\n32" + messageHash)
-  const signature = await wallet.signMessage(ethers.getBytes(messageHash));
-
-  console.log(`[VBMS Signature] Address: ${address}, Amount: ${amount} VBMS (${amountInWei} wei), Nonce: ${nonce}`);
-  console.log(`[VBMS Signature] Message Hash: ${messageHash}`);
-  console.log(`[VBMS Signature] Signature: ${signature}`);
-  console.log(`[VBMS Signature] Signer Address: ${wallet.address}`);
-
-  return signature;
 }
 
 // ========== MUTATION: Claim Battle Rewards Now (Immediate) ==========
