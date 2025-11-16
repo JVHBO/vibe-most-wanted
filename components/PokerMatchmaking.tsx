@@ -922,7 +922,7 @@ export function PokerMatchmaking({
   ];
 
   return (
-    <div className="fixed inset-0 bg-vintage-deep-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 pb-20 sm:pb-4">
+    <div className="fixed inset-0 bg-vintage-deep-black/95 backdrop-blur-sm flex items-center justify-center z-[200] p-2 sm:p-4 pb-20 sm:pb-4">
       <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-vintage-gold/50 max-w-6xl w-full max-h-[92vh] sm:max-h-[95vh] overflow-y-auto shadow-2xl shadow-vintage-gold/20">
 
         {/* Header */}
