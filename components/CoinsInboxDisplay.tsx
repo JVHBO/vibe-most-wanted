@@ -32,7 +32,10 @@ export function CoinsInboxDisplay({ compact = false }: CoinsInboxDisplayProps) {
   }
 
   // Always render, even if data is loading (don't return null!)
-  const isLoading = !address || !inboxStatus || isBalanceLoading;
+  // In compact mode (miniapp), don't wait for blockchain balance - it may hang in Farcaster
+  const isLoading = compact
+    ? (!address || !inboxStatus)
+    : (!address || !inboxStatus || isBalanceLoading);
   const vbmsInbox = inboxStatus?.inbox || 0; // VBMS inbox (auto-converted from TESTVBMS)
   const vbmsBalance = parseFloat(vbmsWalletBalance || '0'); // Actual VBMS token balance
   const hasUncollected = vbmsInbox > 0;
