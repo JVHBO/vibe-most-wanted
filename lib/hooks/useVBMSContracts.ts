@@ -580,3 +580,36 @@ export function useFinishVBMSBattle() {
     error,
   };
 }
+
+/**
+ * Transfer VBMS tokens
+ */
+export function useTransferVBMS() {
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  const transfer = async (to: `0x${string}`, amount: bigint) => {
+    console.log("💸 Transferring VBMS:", {
+      to,
+      amount: amount.toString(),
+      contractAddress: CONTRACTS.VBMS_TOKEN,
+    });
+
+    writeContract({
+      address: CONTRACTS.VBMS_TOKEN as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: 'transfer',
+      args: [to, amount],
+      chainId: CONTRACTS.CHAIN_ID,
+    });
+  };
+
+  return {
+    transfer,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+  };
+}
