@@ -26,11 +26,6 @@ export function filterCardsByCollection(cards: Card[], collectionId: CollectionI
  */
 export function filterCardsByCollections(cards: Card[], collectionIds: CollectionId[]): Card[] {
   return cards.filter(card => {
-    // FREE cards don't belong to any collection - always include them
-    if ((card as any).isFreeCard || (card as any).badgeType === 'FREE_CARD') {
-      return true;
-    }
-
     // Filter NFT cards by their collection (default to 'vibe' if not set)
     const cardCollection = card.collection || 'vibe';
     return collectionIds.includes(cardCollection as CollectionId);
