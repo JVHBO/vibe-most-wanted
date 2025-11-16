@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
@@ -23,9 +23,9 @@ export function CoinsInboxModal({ inboxStatus, onClose }: CoinsInboxModalProps) 
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const convertTESTVBMS = useMutation(api.vbmsClaim.convertTESTVBMStoVBMS);
+  const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
-  const prepareInboxClaim = useMutation(api.vbmsClaim.prepareInboxClaim);
+  const prepareInboxClaim = useAction(api.vbmsClaim.prepareInboxClaim);
   const recordInboxClaim = useMutation(api.vbmsClaim.recordInboxClaim);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
 
