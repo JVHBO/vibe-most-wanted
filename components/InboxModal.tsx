@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
@@ -23,9 +23,9 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const claimAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
-  const prepareInboxClaimVBMS = useMutation(api.vbmsClaim.prepareInboxClaim);
+  const prepareInboxClaimVBMS = useAction(api.vbmsClaim.prepareInboxClaim);
   const recordInboxClaim = useMutation(api.vbmsClaim.recordInboxClaim);
-  const convertTESTVBMS = useMutation(api.vbmsClaim.convertTESTVBMStoVBMS);
+  const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
 
