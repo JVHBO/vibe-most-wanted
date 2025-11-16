@@ -405,7 +405,16 @@ export const selectCard = mutation({
   args: {
     roomId: v.string(),
     address: v.string(),
-    card: v.any(),
+    card: v.object({
+      tokenId: v.string(),
+      collection: v.optional(v.string()),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+      wear: v.optional(v.string()),
+    }),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db
