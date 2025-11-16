@@ -50,10 +50,19 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
     if (!sdk.wallet?.ethProvider) {
-      throw new Error("Farcaster wallet not available");
+      const error = "Farcaster wallet not available";
+      console.error('[CoinsInboxModal]', error);
+      toast.error(error);
+      throw new Error(error);
     }
 
-    console.log('[CoinsInboxModal] Claiming via Farcaster SDK:', { amount, nonce });
+    console.log('[CoinsInboxModal] Claiming via Farcaster SDK:', {
+      amount,
+      nonce,
+      from: address,
+      to: CONTRACTS.VBMSPoolTroll,
+      chainId: CONTRACTS.CHAIN_ID
+    });
 
     // Encode the function call
     const data = encodeFunctionData({
@@ -62,18 +71,27 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       args: [parseEther(amount), nonce as `0x${string}`, signature as `0x${string}`],
     });
 
-    // Send transaction via Farcaster SDK
-    const txHash = await sdk.wallet.ethProvider.request({
-      method: 'eth_sendTransaction',
-      params: [{
-        from: address,
-        to: CONTRACTS.VBMSPoolTroll,
-        data: data,
-      }],
-    });
+    console.log('[CoinsInboxModal] Encoded data:', data);
 
-    console.log('[CoinsInboxModal] Farcaster SDK TX hash:', txHash);
-    return txHash;
+    try {
+      // Send transaction via Farcaster SDK
+      const txHash = await sdk.wallet.ethProvider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: address,
+          to: CONTRACTS.VBMSPoolTroll,
+          data: data,
+        }],
+      });
+
+      console.log('[CoinsInboxModal] Farcaster SDK TX hash:', txHash);
+      toast.success('TX enviada: ' + txHash);
+      return txHash;
+    } catch (error: any) {
+      console.error('[CoinsInboxModal] Farcaster SDK error:', error);
+      toast.error('Erro na TX: ' + (error.message || 'Desconhecido'));
+      throw error;
+    }
   };
 
   const vbmsInbox = inboxStatus.inbox || 0;
