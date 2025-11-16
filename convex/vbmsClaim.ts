@@ -9,7 +9,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 // ========== HELPER: Get Profile ==========
@@ -91,41 +91,61 @@ function generateNonce(): string {
   return `0x${timestamp}${random1}${random2}${random3}`.substring(0, 66); // 0x + 64 chars
 }
 
-// ========== HELPER: Sign Message (ECDSA Real Signature) ==========
-// Calls Next.js API route to sign the message (ethers.js doesn't work in Convex runtime)
+// ========== ACTION: Sign Message (ECDSA Real Signature) ==========
+// Calls Next.js API route to sign the message (needs to be action because of fetch)
 
-async function signClaimMessage(
-  address: string,
-  amount: number,
-  nonce: string
-): Promise<string> {
-  // Call Next.js API to sign the message
-  // We can't use ethers.js directly in Convex because it doesn't work in the Convex runtime
-  const apiUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+export const signClaimMessage = action({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    nonce: v.string(),
+  },
+  handler: async (ctx, args): Promise<string> => {
+    const { address, amount, nonce } = args;
+    const apiUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-  try {
-    const response = await fetch(`${apiUrl}/api/vbms/sign-claim`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address, amount, nonce }),
-    });
+    console.log(`[VBMS Sign Claim] Calling API at: ${apiUrl}/api/vbms/sign-claim`);
+    console.log(`[VBMS Sign Claim] Request: address=${address}, amount=${amount}, nonce=${nonce}`);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(`Failed to sign claim: ${errorData.error || response.statusText}`);
+    try {
+      const response = await fetch(`${apiUrl}/api/vbms/sign-claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, amount, nonce }),
+      });
+
+      console.log(`[VBMS Sign Claim] Response status: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[VBMS Sign Claim] Error response body: ${errorText}`);
+
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText || 'Unknown error' };
+        }
+
+        throw new Error(`Failed to sign claim (${response.status}): ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      console.log(`[VBMS Signature] Address: ${address}, Amount: ${amount} VBMS, Nonce: ${nonce}`);
+      console.log(`[VBMS Signature] Signature received: ${data.signature?.slice(0, 20)}...`);
+
+      if (!data.signature) {
+        throw new Error('No signature in response');
+      }
+
+      return data.signature;
+    } catch (error: any) {
+      console.error(`[VBMS Signature Error] ${error.message}`, error);
+      throw new Error(`Failed to sign claim message: ${error.message}`);
     }
-
-    const data = await response.json();
-
-    console.log(`[VBMS Signature] Address: ${address}, Amount: ${amount} VBMS, Nonce: ${nonce}`);
-    console.log(`[VBMS Signature] Signature: ${data.signature}`);
-
-    return data.signature;
-  } catch (error: any) {
-    console.error(`[VBMS Signature Error]`, error);
-    throw new Error(`Failed to sign claim message: ${error.message}`);
   }
-}
+});
 
 // ========== MUTATION: Claim Battle Rewards Now (Immediate) ==========
 
@@ -165,7 +185,7 @@ export const claimBattleRewardsNow = mutation({
 
     // Generate signature for smart contract
     const nonce = generateNonce();
-    const signature = await signClaimMessage(address, bonusData.totalAmount, nonce);
+    const signature = await ctx.runAction(signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     // Mark match as claimed (will be finalized after blockchain confirmation)
     await ctx.db.patch(matchId, {
@@ -278,7 +298,7 @@ export const prepareInboxClaim = mutation({
 
     // Generate signature
     const nonce = generateNonce();
-    const signature = await signClaimMessage(address, bonusData.totalAmount, nonce);
+    const signature = await ctx.runAction(signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     // 🔒 SECURITY: Zero inbox IMMEDIATELY to prevent multiple claims
     await ctx.db.patch(profile._id, {
@@ -563,7 +583,7 @@ export const claimAchievementNow = mutation({
 
     // Generate signature for smart contract
     const nonce = generateNonce();
-    const signature = await signClaimMessage(address, bonusData.totalAmount, nonce);
+    const signature = await ctx.runAction(signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     // 🔒 SECURITY: Mark blockchain claim to prevent reuse
     await ctx.db.patch(achievement._id, {
@@ -716,7 +736,7 @@ export const claimPveRewardNow = mutation({
 
     // Generate signature for smart contract
     const nonce = generateNonce();
-    const signature = await signClaimMessage(address, bonusData.totalAmount, nonce);
+    const signature = await ctx.runAction(signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     console.log(`💰 ${address} claiming ${bonusData.totalAmount} VBMS now from PvE victory (difficulty: ${difficulty || 'N/A'}, base: ${amount}, bonus: ${bonusData.bonus})`);
 
@@ -763,7 +783,7 @@ export const convertTESTVBMStoVBMS = mutation({
 
     // Generate signature for blockchain claim
     const nonce = generateNonce();
-    const signature = await signClaimMessage(address, testVBMSBalance, nonce);
+    const signature = await ctx.runAction(signClaimMessage, { address, amount: testVBMSBalance, nonce });
 
     console.log(`💱 ${address} converting ${testVBMSBalance} TESTVBMS → VBMS (nonce: ${nonce})`);
 
