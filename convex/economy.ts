@@ -1776,7 +1776,7 @@ export const awardPokerCoins = mutation({
     await ctx.db.patch(matchId, {
       rewardsClaimed: true,
       claimedAt: Date.now(),
-      claimType: "poker_testvbms",
+      claimType: "immediate",
     });
 
     return {

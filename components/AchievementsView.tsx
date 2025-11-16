@@ -76,7 +76,7 @@ export default function AchievementsView({
       let totalReward = 0;
       let successCount = 0;
 
-      // Claim all achievements (just mark as claimed)
+      // Claim all achievements - TESTVBMS added automatically in backend
       for (const achievement of unclaimed) {
         try {
           const result = await claimAchievement(achievement.achievementId);
@@ -89,13 +89,9 @@ export default function AchievementsView({
         }
       }
 
-      // Show Reward Choice Modal with total amount
-      if (successCount > 0 && totalReward > 0) {
-        setPendingReward({
-          amount: totalReward,
-          source: 'leaderboard',
-        });
-        setShowRewardChoice(true);
+      // Show success message
+      if (successCount > 0 && totalReward > 0 && onSuccess) {
+        onSuccess(`✅ ${totalReward} TESTVBMS added from ${successCount} achievements!`);
       }
     } finally {
       setIsClaiming(false);
