@@ -317,13 +317,54 @@ export const sendToInbox = mutation({
   },
 });
 
-// ========== MUTATION: Prepare Inbox Claim (Collect All) ==========
+// ========== ACTION: Prepare Inbox Claim (Collect All) ==========
 
-export const prepareInboxClaim = mutation({
+export const prepareInboxClaim = action({
   args: {
     address: v.string(),
   },
-  handler: async (ctx, { address }) => {
+  handler: async (ctx, { address }): Promise<{
+    amount: number;
+    baseAmount: number;
+    bonus: number;
+    bonusReasons: string[];
+    nonce: string;
+    signature: string;
+    message: string;
+  }> => {
+    // Get profile, validate, and zero inbox via internal mutation
+    const result = await ctx.runMutation(internal.vbmsClaim.prepareInboxClaimInternal, { address });
+
+    // Generate signature for blockchain claim
+    const nonce = generateNonce();
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+      address,
+      amount: result.totalAmount,
+      nonce
+    });
+
+    return {
+      amount: result.totalAmount,
+      baseAmount: result.baseAmount,
+      bonus: result.bonus,
+      bonusReasons: result.bonusReasons,
+      nonce,
+      signature,
+      message: `Collect ${result.totalAmount} VBMS from inbox`,
+    };
+  },
+});
+
+export const prepareInboxClaimInternal = internalMutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }): Promise<{
+    totalAmount: number;
+    baseAmount: number;
+    bonus: number;
+    bonusReasons: string[];
+  }> => {
     const profile = await getProfile(ctx, address);
 
     const inboxAmount = profile.inbox || 0;
@@ -335,23 +376,16 @@ export const prepareInboxClaim = mutation({
     // Calculate bonus (inbox collection gets all bonuses)
     const bonusData = calculateClaimBonus(profile, inboxAmount);
 
-    // Generate signature
-    const nonce = generateNonce();
-    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
-
     // 🔒 SECURITY: Zero inbox IMMEDIATELY to prevent multiple claims
     await ctx.db.patch(profile._id, {
       inbox: 0,
     });
 
     return {
-      amount: bonusData.totalAmount,
+      totalAmount: bonusData.totalAmount,
       baseAmount: bonusData.baseAmount,
       bonus: bonusData.bonus,
       bonusReasons: bonusData.bonusReasons,
-      nonce,
-      signature,
-      message: `Collect ${bonusData.totalAmount} VBMS from inbox`,
     };
   },
 });
@@ -580,8 +614,11 @@ export const sendAchievementToInbox = mutation({
   },
 });
 
-// ========== MUTATION: Claim Achievement Now (Immediate) ==========
+// ========== DISABLED: Claim Achievement Now (Immediate) ==========
+// TODO: Refactor to use action/internal mutation pattern (mutations cannot call ctx.runAction)
+// Currently not used by frontend
 
+/*
 export const claimAchievementNow = mutation({
   args: {
     address: v.string(),
@@ -650,6 +687,7 @@ export const claimAchievementNow = mutation({
     };
   },
 });
+*/
 
 // ========== MUTATION: Claim Inbox as TESTVBMS (Virtual Coins) ==========
 
@@ -750,7 +788,7 @@ export const sendPveRewardToInbox = mutation({
 /**
  * Claim PvE reward now (prepare blockchain TX)
  */
-export const claimPveRewardNow = mutation({
+export const claimPveRewardNow = action({
   args: {
     address: v.string(),
     amount: v.number(),
@@ -762,7 +800,60 @@ export const claimPveRewardNow = mutation({
       v.literal("gigachad")
     )),
   },
-  handler: async (ctx, { address, amount, difficulty }) => {
+  handler: async (ctx, { address, amount, difficulty }): Promise<{
+    amount: number;
+    baseAmount: number;
+    bonus: number;
+    bonusReasons: string[];
+    nonce: string;
+    signature: string;
+    message: string;
+  }> => {
+    // Get profile, validate, calculate bonus via internal mutation
+    const result = await ctx.runMutation(internal.vbmsClaim.claimPveRewardNowInternal, {
+      address,
+      amount,
+      difficulty
+    });
+
+    // Generate signature for blockchain claim
+    const nonce = generateNonce();
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+      address,
+      amount: result.totalAmount,
+      nonce
+    });
+
+    return {
+      amount: result.totalAmount,
+      baseAmount: result.baseAmount,
+      bonus: result.bonus,
+      bonusReasons: result.bonusReasons,
+      nonce,
+      signature,
+      message: `Claim ${result.totalAmount} VBMS from PvE victory`,
+    };
+  },
+});
+
+export const claimPveRewardNowInternal = internalMutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    difficulty: v.optional(v.union(
+      v.literal("gey"),
+      v.literal("goofy"),
+      v.literal("gooner"),
+      v.literal("gangster"),
+      v.literal("gigachad")
+    )),
+  },
+  handler: async (ctx, { address, amount, difficulty }): Promise<{
+    totalAmount: number;
+    baseAmount: number;
+    bonus: number;
+    bonusReasons: string[];
+  }> => {
     const profile = await getProfile(ctx, address);
 
     if (amount < 100) {
@@ -772,10 +863,6 @@ export const claimPveRewardNow = mutation({
     // Calculate bonus
     const inboxAmount = profile.inbox || 0;
     const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
-
-    // Generate signature for smart contract
-    const nonce = generateNonce();
-    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     console.log(`💰 ${address} claiming ${bonusData.totalAmount} VBMS now from PvE victory (difficulty: ${difficulty || 'N/A'}, base: ${amount}, bonus: ${bonusData.bonus})`);
 
@@ -790,13 +877,10 @@ export const claimPveRewardNow = mutation({
     });
 
     return {
-      amount: bonusData.totalAmount,
+      totalAmount: bonusData.totalAmount,
       baseAmount: bonusData.baseAmount,
       bonus: bonusData.bonus,
       bonusReasons: bonusData.bonusReasons,
-      nonce,
-      signature,
-      message: `Claim ${bonusData.totalAmount} VBMS from PvE victory`,
     };
   },
 });
