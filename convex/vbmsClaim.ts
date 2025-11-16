@@ -155,7 +155,15 @@ export const claimBattleRewardsNow = action({
     address: v.string(),
     matchId: v.id("matches"),
   },
-  handler: async (ctx, { address, matchId }) => {
+  handler: async (ctx, { address, matchId }): Promise<{
+    amount: number;
+    baseAmount: number;
+    bonus: number;
+    bonusReasons: string[];
+    nonce: string;
+    signature: string;
+    message: string;
+  }> => {
     // Get profile and match data, calculate bonus via internal mutation
     const result = await ctx.runMutation(internal.vbmsClaim.claimBattleRewardsNowInternal, {
       address,
@@ -187,7 +195,12 @@ export const claimBattleRewardsNowInternal = internalMutation({
     address: v.string(),
     matchId: v.id("matches"),
   },
-  handler: async (ctx, { address, matchId }) => {
+  handler: async (ctx, { address, matchId }): Promise<{
+    totalAmount: number;
+    baseAmount: number;
+    bonus: number;
+    bonusReasons: string[];
+  }> => {
     const profile = await getProfile(ctx, address);
 
     // Get match data
