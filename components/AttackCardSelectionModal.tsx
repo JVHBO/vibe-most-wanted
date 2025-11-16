@@ -75,8 +75,6 @@ interface AttackCardSelectionModalProps {
   setPvpPreviewData: Dispatch<SetStateAction<PvPPreviewData | null>>;
   setShowPvPPreview: Dispatch<SetStateAction<boolean>>;
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
-  setPendingReward: Dispatch<SetStateAction<{amount: number, source: "pve" | "pvp" | "attack" | "defense" | "leaderboard"} | null>>;
-  setShowRewardChoice: Dispatch<SetStateAction<boolean>>;
 
   // Functions
   isCardLocked: (tokenId: string, mode: 'attack' | 'pvp') => boolean;
@@ -129,8 +127,6 @@ export function AttackCardSelectionModal({
   setPvpPreviewData,
   setShowPvPPreview,
   setErrorMessage,
-  setPendingReward,
-  setShowRewardChoice,
   isCardLocked,
   payEntryFee,
   recordAttackResult,
@@ -313,12 +309,7 @@ export function AttackCardSelectionModal({
         });
 
         // Set pending reward to show RewardChoiceModal (only for wins)
-        if (matchResult === 'win' && coinsEarned > 0) {
-          setPendingReward({
-            amount: coinsEarned,
-            source: 'attack',
-          });
-        }
+        // TESTVBMS already added - no modal
 
         // Show result popup after closing battle
         setTimeout(() => {
