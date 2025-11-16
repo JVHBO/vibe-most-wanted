@@ -66,7 +66,7 @@ export function CoinsInboxModal({ inboxStatus, onClose }: CoinsInboxModalProps) 
       await recordTESTVBMSConversion({
         address,
         amount: result.amount,
-        txHash: txHash as string,
+        txHash: txHash as unknown as string,
       });
 
       toast.success(`✅ ${result.amount.toLocaleString()} TESTVBMS convertidos para VBMS!`);
