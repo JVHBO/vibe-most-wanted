@@ -4272,7 +4272,7 @@ export default function TCGPage() {
           </button>
 
           {/* Coins Inbox - Only show here in miniapp (compact mode) */}
-          {isInFarcaster && <CoinsInboxDisplay compact />}
+          {isInFarcaster && <CoinsInboxDisplay compact userAddress={userProfile?.address} />}
 
           <Link
             href="/docs"

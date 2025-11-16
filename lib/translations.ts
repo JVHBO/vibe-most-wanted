@@ -243,7 +243,7 @@ export const translations = {
     noNfts: 'No revealed cards found.',
     unopenedCardsNotice: 'You have {count} unopened card(s).',
     openOnVibeMarket: 'Open them on Vibe Market →',
-    orOpenYourPacks: 'or open your sealed packs',
+    orOpenYourPacks: 'or sell your $VBMS',
     selectCards: 'Select 5 cards to play',
     playHand: 'Play Hand',
     language: 'Language',
