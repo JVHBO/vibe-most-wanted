@@ -601,7 +601,7 @@ export function PokerMatchmaking({
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     battleId: activeBattleId.toString(),
-                    winner: walletAddress, // You as winner
+                    winnerAddress: walletAddress, // You as winner
                   })
                 });
 
