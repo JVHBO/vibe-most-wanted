@@ -139,7 +139,7 @@ export function useDailyClaimInfo(address?: `0x${string}`) {
  * Claim VBMS from pool
  */
 export function useClaimVBMS() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const claimVBMS = async (amount: string, nonce: string, signature: `0x${string}`) => {
@@ -150,13 +150,16 @@ export function useClaimVBMS() {
       signature: signature.slice(0, 10) + '...',
     });
 
-    writeContract({
+    const txHash = await writeContractAsync({
       address: CONTRACTS.VBMSPoolTroll as `0x${string}`,
       abi: POOL_ABI,
       functionName: 'claimVBMS',
       args: [parseEther(amount), nonce as `0x${string}`, signature],
       chainId: CONTRACTS.CHAIN_ID,
     });
+
+    console.log("✅ TX Hash:", txHash);
+    return txHash;
   };
 
   return {
