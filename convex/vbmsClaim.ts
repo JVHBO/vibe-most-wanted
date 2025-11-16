@@ -811,7 +811,12 @@ export const convertTESTVBMStoVBMS = action({
   args: {
     address: v.string(),
   },
-  handler: async (ctx, { address }) => {
+  handler: async (ctx, { address }): Promise<{
+    amount: number;
+    nonce: string;
+    signature: string;
+    message: string;
+  }> => {
     // Get profile and validate via internal mutation
     const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address });
 
@@ -839,7 +844,7 @@ export const convertTESTVBMSInternal = internalMutation({
   args: {
     address: v.string(),
   },
-  handler: async (ctx, { address }) => {
+  handler: async (ctx, { address }): Promise<{ testVBMSBalance: number }> => {
     const profile = await getProfile(ctx, address);
 
     const testVBMSBalance = profile.coins || 0;
