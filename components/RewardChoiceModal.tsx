@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RewardChoiceModalProps {
   amount: number;
@@ -22,6 +23,7 @@ export function RewardChoiceModal({
   onChoiceMade,
 }: RewardChoiceModalProps) {
   const { address } = useAccount();
+  const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const processReward = useMutation(api.rewardsChoice.processRewardChoice);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
@@ -32,8 +34,8 @@ export function RewardChoiceModal({
   const sourceLabels = {
     pve: "PvE",
     pvp: "PvP",
-    attack: "Ataque",
-    defense: "Defesa",
+    attack: t('attack') || "Attack",
+    defense: t('defense') || "Defense",
     leaderboard: "Leaderboard",
   };
 
@@ -127,32 +129,30 @@ export function RewardChoiceModal({
         <div className="text-center mb-4 md:mb-6">
           <div className="text-5xl md:text-6xl mb-2 md:mb-3">🎉</div>
           <h2 className="text-2xl md:text-3xl font-bold text-vintage-gold mb-2">
-            Vitória!
+            {t('victory')}!
           </h2>
           <p className="text-lg text-vintage-gold/80 mb-1">
-            Você ganhou{" "}
+            {t('youWon')}{" "}
             <span className="font-bold text-vintage-orange">
-              {amount.toLocaleString()} coins
+              {amount.toLocaleString()} {t('coins')}
             </span>
           </p>
           <p className="text-sm text-vintage-gold/60">
-            de {sourceLabels[source]}
+            {t('from')} {sourceLabels[source]}
           </p>
         </div>
 
         {/* Choice explanation */}
         <div className="bg-vintage-deep-black/50 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
           <p className="text-xs md:text-sm text-vintage-gold/80 text-center mb-2">
-            💡 Escolha como receber suas moedas:
+            💡 {t('chooseHow')}
           </p>
           <ul className="text-xs text-vintage-gold/60 space-y-1">
             <li>
-              ✅ <strong>Coletar Agora:</strong> Moedas vão direto para seu
-              saldo
+              ✅ <strong>{t('claimNowLabel')}:</strong> {t('claimNowExplain')}
             </li>
             <li>
-              📥 <strong>Guardar para Depois:</strong> Moedas vão para seu inbox
-              para coletar quando quiser
+              📥 <strong>{t('saveLaterLabel')}:</strong> {t('saveLaterExplain')}
             </li>
           </ul>
         </div>
@@ -170,9 +170,9 @@ export function RewardChoiceModal({
             <div className="flex items-center justify-center gap-2 md:gap-3">
               <span className="text-xl md:text-2xl">💰</span>
               <div>
-                <div>Coletar Agora</div>
+                <div>{t('claimNowLabel')}</div>
                 <div className="text-xs opacity-80">
-                  Disponível imediatamente
+                  {t('claimNowDesc')}
                 </div>
               </div>
             </div>
@@ -189,8 +189,8 @@ export function RewardChoiceModal({
             <div className="flex items-center justify-center gap-2 md:gap-3">
               <span className="text-xl md:text-2xl">📥</span>
               <div>
-                <div>Guardar para Depois</div>
-                <div className="text-xs opacity-80">Vai para o Inbox</div>
+                <div>{t('saveLaterLabel')}</div>
+                <div className="text-xs opacity-80">{t('saveLaterDesc')}</div>
               </div>
             </div>
           </button>
