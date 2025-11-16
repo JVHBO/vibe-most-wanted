@@ -6,7 +6,7 @@ import NextImage from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { docsTranslations, type DocsSupportedLanguage, type DocsTranslationKey } from "@/lib/docs-translations";
 
-type DocSection = "economy" | "battles" | "poker" | "achievements" | "quests" | "cards" | "faq";
+type DocSection = "economy" | "vbms" | "battles" | "poker" | "achievements" | "quests" | "cards" | "faq";
 
 export default function DocsPage() {
   const { lang } = useLanguage();
@@ -31,6 +31,7 @@ export default function DocsPage() {
 
   const sections = [
     { id: "economy" as DocSection, label: t("economy"), icon: "/images/icons/coins.svg" },
+    { id: "vbms" as DocSection, label: "VBMS Tokens", icon: "/images/icons/coins.svg" },
     { id: "battles" as DocSection, label: t("battles"), icon: "/images/icons/battle.svg" },
     { id: "poker" as DocSection, label: "Poker Battle", icon: "/images/icons/cards.svg" },
     { id: "achievements" as DocSection, label: t("achievements"), icon: "/images/icons/achievement.svg" },
@@ -93,6 +94,7 @@ export default function DocsPage() {
           <div className="lg:col-span-3">
             <div className="bg-vintage-charcoal/80 backdrop-blur-lg border-2 border-vintage-gold/30 rounded-xl p-6 shadow-gold">
               {activeSection === "economy" && <EconomyDocs t={t} />}
+              {activeSection === "vbms" && <VBMSDocs />}
               {activeSection === "battles" && <BattlesDocs t={t} getCoinsWord={getCoinsWord} />}
               {activeSection === "poker" && <PokerBattleDocs />}
               {activeSection === "achievements" && <AchievementsDocs t={t} />}
@@ -540,6 +542,202 @@ function PokerBattleDocs() {
           <li>• CRITICAL is expensive but can turn the game around!</li>
           <li>• Watch your bankroll - don't run out of coins</li>
           <li>• Winning 6+ rounds guarantees victory in best-of-10</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// VBMS Tokens Section
+function VBMSDocs() {
+  return (
+    <div className="space-y-6 text-vintage-ice font-modern">
+      <div>
+        <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4 flex items-center gap-2">
+          <NextImage src="/images/icons/coins.svg" alt="VBMS" width={32} height={32} />
+          💎 VBMS Tokens
+        </h2>
+        <p className="mb-4 leading-relaxed">
+          Learn about the two token types in Vibe Most Wanted: TESTVBMS (in-game currency) and VBMS (real blockchain tokens).
+        </p>
+      </div>
+
+      {/* Token Types */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">🪙 Two Token Types</h3>
+        <div className="space-y-3">
+          <div>
+            <p className="font-bold text-blue-400">💎 TESTVBMS (Virtual Currency)</p>
+            <ul className="text-sm space-y-1 mt-2 ml-4">
+              <li>• Used for in-game purchases and battles</li>
+              <li>• Earned by playing games, completing quests, achievements</li>
+              <li>• Stored in your profile (not on blockchain)</li>
+              <li>• Can be converted to real VBMS tokens</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-bold text-green-400">🔗 VBMS (Blockchain Tokens)</p>
+            <ul className="text-sm space-y-1 mt-2 ml-4">
+              <li>• Real ERC20 tokens on Base blockchain</li>
+              <li>• Claim to your wallet address</li>
+              <li>• Can be traded, sold, or held</li>
+              <li>• Contract: 0xb03439567cd22f278b21e1ffcdfb8e1696763827</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* The Inbox System */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">📬 The Inbox System</h3>
+        <p className="mb-3">When you earn VBMS rewards, they go to your inbox first. This allows you to:</p>
+        <ul className="space-y-2">
+          <li className="flex items-start gap-2">
+            <span className="text-vintage-gold">1.</span>
+            <div>
+              <strong className="text-vintage-gold">Accumulate Rewards:</strong> Save gas fees by claiming larger amounts
+            </div>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-vintage-gold">2.</span>
+            <div>
+              <strong className="text-vintage-gold">Earn Bonuses:</strong> Get bonus VBMS for larger claims and waiting periods
+            </div>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-vintage-gold">3.</span>
+            <div>
+              <strong className="text-vintage-gold">Choose When to Claim:</strong> Claim immediately or save for later
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      {/* How to Claim */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">💰 How to Claim VBMS</h3>
+        <div className="space-y-3">
+          <div>
+            <p className="font-bold text-blue-400">Method 1: Claim from Inbox</p>
+            <ol className="text-sm space-y-1 mt-2 ml-4">
+              <li>1. Accumulate VBMS in your inbox (earn from games)</li>
+              <li>2. Click the inbox icon to see your balance</li>
+              <li>3. Click "Collect VBMS" when you have 100+ VBMS</li>
+              <li>4. Sign the transaction with your wallet</li>
+              <li>5. VBMS tokens sent directly to your wallet!</li>
+            </ol>
+          </div>
+          <div>
+            <p className="font-bold text-purple-400">Method 2: Convert TESTVBMS</p>
+            <ol className="text-sm space-y-1 mt-2 ml-4">
+              <li>1. Earn TESTVBMS by playing games</li>
+              <li>2. Open your coins balance modal</li>
+              <li>3. Click "Convert to VBMS" when you have 100+ TESTVBMS</li>
+              <li>4. Sign the transaction</li>
+              <li>5. Your TESTVBMS converts to real VBMS tokens!</li>
+            </ol>
+          </div>
+        </div>
+        <p className="text-sm text-vintage-burnt-gold mt-3">
+          💡 Minimum claim amount: 100 VBMS
+        </p>
+      </div>
+
+      {/* Bonus System */}
+      <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 rounded-lg p-4 border border-yellow-500/30">
+        <h3 className="text-xl font-bold text-yellow-400 mb-3">🎁 Claim Bonuses</h3>
+        <p className="mb-3">Earn extra VBMS when you claim by meeting these conditions:</p>
+        <div className="space-y-2">
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">💰</span>
+            <div>
+              <strong className="text-yellow-400">Large Claim Bonus (+1%):</strong> Claim 1,000+ VBMS at once
+              <p className="text-sm text-vintage-burnt-gold">Example: Claim 1,000 → Get 1,010 VBMS (+10 bonus)</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">📅</span>
+            <div>
+              <strong className="text-yellow-400">Weekly Bonus (+5%):</strong> Wait 7+ days since last claim
+              <p className="text-sm text-vintage-burnt-gold">Example: Claim 500 after 7 days → Get 525 VBMS (+25 bonus)</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">☀️</span>
+            <div>
+              <strong className="text-yellow-400">Daily First Claim (+50):</strong> First claim of the day
+              <p className="text-sm text-vintage-burnt-gold">Example: First claim today → Get +50 VBMS bonus</p>
+            </div>
+          </div>
+        </div>
+        <p className="text-sm text-yellow-300 mt-4 italic">
+          🌟 Bonuses stack! Wait 7 days and claim 1,000+ for maximum rewards!
+        </p>
+      </div>
+
+      {/* Daily Limits */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-red-500/20">
+        <h3 className="text-xl font-bold text-red-400 mb-3">⚠️ Claim Limits</h3>
+        <ul className="space-y-2">
+          <li className="flex items-center gap-2">
+            <span className="text-red-400">•</span>
+            <strong>Minimum Claim:</strong> 100 VBMS per transaction
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-red-400">•</span>
+            <strong>Maximum Claim:</strong> 100,000 VBMS per transaction
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-red-400">•</span>
+            <strong>Daily Limit:</strong> 500,000 VBMS per 24 hours
+          </li>
+        </ul>
+        <p className="text-sm text-vintage-burnt-gold mt-3">
+          💡 Limits reset every 24 hours from your last claim
+        </p>
+      </div>
+
+      {/* Security */}
+      <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-4 border border-blue-500/30">
+        <h3 className="text-xl font-bold text-blue-300 mb-3">🛡️ Security & Verification</h3>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400">✓</span>
+            <div>
+              <strong>Backend Signature:</strong> Every claim is signed by our secure backend
+            </div>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400">✓</span>
+            <div>
+              <strong>Nonce Protection:</strong> Each claim uses a unique nonce (prevents replay attacks)
+            </div>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400">✓</span>
+            <div>
+              <strong>Smart Contract Verification:</strong> VBMSPoolTroll contract validates all claims on-chain
+            </div>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400">✓</span>
+            <div>
+              <strong>Blacklist Protection:</strong> Suspicious addresses are blocked automatically
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      {/* Tips */}
+      <div className="bg-vintage-black/30 rounded-lg p-4 border border-vintage-gold/20">
+        <h3 className="text-xl font-bold text-vintage-gold mb-3">💡 Pro Tips</h3>
+        <ul className="space-y-1 text-sm">
+          <li>• Wait to accumulate 1,000+ VBMS for the 1% bonus</li>
+          <li>• Claim once a week to get the 5% weekly bonus</li>
+          <li>• Make your first claim of the day to get +50 VBMS</li>
+          <li>• Convert TESTVBMS when you have 100+ for easy claiming</li>
+          <li>• Check your inbox regularly to track rewards</li>
+          <li>• Gas fees are paid by you, so claim larger amounts to save on fees</li>
         </ul>
       </div>
     </div>
