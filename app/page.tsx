@@ -1274,6 +1274,14 @@ export default function TCGPage() {
       setFilteredCount(filtered);
       devLog(`📊 NFT Stats: Total=${enrichedRaw.length}, Revealed=${revealed.length}, Filtered=${filtered}`);
 
+      // DEBUG: Count NFTs by collection
+      const collectionCounts: Record<string, number> = {};
+      revealed.forEach((nft) => {
+        const col = nft.collection || 'no-collection';
+        collectionCounts[col] = (collectionCounts[col] || 0) + 1;
+      });
+      console.log('📦 NFTs by collection:', collectionCounts);
+
       const IMAGE_BATCH_SIZE = 50;
       const processed = [];
 
