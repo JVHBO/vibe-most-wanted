@@ -1046,7 +1046,7 @@ export default function TCGPage() {
       devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
 
-      // Show RewardChoiceModal
+      // TESTVBMS added to balance - show modal to choose claim now or later
       if (result && result.success) {
         setPendingReward({
           amount: result.reward,
@@ -1075,7 +1075,7 @@ export default function TCGPage() {
       if (soundEnabled) AudioManager.buttonSuccess();
       devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
 
-      // Show RewardChoiceModal
+      // TESTVBMS added to balance - show modal to choose claim now or later
       if (result && result.success) {
         setPendingReward({
           amount: result.reward,

@@ -83,9 +83,25 @@ export const processRewardChoice = mutation({
     }
 
     if (choice === "claim_now") {
-      // Generate signature for blockchain claim (VBMS on-chain)
+      // CLAIM NOW: Convert TESTVBMS to VBMS blockchain
+      const currentCoins = profile.coins || 0;
+
+      if (currentCoins < amount) {
+        throw new Error(`Saldo insuficiente. Você tem ${currentCoins} TESTVBMS, precisa de ${amount}`);
+      }
+
+      // Deduct TESTVBMS
+      const newCoinsBalance = currentCoins - amount;
+
+      // Generate signature for blockchain claim
       const nonce = generateNonce();
       const signature = await signClaimMessage(address, amount, nonce);
+
+      // Update profile - remove TESTVBMS
+      await ctx.db.patch(profile._id, {
+        coins: newCoinsBalance,
+        lastUpdated: Date.now(),
+      });
 
       // Track analytics
       await ctx.db.insert("claimAnalytics", {
@@ -103,24 +119,17 @@ export const processRewardChoice = mutation({
         amount: amount,
         nonce: nonce,
         signature: signature,
-        message: `💳 Claim ${amount} VBMS via blockchain transaction`,
+        newCoinsBalance: newCoinsBalance,
+        message: `💳 ${amount} TESTVBMS convertidos para VBMS! Assine a transação.`,
       };
     } else {
-      // Send to VBMS inbox for later blockchain claim
-      const currentInbox = profile.inbox || 0;
-      const newInboxBalance = currentInbox + amount;
-
-      await ctx.db.patch(profile._id, {
-        inbox: newInboxBalance,
-        lastUpdated: Date.now(),
-      });
-
+      // CLAIM LATER: Keep in TESTVBMS (do nothing, just close modal)
       return {
         success: true,
         choice: "claim_later",
         amount: amount,
-        newInboxBalance: newInboxBalance,
-        message: `📬 ${amount} VBMS enviado para o inbox! Colete quando quiser e pague gas apenas 1 vez.`,
+        coinsBalance: profile.coins || 0,
+        message: `📥 ${amount} TESTVBMS guardados! Converta depois quando quiser.`,
       };
     }
   },
