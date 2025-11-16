@@ -489,11 +489,20 @@ export function useFinishVBMSBattle() {
         body: JSON.stringify({ battleId, winnerAddress }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to get signature from backend');
+        console.error('❌ Backend error:', data);
+        throw new Error(data.error || 'Failed to get signature from backend');
       }
 
-      const { signature } = await response.json();
+      const { signature } = data;
+
+      if (!signature) {
+        console.error('❌ No signature in response:', data);
+        throw new Error('Backend returned invalid response: missing signature');
+      }
+
       console.log('✅ Got signature from backend:', signature);
 
       // Call contract with signature
