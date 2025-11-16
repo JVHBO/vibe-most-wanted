@@ -417,44 +417,58 @@ export const selectCard = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    const room = await ctx.db
-      .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
-      .first();
+    try {
+      const room = await ctx.db
+        .query("pokerRooms")
+        .filter((q) => q.eq(q.field("roomId"), args.roomId))
+        .first();
 
-    if (!room || !room.gameState) {
-      throw new Error("Room not found or game not started");
+      if (!room || !room.gameState) {
+        throw new Error("Room not found or game not started");
+      }
+
+      const isHost = room.hostAddress === args.address.toLowerCase();
+      const isGuest = room.guestAddress === args.address.toLowerCase();
+
+      if (!isHost && !isGuest) {
+        throw new Error("You are not a player in this room");
+      }
+
+      if (room.gameState.phase !== "card-selection") {
+        throw new Error(`Not in card selection phase. Current phase: ${room.gameState.phase}`);
+      }
+
+      // Ensure card object is valid
+      if (!args.card || !args.card.tokenId || !args.card.power) {
+        throw new Error("Invalid card data");
+      }
+
+      // Update the appropriate player's card
+      const gameState = { ...room.gameState };
+      if (isHost) {
+        gameState.hostSelectedCard = args.card;
+      } else {
+        gameState.guestSelectedCard = args.card;
+      }
+
+      // If both players have selected, move to reveal (skip betting)
+      if (gameState.hostSelectedCard && gameState.guestSelectedCard) {
+        gameState.phase = "reveal";
+      }
+
+      await ctx.db.patch(room._id, { gameState });
+
+      console.log(`🎴 Card selected: ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error(`❌ [selectCard] Error: ${error.message}`, {
+        roomId: args.roomId,
+        address: args.address,
+        card: args.card,
+      });
+      throw error;
     }
-
-    const isHost = room.hostAddress === args.address.toLowerCase();
-    const isGuest = room.guestAddress === args.address.toLowerCase();
-
-    if (!isHost && !isGuest) {
-      throw new Error("You are not a player in this room");
-    }
-
-    if (room.gameState.phase !== "card-selection") {
-      throw new Error("Not in card selection phase");
-    }
-
-    // Update the appropriate player's card
-    const gameState = { ...room.gameState };
-    if (isHost) {
-      gameState.hostSelectedCard = args.card;
-    } else {
-      gameState.guestSelectedCard = args.card;
-    }
-
-    // If both players have selected, move to reveal (skip betting)
-    if (gameState.hostSelectedCard && gameState.guestSelectedCard) {
-      gameState.phase = "reveal";
-    }
-
-    await ctx.db.patch(room._id, { gameState });
-
-    console.log(`🎴 Card selected: ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
-
-    return { success: true };
   },
 });
 
