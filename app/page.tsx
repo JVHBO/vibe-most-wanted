@@ -2916,14 +2916,31 @@ export default function TCGPage() {
 
       if (!contractAddress) return 0;
 
-      // Fetch NFTs for this collection from Alchemy
-      const response = await fetch(
-        `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${address}&contractAddresses[]=${contractAddress}&withMetadata=true`
-      );
+      // Fetch NFTs for this collection from Alchemy with retry logic
+      let response: Response;
+      let retries = 0;
+      const maxRetries = 3;
 
-      if (!response.ok) throw new Error('Alchemy API error');
+      while (retries <= maxRetries) {
+        response = await fetch(
+          `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${address}&contractAddresses[]=${contractAddress}&withMetadata=true`
+        );
 
-      const data = await response.json();
+        if (response.status === 429 && retries < maxRetries) {
+          // Exponential backoff: 1s, 2s, 4s
+          const delay = Math.pow(2, retries) * 1000;
+          devLog(`⏳ [Leaderboard] Rate limited for ${address.substring(0, 8)}..., retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retries++;
+          continue;
+        }
+
+        break;
+      }
+
+      if (!response!.ok) throw new Error(`Alchemy API error: ${response!.status}`);
+
+      const data = await response!.json();
       const nfts = data.ownedNfts || [];
 
       // Calculate total power from attributes
@@ -2973,17 +2990,19 @@ export default function TCGPage() {
     if (playersNeedingCalculation.length > 0 && !isCalculatingCollectionPower) {
       setIsCalculatingCollectionPower(true);
 
-      // Calculate in background
-      Promise.all(
-        playersNeedingCalculation.map(p =>
-          calculateCollectionPower(p.address, leaderboardCollection)
-        )
-      ).then(() => {
+      // Calculate sequentially with delay to avoid rate limiting (not in parallel)
+      (async () => {
+        for (const player of playersNeedingCalculation) {
+          try {
+            await calculateCollectionPower(player.address, leaderboardCollection);
+            // Add 200ms delay between requests to avoid overwhelming API
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (err) {
+            devError(`[Leaderboard] Error calculating power for ${player.address}:`, err);
+          }
+        }
         setIsCalculatingCollectionPower(false);
-      }).catch(err => {
-        devError('[Leaderboard] Batch calculation error:', err);
-        setIsCalculatingCollectionPower(false);
-      });
+      })();
     }
 
     // Sort by collection power (desc)
