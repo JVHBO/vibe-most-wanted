@@ -1046,14 +1046,46 @@ export default function TCGPage() {
       devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
 
-      // Show success alert
-      alert(`🎁 Weekly Reward Claimed!\n\nRank #${result.rank}: +${result.reward} $TESTVBMS\nNew Balance: ${result.newBalance.toLocaleString()} coins`);
+      // Show RewardChoiceModal
+      if (result && result.success) {
+        setPendingReward({
+          amount: result.reward,
+          source: 'leaderboard'
+        });
+        setShowRewardChoice(true);
+      }
     } catch (error: any) {
       devError('✗ Error claiming weekly reward:', error);
       alert(error.message || 'Failed to claim weekly reward');
       if (soundEnabled) AudioManager.buttonError();
     } finally {
       setIsClaimingWeeklyReward(false);
+    }
+  };
+
+  // 🎯 Handler to claim weekly quest reward
+  const handleClaimWeeklyQuestReward = async (questId: string) => {
+    if (!address) return;
+
+    try {
+      devLog(`🎯 Claiming weekly quest reward: ${questId}...`);
+
+      const result = await claimWeeklyReward({ address, questId });
+
+      if (soundEnabled) AudioManager.buttonSuccess();
+      devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
+
+      // Show RewardChoiceModal
+      if (result && result.success) {
+        setPendingReward({
+          amount: result.reward,
+          source: 'pve' // Weekly quests count as PvE
+        });
+        setShowRewardChoice(true);
+      }
+    } catch (error: any) {
+      devError('Error claiming reward:', error);
+      if (soundEnabled) AudioManager.buttonError();
     }
   };
 
@@ -5357,15 +5389,7 @@ export default function TCGPage() {
                             </div>
                           ) : weeklyProgress.quests.weekly_attack_wins.completed ? (
                             <button
-                              onClick={async () => {
-                                try {
-                                  await claimWeeklyReward({ address, questId: 'weekly_attack_wins' });
-                                  if (soundEnabled) AudioManager.buttonSuccess();
-                                } catch (error) {
-                                  devError('Error claiming reward:', error);
-                                  if (soundEnabled) AudioManager.buttonError();
-                                }
-                              }}
+                              onClick={() => handleClaimWeeklyQuestReward('weekly_attack_wins')}
                               className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
                               ✦ Claim 300 $TESTVBMS
@@ -5401,15 +5425,7 @@ export default function TCGPage() {
                             </div>
                           ) : weeklyProgress.quests.weekly_total_matches.completed ? (
                             <button
-                              onClick={async () => {
-                                try {
-                                  await claimWeeklyReward({ address, questId: 'weekly_total_matches' });
-                                  if (soundEnabled) AudioManager.buttonSuccess();
-                                } catch (error) {
-                                  devError('Error claiming reward:', error);
-                                  if (soundEnabled) AudioManager.buttonError();
-                                }
-                              }}
+                              onClick={() => handleClaimWeeklyQuestReward('weekly_total_matches')}
                               className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
                               ✦ Claim 200 $TESTVBMS
@@ -5445,15 +5461,7 @@ export default function TCGPage() {
                             </div>
                           ) : weeklyProgress.quests.weekly_defense_wins.completed ? (
                             <button
-                              onClick={async () => {
-                                try {
-                                  await claimWeeklyReward({ address, questId: 'weekly_defense_wins' });
-                                  if (soundEnabled) AudioManager.buttonSuccess();
-                                } catch (error) {
-                                  devError('Error claiming reward:', error);
-                                  if (soundEnabled) AudioManager.buttonError();
-                                }
-                              }}
+                              onClick={() => handleClaimWeeklyQuestReward('weekly_defense_wins')}
                               className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
                               ✦ Claim 400 $TESTVBMS
@@ -5489,15 +5497,7 @@ export default function TCGPage() {
                             </div>
                           ) : weeklyProgress.quests.weekly_pve_streak.completed ? (
                             <button
-                              onClick={async () => {
-                                try {
-                                  await claimWeeklyReward({ address, questId: 'weekly_pve_streak' });
-                                  if (soundEnabled) AudioManager.buttonSuccess();
-                                } catch (error) {
-                                  devError('Error claiming reward:', error);
-                                  if (soundEnabled) AudioManager.buttonError();
-                                }
-                              }}
+                              onClick={() => handleClaimWeeklyQuestReward('weekly_pve_streak')}
                               className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
                               ✦ Claim 500 $TESTVBMS

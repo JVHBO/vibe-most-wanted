@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { RewardChoiceModal } from "./RewardChoiceModal";
 
 interface QuestPanelProps {
   playerAddress: string;
@@ -12,6 +13,11 @@ interface QuestPanelProps {
 
 export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelProps) {
   const [isClaiming, setIsClaiming] = useState(false);
+  const [showRewardChoice, setShowRewardChoice] = useState(false);
+  const [pendingReward, setPendingReward] = useState<{
+    amount: number;
+    source: string;
+  } | null>(null);
 
   // Fetch daily quest and progress
   const dailyQuest = useQuery(api.quests.getDailyQuest);
@@ -26,12 +32,22 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
 
     setIsClaiming(true);
     try {
-      await claimReward({ address: playerAddress.toLowerCase() });
+      const result = await claimReward({ address: playerAddress.toLowerCase() });
+
       // Play success sound if enabled
       if (soundEnabled && typeof window !== 'undefined') {
         const audio = new Audio('/marvin-victory.mp3');
         audio.volume = 0.3;
         audio.play().catch(() => {});
+      }
+
+      // Show RewardChoiceModal
+      if (result && result.success) {
+        setPendingReward({
+          amount: result.reward,
+          source: 'pve' // Daily quests count as PvE
+        });
+        setShowRewardChoice(true);
       }
     } catch (error) {
       console.error("Failed to claim quest reward:", error);
@@ -137,6 +153,19 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
           Quests reset daily at 00:00 UTC
         </div>
       </div>
+
+      {/* Reward Choice Modal */}
+      {showRewardChoice && pendingReward && (
+        <RewardChoiceModal
+          amount={pendingReward.amount}
+          source={pendingReward.source as "pve" | "pvp" | "attack" | "defense" | "leaderboard"}
+          onClose={() => setShowRewardChoice(false)}
+          onChoiceMade={(choice) => {
+            setShowRewardChoice(false);
+            // Modal closed - user made their choice
+          }}
+        />
+      )}
     </div>
   );
 }
