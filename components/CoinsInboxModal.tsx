@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,6 +8,9 @@ import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import sdk from "@farcaster/frame-sdk";
+import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
+import { encodeFunctionData, parseEther } from "viem";
 
 interface CoinsInboxModalProps {
   inboxStatus: {
@@ -25,18 +28,53 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const address = userAddress || wagmiAddress;
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
 
-  // Debug logging for mobile
-  if (typeof window !== 'undefined') {
-    console.log('[CoinsInboxModal] address from useAccount:', address);
-    console.log('[CoinsInboxModal] inboxStatus:', inboxStatus);
-  }
+  // Check if we should use Farcaster SDK for transactions
+  useEffect(() => {
+    const checkFarcasterSDK = async () => {
+      if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
+        setUseFarcasterSDK(true);
+        console.log('[CoinsInboxModal] Using Farcaster SDK for transactions');
+      }
+    };
+    checkFarcasterSDK();
+  }, []);
 
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const prepareInboxClaim = useAction(api.vbmsClaim.prepareInboxClaim);
   const recordInboxClaim = useMutation(api.vbmsClaim.recordInboxClaim);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
+
+  // Helper function to claim via Farcaster SDK
+  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
+    if (!sdk.wallet?.ethProvider) {
+      throw new Error("Farcaster wallet not available");
+    }
+
+    console.log('[CoinsInboxModal] Claiming via Farcaster SDK:', { amount, nonce });
+
+    // Encode the function call
+    const data = encodeFunctionData({
+      abi: POOL_ABI,
+      functionName: 'claimVBMS',
+      args: [parseEther(amount), nonce as `0x${string}`, signature as `0x${string}`],
+    });
+
+    // Send transaction via Farcaster SDK
+    const txHash = await sdk.wallet.ethProvider.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: address,
+        to: CONTRACTS.VBMSPoolTroll,
+        data: data,
+      }],
+    });
+
+    console.log('[CoinsInboxModal] Farcaster SDK TX hash:', txHash);
+    return txHash;
+  };
 
   const vbmsInbox = inboxStatus.inbox || 0;
   const testvbmsBalance = inboxStatus.coins || 0;
@@ -63,11 +101,18 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
-      const txHash = await claimVBMS(
-        result.amount.toString(),
-        result.nonce as `0x${string}`,
-        result.signature as `0x${string}`
-      );
+      // Use Farcaster SDK if available, otherwise wagmi
+      const txHash = useFarcasterSDK
+        ? await claimViaFarcasterSDK(
+            result.amount.toString(),
+            result.nonce,
+            result.signature
+          )
+        : await claimVBMS(
+            result.amount.toString(),
+            result.nonce as `0x${string}`,
+            result.signature as `0x${string}`
+          );
 
       console.log('[CoinsInboxModal] Conversion TX successful:', txHash);
 
@@ -111,11 +156,18 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
-      const txHash = await claimVBMS(
-        result.amount.toString(),
-        result.nonce as `0x${string}`,
-        result.signature as `0x${string}`
-      );
+      // Use Farcaster SDK if available, otherwise wagmi
+      const txHash = useFarcasterSDK
+        ? await claimViaFarcasterSDK(
+            result.amount.toString(),
+            result.nonce,
+            result.signature
+          )
+        : await claimVBMS(
+            result.amount.toString(),
+            result.nonce as `0x${string}`,
+            result.signature as `0x${string}`
+          );
 
       console.log('[CoinsInboxModal] Inbox claim TX successful:', txHash);
 
