@@ -23,6 +23,12 @@ export function CoinsInboxModal({ inboxStatus, onClose }: CoinsInboxModalProps) 
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Debug logging for mobile
+  if (typeof window !== 'undefined') {
+    console.log('[CoinsInboxModal] address from useAccount:', address);
+    console.log('[CoinsInboxModal] inboxStatus:', inboxStatus);
+  }
+
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const prepareInboxClaim = useAction(api.vbmsClaim.prepareInboxClaim);
