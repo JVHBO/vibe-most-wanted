@@ -151,12 +151,13 @@ export const signClaimMessage = action({
 // ========== MUTATION: Claim Battle Rewards Now (Immediate) ==========
 // TODO: Refactor these to use internal mutations (they currently use ctx.db which doesn't work in actions)
 
-// @ts-ignore - Temporarily disabled, needs refactoring to use internal mutations
+// @ts-expect-error - TODO: Refactor to use internal mutations pattern like convertTESTVBMStoVBMS
 export const claimBattleRewardsNow_DISABLED = action({
   args: {
     address: v.string(),
     matchId: v.id("matches"),
   },
+  // @ts-expect-error - TODO: Refactor to use internal mutations
   handler: async (ctx, { address, matchId }) => {
     const profile = await getProfile(ctx, address);
 
