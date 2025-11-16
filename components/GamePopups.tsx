@@ -65,6 +65,7 @@ interface GamePopupsProps {
   loginBonusClaimed: boolean;
   isClaimingBonus: boolean;
   handleClaimLoginBonus: () => void;
+  onDailyClaimNow?: () => void; // Trigger reward choice modal for blockchain TX
 
   // Welcome pack popup
   showWelcomePackPopup: boolean;
@@ -100,6 +101,7 @@ export function GamePopups({
   loginBonusClaimed,
   isClaimingBonus,
   handleClaimLoginBonus,
+  onDailyClaimNow,
   showWelcomePackPopup,
   setShowWelcomePackPopup,
   isClaimingWelcomePack,
@@ -152,21 +154,93 @@ export function GamePopups({
             </div>
           )}
 
+          {/* 👅 VICTORY 3 - Sensual tongues floating effect */}
+          {currentVictoryImage === '/victory-3.jpg' && (
+            <>
+              {/* Audio for victory-3 */}
+              <audio autoPlay loop>
+                <source src="/victory-3.mp3" type="audio/mpeg" />
+              </audio>
+
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {/* Tongues floating and licking */}
+                {[...Array(isInFarcaster ? 12 : 25)].map((_, i) => (
+                  <div
+                    key={`tongue-${i}`}
+                    className="absolute animate-float-heart text-5xl"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      animationDelay: `${Math.random() * 3}s`,
+                      animationDuration: `${2 + Math.random() * 2}s`,
+                      filter: 'drop-shadow(0 0 8px rgba(255, 20, 147, 0.6))',
+                      transform: `rotate(${Math.random() * 360}deg)`,
+                    }}
+                  >
+                    👅
+                  </div>
+                ))}
+
+                {/* Peaches and eggplants for extra sensuality */}
+                {[...Array(isInFarcaster ? 6 : 12)].map((_, i) => (
+                  <div
+                    key={`peach-${i}`}
+                    className="absolute animate-pulse text-4xl"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                      animationDelay: `${Math.random() * 2}s`,
+                      animationDuration: `${1.5 + Math.random() * 1.5}s`,
+                      filter: 'drop-shadow(0 0 6px rgba(255, 105, 180, 0.5))',
+                    }}
+                  >
+                    {i % 2 === 0 ? '🍑' : '🍆'}
+                  </div>
+                ))}
+
+                {/* Water drops/sweat */}
+                {[...Array(isInFarcaster ? 8 : 15)].map((_, i) => (
+                  <div
+                    key={`drop-${i}`}
+                    className="absolute animate-ping text-3xl"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                      animationDelay: `${Math.random() * 3}s`,
+                      animationDuration: `${2 + Math.random() * 2}s`,
+                    }}
+                  >
+                    💦
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
             <img
               src={currentVictoryImage}
               alt="Victory!"
-              className={`max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl border-4 ${
+              className={`rounded-2xl shadow-2xl border-4 ${
                 currentVictoryImage === '/victory-2.jpg'
-                  ? 'shadow-pink-500/50 border-pink-400 animate-pulse-glow'
-                  : 'shadow-yellow-500/50 border-yellow-400'
+                  ? 'max-w-[90vw] max-h-[80vh] shadow-pink-500/50 border-pink-400 animate-pulse-glow'
+                  : currentVictoryImage === '/victory-3.jpg'
+                  ? 'max-w-[90vw] max-h-[55vh] object-contain shadow-gold-500/50 border-gold-400 animate-pulse-glow'
+                  : 'max-w-[90vw] max-h-[80vh] shadow-yellow-500/50 border-yellow-400'
               }`}
             />
-            <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse px-4 text-center">
-              {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
-                ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
-                : t('victoryPrize')}
-            </p>
+            <div className="text-center px-4">
+              <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse">
+                {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
+                  ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
+                  : t('victoryPrize')}
+              </p>
+              {/* PvP Inbox Reminder */}
+              {lastBattleResult?.type === 'pvp' && lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0 && (
+                <p className="text-lg text-green-400 font-semibold mt-2 animate-bounce">
+                  📬 Check your inbox to claim TESTVBMS!
+                </p>
+              )}
+            </div>
 
             {/* Share Incentive Banner */}
             {sharesRemaining !== undefined && sharesRemaining > 0 && (
@@ -413,21 +487,24 @@ export function GamePopups({
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setShowDailyClaimPopup(false)}>
           <div className="bg-vintage-charcoal rounded-2xl border-4 border-green-500 max-w-md w-full p-6 shadow-2xl shadow-green-500/50" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
+              <span className="text-4xl">🎁</span>
               <h2 className="text-2xl font-display font-bold text-green-400">Daily Bonus Available</h2>
             </div>
             <p className="text-vintage-ice mb-6 font-modern text-lg">
-              Claim your daily bonus: <span className="text-green-400 font-bold">+25 $TESTVBMS</span>
+              Claim your daily bonus: <span className="text-vintage-gold font-bold">+25 VBMS</span>
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  handleClaimLoginBonus();
+                  if (onDailyClaimNow) {
+                    onDailyClaimNow();
+                  }
                   setShowDailyClaimPopup(false);
                 }}
                 disabled={isClaimingBonus}
-                className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-vintage-gold/30"
               >
-                {isClaimingBonus ? 'Claiming...' : 'Claim Now'}
+                {isClaimingBonus ? 'Claiming...' : 'Claim Now 💎'}
               </button>
               <button
                 onClick={() => setShowDailyClaimPopup(false)}

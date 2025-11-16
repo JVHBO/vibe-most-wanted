@@ -8,6 +8,8 @@ export const sendMessage = mutation({
     sender: v.string(), // address
     senderUsername: v.string(),
     message: v.string(),
+    type: v.optional(v.union(v.literal("text"), v.literal("sound"))), // Message type
+    soundUrl: v.optional(v.string()), // URL of the sound file (for sound messages)
   },
   handler: async (ctx, args) => {
     // Validate message length
@@ -25,6 +27,8 @@ export const sendMessage = mutation({
       senderUsername: args.senderUsername,
       message: args.message.trim(),
       timestamp: Date.now(),
+      type: args.type,
+      soundUrl: args.soundUrl,
     });
 
     return { success: true };

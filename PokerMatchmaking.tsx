@@ -193,17 +193,10 @@ export function PokerMatchmaking({
           setProcessedApproval(false);
         }
       } else if (isApproved && vbmsStage === "approving" && !processedApproval && isPendingJoin && !isJoiningBattleRef.current) {
-        // JOIN ROOM flow - same approach as CREATE (wait + refetch + join)
-        console.log("✅ Approval transaction confirmed! Refetching allowance...");
+        // JOIN ROOM flow - call joinBlockchainBattle directly after approval
+        console.log("✅ Approval confirmed! Now joining battle...");
         setProcessedApproval(true);
         isJoiningBattleRef.current = true; // Set guard to prevent other useEffect from triggering
-
-        // Wait a bit for blockchain to update (same as CREATE flow)
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Refetch allowance to get updated value (same as CREATE flow)
-        const { data: newAllowance } = await refetchAllowance();
-        console.log("🔄 Refetched allowance after approval:", newAllowance);
 
         try {
           // Get pending room data

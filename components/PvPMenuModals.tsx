@@ -11,6 +11,8 @@
  */
 
 import { Dispatch, SetStateAction } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexPvPService } from '@/lib/convex-pvp';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -52,6 +54,7 @@ interface PvPMenuModalsProps {
   setPveSelectedCards: Dispatch<SetStateAction<any[]>>;
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
   setIsDifficultyModalOpen: Dispatch<SetStateAction<boolean>>;
+  setShowEntryFeeModal: Dispatch<SetStateAction<boolean>>;
 
   // Translation function
   t: any;
@@ -77,8 +80,14 @@ export function PvPMenuModals({
   setPveSelectedCards,
   setErrorMessage,
   setIsDifficultyModalOpen,
+  setShowEntryFeeModal,
   t,
 }: PvPMenuModalsProps) {
+  // Check if player has a valid entry fee
+  const entryFeeCheck = useQuery(
+    api.pvp.checkEntryFee,
+    address ? { address } : "skip"
+  );
 
   // Modal de Seleção de Modo de Jogo (PvE vs PvP)
   if (pvpMode === 'menu') {
@@ -154,10 +163,10 @@ export function PvPMenuModals({
               onClick={async () => {
                 if (soundEnabled) AudioManager.buttonSuccess();
 
-                // Check if player has enough coins
-                const currentBalance = playerEconomy?.coins || 0;
-                if (currentBalance < 20) {
-                  setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
+                // Check if player has a valid entry fee
+                if (!entryFeeCheck?.hasEntryFee) {
+                  setShowEntryFeeModal(true);
+                  setPvpMode(null); // Close this modal
                   if (soundEnabled) AudioManager.buttonError();
                   return;
                 }
@@ -165,7 +174,7 @@ export function PvPMenuModals({
                 setPvpMode('autoMatch');
                 setIsSearching(true);
                 try {
-                  // Entry fee will be paid when battle actually starts (both players ready)
+                  // Entry fee will be used when battle actually starts (both players ready)
                   const code = await ConvexPvPService.findMatch(address || '', userProfile?.username);
                   if (code) {
                     // Encontrou uma sala imediatamente
@@ -184,7 +193,7 @@ export function PvPMenuModals({
             >
               <div className="flex items-center justify-between">
                 <span>◊ {t('autoMatch')}</span>
-                <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 20 ⟩</span>
+                <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">20 VBMS</span>
               </div>
             </button>
 
@@ -213,7 +222,7 @@ export function PvPMenuModals({
             >
               <div className="flex items-center justify-between">
                 <span>→ {t('joinRoom')}</span>
-                <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">⟨ 20 ⟩</span>
+                <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">20 VBMS</span>
               </div>
             </button>
 
@@ -277,15 +286,15 @@ export function PvPMenuModals({
               </div>
             </button>
 
-            {/* Ranked Mode - 40 coins */}
+            {/* Ranked Mode - 20 VBMS */}
             <button
               onClick={async () => {
                 if (soundEnabled) AudioManager.buttonClick();
 
-                // Check if player has enough coins
-                const currentBalance = playerEconomy?.coins || 0;
-                if (currentBalance < 20) {
-                  setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
+                // Check if player has a valid entry fee
+                if (!entryFeeCheck?.hasEntryFee) {
+                  setShowEntryFeeModal(true);
+                  setPvpMode(null); // Close this modal
                   if (soundEnabled) AudioManager.buttonError();
                   return;
                 }
@@ -293,7 +302,7 @@ export function PvPMenuModals({
                 setSelectedRoomMode('ranked');
 
                 try {
-                  // Entry fee will be paid when battle actually starts (both players ready)
+                  // Entry fee will be used when battle actually starts (both players ready)
                   // Remove from matchmaking before creating manual room
                   await ConvexPvPService.cancelMatchmaking(address || '');
                   const code = await ConvexPvPService.createRoom(address || '', userProfile?.username, 'ranked');
@@ -309,10 +318,10 @@ export function PvPMenuModals({
               <div className="flex flex-col items-start">
                 <div className="flex items-center justify-between w-full mb-2">
                   <span>⚔️ RANKED</span>
-                  <span className="text-sm font-modern bg-vintage-black/30 px-3 py-1 rounded">⟨ 20 ⟩</span>
+                  <span className="text-sm font-modern bg-vintage-black/30 px-3 py-1 rounded">20 VBMS</span>
                 </div>
                 <p className="text-xs text-left text-vintage-black/70 font-modern">
-                  Competitive • Entry fee • Win coins with ranking bonus
+                  Competitive • Entry fee • Win TESTVBMS in inbox
                 </p>
               </div>
             </button>
@@ -445,16 +454,16 @@ export function PvPMenuModals({
             onClick={async () => {
               if (soundEnabled) AudioManager.buttonClick();
 
-              // Check if player has enough coins
-              const currentBalance = playerEconomy?.coins || 0;
-              if (currentBalance < 20) {
-                setErrorMessage(t('insufficientFundsPvP').replace('{balance}', currentBalance.toString()));
+              // Check if player has a valid entry fee
+              if (!entryFeeCheck?.hasEntryFee) {
+                setShowEntryFeeModal(true);
+                setPvpMode(null); // Close this modal
                 if (soundEnabled) AudioManager.buttonError();
                 return;
               }
 
               try {
-                // Entry fee will be paid when battle actually starts (both players ready)
+                // Entry fee will be used when battle actually starts (both players ready)
                 // Remove do matchmaking antes de entrar em sala manual
                 await ConvexPvPService.cancelMatchmaking(address || '');
                 await ConvexPvPService.joinRoom(roomCode, address || '', userProfile?.username);
@@ -470,7 +479,7 @@ export function PvPMenuModals({
           >
             <div className="flex items-center justify-between">
               <span>{t('join')}</span>
-              <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded">⟨ 20 ⟩</span>
+              <span className="text-sm font-modern bg-white/20 px-2 py-1 rounded">20 VBMS</span>
             </div>
           </button>
 

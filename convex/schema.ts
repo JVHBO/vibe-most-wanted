@@ -455,9 +455,13 @@ export default defineSchema({
     ante: v.number(), // Ante amount (2, 10, 50, 200) - paid once at start
     token: v.union(
       v.literal("TESTVBMS"),
+      v.literal("VBMS"),
       v.literal("testUSDC"),
       v.literal("VIBE_NFT")
     ),
+
+    // Blockchain Integration
+    blockchainBattleId: v.optional(v.number()), // ID from smart contract
 
     // Players
     hostAddress: v.string(),
@@ -531,6 +535,8 @@ export default defineSchema({
     senderUsername: v.string(), // Display name
     message: v.string(), // Chat message content (max 500 chars)
     timestamp: v.number(), // When message was sent
+    type: v.optional(v.union(v.literal("text"), v.literal("sound"))), // Message type
+    soundUrl: v.optional(v.string()), // URL of the sound file (for sound messages)
   })
     .index("by_room", ["roomId", "timestamp"]), // For fetching messages by room chronologically
 
@@ -544,6 +550,7 @@ export default defineSchema({
     amount: v.number(), // Bet amount in tokens
     token: v.union(
       v.literal("TESTVBMS"),
+      v.literal("VBMS"),
       v.literal("testUSDC"),
       v.literal("VIBE_NFT")
     ),
@@ -560,6 +567,49 @@ export default defineSchema({
     .index("by_room", ["roomId", "timestamp"])
     .index("by_bettor", ["bettor", "timestamp"])
     .index("by_status", ["status", "timestamp"]),
+
+  // Betting Credits Balance
+  bettingCredits: defineTable({
+    address: v.string(), // Player's wallet address (lowercase)
+    balance: v.number(), // Current betting credits balance
+    totalDeposited: v.number(), // Lifetime deposits
+    totalWithdrawn: v.number(), // Lifetime withdrawals
+    lastDeposit: v.number(), // Last deposit timestamp
+    txHash: v.optional(v.string()), // Last deposit tx hash
+  })
+    .index("by_address", ["address"])
+    .index("by_txHash", ["txHash"]),
+
+  // Betting Transactions Log
+  bettingTransactions: defineTable({
+    address: v.string(), // Player's wallet address
+    type: v.union(
+      v.literal("deposit"), // Deposited VBMS for credits
+      v.literal("bet"), // Placed a bet
+      v.literal("win"), // Won a bet
+      v.literal("loss"), // Lost a bet
+      v.literal("withdraw") // Withdrew credits to VBMS
+    ),
+    amount: v.number(), // Transaction amount (negative for bets/losses)
+    roomId: v.optional(v.string()), // Room ID if bet-related
+    txHash: v.optional(v.string()), // Blockchain tx hash if deposit/withdraw
+    timestamp: v.number(),
+  })
+    .index("by_address", ["address", "timestamp"])
+    .index("by_type", ["type", "timestamp"]),
+
+  // PvP Entry Fees
+  pvpEntryFees: defineTable({
+    address: v.string(), // Player's wallet address (lowercase)
+    amount: v.number(), // VBMS amount paid
+    txHash: v.string(), // Blockchain transaction hash
+    timestamp: v.number(), // When entry fee was paid
+    used: v.boolean(), // Whether this entry fee was used for a battle
+    usedAt: v.optional(v.number()), // When it was used
+  })
+    .index("by_address", ["address"])
+    .index("by_txHash", ["txHash"])
+    .index("by_address_used", ["address", "used"]),
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // CARD PACKS SYSTEM (Non-NFT Free Cards)

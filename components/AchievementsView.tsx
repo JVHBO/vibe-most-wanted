@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import NextImage from "next/image";
 import { useAchievements } from "../hooks/useAchievements";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { RewardChoiceModal } from "./RewardChoiceModal";
 
 interface AchievementsViewProps {
   playerAddress?: string;
@@ -37,13 +40,34 @@ export default function AchievementsView({
   const [filter, setFilter] = useState<string>("all");
   const [isClaiming, setIsClaiming] = useState(false);
 
+  // Reward Choice Modal State (same as PvE battles)
+  const [showRewardChoice, setShowRewardChoice] = useState(false);
+  const [pendingReward, setPendingReward] = useState<{amount: number, source: "pve" | "pvp" | "attack" | "defense" | "leaderboard"} | null>(null);
+
   /**
-   * Handle claim single achievement
+   * Handle claim single achievement - Show Reward Choice Modal
    */
   const handleClaim = async (achievementId: string) => {
+    if (!playerAddress) return;
+
     setIsClaiming(true);
     try {
-      await claimAchievement(achievementId);
+      // Mark achievement as claimed
+      const result = await claimAchievement(achievementId);
+
+      if (result) {
+        // Show Reward Choice Modal (same as PvE battles)
+        setPendingReward({
+          amount: result.reward,
+          source: 'leaderboard', // Achievements count as leaderboard rewards
+        });
+        setShowRewardChoice(true);
+      }
+    } catch (error) {
+      console.error('[Achievement] Failed to claim:', error);
+      if (onError) {
+        onError('Failed to claim achievement');
+      }
     } finally {
       setIsClaiming(false);
     }
@@ -53,9 +77,34 @@ export default function AchievementsView({
    * Handle claim all unclaimed
    */
   const handleClaimAll = async () => {
+    if (!playerAddress || !unclaimed || unclaimed.length === 0) return;
+
     setIsClaiming(true);
     try {
-      await claimAllUnclaimed();
+      let totalReward = 0;
+      let successCount = 0;
+
+      // Claim all achievements (just mark as claimed)
+      for (const achievement of unclaimed) {
+        try {
+          const result = await claimAchievement(achievement.achievementId);
+          if (result) {
+            totalReward += result.reward;
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`Failed to claim ${achievement.achievementId}:`, error);
+        }
+      }
+
+      // Show Reward Choice Modal with total amount
+      if (successCount > 0 && totalReward > 0) {
+        setPendingReward({
+          amount: totalReward,
+          source: 'leaderboard',
+        });
+        setShowRewardChoice(true);
+      }
     } finally {
       setIsClaiming(false);
     }
@@ -101,7 +150,7 @@ export default function AchievementsView({
             <NextImage src="/images/icons/achievement.svg" alt="Achievement" width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" /> Achievements
           </h1>
           <p className="text-vintage-burnt-gold font-modern">
-            Collect cards and unlock achievements to earn $TESTVBMS coins
+            Collect cards and unlock achievements to earn $VBMS tokens
           </p>
         </div>
 
@@ -268,7 +317,7 @@ export default function AchievementsView({
                         disabled={isClaiming}
                         className="w-full py-2 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black rounded-lg font-bold font-modern hover:scale-105 transition-transform disabled:opacity-50 shadow-gold"
                       >
-                        <NextImage src="/images/icons/coins.svg" alt="Coins" width={16} height={16} className="inline mr-2" /> Claim {achievement.reward} Coins
+                        <NextImage src="/images/icons/coins.svg" alt="VBMS" width={16} height={16} className="inline mr-2" /> Claim {achievement.reward} VBMS
                       </button>
                     )}
                   </div>
@@ -287,6 +336,28 @@ export default function AchievementsView({
               No achievements match this filter
             </p>
           </div>
+        )}
+
+        {/* Reward Choice Modal (same as PvE battles) */}
+        {showRewardChoice && pendingReward && playerAddress && (
+          <RewardChoiceModal
+            amount={pendingReward.amount}
+            source={pendingReward.source}
+            onClose={() => {
+              setShowRewardChoice(false);
+              setPendingReward(null);
+            }}
+            onChoiceMade={(choice) => {
+              console.log(`🎯 Achievement reward: ${choice} for ${pendingReward.amount} coins`);
+              if (onSuccess) {
+                onSuccess(
+                  choice === 'claim_now'
+                    ? `💰 ${pendingReward.amount} TESTVBMS added to balance!`
+                    : `📬 ${pendingReward.amount} VBMS sent to inbox!`
+                );
+              }
+            }}
+          />
         )}
       </div>
     </div>

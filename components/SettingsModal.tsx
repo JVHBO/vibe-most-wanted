@@ -9,6 +9,11 @@ import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { createPortal } from "react-dom";
+import { useState } from 'react';
+import { useAccount } from 'wagmi';
+import { writeContract } from 'wagmi/actions';
+import { config } from '@/lib/wagmi';
+import { CONTRACTS, ERC20_ABI } from '@/lib/contracts';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -59,7 +64,43 @@ export function SettingsModal({
   setUserProfile,
   setErrorMessage,
 }: SettingsModalProps) {
+  const { address: walletAddress } = useAccount();
+  const [isRevoking, setIsRevoking] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleRevokeApproval = async () => {
+    if (!walletAddress) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    const confirmed = confirm(
+      'Are you sure you want to revoke VBMS approval for PokerBattle contract?\n\n' +
+      'You will need to approve again to create or join battles.'
+    );
+
+    if (!confirmed) return;
+
+    setIsRevoking(true);
+    try {
+      await writeContract(config, {
+        address: CONTRACTS.VBMSToken as `0x${string}`,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [CONTRACTS.VBMSPokerBattle as `0x${string}`, 0n],
+      });
+
+      if (soundEnabled) AudioManager.buttonSuccess();
+      alert('VBMS approval revoked successfully!');
+    } catch (error: any) {
+      console.error('Error revoking approval:', error);
+      if (soundEnabled) AudioManager.buttonError();
+      alert('Failed to revoke approval: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsRevoking(false);
+    }
+  };
 
   const handleUsernameChange = async () => {
     if (soundEnabled) AudioManager.buttonClick();
@@ -403,6 +444,31 @@ export function SettingsModal({
                 <p className="text-xs text-vintage-burnt-gold italic text-center">
                   {t('vibeMarketEasterEgg')}
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* VBMS Revoke Approval */}
+          {walletAddress && (
+            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-red-500/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl sm:text-3xl text-red-400">🔒</span>
+                  <div>
+                    <p className="font-modern font-bold text-vintage-gold">VBMS APPROVAL</p>
+                    <p className="text-xs text-vintage-burnt-gold">
+                      Revoke PokerBattle contract access
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleRevokeApproval}
+                  disabled={isRevoking}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-900/50 text-white rounded-lg text-sm font-modern font-semibold transition"
+                >
+                  {isRevoking ? 'Revoking...' : 'Revoke'}
+                </button>
               </div>
             </div>
           )}

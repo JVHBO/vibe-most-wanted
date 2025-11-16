@@ -31,6 +31,8 @@ const PVE_REWARDS = {
 // PvP Rewards
 const PVP_WIN_REWARD = 100;
 const PVP_LOSS_PENALTY = -20; // Lose 20 coins on loss
+const REVENGE_BONUS = 1.2; // +20% bonus for revenge wins
+const MAX_REMATCHES_PER_DAY = 5; // Max revenge matches per day
 
 // PvP Ranking Bonuses - Based on RANK DIFFERENCE (not absolute position)
 // This prevents #2 vs #3 giving huge bonuses, but rewards attacking much higher ranked players
@@ -296,7 +298,7 @@ async function checkAndResetDailyLimits(ctx: any, profile: any) {
   const today = new Date().toISOString().split('T')[0];
 
   if (!profile.dailyLimits || profile.dailyLimits.lastResetDate !== today) {
-    // Reset daily limits
+    // Reset daily limits AND rematchesToday
     await ctx.db.patch(profile._id, {
       dailyLimits: {
         pveWins: 0,
@@ -307,6 +309,7 @@ async function checkAndResetDailyLimits(ctx: any, profile: any) {
         loginBonus: false,
         streakBonus: false,
       },
+      rematchesToday: 0, // Reset revenge match count
     });
 
     // Return fresh limits
@@ -389,18 +392,44 @@ export const previewPvPRewards = query({
     const isToday = dailyLimits.lastResetDate === today;
     const firstPvpBonus = isToday && !dailyLimits.firstPvpBonus ? BONUSES.firstPvp : 0;
 
+    // Check for revenge match (opponent previously defeated player)
+    const normalizedPlayerAddress = playerAddress.toLowerCase();
+    const normalizedOpponentAddress = opponentAddress.toLowerCase();
+    const lastOpponentVictory = await ctx.db
+      .query("matches")
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedOpponentAddress))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("opponentAddress"), normalizedPlayerAddress),
+          q.eq(q.field("result"), "win")
+        )
+      )
+      .order("desc")
+      .first();
+
+    const isRevenge = lastOpponentVictory !== null;
+    let revengeBonus = 0;
+    let rewardWithRevenge = winReward;
+
+    if (isRevenge) {
+      revengeBonus = Math.round(winReward * (REVENGE_BONUS - 1)); // 20% of base reward
+      rewardWithRevenge = Math.round(winReward * REVENGE_BONUS);
+    }
+
     // Calculate total potential rewards
-    const totalWinReward = winReward + streakBonus + firstPvpBonus;
+    const totalWinReward = rewardWithRevenge + streakBonus + firstPvpBonus;
 
     return {
       opponentRank,
       currentStreak,
+      isRevenge, // Flag if this is a revenge match
 
       // Win scenario
       win: {
         baseReward: baseWinReward,
         rankingBonus: winBonus,
         rankingMultiplier: winMultiplier,
+        revengeBonus, // +20% revenge bonus if applicable
         firstPvpBonus,
         streakBonus,
         streakMessage,
@@ -444,8 +473,9 @@ export const awardPvECoins = mutation({
       v.literal("ru"),
       v.literal("zh-CN")
     )),
+    skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins
   },
-  handler: async (ctx, { address, difficulty, won, language }) => {
+  handler: async (ctx, { address, difficulty, won, language, skipCoins }) => {
     let profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
@@ -568,16 +598,18 @@ export const awardPvECoins = mutation({
       totalReward = remaining;
     }
 
-    // Award coins
-    await ctx.db.patch(profile!._id, {
-      coins: (profile.coins || 0) + totalReward,
-      lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
-      dailyLimits: {
-        ...dailyLimits,
-        pveWins: dailyLimits.pveWins + 1,
-      },
-      // lastPvEAward already updated immediately after rate limit check (line 491)
-    });
+    // Award coins (or just return amount if skipCoins)
+    if (!skipCoins) {
+      await ctx.db.patch(profile!._id, {
+        coins: (profile.coins || 0) + totalReward,
+        lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
+        dailyLimits: {
+          ...dailyLimits,
+          pveWins: dailyLimits.pveWins + 1,
+        },
+        // lastPvEAward already updated immediately after rate limit check (line 491)
+      });
+    }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
     // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
@@ -1149,6 +1181,7 @@ export const recordAttackResult = mutation({
       v.literal("ru"),
       v.literal("zh-CN")
     )),
+    skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins (for wins only)
   },
   handler: async (ctx, args) => {
     const normalizedPlayerAddress = args.playerAddress.toLowerCase();
@@ -1223,6 +1256,22 @@ export const recordAttackResult = mutation({
     const won = args.result === 'win';
     const rankingMultiplier = calculateRankingMultiplier(playerRank, opponentRank, won);
 
+    // ===== STEP 2.5: Check for revenge match =====
+    // Revenge = opponent previously defeated this player
+    const lastOpponentVictory = await ctx.db
+      .query("matches")
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedOpponentAddress))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("opponentAddress"), normalizedPlayerAddress),
+          q.eq(q.field("result"), "win")
+        )
+      )
+      .order("desc")
+      .first();
+
+    const isRevenge = lastOpponentVictory !== null;
+
     // ===== STEP 3: Calculate and award/deduct coins =====
     let newStreak = profile.winStreak || 0;
     const bonuses: string[] = [];
@@ -1234,11 +1283,20 @@ export const recordAttackResult = mutation({
       newStreak++;
       // 🇨🇳 Apply language boost to base reward first, then ranking multiplier
       const boostedBase = args.language ? applyLanguageBoost(PVP_WIN_REWARD, args.language) : PVP_WIN_REWARD;
-      totalReward = Math.round(boostedBase * rankingMultiplier);
+      let rewardBeforeRevenge = Math.round(boostedBase * rankingMultiplier);
+
+      // 🔥 Apply revenge bonus (+20%)
+      if (isRevenge) {
+        const revengeBonus = Math.round(rewardBeforeRevenge * (REVENGE_BONUS - 1)); // 20% of reward
+        totalReward = Math.round(rewardBeforeRevenge * REVENGE_BONUS);
+        bonuses.push(`⚔️ Revenge Bonus +${revengeBonus} (${((REVENGE_BONUS - 1) * 100).toFixed(0)}%)`);
+      } else {
+        totalReward = rewardBeforeRevenge;
+      }
 
       // Add ranking bonus message
       if (rankingMultiplier > 1.0) {
-        const bonusAmount = totalReward - PVP_WIN_REWARD;
+        const bonusAmount = rewardBeforeRevenge - PVP_WIN_REWARD;
         bonuses.push(`Rank #${opponentRank} Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
       }
 
@@ -1295,9 +1353,14 @@ export const recordAttackResult = mutation({
       }
 
       // No daily cap for attack mode - limited by 5 attacks/day instead
-      newCoins = (profile.coins || 0) + totalReward;
+      // Award coins (or just calculate if skipCoins)
+      if (!args.skipCoins) {
+        newCoins = (profile.coins || 0) + totalReward;
+      } else {
+        newCoins = profile.coins || 0; // Keep current balance
+      }
     } else if (args.result === 'loss') {
-      // LOSER: Deduct coins
+      // LOSER: Deduct coins AND create inbox debt if needed
       newStreak = 0;
       const basePenalty = PVP_LOSS_PENALTY; // -20
       const penalty = Math.round(basePenalty * rankingMultiplier);
@@ -1309,7 +1372,82 @@ export const recordAttackResult = mutation({
         bonuses.push(`Rank #${opponentRank} Penalty Reduced -${reduction} (${(rankingMultiplier * 100).toFixed(0)}% penalty)`);
       }
 
-      newCoins = Math.max(0, (profile.coins || 0) + penalty); // Can't go below 0
+      const currentCoins = profile.coins || 0;
+      const penaltyAmount = Math.abs(penalty);
+
+      // Calculate how much can be deducted from coins vs inbox debt
+      let coinsDeducted = 0;
+      let inboxDebt = 0;
+
+      if (currentCoins >= penaltyAmount) {
+        // Has enough coins - deduct all from coins
+        coinsDeducted = penaltyAmount;
+        newCoins = currentCoins - penaltyAmount;
+      } else {
+        // Not enough coins - deduct what we have and create inbox debt
+        coinsDeducted = currentCoins;
+        newCoins = 0;
+        inboxDebt = penaltyAmount - currentCoins; // Remaining goes to inbox as debt
+      }
+
+      // 💰 TRANSFER SYSTEM: Full penalty goes to defender (95%, 5% pool fee)
+      const poolFee = Math.round(penaltyAmount * 0.05); // 5% pool fee
+      const defenderReward = penaltyAmount - poolFee; // 95% goes to defender
+
+      // Get defender profile
+      let defenderProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
+        .first();
+
+      if (defenderProfile) {
+        // Initialize economy if needed
+        if (defenderProfile.coins === undefined) {
+          const today = new Date().toISOString().split('T')[0];
+          await ctx.db.patch(defenderProfile._id, {
+            coins: 0,
+            lifetimeEarned: 0,
+            lifetimeSpent: 0,
+            dailyLimits: {
+              pveWins: 0,
+              pvpMatches: 0,
+              lastResetDate: today,
+              firstPveBonus: false,
+              firstPvpBonus: false,
+              loginBonus: false,
+              streakBonus: false,
+            },
+          });
+          // Reload
+          defenderProfile = await ctx.db.get(defenderProfile._id);
+        }
+
+        if (defenderProfile) {
+          // Award TESTVBMS to defender
+          const defenderNewCoins = (defenderProfile.coins || 0) + defenderReward;
+          await ctx.db.patch(defenderProfile._id, {
+            coins: defenderNewCoins,
+            lifetimeEarned: (defenderProfile.lifetimeEarned || 0) + defenderReward,
+          });
+
+          console.log(`🛡️ Defense reward: ${normalizedOpponentAddress} earned ${defenderReward} TESTVBMS`);
+        }
+      }
+
+      // Apply inbox debt to attacker (can go negative!)
+      if (inboxDebt > 0) {
+        const currentInbox = profile.inbox || 0;
+        const newInbox = currentInbox - inboxDebt;
+
+        // Update attacker's inbox with debt
+        await ctx.db.patch(profile._id, {
+          inbox: newInbox, // Can be negative!
+        });
+
+        console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (${coinsDeducted} from coins, ${inboxDebt} inbox debt). Inbox: ${currentInbox} → ${newInbox}`);
+      } else {
+        console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (all from coins)`);
+      }
     }
 
     // ===== STEP 4: Record match history =====
@@ -1353,6 +1491,7 @@ export const recordAttackResult = mutation({
         ...dailyLimits,
         pvpMatches: dailyLimits.pvpMatches + 1,
       },
+      rematchesToday: isRevenge ? (profile.rematchesToday || 0) + 1 : profile.rematchesToday,
       lastUpdated: Date.now(),
     });
 

@@ -11,6 +11,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { ethers } from "ethers";
 
 // ========== HELPER: Get Profile ==========
 
@@ -83,20 +84,50 @@ function calculateClaimBonus(
 // ========== HELPER: Generate Nonce ==========
 
 function generateNonce(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  // Generate bytes32 nonce (64 hex characters)
+  const timestamp = Date.now().toString(16).padStart(16, '0');
+  const random1 = Math.random().toString(16).substring(2).padStart(16, '0');
+  const random2 = Math.random().toString(16).substring(2).padStart(16, '0');
+  const random3 = Math.random().toString(16).substring(2).padStart(16, '0');
+  return `0x${timestamp}${random1}${random2}${random3}`.substring(0, 66); // 0x + 64 chars
 }
 
-// ========== HELPER: Sign Message (Placeholder) ==========
+// ========== HELPER: Sign Message (ECDSA Real Signature) ==========
 
 async function signClaimMessage(
   address: string,
   amount: number,
   nonce: string
 ): Promise<string> {
-  // TODO: Implement actual backend signing with private key
-  // For now, return placeholder
-  // This should use ethers.js to sign: keccak256(abi.encodePacked(address, amount, nonce))
-  return `0x${"0".repeat(130)}`; // Placeholder signature
+  // Get private key from environment variable
+  const SIGNER_PRIVATE_KEY = process.env.VBMS_SIGNER_PRIVATE_KEY;
+
+  if (!SIGNER_PRIVATE_KEY) {
+    throw new Error('VBMS_SIGNER_PRIVATE_KEY not configured in environment variables');
+  }
+
+  // Create wallet from private key
+  const wallet = new ethers.Wallet(SIGNER_PRIVATE_KEY);
+
+  // Encode message: keccak256(abi.encodePacked(address, uint256, bytes32))
+  // Amount needs to be converted to wei (18 decimals)
+  const amountInWei = ethers.parseEther(amount.toString());
+
+  const messageHash = ethers.solidityPackedKeccak256(
+    ['address', 'uint256', 'bytes32'],
+    [address, amountInWei, nonce]
+  );
+
+  // Sign the message hash WITH Ethereum Signed Message prefix
+  // Contract expects: keccak256("\x19Ethereum Signed Message:\n32" + messageHash)
+  const signature = await wallet.signMessage(ethers.getBytes(messageHash));
+
+  console.log(`[VBMS Signature] Address: ${address}, Amount: ${amount} VBMS (${amountInWei} wei), Nonce: ${nonce}`);
+  console.log(`[VBMS Signature] Message Hash: ${messageHash}`);
+  console.log(`[VBMS Signature] Signature: ${signature}`);
+  console.log(`[VBMS Signature] Signer Address: ${wallet.address}`);
+
+  return signature;
 }
 
 // ========== MUTATION: Claim Battle Rewards Now (Immediate) ==========
@@ -252,6 +283,11 @@ export const prepareInboxClaim = mutation({
     const nonce = generateNonce();
     const signature = await signClaimMessage(address, bonusData.totalAmount, nonce);
 
+    // 🔒 SECURITY: Zero inbox IMMEDIATELY to prevent multiple claims
+    await ctx.db.patch(profile._id, {
+      inbox: 0,
+    });
+
     return {
       amount: bonusData.totalAmount,
       baseAmount: bonusData.baseAmount,
@@ -351,12 +387,12 @@ export const getPlayerEconomy = query({
     }
 
     return {
-      // Virtual balance (in-app spending)
+      // Virtual balance (in-app spending) - TESTVBMS
       coins: profile.coins || 0,
       lifetimeEarned: profile.lifetimeEarned || 0,
       lifetimeSpent: profile.lifetimeSpent || 0,
 
-      // Real VBMS token
+      // Real VBMS token (inbox system)
       inbox: profile.inbox || 0,
       claimedTokens: profile.claimedTokens || 0,
       poolDebt: profile.poolDebt || 0,
@@ -434,6 +470,366 @@ export const getClaimHistory = query({
       .take(limit);
 
     return history;
+  },
+});
+
+// ========== MUTATION: Send Achievement to Inbox ==========
+
+export const sendAchievementToInbox = mutation({
+  args: {
+    address: v.string(),
+    achievementId: v.string(),
+    amount: v.number(),
+  },
+  handler: async (ctx, { address, achievementId, amount }) => {
+    const profile = await getProfile(ctx, address);
+
+    const currentInbox = profile.inbox || 0;
+    const newInbox = currentInbox + amount;
+
+    // Check if paying off debt
+    const hadDebt = currentInbox < 0;
+    const debtPaid = hadDebt ? Math.min(Math.abs(currentInbox), amount) : 0;
+    const netGain = amount - debtPaid;
+
+    await ctx.db.patch(profile._id, {
+      inbox: newInbox,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
+    });
+
+    // Track analytics
+    await ctx.db.insert("claimAnalytics", {
+      playerAddress: address.toLowerCase(),
+      choice: "inbox",
+      amount,
+      inboxTotal: newInbox,
+      bonusAvailable: false,
+      timestamp: Date.now(),
+    });
+
+    let message = `📬 ${amount} VBMS sent to inbox from achievement!`;
+    if (hadDebt && newInbox < 0) {
+      message = `📬 ${amount} VBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
+    } else if (hadDebt && newInbox >= 0) {
+      message = `📬 ${amount} VBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
+    }
+
+    return {
+      newInbox,
+      amountAdded: amount,
+      debtPaid,
+      hadDebt,
+      message,
+    };
+  },
+});
+
+// ========== MUTATION: Claim Achievement Now (Immediate) ==========
+
+export const claimAchievementNow = mutation({
+  args: {
+    address: v.string(),
+    achievementId: v.string(),
+    amount: v.number(),
+  },
+  handler: async (ctx, { address, achievementId, amount }) => {
+    const profile = await getProfile(ctx, address);
+
+    // 🔒 SECURITY: Verify achievement hasn't been claimed yet
+    const achievement = await ctx.db
+      .query("achievements")
+      .withIndex("by_player_achievement", (q) =>
+        q.eq("playerAddress", address.toLowerCase()).eq("achievementId", achievementId)
+      )
+      .first();
+
+    if (!achievement) {
+      throw new Error("Achievement not found");
+    }
+
+    if (!achievement.claimedAt) {
+      throw new Error("Achievement reward not claimed yet - call claimAchievementReward first");
+    }
+
+    // Check if blockchain claim already done (prevent double claim)
+    if (achievement.blockchainClaimedAt) {
+      throw new Error("Achievement VBMS already claimed on blockchain");
+    }
+
+    if (amount < 100) {
+      throw new Error("Minimum claim amount is 100 VBMS");
+    }
+
+    // Calculate bonus
+    const inboxAmount = profile.inbox || 0;
+    const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
+
+    // Generate signature for smart contract
+    const nonce = generateNonce();
+    const signature = await signClaimMessage(address, bonusData.totalAmount, nonce);
+
+    // 🔒 SECURITY: Mark blockchain claim to prevent reuse
+    await ctx.db.patch(achievement._id, {
+      blockchainClaimedAt: Date.now(),
+    });
+
+    // Track analytics
+    await ctx.db.insert("claimAnalytics", {
+      playerAddress: address.toLowerCase(),
+      choice: "immediate",
+      amount,
+      inboxTotal: inboxAmount,
+      bonusAvailable: bonusData.bonus > 0,
+      timestamp: Date.now(),
+    });
+
+    return {
+      amount: bonusData.totalAmount,
+      baseAmount: bonusData.baseAmount,
+      bonus: bonusData.bonus,
+      bonusReasons: bonusData.bonusReasons,
+      nonce,
+      signature,
+      message: `Claim ${bonusData.totalAmount} VBMS from achievement`,
+    };
+  },
+});
+
+// ========== MUTATION: Claim Inbox as TESTVBMS (Virtual Coins) ==========
+
+export const claimInboxAsTESTVBMS = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const profile = await getProfile(ctx, address);
+
+    const inboxAmount = profile.inbox || 0;
+
+    if (inboxAmount < 1) {
+      throw new Error("Nada para coletar no inbox");
+    }
+
+    // Add to virtual coins balance
+    const currentCoins = profile.coins || 0;
+    const newCoins = currentCoins + inboxAmount;
+
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      inbox: 0, // Clear inbox
+      lifetimeEarned: (profile.lifetimeEarned || 0) + inboxAmount,
+    });
+
+    return {
+      success: true,
+      amount: inboxAmount,
+      newBalance: newCoins,
+      message: `💰 ${inboxAmount} TESTVBMS added to your balance!`,
+    };
+  },
+});
+
+// ========== PVE REWARD CLAIMS ==========
+
+/**
+ * Send PvE reward to inbox (CPU poker victories) - pays debt first if any
+ */
+export const sendPveRewardToInbox = mutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    difficulty: v.optional(v.union(
+      v.literal("gey"),
+      v.literal("goofy"),
+      v.literal("gooner"),
+      v.literal("gangster"),
+      v.literal("gigachad")
+    )),
+  },
+  handler: async (ctx, { address, amount, difficulty }) => {
+    const profile = await getProfile(ctx, address);
+
+    const currentInbox = profile.inbox || 0;
+    const newInbox = currentInbox + amount;
+
+    // Check if paying off debt
+    const hadDebt = currentInbox < 0;
+    const debtPaid = hadDebt ? Math.min(Math.abs(currentInbox), amount) : 0;
+    const netGain = amount - debtPaid;
+
+    await ctx.db.patch(profile._id, {
+      inbox: newInbox,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
+    });
+
+    console.log(`📬 ${address} sent ${amount} VBMS to inbox from PvE victory (difficulty: ${difficulty || 'N/A'}). Inbox: ${currentInbox} → ${newInbox}`);
+
+    // Track analytics
+    await ctx.db.insert("claimAnalytics", {
+      playerAddress: address.toLowerCase(),
+      choice: "inbox",
+      amount,
+      inboxTotal: newInbox,
+      bonusAvailable: false,
+      timestamp: Date.now(),
+    });
+
+    let message = `📬 ${amount} VBMS sent to inbox from PvE victory!`;
+    if (hadDebt && newInbox < 0) {
+      message = `📬 ${amount} VBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
+    } else if (hadDebt && newInbox >= 0) {
+      message = `📬 ${amount} VBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
+    }
+
+    return {
+      newInbox,
+      amountAdded: amount,
+      debtPaid,
+      hadDebt,
+      message,
+    };
+  },
+});
+
+/**
+ * Claim PvE reward now (prepare blockchain TX)
+ */
+export const claimPveRewardNow = mutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    difficulty: v.optional(v.union(
+      v.literal("gey"),
+      v.literal("goofy"),
+      v.literal("gooner"),
+      v.literal("gangster"),
+      v.literal("gigachad")
+    )),
+  },
+  handler: async (ctx, { address, amount, difficulty }) => {
+    const profile = await getProfile(ctx, address);
+
+    if (amount < 100) {
+      throw new Error("Minimum claim amount is 100 VBMS");
+    }
+
+    // Calculate bonus
+    const inboxAmount = profile.inbox || 0;
+    const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
+
+    // Generate signature for smart contract
+    const nonce = generateNonce();
+    const signature = await signClaimMessage(address, bonusData.totalAmount, nonce);
+
+    console.log(`💰 ${address} claiming ${bonusData.totalAmount} VBMS now from PvE victory (difficulty: ${difficulty || 'N/A'}, base: ${amount}, bonus: ${bonusData.bonus})`);
+
+    // Track analytics
+    await ctx.db.insert("claimAnalytics", {
+      playerAddress: address.toLowerCase(),
+      choice: "immediate",
+      amount,
+      inboxTotal: inboxAmount,
+      bonusAvailable: bonusData.bonus > 0,
+      timestamp: Date.now(),
+    });
+
+    return {
+      amount: bonusData.totalAmount,
+      baseAmount: bonusData.baseAmount,
+      bonus: bonusData.bonus,
+      bonusReasons: bonusData.bonusReasons,
+      nonce,
+      signature,
+      message: `Claim ${bonusData.totalAmount} VBMS from PvE victory`,
+    };
+  },
+});
+
+// ========== MUTATION: Convert TESTVBMS to VBMS ==========
+
+/**
+ * Convert all TESTVBMS coins to VBMS blockchain tokens
+ * Prepares the signature for blockchain claim
+ */
+export const convertTESTVBMStoVBMS = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const profile = await getProfile(ctx, address);
+
+    const testVBMSBalance = profile.coins || 0;
+
+    if (testVBMSBalance < 100) {
+      throw new Error(`Minimum 100 TESTVBMS required to convert. You have: ${testVBMSBalance}`);
+    }
+
+    // Generate signature for blockchain claim
+    const nonce = generateNonce();
+    const signature = await signClaimMessage(address, testVBMSBalance, nonce);
+
+    console.log(`💱 ${address} converting ${testVBMSBalance} TESTVBMS → VBMS (nonce: ${nonce})`);
+
+    // 🔒 SECURITY: Zero TESTVBMS balance IMMEDIATELY to prevent multiple claims
+    await ctx.db.patch(profile._id, {
+      coins: 0,
+    });
+
+    // Track analytics
+    await ctx.db.insert("claimAnalytics", {
+      playerAddress: address.toLowerCase(),
+      choice: "immediate",
+      amount: testVBMSBalance,
+      inboxTotal: profile.inbox || 0,
+      bonusAvailable: false,
+      timestamp: Date.now(),
+    });
+
+    return {
+      amount: testVBMSBalance,
+      nonce: nonce,
+      signature: signature,
+      message: `Convert ${testVBMSBalance} TESTVBMS → VBMS blockchain tokens`,
+    };
+  },
+});
+
+/**
+ * Record TESTVBMS → VBMS conversion (after blockchain confirmation)
+ * Zeros the TESTVBMS balance
+ */
+export const recordTESTVBMSConversion = mutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    txHash: v.string(),
+  },
+  handler: async (ctx, { address, amount, txHash }) => {
+    const profile = await getProfile(ctx, address);
+
+    // Zero TESTVBMS coins
+    await ctx.db.patch(profile._id, {
+      coins: 0,
+      claimedTokens: (profile.claimedTokens || 0) + amount,
+      lastClaimTimestamp: Date.now(),
+    });
+
+    // Save to claim history
+    await ctx.db.insert("claimHistory", {
+      playerAddress: address.toLowerCase(),
+      amount,
+      txHash,
+      timestamp: Date.now(),
+      type: "testvbms_conversion",
+    });
+
+    console.log(`✅ ${address} converted ${amount} TESTVBMS → VBMS, zeroed coins`);
+
+    return {
+      success: true,
+      newCoinsBalance: 0,
+      newClaimedTotal: (profile.claimedTokens || 0) + amount,
+    };
   },
 });
 

@@ -39,7 +39,7 @@ export function InboxDisplay({ compact = false }: InboxDisplayProps) {
           className={`relative bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base flex items-center justify-center ${
             isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'
           }`}
-          title={isLoading ? "Loading..." : `Inbox: ${inboxAmount.toLocaleString()} TESTVBMS`}
+          title={isLoading ? "Loading..." : `Inbox: ${inboxAmount.toLocaleString()} VBMS`}
         >
           <span className={`text-xl md:text-2xl ${isLoading ? 'animate-pulse' : ''}`}>📬</span>
           {!isLoading && hasUncollected && (
@@ -68,7 +68,7 @@ export function InboxDisplay({ compact = false }: InboxDisplayProps) {
         <div className="text-left">
           <div className="text-xs text-vintage-gold/60">Inbox</div>
           <div className="text-sm font-bold text-vintage-gold">
-            {inboxAmount.toLocaleString()} TESTVBMS
+            {inboxAmount.toLocaleString()} VBMS
           </div>
         </div>
 

@@ -10,7 +10,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 // Create a new poker room
@@ -19,7 +19,8 @@ export const createPokerRoom = mutation({
     address: v.string(),
     username: v.string(),
     ante: v.number(), // 2, 10, 50, or 200
-    token: v.union(v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
+    token: v.union(v.literal("VBMS"), v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
+    blockchainBattleId: v.optional(v.number()), // Optional blockchain battle ID
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -35,6 +36,7 @@ export const createPokerRoom = mutation({
       status: "waiting",
       ante: args.ante,
       token: args.token,
+      blockchainBattleId: args.blockchainBattleId, // Store blockchain battle ID
       hostAddress: args.address.toLowerCase(),
       hostUsername: args.username,
       hostReady: false,
@@ -208,7 +210,7 @@ export const autoMatch = mutation({
     address: v.string(),
     username: v.string(),
     ante: v.number(),
-    token: v.union(v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
+    token: v.union(v.literal("VBMS"), v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -507,19 +509,14 @@ export const useCardAction = mutation({
       console.log(`💰 Guest paid ${cost} boost coins for ${args.action}. New balance: ${newGuestBoostCoins}`);
     }
 
-    // If both players have acted, check if there are spectators
+    // If both players have acted, move directly to resolution
+    // Spectators can bet BEFORE the round starts (during card-selection phase)
     if (gameState.hostAction && gameState.guestAction) {
       const hasSpectators = room.spectators && room.spectators.length > 0;
 
-      if (hasSpectators) {
-        // Move to spectator betting phase
-        gameState.phase = "spectator-betting";
-        console.log(`👀 ${room.spectators!.length} spectators present - entering betting phase`);
-      } else {
-        // No spectators, skip betting and go straight to resolution
-        gameState.phase = "resolution";
-        console.log('🎲 No spectators - skipping betting phase');
-      }
+      // Always go to resolution (spectators bet during card-selection now)
+      gameState.phase = "resolution";
+      console.log(`👀 ${hasSpectators ? room.spectators!.length : 0} spectators present - moving to resolution`);
     }
 
     await ctx.db.patch(room._id, {
@@ -566,7 +563,16 @@ export const resolveRound = mutation({
     const guestAction = gameState.guestAction;
 
     if (!hostCard || !guestCard) {
-      throw new Error("Both players must select cards before resolving");
+      console.warn("[resolveRound] Missing cards - skipping resolution", {
+        hasHostCard: !!hostCard,
+        hasGuestCard: !!guestCard,
+        currentRound: gameState.currentRound,
+        hostSelectedCard: gameState.hostSelectedCard,
+        guestSelectedCard: gameState.guestSelectedCard,
+      });
+      // Don't throw error - just return early to avoid breaking the game
+      // This can happen if a player disconnected or the round was already resolved
+      return { success: false, reason: "Missing card selections" };
     }
 
     // Calculate winner server-side
@@ -781,8 +787,8 @@ export const getMyPokerRoom = query({
   },
 });
 
-// Cleanup old poker rooms
-export const cleanupOldPokerRooms = mutation({
+// Cleanup old poker rooms (called by cron)
+export const cleanupOldPokerRooms = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
@@ -844,10 +850,11 @@ export const placeBet = mutation({
       throw new Error("Cannot bet on finished or cancelled games");
     }
 
-    // Only allow betting during spectator-betting phase
-    if (room.gameState?.phase !== "spectator-betting") {
+    // Allow betting during any active phase except game-over
+    const allowedPhases = ["card-selection", "reveal", "resolution"];
+    if (!allowedPhases.includes(room.gameState?.phase || '')) {
       console.error(`❌ Wrong phase for betting: ${room.gameState?.phase}`);
-      throw new Error(`Betting is only allowed during the betting phase. Current phase: ${room.gameState?.phase || 'unknown'}`);
+      throw new Error(`Betting is only allowed during active rounds. Current phase: ${room.gameState?.phase || 'unknown'}`);
     }
 
     // Verify betOn is a player in the room

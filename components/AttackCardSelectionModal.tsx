@@ -75,6 +75,8 @@ interface AttackCardSelectionModalProps {
   setPvpPreviewData: Dispatch<SetStateAction<PvPPreviewData | null>>;
   setShowPvPPreview: Dispatch<SetStateAction<boolean>>;
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
+  setPendingReward: Dispatch<SetStateAction<{amount: number, source: "pve" | "pvp" | "attack" | "defense" | "leaderboard"} | null>>;
+  setShowRewardChoice: Dispatch<SetStateAction<boolean>>;
 
   // Functions
   isCardLocked: (tokenId: string, mode: 'attack' | 'pvp') => boolean;
@@ -127,6 +129,8 @@ export function AttackCardSelectionModal({
   setPvpPreviewData,
   setShowPvPPreview,
   setErrorMessage,
+  setPendingReward,
+  setShowRewardChoice,
   isCardLocked,
   payEntryFee,
   recordAttackResult,
@@ -240,6 +244,7 @@ export function AttackCardSelectionModal({
 
       if (address && userProfile) {
         try {
+          // Record attack result (coins NOT added yet for wins)
           const result = await recordAttackResult({
             playerAddress: address,
             playerPower: playerTotal,
@@ -252,6 +257,7 @@ export function AttackCardSelectionModal({
             opponentCards: defenderCards,
             entryFeePaid: 0,
             language: lang,
+            skipCoins: matchResult === 'win', // Only skip coins for wins (losses are auto-processed)
           });
 
           coinsEarned = result.coinsAwarded || 0;
@@ -305,6 +311,14 @@ export function AttackCardSelectionModal({
           type: 'attack',
           coinsEarned
         });
+
+        // Set pending reward to show RewardChoiceModal (only for wins)
+        if (matchResult === 'win' && coinsEarned > 0) {
+          setPendingReward({
+            amount: coinsEarned,
+            source: 'attack',
+          });
+        }
 
         // Show result popup after closing battle
         setTimeout(() => {

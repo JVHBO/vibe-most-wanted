@@ -87,19 +87,19 @@ export function PveCardSelectionModal({
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-8 shadow-neon my-8 max-h-[90vh] overflow-y-auto"
+        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-neon-blue max-w-4xl w-full p-4 md:p-6 lg:p-8 shadow-neon my-4 md:my-8 max-h-[95vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-neon-blue">
+        <h2 className="text-2xl md:text-3xl font-display font-bold text-center mb-2 text-vintage-neon-blue">
           {t('selectYourCardsTitle')}
         </h2>
-        <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
+        <p className="text-center text-vintage-burnt-gold mb-4 md:mb-6 text-xs md:text-sm font-modern">
           Choose {handSize} cards to battle vs AI ({pveSelectedCards.length}/{handSize} selected)
         </p>
 
         {/* Selected Cards Display */}
-        <div className="mb-6 p-4 bg-vintage-black/50 rounded-xl border border-vintage-neon-blue/50">
-          <div className="grid grid-cols-5 gap-2">
+        <div className="mb-4 md:mb-6 p-3 md:p-4 bg-vintage-black/50 rounded-xl border border-vintage-neon-blue/50">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-2">
             {pveSelectedCards.map((card, i) => (
               <div
                 key={i}
@@ -140,7 +140,7 @@ export function PveCardSelectionModal({
         </div>
 
         {/* Available Cards Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto p-2">
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 md:gap-2 mb-4 md:mb-6 max-h-80 md:max-h-96 overflow-y-auto p-2">
           {sortedPveNfts.map((nft) => {
             const isSelected = pveSelectedCards.find(c => c.tokenId === nft.tokenId);
             return (
@@ -191,11 +191,11 @@ export function PveCardSelectionModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-3">
+        <div className="space-y-2 md:space-y-3">
           <button
             onClick={handleChooseDifficulty}
             disabled={pveSelectedCards.length !== handSize || jcNfts.length < handSize}
-            className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
+            className={`w-full px-4 md:px-6 py-3 md:py-4 rounded-xl font-display font-bold text-base md:text-lg transition-all uppercase tracking-wide ${
               pveSelectedCards.length === handSize && jcNfts.length >= handSize
                 ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                 : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
@@ -208,7 +208,7 @@ export function PveCardSelectionModal({
 
           <button
             onClick={handleCancel}
-            className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
+            className="w-full px-4 md:px-6 py-2 md:py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition text-sm md:text-base"
           >
             Cancel
           </button>
