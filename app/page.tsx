@@ -1306,6 +1306,8 @@ export default function TCGPage() {
               wear: findAttr(nft, 'wear'),
               foil: findAttr(nft, 'foil'),
               power: calcPower(nft),
+              badgeType: 'NFT', // Explicitly mark as NFT (not FREE_CARD)
+              isFreeCard: false, // Explicitly mark as not a free card
             };
           })
         );
@@ -2193,7 +2195,13 @@ export default function TCGPage() {
   const filteredAndSortedNfts = useMemo(() => {
     let filtered = nfts;
 
-    console.log(`🔍 Filtering: cardTypeFilter=${cardTypeFilter}, selectedCollections=${JSON.stringify(selectedCollections)}, totalCards=${nfts.length}`);
+    // DEBUG: Log current state
+    const nftCards = nfts.filter(c => c.badgeType !== 'FREE_CARD');
+    const freeCards = nfts.filter(c => c.badgeType === 'FREE_CARD');
+    console.log(`🔍 FILTER START:`);
+    console.log(`  Total cards: ${nfts.length} (${nftCards.length} NFTs + ${freeCards.length} FREE)`);
+    console.log(`  cardTypeFilter: "${cardTypeFilter}"`);
+    console.log(`  selectedCollections: ${JSON.stringify(selectedCollections)}`);
 
     // Apply type filter
     if (cardTypeFilter === 'free') {
