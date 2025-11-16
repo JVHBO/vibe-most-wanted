@@ -5,7 +5,6 @@ import NextImage from "next/image";
 import { useAchievements } from "../hooks/useAchievements";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { RewardChoiceModal } from "./RewardChoiceModal";
 
 interface AchievementsViewProps {
   playerAddress?: string;
@@ -41,8 +40,6 @@ export default function AchievementsView({
   const [isClaiming, setIsClaiming] = useState(false);
 
   // Reward Choice Modal State (same as PvE battles)
-  const [showRewardChoice, setShowRewardChoice] = useState(false);
-  const [pendingReward, setPendingReward] = useState<{amount: number, source: "pve" | "pvp" | "attack" | "defense" | "leaderboard"} | null>(null);
 
   /**
    * Handle claim single achievement - Show Reward Choice Modal
@@ -52,16 +49,11 @@ export default function AchievementsView({
 
     setIsClaiming(true);
     try {
-      // Mark achievement as claimed
+      // Claim achievement - TESTVBMS added automatically in backend
       const result = await claimAchievement(achievementId);
 
-      if (result) {
-        // Show Reward Choice Modal (same as PvE battles)
-        setPendingReward({
-          amount: result.reward,
-          source: 'leaderboard', // Achievements count as leaderboard rewards
-        });
-        setShowRewardChoice(true);
+      if (result && onSuccess) {
+        onSuccess(`✅ ${result.reward} TESTVBMS added!`);
       }
     } catch (error) {
       console.error('[Achievement] Failed to claim:', error);
@@ -338,27 +330,6 @@ export default function AchievementsView({
           </div>
         )}
 
-        {/* Reward Choice Modal (same as PvE battles) */}
-        {showRewardChoice && pendingReward && playerAddress && (
-          <RewardChoiceModal
-            amount={pendingReward.amount}
-            source={pendingReward.source}
-            onClose={() => {
-              setShowRewardChoice(false);
-              setPendingReward(null);
-            }}
-            onChoiceMade={(choice) => {
-              console.log(`🎯 Achievement reward: ${choice} for ${pendingReward.amount} coins`);
-              if (onSuccess) {
-                onSuccess(
-                  choice === 'claim_now'
-                    ? `💰 ${pendingReward.amount} TESTVBMS added to balance!`
-                    : `📬 ${pendingReward.amount} VBMS sent to inbox!`
-                );
-              }
-            }}
-          />
-        )}
       </div>
     </div>
   );
