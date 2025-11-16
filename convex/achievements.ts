@@ -238,9 +238,24 @@ export const claimAchievementReward = mutation({
       throw new Error("Profile not found");
     }
 
-    // MIGRATED TO VBMS: Rewards are now claimed via VBMSPoolTroll
-    // This mutation only marks achievement as claimed
-    // Frontend handles the actual VBMS claim (immediate or inbox)
+    // Add coins (TESTVBMS) to player profile
+    const oldCoins = profile.coins || 0;
+    const newCoins = oldCoins + definition.reward;
+    const lifetimeEarned = (profile.lifetimeEarned || 0) + definition.reward;
+
+    console.log('[claimAchievementReward] Adding coins:', {
+      address: normalizedAddress,
+      achievementId,
+      oldCoins,
+      reward: definition.reward,
+      newCoins
+    });
+
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned,
+      lastUpdated: Date.now(),
+    });
 
     // Mark achievement as claimed
     await ctx.db.patch(achievement._id, {
@@ -250,6 +265,7 @@ export const claimAchievementReward = mutation({
     return {
       success: true,
       reward: definition.reward,
+      newBalance: newCoins,
       achievementName: definition.name,
       achievementId: definition.id,
     };
