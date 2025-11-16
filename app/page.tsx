@@ -3078,6 +3078,17 @@ export default function TCGPage() {
     });
   }, [address, userProfile]);
 
+  // Close all modals when view changes (fix for modals persisting across views)
+  useEffect(() => {
+    setShowPokerBattle(false);
+    setShowPvPEntryFeeModal(false);
+    setShowBattleScreen(false);
+    setShowPveCardSelection(false);
+    setShowAttackCardSelection(false);
+    setShowPvPPreview(false);
+    setShowSettings(false);
+  }, [currentView]);
+
   return (
     <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
       {/* Ambient floating particles */}
