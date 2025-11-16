@@ -1690,3 +1690,99 @@ export const awardShareBonus = mutation({
     throw new Error("Invalid share type");
   },
 });
+
+/**
+ * Award TESTVBMS coins for poker battles
+ * Used when player wins a poker game with TESTVBMS ante
+ */
+export const awardPokerCoins = mutation({
+  args: {
+    address: v.string(),
+    matchId: v.id("matches"),
+  },
+  handler: async (ctx, { address, matchId }) => {
+    let profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Get match data
+    const match = await ctx.db.get(matchId);
+    if (!match) {
+      throw new Error("Match not found");
+    }
+
+    // Verify match belongs to this player
+    if (match.playerAddress.toLowerCase() !== address.toLowerCase()) {
+      throw new Error("Unauthorized: Match does not belong to this player");
+    }
+
+    // Check if rewards already claimed
+    if (match.rewardsClaimed) {
+      throw new Error("Rewards already claimed for this match");
+    }
+
+    const amount = match.coinsEarned || 0;
+
+    // Initialize economy if needed
+    if (profile.coins === undefined) {
+      const today = new Date().toISOString().split('T')[0];
+      await ctx.db.patch(profile._id, {
+        coins: 0,
+        lifetimeEarned: 0,
+        lifetimeSpent: 0,
+        dailyLimits: {
+          pveWins: 0,
+          pvpMatches: 0,
+          lastResetDate: today,
+          firstPveBonus: false,
+          firstPvpBonus: false,
+          loginBonus: false,
+          streakBonus: false,
+        },
+        winStreak: 0,
+        lastWinTimestamp: 0,
+      });
+      // Reload profile
+      const updatedProfile = await ctx.db.get(profile._id);
+      if (!updatedProfile) throw new Error("Failed to initialize economy");
+      profile = updatedProfile;
+    }
+
+    // Add TESTVBMS to profile.coins (same pattern as leaderboard)
+    const oldCoins = profile.coins || 0;
+    const newCoins = oldCoins + amount;
+    const lifetimeEarned = (profile.lifetimeEarned || 0) + amount;
+
+    console.log('[awardPokerCoins] Adding coins:', {
+      address: address.toLowerCase(),
+      matchId,
+      oldCoins,
+      amount,
+      newCoins,
+    });
+
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned,
+      lastUpdated: Date.now(),
+    });
+
+    // Mark match as claimed
+    await ctx.db.patch(matchId, {
+      rewardsClaimed: true,
+      claimedAt: Date.now(),
+      claimType: "poker_testvbms",
+    });
+
+    return {
+      success: true,
+      amount,
+      newBalance: newCoins,
+    };
+  },
+});

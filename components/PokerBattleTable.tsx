@@ -91,6 +91,7 @@ export function PokerBattleTable({
   const finishGameMutation = useMutation(api.pokerBattle.finishGame);
   const recordMatchMutation = useMutation(api.matches.recordMatch);
   const sendToInboxMutation = useMutation(api.vbmsClaim.sendToInbox);
+  const awardPokerCoinsMutation = useMutation(api.economy.awardPokerCoins);
 
   // PvE claim mutations
   const sendPveRewardToInbox = useMutation(api.vbmsClaim.sendPveRewardToInbox);
@@ -1475,7 +1476,7 @@ export function PokerBattleTable({
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation]);
 
-  // Auto-save TESTVBMS to inbox, but let VBMS show choice dialog
+  // Auto-award TESTVBMS to coins, but let VBMS show choice dialog
   useEffect(() => {
     // Works for both CPU mode and PvP mode
     if (phase === 'game-over' && !isSpectatorMode && !battleFinalized) {
@@ -1483,25 +1484,25 @@ export function PokerBattleTable({
 
       // Only proceed if player won
       if (result === 'win') {
-        // TESTVBMS: Auto-save to inbox immediately
+        // TESTVBMS: Award to profile.coins immediately (like leaderboard)
         if (selectedToken === 'TESTVBMS' && createdMatchId) {
-          console.log('[PokerBattle] 📬 Auto-saving TESTVBMS to inbox', {
+          console.log('[PokerBattle] 💰 Adding TESTVBMS to coins', {
             address: playerAddress,
             matchId: createdMatchId,
             amount: Math.round((selectedAnte * 2) * 0.95),
             mode: isCPUMode ? 'CPU' : 'PvP'
           });
 
-          sendToInboxMutation({
+          awardPokerCoinsMutation({
             address: playerAddress,
             matchId: createdMatchId,
           })
             .then((result) => {
-              console.log('[PokerBattle] ✅ TESTVBMS auto-saved to inbox:', result);
+              console.log('[PokerBattle] ✅ TESTVBMS added to coins:', result);
               setBattleFinalized(true);
             })
             .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to auto-save to inbox:', error);
+              console.error('[PokerBattle] ❌ Failed to add TESTVBMS:', error);
             });
         }
 
@@ -1509,7 +1510,7 @@ export function PokerBattleTable({
         // No automatic action - wait for user decision
       }
     }
-  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, selectedToken, selectedAnte, createdMatchId, sendToInboxMutation, playerAddress]);
+  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, selectedToken, selectedAnte, createdMatchId, awardPokerCoinsMutation, playerAddress]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
   useEffect(() => {
