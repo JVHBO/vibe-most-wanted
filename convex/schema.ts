@@ -421,7 +421,8 @@ export default defineSchema({
     type: v.union(
       v.literal("inbox_collect"), // Collected from inbox
       v.literal("immediate"), // Claimed immediately after battle
-      v.literal("manual") // Manual claim
+      v.literal("manual"), // Manual claim
+      v.literal("testvbms_conversion") // TESTVBMS to VBMS conversion
     ),
   })
     .index("by_player", ["playerAddress", "timestamp"])
