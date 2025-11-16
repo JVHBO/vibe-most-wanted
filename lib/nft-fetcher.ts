@@ -326,8 +326,31 @@ export async function fetchAndProcessNFTs(
     targetTokenIds,
   } = options;
 
-  // Step 1: Fetch raw NFTs (no filtering)
-  const rawNFTs = await fetchRawNFTs(owner, contractAddress, maxPages, targetTokenIds);
+  let rawNFTs: any[] = [];
+
+  // If no contractAddress specified, fetch from ALL enabled collections
+  if (!contractAddress) {
+    const { getEnabledCollections } = await import('@/lib/collections');
+    const enabledCollections = getEnabledCollections();
+
+    console.log(`📡 Fetching NFTs from ${enabledCollections.length} collections...`);
+
+    for (const collection of enabledCollections) {
+      try {
+        console.log(`📡 Fetching from ${collection.displayName} (${collection.contractAddress})`);
+        const nfts = await fetchRawNFTs(owner, collection.contractAddress, maxPages, targetTokenIds);
+        // Tag each NFT with its collection
+        const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+        rawNFTs.push(...tagged);
+        console.log(`✓ Found ${nfts.length} NFTs from ${collection.displayName}`);
+      } catch (error) {
+        console.error(`✗ Failed to fetch from ${collection.displayName}:`, error);
+      }
+    }
+  } else {
+    // Fetch from specific contract
+    rawNFTs = await fetchRawNFTs(owner, contractAddress, maxPages, targetTokenIds);
+  }
 
   // Step 2: Refresh metadata (optional but recommended for accurate data)
   let processedNFTs = rawNFTs;
