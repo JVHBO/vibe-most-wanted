@@ -8,7 +8,7 @@ import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
-import sdk from "@farcaster/frame-sdk";
+import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 
@@ -78,7 +78,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       const txHash = await sdk.wallet.ethProvider.request({
         method: 'eth_sendTransaction',
         params: [{
-          from: address,
+          from: address as `0x${string}`,
           to: CONTRACTS.VBMSPoolTroll,
           data: data,
         }],
