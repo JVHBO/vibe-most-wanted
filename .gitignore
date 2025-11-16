@@ -123,8 +123,8 @@ hardhat.config.js
 convex/conversion.ts
 
 # VBMS Poker Hooks & Utils
-lib/contracts.ts
-lib/hooks/useVBMSContracts.ts
+# lib/contracts.ts - REMOVED - needed for production
+# lib/hooks/useVBMSContracts.ts - REMOVED - needed for production
 
 # VBMS Poker Assets
 public/victory/
