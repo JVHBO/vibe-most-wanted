@@ -9,8 +9,9 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
+import { mutation, query, action, internalMutation, internalAction } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 // ========== HELPER: Get Profile ==========
 
@@ -185,7 +186,7 @@ export const claimBattleRewardsNow = mutation({
 
     // Generate signature for smart contract
     const nonce = generateNonce();
-    const signature = await ctx.runAction(signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     // Mark match as claimed (will be finalized after blockchain confirmation)
     await ctx.db.patch(matchId, {
@@ -298,7 +299,7 @@ export const prepareInboxClaim = mutation({
 
     // Generate signature
     const nonce = generateNonce();
-    const signature = await ctx.runAction(signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     // 🔒 SECURITY: Zero inbox IMMEDIATELY to prevent multiple claims
     await ctx.db.patch(profile._id, {
@@ -583,7 +584,7 @@ export const claimAchievementNow = mutation({
 
     // Generate signature for smart contract
     const nonce = generateNonce();
-    const signature = await ctx.runAction(signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     // 🔒 SECURITY: Mark blockchain claim to prevent reuse
     await ctx.db.patch(achievement._id, {
@@ -736,7 +737,7 @@ export const claimPveRewardNow = mutation({
 
     // Generate signature for smart contract
     const nonce = generateNonce();
-    const signature = await ctx.runAction(signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
 
     console.log(`💰 ${address} claiming ${bonusData.totalAmount} VBMS now from PvE victory (difficulty: ${difficulty || 'N/A'}, base: ${amount}, bonus: ${bonusData.bonus})`);
 
@@ -768,7 +769,35 @@ export const claimPveRewardNow = mutation({
  * Convert all TESTVBMS coins to VBMS blockchain tokens
  * Prepares the signature for blockchain claim
  */
-export const convertTESTVBMStoVBMS = mutation({
+export const convertTESTVBMStoVBMS = action({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    // Get profile and validate via internal mutation
+    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address });
+
+    // Generate signature for blockchain claim
+    const nonce = generateNonce();
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+      address,
+      amount: result.testVBMSBalance,
+      nonce
+    });
+
+    console.log(`💱 ${address} converting ${result.testVBMSBalance} TESTVBMS → VBMS (nonce: ${nonce})`);
+
+    return {
+      amount: result.testVBMSBalance,
+      nonce: nonce,
+      signature: signature,
+      message: `Converting ${result.testVBMSBalance} TESTVBMS to VBMS`,
+    };
+  },
+});
+
+// Internal mutation to handle database operations
+export const convertTESTVBMSInternal = internalMutation({
   args: {
     address: v.string(),
   },
@@ -780,12 +809,6 @@ export const convertTESTVBMStoVBMS = mutation({
     if (testVBMSBalance < 100) {
       throw new Error(`Minimum 100 TESTVBMS required to convert. You have: ${testVBMSBalance}`);
     }
-
-    // Generate signature for blockchain claim
-    const nonce = generateNonce();
-    const signature = await ctx.runAction(signClaimMessage, { address, amount: testVBMSBalance, nonce });
-
-    console.log(`💱 ${address} converting ${testVBMSBalance} TESTVBMS → VBMS (nonce: ${nonce})`);
 
     // 🔒 SECURITY: Zero TESTVBMS balance IMMEDIATELY to prevent multiple claims
     await ctx.db.patch(profile._id, {
@@ -802,12 +825,7 @@ export const convertTESTVBMStoVBMS = mutation({
       timestamp: Date.now(),
     });
 
-    return {
-      amount: testVBMSBalance,
-      nonce: nonce,
-      signature: signature,
-      message: `Convert ${testVBMSBalance} TESTVBMS → VBMS blockchain tokens`,
-    };
+    return { testVBMSBalance };
   },
 });
 
