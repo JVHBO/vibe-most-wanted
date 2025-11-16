@@ -2977,10 +2977,11 @@ export default function TCGPage() {
       const cachedPower = collectionPowerCache.get(player.address)?.get(leaderboardCollection);
       return {
         ...player,
-        collectionPower: cachedPower ?? player.stats.totalPower, // Fallback to total power while calculating
+        collectionPower: cachedPower ?? 0, // Default to 0 if not calculated yet (will calculate async)
         needsCalculation: cachedPower === undefined
       };
-    });
+    })
+    .filter(p => p.collectionPower > 0 || p.needsCalculation); // Only show players with power in this collection or being calculated
 
     // Trigger async calculation for players that need it (but don't block render)
     const playersNeedingCalculation = leaderboardWithCollectionPower
