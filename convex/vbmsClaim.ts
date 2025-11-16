@@ -937,10 +937,8 @@ export const convertTESTVBMSInternal = internalMutation({
       throw new Error(`Minimum 100 TESTVBMS required to convert. You have: ${testVBMSBalance}`);
     }
 
-    // 🔒 SECURITY: Zero TESTVBMS balance IMMEDIATELY to prevent multiple claims
-    await ctx.db.patch(profile._id, {
-      coins: 0,
-    });
+    // NOTE: Balance will be zeroed by recordTESTVBMSConversion AFTER blockchain TX succeeds
+    // DO NOT zero here - if signature fails, user loses their TESTVBMS!
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
