@@ -239,19 +239,6 @@ export default function DifficultyModal({
                   {hasAttemptsLeft ? t('startBattle') : '🔒 No Attempts Left'}
                 </span>
               </button>
-              {onEliminationBattle && (
-                <div className="relative w-full sm:w-auto">
-                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-vintage-burnt-gold font-bold text-xs tracking-widest z-10">
-                    SOON
-                  </div>
-                  <button
-                    disabled
-                    className="relative w-full sm:w-auto px-6 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-purple-600/30 to-purple-700/30 text-white/40 rounded-lg font-display font-bold text-sm lg:text-xl uppercase tracking-wider border-2 border-purple-500/20 cursor-not-allowed opacity-50"
-                  >
-                    <span className="drop-shadow-lg">⚔️ Elimination Mode</span>
-                  </button>
-                </div>
-              )}
             </>
           )}
           <button
