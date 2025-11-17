@@ -1643,52 +1643,16 @@ export function PokerBattleTable({
   // REMOVED: Auto-close room (user wants to see victory screen without auto-closing)
   // Room is marked as 'finished' in database but UI stays open for user to close manually
 
-  // Safety timeout: Auto-save VBMS to inbox if player doesn't choose within 30 seconds
+  // Note: VBMS battles are finalized via blockchain contract (finishVBMSBattle) in the useEffect above
+  // No inbox system for VBMS battles - rewards are transferred directly via smart contract
+
+  // Auto-close game after it ends
   useEffect(() => {
-    if (phase === 'game-over' && selectedToken === 'VBMS' && !isSpectatorMode && !battleFinalized) {
-      const result = playerScore > opponentScore ? 'win' : 'loss';
-
-      if (result === 'win' && createdMatchId) {
-        console.log('[PokerBattle] 🛡️ Safety timeout started - auto-save to inbox in 30s if no choice made', {
-          mode: isCPUMode ? 'CPU' : 'PvP'
-        });
-
-        const safetyTimer = setTimeout(() => {
-          console.log('[PokerBattle] ⏰ Safety timeout triggered - auto-saving VBMS to inbox');
-
-          sendToInboxMutation({
-            address: playerAddress,
-            matchId: createdMatchId,
-          })
-            .then((result) => {
-              console.log('[PokerBattle] ✅ VBMS auto-saved to inbox (safety timeout):', result);
-              setBattleFinalized(true);
-
-              toast.success(
-                `📬 ${Math.round((selectedAnte * 2) * 0.95)} VBMS saved to inbox!`,
-                {
-                  description: 'Claim anytime from your profile',
-                  duration: 5000,
-                }
-              );
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to auto-save to inbox:', error);
-            });
-        }, 30000); // 30 seconds safety timeout
-
-        return () => clearTimeout(safetyTimer);
-      }
-    }
-  }, [phase, selectedToken, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, sendToInboxMutation, playerAddress]);
-
-  // Auto-close game after it ends (wait for VBMS battles to finalize first)
-  useEffect(() => {
-    // For VBMS battles, wait until battle is finalized before closing
+    // For VBMS battles, wait until blockchain battle is finished (roomFinished)
     // For other token types, close after 10 seconds
-    const shouldWaitForFinalization = selectedToken === 'VBMS' && !battleFinalized;
+    const shouldWaitForBlockchain = selectedToken === 'VBMS' && !roomFinished && !isCPUMode;
 
-    if (phase === 'game-over' && !isSpectatorMode && !shouldWaitForFinalization) {
+    if (phase === 'game-over' && !isSpectatorMode && !shouldWaitForBlockchain) {
       console.log('[PokerBattle] Game over - will auto-close in 10 seconds');
 
       const timer = setTimeout(() => {
@@ -1698,7 +1662,7 @@ export function PokerBattleTable({
 
       return () => clearTimeout(timer);
     }
-  }, [phase, isSpectatorMode, selectedToken, battleFinalized, onClose]);
+  }, [phase, isSpectatorMode, selectedToken, roomFinished, isCPUMode, onClose]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
