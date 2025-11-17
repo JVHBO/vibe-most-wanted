@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
@@ -15,6 +14,9 @@ export function FarcasterNotificationRegistration() {
   useEffect(() => {
     async function registerNotificationToken() {
       try {
+        // Dynamic import to prevent SSR/non-Farcaster errors
+        const { sdk } = await import('@farcaster/miniapp-sdk');
+
         // Check if running in Farcaster
         const context = await sdk.context;
 
@@ -24,8 +26,9 @@ export function FarcasterNotificationRegistration() {
 
         const fid = context.user.fid.toString();
 
-        // Request notification permission and get token
-        const notificationDetails = await sdk.actions.addFrame();
+        // Request notification permission and get token (re-import to ensure sdk is available)
+        const { sdk: sdkActions } = await import('@farcaster/miniapp-sdk');
+        const notificationDetails = await sdkActions.actions.addFrame();
 
         if (notificationDetails?.notificationDetails) {
           const { token, url } = notificationDetails.notificationDetails;
