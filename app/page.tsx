@@ -819,21 +819,12 @@ export default function TCGPage() {
 
             // 🔧 Connect wagmi to sync with the rest of the app
             try {
-              devLog('📋 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name, type: c.type })));
-
-              const farcasterConnector = connectors.find(c =>
-                c.id === 'farcaster' ||
-                c.type === 'farcasterMiniApp' ||
-                c.name?.toLowerCase().includes('farcaster')
-              );
-
-              if (farcasterConnector && !isConnected) {
-                devLog('🔗 Connecting wagmi with Farcaster connector:', { id: farcasterConnector.id, name: farcasterConnector.name, type: farcasterConnector.type });
+              if (!isConnected) {
+                // Import farcasterConnector directly instead of searching through connectors
+                const { farcasterConnector } = await import('@/lib/wagmi');
+                devLog('🔗 Connecting wagmi with Farcaster connector...');
                 await connect({ connector: farcasterConnector });
                 devLog('✓ Wagmi synced with Farcaster wallet');
-              } else if (!farcasterConnector) {
-                devLog('⚠️ No Farcaster connector found in wagmi');
-                devLog('Available:', connectors.map(c => `${c.id} (${c.type})`).join(', '));
               } else {
                 devLog('ℹ️ Already connected, skipping wagmi connect');
               }
