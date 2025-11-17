@@ -253,9 +253,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
           {/* VBMS Balance (blockchain) - REMOVED, not showing wallet balance anymore */}
 
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
+          {/* Action Buttons */}
+          <div className="space-y-3">
           {/* Convert TESTVBMS → VBMS (only button) */}
           {testvbmsBalance >= 100 ? (
             <button
@@ -300,6 +299,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               </p>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>,
