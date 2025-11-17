@@ -799,20 +799,20 @@ export function PokerBattleTable({
         currentRound
       });
 
-      // Emergency fallback for CPU mode - auto-select cards if missing
-      if (isCPUMode && playerHand.length > 0 && opponentHand.length > 0) {
-        console.warn('[PokerBattle] CPU Mode emergency fallback - auto-selecting cards');
+      // Emergency fallback - auto-select cards if missing (CPU and PvP)
+      if (playerHand.length > 0 && opponentHand.length > 0) {
+        console.warn('[PokerBattle] Emergency fallback - auto-selecting missing cards');
 
         if (!playerSelectedCard) {
           const fallbackPlayerCard = playerHand[Math.floor(Math.random() * playerHand.length)];
           setPlayerSelectedCard(fallbackPlayerCard);
-          console.log('[PokerBattle] Emergency: Selected player card', fallbackPlayerCard.tokenId);
+          console.log('[PokerBattle] Emergency: Auto-selected player card', fallbackPlayerCard.tokenId);
         }
 
         if (!opponentSelectedCard) {
           const fallbackOpponentCard = opponentHand[Math.floor(Math.random() * opponentHand.length)];
           setOpponentSelectedCard(fallbackOpponentCard);
-          console.log('[PokerBattle] Emergency: Selected opponent card', fallbackOpponentCard.tokenId);
+          console.log('[PokerBattle] Emergency: Auto-selected opponent card', fallbackOpponentCard.tokenId);
         }
 
         // Retry after short delay to let state update
@@ -820,6 +820,9 @@ export function PokerBattleTable({
         return;
       }
 
+      // If no cards in hand, cannot proceed - force finish to prevent softlock
+      console.error('[PokerBattle] CRITICAL: No cards in hand to auto-select - forcing game finish');
+      setPhase('game-over');
       return;
     }
 
