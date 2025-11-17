@@ -140,7 +140,6 @@ export function useDailyClaimInfo(address?: `0x${string}`) {
  */
 export function useClaimVBMS() {
   const { writeContractAsync, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const claimVBMS = async (amount: string, nonce: string, signature: `0x${string}`) => {
     console.log("📝 Claiming VBMS with:", {
@@ -166,8 +165,8 @@ export function useClaimVBMS() {
     claimVBMS,
     hash,
     isPending,
-    isConfirming,
-    isSuccess,
+    isConfirming: false, // Not waiting for confirmation in this function
+    isSuccess: false,
     error,
   };
 }
