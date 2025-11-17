@@ -29,9 +29,12 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   // Check if we should use Farcaster SDK for transactions
   useEffect(() => {
     const checkFarcasterSDK = async () => {
-      if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.getEthereumProvider()) {
-        setUseFarcasterSDK(true);
-        console.log('[InboxModal] Using Farcaster SDK for transactions');
+      if (sdk && typeof sdk.wallet !== 'undefined') {
+        const provider = await sdk.wallet.getEthereumProvider();
+        if (provider) {
+          setUseFarcasterSDK(true);
+          console.log('[InboxModal] Using Farcaster SDK for transactions');
+        }
       }
     };
     checkFarcasterSDK();
@@ -46,7 +49,8 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
-    if (!sdk.wallet?.ethProvider) {
+    const provider = await sdk.wallet.getEthereumProvider();
+    if (!provider) {
       const error = "Farcaster wallet not available";
       console.error('[InboxModal]', error);
       toast.error(error);
@@ -72,7 +76,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
     try {
       // Send transaction via Farcaster SDK
-      const txHash = await sdk.wallet.getEthereumProvider().request({
+      const txHash = await provider.request({
         method: 'eth_sendTransaction',
         params: [{
           from: address as `0x${string}`,
