@@ -14,8 +14,6 @@ export async function POST() {
     // List remaining rooms
     const rooms = await client.query(api.pokerBattle.listAllRooms, {});
 
-    client.close();
-
     return NextResponse.json({
       success: true,
       deletedCount: result.deletedCount,
