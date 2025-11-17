@@ -7,7 +7,7 @@ export const CONTRACTS = {
   // Contract addresses on Base Mainnet
   VBMSToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827',
   VBMSPoolTroll: '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b',
-  VBMSPokerBattle: '0xce766404d1C4788078C4E77D12B13793afceD867', // V4 - CURRENT
+  VBMSPokerBattle: '0x01090882A1Cb18CFCA89cB91edE798F0308aB950', // V5 - CURRENT (no activeBattles check)
   VBMSBetting: '0x50d06e73a9849e6f8f76e7ba818a20493714d085',
 
   // Chain configuration
