@@ -758,84 +758,20 @@ export default function TCGPage() {
     syncMusicVolume(musicVolume);
   }, [musicVolume, syncMusicVolume]);
 
-  // Detect Farcaster miniapp context (independent of wallet connection)
+  // Auto-connect Farcaster wallet in miniapp context (Nov 14 simple version)
   useEffect(() => {
-    const checkFarcasterContext = async () => {
-      try {
-        // Use robust iframe detection
-        const inMiniapp = isMiniappMode();
-
-        if (inMiniapp) {
-          setIsInFarcaster(true);
-          devLog('✓ Running in Farcaster miniapp context (iframe detected)');
-
-          // Also try to verify SDK is available
-          try {
-            if (sdk && typeof sdk.wallet !== 'undefined') {
-              const provider = await sdk.wallet.getEthereumProvider();
-              if (provider) {
-                devLog('✓ Farcaster SDK wallet provider confirmed');
-              }
-            }
-          } catch (sdkErr) {
-            devLog('⚠️ Miniapp detected but SDK not fully loaded yet');
-          }
-        } else {
-          setIsInFarcaster(false);
-          devLog('ℹ Not in Farcaster miniapp context');
-        }
-      } catch (err) {
-        setIsInFarcaster(false);
-        devLog('! Error detecting Farcaster context:', err);
-      }
-    };
-
-    checkFarcasterContext();
-  }, []); // Run once on mount
-
-  // Auto-connect Farcaster wallet in miniapp context
-  useEffect(() => {
-    // Only run if we've detected we're in Farcaster miniapp
-    if (!isInFarcaster) {
-      return;
-    }
-
     const initFarcasterWallet = async () => {
       try {
-        // Check if we're in Farcaster context
-        if (sdk && typeof sdk.wallet !== 'undefined') {
-          const provider = await sdk.wallet.getEthereumProvider();
-          if (provider) {
-            setIsCheckingFarcaster(true); // Show loading only when Farcaster detected
-            devLog('🔗 Attempting Farcaster auto-connect...');
-
-            const addresses = await provider.request({
-              method: "eth_requestAccounts"
-            });
+        // Check if we're in Farcaster context - use OLD API
+        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
+          setIsInFarcaster(true);
+          const addresses = await sdk.wallet.ethProvider.request({
+            method: "eth_requestAccounts"
+          });
           if (addresses && addresses[0]) {
             setFarcasterAddress(addresses[0]);
             localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
             devLog('✓ Auto-connected Farcaster wallet:', addresses[0]);
-
-            // 🔧 Connect wagmi to sync with the rest of the app
-            try {
-              const farcasterConnector = connectors.find(c =>
-                c.name?.toLowerCase().includes('farcaster') ||
-                c.name?.toLowerCase().includes('warpcast') ||
-                c.id?.toLowerCase().includes('farcaster')
-              );
-
-              if (farcasterConnector && !isConnected) {
-                devLog('🔗 Connecting wagmi with Farcaster connector:', farcasterConnector.name);
-                await connect({ connector: farcasterConnector });
-                devLog('✓ Wagmi synced with Farcaster wallet');
-              } else if (!farcasterConnector) {
-                devLog('⚠️ No Farcaster connector found in wagmi - app may not work fully');
-              }
-            } catch (wagmiErr) {
-              devLog('! Error connecting wagmi:', wagmiErr);
-              // Continue anyway - farcasterAddress is set, some features will work
-            }
 
             // ✓ Save FID to profile for notifications
             try {
@@ -856,24 +792,22 @@ export default function TCGPage() {
               devLog('! Could not save FID:', fidError);
             }
           } else {
-            // Failed to get address from Farcaster wallet
-            devLog('! No address returned from Farcaster wallet');
-          }
+            // Failed to get address, reset Farcaster state
+            setIsInFarcaster(false);
           }
         }
       } catch (err) {
-        devLog('! Error in Farcaster auto-connect:', err);
+        devLog('! Not in Farcaster context or wallet unavailable');
+        // Reset Farcaster state on error
+        setIsInFarcaster(false);
         setFarcasterAddress(null);
-        setIsInFarcaster(false); // Mark as not in Farcaster if connection fails
       } finally {
         // Always set checking to false after checking
         setIsCheckingFarcaster(false);
       }
     };
-
-    // Run when isInFarcaster changes to true
     initFarcasterWallet();
-  }, [isInFarcaster, connectors, isConnected, connect]); // Run when Farcaster context is detected
+  }, []);
 
   // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
