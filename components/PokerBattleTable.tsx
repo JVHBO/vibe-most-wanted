@@ -1582,6 +1582,28 @@ export function PokerBattleTable({
     }
   }, [phase, gameOverShown, playerScore, opponentScore, selectedAnte, isCPUMode, room]);
 
+  // Auto-close room when game is finished (prevent token recovery exploit)
+  useEffect(() => {
+    if (!isCPUMode && room && room.status === 'finished' && phase === 'game-over') {
+      console.log('[PokerBattle] Room finished - auto-closing in 5 seconds');
+
+      const autoCloseTimer = setTimeout(() => {
+        console.log('[PokerBattle] Auto-closing finished room');
+
+        // Close all popups
+        setShowWinPopup(false);
+        setShowLossPopup(false);
+        setShowTiePopup(false);
+        setShowClaimChoice(false);
+
+        // Close the battle
+        onClose();
+      }, 5000); // 5 second delay to let players see the result
+
+      return () => clearTimeout(autoCloseTimer);
+    }
+  }, [room, phase, isCPUMode, onClose]);
+
   // Safety timeout: Auto-save VBMS to inbox if player doesn't choose within 30 seconds
   useEffect(() => {
     if (phase === 'game-over' && selectedToken === 'VBMS' && !isSpectatorMode && !battleFinalized) {
