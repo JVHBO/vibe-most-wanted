@@ -2729,18 +2729,18 @@ export default function TCGPage() {
 
     setIsClaimingMission(missionId);
     try {
-      // Mark mission as claimed and get reward amount (coins NOT added yet)
+      // Mark mission as claimed and send reward to inbox
       const result = await convex.mutation(api.missions.claimMission, {
         playerAddress: address,
         missionId: missionId as any,
         language: lang,
-        skipCoins: true, // Only calculate, don't add coins yet
+        skipCoins: false, // Send to inbox
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog('✅ Mission claimed - TESTVBMS added:', result);
+      devLog('✅ Mission claimed - TESTVBMS sent to inbox:', result);
 
-      // TESTVBMS already added - no modal
+      // TESTVBMS sent to inbox - player can claim later
 
       // Reload missions
       await loadMissions();
