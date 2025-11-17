@@ -33,7 +33,7 @@ export function PokerMatchmaking({
 }: PokerMatchmakingProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAnte, setSelectedAnte] = useState(10);
-  const [selectedToken, setSelectedToken] = useState<"VBMS" | "VIBE_NFT" | "VBMS">("VBMS");
+  const [selectedToken, setSelectedToken] = useState<"VBMS" | "VIBE_NFT" | "TESTVBMS">("VBMS");
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isAutoMatching, setIsAutoMatching] = useState(false);
@@ -879,7 +879,7 @@ export function PokerMatchmaking({
       });
       AudioManager.buttonSuccess();
       // Navigate to spectator view
-      onRoomJoined(roomId, false, 0, "VBMS", true); // Pass isSpectator = true
+      onRoomJoined(roomId, false, 0, "TESTVBMS", true); // Pass isSpectator = true
     } catch (error) {
       console.error("Error spectating:", error);
       AudioManager.buttonError();

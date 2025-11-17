@@ -929,7 +929,7 @@ export default function ProfilePage() {
           <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-6 rounded-xl border-2 border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern flex items-center gap-1">💰 COINS</p>
             <p className="text-3xl font-bold text-vintage-gold">{(profile.coins || 0).toLocaleString()}</p>
-            <p className="text-[10px] text-vintage-burnt-gold font-modern mt-1">$VBMS</p>
+            <p className="text-[10px] text-vintage-burnt-gold font-modern mt-1">$TESTVBMS</p>
           </div>
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-neon-blue/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♣ PvE RECORD</p>
@@ -1461,7 +1461,7 @@ export default function ProfilePage() {
                           <p className={`text-xl font-bold ${match.coinsEarned > 0 ? 'text-vintage-gold' : 'text-gray-400'}`}>
                             {match.coinsEarned > 0 ? '+' : ''}{match.coinsEarned}
                           </p>
-                          <p className="text-[10px] text-vintage-burnt-gold font-modern">$VBMS</p>
+                          <p className="text-[10px] text-vintage-burnt-gold font-modern">$TESTVBMS</p>
                         </div>
                       )}
 

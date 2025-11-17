@@ -518,7 +518,7 @@ function PokerBattleDocs() {
         <ul className="space-y-2">
           <li className="flex items-center gap-2">
             <span className="text-vintage-gold">💎</span>
-            <strong>VBMS:</strong> Main game currency (default)
+            <strong>TESTVBMS:</strong> Main game currency (default)
           </li>
           <li className="flex items-center gap-2">
             <span className="text-green-400">💵</span>
