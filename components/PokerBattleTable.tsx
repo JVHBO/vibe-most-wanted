@@ -1272,8 +1272,9 @@ export function PokerBattleTable({
   // Handler for closing victory screen
   const handleCloseVictoryScreen = () => {
     setShowWinPopup(false);
-    // If there was a stake, show claim dialog instead of closing
-    if (selectedAnte > 0 && !isSpectatorMode) {
+    // Only show claim dialog for VBMS battles with stake
+    // TESTVBMS auto-awards to coins (handled by useEffect)
+    if (selectedAnte > 0 && !isSpectatorMode && selectedToken === 'VBMS') {
       setShowClaimChoice(true);
     } else {
       onClose();
