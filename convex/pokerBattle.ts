@@ -782,9 +782,7 @@ export const finishGame = mutation({
       .first();
 
     if (!room) {
-      // Room already deleted or doesn't exist - this is OK, just log and return success
-      console.log(`⚠️ Room ${args.roomId} not found (already deleted or doesn't exist) - skipping deletion`);
-      return { success: true, alreadyDeleted: true };
+      throw new Error("Room not found");
     }
 
     // DELETE the room immediately (no need to mark as finished since we're deleting)
