@@ -1067,7 +1067,7 @@ export const resolveBets = mutation({
           // Pay out winnings to inbox
           const currentInbox = profile.coinsInbox || 0;
           await ctx.db.patch(profile._id, {
-            inbox: currentInbox + payout,
+            coinsInbox: currentInbox + payout,
             lifetimeEarned: (profile.lifetimeEarned || 0) + payout,
           });
 
