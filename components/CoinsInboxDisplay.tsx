@@ -43,7 +43,7 @@ export function CoinsInboxDisplay({ compact = false, userAddress }: CoinsInboxDi
   const isLoading = compact
     ? (inboxStatus === undefined) // Only wait for Convex query, not wallet address
     : (!address || !inboxStatus || isBalanceLoading);
-  const vbmsInbox = inboxStatus?.inbox || 0; // VBMS inbox (from leaderboard/rewards - ready to claim)
+  const vbmsInbox = inboxStatus?.coinsInbox || 0; // VBMS inbox (from leaderboard/rewards - ready to claim)
   const vbmsBalance = parseFloat(vbmsWalletBalance || '0'); // Actual VBMS token balance from blockchain
   const hasUncollected = vbmsInbox >= 100; // Show dot if VBMS ready to claim (min 100)
 

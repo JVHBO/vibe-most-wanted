@@ -28,10 +28,10 @@ export const sendCoinsToInbox = mutation({
       throw new Error("Profile not found");
     }
 
-    const currentInbox = profile.coinsInbox || 0;
+    const currentInbox = profile.inbox || 0;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: currentInbox + amount,
+      inbox: currentInbox + amount,
       lastUpdated: Date.now(),
     });
 
@@ -60,7 +60,7 @@ export const claimAllCoinsFromInbox = mutation({
       throw new Error("Profile not found");
     }
 
-    const inboxAmount = profile.coinsInbox || 0;
+    const inboxAmount = profile.inbox || 0;
 
     if (inboxAmount === 0) {
       throw new Error("No coins in inbox to claim");
@@ -71,7 +71,7 @@ export const claimAllCoinsFromInbox = mutation({
 
     await ctx.db.patch(profile._id, {
       coins: newCoinsBalance,
-      coinsInbox: 0,
+      inbox: 0,
       lifetimeEarned: (profile.lifetimeEarned || 0) + inboxAmount,
       lastUpdated: Date.now(),
     });
@@ -102,7 +102,7 @@ export const getInboxStatus = query({
     }
 
     return {
-      coinsInbox: profile.coinsInbox || 0,
+      coinsInbox: profile.inbox || 0, // For backward compatibility
       coins: profile.coins || 0,
       inbox: profile.inbox || 0, // VBMS tokens from leaderboard/rewards
       lifetimeEarned: profile.lifetimeEarned || 0,
