@@ -1146,3 +1146,40 @@ export const listAllRooms = query({
     return rooms;
   },
 });
+
+/**
+ * Force delete a stuck poker room (admin tool)
+ */
+export const forceDeleteRoom = mutation({
+  args: {
+    roomId: v.string(), // roomId is a string in pokerRooms table
+  },
+  handler: async (ctx, { roomId }) => {
+    console.log(`[forceDeleteRoom] Force deleting room #${roomId}...`);
+
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (!room) {
+      throw new Error(`Room #${roomId} not found`);
+    }
+
+    console.log(`[forceDeleteRoom] Found room:`, room);
+
+    // Just delete it directly - no status update needed
+    await ctx.db.delete(room._id);
+
+    console.log(`[forceDeleteRoom] Room #${roomId} deleted successfully`);
+
+    return {
+      success: true,
+      deletedRoom: {
+        roomId: room.roomId,
+        status: room.status,
+        players: [room.hostAddress, room.guestAddress],
+      },
+    };
+  },
+});
