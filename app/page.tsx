@@ -765,7 +765,7 @@ export default function TCGPage() {
         // Combine both checks: iframe detection AND Farcaster SDK presence
         // This prevents false positives (website) and false negatives (miniapp)
         const isInIframe = isMiniappMode(); // window.parent !== window
-        const hasFarcasterSDK = sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider;
+        const hasFarcasterSDK = !!(sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider);
 
         const inMiniapp = isInIframe && hasFarcasterSDK;
         setIsInFarcaster(inMiniapp);
