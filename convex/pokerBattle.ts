@@ -24,7 +24,42 @@ export const createPokerRoom = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const roomId = `poker_${args.address}_${now}`;
+    const normalizedAddress = args.address.toLowerCase();
+
+    // ✅ VALIDAÇÃO MELHORADA: Verificar se player já tem sala ativa
+    const existingRoom = await ctx.db
+      .query("pokerRooms")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("hostAddress"), normalizedAddress),
+          q.eq(q.field("guestAddress"), normalizedAddress)
+        )
+      )
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "waiting"),
+          q.eq(q.field("status"), "ready"),
+          q.eq(q.field("status"), "in-progress")
+        )
+      )
+      .filter((q) => q.gt(q.field("expiresAt"), now))
+      .first();
+
+    if (existingRoom) {
+      // Player já tem uma sala ativa - fornecer informações úteis
+      const isHost = existingRoom.hostAddress === normalizedAddress;
+      const roomStatus = existingRoom.status;
+      const opponent = isHost ? existingRoom.guestUsername : existingRoom.hostUsername;
+
+      throw new Error(
+        `You already have an active battle! ` +
+        `Status: ${roomStatus}. ` +
+        `${opponent ? `Opponent: ${opponent}. ` : ''}` +
+        `Please finish or wait for your current battle to expire before creating a new one.`
+      );
+    }
+
+    const roomId = `poker_${normalizedAddress}_${now}`;
 
     // Starting bankroll = ante * 50 (enough for full game)
     const startingBankroll = args.ante * 50;
