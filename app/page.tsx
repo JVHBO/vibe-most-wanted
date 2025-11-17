@@ -2914,6 +2914,7 @@ export default function TCGPage() {
     // Return 0 for now to prevent site from hanging
     return 0;
 
+    /* DISABLED CODE - Uncomment when Alchemy API is fixed
     // Check cache first
     const addressCache = collectionPowerCache.get(address);
     if (addressCache?.has(collectionId)) {
@@ -2974,6 +2975,7 @@ export default function TCGPage() {
       devError('[Leaderboard] Error calculating collection power:', error);
       return 0;
     }
+    */
   }, [collectionPowerCache]);
 
   // Filter and re-rank leaderboard by collection
