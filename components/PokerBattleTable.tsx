@@ -242,6 +242,9 @@ export function PokerBattleTable({
   const [gameOverShown, setGameOverShown] = useState(false);
   const [createdMatchId, setCreatedMatchId] = useState<Id<"matches"> | null>(null);
 
+  // Prevent multiple match recordings (useRef persists across renders)
+  const matchRecordedRef = useRef(false);
+
   // GamePopups control states
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [showLossPopup, setShowLossPopup] = useState(false);
@@ -1464,9 +1467,12 @@ export function PokerBattleTable({
 
   // Record match when game ends
   useEffect(() => {
-    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore !== opponentScore) {
+    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore !== opponentScore && !matchRecordedRef.current) {
       const result = playerScore > opponentScore ? 'win' : 'loss';
       const matchType = isCPUMode ? 'poker-cpu' : 'poker-pvp';
+
+      // Mark as recorded immediately to prevent duplicate calls
+      matchRecordedRef.current = true;
 
       // Record match to history
       recordMatchMutation({
