@@ -278,20 +278,23 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             {canClaimInbox ? `💳 Claim ${vbmsInbox.toLocaleString()} VBMS (Pay Gas)` : "📬 Inbox Empty"}
           </button>
 
-          {/* Option 2: Convert TESTVBMS to VBMS */}
-          {testvbmsBalance > 0 && (
-            <button
-              onClick={handleConvertTESTVBMS}
-              disabled={!canConvertTESTVBMS}
-              className={`w-full py-3 rounded-lg font-bold text-lg transition-all ${
-                canConvertTESTVBMS
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:scale-105"
-                  : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed"
-              }`}
-            >
-              🔄 Convert {testvbmsBalance.toLocaleString()} TESTVBMS → VBMS
-            </button>
-          )}
+          {/* Option 2: Convert TESTVBMS to VBMS - Always show */}
+          <button
+            onClick={handleConvertTESTVBMS}
+            disabled={!canConvertTESTVBMS}
+            className={`w-full py-3 rounded-lg font-bold text-lg transition-all ${
+              canConvertTESTVBMS
+                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:scale-105"
+                : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed"
+            }`}
+          >
+            {canConvertTESTVBMS
+              ? `🔄 Convert ${testvbmsBalance.toLocaleString()} TESTVBMS → VBMS`
+              : testvbmsBalance > 0
+                ? `Need 100 TESTVBMS (have ${testvbmsBalance})`
+                : "No TESTVBMS to convert"
+            }
+          </button>
 
           {/* Message to use miniapp */}
           <p className="text-xs text-center text-vintage-gold/60 mt-4">

@@ -4272,9 +4272,6 @@ export default function TCGPage() {
             <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
-          {/* Coins Inbox - Only show here in miniapp (compact mode) */}
-          {isInFarcaster && <CoinsInboxDisplay compact userAddress={userProfile?.address} />}
-
           <Link
             href="/docs"
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
@@ -4483,11 +4480,11 @@ export default function TCGPage() {
                 {isInFarcaster ? (
                   <>
                     <span className="text-[10px] font-bold whitespace-nowrap">Claim</span>
-                    <span className="text-xl leading-none">💰</span>
+                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5" />
                   </>
                 ) : (
                   <>
-                    <span className="text-base md:text-lg">💰</span>
+                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
                     <span className="hidden sm:inline">Claim</span>
                   </>
                 )}
