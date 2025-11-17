@@ -71,7 +71,7 @@ export function PokerBattleTable({
   const [isHost, setIsHost] = useState(false);
   const [selectedAnte, setSelectedAnte] = useState(25);
   const [isSpectatorMode, setIsSpectatorMode] = useState(isSpectator);
-  const [selectedToken, setSelectedToken] = useState<'VBMS' | 'TESTVBMS' | 'VIBE_NFT'>('VBMS');
+  const [selectedToken, setSelectedToken] = useState<'VBMS' | 'VBMS' | 'VIBE_NFT'>('VBMS');
 
   // Betting system state
   const [showSpectatorEntryModal, setShowSpectatorEntryModal] = useState(false);
@@ -1234,7 +1234,7 @@ export function PokerBattleTable({
     setRoomId(newRoomId);
     setIsHost(host);
     setSelectedAnte(ante);
-    setSelectedToken(token as 'VBMS' | 'TESTVBMS' | 'VIBE_NFT');
+    setSelectedToken(token as 'VBMS' | 'VBMS' | 'VIBE_NFT');
     setCurrentView(spectator ? 'game' : 'waiting');
     setIsSpectatorMode(spectator);
   };
@@ -1486,7 +1486,7 @@ export function PokerBattleTable({
         opponentScore,
       }).then((matchId) => {
         console.log('[PokerBattle] Match recorded to history', matchId);
-        // Save matchId for TESTVBMS inbox integration
+        // Save matchId for VBMS inbox integration
         if (matchId) {
           setCreatedMatchId(matchId);
         }
@@ -1544,7 +1544,7 @@ export function PokerBattleTable({
               });
             });
         } else {
-          // For TESTVBMS/NFT battles, just delete Convex room (no blockchain)
+          // For VBMS/NFT battles, just delete Convex room (no blockchain)
           finishGameMutation({
             roomId,
             winnerId: winnerId.toLowerCase(),
@@ -1561,7 +1561,7 @@ export function PokerBattleTable({
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation, roomFinished, selectedToken, finishVBMSBattle]);
 
-  // ALL rewards go to inbox as TESTVBMS
+  // ALL rewards go to inbox as VBMS
   useEffect(() => {
     // Works for both CPU mode and PvP mode
     if (phase === 'game-over' && !isSpectatorMode && !battleFinalized) {
@@ -1571,7 +1571,7 @@ export function PokerBattleTable({
       if (result === 'win' && createdMatchId && selectedAnte > 0) {
         const rewardAmount = Math.round((selectedAnte * 2) * 0.95);
 
-        console.log('[PokerBattle] 💰 Sending TESTVBMS to inbox', {
+        console.log('[PokerBattle] 💰 Sending VBMS to inbox', {
           address: playerAddress,
           matchId: createdMatchId,
           amount: rewardAmount,
@@ -1584,11 +1584,11 @@ export function PokerBattleTable({
           difficulty: isCPUMode ? difficulty : undefined,
         })
           .then((result) => {
-            console.log('[PokerBattle] ✅ TESTVBMS sent to inbox:', result);
+            console.log('[PokerBattle] ✅ VBMS sent to inbox:', result);
             setBattleFinalized(true);
           })
           .catch((error) => {
-            console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox:', error);
+            console.error('[PokerBattle] ❌ Failed to send VBMS to inbox:', error);
           });
       }
     }

@@ -1,9 +1,9 @@
 /**
- * ECONOMY SYSTEM ($TESTVBMS)
+ * ECONOMY SYSTEM ($VBMS)
  *
  * Manages the in-game currency system for Vibe Most Wanted
- * - 10M $TESTVBMS total pool
- * - Daily caps: 3,500 $TESTVBMS per player
+ * - 10M $VBMS total pool
+ * - Daily caps: 3,500 $VBMS per player
  * - Entry fees for PvP modes
  * - Persistent balances for future web3 claim
  * - Weekly quest tracking integration
@@ -15,7 +15,7 @@ import { api, internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
 
 // Constants
-const DAILY_CAP = 1500; // Max $TESTVBMS per day per player (reduced from 3500)
+const DAILY_CAP = 1500; // Max $VBMS per day per player (reduced from 3500)
 const PVE_WIN_LIMIT = 30; // Max PvE wins per day
 const PVP_MATCH_LIMIT = 10; // Max PvP matches per day
 
@@ -1052,7 +1052,7 @@ export const payEntryFee = mutation({
 
     // Check if player has enough coins
     if (currentCoins < fee) {
-      throw new Error(`Insufficient funds. Need ${fee} $TESTVBMS but only have ${currentCoins}`);
+      throw new Error(`Insufficient funds. Need ${fee} $VBMS but only have ${currentCoins}`);
     }
 
     // Deduct fee
@@ -1061,7 +1061,7 @@ export const payEntryFee = mutation({
       lifetimeSpent: (profile.lifetimeSpent || 0) + fee,
     });
 
-    console.log(`💸 Entry fee paid: ${fee} $TESTVBMS for ${mode} mode by ${address}`);
+    console.log(`💸 Entry fee paid: ${fee} $VBMS for ${mode} mode by ${address}`);
 
     return {
       paid: fee,
@@ -1423,14 +1423,14 @@ export const recordAttackResult = mutation({
         }
 
         if (defenderProfile) {
-          // Award TESTVBMS to defender
+          // Award VBMS to defender
           const defenderNewCoins = (defenderProfile.coins || 0) + defenderReward;
           await ctx.db.patch(defenderProfile._id, {
             coins: defenderNewCoins,
             lifetimeEarned: (defenderProfile.lifetimeEarned || 0) + defenderReward,
           });
 
-          console.log(`🛡️ Defense reward: ${normalizedOpponentAddress} earned ${defenderReward} TESTVBMS`);
+          console.log(`🛡️ Defense reward: ${normalizedOpponentAddress} earned ${defenderReward} VBMS`);
         }
       }
 
@@ -1692,8 +1692,8 @@ export const awardShareBonus = mutation({
 });
 
 /**
- * Award TESTVBMS coins for poker battles
- * Used when player wins a poker game with TESTVBMS ante
+ * Award VBMS coins for poker battles
+ * Used when player wins a poker game with VBMS ante
  */
 export const awardPokerCoins = mutation({
   args: {
@@ -1753,7 +1753,7 @@ export const awardPokerCoins = mutation({
       profile = updatedProfile;
     }
 
-    // Add TESTVBMS to profile.coins (same pattern as leaderboard)
+    // Add VBMS to profile.coins (same pattern as leaderboard)
     const oldCoins = profile.coins || 0;
     const newCoins = oldCoins + amount;
     const lifetimeEarned = (profile.lifetimeEarned || 0) + amount;

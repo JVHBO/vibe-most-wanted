@@ -1,12 +1,12 @@
 /**
- * EMERGENCY: Restore TESTVBMS balance
- * This is a one-time fix for the bug where convertTESTVBMSInternal zeros balance before signature succeeds
+ * EMERGENCY: Restore VBMS balance
+ * This is a one-time fix for the bug where convertVBMSInternal zeros balance before signature succeeds
  */
 
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-export const restoreTESTVBMS = mutation({
+export const restoreVBMS = mutation({
   args: {
     address: v.string(),
     amount: v.number(),
@@ -27,12 +27,12 @@ export const restoreTESTVBMS = mutation({
       coins: amount,
     });
 
-    console.log(`✅ EMERGENCY RESTORE: ${address} TESTVBMS: ${oldBalance} → ${amount}`);
+    console.log(`✅ EMERGENCY RESTORE: ${address} VBMS: ${oldBalance} → ${amount}`);
 
     return {
       oldBalance,
       newBalance: amount,
-      message: `Restored ${amount} TESTVBMS`,
+      message: `Restored ${amount} VBMS`,
     };
   },
 });

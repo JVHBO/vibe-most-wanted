@@ -26,6 +26,18 @@ export function useVBMSBalance(address?: `0x${string}`) {
     },
   });
 
+  // Debug logging
+  console.log('[useVBMSBalance] Query Result:', {
+    address,
+    balance: balance?.toString(),
+    balanceFormatted: balance ? formatEther(balance as bigint) : '0',
+    isLoading,
+    error,
+    contractAddress: CONTRACTS.VBMSToken,
+    chainId: CONTRACTS.CHAIN_ID,
+    enabled: !!address,
+  });
+
   return {
     balance: balance ? formatEther(balance as bigint) : '0',
     balanceRaw: balance as bigint | undefined,

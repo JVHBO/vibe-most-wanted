@@ -13,7 +13,7 @@ interface InboxModalProps {
     inbox: number;
     claimableBalance: number;
     lastClaimTimestamp: number;
-    coins?: number; // TESTVBMS virtual balance
+    coins?: number; // VBMS virtual balance
   };
   onClose: () => void;
 }
@@ -22,37 +22,37 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   const { address } = useAccount();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const claimAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
+  const claimAsVBMS = useMutation(api.vbmsClaim.claimInboxAsVBMS);
   const prepareInboxClaimVBMS = useAction(api.vbmsClaim.prepareInboxClaim);
   const recordInboxClaim = useMutation(api.vbmsClaim.recordInboxClaim);
-  const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
-  const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
+  const convertVBMS = useAction(api.vbmsClaim.convertVBMStoVBMS);
+  const recordVBMSConversion = useMutation(api.vbmsClaim.recordVBMSConversion);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
 
   const inboxAmount = economy.inbox || 0;
   const testvbmsBalance = economy.coins || 0;
-  const canClaimTESTVBMS = inboxAmount >= 1 && !isProcessing;
+  const canClaimVBMS = inboxAmount >= 1 && !isProcessing;
   const canClaimVBMS = inboxAmount >= 100 && !isProcessing;
-  const canConvertTESTVBMS = testvbmsBalance >= 100 && !isProcessing;
+  const canConvertVBMS = testvbmsBalance >= 100 && !isProcessing;
 
-  // Claim as virtual TESTVBMS coins
-  const handleClaimTESTVBMS = async () => {
+  // Claim as virtual VBMS coins
+  const handleClaimVBMS = async () => {
     if (!address) {
       toast.error("Conecte sua carteira");
       return;
     }
 
-    if (!canClaimTESTVBMS) {
+    if (!canClaimVBMS) {
       toast.error("Inbox vazio");
       return;
     }
 
     try {
-      const result = await claimAsTESTVBMS({ address });
+      const result = await claimAsVBMS({ address });
       toast.success(result.message);
       onClose();
     } catch (error: any) {
-      toast.error(error.message || "Erro ao coletar TESTVBMS");
+      toast.error(error.message || "Erro ao coletar VBMS");
     }
   };
 
@@ -64,7 +64,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     }
 
     if (!canClaimVBMS) {
-      toast.error("Mínimo de 100 TESTVBMS para converter em VBMS");
+      toast.error("Mínimo de 100 VBMS para converter em VBMS");
       return;
     }
 
@@ -121,23 +121,23 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     }
   };
 
-  // Convert TESTVBMS to VBMS blockchain tokens
-  const handleConvertTESTVBMS = async () => {
+  // Convert VBMS to VBMS blockchain tokens
+  const handleConvertVBMS = async () => {
     if (!address) {
       toast.error("Conecte sua carteira");
       return;
     }
 
-    if (!canConvertTESTVBMS) {
-      toast.error("Mínimo de 100 TESTVBMS para converter");
+    if (!canConvertVBMS) {
+      toast.error("Mínimo de 100 VBMS para converter");
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      console.log('[InboxModal] Converting TESTVBMS to VBMS...');
-      const result = await convertTESTVBMS({ address });
+      console.log('[InboxModal] Converting VBMS to VBMS...');
+      const result = await convertVBMS({ address });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
@@ -149,22 +149,22 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
       console.log('[InboxModal] Conversion TX successful:', txHash);
 
-      // Zero TESTVBMS balance
-      await recordTESTVBMSConversion({
+      // Zero VBMS balance
+      await recordVBMSConversion({
         address,
         amount: result.amount,
         txHash: txHash as unknown as string,
       });
 
-      toast.success(`✅ ${result.amount.toLocaleString()} TESTVBMS convertidos para VBMS!`);
+      toast.success(`✅ ${result.amount.toLocaleString()} VBMS convertidos para VBMS!`);
 
       setTimeout(() => {
         onClose();
       }, 1500);
 
     } catch (error: any) {
-      console.error('[InboxModal] Error converting TESTVBMS:', error);
-      toast.error(error.message || "Erro ao converter TESTVBMS");
+      console.error('[InboxModal] Error converting VBMS:', error);
+      toast.error(error.message || "Erro ao converter VBMS");
       setIsProcessing(false);
     }
   };
@@ -235,7 +235,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
             </div>
           </div>
 
-          {/* TESTVBMS Balance Card */}
+          {/* VBMS Balance Card */}
           <div className="relative bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-400/50 rounded-xl p-5 overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-400/20 rounded-full blur-2xl -mr-16 -mt-16" />
             <div className="relative">
@@ -253,7 +253,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
                 {testvbmsBalance.toLocaleString()}
               </div>
               <div className="text-sm text-purple-200 font-medium">
-                TESTVBMS • Use na shop, battles & fees
+                VBMS • Use na shop, battles & fees
               </div>
             </div>
           </div>
@@ -292,13 +292,13 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
           {/* Action Buttons */}
           <div className="space-y-2">
-            {/* Claim Inbox as TESTVBMS */}
+            {/* Claim Inbox as VBMS */}
             {inboxAmount > 0 && (
               <button
-                onClick={handleClaimTESTVBMS}
-                disabled={!canClaimTESTVBMS || isProcessing}
+                onClick={handleClaimVBMS}
+                disabled={!canClaimVBMS || isProcessing}
                 className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                  canClaimTESTVBMS
+                  canClaimVBMS
                     ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:scale-[1.02]"
                     : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
                 }`}
@@ -307,7 +307,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
                 <div className="relative flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <span className="text-xl">💰</span>
-                    <span>Claim as TESTVBMS</span>
+                    <span>Claim as VBMS</span>
                   </span>
                   <span className="text-sm opacity-80">Instant</span>
                 </div>
@@ -336,13 +336,13 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
               </button>
             )}
 
-            {/* Convert TESTVBMS to VBMS */}
+            {/* Convert VBMS to VBMS */}
             {testvbmsBalance >= 100 && (
               <button
-                onClick={handleConvertTESTVBMS}
-                disabled={!canConvertTESTVBMS || isProcessing}
+                onClick={handleConvertVBMS}
+                disabled={!canConvertVBMS || isProcessing}
                 className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                  canConvertTESTVBMS
+                  canConvertVBMS
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02]"
                     : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
                 }`}
@@ -351,7 +351,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
                 <div className="relative flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <span className="text-xl">🔄</span>
-                    <span>Convert {testvbmsBalance.toLocaleString()} TESTVBMS</span>
+                    <span>Convert {testvbmsBalance.toLocaleString()} VBMS</span>
                   </span>
                   <span className="text-xs opacity-80">→ VBMS</span>
                 </div>
@@ -373,11 +373,11 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
           )}
 
           {/* Info Footer */}
-          {(canClaimVBMS || canConvertTESTVBMS) && (
+          {(canClaimVBMS || canConvertVBMS) && (
             <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
               <p className="text-xs text-vintage-gold/70 text-center leading-relaxed">
                 💎 <span className="font-semibold">VBMS</span> = Blockchain tokens (trade/hold) •
-                <span className="font-semibold"> TESTVBMS</span> = In-game currency (shop/fees)
+                <span className="font-semibold"> VBMS</span> = In-game currency (shop/fees)
               </p>
             </div>
           )}

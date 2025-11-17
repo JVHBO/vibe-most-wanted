@@ -28,13 +28,22 @@ export function CoinsInboxDisplay({ compact = false, userAddress }: CoinsInboxDi
   );
 
   // Get actual VBMS wallet balance from blockchain (only for website mode)
-  const { balance: vbmsWalletBalance, isLoading: isBalanceLoading } = compact
-    ? { balance: '0', isLoading: false } // Skip blockchain query in miniapp
+  const { balance: vbmsWalletBalance, isLoading: isBalanceLoading, error: balanceError } = compact
+    ? { balance: '0', isLoading: false, error: null } // Skip blockchain query in miniapp
     : useVBMSBalance(address as `0x${string}` | undefined);
 
   // Debug logging (keep in production to diagnose miniapp issues)
   if (typeof window !== 'undefined') {
-    console.log('[CoinsInboxDisplay] compact:', compact, 'address:', address, 'inboxStatus:', inboxStatus, 'vbmsWalletBalance:', vbmsWalletBalance, 'isBalanceLoading:', isBalanceLoading);
+    console.log('[CoinsInboxDisplay] Debug Info:', {
+      compact,
+      address,
+      inboxStatus,
+      vbmsWalletBalance,
+      isBalanceLoading,
+      balanceError,
+      contractAddress: '0xb03439567cd22f278b21e1ffcdfb8e1696763827',
+      chainId: 8453
+    });
   }
 
   // Always render, even if data is loading (don't return null!)

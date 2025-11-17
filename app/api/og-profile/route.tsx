@@ -402,7 +402,7 @@ export async function GET(request: Request) {
                     color: '#FBBF24',
                   }}
                 >
-                  {coins} $TESTVBMS
+                  {coins} $VBMS
                 </div>
               </div>
             </div>

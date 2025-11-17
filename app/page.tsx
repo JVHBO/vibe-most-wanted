@@ -525,7 +525,7 @@ export default function TCGPage() {
   const awardPvPVBMS = useMutation(api.economyVBMS.awardPvPVBMS);
   const getVBMSBalance = useQuery(api.economyVBMS.getVBMSBalance, address ? { address } : "skip");
 
-  // PvP Entry Fee & Reward System (VBMS entry → TESTVBMS inbox rewards)
+  // PvP Entry Fee & Reward System (VBMS entry → VBMS inbox rewards)
   const useEntryFee = useMutation(api.pvp.useEntryFee);
   const sendPvPRewardToInbox = useMutation(api.pvp.sendPvPRewardToInbox);
 
@@ -900,7 +900,7 @@ export default function TCGPage() {
 
     setCurrentVictoryImage(victoryImage);
 
-    // TESTVBMS already added - just show victory
+    // VBMS already added - just show victory
     setShowWinPopup(true);
   };
 
@@ -913,13 +913,13 @@ export default function TCGPage() {
       victoryAudioRef.current = null;
     }
     setShowWinPopup(false);
-    // TESTVBMS already added - no modal
+    // VBMS already added - no modal
   };
 
   // 🎵 Handler to close defeat screen
   const handleCloseDefeatScreen = () => {
     setShowLossPopup(false);
-    // TESTVBMS already added - no modal
+    // VBMS already added - no modal
   };
 
   // 💰 Handler to claim daily login bonus
@@ -933,7 +933,7 @@ export default function TCGPage() {
       const result = await claimLoginBonus({ address });
 
       if (result.awarded > 0) {
-        devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
+        devLog(`✓ Login bonus claimed: +${result.awarded} VBMS`);
         setLoginBonusClaimed(true);
         if (soundEnabled) AudioManager.buttonClick();
       } else {
@@ -959,8 +959,8 @@ export default function TCGPage() {
       const result = await claimLoginBonus({ address });
 
       if (result.reason?.includes('Mission created')) {
-        devLog('✓ Daily mission created - TESTVBMS added');
-        // TESTVBMS already added - no modal
+        devLog('✓ Daily mission created - VBMS added');
+        // VBMS already added - no modal
         setLoginBonusClaimed(true);
       } else {
         devLog(`! ${result.reason}`);
@@ -1004,7 +1004,7 @@ export default function TCGPage() {
 
       const result = await claimQuestReward({ address });
 
-      devLog(`✓ Quest reward claimed: +${result.reward} $TESTVBMS`);
+      devLog(`✓ Quest reward claimed: +${result.reward} VBMS`);
       if (soundEnabled) AudioManager.buttonClick();
     } catch (error: any) {
       devError('✗ Error claiming quest reward:', error);
@@ -1025,7 +1025,7 @@ export default function TCGPage() {
 
       const result = await claimWeeklyLeaderboardReward({ address });
 
-      devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
+      devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} VBMS`);
       if (soundEnabled) AudioManager.buttonClick();
     } catch (error: any) {
       devError('✗ Error claiming weekly reward:', error);
@@ -1046,7 +1046,7 @@ export default function TCGPage() {
       const result = await claimWeeklyReward({ address, questId });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
+      devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} VBMS`);
     } catch (error: any) {
       devError('Error claiming reward:', error);
       if (soundEnabled) AudioManager.buttonError();
@@ -1861,7 +1861,7 @@ export default function TCGPage() {
                   });
                   coinsEarned = reward?.awarded || 0;
                   if (coinsEarned > 0) {
-                    devLog(`💰 Elimination Mode: Awarded ${coinsEarned} $TESTVBMS`, reward);
+                    devLog(`💰 Elimination Mode: Awarded ${coinsEarned} VBMS`, reward);
                   }
 
                   // Record match with coins earned
@@ -1899,7 +1899,7 @@ export default function TCGPage() {
                 opponentPfpUrl: undefined, // PvE opponent has no PFP
               });
 
-              // TESTVBMS already added - no modal needed
+              // VBMS already added - no modal needed
               console.log('[DEBUG PvE Elimination] coinsEarned:', coinsEarned, 'finalResult:', finalResult);
 
               // Close battle first
@@ -2007,7 +2007,7 @@ export default function TCGPage() {
             });
             coinsEarned = reward?.awarded || 0;
             if (coinsEarned > 0) {
-              devLog(`💰 PvE ${aiDifficulty}: Awarded ${coinsEarned} $TESTVBMS`, reward);
+              devLog(`💰 PvE ${aiDifficulty}: Awarded ${coinsEarned} VBMS`, reward);
             }
 
             // Record match with coins earned
@@ -2046,7 +2046,7 @@ export default function TCGPage() {
           opponentPfpUrl: undefined, // PvE opponent has no PFP
         });
 
-        // TESTVBMS already added - no modal
+        // VBMS already added - no modal
 
         // Fecha a tela de batalha PRIMEIRO
         setTimeout(() => {
@@ -2390,20 +2390,20 @@ export default function TCGPage() {
 
                 if (userProfile && address) {
                   try {
-                    // ✅ Award TESTVBMS to inbox for ranked PvP winners
+                    // ✅ Award VBMS to inbox for ranked PvP winners
                     if (isRanked && matchResult === 'win') {
-                      // Ranked PvP Winner: Send TESTVBMS to inbox
-                      const TESTVBMS_REWARD = 40; // 40 TESTVBMS reward for winning
+                      // Ranked PvP Winner: Send VBMS to inbox
+                      const VBMS_REWARD = 40; // 40 VBMS reward for winning
                       const reward = await sendPvPRewardToInbox({
                         address,
-                        rewardAmount: TESTVBMS_REWARD,
+                        rewardAmount: VBMS_REWARD,
                         roomCode: roomCode || undefined
                       });
 
                       if (reward?.success) {
-                        coinsEarned = TESTVBMS_REWARD;
-                        devLog(`🏆 PvP Win: ${TESTVBMS_REWARD} TESTVBMS sent to inbox`);
-                        toast.success(`Victory! ${TESTVBMS_REWARD} TESTVBMS sent to your inbox!`);
+                        coinsEarned = VBMS_REWARD;
+                        devLog(`🏆 PvP Win: ${VBMS_REWARD} VBMS sent to inbox`);
+                        toast.success(`Victory! ${VBMS_REWARD} VBMS sent to your inbox!`);
                       }
                     } else if (isRanked && matchResult !== 'win') {
                       // Ranked PvP Loser/Tie: No reward (VBMS stays in pool)
@@ -2468,7 +2468,7 @@ export default function TCGPage() {
                     opponentPfpUrl: opponentPfpUrl,
                   });
 
-                  // TESTVBMS already added - no modal
+                  // VBMS already added - no modal
 
                   // Mostra popup DEPOIS de fechar batalha
                   setTimeout(() => {
@@ -2738,9 +2738,9 @@ export default function TCGPage() {
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog('✅ Mission claimed - TESTVBMS added:', result);
+      devLog('✅ Mission claimed - VBMS added:', result);
 
-      // TESTVBMS already added - no modal
+      // VBMS already added - no modal
 
       // Reload missions
       await loadMissions();
@@ -3573,7 +3573,7 @@ export default function TCGPage() {
                   <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-300 mb-0.5 sm:mb-1">
                     +{pvpPreviewData.win.totalReward}
                   </p>
-                  <p className="text-xs sm:text-sm text-green-200/70">$TESTVBMS</p>
+                  <p className="text-xs sm:text-sm text-green-200/70">VBMS</p>
                 </div>
 
                 <div className="space-y-1 sm:space-y-1.5 md:space-y-2 text-xs sm:text-sm">
@@ -3622,7 +3622,7 @@ export default function TCGPage() {
                   <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-red-300 mb-0.5 sm:mb-1">
                     {pvpPreviewData.loss.totalPenalty}
                   </p>
-                  <p className="text-xs sm:text-sm text-red-200/70">$TESTVBMS</p>
+                  <p className="text-xs sm:text-sm text-red-200/70">VBMS</p>
                 </div>
 
                 <div className="space-y-1 sm:space-y-1.5 md:space-y-2 text-xs sm:text-sm">
@@ -3650,7 +3650,7 @@ export default function TCGPage() {
             {/* Current Balance */}
             <div className="mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 bg-vintage-black/50 rounded-lg border border-vintage-gold/20 text-center">
               <p className="text-[10px] sm:text-xs text-vintage-burnt-gold mb-0.5 sm:mb-1">YOUR CURRENT BALANCE</p>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold">{pvpPreviewData.playerCoins} $TESTVBMS</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold">{pvpPreviewData.playerCoins} VBMS</p>
             </div>
 
             {/* Action Buttons */}
@@ -3667,7 +3667,7 @@ export default function TCGPage() {
                   try {
                     // Pay entry fee
                     await payEntryFee({ address: address || '', mode: 'attack' });
-                    devLog('Attack entry fee paid: 50 $TESTVBMS');
+                    devLog('Attack entry fee paid: 50 VBMS');
 
                     // Setup battle (código original continua aqui...)
                     devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -4412,7 +4412,7 @@ export default function TCGPage() {
                           {(playerEconomy.coins || 0).toLocaleString()}
                         </span>
                         <span className="text-vintage-burnt-gold font-modern text-[8px] md:text-[10px] leading-none mt-0.5">
-                          $TESTVBMS
+                          VBMS
                         </span>
                       </div>
                     </div>
@@ -4581,7 +4581,7 @@ export default function TCGPage() {
                   <div>
                     <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold">DAILY QUEST</h3>
                     <p className="text-xs md:text-sm text-vintage-burnt-gold font-modern capitalize">
-                      {questProgress.quest.difficulty} • +{questProgress.quest.reward} $TESTVBMS
+                      {questProgress.quest.difficulty} • +{questProgress.quest.reward} VBMS
                     </p>
                   </div>
                 </div>
@@ -5328,7 +5328,7 @@ export default function TCGPage() {
                               onClick={() => handleClaimWeeklyQuestReward('weekly_attack_wins')}
                               className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
-                              ✦ Claim 300 $TESTVBMS
+                              ✦ Claim 300 VBMS
                             </button>
                           ) : null}
                         </div>
@@ -5364,7 +5364,7 @@ export default function TCGPage() {
                               onClick={() => handleClaimWeeklyQuestReward('weekly_total_matches')}
                               className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
-                              ✦ Claim 200 $TESTVBMS
+                              ✦ Claim 200 VBMS
                             </button>
                           ) : null}
                         </div>
@@ -5400,7 +5400,7 @@ export default function TCGPage() {
                               onClick={() => handleClaimWeeklyQuestReward('weekly_defense_wins')}
                               className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
-                              ✦ Claim 400 $TESTVBMS
+                              ✦ Claim 400 VBMS
                             </button>
                           ) : null}
                         </div>
@@ -5436,7 +5436,7 @@ export default function TCGPage() {
                               onClick={() => handleClaimWeeklyQuestReward('weekly_pve_streak')}
                               className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
                             >
-                              ✦ Claim 500 $TESTVBMS
+                              ✦ Claim 500 VBMS
                             </button>
                           ) : null}
                         </div>
@@ -5526,7 +5526,7 @@ export default function TCGPage() {
                           <div className="text-right">
                             <p className="text-sm text-green-400 mb-1">Next Reward</p>
                             <p className="text-3xl font-display font-bold text-green-300">+{nextReward.toLocaleString()}</p>
-                            <p className="text-xs text-green-400">$TESTVBMS</p>
+                            <p className="text-xs text-green-400">VBMS</p>
                           </div>
                         )}
                       </div>
@@ -5644,7 +5644,7 @@ export default function TCGPage() {
                                   <span className="text-vintage-gold font-bold text-lg">
                                     +{mission.reward}
                                   </span>
-                                  <span className="text-vintage-burnt-gold text-sm">$TESTVBMS</span>
+                                  <span className="text-vintage-burnt-gold text-sm">VBMS</span>
                                 </div>
                               </div>
 

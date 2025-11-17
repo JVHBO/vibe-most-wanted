@@ -238,7 +238,7 @@ export const claimAchievementReward = mutation({
       throw new Error("Profile not found");
     }
 
-    // Add coins (TESTVBMS) to player profile
+    // Add coins (VBMS) to player profile
     const oldCoins = profile.coins || 0;
     const newCoins = oldCoins + definition.reward;
     const lifetimeEarned = (profile.lifetimeEarned || 0) + definition.reward;

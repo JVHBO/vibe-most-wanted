@@ -49,11 +49,11 @@ export default function AchievementsView({
 
     setIsClaiming(true);
     try {
-      // Claim achievement - TESTVBMS added automatically in backend
+      // Claim achievement - VBMS added automatically in backend
       const result = await claimAchievement(achievementId);
 
       if (result && onSuccess) {
-        onSuccess(`✅ ${result.reward} TESTVBMS added!`);
+        onSuccess(`✅ ${result.reward} VBMS added!`);
       }
     } catch (error) {
       console.error('[Achievement] Failed to claim:', error);
@@ -76,7 +76,7 @@ export default function AchievementsView({
       let totalReward = 0;
       let successCount = 0;
 
-      // Claim all achievements - TESTVBMS added automatically in backend
+      // Claim all achievements - VBMS added automatically in backend
       for (const achievement of unclaimed) {
         try {
           const result = await claimAchievement(achievement.achievementId);
@@ -91,7 +91,7 @@ export default function AchievementsView({
 
       // Show success message
       if (successCount > 0 && totalReward > 0 && onSuccess) {
-        onSuccess(`✅ ${totalReward} TESTVBMS added from ${successCount} achievements!`);
+        onSuccess(`✅ ${totalReward} VBMS added from ${successCount} achievements!`);
       }
     } finally {
       setIsClaiming(false);
