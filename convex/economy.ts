@@ -797,9 +797,10 @@ export const awardPvPCoins = mutation({
 
       // No daily cap for PvP - limited by 10 matches/day instead
 
-      // Award coins
+      // Award coins to inbox (not balance)
+      const currentInbox = profile.inbox || 0;
       await ctx.db.patch(profile!._id, {
-        coins: (profile.coins || 0) + totalReward,
+        inbox: currentInbox + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
@@ -809,6 +810,8 @@ export const awardPvPCoins = mutation({
         },
         // lastPvPAward already updated immediately after rate limit check (line 652)
       });
+
+      console.log(`📬 PvP reward sent to inbox: ${totalReward} TESTVBMS for ${address}. Inbox: ${currentInbox} → ${currentInbox + totalReward}`);
 
       // 🎯 Track weekly quest progress (async, non-blocking)
       // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
