@@ -15,6 +15,16 @@ export function FarcasterNotificationRegistration() {
   useEffect(() => {
     async function registerNotificationToken() {
       try {
+        // Only run in Farcaster context
+        if (typeof window === 'undefined') {
+          return;
+        }
+
+        // Check if SDK is available (only in Farcaster)
+        if (!sdk?.context) {
+          return;
+        }
+
         // Check if running in Farcaster
         const context = await sdk.context;
 
@@ -46,7 +56,8 @@ export function FarcasterNotificationRegistration() {
           console.log('✅ Notification token registered successfully');
         }
       } catch (error) {
-        console.error('Error registering notification token:', error);
+        // Silent fail if not in Farcaster - don't break the app
+        console.log('ℹ️ Not in Farcaster context, skipping notification registration');
       }
     }
 
