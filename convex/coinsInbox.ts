@@ -127,6 +127,6 @@ export const hasUnclaimedCoins = query({
       return false;
     }
 
-    return (profile.coinsInbox || 0) > 0;
+    return (profile.inbox || 0) > 0;
   },
 });
