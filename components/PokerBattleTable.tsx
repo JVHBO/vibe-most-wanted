@@ -16,6 +16,7 @@ import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts'
 import { SpectatorEntryModal } from './SpectatorEntryModal';
 import { BettingInterface } from './BettingInterface';
 import { GamePopups } from './GamePopups';
+import { RewardChoiceModal } from './RewardChoiceModal';
 
 interface Card {
   tokenId: string;
@@ -2729,151 +2730,20 @@ export function PokerBattleTable({
           </div>
         )}
 
-        {/* CLAIM CHOICE DIALOG - Appears after victory screen for all modes with stakes */}
+        {/* REWARD CHOICE MODAL - Appears after victory for TESTVBMS battles */}
         {showClaimChoice && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[500]">
-            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-8 text-center shadow-2xl max-w-md mx-4">
-              {/* Trophy Icon */}
-              <div className="mb-6 flex justify-center animate-bounce">
-                <TrophyIcon className="text-vintage-gold" size={80} />
-              </div>
-
-              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">
-                CLAIM YOUR PRIZE!
-              </h2>
-
-              <p className="text-xl text-vintage-burnt-gold mb-2">
-                Prize: {Math.round((selectedAnte * 2) * 0.95)} {isCPUMode ? 'VBMS' : selectedToken}
-              </p>
-              <p className="text-sm text-green-300/70 mb-6">
-                (Pot: {selectedAnte * 2}, Fee: {Math.round((selectedAnte * 2) * 0.05)})
-              </p>
-
-              <div className="bg-vintage-gold/10 rounded-lg p-4 mb-6 border border-vintage-gold/30">
-                <p className="text-vintage-ice font-bold mb-3">How do you want to claim?</p>
-                <div className="flex flex-col gap-3">
-                  {/* Claim Now / Claim to Wallet */}
-                  {isCPUMode ? (
-                    <button
-                      onClick={async () => {
-                        setShowClaimChoice(false);
-                        setClaimChoiceMade(true);
-                        console.log('[PokerBattle] 💰 CPU Mode: Claiming VBMS now');
-
-                        const rewardAmount = Math.round((selectedAnte * 2) * 0.95);
-
-                        try {
-                          // Step 1: Get signature from backend
-                          const result = await claimPveRewardNow({
-                            address: playerAddress,
-                            amount: rewardAmount,
-                            difficulty,
-                          });
-                          console.log('[PokerBattle] ✅ PvE reward claim prepared, signature obtained');
-
-                          // Step 2: Execute blockchain transaction
-                          toast.info("🔐 Aguardando assinatura da carteira...");
-                          const txHash = await claimVBMS(
-                            result.amount.toString(),
-                            result.nonce as `0x${string}`,
-                            result.signature as `0x${string}`
-                          );
-                          console.log('[PokerBattle] ✅ PvE reward TX successful:', txHash);
-
-                          // Step 3: Record claim in history
-                          await recordImmediateClaim({
-                            address: playerAddress,
-                            amount: result.amount,
-                            bonus: result.bonus,
-                            bonusReasons: result.bonusReasons,
-                            txHash: txHash as unknown as string,
-                          });
-
-                          toast.success(`✅ ${result.amount.toLocaleString()} VBMS claimed!`);
-                        } catch (error: any) {
-                          console.error('[PokerBattle] ❌ Failed to claim PvE reward:', error);
-                          toast.error(error.message || "Erro ao coletar VBMS");
-                        }
-                        onClose();
-                      }}
-                      className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2"
-                    >
-                      <span>💳</span> Claim as VBMS (Pay Gas)
-                    </button>
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        setShowClaimChoice(false);
-                        setClaimChoiceMade(true);
-                        console.log('[PokerBattle] 💰 User chose: Claim to Wallet');
-
-                        // Trigger blockchain claim for VBMS battles only
-                        if (selectedToken === 'VBMS' && !battleFinalized && room && room.blockchainBattleId) {
-                          try {
-                            // Determine winner address (player won, so it's playerAddress)
-                            const winnerAddress = playerAddress as `0x${string}`;
-                            await finishVBMSBattle(room.blockchainBattleId, winnerAddress);
-                            console.log('[PokerBattle] ✅ VBMS battle finished, tokens claimed to wallet');
-                          } catch (error) {
-                            console.error('[PokerBattle] ❌ Failed to claim to wallet:', error);
-                          }
-                        }
-                        onClose();
-                      }}
-                      className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2"
-                    >
-                      <span>💳</span> Claim to Wallet {selectedToken === 'VBMS' && '(Pay Gas)'}
-                    </button>
-                  )}
-
-                  {/* Send to Inbox */}
-                  <button
-                    onClick={async () => {
-                      setShowClaimChoice(false);
-                      setClaimChoiceMade(true);
-                      console.log('[PokerBattle] 📬 User chose: Send to Inbox');
-
-                      if (isCPUMode) {
-                        // CPU Mode: Use PvE inbox mutation
-                        const rewardAmount = Math.round((selectedAnte * 2) * 0.95);
-                        try {
-                          await sendPveRewardToInbox({
-                            address: playerAddress,
-                            amount: rewardAmount,
-                            difficulty,
-                          });
-                          console.log('[PokerBattle] ✅ PvE reward sent to inbox');
-                        } catch (error) {
-                          console.error('[PokerBattle] ❌ Failed to send PvE reward to inbox:', error);
-                        }
-                      } else {
-                        // PvP Mode: Use match-based inbox mutation
-                        if (createdMatchId) {
-                          try {
-                            await sendToInboxMutation({
-                              address: playerAddress,
-                              matchId: createdMatchId,
-                            });
-                            console.log('[PokerBattle] ✅ Match sent to inbox');
-                          } catch (error) {
-                            console.error('[PokerBattle] ❌ Failed to send to inbox:', error);
-                          }
-                        }
-                      }
-                      onClose();
-                    }}
-                    className="w-full px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <span>📬</span> Send to Inbox (Claim Later)
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-xs text-vintage-ice/60">
-                {isCPUMode ? 'Choose to claim VBMS now (pay gas) or send to inbox (claim later)' : 'Wallet claim is immediate. Inbox allows you to claim later.'}
-              </p>
-            </div>
-          </div>
+          <RewardChoiceModal
+            amount={Math.round((selectedAnte * 2) * 0.95)}
+            source={isCPUMode ? "pve" : "pvp"}
+            onClose={() => {
+              setShowClaimChoice(false);
+              onClose();
+            }}
+            onChoiceMade={(choice) => {
+              console.log('[PokerBattle] Reward choice made:', choice);
+              setClaimChoiceMade(true);
+            }}
+          />
         )}
 
         {/* ROUND WINNER ANNOUNCEMENT - Semi-transparent overlay positioned at top */}
