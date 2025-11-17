@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { sdk } from "@farcaster/miniapp-sdk";
+import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
+import { encodeFunctionData, parseEther } from "viem";
 
 interface InboxModalProps {
   economy: {
@@ -21,6 +24,18 @@ interface InboxModalProps {
 export function InboxModal({ economy, onClose }: InboxModalProps) {
   const { address } = useAccount();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+
+  // Check if we should use Farcaster SDK for transactions
+  useEffect(() => {
+    const checkFarcasterSDK = async () => {
+      if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
+        setUseFarcasterSDK(true);
+        console.log('[InboxModal] Using Farcaster SDK for transactions');
+      }
+    };
+    checkFarcasterSDK();
+  }, []);
 
   const claimAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const prepareInboxClaimVBMS = useAction(api.vbmsClaim.prepareInboxClaim);
@@ -28,6 +43,53 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
+
+  // Helper function to claim via Farcaster SDK
+  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
+    if (!sdk.wallet?.ethProvider) {
+      const error = "Farcaster wallet not available";
+      console.error('[InboxModal]', error);
+      toast.error(error);
+      throw new Error(error);
+    }
+
+    console.log('[InboxModal] Claiming via Farcaster SDK:', {
+      amount,
+      nonce,
+      from: address,
+      to: CONTRACTS.VBMSPoolTroll,
+      chainId: CONTRACTS.CHAIN_ID
+    });
+
+    // Encode the function call
+    const data = encodeFunctionData({
+      abi: POOL_ABI,
+      functionName: 'claimVBMS',
+      args: [parseEther(amount), nonce as `0x${string}`, signature as `0x${string}`],
+    });
+
+    console.log('[InboxModal] Encoded data:', data);
+
+    try {
+      // Send transaction via Farcaster SDK
+      const txHash = await sdk.wallet.ethProvider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: address as `0x${string}`,
+          to: CONTRACTS.VBMSPoolTroll,
+          data: data,
+        }],
+      });
+
+      console.log('[InboxModal] Farcaster SDK TX hash:', txHash);
+      toast.success('TX enviada: ' + txHash);
+      return txHash;
+    } catch (error: any) {
+      console.error('[InboxModal] Farcaster SDK error:', error);
+      toast.error('Erro na TX: ' + (error.message || 'Desconhecido'));
+      throw error;
+    }
+  };
 
   const inboxAmount = economy.inbox || 0;
   const testvbmsBalance = economy.coins || 0;
@@ -86,11 +148,18 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       toast.info("🔐 Aguardando assinatura da carteira...");
 
       console.log('[InboxModal] Step 3: Calling blockchain claimVBMS...');
-      const txHash = await claimVBMS(
-        result.amount.toString(),
-        result.nonce as `0x${string}`,
-        result.signature as `0x${string}`
-      );
+      // Use Farcaster SDK if available, otherwise wagmi
+      const txHash = useFarcasterSDK
+        ? await claimViaFarcasterSDK(
+            result.amount.toString(),
+            result.nonce,
+            result.signature
+          )
+        : await claimVBMS(
+            result.amount.toString(),
+            result.nonce as `0x${string}`,
+            result.signature as `0x${string}`
+          );
 
       console.log('[InboxModal] Step 4: TX sent, waiting for confirmation...', txHash);
       toast.loading("⏳ Aguardando confirmação da blockchain...", { id: "claim-wait" });
@@ -148,11 +217,18 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       toast.info("🔐 Aguardando assinatura da carteira...");
 
       console.log('[InboxModal] Step 2: Sending blockchain TX...');
-      const txHash = await claimVBMS(
-        result.amount.toString(),
-        result.nonce as `0x${string}`,
-        result.signature as `0x${string}`
-      );
+      // Use Farcaster SDK if available, otherwise wagmi
+      const txHash = useFarcasterSDK
+        ? await claimViaFarcasterSDK(
+            result.amount.toString(),
+            result.nonce,
+            result.signature
+          )
+        : await claimVBMS(
+            result.amount.toString(),
+            result.nonce as `0x${string}`,
+            result.signature as `0x${string}`
+          );
 
       console.log('[InboxModal] Step 3: TX sent, waiting for confirmation...', txHash);
       toast.loading("⏳ Aguardando confirmação da blockchain...", { id: "conversion-wait" });
