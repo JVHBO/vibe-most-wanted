@@ -782,7 +782,9 @@ export const finishGame = mutation({
       .first();
 
     if (!room) {
-      throw new Error("Room not found");
+      // Don't throw error - room may have already been deleted
+      console.log(`⚠️ Room ${args.roomId} already deleted or not found (this is okay)`);
+      return { success: true, alreadyDeleted: true };
     }
 
     // DELETE the room immediately (no need to mark as finished since we're deleting)
@@ -790,7 +792,7 @@ export const finishGame = mutation({
 
     console.log(`🗑️ Room ${args.roomId} deleted. Winner: ${args.winnerUsername} (${args.finalPot} pot)`);
 
-    return { success: true };
+    return { success: true, alreadyDeleted: false };
   },
 });
 
@@ -1144,6 +1146,63 @@ export const listAllRooms = query({
   handler: async (ctx) => {
     const rooms = await ctx.db.query("pokerRooms").collect();
     return rooms;
+  },
+});
+
+/**
+ * Clean up old/expired poker rooms (admin tool)
+ */
+export const cleanupOldRooms = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const rooms = await ctx.db.query("pokerRooms").collect();
+
+    let deletedCount = 0;
+    for (const room of rooms) {
+      // Delete if expired or older than 1 hour
+      if (room.expiresAt < now || (now - room.createdAt > 3600000)) {
+        await ctx.db.delete(room._id);
+        deletedCount++;
+        console.log(`[cleanupOldRooms] Deleted expired/old room ${room.roomId}`);
+      }
+    }
+
+    return { deletedCount };
+  },
+});
+
+/**
+ * Force delete room by player address (admin tool)
+ */
+export const forceDeleteRoomByAddress = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const addr = address.toLowerCase();
+    console.log(`[forceDeleteRoomByAddress] Finding rooms for address ${addr}...`);
+
+    const rooms = await ctx.db
+      .query("pokerRooms")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("hostAddress"), addr),
+          q.eq(q.field("guestAddress"), addr)
+        )
+      )
+      .collect();
+
+    if (rooms.length === 0) {
+      return { deletedCount: 0, message: "No rooms found for this address" };
+    }
+
+    for (const room of rooms) {
+      await ctx.db.delete(room._id);
+      console.log(`[forceDeleteRoomByAddress] Deleted room ${room.roomId}`);
+    }
+
+    return { deletedCount: rooms.length, message: `Deleted ${rooms.length} room(s)` };
   },
 });
 
