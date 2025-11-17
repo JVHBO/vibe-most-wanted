@@ -778,10 +778,13 @@ export const distributeWeeklyRewards = internalMutation({
       }
 
       if (reward > 0) {
+        const currentInbox = player.inbox || 0;
         await ctx.db.patch(player._id, {
-          coins: (player.coins || 0) + reward,
+          inbox: currentInbox + reward,
           lifetimeEarned: (player.lifetimeEarned || 0) + reward,
         });
+
+        console.log(`📬 Weekly leaderboard reward sent to inbox: ${reward} TESTVBMS for ${player.address}. Inbox: ${currentInbox} → ${currentInbox + reward}`);
 
         rewards.push({
           rank,
