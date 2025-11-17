@@ -321,7 +321,7 @@ export function PvPMenuModals({
                   <span className="text-sm font-modern bg-vintage-black/30 px-3 py-1 rounded">20 VBMS</span>
                 </div>
                 <p className="text-xs text-left text-vintage-black/70 font-modern">
-                  Competitive • Entry fee • Win VBMS in inbox
+                  Competitive • Entry fee • Win TESTVBMS in inbox
                 </p>
               </div>
             </button>

@@ -1,7 +1,7 @@
 /**
  * COINS INBOX SYSTEM
  *
- * Manages the "claim later" feature for $VBMS coins
+ * Manages the "claim later" feature for $TESTVBMS coins
  * Allows players to accumulate coins in their inbox and claim them later
  * Integrated with PvE, PvP, Attack, and Leaderboard reward systems
  */

@@ -2,7 +2,7 @@
  * API Route: Sign VBMS Claim Message
  *
  * Signs a claim message for VBMS token distribution
- * Used by convertVBMStoVBMS mutation in Convex
+ * Used by convertTESTVBMStoVBMS mutation in Convex
  */
 
 import { NextRequest, NextResponse } from 'next/server';

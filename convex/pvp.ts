@@ -2,7 +2,7 @@
  * PVP ENTRY FEE SYSTEM
  *
  * Players pay VBMS entry fee to VBMSPoolTroll
- * Winners receive VBMS rewards in inbox
+ * Winners receive TESTVBMS rewards in inbox
  * Losers' VBMS stays locked in pool
  */
 
@@ -118,7 +118,7 @@ export const checkEntryFee = query({
 /**
  * SEND PVP REWARD TO INBOX
  * Called when player wins a PvP battle
- * Sends VBMS reward to player's inbox
+ * Sends TESTVBMS reward to player's inbox
  */
 export const sendPvPRewardToInbox = mutation({
   args: {
@@ -130,7 +130,7 @@ export const sendPvPRewardToInbox = mutation({
     const { address, rewardAmount, roomCode } = args;
     const normalizedAddress = address.toLowerCase();
 
-    // Send VBMS to inbox
+    // Send TESTVBMS to inbox
     await ctx.db.insert("vbmsInbox" as any, {
       address: normalizedAddress,
       amount: rewardAmount,
@@ -142,7 +142,7 @@ export const sendPvPRewardToInbox = mutation({
       timestamp: Date.now(),
     });
 
-    console.log(`🏆 PvP reward sent to inbox: ${rewardAmount} VBMS for ${address}`);
+    console.log(`🏆 PvP reward sent to inbox: ${rewardAmount} TESTVBMS for ${address}`);
 
     return {
       success: true,

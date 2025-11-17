@@ -167,7 +167,7 @@ export function AttackCardSelectionModal({
     try {
       // Pay entry fee BEFORE attacking
       await payEntryFee({ address: address || '', mode: 'attack' });
-      devLog('Attack entry fee paid: 50 $VBMS');
+      devLog('Attack entry fee paid: 50 $TESTVBMS');
     } catch (error: any) {
       setErrorMessage('Error paying entry fee: ' + error.message);
       setIsAttacking(false);
@@ -309,7 +309,7 @@ export function AttackCardSelectionModal({
         });
 
         // Set pending reward to show RewardChoiceModal (only for wins)
-        // VBMS already added - no modal
+        // TESTVBMS already added - no modal
 
         // Show result popup after closing battle
         setTimeout(() => {

@@ -111,7 +111,7 @@ export function BettingInterface({
             ? userBet
               ? `You bet ${userBet.amount} credits on ${userBet.betOn === player1Address ? player1Username : player2Username}`
               : "Betting is closed"
-            : "Pool system: Winners split 95% of total bets! VBMS → Inbox"}
+            : "Pool system: Winners split 95% of total bets! TESTVBMS → Inbox"}
         </p>
       </div>
 
@@ -214,7 +214,7 @@ export function BettingInterface({
                 🏆 Pool-based system: Winners split 95% of total bets proportionally
               </p>
               <p className="text-vintage-ice/70 text-xs">
-                📬 Winnings sent to inbox as VBMS (claim anytime!)
+                📬 Winnings sent to inbox as TESTVBMS (claim anytime!)
               </p>
             </div>
           )}
@@ -251,7 +251,7 @@ export function BettingInterface({
             <span className="font-bold">{userBet.betOn === player1Address ? player1Username : player2Username}</span>
           </p>
           <p className="text-vintage-ice/70 text-xs text-center">
-            📬 If you win, VBMS will be sent to your inbox!
+            📬 If you win, TESTVBMS will be sent to your inbox!
           </p>
           <p className="text-vintage-ice/70 text-xs text-center mt-1">
             🏆 Your share = ({userBet.amount} / total on winner) × 95% of pool
