@@ -10,6 +10,9 @@ import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
+import Image from "next/image";
+
+const NextImage = Image;
 
 interface InboxModalProps {
   economy: {
