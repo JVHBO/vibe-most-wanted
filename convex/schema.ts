@@ -538,6 +538,7 @@ export default defineSchema({
     timestamp: v.number(), // When message was sent
     type: v.optional(v.union(v.literal("text"), v.literal("sound"))), // Message type
     soundUrl: v.optional(v.string()), // URL of the sound file (for sound messages)
+    emoji: v.optional(v.string()), // Emoji for floating animation (for sound messages)
   })
     .index("by_room", ["roomId", "timestamp"]), // For fetching messages by room chronologically
 
