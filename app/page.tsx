@@ -762,15 +762,24 @@ export default function TCGPage() {
   useEffect(() => {
     const checkFarcasterContext = () => {
       try {
-        // Use ONLY iframe detection for miniapp context
-        // SDK check was causing false negatives because SDK isn't ready on mount
-        const inMiniapp = isMiniappMode(); // window.parent !== window
+        // Check if in iframe AND has Farcaster-specific indicators
+        const isInIframe = isMiniappMode(); // window.parent !== window
+
+        // Additional check: look for Farcaster-specific URL patterns or referrer
+        const isFarcasterUrl = typeof window !== 'undefined' && (
+          window.location.hostname.includes('farcaster') ||
+          document.referrer.includes('farcaster') ||
+          document.referrer.includes('warpcast')
+        );
+
+        // Only consider it a miniapp if BOTH conditions are true
+        const inMiniapp = isInIframe && isFarcasterUrl;
         setIsInFarcaster(inMiniapp);
 
         if (inMiniapp) {
-          devLog('✓ Running in Farcaster miniapp context (iframe detected)');
+          devLog('✓ Running in Farcaster miniapp context (iframe + Farcaster URL detected)');
         } else {
-          devLog('ℹ Not in Farcaster miniapp context (not in iframe)');
+          devLog('ℹ Not in Farcaster miniapp context', { isInIframe, isFarcasterUrl });
         }
       } catch (err) {
         setIsInFarcaster(false);
