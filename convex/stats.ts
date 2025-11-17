@@ -12,7 +12,7 @@ export const getAllProfiles = query({
       username: profile.username,
       address: profile.address,
       coins: profile.coins || 0,
-      coinsInbox: profile.coinsInbox || 0,
+      coinsInbox: profile.inbox || 0, // Using inbox field now
       lifetimeEarned: profile.lifetimeEarned || 0,
       lifetimeSpent: profile.lifetimeSpent || 0,
     }));

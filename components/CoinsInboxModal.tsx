@@ -14,7 +14,7 @@ import { encodeFunctionData, parseEther } from "viem";
 
 interface CoinsInboxModalProps {
   inboxStatus: {
-    inbox: number; // VBMS inbox (backend balance from leaderboard/rewards)
+    coinsInbox: number; // VBMS inbox (backend balance from leaderboard/rewards)
     coins: number; // TESTVBMS for in-game spending
     lifetimeEarned: number;
   };
@@ -95,7 +95,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     }
   };
 
-  const vbmsInbox = inboxStatus.inbox || 0;
+  const vbmsInbox = inboxStatus.coinsInbox || 0;
   const canClaimInbox = vbmsInbox >= 100 && !isProcessing; // Minimum 100 VBMS to claim
 
   // Claim VBMS from inbox
