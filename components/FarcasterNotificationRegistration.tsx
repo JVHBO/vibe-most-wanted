@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
@@ -14,19 +15,6 @@ export function FarcasterNotificationRegistration() {
   useEffect(() => {
     async function registerNotificationToken() {
       try {
-        // Only run in browser
-        if (typeof window === 'undefined') {
-          return;
-        }
-
-        // Dynamically import SDK to avoid SSR issues
-        const { sdk } = await import('@farcaster/miniapp-sdk');
-
-        // Check if SDK is available (only in Farcaster)
-        if (!sdk) {
-          return;
-        }
-
         // Check if running in Farcaster
         const context = await sdk.context;
 
@@ -42,24 +30,15 @@ export function FarcasterNotificationRegistration() {
         if (notificationDetails?.notificationDetails) {
           const { token, url } = notificationDetails.notificationDetails;
 
-          // Validate token and url before saving
-          if (!token || !url) {
-            console.log('⚠️ Missing token or url from Farcaster SDK:', { token, url });
-            return;
-          }
-
           // Save to Convex
           await saveToken({
             fid,
             token,
             url,
           });
-
-          console.log('✅ Notification token registered successfully');
         }
       } catch (error) {
-        // Silent fail if not in Farcaster - don't break the app
-        // This is expected when not in Farcaster miniapp
+        console.error('Error registering notification token:', error);
       }
     }
 

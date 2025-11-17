@@ -8,6 +8,4 @@ export const config = getDefaultConfig({
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
   chains: [base],
   ssr: true,
-  // Disable auto-connect to prevent infinite loading
-  multiInjectedProviderDiscovery: false,
 });
