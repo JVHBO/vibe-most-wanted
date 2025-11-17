@@ -21,7 +21,7 @@ export interface AchievementDefinition {
     wear?: string;
     foil?: string;
   };
-  reward: number; // $TESTVBMS coins
+  reward: number; // $VBMS coins
   tier?: number; // For progressive achievements (1, 5, 10, 25, 50, 100)
 }
 

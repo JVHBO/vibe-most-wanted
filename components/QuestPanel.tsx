@@ -35,7 +35,7 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
         audio.play().catch(() => {});
       }
 
-      // TESTVBMS added to balance - close panel
+      // VBMS added to balance - close panel
       if (result && result.success) {
         setTimeout(() => {
           onClose();

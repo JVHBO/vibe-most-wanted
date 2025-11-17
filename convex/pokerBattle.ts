@@ -19,7 +19,7 @@ export const createPokerRoom = mutation({
     address: v.string(),
     username: v.string(),
     ante: v.number(), // 2, 10, 50, or 200
-    token: v.union(v.literal("VBMS"), v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
+    token: v.union(v.literal("VBMS"), v.literal("VBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
     blockchainBattleId: v.optional(v.number()), // Optional blockchain battle ID
   },
   handler: async (ctx, args) => {
@@ -210,7 +210,7 @@ export const autoMatch = mutation({
     address: v.string(),
     username: v.string(),
     ante: v.number(),
-    token: v.union(v.literal("VBMS"), v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
+    token: v.union(v.literal("VBMS"), v.literal("VBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
   },
   handler: async (ctx, args) => {
     const now = Date.now();

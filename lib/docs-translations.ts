@@ -20,7 +20,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economia",
-    economyIntro: "O Vibe Most Wanted possui um sistema de moedas virtuais ($TESTVBMS) que você ganha jogando e pode usar para participar de partidas ranqueadas.",
+    economyIntro: "O Vibe Most Wanted possui um sistema de moedas virtuais ($VBMS) que você ganha jogando e pode usar para participar de partidas ranqueadas.",
 
     howToEarnCoins: "Como Ganhar Moedas",
     earnPve: "PvE (Jogador vs IA)",
@@ -175,7 +175,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Economy System",
-    economyIntro: "Vibe Most Wanted features a virtual currency system ($TESTVBMS) that you earn by playing and can use to participate in ranked matches.",
+    economyIntro: "Vibe Most Wanted features a virtual currency system ($VBMS) that you earn by playing and can use to participate in ranked matches.",
 
     howToEarnCoins: "How to Earn Coins",
     earnPve: "PvE (Player vs AI)",
@@ -330,7 +330,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economía",
-    economyIntro: "Vibe Most Wanted cuenta con un sistema de moneda virtual ($TESTVBMS) que ganas jugando y puedes usar para participar en partidas clasificatorias.",
+    economyIntro: "Vibe Most Wanted cuenta con un sistema de moneda virtual ($VBMS) que ganas jugando y puedes usar para participar en partidas clasificatorias.",
 
     howToEarnCoins: "Cómo Ganar Monedas",
     earnPve: "PvE (Jugador vs IA)",
@@ -485,7 +485,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated for brevity - full translation recommended)
     economyTitle: "अर्थव्यवस्था प्रणाली",
-    economyIntro: "Vibe Most Wanted में एक वर्चुअल करेंसी सिस्टम ($TESTVBMS) है जो आप खेलकर कमाते हैं और रैंक मैचों में भाग लेने के लिए उपयोग कर सकते हैं।",
+    economyIntro: "Vibe Most Wanted में एक वर्चुअल करेंसी सिस्टम ($VBMS) है जो आप खेलकर कमाते हैं और रैंक मैचों में भाग लेने के लिए उपयोग कर सकते हैं।",
 
     howToEarnCoins: "सिक्के कैसे कमाएं",
     earnPve: "PvE (खिलाड़ी बनाम AI)",
@@ -619,7 +619,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated - full translation recommended)
     economyTitle: "Экономическая система",
-    economyIntro: "Vibe Most Wanted имеет систему виртуальной валюты ($TESTVBMS), которую вы зарабатываете, играя, и можете использовать для участия в рейтинговых матчах.",
+    economyIntro: "Vibe Most Wanted имеет систему виртуальной валюты ($VBMS), которую вы зарабатываете, играя, и можете использовать для участия в рейтинговых матчах.",
 
     howToEarnCoins: "Как заработать монеты",
     earnPve: "PvE (Игрок против ИИ)",
@@ -774,7 +774,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated)
     economyTitle: "经济系统",
-    economyIntro: "Vibe Most Wanted 拥有虚拟货币系统 ($TESTVBMS)，您可以通过游戏赚取并用于参与排名赛。",
+    economyIntro: "Vibe Most Wanted 拥有虚拟货币系统 ($VBMS)，您可以通过游戏赚取并用于参与排名赛。",
 
     howToEarnCoins: "如何赚取金币",
     earnPve: "PvE (玩家对AI)",

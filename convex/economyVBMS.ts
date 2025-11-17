@@ -1,7 +1,7 @@
 /**
  * VBMS-BASED PVP ECONOMY
  *
- * PvP system using real VBMS tokens instead of TESTVBMS
+ * PvP system using real VBMS tokens instead of VBMS
  */
 
 import { v } from "convex/values";
