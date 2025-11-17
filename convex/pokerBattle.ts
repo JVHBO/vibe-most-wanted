@@ -634,12 +634,25 @@ export const resolveRound = mutation({
     const hostHasShield = hostAction === 'SHIELD';
     const guestHasShield = guestAction === 'SHIELD';
 
+    console.log(`[resolveRound] Initial - Host: ${hostPower} (${hostAction || 'PASS'}), Guest: ${guestPower} (${guestAction || 'PASS'})`);
+    console.log(`[resolveRound] Shields - Host has shield: ${hostHasShield}, Guest has shield: ${guestHasShield}`);
+
     // Apply BOOST (+30%)
     if (hostAction === 'BOOST' && !guestHasShield) {
+      console.log(`[resolveRound] Host BOOST applied: ${hostPower} → ${hostPower * 1.3}`);
       hostPower *= 1.3;
     }
     if (guestAction === 'BOOST' && !hostHasShield) {
+      console.log(`[resolveRound] Guest BOOST applied: ${guestPower} → ${guestPower * 1.3}`);
       guestPower *= 1.3;
+    }
+
+    // Shield blocked boost
+    if (hostAction === 'BOOST' && guestHasShield) {
+      console.log(`[resolveRound] Host BOOST BLOCKED by Guest SHIELD`);
+    }
+    if (guestAction === 'BOOST' && hostHasShield) {
+      console.log(`[resolveRound] Guest BOOST BLOCKED by Host SHIELD`);
     }
 
     // Apply DOUBLE (x2)
@@ -649,6 +662,9 @@ export const resolveRound = mutation({
     // Determine winner
     const isTie = hostPower === guestPower;
     const hostWins = hostPower > guestPower;
+
+    console.log(`[resolveRound] Final - Host: ${hostPower}, Guest: ${guestPower}`);
+    console.log(`[resolveRound] Result - Tie: ${isTie}, HostWins: ${hostWins}, GuestWins: ${!hostWins && !isTie}`);
 
     // Update round history
     const roundHistory = room.roundHistory || [];
