@@ -707,6 +707,7 @@ export const resolveRound = mutation({
         winnerId: finalWinnerId,
         winnerUsername: finalWinnerUsername,
         finalPot: finalPrize,
+        status: "finished", // Mark room as finished to prevent further interactions
       });
 
       return { success: true, gameOver: true };
