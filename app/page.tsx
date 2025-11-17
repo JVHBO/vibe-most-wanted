@@ -4404,8 +4404,8 @@ export default function TCGPage() {
                     </div>
                   )}
 
-                  {/* Coins Inbox - Only show in header on website (not in miniapp) */}
-                  {userProfile && !isInFarcaster && <CoinsInboxDisplay />}
+                  {/* Coins Inbox removed from header - use navigation tab "Claim" button instead */}
+                  {/* {userProfile && !isInFarcaster && <CoinsInboxDisplay />} */}
                 </div>
               </div>
             </div>
