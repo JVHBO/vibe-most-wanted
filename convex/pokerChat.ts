@@ -10,6 +10,7 @@ export const sendMessage = mutation({
     message: v.string(),
     type: v.optional(v.union(v.literal("text"), v.literal("sound"))), // Message type
     soundUrl: v.optional(v.string()), // URL of the sound file (for sound messages)
+    emoji: v.optional(v.string()), // Emoji for floating animation (for sound messages)
   },
   handler: async (ctx, args) => {
     // Validate message length
@@ -29,6 +30,7 @@ export const sendMessage = mutation({
       timestamp: Date.now(),
       type: args.type,
       soundUrl: args.soundUrl,
+      emoji: args.emoji,
     });
 
     return { success: true };
