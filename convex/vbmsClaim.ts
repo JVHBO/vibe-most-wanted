@@ -743,7 +743,7 @@ export const sendPveRewardToInbox = mutation({
   handler: async (ctx, { address, amount, difficulty }) => {
     const profile = await getProfile(ctx, address);
 
-    const currentInbox = profile.inbox || 0;
+    const currentInbox = profile.coinsInbox || 0;
     const newInbox = currentInbox + amount;
 
     // Check if paying off debt
@@ -752,11 +752,12 @@ export const sendPveRewardToInbox = mutation({
     const netGain = amount - debtPaid;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
+      lastUpdated: Date.now(),
     });
 
-    console.log(`📬 ${address} sent ${amount} VBMS to inbox from PvE victory (difficulty: ${difficulty || 'N/A'}). Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`📬 ${address} sent ${amount} TESTVBMS to coinsInbox from PvE victory (difficulty: ${difficulty || 'N/A'}). CoinsInbox: ${currentInbox} → ${newInbox}`);
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
@@ -768,11 +769,11 @@ export const sendPveRewardToInbox = mutation({
       timestamp: Date.now(),
     });
 
-    let message = `📬 ${amount} VBMS sent to inbox from PvE victory!`;
+    let message = `📬 ${amount} TESTVBMS sent to inbox from PvE victory!`;
     if (hadDebt && newInbox < 0) {
-      message = `📬 ${amount} VBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
+      message = `📬 ${amount} TESTVBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
     } else if (hadDebt && newInbox >= 0) {
-      message = `📬 ${amount} VBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
+      message = `📬 ${amount} TESTVBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
     }
 
     return {

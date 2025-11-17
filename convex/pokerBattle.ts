@@ -767,7 +767,7 @@ export const resolveRound = mutation({
   },
 });
 
-// Finish a game
+// Finish a game and DELETE the room to prevent re-joining
 export const finishGame = mutation({
   args: {
     roomId: v.string(),
@@ -785,6 +785,7 @@ export const finishGame = mutation({
       throw new Error("Room not found");
     }
 
+    // Mark as finished first (for analytics)
     await ctx.db.patch(room._id, {
       status: "finished",
       winnerId: args.winnerId.toLowerCase(),
@@ -792,6 +793,11 @@ export const finishGame = mutation({
       finalPot: args.finalPot,
       finishedAt: Date.now(),
     });
+
+    // Then DELETE the room immediately to prevent re-joining
+    await ctx.db.delete(room._id);
+
+    console.log(`🗑️ Room ${args.roomId} finished and deleted. Winner: ${args.winnerUsername}`);
 
     return { success: true };
   },
