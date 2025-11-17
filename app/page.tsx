@@ -762,12 +762,13 @@ export default function TCGPage() {
   useEffect(() => {
     const checkFarcasterContext = () => {
       try {
-        // Check if we're running in Farcaster miniapp environment
-        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
-          setIsInFarcaster(true);
+        // Use the robust isMiniappMode() helper
+        const inMiniapp = isMiniappMode();
+        setIsInFarcaster(inMiniapp);
+
+        if (inMiniapp) {
           devLog('✓ Running in Farcaster miniapp context');
         } else {
-          setIsInFarcaster(false);
           devLog('ℹ Not in Farcaster miniapp context');
         }
       } catch (err) {
