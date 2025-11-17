@@ -91,18 +91,18 @@ export const processRewardChoice = mutation({
     });
 
     if (choice === "claim_now") {
-      // CLAIM NOW: Convert TESTVBMS to VBMS blockchain
+      // CLAIM NOW: Convert VBMS to VBMS blockchain
       const currentCoins = profile.coins || 0;
 
       console.log('[processRewardChoice] Checking balance:', { currentCoins, amount });
 
       if (currentCoins < amount) {
-        const error = `Saldo insuficiente. Você tem ${currentCoins} TESTVBMS, precisa de ${amount}`;
+        const error = `Saldo insuficiente. Você tem ${currentCoins} VBMS, precisa de ${amount}`;
         console.error('[processRewardChoice]', error);
         throw new Error(error);
       }
 
-      // Deduct TESTVBMS
+      // Deduct VBMS
       const newCoinsBalance = currentCoins - amount;
 
       console.log('[processRewardChoice] Generating signature...');
@@ -119,7 +119,7 @@ export const processRewardChoice = mutation({
         throw new Error(`Failed to generate signature: ${signError.message}`);
       }
 
-      // Update profile - remove TESTVBMS
+      // Update profile - remove VBMS
       await ctx.db.patch(profile._id, {
         coins: newCoinsBalance,
         lastUpdated: Date.now(),
@@ -142,16 +142,16 @@ export const processRewardChoice = mutation({
         nonce: nonce,
         signature: signature,
         newCoinsBalance: newCoinsBalance,
-        message: `💳 ${amount} TESTVBMS convertidos para VBMS! Assine a transação.`,
+        message: `💳 ${amount} VBMS convertidos para VBMS! Assine a transação.`,
       };
     } else {
-      // CLAIM LATER: Keep in TESTVBMS (do nothing, just close modal)
+      // CLAIM LATER: Keep in VBMS (do nothing, just close modal)
       return {
         success: true,
         choice: "claim_later",
         amount: amount,
         coinsBalance: profile.coins || 0,
-        message: `📥 ${amount} TESTVBMS guardados! Converta depois quando quiser.`,
+        message: `📥 ${amount} VBMS guardados! Converta depois quando quiser.`,
       };
     }
   },

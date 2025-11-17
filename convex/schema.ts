@@ -78,7 +78,7 @@ export default defineSchema({
     rematchesToday: v.number(),
     lastAttackDate: v.optional(v.string()), // ISO date string YYYY-MM-DD
 
-    // Economy System ($TESTVBMS)
+    // Economy System ($VBMS)
     coins: v.optional(v.number()), // Current balance (for spending in-app)
     coinsInbox: v.optional(v.number()), // Unclaimed coins (inbox/correio) - claim later option
     lifetimeEarned: v.optional(v.number()), // Total ever earned
@@ -173,7 +173,7 @@ export default defineSchema({
     opponentCards: v.array(v.any()),
 
     // Economy
-    coinsEarned: v.optional(v.number()), // $TESTVBMS earned from this match
+    coinsEarned: v.optional(v.number()), // $VBMS earned from this match
     entryFeePaid: v.optional(v.number()), // Entry fee paid (50 for attack, 80 for pvp)
 
     // VBMS Rewards Tracking
@@ -329,7 +329,7 @@ export default defineSchema({
       difficulty: v.optional(v.string()), // Specific difficulty required
       maxPower: v.optional(v.number()), // Max power restriction
     }),
-    reward: v.number(), // $TESTVBMS reward
+    reward: v.number(), // $VBMS reward
     difficulty: v.string(), // "easy", "medium", "hard" (quest difficulty, not AI)
     createdAt: v.number(),
   })
@@ -422,7 +422,7 @@ export default defineSchema({
       v.literal("inbox_collect"), // Collected from inbox
       v.literal("immediate"), // Claimed immediately after battle
       v.literal("manual"), // Manual claim
-      v.literal("testvbms_conversion") // TESTVBMS to VBMS conversion
+      v.literal("testvbms_conversion") // VBMS to VBMS conversion
     ),
   })
     .index("by_player", ["playerAddress", "timestamp"])
@@ -455,7 +455,7 @@ export default defineSchema({
     // Stakes & Token
     ante: v.number(), // Ante amount (2, 10, 50, 200) - paid once at start
     token: v.union(
-      v.literal("TESTVBMS"),
+      v.literal("VBMS"),
       v.literal("VBMS"),
       v.literal("testUSDC"),
       v.literal("VIBE_NFT")
@@ -551,7 +551,7 @@ export default defineSchema({
     betOnUsername: v.string(), // Username of player being bet on
     amount: v.number(), // Bet amount in tokens
     token: v.union(
-      v.literal("TESTVBMS"),
+      v.literal("VBMS"),
       v.literal("VBMS"),
       v.literal("testUSDC"),
       v.literal("VIBE_NFT")

@@ -92,7 +92,7 @@ export const recordMatch = mutation({
     opponentCards: v.array(v.any()),
     opponentAddress: v.optional(v.string()),
     opponentUsername: v.optional(v.string()),
-    coinsEarned: v.optional(v.number()), // $TESTVBMS earned from this match
+    coinsEarned: v.optional(v.number()), // $VBMS earned from this match
     entryFeePaid: v.optional(v.number()), // Entry fee paid
     difficulty: v.optional(v.union(
       v.literal("gey"),
