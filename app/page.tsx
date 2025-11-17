@@ -960,7 +960,7 @@ export default function TCGPage() {
 
       if (result.reason?.includes('Mission created')) {
         devLog('✓ Daily mission created - TESTVBMS added');
-        // TESTVBMS already added - no modal
+        // TESTVBMS sent to inbox - player can claim later
         setLoginBonusClaimed(true);
       } else {
         devLog(`! ${result.reason}`);
@@ -1851,13 +1851,13 @@ export default function TCGPage() {
 
               if (userProfile && address) {
                 try {
-                  // Calculate PvE Elimination reward (coins NOT added yet - player will choose)
+                  // Calculate and send PvE Elimination reward to inbox
                   const reward = await awardPvECoins({
                     address,
                     difficulty: eliminationDifficulty,
                     language: lang,
                     won: finalResult === 'win',
-                    skipCoins: true // Only calculate, don't add coins yet
+                    skipCoins: false // Send to inbox
                   });
                   coinsEarned = reward?.awarded || 0;
                   if (coinsEarned > 0) {
@@ -1899,7 +1899,7 @@ export default function TCGPage() {
                 opponentPfpUrl: undefined, // PvE opponent has no PFP
               });
 
-              // TESTVBMS already added - no modal needed
+              // TESTVBMS sent to inbox - player can claim later needed
               console.log('[DEBUG PvE Elimination] coinsEarned:', coinsEarned, 'finalResult:', finalResult);
 
               // Close battle first
@@ -1996,14 +1996,14 @@ export default function TCGPage() {
 
         if (userProfile && address) {
           try {
-            // Calculate PvE reward (coins NOT added yet - player will choose)
+            // Calculate and send PvE reward to inbox
             devLog(`🎯 PvE Difficulty: ${aiDifficulty}`); // Debug log
             const reward = await awardPvECoins({
               address,
               difficulty: aiDifficulty,
               language: lang,
               won: matchResult === 'win',
-              skipCoins: true // Only calculate, don't add coins yet
+              skipCoins: false // Send to inbox
             });
             coinsEarned = reward?.awarded || 0;
             if (coinsEarned > 0) {
@@ -2046,7 +2046,7 @@ export default function TCGPage() {
           opponentPfpUrl: undefined, // PvE opponent has no PFP
         });
 
-        // TESTVBMS already added - no modal
+        // TESTVBMS sent to inbox - player can claim later
 
         // Fecha a tela de batalha PRIMEIRO
         setTimeout(() => {
@@ -2468,7 +2468,7 @@ export default function TCGPage() {
                     opponentPfpUrl: opponentPfpUrl,
                   });
 
-                  // TESTVBMS already added - no modal
+                  // TESTVBMS sent to inbox - player can claim later
 
                   // Mostra popup DEPOIS de fechar batalha
                   setTimeout(() => {

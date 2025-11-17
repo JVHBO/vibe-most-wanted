@@ -598,10 +598,12 @@ export const awardPvECoins = mutation({
       totalReward = remaining;
     }
 
-    // Award coins (or just return amount if skipCoins)
+    // Award coins to inbox (or just return amount if skipCoins)
     if (!skipCoins) {
+      // Send TESTVBMS to inbox instead of adding directly to balance
+      const currentInbox = profile.inbox || 0;
       await ctx.db.patch(profile!._id, {
-        coins: (profile.coins || 0) + totalReward,
+        inbox: currentInbox + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         dailyLimits: {
           ...dailyLimits,
@@ -609,6 +611,7 @@ export const awardPvECoins = mutation({
         },
         // lastPvEAward already updated immediately after rate limit check (line 491)
       });
+      console.log(`💰 PvE reward sent to inbox: ${totalReward} TESTVBMS for ${address}`);
     }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
