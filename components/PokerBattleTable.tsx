@@ -116,13 +116,28 @@ export function PokerBattleTable({
   const [chatInput, setChatInput] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [floatingMessages, setFloatingMessages] = useState<Array<{id: number, sender: string, message: string, isOwnMessage: boolean}>>([]);
+  const [floatingEmojis, setFloatingEmojis] = useState<Array<{id: number, emoji: string, x: number, y: number}>>([]);
 
   // Meme sound sync function
-  const playMemeSound = async (soundUrl: string, soundName: string) => {
+  const playMemeSound = async (soundUrl: string, soundName: string, emoji: string) => {
     // Play locally
     const audio = new Audio(soundUrl);
     audio.volume = 0.7;
     audio.play().catch(() => {});
+
+    // Show floating emoji animation
+    const newEmoji = {
+      id: Date.now(),
+      emoji,
+      x: Math.random() * 80 + 10, // Random x position (10-90%)
+      y: Math.random() * 60 + 20, // Random y position (20-80%)
+    };
+    setFloatingEmojis(prev => [...prev, newEmoji]);
+
+    // Remove emoji after 3 seconds
+    setTimeout(() => {
+      setFloatingEmojis(prev => prev.filter(e => e.id !== newEmoji.id));
+    }, 3000);
 
     // Broadcast to other players via Convex (only in PvP mode)
     if (!isCPUMode && roomId) {
@@ -134,6 +149,7 @@ export function PokerBattleTable({
           message: soundName,
           type: "sound",
           soundUrl: soundUrl,
+          emoji: emoji,
         });
       } catch (error) {
         console.error('[PokerBattle] Failed to broadcast sound:', error);
@@ -154,6 +170,21 @@ export function PokerBattleTable({
       const audio = new Audio(lastMessage.soundUrl);
       audio.volume = 0.7;
       audio.play().catch(() => {});
+
+      // Show floating emoji for synced sounds
+      if (lastMessage.emoji) {
+        const newEmoji = {
+          id: Date.now(),
+          emoji: lastMessage.emoji,
+          x: Math.random() * 80 + 10,
+          y: Math.random() * 60 + 20,
+        };
+        setFloatingEmojis(prev => [...prev, newEmoji]);
+
+        setTimeout(() => {
+          setFloatingEmojis(prev => prev.filter(e => e.id !== newEmoji.id));
+        }, 3000);
+      }
     }
 
     // Add to floating messages (only for text messages)
@@ -2182,38 +2213,52 @@ export function PokerBattleTable({
             </div>
 
             {/* Meme Sound Panel - Floating on left side */}
-            <div className="absolute left-2 sm:left-4 top-2 sm:top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[140px] sm:max-w-none">
+            <div className="absolute left-2 sm:left-4 top-2 sm:top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
                 <div className="text-vintage-gold font-display font-bold text-[10px] mb-1.5 text-center border-b border-vintage-gold/30 pb-1">
                   🔊 MEME SOUNDS
                 </div>
-                <div className="grid grid-cols-2 gap-1">
+                <div className="grid grid-cols-3 gap-1">
                   <button
-                    onClick={() => playMemeSound('/let-him-cook-now.mp3', 'LET HIM COOK 👨‍🍳')}
+                    onClick={() => playMemeSound('/let-him-cook-now.mp3', 'LET HIM COOK 👨‍🍳', '👨‍🍳')}
                     className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 hover:from-orange-500/40 hover:to-orange-600/40 border border-orange-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
                     <div className="font-bold text-orange-400 text-[11px]">👨‍🍳</div>
-                    <div className="text-orange-300 text-[7px] leading-tight">LET HIM COOK</div>
+                    <div className="text-orange-300 text-[7px] leading-tight">COOK</div>
                   </button>
                   <button
-                    onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA~ 😺')}
+                    onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA~ 😺', '😺')}
                     className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 hover:from-pink-500/40 hover:to-pink-600/40 border border-pink-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
                     <div className="font-bold text-pink-400 text-[11px]">😺</div>
                     <div className="text-pink-300 text-[7px] leading-tight">NYA~</div>
                   </button>
                   <button
-                    onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QUANDALE 🤪')}
+                    onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QUANDALE 🤪', '🤪')}
                     className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 hover:from-purple-500/40 hover:to-purple-600/40 border border-purple-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
                     <div className="font-bold text-purple-400 text-[11px]">🤪</div>
-                    <div className="text-purple-300 text-[7px] leading-tight">QUANDALE</div>
+                    <div className="text-purple-300 text-[7px] leading-tight">QUAN</div>
                   </button>
                   <button
-                    onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NOT POKER 🃏')}
+                    onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NOT POKER 🃏', '🃏')}
                     className="bg-gradient-to-br from-red-500/20 to-red-600/20 hover:from-red-500/40 hover:to-red-600/40 border border-red-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
                     <div className="font-bold text-red-400 text-[11px]">🃏</div>
-                    <div className="text-red-300 text-[7px] leading-tight">NOT POKER</div>
+                    <div className="text-red-300 text-[7px] leading-tight">POKER</div>
+                  </button>
+                  <button
+                    onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'RECEBA! 🧤', '🧤')}
+                    className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 hover:from-yellow-500/40 hover:to-yellow-600/40 border border-yellow-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                  >
+                    <div className="font-bold text-yellow-400 text-[11px]">🧤</div>
+                    <div className="text-yellow-300 text-[7px] leading-tight">RECEBA</div>
+                  </button>
+                  <button
+                    onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FART 💨', '💨')}
+                    className="bg-gradient-to-br from-green-500/20 to-green-600/20 hover:from-green-500/40 hover:to-green-600/40 border border-green-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                  >
+                    <div className="font-bold text-green-400 text-[11px]">💨</div>
+                    <div className="text-green-300 text-[7px] leading-tight">FART</div>
                   </button>
                 </div>
                 {/* Voice Chat - Only in PvP mode */}
@@ -2813,6 +2858,26 @@ export function PokerBattleTable({
                   <div className="text-xs font-bold mb-1 opacity-70">{msg.sender}</div>
                   <div className="text-sm">{msg.message}</div>
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Floating Emojis - Like a live stream */}
+        {currentView === 'game' && floatingEmojis.length > 0 && (
+          <div className="fixed inset-0 z-[235] pointer-events-none">
+            {floatingEmojis.map((emoji) => (
+              <div
+                key={emoji.id}
+                className="absolute animate-[float-up_3s_ease-out_forwards]"
+                style={{
+                  left: `${emoji.x}%`,
+                  top: `${emoji.y}%`,
+                  fontSize: '4rem',
+                  textShadow: '0 0 10px rgba(0,0,0,0.5)',
+                }}
+              >
+                {emoji.emoji}
               </div>
             ))}
           </div>

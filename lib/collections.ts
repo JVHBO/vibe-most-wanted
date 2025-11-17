@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'tkkv' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -113,20 +113,6 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/american-football?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY AFCL PACKS',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-    // ColeÃ§Ã£o Tukka Vibes
-  tkkv: {
-    id: 'tkkv',
-    name: 'tkkv',
-    displayName: 'Tukka Vibes',
-    description: 'ColeÃ§Ã£o Tukka Vibes NFT',
-    contractAddress: '0x60838b9f2558aeff25e353e59ecce915d0553aaa',
-    chain: 'base-mainnet',
-    enabled: true,
-    marketplaceUrl: 'https://vibechain.com/market/tukka-vibes?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY TUKKA VIBES PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
