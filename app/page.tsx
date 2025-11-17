@@ -771,7 +771,7 @@ export default function TCGPage() {
 
           // Also try to verify SDK is available
           try {
-            if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
+            if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.getEthereumProvider()) {
               devLog('✓ Farcaster SDK wallet provider confirmed');
             }
           } catch (sdkErr) {
@@ -792,12 +792,19 @@ export default function TCGPage() {
 
   // Auto-connect Farcaster wallet in miniapp context
   useEffect(() => {
+    // Only run if we've detected we're in Farcaster miniapp
+    if (!isInFarcaster) {
+      return;
+    }
+
     const initFarcasterWallet = async () => {
       try {
         // Check if we're in Farcaster context
-        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
+        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.getEthereumProvider()) {
           setIsCheckingFarcaster(true); // Show loading only when Farcaster detected
-          const addresses = await sdk.wallet.ethProvider.request({
+          devLog('🔗 Attempting Farcaster auto-connect...');
+
+          const addresses = await sdk.wallet.getEthereumProvider().request({
             method: "eth_requestAccounts"
           });
           if (addresses && addresses[0]) {
@@ -858,9 +865,9 @@ export default function TCGPage() {
       }
     };
 
-    // Only run once on mount, not when connect/connectors/isConnected change
+    // Run when isInFarcaster changes to true
     initFarcasterWallet();
-  }, []); // Run ONLY once on mount
+  }, [isInFarcaster, connectors, isConnected, connect]); // Run when Farcaster context is detected
 
   // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
