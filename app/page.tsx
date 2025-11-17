@@ -762,14 +762,18 @@ export default function TCGPage() {
   useEffect(() => {
     const checkFarcasterContext = () => {
       try {
-        // Use the robust isMiniappMode() helper
-        const inMiniapp = isMiniappMode();
+        // Combine both checks: iframe detection AND Farcaster SDK presence
+        // This prevents false positives (website) and false negatives (miniapp)
+        const isInIframe = isMiniappMode(); // window.parent !== window
+        const hasFarcasterSDK = sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider;
+
+        const inMiniapp = isInIframe && hasFarcasterSDK;
         setIsInFarcaster(inMiniapp);
 
         if (inMiniapp) {
-          devLog('✓ Running in Farcaster miniapp context');
+          devLog('✓ Running in Farcaster miniapp context (iframe + SDK detected)');
         } else {
-          devLog('ℹ Not in Farcaster miniapp context');
+          devLog('ℹ Not in Farcaster miniapp context', { isInIframe, hasFarcasterSDK });
         }
       } catch (err) {
         setIsInFarcaster(false);
