@@ -120,24 +120,8 @@ export function PokerBattleTable({
 
   // Meme sound sync function
   const playMemeSound = async (soundUrl: string, soundName: string, emoji: string) => {
-    // Play locally
-    const audio = new Audio(soundUrl);
-    audio.volume = 0.7;
-    audio.play().catch(() => {});
-
-    // Show floating emoji animation
-    const newEmoji = {
-      id: Date.now(),
-      emoji,
-      x: Math.random() * 80 + 10, // Random x position (10-90%)
-      y: Math.random() * 60 + 20, // Random y position (20-80%)
-    };
-    setFloatingEmojis(prev => [...prev, newEmoji]);
-
-    // Remove emoji after 3 seconds
-    setTimeout(() => {
-      setFloatingEmojis(prev => prev.filter(e => e.id !== newEmoji.id));
-    }, 3000);
+    // DON'T play locally or show emoji here - let the useEffect handle it for both players
+    // Just broadcast to Convex so the useEffect picks it up for everyone
 
     // Broadcast to other players via Convex (only in PvP mode)
     if (!isCPUMode && roomId) {
@@ -151,6 +135,7 @@ export function PokerBattleTable({
           soundUrl: soundUrl,
           emoji: emoji,
         });
+        console.log('[PokerBattle] Sound meme broadcasted:', soundName, soundUrl);
       } catch (error) {
         console.error('[PokerBattle] Failed to broadcast sound:', error);
       }
@@ -164,14 +149,16 @@ export function PokerBattleTable({
     const lastMessage = messages[messages.length - 1];
     const isOwnMessage = lastMessage.sender.toLowerCase() === playerAddress.toLowerCase();
 
-    // If it's a sound message, play it for other players (not the sender)
-    if (lastMessage.type === 'sound' && !isOwnMessage && lastMessage.soundUrl) {
-      console.log('[PokerBattle] Playing synced meme sound:', lastMessage.message);
+    // If it's a sound message, play it for EVERYONE (both sender and receiver)
+    if (lastMessage.type === 'sound' && lastMessage.soundUrl) {
+      console.log('[PokerBattle] Playing synced meme sound:', lastMessage.message, lastMessage.soundUrl);
       const audio = new Audio(lastMessage.soundUrl);
       audio.volume = 0.7;
-      audio.play().catch(() => {});
+      audio.play().catch((err) => {
+        console.error('[PokerBattle] Failed to play audio:', err);
+      });
 
-      // Show floating emoji for synced sounds
+      // Show floating emoji for EVERYONE (both sender and receiver)
       if (lastMessage.emoji) {
         const newEmoji = {
           id: Date.now(),
