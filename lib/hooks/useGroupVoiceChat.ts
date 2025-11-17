@@ -60,6 +60,20 @@ export function useGroupVoiceChat(
   // Initialize local audio stream
   const initLocalAudio = useCallback(async () => {
     try {
+      // Check if running in Farcaster miniapp (no microphone access)
+      const isMiniapp = typeof window !== 'undefined' &&
+        (window.location.pathname.includes('/miniapp') ||
+         window.parent !== window); // Detect iframe
+
+      if (isMiniapp) {
+        devLog('[GroupVoice] Miniapp detected - voice chat not available');
+        setState(prev => ({
+          ...prev,
+          error: 'Voice chat not available in miniapp'
+        }));
+        return null;
+      }
+
       devLog('[GroupVoice] Requesting microphone access...');
 
       const stream = await navigator.mediaDevices.getUserMedia({
