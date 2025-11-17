@@ -42,7 +42,7 @@ export default function TestPage() {
 
   // Mock inbox data (now dynamic)
   const mockInboxData = {
-    inbox: inboxAmount,
+    coinsInbox: inboxAmount,
     coins: currentBalance,
     lifetimeEarned: lifetimeEarned,
   };
