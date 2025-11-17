@@ -116,19 +116,6 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-  // Coleção VIBESTALGIA
-  vbst: {
-    id: 'vbst',
-    name: 'vbst',
-    displayName: 'VIBESTALGIA',
-    description: 'Coleção VIBESTALGIA NFT',
-    contractAddress: '0x0a086b3ee29aacb66a8e869a1cb0ddfa09d552c2',
-    chain: 'base-mainnet',
-    enabled: true,
-    marketplaceUrl: 'https://vibechain.com/market/vibestalgia?ref=XCLR1DJ6LQTT',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
   // Template para nova coleção customizada
   custom: {
     id: 'custom',
