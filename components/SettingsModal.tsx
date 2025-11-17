@@ -455,6 +455,80 @@ export function SettingsModal({
             </div>
           )}
 
+          {/* Cleanup Stuck Rooms (Admin) */}
+          {walletAddress && (
+            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl sm:text-3xl text-vintage-gold">🔧</span>
+                <div>
+                  <p className="font-modern font-bold text-vintage-gold">ROOM CLEANUP</p>
+                  <p className="text-xs text-vintage-burnt-gold">
+                    Clear stuck poker battle rooms
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {/* Cleanup Old Rooms */}
+                <button
+                  onClick={async () => {
+                    setIsCleaningRooms(true);
+                    try {
+                      const result = await cleanupOldRooms();
+                      if (soundEnabled) AudioManager.buttonSuccess();
+                      alert(`Cleaned up ${result.deletedCount} old/expired room(s)`);
+                    } catch (error: any) {
+                      console.error('Error cleaning rooms:', error);
+                      if (soundEnabled) AudioManager.buttonError();
+                      alert('Failed to cleanup rooms: ' + (error.message || 'Unknown error'));
+                    } finally {
+                      setIsCleaningRooms(false);
+                    }
+                  }}
+                  disabled={isCleaningRooms}
+                  className="w-full px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark disabled:bg-vintage-black/50 text-vintage-black rounded-lg text-sm font-modern font-semibold transition"
+                >
+                  {isCleaningRooms ? 'Cleaning...' : 'Cleanup All Old Rooms'}
+                </button>
+
+                {/* Cleanup by Address */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={cleanupAddress}
+                    onChange={(e) => setCleanupAddress(e.target.value)}
+                    placeholder="0x... or leave empty for your address"
+                    className="flex-1 bg-vintage-black text-vintage-gold px-3 py-2 rounded-lg border border-vintage-gold/50 focus:border-vintage-gold focus:outline-none font-modern text-xs"
+                  />
+                  <button
+                    onClick={async () => {
+                      const targetAddress = cleanupAddress || walletAddress;
+                      if (!targetAddress) return;
+
+                      setIsCleaningRooms(true);
+                      try {
+                        const result = await forceDeleteRoomByAddress({ address: targetAddress });
+                        if (soundEnabled) AudioManager.buttonSuccess();
+                        alert(result.message);
+                        setCleanupAddress('');
+                      } catch (error: any) {
+                        console.error('Error deleting room:', error);
+                        if (soundEnabled) AudioManager.buttonError();
+                        alert('Failed to delete room: ' + (error.message || 'Unknown error'));
+                      } finally {
+                        setIsCleaningRooms(false);
+                      }
+                    }}
+                    disabled={isCleaningRooms}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-900/50 text-white rounded-lg text-sm font-modern font-semibold transition whitespace-nowrap"
+                  >
+                    {isCleaningRooms ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* VBMS Revoke Approval */}
           {walletAddress && (
             <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-red-500/50">
