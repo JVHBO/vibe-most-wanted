@@ -943,11 +943,11 @@ export const claimWeeklyLeaderboardReward = mutation({
     }
 
     // Add coins to inbox (not balance)
-    const currentInbox = player.inbox || 0;
+    const currentInbox = player.coinsInbox || 0;
     const newInbox = currentInbox + reward;
     const newLifetimeEarned = (player.lifetimeEarned || 0) + reward;
 
-    console.log('[claimWeeklyLeaderboardReward] Adding to inbox:', {
+    console.log('[claimWeeklyLeaderboardReward] Adding to coinsInbox:', {
       address: normalizedAddress,
       currentInbox,
       reward,

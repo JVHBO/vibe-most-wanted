@@ -260,17 +260,20 @@ export const claimMission = mutation({
       // 🇨🇳 Apply language boost to mission reward
       boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
 
-      // Award coins (or just calculate if skipCoins)
+      // Award coins to inbox (or just calculate if skipCoins)
       if (!skipCoins) {
-        newBalance = (profile.coins || 0) + boostedReward;
+        const currentInbox = profile.coinsInbox || 0;
+        newBalance = currentInbox + boostedReward;
         const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
         await ctx.db.patch(profile._id, {
-          coins: newBalance,
+          coinsInbox: newBalance,
           lifetimeEarned: newLifetimeEarned,
         });
+
+        console.log(`📬 Mission reward sent to inbox: ${boostedReward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newBalance}`);
       } else {
-        newBalance = profile.coins || 0;
+        newBalance = profile.coinsInbox || 0;
       }
     } else if (rewardInfo.type === "pack") {
       // Award pack(s)
