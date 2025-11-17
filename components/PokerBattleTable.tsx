@@ -1500,7 +1500,7 @@ export function PokerBattleTable({
         console.error('[PokerBattle] Failed to record match:', error);
       });
 
-      // Mark room as finished (only for PvP mode)
+      // Mark room as finished (PvP mode only - CPU doesn't have rooms)
       if (!isCPUMode && roomId && room && !roomFinished) {
         const winnerId = playerScore > opponentScore
           ? (isHost ? room.hostAddress : room.guestAddress)
