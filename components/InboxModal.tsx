@@ -372,6 +372,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
                 </p>
               </div>
             )}
+          </div>
         </div>
 
         {/* Decorative bottom border */}
