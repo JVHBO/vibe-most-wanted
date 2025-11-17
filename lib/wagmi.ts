@@ -1,21 +1,21 @@
 'use client';
 
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { createConfig, http } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
+import { injected, walletConnect } from 'wagmi/connectors';
 
-const defaultConfig = getDefaultConfig({
-  appName: 'VIBE MOST WANTED',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
+export const config = createConfig({
   chains: [base],
-  ssr: true,
-});
-
-// Add Farcaster connector to the default connectors (keeps MetaMask, Rabby, etc)
-export const config = {
-  ...defaultConfig,
   connectors: [
     farcasterMiniApp(),
-    ...defaultConfig.connectors,
+    injected(),
+    walletConnect({
+      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID'
+    }),
   ],
-};
+  transports: {
+    [base.id]: http(),
+  },
+  ssr: true,
+});
