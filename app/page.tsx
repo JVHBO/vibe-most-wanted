@@ -15,6 +15,7 @@ import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "sonner";
+import { isMiniappMode } from "@/lib/utils/miniapp";
 
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
@@ -341,6 +342,7 @@ const MatchHistorySection = memo(({ address }: { address: string }) => {
                     width={48}
                     height={48}
                     className="text-vintage-gold"
+                    loading="lazy"
                   />
                   <div>
                     <p className={`font-display font-bold text-lg ${resultColor} flex items-center gap-2`}>
@@ -535,15 +537,21 @@ export default function TCGPage() {
   const { finishBattle: finishVBMSBattle } = useFinishVBMSBattle();
   const { battleId: activeBattleId, refetch: refetchActiveBattle } = useActiveBattle(address as `0x${string}`);
 
-  // 🎁 Welcome Pack
-  const hasReceivedWelcomePack = useQuery(api.welcomePack.hasReceivedWelcomePack, address ? { address } : "skip");
+  // 🎁 Welcome Pack (skip in miniapp for performance)
+  const hasReceivedWelcomePack = useQuery(
+    api.welcomePack.hasReceivedWelcomePack,
+    (address && !isMiniappMode()) ? { address } : "skip"
+  );
   const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
 
   // 🎯 Weekly Quests mutations
   const claimWeeklyReward = useMutation(api.quests.claimWeeklyReward);
 
-  // 🏅 Weekly Leaderboard Rewards
-  const weeklyRewardEligibility = useQuery(api.quests.checkWeeklyRewardEligibility, address ? { address } : "skip");
+  // 🏅 Weekly Leaderboard Rewards (skip in miniapp for performance)
+  const weeklyRewardEligibility = useQuery(
+    api.quests.checkWeeklyRewardEligibility,
+    (address && !isMiniappMode()) ? { address } : "skip"
+  );
   const claimWeeklyLeaderboardReward = useMutation(api.quests.claimWeeklyLeaderboardReward);
   const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState<boolean>(false);
 
