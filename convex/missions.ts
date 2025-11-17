@@ -375,12 +375,12 @@ export const claimAllMissions = mutation({
     }, 0);
 
     // Award to inbox (not balance)
-    const currentInbox = profile.inbox || 0;
+    const currentInbox = profile.coinsInbox || 0;
     const newInbox = currentInbox + totalReward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + totalReward;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned: newLifetimeEarned,
     });
 

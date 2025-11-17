@@ -422,12 +422,12 @@ export const claimQuestReward = mutation({
     }
 
     // Add to inbox (TESTVBMS) - player can convert later if they want
-    const currentInbox = profile.inbox || 0;
+    const currentInbox = profile.coinsInbox || 0;
     const newInbox = currentInbox + quest.reward;
     const lifetimeEarned = (profile.lifetimeEarned || 0) + quest.reward;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned,
       lastUpdated: Date.now(),
     });
@@ -711,12 +711,12 @@ export const claimWeeklyReward = mutation({
     }
 
     const reward = questDef.reward;
-    const currentInbox = profile.inbox || 0;
+    const currentInbox = profile.coinsInbox || 0;
     const newInbox = currentInbox + reward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + reward;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned: newLifetimeEarned,
       lastUpdated: Date.now(),
     });
@@ -783,7 +783,7 @@ export const distributeWeeklyRewards = internalMutation({
       if (reward > 0) {
         const currentInbox = player.inbox || 0;
         await ctx.db.patch(player._id, {
-          inbox: currentInbox + reward,
+          coinsInbox: currentInbox + reward,
           lifetimeEarned: (player.lifetimeEarned || 0) + reward,
         });
 
@@ -955,7 +955,7 @@ export const claimWeeklyLeaderboardReward = mutation({
     });
 
     await ctx.db.patch(player._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned: newLifetimeEarned,
       lastUpdated: Date.now(),
     });
