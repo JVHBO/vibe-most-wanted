@@ -1064,12 +1064,14 @@ export const resolveBets = mutation({
           .first();
 
         if (profile) {
-          // Pay out winnings
+          // Pay out winnings to inbox
+          const currentInbox = profile.inbox || 0;
           await ctx.db.patch(profile._id, {
-            coins: (profile.coins || 0) + payout,
+            inbox: currentInbox + payout,
             lifetimeEarned: (profile.lifetimeEarned || 0) + payout,
           });
 
+          console.log(`📬 Poker bet winnings sent to inbox: ${payout} TESTVBMS for ${bet.bettor}. Inbox: ${currentInbox} → ${currentInbox + payout}`);
           totalPaidOut += payout;
         }
 
