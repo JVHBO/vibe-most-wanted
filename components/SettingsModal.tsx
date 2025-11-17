@@ -14,6 +14,8 @@ import { useAccount } from 'wagmi';
 import { writeContract } from 'wagmi/actions';
 import { config } from '@/lib/wagmi';
 import { CONTRACTS, ERC20_ABI } from '@/lib/contracts';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -66,6 +68,11 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const { address: walletAddress } = useAccount();
   const [isRevoking, setIsRevoking] = useState(false);
+  const [isCleaningRooms, setIsCleaningRooms] = useState(false);
+  const [cleanupAddress, setCleanupAddress] = useState('');
+
+  const cleanupOldRooms = useMutation(api.pokerBattle.cleanupOldRooms);
+  const forceDeleteRoomByAddress = useMutation(api.pokerBattle.forceDeleteRoomByAddress);
 
   if (!isOpen) return null;
 

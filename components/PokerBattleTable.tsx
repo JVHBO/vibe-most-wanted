@@ -1555,6 +1555,8 @@ export function PokerBattleTable({
                   setRoomFinished(true);
                 }).catch((error) => {
                   console.error('[PokerBattle] Failed to delete Convex room:', error);
+                  // Mark as finished anyway so auto-close can proceed
+                  setRoomFinished(true);
                 });
               })
               .catch((error) => {
@@ -1574,6 +1576,8 @@ export function PokerBattleTable({
                   setRoomFinished(true);
                 }).catch((error2) => {
                   console.error('[PokerBattle] Failed to delete Convex room:', error2);
+                  // Mark as finished anyway so auto-close can proceed
+                  setRoomFinished(true);
                 });
               });
           }
@@ -1589,6 +1593,8 @@ export function PokerBattleTable({
             setRoomFinished(true);
           }).catch((error) => {
             console.error('[PokerBattle] Failed to finish room:', error);
+            // Mark as finished anyway so auto-close can proceed
+            setRoomFinished(true);
           });
         }
       }
