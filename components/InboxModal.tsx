@@ -92,7 +92,11 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         result.signature as `0x${string}`
       );
 
-      console.log('[InboxModal] Step 4: Blockchain TX successful:', txHash);
+      console.log('[InboxModal] Step 4: TX sent, waiting for confirmation...', txHash);
+      toast.loading("⏳ Aguardando confirmação da blockchain...", { id: "claim-wait" });
+
+      // Wait for TX confirmation (3 seconds should be enough for Base)
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Record the claim in backend to zero inbox
       console.log('[InboxModal] Step 5: Recording inbox claim to zero balance...');
@@ -103,6 +107,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       });
 
       console.log('[InboxModal] Step 6: Inbox zeroed successfully!');
+      toast.dismiss("claim-wait");
 
       toast.success(
         `✅ ${result.amount.toLocaleString()} VBMS claimed via blockchain!` +
@@ -116,6 +121,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
     } catch (error: any) {
       console.error('[InboxModal] Error claiming VBMS:', error);
+      toast.dismiss("claim-wait");
       toast.error(error.message || "Erro ao coletar VBMS");
       setIsProcessing(false);
     }
@@ -136,26 +142,34 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     setIsProcessing(true);
 
     try {
-      console.log('[InboxModal] Converting TESTVBMS to VBMS...');
+      console.log('[InboxModal] Step 1: Getting signature...');
       const result = await convertTESTVBMS({ address });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
+      console.log('[InboxModal] Step 2: Sending blockchain TX...');
       const txHash = await claimVBMS(
         result.amount.toString(),
         result.nonce as `0x${string}`,
         result.signature as `0x${string}`
       );
 
-      console.log('[InboxModal] Conversion TX successful:', txHash);
+      console.log('[InboxModal] Step 3: TX sent, waiting for confirmation...', txHash);
+      toast.loading("⏳ Aguardando confirmação da blockchain...", { id: "conversion-wait" });
 
-      // Zero TESTVBMS balance
+      // Wait for TX confirmation (3 seconds should be enough for Base)
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      console.log('[InboxModal] Step 4: Zeroing TESTVBMS balance...');
+      // Zero TESTVBMS balance after TX is sent
       await recordTESTVBMSConversion({
         address,
         amount: result.amount,
         txHash: txHash as unknown as string,
       });
 
+      console.log('[InboxModal] Step 5: Conversion complete!');
+      toast.dismiss("conversion-wait");
       toast.success(`✅ ${result.amount.toLocaleString()} TESTVBMS convertidos para VBMS!`);
 
       setTimeout(() => {
@@ -164,6 +178,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
     } catch (error: any) {
       console.error('[InboxModal] Error converting TESTVBMS:', error);
+      toast.dismiss("conversion-wait");
       toast.error(error.message || "Erro ao converter TESTVBMS");
       setIsProcessing(false);
     }
