@@ -12,11 +12,19 @@ import {
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
 // Create a custom Farcaster wallet for RainbowKit
-const farcasterWallet = () => ({
+const farcasterWallet = (): any => ({
   id: 'farcaster',
   name: 'Farcaster',
+  rdns: 'xyz.farcaster',
   iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiM4NTY1QzQiLz48L3N2Zz4=',
   iconBackground: '#8565C4',
+  downloadUrls: {},
+  mobile: {
+    getUri: () => '',
+  },
+  qrCode: {
+    getUri: () => '',
+  },
   createConnector: () => farcasterMiniApp(),
 });
 
