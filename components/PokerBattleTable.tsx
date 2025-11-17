@@ -587,6 +587,12 @@ export function PokerBattleTable({
 
   // Card Selection Phase
   const selectCard = async (card: Card) => {
+    // Block card selection if showing round winner (prevents clicking during animations)
+    if (showRoundWinner) {
+      console.log('[PokerBattle] Card selection blocked - showing round winner');
+      return;
+    }
+
     console.log('[PokerBattle] selectCard called', {
       card: { tokenId: card.tokenId, power: card.power, name: card.name },
       phase,
@@ -2546,8 +2552,8 @@ export function PokerBattleTable({
                     {playerHand.map((card, index) => (
                       <button
                         key={`player-hand-${index}-${card.tokenId}`}
-                        onClick={() => phase === 'card-selection' && selectCard(card)}
-                        disabled={phase !== 'card-selection' || selectedAnte === 0 || isSpectatorMode}
+                        onClick={() => phase === 'card-selection' && !showRoundWinner && selectCard(card)}
+                        disabled={phase !== 'card-selection' || selectedAnte === 0 || isSpectatorMode || showRoundWinner}
                         style={{ animationDelay: `${index * 100}ms` }}
                         className={`${isInFarcaster ? 'w-14' : 'w-16 sm:w-20'} aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
                           playerSelectedCard?.tokenId === card.tokenId
