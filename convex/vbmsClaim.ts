@@ -16,9 +16,10 @@ import { internal } from "./_generated/api";
 // ========== HELPER: Get Profile ==========
 
 async function getProfile(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
   const profile = await ctx.db
     .query("profiles")
-    .withIndex("by_address", (q: any) => q.eq("address", address.toLowerCase()))
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
     .first();
 
   if (!profile) {
