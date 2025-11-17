@@ -1,12 +1,13 @@
 name: Deploy Convex Backend
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'convex/**'
-      - '.github/workflows/convex-deploy.yml'
+  # Disabled temporarily - deploy manually with npx convex deploy
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'convex/**'
+  #     - '.github/workflows/convex-deploy.yml'
   workflow_dispatch:
 
 jobs:
