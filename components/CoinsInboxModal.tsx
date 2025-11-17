@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useClaimVBMS, useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
@@ -46,6 +46,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const prepareInboxClaim = useAction(api.vbmsClaim.prepareInboxClaim);
   const recordInboxClaim = useMutation(api.vbmsClaim.recordInboxClaim);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
+
+  // Get VBMS wallet balance from blockchain
+  const { balance: vbmsWalletBalance } = useVBMSBalance(address as `0x${string}`);
 
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
@@ -236,14 +239,14 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           </h2>
         </div>
 
-        {/* VBMS Inbox Balance */}
+        {/* VBMS Wallet Balance */}
         <div className="bg-gradient-to-br from-vintage-gold/20 to-vintage-orange/10 rounded-xl p-5 mb-4 border-2 border-vintage-gold/50">
           <div className="text-center">
             <div className="text-xs font-bold text-vintage-gold/80 mb-2 uppercase tracking-wide">
-              VBMS
+              VBMS Wallet
             </div>
             <div className="text-5xl font-bold text-vintage-gold mb-2">
-              {vbmsInbox.toLocaleString()}
+              {parseFloat(vbmsWalletBalance || '0').toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
             </div>
           </div>
         </div>
