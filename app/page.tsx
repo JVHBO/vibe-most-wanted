@@ -2910,6 +2910,10 @@ export default function TCGPage() {
 
   // Calculate power for a specific collection (smart approach: use Alchemy API)
   const calculateCollectionPower = useCallback(async (address: string, collectionId: CollectionId): Promise<number> => {
+    // TEMPORARILY DISABLED: Alchemy API calls causing infinite loading
+    // Return 0 for now to prevent site from hanging
+    return 0;
+
     // Check cache first
     const addressCache = collectionPowerCache.get(address);
     if (addressCache?.has(collectionId)) {
