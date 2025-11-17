@@ -81,6 +81,7 @@ export function PokerMatchmaking({
   const autoMatch = useMutation(api.pokerBattle.autoMatch);
   const spectate = useMutation(api.pokerBattle.spectateRoom);
   const leaveRoom = useMutation(api.pokerBattle.leavePokerRoom);
+  const forceDeleteRoomByAddress = useMutation(api.pokerBattle.forceDeleteRoomByAddress);
 
   // Check if player is already in a room on mount - but only run once to prevent auto-start
   useEffect(() => {
@@ -384,30 +385,28 @@ export function PokerMatchmaking({
     handleApprovalForJoin();
   }, [isApproved, vbmsStage, processedApproval]);
 
-  // Handle battle cancellation success
+  // Auto-delete Convex room when blockchain battle is cancelled
   useEffect(() => {
-    if (isBattleCancelled && myRoom) {
-      console.log("✅ Battle cancelled successfully! Cleaning up Convex room...");
+    if (isBattleCancelled) {
+      console.log("✅ Battle cancelled successfully on blockchain! Auto-deleting Convex room...");
 
-      // Delete the Convex room when blockchain battle is cancelled
-      leaveRoom({
-        roomId: myRoom.roomId,
-        address: playerAddress
-      }).then(() => {
-        console.log("🗑️ Convex room deleted after battle cancellation");
-        AudioManager.buttonSuccess();
-        alert("Battle cancelled! Your VBMS stake has been returned.");
-        // Refetch balance to show returned VBMS
-        refetchVBMSBalance();
-      }).catch((error) => {
-        console.error("❌ Failed to delete Convex room:", error);
-        // Still show success message since blockchain cancel succeeded
-        AudioManager.buttonSuccess();
-        alert("Battle cancelled! Your VBMS stake has been returned.");
-        refetchVBMSBalance();
-      });
+      // Delete room by address (works even if myRoom doesn't exist)
+      forceDeleteRoomByAddress({ address: playerAddress })
+        .then((result) => {
+          console.log(`🗑️ Auto-deleted ${result.deletedCount} room(s) from Convex after blockchain cancel`);
+          AudioManager.buttonSuccess();
+          alert("Battle cancelled! Your VBMS stake has been returned.");
+          refetchVBMSBalance();
+        })
+        .catch((error) => {
+          console.error("❌ Failed to auto-delete Convex room:", error);
+          // Still show success since blockchain cancel succeeded
+          AudioManager.buttonSuccess();
+          alert("Battle cancelled! Your VBMS stake has been returned.");
+          refetchVBMSBalance();
+        });
     }
-  }, [isBattleCancelled, myRoom, playerAddress, leaveRoom]);
+  }, [isBattleCancelled, playerAddress, forceDeleteRoomByAddress, refetchVBMSBalance]);
 
   // Handle blockchain join success -> join Convex room
   useEffect(() => {
@@ -925,6 +924,7 @@ export function PokerMatchmaking({
     AudioManager.buttonClick();
     console.log(`🚫 Cancelling battle #${activeBattleId}...`);
 
+    // Just cancel blockchain - system will auto-delete Convex room when detected
     cancelBlockchainBattle(activeBattleId);
   };
 
