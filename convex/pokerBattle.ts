@@ -417,58 +417,86 @@ export const selectCard = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    try {
-      const room = await ctx.db
-        .query("pokerRooms")
-        .filter((q) => q.eq(q.field("roomId"), args.roomId))
-        .first();
+    console.log(`[selectCard] Called with:`, {
+      roomId: args.roomId,
+      address: args.address,
+      cardTokenId: args.card?.tokenId,
+      cardPower: args.card?.power,
+    });
 
-      if (!room || !room.gameState) {
-        throw new Error("Room not found or game not started");
-      }
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .first();
 
-      const isHost = room.hostAddress === args.address.toLowerCase();
-      const isGuest = room.guestAddress === args.address.toLowerCase();
-
-      if (!isHost && !isGuest) {
-        throw new Error("You are not a player in this room");
-      }
-
-      if (room.gameState.phase !== "card-selection") {
-        throw new Error(`Not in card selection phase. Current phase: ${room.gameState.phase}`);
-      }
-
-      // Ensure card object is valid
-      if (!args.card || !args.card.tokenId || !args.card.power) {
-        throw new Error("Invalid card data");
-      }
-
-      // Update the appropriate player's card
-      const gameState = { ...room.gameState };
-      if (isHost) {
-        gameState.hostSelectedCard = args.card;
-      } else {
-        gameState.guestSelectedCard = args.card;
-      }
-
-      // If both players have selected, move to reveal (skip betting)
-      if (gameState.hostSelectedCard && gameState.guestSelectedCard) {
-        gameState.phase = "reveal";
-      }
-
-      await ctx.db.patch(room._id, { gameState });
-
-      console.log(`🎴 Card selected: ${isHost ? 'Host' : 'Guest'} in ${args.roomId}`);
-
-      return { success: true };
-    } catch (error: any) {
-      console.error(`❌ [selectCard] Error: ${error.message}`, {
-        roomId: args.roomId,
-        address: args.address,
-        card: args.card,
-      });
-      throw error;
+    if (!room) {
+      console.error(`[selectCard] Room not found: ${args.roomId}`);
+      throw new Error("Room not found");
     }
+
+    if (!room.gameState) {
+      console.error(`[selectCard] Game not started in room: ${args.roomId}`);
+      throw new Error("Game not started");
+    }
+
+    const normalizedAddress = args.address.toLowerCase();
+    const isHost = room.hostAddress?.toLowerCase() === normalizedAddress;
+    const isGuest = room.guestAddress?.toLowerCase() === normalizedAddress;
+
+    console.log(`[selectCard] Player check:`, {
+      normalizedAddress,
+      hostAddress: room.hostAddress?.toLowerCase(),
+      guestAddress: room.guestAddress?.toLowerCase(),
+      isHost,
+      isGuest,
+    });
+
+    if (!isHost && !isGuest) {
+      console.error(`[selectCard] Player not in room:`, {
+        address: normalizedAddress,
+        hostAddress: room.hostAddress,
+        guestAddress: room.guestAddress,
+      });
+      throw new Error("You are not a player in this room");
+    }
+
+    if (room.gameState.phase !== "card-selection") {
+      console.error(`[selectCard] Wrong phase:`, {
+        currentPhase: room.gameState.phase,
+        expectedPhase: "card-selection",
+      });
+      throw new Error(`Not in card selection phase. Current phase: ${room.gameState.phase}`);
+    }
+
+    // Validate card data
+    if (!args.card) {
+      throw new Error("Card is null or undefined");
+    }
+    if (!args.card.tokenId) {
+      throw new Error("Card missing tokenId");
+    }
+    if (typeof args.card.power !== 'number') {
+      throw new Error(`Card power is not a number: ${typeof args.card.power}`);
+    }
+
+    // Create new game state with selected card
+    const updatedGameState = {
+      ...room.gameState,
+      hostSelectedCard: isHost ? args.card : room.gameState.hostSelectedCard,
+      guestSelectedCard: isGuest ? args.card : room.gameState.guestSelectedCard,
+    };
+
+    // If both players have selected, move to reveal
+    if (updatedGameState.hostSelectedCard && updatedGameState.guestSelectedCard) {
+      updatedGameState.phase = "reveal";
+      console.log(`[selectCard] Both players selected, moving to reveal phase`);
+    }
+
+    await ctx.db.patch(room._id, { gameState: updatedGameState });
+
+    console.log(`✅ [selectCard] Success: ${isHost ? 'Host' : 'Guest'} selected card in ${args.roomId}`);
+
+    return { success: true };
   },
 });
 
