@@ -611,19 +611,17 @@ export function PokerBattleTable({
         rawCard: card
       });
 
-      // Build card data, only including optional fields if they exist
+      // Build card data - always include collection (undefined if not specified)
       const cardData: any = {
         tokenId: card.tokenId,
+        collection: card.collection, // Can be undefined - mutation accepts optional
         power: card.power || 0,
         imageUrl: card.imageUrl || card.image || '',
         name: card.name || 'Unknown',
         rarity: card.rarity || 'common',
+        foil: card.foil, // Can be undefined
+        wear: card.wear, // Can be undefined
       };
-
-      // Only add optional fields if they have values
-      if (card.collection) cardData.collection = card.collection;
-      if (card.foil) cardData.foil = card.foil;
-      if (card.wear) cardData.wear = card.wear;
 
       console.log('[PokerBattle] Prepared card data:', cardData);
 
