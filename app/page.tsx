@@ -819,14 +819,18 @@ export default function TCGPage() {
 
             // 🔧 Connect wagmi to sync with the rest of the app
             try {
-              if (!isConnected) {
-                // Import farcasterConnector directly instead of searching through connectors
-                const { farcasterConnector } = await import('@/lib/wagmi');
-                devLog('🔗 Connecting wagmi with Farcaster connector...');
+              const farcasterConnector = connectors.find(c =>
+                c.name?.toLowerCase().includes('farcaster') ||
+                c.name?.toLowerCase().includes('warpcast') ||
+                c.id?.toLowerCase().includes('farcaster')
+              );
+
+              if (farcasterConnector && !isConnected) {
+                devLog('🔗 Connecting wagmi with Farcaster connector:', farcasterConnector.name);
                 await connect({ connector: farcasterConnector });
                 devLog('✓ Wagmi synced with Farcaster wallet');
-              } else {
-                devLog('ℹ️ Already connected, skipping wagmi connect');
+              } else if (!farcasterConnector) {
+                devLog('⚠️ No Farcaster connector found in wagmi - app may not work fully');
               }
             } catch (wagmiErr) {
               devLog('! Error connecting wagmi:', wagmiErr);
