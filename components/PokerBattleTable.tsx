@@ -1378,7 +1378,7 @@ export function PokerBattleTable({
   // Play victory music for special victories (with cleanup to prevent duplicates)
   useEffect(() => {
     // Only play victory music if: won, has ante, not spectator, and special victory
-    if (phase === 'game-over' && gameOverShown && selectedAnte !== 0 && !isSpectatorMode && playerScore > opponentScore && soundEnabled && !showClaimChoice) {
+    if (phase === 'game-over' && gameOverShown && selectedAnte !== 0 && !isSpectatorMode && playerScore > opponentScore && soundEnabled) {
       const victoryIndex = (playerScore + opponentScore) % VICTORY_CONFIGS.length;
       const victoryConfig = VICTORY_CONFIGS[victoryIndex];
 
@@ -1583,7 +1583,6 @@ export function PokerBattleTable({
         setShowWinPopup(false);
         setShowLossPopup(false);
         setShowTiePopup(false);
-        setShowClaimChoice(false);
 
         // Close the battle
         onClose();
@@ -1613,8 +1612,6 @@ export function PokerBattleTable({
             .then((result) => {
               console.log('[PokerBattle] ✅ VBMS auto-saved to inbox (safety timeout):', result);
               setBattleFinalized(true);
-              setClaimChoiceMade(true);
-              setShowClaimChoice(false);
 
               toast.success(
                 `📬 ${Math.round((selectedAnte * 2) * 0.95)} VBMS saved to inbox!`,
