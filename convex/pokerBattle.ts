@@ -655,9 +655,23 @@ export const resolveRound = mutation({
       console.log(`[resolveRound] Guest BOOST BLOCKED by Host SHIELD`);
     }
 
-    // Apply DOUBLE (x2)
-    if (hostAction === 'DOUBLE') hostPower *= 2;
-    if (guestAction === 'DOUBLE') guestPower *= 2;
+    // Apply DOUBLE (x2) - CRIT - can be blocked by shield
+    if (hostAction === 'DOUBLE' && !guestHasShield) {
+      console.log(`[resolveRound] Host CRIT/DOUBLE applied: ${hostPower} → ${hostPower * 2}`);
+      hostPower *= 2;
+    }
+    if (guestAction === 'DOUBLE' && !hostHasShield) {
+      console.log(`[resolveRound] Guest CRIT/DOUBLE applied: ${guestPower} → ${guestPower * 2}`);
+      guestPower *= 2;
+    }
+
+    // Shield blocked crit/double
+    if (hostAction === 'DOUBLE' && guestHasShield) {
+      console.log(`[resolveRound] Host CRIT/DOUBLE BLOCKED by Guest SHIELD`);
+    }
+    if (guestAction === 'DOUBLE' && hostHasShield) {
+      console.log(`[resolveRound] Guest CRIT/DOUBLE BLOCKED by Host SHIELD`);
+    }
 
     // Determine winner
     const isTie = hostPower === guestPower;
