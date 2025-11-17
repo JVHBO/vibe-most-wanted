@@ -99,6 +99,17 @@ export const POKER_BATTLE_ABI = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+  {
+    inputs: [
+      { name: 'battleId', type: 'uint256' },
+      { name: 'winner', type: 'address' },
+      { name: 'signature', type: 'bytes' }
+    ],
+    name: 'finishBattle',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 
   // Events
   {

@@ -1510,25 +1510,9 @@ export function PokerBattleTable({
           : (isHost ? room.guestUsername : room.hostUsername);
         const finalPot = Math.round((selectedAnte * 2) * 0.95); // After 5% house fee
 
-        // STEP 1: Delete Convex room IMMEDIATELY (don't wait for blockchain)
-        console.log('[PokerBattle] 🗑️ Deleting Convex room immediately...');
-        finishGameMutation({
-          roomId,
-          winnerId: winnerId.toLowerCase(),
-          winnerUsername,
-          finalPot,
-        }).then(() => {
-          console.log('[PokerBattle] ✅ Room deleted from Convex');
-          setRoomFinished(true);
-        }).catch((error) => {
-          console.error('[PokerBattle] ❌ Failed to delete Convex room:', error);
-          // Mark as finished anyway so auto-close can proceed
-          setRoomFinished(true);
-        });
-
-        // STEP 2: Finish blockchain battle in background (VBMS only - funds transfer)
+        // STEP 1: Finish blockchain battle FIRST (VBMS only - critical to unlock funds)
         if (selectedToken === 'VBMS' && room.blockchainBattleId) {
-          console.log('[PokerBattle] 💰 Finishing VBMS battle on blockchain (background)...', {
+          console.log('[PokerBattle] 💰 Finishing VBMS battle on blockchain FIRST...', {
             battleId: room.blockchainBattleId,
             winner: winnerId,
             finalPot,
@@ -1537,9 +1521,24 @@ export function PokerBattleTable({
           finishVBMSBattle(room.blockchainBattleId, winnerId as `0x${string}`)
             .then((txHash) => {
               console.log('[PokerBattle] ✅ Blockchain battle finished:', txHash);
-              toast.success(`Victory! ${finalPot} VBMS won!`, {
-                description: 'Funds transferred via blockchain',
+              toast.success(`Victory! ${finalPot} VBMS unlocked!`, {
+                description: 'Blockchain transaction confirmed',
                 duration: 5000,
+              });
+
+              // STEP 2: ONLY AFTER blockchain TX succeeds, delete Convex room
+              console.log('[PokerBattle] 🗑️ Now deleting Convex room...');
+              finishGameMutation({
+                roomId,
+                winnerId: winnerId.toLowerCase(),
+                winnerUsername,
+                finalPot,
+              }).then(() => {
+                console.log('[PokerBattle] ✅ Room deleted from Convex');
+                setRoomFinished(true);
+              }).catch((error) => {
+                console.error('[PokerBattle] ❌ Failed to delete Convex room:', error);
+                setRoomFinished(true);
               });
             })
             .catch((error) => {
@@ -1547,16 +1546,32 @@ export function PokerBattleTable({
               toast.error('Failed to finalize VBMS battle on blockchain', {
                 description: error.message || 'Please try again',
               });
+              // Don't delete room if blockchain TX failed - allow retry
             });
+        } else {
+          // Non-VBMS battles: Delete room immediately (no blockchain TX needed)
+          console.log('[PokerBattle] 🗑️ Deleting Convex room (non-VBMS mode)...');
+          finishGameMutation({
+            roomId,
+            winnerId: winnerId.toLowerCase(),
+            winnerUsername,
+            finalPot,
+          }).then(() => {
+            console.log('[PokerBattle] ✅ Room deleted from Convex');
+            setRoomFinished(true);
+          }).catch((error) => {
+            console.error('[PokerBattle] ❌ Failed to delete Convex room:', error);
+            setRoomFinished(true);
+          });
         }
       }
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation, roomFinished, selectedToken, finishVBMSBattle]);
 
-  // TESTVBMS/NFT rewards go to inbox (not VBMS - that uses blockchain)
+  // TESTVBMS rewards go to inbox for ALL modes (TESTVBMS, NFT, and VBMS)
   useEffect(() => {
-    // Only for TESTVBMS or VIBE_NFT battles (CPU or PvP)
-    if (phase === 'game-over' && !isSpectatorMode && !battleFinalized && selectedToken !== 'VBMS') {
+    // ALL battles send TESTVBMS to inbox when won
+    if (phase === 'game-over' && !isSpectatorMode && !battleFinalized) {
       const result = playerScore > opponentScore ? 'win' : 'loss';
 
       // Only proceed if player won and has a valid match
