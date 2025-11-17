@@ -421,16 +421,18 @@ export const claimQuestReward = mutation({
       throw new Error("Quest not completed yet");
     }
 
-    // Add coins (TESTVBMS) - player can convert later if they want
-    const currentCoins = profile.coins || 0;
-    const newCoins = currentCoins + quest.reward;
+    // Add to inbox (TESTVBMS) - player can convert later if they want
+    const currentInbox = profile.inbox || 0;
+    const newInbox = currentInbox + quest.reward;
     const lifetimeEarned = (profile.lifetimeEarned || 0) + quest.reward;
 
     await ctx.db.patch(profile._id, {
-      coins: newCoins,
+      inbox: newInbox,
       lifetimeEarned,
       lastUpdated: Date.now(),
     });
+
+    console.log(`📬 Quest reward sent to inbox: ${quest.reward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
 
     // Mark as claimed
     if (existingProgress) {
@@ -452,7 +454,7 @@ export const claimQuestReward = mutation({
     return {
       success: true,
       reward: quest.reward,
-      newBalance: newCoins,
+      newBalance: newInbox,
       questName: quest.description,
     };
   },
