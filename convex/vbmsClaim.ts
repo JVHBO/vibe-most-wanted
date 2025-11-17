@@ -477,7 +477,7 @@ export const getPlayerEconomy = query({
     }
 
     return {
-      // Virtual balance (in-app spending) - VBMS
+      // Virtual balance (in-app spending) - TESTVBMS
       coins: profile.coins || 0,
       lifetimeEarned: profile.lifetimeEarned || 0,
       lifetimeSpent: profile.lifetimeSpent || 0,
@@ -689,9 +689,9 @@ export const claimAchievementNow = mutation({
 });
 */
 
-// ========== MUTATION: Claim Inbox as VBMS (Virtual Coins) ==========
+// ========== MUTATION: Claim Inbox as TESTVBMS (Virtual Coins) ==========
 
-export const claimInboxAsVBMS = mutation({
+export const claimInboxAsTESTVBMS = mutation({
   args: {
     address: v.string(),
   },
@@ -718,7 +718,7 @@ export const claimInboxAsVBMS = mutation({
       success: true,
       amount: inboxAmount,
       newBalance: newCoins,
-      message: `💰 ${inboxAmount} VBMS added to your balance!`,
+      message: `💰 ${inboxAmount} TESTVBMS added to your balance!`,
     };
   },
 });
@@ -757,7 +757,7 @@ export const sendPveRewardToInbox = mutation({
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 ${address} sent ${amount} VBMS to inbox from PvE victory (difficulty: ${difficulty || 'N/A'}). Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`📬 ${address} sent ${amount} TESTVBMS to inbox from PvE victory (difficulty: ${difficulty || 'N/A'}). Inbox: ${currentInbox} → ${newInbox}`);
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
@@ -769,11 +769,11 @@ export const sendPveRewardToInbox = mutation({
       timestamp: Date.now(),
     });
 
-    let message = `📬 ${amount} VBMS sent to inbox from PvE victory!`;
+    let message = `📬 ${amount} TESTVBMS sent to inbox from PvE victory!`;
     if (hadDebt && newInbox < 0) {
-      message = `📬 ${amount} VBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
+      message = `📬 ${amount} TESTVBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
     } else if (hadDebt && newInbox >= 0) {
-      message = `📬 ${amount} VBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
+      message = `📬 ${amount} TESTVBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
     }
 
     return {
@@ -886,13 +886,13 @@ export const claimPveRewardNowInternal = internalMutation({
   },
 });
 
-// ========== MUTATION: Convert VBMS to VBMS ==========
+// ========== MUTATION: Convert TESTVBMS to VBMS ==========
 
 /**
- * Convert all VBMS coins to VBMS blockchain tokens
+ * Convert all TESTVBMS coins to VBMS blockchain tokens
  * Prepares the signature for blockchain claim
  */
-export const convertVBMStoVBMS = action({
+export const convertTESTVBMStoVBMS = action({
   args: {
     address: v.string(),
   },
@@ -903,7 +903,7 @@ export const convertVBMStoVBMS = action({
     message: string;
   }> => {
     // Get profile and validate via internal mutation
-    const result = await ctx.runMutation(internal.vbmsClaim.convertVBMSInternal, { address });
+    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address });
 
     // Generate signature for blockchain claim
     const nonce = generateNonce();
@@ -913,19 +913,19 @@ export const convertVBMStoVBMS = action({
       nonce
     });
 
-    console.log(`💱 ${address} converting ${result.testVBMSBalance} VBMS → VBMS (nonce: ${nonce})`);
+    console.log(`💱 ${address} converting ${result.testVBMSBalance} TESTVBMS → VBMS (nonce: ${nonce})`);
 
     return {
       amount: result.testVBMSBalance,
       nonce: nonce,
       signature: signature,
-      message: `Converting ${result.testVBMSBalance} VBMS to VBMS`,
+      message: `Converting ${result.testVBMSBalance} TESTVBMS to VBMS`,
     };
   },
 });
 
 // Internal mutation to handle database operations
-export const convertVBMSInternal = internalMutation({
+export const convertTESTVBMSInternal = internalMutation({
   args: {
     address: v.string(),
   },
@@ -935,11 +935,11 @@ export const convertVBMSInternal = internalMutation({
     const testVBMSBalance = profile.coins || 0;
 
     if (testVBMSBalance < 100) {
-      throw new Error(`Minimum 100 VBMS required to convert. You have: ${testVBMSBalance}`);
+      throw new Error(`Minimum 100 TESTVBMS required to convert. You have: ${testVBMSBalance}`);
     }
 
-    // NOTE: Balance will be zeroed by recordVBMSConversion AFTER blockchain TX succeeds
-    // DO NOT zero here - if signature fails, user loses their VBMS!
+    // NOTE: Balance will be zeroed by recordTESTVBMSConversion AFTER blockchain TX succeeds
+    // DO NOT zero here - if signature fails, user loses their TESTVBMS!
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
@@ -956,10 +956,10 @@ export const convertVBMSInternal = internalMutation({
 });
 
 /**
- * Record VBMS → VBMS conversion (after blockchain confirmation)
- * Zeros the VBMS balance
+ * Record TESTVBMS → VBMS conversion (after blockchain confirmation)
+ * Zeros the TESTVBMS balance
  */
-export const recordVBMSConversion = mutation({
+export const recordTESTVBMSConversion = mutation({
   args: {
     address: v.string(),
     amount: v.number(),
@@ -968,7 +968,7 @@ export const recordVBMSConversion = mutation({
   handler: async (ctx, { address, amount, txHash }) => {
     const profile = await getProfile(ctx, address);
 
-    // Zero VBMS coins
+    // Zero TESTVBMS coins
     await ctx.db.patch(profile._id, {
       coins: 0,
       claimedTokens: (profile.claimedTokens || 0) + amount,
@@ -984,7 +984,7 @@ export const recordVBMSConversion = mutation({
       type: "testvbms_conversion" as any,
     });
 
-    console.log(`✅ ${address} converted ${amount} VBMS → VBMS, zeroed coins`);
+    console.log(`✅ ${address} converted ${amount} TESTVBMS → VBMS, zeroed coins`);
 
     return {
       success: true,

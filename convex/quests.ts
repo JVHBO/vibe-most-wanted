@@ -6,7 +6,7 @@
  * WEEKLY REWARDS: TOP 10 leaderboard rewards (distributed Sunday 00:00 UTC)
  *
  * Players complete by playing matches
- * Rewards $VBMS coins
+ * Rewards $TESTVBMS coins
  */
 
 import { v } from "convex/values";
@@ -421,7 +421,7 @@ export const claimQuestReward = mutation({
       throw new Error("Quest not completed yet");
     }
 
-    // Add coins (VBMS) - player can convert later if they want
+    // Add coins (TESTVBMS) - player can convert later if they want
     const currentCoins = profile.coins || 0;
     const newCoins = currentCoins + quest.reward;
     const lifetimeEarned = (profile.lifetimeEarned || 0) + quest.reward;
@@ -698,7 +698,7 @@ export const claimWeeklyReward = mutation({
       throw new Error("Quest definition not found");
     }
 
-    // Get profile and add coins (VBMS)
+    // Get profile and add coins (TESTVBMS)
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
@@ -788,7 +788,7 @@ export const distributeWeeklyRewards = internalMutation({
           reward,
         });
 
-        // devLog (server-side)(`💰 Rank #${rank} ${player.username}: +${reward} $VBMS`);
+        // devLog (server-side)(`💰 Rank #${rank} ${player.username}: +${reward} $TESTVBMS`);
       }
     }
 
@@ -934,7 +934,7 @@ export const claimWeeklyLeaderboardReward = mutation({
       throw new Error("Already claimed reward for this week");
     }
 
-    // Add coins (VBMS)
+    // Add coins (TESTVBMS)
     const oldCoins = player.coins || 0;
     const newCoins = oldCoins + reward;
     const newLifetimeEarned = (player.lifetimeEarned || 0) + reward;

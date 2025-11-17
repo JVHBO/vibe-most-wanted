@@ -162,7 +162,7 @@ export const placeBetWithCredits = mutation({
  * - Total pool = all bets placed
  * - House takes 5% fee
  * - Remaining 95% distributed to winners proportionally
- * - Winners get VBMS sent to inbox
+ * - Winners get TESTVBMS sent to inbox
  */
 export const resolveBets = mutation({
   args: {
@@ -204,7 +204,7 @@ export const resolveBets = mutation({
 
     let totalPaidOut = 0;
 
-    // Process winners - send VBMS to inbox (winnings + unspent credits)
+    // Process winners - send TESTVBMS to inbox (winnings + unspent credits)
     for (const bet of winningBets) {
       // Calculate proportional payout from pool
       const payout = totalOnWinner > 0 ? (bet.amount / totalOnWinner) * prizePool : 0;
@@ -233,7 +233,7 @@ export const resolveBets = mutation({
         });
       }
 
-      // Send total VBMS to inbox (winnings + remaining credits)
+      // Send total TESTVBMS to inbox (winnings + remaining credits)
       if (totalToInbox > 0) {
         await ctx.db.insert("vbmsInbox" as any, {
           address: bet.bettor,
@@ -283,7 +283,7 @@ export const resolveBets = mutation({
         });
       }
 
-      // Send remaining credits to inbox as VBMS (if any)
+      // Send remaining credits to inbox as TESTVBMS (if any)
       if (remainingCredits > 0) {
         await ctx.db.insert("vbmsInbox" as any, {
           address: bet.bettor,
