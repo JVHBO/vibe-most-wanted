@@ -16,10 +16,9 @@ import { internal } from "./_generated/api";
 // ========== HELPER: Get Profile ==========
 
 async function getProfile(ctx: any, address: string) {
-  const normalizedAddress = address.toLowerCase();
   const profile = await ctx.db
     .query("profiles")
-    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .withIndex("by_address", (q: any) => q.eq("address", address.toLowerCase()))
     .first();
 
   if (!profile) {
@@ -744,41 +743,41 @@ export const sendPveRewardToInbox = mutation({
   handler: async (ctx, { address, amount, difficulty }) => {
     const profile = await getProfile(ctx, address);
 
-    const currentCoinsInbox = profile.coinsInbox || 0;
-    const newCoinsInbox = currentCoinsInbox + amount;
+    const currentInbox = profile.inbox || 0;
+    const newInbox = currentInbox + amount;
 
     // Check if paying off debt
-    const hadDebt = currentCoinsInbox < 0;
-    const debtPaid = hadDebt ? Math.min(Math.abs(currentCoinsInbox), amount) : 0;
+    const hadDebt = currentInbox < 0;
+    const debtPaid = hadDebt ? Math.min(Math.abs(currentInbox), amount) : 0;
     const netGain = amount - debtPaid;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: newCoinsInbox,
+      inbox: newInbox,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 ${address} sent ${amount} TESTVBMS to coinsInbox from PvE victory (difficulty: ${difficulty || 'N/A'}). CoinsInbox: ${currentCoinsInbox} → ${newCoinsInbox}`);
+    console.log(`📬 ${address} sent ${amount} TESTVBMS to inbox from PvE victory (difficulty: ${difficulty || 'N/A'}). Inbox: ${currentInbox} → ${newInbox}`);
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
       choice: "inbox",
       amount,
-      inboxTotal: newCoinsInbox,
+      inboxTotal: newInbox,
       bonusAvailable: false,
       timestamp: Date.now(),
     });
 
     let message = `📬 ${amount} TESTVBMS sent to inbox from PvE victory!`;
-    if (hadDebt && newCoinsInbox < 0) {
-      message = `📬 ${amount} TESTVBMS sent to inbox! Debt reduced from ${Math.abs(currentCoinsInbox)} to ${Math.abs(newCoinsInbox)}`;
-    } else if (hadDebt && newCoinsInbox >= 0) {
+    if (hadDebt && newInbox < 0) {
+      message = `📬 ${amount} TESTVBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
+    } else if (hadDebt && newInbox >= 0) {
       message = `📬 ${amount} TESTVBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
     }
 
     return {
-      newInbox: newCoinsInbox,
+      newInbox,
       amountAdded: amount,
       debtPaid,
       hadDebt,

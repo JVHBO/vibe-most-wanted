@@ -15,17 +15,17 @@ import { api, internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
 
 // Constants
-const DAILY_CAP = 5000; // Max $TESTVBMS per day per player
-const PVE_WIN_LIMIT = 10; // Max PvE wins per day (strictly enforced)
+const DAILY_CAP = 1500; // Max $TESTVBMS per day per player (reduced from 3500)
+const PVE_WIN_LIMIT = 30; // Max PvE wins per day
 const PVP_MATCH_LIMIT = 10; // Max PvP matches per day
 
-// PvE Rewards by Difficulty
+// PvE Rewards by Difficulty (reduced ~70% to extend pool longevity)
 const PVE_REWARDS = {
-  gey: 10,
-  goofy: 30,
-  gooner: 75,
-  gangster: 150,
-  gigachad: 300,
+  gey: 2,      // was 5
+  goofy: 5,    // was 15
+  gooner: 10,  // was 30
+  gangster: 20, // was 60
+  gigachad: 40, // was 120
 };
 
 // PvP Rewards
@@ -598,12 +598,10 @@ export const awardPvECoins = mutation({
       totalReward = remaining;
     }
 
-    // Award coins to inbox (or just return amount if skipCoins)
+    // Award coins (or just return amount if skipCoins)
     if (!skipCoins) {
-      // Send TESTVBMS to coinsInbox instead of adding directly to balance
-      const currentCoinsInbox = profile.coinsInbox || 0;
       await ctx.db.patch(profile!._id, {
-        coinsInbox: currentCoinsInbox + totalReward,
+        coins: (profile.coins || 0) + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         dailyLimits: {
           ...dailyLimits,
@@ -611,7 +609,6 @@ export const awardPvECoins = mutation({
         },
         // lastPvEAward already updated immediately after rate limit check (line 491)
       });
-      console.log(`💰 PvE reward sent to coinsInbox: ${totalReward} TESTVBMS for ${address}`);
     }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
