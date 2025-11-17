@@ -295,127 +295,49 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         <div className="relative bg-gradient-to-br from-vintage-gold/10 via-transparent to-transparent p-6 pb-4">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold/30 mb-3">
-              <span className="text-4xl">📬</span>
+              <span className="text-4xl">💰</span>
             </div>
             <h2 className="text-3xl font-display font-bold text-vintage-gold mb-2">
-              VBMS Inbox
+              CONVERTER
             </h2>
             <p className="text-sm text-vintage-gold/70">
-              Acumule rewards e escolha como coletar
+              TESTVBMS → VBMS Blockchain
             </p>
           </div>
         </div>
 
         <div className="px-6 pb-6 space-y-4">
-          {/* Inbox Balance Card */}
-          <div className="relative bg-gradient-to-br from-vintage-gold/5 to-vintage-burnt-gold/5 border border-vintage-gold/30 rounded-xl p-5 overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-vintage-gold/5 rounded-full blur-3xl -mr-16 -mt-16" />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-vintage-gold/70 uppercase tracking-wider">
-                  💰 Inbox Available
-                </span>
-                {inboxAmount > 0 && (
-                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30">
-                    Ready
-                  </span>
-                )}
-              </div>
-              <div className="text-5xl font-display font-bold text-vintage-gold mb-1">
-                {inboxAmount.toLocaleString()}
-              </div>
-              <div className="text-sm text-vintage-gold/60">
-                VBMS • Blockchain transferível
-              </div>
-            </div>
+          {/* Warning - Claims only work on miniapp */}
+          <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-3">
+            <p className="text-xs text-blue-300 text-center leading-relaxed">
+              ⚠️ <span className="font-semibold">Claims only work on Farcaster miniapp</span>
+            </p>
           </div>
 
-          {/* TESTVBMS Balance Card */}
-          <div className="relative bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-400/50 rounded-xl p-5 overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-400/20 rounded-full blur-2xl -mr-16 -mt-16" />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-purple-300 uppercase tracking-wider">
-                  🎮 In-Game Balance
-                </span>
-                {testvbmsBalance >= 100 && (
-                  <span className="text-xs bg-purple-500/40 text-purple-100 px-2 py-1 rounded-full border border-purple-400/50 font-semibold">
-                    Can Convert
-                  </span>
-                )}
+          {/* TESTVBMS Balance (what you can convert) */}
+          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-6 mb-4">
+            <div className="text-center">
+              <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wide">
+                💰 SALDO TESTVBMS
               </div>
-              <div className="text-4xl font-display font-bold text-purple-100 mb-1">
+              <div className="text-6xl font-bold text-green-100 mb-2">
                 {testvbmsBalance.toLocaleString()}
               </div>
-              <div className="text-sm text-purple-200 font-medium">
-                TESTVBMS • Use na shop, battles & fees
+              <div className="text-xs text-green-300/60 mt-2">
+                Disponível para converter
               </div>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-vintage-deep-black/40 border border-vintage-gold/20 rounded-lg p-3 text-center">
-              <div className="text-xs text-vintage-gold/60 mb-1">
-                Último Claim
-              </div>
-              <div className="text-sm font-bold text-vintage-gold">
-                {lastClaimText}
-              </div>
-            </div>
-            <div className="bg-vintage-deep-black/40 border border-vintage-gold/20 rounded-lg p-3 text-center">
-              <div className="text-xs text-vintage-gold/60 mb-1">
-                Mínimo Chain
-              </div>
-              <div className="text-sm font-bold text-vintage-gold">
-                100 VBMS
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-vintage-gold/20"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-vintage-deep-black px-3 text-vintage-gold/50 font-semibold tracking-wider">
-                Actions
-              </span>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2">
-            {/* Claim Inbox as TESTVBMS */}
-            {inboxAmount > 0 && (
+          <div className="space-y-3">
+            {/* Convert TESTVBMS → VBMS (only button) */}
+            {testvbmsBalance >= 100 ? (
               <button
-                onClick={handleClaimTESTVBMS}
-                disabled={!canClaimTESTVBMS || isProcessing}
+                onClick={handleConvertTESTVBMS}
+                disabled={!canConvertTESTVBMS || isProcessing}
                 className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                  canClaimTESTVBMS
-                    ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:scale-[1.02]"
-                    : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
-                }`}
-              >
-                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
-                <div className="relative flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <span className="text-xl">💰</span>
-                    <span>Claim as TESTVBMS</span>
-                  </span>
-                  <span className="text-sm opacity-80">Instant</span>
-                </div>
-              </button>
-            )}
-
-            {/* Claim Inbox as VBMS Blockchain */}
-            {inboxAmount >= 100 && (
-              <button
-                onClick={handleClaimVBMS}
-                disabled={!canClaimVBMS || isProcessing}
-                className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                  canClaimVBMS
+                  canConvertTESTVBMS
                     ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.02]"
                     : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
                 }`}
@@ -423,59 +345,33 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
                 <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
                 <div className="relative flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <span className="text-xl">💳</span>
-                    <span>Claim as VBMS</span>
+                    <span className="text-xl">🔄</span>
+                    <span>Converter {testvbmsBalance.toLocaleString()} → VBMS</span>
                   </span>
                   <span className="text-xs opacity-80 bg-black/20 px-2 py-1 rounded">Pay Gas</span>
                 </div>
               </button>
+            ) : (
+              <div className="text-center py-6">
+                <div className="text-6xl mb-3 opacity-20">💰</div>
+                <p className="text-vintage-gold/60 text-sm">
+                  Mínimo de 100 TESTVBMS
+                </p>
+                <p className="text-vintage-gold/40 text-xs mt-1">
+                  Complete battles para ganhar mais!
+                </p>
+              </div>
             )}
 
-            {/* Convert TESTVBMS to VBMS */}
-            {testvbmsBalance >= 100 && (
-              <button
-                onClick={handleConvertTESTVBMS}
-                disabled={!canConvertTESTVBMS || isProcessing}
-                className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                  canConvertTESTVBMS
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02]"
-                    : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
-                }`}
-              >
-                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
-                <div className="relative flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <span className="text-xl">🔄</span>
-                    <span>Convert {testvbmsBalance.toLocaleString()} TESTVBMS</span>
-                  </span>
-                  <span className="text-xs opacity-80">→ VBMS</span>
-                </div>
-              </button>
+            {/* Help Text */}
+            {canConvertTESTVBMS && (
+              <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
+                <p className="text-xs text-vintage-gold/70 text-center leading-relaxed">
+                  💎 <span className="font-semibold">VBMS</span> = Blockchain tokens (onchain) •
+                  <span className="font-semibold"> TESTVBMS</span> = In-game currency (offchain)
+                </p>
+              </div>
             )}
-          </div>
-
-          {/* Help Text */}
-          {inboxAmount === 0 && testvbmsBalance === 0 && (
-            <div className="text-center py-6">
-              <div className="text-6xl mb-3 opacity-20">📭</div>
-              <p className="text-vintage-gold/60 text-sm">
-                Inbox vazio
-              </p>
-              <p className="text-vintage-gold/40 text-xs mt-1">
-                Complete battles e achievements para ganhar VBMS!
-              </p>
-            </div>
-          )}
-
-          {/* Info Footer */}
-          {(canClaimVBMS || canConvertTESTVBMS) && (
-            <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
-              <p className="text-xs text-vintage-gold/70 text-center leading-relaxed">
-                💎 <span className="font-semibold">VBMS</span> = Blockchain tokens (trade/hold) •
-                <span className="font-semibold"> TESTVBMS</span> = In-game currency (shop/fees)
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Decorative bottom border */}
