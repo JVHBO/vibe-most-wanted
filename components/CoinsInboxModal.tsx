@@ -218,7 +218,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               <NextImage src="/images/icons/convert.svg" alt="Convert" width={32} height={32} className="w-8 h-8" />
             </div>
             <h2 className="text-3xl font-display font-bold text-vintage-gold mb-2">
-              CONVERTER
+              CONVERT
             </h2>
             <p className="text-sm text-vintage-gold/70">
               TESTVBMS → VBMS Blockchain
