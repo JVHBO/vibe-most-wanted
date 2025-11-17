@@ -744,41 +744,41 @@ export const sendPveRewardToInbox = mutation({
   handler: async (ctx, { address, amount, difficulty }) => {
     const profile = await getProfile(ctx, address);
 
-    const currentInbox = profile.inbox || 0;
-    const newInbox = currentInbox + amount;
+    const currentCoinsInbox = profile.coinsInbox || 0;
+    const newCoinsInbox = currentCoinsInbox + amount;
 
     // Check if paying off debt
-    const hadDebt = currentInbox < 0;
-    const debtPaid = hadDebt ? Math.min(Math.abs(currentInbox), amount) : 0;
+    const hadDebt = currentCoinsInbox < 0;
+    const debtPaid = hadDebt ? Math.min(Math.abs(currentCoinsInbox), amount) : 0;
     const netGain = amount - debtPaid;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newCoinsInbox,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 ${address} sent ${amount} TESTVBMS to inbox from PvE victory (difficulty: ${difficulty || 'N/A'}). Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`📬 ${address} sent ${amount} TESTVBMS to coinsInbox from PvE victory (difficulty: ${difficulty || 'N/A'}). CoinsInbox: ${currentCoinsInbox} → ${newCoinsInbox}`);
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
       choice: "inbox",
       amount,
-      inboxTotal: newInbox,
+      inboxTotal: newCoinsInbox,
       bonusAvailable: false,
       timestamp: Date.now(),
     });
 
     let message = `📬 ${amount} TESTVBMS sent to inbox from PvE victory!`;
-    if (hadDebt && newInbox < 0) {
-      message = `📬 ${amount} TESTVBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
-    } else if (hadDebt && newInbox >= 0) {
+    if (hadDebt && newCoinsInbox < 0) {
+      message = `📬 ${amount} TESTVBMS sent to inbox! Debt reduced from ${Math.abs(currentCoinsInbox)} to ${Math.abs(newCoinsInbox)}`;
+    } else if (hadDebt && newCoinsInbox >= 0) {
       message = `📬 ${amount} TESTVBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
     }
 
     return {
-      newInbox,
+      newInbox: newCoinsInbox,
       amountAdded: amount,
       debtPaid,
       hadDebt,
