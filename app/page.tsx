@@ -771,8 +771,11 @@ export default function TCGPage() {
 
           // Also try to verify SDK is available
           try {
-            if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.getEthereumProvider()) {
-              devLog('✓ Farcaster SDK wallet provider confirmed');
+            if (sdk && typeof sdk.wallet !== 'undefined') {
+              const provider = await sdk.wallet.getEthereumProvider();
+              if (provider) {
+                devLog('✓ Farcaster SDK wallet provider confirmed');
+              }
             }
           } catch (sdkErr) {
             devLog('⚠️ Miniapp detected but SDK not fully loaded yet');
@@ -800,13 +803,15 @@ export default function TCGPage() {
     const initFarcasterWallet = async () => {
       try {
         // Check if we're in Farcaster context
-        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.getEthereumProvider()) {
-          setIsCheckingFarcaster(true); // Show loading only when Farcaster detected
-          devLog('🔗 Attempting Farcaster auto-connect...');
+        if (sdk && typeof sdk.wallet !== 'undefined') {
+          const provider = await sdk.wallet.getEthereumProvider();
+          if (provider) {
+            setIsCheckingFarcaster(true); // Show loading only when Farcaster detected
+            devLog('🔗 Attempting Farcaster auto-connect...');
 
-          const addresses = await sdk.wallet.getEthereumProvider().request({
-            method: "eth_requestAccounts"
-          });
+            const addresses = await provider.request({
+              method: "eth_requestAccounts"
+            });
           if (addresses && addresses[0]) {
             setFarcasterAddress(addresses[0]);
             localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
@@ -853,6 +858,7 @@ export default function TCGPage() {
           } else {
             // Failed to get address from Farcaster wallet
             devLog('! No address returned from Farcaster wallet');
+          }
           }
         }
       } catch (err) {
