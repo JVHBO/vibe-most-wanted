@@ -782,6 +782,7 @@ export default function TCGPage() {
   // Auto-connect Farcaster wallet in miniapp context
   useEffect(() => {
     const initFarcasterWallet = async () => {
+      setIsCheckingFarcaster(true); // Show loading during check
       try {
         // Check if we're in Farcaster context
         if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
@@ -839,6 +840,7 @@ export default function TCGPage() {
       } catch (err) {
         devLog('! Error in Farcaster auto-connect:', err);
         setFarcasterAddress(null);
+        setIsInFarcaster(false); // Mark as not in Farcaster if connection fails
       } finally {
         // Always set checking to false after checking
         setIsCheckingFarcaster(false);
