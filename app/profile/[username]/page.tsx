@@ -298,8 +298,8 @@ export default function ProfilePage() {
   useEffect(() => {
     const initFarcasterWallet = async () => {
       try {
-        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
-          const addresses = await sdk.wallet.ethProvider.request({
+        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.getEthereumProvider()) {
+          const addresses = await sdk.wallet.getEthereumProvider().request({
             method: "eth_requestAccounts"
           });
           if (addresses && addresses[0]) {
