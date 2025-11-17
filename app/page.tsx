@@ -760,12 +760,23 @@ export default function TCGPage() {
 
   // Detect Farcaster miniapp context (independent of wallet connection)
   useEffect(() => {
-    const checkFarcasterContext = () => {
+    const checkFarcasterContext = async () => {
       try {
-        // Check if we're running in Farcaster miniapp environment
-        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
+        // Use robust iframe detection
+        const inMiniapp = isMiniappMode();
+
+        if (inMiniapp) {
           setIsInFarcaster(true);
-          devLog('✓ Running in Farcaster miniapp context');
+          devLog('✓ Running in Farcaster miniapp context (iframe detected)');
+
+          // Also try to verify SDK is available
+          try {
+            if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
+              devLog('✓ Farcaster SDK wallet provider confirmed');
+            }
+          } catch (sdkErr) {
+            devLog('⚠️ Miniapp detected but SDK not fully loaded yet');
+          }
         } else {
           setIsInFarcaster(false);
           devLog('ℹ Not in Farcaster miniapp context');
