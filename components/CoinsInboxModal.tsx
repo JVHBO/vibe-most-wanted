@@ -14,8 +14,8 @@ import { encodeFunctionData, parseEther } from "viem";
 
 interface CoinsInboxModalProps {
   inboxStatus: {
-    coinsInbox: number; // VBMS inbox (backend balance from leaderboard/rewards)
-    coins: number; // TESTVBMS for in-game spending
+    inbox: number; // TESTVBMS inbox (rewards accumulate here)
+    coins: number; // TESTVBMS balance (after claiming from inbox)
     lifetimeEarned: number;
   };
   onClose: () => void;
