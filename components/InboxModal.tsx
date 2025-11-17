@@ -295,7 +295,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         <div className="relative bg-gradient-to-br from-vintage-gold/10 via-transparent to-transparent p-6 pb-4">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold/30 mb-3">
-              <span className="text-4xl">💰</span>
+              <NextImage src="/images/icons/convert.svg" alt="Convert" width={32} height={32} className="w-8 h-8" />
             </div>
             <h2 className="text-3xl font-display font-bold text-vintage-gold mb-2">
               CONVERTER
@@ -309,22 +309,24 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         <div className="px-6 pb-6 space-y-4">
           {/* Warning - Claims only work on miniapp */}
           <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-3">
-            <p className="text-xs text-blue-300 text-center leading-relaxed">
-              ⚠️ <span className="font-semibold">Claims only work on Farcaster miniapp</span>
+            <p className="text-xs text-blue-300 text-center leading-relaxed flex items-center justify-center gap-2">
+              <NextImage src="/images/icons/warning.svg" alt="Warning" width={16} height={16} className="w-4 h-4" />
+              <span className="font-semibold">Claims only work on Farcaster miniapp</span>
             </p>
           </div>
 
           {/* TESTVBMS Balance (what you can convert) */}
           <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-6 mb-4">
             <div className="text-center">
-              <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wide">
-                💰 SALDO TESTVBMS
+              <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wide flex items-center justify-center gap-2">
+                <NextImage src="/images/icons/coins.svg" alt="TESTVBMS" width={20} height={20} className="w-5 h-5" />
+                TESTVBMS BALANCE
               </div>
               <div className="text-6xl font-bold text-green-100 mb-2">
                 {testvbmsBalance.toLocaleString()}
               </div>
               <div className="text-xs text-green-300/60 mt-2">
-                Disponível para converter
+                Available to convert
               </div>
             </div>
           </div>
@@ -345,20 +347,22 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
                 <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
                 <div className="relative flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <span className="text-xl">🔄</span>
-                    <span>Converter {testvbmsBalance.toLocaleString()} → VBMS</span>
+                    <NextImage src="/images/icons/convert.svg" alt="Convert" width={20} height={20} className="w-5 h-5" />
+                    <span>Convert {testvbmsBalance.toLocaleString()} → VBMS</span>
                   </span>
                   <span className="text-xs opacity-80 bg-black/20 px-2 py-1 rounded">Pay Gas</span>
                 </div>
               </button>
             ) : (
               <div className="text-center py-6">
-                <div className="text-6xl mb-3 opacity-20">💰</div>
+                <div className="flex justify-center mb-3 opacity-20">
+                  <NextImage src="/images/icons/coins.svg" alt="Coins" width={48} height={48} className="w-12 h-12" />
+                </div>
                 <p className="text-vintage-gold/60 text-sm">
-                  Mínimo de 100 TESTVBMS
+                  Minimum 100 TESTVBMS required
                 </p>
                 <p className="text-vintage-gold/40 text-xs mt-1">
-                  Complete battles para ganhar mais!
+                  Complete battles to earn more!
                 </p>
               </div>
             )}
@@ -366,8 +370,9 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
             {/* Help Text */}
             {canConvertTESTVBMS && (
               <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
-                <p className="text-xs text-vintage-gold/70 text-center leading-relaxed">
-                  💎 <span className="font-semibold">VBMS</span> = Blockchain tokens (onchain) •
+                <p className="text-xs text-vintage-gold/70 text-center leading-relaxed flex items-center justify-center gap-1.5">
+                  <NextImage src="/images/icons/diamond.svg" alt="VBMS" width={14} height={14} className="w-3.5 h-3.5" />
+                  <span className="font-semibold">VBMS</span> = Blockchain tokens (onchain) •
                   <span className="font-semibold"> TESTVBMS</span> = In-game currency (offchain)
                 </p>
               </div>
