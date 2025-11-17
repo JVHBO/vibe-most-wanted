@@ -600,9 +600,9 @@ export const awardPvECoins = mutation({
 
     // Award coins to inbox (not balance)
     if (!skipCoins) {
-      const currentInbox = profile.inbox || 0;
+      const currentInbox = profile.coinsInbox || 0;
       await ctx.db.patch(profile!._id, {
-        inbox: currentInbox + totalReward,
+        coinsInbox: currentInbox + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         dailyLimits: {
           ...dailyLimits,
@@ -798,9 +798,9 @@ export const awardPvPCoins = mutation({
       // No daily cap for PvP - limited by 10 matches/day instead
 
       // Award coins to inbox (not balance)
-      const currentInbox = profile.inbox || 0;
+      const currentInbox = profile.coinsInbox || 0;
       await ctx.db.patch(profile!._id, {
-        inbox: currentInbox + totalReward,
+        coinsInbox: currentInbox + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
@@ -1361,9 +1361,9 @@ export const recordAttackResult = mutation({
       // No daily cap for attack mode - limited by 5 attacks/day instead
       // Award to inbox (or just calculate if skipCoins)
       if (!args.skipCoins) {
-        const currentInbox = profile.inbox || 0;
+        const currentInbox = profile.coinsInbox || 0;
         await ctx.db.patch(profile._id, {
-          inbox: currentInbox + totalReward,
+          coinsInbox: currentInbox + totalReward,
           lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
           winStreak: newStreak,
           lastWinTimestamp: Date.now(),
@@ -1440,10 +1440,10 @@ export const recordAttackResult = mutation({
 
         if (defenderProfile) {
           // Award TESTVBMS to defender's inbox
-          const currentDefenderInbox = defenderProfile.inbox || 0;
+          const currentDefenderInbox = defenderProfile.coinsInbox || 0;
           const newDefenderInbox = currentDefenderInbox + defenderReward;
           await ctx.db.patch(defenderProfile._id, {
-            inbox: newDefenderInbox,
+            coinsInbox: newDefenderInbox,
             lifetimeEarned: (defenderProfile.lifetimeEarned || 0) + defenderReward,
           });
 
@@ -1453,12 +1453,12 @@ export const recordAttackResult = mutation({
 
       // Apply inbox debt to attacker (can go negative!)
       if (inboxDebt > 0) {
-        const currentInbox = profile.inbox || 0;
+        const currentInbox = profile.coinsInbox || 0;
         const newInbox = currentInbox - inboxDebt;
 
         // Update attacker's inbox with debt
         await ctx.db.patch(profile._id, {
-          inbox: newInbox, // Can be negative!
+          coinsInbox: newInbox, // Can be negative!
         });
 
         console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (${coinsDeducted} from coins, ${inboxDebt} inbox debt). Inbox: ${currentInbox} → ${newInbox}`);
@@ -1613,13 +1613,13 @@ export const awardShareBonus = mutation({
 
       // Award profile share bonus: +250 to inbox
       const bonus = 250;
-      const currentInbox = profile.inbox || 0;
+      const currentInbox = profile.coinsInbox || 0;
       const newInbox = currentInbox + bonus;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
       const newTotalShareBonus = (profile.totalShareBonus || 0) + bonus;
 
       await ctx.db.patch(profile._id, {
-        inbox: newInbox,
+        coinsInbox: newInbox,
         lifetimeEarned: newLifetimeEarned,
         totalShareBonus: newTotalShareBonus,
         hasSharedProfile: true,
@@ -1648,13 +1648,13 @@ export const awardShareBonus = mutation({
 
       // Award daily share bonus: +50 to inbox
       const bonus = 50;
-      const currentInbox = profile.inbox || 0;
+      const currentInbox = profile.coinsInbox || 0;
       const newInbox = currentInbox + bonus;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
       const newTotalShareBonus = (profile.totalShareBonus || 0) + bonus;
 
       await ctx.db.patch(profile._id, {
-        inbox: newInbox,
+        coinsInbox: newInbox,
         lifetimeEarned: newLifetimeEarned,
         totalShareBonus: newTotalShareBonus,
         lastShareDate: today,
@@ -1687,14 +1687,14 @@ export const awardShareBonus = mutation({
 
       // Award victory share bonus: +10 to inbox
       const bonus = 10;
-      const currentInbox = profile.inbox || 0;
+      const currentInbox = profile.coinsInbox || 0;
       const newInbox = currentInbox + bonus;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
       const newTotalShareBonus = (profile.totalShareBonus || 0) + bonus;
       const newDailyShares = dailyShares + 1;
 
       await ctx.db.patch(profile._id, {
-        inbox: newInbox,
+        coinsInbox: newInbox,
         lifetimeEarned: newLifetimeEarned,
         totalShareBonus: newTotalShareBonus,
         dailyShares: newDailyShares,
