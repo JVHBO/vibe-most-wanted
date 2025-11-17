@@ -11,28 +11,12 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
-// Create a custom Farcaster wallet for RainbowKit
-const farcasterWallet = (): any => ({
-  id: 'farcaster',
-  name: 'Farcaster',
-  rdns: 'xyz.farcaster',
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiM4NTY1QzQiLz48L3N2Zz4=',
-  iconBackground: '#8565C4',
-  downloadUrls: {},
-  mobile: {
-    getUri: () => '',
-  },
-  qrCode: {
-    getUri: () => '',
-  },
-  createConnector: () => farcasterMiniApp(),
-});
-
-const connectors = connectorsForWallets(
+// Create RainbowKit connectors (for desktop)
+const rainbowKitConnectors = connectorsForWallets(
   [
     {
       groupName: 'Recommended',
-      wallets: [farcasterWallet, rabbyWallet, metaMaskWallet],
+      wallets: [rabbyWallet, metaMaskWallet],
     },
     {
       groupName: 'Others',
@@ -45,11 +29,21 @@ const connectors = connectorsForWallets(
   }
 );
 
+// Add Farcaster connector directly (not through RainbowKit)
+// This connector will be used programmatically in the miniapp
+const allConnectors = [
+  farcasterMiniApp(),
+  ...rainbowKitConnectors,
+];
+
 export const config = createConfig({
   chains: [base],
-  connectors,
+  connectors: allConnectors,
   transports: {
     [base.id]: http(),
   },
   ssr: true,
 });
+
+// Export Farcaster connector separately for direct use
+export const farcasterConnector = farcasterMiniApp();
