@@ -711,14 +711,17 @@ export const claimWeeklyReward = mutation({
     }
 
     const reward = questDef.reward;
-    const newCoins = (profile.coins || 0) + reward;
+    const currentInbox = profile.inbox || 0;
+    const newInbox = currentInbox + reward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + reward;
 
     await ctx.db.patch(profile._id, {
-      coins: newCoins,
+      inbox: newInbox,
       lifetimeEarned: newLifetimeEarned,
       lastUpdated: Date.now(),
     });
+
+    console.log(`📬 Weekly quest reward sent to inbox: ${reward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
 
     // Mark as claimed
     const updatedQuests = { ...progress.quests };
@@ -729,7 +732,7 @@ export const claimWeeklyReward = mutation({
     return {
       success: true,
       reward,
-      newBalance: newCoins,
+      newBalance: newInbox,
       questName: questDef.description,
     };
   },
