@@ -846,8 +846,10 @@ export default function TCGPage() {
         setIsCheckingFarcaster(false);
       }
     };
+
+    // Only run once on mount, not when connect/connectors/isConnected change
     initFarcasterWallet();
-  }, [connect, connectors, isConnected]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // Run ONLY once on mount
 
   // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
