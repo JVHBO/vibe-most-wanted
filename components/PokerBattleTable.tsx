@@ -16,7 +16,6 @@ import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts'
 import { SpectatorEntryModal } from './SpectatorEntryModal';
 import { BettingInterface } from './BettingInterface';
 import { GamePopups } from './GamePopups';
-import { RewardChoiceModal } from './RewardChoiceModal';
 
 interface Card {
   tokenId: string;
@@ -93,7 +92,6 @@ export function PokerBattleTable({
   const finishGameMutation = useMutation(api.pokerBattle.finishGame);
   const recordMatchMutation = useMutation(api.matches.recordMatch);
   const sendToInboxMutation = useMutation(api.vbmsClaim.sendToInbox);
-  const awardPokerCoinsMutation = useMutation(api.economy.awardPokerCoins);
 
   // PvE claim mutations
   const sendPveRewardToInbox = useMutation(api.vbmsClaim.sendPveRewardToInbox);
@@ -223,8 +221,6 @@ export function PokerBattleTable({
 
   // Game-over screen control - prevents multiple screens from overlapping
   const [gameOverShown, setGameOverShown] = useState(false);
-  const [showClaimChoice, setShowClaimChoice] = useState(false);
-  const [claimChoiceMade, setClaimChoiceMade] = useState(false);
   const [createdMatchId, setCreatedMatchId] = useState<Id<"matches"> | null>(null);
 
   // GamePopups control states
@@ -1273,13 +1269,8 @@ export function PokerBattleTable({
   // Handler for closing victory screen
   const handleCloseVictoryScreen = () => {
     setShowWinPopup(false);
-    // Only show claim dialog for VBMS battles with stake
-    // TESTVBMS auto-awards to coins (handled by useEffect)
-    if (selectedAnte > 0 && !isSpectatorMode && selectedToken === 'VBMS') {
-      setShowClaimChoice(true);
-    } else {
-      onClose();
-    }
+    // All rewards go to inbox automatically, close the game
+    onClose();
   };
 
   // Handler for closing defeat screen
@@ -1409,7 +1400,7 @@ export function PokerBattleTable({
         victoryAudioRef.current = null;
       }
     };
-  }, [phase, gameOverShown, selectedAnte, isSpectatorMode, playerScore, opponentScore, soundEnabled, showClaimChoice]);
+  }, [phase, gameOverShown, selectedAnte, isSpectatorMode, playerScore, opponentScore, soundEnabled]);
 
   // Show spectator entry modal when entering spectator mode (regardless of game state)
   useEffect(() => {
@@ -1501,41 +1492,38 @@ export function PokerBattleTable({
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation]);
 
-  // Auto-award TESTVBMS to coins, but let VBMS show choice dialog
+  // ALL rewards go to inbox as TESTVBMS
   useEffect(() => {
     // Works for both CPU mode and PvP mode
     if (phase === 'game-over' && !isSpectatorMode && !battleFinalized) {
       const result = playerScore > opponentScore ? 'win' : 'loss';
 
-      // Only proceed if player won
-      if (result === 'win') {
-        // TESTVBMS: Award to profile.coins immediately (like leaderboard)
-        if (selectedToken === 'TESTVBMS' && createdMatchId) {
-          console.log('[PokerBattle] 💰 Adding TESTVBMS to coins', {
-            address: playerAddress,
-            matchId: createdMatchId,
-            amount: Math.round((selectedAnte * 2) * 0.95),
-            mode: isCPUMode ? 'CPU' : 'PvP'
-          });
+      // Only proceed if player won and has a valid match
+      if (result === 'win' && createdMatchId && selectedAnte > 0) {
+        const rewardAmount = Math.round((selectedAnte * 2) * 0.95);
 
-          awardPokerCoinsMutation({
-            address: playerAddress,
-            matchId: createdMatchId,
+        console.log('[PokerBattle] 💰 Sending TESTVBMS to inbox', {
+          address: playerAddress,
+          matchId: createdMatchId,
+          amount: rewardAmount,
+          mode: isCPUMode ? 'CPU' : 'PvP'
+        });
+
+        sendToInboxMutation({
+          address: playerAddress,
+          amount: rewardAmount,
+          source: isCPUMode ? 'pve' : 'pvp',
+        })
+          .then((result) => {
+            console.log('[PokerBattle] ✅ TESTVBMS sent to inbox:', result);
+            setBattleFinalized(true);
           })
-            .then((result) => {
-              console.log('[PokerBattle] ✅ TESTVBMS added to coins:', result);
-              setBattleFinalized(true);
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to add TESTVBMS:', error);
-            });
-        }
-
-        // VBMS: User choice dialog shows (claim now OR send to inbox)
-        // No automatic action - wait for user decision
+          .catch((error) => {
+            console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox:', error);
+          });
       }
     }
-  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, selectedToken, selectedAnte, createdMatchId, awardPokerCoinsMutation, playerAddress]);
+  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, sendToInboxMutation, playerAddress]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
   useEffect(() => {
@@ -1646,15 +1634,9 @@ export function PokerBattleTable({
     }
   }, [phase, selectedToken, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, sendToInboxMutation, playerAddress]);
 
-  // Auto-close game 10 seconds after it ends (or immediately after choice is made)
+  // Auto-close game 10 seconds after it ends
   useEffect(() => {
     if (phase === 'game-over' && !isSpectatorMode) {
-      // If VBMS battle and choice not made yet, wait longer
-      if (selectedToken === 'VBMS' && !claimChoiceMade) {
-        console.log('[PokerBattle] Waiting for claim choice before closing...');
-        return;
-      }
-
       console.log('[PokerBattle] Game over - will auto-close in 10 seconds');
 
       const timer = setTimeout(() => {
@@ -1664,7 +1646,7 @@ export function PokerBattleTable({
 
       return () => clearTimeout(timer);
     }
-  }, [phase, isSpectatorMode, selectedToken, claimChoiceMade, onClose]);
+  }, [phase, isSpectatorMode, onClose]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
@@ -2728,22 +2710,6 @@ export function PokerBattleTable({
               </button>
             </div>
           </div>
-        )}
-
-        {/* REWARD CHOICE MODAL - Appears after victory for TESTVBMS battles */}
-        {showClaimChoice && (
-          <RewardChoiceModal
-            amount={Math.round((selectedAnte * 2) * 0.95)}
-            source={isCPUMode ? "pve" : "pvp"}
-            onClose={() => {
-              setShowClaimChoice(false);
-              onClose();
-            }}
-            onChoiceMade={(choice) => {
-              console.log('[PokerBattle] Reward choice made:', choice);
-              setClaimChoiceMade(true);
-            }}
-          />
         )}
 
         {/* ROUND WINNER ANNOUNCEMENT - Semi-transparent overlay positioned at top */}
