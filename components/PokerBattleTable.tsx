@@ -242,6 +242,9 @@ export function PokerBattleTable({
   const [gameOverShown, setGameOverShown] = useState(false);
   const [createdMatchId, setCreatedMatchId] = useState<Id<"matches"> | null>(null);
 
+  // Prevent multiple match recordings (useRef persists across renders)
+  const matchRecordedRef = useRef(false);
+
   // GamePopups control states
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [showLossPopup, setShowLossPopup] = useState(false);
@@ -1464,9 +1467,12 @@ export function PokerBattleTable({
 
   // Record match when game ends
   useEffect(() => {
-    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore !== opponentScore) {
+    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && playerScore !== opponentScore && !matchRecordedRef.current) {
       const result = playerScore > opponentScore ? 'win' : 'loss';
       const matchType = isCPUMode ? 'poker-cpu' : 'poker-pvp';
+
+      // Mark as recorded immediately to prevent duplicate calls
+      matchRecordedRef.current = true;
 
       // Record match to history
       recordMatchMutation({
@@ -1505,44 +1511,72 @@ export function PokerBattleTable({
         const finalPot = Math.round((selectedAnte * 2) * 0.95); // After 5% house fee
 
         // Step 1: Finish battle on blockchain (if using VBMS)
-        if (selectedToken === 'VBMS' && room.blockchainBattleId) {
-          console.log('[PokerBattle] Finishing VBMS battle on blockchain...', {
-            battleId: room.blockchainBattleId,
-            winner: winnerId,
-          });
-
-          finishVBMSBattle(room.blockchainBattleId, winnerId as `0x${string}`)
-            .then((txHash) => {
-              console.log('[PokerBattle] ✅ Blockchain battle finished:', txHash);
-
-              // Step 2: Delete Convex room after blockchain finish
-              finishGameMutation({
-                roomId,
-                winnerId: winnerId.toLowerCase(),
-                winnerUsername,
-                finalPot,
-              }).then(() => {
-                console.log('[PokerBattle] Room deleted from Convex');
-                setRoomFinished(true);
-              }).catch((error) => {
-                console.error('[PokerBattle] Failed to delete Convex room:', error);
-              });
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to finish blockchain battle:', error);
-              // Even if blockchain fails, try to clean up Convex room
-              finishGameMutation({
-                roomId,
-                winnerId: winnerId.toLowerCase(),
-                winnerUsername,
-                finalPot,
-              }).then(() => {
-                console.log('[PokerBattle] Room deleted from Convex (after blockchain error)');
-                setRoomFinished(true);
-              }).catch((error2) => {
-                console.error('[PokerBattle] Failed to delete Convex room:', error2);
-              });
+        if (selectedToken === 'VBMS') {
+          if (!room.blockchainBattleId) {
+            console.error('[PokerBattle] ❌ CRITICAL: VBMS battle has no blockchainBattleId!', {
+              roomId,
+              room,
+              selectedToken,
             });
+            toast.error('Error: VBMS battle missing blockchain ID. Please contact support.');
+
+            // Still clean up Convex room
+            finishGameMutation({
+              roomId,
+              winnerId: winnerId.toLowerCase(),
+              winnerUsername,
+              finalPot,
+            }).then(() => {
+              setRoomFinished(true);
+            });
+          } else {
+            console.log('[PokerBattle] Finishing VBMS battle on blockchain...', {
+              battleId: room.blockchainBattleId,
+              winner: winnerId,
+              finalPot,
+            });
+
+            finishVBMSBattle(room.blockchainBattleId, winnerId as `0x${string}`)
+              .then((txHash) => {
+                console.log('[PokerBattle] ✅ Blockchain battle finished:', txHash);
+                toast.success(`Victory! ${finalPot} VBMS won!`, {
+                  description: 'Funds transferred via blockchain',
+                  duration: 5000,
+                });
+
+                // Step 2: Delete Convex room after blockchain finish
+                finishGameMutation({
+                  roomId,
+                  winnerId: winnerId.toLowerCase(),
+                  winnerUsername,
+                  finalPot,
+                }).then(() => {
+                  console.log('[PokerBattle] Room deleted from Convex');
+                  setRoomFinished(true);
+                }).catch((error) => {
+                  console.error('[PokerBattle] Failed to delete Convex room:', error);
+                });
+              })
+              .catch((error) => {
+                console.error('[PokerBattle] ❌ Failed to finish blockchain battle:', error);
+                toast.error('Failed to finalize VBMS battle on blockchain', {
+                  description: error.message || 'Please try again',
+                });
+
+                // Even if blockchain fails, try to clean up Convex room
+                finishGameMutation({
+                  roomId,
+                  winnerId: winnerId.toLowerCase(),
+                  winnerUsername,
+                  finalPot,
+                }).then(() => {
+                  console.log('[PokerBattle] Room deleted from Convex (after blockchain error)');
+                  setRoomFinished(true);
+                }).catch((error2) => {
+                  console.error('[PokerBattle] Failed to delete Convex room:', error2);
+                });
+              });
+          }
         } else {
           // For TESTVBMS/NFT battles, just delete Convex room (no blockchain)
           finishGameMutation({
@@ -1561,10 +1595,10 @@ export function PokerBattleTable({
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation, roomFinished, selectedToken, finishVBMSBattle]);
 
-  // ALL rewards go to inbox as TESTVBMS
+  // TESTVBMS/NFT rewards go to inbox (not VBMS - that uses blockchain)
   useEffect(() => {
-    // Works for both CPU mode and PvP mode
-    if (phase === 'game-over' && !isSpectatorMode && !battleFinalized) {
+    // Only for TESTVBMS or VIBE_NFT battles (CPU or PvP)
+    if (phase === 'game-over' && !isSpectatorMode && !battleFinalized && selectedToken !== 'VBMS') {
       const result = playerScore > opponentScore ? 'win' : 'loss';
 
       // Only proceed if player won and has a valid match
@@ -1575,6 +1609,7 @@ export function PokerBattleTable({
           address: playerAddress,
           matchId: createdMatchId,
           amount: rewardAmount,
+          selectedToken,
           mode: isCPUMode ? 'CPU' : 'PvP'
         });
 
@@ -1586,13 +1621,22 @@ export function PokerBattleTable({
           .then((result) => {
             console.log('[PokerBattle] ✅ TESTVBMS sent to inbox:', result);
             setBattleFinalized(true);
+
+            // Show success toast
+            toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
+              description: 'Check your inbox to claim',
+              duration: 5000,
+            });
           })
           .catch((error) => {
             console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox:', error);
+            toast.error('Failed to send reward to inbox', {
+              description: error.message || 'Please try again',
+            });
           });
       }
     }
-  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, sendToInboxMutation, playerAddress]);
+  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendToInboxMutation, playerAddress]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
   useEffect(() => {
@@ -1643,54 +1687,22 @@ export function PokerBattleTable({
   // REMOVED: Auto-close room (user wants to see victory screen without auto-closing)
   // Room is marked as 'finished' in database but UI stays open for user to close manually
 
-  // Safety timeout: Auto-save VBMS to inbox if player doesn't choose within 30 seconds
-  useEffect(() => {
-    if (phase === 'game-over' && selectedToken === 'VBMS' && !isSpectatorMode && !battleFinalized) {
-      const result = playerScore > opponentScore ? 'win' : 'loss';
+  // Note: VBMS battles are finalized via blockchain contract (finishVBMSBattle) in the useEffect above
+  // No inbox system for VBMS battles - rewards are transferred directly via smart contract
 
-      if (result === 'win' && createdMatchId) {
-        console.log('[PokerBattle] 🛡️ Safety timeout started - auto-save to inbox in 30s if no choice made', {
-          mode: isCPUMode ? 'CPU' : 'PvP'
-        });
-
-        const safetyTimer = setTimeout(() => {
-          console.log('[PokerBattle] ⏰ Safety timeout triggered - auto-saving VBMS to inbox');
-
-          sendToInboxMutation({
-            address: playerAddress,
-            matchId: createdMatchId,
-          })
-            .then((result) => {
-              console.log('[PokerBattle] ✅ VBMS auto-saved to inbox (safety timeout):', result);
-              setBattleFinalized(true);
-
-              toast.success(
-                `📬 ${Math.round((selectedAnte * 2) * 0.95)} VBMS saved to inbox!`,
-                {
-                  description: 'Claim anytime from your profile',
-                  duration: 5000,
-                }
-              );
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to auto-save to inbox:', error);
-            });
-        }, 30000); // 30 seconds safety timeout
-
-        return () => clearTimeout(safetyTimer);
-      }
-    }
-  }, [phase, selectedToken, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, sendToInboxMutation, playerAddress]);
-
-  // Auto-close game 10 seconds after it ends
+  // Auto-close game after it ends
   useEffect(() => {
     if (phase === 'game-over' && !isSpectatorMode) {
-      console.log('[PokerBattle] Game over - will auto-close in 10 seconds');
+      console.log('[PokerBattle] Game over - will auto-close in 15 seconds', {
+        selectedToken,
+        roomFinished,
+        isCPUMode
+      });
 
       const timer = setTimeout(() => {
         console.log('[PokerBattle] Auto-closing game...');
         onClose();
-      }, 10000); // 10 seconds
+      }, 15000); // 15 seconds to see victory screen
 
       return () => clearTimeout(timer);
     }

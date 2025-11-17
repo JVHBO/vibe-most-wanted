@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# Local private folders
+prints/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
