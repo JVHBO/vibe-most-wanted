@@ -1505,44 +1505,72 @@ export function PokerBattleTable({
         const finalPot = Math.round((selectedAnte * 2) * 0.95); // After 5% house fee
 
         // Step 1: Finish battle on blockchain (if using VBMS)
-        if (selectedToken === 'VBMS' && room.blockchainBattleId) {
-          console.log('[PokerBattle] Finishing VBMS battle on blockchain...', {
-            battleId: room.blockchainBattleId,
-            winner: winnerId,
-          });
-
-          finishVBMSBattle(room.blockchainBattleId, winnerId as `0x${string}`)
-            .then((txHash) => {
-              console.log('[PokerBattle] ✅ Blockchain battle finished:', txHash);
-
-              // Step 2: Delete Convex room after blockchain finish
-              finishGameMutation({
-                roomId,
-                winnerId: winnerId.toLowerCase(),
-                winnerUsername,
-                finalPot,
-              }).then(() => {
-                console.log('[PokerBattle] Room deleted from Convex');
-                setRoomFinished(true);
-              }).catch((error) => {
-                console.error('[PokerBattle] Failed to delete Convex room:', error);
-              });
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to finish blockchain battle:', error);
-              // Even if blockchain fails, try to clean up Convex room
-              finishGameMutation({
-                roomId,
-                winnerId: winnerId.toLowerCase(),
-                winnerUsername,
-                finalPot,
-              }).then(() => {
-                console.log('[PokerBattle] Room deleted from Convex (after blockchain error)');
-                setRoomFinished(true);
-              }).catch((error2) => {
-                console.error('[PokerBattle] Failed to delete Convex room:', error2);
-              });
+        if (selectedToken === 'VBMS') {
+          if (!room.blockchainBattleId) {
+            console.error('[PokerBattle] ❌ CRITICAL: VBMS battle has no blockchainBattleId!', {
+              roomId,
+              room,
+              selectedToken,
             });
+            toast.error('Error: VBMS battle missing blockchain ID. Please contact support.');
+
+            // Still clean up Convex room
+            finishGameMutation({
+              roomId,
+              winnerId: winnerId.toLowerCase(),
+              winnerUsername,
+              finalPot,
+            }).then(() => {
+              setRoomFinished(true);
+            });
+          } else {
+            console.log('[PokerBattle] Finishing VBMS battle on blockchain...', {
+              battleId: room.blockchainBattleId,
+              winner: winnerId,
+              finalPot,
+            });
+
+            finishVBMSBattle(room.blockchainBattleId, winnerId as `0x${string}`)
+              .then((txHash) => {
+                console.log('[PokerBattle] ✅ Blockchain battle finished:', txHash);
+                toast.success(`Victory! ${finalPot} VBMS won!`, {
+                  description: 'Funds transferred via blockchain',
+                  duration: 5000,
+                });
+
+                // Step 2: Delete Convex room after blockchain finish
+                finishGameMutation({
+                  roomId,
+                  winnerId: winnerId.toLowerCase(),
+                  winnerUsername,
+                  finalPot,
+                }).then(() => {
+                  console.log('[PokerBattle] Room deleted from Convex');
+                  setRoomFinished(true);
+                }).catch((error) => {
+                  console.error('[PokerBattle] Failed to delete Convex room:', error);
+                });
+              })
+              .catch((error) => {
+                console.error('[PokerBattle] ❌ Failed to finish blockchain battle:', error);
+                toast.error('Failed to finalize VBMS battle on blockchain', {
+                  description: error.message || 'Please try again',
+                });
+
+                // Even if blockchain fails, try to clean up Convex room
+                finishGameMutation({
+                  roomId,
+                  winnerId: winnerId.toLowerCase(),
+                  winnerUsername,
+                  finalPot,
+                }).then(() => {
+                  console.log('[PokerBattle] Room deleted from Convex (after blockchain error)');
+                  setRoomFinished(true);
+                }).catch((error2) => {
+                  console.error('[PokerBattle] Failed to delete Convex room:', error2);
+                });
+              });
+          }
         } else {
           // For TESTVBMS/NFT battles, just delete Convex room (no blockchain)
           finishGameMutation({
