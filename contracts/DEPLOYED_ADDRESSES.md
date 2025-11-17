@@ -19,19 +19,23 @@
 ```
 🔗 [View on Basescan](https://basescan.org/address/0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b)
 
-### VBMSPokerBattle V4 (PvP Stakes) ⭐ CURRENT
+### VBMSPokerBattle V5 (PvP Stakes) ⭐ CURRENT
 ```
-0xce766404d1C4788078C4E77D12B13793afceD867
+0x01090882A1Cb18CFCA89cB91edE798F0308aB950
 ```
-🔗 [View on Basescan](https://basescan.org/address/0xce766404d1C4788078C4E77D12B13793afceD867)
-🔗 [View on Blockscout](https://base.blockscout.com/address/0xce766404d1C4788078C4E77D12B13793afceD867)
+🔗 [View on Basescan](https://basescan.org/address/0x01090882A1Cb18CFCA89cB91edE798F0308aB950)
+🔗 [View on Blockscout](https://base.blockscout.com/address/0x01090882A1Cb18CFCA89cB91edE798F0308aB950)
 
-**V4 Improvements:**
-- ✅ No cancel cooldown (can cancel immediately!)
-- ✅ Admin emergency functions for orphaned battles
-- ✅ Better event emissions
-- ✅ Guaranteed cleanup in all code paths
-- 🆕 **Emergency withdraw function** - Owner can rescue stuck tokens
+**V5 Improvements:**
+- 🎯 **MAJOR FIX:** Removed activeBattles check - players never get stuck!
+- ✅ Players can create new battles immediately (no TX needed at end)
+- ✅ Backend Convex validates "one active battle per player"
+- ✅ All V4 features maintained:
+  - ✅ No cancel cooldown (can cancel immediately!)
+  - ✅ Admin emergency functions for orphaned battles
+  - ✅ Better event emissions
+  - ✅ Guaranteed cleanup in all code paths
+  - 🆕 **Emergency withdraw function** - Owner can rescue stuck tokens
 
 **Constructor Parameters:**
 - VBMS Token: `0xb03439567cd22f278b21e1ffcdfb8e1696763827`
@@ -39,6 +43,7 @@
 - Backend Signer: `0xd99624896203B1dd1AaED4945bF4C76e489B7009`
 
 **Previous Versions (deprecated):**
+- V4: `0xce766404d1C4788078C4E77D12B13793afceD867`
 - V3: `0xD72A5B7139224D5041d0eE2a8AD837747E24Ec37`
 - V2: `0x954af331cc23642978Cbdbdbd7c28B13A510952E`
 
