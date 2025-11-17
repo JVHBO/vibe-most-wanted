@@ -5793,25 +5793,6 @@ export default function TCGPage() {
         tempSelected={tempSelectedDifficulty}
       />
 
-      {/* Claude AI Disclaimer - Footer */}
-      <div className="mt-8 mb-4 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 border-2 border-purple-400/30 rounded-xl p-3 md:p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#A855F7" strokeWidth="2" fill="#A855F7" fillOpacity="0.2"/>
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-purple-300 font-bold text-sm md:text-base mb-1">
-              {t('claudeDisclaimerTitle')}
-            </p>
-            <p className="text-purple-200/90 text-xs md:text-sm leading-relaxed">
-              {t('claudeDisclaimerText')}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Easter Egg - Runaway Image */}
       <RunawayEasterEgg />
 
