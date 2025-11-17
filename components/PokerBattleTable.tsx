@@ -91,7 +91,7 @@ export function PokerBattleTable({
   const resolveRoundMutation = useMutation(api.pokerBattle.resolveRound);
   const finishGameMutation = useMutation(api.pokerBattle.finishGame);
   const recordMatchMutation = useMutation(api.matches.recordMatch);
-  const sendToInboxMutation = useMutation(api.vbmsClaim.sendToInbox);
+  const sendToInboxMutation = useMutation(api.vbmsClaim.sendPveRewardToInbox);
 
   // PvE claim mutations
   const sendPveRewardToInbox = useMutation(api.vbmsClaim.sendPveRewardToInbox);
@@ -249,6 +249,7 @@ export function PokerBattleTable({
   const [currentRound, setCurrentRound] = useState(1);
   const [pot, setPot] = useState(0);
   const [battleFinalized, setBattleFinalized] = useState(false);
+  const [roomFinished, setRoomFinished] = useState(false);
 
   // Game-over screen control - prevents multiple screens from overlapping
   const [gameOverShown, setGameOverShown] = useState(false);
@@ -1498,7 +1499,7 @@ export function PokerBattleTable({
       });
 
       // Mark room as finished (only for PvP mode)
-      if (!isCPUMode && roomId && room) {
+      if (!isCPUMode && roomId && room && !roomFinished) {
         const winnerId = playerScore > opponentScore
           ? (isHost ? room.hostAddress : room.guestAddress)
           : (isHost ? room.guestAddress : room.hostAddress);
@@ -1514,12 +1515,13 @@ export function PokerBattleTable({
           finalPot,
         }).then(() => {
           console.log('[PokerBattle] Room marked as finished');
+          setRoomFinished(true);
         }).catch((error) => {
           console.error('[PokerBattle] Failed to finish room:', error);
         });
       }
     }
-  }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation]);
+  }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation, roomFinished]);
 
   // ALL rewards go to inbox as TESTVBMS
   useEffect(() => {
@@ -1541,7 +1543,7 @@ export function PokerBattleTable({
         sendToInboxMutation({
           address: playerAddress,
           amount: rewardAmount,
-          source: isCPUMode ? 'pve' : 'pvp',
+          difficulty: isCPUMode ? difficulty : undefined,
         })
           .then((result) => {
             console.log('[PokerBattle] ✅ TESTVBMS sent to inbox:', result);
