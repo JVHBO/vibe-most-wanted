@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
@@ -15,13 +14,16 @@ export function FarcasterNotificationRegistration() {
   useEffect(() => {
     async function registerNotificationToken() {
       try {
-        // Only run in Farcaster context
+        // Only run in browser
         if (typeof window === 'undefined') {
           return;
         }
 
+        // Dynamically import SDK to avoid SSR issues
+        const { sdk } = await import('@farcaster/miniapp-sdk');
+
         // Check if SDK is available (only in Farcaster)
-        if (!sdk?.context) {
+        if (!sdk) {
           return;
         }
 
@@ -57,7 +59,7 @@ export function FarcasterNotificationRegistration() {
         }
       } catch (error) {
         // Silent fail if not in Farcaster - don't break the app
-        console.log('ℹ️ Not in Farcaster context, skipping notification registration');
+        // This is expected when not in Farcaster miniapp
       }
     }
 
