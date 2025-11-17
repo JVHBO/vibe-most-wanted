@@ -3650,7 +3650,7 @@ export default function TCGPage() {
             {/* Current Balance */}
             <div className="mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 bg-vintage-black/50 rounded-lg border border-vintage-gold/20 text-center">
               <p className="text-[10px] sm:text-xs text-vintage-burnt-gold mb-0.5 sm:mb-1">YOUR CURRENT BALANCE</p>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold">{pvpPreviewData.playerCoins} $TESTVBMS</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold">{parseFloat(vbmsBlockchainBalance || '0').toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} VBMS</p>
             </div>
 
             {/* Action Buttons */}
