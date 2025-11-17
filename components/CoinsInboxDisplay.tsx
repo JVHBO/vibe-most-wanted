@@ -43,10 +43,9 @@ export function CoinsInboxDisplay({ compact = false, userAddress }: CoinsInboxDi
   const isLoading = compact
     ? (inboxStatus === undefined) // Only wait for Convex query, not wallet address
     : (!address || !inboxStatus || isBalanceLoading);
-  const vbmsInbox = inboxStatus?.coinsInbox || 0; // VBMS inbox (from backend - NOT blockchain wallet)
-  const testvbmsBalance = inboxStatus?.coins || 0; // TESTVBMS in-game balance (can be converted)
+  const testvbmsInbox = inboxStatus?.coinsInbox || 0; // TESTVBMS inbox (from PvE/PvP victories - can be converted to VBMS)
   const vbmsBalance = parseFloat(vbmsWalletBalance || '0'); // Actual VBMS token balance from blockchain
-  const hasUncollected = vbmsInbox > 0 || testvbmsBalance >= 100; // Show dot if VBMS inbox OR TESTVBMS ready to convert (min 100)
+  const hasUncollected = testvbmsInbox >= 100; // Show dot if TESTVBMS ready to convert (min 100)
 
   // Compact version for miniapp (icon only, like other buttons)
   if (compact) {
