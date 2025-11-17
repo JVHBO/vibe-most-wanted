@@ -1510,60 +1510,23 @@ export function PokerBattleTable({
           : (isHost ? room.guestUsername : room.hostUsername);
         const finalPot = Math.round((selectedAnte * 2) * 0.95); // After 5% house fee
 
-        // STEP 1: Finish blockchain battle FIRST (VBMS only - critical to unlock funds)
-        if (selectedToken === 'VBMS' && room.blockchainBattleId) {
-          console.log('[PokerBattle] 💰 Finishing VBMS battle on blockchain FIRST...', {
-            battleId: room.blockchainBattleId,
-            winner: winnerId,
-            finalPot,
-          });
-
-          finishVBMSBattle(room.blockchainBattleId, winnerId as `0x${string}`)
-            .then((txHash) => {
-              console.log('[PokerBattle] ✅ Blockchain battle finished:', txHash);
-              toast.success(`Victory! ${finalPot} VBMS unlocked!`, {
-                description: 'Blockchain transaction confirmed',
-                duration: 5000,
-              });
-
-              // STEP 2: ONLY AFTER blockchain TX succeeds, delete Convex room
-              console.log('[PokerBattle] 🗑️ Now deleting Convex room...');
-              finishGameMutation({
-                roomId,
-                winnerId: winnerId.toLowerCase(),
-                winnerUsername,
-                finalPot,
-              }).then(() => {
-                console.log('[PokerBattle] ✅ Room deleted from Convex');
-                setRoomFinished(true);
-              }).catch((error) => {
-                console.error('[PokerBattle] ❌ Failed to delete Convex room:', error);
-                setRoomFinished(true);
-              });
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to finish blockchain battle:', error);
-              toast.error('Failed to finalize VBMS battle on blockchain', {
-                description: error.message || 'Please try again',
-              });
-              // Don't delete room if blockchain TX failed - allow retry
-            });
-        } else {
-          // Non-VBMS battles: Delete room immediately (no blockchain TX needed)
-          console.log('[PokerBattle] 🗑️ Deleting Convex room (non-VBMS mode)...');
-          finishGameMutation({
-            roomId,
-            winnerId: winnerId.toLowerCase(),
-            winnerUsername,
-            finalPot,
-          }).then(() => {
-            console.log('[PokerBattle] ✅ Room deleted from Convex');
-            setRoomFinished(true);
-          }).catch((error) => {
-            console.error('[PokerBattle] ❌ Failed to delete Convex room:', error);
-            setRoomFinished(true);
-          });
-        }
+        // ALWAYS delete Convex room immediately when game ends (all modes)
+        // Players receive TESTVBMS rewards in inbox (same as PvE)
+        // VBMS funds stay in contract - admin withdraws later via emergencyWithdraw
+        console.log('[PokerBattle] 🗑️ Deleting Convex room immediately...');
+        finishGameMutation({
+          roomId,
+          winnerId: winnerId.toLowerCase(),
+          winnerUsername,
+          finalPot,
+        }).then(() => {
+          console.log('[PokerBattle] ✅ Room deleted from Convex');
+          setRoomFinished(true);
+        }).catch((error) => {
+          console.error('[PokerBattle] ❌ Failed to delete Convex room:', error);
+          // Mark as finished anyway so game can proceed
+          setRoomFinished(true);
+        });
       }
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation, roomFinished, selectedToken, finishVBMSBattle]);
