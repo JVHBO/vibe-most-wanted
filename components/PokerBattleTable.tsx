@@ -1500,34 +1500,10 @@ export function PokerBattleTable({
         console.error('[PokerBattle] Failed to record match:', error);
       });
 
-      // ALWAYS delete Convex room immediately when game ends (PvP mode only - CPU doesn't have rooms)
-      if (!isCPUMode && roomId && room && !roomFinished) {
-        const winnerId = playerScore > opponentScore
-          ? (isHost ? room.hostAddress : room.guestAddress)
-          : (isHost ? room.guestAddress : room.hostAddress);
-        const winnerUsername = playerScore > opponentScore
-          ? (isHost ? room.hostUsername : room.guestUsername)
-          : (isHost ? room.guestUsername : room.hostUsername);
-        const finalPot = Math.round((selectedAnte * 2) * 0.95); // After 5% house fee
-
-        // ALWAYS delete Convex room immediately when game ends (all modes)
-        // Players receive TESTVBMS rewards in inbox (same as PvE)
-        // VBMS funds stay in contract - admin withdraws later via emergencyWithdraw
-        console.log('[PokerBattle] 🗑️ Deleting Convex room immediately...');
-        finishGameMutation({
-          roomId,
-          winnerId: winnerId.toLowerCase(),
-          winnerUsername,
-          finalPot,
-        }).then(() => {
-          console.log('[PokerBattle] ✅ Room deleted from Convex');
-          setRoomFinished(true);
-        }).catch((error) => {
-          console.error('[PokerBattle] ❌ Failed to delete Convex room:', error);
-          // Mark as finished anyway so game can proceed
-          setRoomFinished(true);
-        });
-      }
+      // Room cleanup is now automatic - handled by the useEffect that watches room.status === 'finished'
+      // VBMS: Auto-calls finishBattle TX → then deletes room
+      // Non-VBMS: Deletes room immediately
+      console.log('[PokerBattle] Match recorded - room cleanup will happen automatically when backend marks as finished');
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation, roomFinished, selectedToken, finishVBMSBattle]);
 
@@ -1573,6 +1549,65 @@ export function PokerBattleTable({
       }
     }
   }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendToInboxMutation, playerAddress]);
+
+  // Auto-finalize VBMS blockchain battle when room becomes "finished"
+  useEffect(() => {
+    if (!isCPUMode && room && room.status === 'finished' && selectedToken === 'VBMS' && room.blockchainBattleId && !roomFinished) {
+      console.log('[PokerBattle] 🔐 Room marked as finished - auto-finalizing blockchain battle...', {
+        battleId: room.blockchainBattleId,
+        winnerId: room.winnerId,
+        winnerUsername: room.winnerUsername,
+      });
+
+      // Automatically call finishBattle TX without user interaction
+      finishVBMSBattle(room.blockchainBattleId, room.winnerId as `0x${string}`)
+        .then((txHash) => {
+          console.log('[PokerBattle] ✅ Blockchain battle auto-finalized:', txHash);
+          toast.success('Battle finalized on blockchain!', {
+            description: 'activeBattles cleared - you can create new battles',
+            duration: 5000,
+          });
+
+          // Now delete the Convex room
+          finishGameMutation({
+            roomId: room.roomId,
+            winnerId: room.winnerId.toLowerCase(),
+            winnerUsername: room.winnerUsername,
+            finalPot: room.finalPot || 0,
+          }).then(() => {
+            console.log('[PokerBattle] ✅ Room deleted from Convex after blockchain TX');
+            setRoomFinished(true);
+          }).catch((error) => {
+            console.error('[PokerBattle] ❌ Failed to delete room:', error);
+            setRoomFinished(true);
+          });
+        })
+        .catch((error) => {
+          console.error('[PokerBattle] ❌ Auto-finalize failed:', error);
+          toast.error('Failed to finalize blockchain battle', {
+            description: 'Please refresh and try again',
+            duration: 8000,
+          });
+        });
+    }
+
+    // For non-VBMS battles, delete room immediately when finished
+    if (!isCPUMode && room && room.status === 'finished' && selectedToken !== 'VBMS' && !roomFinished) {
+      console.log('[PokerBattle] 🗑️ Non-VBMS room finished - deleting immediately...');
+      finishGameMutation({
+        roomId: room.roomId,
+        winnerId: room.winnerId.toLowerCase(),
+        winnerUsername: room.winnerUsername,
+        finalPot: room.finalPot || 0,
+      }).then(() => {
+        console.log('[PokerBattle] ✅ Room deleted from Convex');
+        setRoomFinished(true);
+      }).catch((error) => {
+        console.error('[PokerBattle] ❌ Failed to delete room:', error);
+        setRoomFinished(true);
+      });
+    }
+  }, [room, isCPUMode, selectedToken, roomFinished, finishVBMSBattle, finishGameMutation]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
   useEffect(() => {
