@@ -614,16 +614,19 @@ export function PokerBattleTable({
         rawCard: card
       });
 
-      const cardData = {
+      // Build card data, only including optional fields if they exist
+      const cardData: any = {
         tokenId: card.tokenId,
-        collection: card.collection,
         power: card.power || 0,
         imageUrl: card.imageUrl || card.image || '',
         name: card.name || 'Unknown',
         rarity: card.rarity || 'common',
-        foil: card.foil,
-        wear: card.wear,
       };
+
+      // Only add optional fields if they have values
+      if (card.collection) cardData.collection = card.collection;
+      if (card.foil) cardData.foil = card.foil;
+      if (card.wear) cardData.wear = card.wear;
 
       console.log('[PokerBattle] Prepared card data:', cardData);
 
