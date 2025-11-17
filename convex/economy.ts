@@ -1359,21 +1359,8 @@ export const recordAttackResult = mutation({
       }
 
       // No daily cap for attack mode - limited by 5 attacks/day instead
-      // Award to inbox (or just calculate if skipCoins)
-      if (!args.skipCoins) {
-        const currentInbox = profile.coinsInbox || 0;
-        await ctx.db.patch(profile._id, {
-          coinsInbox: currentInbox + totalReward,
-          lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
-          winStreak: newStreak,
-          lastWinTimestamp: Date.now(),
-          dailyLimits: {
-            ...dailyLimits,
-            pvpMatches: dailyLimits.pvpMatches + 1,
-          },
-        });
-        console.log(`📬 Attack reward sent to inbox: ${totalReward} TESTVBMS for ${normalizedPlayerAddress}. Inbox: ${currentInbox} → ${currentInbox + totalReward}`);
-      }
+      // Award will be applied in final profile update (STEP 5)
+      console.log(`📬 Attack reward will be added to inbox: ${totalReward} TESTVBMS for ${normalizedPlayerAddress}`);
       newCoins = profile.coins || 0; // Keep current balance for return value
     } else if (args.result === 'loss') {
       // LOSER: Deduct coins AND create inbox debt if needed
@@ -1496,7 +1483,7 @@ export const recordAttackResult = mutation({
     }
 
     // Update profile atomically (all fields at once)
-    await ctx.db.patch(profile._id, {
+    const updateData: any = {
       coins: newCoins,
       lifetimeEarned: won ? (profile.lifetimeEarned || 0) + totalReward : profile.lifetimeEarned,
       lifetimeSpent: !won && totalReward < 0 ? (profile.lifetimeSpent || 0) + Math.abs(totalReward) : profile.lifetimeSpent,
@@ -1510,7 +1497,16 @@ export const recordAttackResult = mutation({
       },
       rematchesToday: isRevenge ? (profile.rematchesToday || 0) + 1 : profile.rematchesToday,
       lastUpdated: Date.now(),
-    });
+    };
+
+    // Add coinsInbox update for wins (skip if skipCoins flag is set)
+    if (won && !args.skipCoins) {
+      const currentInbox = profile.coinsInbox || 0;
+      updateData.coinsInbox = currentInbox + totalReward;
+      console.log(`📬 Attack reward sent to inbox: ${totalReward} TESTVBMS. Inbox: ${currentInbox} → ${updateData.coinsInbox}`);
+    }
+
+    await ctx.db.patch(profile._id, updateData);
 
     // ===== STEP 6: Get and return updated profile =====
     const updatedProfile = await ctx.db.get(profile._id);
