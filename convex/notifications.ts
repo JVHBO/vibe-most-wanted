@@ -54,34 +54,44 @@ export const saveToken = mutation({
     url: v.string(),
   },
   handler: async (ctx, { fid, token, url }) => {
+    // Validate inputs
+    if (!fid || !token || !url) {
+      throw new Error(`Invalid input: fid=${fid}, token=${token ? 'present' : 'missing'}, url=${url ? 'present' : 'missing'}`);
+    }
+
     const now = Date.now();
 
-    // Check if token already exists
-    const existing = await ctx.db
-      .query("notificationTokens")
-      .withIndex("by_fid", (q) => q.eq("fid", fid))
-      .first();
+    try {
+      // Check if token already exists
+      const existing = await ctx.db
+        .query("notificationTokens")
+        .withIndex("by_fid", (q) => q.eq("fid", fid))
+        .first();
 
-    if (existing) {
-      // Update existing token
-      await ctx.db.patch(existing._id, {
-        token,
-        url,
-        lastUpdated: now,
-      });
-      console.log(`✅ Updated notification token for FID ${fid}`);
-      return existing._id;
-    } else {
-      // Create new token
-      const newId = await ctx.db.insert("notificationTokens", {
-        fid,
-        token,
-        url,
-        createdAt: now,
-        lastUpdated: now,
-      });
-      console.log(`✅ Created notification token for FID ${fid}`);
-      return newId;
+      if (existing) {
+        // Update existing token
+        await ctx.db.patch(existing._id, {
+          token,
+          url,
+          lastUpdated: now,
+        });
+        console.log(`✅ Updated notification token for FID ${fid}`);
+        return existing._id;
+      } else {
+        // Create new token
+        const newId = await ctx.db.insert("notificationTokens", {
+          fid,
+          token,
+          url,
+          createdAt: now,
+          lastUpdated: now,
+        });
+        console.log(`✅ Created notification token for FID ${fid}`);
+        return newId;
+      }
+    } catch (error: any) {
+      console.error(`❌ Error saving notification token for FID ${fid}:`, error);
+      throw new Error(`Failed to save notification token: ${error.message}`);
     }
   },
 });

@@ -30,12 +30,20 @@ export function FarcasterNotificationRegistration() {
         if (notificationDetails?.notificationDetails) {
           const { token, url } = notificationDetails.notificationDetails;
 
+          // Validate token and url before saving
+          if (!token || !url) {
+            console.log('⚠️ Missing token or url from Farcaster SDK:', { token, url });
+            return;
+          }
+
           // Save to Convex
           await saveToken({
             fid,
             token,
             url,
           });
+
+          console.log('✅ Notification token registered successfully');
         }
       } catch (error) {
         console.error('Error registering notification token:', error);
