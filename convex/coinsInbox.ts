@@ -104,6 +104,7 @@ export const getInboxStatus = query({
     return {
       coinsInbox: profile.coinsInbox || 0,
       coins: profile.coins || 0,
+      inbox: profile.inbox || 0, // VBMS tokens from leaderboard/rewards
       lifetimeEarned: profile.lifetimeEarned || 0,
     };
   },
