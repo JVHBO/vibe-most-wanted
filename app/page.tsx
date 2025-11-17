@@ -4643,6 +4643,7 @@ export default function TCGPage() {
                       >
                         <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
                         <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
+                        <option value="vbst" className="bg-vintage-charcoal text-vintage-gold">VBST</option>
                         <option value="americanfootball" className="bg-vintage-charcoal text-vintage-gold">AFCL</option>
                         <option value="gmvbrs" className="bg-vintage-charcoal text-vintage-gold">VBRS</option>
                       </select>
