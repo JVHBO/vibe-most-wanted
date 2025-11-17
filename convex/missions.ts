@@ -374,14 +374,17 @@ export const claimAllMissions = mutation({
       return sum + boostedReward;
     }, 0);
 
-    // Award coins
-    const newBalance = (profile.coins || 0) + totalReward;
+    // Award to inbox (not balance)
+    const currentInbox = profile.inbox || 0;
+    const newInbox = currentInbox + totalReward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + totalReward;
 
     await ctx.db.patch(profile._id, {
-      coins: newBalance,
+      inbox: newInbox,
       lifetimeEarned: newLifetimeEarned,
     });
+
+    console.log(`📬 Mission rewards sent to inbox: ${totalReward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
 
     // Mark all as claimed
     const now = Date.now();
@@ -397,7 +400,7 @@ export const claimAllMissions = mutation({
       success: true,
       claimed: missions.length,
       totalReward,
-      newBalance,
+      newBalance: newInbox,
     };
   },
 });
