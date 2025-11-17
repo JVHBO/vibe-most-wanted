@@ -42,8 +42,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   }, []);
 
   const claimInboxAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
-  const prepareInboxClaim = useAction(api.vbmsClaim.prepareInboxClaim);
-  const recordInboxClaim = useMutation(api.vbmsClaim.recordInboxClaim);
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const { claimVBMS } = useClaimVBMS();
@@ -98,20 +96,19 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     }
   };
 
-  const vbmsInbox = inboxStatus.inbox || 0; // VBMS inbox (TESTVBMS from PvE)
-  const testvbmsBalance = inboxStatus.coins || 0; // TESTVBMS balance (from PvP/Leaderboard)
-  const canClaimTESTVBMS = vbmsInbox >= 1 && !isProcessing;
-  const canClaimVBMS = vbmsInbox >= 100 && !isProcessing;
+  const inboxAmount = inboxStatus.inbox || 0; // TESTVBMS no inbox
+  const testvbmsBalance = inboxStatus.coins || 0; // TESTVBMS no saldo
+  const canClaimInbox = inboxAmount >= 1 && !isProcessing;
   const canConvertTESTVBMS = testvbmsBalance >= 100 && !isProcessing;
 
-  // Claim inbox as TESTVBMS (instant, no gas)
-  const handleClaimTESTVBMS = async () => {
+  // Claim inbox → adiciona ao saldo TESTVBMS (instant, no gas)
+  const handleClaimInbox = async () => {
     if (!address) {
       toast.error("Conecte sua carteira");
       return;
     }
 
-    if (!canClaimTESTVBMS) {
+    if (!canClaimInbox) {
       toast.error("Inbox vazio");
       return;
     }
@@ -123,81 +120,11 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         onClose();
       }, 1500);
     } catch (error: any) {
-      toast.error(error.message || "Erro ao coletar TESTVBMS");
+      toast.error(error.message || "Erro ao coletar inbox");
     }
   };
 
-  // Claim inbox as VBMS blockchain tokens
-  const handleClaimVBMS = async () => {
-    if (!address) {
-      toast.error("Conecte sua carteira");
-      return;
-    }
-
-    if (!canClaimInbox) {
-      toast.error("Mínimo de 100 VBMS no inbox para coletar");
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      console.log('[CoinsInboxModal] Claiming inbox VBMS...');
-      const result = await prepareInboxClaim({ address });
-
-      // Show bonus info if any
-      if (result.bonusReasons && result.bonusReasons.length > 0) {
-        result.bonusReasons.forEach((reason: string) => {
-          toast.info(reason);
-        });
-      }
-
-      toast.info("🔐 Aguardando assinatura da carteira...");
-
-      // Use Farcaster SDK if available, otherwise wagmi
-      const txHash = useFarcasterSDK
-        ? await claimViaFarcasterSDK(
-            result.amount.toString(),
-            result.nonce,
-            result.signature
-          )
-        : await claimVBMS(
-            result.amount.toString(),
-            result.nonce as `0x${string}`,
-            result.signature as `0x${string}`
-          );
-
-      console.log('[CoinsInboxModal] Inbox claim TX successful:', txHash);
-      toast.loading("⏳ Aguardando confirmação da blockchain...", { id: "claim-wait" });
-
-      // Wait for TX confirmation (3 seconds should be enough for Base)
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      await recordInboxClaim({
-        address,
-        amount: result.amount,
-        txHash: txHash as unknown as string,
-      });
-
-      toast.dismiss("claim-wait");
-      toast.success(
-        `✅ ${result.amount.toLocaleString()} VBMS coletados!` +
-        (result.bonus > 0 ? ` (+${result.bonus} bonus)` : "")
-      );
-
-      setTimeout(() => {
-        onClose();
-      }, 1500);
-
-    } catch (error: any) {
-      console.error('[CoinsInboxModal] Error claiming inbox:', error);
-      toast.dismiss("claim-wait");
-      toast.error(error.message || "Erro ao coletar VBMS");
-      setIsProcessing(false);
-    }
-  };
-
-  // Convert TESTVBMS balance → VBMS blockchain tokens
+  // Convert TESTVBMS saldo → VBMS blockchain tokens
   const handleConvertTESTVBMS = async () => {
     if (!address) {
       toast.error("Conecte sua carteira");
@@ -284,7 +211,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             INBOX
           </h2>
           <p className="text-xs text-vintage-burnt-gold mt-2">
-            Seus rewards de PvE, PvP e Leaderboard
+            Claim rewards e converta para VBMS
           </p>
         </div>
 
@@ -292,13 +219,13 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         <div className="bg-gradient-to-br from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold/50 rounded-xl p-6 mb-4">
           <div className="text-center">
             <div className="text-sm font-bold text-vintage-gold mb-3 uppercase tracking-wide">
-              💎 WALLET
+              💎 VBMS WALLET
             </div>
             <div className="text-6xl font-bold text-vintage-gold mb-2">
               {parseFloat(vbmsWalletBalance || '0').toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-vintage-gold/60 mt-2">
-              VBMS na carteira blockchain
+              Blockchain (onchain)
             </div>
           </div>
         </div>
@@ -310,10 +237,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               📬 INBOX
             </div>
             <div className="text-6xl font-bold text-purple-100 mb-2">
-              {vbmsInbox.toLocaleString()}
+              {inboxAmount.toLocaleString()}
             </div>
             <div className="text-xs text-purple-300/60 mt-2">
-              De PvE - Claim como TESTVBMS ou VBMS (min. 100)
+              TESTVBMS rewards (offchain)
             </div>
           </div>
         </div>
@@ -322,26 +249,26 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-6 mb-6">
           <div className="text-center">
             <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wide">
-              💰 SALDO
+              💰 SALDO TESTVBMS
             </div>
             <div className="text-6xl font-bold text-green-100 mb-2">
               {testvbmsBalance.toLocaleString()}
             </div>
             <div className="text-xs text-green-300/60 mt-2">
-              TESTVBMS de PvP & Leaderboard - Converta para VBMS (min. 100)
+              In-game currency (offchain)
             </div>
           </div>
         </div>
 
-        {/* Claim buttons */}
+        {/* Action Buttons */}
         <div className="space-y-3">
-          {/* Claim Inbox as TESTVBMS (instant, no gas) */}
-          {vbmsInbox > 0 && (
+          {/* Claim Inbox → Saldo (instant, no gas) */}
+          {inboxAmount > 0 && (
             <button
-              onClick={handleClaimTESTVBMS}
-              disabled={!canClaimTESTVBMS || isProcessing}
+              onClick={handleClaimInbox}
+              disabled={!canClaimInbox || isProcessing}
               className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                canClaimTESTVBMS
+                canClaimInbox
                   ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:scale-[1.02]"
                   : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
               }`}
@@ -350,20 +277,20 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               <div className="relative flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <span className="text-xl">💰</span>
-                  <span>Claim {vbmsInbox.toLocaleString()} as TESTVBMS</span>
+                  <span>Claim {inboxAmount.toLocaleString()} TESTVBMS</span>
                 </span>
                 <span className="text-sm opacity-80">Instant</span>
               </div>
             </button>
           )}
 
-          {/* Claim Inbox as VBMS Blockchain (min. 100) */}
-          {vbmsInbox >= 100 && (
+          {/* Convert Saldo → VBMS blockchain (pay gas, min 100) */}
+          {testvbmsBalance >= 100 && (
             <button
-              onClick={handleClaimVBMS}
-              disabled={!canClaimVBMS || isProcessing}
+              onClick={handleConvertTESTVBMS}
+              disabled={!canConvertTESTVBMS || isProcessing}
               className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                canClaimVBMS
+                canConvertTESTVBMS
                   ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.02]"
                   : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
               }`}
@@ -371,55 +298,33 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
               <div className="relative flex items-center justify-between">
                 <span className="flex items-center gap-2">
-                  <span className="text-xl">💳</span>
-                  <span>Claim {vbmsInbox.toLocaleString()} as VBMS</span>
+                  <span className="text-xl">🔄</span>
+                  <span>Convert {testvbmsBalance.toLocaleString()} → VBMS</span>
                 </span>
                 <span className="text-xs opacity-80 bg-black/20 px-2 py-1 rounded">Pay Gas</span>
               </div>
             </button>
           )}
 
-          {/* Convert TESTVBMS Balance → VBMS */}
-          {testvbmsBalance >= 100 && (
-            <button
-              onClick={handleConvertTESTVBMS}
-              disabled={!canConvertTESTVBMS || isProcessing}
-              className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                canConvertTESTVBMS
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02]"
-                  : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
-              }`}
-            >
-              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
-              <div className="relative flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <span className="text-xl">🔄</span>
-                  <span>Convert {testvbmsBalance.toLocaleString()} TESTVBMS</span>
-                </span>
-                <span className="text-xs opacity-80">→ VBMS</span>
-              </div>
-            </button>
-          )}
-
           {/* Empty state */}
-          {vbmsInbox === 0 && testvbmsBalance === 0 && (
+          {inboxAmount === 0 && testvbmsBalance === 0 && (
             <div className="text-center py-6">
               <div className="text-6xl mb-3 opacity-20">📭</div>
               <p className="text-vintage-gold/60 text-sm">
                 Inbox vazio
               </p>
               <p className="text-vintage-gold/40 text-xs mt-1">
-                Complete battles e achievements para ganhar VBMS!
+                Complete battles para ganhar TESTVBMS!
               </p>
             </div>
           )}
 
           {/* Help Text */}
-          {(canClaimVBMS || canConvertTESTVBMS) && (
+          {canConvertTESTVBMS && (
             <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
               <p className="text-xs text-vintage-gold/70 text-center leading-relaxed">
-                💎 <span className="font-semibold">VBMS</span> = Blockchain tokens (trade/hold) •
-                <span className="font-semibold"> TESTVBMS</span> = In-game currency (shop/fees)
+                💎 <span className="font-semibold">VBMS</span> = Blockchain tokens (onchain) •
+                <span className="font-semibold"> TESTVBMS</span> = In-game currency (offchain)
               </p>
             </div>
           )}
