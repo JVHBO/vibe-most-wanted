@@ -42,7 +42,7 @@ export default function TestPage() {
 
   // Mock inbox data (now dynamic)
   const mockInboxData = {
-    coinsInbox: inboxAmount, // VBMS tokens from leaderboard/rewards
+    inbox: inboxAmount, // TESTVBMS tokens from leaderboard/rewards
     coins: currentBalance,
     lifetimeEarned: lifetimeEarned,
   };
