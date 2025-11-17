@@ -1682,9 +1682,13 @@ export function PokerBattleTable({
     }
   }, [phase, selectedToken, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, sendToInboxMutation, playerAddress]);
 
-  // Auto-close game 10 seconds after it ends
+  // Auto-close game after it ends (wait for VBMS battles to finalize first)
   useEffect(() => {
-    if (phase === 'game-over' && !isSpectatorMode) {
+    // For VBMS battles, wait until battle is finalized before closing
+    // For other token types, close after 10 seconds
+    const shouldWaitForFinalization = selectedToken === 'VBMS' && !battleFinalized;
+
+    if (phase === 'game-over' && !isSpectatorMode && !shouldWaitForFinalization) {
       console.log('[PokerBattle] Game over - will auto-close in 10 seconds');
 
       const timer = setTimeout(() => {
@@ -1694,7 +1698,7 @@ export function PokerBattleTable({
 
       return () => clearTimeout(timer);
     }
-  }, [phase, isSpectatorMode, onClose]);
+  }, [phase, isSpectatorMode, selectedToken, battleFinalized, onClose]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
