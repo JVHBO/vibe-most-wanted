@@ -8,7 +8,14 @@ import { config } from '@/lib/wagmi';
 
 import '@rainbow-me/rainbowkit/styles.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
   return (
