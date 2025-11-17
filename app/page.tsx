@@ -408,6 +408,7 @@ export default function TCGPage() {
   const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null);
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false); // Changed to false for testing
+  const [showManualConnect, setShowManualConnect] = useState<boolean>(false); // Show manual connect if auto-connect fails
 
   // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
@@ -808,6 +809,21 @@ export default function TCGPage() {
     };
     initFarcasterWallet();
   }, []);
+
+  // Fallback: If in Farcaster but no address after 5s, allow manual connect
+  useEffect(() => {
+    if (isInFarcaster && !address && !isCheckingFarcaster) {
+      const timeout = setTimeout(() => {
+        devLog('⏱️ Auto-connect timeout - showing manual connect option');
+        setShowManualConnect(true);
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timeout);
+    } else if (address) {
+      // Reset when connected
+      setShowManualConnect(false);
+    }
+  }, [isInFarcaster, address, isCheckingFarcaster]);
 
   // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
@@ -4262,8 +4278,8 @@ export default function TCGPage() {
 
       {!address ? (
         <div className="flex flex-col items-center justify-center py-20">
-          {/* Show loading while checking for Farcaster OR if confirmed in Farcaster */}
-          {isCheckingFarcaster || isInFarcaster ? (
+          {/* Show loading while checking for Farcaster OR if confirmed in Farcaster (unless manual connect is needed) */}
+          {(isCheckingFarcaster || isInFarcaster) && !showManualConnect ? (
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display animate-pulse">♠</div>
               <div className="w-full px-6 py-4 bg-vintage-gold/20 text-vintage-gold rounded-xl border-2 border-vintage-gold/50 font-display font-semibold">
@@ -4271,7 +4287,7 @@ export default function TCGPage() {
               </div>
             </div>
           ) : (
-            /* Show full connect modal ONLY after confirming NOT in Farcaster */
+            /* Show full connect modal if NOT in Farcaster OR if manual connect is needed */
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
               <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
