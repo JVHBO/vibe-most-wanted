@@ -26,6 +26,7 @@ import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { InboxDisplay } from "@/components/InboxDisplay";
 import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
+import { CoinsInboxModal } from "@/components/CoinsInboxModal";
 import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
 import { PvPMenuModals } from "@/components/PvPMenuModals";
