@@ -1589,10 +1589,10 @@ export function PokerBattleTable({
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation, roomFinished, selectedToken, finishVBMSBattle]);
 
-  // ALL rewards go to inbox as TESTVBMS
+  // TESTVBMS/NFT rewards go to inbox (not VBMS - that uses blockchain)
   useEffect(() => {
-    // Works for both CPU mode and PvP mode
-    if (phase === 'game-over' && !isSpectatorMode && !battleFinalized) {
+    // Only for TESTVBMS or VIBE_NFT battles (CPU or PvP)
+    if (phase === 'game-over' && !isSpectatorMode && !battleFinalized && selectedToken !== 'VBMS') {
       const result = playerScore > opponentScore ? 'win' : 'loss';
 
       // Only proceed if player won and has a valid match
@@ -1603,6 +1603,7 @@ export function PokerBattleTable({
           address: playerAddress,
           matchId: createdMatchId,
           amount: rewardAmount,
+          selectedToken,
           mode: isCPUMode ? 'CPU' : 'PvP'
         });
 
@@ -1614,13 +1615,22 @@ export function PokerBattleTable({
           .then((result) => {
             console.log('[PokerBattle] ✅ TESTVBMS sent to inbox:', result);
             setBattleFinalized(true);
+
+            // Show success toast
+            toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
+              description: 'Check your inbox to claim',
+              duration: 5000,
+            });
           })
           .catch((error) => {
             console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox:', error);
+            toast.error('Failed to send reward to inbox', {
+              description: error.message || 'Please try again',
+            });
           });
       }
     }
-  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, sendToInboxMutation, playerAddress]);
+  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendToInboxMutation, playerAddress]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
   useEffect(() => {
@@ -1676,21 +1686,21 @@ export function PokerBattleTable({
 
   // Auto-close game after it ends
   useEffect(() => {
-    // For VBMS battles, wait until blockchain battle is finished (roomFinished)
-    // For other token types, close after 10 seconds
-    const shouldWaitForBlockchain = selectedToken === 'VBMS' && !roomFinished && !isCPUMode;
-
-    if (phase === 'game-over' && !isSpectatorMode && !shouldWaitForBlockchain) {
-      console.log('[PokerBattle] Game over - will auto-close in 10 seconds');
+    if (phase === 'game-over' && !isSpectatorMode) {
+      console.log('[PokerBattle] Game over - will auto-close in 15 seconds', {
+        selectedToken,
+        roomFinished,
+        isCPUMode
+      });
 
       const timer = setTimeout(() => {
         console.log('[PokerBattle] Auto-closing game...');
         onClose();
-      }, 10000); // 10 seconds
+      }, 15000); // 15 seconds to see victory screen
 
       return () => clearTimeout(timer);
     }
-  }, [phase, isSpectatorMode, selectedToken, roomFinished, isCPUMode, onClose]);
+  }, [phase, isSpectatorMode, onClose]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
