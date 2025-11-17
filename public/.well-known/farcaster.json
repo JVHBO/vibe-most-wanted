@@ -27,7 +27,8 @@
     "tagline": "Battle with your NFT cards",
     "ogTitle": "VIBE MOST WANTED",
     "ogDescription": "Battle with VIBE NFT cards in PvE and PvP modes on Base!",
-    "ogImageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2"
+    "ogImageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2",
+    "requiredCapabilities": ["wallet.getEthereumProvider"]
   },
   "baseBuilder": {
     "ownerAddress": "0x89b0E4670c44246CC9c2d86D04c34D91064311Ed"
