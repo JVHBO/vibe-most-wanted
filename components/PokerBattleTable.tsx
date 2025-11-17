@@ -2112,8 +2112,7 @@ export function PokerBattleTable({
           <div className="h-full flex flex-col relative">
 
             {/* Round History Panel - Inside green table */}
-            {!isInFarcaster && (
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-vintage-charcoal/90 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl w-[140px]">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-vintage-charcoal/90 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl w-[140px]">
                 <div className="text-vintage-gold font-display font-bold text-[10px] mb-1 text-center border-b border-vintage-gold/30 pb-1">
                   ROUNDS
                 </div>
@@ -2180,12 +2179,10 @@ export function PokerBattleTable({
                     );
                   })}
                 </div>
-              </div>
-            )}
+            </div>
 
             {/* Meme Sound Panel - Floating on left side */}
-            {!isInFarcaster && (
-              <div className="absolute left-2 sm:left-4 top-2 sm:top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[140px] sm:max-w-none">
+            <div className="absolute left-2 sm:left-4 top-2 sm:top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[140px] sm:max-w-none">
                 <div className="text-vintage-gold font-display font-bold text-[10px] mb-1.5 text-center border-b border-vintage-gold/30 pb-1">
                   🔊 MEME SOUNDS
                 </div>
@@ -2230,8 +2227,7 @@ export function PokerBattleTable({
                     onSetUserVolume={groupVoice.setUserVolume}
                   />
                 )}
-              </div>
-            )}
+            </div>
 
             {/* Game info header */}
             <div className={`bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl ${
