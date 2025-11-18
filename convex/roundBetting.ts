@@ -94,6 +94,28 @@ export const placeBetOnRound = mutation({
 
     console.log(`🎰 Round bet placed: ${normalizedAddress} bet ${amount} credits on round ${roundNumber} at ${odds}x odds`);
 
+    // Get bettor's username for chat message
+    const bettorProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    // Get player's username that was bet on
+    const betOnProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedBetOn))
+      .first();
+
+    // Send chat message visible to everyone
+    await ctx.db.insert("pokerChatMessages", {
+      roomId,
+      sender: normalizedAddress,
+      senderUsername: bettorProfile?.username || "Spectator",
+      message: `🎰 Bet ${amount} credits on ${betOnProfile?.username || "Player"} at ${odds}x odds for Round ${roundNumber}`,
+      timestamp: Date.now(),
+      type: "text" as const,
+    });
+
     return {
       success: true,
       newBalance: credits.balance - amount,
@@ -145,6 +167,14 @@ export const resolveRoundBets = mutation({
     for (const bet of bets) {
       const isWinner = bet.betOn.toLowerCase() === normalizedWinner;
 
+      // Get bettor's profile for username
+      const bettorProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", bet.bettor))
+        .first();
+
+      const bettorUsername = bettorProfile?.username || "Spectator";
+
       if (isWinner) {
         // WINNER: Calculate payout and add credits back
         const payout = Math.floor(bet.amount * bet.odds);
@@ -180,6 +210,16 @@ export const resolveRoundBets = mutation({
           roomId,
           timestamp: Date.now(),
         });
+
+        // Send chat message for winner (visible to everyone)
+        await ctx.db.insert("pokerChatMessages", {
+          roomId,
+          sender: bet.bettor,
+          senderUsername: bettorUsername,
+          message: `🎉 Won ${payout} credits! (${bet.amount} × ${bet.odds}x)`,
+          timestamp: Date.now(),
+          type: "text" as const,
+        });
       } else {
         // LOSER: No payout, credits already deducted
         losersCount++;
@@ -199,6 +239,16 @@ export const resolveRoundBets = mutation({
           amount: -bet.amount,
           roomId,
           timestamp: Date.now(),
+        });
+
+        // Send chat message for loser (visible to everyone)
+        await ctx.db.insert("pokerChatMessages", {
+          roomId,
+          sender: bet.bettor,
+          senderUsername: bettorUsername,
+          message: `💔 Lost ${bet.amount} credits on Round ${roundNumber}`,
+          timestamp: Date.now(),
+          type: "text" as const,
         });
       }
     }
