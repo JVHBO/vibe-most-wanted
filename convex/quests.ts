@@ -421,18 +421,18 @@ export const claimQuestReward = mutation({
       throw new Error("Quest not completed yet");
     }
 
-    // Add to inbox (TESTVBMS) - player can convert later if they want
-    const currentInbox = profile.coinsInbox || 0;
-    const newInbox = currentInbox + quest.reward;
+    // Add to coins balance (TESTVBMS)
+    const currentBalance = profile.coins || 0;
+    const newBalance = currentBalance + quest.reward;
     const lifetimeEarned = (profile.lifetimeEarned || 0) + quest.reward;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned,
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 Quest reward sent to inbox: ${quest.reward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`💰 Quest reward added to balance: ${quest.reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
     if (existingProgress) {
@@ -454,7 +454,7 @@ export const claimQuestReward = mutation({
     return {
       success: true,
       reward: quest.reward,
-      newBalance: newInbox,
+      newBalance: newBalance,
       questName: quest.description,
     };
   },
@@ -711,17 +711,17 @@ export const claimWeeklyReward = mutation({
     }
 
     const reward = questDef.reward;
-    const currentInbox = profile.coinsInbox || 0;
-    const newInbox = currentInbox + reward;
+    const currentBalance = profile.coins || 0;
+    const newBalance = currentBalance + reward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + reward;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned: newLifetimeEarned,
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 Weekly quest reward sent to inbox: ${reward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`💰 Weekly quest reward added to balance: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
     const updatedQuests = { ...progress.quests };
@@ -732,7 +732,7 @@ export const claimWeeklyReward = mutation({
     return {
       success: true,
       reward,
-      newBalance: newInbox,
+      newBalance: newBalance,
       questName: questDef.description,
     };
   },
