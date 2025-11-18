@@ -4297,9 +4297,16 @@ export default function TCGPage() {
                         setIsCheckingFarcaster(true);
 
                         if (sdk?.wallet?.ethProvider) {
-                          const addresses = await sdk.wallet.ethProvider.request({
+                          // Add timeout to prevent infinite loading
+                          const timeoutPromise = new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error('Connection timeout')), 5000)
+                          );
+
+                          const accountsPromise = sdk.wallet.ethProvider.request({
                             method: "eth_requestAccounts"
                           });
+
+                          const addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
 
                           if (addresses && addresses[0]) {
                             setFarcasterAddress(addresses[0]);
