@@ -1553,8 +1553,12 @@ export function PokerBattleTable({
           })
           .catch((error) => {
             console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox:', error);
+
+            // IMPORTANT: Mark as finalized even on error to prevent retry loops
+            setBattleFinalized(true);
+
             toast.error('Failed to send reward to inbox', {
-              description: error.message || 'Please try again',
+              description: error.message || 'Please deploy Convex to enable PvP rewards',
             });
           });
       }
@@ -1562,15 +1566,38 @@ export function PokerBattleTable({
   }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendPveRewardToInbox, sendPvpRewardToInbox, playerAddress, difficulty]);
 
   // Auto-delete finished rooms (V5: No TX needed, just cleanup Convex)
+  // Triggers when: room.status === 'finished' OR when phase === 'game-over' in PvP
   useEffect(() => {
-    if (!isCPUMode && room && room.status === 'finished' && !roomFinished && !roomDeletionRef.current) {
-      console.log('[PokerBattle] 🗑️ Room finished - deleting from Convex...');
+    // Only for PvP mode (not CPU)
+    if (isCPUMode || !room || roomFinished || roomDeletionRef.current) return;
+
+    // Check if should delete:
+    // 1. Room status is explicitly 'finished' (backend marked it)
+    // 2. OR phase is 'game-over' and we have a winner (fallback for realtime delay)
+    const shouldDelete =
+      room.status === 'finished' ||
+      (phase === 'game-over' && (playerScore >= 4 || opponentScore >= 4));
+
+    if (shouldDelete) {
+      console.log('[PokerBattle] 🗑️ Room finished - deleting from Convex...', {
+        status: room.status,
+        phase,
+        playerScore,
+        opponentScore
+      });
+
       roomDeletionRef.current = true; // Mark as deletion in progress
+
+      // Determine winner (for finishGame mutation)
+      const winnerId = playerScore >= 4 ? playerAddress : (room.guestAddress || room.hostAddress);
+      const winnerUsername = playerScore >= 4 ? playerUsername : (room.guestUsername || room.hostUsername);
+      const finalPot = room.finalPot || 0;
+
       finishGameMutation({
         roomId: room.roomId,
-        winnerId: room.winnerId.toLowerCase(),
-        winnerUsername: room.winnerUsername,
-        finalPot: room.finalPot || 0,
+        winnerId: winnerId.toLowerCase(),
+        winnerUsername: winnerUsername || 'Unknown',
+        finalPot,
       }).then(() => {
         console.log('[PokerBattle] ✅ Room deleted from Convex');
         setRoomFinished(true);
@@ -1581,7 +1608,7 @@ export function PokerBattleTable({
         roomDeletionRef.current = false;
       });
     }
-  }, [room, isCPUMode, roomFinished, finishGameMutation]);
+  }, [room, isCPUMode, roomFinished, finishGameMutation, phase, playerScore, opponentScore, playerAddress, playerUsername]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
   useEffect(() => {
