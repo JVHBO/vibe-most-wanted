@@ -972,11 +972,11 @@ export function PokerBattleTable({
 
         // Show round winner message
         setShowRoundWinner(true);
-        console.log('[PokerBattle] CPU Mode - Showing round winner, waiting 8s for reveal');
+        console.log('[PokerBattle] CPU Mode - Showing round winner, waiting 4s for reveal');
 
         // Hide message and check win condition after delay
         setTimeout(() => {
-          console.log('[PokerBattle] CPU Mode - 8s timeout completed, checking win condition');
+          console.log('[PokerBattle] CPU Mode - 4s timeout completed, checking win condition');
           setShowRoundWinner(false);
           setRoundWinner(null);
 
@@ -998,7 +998,7 @@ export function PokerBattleTable({
             console.log('[PokerBattle] CPU Mode - Proceeding to next round');
             nextRound();
           }
-        }, 8000);
+        }, 4000);
       }, 1000);
     } else {
       // PvP mode - send to server for resolution
@@ -1130,7 +1130,7 @@ export function PokerBattleTable({
               // Server already updated gameState, which will be synced via useEffect
               nextRound();
             }
-          }, 8000);
+          }, 4000);
         }, 1000);
       } catch (error) {
         console.error('[PokerBattle] PvP Mode - Error resolving round:', error);
