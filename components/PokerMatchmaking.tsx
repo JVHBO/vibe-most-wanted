@@ -778,7 +778,6 @@ export function PokerMatchmaking({
       console.log("Step 1/2: Approving VBMS...");
       approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
       return; // useEffect will handle next step after approval
-      }
     } catch (error) {
       console.error("❌ Error in handleCreateRoom:", error);
       AudioManager.buttonError();
