@@ -765,9 +765,19 @@ export default function TCGPage() {
         // Check if we're in Farcaster context - use OLD API
         if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
           setIsInFarcaster(true);
-          const addresses = await sdk.wallet.ethProvider.request({
+          setIsCheckingFarcaster(true);
+
+          // Add timeout to prevent infinite loading
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Farcaster wallet connection timeout')), 5000)
+          );
+
+          const accountsPromise = sdk.wallet.ethProvider.request({
             method: "eth_requestAccounts"
           });
+
+          const addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+
           if (addresses && addresses[0]) {
             setFarcasterAddress(addresses[0]);
             localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
@@ -797,7 +807,7 @@ export default function TCGPage() {
           }
         }
       } catch (err) {
-        devLog('! Not in Farcaster context or wallet unavailable');
+        devLog('! Not in Farcaster context or wallet unavailable:', err);
         // Reset Farcaster state on error
         setIsInFarcaster(false);
         setFarcasterAddress(null);
@@ -4262,8 +4272,8 @@ export default function TCGPage() {
 
       {!address ? (
         <div className="flex flex-col items-center justify-center py-20">
-          {/* Show loading while checking for Farcaster OR if confirmed in Farcaster */}
-          {isCheckingFarcaster || isInFarcaster ? (
+          {/* Show loading ONLY while actively checking for Farcaster */}
+          {isCheckingFarcaster ? (
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display animate-pulse">♠</div>
               <div className="w-full px-6 py-4 bg-vintage-gold/20 text-vintage-gold rounded-xl border-2 border-vintage-gold/50 font-display font-semibold">
@@ -4271,7 +4281,7 @@ export default function TCGPage() {
               </div>
             </div>
           ) : (
-            /* Show full connect modal ONLY after confirming NOT in Farcaster */
+            /* Show full connect modal after checking Farcaster (even if in Farcaster context but not connected) */
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
               <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
