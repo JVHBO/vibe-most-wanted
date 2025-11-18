@@ -795,48 +795,60 @@ export const sendPvpRewardToInbox = mutation({
     amount: v.number(),
   },
   handler: async (ctx, { address, amount }) => {
-    const profile = await getProfile(ctx, address);
+    try {
+      console.log(`[sendPvpRewardToInbox] START - address: ${address}, amount: ${amount}`);
 
-    const currentInbox = profile.coinsInbox || 0;
-    const newInbox = currentInbox + amount;
+      const profile = await getProfile(ctx, address);
+      console.log(`[sendPvpRewardToInbox] Profile found: ${profile._id}`);
 
-    // Check if paying off debt
-    const hadDebt = currentInbox < 0;
-    const debtPaid = hadDebt ? Math.min(Math.abs(currentInbox), amount) : 0;
-    const netGain = amount - debtPaid;
+      const currentInbox = profile.coinsInbox || 0;
+      const newInbox = currentInbox + amount;
 
-    await ctx.db.patch(profile._id, {
-      coinsInbox: newInbox,
-      lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
-      lastUpdated: Date.now(),
-    });
+      // Check if paying off debt
+      const hadDebt = currentInbox < 0;
+      const debtPaid = hadDebt ? Math.min(Math.abs(currentInbox), amount) : 0;
+      const netGain = amount - debtPaid;
 
-    console.log(`📬 ${address} sent ${amount} TESTVBMS to inbox from PvP victory. Inbox: ${currentInbox} → ${newInbox}`);
+      console.log(`[sendPvpRewardToInbox] Updating profile...`);
+      await ctx.db.patch(profile._id, {
+        coinsInbox: newInbox,
+        lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
+        lastUpdated: Date.now(),
+      });
 
-    // Track analytics
-    await ctx.db.insert("claimAnalytics", {
-      playerAddress: address.toLowerCase(),
-      choice: "inbox",
-      amount,
-      inboxTotal: newInbox,
-      bonusAvailable: false,
-      timestamp: Date.now(),
-    });
+      console.log(`📬 ${address} sent ${amount} TESTVBMS to inbox from PvP victory. Inbox: ${currentInbox} → ${newInbox}`);
 
-    let message = `📬 ${amount} TESTVBMS sent to inbox from PvP victory!`;
-    if (hadDebt && newInbox < 0) {
-      message = `📬 ${amount} TESTVBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
-    } else if (hadDebt && newInbox >= 0) {
-      message = `📬 ${amount} TESTVBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
+      // Track analytics
+      console.log(`[sendPvpRewardToInbox] Inserting analytics...`);
+      await ctx.db.insert("claimAnalytics", {
+        playerAddress: address.toLowerCase(),
+        choice: "inbox",
+        amount,
+        inboxTotal: newInbox,
+        bonusAvailable: false,
+        timestamp: Date.now(),
+      });
+
+      let message = `📬 ${amount} TESTVBMS sent to inbox from PvP victory!`;
+      if (hadDebt && newInbox < 0) {
+        message = `📬 ${amount} TESTVBMS sent to inbox! Debt reduced from ${Math.abs(currentInbox)} to ${Math.abs(newInbox)}`;
+      } else if (hadDebt && newInbox >= 0) {
+        message = `📬 ${amount} TESTVBMS sent to inbox! Debt cleared (${debtPaid} paid), +${netGain} added!`;
+      }
+
+      console.log(`[sendPvpRewardToInbox] SUCCESS`);
+      return {
+        newInbox,
+        amountAdded: amount,
+        debtPaid,
+        hadDebt,
+        message,
+      };
+    } catch (error: any) {
+      console.error(`[sendPvpRewardToInbox] ERROR:`, error);
+      console.error(`[sendPvpRewardToInbox] Error details:`, error.message, error.stack);
+      throw new Error(`Failed to send PvP reward to inbox: ${error.message}`);
     }
-
-    return {
-      newInbox,
-      amountAdded: amount,
-      debtPaid,
-      hadDebt,
-      message,
-    };
   },
 });
 
