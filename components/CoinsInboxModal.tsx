@@ -221,7 +221,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               CONVERT
             </h2>
             <p className="text-sm text-vintage-gold/70">
-              TESTVBMS → VBMS Blockchain
+              TESTVBMS → VBMS
             </p>
           </div>
         </div>
@@ -285,17 +285,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               </p>
               <p className="text-vintage-gold/40 text-xs mt-1">
                 Complete battles to earn more!
-              </p>
-            </div>
-          )}
-
-          {/* Help Text */}
-          {canConvertTESTVBMS && (
-            <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
-              <p className="text-xs text-vintage-gold/70 text-center leading-relaxed flex items-center justify-center gap-1.5">
-                <NextImage src="/images/icons/diamond.svg" alt="VBMS" width={14} height={14} className="w-3.5 h-3.5" />
-                <span className="font-semibold">VBMS</span> = Blockchain tokens (onchain) •
-                <span className="font-semibold"> TESTVBMS</span> = In-game currency (offchain)
               </p>
             </div>
           )}
