@@ -283,11 +283,11 @@ export const sendToInbox = mutation({
 
     const amount = match.coinsEarned || 0;
 
-    // Add to inbox
-    const newInbox = (profile.coinsInbox || 0) + amount;
+    // Add to balance
+    const newBalance = (profile.coins || 0) + amount;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
     });
 
@@ -301,18 +301,18 @@ export const sendToInbox = mutation({
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
-      choice: "inbox",
+      choice: "immediate",
       amount,
-      inboxTotal: newInbox,
+      inboxTotal: newBalance,
       bonusAvailable: false,
       timestamp: Date.now(),
     });
 
     return {
-      newInbox,
+      newInbox: newBalance,
       amountAdded: amount,
       gasUsed: 0,
-      message: `📬 ${amount} VBMS sent to inbox!`,
+      message: `💰 ${amount} VBMS added to balance!`,
     };
   },
 });

@@ -18,17 +18,17 @@ export const sendShopAnnouncement = mutation({
     let notificationsSent = 0;
     let coinsAdded = 0;
 
-    // Give 100 coins to everyone as shop launch bonus (sent to inbox)
+    // Give 100 coins to everyone as shop launch bonus (added to balance)
     for (const profile of allProfiles) {
-      const currentInbox = profile.coinsInbox || 0;
+      const currentBalance = profile.coins || 0;
       const bonusAmount = 100;
 
       await ctx.db.patch(profile._id, {
-        coinsInbox: currentInbox + bonusAmount,
+        coins: currentBalance + bonusAmount,
         lifetimeEarned: (profile.lifetimeEarned || 0) + bonusAmount,
       });
 
-      console.log(`📬 Shop bonus sent to inbox: ${bonusAmount} TESTVBMS for ${profile.address}. Inbox: ${currentInbox} → ${currentInbox + bonusAmount}`);
+      console.log(`💰 Shop bonus added to balance: ${bonusAmount} TESTVBMS for ${profile.address}. Balance: ${currentBalance} → ${currentBalance + bonusAmount}`);
 
       notificationsSent++;
       coinsAdded += bonusAmount;
