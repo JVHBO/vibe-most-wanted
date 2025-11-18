@@ -24,7 +24,42 @@ export const createPokerRoom = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const roomId = `poker_${args.address}_${now}`;
+    const normalizedAddress = args.address.toLowerCase();
+
+    // ✅ VALIDAÇÃO MELHORADA: Verificar se player já tem sala ativa
+    const existingRoom = await ctx.db
+      .query("pokerRooms")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("hostAddress"), normalizedAddress),
+          q.eq(q.field("guestAddress"), normalizedAddress)
+        )
+      )
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "waiting"),
+          q.eq(q.field("status"), "ready"),
+          q.eq(q.field("status"), "in-progress")
+        )
+      )
+      .filter((q) => q.gt(q.field("expiresAt"), now))
+      .first();
+
+    if (existingRoom) {
+      // Player já tem uma sala ativa - fornecer informações úteis
+      const isHost = existingRoom.hostAddress === normalizedAddress;
+      const roomStatus = existingRoom.status;
+      const opponent = isHost ? existingRoom.guestUsername : existingRoom.hostUsername;
+
+      throw new Error(
+        `You already have an active battle! ` +
+        `Status: ${roomStatus}. ` +
+        `${opponent ? `Opponent: ${opponent}. ` : ''}` +
+        `Please finish or wait for your current battle to expire before creating a new one.`
+      );
+    }
+
+    const roomId = `poker_${normalizedAddress}_${now}`;
 
     // Starting bankroll = ante * 50 (enough for full game)
     const startingBankroll = args.ante * 50;
@@ -201,118 +236,6 @@ export const leavePokerRoom = mutation({
     }
 
     return { success: true };
-  },
-});
-
-// Auto-match: Find or create a room
-export const autoMatch = mutation({
-  args: {
-    address: v.string(),
-    username: v.string(),
-    ante: v.number(),
-    token: v.union(v.literal("VBMS"), v.literal("TESTVBMS"), v.literal("testUSDC"), v.literal("VIBE_NFT")),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const addr = args.address.toLowerCase();
-
-    // Check if player is already in a room
-    const existingRoom = await ctx.db
-      .query("pokerRooms")
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("hostAddress"), addr),
-          q.eq(q.field("guestAddress"), addr)
-        )
-      )
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("status"), "waiting"),
-          q.eq(q.field("status"), "ready"),
-          q.eq(q.field("status"), "in-progress")
-        )
-      )
-      .first();
-
-    if (existingRoom) {
-      const isHost = existingRoom.hostAddress === addr;
-      console.log(`🎮 Auto-match: ${args.username} already in room ${existingRoom.roomId}`);
-      return {
-        success: true,
-        action: isHost ? "created" : "joined",
-        roomId: existingRoom.roomId,
-        startingBankroll: isHost ? existingRoom.hostBankroll : existingRoom.guestBankroll,
-      };
-    }
-
-    // Look for an available room with same stakes - CRITICAL: check guestAddress is null
-    const availableRoom = await ctx.db
-      .query("pokerRooms")
-      .withIndex("by_token_ante", (q) =>
-        q.eq("token", args.token).eq("ante", args.ante).eq("status", "waiting")
-      )
-      .filter((q) => q.neq(q.field("hostAddress"), addr)) // Not my room
-      .filter((q) => q.eq(q.field("guestAddress"), undefined)) // No guest yet
-      .filter((q) => q.gt(q.field("expiresAt"), now)) // Not expired
-      .order("asc") // Get oldest room first (FIFO)
-      .first();
-
-    if (availableRoom) {
-      // Double-check guestAddress is still null (race condition protection)
-      if (availableRoom.guestAddress) {
-        // Someone else joined between query and patch - create new room
-        console.log(`⚠️ Auto-match: Race condition detected, creating new room for ${args.username}`);
-      } else {
-        // Found a room - join it atomically
-        const startingBankroll = availableRoom.ante * 50;
-        const startingBoostCoins = 1000;
-
-        await ctx.db.patch(availableRoom._id, {
-          guestAddress: addr,
-          guestUsername: args.username,
-          guestReady: false,
-          guestBankroll: startingBankroll,
-          guestBoostCoins: startingBoostCoins,
-        });
-
-        console.log(`🎮 Auto-match: ${args.username} joined room ${availableRoom.roomId}`);
-
-        return {
-          success: true,
-          action: "joined",
-          roomId: availableRoom.roomId,
-          startingBankroll,
-        };
-      }
-    }
-
-    // No room found or race condition - create a new one
-    const roomId = `poker_${addr}_${now}`;
-    const startingBankroll = args.ante * 50;
-    const startingBoostCoins = 1000;
-
-    await ctx.db.insert("pokerRooms", {
-      roomId,
-      status: "waiting",
-      ante: args.ante,
-      token: args.token,
-      hostAddress: addr,
-      hostUsername: args.username,
-      hostReady: false,
-      hostBankroll: startingBankroll,
-      hostBoostCoins: startingBoostCoins,
-      createdAt: now,
-      expiresAt: now + 10 * 60 * 1000,
-    });
-
-    console.log(`🎮 Auto-match: ${args.username} created room ${roomId}`);
-
-    return {
-      success: true,
-      action: "created",
-      roomId,
-      startingBankroll,
-    };
   },
 });
 

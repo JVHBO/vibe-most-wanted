@@ -157,46 +157,6 @@ export function PvPMenuModals({
           </p>
 
           <div className="space-y-4">
-            {/* Busca Automática */}
-            <button
-              disabled={isSearching}
-              onClick={async () => {
-                if (soundEnabled) AudioManager.buttonSuccess();
-
-                // Check if player has a valid entry fee
-                if (!entryFeeCheck?.hasEntryFee) {
-                  setShowEntryFeeModal(true);
-                  setPvpMode(null); // Close this modal
-                  if (soundEnabled) AudioManager.buttonError();
-                  return;
-                }
-
-                setPvpMode('autoMatch');
-                setIsSearching(true);
-                try {
-                  // Entry fee will be used when battle actually starts (both players ready)
-                  const code = await ConvexPvPService.findMatch(address || '', userProfile?.username);
-                  if (code) {
-                    // Encontrou uma sala imediatamente
-                    setRoomCode(code);
-                    setPvpMode('inRoom');
-                    setIsSearching(false);
-                  }
-                  // Se não encontrou (code === ''), continua em autoMatch aguardando
-                } catch (error: any) {
-                  setErrorMessage('Error finding match: ' + error.message);
-                  setIsSearching(false);
-                  setPvpMode('pvpMenu');
-                }
-              }}
-              className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold text-lg shadow-gold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              <div className="flex items-center justify-between">
-                <span>◊ {t('autoMatch')}</span>
-                <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">20 VBMS</span>
-              </div>
-            </button>
-
             {/* Criar Sala */}
             <button
               onClick={() => {
@@ -335,38 +295,6 @@ export function PvPMenuModals({
               className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
             >
               ← {t('back') || 'BACK'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Modal de Busca Automática
-  if (pvpMode === 'autoMatch' && isSearching && !roomCode) {
-    return (
-      <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
-        <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold">
-          <div className="text-center">
-            <div className="mb-6">
-              <LoadingSpinner size="xl" variant="gold" />
-            </div>
-            <h2 className="text-2xl font-display font-bold text-vintage-gold mb-2">
-              {t('searching')}
-            </h2>
-            <p className="text-vintage-burnt-gold mb-8 font-modern">
-              {t('waitingForOpponent')}
-            </p>
-            <button
-              onClick={() => {
-                if (soundEnabled) AudioManager.buttonError();
-                setIsSearching(false);
-                setPvpMode('pvpMenu');
-                ConvexPvPService.cancelMatchmaking(address || '');
-              }}
-              className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition"
-            >
-              {t('cancelSearch')}
             </button>
           </div>
         </div>

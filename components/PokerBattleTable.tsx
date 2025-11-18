@@ -91,10 +91,10 @@ export function PokerBattleTable({
   const resolveRoundMutation = useMutation(api.pokerBattle.resolveRound);
   const finishGameMutation = useMutation(api.pokerBattle.finishGame);
   const recordMatchMutation = useMutation(api.matches.recordMatch);
-  const sendToInboxMutation = useMutation(api.vbmsClaim.sendPveRewardToInbox);
 
-  // PvE claim mutations
+  // PvE and PvP claim mutations
   const sendPveRewardToInbox = useMutation(api.vbmsClaim.sendPveRewardToInbox);
+  const sendPvpRewardToInbox = useMutation(api.vbmsClaim.sendPvpRewardToInbox);
   const claimPveRewardNow = useMutation(api.vbmsClaim.claimPveRewardNow);
   const recordImmediateClaim = useMutation(api.vbmsClaim.recordImmediateClaim);
 
@@ -238,12 +238,21 @@ export function PokerBattleTable({
   const [battleFinalized, setBattleFinalized] = useState(false);
   const [roomFinished, setRoomFinished] = useState(false);
 
+  // Reset roomFinished and roomDeletionRef when roomId changes (new room/battle)
+  useEffect(() => {
+    setRoomFinished(false);
+    roomDeletionRef.current = false;
+  }, [roomId]);
+
   // Game-over screen control - prevents multiple screens from overlapping
   const [gameOverShown, setGameOverShown] = useState(false);
   const [createdMatchId, setCreatedMatchId] = useState<Id<"matches"> | null>(null);
 
   // Prevent multiple match recordings (useRef persists across renders)
   const matchRecordedRef = useRef(false);
+
+  // Prevent multiple room deletions (useRef persists across renders)
+  const roomDeletionRef = useRef(false);
 
   // GamePopups control states
   const [showWinPopup, setShowWinPopup] = useState(false);
@@ -1500,63 +1509,17 @@ export function PokerBattleTable({
         console.error('[PokerBattle] Failed to record match:', error);
       });
 
-      // ALWAYS delete Convex room immediately when game ends (PvP mode only - CPU doesn't have rooms)
-      if (!isCPUMode && roomId && room && !roomFinished) {
-        const winnerId = playerScore > opponentScore
-          ? (isHost ? room.hostAddress : room.guestAddress)
-          : (isHost ? room.guestAddress : room.hostAddress);
-        const winnerUsername = playerScore > opponentScore
-          ? (isHost ? room.hostUsername : room.guestUsername)
-          : (isHost ? room.guestUsername : room.hostUsername);
-        const finalPot = Math.round((selectedAnte * 2) * 0.95); // After 5% house fee
-
-        // STEP 1: Delete Convex room IMMEDIATELY (don't wait for blockchain)
-        console.log('[PokerBattle] 🗑️ Deleting Convex room immediately...');
-        finishGameMutation({
-          roomId,
-          winnerId: winnerId.toLowerCase(),
-          winnerUsername,
-          finalPot,
-        }).then(() => {
-          console.log('[PokerBattle] ✅ Room deleted from Convex');
-          setRoomFinished(true);
-        }).catch((error) => {
-          console.error('[PokerBattle] ❌ Failed to delete Convex room:', error);
-          // Mark as finished anyway so auto-close can proceed
-          setRoomFinished(true);
-        });
-
-        // STEP 2: Finish blockchain battle in background (VBMS only - funds transfer)
-        if (selectedToken === 'VBMS' && room.blockchainBattleId) {
-          console.log('[PokerBattle] 💰 Finishing VBMS battle on blockchain (background)...', {
-            battleId: room.blockchainBattleId,
-            winner: winnerId,
-            finalPot,
-          });
-
-          finishVBMSBattle(room.blockchainBattleId, winnerId as `0x${string}`)
-            .then((txHash) => {
-              console.log('[PokerBattle] ✅ Blockchain battle finished:', txHash);
-              toast.success(`Victory! ${finalPot} VBMS won!`, {
-                description: 'Funds transferred via blockchain',
-                duration: 5000,
-              });
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to finish blockchain battle:', error);
-              toast.error('Failed to finalize VBMS battle on blockchain', {
-                description: error.message || 'Please try again',
-              });
-            });
-        }
-      }
+      // Room cleanup is now automatic - handled by the useEffect that watches room.status === 'finished'
+      // VBMS: Auto-calls finishBattle TX → then deletes room
+      // Non-VBMS: Deletes room immediately
+      console.log('[PokerBattle] Match recorded - room cleanup will happen automatically when backend marks as finished');
     }
   }, [phase, selectedAnte, isSpectatorMode, playerScore, opponentScore, isCPUMode, playerAddress, recordMatchMutation, playerHand, opponentHand, isHost, room, difficulty, roomId, finishGameMutation, roomFinished, selectedToken, finishVBMSBattle]);
 
-  // TESTVBMS/NFT rewards go to inbox (not VBMS - that uses blockchain)
+  // TESTVBMS rewards go to inbox for ALL modes (TESTVBMS, NFT, and VBMS)
   useEffect(() => {
-    // Only for TESTVBMS or VIBE_NFT battles (CPU or PvP)
-    if (phase === 'game-over' && !isSpectatorMode && !battleFinalized && selectedToken !== 'VBMS') {
+    // ALL battles send TESTVBMS to inbox when won
+    if (phase === 'game-over' && !isSpectatorMode && !battleFinalized) {
       const result = playerScore > opponentScore ? 'win' : 'loss';
 
       // Only proceed if player won and has a valid match
@@ -1571,30 +1534,103 @@ export function PokerBattleTable({
           mode: isCPUMode ? 'CPU' : 'PvP'
         });
 
-        sendToInboxMutation({
-          address: playerAddress,
-          amount: rewardAmount,
-          difficulty: isCPUMode ? difficulty : undefined,
-        })
-          .then((result) => {
-            console.log('[PokerBattle] ✅ TESTVBMS sent to inbox:', result);
-            setBattleFinalized(true);
-
-            // Show success toast
-            toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
-              description: 'Check your inbox to claim',
-              duration: 5000,
-            });
+        // Separate mutations for PvE and PvP to avoid type confusion
+        if (isCPUMode) {
+          // PvE mode - includes difficulty
+          sendPveRewardToInbox({
+            address: playerAddress,
+            amount: rewardAmount,
+            difficulty
           })
-          .catch((error) => {
-            console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox:', error);
-            toast.error('Failed to send reward to inbox', {
-              description: error.message || 'Please try again',
+            .then((result) => {
+              console.log('[PokerBattle] ✅ TESTVBMS sent to inbox (PvE):', result);
+              setBattleFinalized(true);
+
+              toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
+                description: 'Check your inbox to claim',
+                duration: 5000,
+              });
+            })
+            .catch((error) => {
+              console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox (PvE):', error);
+              setBattleFinalized(true);
+
+              toast.error('Failed to send reward to inbox', {
+                description: error.message || 'Server error',
+              });
             });
-          });
+        } else {
+          // PvP mode - no difficulty
+          sendPvpRewardToInbox({
+            address: playerAddress,
+            amount: rewardAmount
+          })
+            .then((result) => {
+              console.log('[PokerBattle] ✅ TESTVBMS sent to inbox (PvP):', result);
+              setBattleFinalized(true);
+
+              toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
+                description: 'Check your inbox to claim',
+                duration: 5000,
+              });
+            })
+            .catch((error) => {
+              console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox (PvP):', error);
+              setBattleFinalized(true);
+
+              toast.error('Failed to send reward to inbox', {
+                description: error.message || 'Server error',
+              });
+            });
+        }
       }
     }
-  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendToInboxMutation, playerAddress]);
+  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendPveRewardToInbox, sendPvpRewardToInbox, playerAddress, difficulty]);
+
+  // Auto-delete finished rooms (V5: No TX needed, just cleanup Convex)
+  // Triggers when: room.status === 'finished' OR when phase === 'game-over' in PvP
+  useEffect(() => {
+    // Only for PvP mode (not CPU)
+    if (isCPUMode || !room || roomFinished || roomDeletionRef.current) return;
+
+    // Check if should delete:
+    // 1. Room status is explicitly 'finished' (backend marked it)
+    // 2. OR phase is 'game-over' and we have a winner (fallback for realtime delay)
+    const shouldDelete =
+      room.status === 'finished' ||
+      (phase === 'game-over' && (playerScore >= 4 || opponentScore >= 4));
+
+    if (shouldDelete) {
+      console.log('[PokerBattle] 🗑️ Room finished - deleting from Convex...', {
+        status: room.status,
+        phase,
+        playerScore,
+        opponentScore
+      });
+
+      roomDeletionRef.current = true; // Mark as deletion in progress
+
+      // Determine winner (for finishGame mutation)
+      const winnerId = playerScore >= 4 ? playerAddress : (room.guestAddress || room.hostAddress);
+      const winnerUsername = playerScore >= 4 ? playerUsername : (room.guestUsername || room.hostUsername);
+      const finalPot = room.finalPot || 0;
+
+      finishGameMutation({
+        roomId: room.roomId,
+        winnerId: winnerId.toLowerCase(),
+        winnerUsername: winnerUsername || 'Unknown',
+        finalPot,
+      }).then(() => {
+        console.log('[PokerBattle] ✅ Room deleted from Convex');
+        setRoomFinished(true);
+      }).catch((error) => {
+        console.error('[PokerBattle] ❌ Failed to delete room:', error);
+        setRoomFinished(true);
+        // Reset ref on error so user can retry if needed
+        roomDeletionRef.current = false;
+      });
+    }
+  }, [room, isCPUMode, roomFinished, finishGameMutation, phase, playerScore, opponentScore, playerAddress, playerUsername]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
   useEffect(() => {

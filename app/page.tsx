@@ -408,7 +408,6 @@ export default function TCGPage() {
   const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null);
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false); // Changed to false for testing
-  const [showManualConnect, setShowManualConnect] = useState<boolean>(false); // Show manual connect if auto-connect fails
 
   // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
@@ -558,6 +557,10 @@ export default function TCGPage() {
 
   // 💰 Coins Inbox Status
   const inboxStatus = useQuery(api.coinsInbox.getInboxStatus, address ? { address } : "skip");
+
+  // 🎮 Daily Attempts System (PvE limits)
+  const pveAttemptsData = useQuery(api.pokerCpu.getRemainingPveAttempts, address ? { address } : "skip");
+  const consumePveAttempt = useMutation(api.pokerCpu.consumePveAttempt);
 
   // 🔒 Defense Lock System - Get locked cards for Attack/PvP modes
   const attackLockedCards = useQuery(
@@ -766,9 +769,19 @@ export default function TCGPage() {
         // Check if we're in Farcaster context - use OLD API
         if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
           setIsInFarcaster(true);
-          const addresses = await sdk.wallet.ethProvider.request({
+          setIsCheckingFarcaster(true);
+
+          // Add timeout to prevent infinite loading
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Farcaster wallet connection timeout')), 5000)
+          );
+
+          const accountsPromise = sdk.wallet.ethProvider.request({
             method: "eth_requestAccounts"
           });
+
+          const addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+
           if (addresses && addresses[0]) {
             setFarcasterAddress(addresses[0]);
             localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
@@ -798,7 +811,7 @@ export default function TCGPage() {
           }
         }
       } catch (err) {
-        devLog('! Not in Farcaster context or wallet unavailable');
+        devLog('! Not in Farcaster context or wallet unavailable:', err);
         // Reset Farcaster state on error
         setIsInFarcaster(false);
         setFarcasterAddress(null);
@@ -809,21 +822,6 @@ export default function TCGPage() {
     };
     initFarcasterWallet();
   }, []);
-
-  // Fallback: If in Farcaster but no address after 5s, allow manual connect
-  useEffect(() => {
-    if (isInFarcaster && !address && !isCheckingFarcaster) {
-      const timeout = setTimeout(() => {
-        devLog('⏱️ Auto-connect timeout - showing manual connect option');
-        setShowManualConnect(true);
-      }, 5000); // 5 seconds
-
-      return () => clearTimeout(timeout);
-    } else if (address) {
-      // Reset when connected
-      setShowManualConnect(false);
-    }
-  }, [isInFarcaster, address, isCheckingFarcaster]);
 
   // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
@@ -1095,12 +1093,12 @@ export default function TCGPage() {
     }
   }, []);
 
-  // 🎁 Show welcome pack popup if user hasn't received it
+  // 🎁 Show welcome pack popup if user hasn't received it (only AFTER profile is created)
   useEffect(() => {
-    if (address && hasReceivedWelcomePack === false) {
+    if (address && userProfile && hasReceivedWelcomePack === false) {
       setShowWelcomePackPopup(true);
     }
-  }, [address, hasReceivedWelcomePack]);
+  }, [address, userProfile, hasReceivedWelcomePack]);
 
   // Sync login bonus claimed status and show popup on login
   useEffect(() => {
@@ -4278,8 +4276,8 @@ export default function TCGPage() {
 
       {!address ? (
         <div className="flex flex-col items-center justify-center py-20">
-          {/* Show loading while checking for Farcaster OR if confirmed in Farcaster (unless manual connect is needed) */}
-          {(isCheckingFarcaster || isInFarcaster) && !showManualConnect ? (
+          {/* Show loading ONLY while actively checking for Farcaster */}
+          {isCheckingFarcaster ? (
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display animate-pulse">♠</div>
               <div className="w-full px-6 py-4 bg-vintage-gold/20 text-vintage-gold rounded-xl border-2 border-vintage-gold/50 font-display font-semibold">
@@ -4287,50 +4285,95 @@ export default function TCGPage() {
               </div>
             </div>
           ) : (
-            /* Show full connect modal if NOT in Farcaster OR if manual connect is needed */
+            /* Show connect modal - different for Farcaster miniapp vs regular web */
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
               <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
               <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
 
               <div className="flex justify-center">
-                <ConnectButton.Custom>
-                  {({
-                    account,
-                    chain,
-                    openAccountModal,
-                    openChainModal,
-                    openConnectModal,
-                    mounted,
-                  }) => {
-                    return (
-                      <div
-                        {...(!mounted && {
-                          'aria-hidden': true,
-                          'style': {
-                            opacity: 0,
-                            pointerEvents: 'none',
-                            userSelect: 'none',
-                          },
-                        })}
-                      >
-                        {(() => {
-                          if (!mounted || !account || !chain) {
-                            return (
-                              <button
-                                onClick={openConnectModal}
-                                className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-                              >
-                                {t('connectWallet')}
-                              </button>
-                            );
+                {isInFarcaster ? (
+                  /* In Farcaster miniapp: Show custom Farcaster wallet button */
+                  <button
+                    onClick={async () => {
+                      try {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        setIsCheckingFarcaster(true);
+
+                        if (sdk?.wallet?.ethProvider) {
+                          // Add timeout to prevent infinite loading
+                          const timeoutPromise = new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error('Connection timeout')), 5000)
+                          );
+
+                          const accountsPromise = sdk.wallet.ethProvider.request({
+                            method: "eth_requestAccounts"
+                          });
+
+                          const addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+
+                          if (addresses && addresses[0]) {
+                            setFarcasterAddress(addresses[0]);
+                            localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
+                            devLog('✓ Connected Farcaster wallet:', addresses[0]);
+                          } else {
+                            throw new Error('No address returned');
                           }
-                          return null;
-                        })()}
-                      </div>
-                    );
-                  }}
-                </ConnectButton.Custom>
+                        } else {
+                          throw new Error('Farcaster SDK not available');
+                        }
+                      } catch (err) {
+                        devError('Failed to connect Farcaster wallet:', err);
+                        if (soundEnabled) AudioManager.buttonError();
+                        alert('Failed to connect Farcaster wallet. Please try again.');
+                      } finally {
+                        setIsCheckingFarcaster(false);
+                      }
+                    }}
+                    className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                  >
+                    Connect Farcaster Wallet
+                  </button>
+                ) : (
+                  /* Regular web: Show RainbowKit modal */
+                  <ConnectButton.Custom>
+                    {({
+                      account,
+                      chain,
+                      openAccountModal,
+                      openChainModal,
+                      openConnectModal,
+                      mounted,
+                    }) => {
+                      return (
+                        <div
+                          {...(!mounted && {
+                            'aria-hidden': true,
+                            'style': {
+                              opacity: 0,
+                              pointerEvents: 'none',
+                              userSelect: 'none',
+                            },
+                          })}
+                        >
+                          {(() => {
+                            if (!mounted || !account || !chain) {
+                              return (
+                                <button
+                                  onClick={openConnectModal}
+                                  className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                                >
+                                  {t('connectWallet')}
+                                </button>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      );
+                    }}
+                  </ConnectButton.Custom>
+                )}
               </div>
             </div>
           )}
@@ -5733,7 +5776,7 @@ export default function TCGPage() {
           if (soundEnabled) AudioManager.buttonClick();
           setTempSelectedDifficulty(difficulty);
         }}
-        onBattle={(difficulty) => {
+        onBattle={async (difficulty) => {
           // Check if this is Poker CPU mode
           if (pokerMode === 'cpu') {
             if (soundEnabled) AudioManager.buttonClick();
@@ -5742,6 +5785,18 @@ export default function TCGPage() {
             setTempSelectedDifficulty(null);
             setShowPokerBattle(true);
           } else {
+            // PvE Mode: Consume daily attempt before starting battle
+            try {
+              if (address) {
+                await consumePveAttempt({ address });
+                console.log('✅ PvE attempt consumed successfully');
+              }
+            } catch (error) {
+              console.error('❌ Failed to consume PvE attempt:', error);
+              alert(error instanceof Error ? error.message : 'Failed to start battle. Please try again.');
+              return; // Don't start battle if attempt consumption failed
+            }
+
             // Don't play sound here - playHand() will play AudioManager.playHand()
             setAiDifficulty(difficulty);
             setIsDifficultyModalOpen(false);
@@ -5777,6 +5832,8 @@ export default function TCGPage() {
         unlockedDifficulties={unlockedDifficulties as Set<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>}
         currentDifficulty={aiDifficulty}
         tempSelected={tempSelectedDifficulty}
+        remainingAttempts={pveAttemptsData?.remaining ?? 10}
+        totalAttempts={pveAttemptsData?.total ?? 10}
       />
 
       {/* Easter Egg - Runaway Image */}
