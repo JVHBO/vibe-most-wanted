@@ -238,9 +238,10 @@ export function PokerBattleTable({
   const [battleFinalized, setBattleFinalized] = useState(false);
   const [roomFinished, setRoomFinished] = useState(false);
 
-  // Reset roomFinished when roomId changes (new room/battle)
+  // Reset roomFinished and roomDeletionRef when roomId changes (new room/battle)
   useEffect(() => {
     setRoomFinished(false);
+    roomDeletionRef.current = false;
   }, [roomId]);
 
   // Game-over screen control - prevents multiple screens from overlapping
@@ -249,6 +250,9 @@ export function PokerBattleTable({
 
   // Prevent multiple match recordings (useRef persists across renders)
   const matchRecordedRef = useRef(false);
+
+  // Prevent multiple room deletions (useRef persists across renders)
+  const roomDeletionRef = useRef(false);
 
   // GamePopups control states
   const [showWinPopup, setShowWinPopup] = useState(false);
@@ -1557,8 +1561,9 @@ export function PokerBattleTable({
 
   // Auto-delete finished rooms (V5: No TX needed, just cleanup Convex)
   useEffect(() => {
-    if (!isCPUMode && room && room.status === 'finished' && !roomFinished) {
+    if (!isCPUMode && room && room.status === 'finished' && !roomFinished && !roomDeletionRef.current) {
       console.log('[PokerBattle] 🗑️ Room finished - deleting from Convex...');
+      roomDeletionRef.current = true; // Mark as deletion in progress
       finishGameMutation({
         roomId: room.roomId,
         winnerId: room.winnerId.toLowerCase(),
@@ -1570,6 +1575,8 @@ export function PokerBattleTable({
       }).catch((error) => {
         console.error('[PokerBattle] ❌ Failed to delete room:', error);
         setRoomFinished(true);
+        // Reset ref on error so user can retry if needed
+        roomDeletionRef.current = false;
       });
     }
   }, [room, isCPUMode, roomFinished, finishGameMutation]);
