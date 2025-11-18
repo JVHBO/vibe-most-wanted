@@ -978,7 +978,7 @@ export const claimWeeklyLeaderboardReward = mutation({
       success: true,
       rank,
       reward,
-      newBalance: newInbox,
+      newBalance: newBalance,
       rewardName: `Leaderboard Rank #${rank}`,
       nextResetDate: getNextSunday(),
     };
