@@ -50,13 +50,15 @@ export function PokerMatchmaking({
 
   // Web3 hooks for VBMS
   const { address: walletAddress } = useAccount();
-  const { balance: vbmsBalance, balanceRaw: vbmsBalanceRaw, refetch: refetchVBMSBalance } = useVBMSBalance(walletAddress);
-  console.log("🔍 VBMS Balance Debug:", { walletAddress, vbmsBalance, vbmsBalanceRaw });
-  const { allowance: vbmsAllowance, allowanceRaw: vbmsAllowanceRaw, refetch: refetchAllowance } = useVBMSAllowance(walletAddress, CONTRACTS.VBMSPokerBattle as `0x${string}`);
+  // Use playerAddress (Farcaster miniapp) OR walletAddress (web wallet) - playerAddress takes priority
+  const effectiveAddress = (playerAddress || walletAddress) as `0x${string}` | undefined;
+  const { balance: vbmsBalance, balanceRaw: vbmsBalanceRaw, refetch: refetchVBMSBalance } = useVBMSBalance(effectiveAddress);
+  console.log("🔍 VBMS Balance Debug:", { playerAddress, walletAddress, effectiveAddress, vbmsBalance, vbmsBalanceRaw });
+  const { allowance: vbmsAllowance, allowanceRaw: vbmsAllowanceRaw, refetch: refetchAllowance } = useVBMSAllowance(effectiveAddress, CONTRACTS.VBMSPokerBattle as `0x${string}`);
   const { approve: approveVBMS, isPending: isApproving, isConfirming: isApprovingConfirming, isSuccess: isApproved, error: approveError } = useApproveVBMS();
   const { createBattle: createBlockchainBattle, isPending: isCreatingBattle, isConfirming: isCreatingBattleConfirming, isSuccess: isBattleCreated, error: createBattleError } = useCreateBattle();
   const { joinBattle: joinBlockchainBattle, isPending: isJoiningBattle, isConfirming: isJoiningBattleConfirming, isSuccess: isBattleJoined, error: joinBattleError } = useJoinBattle();
-  const { battleId: activeBattleId, isLoading: isLoadingActiveBattle, refetch: refetchActiveBattle } = useActiveBattle(walletAddress);
+  const { battleId: activeBattleId, isLoading: isLoadingActiveBattle, refetch: refetchActiveBattle } = useActiveBattle(effectiveAddress);
   const { battle: activeBattleInfo, isLoading: isLoadingBattleInfo } = useBattle(activeBattleId);
   const { cancelBattle: cancelBlockchainBattle, isPending: isCancellingBattle, isConfirming: isCancellingBattleConfirming, isSuccess: isBattleCancelled } = useCancelBattle();
 
@@ -98,7 +100,7 @@ export function PokerMatchmaking({
   useEffect(() => {
     const recoverOrphanedBattle = async () => {
       // Only check if we're using VBMS and have wallet connected
-      if (!walletAddress || selectedToken !== "VBMS") return;
+      if (!effectiveAddress || selectedToken !== "VBMS") return;
 
       // If we already have a Convex room, don't do anything
       if (myRoom) return;
@@ -560,7 +562,8 @@ export function PokerMatchmaking({
     try {
       // If VBMS is selected, create blockchain battle
       if (selectedToken === "VBMS") {
-        if (!walletAddress) {
+        // Check if we have an address (from Farcaster miniapp OR web wallet)
+        if (!effectiveAddress) {
           console.log("Wallet Not Connected - Please connect your wallet to play with VBMS");
           AudioManager.buttonError();
           return;
@@ -614,7 +617,7 @@ export function PokerMatchmaking({
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     battleId: activeBattleId.toString(),
-                    winnerAddress: walletAddress, // You as winner
+                    winnerAddress: effectiveAddress, // You as winner
                   })
                 });
 
@@ -638,7 +641,7 @@ export function PokerMatchmaking({
                     type: 'function',
                   }],
                   functionName: 'finishBattle',
-                  args: [BigInt(activeBattleId), walletAddress as `0x${string}`, signature as `0x${string}`]
+                  args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
                 });
 
                 console.log("✅ Battle finished! You can now create a new one.");
@@ -737,7 +740,8 @@ export function PokerMatchmaking({
     try {
       // If VBMS room, join blockchain battle
       if (token === "VBMS") {
-        if (!walletAddress) {
+        // Check if we have an address (from Farcaster miniapp OR web wallet)
+        if (!effectiveAddress) {
           console.log("Wallet Not Connected - Please connect your wallet to play with VBMS");
           AudioManager.buttonError();
           setIsJoining(false);
@@ -1046,7 +1050,7 @@ export function PokerMatchmaking({
                   >
                     <div className="text-lg">$VBMS</div>
                     <div className="text-[10px] mt-1">
-                      {walletAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
+                      {effectiveAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
                     </div>
                   </button>
                   <button
