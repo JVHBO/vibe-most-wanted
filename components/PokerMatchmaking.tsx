@@ -858,45 +858,6 @@ export function PokerMatchmaking({
         </div>
 
         <div className="p-3 sm:p-6">
-          {/* Active Battle Warning */}
-          {activeBattleId > 0 && activeBattleInfo && (
-            <div className="mb-4 sm:mb-8 bg-vintage-gold/10 border-2 border-vintage-gold/50 rounded-xl p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="text-lg sm:text-xl font-display font-bold text-vintage-gold mb-2">
-                    ⚠️ Active Battle #{activeBattleId}
-                  </h3>
-                  <p className="text-sm sm:text-base text-vintage-parchment mb-2">
-                    {activeBattleInfo.status === 0 && "Waiting for opponent..."}
-                    {activeBattleInfo.status === 1 && "Battle in progress"}
-                    {activeBattleInfo.status === 2 && "Battle finished"}
-                  </p>
-                  <p className="text-xs sm:text-sm text-vintage-burnt-gold">
-                    Stake: {activeBattleInfo.stake} VBMS
-                  </p>
-                </div>
-
-                {activeBattleInfo.status === 0 && (() => {
-                  // V3 Contract: NO COOLDOWN - Can cancel immediately!
-                  const canCancel = true;
-
-                  return (
-                    <div className="flex flex-col gap-2 items-end">
-                      <button
-                        onClick={handleCancelBattle}
-                        disabled={!canCancel || isCancellingBattle || isCancellingBattleConfirming}
-                        className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-display font-bold transition"
-                        title="Cancel and recover your VBMS (V3: No wait time!)"
-                      >
-                        {isCancellingBattle || isCancellingBattleConfirming ? "Cancelling..." : "Cancel Battle"}
-                      </button>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-
           {/* Stuck in Room Warning - Force Leave Option */}
           {myRoom && !activeBattleId && (
             <div className="mb-4 sm:mb-8 bg-red-500/10 border-2 border-red-500/50 rounded-xl p-4">
