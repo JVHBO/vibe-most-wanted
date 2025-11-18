@@ -78,7 +78,7 @@ export function PokerMatchmaking({
     vbmsBalanceRaw,
     source: isInMiniapp ? 'Farcaster SDK' : 'Wagmi'
   });
-  const { approve: approveVBMS, isPending: isApproving, isConfirming: isApprovingConfirming, isSuccess: isApproved, error: approveError } = useApproveVBMS();
+  const { approve: approveVBMS, isPending: isApproving, error: approveError } = useApproveVBMS();
   const { createBattle: createBlockchainBattle, isPending: isCreatingBattle, isConfirming: isCreatingBattleConfirming, isSuccess: isBattleCreated, error: createBattleError } = useCreateBattle();
   const { joinBattle: joinBlockchainBattle, isPending: isJoiningBattle, isConfirming: isJoiningBattleConfirming, isSuccess: isBattleJoined, error: joinBattleError } = useJoinBattle();
   const { battleId: activeBattleId, isLoading: isLoadingActiveBattle, refetch: refetchActiveBattle } = useActiveBattle(effectiveAddress);
