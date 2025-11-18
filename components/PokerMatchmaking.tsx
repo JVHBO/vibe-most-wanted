@@ -590,141 +590,11 @@ export function PokerMatchmaking({
         return;
       }
 
-      // Check if user already has an active battle
+      // REMOVED: Active battle check - now allows creating multiple battles
+      // Players can create new battles even if they have active ones
+      // Old battles will be auto-canceled after timeout
       if (activeBattleId > 0 && activeBattleInfo) {
-        console.log("⚠️ You already have an active battle:", {
-          battleId: activeBattleId,
-          status: activeBattleInfo.status,
-          createdAt: activeBattleInfo.createdAt,
-        });
-
-        console.log("🔍 Debug - status type:", typeof activeBattleInfo.status, "value:", activeBattleInfo.status);
-        console.log("🔍 Debug - status === 0:", activeBattleInfo.status === 0);
-        console.log("🔍 Debug - status === 1:", activeBattleInfo.status === 1);
-        console.log("🔍 Debug - status == 1:", activeBattleInfo.status == 1);
-
-        // Calculate if 10 minutes have passed (for cancel)
-        const tenMinutes = 600; // seconds
-        const now = Math.floor(Date.now() / 1000);
-        const canCancel = (now - activeBattleInfo.createdAt) >= tenMinutes;
-
-        if (canCancel && activeBattleInfo.status === 0) { // 0 = WAITING
-          const shouldCancel = confirm(`You already have an active battle (#${activeBattleId}) waiting for an opponent.\n\nDo you want to CANCEL it and create a new one?`);
-          if (shouldCancel) {
-            console.log("🗑️ Canceling orphaned battle #" + activeBattleId);
-            try {
-              await cancelBlockchainBattle(activeBattleId);
-              console.log("✅ Battle canceled! You can now create a new one.");
-              // Wait a bit for blockchain to update, then allow creating new battle
-              setTimeout(() => {
-                setIsCreating(false);
-              }, 2000);
-              return;
-            } catch (error) {
-              console.error("❌ Failed to cancel battle:", error);
-              alert("Failed to cancel battle. Please try again.");
-              AudioManager.buttonError();
-              return;
-            }
-          }
-        } else if (activeBattleInfo.status === 1) { // ACTIVE - battle in progress
-          const shouldFinish = confirm(`You already have an ACTIVE battle (#${activeBattleId}) in progress.\n\nDo you want to FORCE FINISH it as a draw and create a new one?`);
-          if (shouldFinish) {
-            console.log("🏁 Force finishing battle #" + activeBattleId);
-            try {
-              // Get signature from backend
-              const response = await fetch('/api/poker/finish-battle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  battleId: activeBattleId.toString(),
-                  winnerAddress: effectiveAddress, // You as winner
-                })
-              });
-
-              const { signature } = await response.json();
-
-              // Call finishBattle on blockchain
-              // IMPORTANT: Use Farcaster SDK in miniapp, wagmi on web
-              if (isInMiniapp) {
-                // Miniapp: Use Farcaster SDK provider
-                const sdk = (window as any).sdk;
-                const provider = sdk?.wallet?.ethProvider || (window as any).ethereum;
-
-                if (!provider) {
-                  throw new Error('No wallet provider available');
-                }
-
-                // Encode function call
-                const { encodeFunctionData } = await import('viem');
-                const data = encodeFunctionData({
-                  abi: [{
-                    inputs: [
-                      { name: 'battleId', type: 'uint256' },
-                      { name: 'winner', type: 'address' },
-                      { name: 'signature', type: 'bytes' }
-                    ],
-                    name: 'finishBattle',
-                    outputs: [],
-                    stateMutability: 'nonpayable',
-                    type: 'function',
-                  }],
-                  functionName: 'finishBattle',
-                  args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
-                });
-
-                // Send transaction via Farcaster SDK
-                const txHash = await provider.request({
-                  method: 'eth_sendTransaction',
-                  params: [{
-                    from: effectiveAddress,
-                    to: CONTRACTS.VBMSPokerBattle,
-                    data,
-                  }],
-                });
-
-                console.log("📤 Force finish TX sent:", txHash);
-              } else {
-                // Web: Use wagmi
-                const { writeContract } = await import('wagmi/actions');
-                const { config } = await import('@/lib/wagmi');
-
-                await writeContract(config, {
-                  address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
-                  abi: [{
-                    inputs: [
-                      { name: 'battleId', type: 'uint256' },
-                      { name: 'winner', type: 'address' },
-                      { name: 'signature', type: 'bytes' }
-                    ],
-                    name: 'finishBattle',
-                    outputs: [],
-                    stateMutability: 'nonpayable',
-                    type: 'function',
-                  }],
-                  functionName: 'finishBattle',
-                  args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
-                });
-              }
-
-              console.log("✅ Battle finished! You can now create a new one.");
-              setTimeout(() => {
-                setIsCreating(false);
-              }, 2000);
-              return;
-            } catch (error) {
-              console.error("❌ Failed to finish battle:", error);
-              alert("Failed to finish battle. Please try again.");
-              AudioManager.buttonError();
-              return;
-            }
-          }
-        } else {
-          alert(`You already have an active battle (#${activeBattleId}). Wait for it to finish or for an opponent to join.`);
-        }
-
-        AudioManager.buttonError();
-        return;
+        console.log("⚠️ Note: You have an active battle #" + activeBattleId + " - it will be abandoned if you create a new one");
       }
 
       // Calculate total stake needed
@@ -1023,6 +893,45 @@ export function PokerMatchmaking({
                     </div>
                   );
                 })()}
+              </div>
+            </div>
+          )}
+
+          {/* Stuck in Room Warning - Force Leave Option */}
+          {myRoom && !activeBattleId && (
+            <div className="mb-4 sm:mb-8 bg-red-500/10 border-2 border-red-500/50 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg sm:text-xl font-display font-bold text-red-400 mb-2">
+                    🚨 Stuck in Room
+                  </h3>
+                  <p className="text-sm sm:text-base text-vintage-parchment mb-2">
+                    Room: {myRoom.roomId.slice(0, 8)}... • Stake: {myRoom.ante} {myRoom.token}
+                  </p>
+                  <p className="text-xs sm:text-sm text-vintage-burnt-gold">
+                    You're in a room with no active blockchain battle. Click to force leave.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 items-end">
+                  <button
+                    onClick={async () => {
+                      try {
+                        console.log('🚨 Force leaving stuck room:', myRoom.roomId);
+                        await forceDeleteRoomByAddress({ address: playerAddress });
+                        console.log('✅ Successfully left room');
+                        AudioManager.buttonClick();
+                      } catch (error) {
+                        console.error('❌ Failed to leave room:', error);
+                        AudioManager.buttonError();
+                      }
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-display font-bold transition"
+                    title="Force leave this stuck room"
+                  >
+                    Force Leave
+                  </button>
+                </div>
               </div>
             </div>
           )}
