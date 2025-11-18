@@ -17,5 +17,8 @@ export function shouldSkipHeavyQueries(): boolean {
 }
 
 export function shouldDisableVoiceChat(): boolean {
-  return isMiniappMode();
+  // DISABLED: Allow voice chat even in iframe
+  // Voice chat works fine in Farcaster web iframe
+  // Only the native mobile app has restrictions
+  return false;
 }
