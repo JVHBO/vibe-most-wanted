@@ -781,7 +781,7 @@ export const distributeWeeklyRewards = internalMutation({
       }
 
       if (reward > 0) {
-        const currentInbox = player.inbox || 0;
+        const currentInbox = player.coinsInbox || 0;
         await ctx.db.patch(player._id, {
           coinsInbox: currentInbox + reward,
           lifetimeEarned: (player.lifetimeEarned || 0) + reward,
