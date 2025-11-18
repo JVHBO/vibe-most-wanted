@@ -55,7 +55,11 @@ export function PokerMatchmaking({
   const effectiveAddress = (playerAddress || walletAddress) as `0x${string}` | undefined;
 
   // Detect miniapp (needs Farcaster SDK provider, wagmi won't work)
-  const isInMiniapp = typeof window !== 'undefined' && window.parent !== window;
+  // Check both iframe (web) and Farcaster SDK (mobile app)
+  const isInMiniapp = typeof window !== 'undefined' && (
+    window.parent !== window || // iframe detection (web)
+    !!(window as any).sdk?.wallet // Farcaster SDK detection (mobile + web)
+  );
 
   // Use Farcaster-compatible hooks in miniapp, wagmi hooks on web
   const farcasterBalance = useFarcasterVBMSBalance(effectiveAddress);
@@ -645,25 +649,67 @@ export function PokerMatchmaking({
                 const { signature } = await response.json();
 
                 // Call finishBattle on blockchain
-                const { writeContract } = await import('wagmi/actions');
-                const { config } = await import('@/lib/wagmi');
+                // IMPORTANT: Use Farcaster SDK in miniapp, wagmi on web
+                if (isInMiniapp) {
+                  // Miniapp: Use Farcaster SDK provider
+                  const sdk = (window as any).sdk;
+                  const provider = sdk?.wallet?.ethProvider || (window as any).ethereum;
 
-                await writeContract(config, {
-                  address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
-                  abi: [{
-                    inputs: [
-                      { name: 'battleId', type: 'uint256' },
-                      { name: 'winner', type: 'address' },
-                      { name: 'signature', type: 'bytes' }
-                    ],
-                    name: 'finishBattle',
-                    outputs: [],
-                    stateMutability: 'nonpayable',
-                    type: 'function',
-                  }],
-                  functionName: 'finishBattle',
-                  args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
-                });
+                  if (!provider) {
+                    throw new Error('No wallet provider available');
+                  }
+
+                  // Encode function call
+                  const { encodeFunctionData } = await import('viem');
+                  const data = encodeFunctionData({
+                    abi: [{
+                      inputs: [
+                        { name: 'battleId', type: 'uint256' },
+                        { name: 'winner', type: 'address' },
+                        { name: 'signature', type: 'bytes' }
+                      ],
+                      name: 'finishBattle',
+                      outputs: [],
+                      stateMutability: 'nonpayable',
+                      type: 'function',
+                    }],
+                    functionName: 'finishBattle',
+                    args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
+                  });
+
+                  // Send transaction via Farcaster SDK
+                  const txHash = await provider.request({
+                    method: 'eth_sendTransaction',
+                    params: [{
+                      from: effectiveAddress,
+                      to: CONTRACTS.VBMSPokerBattle,
+                      data,
+                    }],
+                  });
+
+                  console.log("📤 Force finish TX sent:", txHash);
+                } else {
+                  // Web: Use wagmi
+                  const { writeContract } = await import('wagmi/actions');
+                  const { config } = await import('@/lib/wagmi');
+
+                  await writeContract(config, {
+                    address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
+                    abi: [{
+                      inputs: [
+                        { name: 'battleId', type: 'uint256' },
+                        { name: 'winner', type: 'address' },
+                        { name: 'signature', type: 'bytes' }
+                      ],
+                      name: 'finishBattle',
+                      outputs: [],
+                      stateMutability: 'nonpayable',
+                      type: 'function',
+                    }],
+                    functionName: 'finishBattle',
+                    args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
+                  });
+                }
 
                 console.log("✅ Battle finished! You can now create a new one.");
                 setTimeout(() => {

@@ -14,6 +14,7 @@ export function useFarcasterVBMSBalance(address?: string) {
   const [balance, setBalance] = useState<string>('0');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
     if (!address) {
@@ -74,7 +75,7 @@ export function useFarcasterVBMSBalance(address?: string) {
     };
 
     fetchBalance();
-  }, [address]);
+  }, [address, refetchTrigger]);
 
   return {
     balance,
@@ -82,10 +83,8 @@ export function useFarcasterVBMSBalance(address?: string) {
     isLoading,
     error,
     refetch: () => {
-      // Trigger re-fetch by updating a dependency
-      if (address) {
-        setBalance('0');
-      }
+      // Trigger re-fetch by incrementing the trigger
+      setRefetchTrigger(prev => prev + 1);
     },
   };
 }
@@ -96,6 +95,7 @@ export function useFarcasterVBMSBalance(address?: string) {
 export function useFarcasterVBMSAllowance(owner?: string, spender?: string) {
   const [allowance, setAllowance] = useState<string>('0');
   const [isLoading, setIsLoading] = useState(false);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
     if (!owner || !spender) {
@@ -150,16 +150,15 @@ export function useFarcasterVBMSAllowance(owner?: string, spender?: string) {
     };
 
     fetchAllowance();
-  }, [owner, spender]);
+  }, [owner, spender, refetchTrigger]);
 
   return {
     allowance,
     allowanceRaw: allowance !== '0' ? BigInt(parseFloat(allowance) * 1e18) : BigInt(0),
     isLoading,
     refetch: () => {
-      if (owner && spender) {
-        setAllowance('0');
-      }
+      // Trigger re-fetch by incrementing the trigger
+      setRefetchTrigger(prev => prev + 1);
     },
   };
 }
