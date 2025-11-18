@@ -34,7 +34,6 @@ export function PokerMatchmaking({
 }: PokerMatchmakingProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAnte, setSelectedAnte] = useState(10);
-  const [selectedToken, setSelectedToken] = useState<"VBMS" | "VIBE_NFT" | "TESTVBMS">("VBMS");
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [hasCheckedExistingRoom, setHasCheckedExistingRoom] = useState(false);
@@ -781,13 +780,6 @@ export function PokerMatchmaking({
         approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
         return; // useEffect will handle next step after approval
       }
-
-      // For VIBE_NFT, use the normal off-chain flow (to be implemented)
-      if (selectedToken === "VIBE_NFT") {
-        console.log("VIBE_NFT mode coming soon!");
-        AudioManager.buttonError();
-        return;
-      }
     } catch (error) {
       console.error("❌ Error in handleCreateRoom:", error);
       AudioManager.buttonError();
@@ -905,14 +897,6 @@ export function PokerMatchmaking({
         // The useEffect will handle joining after approval
         // DON'T reset isJoining here - let the useEffect handle it
         console.log("✅ Approval transaction sent, waiting for confirmation...");
-        return;
-      }
-
-      // For VIBE_NFT, use normal off-chain flow (to be implemented)
-      if (token === "VIBE_NFT") {
-        console.log("VIBE_NFT mode coming soon!");
-        AudioManager.buttonError();
-        setIsJoining(false);
         return;
       }
     } catch (error) {
@@ -1068,69 +1052,45 @@ export function PokerMatchmaking({
           {/* Room Settings */}
           <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-xl sm:rounded-2xl p-3 sm:p-6 mb-4 sm:mb-8">
             <h3 className="text-base sm:text-xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">
-              ⚙️ ROOM SETTINGS
+              ⚙️ STAKES SELECTION
             </h3>
 
-            <div className="grid md:grid-cols-2 gap-3 sm:gap-6">
-              {/* Token Selection */}
-              <div>
-                <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                  BETTING TOKEN
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setSelectedToken("VBMS")}
-                    className={`px-6 py-4 rounded-xl font-bold transition-all ${
-                      selectedToken === "VBMS"
-                        ? "bg-gradient-to-br from-yellow-500 to-orange-500 text-black border-2 border-yellow-400 shadow-xl shadow-yellow-500/50"
-                        : "bg-vintage-charcoal text-yellow-400 border-2 border-yellow-400/30 hover:border-yellow-400/60"
-                    }`}
-                  >
-                    <div className="text-lg">$VBMS</div>
-                    <div className="text-[10px] mt-1">
-                      {effectiveAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setSelectedToken("VIBE_NFT")}
-                    className={`px-6 py-4 rounded-xl font-bold transition-all ${
-                      selectedToken === "VIBE_NFT"
-                        ? "bg-vintage-gold text-vintage-black border-2 border-vintage-gold shadow-gold"
-                        : "bg-vintage-charcoal text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
-                    }`}
-                  >
-                    <div className="text-lg">VIBE NFT</div>
-                    <div className="text-[10px] text-vintage-burnt-gold mt-1">Card Mode</div>
-                  </button>
+            {/* Current Token Display */}
+            <div className="mb-4 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-2 border-yellow-400/30 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-vintage-burnt-gold mb-1">Betting Token</div>
+                  <div className="text-2xl font-bold text-yellow-400">$VBMS</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-vintage-burnt-gold mb-1">Your Balance</div>
+                  <div className="text-2xl font-bold text-yellow-400">
+                    {effectiveAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
                   </div>
-                <div className="mt-3 bg-blue-900/20 border border-blue-500/30 rounded-xl p-3">
-                  <p className="text-blue-300 text-xs">
-                    💡 VBMS tokens are bet for prizes - NFT cards determine gameplay power
-                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Ante Selection */}
-              <div>
-                <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                  STAKES (Entry Fee)
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {anteOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setSelectedAnte(option.value)}
-                      className={`p-3 rounded-xl border-2 font-bold transition-all ${
-                        selectedAnte === option.value
-                          ? `bg-gradient-to-br ${option.color} text-white border-white shadow-lg`
-                          : "bg-vintage-charcoal text-vintage-gold border-vintage-gold/30 hover:border-vintage-gold/60"
-                      }`}
-                    >
-                      <div className="text-xs mb-1">{option.label}</div>
-                      <div className="text-lg">{option.value}</div>
-                    </button>
-                  ))}
-                </div>
+            {/* Ante Selection */}
+            <div>
+              <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
+                STAKES (Entry Fee)
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {anteOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setSelectedAnte(option.value)}
+                    className={`p-3 rounded-xl border-2 font-bold transition-all ${
+                      selectedAnte === option.value
+                        ? `bg-gradient-to-br ${option.color} text-white border-white shadow-lg`
+                        : "bg-vintage-charcoal text-vintage-gold border-vintage-gold/30 hover:border-vintage-gold/60"
+                    }`}
+                  >
+                    <div className="text-xs mb-1">{option.label}</div>
+                    <div className="text-lg">{option.value}</div>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -1259,41 +1219,16 @@ export function PokerMatchmaking({
               🎰 CREATE ROOM
             </h2>
 
-            {/* Token Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                BETTING TOKEN
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setSelectedToken("VBMS")}
-                  className={`px-6 py-4 rounded-xl font-bold transition-all ${
-                    selectedToken === "VBMS"
-                      ? "bg-gradient-to-br from-yellow-500 to-orange-500 text-black border-2 border-yellow-400 shadow-xl shadow-yellow-500/50"
-                      : "bg-vintage-deep-black text-yellow-400 border-2 border-yellow-400/30 hover:border-yellow-400/60"
-                  }`}
-                >
-                  <div className="text-lg">$VBMS</div>
-                  <div className="text-[10px] mt-1">
+            {/* Token Display */}
+            <div className="mb-6 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-2 border-yellow-400/30 rounded-xl p-4">
+              <div className="text-center">
+                <div className="text-sm text-vintage-burnt-gold mb-2">Betting Token</div>
+                <div className="text-3xl font-bold text-yellow-400 mb-2">$VBMS</div>
+                <div className="text-sm text-vintage-burnt-gold">
+                  Your Balance: <span className="text-yellow-400 font-bold">
                     {walletAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
-                  </div>
-                </button>
-                <button
-                  onClick={() => setSelectedToken("VIBE_NFT")}
-                  className={`px-6 py-4 rounded-xl font-bold transition-all ${
-                    selectedToken === "VIBE_NFT"
-                      ? "bg-vintage-gold text-vintage-black border-2 border-vintage-gold shadow-gold"
-                      : "bg-vintage-deep-black text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
-                  }`}
-                >
-                  <div className="text-lg">VIBE NFT</div>
-                  <div className="text-[10px] text-vintage-burnt-gold mt-1">Card Mode</div>
-                </button>
-              </div>
-              <div className="mt-3 bg-blue-900/20 border border-blue-500/30 rounded-xl p-3">
-                <p className="text-blue-300 text-xs">
-                  💡 VBMS tokens are bet for prizes - NFT cards determine gameplay power
-                </p>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1326,13 +1261,13 @@ export function PokerMatchmaking({
                 <div className="flex justify-between">
                   <span>Your Stake:</span>
                   <span className="text-vintage-gold font-bold">
-                    {selectedAnte} {selectedToken}
+                    {selectedAnte} VBMS
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Total Pot:</span>
                   <span className="text-vintage-gold font-bold">
-                    {selectedAnte * 2} {selectedToken}
+                    {selectedAnte * 2} VBMS
                   </span>
                 </div>
               </div>
