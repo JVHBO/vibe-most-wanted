@@ -199,8 +199,8 @@ export function PokerMatchmaking({
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Refetch allowance to get updated value
-        const { data: newAllowance } = await refetchAllowance();
-        console.log("🔄 Refetched allowance after approval:", newAllowance);
+        await refetchAllowance();
+        console.log("🔄 Refetched allowance after approval - will use updated vbmsAllowance from hook");
 
         // Now create the battle
         setVbmsStage("creating");
