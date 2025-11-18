@@ -238,6 +238,11 @@ export function PokerBattleTable({
   const [battleFinalized, setBattleFinalized] = useState(false);
   const [roomFinished, setRoomFinished] = useState(false);
 
+  // Reset roomFinished when roomId changes (new room/battle)
+  useEffect(() => {
+    setRoomFinished(false);
+  }, [roomId]);
+
   // Game-over screen control - prevents multiple screens from overlapping
   const [gameOverShown, setGameOverShown] = useState(false);
   const [createdMatchId, setCreatedMatchId] = useState<Id<"matches"> | null>(null);
