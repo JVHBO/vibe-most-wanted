@@ -585,7 +585,7 @@ export const sendAchievementToInbox = mutation({
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
-      choice: "direct",
+      choice: "immediate",
       amount,
       inboxTotal: newBalance,
       bonusAvailable: false,
@@ -747,7 +747,7 @@ export const sendPveRewardToInbox = mutation({
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
-      choice: "direct",
+      choice: "immediate",
       amount,
       inboxTotal: newBalance,
       bonusAvailable: false,
@@ -797,7 +797,7 @@ export const sendPvpRewardToInbox = mutation({
       console.log(`[sendPvpRewardToInbox] Inserting analytics...`);
       await ctx.db.insert("claimAnalytics", {
         playerAddress: address.toLowerCase(),
-        choice: "direct",
+        choice: "immediate",
         amount,
         inboxTotal: newBalance,
         bonusAvailable: false,
