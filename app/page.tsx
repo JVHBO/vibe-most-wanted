@@ -4281,50 +4281,88 @@ export default function TCGPage() {
               </div>
             </div>
           ) : (
-            /* Show full connect modal after checking Farcaster (even if in Farcaster context but not connected) */
+            /* Show connect modal - different for Farcaster miniapp vs regular web */
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
               <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
               <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
               <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
 
               <div className="flex justify-center">
-                <ConnectButton.Custom>
-                  {({
-                    account,
-                    chain,
-                    openAccountModal,
-                    openChainModal,
-                    openConnectModal,
-                    mounted,
-                  }) => {
-                    return (
-                      <div
-                        {...(!mounted && {
-                          'aria-hidden': true,
-                          'style': {
-                            opacity: 0,
-                            pointerEvents: 'none',
-                            userSelect: 'none',
-                          },
-                        })}
-                      >
-                        {(() => {
-                          if (!mounted || !account || !chain) {
-                            return (
-                              <button
-                                onClick={openConnectModal}
-                                className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-                              >
-                                {t('connectWallet')}
-                              </button>
-                            );
+                {isInFarcaster ? (
+                  /* In Farcaster miniapp: Show custom Farcaster wallet button */
+                  <button
+                    onClick={async () => {
+                      try {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        setIsCheckingFarcaster(true);
+
+                        if (sdk?.wallet?.ethProvider) {
+                          const addresses = await sdk.wallet.ethProvider.request({
+                            method: "eth_requestAccounts"
+                          });
+
+                          if (addresses && addresses[0]) {
+                            setFarcasterAddress(addresses[0]);
+                            localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
+                            devLog('✓ Connected Farcaster wallet:', addresses[0]);
+                          } else {
+                            throw new Error('No address returned');
                           }
-                          return null;
-                        })()}
-                      </div>
-                    );
-                  }}
-                </ConnectButton.Custom>
+                        } else {
+                          throw new Error('Farcaster SDK not available');
+                        }
+                      } catch (err) {
+                        devError('Failed to connect Farcaster wallet:', err);
+                        if (soundEnabled) AudioManager.buttonError();
+                        alert('Failed to connect Farcaster wallet. Please try again.');
+                      } finally {
+                        setIsCheckingFarcaster(false);
+                      }
+                    }}
+                    className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                  >
+                    Connect Farcaster Wallet
+                  </button>
+                ) : (
+                  /* Regular web: Show RainbowKit modal */
+                  <ConnectButton.Custom>
+                    {({
+                      account,
+                      chain,
+                      openAccountModal,
+                      openChainModal,
+                      openConnectModal,
+                      mounted,
+                    }) => {
+                      return (
+                        <div
+                          {...(!mounted && {
+                            'aria-hidden': true,
+                            'style': {
+                              opacity: 0,
+                              pointerEvents: 'none',
+                              userSelect: 'none',
+                            },
+                          })}
+                        >
+                          {(() => {
+                            if (!mounted || !account || !chain) {
+                              return (
+                                <button
+                                  onClick={openConnectModal}
+                                  className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                                >
+                                  {t('connectWallet')}
+                                </button>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      );
+                    }}
+                  </ConnectButton.Custom>
+                )}
               </div>
             </div>
           )}
