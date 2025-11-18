@@ -6,8 +6,8 @@ import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { useAccount } from "wagmi";
 import {
-  useVBMSBalance,
-  useVBMSAllowance,
+  useVBMSBalance as useWagmiVBMSBalance,
+  useVBMSAllowance as useWagmiVBMSAllowance,
   useApproveVBMS,
   useCreateBattle,
   useJoinBattle,
@@ -15,6 +15,7 @@ import {
   useActiveBattle,
   useBattle
 } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance, useFarcasterVBMSAllowance } from "@/lib/hooks/useFarcasterVBMS";
 import { CONTRACTS } from "@/lib/contracts";
 import { parseEther } from "viem";
 
@@ -52,9 +53,29 @@ export function PokerMatchmaking({
   const { address: walletAddress } = useAccount();
   // Use playerAddress (Farcaster miniapp) OR walletAddress (web wallet) - playerAddress takes priority
   const effectiveAddress = (playerAddress || walletAddress) as `0x${string}` | undefined;
-  const { balance: vbmsBalance, balanceRaw: vbmsBalanceRaw, refetch: refetchVBMSBalance } = useVBMSBalance(effectiveAddress);
-  console.log("🔍 VBMS Balance Debug:", { playerAddress, walletAddress, effectiveAddress, vbmsBalance, vbmsBalanceRaw });
-  const { allowance: vbmsAllowance, allowanceRaw: vbmsAllowanceRaw, refetch: refetchAllowance } = useVBMSAllowance(effectiveAddress, CONTRACTS.VBMSPokerBattle as `0x${string}`);
+
+  // Detect miniapp (needs Farcaster SDK provider, wagmi won't work)
+  const isInMiniapp = typeof window !== 'undefined' && window.parent !== window;
+
+  // Use Farcaster-compatible hooks in miniapp, wagmi hooks on web
+  const farcasterBalance = useFarcasterVBMSBalance(effectiveAddress);
+  const farcasterAllowance = useFarcasterVBMSAllowance(effectiveAddress, CONTRACTS.VBMSPokerBattle);
+  const wagmiBalance = useWagmiVBMSBalance(effectiveAddress);
+  const wagmiAllowance = useWagmiVBMSAllowance(effectiveAddress, CONTRACTS.VBMSPokerBattle as `0x${string}`);
+
+  // Select hooks based on environment
+  const { balance: vbmsBalance, balanceRaw: vbmsBalanceRaw, refetch: refetchVBMSBalance } = isInMiniapp ? farcasterBalance : wagmiBalance;
+  const { allowance: vbmsAllowance, allowanceRaw: vbmsAllowanceRaw, refetch: refetchAllowance } = isInMiniapp ? farcasterAllowance : wagmiAllowance;
+
+  console.log("🔍 VBMS Balance Debug:", {
+    isInMiniapp,
+    playerAddress,
+    walletAddress,
+    effectiveAddress,
+    vbmsBalance,
+    vbmsBalanceRaw,
+    source: isInMiniapp ? 'Farcaster SDK' : 'Wagmi'
+  });
   const { approve: approveVBMS, isPending: isApproving, isConfirming: isApprovingConfirming, isSuccess: isApproved, error: approveError } = useApproveVBMS();
   const { createBattle: createBlockchainBattle, isPending: isCreatingBattle, isConfirming: isCreatingBattleConfirming, isSuccess: isBattleCreated, error: createBattleError } = useCreateBattle();
   const { joinBattle: joinBlockchainBattle, isPending: isJoiningBattle, isConfirming: isJoiningBattleConfirming, isSuccess: isBattleJoined, error: joinBattleError } = useJoinBattle();
