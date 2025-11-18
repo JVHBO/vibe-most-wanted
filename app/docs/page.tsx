@@ -145,7 +145,7 @@ export default function DocsPage() {
           <h1 className="text-5xl font-display font-bold text-vintage-gold mb-2">
             {t("documentation")}
           </h1>
-          <p className="text-vintage-burnt-gold">{t("completeGuide")}</p>
+          <p className="text-vintage-burnt-gold">{t("subtitle")}</p>
         </div>
 
         {/* Section Navigation */}
