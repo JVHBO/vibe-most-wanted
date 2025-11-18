@@ -1550,50 +1550,10 @@ export function PokerBattleTable({
     }
   }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendToInboxMutation, playerAddress]);
 
-  // Auto-finalize VBMS blockchain battle when room becomes "finished"
+  // Auto-delete finished rooms (V5: No TX needed, just cleanup Convex)
   useEffect(() => {
-    if (!isCPUMode && room && room.status === 'finished' && selectedToken === 'VBMS' && room.blockchainBattleId && !roomFinished) {
-      console.log('[PokerBattle] 🔐 Room marked as finished - auto-finalizing blockchain battle...', {
-        battleId: room.blockchainBattleId,
-        winnerId: room.winnerId,
-        winnerUsername: room.winnerUsername,
-      });
-
-      // Automatically call finishBattle TX without user interaction
-      finishVBMSBattle(room.blockchainBattleId, room.winnerId as `0x${string}`)
-        .then((txHash) => {
-          console.log('[PokerBattle] ✅ Blockchain battle auto-finalized:', txHash);
-          toast.success('Battle finalized on blockchain!', {
-            description: 'activeBattles cleared - you can create new battles',
-            duration: 5000,
-          });
-
-          // Now delete the Convex room
-          finishGameMutation({
-            roomId: room.roomId,
-            winnerId: room.winnerId.toLowerCase(),
-            winnerUsername: room.winnerUsername,
-            finalPot: room.finalPot || 0,
-          }).then(() => {
-            console.log('[PokerBattle] ✅ Room deleted from Convex after blockchain TX');
-            setRoomFinished(true);
-          }).catch((error) => {
-            console.error('[PokerBattle] ❌ Failed to delete room:', error);
-            setRoomFinished(true);
-          });
-        })
-        .catch((error) => {
-          console.error('[PokerBattle] ❌ Auto-finalize failed:', error);
-          toast.error('Failed to finalize blockchain battle', {
-            description: 'Please refresh and try again',
-            duration: 8000,
-          });
-        });
-    }
-
-    // For non-VBMS battles, delete room immediately when finished
-    if (!isCPUMode && room && room.status === 'finished' && selectedToken !== 'VBMS' && !roomFinished) {
-      console.log('[PokerBattle] 🗑️ Non-VBMS room finished - deleting immediately...');
+    if (!isCPUMode && room && room.status === 'finished' && !roomFinished) {
+      console.log('[PokerBattle] 🗑️ Room finished - deleting from Convex...');
       finishGameMutation({
         roomId: room.roomId,
         winnerId: room.winnerId.toLowerCase(),
@@ -1607,7 +1567,7 @@ export function PokerBattleTable({
         setRoomFinished(true);
       });
     }
-  }, [room, isCPUMode, selectedToken, roomFinished, finishVBMSBattle, finishGameMutation]);
+  }, [room, isCPUMode, roomFinished, finishGameMutation]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
   useEffect(() => {
