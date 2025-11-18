@@ -1534,33 +1534,55 @@ export function PokerBattleTable({
           mode: isCPUMode ? 'CPU' : 'PvP'
         });
 
-        // Use correct mutation based on mode
-        const sendRewardMutation = isCPUMode ? sendPveRewardToInbox : sendPvpRewardToInbox;
-        const mutationArgs = isCPUMode
-          ? { address: playerAddress, amount: rewardAmount, difficulty }
-          : { address: playerAddress, amount: rewardAmount };
-
-        sendRewardMutation(mutationArgs)
-          .then((result) => {
-            console.log('[PokerBattle] ✅ TESTVBMS sent to inbox:', result);
-            setBattleFinalized(true);
-
-            // Show success toast
-            toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
-              description: 'Check your inbox to claim',
-              duration: 5000,
-            });
+        // Separate mutations for PvE and PvP to avoid type confusion
+        if (isCPUMode) {
+          // PvE mode - includes difficulty
+          sendPveRewardToInbox({
+            address: playerAddress,
+            amount: rewardAmount,
+            difficulty
           })
-          .catch((error) => {
-            console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox:', error);
+            .then((result) => {
+              console.log('[PokerBattle] ✅ TESTVBMS sent to inbox (PvE):', result);
+              setBattleFinalized(true);
 
-            // IMPORTANT: Mark as finalized even on error to prevent retry loops
-            setBattleFinalized(true);
+              toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
+                description: 'Check your inbox to claim',
+                duration: 5000,
+              });
+            })
+            .catch((error) => {
+              console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox (PvE):', error);
+              setBattleFinalized(true);
 
-            toast.error('Failed to send reward to inbox', {
-              description: error.message || 'Please deploy Convex to enable PvP rewards',
+              toast.error('Failed to send reward to inbox', {
+                description: error.message || 'Server error',
+              });
             });
-          });
+        } else {
+          // PvP mode - no difficulty
+          sendPvpRewardToInbox({
+            address: playerAddress,
+            amount: rewardAmount
+          })
+            .then((result) => {
+              console.log('[PokerBattle] ✅ TESTVBMS sent to inbox (PvP):', result);
+              setBattleFinalized(true);
+
+              toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
+                description: 'Check your inbox to claim',
+                duration: 5000,
+              });
+            })
+            .catch((error) => {
+              console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox (PvP):', error);
+              setBattleFinalized(true);
+
+              toast.error('Failed to send reward to inbox', {
+                description: error.message || 'Server error',
+              });
+            });
+        }
       }
     }
   }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendPveRewardToInbox, sendPvpRewardToInbox, playerAddress, difficulty]);
