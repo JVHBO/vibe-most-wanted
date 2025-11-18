@@ -27,7 +27,7 @@ export function ShopView({ address }: ShopViewProps) {
   // VBMS Blockchain hooks
   const { address: walletAddress } = useAccount();
   const { balance: vbmsBalance, refetch: refetchVBMS } = useVBMSBalance(walletAddress);
-  const { transfer, hash: transferHash, isConfirming, isSuccess: transferSuccess, isPending: isTransferring } = useTransferVBMS();
+  const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
 
   // State
   const [quantity, setQuantity] = useState(1);
@@ -35,70 +35,6 @@ export function ShopView({ address }: ShopViewProps) {
   const [openingPack, setOpeningPack] = useState(false);
   const [revealedCards, setRevealedCards] = useState<any[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-  // Track pending purchase (packType, packPrice, quantity)
-  const pendingPurchaseRef = useRef<{ packType: string; packPrice: number; quantity: number } | null>(null);
-
-  // Watch for successful VBMS transfer and call backend
-  useEffect(() => {
-    if (transferSuccess && transferHash && pendingPurchaseRef.current && address) {
-      const { packType, packPrice, quantity } = pendingPurchaseRef.current;
-
-      // Call backend to verify and mint packs
-      (async () => {
-        try {
-          setNotification({
-            type: 'success',
-            message: 'Transfer confirmed! Minting packs...'
-          });
-
-          console.log('💎 Calling backend with tx hash:', transferHash);
-
-          const response = await fetch('/api/shop/buy-with-vbms', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              address,
-              packType,
-              quantity,
-              txHash: transferHash,
-            }),
-          });
-
-          // Check if response is JSON
-          const contentType = response.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('Non-JSON response:', text);
-            throw new Error('Server returned invalid response (not JSON)');
-          }
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.error || 'Purchase failed');
-          }
-
-          setNotification({
-            type: 'success',
-            message: `Bought ${data.packsReceived} ${packType} pack(s) for ${data.vbmsSpent} VBMS! 💎`
-          });
-
-          refetchVBMS();
-          setQuantity(1);
-          pendingPurchaseRef.current = null; // Clear pending purchase
-        } catch (error: any) {
-          console.error('❌ Pack purchase error:', error);
-          setNotification({
-            type: 'error',
-            message: error.message || "Failed to buy with VBMS"
-          });
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-  }, [transferSuccess, transferHash, address]);
 
   // Handle purchase with VBMS (blockchain)
   const handleBuyWithVBMS = async (packType: string, packPrice: number) => {
@@ -123,9 +59,6 @@ export function ShopView({ address }: ShopViewProps) {
 
     setLoading(true);
 
-    // Store purchase details for useEffect to process after transfer
-    pendingPurchaseRef.current = { packType, packPrice, quantity };
-
     try {
       // Step 1: Transfer VBMS to pool
       setNotification({
@@ -133,18 +66,59 @@ export function ShopView({ address }: ShopViewProps) {
         message: 'Transferring VBMS to pool... Please confirm in your wallet'
       });
 
-      // Call transfer - this will trigger wallet popup
-      // Transaction hash will be available via transferHash after confirmation
-      transfer(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(totalVBMS));
-      console.log('💸 Transfer initiated, waiting for confirmation...');
+      console.log('💸 Initiating transfer...');
+      const transferHash = await transfer(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(totalVBMS));
+
+      console.log('✅ Transfer confirmed:', transferHash);
+
+      // Step 2: Call backend to verify and mint packs
+      setNotification({
+        type: 'success',
+        message: 'Transfer confirmed! Minting packs...'
+      });
+
+      console.log('💎 Calling backend with tx hash:', transferHash);
+
+      const response = await fetch('/api/shop/buy-with-vbms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          packType,
+          quantity,
+          txHash: transferHash,
+        }),
+      });
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        throw new Error('Server returned invalid response (not JSON)');
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Purchase failed');
+      }
+
+      setNotification({
+        type: 'success',
+        message: `Bought ${data.packsReceived} ${packType} pack(s) for ${data.vbmsSpent} VBMS! 💎`
+      });
+
+      refetchVBMS();
+      setQuantity(1);
     } catch (error: any) {
-      console.error('❌ Transfer error:', error);
+      console.error('❌ Pack purchase error:', error);
       setNotification({
         type: 'error',
-        message: error.message || "Failed to transfer VBMS"
+        message: error.message || "Failed to buy with VBMS"
       });
+    } finally {
       setLoading(false);
-      pendingPurchaseRef.current = null;
     }
   };
 
