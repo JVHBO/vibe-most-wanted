@@ -121,8 +121,8 @@ export function PokerMatchmaking({
   /*
   useEffect(() => {
     const recoverOrphanedBattle = async () => {
-      // Only check if we're using VBMS and have wallet connected
-      if (!effectiveAddress || selectedToken !== "VBMS") return;
+      // Only check if we have wallet connected
+      if (!effectiveAddress) return;
 
       // If we already have a Convex room, don't do anything
       if (myRoom) return;
@@ -182,7 +182,7 @@ export function PokerMatchmaking({
     };
 
     recoverOrphanedBattle();
-  }, [activeBattleId, activeBattleInfo, myRoom, walletAddress, selectedToken, availableRooms, joinRoom, createRoom, playerAddress, playerUsername]);
+  }, [activeBattleId, activeBattleInfo, myRoom, walletAddress, availableRooms, joinRoom, createRoom, playerAddress, playerUsername]);
   */
 
   // Handle VBMS approval success -> refetch allowance and continue
@@ -582,203 +582,202 @@ export function PokerMatchmaking({
     isCreatingConvexRoomRef.current = false;
 
     try {
-      // If VBMS is selected, create blockchain battle
-      if (selectedToken === "VBMS") {
-        // Check if we have an address (from Farcaster miniapp OR web wallet)
-        if (!effectiveAddress) {
-          console.log("Wallet Not Connected - Please connect your wallet to play with VBMS");
-          AudioManager.buttonError();
-          return;
-        }
+      // Create VBMS blockchain battle
+      // Check if we have an address (from Farcaster miniapp OR web wallet)
+      if (!effectiveAddress) {
+        console.log("Wallet Not Connected - Please connect your wallet to play with VBMS");
+        AudioManager.buttonError();
+        return;
+      }
 
-        // Check if user already has an active battle
-        if (activeBattleId > 0 && activeBattleInfo) {
-          console.log("⚠️ You already have an active battle:", {
-            battleId: activeBattleId,
-            status: activeBattleInfo.status,
-            createdAt: activeBattleInfo.createdAt,
-          });
+      // Check if user already has an active battle
+      if (activeBattleId > 0 && activeBattleInfo) {
+        console.log("⚠️ You already have an active battle:", {
+          battleId: activeBattleId,
+          status: activeBattleInfo.status,
+          createdAt: activeBattleInfo.createdAt,
+        });
 
-          console.log("🔍 Debug - status type:", typeof activeBattleInfo.status, "value:", activeBattleInfo.status);
-          console.log("🔍 Debug - status === 0:", activeBattleInfo.status === 0);
-          console.log("🔍 Debug - status === 1:", activeBattleInfo.status === 1);
-          console.log("🔍 Debug - status == 1:", activeBattleInfo.status == 1);
+        console.log("🔍 Debug - status type:", typeof activeBattleInfo.status, "value:", activeBattleInfo.status);
+        console.log("🔍 Debug - status === 0:", activeBattleInfo.status === 0);
+        console.log("🔍 Debug - status === 1:", activeBattleInfo.status === 1);
+        console.log("🔍 Debug - status == 1:", activeBattleInfo.status == 1);
 
-          // Calculate if 10 minutes have passed (for cancel)
-          const tenMinutes = 600; // seconds
-          const now = Math.floor(Date.now() / 1000);
-          const canCancel = (now - activeBattleInfo.createdAt) >= tenMinutes;
+        // Calculate if 10 minutes have passed (for cancel)
+        const tenMinutes = 600; // seconds
+        const now = Math.floor(Date.now() / 1000);
+        const canCancel = (now - activeBattleInfo.createdAt) >= tenMinutes;
 
-          if (canCancel && activeBattleInfo.status === 0) { // 0 = WAITING
-            const shouldCancel = confirm(`You already have an active battle (#${activeBattleId}) waiting for an opponent.\n\nDo you want to CANCEL it and create a new one?`);
-            if (shouldCancel) {
-              console.log("🗑️ Canceling orphaned battle #" + activeBattleId);
-              try {
-                await cancelBlockchainBattle(activeBattleId);
-                console.log("✅ Battle canceled! You can now create a new one.");
-                // Wait a bit for blockchain to update, then allow creating new battle
-                setTimeout(() => {
-                  setIsCreating(false);
-                }, 2000);
-                return;
-              } catch (error) {
-                console.error("❌ Failed to cancel battle:", error);
-                alert("Failed to cancel battle. Please try again.");
-                AudioManager.buttonError();
-                return;
-              }
+        if (canCancel && activeBattleInfo.status === 0) { // 0 = WAITING
+          const shouldCancel = confirm(`You already have an active battle (#${activeBattleId}) waiting for an opponent.\n\nDo you want to CANCEL it and create a new one?`);
+          if (shouldCancel) {
+            console.log("🗑️ Canceling orphaned battle #" + activeBattleId);
+            try {
+              await cancelBlockchainBattle(activeBattleId);
+              console.log("✅ Battle canceled! You can now create a new one.");
+              // Wait a bit for blockchain to update, then allow creating new battle
+              setTimeout(() => {
+                setIsCreating(false);
+              }, 2000);
+              return;
+            } catch (error) {
+              console.error("❌ Failed to cancel battle:", error);
+              alert("Failed to cancel battle. Please try again.");
+              AudioManager.buttonError();
+              return;
             }
-          } else if (activeBattleInfo.status === 1) { // ACTIVE - battle in progress
-            const shouldFinish = confirm(`You already have an ACTIVE battle (#${activeBattleId}) in progress.\n\nDo you want to FORCE FINISH it as a draw and create a new one?`);
-            if (shouldFinish) {
-              console.log("🏁 Force finishing battle #" + activeBattleId);
-              try {
-                // Get signature from backend
-                const response = await fetch('/api/poker/finish-battle', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    battleId: activeBattleId.toString(),
-                    winnerAddress: effectiveAddress, // You as winner
-                  })
-                });
+          }
+        } else if (activeBattleInfo.status === 1) { // ACTIVE - battle in progress
+          const shouldFinish = confirm(`You already have an ACTIVE battle (#${activeBattleId}) in progress.\n\nDo you want to FORCE FINISH it as a draw and create a new one?`);
+          if (shouldFinish) {
+            console.log("🏁 Force finishing battle #" + activeBattleId);
+            try {
+              // Get signature from backend
+              const response = await fetch('/api/poker/finish-battle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  battleId: activeBattleId.toString(),
+                  winnerAddress: effectiveAddress, // You as winner
+                })
+              });
 
-                const { signature } = await response.json();
+              const { signature } = await response.json();
 
-                // Call finishBattle on blockchain
-                // IMPORTANT: Use Farcaster SDK in miniapp, wagmi on web
-                if (isInMiniapp) {
-                  // Miniapp: Use Farcaster SDK provider
-                  const sdk = (window as any).sdk;
-                  const provider = sdk?.wallet?.ethProvider || (window as any).ethereum;
+              // Call finishBattle on blockchain
+              // IMPORTANT: Use Farcaster SDK in miniapp, wagmi on web
+              if (isInMiniapp) {
+                // Miniapp: Use Farcaster SDK provider
+                const sdk = (window as any).sdk;
+                const provider = sdk?.wallet?.ethProvider || (window as any).ethereum;
 
-                  if (!provider) {
-                    throw new Error('No wallet provider available');
-                  }
-
-                  // Encode function call
-                  const { encodeFunctionData } = await import('viem');
-                  const data = encodeFunctionData({
-                    abi: [{
-                      inputs: [
-                        { name: 'battleId', type: 'uint256' },
-                        { name: 'winner', type: 'address' },
-                        { name: 'signature', type: 'bytes' }
-                      ],
-                      name: 'finishBattle',
-                      outputs: [],
-                      stateMutability: 'nonpayable',
-                      type: 'function',
-                    }],
-                    functionName: 'finishBattle',
-                    args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
-                  });
-
-                  // Send transaction via Farcaster SDK
-                  const txHash = await provider.request({
-                    method: 'eth_sendTransaction',
-                    params: [{
-                      from: effectiveAddress,
-                      to: CONTRACTS.VBMSPokerBattle,
-                      data,
-                    }],
-                  });
-
-                  console.log("📤 Force finish TX sent:", txHash);
-                } else {
-                  // Web: Use wagmi
-                  const { writeContract } = await import('wagmi/actions');
-                  const { config } = await import('@/lib/wagmi');
-
-                  await writeContract(config, {
-                    address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
-                    abi: [{
-                      inputs: [
-                        { name: 'battleId', type: 'uint256' },
-                        { name: 'winner', type: 'address' },
-                        { name: 'signature', type: 'bytes' }
-                      ],
-                      name: 'finishBattle',
-                      outputs: [],
-                      stateMutability: 'nonpayable',
-                      type: 'function',
-                    }],
-                    functionName: 'finishBattle',
-                    args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
-                  });
+                if (!provider) {
+                  throw new Error('No wallet provider available');
                 }
 
-                console.log("✅ Battle finished! You can now create a new one.");
-                setTimeout(() => {
-                  setIsCreating(false);
-                }, 2000);
-                return;
-              } catch (error) {
-                console.error("❌ Failed to finish battle:", error);
-                alert("Failed to finish battle. Please try again.");
-                AudioManager.buttonError();
-                return;
+                // Encode function call
+                const { encodeFunctionData } = await import('viem');
+                const data = encodeFunctionData({
+                  abi: [{
+                    inputs: [
+                      { name: 'battleId', type: 'uint256' },
+                      { name: 'winner', type: 'address' },
+                      { name: 'signature', type: 'bytes' }
+                    ],
+                    name: 'finishBattle',
+                    outputs: [],
+                    stateMutability: 'nonpayable',
+                    type: 'function',
+                  }],
+                  functionName: 'finishBattle',
+                  args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
+                });
+
+                // Send transaction via Farcaster SDK
+                const txHash = await provider.request({
+                  method: 'eth_sendTransaction',
+                  params: [{
+                    from: effectiveAddress,
+                    to: CONTRACTS.VBMSPokerBattle,
+                    data,
+                  }],
+                });
+
+                console.log("📤 Force finish TX sent:", txHash);
+              } else {
+                // Web: Use wagmi
+                const { writeContract } = await import('wagmi/actions');
+                const { config } = await import('@/lib/wagmi');
+
+                await writeContract(config, {
+                  address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
+                  abi: [{
+                    inputs: [
+                      { name: 'battleId', type: 'uint256' },
+                      { name: 'winner', type: 'address' },
+                      { name: 'signature', type: 'bytes' }
+                    ],
+                    name: 'finishBattle',
+                    outputs: [],
+                    stateMutability: 'nonpayable',
+                    type: 'function',
+                  }],
+                  functionName: 'finishBattle',
+                  args: [BigInt(activeBattleId), effectiveAddress as `0x${string}`, signature as `0x${string}`]
+                });
               }
+
+              console.log("✅ Battle finished! You can now create a new one.");
+              setTimeout(() => {
+                setIsCreating(false);
+              }, 2000);
+              return;
+            } catch (error) {
+              console.error("❌ Failed to finish battle:", error);
+              alert("Failed to finish battle. Please try again.");
+              AudioManager.buttonError();
+              return;
             }
-          } else {
-            alert(`You already have an active battle (#${activeBattleId}). Wait for it to finish or for an opponent to join.`);
           }
-
-          AudioManager.buttonError();
-          return;
+        } else {
+          alert(`You already have an active battle (#${activeBattleId}). Wait for it to finish or for an opponent to join.`);
         }
 
-        // Calculate total stake needed
-        const stakeAmount = selectedAnte.toString();
+        AudioManager.buttonError();
+        return;
+      }
 
-        // Check if user has enough VBMS
-        const userBalance = parseFloat(vbmsBalance);
-        const requiredAmount = parseFloat(stakeAmount);
+      // Calculate total stake needed
+      const stakeAmount = selectedAnte.toString();
 
-        console.log("💰 Balance check:", {
-          userBalance,
-          requiredAmount,
-          hasEnough: userBalance >= requiredAmount,
-        });
+      // Check if user has enough VBMS
+      const userBalance = parseFloat(vbmsBalance);
+      const requiredAmount = parseFloat(stakeAmount);
 
-        if (userBalance < requiredAmount) {
-          console.log(`Insufficient VBMS - You need ${requiredAmount} VBMS but only have ${userBalance.toFixed(2)} VBMS`);
-          AudioManager.buttonError();
-          return;
-        }
+      console.log("💰 Balance check:", {
+        userBalance,
+        requiredAmount,
+        hasEnough: userBalance >= requiredAmount,
+      });
 
-        // IMPORTANT: Refetch allowance to get latest value from blockchain
-        console.log("🔄 Refetching allowance before check...");
-        await refetchAllowance();
-        console.log("🔄 Refetched allowance - will use updated vbmsAllowance from hook");
-        const currentAllowance = parseFloat(vbmsAllowance?.toString() || '0');
-        const requiredAllowance = parseFloat(stakeAmount);
+      if (userBalance < requiredAmount) {
+        console.log(`Insufficient VBMS - You need ${requiredAmount} VBMS but only have ${userBalance.toFixed(2)} VBMS`);
+        AudioManager.buttonError();
+        return;
+      }
 
-        console.log("💰 Allowance check for CREATE:", {
-          vbmsAllowance: vbmsAllowance,
-          currentAllowance,
-          requiredAllowance,
-          hasEnoughAllowance: currentAllowance >= requiredAllowance,
-        });
+      // IMPORTANT: Refetch allowance to get latest value from blockchain
+      console.log("🔄 Refetching allowance before check...");
+      await refetchAllowance();
+      console.log("🔄 Refetched allowance - will use updated vbmsAllowance from hook");
+      const currentAllowance = parseFloat(vbmsAllowance?.toString() || '0');
+      const requiredAllowance = parseFloat(stakeAmount);
 
-        if (currentAllowance >= requiredAllowance) {
-          // Already have enough allowance, skip straight to createBattle
-          console.log("✅ Sufficient allowance already exists! Skipping approval...");
-          setVbmsStage("creating");
-          setIsCreating(true);
-          console.log("Creating battle on-chain - Please confirm the transaction...");
-          createBlockchainBattle(stakeAmount);
-          return;
-        }
+      console.log("💰 Allowance check for CREATE:", {
+        vbmsAllowance: vbmsAllowance,
+        currentAllowance,
+        requiredAllowance,
+        hasEnoughAllowance: currentAllowance >= requiredAllowance,
+      });
 
-        // Need to approve first
-        console.log("⚠️ Insufficient allowance, requesting approval...");
-        setProcessedApproval(false); // Reset before approving
-        setVbmsStage("approving");
+      if (currentAllowance >= requiredAllowance) {
+        // Already have enough allowance, skip straight to createBattle
+        console.log("✅ Sufficient allowance already exists! Skipping approval...");
+        setVbmsStage("creating");
         setIsCreating(true);
-        console.log("Step 1/2: Approving VBMS...");
-        approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
-        return; // useEffect will handle next step after approval
+        console.log("Creating battle on-chain - Please confirm the transaction...");
+        createBlockchainBattle(stakeAmount);
+        return;
+      }
+
+      // Need to approve first
+      console.log("⚠️ Insufficient allowance, requesting approval...");
+      setProcessedApproval(false); // Reset before approving
+      setVbmsStage("approving");
+      setIsCreating(true);
+      console.log("Step 1/2: Approving VBMS...");
+      approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
+      return; // useEffect will handle next step after approval
       }
     } catch (error) {
       console.error("❌ Error in handleCreateRoom:", error);
@@ -991,7 +990,7 @@ export function PokerMatchmaking({
 
         <div className="p-3 sm:p-6">
           {/* Active Battle Warning */}
-          {selectedToken === "VBMS" && activeBattleId > 0 && activeBattleInfo && (
+          {activeBattleId > 0 && activeBattleInfo && (
             <div className="mb-4 sm:mb-8 bg-vintage-gold/10 border-2 border-vintage-gold/50 rounded-xl p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
