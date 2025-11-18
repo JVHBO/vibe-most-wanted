@@ -706,13 +706,13 @@ export function PokerMatchmaking({
 
         // IMPORTANT: Refetch allowance to get latest value from blockchain
         console.log("🔄 Refetching allowance before check...");
-        const { data: freshAllowance } = await refetchAllowance();
-        const currentAllowance = parseFloat((freshAllowance || vbmsAllowance)?.toString() || '0');
+        await refetchAllowance();
+        console.log("🔄 Refetched allowance - will use updated vbmsAllowance from hook");
+        const currentAllowance = parseFloat(vbmsAllowance?.toString() || '0');
         const requiredAllowance = parseFloat(stakeAmount);
 
         console.log("💰 Allowance check for CREATE:", {
-          vbmsAllowance_stale: vbmsAllowance,
-          freshAllowance: freshAllowance,
+          vbmsAllowance: vbmsAllowance,
           currentAllowance,
           requiredAllowance,
           hasEnoughAllowance: currentAllowance >= requiredAllowance,
