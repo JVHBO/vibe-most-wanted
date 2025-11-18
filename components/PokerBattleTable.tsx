@@ -107,6 +107,10 @@ export function PokerBattleTable({
   // Betting mutations
   const resolveBetsMutation = useMutation(api.bettingCredits.resolveBets);
 
+  // Round betting mutations (instant payouts on each round)
+  const resolveRoundBetsMutation = useMutation(api.roundBetting.resolveRoundBets);
+  const convertCreditsMutation = useMutation(api.roundBetting.convertCreditsToCoins);
+
   // Chat system
   const messages = useQuery(
     api.pokerChat.getMessages,
@@ -974,6 +978,21 @@ export function PokerBattleTable({
         setShowRoundWinner(true);
         console.log('[PokerBattle] CPU Mode - Showing round winner, waiting 4s for reveal');
 
+        // Resolve round bets (instant payout for spectators)
+        if (!isCPUMode && roomId && room) {
+          const winnerAddress = playerWins
+            ? (isHost ? room.hostAddress : room.guestAddress)
+            : (isHost ? room.guestAddress : room.hostAddress);
+
+          resolveRoundBetsMutation({
+            roomId,
+            roundNumber: currentRound,
+            winnerAddress,
+          }).catch((error) => {
+            console.error('[PokerBattle] Failed to resolve round bets:', error);
+          });
+        }
+
         // Hide message and check win condition after delay
         setTimeout(() => {
           console.log('[PokerBattle] CPU Mode - 4s timeout completed, checking win condition');
@@ -1073,6 +1092,21 @@ export function PokerBattleTable({
           console.log('[PokerBattle] PvP Mode - Showing round winner', {
             winner: isTie ? 'tie' : (playerWins ? 'player' : 'opponent')
           });
+
+          // Resolve round bets (instant payout for spectators)
+          if (!isTie && roomId && room) {
+            const winnerAddress = playerWins
+              ? (isHost ? room.hostAddress : room.guestAddress)
+              : (isHost ? room.guestAddress : room.hostAddress);
+
+            resolveRoundBetsMutation({
+              roomId,
+              roundNumber: currentRound,
+              winnerAddress,
+            }).catch((error) => {
+              console.error('[PokerBattle] PvP Mode - Failed to resolve round bets:', error);
+            });
+          }
 
           // Add to round history
           if (isTie) {
@@ -1473,6 +1507,25 @@ export function PokerBattleTable({
       }
     }
   }, [phase, playerScore, opponentScore, isCPUMode, roomId, room, isHost, resolveBetsMutation]);
+
+  // Convert remaining betting credits to TESTVBMS when game ends (spectator only)
+  useEffect(() => {
+    if (phase === 'game-over' && isSpectatorMode && playerAddress && !isCPUMode) {
+      console.log('[PokerBattle] Game over - converting remaining betting credits to TESTVBMS');
+
+      convertCreditsMutation({
+        address: playerAddress,
+        roomId,
+      }).then((result) => {
+        if (result.converted > 0) {
+          console.log(`💰 Converted ${result.converted} betting credits to TESTVBMS`);
+          toast.success(result.message);
+        }
+      }).catch((error) => {
+        console.error('[PokerBattle] Failed to convert credits:', error);
+      });
+    }
+  }, [phase, isSpectatorMode, playerAddress, isCPUMode, roomId, convertCreditsMutation]);
 
   // Record match when game ends
   useEffect(() => {
