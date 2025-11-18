@@ -37,7 +37,6 @@ export function PokerMatchmaking({
   const [selectedToken, setSelectedToken] = useState<"VBMS" | "VIBE_NFT" | "TESTVBMS">("VBMS");
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
-  const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [hasCheckedExistingRoom, setHasCheckedExistingRoom] = useState(false);
 
   // Ref to prevent multiple orphaned battle recoveries running at once
@@ -105,7 +104,6 @@ export function PokerMatchmaking({
   // Mutations
   const createRoom = useMutation(api.pokerBattle.createPokerRoom);
   const joinRoom = useMutation(api.pokerBattle.joinPokerRoom);
-  const autoMatch = useMutation(api.pokerBattle.autoMatch);
   const spectate = useMutation(api.pokerBattle.spectateRoom);
   const leaveRoom = useMutation(api.pokerBattle.leavePokerRoom);
   const forceDeleteRoomByAddress = useMutation(api.pokerBattle.forceDeleteRoomByAddress);
@@ -923,33 +921,6 @@ export function PokerMatchmaking({
       setIsJoining(false);
       setVbmsStage("idle");
       setSkippedApproval(false); // Reset skip flag on error
-    }
-  };
-
-  const handleAutoMatch = async () => {
-    if (isAutoMatching) return;
-
-    setIsAutoMatching(true);
-    AudioManager.buttonClick();
-
-    try {
-      const result = await autoMatch({
-        address: playerAddress,
-        username: playerUsername,
-        ante: selectedAnte,
-        token: selectedToken,
-      });
-
-      if (result.success) {
-        const isHost = result.action === "created";
-        AudioManager.buttonSuccess();
-        onRoomJoined(result.roomId, isHost, selectedAnte, selectedToken);
-      }
-    } catch (error) {
-      console.error("Error auto-matching:", error);
-      AudioManager.buttonError();
-    } finally {
-      setIsAutoMatching(false);
     }
   };
 
