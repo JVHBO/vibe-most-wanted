@@ -558,6 +558,10 @@ export default function TCGPage() {
   // 💰 Coins Inbox Status
   const inboxStatus = useQuery(api.coinsInbox.getInboxStatus, address ? { address } : "skip");
 
+  // 🎮 Daily Attempts System (PvE limits)
+  const pveAttemptsData = useQuery(api.pokerCpu.getRemainingPveAttempts, address ? { address } : "skip");
+  const consumePveAttempt = useMutation(api.pokerCpu.consumePveAttempt);
+
   // 🔒 Defense Lock System - Get locked cards for Attack/PvP modes
   const attackLockedCards = useQuery(
     api.profiles.getAvailableCards,
@@ -5772,7 +5776,7 @@ export default function TCGPage() {
           if (soundEnabled) AudioManager.buttonClick();
           setTempSelectedDifficulty(difficulty);
         }}
-        onBattle={(difficulty) => {
+        onBattle={async (difficulty) => {
           // Check if this is Poker CPU mode
           if (pokerMode === 'cpu') {
             if (soundEnabled) AudioManager.buttonClick();
@@ -5781,6 +5785,18 @@ export default function TCGPage() {
             setTempSelectedDifficulty(null);
             setShowPokerBattle(true);
           } else {
+            // PvE Mode: Consume daily attempt before starting battle
+            try {
+              if (address) {
+                await consumePveAttempt({ address });
+                console.log('✅ PvE attempt consumed successfully');
+              }
+            } catch (error) {
+              console.error('❌ Failed to consume PvE attempt:', error);
+              alert(error instanceof Error ? error.message : 'Failed to start battle. Please try again.');
+              return; // Don't start battle if attempt consumption failed
+            }
+
             // Don't play sound here - playHand() will play AudioManager.playHand()
             setAiDifficulty(difficulty);
             setIsDifficultyModalOpen(false);
@@ -5816,6 +5832,8 @@ export default function TCGPage() {
         unlockedDifficulties={unlockedDifficulties as Set<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>}
         currentDifficulty={aiDifficulty}
         tempSelected={tempSelectedDifficulty}
+        remainingAttempts={pveAttemptsData?.remaining ?? 10}
+        totalAttempts={pveAttemptsData?.total ?? 10}
       />
 
       {/* Easter Egg - Runaway Image */}
