@@ -77,8 +77,11 @@ export const getLeaderboardLite = query({
       .order("desc")
       .take(cappedLimit);
 
+    // ✅ FILTER: Only show players with complete defense deck (5 cards)
+    const validProfiles = profiles.filter(p => p.defenseDeck && p.defenseDeck.length === 5);
+
     // Return ONLY display fields for leaderboard
-    return profiles.map(p => ({
+    return validProfiles.map(p => ({
       address: p.address,
       username: p.username,
       stats: {
@@ -90,7 +93,7 @@ export const getLeaderboardLite = query({
         pvpLosses: p.stats?.pvpLosses || 0,
       },
       // Add hasDefenseDeck flag for Attack button (without sending full deck data)
-      hasDefenseDeck: p.defenseDeck && p.defenseDeck.length === 5,
+      hasDefenseDeck: true, // Always true since we filtered above
       userIndex: p.userIndex,
       // Include twitter fields for battle shares (needed for opponent PFP in OG images)
       twitter: p.twitter,
