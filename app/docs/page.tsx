@@ -172,7 +172,7 @@ export default function DocsPage() {
             <div>
               <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">{t("economy")}</h2>
               <div className="space-y-4 text-vintage-ice">
-                <p>{t("economyDesc")}</p>
+                <p>Earn and spend VBMS tokens by playing battles, completing quests, and achievements.</p>
 
                 <h3 className="text-xl font-bold text-vintage-gold mt-6">Daily Limits</h3>
                 <ul className="list-disc list-inside space-y-2">
@@ -197,7 +197,7 @@ export default function DocsPage() {
             <div>
               <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">{t("battles")}</h2>
               <div className="space-y-4 text-vintage-ice">
-                <p>{t("battlesDesc")}</p>
+                <p>Fight against AI opponents in PvE battles with 5 difficulty levels.</p>
 
                 <h3 className="text-xl font-bold text-vintage-gold mt-6">Difficulties</h3>
                 <ul className="list-disc list-inside space-y-2">
@@ -240,7 +240,7 @@ export default function DocsPage() {
           {activeSection === "achievements" && (
             <div>
               <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">{t("achievements")}</h2>
-              <p className="text-vintage-ice">{t("achievementsDesc")}</p>
+              <p className="text-vintage-ice">Complete achievements to earn bonus VBMS rewards and unlock special badges.</p>
             </div>
           )}
 
@@ -248,7 +248,7 @@ export default function DocsPage() {
           {activeSection === "quests" && (
             <div>
               <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">{t("quests")}</h2>
-              <p className="text-vintage-ice">{t("questsDesc")}</p>
+              <p className="text-vintage-ice">Complete daily and weekly quests for extra VBMS rewards.</p>
             </div>
           )}
 
@@ -256,7 +256,7 @@ export default function DocsPage() {
           {activeSection === "cards" && (
             <div>
               <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">{t("cards")}</h2>
-              <p className="text-vintage-ice">{t("cardsDesc")}</p>
+              <p className="text-vintage-ice">Collect NFT cards with different rarities, wear levels, and foil effects to build powerful decks.</p>
             </div>
           )}
 
