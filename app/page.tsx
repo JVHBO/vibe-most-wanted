@@ -1089,12 +1089,12 @@ export default function TCGPage() {
     }
   }, []);
 
-  // 🎁 Show welcome pack popup if user hasn't received it
+  // 🎁 Show welcome pack popup if user hasn't received it (only AFTER profile is created)
   useEffect(() => {
-    if (address && hasReceivedWelcomePack === false) {
+    if (address && userProfile && hasReceivedWelcomePack === false) {
       setShowWelcomePackPopup(true);
     }
-  }, [address, hasReceivedWelcomePack]);
+  }, [address, userProfile, hasReceivedWelcomePack]);
 
   // Sync login bonus claimed status and show popup on login
   useEffect(() => {
