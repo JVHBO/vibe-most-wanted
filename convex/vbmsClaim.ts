@@ -743,7 +743,7 @@ export const sendPveRewardToInbox = mutation({
   handler: async (ctx, { address, amount, difficulty }) => {
     const profile = await getProfile(ctx, address);
 
-    const currentInbox = profile.inbox || 0;
+    const currentInbox = profile.coinsInbox || 0;
     const newInbox = currentInbox + amount;
 
     // Check if paying off debt
@@ -752,7 +752,7 @@ export const sendPveRewardToInbox = mutation({
     const netGain = amount - debtPaid;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
       lastUpdated: Date.now(),
     });
