@@ -226,7 +226,7 @@ export const claimBattleRewardsNowInternal = internalMutation({
     }
 
     // Calculate bonus
-    const inboxAmount = profile.inbox || 0;
+    const inboxAmount = profile.coinsInbox || 0;
     const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
 
     // Mark match as claimed (will be finalized after blockchain confirmation)
@@ -284,10 +284,10 @@ export const sendToInbox = mutation({
     const amount = match.coinsEarned || 0;
 
     // Add to inbox
-    const newInbox = (profile.inbox || 0) + amount;
+    const newInbox = (profile.coinsInbox || 0) + amount;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
     });
 
@@ -367,7 +367,7 @@ export const prepareInboxClaimInternal = internalMutation({
   }> => {
     const profile = await getProfile(ctx, address);
 
-    const inboxAmount = profile.inbox || 0;
+    const inboxAmount = profile.coinsInbox || 0;
 
     if (inboxAmount < 100) {
       throw new Error("Minimum claim amount is 100 VBMS. Current inbox: " + inboxAmount);
@@ -378,7 +378,7 @@ export const prepareInboxClaimInternal = internalMutation({
 
     // 🔒 SECURITY: Zero inbox IMMEDIATELY to prevent multiple claims
     await ctx.db.patch(profile._id, {
-      inbox: 0,
+      coinsInbox: 0,
     });
 
     return {
@@ -403,7 +403,7 @@ export const recordInboxClaim = mutation({
 
     // Clear inbox
     await ctx.db.patch(profile._id, {
-      inbox: 0,
+      coinsInbox: 0,
       claimedTokens: (profile.claimedTokens || 0) + amount,
       lastClaimTimestamp: Date.now(),
     });
@@ -483,13 +483,13 @@ export const getPlayerEconomy = query({
       lifetimeSpent: profile.lifetimeSpent || 0,
 
       // Real VBMS token (inbox system)
-      inbox: profile.inbox || 0,
+      inbox: profile.coinsInbox || 0,
       claimedTokens: profile.claimedTokens || 0,
       poolDebt: profile.poolDebt || 0,
       lastClaimTimestamp: profile.lastClaimTimestamp || 0,
 
       // Calculate claimable
-      claimableBalance: Math.max(0, (profile.inbox || 0) - (profile.poolDebt || 0)),
+      claimableBalance: Math.max(0, (profile.coinsInbox || 0) - (profile.poolDebt || 0)),
     };
   },
 });
@@ -504,7 +504,7 @@ export const getClaimRecommendation = query({
   handler: async (ctx, { address, pendingAmount }) => {
     const profile = await getProfile(ctx, address);
 
-    const inboxAmount = profile.inbox || 0;
+    const inboxAmount = profile.coinsInbox || 0;
     const totalAfterClaim = inboxAmount + pendingAmount;
     const lastClaim = profile.lastClaimTimestamp || 0;
     const daysSinceLastClaim = (Date.now() - lastClaim) / (24 * 60 * 60 * 1000);
@@ -574,7 +574,7 @@ export const sendAchievementToInbox = mutation({
   handler: async (ctx, { address, achievementId, amount }) => {
     const profile = await getProfile(ctx, address);
 
-    const currentInbox = profile.inbox || 0;
+    const currentInbox = profile.coinsInbox || 0;
     const newInbox = currentInbox + amount;
 
     // Check if paying off debt
@@ -583,7 +583,7 @@ export const sendAchievementToInbox = mutation({
     const netGain = amount - debtPaid;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
     });
 
@@ -654,7 +654,7 @@ export const claimAchievementNow = mutation({
     }
 
     // Calculate bonus
-    const inboxAmount = profile.inbox || 0;
+    const inboxAmount = profile.coinsInbox || 0;
     const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
 
     // Generate signature for smart contract
@@ -698,7 +698,7 @@ export const claimInboxAsTESTVBMS = mutation({
   handler: async (ctx, { address }) => {
     const profile = await getProfile(ctx, address);
 
-    const inboxAmount = profile.inbox || 0;
+    const inboxAmount = profile.coinsInbox || 0;
 
     if (inboxAmount < 1) {
       throw new Error("Nada para coletar no inbox");
@@ -710,7 +710,7 @@ export const claimInboxAsTESTVBMS = mutation({
 
     await ctx.db.patch(profile._id, {
       coins: newCoins,
-      inbox: 0, // Clear inbox
+      coinsInbox: 0, // Clear inbox
       lifetimeEarned: (profile.lifetimeEarned || 0) + inboxAmount,
     });
 
@@ -862,7 +862,7 @@ export const claimPveRewardNowInternal = internalMutation({
     }
 
     // Calculate bonus
-    const inboxAmount = profile.inbox || 0;
+    const inboxAmount = profile.coinsInbox || 0;
     const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
 
     console.log(`💰 ${address} claiming ${bonusData.totalAmount} VBMS now from PvE victory (difficulty: ${difficulty || 'N/A'}, base: ${amount}, bonus: ${bonusData.bonus})`);
@@ -946,7 +946,7 @@ export const convertTESTVBMSInternal = internalMutation({
       playerAddress: address.toLowerCase(),
       choice: "immediate",
       amount: testVBMSBalance,
-      inboxTotal: profile.inbox || 0,
+      inboxTotal: profile.coinsInbox || 0,
       bonusAvailable: false,
       timestamp: Date.now(),
     });
