@@ -226,8 +226,8 @@ export function PokerMatchmaking({
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Refetch allowance to get updated value (same as CREATE flow)
-        const { data: newAllowance } = await refetchAllowance();
-        console.log("🔄 Refetched allowance after approval:", newAllowance);
+        await refetchAllowance();
+        console.log("🔄 Refetched allowance after approval - will use updated vbmsAllowance from hook");
 
         try {
           // Get pending room data
