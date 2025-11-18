@@ -600,6 +600,28 @@ export default defineSchema({
     .index("by_address", ["address", "timestamp"])
     .index("by_type", ["type", "timestamp"]),
 
+  // Round-by-Round Betting (Live betting on each poker round)
+  roundBets: defineTable({
+    roomId: v.string(), // Which poker room
+    roundNumber: v.number(), // 1-7
+    bettor: v.string(), // Spectator's address (lowercase)
+    betOn: v.string(), // Address of player bet on (hostAddress or guestAddress)
+    amount: v.number(), // Credits bet
+    odds: v.number(), // Multiplier (1.5, 1.8, 2.0)
+    status: v.union(
+      v.literal("active"), // Round in progress
+      v.literal("won"), // Won - credits paid
+      v.literal("lost"), // Lost - credits gone
+      v.literal("refunded") // Game cancelled
+    ),
+    payout: v.optional(v.number()), // Credits won (amount × odds)
+    timestamp: v.number(), // When bet was placed
+    resolvedAt: v.optional(v.number()), // When bet was resolved
+  })
+    .index("by_room_round", ["roomId", "roundNumber"])
+    .index("by_room_status", ["roomId", "status"])
+    .index("by_bettor", ["bettor", "timestamp"]),
+
   // PvP Entry Fees
   pvpEntryFees: defineTable({
     address: v.string(), // Player's wallet address (lowercase)
