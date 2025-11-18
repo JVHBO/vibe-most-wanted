@@ -942,25 +942,25 @@ export const claimWeeklyLeaderboardReward = mutation({
       throw new Error("Already claimed reward for this week");
     }
 
-    // Add coins to inbox (not balance)
-    const currentInbox = player.coinsInbox || 0;
-    const newInbox = currentInbox + reward;
+    // Add coins to balance (direct)
+    const currentBalance = player.coins || 0;
+    const newBalance = currentBalance + reward;
     const newLifetimeEarned = (player.lifetimeEarned || 0) + reward;
 
-    console.log('[claimWeeklyLeaderboardReward] Adding to coinsInbox:', {
+    console.log('[claimWeeklyLeaderboardReward] Adding to coins:', {
       address: normalizedAddress,
-      currentInbox,
+      currentBalance,
       reward,
-      newInbox
+      newBalance
     });
 
     await ctx.db.patch(player._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned: newLifetimeEarned,
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 Leaderboard reward sent to inbox: ${reward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`💰 Leaderboard reward added to balance: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Record claim in weeklyRewards table
     await ctx.db.insert("weeklyRewards", {
