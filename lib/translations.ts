@@ -472,7 +472,8 @@ export const translations = {
     insufficientFundsAttack: 'Insufficient funds!\n\nNeed 50 $TESTVBMS to attack.\nCurrent balance: {balance} $TESTVBMS\n\n※ Tip: Play PvE mode to earn coins!',
     insufficientFundsPvP: 'Insufficient funds!\n\nNeed 40 $TESTVBMS to play PvP.\nCurrent balance: {balance} $TESTVBMS\n\n※ Tip: Play PvE mode to earn coins!',
     tieResult: 'Tie!',
-    twitterHint: 'You can add your Twitter later in the profile tab'
+    twitterHint: 'You can add your Twitter later in the profile tab',
+    connectTwitter: 'Connect X'
   },
   es: {
     title: 'Home',
@@ -699,7 +700,18 @@ export const translations = {
     insufficientFundsAttack: '¡Fondos insuficientes!\n\nNecesitas 50 $TESTVBMS para atacar.\nSaldo actual: {balance} $TESTVBMS\n\n※ Consejo: ¡Juega el modo PvE para ganar monedas!',
     insufficientFundsPvP: '¡Fondos insuficientes!\n\nNecesitas 40 $TESTVBMS para jugar PvP.\nSaldo actual: {balance} $TESTVBMS\n\n※ Consejo: ¡Juega el modo PvE para ganar monedas!',
     tieResult: '¡Empate!',
-    twitterHint: 'Puedes agregar tu Twitter más tarde en la pestaña de perfil'
+    twitterHint: 'Puedes agregar tu Twitter más tarde en la pestaña de perfil',
+    youWon: 'Ganaste',
+    coins: 'monedas',
+    chooseHow: 'Elige cómo recibir tus monedas:',
+    claimNowLabel: 'Reclamar Ahora',
+    claimNowDesc: 'Disponible inmediatamente',
+    claimNowExplain: 'Las monedas van directamente a tu saldo',
+    saveLaterLabel: 'Guardar para Después',
+    saveLaterDesc: 'Va al Buzón',
+    saveLaterExplain: 'Las monedas van a tu buzón para reclamar cuando quieras',
+    decideLater: 'Decidir después',
+    connectTwitter: 'Conectar X'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
