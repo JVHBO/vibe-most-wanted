@@ -280,7 +280,7 @@ export default function ProfilePage() {
   // Filtros
   const [filterRarity, setFilterRarity] = useState<string>('all');
   const [filterFoil, setFilterFoil] = useState<string>('all');
-  const [filterRevealed, setFilterRevealed] = useState<string>('revealed');
+  const [filterRevealed, setFilterRevealed] = useState<string>('all');
 
   // Force metadata refresh state (check localStorage on mount)
   const [forceMetadataRefresh, setForceMetadataRefresh] = useState<boolean>(() => {
