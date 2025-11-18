@@ -91,10 +91,10 @@ export function PokerBattleTable({
   const resolveRoundMutation = useMutation(api.pokerBattle.resolveRound);
   const finishGameMutation = useMutation(api.pokerBattle.finishGame);
   const recordMatchMutation = useMutation(api.matches.recordMatch);
-  const sendToInboxMutation = useMutation(api.vbmsClaim.sendPveRewardToInbox);
 
-  // PvE claim mutations
+  // PvE and PvP claim mutations
   const sendPveRewardToInbox = useMutation(api.vbmsClaim.sendPveRewardToInbox);
+  const sendPvpRewardToInbox = useMutation(api.vbmsClaim.sendPvpRewardToInbox);
   const claimPveRewardNow = useMutation(api.vbmsClaim.claimPveRewardNow);
   const recordImmediateClaim = useMutation(api.vbmsClaim.recordImmediateClaim);
 
@@ -1534,11 +1534,13 @@ export function PokerBattleTable({
           mode: isCPUMode ? 'CPU' : 'PvP'
         });
 
-        sendToInboxMutation({
-          address: playerAddress,
-          amount: rewardAmount,
-          difficulty: isCPUMode ? difficulty : undefined,
-        })
+        // Use correct mutation based on mode
+        const sendRewardMutation = isCPUMode ? sendPveRewardToInbox : sendPvpRewardToInbox;
+        const mutationArgs = isCPUMode
+          ? { address: playerAddress, amount: rewardAmount, difficulty }
+          : { address: playerAddress, amount: rewardAmount };
+
+        sendRewardMutation(mutationArgs)
           .then((result) => {
             console.log('[PokerBattle] ✅ TESTVBMS sent to inbox:', result);
             setBattleFinalized(true);
@@ -1557,7 +1559,7 @@ export function PokerBattleTable({
           });
       }
     }
-  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendToInboxMutation, playerAddress]);
+  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendPveRewardToInbox, sendPvpRewardToInbox, playerAddress, difficulty]);
 
   // Auto-delete finished rooms (V5: No TX needed, just cleanup Convex)
   useEffect(() => {
