@@ -241,6 +241,17 @@ export const upsertProfile = mutation({
         reason: "Welcome bonus"
       });
 
+      // Create welcome_gift mission (500 coins claimable)
+      await ctx.db.insert("personalMissions", {
+        playerAddress: address,
+        date: "once", // One-time mission
+        missionType: "welcome_gift",
+        completed: true, // Auto-completed for new users
+        claimed: false, // Not claimed yet - player needs to claim
+        reward: 500,
+        completedAt: now,
+      });
+
       return newId;
     }
   },
