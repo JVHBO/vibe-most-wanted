@@ -34,7 +34,7 @@ export const chargeVBMSEntryFee = mutation({
     }
 
     const fee = VBMS_ENTRY_FEES.pvp;
-    const currentInbox = profile.inbox || 0;
+    const currentInbox = profile.coinsInbox || 0;
 
     // Check if player has enough VBMS
     if (currentInbox < fee) {
@@ -50,7 +50,7 @@ export const chargeVBMSEntryFee = mutation({
     const newInbox = currentInbox - fee;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
     });
 
     console.log(`💸 ${address} paid ${fee} VBMS entry fee. Inbox: ${currentInbox} → ${newInbox}`);
@@ -82,7 +82,7 @@ export const awardPvPVBMS = mutation({
       throw new Error("Profile not found");
     }
 
-    const currentInbox = profile.inbox || 0;
+    const currentInbox = profile.coinsInbox || 0;
     let reward = 0;
 
     if (won) {
@@ -96,7 +96,7 @@ export const awardPvPVBMS = mutation({
     const newInbox = currentInbox + reward;
 
     await ctx.db.patch(profile._id, {
-      inbox: newInbox,
+      coinsInbox: newInbox,
       lifetimeEarned: (profile.lifetimeEarned || 0) + Math.max(0, reward),
     });
 
@@ -132,7 +132,7 @@ export const getVBMSBalance = query({
       };
     }
 
-    const inbox = profile.inbox || 0;
+    const inbox = profile.coinsInbox || 0;
     const canPlayPvP = inbox >= VBMS_ENTRY_FEES.pvp;
 
     return {
