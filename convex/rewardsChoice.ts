@@ -87,7 +87,7 @@ export const processRewardChoice = mutation({
 
     console.log('[processRewardChoice] Profile found:', {
       coins: profile.coins,
-      inbox: profile.inbox
+      inbox: profile.coinsInbox
     });
 
     if (choice === "claim_now") {
@@ -130,7 +130,7 @@ export const processRewardChoice = mutation({
         playerAddress: address.toLowerCase(),
         choice: "immediate",
         amount,
-        inboxTotal: profile.inbox || 0,
+        inboxTotal: profile.coinsInbox || 0,
         bonusAvailable: false,
         timestamp: Date.now(),
       });

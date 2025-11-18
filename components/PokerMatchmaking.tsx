@@ -6,8 +6,8 @@ import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { useAccount } from "wagmi";
 import {
-  useVBMSBalance,
-  useVBMSAllowance,
+  useVBMSBalance as useWagmiVBMSBalance,
+  useVBMSAllowance as useWagmiVBMSAllowance,
   useApproveVBMS,
   useCreateBattle,
   useJoinBattle,
@@ -15,6 +15,7 @@ import {
   useActiveBattle,
   useBattle
 } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance, useFarcasterVBMSAllowance } from "@/lib/hooks/useFarcasterVBMS";
 import { CONTRACTS } from "@/lib/contracts";
 import { parseEther } from "viem";
 
@@ -33,10 +34,8 @@ export function PokerMatchmaking({
 }: PokerMatchmakingProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAnte, setSelectedAnte] = useState(10);
-  const [selectedToken, setSelectedToken] = useState<"VBMS" | "VIBE_NFT" | "TESTVBMS">("VBMS");
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
-  const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [hasCheckedExistingRoom, setHasCheckedExistingRoom] = useState(false);
 
   // Ref to prevent multiple orphaned battle recoveries running at once
@@ -50,13 +49,39 @@ export function PokerMatchmaking({
 
   // Web3 hooks for VBMS
   const { address: walletAddress } = useAccount();
-  const { balance: vbmsBalance, balanceRaw: vbmsBalanceRaw, refetch: refetchVBMSBalance } = useVBMSBalance(walletAddress);
-  console.log("🔍 VBMS Balance Debug:", { walletAddress, vbmsBalance, vbmsBalanceRaw });
-  const { allowance: vbmsAllowance, allowanceRaw: vbmsAllowanceRaw, refetch: refetchAllowance } = useVBMSAllowance(walletAddress, CONTRACTS.VBMSPokerBattle as `0x${string}`);
+  // Use playerAddress (Farcaster miniapp) OR walletAddress (web wallet) - playerAddress takes priority
+  const effectiveAddress = (playerAddress || walletAddress) as `0x${string}` | undefined;
+
+  // Detect miniapp (needs Farcaster SDK provider, wagmi won't work)
+  // Check both iframe (web) and Farcaster SDK (mobile app)
+  const isInMiniapp = typeof window !== 'undefined' && (
+    window.parent !== window || // iframe detection (web)
+    !!(window as any).sdk?.wallet // Farcaster SDK detection (mobile + web)
+  );
+
+  // Use Farcaster-compatible hooks in miniapp, wagmi hooks on web
+  const farcasterBalance = useFarcasterVBMSBalance(effectiveAddress);
+  const farcasterAllowance = useFarcasterVBMSAllowance(effectiveAddress, CONTRACTS.VBMSPokerBattle);
+  const wagmiBalance = useWagmiVBMSBalance(effectiveAddress);
+  const wagmiAllowance = useWagmiVBMSAllowance(effectiveAddress, CONTRACTS.VBMSPokerBattle as `0x${string}`);
+
+  // Select hooks based on environment
+  const { balance: vbmsBalance, balanceRaw: vbmsBalanceRaw, refetch: refetchVBMSBalance } = isInMiniapp ? farcasterBalance : wagmiBalance;
+  const { allowance: vbmsAllowance, allowanceRaw: vbmsAllowanceRaw, refetch: refetchAllowance } = isInMiniapp ? farcasterAllowance : wagmiAllowance;
+
+  console.log("🔍 VBMS Balance Debug:", {
+    isInMiniapp,
+    playerAddress,
+    walletAddress,
+    effectiveAddress,
+    vbmsBalance,
+    vbmsBalanceRaw,
+    source: isInMiniapp ? 'Farcaster SDK' : 'Wagmi'
+  });
   const { approve: approveVBMS, isPending: isApproving, isConfirming: isApprovingConfirming, isSuccess: isApproved, error: approveError } = useApproveVBMS();
   const { createBattle: createBlockchainBattle, isPending: isCreatingBattle, isConfirming: isCreatingBattleConfirming, isSuccess: isBattleCreated, error: createBattleError } = useCreateBattle();
   const { joinBattle: joinBlockchainBattle, isPending: isJoiningBattle, isConfirming: isJoiningBattleConfirming, isSuccess: isBattleJoined, error: joinBattleError } = useJoinBattle();
-  const { battleId: activeBattleId, isLoading: isLoadingActiveBattle, refetch: refetchActiveBattle } = useActiveBattle(walletAddress);
+  const { battleId: activeBattleId, isLoading: isLoadingActiveBattle, refetch: refetchActiveBattle } = useActiveBattle(effectiveAddress);
   const { battle: activeBattleInfo, isLoading: isLoadingBattleInfo } = useBattle(activeBattleId);
   const { cancelBattle: cancelBlockchainBattle, isPending: isCancellingBattle, isConfirming: isCancellingBattleConfirming, isSuccess: isBattleCancelled } = useCancelBattle();
 
@@ -78,7 +103,6 @@ export function PokerMatchmaking({
   // Mutations
   const createRoom = useMutation(api.pokerBattle.createPokerRoom);
   const joinRoom = useMutation(api.pokerBattle.joinPokerRoom);
-  const autoMatch = useMutation(api.pokerBattle.autoMatch);
   const spectate = useMutation(api.pokerBattle.spectateRoom);
   const leaveRoom = useMutation(api.pokerBattle.leavePokerRoom);
   const forceDeleteRoomByAddress = useMutation(api.pokerBattle.forceDeleteRoomByAddress);
@@ -97,8 +121,8 @@ export function PokerMatchmaking({
   /*
   useEffect(() => {
     const recoverOrphanedBattle = async () => {
-      // Only check if we're using VBMS and have wallet connected
-      if (!walletAddress || selectedToken !== "VBMS") return;
+      // Only check if we have wallet connected
+      if (!effectiveAddress) return;
 
       // If we already have a Convex room, don't do anything
       if (myRoom) return;
@@ -158,7 +182,7 @@ export function PokerMatchmaking({
     };
 
     recoverOrphanedBattle();
-  }, [activeBattleId, activeBattleInfo, myRoom, walletAddress, selectedToken, availableRooms, joinRoom, createRoom, playerAddress, playerUsername]);
+  }, [activeBattleId, activeBattleInfo, myRoom, walletAddress, availableRooms, joinRoom, createRoom, playerAddress, playerUsername]);
   */
 
   // Handle VBMS approval success -> refetch allowance and continue
@@ -176,8 +200,8 @@ export function PokerMatchmaking({
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Refetch allowance to get updated value
-        const { data: newAllowance } = await refetchAllowance();
-        console.log("🔄 Refetched allowance after approval:", newAllowance);
+        await refetchAllowance();
+        console.log("🔄 Refetched allowance after approval - will use updated vbmsAllowance from hook");
 
         // Now create the battle
         setVbmsStage("creating");
@@ -203,8 +227,8 @@ export function PokerMatchmaking({
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Refetch allowance to get updated value (same as CREATE flow)
-        const { data: newAllowance } = await refetchAllowance();
-        console.log("🔄 Refetched allowance after approval:", newAllowance);
+        await refetchAllowance();
+        console.log("🔄 Refetched allowance after approval - will use updated vbmsAllowance from hook");
 
         try {
           // Get pending room data
@@ -558,168 +582,72 @@ export function PokerMatchmaking({
     isCreatingConvexRoomRef.current = false;
 
     try {
-      // If VBMS is selected, create blockchain battle
-      if (selectedToken === "VBMS") {
-        if (!walletAddress) {
-          console.log("Wallet Not Connected - Please connect your wallet to play with VBMS");
-          AudioManager.buttonError();
-          return;
-        }
-
-        // Check if user already has an active battle
-        if (activeBattleId > 0 && activeBattleInfo) {
-          console.log("⚠️ You already have an active battle:", {
-            battleId: activeBattleId,
-            status: activeBattleInfo.status,
-            createdAt: activeBattleInfo.createdAt,
-          });
-
-          console.log("🔍 Debug - status type:", typeof activeBattleInfo.status, "value:", activeBattleInfo.status);
-          console.log("🔍 Debug - status === 0:", activeBattleInfo.status === 0);
-          console.log("🔍 Debug - status === 1:", activeBattleInfo.status === 1);
-          console.log("🔍 Debug - status == 1:", activeBattleInfo.status == 1);
-
-          // Calculate if 10 minutes have passed (for cancel)
-          const tenMinutes = 600; // seconds
-          const now = Math.floor(Date.now() / 1000);
-          const canCancel = (now - activeBattleInfo.createdAt) >= tenMinutes;
-
-          if (canCancel && activeBattleInfo.status === 0) { // 0 = WAITING
-            const shouldCancel = confirm(`You already have an active battle (#${activeBattleId}) waiting for an opponent.\n\nDo you want to CANCEL it and create a new one?`);
-            if (shouldCancel) {
-              console.log("🗑️ Canceling orphaned battle #" + activeBattleId);
-              try {
-                await cancelBlockchainBattle(activeBattleId);
-                console.log("✅ Battle canceled! You can now create a new one.");
-                // Wait a bit for blockchain to update, then allow creating new battle
-                setTimeout(() => {
-                  setIsCreating(false);
-                }, 2000);
-                return;
-              } catch (error) {
-                console.error("❌ Failed to cancel battle:", error);
-                alert("Failed to cancel battle. Please try again.");
-                AudioManager.buttonError();
-                return;
-              }
-            }
-          } else if (activeBattleInfo.status === 1) { // ACTIVE - battle in progress
-            const shouldFinish = confirm(`You already have an ACTIVE battle (#${activeBattleId}) in progress.\n\nDo you want to FORCE FINISH it as a draw and create a new one?`);
-            if (shouldFinish) {
-              console.log("🏁 Force finishing battle #" + activeBattleId);
-              try {
-                // Get signature from backend
-                const response = await fetch('/api/poker/finish-battle', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    battleId: activeBattleId.toString(),
-                    winnerAddress: walletAddress, // You as winner
-                  })
-                });
-
-                const { signature } = await response.json();
-
-                // Call finishBattle on blockchain
-                const { writeContract } = await import('wagmi/actions');
-                const { config } = await import('@/lib/wagmi');
-
-                await writeContract(config, {
-                  address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
-                  abi: [{
-                    inputs: [
-                      { name: 'battleId', type: 'uint256' },
-                      { name: 'winner', type: 'address' },
-                      { name: 'signature', type: 'bytes' }
-                    ],
-                    name: 'finishBattle',
-                    outputs: [],
-                    stateMutability: 'nonpayable',
-                    type: 'function',
-                  }],
-                  functionName: 'finishBattle',
-                  args: [BigInt(activeBattleId), walletAddress as `0x${string}`, signature as `0x${string}`]
-                });
-
-                console.log("✅ Battle finished! You can now create a new one.");
-                setTimeout(() => {
-                  setIsCreating(false);
-                }, 2000);
-                return;
-              } catch (error) {
-                console.error("❌ Failed to finish battle:", error);
-                alert("Failed to finish battle. Please try again.");
-                AudioManager.buttonError();
-                return;
-              }
-            }
-          } else {
-            alert(`You already have an active battle (#${activeBattleId}). Wait for it to finish or for an opponent to join.`);
-          }
-
-          AudioManager.buttonError();
-          return;
-        }
-
-        // Calculate total stake needed
-        const stakeAmount = selectedAnte.toString();
-
-        // Check if user has enough VBMS
-        const userBalance = parseFloat(vbmsBalance);
-        const requiredAmount = parseFloat(stakeAmount);
-
-        console.log("💰 Balance check:", {
-          userBalance,
-          requiredAmount,
-          hasEnough: userBalance >= requiredAmount,
-        });
-
-        if (userBalance < requiredAmount) {
-          console.log(`Insufficient VBMS - You need ${requiredAmount} VBMS but only have ${userBalance.toFixed(2)} VBMS`);
-          AudioManager.buttonError();
-          return;
-        }
-
-        // IMPORTANT: Refetch allowance to get latest value from blockchain
-        console.log("🔄 Refetching allowance before check...");
-        const { data: freshAllowance } = await refetchAllowance();
-        const currentAllowance = parseFloat((freshAllowance || vbmsAllowance)?.toString() || '0');
-        const requiredAllowance = parseFloat(stakeAmount);
-
-        console.log("💰 Allowance check for CREATE:", {
-          vbmsAllowance_stale: vbmsAllowance,
-          freshAllowance: freshAllowance,
-          currentAllowance,
-          requiredAllowance,
-          hasEnoughAllowance: currentAllowance >= requiredAllowance,
-        });
-
-        if (currentAllowance >= requiredAllowance) {
-          // Already have enough allowance, skip straight to createBattle
-          console.log("✅ Sufficient allowance already exists! Skipping approval...");
-          setVbmsStage("creating");
-          setIsCreating(true);
-          console.log("Creating battle on-chain - Please confirm the transaction...");
-          createBlockchainBattle(stakeAmount);
-          return;
-        }
-
-        // Need to approve first
-        console.log("⚠️ Insufficient allowance, requesting approval...");
-        setProcessedApproval(false); // Reset before approving
-        setVbmsStage("approving");
-        setIsCreating(true);
-        console.log("Step 1/2: Approving VBMS...");
-        approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
-        return; // useEffect will handle next step after approval
-      }
-
-      // For VIBE_NFT, use the normal off-chain flow (to be implemented)
-      if (selectedToken === "VIBE_NFT") {
-        console.log("VIBE_NFT mode coming soon!");
+      // Create VBMS blockchain battle
+      // Check if we have an address (from Farcaster miniapp OR web wallet)
+      if (!effectiveAddress) {
+        console.log("Wallet Not Connected - Please connect your wallet to play with VBMS");
         AudioManager.buttonError();
         return;
       }
+
+      // REMOVED: Active battle check - now allows creating multiple battles
+      // Players can create new battles even if they have active ones
+      // Old battles will be auto-canceled after timeout
+      if (activeBattleId > 0 && activeBattleInfo) {
+        console.log("⚠️ Note: You have an active battle #" + activeBattleId + " - it will be abandoned if you create a new one");
+      }
+
+      // Calculate total stake needed
+      const stakeAmount = selectedAnte.toString();
+
+      // Check if user has enough VBMS
+      const userBalance = parseFloat(vbmsBalance);
+      const requiredAmount = parseFloat(stakeAmount);
+
+      console.log("💰 Balance check:", {
+        userBalance,
+        requiredAmount,
+        hasEnough: userBalance >= requiredAmount,
+      });
+
+      if (userBalance < requiredAmount) {
+        console.log(`Insufficient VBMS - You need ${requiredAmount} VBMS but only have ${userBalance.toFixed(2)} VBMS`);
+        AudioManager.buttonError();
+        return;
+      }
+
+      // IMPORTANT: Refetch allowance to get latest value from blockchain
+      console.log("🔄 Refetching allowance before check...");
+      await refetchAllowance();
+      console.log("🔄 Refetched allowance - will use updated vbmsAllowance from hook");
+      const currentAllowance = parseFloat(vbmsAllowance?.toString() || '0');
+      const requiredAllowance = parseFloat(stakeAmount);
+
+      console.log("💰 Allowance check for CREATE:", {
+        vbmsAllowance: vbmsAllowance,
+        currentAllowance,
+        requiredAllowance,
+        hasEnoughAllowance: currentAllowance >= requiredAllowance,
+      });
+
+      if (currentAllowance >= requiredAllowance) {
+        // Already have enough allowance, skip straight to createBattle
+        console.log("✅ Sufficient allowance already exists! Skipping approval...");
+        setVbmsStage("creating");
+        setIsCreating(true);
+        console.log("Creating battle on-chain - Please confirm the transaction...");
+        createBlockchainBattle(stakeAmount);
+        return;
+      }
+
+      // Need to approve first
+      console.log("⚠️ Insufficient allowance, requesting approval...");
+      setProcessedApproval(false); // Reset before approving
+      setVbmsStage("approving");
+      setIsCreating(true);
+      console.log("Step 1/2: Approving VBMS...");
+      approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
+      return; // useEffect will handle next step after approval
     } catch (error) {
       console.error("❌ Error in handleCreateRoom:", error);
       AudioManager.buttonError();
@@ -737,7 +665,8 @@ export function PokerMatchmaking({
     try {
       // If VBMS room, join blockchain battle
       if (token === "VBMS") {
-        if (!walletAddress) {
+        // Check if we have an address (from Farcaster miniapp OR web wallet)
+        if (!effectiveAddress) {
           console.log("Wallet Not Connected - Please connect your wallet to play with VBMS");
           AudioManager.buttonError();
           setIsJoining(false);
@@ -838,47 +767,12 @@ export function PokerMatchmaking({
         console.log("✅ Approval transaction sent, waiting for confirmation...");
         return;
       }
-
-      // For VIBE_NFT, use normal off-chain flow (to be implemented)
-      if (token === "VIBE_NFT") {
-        console.log("VIBE_NFT mode coming soon!");
-        AudioManager.buttonError();
-        setIsJoining(false);
-        return;
-      }
     } catch (error) {
       console.error("Error joining room:", error);
       AudioManager.buttonError();
       setIsJoining(false);
       setVbmsStage("idle");
       setSkippedApproval(false); // Reset skip flag on error
-    }
-  };
-
-  const handleAutoMatch = async () => {
-    if (isAutoMatching) return;
-
-    setIsAutoMatching(true);
-    AudioManager.buttonClick();
-
-    try {
-      const result = await autoMatch({
-        address: playerAddress,
-        username: playerUsername,
-        ante: selectedAnte,
-        token: selectedToken,
-      });
-
-      if (result.success) {
-        const isHost = result.action === "created";
-        AudioManager.buttonSuccess();
-        onRoomJoined(result.roomId, isHost, selectedAnte, selectedToken);
-      }
-    } catch (error) {
-      console.error("Error auto-matching:", error);
-      AudioManager.buttonError();
-    } finally {
-      setIsAutoMatching(false);
     }
   };
 
@@ -965,7 +859,7 @@ export function PokerMatchmaking({
 
         <div className="p-3 sm:p-6">
           {/* Active Battle Warning */}
-          {selectedToken === "VBMS" && activeBattleId > 0 && activeBattleInfo && (
+          {activeBattleId > 0 && activeBattleInfo && (
             <div className="mb-4 sm:mb-8 bg-vintage-gold/10 border-2 border-vintage-gold/50 rounded-xl p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -1003,6 +897,45 @@ export function PokerMatchmaking({
             </div>
           )}
 
+          {/* Stuck in Room Warning - Force Leave Option */}
+          {myRoom && !activeBattleId && (
+            <div className="mb-4 sm:mb-8 bg-red-500/10 border-2 border-red-500/50 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg sm:text-xl font-display font-bold text-red-400 mb-2">
+                    🚨 Stuck in Room
+                  </h3>
+                  <p className="text-sm sm:text-base text-vintage-parchment mb-2">
+                    Room: {myRoom.roomId.slice(0, 8)}... • Stake: {myRoom.ante} {myRoom.token}
+                  </p>
+                  <p className="text-xs sm:text-sm text-vintage-burnt-gold">
+                    You're in a room with no active blockchain battle. Click to force leave.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 items-end">
+                  <button
+                    onClick={async () => {
+                      try {
+                        console.log('🚨 Force leaving stuck room:', myRoom.roomId);
+                        await forceDeleteRoomByAddress({ address: playerAddress });
+                        console.log('✅ Successfully left room');
+                        AudioManager.buttonClick();
+                      } catch (error) {
+                        console.error('❌ Failed to leave room:', error);
+                        AudioManager.buttonError();
+                      }
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-display font-bold transition"
+                    title="Force leave this stuck room"
+                  >
+                    Force Leave
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Main Action Button */}
           <div className="flex justify-center mb-4 sm:mb-8">
             {/* Create Room */}
@@ -1026,69 +959,45 @@ export function PokerMatchmaking({
           {/* Room Settings */}
           <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-xl sm:rounded-2xl p-3 sm:p-6 mb-4 sm:mb-8">
             <h3 className="text-base sm:text-xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">
-              ⚙️ ROOM SETTINGS
+              ⚙️ STAKES SELECTION
             </h3>
 
-            <div className="grid md:grid-cols-2 gap-3 sm:gap-6">
-              {/* Token Selection */}
-              <div>
-                <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                  BETTING TOKEN
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setSelectedToken("VBMS")}
-                    className={`px-6 py-4 rounded-xl font-bold transition-all ${
-                      selectedToken === "VBMS"
-                        ? "bg-gradient-to-br from-yellow-500 to-orange-500 text-black border-2 border-yellow-400 shadow-xl shadow-yellow-500/50"
-                        : "bg-vintage-charcoal text-yellow-400 border-2 border-yellow-400/30 hover:border-yellow-400/60"
-                    }`}
-                  >
-                    <div className="text-lg">$VBMS</div>
-                    <div className="text-[10px] mt-1">
-                      {walletAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setSelectedToken("VIBE_NFT")}
-                    className={`px-6 py-4 rounded-xl font-bold transition-all ${
-                      selectedToken === "VIBE_NFT"
-                        ? "bg-vintage-gold text-vintage-black border-2 border-vintage-gold shadow-gold"
-                        : "bg-vintage-charcoal text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
-                    }`}
-                  >
-                    <div className="text-lg">VIBE NFT</div>
-                    <div className="text-[10px] text-vintage-burnt-gold mt-1">Card Mode</div>
-                  </button>
+            {/* Current Token Display */}
+            <div className="mb-4 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-2 border-yellow-400/30 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-vintage-burnt-gold mb-1">Betting Token</div>
+                  <div className="text-2xl font-bold text-yellow-400">$VBMS</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-vintage-burnt-gold mb-1">Your Balance</div>
+                  <div className="text-2xl font-bold text-yellow-400">
+                    {effectiveAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
                   </div>
-                <div className="mt-3 bg-blue-900/20 border border-blue-500/30 rounded-xl p-3">
-                  <p className="text-blue-300 text-xs">
-                    💡 VBMS tokens are bet for prizes - NFT cards determine gameplay power
-                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Ante Selection */}
-              <div>
-                <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                  STAKES (Entry Fee)
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {anteOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setSelectedAnte(option.value)}
-                      className={`p-3 rounded-xl border-2 font-bold transition-all ${
-                        selectedAnte === option.value
-                          ? `bg-gradient-to-br ${option.color} text-white border-white shadow-lg`
-                          : "bg-vintage-charcoal text-vintage-gold border-vintage-gold/30 hover:border-vintage-gold/60"
-                      }`}
-                    >
-                      <div className="text-xs mb-1">{option.label}</div>
-                      <div className="text-lg">{option.value}</div>
-                    </button>
-                  ))}
-                </div>
+            {/* Ante Selection */}
+            <div>
+              <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
+                STAKES (Entry Fee)
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {anteOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setSelectedAnte(option.value)}
+                    className={`p-3 rounded-xl border-2 font-bold transition-all ${
+                      selectedAnte === option.value
+                        ? `bg-gradient-to-br ${option.color} text-white border-white shadow-lg`
+                        : "bg-vintage-charcoal text-vintage-gold border-vintage-gold/30 hover:border-vintage-gold/60"
+                    }`}
+                  >
+                    <div className="text-xs mb-1">{option.label}</div>
+                    <div className="text-lg">{option.value}</div>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -1217,41 +1126,16 @@ export function PokerMatchmaking({
               🎰 CREATE ROOM
             </h2>
 
-            {/* Token Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-vintage-burnt-gold mb-3">
-                BETTING TOKEN
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setSelectedToken("VBMS")}
-                  className={`px-6 py-4 rounded-xl font-bold transition-all ${
-                    selectedToken === "VBMS"
-                      ? "bg-gradient-to-br from-yellow-500 to-orange-500 text-black border-2 border-yellow-400 shadow-xl shadow-yellow-500/50"
-                      : "bg-vintage-deep-black text-yellow-400 border-2 border-yellow-400/30 hover:border-yellow-400/60"
-                  }`}
-                >
-                  <div className="text-lg">$VBMS</div>
-                  <div className="text-[10px] mt-1">
+            {/* Token Display */}
+            <div className="mb-6 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-2 border-yellow-400/30 rounded-xl p-4">
+              <div className="text-center">
+                <div className="text-sm text-vintage-burnt-gold mb-2">Betting Token</div>
+                <div className="text-3xl font-bold text-yellow-400 mb-2">$VBMS</div>
+                <div className="text-sm text-vintage-burnt-gold">
+                  Your Balance: <span className="text-yellow-400 font-bold">
                     {walletAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
-                  </div>
-                </button>
-                <button
-                  onClick={() => setSelectedToken("VIBE_NFT")}
-                  className={`px-6 py-4 rounded-xl font-bold transition-all ${
-                    selectedToken === "VIBE_NFT"
-                      ? "bg-vintage-gold text-vintage-black border-2 border-vintage-gold shadow-gold"
-                      : "bg-vintage-deep-black text-vintage-gold border-2 border-vintage-gold/30 hover:border-vintage-gold/60"
-                  }`}
-                >
-                  <div className="text-lg">VIBE NFT</div>
-                  <div className="text-[10px] text-vintage-burnt-gold mt-1">Card Mode</div>
-                </button>
-              </div>
-              <div className="mt-3 bg-blue-900/20 border border-blue-500/30 rounded-xl p-3">
-                <p className="text-blue-300 text-xs">
-                  💡 VBMS tokens are bet for prizes - NFT cards determine gameplay power
-                </p>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1284,13 +1168,13 @@ export function PokerMatchmaking({
                 <div className="flex justify-between">
                   <span>Your Stake:</span>
                   <span className="text-vintage-gold font-bold">
-                    {selectedAnte} {selectedToken}
+                    {selectedAnte} VBMS
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Total Pot:</span>
                   <span className="text-vintage-gold font-bold">
-                    {selectedAnte * 2} {selectedToken}
+                    {selectedAnte * 2} VBMS
                   </span>
                 </div>
               </div>
