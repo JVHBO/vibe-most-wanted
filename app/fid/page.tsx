@@ -7,7 +7,6 @@ import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
-import FoilCardEffect from "@/components/FoilCardEffect";
 
 export default function FidPage() {
   const { address } = useAccount();
@@ -16,7 +15,6 @@ export default function FidPage() {
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [previewFoil, setPreviewFoil] = useState<'Standard' | 'Prize' | 'None' | null>(null);
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
@@ -31,7 +29,6 @@ export default function FidPage() {
     setError(null);
     setUserData(null);
     setPreviewImage(null);
-    setPreviewFoil(null);
 
     const fid = parseInt(fidInput);
     if (isNaN(fid) || fid <= 0) {
@@ -76,10 +73,6 @@ export default function FidPage() {
       const suitSymbol = getSuitSymbol(suit);
       const color = getSuitColor(suit);
       const rank = generateRankFromRarity(rarity);
-
-      // Generate random foil for preview
-      const foil = generateRandomFoil();
-      setPreviewFoil(foil);
 
       // Generate card image
       const imageDataUrl = await generateFarcasterCardImage({
@@ -312,21 +305,13 @@ export default function FidPage() {
           <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
             <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
               Card Preview
-              {previewFoil && previewFoil !== 'None' && (
-                <span className="ml-2 text-purple-400 text-lg">✨ {previewFoil} Foil</span>
-              )}
             </h2>
             <div className="flex justify-center">
-              <FoilCardEffect
-                foilType={(previewFoil === 'Standard' || previewFoil === 'Prize') ? previewFoil : null}
-                className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
-              >
-                <img
-                  src={previewImage}
-                  alt="Card Preview"
-                  className="w-full h-full object-cover"
-                />
-              </FoilCardEffect>
+              <img
+                src={previewImage}
+                alt="Card Preview"
+                className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold"
+              />
             </div>
           </div>
         )}
@@ -351,28 +336,19 @@ export default function FidPage() {
                     </span>
                   </div>
 
-                  <FoilCardEffect
-                    foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null}
-                    className="w-full aspect-square rounded-lg mb-2 overflow-hidden"
-                  >
-                    <img
-                      src={card.pfpUrl}
-                      alt={card.username}
-                      className="w-full h-full object-cover"
-                    />
-                  </FoilCardEffect>
-
+                  <img
+                    src={card.pfpUrl}
+                    alt={card.username}
+                    className="w-full aspect-square object-cover rounded-lg mb-2"
+                  />
                   <p className="text-vintage-gold font-bold">{card.displayName}</p>
                   <p className="text-vintage-ice/70 text-sm">@{card.username}</p>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-vintage-burnt-gold text-sm">{card.rarity}</span>
                     <span className="text-vintage-ice text-sm">⚡ {card.power}</span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-xs">
-                    <span className="text-vintage-ice/50">Score: {card.neynarScore.toFixed(2)}</span>
-                    {card.foil && card.foil !== 'None' && (
-                      <span className="text-purple-400 font-bold">✨ {card.foil}</span>
-                    )}
+                  <div className="mt-1 text-center text-xs text-vintage-ice/50">
+                    Score: {card.neynarScore.toFixed(2)}
                   </div>
                 </div>
               ))}
