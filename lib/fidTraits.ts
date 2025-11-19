@@ -67,12 +67,21 @@ function getFoilProbabilities(fid: number): Array<{ value: FoilType; weight: num
     ];
   }
 
-  // FID 100,001 - 500,000: Mostly None, some Standard
+  // FID 100,001 - 250,000: Good Standard chance, low Prize
+  if (fid <= 250000) {
+    return [
+      { value: 'Prize', weight: 8 },
+      { value: 'Standard', weight: 45 },
+      { value: 'None', weight: 47 },
+    ];
+  }
+
+  // FID 250,001 - 500,000: Mostly None, some Standard
   if (fid <= 500000) {
     return [
-      { value: 'Prize', weight: 3 },
-      { value: 'Standard', weight: 30 },
-      { value: 'None', weight: 67 },
+      { value: 'Prize', weight: 2 },
+      { value: 'Standard', weight: 25 },
+      { value: 'None', weight: 73 },
     ];
   }
 
@@ -130,13 +139,24 @@ function getWearProbabilities(fid: number): Array<{ value: WearType; weight: num
     ];
   }
 
-  // FID 100,001 - 500,000: Moderate wear
+  // FID 100,001 - 250,000: Good Mint/Lightly Played
+  if (fid <= 250000) {
+    return [
+      { value: 'Pristine', weight: 5 },
+      { value: 'Mint', weight: 35 },
+      { value: 'Lightly Played', weight: 50 },
+      { value: 'Moderately Played', weight: 10 },
+      { value: 'Heavily Played', weight: 0 },
+    ];
+  }
+
+  // FID 250,001 - 500,000: Moderate wear
   if (fid <= 500000) {
     return [
       { value: 'Pristine', weight: 0 },
-      { value: 'Mint', weight: 15 },
-      { value: 'Lightly Played', weight: 45 },
-      { value: 'Moderately Played', weight: 40 },
+      { value: 'Mint', weight: 10 },
+      { value: 'Lightly Played', weight: 40 },
+      { value: 'Moderately Played', weight: 50 },
       { value: 'Heavily Played', weight: 0 },
     ];
   }
@@ -191,8 +211,11 @@ export function getFidTraitInfo(fid: number): string {
   if (fid <= 100000) {
     return 'Established User - 15% Prize, 50% Standard';
   }
+  if (fid <= 250000) {
+    return 'Active User - 8% Prize, 45% Standard';
+  }
   if (fid <= 500000) {
-    return 'Regular User - 3% Prize, 30% Standard';
+    return 'Regular User - 2% Prize, 25% Standard';
   }
   if (fid <= 1200000) {
     return 'New User - 8% Standard only';
