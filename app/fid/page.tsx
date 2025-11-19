@@ -304,7 +304,7 @@ export default function FidPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2">
-            Vibe Most Wanted- FID Edition
+            VibeFID
           </h1>
           <p className="text-vintage-ice">
             Mint playable cards from Farcaster profiles
