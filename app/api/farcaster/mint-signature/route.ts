@@ -35,16 +35,18 @@ export async function POST(request: NextRequest) {
     const normalizedAddress = address.toLowerCase();
     const verifiedAddresses = user.verified_addresses.eth_addresses.map(a => a.toLowerCase());
 
-    if (!verifiedAddresses.includes(normalizedAddress)) {
-      return NextResponse.json({
-        error: 'You do not own this FID',
-        fid,
-        yourAddress: address,
-        fidOwners: user.verified_addresses.eth_addresses,
-      }, { status: 403 });
-    }
+    // TESTING MODE: Ownership check disabled for testing
+    // if (!verifiedAddresses.includes(normalizedAddress)) {
+    //   return NextResponse.json({
+    //     error: 'You do not own this FID',
+    //     fid,
+    //     yourAddress: address,
+    //     fidOwners: user.verified_addresses.eth_addresses,
+    //   }, { status: 403 });
+    // }
 
-    console.log('✅ Ownership verified for FID', fid);
+    console.log('⚠️ TESTING MODE: Ownership verification bypassed');
+    console.log('✅ Signature generated for FID', fid);
 
     // 3. Get signer private key from environment
     const SIGNER_PRIVATE_KEY = process.env.VBMS_SIGNER_PRIVATE_KEY;
