@@ -116,7 +116,7 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       // Draw PFP in center (square)
       const pfpSize = 350;
       const pfpX = (canvas.width - pfpSize) / 2;
-      const pfpY = 100;
+      const pfpY = 160; // More centered vertically
 
       // PFP border
       ctx.strokeStyle = '#000';
