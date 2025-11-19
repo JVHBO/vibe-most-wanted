@@ -28,6 +28,7 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { InboxDisplay } from "@/components/InboxDisplay";
 import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
 import { CoinsInboxModal } from "@/components/CoinsInboxModal";
+import { CardMedia } from "@/components/CardMedia";
 import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
 import { PvPMenuModals } from "@/components/PvPMenuModals";
@@ -3265,7 +3266,7 @@ export default function TCGPage() {
                         foilType={(selectedCards[currentRound - 1]?.foil === 'Standard' || selectedCards[currentRound - 1]?.foil === 'Prize') ? selectedCards[currentRound - 1].foil : null}
                         className="w-full h-full"
                       >
-                        <img src={selectedCards[currentRound - 1]?.imageUrl} alt={`#${selectedCards[currentRound - 1]?.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                        <CardMedia src={selectedCards[currentRound - 1]?.imageUrl} alt={`#${selectedCards[currentRound - 1]?.tokenId}`} className="w-full h-full object-cover" loading="eager" />
                       </FoilCardEffect>
                       <div
                         className="absolute top-0 left-0 bg-cyan-500 text-white text-lg md:text-xl font-bold px-3 py-2 rounded-br"
@@ -3283,7 +3284,7 @@ export default function TCGPage() {
                       <div className="flex gap-1 mt-2">
                         {orderedPlayerCards.slice(0, currentRound - 1).map((card, i) => (
                           <div key={i} className={`w-12 h-16 rounded border-2 ${roundResults[i] === 'win' ? 'border-green-500' : roundResults[i] === 'loss' ? 'border-red-500' : 'border-yellow-500'} opacity-50`}>
-                            <img src={card.imageUrl} alt="" className="w-full h-full object-cover" />
+                            <CardMedia src={card.imageUrl} alt="" className="w-full h-full object-cover" />
                           </div>
                         ))}
                       </div>
@@ -3315,7 +3316,7 @@ export default function TCGPage() {
                             foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
                             className="w-full h-full"
                           >
-                            <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                            <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
                           </FoilCardEffect>
                           <div
                             className="absolute top-0 left-0 bg-cyan-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
@@ -3386,7 +3387,7 @@ export default function TCGPage() {
                         foilType={(dealerCards[currentRound - 1]?.foil === 'Standard' || dealerCards[currentRound - 1]?.foil === 'Prize') ? dealerCards[currentRound - 1].foil : null}
                         className="w-full h-full"
                       >
-                        <img src={dealerCards[currentRound - 1]?.imageUrl} alt={`#${dealerCards[currentRound - 1]?.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                        <CardMedia src={dealerCards[currentRound - 1]?.imageUrl} alt={`#${dealerCards[currentRound - 1]?.tokenId}`} className="w-full h-full object-cover" loading="eager" />
                       </FoilCardEffect>
                       <div
                         className="absolute top-0 left-0 bg-red-500 text-white text-lg md:text-xl font-bold px-3 py-2 rounded-br"
@@ -3409,7 +3410,7 @@ export default function TCGPage() {
                       <div className="flex gap-1 mt-2">
                         {orderedOpponentCards.slice(0, currentRound - 1).map((card, i) => (
                           <div key={i} className={`w-12 h-16 rounded border-2 ${roundResults[i] === 'loss' ? 'border-green-500' : roundResults[i] === 'win' ? 'border-red-500' : 'border-yellow-500'} opacity-50`}>
-                            <img src={card.imageUrl} alt="" className="w-full h-full object-cover" />
+                            <CardMedia src={card.imageUrl} alt="" className="w-full h-full object-cover" />
                           </div>
                         ))}
                       </div>
@@ -3441,7 +3442,7 @@ export default function TCGPage() {
                             foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
                             className="w-full h-full"
                           >
-                            <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
+                            <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
                           </FoilCardEffect>
                           <div
                             className="absolute top-0 left-0 bg-red-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
@@ -4902,7 +4903,7 @@ export default function TCGPage() {
                   <div className="grid grid-cols-5 gap-2 min-h-[120px]">
                     {selectedCards.map((c, i) => (
                       <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
-                        <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
+                        <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
                         <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
                       </FoilCardEffect>
                     ))}
@@ -4954,7 +4955,7 @@ export default function TCGPage() {
                       <div className="grid grid-cols-5 gap-2 mb-3">
                         {dealerCards.map((c, i) => (
                           <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/30">
-                            <img src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
+                            <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
                             <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br">{c.power}</div>
                             <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">#{c.tokenId}</div>
                           </FoilCardEffect>

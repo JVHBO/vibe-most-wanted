@@ -14,6 +14,7 @@ import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardLoadingSpinner } from '@/components/LoadingSpinner';
 import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
 import { filterCardsByCollections, COLLECTIONS, type CollectionId } from "@/lib/collections/index";
+import { CardMedia } from '@/components/CardMedia';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -1591,7 +1592,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-5 gap-1.5">
                 {attackSelectedCards.map((card, i) => (
                   <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-600 shadow-lg">
-                    <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                    <CardMedia src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
                     <div className="absolute top-0 left-0 bg-red-600 text-white text-xs px-1 rounded-br font-bold">{card.power}</div>
                   </div>
                 ))}
@@ -1631,7 +1632,7 @@ export default function ProfilePage() {
                         : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50'
                     }`}
                   >
-                    <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
+                    <CardMedia src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
                     <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
                       {nft.power}
                     </div>
