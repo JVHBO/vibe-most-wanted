@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser } from "@/lib/neynar";
+import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
 
 export default function FidPage() {
   const { address } = useAccount();
@@ -13,6 +14,7 @@ export default function FidPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
@@ -26,6 +28,7 @@ export default function FidPage() {
   const handleFetchUser = async () => {
     setError(null);
     setUserData(null);
+    setPreviewImage(null);
 
     const fid = parseInt(fidInput);
     if (isNaN(fid) || fid <= 0) {
@@ -47,6 +50,48 @@ export default function FidPage() {
       setUserData(user);
     } catch (err: any) {
       setError(err.message || "Failed to fetch user data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeneratePreview = async () => {
+    if (!userData) {
+      setError("No user data loaded");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const score = userData.experimental?.neynar_user_score || 0;
+      const rarity = calculateRarityFromScore(score);
+
+      // Generate random suit and rank
+      const suit = generateRandomSuit();
+      const suitSymbol = getSuitSymbol(suit);
+      const color = getSuitColor(suit);
+      const rank = generateRankFromRarity(rarity);
+
+      // Generate card image
+      const imageDataUrl = await generateFarcasterCardImage({
+        fid: userData.fid,
+        username: userData.username,
+        displayName: userData.display_name,
+        pfpUrl: userData.pfp_url,
+        bio: userData.profile?.bio?.text || "",
+        neynarScore: score,
+        suit,
+        suitSymbol,
+        rank,
+        color,
+        rarity,
+      });
+
+      setPreviewImage(imageDataUrl);
+    } catch (err: any) {
+      setError(err.message || "Failed to generate preview");
     } finally {
       setLoading(false);
     }
@@ -229,6 +274,16 @@ export default function FidPage() {
                   </div>
                 )}
 
+                {/* Generate Preview Button */}
+                <button
+                  onClick={handleGeneratePreview}
+                  disabled={loading}
+                  className="w-full px-6 py-3 mb-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {loading ? "Generating..." : "Generate Card Preview"}
+                </button>
+
+                {/* Mint Button */}
                 <button
                   onClick={handleMintCard}
                   disabled={loading || !address}
@@ -241,6 +296,22 @@ export default function FidPage() {
                     : "Mint Card"}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card Preview */}
+        {previewImage && (
+          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
+            <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
+              Card Preview
+            </h2>
+            <div className="flex justify-center">
+              <img
+                src={previewImage}
+                alt="Card Preview"
+                className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold"
+              />
             </div>
           </div>
         )}
