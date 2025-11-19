@@ -74,17 +74,17 @@ export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
 /**
  * Calculate card rarity based on Neynar User Score
  *
- * Ranges:
+ * Using Vibe Most Wanted collection trait names (5 rarities):
  * - Common: ≤ 0.69
  * - Rare: 0.70 - 0.78
- * - Epic: 0.80 - 0.89
+ * - Epic: 0.79 - 0.89
  * - Legendary: 0.90 - 0.99
  * - Mythic: ≥ 1.00
  */
 export function calculateRarityFromScore(score: number): 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic' {
   if (score >= 1.0) return 'Mythic';
   if (score >= 0.90) return 'Legendary';
-  if (score >= 0.80) return 'Epic';
+  if (score >= 0.79) return 'Epic';
   if (score >= 0.70) return 'Rare';
   return 'Common';
 }
@@ -168,7 +168,7 @@ export function getSuitColor(suit: CardSuit): 'red' | 'black' {
  *
  * - Common (≤0.69): 2, 3, 4, 5, 6
  * - Rare (0.70-0.78): 7, 8
- * - Epic (0.80-0.89): 9, 10, J
+ * - Epic (0.79-0.89): 9, 10, J
  * - Legendary (0.90-0.99): Q, K
  * - Mythic (≥1.0): A
  */

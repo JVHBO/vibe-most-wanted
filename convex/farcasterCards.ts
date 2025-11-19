@@ -71,6 +71,7 @@ export const mintFarcasterCard = mutation({
       rarity: args.rarity,
       foil: args.foil,
       wear: args.wear,
+      status: "Rarity Assigned", // All Farcaster cards have rarity from Neynar score
       power: args.power,
 
       // Playing Card Properties

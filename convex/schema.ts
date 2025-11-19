@@ -735,7 +735,8 @@ export default defineSchema({
     cardId: v.string(), // Unique card ID (farcaster_{fid})
     rarity: v.string(), // "Common", "Rare", "Epic", "Legendary", "Mythic"
     foil: v.string(), // "Prize", "Standard", "None"
-    wear: v.string(), // "Pristine", "Mint", "Lightly Played", etc.
+    wear: v.string(), // "Pristine", "Mint", "Lightly Played", "Moderately Played", "Heavily Played"
+    status: v.string(), // "Rarity Assigned" (all Farcaster cards have rarity from score)
     power: v.number(), // Card power (calculated from rarity + foil + wear)
 
     // Playing Card Properties
