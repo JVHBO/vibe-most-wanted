@@ -5,8 +5,20 @@ import { useAccount } from "wagmi";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
-import type { NeynarUser } from "@/lib/neynar";
+import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
+import FoilCardEffect from "@/components/FoilCardEffect";
+
+interface GeneratedTraits {
+  rarity: string;
+  foil: string;
+  wear: string;
+  suit: CardSuit;
+  rank: CardRank;
+  suitSymbol: string;
+  color: 'red' | 'black';
+  power: number;
+}
 
 export default function FidPage() {
   const { address } = useAccount();
@@ -15,11 +27,12 @@ export default function FidPage() {
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
 
-  // Queries
+  // Queries - with conditional skip to prevent errors
   const myCards = useQuery(
     api.farcasterCards.getFarcasterCardsByAddress,
     address ? { address } : "skip"
@@ -29,6 +42,7 @@ export default function FidPage() {
     setError(null);
     setUserData(null);
     setPreviewImage(null);
+    setGeneratedTraits(null);
 
     const fid = parseInt(fidInput);
     if (isNaN(fid) || fid <= 0) {
@@ -74,6 +88,25 @@ export default function FidPage() {
       const color = getSuitColor(suit);
       const rank = generateRankFromRarity(rarity);
 
+      // Generate random foil and wear
+      const foil = generateRandomFoil();
+      const wear = generateRandomWear();
+
+      // Calculate power
+      const power = getBasePowerFromRarity(rarity);
+
+      // Save generated traits
+      setGeneratedTraits({
+        rarity,
+        foil,
+        wear,
+        suit,
+        rank,
+        suitSymbol,
+        color,
+        power,
+      });
+
       // Generate card image
       const imageDataUrl = await generateFarcasterCardImage({
         fid: userData.fid,
@@ -112,25 +145,25 @@ export default function FidPage() {
     setError(null);
 
     try {
-      // Calculate rarity from score
       const score = userData.experimental?.neynar_user_score || 0;
-      const rarity = calculateRarityFromScore(score);
-      const basePower = getBasePowerFromRarity(rarity);
 
-      // Generate random suit (first RNG)
-      const suit = generateRandomSuit();
-      const suitSymbol = getSuitSymbol(suit);
-      const color = getSuitColor(suit);
+      // Use generated traits if available (from preview), otherwise generate new ones
+      let traits = generatedTraits;
 
-      // Generate rank based on rarity (second RNG, score-based)
-      const rank = generateRankFromRarity(rarity);
+      if (!traits) {
+        const rarity = calculateRarityFromScore(score);
+        const suit = generateRandomSuit();
+        const suitSymbol = getSuitSymbol(suit);
+        const color = getSuitColor(suit);
+        const rank = generateRankFromRarity(rarity);
+        const foil = generateRandomFoil();
+        const wear = generateRandomWear();
+        const power = getBasePowerFromRarity(rarity);
 
-      // Generate random foil and wear
-      const foil = generateRandomFoil();
-      const wear = generateRandomWear();
+        traits = { rarity, suit, suitSymbol, color, rank, foil, wear, power };
+      }
 
-      // Calculate final power (simplified - you can add modifiers)
-      const power = basePower;
+      const { rarity, suit, suitSymbol, color, rank, foil, wear, power } = traits;
 
       // For now, use the PFP URL directly as imageUrl
       // TODO: Call Nanobanana IA to generate the card image
@@ -161,6 +194,8 @@ export default function FidPage() {
 
       alert(result.message);
       setUserData(null);
+      setPreviewImage(null);
+      setGeneratedTraits(null);
       setFidInput("");
     } catch (err: any) {
       setError(err.message || "Failed to mint card");
@@ -301,17 +336,60 @@ export default function FidPage() {
         )}
 
         {/* Card Preview */}
-        {previewImage && (
+        {previewImage && generatedTraits && (
           <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
             <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
               Card Preview
             </h2>
-            <div className="flex justify-center">
-              <img
-                src={previewImage}
-                alt="Card Preview"
-                className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold"
-              />
+            <div className="flex flex-col items-center gap-6">
+              {/* Card Image with Foil Effect */}
+              <FoilCardEffect
+                foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
+                className="max-w-md"
+              >
+                <img
+                  src={previewImage}
+                  alt="Card Preview"
+                  className="rounded-lg shadow-2xl border-4 border-vintage-gold"
+                />
+              </FoilCardEffect>
+
+              {/* Generated Traits */}
+              <div className="w-full max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-6">
+                <h3 className="text-xl font-bold text-vintage-gold mb-4 text-center">
+                  Generated Traits
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-vintage-burnt-gold font-semibold">Card:</span>{" "}
+                    <span className={`font-bold ${generatedTraits.color === 'red' ? 'text-red-500' : 'text-white'}`}>
+                      {generatedTraits.rank}{generatedTraits.suitSymbol}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-vintage-burnt-gold font-semibold">Rarity:</span>{" "}
+                    <span className="text-vintage-ice">{generatedTraits.rarity}</span>
+                  </div>
+                  <div>
+                    <span className="text-vintage-burnt-gold font-semibold">Foil:</span>{" "}
+                    <span className={`font-bold ${
+                      generatedTraits.foil === 'Prize' ? 'text-purple-400' :
+                      generatedTraits.foil === 'Standard' ? 'text-blue-400' :
+                      'text-vintage-ice'
+                    }`}>
+                      {generatedTraits.foil}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-vintage-burnt-gold font-semibold">Wear:</span>{" "}
+                    <span className="text-vintage-ice">{generatedTraits.wear}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-vintage-burnt-gold font-semibold">Power:</span>{" "}
+                    <span className="text-vintage-gold font-bold text-lg">{generatedTraits.power}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
