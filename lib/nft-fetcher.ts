@@ -275,6 +275,11 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
       return 'gmvbrs';
     }
 
+    // American Football collection (AFCL)
+    if (contractAddr === '0xe3910325daaef5d969e6db5eca1ff0117bb160ae') {
+      return 'americanfootball';
+    }
+
     // Default to VBMS collection
     return 'vibe';
   };

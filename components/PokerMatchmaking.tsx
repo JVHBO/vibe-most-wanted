@@ -78,7 +78,7 @@ export function PokerMatchmaking({
     vbmsBalanceRaw,
     source: isInMiniapp ? 'Farcaster SDK' : 'Wagmi'
   });
-  const { approve: approveVBMS, isPending: isApproving, isConfirming: isApprovingConfirming, isSuccess: isApproved, error: approveError } = useApproveVBMS();
+  const { approve: approveVBMS, isPending: isApproving, error: approveError } = useApproveVBMS();
   const { createBattle: createBlockchainBattle, isPending: isCreatingBattle, isConfirming: isCreatingBattleConfirming, isSuccess: isBattleCreated, error: createBattleError } = useCreateBattle();
   const { joinBattle: joinBlockchainBattle, isPending: isJoiningBattle, isConfirming: isJoiningBattleConfirming, isSuccess: isBattleJoined, error: joinBattleError } = useJoinBattle();
   const { battleId: activeBattleId, isLoading: isLoadingActiveBattle, refetch: refetchActiveBattle } = useActiveBattle(effectiveAddress);
@@ -184,88 +184,6 @@ export function PokerMatchmaking({
     recoverOrphanedBattle();
   }, [activeBattleId, activeBattleInfo, myRoom, walletAddress, availableRooms, joinRoom, createRoom, playerAddress, playerUsername]);
   */
-
-  // Handle VBMS approval success -> refetch allowance and continue
-  useEffect(() => {
-    const handleApprovalSuccess = async () => {
-      // Check if we're in JOIN flow (not CREATE flow)
-      const isPendingJoin = !!(window as any).__pendingVBMSJoinRoomId;
-
-      if (isApproved && vbmsStage === "approving" && !processedApproval && !isPendingJoin) {
-        // CREATE ROOM flow
-        console.log("✅ Approval transaction confirmed! Refetching allowance...");
-        setProcessedApproval(true);
-
-        // Wait a bit for blockchain to update
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Refetch allowance to get updated value
-        await refetchAllowance();
-        console.log("🔄 Refetched allowance after approval - will use updated vbmsAllowance from hook");
-
-        // Now create the battle
-        setVbmsStage("creating");
-        console.log("Creating Battle - Please confirm the transaction to create the battle...");
-
-        try {
-          const stakeAmount = selectedAnte.toString();
-          await createBlockchainBattle(stakeAmount);
-        } catch (error) {
-          console.error("Error creating blockchain battle:", error);
-          AudioManager.buttonError();
-          setVbmsStage("idle");
-          setIsCreating(false);
-          setProcessedApproval(false);
-        }
-      } else if (isApproved && vbmsStage === "approving" && !processedApproval && isPendingJoin && !isJoiningBattleRef.current) {
-        // JOIN ROOM flow - same approach as CREATE (wait + refetch + join)
-        console.log("✅ Approval transaction confirmed! Refetching allowance...");
-        setProcessedApproval(true);
-        isJoiningBattleRef.current = true; // Set guard to prevent other useEffect from triggering
-
-        // Wait a bit for blockchain to update (same as CREATE flow)
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Refetch allowance to get updated value (same as CREATE flow)
-        await refetchAllowance();
-        console.log("🔄 Refetched allowance after approval - will use updated vbmsAllowance from hook");
-
-        try {
-          // Get pending room data
-          const currentRoomId = (window as any).__pendingVBMSJoinRoomId;
-          const room = availableRooms?.find((r: any) => r.roomId === currentRoomId);
-          const battleId = room?.blockchainBattleId;
-
-          if (!battleId) {
-            throw new Error("Room doesn't have a blockchain battle ID");
-          }
-
-          // Store pending convex join data for after blockchain join confirms
-          (window as any).__pendingConvexJoin = {
-            roomId: currentRoomId,
-            ante: (window as any).__pendingVBMSJoinAnte,
-            token: (window as any).__pendingVBMSJoinToken,
-            battleId,
-          };
-
-          console.log(`💰 Joining battle #${battleId} - Please confirm the transaction...`);
-          setVbmsStage("joining");
-
-          // Call join directly - don't wait for another useEffect
-          await joinBlockchainBattle(battleId);
-        } catch (error) {
-          console.error("❌ Error joining battle after approval:", error);
-          AudioManager.buttonError();
-          setVbmsStage("idle");
-          setIsJoining(false);
-          setProcessedApproval(false);
-          isJoiningBattleRef.current = false; // Reset guard on error
-        }
-      }
-    };
-
-    handleApprovalSuccess();
-  }, [isApproved, vbmsStage, processedApproval]);
 
   // Handle battle created success -> create Convex room
   useEffect(() => {
@@ -389,25 +307,7 @@ export function PokerMatchmaking({
   }, [joinBattleError]);
 
   // Handle approval success for JOIN -> transition to joining stage
-  useEffect(() => {
-    const handleApprovalForJoin = async () => {
-      const pendingJoin = (window as any).__pendingConvexJoin;
-
-      if (
-        isApproved &&
-        vbmsStage === "approving" &&
-        pendingJoin &&
-        !processedApproval
-      ) {
-        console.log("✅ Approval confirmed! Transitioning to joining stage...");
-        setProcessedApproval(true);
-        setVbmsStage("joining");
-        // NOTE: Do NOT call joinBlockchainBattle here - it will be called by the next useEffect
-      }
-    };
-
-    handleApprovalForJoin();
-  }, [isApproved, vbmsStage, processedApproval]);
+  // REMOVED: Old useEffect that watched for isApproved - now using async/await inline
 
   // Auto-delete Convex room when blockchain battle is cancelled
   useEffect(() => {
@@ -496,24 +396,18 @@ export function PokerMatchmaking({
     joinConvexRoom();
   }, [isBattleJoined, vbmsStage]);
 
-  // Handle VBMS approval for joining -> join battle on blockchain
-  // WAIT for approval to be CONFIRMED before calling joinBattle (OR if we skipped approval)
+  // Handle joining battle on blockchain after approval (or if skipped)
   useEffect(() => {
     console.log("🔍 Join Battle useEffect triggered:", {
-      isApproved,
-      isApprovingConfirming,
-      skippedApproval,
       vbmsStage,
       isJoiningBattleRef: isJoiningBattleRef.current,
-      readyToJoin: ((isApproved && !isApprovingConfirming) || skippedApproval) && vbmsStage === "joining" && !isJoiningBattleRef.current,
+      readyToJoin: vbmsStage === "joining" && !isJoiningBattleRef.current,
     });
 
     const joinBattleOnChain = async () => {
-      // Proceed if: (approval confirmed OR skipped approval) AND stage is joining AND not already called
-      const approvalReady = (isApproved && !isApprovingConfirming) || skippedApproval;
-
-      if (approvalReady && vbmsStage === "joining" && !isJoiningBattleRef.current) {
-        console.log("✅ Ready to join battle! (approval:", skippedApproval ? "skipped" : "confirmed", ")");
+      // Proceed if stage is joining AND not already called
+      if (vbmsStage === "joining" && !isJoiningBattleRef.current) {
+        console.log("✅ Ready to join battle!");
 
         // Set guard to prevent multiple calls
         isJoiningBattleRef.current = true;
@@ -564,13 +458,11 @@ export function PokerMatchmaking({
           setSkippedApproval(false); // Reset skip flag on error
           isJoiningBattleRef.current = false; // Reset on error
         }
-      } else if (isApprovingConfirming && vbmsStage === "joining") {
-        console.log("⏳ Waiting for approval to be confirmed on blockchain...");
       }
     };
 
     joinBattleOnChain();
-  }, [isApproved, isApprovingConfirming, skippedApproval, vbmsStage]);
+  }, [vbmsStage]);
 
   const handleCreateRoom = async () => {
     if (isCreating) return;
@@ -646,8 +538,16 @@ export function PokerMatchmaking({
       setVbmsStage("approving");
       setIsCreating(true);
       console.log("Step 1/2: Approving VBMS...");
-      approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
-      return; // useEffect will handle next step after approval
+
+      await approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
+
+      console.log("✅ Approval confirmed! Proceeding to create battle...");
+      setProcessedApproval(true);
+      setVbmsStage("creating");
+
+      // Now create the battle
+      console.log("Step 2/2: Creating battle on-chain...");
+      createBlockchainBattle(stakeAmount);
     } catch (error) {
       console.error("❌ Error in handleCreateRoom:", error);
       AudioManager.buttonError();
@@ -750,22 +650,17 @@ export function PokerMatchmaking({
           throw new Error("Room doesn't have a blockchain battle ID");
         }
 
-        // Store for useEffect to use after approval
-        (window as any).__pendingConvexJoin = {
-          roomId,
-          ante,
-          token,
-          battleId,
-        };
+        // Await approval
+        console.log("⏳ Requesting approval...");
+        setProcessedApproval(false);
+        setVbmsStage("approving");
 
-        console.log("📦 Stored pendingConvexJoin for after approval:", (window as any).__pendingConvexJoin);
+        await approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
 
-        approveVBMS(CONTRACTS.VBMSPokerBattle as `0x${string}`, stakeAmount);
-
-        // The useEffect will handle joining after approval
-        // DON'T reset isJoining here - let the useEffect handle it
-        console.log("✅ Approval transaction sent, waiting for confirmation...");
-        return;
+        console.log("✅ Approval confirmed! Transitioning to joining stage...");
+        setProcessedApproval(true);
+        setVbmsStage("joining");
+        // useEffect will handle joining the blockchain battle
       }
     } catch (error) {
       console.error("Error joining room:", error);
@@ -858,45 +753,6 @@ export function PokerMatchmaking({
         </div>
 
         <div className="p-3 sm:p-6">
-          {/* Active Battle Warning */}
-          {activeBattleId > 0 && activeBattleInfo && (
-            <div className="mb-4 sm:mb-8 bg-vintage-gold/10 border-2 border-vintage-gold/50 rounded-xl p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="text-lg sm:text-xl font-display font-bold text-vintage-gold mb-2">
-                    ⚠️ Active Battle #{activeBattleId}
-                  </h3>
-                  <p className="text-sm sm:text-base text-vintage-parchment mb-2">
-                    {activeBattleInfo.status === 0 && "Waiting for opponent..."}
-                    {activeBattleInfo.status === 1 && "Battle in progress"}
-                    {activeBattleInfo.status === 2 && "Battle finished"}
-                  </p>
-                  <p className="text-xs sm:text-sm text-vintage-burnt-gold">
-                    Stake: {activeBattleInfo.stake} VBMS
-                  </p>
-                </div>
-
-                {activeBattleInfo.status === 0 && (() => {
-                  // V3 Contract: NO COOLDOWN - Can cancel immediately!
-                  const canCancel = true;
-
-                  return (
-                    <div className="flex flex-col gap-2 items-end">
-                      <button
-                        onClick={handleCancelBattle}
-                        disabled={!canCancel || isCancellingBattle || isCancellingBattleConfirming}
-                        className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-display font-bold transition"
-                        title="Cancel and recover your VBMS (V3: No wait time!)"
-                      >
-                        {isCancellingBattle || isCancellingBattleConfirming ? "Cancelling..." : "Cancel Battle"}
-                      </button>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-
           {/* Stuck in Room Warning - Force Leave Option */}
           {myRoom && !activeBattleId && (
             <div className="mb-4 sm:mb-8 bg-red-500/10 border-2 border-red-500/50 rounded-xl p-4">
@@ -1204,7 +1060,7 @@ export function PokerMatchmaking({
       )}
 
       {/* LOADING OVERLAY - Shows during battle creation/joining */}
-      {(isCreatingBattle || isCreatingBattleConfirming || isJoiningBattle || isJoiningBattleConfirming || (isApproving || isApprovingConfirming)) && (
+      {(isCreatingBattle || isCreatingBattleConfirming || isJoiningBattle || isJoiningBattleConfirming || isApproving) && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[600]">
           <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-8 text-center shadow-2xl max-w-md mx-4 animate-in fade-in duration-300">
             {/* Animated Spinner */}
@@ -1214,15 +1070,14 @@ export function PokerMatchmaking({
 
             {/* Status Message */}
             <h2 className="text-2xl font-display font-bold text-vintage-gold mb-4">
-              {isApproving || isApprovingConfirming ? "Approving VBMS..." :
+              {isApproving ? "Approving VBMS..." :
                isCreatingBattle || isCreatingBattleConfirming ? "Creating Battle..." :
                isJoiningBattle || isJoiningBattleConfirming ? "Joining Battle..." :
                "Processing..."}
             </h2>
 
             <p className="text-vintage-ice mb-4">
-              {isApproving ? "Please confirm the approval transaction in your wallet" :
-               isApprovingConfirming ? "Approval transaction confirming on blockchain..." :
+              {isApproving ? "Please confirm the approval transaction in your wallet..." :
                isCreatingBattle ? "Please confirm the battle creation transaction in your wallet" :
                isCreatingBattleConfirming ? "Battle creation transaction confirming on blockchain..." :
                isJoiningBattle ? "Please confirm the join battle transaction in your wallet" :

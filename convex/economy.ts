@@ -598,11 +598,11 @@ export const awardPvECoins = mutation({
       totalReward = remaining;
     }
 
-    // Award coins to inbox (not balance)
+    // Award coins to balance (direct)
     if (!skipCoins) {
-      const currentInbox = profile.coinsInbox || 0;
+      const currentBalance = profile.coins || 0;
       await ctx.db.patch(profile!._id, {
-        coinsInbox: currentInbox + totalReward,
+        coins: currentBalance + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         dailyLimits: {
           ...dailyLimits,
@@ -611,7 +611,7 @@ export const awardPvECoins = mutation({
         // lastPvEAward already updated immediately after rate limit check (line 491)
       });
 
-      console.log(`📬 PvE reward sent to inbox: ${totalReward} TESTVBMS for ${address}. Inbox: ${currentInbox} → ${currentInbox + totalReward}`);
+      console.log(`💰 PvE reward added to balance: ${totalReward} TESTVBMS for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}`);
     }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
@@ -797,10 +797,10 @@ export const awardPvPCoins = mutation({
 
       // No daily cap for PvP - limited by 10 matches/day instead
 
-      // Award coins to inbox (not balance)
-      const currentInbox = profile.coinsInbox || 0;
+      // Award coins to balance (direct)
+      const currentBalance = profile.coins || 0;
       await ctx.db.patch(profile!._id, {
-        coinsInbox: currentInbox + totalReward,
+        coins: currentBalance + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
@@ -811,7 +811,7 @@ export const awardPvPCoins = mutation({
         // lastPvPAward already updated immediately after rate limit check (line 652)
       });
 
-      console.log(`📬 PvP reward sent to inbox: ${totalReward} TESTVBMS for ${address}. Inbox: ${currentInbox} → ${currentInbox + totalReward}`);
+      console.log(`💰 PvP reward added to balance: ${totalReward} TESTVBMS for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}`);
 
       // 🎯 Track weekly quest progress (async, non-blocking)
       // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
@@ -1499,11 +1499,11 @@ export const recordAttackResult = mutation({
       lastUpdated: Date.now(),
     };
 
-    // Add coinsInbox update for wins (skip if skipCoins flag is set)
+    // Add coins update for wins (skip if skipCoins flag is set)
     if (won && !args.skipCoins) {
-      const currentInbox = profile.coinsInbox || 0;
-      updateData.coinsInbox = currentInbox + totalReward;
-      console.log(`📬 Attack reward sent to inbox: ${totalReward} TESTVBMS. Inbox: ${currentInbox} → ${updateData.coinsInbox}`);
+      const currentBalance = profile.coins || 0;
+      updateData.coins = currentBalance + totalReward;
+      console.log(`💰 Attack reward added to balance: ${totalReward} TESTVBMS. Balance: ${currentBalance} → ${updateData.coins}`);
     }
 
     await ctx.db.patch(profile._id, updateData);

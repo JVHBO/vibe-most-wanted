@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTransferVBMS, useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
@@ -21,52 +21,10 @@ export function PvPEntryFeeModal({
 }: PvPEntryFeeModalProps) {
   const { address } = useAccount();
   const { balance: vbmsBalance } = useVBMSBalance(address);
-  const { transfer, hash: transferHash, isSuccess: transferSuccess, isPending: isTransferring } = useTransferVBMS();
+  const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
 
   const [step, setStep] = useState<"confirm" | "transferring" | "done">("confirm");
   const [error, setError] = useState<string | null>(null);
-
-  // Watch for successful transfer and call API
-  useEffect(() => {
-    if (transferSuccess && transferHash && address && step === "transferring") {
-      (async () => {
-        try {
-          console.log("✅ Entry fee transferred:", transferHash);
-
-          // Step 2: Verify and record entry via API
-          const response = await fetch('/api/pvp/entry-fee', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              address,
-              amount: entryFeeAmount,
-              txHash: transferHash,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.error || 'Failed to process entry fee');
-          }
-
-          console.log("⚔️ Entry fee recorded:", data);
-
-          // Step 3: Done
-          setStep("done");
-          setTimeout(() => {
-            onSuccess();
-            onClose();
-            setStep("confirm"); // Reset for next time
-          }, 1500);
-        } catch (err: any) {
-          console.error("Error paying entry fee:", err);
-          setError(err.message || "Failed to pay entry fee");
-          setStep("confirm");
-        }
-      })();
-    }
-  }, [transferSuccess, transferHash, address, step, entryFeeAmount, onSuccess, onClose]);
 
   const handlePayEntryFee = async () => {
     if (!address) return;
@@ -81,17 +39,44 @@ export function PvPEntryFeeModal({
     try {
       // Step 1: Transfer VBMS to VBMSPoolTroll
       setStep("transferring");
+      console.log("💸 Initiating transfer...");
 
-      // Call transfer - hash will come via transferHash after confirmation
-      transfer(
+      const transferHash = await transfer(
         CONTRACTS.VBMSPoolTroll as `0x${string}`,
         parseEther(entryFeeAmount.toString())
       );
 
-      console.log("💸 Transfer initiated, waiting for confirmation...");
+      console.log("✅ Entry fee transferred:", transferHash);
+
+      // Step 2: Verify and record entry via API
+      const response = await fetch('/api/pvp/entry-fee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          amount: entryFeeAmount,
+          txHash: transferHash,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to process entry fee');
+      }
+
+      console.log("⚔️ Entry fee recorded:", data);
+
+      // Step 3: Done
+      setStep("done");
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+        setStep("confirm"); // Reset for next time
+      }, 1500);
     } catch (err: any) {
-      console.error("Error initiating transfer:", err);
-      setError(err.message || "Failed to initiate transfer");
+      console.error("Error paying entry fee:", err);
+      setError(err.message || "Failed to pay entry fee");
       setStep("confirm");
     }
   };
