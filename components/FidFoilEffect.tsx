@@ -12,8 +12,9 @@ interface FidFoilEffectProps {
  * FidFoilEffect - New holographic effect specifically for /fid page
  *
  * Features modern rainbow scan effects:
- * - Prize: Intense rainbow wave with particle shimmer
- * - Standard: Subtle diagonal scan with soft glow
+ * - Prize (1%): Intense rainbow wave with particle shimmer
+ * - Standard (10%): Subtle diagonal scan with soft glow
+ * - None (89%): No effect
  */
 const FidFoilEffect: React.FC<FidFoilEffectProps> = ({
   children,
