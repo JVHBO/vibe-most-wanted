@@ -12,7 +12,6 @@ import type { CardSuit, CardRank } from './neynar';
  */
 function generateMemeCrime(): string {
   const crimes = [
-    "This mfer is clearly Clark Kent who shaved his head to look like Lex Luthor",
     "Caught redhanded stealing vibes from the timeline",
     "Wanted for posting cringe takes at 3am",
     "Accused of having too much aura for their follower count",
@@ -114,9 +113,9 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
 
     pfpImg.onload = () => {
       // Draw PFP in center (square)
-      const pfpSize = 350;
+      const pfpSize = 320;
       const pfpX = (canvas.width - pfpSize) / 2;
-      const pfpY = 160; // More centered vertically
+      const pfpY = 150; // Centered with space for bottom text
 
       // PFP border
       ctx.strokeStyle = '#000';
