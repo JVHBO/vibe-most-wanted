@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 /**
- * Upload NFT video to NFT.Storage (IPFS)
+ * Upload NFT video to Filebase IPFS via S3-compatible API
  *
  * Expects:
  * - FormData with 'video' field containing video blob
@@ -14,11 +15,13 @@ export const maxDuration = 60;
  */
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = process.env.NFT_STORAGE_API_KEY;
+    const accessKey = process.env.FILEBASE_ACCESS_KEY;
+    const secretKey = process.env.FILEBASE_SECRET_KEY;
+    const bucketName = process.env.FILEBASE_BUCKET_NAME || 'vibefid';
 
-    if (!apiKey) {
+    if (!accessKey || !secretKey) {
       return NextResponse.json(
-        { error: 'NFT.Storage API key not configured' },
+        { error: 'Filebase credentials not configured' },
         { status: 500 }
       );
     }
@@ -33,32 +36,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to NFT.Storage
-    const nftStorageFormData = new FormData();
-    nftStorageFormData.append('file', videoBlob, 'card.mp4');
+    // Convert blob to buffer
+    const arrayBuffer = await videoBlob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    const uploadResponse = await fetch('https://api.nft.storage/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
+    // Configure S3 client for Filebase
+    const s3Client = new S3Client({
+      endpoint: 'https://s3.filebase.com',
+      region: 'us-east-1',
+      credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
       },
-      body: nftStorageFormData,
     });
 
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
-      console.error('NFT.Storage upload failed:', errorText);
-      return NextResponse.json(
-        { error: 'Failed to upload to NFT.Storage', details: errorText },
-        { status: uploadResponse.status }
-      );
+    // Generate unique filename
+    const timestamp = Date.now();
+    const filename = `card-${timestamp}.mp4`;
+
+    // Upload to Filebase S3 bucket (automatically pins to IPFS)
+    const uploadCommand = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: filename,
+      Body: buffer,
+      ContentType: 'video/mp4',
+    });
+
+    await s3Client.send(uploadCommand);
+
+    // Get CID from object metadata
+    const headCommand = new HeadObjectCommand({
+      Bucket: bucketName,
+      Key: filename,
+    });
+
+    const headResult = await s3Client.send(headCommand);
+    const cid = headResult.Metadata?.cid;
+
+    if (!cid) {
+      throw new Error('Failed to retrieve CID from uploaded file');
     }
 
-    const uploadResult = await uploadResponse.json();
-    const cid = uploadResult.value.cid;
-    const ipfsUrl = `https://nftstorage.link/ipfs/${cid}`;
+    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
 
-    console.log(`✅ Video uploaded to IPFS: ${ipfsUrl}`);
+    console.log(`✅ Video uploaded to IPFS (Filebase): ${ipfsUrl}`);
 
     return NextResponse.json({
       ipfsUrl,
@@ -67,7 +88,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error uploading to NFT.Storage:', error);
+    console.error('Error uploading to Filebase:', error);
     return NextResponse.json(
       { error: 'Internal server error', message: error.message },
       { status: 500 }
