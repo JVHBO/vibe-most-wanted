@@ -81,33 +81,50 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
           </>
         )}
 
-        {/* Standard Foil - Subtle pastel effect */}
+        {/* Standard Foil - Enhanced holographic effect */}
         {!isPrize && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: `
-                conic-gradient(from 45deg at 30% 30%,
-                  rgba(255, 100, 200, 0.3),
-                  rgba(255, 200, 100, 0.3),
-                  rgba(100, 255, 200, 0.3),
-                  rgba(100, 200, 255, 0.3),
-                  rgba(200, 100, 255, 0.3),
-                  rgba(255, 100, 200, 0.3)
-                ),
-                linear-gradient(135deg, transparent, rgba(100, 200, 255, .4) 20%, rgba(200, 100, 255, .4) 50%, transparent 80%)
-              `,
-              backgroundSize: '100% 100%, 200% 200%',
-              backgroundPosition: '0 0, -100% -100%',
-              animation: 'standardFoilShine 4s linear infinite',
-              opacity: 0.3,
-              mixBlendMode: 'hard-light',
-            }}
-          />
+          <>
+            {/* Base holographic gradient */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: `
+                  conic-gradient(from 45deg at 30% 30%,
+                    rgba(255, 100, 200, 0.5),
+                    rgba(255, 200, 100, 0.5),
+                    rgba(100, 255, 200, 0.5),
+                    rgba(100, 200, 255, 0.5),
+                    rgba(200, 100, 255, 0.5),
+                    rgba(255, 100, 200, 0.5)
+                  ),
+                  linear-gradient(135deg, transparent, rgba(100, 200, 255, .5) 20%, rgba(200, 100, 255, .5) 50%, transparent 80%)
+                `,
+                backgroundSize: '100% 100%, 200% 200%',
+                backgroundPosition: '0 0, -100% -100%',
+                animation: 'standardFoilShine 3s linear infinite',
+                opacity: 0.5,
+                mixBlendMode: 'hard-light',
+              }}
+            />
+            {/* Subtle light sweep overlay */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, .5) 48%, rgba(255, 255, 255, .4) 52%, transparent 60%)',
+                animation: 'standardFoilSweep 6s ease-in-out infinite',
+                opacity: 0.4,
+                mixBlendMode: 'overlay',
+              }}
+            />
+          </>
         )}
       </div>
 
@@ -132,6 +149,15 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
           100% {
             background-position: 0 0, 100% 100%;
             filter: hue-rotate(360deg);
+          }
+        }
+
+        @keyframes standardFoilSweep {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
           }
         }
 
