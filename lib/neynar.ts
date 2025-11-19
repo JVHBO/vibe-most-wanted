@@ -90,15 +90,15 @@ export function calculateRarityFromScore(score: number): 'Common' | 'Rare' | 'Ep
 }
 
 /**
- * Calculate base power from rarity
+ * Calculate base power from rarity (matching VBMS, GM VBRS, AFCL collections)
  */
 export function getBasePowerFromRarity(rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic'): number {
   const basePowers = {
-    Common: 60,
-    Rare: 80,
-    Epic: 100,
-    Legendary: 125,
-    Mythic: 150,
+    Common: 5,
+    Rare: 20,
+    Epic: 80,
+    Legendary: 240,
+    Mythic: 800,
   };
   return basePowers[rarity];
 }
