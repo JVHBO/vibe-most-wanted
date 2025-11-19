@@ -126,6 +126,24 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       // Draw PFP
       ctx.drawImage(pfpImg, pfpX, pfpY, pfpSize, pfpSize);
 
+      // Add vintage filter overlay on PFP
+      const gradient = ctx.createLinearGradient(pfpX, pfpY, pfpX, pfpY + pfpSize);
+      gradient.addColorStop(0, 'rgba(101, 67, 33, 0.15)'); // Sepia tone top
+      gradient.addColorStop(0.5, 'rgba(101, 67, 33, 0.05)'); // Lighter middle
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)'); // Darker bottom
+      ctx.fillStyle = gradient;
+      ctx.fillRect(pfpX, pfpY, pfpSize, pfpSize);
+
+      // Add subtle vignette effect
+      const radialGrad = ctx.createRadialGradient(
+        pfpX + pfpSize/2, pfpY + pfpSize/2, pfpSize * 0.3,
+        pfpX + pfpSize/2, pfpY + pfpSize/2, pfpSize * 0.7
+      );
+      radialGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      radialGrad.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+      ctx.fillStyle = radialGrad;
+      ctx.fillRect(pfpX, pfpY, pfpSize, pfpSize);
+
       // Username below PFP
       ctx.fillStyle = '#000';
       ctx.font = 'bold 28px serif';
