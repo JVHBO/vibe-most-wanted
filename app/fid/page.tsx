@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
+import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
+import { getFidTraits } from "@/lib/fidTraits";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
 import { generateCardVideo } from "@/lib/generateCardVideo";
@@ -173,9 +174,10 @@ export default function FidPage() {
       const color = getSuitColor(suit);
       const rank = generateRankFromRarity(rarity);
 
-      // Generate random foil and wear
-      const foil = generateRandomFoil();
-      const wear = generateRandomWear();
+      // Generate FID-based foil and wear traits (deterministic based on FID)
+      const fidTraits = getFidTraits(userData.fid);
+      const foil = fidTraits.foil;
+      const wear = fidTraits.wear;
 
       // Calculate power with foil and wear multipliers
       const basePower = getBasePowerFromRarity(rarity);
@@ -262,8 +264,11 @@ export default function FidPage() {
         const suitSymbol = getSuitSymbol(suit);
         const color = getSuitColor(suit);
         const rank = generateRankFromRarity(rarity);
-        const foil = generateRandomFoil();
-        const wear = generateRandomWear();
+
+        // Generate FID-based foil and wear traits (deterministic based on FID)
+        const fidTraits = getFidTraits(userData.fid);
+        const foil = fidTraits.foil;
+        const wear = fidTraits.wear;
 
         // Calculate power with foil and wear multipliers
         const basePower = getBasePowerFromRarity(rarity);
