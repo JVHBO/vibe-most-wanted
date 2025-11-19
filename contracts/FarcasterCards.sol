@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
@@ -20,9 +19,6 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
  * - Multiple mints per user allowed
  */
 contract FarcasterCards is ERC721, ERC721URIStorage, Ownable {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIdCounter;
-
     // Mint price: 0.0005 ETH
     uint256 public mintPrice = 0.0005 ether;
 
@@ -31,6 +27,9 @@ contract FarcasterCards is ERC721, ERC721URIStorage, Ownable {
 
     // Total mints counter
     uint256 public totalMinted;
+
+    // Current token ID
+    uint256 private _nextTokenId = 1;
 
     // Mapping to track which FIDs have been minted
     mapping(uint256 => bool) public fidMinted;
@@ -44,10 +43,7 @@ contract FarcasterCards is ERC721, ERC721URIStorage, Ownable {
     );
     event Withdrawn(address indexed owner, uint256 amount);
 
-    constructor() ERC721("Vibe Most Wanted - FID Edition", "VMWFID") Ownable(msg.sender) {
-        // Start token IDs at 1
-        _tokenIdCounter.increment();
-    }
+    constructor() ERC721("Vibe Most Wanted - FID Edition", "VMWFID") Ownable(msg.sender) {}
 
     /**
      * @dev Set the verifier address (backend signer)
@@ -83,8 +79,7 @@ contract FarcasterCards is ERC721, ERC721URIStorage, Ownable {
             require(_verifySignature(msg.sender, fid, metadataURI, signature), "Invalid signature");
         }
 
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+        uint256 tokenId = _nextTokenId++;
         totalMinted++;
         fidMinted[fid] = true;
 
@@ -151,8 +146,7 @@ contract FarcasterCards is ERC721, ERC721URIStorage, Ownable {
                 );
             }
 
-            uint256 tokenId = _tokenIdCounter.current();
-            _tokenIdCounter.increment();
+            uint256 tokenId = _nextTokenId++;
             totalMinted++;
             fidMinted[fids[i]] = true;
 
@@ -219,7 +213,7 @@ contract FarcasterCards is ERC721, ERC721URIStorage, Ownable {
         uint256[] memory tokenIds = new uint256[](tokenCount);
         uint256 currentIndex = 0;
 
-        for (uint256 i = 1; i < _tokenIdCounter.current(); i++) {
+        for (uint256 i = 1; i < _nextTokenId; i++) {
             if (_ownerOf(i) == owner) {
                 tokenIds[currentIndex] = i;
                 currentIndex++;
