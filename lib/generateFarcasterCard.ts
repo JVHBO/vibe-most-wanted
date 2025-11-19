@@ -113,9 +113,9 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
 
     pfpImg.onload = () => {
       // Draw PFP in center (square)
-      const pfpSize = 320;
+      const pfpSize = 300;
       const pfpX = (canvas.width - pfpSize) / 2;
-      const pfpY = 150; // Centered with space for bottom text
+      const pfpY = 200; // More centered vertically in 700px canvas
 
       // PFP border
       ctx.strokeStyle = '#000';
@@ -172,15 +172,16 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       ctx.fillText(line, canvas.width / 2, y);
 
       // Bottom right: rotated 180° (upside down like real playing cards)
+      // Match top spacing: rank at 80px from edge, suit at 130px from edge
       ctx.save();
       ctx.translate(canvas.width - 30, canvas.height - 30);
       ctx.rotate(Math.PI); // 180° rotation
       ctx.fillStyle = params.color === 'red' ? '#dc143c' : '#000';
       ctx.textAlign = 'left';
-      ctx.font = '50px serif';
-      ctx.fillText(params.suitSymbol, 0, 60);
       ctx.font = 'bold 60px serif';
-      ctx.fillText(params.rank, 0, 10);
+      ctx.fillText(params.rank, 0, 50); // 80px from bottom (670 - 620 = 50)
+      ctx.font = '50px serif';
+      ctx.fillText(params.suitSymbol, 0, 100); // 130px from bottom (670 - 570 = 100)
       ctx.restore();
 
       // Convert to data URL
