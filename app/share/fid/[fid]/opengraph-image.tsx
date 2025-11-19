@@ -62,21 +62,9 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
 
     const pfpUrl = cardData.pfpUrl ? proxyUrl(cardData.pfpUrl) : '';
 
-    // Get foil border color
-    const getFoilBorderColor = (foil: string) => {
-      if (foil === 'Prize') return '#A855F7'; // Purple
-      if (foil === 'Standard') return '#3B82F6'; // Blue
-      return '#FFD700'; // Gold
-    };
-
-    // Get rarity color
-    const getRarityColor = (rarity: string) => {
-      if (rarity === 'Mythic') return '#A855F7'; // Purple
-      if (rarity === 'Legendary') return '#FFD700'; // Gold
-      if (rarity === 'Epic') return '#9333EA'; // Purple
-      if (rarity === 'Rare') return '#3B82F6'; // Blue
-      return '#10B981'; // Green for Common
-    };
+    // Card dimensions scaled to fit OG image (maintain 2.5:3.5 ratio)
+    const cardWidth = 450;
+    const cardHeight = 630;
 
     return new ImageResponse(
       (
@@ -89,154 +77,210 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
             justifyContent: 'center',
             background: 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
             position: 'relative',
-            padding: '40px',
           }}
         >
-          {/* Glow effect */}
+          {/* Playing Card */}
           <div
             style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: `radial-gradient(circle at center, ${getRarityColor(cardData.rarity)}20 0%, transparent 70%)`,
-              display: 'flex',
-            }}
-          />
-
-          {/* Main Card */}
-          <div
-            style={{
+              width: `${cardWidth}px`,
+              height: `${cardHeight}px`,
+              background: '#f5f5dc',
+              border: '4px solid #000',
+              borderRadius: '8px',
+              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              gap: '30px',
-              zIndex: 1,
-              background: 'rgba(0, 0, 0, 0.6)',
-              padding: '60px',
-              borderRadius: '24px',
-              border: `6px solid ${getFoilBorderColor(cardData.foil)}`,
-              boxShadow: `0 30px 80px ${getFoilBorderColor(cardData.foil)}60`,
+              padding: '10px',
             }}
           >
-            {/* VibeFID Title */}
+            {/* Top left: Rank + Suit */}
             <div
               style={{
-                fontSize: '72px',
-                fontWeight: 900,
-                color: '#FFD700',
-                textShadow: '0 4px 20px rgba(255, 215, 0, 0.6)',
-                letterSpacing: '4px',
-                textAlign: 'center',
+                position: 'absolute',
+                top: '20px',
+                left: '15px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
               }}
             >
-              VibeFID
-            </div>
-
-            {/* PFP */}
-            {pfpUrl && (
-              <img
-                src={pfpUrl}
+              <span
                 style={{
-                  width: '240px',
-                  height: '240px',
-                  borderRadius: '50%',
-                  border: `6px solid ${getFoilBorderColor(cardData.foil)}`,
-                  boxShadow: `0 10px 40px ${getFoilBorderColor(cardData.foil)}80`,
-                  objectFit: 'cover',
+                  fontSize: cardData.rank === '10' ? '46px' : '52px',
+                  fontWeight: 900,
+                  color: cardData.color === 'red' ? '#dc143c' : '#000',
+                  fontFamily: 'serif',
+                  lineHeight: 1,
+                  letterSpacing: cardData.rank === '10' ? '-6px' : '0',
                 }}
-              />
-            )}
-
-            {/* Username */}
-            <div
-              style={{
-                fontSize: '48px',
-                fontWeight: 700,
-                color: 'rgba(255, 255, 255, 0.95)',
-                textAlign: 'center',
-              }}
-            >
-              @{cardData.username}
+              >
+                {cardData.rank}
+              </span>
+              <span
+                style={{
+                  fontSize: '44px',
+                  color: cardData.color === 'red' ? '#dc143c' : '#000',
+                  fontFamily: 'serif',
+                  lineHeight: 1,
+                  marginTop: '-4px',
+                }}
+              >
+                {cardData.suitSymbol}
+              </span>
             </div>
 
-            {/* Stats Grid - 2 columns */}
+            {/* Top center: FID + Score */}
             <div
               style={{
                 display: 'flex',
-                gap: '40px',
-                marginTop: '20px',
+                flexDirection: 'column',
+                alignItems: 'center',
+                marginTop: '10px',
               }}
             >
-              {/* Left Column */}
-              <div
+              <span
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '20px',
+                  fontSize: '18px',
+                  color: '#000',
+                  fontFamily: 'monospace',
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '24px' }}>Rarity</span>
-                  <span style={{ color: getRarityColor(cardData.rarity), fontWeight: 900, fontSize: '36px' }}>
-                    {cardData.rarity}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '24px' }}>Card</span>
-                  <span
-                    style={{
-                      color: cardData.color === 'red' ? '#EF4444' : '#fff',
-                      fontWeight: 900,
-                      fontSize: '48px',
-                    }}
-                  >
-                    {cardData.rank}{cardData.suitSymbol}
-                  </span>
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div
+                fid:{cardData.fid}
+              </span>
+              <span
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '20px',
+                  fontSize: '16px',
+                  color: '#000',
+                  fontFamily: 'monospace',
+                  marginTop: '2px',
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '24px' }}>Foil</span>
-                  <span
-                    style={{
-                      color: getFoilBorderColor(cardData.foil),
-                      fontWeight: 900,
-                      fontSize: '36px',
-                    }}
-                  >
-                    {cardData.foil}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '24px' }}>Power</span>
-                  <span style={{ color: '#FFD700', fontWeight: 900, fontSize: '48px' }}>
-                    ⚡ {cardData.power}
-                  </span>
-                </div>
-              </div>
+                neynar score: {cardData.neynarScore?.toFixed(2) || '0.00'}
+              </span>
             </div>
 
-            {/* Branding */}
+            {/* Center: PFP */}
+            {pfpUrl && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginTop: '100px',
+                }}
+              >
+                <div
+                  style={{
+                    width: '260px',
+                    height: '260px',
+                    border: '3px solid #000',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                  }}
+                >
+                  <img
+                    src={pfpUrl}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                  {/* Vintage overlay */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(to bottom, rgba(101, 67, 33, 0.15), rgba(0, 0, 0, 0.2))',
+                      display: 'flex',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Below PFP: Username */}
             <div
               style={{
-                fontSize: '20px',
-                fontWeight: 600,
-                color: 'rgba(255, 255, 255, 0.3)',
-                letterSpacing: '2px',
+                display: 'flex',
+                justifyContent: 'center',
                 marginTop: '20px',
               }}
             >
-              VIBE MOST WANTED
+              <span
+                style={{
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  color: '#000',
+                  fontFamily: 'serif',
+                  textAlign: 'center',
+                }}
+              >
+                {cardData.displayName || cardData.username}
+              </span>
+            </div>
+
+            {/* Bottom: Meme text */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '8px',
+                paddingLeft: '20px',
+                paddingRight: '20px',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: '#000',
+                  fontFamily: 'serif',
+                  textAlign: 'center',
+                  lineHeight: 1.2,
+                }}
+              >
+                Wanted for crimes against good vibes
+              </span>
+            </div>
+
+            {/* Bottom right: Rotated Rank + Suit (upside down) */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '20px',
+                right: '15px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                transform: 'rotate(180deg)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: cardData.rank === '10' ? '46px' : '52px',
+                  fontWeight: 900,
+                  color: cardData.color === 'red' ? '#dc143c' : '#000',
+                  fontFamily: 'serif',
+                  lineHeight: 1,
+                  letterSpacing: cardData.rank === '10' ? '-6px' : '0',
+                }}
+              >
+                {cardData.rank}
+              </span>
+              <span
+                style={{
+                  fontSize: '44px',
+                  color: cardData.color === 'red' ? '#dc143c' : '#000',
+                  fontFamily: 'serif',
+                  lineHeight: 1,
+                  marginTop: '-4px',
+                }}
+              >
+                {cardData.suitSymbol}
+              </span>
             </div>
           </div>
         </div>
