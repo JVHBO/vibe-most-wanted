@@ -227,6 +227,7 @@ export default function FidPage() {
         rank,
         color,
         rarity,
+        bounty: power * 10, // Bounty = Power × 10
       });
 
       setPreviewImage(imageDataUrl);
@@ -303,6 +304,7 @@ export default function FidPage() {
           rank,
           color,
           rarity,
+          bounty: power * 10, // Bounty = Power × 10
         });
       }
 
