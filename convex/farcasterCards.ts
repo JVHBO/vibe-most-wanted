@@ -44,6 +44,9 @@ export const mintFarcasterCard = mutation({
     const timestamp = Date.now();
     const cardId = `farcaster_${args.fid}_${timestamp}`;
 
+    // NOTE: Multiple mints of same FID are allowed
+    // The smart contract handles uniqueness on-chain, Convex just stores metadata
+
     // Insert card (no uniqueness check - multiple mints allowed)
     const cardDocId = await ctx.db.insert("farcasterCards", {
       // Farcaster Data
