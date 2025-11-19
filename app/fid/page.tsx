@@ -37,6 +37,10 @@ export default function FidPage() {
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
 
+  // Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [mintedCardData, setMintedCardData] = useState<any>(null);
+
   // Auto-fill FID if in Farcaster miniapp
   useEffect(() => {
     if (farcasterContext.isReady && farcasterContext.user?.fid && !fidInput) {
@@ -87,7 +91,14 @@ export default function FidPage() {
 
           await mintCard(validatedData);
           setError(null);
-          alert(`✅ NFT minted successfully!\n\nTransaction: ${hash}\nIPFS: ${pendingMintData.imageUrl}`);
+
+          // Show success modal with card data
+          setMintedCardData({
+            ...validatedData,
+            cardImage: previewImage, // Card image for display
+            txHash: hash,
+          });
+          setShowSuccessModal(true);
 
           // Reset form
           setUserData(null);
@@ -615,8 +626,118 @@ export default function FidPage() {
                   <div className="mt-1 text-center text-xs text-vintage-ice/50">
                     Score: {card.neynarScore.toFixed(2)}
                   </div>
+
+                  {/* Share Button */}
+                  <a
+                    href={(() => {
+                      const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
+                      const foilText = card.foil !== 'None' ? ` with ${card.foil} foil` : '';
+                      const castText = `Just minted my VibeFID!\n\n${card.rarity}${foilText} • ${card.power} power\n\n@jvhbo`;
+
+                      return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                    })()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 w-full px-3 py-2 bg-purple-600/80 hover:bg-purple-600 text-white text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-1"
+                  >
+                    <span className="text-base">🔮</span>
+                    Share
+                  </a>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && mintedCardData && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+            <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold p-8 max-w-md w-full relative">
+              {/* Close button */}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="absolute top-4 right-4 text-vintage-ice hover:text-vintage-gold text-3xl leading-none"
+              >
+                ×
+              </button>
+
+              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4 text-center">
+                VibeFID Minted! 🎉
+              </h2>
+
+              {/* Card Preview */}
+              {mintedCardData.cardImage && (
+                <div className="mb-6">
+                  <FoilCardEffect
+                    foilType={mintedCardData.foil === 'None' ? null : (mintedCardData.foil as 'Standard' | 'Prize')}
+                    className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
+                  >
+                    <img
+                      src={mintedCardData.cardImage}
+                      alt="Minted Card"
+                      className="w-full h-full object-cover"
+                    />
+                  </FoilCardEffect>
+                </div>
+              )}
+
+              {/* Card Stats */}
+              <div className="bg-vintage-black/50 rounded-lg p-4 mb-6">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-vintage-burnt-gold">Rarity:</span>{" "}
+                    <span className="text-vintage-ice font-bold">{mintedCardData.rarity}</span>
+                  </div>
+                  <div>
+                    <span className="text-vintage-burnt-gold">Foil:</span>{" "}
+                    <span className={`font-bold ${
+                      mintedCardData.foil === 'Prize' ? 'text-purple-400' :
+                      mintedCardData.foil === 'Standard' ? 'text-blue-400' :
+                      'text-vintage-ice'
+                    }`}>
+                      {mintedCardData.foil}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-vintage-burnt-gold">Wear:</span>{" "}
+                    <span className="text-vintage-ice">{mintedCardData.wear}</span>
+                  </div>
+                  <div>
+                    <span className="text-vintage-burnt-gold">Power:</span>{" "}
+                    <span className="text-vintage-gold font-bold text-lg">{mintedCardData.power}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Share Button */}
+              <a
+                href={(() => {
+                  const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${mintedCardData.fid}`;
+                  const foilText = mintedCardData.foil !== 'None' ? ` with ${mintedCardData.foil} foil` : '';
+                  const castText = `Just minted my VibeFID!\n\n${mintedCardData.rarity}${foilText} • ${mintedCardData.power} power\n\n@jvhbo`;
+
+                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                })()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mb-3"
+              >
+                <span className="text-xl">🔮</span>
+                Share to Farcaster
+              </a>
+
+              {/* View on BaseScan */}
+              {mintedCardData.txHash && (
+                <a
+                  href={`https://basescan.org/tx/${mintedCardData.txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full px-6 py-3 bg-vintage-black/50 hover:bg-vintage-black text-vintage-ice font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>🔗</span>
+                  View on BaseScan
+                </a>
+              )}
             </div>
           </div>
         )}
