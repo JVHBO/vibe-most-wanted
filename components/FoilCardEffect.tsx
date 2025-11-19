@@ -81,33 +81,63 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
           </>
         )}
 
-        {/* Standard Foil - Subtle pastel effect */}
+        {/* Standard Foil - Complex radial gradients effect */}
         {!isPrize && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: `
-                conic-gradient(from 45deg at 30% 30%,
-                  rgba(255, 100, 200, 0.3),
-                  rgba(255, 200, 100, 0.3),
-                  rgba(100, 255, 200, 0.3),
-                  rgba(100, 200, 255, 0.3),
-                  rgba(200, 100, 255, 0.3),
-                  rgba(255, 100, 200, 0.3)
-                ),
-                linear-gradient(135deg, transparent, rgba(100, 200, 255, .4) 20%, rgba(200, 100, 255, .4) 50%, transparent 80%)
-              `,
-              backgroundSize: '100% 100%, 200% 200%',
-              backgroundPosition: '0 0, -100% -100%',
-              animation: 'standardFoilShine 4s linear infinite',
-              opacity: 0.3,
-              mixBlendMode: 'hard-light',
-            }}
-          />
+          <div className="standard-foil-wrapper" style={{ overflow: 'hidden' }}>
+            {/* Rotating radial gradients */}
+            <div
+              className="standard-foil-before"
+              style={{
+                position: 'absolute',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
+                background: `
+                  radial-gradient(ellipse at 25% 25%,
+                    rgba(255, 255, 255, 1) 0%,
+                    rgba(255, 100, 180, .9) 8%,
+                    rgba(100, 200, 255, .9) 16%,
+                    rgba(150, 255, 150, .9) 24%,
+                    rgba(255, 255, 100, .9) 32%,
+                    rgba(255, 150, 100, .9) 40%,
+                    rgba(200, 100, 255, .9) 48%,
+                    rgba(100, 255, 255, .8) 56%,
+                    rgba(255, 200, 150, .7) 64%,
+                    rgba(150, 255, 200, .6) 72%,
+                    rgba(255, 150, 255, .5) 80%,
+                    transparent 100%
+                  ),
+                  radial-gradient(circle at 70% 70%,
+                    rgba(255, 255, 255, .9) 0%,
+                    rgba(100, 255, 200, .8) 15%,
+                    rgba(255, 150, 255, .7) 30%,
+                    rgba(200, 255, 100, .6) 45%,
+                    transparent 60%
+                  )
+                `,
+                backgroundSize: '120% 120%, 80% 80%',
+                backgroundPosition: '-20% -20%, 20% 20%',
+                animation: 'standardFoilRotate 5s linear infinite',
+                transformOrigin: 'center',
+                opacity: 0.8,
+              }}
+            />
+            {/* Sweeping light gradient */}
+            <div
+              className="standard-foil-after"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .7) 45%, rgba(255, 255, 255, .6) 50%, transparent 55%)',
+                animation: 'standardFoilSweep 7s ease-in-out infinite',
+                opacity: 0.3,
+              }}
+            />
+          </div>
         )}
       </div>
 
@@ -124,23 +154,30 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
           }
         }
 
-        @keyframes standardFoilShine {
-          0% {
-            background-position: 0 0, -100% -100%;
-            filter: hue-rotate(0deg);
-          }
-          100% {
-            background-position: 0 0, 100% 100%;
-            filter: hue-rotate(360deg);
-          }
-        }
-
         @keyframes prismMove {
           0% {
             background-position: 0 0;
           }
           100% {
             background-position: 100px 100px;
+          }
+        }
+
+        @keyframes standardFoilRotate {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes standardFoilSweep {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
           }
         }
       `}</style>
