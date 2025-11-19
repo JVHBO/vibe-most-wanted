@@ -47,7 +47,7 @@ export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
       {
         headers: {
           'accept': 'application/json',
-          'api_key': NEYNAR_API_KEY,
+          'x-api-key': NEYNAR_API_KEY,
         },
       }
     );
