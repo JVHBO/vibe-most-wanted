@@ -124,3 +124,63 @@ export function generateRandomWear(): 'Pristine' | 'Mint' | 'Lightly Played' | '
   if (random < 0.85) return 'Moderately Played'; // 20%
   return 'Heavily Played'; // 15%
 }
+
+/**
+ * Card suits
+ */
+export type CardSuit = 'hearts' | 'diamonds' | 'spades' | 'clubs';
+
+/**
+ * Card ranks
+ */
+export type CardRank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
+
+/**
+ * Generate random suit (first RNG)
+ */
+export function generateRandomSuit(): CardSuit {
+  const suits: CardSuit[] = ['hearts', 'diamonds', 'spades', 'clubs'];
+  return suits[Math.floor(Math.random() * suits.length)];
+}
+
+/**
+ * Get suit symbol
+ */
+export function getSuitSymbol(suit: CardSuit): string {
+  const symbols = {
+    hearts: '♥',
+    diamonds: '♦',
+    spades: '♠',
+    clubs: '♣',
+  };
+  return symbols[suit];
+}
+
+/**
+ * Get suit color
+ */
+export function getSuitColor(suit: CardSuit): 'red' | 'black' {
+  return suit === 'hearts' || suit === 'diamonds' ? 'red' : 'black';
+}
+
+/**
+ * Generate rank based on rarity (second RNG, score-based)
+ *
+ * - Common (≤0.69): 2, 3, 4, 5, 6
+ * - Rare (0.70-0.78): 7, 8
+ * - Epic (0.80-0.89): 9, 10, J
+ * - Legendary (0.90-0.99): Q, K
+ * - Mythic (≥1.0): A
+ */
+export function generateRankFromRarity(rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic'): CardRank {
+  const ranksByRarity: Record<string, CardRank[]> = {
+    Common: ['2', '3', '4', '5', '6'],
+    Rare: ['7', '8'],
+    Epic: ['9', '10', 'J'],
+    Legendary: ['Q', 'K'],
+    Mythic: ['A'],
+  };
+
+  const availableRanks = ranksByRarity[rarity];
+  return availableRanks[Math.floor(Math.random() * availableRanks.length)];
+}

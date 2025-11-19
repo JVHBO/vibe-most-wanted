@@ -738,6 +738,12 @@ export default defineSchema({
     wear: v.string(), // "Pristine", "Mint", "Lightly Played", etc.
     power: v.number(), // Card power (calculated from rarity + foil + wear)
 
+    // Playing Card Properties
+    suit: v.string(), // "hearts", "diamonds", "spades", "clubs" (random)
+    rank: v.string(), // "2"-"10", "J", "Q", "K", "A" (based on rarity)
+    suitSymbol: v.string(), // "♥", "♦", "♠", "♣"
+    color: v.string(), // "red" or "black"
+
     // Farcaster Stats (frozen at mint time)
     neynarScore: v.number(), // Neynar user score (0-1+)
     followerCount: v.number(),
