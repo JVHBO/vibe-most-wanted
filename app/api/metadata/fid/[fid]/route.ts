@@ -67,10 +67,6 @@ export async function GET(
           display_type: 'number',
         },
         {
-          trait_type: 'Card',
-          value: `${cardData.rank}${cardData.suitSymbol}`,
-        },
-        {
           trait_type: 'Suit',
           value: cardData.suit.charAt(0).toUpperCase() + cardData.suit.slice(1),
         },
