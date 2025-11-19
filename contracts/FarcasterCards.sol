@@ -17,9 +17,6 @@ contract FarcasterCards is ERC721, EIP712, Ownable {
     /// @dev Mint price in wei (0.0005 ETH)
     uint256 public constant MINT_PRICE = 0.0005 ether;
 
-    /// @dev Maximum number of tokens that can be minted
-    uint256 public constant MAX_SUPPLY = 10_000;
-
     /// @dev EIP-712 typehash for MintPermit struct
     bytes32 public constant MINT_PERMIT_TYPEHASH =
         keccak256("MintPermit(address to,uint256 fid,string ipfsURI)");
@@ -33,9 +30,6 @@ contract FarcasterCards is ERC721, EIP712, Ownable {
 
     /// @dev Signer address cannot be zero
     error InvalidSigner();
-
-    /// @dev Maximum supply has been reached
-    error MaxSupplyReached();
 
     /// @dev FID has already been minted
     error FIDAlreadyMinted();
@@ -149,9 +143,6 @@ contract FarcasterCards is ERC721, EIP712, Ownable {
     {
         // Check minting is not closed
         if (mintingClosed) revert MintingClosed();
-
-        // Check max supply has not been reached
-        if (totalMinted >= MAX_SUPPLY) revert MaxSupplyReached();
 
         // Check FID has not already been minted
         if (fidMinted[fid]) revert FIDAlreadyMinted();
