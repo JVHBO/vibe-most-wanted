@@ -172,13 +172,17 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       }
       ctx.fillText(line, canvas.width / 2, y);
 
-      // Bottom right: suit on top, rank on bottom
+      // Bottom right: rotated 180° (upside down like real playing cards)
+      ctx.save();
+      ctx.translate(canvas.width - 30, canvas.height - 30);
+      ctx.rotate(Math.PI); // 180° rotation
       ctx.fillStyle = params.color === 'red' ? '#dc143c' : '#000';
-      ctx.textAlign = 'right';
-      ctx.font = '50px serif';
-      ctx.fillText(params.suitSymbol, canvas.width - 30, canvas.height - 80);
+      ctx.textAlign = 'left';
       ctx.font = 'bold 60px serif';
-      ctx.fillText(params.rank, canvas.width - 30, canvas.height - 30);
+      ctx.fillText(params.rank, 0, 60);
+      ctx.font = '50px serif';
+      ctx.fillText(params.suitSymbol, 0, 110);
+      ctx.restore();
 
       // Convert to data URL
       const dataUrl = canvas.toDataURL('image/png');
