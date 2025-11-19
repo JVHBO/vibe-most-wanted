@@ -59,7 +59,33 @@ export default function FidPage() {
       const saveToConvex = async () => {
         try {
           setError("Saving card data...");
-          await mintCard(pendingMintData);
+
+          // Validate all required fields
+          const validatedData = {
+            fid: Number(pendingMintData.fid),
+            username: String(pendingMintData.username),
+            displayName: String(pendingMintData.displayName),
+            pfpUrl: String(pendingMintData.pfpUrl),
+            bio: String(pendingMintData.bio || ""),
+            neynarScore: Number(pendingMintData.neynarScore),
+            followerCount: Number(pendingMintData.followerCount),
+            followingCount: Number(pendingMintData.followingCount),
+            powerBadge: Boolean(pendingMintData.powerBadge),
+            address: String(pendingMintData.address),
+            rarity: String(pendingMintData.rarity),
+            foil: String(pendingMintData.foil),
+            wear: String(pendingMintData.wear),
+            power: Number(pendingMintData.power),
+            suit: String(pendingMintData.suit),
+            rank: String(pendingMintData.rank),
+            suitSymbol: String(pendingMintData.suitSymbol),
+            color: String(pendingMintData.color),
+            imageUrl: String(pendingMintData.imageUrl),
+          };
+
+          console.log('💾 Saving to Convex:', validatedData);
+
+          await mintCard(validatedData);
           setError(null);
           alert(`✅ NFT minted successfully!\n\nTransaction: ${hash}\nIPFS: ${pendingMintData.imageUrl}`);
 
@@ -70,6 +96,7 @@ export default function FidPage() {
           setFidInput("");
           setPendingMintData(null);
         } catch (err: any) {
+          console.error('❌ Convex save error:', err);
           setError(`NFT minted but failed to save metadata: ${err.message}`);
         } finally {
           setLoading(false);
