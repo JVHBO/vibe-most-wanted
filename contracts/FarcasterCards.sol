@@ -35,7 +35,7 @@ contract FarcasterCards is ERC721, ERC721URIStorage, Ownable {
     );
     event Withdrawn(address indexed owner, uint256 amount);
 
-    constructor() ERC721("Farcaster Cards", "FCARD") Ownable(msg.sender) {
+    constructor() ERC721("Vibe Most Wanted - FID Edition", "VMWFID") Ownable(msg.sender) {
         // Start token IDs at 1
         _tokenIdCounter.increment();
     }
