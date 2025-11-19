@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getFidTraits } from '@/lib/fidTraits';
 
 export const runtime = 'edge';
 
@@ -42,6 +43,10 @@ export async function GET(
       );
     }
 
+    // Generate FID-based foil and wear traits
+    const fidNumber = parseInt(fid);
+    const traits = getFidTraits(fidNumber);
+
     // Build OpenSea-compatible metadata
     const metadata = {
       name: `VibeFID #${cardData.fid}`,
@@ -55,11 +60,11 @@ export async function GET(
         },
         {
           trait_type: 'Foil',
-          value: cardData.foil,
+          value: traits.foil,
         },
         {
           trait_type: 'Wear',
-          value: cardData.wear,
+          value: traits.wear,
         },
         {
           trait_type: 'Power',
