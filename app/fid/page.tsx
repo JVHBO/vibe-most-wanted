@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import { getFidTraits } from "@/lib/fidTraits";
+import { getFarcasterAccountCreationDate } from "@/lib/farcasterRegistry";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
 import { generateCardVideo } from "@/lib/generateCardVideo";
@@ -214,6 +215,9 @@ export default function FidPage() {
         power,
       });
 
+      // Fetch account creation date
+      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
+
       // Generate card image
       const imageDataUrl = await generateFarcasterCardImage({
         fid: userData.fid,
@@ -227,6 +231,8 @@ export default function FidPage() {
         rank,
         color,
         rarity,
+        bounty: power * 10, // Bounty = Power × 10
+        createdAt: createdAt || undefined,
       });
 
       setPreviewImage(imageDataUrl);
@@ -290,6 +296,9 @@ export default function FidPage() {
 
         traits = { rarity, suit, suitSymbol, color, rank, foil, wear, power };
 
+        // Fetch account creation date
+        const createdAt = await getFarcasterAccountCreationDate(userData.fid);
+
         // Generate card image if not already generated
         cardImageDataUrl = await generateFarcasterCardImage({
           fid: userData.fid,
@@ -303,6 +312,8 @@ export default function FidPage() {
           rank,
           color,
           rarity,
+          bounty: power * 10, // Bounty = Power × 10
+          createdAt: createdAt || undefined,
         });
       }
 
