@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
+import FidFoilEffect from "@/components/FidFoilEffect";
 
 export default function FidPage() {
   const { address } = useAccount();
@@ -15,6 +16,7 @@ export default function FidPage() {
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewFoil, setPreviewFoil] = useState<'Prize' | 'Standard' | 'None'>('None');
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
@@ -29,6 +31,7 @@ export default function FidPage() {
     setError(null);
     setUserData(null);
     setPreviewImage(null);
+    setPreviewFoil('None');
 
     const fid = parseInt(fidInput);
     if (isNaN(fid) || fid <= 0) {
@@ -73,6 +76,10 @@ export default function FidPage() {
       const suitSymbol = getSuitSymbol(suit);
       const color = getSuitColor(suit);
       const rank = generateRankFromRarity(rarity);
+
+      // Generate random foil for preview
+      const foil = generateRandomFoil();
+      setPreviewFoil(foil);
 
       // Generate card image
       const imageDataUrl = await generateFarcasterCardImage({
@@ -305,13 +312,20 @@ export default function FidPage() {
           <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
             <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
               Card Preview
+              {previewFoil !== 'None' && (
+                <span className={`ml-3 text-sm ${previewFoil === 'Prize' ? 'text-purple-400' : 'text-blue-400'}`}>
+                  {previewFoil === 'Prize' ? '✨ PRIZE FOIL!' : '⭐ Standard Foil'}
+                </span>
+              )}
             </h2>
             <div className="flex justify-center">
-              <img
-                src={previewImage}
-                alt="Card Preview"
-                className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold"
-              />
+              <FidFoilEffect foilType={previewFoil} className="inline-block">
+                <img
+                  src={previewImage}
+                  alt="Card Preview"
+                  className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold"
+                />
+              </FidFoilEffect>
             </div>
           </div>
         )}
