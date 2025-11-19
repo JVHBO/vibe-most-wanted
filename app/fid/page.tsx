@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -11,6 +11,7 @@ import { generateCardVideo } from "@/lib/generateCardVideo";
 import { FARCASTER_CARDS_ABI, FARCASTER_CARDS_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contracts/FarcasterCardsABI";
 import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
+import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
 
 interface GeneratedTraits {
   rarity: string;
@@ -25,12 +26,20 @@ interface GeneratedTraits {
 
 export default function FidPage() {
   const { address } = useAccount();
+  const farcasterContext = useFarcasterContext();
   const [fidInput, setFidInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
+
+  // Auto-fill FID if in Farcaster miniapp
+  useEffect(() => {
+    if (farcasterContext.isReady && farcasterContext.user?.fid && !fidInput) {
+      setFidInput(farcasterContext.user.fid.toString());
+    }
+  }, [farcasterContext.isReady, farcasterContext.user?.fid]);
 
   // Contract interaction
   const { writeContract, data: hash, isPending: isContractPending } = useWriteContract();
@@ -301,6 +310,47 @@ export default function FidPage() {
             Mint playable cards from Farcaster profiles
           </p>
         </div>
+
+        {/* Warning if not in Farcaster miniapp */}
+        {farcasterContext.isReady && !farcasterContext.isInMiniapp && (
+          <div className="bg-purple-900/50 border-2 border-purple-500 rounded-xl p-8 mb-8 text-center">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-3xl font-bold text-purple-300 mb-4">
+              Acesse pelo Farcaster Miniapp
+            </h2>
+            <p className="text-purple-200 mb-6 text-lg">
+              Para mintar seu Farcaster Card, você precisa acessar através do Farcaster app.
+              <br />
+              <span className="text-sm text-purple-300">
+                Apenas usuários verificados do Farcaster podem mintar cards de seus próprios FIDs.
+              </span>
+            </p>
+            <a
+              href="https://warpcast.com/~/miniapps/vibemostwanted"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-xl"
+            >
+              🚀 Abrir no Farcaster App
+            </a>
+            <p className="mt-4 text-sm text-purple-400">
+              Ou acesse <span className="font-mono bg-purple-950/50 px-2 py-1 rounded">warpcast.com</span> e busque por "VIBE MOST WANTED"
+            </p>
+          </div>
+        )}
+
+        {/* Success message when in miniapp */}
+        {farcasterContext.isReady && farcasterContext.isInMiniapp && farcasterContext.user && (
+          <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mb-6 text-center">
+            <p className="text-green-300">
+              ✅ Conectado como <span className="font-bold">@{farcasterContext.user.username || `FID ${farcasterContext.user.fid}`}</span>
+              {" "}(FID: {farcasterContext.user.fid})
+            </p>
+            <p className="text-green-400 text-sm mt-1">
+              Seu FID foi pré-preenchido. Você pode mintar seu próprio card ou de outros usuários.
+            </p>
+          </div>
+        )}
 
         {/* Input Section */}
         <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
