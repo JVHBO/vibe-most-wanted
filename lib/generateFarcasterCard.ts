@@ -89,13 +89,25 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
     ctx.lineWidth = 4;
     ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
 
-    // Top left: rank and suit
+    // Top left: rank and suit (centered horizontally)
     ctx.fillStyle = params.color === 'red' ? '#dc143c' : '#000';
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'center';
+
+    // For "10", compress letter spacing
+    if (params.rank === '10') {
+      ctx.letterSpacing = '-8px';
+    }
     ctx.font = 'bold 60px serif';
-    ctx.fillText(params.rank, 30, 80);
+    const rankWidth = ctx.measureText(params.rank).width;
+    ctx.fillText(params.rank, 30 + rankWidth / 2, 80);
+
+    // Reset letter spacing
+    ctx.letterSpacing = '0px';
+
+    // Suit symbol centered with rank
     ctx.font = '50px serif';
-    ctx.fillText(params.suitSymbol, 30, 130);
+    const suitWidth = ctx.measureText(params.suitSymbol).width;
+    ctx.fillText(params.suitSymbol, 30 + rankWidth / 2, 130);
 
     // Top center - FID
     ctx.fillStyle = '#000';
@@ -177,11 +189,22 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       ctx.translate(canvas.width - 30, canvas.height - 30);
       ctx.rotate(Math.PI); // 180° rotation
       ctx.fillStyle = params.color === 'red' ? '#dc143c' : '#000';
-      ctx.textAlign = 'left';
+      ctx.textAlign = 'center';
+
+      // For "10", compress letter spacing
+      if (params.rank === '10') {
+        ctx.letterSpacing = '-8px';
+      }
       ctx.font = 'bold 60px serif';
-      ctx.fillText(params.rank, 0, 50); // 80px from bottom (670 - 620 = 50)
+      const bottomRankWidth = ctx.measureText(params.rank).width;
+      ctx.fillText(params.rank, bottomRankWidth / 2, 50); // 80px from bottom, centered
+
+      // Reset letter spacing
+      ctx.letterSpacing = '0px';
+
+      // Suit symbol centered with rank
       ctx.font = '50px serif';
-      ctx.fillText(params.suitSymbol, 0, 100); // 130px from bottom (670 - 570 = 100)
+      ctx.fillText(params.suitSymbol, bottomRankWidth / 2, 100); // 130px from bottom, centered
       ctx.restore();
 
       // Convert to data URL
