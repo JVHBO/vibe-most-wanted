@@ -47,6 +47,34 @@ export async function GET(
     const fidNumber = parseInt(fid);
     const traits = getFidTraits(fidNumber);
 
+    // Recalculate power with correct foil/wear multipliers
+    const rarityBasePower: Record<string, number> = {
+      Common: 5,
+      Rare: 20,
+      Epic: 80,
+      Legendary: 240,
+      Mythic: 800,
+    };
+
+    const wearMultiplier: Record<string, number> = {
+      Pristine: 1.8,
+      Mint: 1.4,
+      'Lightly Played': 1.0,
+      'Moderately Played': 1.0,
+      'Heavily Played': 1.0,
+    };
+
+    const foilMultiplier: Record<string, number> = {
+      Prize: 15.0,
+      Standard: 2.5,
+      None: 1.0,
+    };
+
+    const basePower = rarityBasePower[cardData.rarity] || 5;
+    const wearMult = wearMultiplier[traits.wear] || 1.0;
+    const foilMult = foilMultiplier[traits.foil] || 1.0;
+    const correctPower = Math.round(basePower * wearMult * foilMult);
+
     // Build OpenSea-compatible metadata
     const metadata = {
       name: `VibeFID #${cardData.fid}`,
@@ -68,7 +96,7 @@ export async function GET(
         },
         {
           trait_type: 'Bounty',
-          value: cardData.power * 10, // Bounty = Power × 10 for display
+          value: correctPower * 10, // Bounty = Power × 10 (using recalculated power)
           display_type: 'number',
         },
         {
@@ -82,11 +110,6 @@ export async function GET(
         {
           trait_type: 'Neynar Score',
           value: cardData.neynarScore?.toFixed(2) || '0.00',
-          display_type: 'number',
-        },
-        {
-          trait_type: 'Follower Count',
-          value: cardData.followerCount,
           display_type: 'number',
         },
         {
