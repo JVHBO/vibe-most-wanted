@@ -7,6 +7,46 @@
 import type { NeynarUser } from './neynar';
 import type { CardSuit, CardRank } from './neynar';
 
+/**
+ * Generate a random meme crime phrase
+ */
+function generateMemeCrime(): string {
+  const crimes = [
+    "This mfer is clearly Clark Kent who shaved his head to look like Lex Luthor",
+    "Caught redhanded stealing vibes from the timeline",
+    "Wanted for posting cringe takes at 3am",
+    "Accused of having too much aura for their follower count",
+    "Guilty of being chronically online since 2009",
+    "Suspected of touching grass only once a year",
+    "Known associate of the ratio gang",
+    "Wanted for committing tax fraud in the metaverse",
+    "Caught lacking in the group chat",
+    "Guilty of copying homework and still getting it wrong",
+    "Wanted for being too based for their own good",
+    "Accused of having main character syndrome",
+    "Known for starting beef in the replies",
+    "Caught simping in 4K resolution",
+    "Guilty of posting banger after banger",
+    "Wanted for stealing the aux cord at parties",
+    "Suspected of unironically saying 'hear me out'",
+    "Known for gatekeeping their Spotify playlists",
+    "Caught making up stories for clout",
+    "Guilty of having zero chill whatsoever",
+    "Wanted for crimes against good taste",
+    "Accused of being built different (derogatory)",
+    "Known for sliding into DMs with 'hey lol'",
+    "Caught lacking common sense in public",
+    "Guilty of being that friend who never texts back",
+    "Wanted for hoarding NFTs they'll never sell",
+    "Suspected of pretending to read books for aesthetic",
+    "Known for starting drama and grabbing popcorn",
+    "Caught being a menace to society (affectionate)",
+    "Guilty of believing their own hype too much",
+  ];
+
+  return crimes[Math.floor(Math.random() * crimes.length)];
+}
+
 export interface CardGenerationParams {
   // Farcaster data
   fid: number;
@@ -92,10 +132,27 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       ctx.textAlign = 'center';
       ctx.fillText(params.displayName || params.username, canvas.width / 2, pfpY + pfpSize + 40);
 
-      // Bio below username (truncated)
+      // Meme crime text below username
       ctx.font = '14px serif';
-      const bioText = params.bio.length > 60 ? params.bio.slice(0, 60) + '...' : params.bio;
-      ctx.fillText(bioText, canvas.width / 2, pfpY + pfpSize + 65);
+      const crimeText = generateMemeCrime();
+      // Word wrap for long text
+      const maxWidth = 450;
+      const words = crimeText.split(' ');
+      let line = '';
+      let y = pfpY + pfpSize + 65;
+
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && i > 0) {
+          ctx.fillText(line, canvas.width / 2, y);
+          line = words[i] + ' ';
+          y += 18;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, canvas.width / 2, y);
 
       // Bottom right: suit on top, rank on bottom
       ctx.fillStyle = params.color === 'red' ? '#dc143c' : '#000';
