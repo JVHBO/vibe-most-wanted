@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -126,6 +126,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: '0x3e1e69e444261a5bc65b83c41036b5284c1e69ae',
+    buttonText: 'Opensea Link',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection VibeFID
+  vibefid: {
+    id: 'vibefid',
+    name: 'vibefid',
+    displayName: 'VibeFID',
+    description: 'Collection VibeFID NFT',
+    contractAddress: '0x3e1e69e444261a5bc65b83c41036b5284c1e69ae',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://opensea.io/collection/vibefid',
     buttonText: 'Opensea Link',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
