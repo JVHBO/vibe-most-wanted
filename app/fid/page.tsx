@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
 import { generateCardVideo } from "@/lib/generateCardVideo";
+import { FARCASTER_CARDS_ABI, FARCASTER_CARDS_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contracts/FarcasterCardsABI";
+import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
 
 interface GeneratedTraits {
@@ -29,6 +31,12 @@ export default function FidPage() {
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
+
+  // Contract interaction
+  const { writeContract, data: hash, isPending: isContractPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);

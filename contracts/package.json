@@ -1,0 +1,16 @@
+{
+  "name": "farcaster-cards-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for Farcaster Cards NFT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.ts --network base",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "verify": "hardhat verify --network base"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "hardhat": "^2.19.0"
+  }
+}
