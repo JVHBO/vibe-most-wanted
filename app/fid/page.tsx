@@ -382,12 +382,12 @@ export default function FidPage() {
               {/* Card Image with Foil Effect */}
               <FoilCardEffect
                 foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
-                className="max-w-md"
+                className="w-full max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
               >
                 <img
                   src={previewImage}
                   alt="Card Preview"
-                  className="rounded-lg shadow-2xl border-4 border-vintage-gold"
+                  className="w-full h-full object-cover"
                 />
               </FoilCardEffect>
 
