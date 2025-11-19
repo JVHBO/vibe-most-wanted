@@ -421,18 +421,18 @@ export const claimQuestReward = mutation({
       throw new Error("Quest not completed yet");
     }
 
-    // Add to inbox (TESTVBMS) - player can convert later if they want
-    const currentInbox = profile.coinsInbox || 0;
-    const newInbox = currentInbox + quest.reward;
+    // Add to coins balance (TESTVBMS)
+    const currentBalance = profile.coins || 0;
+    const newBalance = currentBalance + quest.reward;
     const lifetimeEarned = (profile.lifetimeEarned || 0) + quest.reward;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned,
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 Quest reward sent to inbox: ${quest.reward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`💰 Quest reward added to balance: ${quest.reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
     if (existingProgress) {
@@ -454,7 +454,7 @@ export const claimQuestReward = mutation({
     return {
       success: true,
       reward: quest.reward,
-      newBalance: newInbox,
+      newBalance: newBalance,
       questName: quest.description,
     };
   },
@@ -711,17 +711,17 @@ export const claimWeeklyReward = mutation({
     }
 
     const reward = questDef.reward;
-    const currentInbox = profile.coinsInbox || 0;
-    const newInbox = currentInbox + reward;
+    const currentBalance = profile.coins || 0;
+    const newBalance = currentBalance + reward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + reward;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned: newLifetimeEarned,
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 Weekly quest reward sent to inbox: ${reward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`💰 Weekly quest reward added to balance: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
     const updatedQuests = { ...progress.quests };
@@ -732,7 +732,7 @@ export const claimWeeklyReward = mutation({
     return {
       success: true,
       reward,
-      newBalance: newInbox,
+      newBalance: newBalance,
       questName: questDef.description,
     };
   },
@@ -781,13 +781,13 @@ export const distributeWeeklyRewards = internalMutation({
       }
 
       if (reward > 0) {
-        const currentInbox = player.coinsInbox || 0;
+        const currentBalance = player.coins || 0;
         await ctx.db.patch(player._id, {
-          coinsInbox: currentInbox + reward,
+          coins: currentBalance + reward,
           lifetimeEarned: (player.lifetimeEarned || 0) + reward,
         });
 
-        console.log(`📬 Weekly leaderboard reward sent to inbox: ${reward} TESTVBMS for ${player.address}. Inbox: ${currentInbox} → ${currentInbox + reward}`);
+        console.log(`💰 Weekly leaderboard reward added to balance: ${reward} TESTVBMS for ${player.address}. Balance: ${currentBalance} → ${currentBalance + reward}`);
 
         rewards.push({
           rank,
@@ -942,25 +942,25 @@ export const claimWeeklyLeaderboardReward = mutation({
       throw new Error("Already claimed reward for this week");
     }
 
-    // Add coins to inbox (not balance)
-    const currentInbox = player.coinsInbox || 0;
-    const newInbox = currentInbox + reward;
+    // Add coins to balance (direct)
+    const currentBalance = player.coins || 0;
+    const newBalance = currentBalance + reward;
     const newLifetimeEarned = (player.lifetimeEarned || 0) + reward;
 
-    console.log('[claimWeeklyLeaderboardReward] Adding to coinsInbox:', {
+    console.log('[claimWeeklyLeaderboardReward] Adding to coins:', {
       address: normalizedAddress,
-      currentInbox,
+      currentBalance,
       reward,
-      newInbox
+      newBalance
     });
 
     await ctx.db.patch(player._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned: newLifetimeEarned,
       lastUpdated: Date.now(),
     });
 
-    console.log(`📬 Leaderboard reward sent to inbox: ${reward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`💰 Leaderboard reward added to balance: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Record claim in weeklyRewards table
     await ctx.db.insert("weeklyRewards", {
@@ -978,7 +978,7 @@ export const claimWeeklyLeaderboardReward = mutation({
       success: true,
       rank,
       reward,
-      newBalance: newInbox,
+      newBalance: newBalance,
       rewardName: `Leaderboard Rank #${rank}`,
       nextResetDate: getNextSunday(),
     };

@@ -62,10 +62,9 @@ export function useVBMSAllowance(owner?: `0x${string}`, spender?: `0x${string}`)
  * Approve VBMS spending for a contract
  */
 export function useApproveVBMS() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { writeContractAsync, isPending, error } = useWriteContract();
 
-  const approve = async (spender: `0x${string}`, amount: string) => {
+  const approve = async (spender: `0x${string}`, amount: string): Promise<`0x${string}`> => {
     console.log("📝 Calling approve with:", {
       tokenAddress: CONTRACTS.VBMSToken,
       spender,
@@ -73,21 +72,21 @@ export function useApproveVBMS() {
       amountParsed: parseEther(amount).toString(),
     });
 
-    writeContract({
+    const hash = await writeContractAsync({
       address: CONTRACTS.VBMSToken as `0x${string}`,
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [spender, parseEther(amount)],
       chainId: CONTRACTS.CHAIN_ID,
     });
+
+    console.log("✅ Approve transaction hash:", hash);
+    return hash;
   };
 
   return {
     approve,
-    hash,
     isPending,
-    isConfirming,
-    isSuccess,
     error,
   };
 }
@@ -538,31 +537,30 @@ export function useFinishVBMSBattle() {
  * Transfer VBMS tokens
  */
 export function useTransferVBMS() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { writeContractAsync, isPending, error } = useWriteContract();
 
-  const transfer = async (to: `0x${string}`, amount: bigint) => {
+  const transfer = async (to: `0x${string}`, amount: bigint): Promise<`0x${string}`> => {
     console.log("💸 Transferring VBMS:", {
       to,
       amount: amount.toString(),
       contractAddress: CONTRACTS.VBMSToken,
     });
 
-    writeContract({
+    const hash = await writeContractAsync({
       address: CONTRACTS.VBMSToken as `0x${string}`,
       abi: ERC20_ABI,
       functionName: 'transfer',
       args: [to, amount],
       chainId: CONTRACTS.CHAIN_ID,
     });
+
+    console.log("✅ Transfer transaction hash:", hash);
+    return hash;
   };
 
   return {
     transfer,
-    hash,
     isPending,
-    isConfirming,
-    isSuccess,
     error,
   };
 }

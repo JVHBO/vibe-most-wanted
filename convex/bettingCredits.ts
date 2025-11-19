@@ -233,21 +233,21 @@ export const resolveBets = mutation({
         });
       }
 
-      // Send total TESTVBMS to inbox (winnings + remaining credits)
+      // Add TESTVBMS to profile coins (winnings + remaining credits)
       if (totalToInbox > 0) {
-        await ctx.db.insert("vbmsInbox" as any, {
-          address: bet.bettor,
-          amount: totalToInbox,
-          source: "betting_win",
-          metadata: {
-            roomId,
-            betAmount: bet.amount,
-            payout: Math.floor(payout),
-            remainingCredits,
-          },
-          claimedAt: undefined,
-          timestamp: Date.now(),
-        });
+        const profile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q) => q.eq("address", bet.bettor))
+          .first();
+
+        if (profile) {
+          const currentBalance = profile.coins || 0;
+          await ctx.db.patch(profile._id, {
+            coins: currentBalance + totalToInbox,
+            lifetimeEarned: (profile.lifetimeEarned || 0) + totalToInbox,
+            lastUpdated: Date.now(),
+          });
+        }
       }
 
       // Log transaction
@@ -283,20 +283,21 @@ export const resolveBets = mutation({
         });
       }
 
-      // Send remaining credits to inbox as TESTVBMS (if any)
+      // Return remaining credits as TESTVBMS to profile coins (if any)
       if (remainingCredits > 0) {
-        await ctx.db.insert("vbmsInbox" as any, {
-          address: bet.bettor,
-          amount: remainingCredits,
-          source: "betting_refund",
-          metadata: {
-            roomId,
-            betAmount: bet.amount,
-            remainingCredits,
-          },
-          claimedAt: undefined,
-          timestamp: Date.now(),
-        });
+        const profile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q) => q.eq("address", bet.bettor))
+          .first();
+
+        if (profile) {
+          const currentBalance = profile.coins || 0;
+          await ctx.db.patch(profile._id, {
+            coins: currentBalance + remainingCredits,
+            lifetimeEarned: (profile.lifetimeEarned || 0) + remainingCredits,
+            lastUpdated: Date.now(),
+          });
+        }
       }
 
       // Log transaction

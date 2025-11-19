@@ -8,7 +8,7 @@ export const CONTRACTS = {
   VBMSToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827',
   VBMSPoolTroll: '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b',
   VBMSPokerBattle: '0x01090882A1Cb18CFCA89cB91edE798F0308aB950', // V5 - CURRENT (no activeBattles check)
-  VBMSBetting: '0x50d06e73a9849e6f8f76e7ba818a20493714d085',
+  VBMSBetting: '0x668c8d288b8670fdb9005fa91be046e4c2585af4', // CURRENT - Spectator betting
 
   // Chain configuration
   CHAIN_ID: 8453,
