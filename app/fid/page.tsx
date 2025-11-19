@@ -7,7 +7,6 @@ import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
-import FoilCardEffect from "@/components/FoilCardEffect";
 
 interface GeneratedTraits {
   rarity: string;
@@ -342,17 +341,12 @@ export default function FidPage() {
               Card Preview
             </h2>
             <div className="flex flex-col items-center gap-6">
-              {/* Card Image with Foil Effect */}
-              <FoilCardEffect
-                foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
-                className="max-w-md"
-              >
-                <img
-                  src={previewImage}
-                  alt="Card Preview"
-                  className="rounded-lg shadow-2xl border-4 border-vintage-gold"
-                />
-              </FoilCardEffect>
+              {/* Card Image */}
+              <img
+                src={previewImage}
+                alt="Card Preview"
+                className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold"
+              />
 
               {/* Generated Traits */}
               <div className="w-full max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-6">
