@@ -16,6 +16,7 @@ export default function FidPage() {
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewFoil, setPreviewFoil] = useState<'Standard' | 'Prize' | 'None' | null>(null);
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
@@ -30,6 +31,7 @@ export default function FidPage() {
     setError(null);
     setUserData(null);
     setPreviewImage(null);
+    setPreviewFoil(null);
 
     const fid = parseInt(fidInput);
     if (isNaN(fid) || fid <= 0) {
@@ -74,6 +76,10 @@ export default function FidPage() {
       const suitSymbol = getSuitSymbol(suit);
       const color = getSuitColor(suit);
       const rank = generateRankFromRarity(rarity);
+
+      // Generate random foil for preview
+      const foil = generateRandomFoil();
+      setPreviewFoil(foil);
 
       // Generate card image
       const imageDataUrl = await generateFarcasterCardImage({
@@ -306,13 +312,21 @@ export default function FidPage() {
           <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
             <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
               Card Preview
+              {previewFoil && previewFoil !== 'None' && (
+                <span className="ml-2 text-purple-400 text-lg">✨ {previewFoil} Foil</span>
+              )}
             </h2>
             <div className="flex justify-center">
-              <img
-                src={previewImage}
-                alt="Card Preview"
-                className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold"
-              />
+              <FoilCardEffect
+                foilType={(previewFoil === 'Standard' || previewFoil === 'Prize') ? previewFoil : null}
+                className="max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
+              >
+                <img
+                  src={previewImage}
+                  alt="Card Preview"
+                  className="w-full h-full object-cover"
+                />
+              </FoilCardEffect>
             </div>
           </div>
         )}
