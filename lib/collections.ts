@@ -116,21 +116,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-    // ColeÃ§Ã£o VibeFID
-  vibefid: {
-    id: 'vibefid',
-    name: 'vibefid',
-    displayName: 'VibeFID',
-    description: 'ColeÃ§Ã£o VibeFID NFT',
-    contractAddress: '0x3e1e69e444261a5bc65b83c41036b5284c1e69ae',
-    chain: 'base-mainnet',
-    enabled: true,
-    marketplaceUrl: '0x3e1e69e444261a5bc65b83c41036b5284c1e69ae',
-    buttonText: 'Opensea Link',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-    // Collection VibeFID
+  // Collection VibeFID
   vibefid: {
     id: 'vibefid',
     name: 'vibefid',
