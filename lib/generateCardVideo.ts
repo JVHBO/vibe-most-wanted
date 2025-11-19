@@ -118,53 +118,55 @@ function drawFoilEffect(
 
   // Set blend mode
   ctx.globalCompositeOperation = 'hard-light';
-  ctx.globalAlpha = foilType === 'Prize' ? 0.4 : 0.25;
+  ctx.globalAlpha = foilType === 'Prize' ? 0.15 : 0.25; // Prize: very subtle (0.15), Standard: 0.25
 
   // Calculate animation progress (0 to 1)
-  const speed = foilType === 'Prize' ? 2 : 4; // seconds per cycle
+  const speed = foilType === 'Prize' ? 8 : 4; // Prize: 8s (slower, subtle), Standard: 4s
   const progress = (frame % (30 * speed)) / (30 * speed);
 
   // Create gradient that shifts with animation
+  // Both use 45deg direction for consistency
   const gradient = ctx.createConicGradient(
-    (progress * Math.PI * 2) + (foilType === 'Prize' ? (225 * Math.PI / 180) : (45 * Math.PI / 180)),
+    (progress * Math.PI * 2) + (45 * Math.PI / 180),
     width * -0.3,
     height * -0.3
   );
 
   if (foilType === 'Prize') {
-    // Prize foil: bright rainbow
-    gradient.addColorStop(0, 'rgba(255, 0, 0, 1)');
-    gradient.addColorStop(0.143, 'rgba(255, 127, 0, 1)');
-    gradient.addColorStop(0.286, 'rgba(255, 255, 0, 1)');
-    gradient.addColorStop(0.429, 'rgba(0, 255, 0, 1)');
-    gradient.addColorStop(0.571, 'rgba(0, 255, 255, 1)');
-    gradient.addColorStop(0.714, 'rgba(0, 0, 255, 1)');
-    gradient.addColorStop(0.857, 'rgba(139, 0, 255, 1)');
-    gradient.addColorStop(1, 'rgba(255, 0, 0, 1)');
+    // Prize foil: ultra-soft, delicate shimmer (matches CSS exactly)
+    gradient.addColorStop(0, 'rgba(139, 0, 255, 0.2)'); // violet
+    gradient.addColorStop(0.143, 'rgba(0, 0, 255, 0.2)'); // blue
+    gradient.addColorStop(0.286, 'rgba(0, 255, 255, 0.2)'); // cyan
+    gradient.addColorStop(0.429, 'rgba(0, 255, 0, 0.2)'); // green
+    gradient.addColorStop(0.571, 'rgba(255, 255, 0, 0.2)'); // yellow
+    gradient.addColorStop(0.714, 'rgba(255, 127, 0, 0.2)'); // orange
+    gradient.addColorStop(0.857, 'rgba(255, 0, 0, 0.15)'); // red (softer)
+    gradient.addColorStop(1, 'rgba(139, 0, 255, 0.2)'); // violet
   } else {
-    // Standard foil: softer pastel (inverted)
-    gradient.addColorStop(0, 'rgba(139, 0, 255, 0.8)');
-    gradient.addColorStop(0.143, 'rgba(0, 0, 255, 0.8)');
-    gradient.addColorStop(0.286, 'rgba(0, 255, 255, 0.8)');
-    gradient.addColorStop(0.429, 'rgba(0, 255, 0, 0.8)');
-    gradient.addColorStop(0.571, 'rgba(255, 255, 0, 0.8)');
-    gradient.addColorStop(0.714, 'rgba(255, 127, 0, 0.8)');
-    gradient.addColorStop(0.857, 'rgba(255, 0, 0, 0.8)');
-    gradient.addColorStop(1, 'rgba(139, 0, 255, 0.8)');
+    // Standard foil: softer pastel (inverted rotation, matches CSS exactly)
+    gradient.addColorStop(0, 'rgba(139, 0, 255, 0.4)'); // violet
+    gradient.addColorStop(0.143, 'rgba(0, 0, 255, 0.4)'); // blue
+    gradient.addColorStop(0.286, 'rgba(0, 255, 255, 0.4)'); // cyan
+    gradient.addColorStop(0.429, 'rgba(0, 255, 0, 0.4)'); // green
+    gradient.addColorStop(0.571, 'rgba(255, 255, 0, 0.4)'); // yellow
+    gradient.addColorStop(0.714, 'rgba(255, 127, 0, 0.4)'); // orange
+    gradient.addColorStop(0.857, 'rgba(255, 0, 0, 0.3)'); // red (softer)
+    gradient.addColorStop(1, 'rgba(139, 0, 255, 0.4)'); // violet
   }
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 
-  // Add diagonal stripes overlay
+  // Add diagonal stripes overlay (matches CSS exactly)
   ctx.globalCompositeOperation = 'overlay';
-  ctx.globalAlpha = 0.3;
+  ctx.globalAlpha = foilType === 'Prize' ? 0.2 : 0.3; // Prize: more subtle
 
-  const stripeWidth = 10;
-  const stripeSpacing = 15;
+  const stripeWidth = 5;
+  const stripeSpacing = 10;
   const offset = (progress * 100) % stripeSpacing;
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  // Prize: very subtle stripes, Standard: moderate stripes
+  ctx.strokeStyle = foilType === 'Prize' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.08)';
   ctx.lineWidth = stripeWidth;
 
   for (let i = -height; i < width + height; i += stripeSpacing) {
