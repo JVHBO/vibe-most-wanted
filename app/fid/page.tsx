@@ -329,6 +329,9 @@ export default function FidPage() {
 
       const { ipfsUrl } = await uploadResponse.json();
 
+      // Build metadata URL that OpenSea will read
+      const metadataUrl = `https://www.vibemostwanted.xyz/api/metadata/fid/${userData.fid}`;
+
       // Get signature from backend
       setError("Verifying FID ownership and getting signature...");
       const signatureResponse = await fetch('/api/farcaster/mint-signature', {
@@ -337,7 +340,7 @@ export default function FidPage() {
         body: JSON.stringify({
           address,
           fid: userData.fid,
-          ipfsURI: ipfsUrl,
+          ipfsURI: metadataUrl, // Use metadata URL instead of image URL
         }),
       });
 
@@ -377,7 +380,7 @@ export default function FidPage() {
         address: VIBEFID_CONTRACT_ADDRESS,
         abi: VIBEFID_ABI,
         functionName: 'presignedMint',
-        args: [BigInt(userData.fid), ipfsUrl, signature as `0x${string}`],
+        args: [BigInt(userData.fid), metadataUrl, signature as `0x${string}`],
         value: parseEther(MINT_PRICE),
       });
 
