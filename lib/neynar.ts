@@ -108,9 +108,9 @@ export function getBasePowerFromRarity(rarity: 'Common' | 'Rare' | 'Epic' | 'Leg
  */
 export function generateRandomFoil(): 'Prize' | 'Standard' | 'None' {
   const random = Math.random();
-  if (random < 0.05) return 'Prize'; // 5% chance
-  if (random < 0.25) return 'Standard'; // 20% chance
-  return 'None'; // 75% chance
+  if (random < 0.01) return 'Prize'; // 1% chance
+  if (random < 0.11) return 'Standard'; // 10% chance
+  return 'None'; // 89% chance
 }
 
 /**
