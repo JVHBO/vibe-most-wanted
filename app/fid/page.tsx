@@ -324,7 +324,7 @@ export default function FidPage() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {myCards.map((card) => (
+              {myCards.map((card: any) => (
                 <div
                   key={card._id}
                   className="bg-vintage-charcoal rounded-lg border border-vintage-gold/30 p-4"
