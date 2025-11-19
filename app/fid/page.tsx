@@ -8,7 +8,7 @@ import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generat
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
 import { generateCardVideo } from "@/lib/generateCardVideo";
-import { FARCASTER_CARDS_ABI, FARCASTER_CARDS_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contracts/FarcasterCardsABI";
+import { VIBEFID_ABI, VIBEFID_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contracts/VibeFIDABI";
 import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
@@ -34,6 +34,9 @@ export default function FidPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
 
+  // Temporary storage for mint data
+  const [pendingMintData, setPendingMintData] = useState<any>(null);
+
   // Auto-fill FID if in Farcaster miniapp
   useEffect(() => {
     if (farcasterContext.isReady && farcasterContext.user?.fid && !fidInput) {
@@ -49,6 +52,32 @@ export default function FidPage() {
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
+
+  // Save to Convex after successful on-chain mint
+  useEffect(() => {
+    if (isConfirmed && pendingMintData) {
+      const saveToConvex = async () => {
+        try {
+          setError("Saving card data...");
+          await mintCard(pendingMintData);
+          setError(null);
+          alert(`✅ NFT minted successfully!\n\nTransaction: ${hash}\nIPFS: ${pendingMintData.imageUrl}`);
+
+          // Reset form
+          setUserData(null);
+          setPreviewImage(null);
+          setGeneratedTraits(null);
+          setFidInput("");
+          setPendingMintData(null);
+        } catch (err: any) {
+          setError(`NFT minted but failed to save metadata: ${err.message}`);
+        } finally {
+          setLoading(false);
+        }
+      };
+      saveToConvex();
+    }
+  }, [isConfirmed, pendingMintData, hash]);
 
   // Queries
   const myCards = useQuery(
@@ -261,9 +290,27 @@ export default function FidPage() {
 
       const { ipfsUrl } = await uploadResponse.json();
 
-      // Mint the card with IPFS URL
-      setError("Minting card...");
-      const result = await mintCard({
+      // Get signature from backend
+      setError("Verifying FID ownership and getting signature...");
+      const signatureResponse = await fetch('/api/farcaster/mint-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          fid: userData.fid,
+          ipfsURI: ipfsUrl,
+        }),
+      });
+
+      if (!signatureResponse.ok) {
+        const errorData = await signatureResponse.json();
+        throw new Error(errorData.error || 'Failed to get mint signature');
+      }
+
+      const { signature } = await signatureResponse.json();
+
+      // Store mint data for later (after on-chain confirmation)
+      setPendingMintData({
         fid: userData.fid,
         username: userData.username,
         displayName: userData.display_name,
@@ -282,18 +329,24 @@ export default function FidPage() {
         rank,
         suitSymbol,
         color,
-        imageUrl: ipfsUrl, // Use IPFS URL
+        imageUrl: ipfsUrl,
       });
 
-      alert(`${result.message}\n\nIPFS URL: ${ipfsUrl}`);
-      setUserData(null);
-      setPreviewImage(null);
-      setGeneratedTraits(null);
-      setFidInput("");
-      setError(null);
+      // Mint NFT on smart contract
+      setError("Minting NFT on-chain (confirm transaction in wallet)...");
+      writeContract({
+        address: VIBEFID_CONTRACT_ADDRESS,
+        abi: VIBEFID_ABI,
+        functionName: 'presignedMint',
+        args: [BigInt(userData.fid), ipfsUrl, signature as `0x${string}`],
+        value: parseEther(MINT_PRICE),
+      });
+
+      // Note: Transaction confirmation is handled by useWaitForTransactionReceipt hook
+      // After confirmation, data is saved to Convex in useEffect above
+
     } catch (err: any) {
       setError(err.message || "Failed to mint card");
-    } finally {
       setLoading(false);
     }
   };
@@ -310,34 +363,6 @@ export default function FidPage() {
             Mint playable cards from Farcaster profiles
           </p>
         </div>
-
-        {/* Warning if not in Farcaster miniapp */}
-        {farcasterContext.isReady && !farcasterContext.isInMiniapp && (
-          <div className="bg-purple-900/50 border-2 border-purple-500 rounded-xl p-8 mb-8 text-center">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-3xl font-bold text-purple-300 mb-4">
-              Acesse pelo Farcaster Miniapp
-            </h2>
-            <p className="text-purple-200 mb-6 text-lg">
-              Para mintar seu Farcaster Card, você precisa acessar através do Farcaster app.
-              <br />
-              <span className="text-sm text-purple-300">
-                Apenas usuários verificados do Farcaster podem mintar cards de seus próprios FIDs.
-              </span>
-            </p>
-            <a
-              href="https://warpcast.com/~/miniapps/vibemostwanted"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-xl"
-            >
-              🚀 Abrir no Farcaster App
-            </a>
-            <p className="mt-4 text-sm text-purple-400">
-              Ou acesse <span className="font-mono bg-purple-950/50 px-2 py-1 rounded">warpcast.com</span> e busque por "VIBE MOST WANTED"
-            </p>
-          </div>
-        )}
 
         {/* Success message when in miniapp */}
         {farcasterContext.isReady && farcasterContext.isInMiniapp && farcasterContext.user && (
