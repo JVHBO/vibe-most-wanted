@@ -60,18 +60,22 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
       return url;
     };
 
-    const cardImageUrl = cardData.imageUrl ? proxyUrl(cardData.imageUrl) : '';
     const pfpUrl = cardData.pfpUrl ? proxyUrl(cardData.pfpUrl) : '';
 
-    // Get foil color
-    const getFoilGradient = (foil: string) => {
-      if (foil === 'Prize') {
-        return 'linear-gradient(135deg, rgba(168, 85, 247, 0.4) 0%, rgba(236, 72, 153, 0.4) 100%)';
-      }
-      if (foil === 'Standard') {
-        return 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(147, 51, 234, 0.3) 100%)';
-      }
-      return 'transparent';
+    // Get foil border color
+    const getFoilBorderColor = (foil: string) => {
+      if (foil === 'Prize') return '#A855F7'; // Purple
+      if (foil === 'Standard') return '#3B82F6'; // Blue
+      return '#FFD700'; // Gold
+    };
+
+    // Get rarity color
+    const getRarityColor = (rarity: string) => {
+      if (rarity === 'Mythic') return '#A855F7'; // Purple
+      if (rarity === 'Legendary') return '#FFD700'; // Gold
+      if (rarity === 'Epic') return '#9333EA'; // Purple
+      if (rarity === 'Rare') return '#3B82F6'; // Blue
+      return '#10B981'; // Green for Common
     };
 
     return new ImageResponse(
@@ -85,6 +89,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
             justifyContent: 'center',
             background: 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
             position: 'relative',
+            padding: '40px',
           }}
         >
           {/* Glow effect */}
@@ -95,179 +100,143 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
               left: 0,
               width: '100%',
               height: '100%',
-              background: 'radial-gradient(circle at center, rgba(255, 215, 0, 0.15) 0%, transparent 60%)',
+              background: `radial-gradient(circle at center, ${getRarityColor(cardData.rarity)}20 0%, transparent 70%)`,
               display: 'flex',
             }}
           />
 
-          {/* Content container */}
+          {/* Main Card */}
           <div
             style={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              gap: '60px',
+              gap: '30px',
               zIndex: 1,
+              background: 'rgba(0, 0, 0, 0.6)',
+              padding: '60px',
+              borderRadius: '24px',
+              border: `6px solid ${getFoilBorderColor(cardData.foil)}`,
+              boxShadow: `0 30px 80px ${getFoilBorderColor(cardData.foil)}60`,
             }}
           >
-            {/* Card Image */}
-            {cardImageUrl && (
-              <div
+            {/* VibeFID Title */}
+            <div
+              style={{
+                fontSize: '72px',
+                fontWeight: 900,
+                color: '#FFD700',
+                textShadow: '0 4px 20px rgba(255, 215, 0, 0.6)',
+                letterSpacing: '4px',
+                textAlign: 'center',
+              }}
+            >
+              VibeFID
+            </div>
+
+            {/* PFP */}
+            {pfpUrl && (
+              <img
+                src={pfpUrl}
                 style={{
-                  width: '400px',
-                  height: '560px',
-                  borderRadius: '16px',
-                  border: '6px solid #FFD700',
-                  boxShadow: '0 20px 60px rgba(255, 215, 0, 0.4)',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  display: 'flex',
+                  width: '240px',
+                  height: '240px',
+                  borderRadius: '50%',
+                  border: `6px solid ${getFoilBorderColor(cardData.foil)}`,
+                  boxShadow: `0 10px 40px ${getFoilBorderColor(cardData.foil)}80`,
+                  objectFit: 'cover',
                 }}
-              >
-                <img
-                  src={cardImageUrl}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-                {/* Foil overlay */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: getFoilGradient(cardData.foil),
-                    display: 'flex',
-                  }}
-                />
-              </div>
+              />
             )}
 
-            {/* Card Info */}
+            {/* Username */}
+            <div
+              style={{
+                fontSize: '48px',
+                fontWeight: 700,
+                color: 'rgba(255, 255, 255, 0.95)',
+                textAlign: 'center',
+              }}
+            >
+              @{cardData.username}
+            </div>
+
+            {/* Stats Grid - 2 columns */}
             <div
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '30px',
-                maxWidth: '600px',
+                gap: '40px',
+                marginTop: '20px',
               }}
             >
-              {/* Title */}
+              {/* Left Column */}
               <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px',
+                  gap: '20px',
                 }}
               >
-                <div
-                  style={{
-                    fontSize: '64px',
-                    fontWeight: 900,
-                    color: '#FFD700',
-                    textShadow: '0 4px 20px rgba(255, 215, 0, 0.5)',
-                    letterSpacing: '2px',
-                  }}
-                >
-                  VibeFID
-                </div>
-                <div
-                  style={{
-                    fontSize: '36px',
-                    fontWeight: 700,
-                    color: 'rgba(255, 255, 255, 0.9)',
-                  }}
-                >
-                  @{cardData.username}
-                </div>
-              </div>
-
-              {/* Stats Grid */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '15px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  padding: '30px',
-                  borderRadius: '12px',
-                  border: '2px solid rgba(255, 215, 0, 0.3)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '28px',
-                  }}
-                >
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Rarity:</span>
-                  <span style={{ color: '#FFD700', fontWeight: 700 }}>{cardData.rarity}</span>
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '28px',
-                  }}
-                >
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Foil:</span>
-                  <span
-                    style={{
-                      color: cardData.foil === 'Prize' ? '#A855F7' : cardData.foil === 'Standard' ? '#3B82F6' : '#fff',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {cardData.foil}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '24px' }}>Rarity</span>
+                  <span style={{ color: getRarityColor(cardData.rarity), fontWeight: 900, fontSize: '36px' }}>
+                    {cardData.rarity}
                   </span>
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '28px',
-                  }}
-                >
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Card:</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '24px' }}>Card</span>
                   <span
                     style={{
                       color: cardData.color === 'red' ? '#EF4444' : '#fff',
-                      fontWeight: 700,
-                      fontSize: '32px',
+                      fontWeight: 900,
+                      fontSize: '48px',
                     }}
                   >
                     {cardData.rank}{cardData.suitSymbol}
                   </span>
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '36px',
-                    marginTop: '10px',
-                    paddingTop: '15px',
-                    borderTop: '2px solid rgba(255, 215, 0, 0.3)',
-                  }}
-                >
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Power:</span>
-                  <span style={{ color: '#FFD700', fontWeight: 900 }}>⚡ {cardData.power}</span>
-                </div>
               </div>
 
-              {/* Branding */}
+              {/* Right Column */}
               <div
                 style={{
-                  fontSize: '20px',
-                  fontWeight: 600,
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  letterSpacing: '1px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '20px',
                 }}
               >
-                VIBE MOST WANTED
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '24px' }}>Foil</span>
+                  <span
+                    style={{
+                      color: getFoilBorderColor(cardData.foil),
+                      fontWeight: 900,
+                      fontSize: '36px',
+                    }}
+                  >
+                    {cardData.foil}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '24px' }}>Power</span>
+                  <span style={{ color: '#FFD700', fontWeight: 900, fontSize: '48px' }}>
+                    ⚡ {cardData.power}
+                  </span>
+                </div>
               </div>
+            </div>
+
+            {/* Branding */}
+            <div
+              style={{
+                fontSize: '20px',
+                fontWeight: 600,
+                color: 'rgba(255, 255, 255, 0.3)',
+                letterSpacing: '2px',
+                marginTop: '20px',
+              }}
+            >
+              VIBE MOST WANTED
             </div>
           </div>
         </div>
