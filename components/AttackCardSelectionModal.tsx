@@ -13,6 +13,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { type UserProfile } from '@/lib/convex-profile';
+import FoilCardEffect from '@/components/FoilCardEffect';
 
 interface Card {
   tokenId: string;
@@ -342,7 +343,12 @@ export function AttackCardSelectionModal({
           <div className="grid grid-cols-5 gap-1.5">
             {attackSelectedCards.map((card, i) => (
               <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-600 shadow-lg">
-                <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                <FoilCardEffect
+                  foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null}
+                  className="w-full h-full"
+                >
+                  <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                </FoilCardEffect>
                 <div className="absolute top-0 left-0 bg-red-600 text-white text-xs px-1 rounded-br font-bold">{card.power}</div>
               </div>
             ))}
