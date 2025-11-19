@@ -67,8 +67,8 @@ export async function GET(
           value: traits.wear,
         },
         {
-          trait_type: 'Power',
-          value: cardData.power,
+          trait_type: 'Bounty',
+          value: cardData.power * 10, // Bounty = Power × 10 for display
           display_type: 'number',
         },
         {
