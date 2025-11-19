@@ -50,12 +50,13 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
     ctx.lineWidth = 4;
     ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
 
-    // Top left suit and rank
+    // Top left: rank and suit
     ctx.fillStyle = params.color === 'red' ? '#dc143c' : '#000';
+    ctx.textAlign = 'left';
     ctx.font = 'bold 60px serif';
     ctx.fillText(params.rank, 30, 80);
     ctx.font = '50px serif';
-    ctx.fillText(params.suitSymbol, 30, 140);
+    ctx.fillText(params.suitSymbol, 30, 130);
 
     // Top center - FID
     ctx.fillStyle = '#000';
@@ -96,16 +97,13 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       const bioText = params.bio.length > 60 ? params.bio.slice(0, 60) + '...' : params.bio;
       ctx.fillText(bioText, canvas.width / 2, pfpY + pfpSize + 65);
 
-      // Bottom right suit and rank (inverted)
-      ctx.save();
-      ctx.translate(canvas.width - 30, canvas.height - 30);
-      ctx.rotate(Math.PI);
+      // Bottom right: suit on top, rank on bottom
       ctx.fillStyle = params.color === 'red' ? '#dc143c' : '#000';
-      ctx.font = 'bold 60px serif';
-      ctx.fillText(params.rank, 0, 60);
+      ctx.textAlign = 'right';
       ctx.font = '50px serif';
-      ctx.fillText(params.suitSymbol, 0, 0);
-      ctx.restore();
+      ctx.fillText(params.suitSymbol, canvas.width - 30, canvas.height - 80);
+      ctx.font = 'bold 60px serif';
+      ctx.fillText(params.rank, canvas.width - 30, canvas.height - 30);
 
       // Convert to data URL
       const dataUrl = canvas.toDataURL('image/png');
