@@ -40,21 +40,11 @@ export const mintFarcasterCard = mutation({
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
 
-    // Check if user already minted this FID
-    const existing = await ctx.db
-      .query("farcasterCards")
-      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
-      .first();
+    // Generate unique card ID with timestamp to allow multiple mints of same FID
+    const timestamp = Date.now();
+    const cardId = `farcaster_${args.fid}_${timestamp}`;
 
-    if (existing) {
-      // User can only mint once per FID globally
-      throw new Error(`Card for FID ${args.fid} has already been minted`);
-    }
-
-    // Create card ID
-    const cardId = `farcaster_${args.fid}`;
-
-    // Insert card
+    // Insert card (no uniqueness check - multiple mints allowed)
     const cardDocId = await ctx.db.insert("farcasterCards", {
       // Farcaster Data
       fid: args.fid,
