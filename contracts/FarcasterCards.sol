@@ -1,244 +1,238 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {ERC721} from "solady/tokens/ERC721.sol";
+import {EIP712} from "solady/utils/EIP712.sol";
+import {ECDSA} from "solady/utils/ECDSA.sol";
+import {Ownable} from "solady/auth/Ownable.sol";
 
-/**
- * @title FarcasterCards
- * @dev ERC721 NFT contract for Farcaster playing cards with signature verification
- *
- * Features:
- * - Mint cards with IPFS metadata
- * - 0.0005 ETH mint price
- * - Signature verification to ensure only FID owners can mint
- * - Owner can withdraw funds
- * - Multiple mints per user allowed
- */
-contract FarcasterCards is ERC721, ERC721URIStorage, Ownable {
-    // Mint price: 0.0005 ETH
-    uint256 public mintPrice = 0.0005 ether;
+/// @title FarcasterCards
+/// @notice Minimal ERC-721 contract for Farcaster playing cards with presigned minting
+/// @dev Uses Solady for gas-efficient ERC721 implementation with EIP-712 signature verification
+contract FarcasterCards is ERC721, EIP712, Ownable {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Verifier address for signature validation
-    address public verifierAddress;
+    /// @dev Mint price in wei (0.0005 ETH)
+    uint256 public constant MINT_PRICE = 0.0005 ether;
 
-    // Total mints counter
+    /// @dev Maximum number of tokens that can be minted
+    uint256 public constant MAX_SUPPLY = 10_000;
+
+    /// @dev EIP-712 typehash for MintPermit struct
+    bytes32 public constant MINT_PERMIT_TYPEHASH =
+        keccak256("MintPermit(address to,uint256 fid,string ipfsURI)");
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Signature verification failed
+    error InvalidSignature();
+
+    /// @dev Signer address cannot be zero
+    error InvalidSigner();
+
+    /// @dev Maximum supply has been reached
+    error MaxSupplyReached();
+
+    /// @dev FID has already been minted
+    error FIDAlreadyMinted();
+
+    /// @dev Insufficient payment sent
+    error InsufficientPayment();
+
+    /// @dev Minting has been permanently closed
+    error MintingClosed();
+
+    /// @dev Metadata URI cannot be empty
+    error EmptyURI();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          STORAGE                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Backend signer address that authorizes mints
+    address public signer;
+
+    /// @notice Total number of tokens minted
     uint256 public totalMinted;
 
-    // Current token ID
-    uint256 private _nextTokenId = 1;
+    /// @notice Whether minting has been permanently closed
+    bool public mintingClosed;
 
-    // Mapping to track which FIDs have been minted
+    /// @notice Mapping from FID to whether it has been minted
     mapping(uint256 => bool) public fidMinted;
 
-    // Events
-    event CardMinted(
-        address indexed minter,
-        uint256 indexed tokenId,
-        uint256 fid,
-        string metadataURI
-    );
-    event Withdrawn(address indexed owner, uint256 amount);
+    /// @notice Mapping from token ID to IPFS metadata URI
+    mapping(uint256 => string) private _tokenURIs;
 
-    constructor() ERC721("Vibe Most Wanted - FID Edition", "VMWFID") Ownable(msg.sender) {}
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /**
-     * @dev Set the verifier address (backend signer)
-     */
-    function setVerifierAddress(address _verifierAddress) external onlyOwner {
-        verifierAddress = _verifierAddress;
+    /// @dev Emitted when the signer address is updated
+    event SignerUpdated(address indexed previousSigner, address indexed newSigner);
+
+    /// @dev Emitted when minting is permanently closed
+    event MintingClosedPermanently();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Initialize the contract with required parameters
+    /// @param _signer Address of the backend that will sign mint permissions
+    constructor(address _signer) {
+        if (_signer == address(0)) revert InvalidSigner();
+
+        signer = _signer;
+        _initializeOwner(msg.sender);
     }
 
-    /**
-     * @dev Set mint price
-     */
-    function setMintPrice(uint256 _mintPrice) external onlyOwner {
-        mintPrice = _mintPrice;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      ERC721 METADATA                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Returns the token collection name
+    function name() public pure override returns (string memory) {
+        return "Vibe Most Wanted - FID Edition";
     }
 
-    /**
-     * @dev Mint a new Farcaster card NFT with signature verification
-     * @param metadataURI IPFS URI for the card metadata/video
-     * @param fid Farcaster ID associated with this card
-     * @param signature Backend signature proving FID ownership
-     */
-    function mintCard(string memory metadataURI, uint256 fid, bytes memory signature)
-        public
-        payable
-        returns (uint256)
+    /// @notice Returns the token collection symbol
+    function symbol() public pure override returns (string memory) {
+        return "VMWFID";
+    }
+
+    /// @notice Returns the metadata URI for a given token
+    /// @param id Token ID to query
+    /// @return The IPFS URI for the token's metadata
+    function tokenURI(uint256 id) public view override returns (string memory) {
+        if (!_exists(id)) revert TokenDoesNotExist();
+        return _tokenURIs[id];
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       EIP712 DOMAIN                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Returns the EIP-712 domain name and version
+    function _domainNameAndVersion()
+        internal
+        pure
+        override
+        returns (string memory name_, string memory version_)
     {
-        require(msg.value >= mintPrice, "Insufficient payment");
-        require(bytes(metadataURI).length > 0, "Metadata URI cannot be empty");
-        require(!fidMinted[fid], "FID already minted");
+        name_ = "Vibe Most Wanted - FID Edition";
+        version_ = "1";
+    }
 
-        // Verify signature if verifier is set
-        if (verifierAddress != address(0)) {
-            require(_verifySignature(msg.sender, fid, metadataURI, signature), "Invalid signature");
-        }
+    /// @notice Returns the EIP-712 domain separator for signature verification
+    /// @return The domain separator hash
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
+    }
 
-        uint256 tokenId = _nextTokenId++;
-        totalMinted++;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      MINTING LOGIC                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Mint a token with a presigned permit from the backend
+    /// @dev Verifies EIP-712 signature and mints NFT
+    /// @param fid The Farcaster ID to mint
+    /// @param ipfsURI The IPFS metadata URI for this token
+    /// @param signature EIP-712 signature from the backend signer
+    function presignedMint(uint256 fid, string calldata ipfsURI, bytes calldata signature)
+        external
+        payable
+    {
+        // Check minting is not closed
+        if (mintingClosed) revert MintingClosed();
+
+        // Check max supply has not been reached
+        if (totalMinted >= MAX_SUPPLY) revert MaxSupplyReached();
+
+        // Check FID has not already been minted
+        if (fidMinted[fid]) revert FIDAlreadyMinted();
+
+        // Check payment
+        if (msg.value < MINT_PRICE) revert InsufficientPayment();
+
+        // Check URI is not empty
+        if (bytes(ipfsURI).length == 0) revert EmptyURI();
+
+        // Construct the EIP-712 struct hash
+        bytes32 structHash = keccak256(
+            abi.encode(MINT_PERMIT_TYPEHASH, msg.sender, fid, keccak256(bytes(ipfsURI)))
+        );
+
+        // Get the EIP-712 digest
+        bytes32 digest = _hashTypedData(structHash);
+
+        // Recover the signer from the signature
+        address recoveredSigner = ECDSA.recover(digest, signature);
+
+        // Verify the signature is from the authorized backend signer
+        if (recoveredSigner != signer) revert InvalidSignature();
+
+        // Mark FID as minted
         fidMinted[fid] = true;
 
-        _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, metadataURI);
+        // Store the IPFS URI for this token (using FID as token ID)
+        _tokenURIs[fid] = ipfsURI;
 
-        emit CardMinted(msg.sender, tokenId, fid, metadataURI);
+        // Mint the token to msg.sender (using FID as token ID)
+        _mint(msg.sender, fid);
 
-        // Refund excess payment
-        if (msg.value > mintPrice) {
-            payable(msg.sender).transfer(msg.value - mintPrice);
-        }
-
-        return tokenId;
-    }
-
-    /**
-     * @dev Verify signature from backend
-     * Message format: keccak256(minter, "VMWFID", fid, metadataURI)
-     */
-    function _verifySignature(
-        address minter,
-        uint256 fid,
-        string memory metadataURI,
-        bytes memory signature
-    ) internal view returns (bool) {
-        bytes32 messageHash = keccak256(abi.encodePacked(minter, "VMWFID", fid, metadataURI));
-        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
-        address recoveredSigner = ECDSA.recover(ethSignedMessageHash, signature);
-
-        return recoveredSigner == verifierAddress;
-    }
-
-    /**
-     * @dev Batch mint multiple cards (gas optimization)
-     * @param metadataURIs Array of IPFS URIs
-     * @param fids Array of Farcaster IDs
-     * @param signatures Array of signatures
-     */
-    function batchMintCards(
-        string[] memory metadataURIs,
-        uint256[] memory fids,
-        bytes[] memory signatures
-    )
-        public
-        payable
-        returns (uint256[] memory)
-    {
-        require(metadataURIs.length == fids.length, "Arrays length mismatch");
-        require(metadataURIs.length == signatures.length, "Signatures length mismatch");
-        require(metadataURIs.length > 0, "Empty arrays");
-        require(msg.value >= mintPrice * metadataURIs.length, "Insufficient payment");
-
-        uint256[] memory tokenIds = new uint256[](metadataURIs.length);
-
-        for (uint256 i = 0; i < metadataURIs.length; i++) {
-            require(!fidMinted[fids[i]], "FID already minted");
-
-            // Verify signature if verifier is set
-            if (verifierAddress != address(0)) {
-                require(
-                    _verifySignature(msg.sender, fids[i], metadataURIs[i], signatures[i]),
-                    "Invalid signature"
-                );
-            }
-
-            uint256 tokenId = _nextTokenId++;
-            totalMinted++;
-            fidMinted[fids[i]] = true;
-
-            _safeMint(msg.sender, tokenId);
-            _setTokenURI(tokenId, metadataURIs[i]);
-
-            tokenIds[i] = tokenId;
-
-            emit CardMinted(msg.sender, tokenId, fids[i], metadataURIs[i]);
-        }
+        // Increment total minted counter
+        totalMinted++;
 
         // Refund excess payment
-        uint256 totalCost = mintPrice * metadataURIs.length;
-        if (msg.value > totalCost) {
-            payable(msg.sender).transfer(msg.value - totalCost);
+        if (msg.value > MINT_PRICE) {
+            _safeTransferETH(msg.sender, msg.value - MINT_PRICE);
         }
-
-        return tokenIds;
     }
 
-    /**
-     * @dev Withdraw contract balance to owner
-     */
-    function withdraw() public onlyOwner {
-        uint256 balance = address(this).balance;
-        require(balance > 0, "No funds to withdraw");
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-        (bool success, ) = payable(owner()).call{value: balance}("");
-        require(success, "Withdrawal failed");
-
-        emit Withdrawn(owner(), balance);
+    /// @notice Update the backend signer address
+    /// @dev Only callable by contract owner
+    /// @param newSigner New backend signer address
+    function setSigner(address newSigner) external onlyOwner {
+        if (newSigner == address(0)) revert InvalidSigner();
+        address previousSigner = signer;
+        signer = newSigner;
+        emit SignerUpdated(previousSigner, newSigner);
     }
 
-    /**
-     * @dev Get contract balance
-     */
-    function getBalance() public view returns (uint256) {
-        return address(this).balance;
+    /// @notice Permanently close minting
+    /// @dev Only callable by contract owner. This action is irreversible.
+    function closeMinting() external onlyOwner {
+        mintingClosed = true;
+        emit MintingClosedPermanently();
     }
 
-    /**
-     * @dev Get total number of cards minted
-     */
-    function getTotalMinted() public view returns (uint256) {
-        return totalMinted;
+    /// @notice Withdraw contract balance to owner
+    /// @dev Only callable by contract owner
+    function withdraw() external onlyOwner {
+        _safeTransferETH(owner(), address(this).balance);
     }
 
-    /**
-     * @dev Check if a FID has been minted
-     */
-    function isFidMinted(uint256 fid) public view returns (bool) {
-        return fidMinted[fid];
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      INTERNAL HELPERS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /**
-     * @dev Get all token IDs owned by an address
-     */
-    function tokensOfOwner(address owner)
-        public
-        view
-        returns (uint256[] memory)
-    {
-        uint256 tokenCount = balanceOf(owner);
-        uint256[] memory tokenIds = new uint256[](tokenCount);
-        uint256 currentIndex = 0;
-
-        for (uint256 i = 1; i < _nextTokenId; i++) {
-            if (_ownerOf(i) == owner) {
-                tokenIds[currentIndex] = i;
-                currentIndex++;
+    /// @dev Safe ETH transfer helper
+    function _safeTransferETH(address to, uint256 amount) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(call(gas(), to, amount, codesize(), 0x00, codesize(), 0x00)) {
+                mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                revert(0x1c, 0x04)
             }
         }
-
-        return tokenIds;
-    }
-
-    // Override required functions
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
-        return super.tokenURI(tokenId);
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
     }
 }
