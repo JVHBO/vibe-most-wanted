@@ -92,8 +92,28 @@ export default function FidPage() {
       const foil = generateRandomFoil();
       const wear = generateRandomWear();
 
-      // Calculate power
-      const power = getBasePowerFromRarity(rarity);
+      // Calculate power with foil and wear multipliers
+      const basePower = getBasePowerFromRarity(rarity);
+
+      // Wear multiplier
+      const wearMultiplier: Record<string, number> = {
+        Pristine: 1.8,
+        Mint: 1.4,
+        "Lightly Played": 1.0,
+        "Moderately Played": 1.0,
+        "Heavily Played": 1.0,
+      };
+
+      // Foil multiplier
+      const foilMultiplier: Record<string, number> = {
+        Prize: 15.0,
+        Standard: 2.5,
+        None: 1.0,
+      };
+
+      const wearMult = wearMultiplier[wear] || 1.0;
+      const foilMult = foilMultiplier[foil] || 1.0;
+      const power = Math.round(basePower * wearMult * foilMult);
 
       // Save generated traits
       setGeneratedTraits({
@@ -158,7 +178,24 @@ export default function FidPage() {
         const rank = generateRankFromRarity(rarity);
         const foil = generateRandomFoil();
         const wear = generateRandomWear();
-        const power = getBasePowerFromRarity(rarity);
+
+        // Calculate power with foil and wear multipliers
+        const basePower = getBasePowerFromRarity(rarity);
+        const wearMultiplier: Record<string, number> = {
+          Pristine: 1.8,
+          Mint: 1.4,
+          "Lightly Played": 1.0,
+          "Moderately Played": 1.0,
+          "Heavily Played": 1.0,
+        };
+        const foilMultiplier: Record<string, number> = {
+          Prize: 15.0,
+          Standard: 2.5,
+          None: 1.0,
+        };
+        const wearMult = wearMultiplier[wear] || 1.0;
+        const foilMult = foilMultiplier[foil] || 1.0;
+        const power = Math.round(basePower * wearMult * foilMult);
 
         traits = { rarity, suit, suitSymbol, color, rank, foil, wear, power };
       }
