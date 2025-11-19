@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
+import { generateCardVideo } from "@/lib/generateCardVideo";
 import FoilCardEffect from "@/components/FoilCardEffect";
 
 interface GeneratedTraits {
@@ -169,8 +170,9 @@ export default function FidPage() {
 
       // Use generated traits if available (from preview), otherwise generate new ones
       let traits = generatedTraits;
+      let cardImageDataUrl = previewImage;
 
-      if (!traits) {
+      if (!traits || !cardImageDataUrl) {
         const rarity = calculateRarityFromScore(score);
         const suit = generateRandomSuit();
         const suitSymbol = getSuitSymbol(suit);
@@ -198,15 +200,52 @@ export default function FidPage() {
         const power = Math.round(basePower * wearMult * foilMult);
 
         traits = { rarity, suit, suitSymbol, color, rank, foil, wear, power };
+
+        // Generate card image if not already generated
+        cardImageDataUrl = await generateFarcasterCardImage({
+          fid: userData.fid,
+          username: userData.username,
+          displayName: userData.display_name,
+          pfpUrl: userData.pfp_url,
+          bio: userData.profile?.bio?.text || "",
+          neynarScore: score,
+          suit,
+          suitSymbol,
+          rank,
+          color,
+          rarity,
+        });
       }
 
       const { rarity, suit, suitSymbol, color, rank, foil, wear, power } = traits;
 
-      // For now, use the PFP URL directly as imageUrl
-      // TODO: Call Nanobanana IA to generate the card image
-      const imageUrl = userData.pfp_url;
+      // Generate MP4 video with foil animation
+      setError("Generating video with foil animation...");
+      const videoBlob = await generateCardVideo({
+        cardImageDataUrl,
+        foilType: foil as 'None' | 'Standard' | 'Prize',
+        duration: 3,
+        fps: 30,
+      });
 
-      // Mint the card
+      // Upload video to IPFS
+      setError("Uploading to IPFS...");
+      const formData = new FormData();
+      formData.append('video', videoBlob, `card-${userData.fid}.webm`);
+
+      const uploadResponse = await fetch('/api/upload-nft-video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload video to IPFS');
+      }
+
+      const { ipfsUrl } = await uploadResponse.json();
+
+      // Mint the card with IPFS URL
+      setError("Minting card...");
       const result = await mintCard({
         fid: userData.fid,
         username: userData.username,
@@ -226,14 +265,15 @@ export default function FidPage() {
         rank,
         suitSymbol,
         color,
-        imageUrl,
+        imageUrl: ipfsUrl, // Use IPFS URL
       });
 
-      alert(result.message);
+      alert(`${result.message}\n\nIPFS URL: ${ipfsUrl}`);
       setUserData(null);
       setPreviewImage(null);
       setGeneratedTraits(null);
       setFidInput("");
+      setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to mint card");
     } finally {
