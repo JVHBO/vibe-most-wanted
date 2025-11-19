@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear } from "@/lib/neynar";
+import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser } from "@/lib/neynar";
 
 export default function FidPage() {
@@ -72,6 +72,14 @@ export default function FidPage() {
       const rarity = calculateRarityFromScore(score);
       const basePower = getBasePowerFromRarity(rarity);
 
+      // Generate random suit (first RNG)
+      const suit = generateRandomSuit();
+      const suitSymbol = getSuitSymbol(suit);
+      const color = getSuitColor(suit);
+
+      // Generate rank based on rarity (second RNG, score-based)
+      const rank = generateRankFromRarity(rarity);
+
       // Generate random foil and wear
       const foil = generateRandomFoil();
       const wear = generateRandomWear();
@@ -99,6 +107,10 @@ export default function FidPage() {
         foil,
         wear,
         power,
+        suit,
+        rank,
+        suitSymbol,
+        color,
         imageUrl,
       });
 
@@ -196,6 +208,19 @@ export default function FidPage() {
                       {calculateRarityFromScore(userData.experimental?.neynar_user_score || 0)}
                     </span>
                   </div>
+                  <div>
+                    <span className="text-vintage-burnt-gold">Card Range:</span>{" "}
+                    <span className="text-vintage-ice">
+                      {(() => {
+                        const rarity = calculateRarityFromScore(userData.experimental?.neynar_user_score || 0);
+                        if (rarity === 'Common') return '2-6';
+                        if (rarity === 'Rare') return '7-8';
+                        if (rarity === 'Epic') return '9-10-J';
+                        if (rarity === 'Legendary') return 'Q-K';
+                        return 'A';
+                      })()}
+                    </span>
+                  </div>
                 </div>
 
                 {userData.power_badge && (
@@ -233,6 +258,13 @@ export default function FidPage() {
                   key={card._id}
                   className="bg-vintage-charcoal rounded-lg border border-vintage-gold/30 p-4"
                 >
+                  {/* Card Symbol */}
+                  <div className="text-center mb-2">
+                    <span className={`text-4xl font-bold ${card.color === 'red' ? 'text-red-500' : 'text-black'}`}>
+                      {card.rank}{card.suitSymbol}
+                    </span>
+                  </div>
+
                   <img
                     src={card.pfpUrl}
                     alt={card.username}
@@ -243,6 +275,9 @@ export default function FidPage() {
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-vintage-burnt-gold text-sm">{card.rarity}</span>
                     <span className="text-vintage-ice text-sm">⚡ {card.power}</span>
+                  </div>
+                  <div className="mt-1 text-center text-xs text-vintage-ice/50">
+                    Score: {card.neynarScore.toFixed(2)}
                   </div>
                 </div>
               ))}

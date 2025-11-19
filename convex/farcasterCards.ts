@@ -28,6 +28,12 @@ export const mintFarcasterCard = mutation({
     wear: v.string(),
     power: v.number(),
 
+    // Playing card properties
+    suit: v.string(), // "hearts", "diamonds", "spades", "clubs"
+    rank: v.string(), // "2"-"10", "J", "Q", "K", "A"
+    suitSymbol: v.string(), // "♥", "♦", "♠", "♣"
+    color: v.string(), // "red" or "black"
+
     // Generated image URL (from Nanobanana IA)
     imageUrl: v.string(),
   },
@@ -66,6 +72,12 @@ export const mintFarcasterCard = mutation({
       foil: args.foil,
       wear: args.wear,
       power: args.power,
+
+      // Playing Card Properties
+      suit: args.suit,
+      rank: args.rank,
+      suitSymbol: args.suitSymbol,
+      color: args.color,
 
       // Farcaster Stats
       neynarScore: args.neynarScore,
