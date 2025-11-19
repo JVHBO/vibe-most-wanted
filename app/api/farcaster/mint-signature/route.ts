@@ -47,9 +47,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Ownership verified for FID', fid);
 
     // 3. Get signer private key from environment
-    const SIGNER_PRIVATE_KEY =
-      process.env.FARCASTER_CARDS_SIGNER_PRIVATE_KEY ||
-      process.env.VBMS_SIGNER_PRIVATE_KEY;
+    const SIGNER_PRIVATE_KEY = process.env.VBMS_SIGNER_PRIVATE_KEY;
 
     if (!SIGNER_PRIVATE_KEY) {
       throw new Error('Signer private key not configured');
@@ -59,14 +57,14 @@ export async function POST(request: NextRequest) {
     const wallet = new ethers.Wallet(SIGNER_PRIVATE_KEY);
 
     // 5. Get contract address
-    const contractAddress = process.env.FARCASTER_CARDS_CONTRACT_ADDRESS;
+    const contractAddress = process.env.VIBEFID_CONTRACT_ADDRESS;
     if (!contractAddress) {
-      throw new Error('FARCASTER_CARDS_CONTRACT_ADDRESS not configured');
+      throw new Error('VIBEFID_CONTRACT_ADDRESS not configured');
     }
 
     // 6. Define EIP-712 domain (must match contract)
     const domain = {
-      name: 'Vibe Most Wanted - FID Edition',
+      name: 'VibeFID',
       version: '1',
       chainId: 8453, // Base mainnet
       verifyingContract: contractAddress,
