@@ -60,11 +60,32 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
       return url;
     };
 
-    const pfpUrl = cardData.pfpUrl ? proxyUrl(cardData.pfpUrl) : '';
+    // Get card image URL from IPFS
+    const cardImageUrl = cardData.imageUrl ? proxyUrl(cardData.imageUrl) : '';
 
-    // Card dimensions scaled to fit OG image (maintain 2.5:3.5 ratio)
-    const cardWidth = 450;
-    const cardHeight = 630;
+    // If no card image, show fallback
+    if (!cardImageUrl) {
+      return new ImageResponse(
+        (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#000',
+              color: '#FFD700',
+              fontSize: '48px',
+              fontWeight: 900,
+            }}
+          >
+            VibeFID Card
+          </div>
+        ),
+        { ...size }
+      );
+    }
 
     return new ImageResponse(
       (
@@ -79,210 +100,19 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
             position: 'relative',
           }}
         >
-          {/* Playing Card */}
-          <div
+          {/* Card Image from IPFS */}
+          <img
+            src={cardImageUrl}
             style={{
-              width: `${cardWidth}px`,
-              height: `${cardHeight}px`,
-              background: '#f5f5dc',
-              border: '4px solid #000',
+              maxWidth: '500px',
+              maxHeight: '630px',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
               borderRadius: '8px',
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              padding: '10px',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
             }}
-          >
-            {/* Top left: Rank + Suit */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '20px',
-                left: '15px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: cardData.rank === '10' ? '46px' : '52px',
-                  fontWeight: 900,
-                  color: cardData.color === 'red' ? '#dc143c' : '#000',
-                  fontFamily: 'serif',
-                  lineHeight: 1,
-                  letterSpacing: cardData.rank === '10' ? '-6px' : '0',
-                }}
-              >
-                {cardData.rank}
-              </span>
-              <span
-                style={{
-                  fontSize: '44px',
-                  color: cardData.color === 'red' ? '#dc143c' : '#000',
-                  fontFamily: 'serif',
-                  lineHeight: 1,
-                  marginTop: '-4px',
-                }}
-              >
-                {cardData.suitSymbol}
-              </span>
-            </div>
-
-            {/* Top center: FID + Score */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                marginTop: '10px',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '18px',
-                  color: '#000',
-                  fontFamily: 'monospace',
-                }}
-              >
-                fid:{cardData.fid}
-              </span>
-              <span
-                style={{
-                  fontSize: '16px',
-                  color: '#000',
-                  fontFamily: 'monospace',
-                  marginTop: '2px',
-                }}
-              >
-                neynar score: {cardData.neynarScore?.toFixed(2) || '0.00'}
-              </span>
-            </div>
-
-            {/* Center: PFP */}
-            {pfpUrl && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  marginTop: '100px',
-                }}
-              >
-                <div
-                  style={{
-                    width: '260px',
-                    height: '260px',
-                    border: '3px solid #000',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    display: 'flex',
-                  }}
-                >
-                  <img
-                    src={pfpUrl}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                  {/* Vintage overlay */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      background: 'linear-gradient(to bottom, rgba(101, 67, 33, 0.15), rgba(0, 0, 0, 0.2))',
-                      display: 'flex',
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Below PFP: Username */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginTop: '20px',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  color: '#000',
-                  fontFamily: 'serif',
-                  textAlign: 'center',
-                }}
-              >
-                {cardData.displayName || cardData.username}
-              </span>
-            </div>
-
-            {/* Bottom: Meme text */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginTop: '8px',
-                paddingLeft: '20px',
-                paddingRight: '20px',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: '#000',
-                  fontFamily: 'serif',
-                  textAlign: 'center',
-                  lineHeight: 1.2,
-                }}
-              >
-                Wanted for crimes against good vibes
-              </span>
-            </div>
-
-            {/* Bottom right: Rotated Rank + Suit (upside down) */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '20px',
-                right: '15px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                transform: 'rotate(180deg)',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: cardData.rank === '10' ? '46px' : '52px',
-                  fontWeight: 900,
-                  color: cardData.color === 'red' ? '#dc143c' : '#000',
-                  fontFamily: 'serif',
-                  lineHeight: 1,
-                  letterSpacing: cardData.rank === '10' ? '-6px' : '0',
-                }}
-              >
-                {cardData.rank}
-              </span>
-              <span
-                style={{
-                  fontSize: '44px',
-                  color: cardData.color === 'red' ? '#dc143c' : '#000',
-                  fontFamily: 'serif',
-                  lineHeight: 1,
-                  marginTop: '-4px',
-                }}
-              >
-                {cardData.suitSymbol}
-              </span>
-            </div>
-          </div>
+          />
         </div>
       ),
       {

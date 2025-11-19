@@ -7,7 +7,6 @@ import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
-import { generateCardVideo } from "@/lib/generateCardVideo";
 import { VIBEFID_ABI, VIBEFID_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contracts/VibeFIDABI";
 import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
@@ -303,27 +302,29 @@ export default function FidPage() {
 
       const { rarity, suit, suitSymbol, color, rank, foil, wear, power } = traits;
 
-      // Generate MP4 video with foil animation
-      setError("Generating video with foil animation...");
-      const videoBlob = await generateCardVideo({
-        cardImageDataUrl,
-        foilType: foil as 'None' | 'Standard' | 'Prize',
-        duration: 3,
-        fps: 30,
-      });
+      // Convert card image from data URL to blob
+      setError("Preparing card image...");
+      const base64Data = cardImageDataUrl.split(',')[1];
+      const binaryData = atob(base64Data);
+      const arrayBuffer = new ArrayBuffer(binaryData.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < binaryData.length; i++) {
+        uint8Array[i] = binaryData.charCodeAt(i);
+      }
+      const imageBlob = new Blob([uint8Array], { type: 'image/png' });
 
-      // Upload video to IPFS
+      // Upload image to IPFS
       setError("Uploading to IPFS...");
       const formData = new FormData();
-      formData.append('video', videoBlob, `card-${userData.fid}.webm`);
+      formData.append('image', imageBlob, `card-${userData.fid}.png`);
 
-      const uploadResponse = await fetch('/api/upload-nft-video', {
+      const uploadResponse = await fetch('/api/upload-nft-image', {
         method: 'POST',
         body: formData,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload video to IPFS');
+        throw new Error('Failed to upload image to IPFS');
       }
 
       const { ipfsUrl } = await uploadResponse.json();
