@@ -32,7 +32,7 @@ export default function FidPage() {
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
 
-  // Queries
+  // Queries - with conditional skip to prevent errors
   const myCards = useQuery(
     api.farcasterCards.getFarcasterCardsByAddress,
     address ? { address } : "skip"
