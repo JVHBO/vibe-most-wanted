@@ -177,10 +177,10 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       ctx.rotate(Math.PI); // 180° rotation
       ctx.fillStyle = params.color === 'red' ? '#dc143c' : '#000';
       ctx.textAlign = 'left';
-      ctx.font = '50px serif';
-      ctx.fillText(params.suitSymbol, 0, 60);
       ctx.font = 'bold 60px serif';
-      ctx.fillText(params.rank, 0, 10);
+      ctx.fillText(params.rank, 0, 80); // Match top left spacing
+      ctx.font = '50px serif';
+      ctx.fillText(params.suitSymbol, 0, 130); // Match top left spacing
       ctx.restore();
 
       // Convert to data URL
