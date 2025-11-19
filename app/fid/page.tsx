@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomFoil, generateRandomWear, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import type { NeynarUser } from "@/lib/neynar";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
+import FoilCardEffect from "@/components/FoilCardEffect";
 
 export default function FidPage() {
   const { address } = useAccount();
@@ -336,19 +337,28 @@ export default function FidPage() {
                     </span>
                   </div>
 
-                  <img
-                    src={card.pfpUrl}
-                    alt={card.username}
-                    className="w-full aspect-square object-cover rounded-lg mb-2"
-                  />
+                  <FoilCardEffect
+                    foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null}
+                    className="w-full aspect-square rounded-lg mb-2 overflow-hidden"
+                  >
+                    <img
+                      src={card.pfpUrl}
+                      alt={card.username}
+                      className="w-full h-full object-cover"
+                    />
+                  </FoilCardEffect>
+
                   <p className="text-vintage-gold font-bold">{card.displayName}</p>
                   <p className="text-vintage-ice/70 text-sm">@{card.username}</p>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-vintage-burnt-gold text-sm">{card.rarity}</span>
                     <span className="text-vintage-ice text-sm">⚡ {card.power}</span>
                   </div>
-                  <div className="mt-1 text-center text-xs text-vintage-ice/50">
-                    Score: {card.neynarScore.toFixed(2)}
+                  <div className="mt-1 flex items-center justify-between text-xs">
+                    <span className="text-vintage-ice/50">Score: {card.neynarScore.toFixed(2)}</span>
+                    {card.foil && card.foil !== 'None' && (
+                      <span className="text-purple-400 font-bold">✨ {card.foil}</span>
+                    )}
                   </div>
                 </div>
               ))}
