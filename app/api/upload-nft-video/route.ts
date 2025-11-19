@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
         accessKeyId: accessKey,
         secretAccessKey: secretKey,
       },
+      forcePathStyle: true, // Required for Filebase
     });
 
     // Generate unique filename
