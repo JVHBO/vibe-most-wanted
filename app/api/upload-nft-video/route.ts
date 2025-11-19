@@ -77,9 +77,10 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to retrieve CID from uploaded file');
     }
 
-    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
+    // Use public IPFS gateway so we can migrate providers later
+    const ipfsUrl = `https://ipfs.io/ipfs/${cid}`;
 
-    console.log(`✅ Video uploaded to IPFS (Filebase): ${ipfsUrl}`);
+    console.log(`✅ Video uploaded to IPFS via Filebase, CID: ${cid}`);
 
     return NextResponse.json({
       ipfsUrl,
