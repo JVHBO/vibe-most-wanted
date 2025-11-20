@@ -7,7 +7,7 @@ import { useAccount } from "wagmi";
 import { CoinsInboxModal } from "./CoinsInboxModal";
 import NextImage from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 
 interface CoinsInboxDisplayProps {
   compact?: boolean; // For miniapp/mobile view
@@ -27,10 +27,8 @@ export function CoinsInboxDisplay({ compact = false, userAddress }: CoinsInboxDi
     address ? { address } : "skip"
   );
 
-  // Get actual VBMS wallet balance from blockchain (only for website mode)
-  const { balance: vbmsWalletBalance, isLoading: isBalanceLoading } = compact
-    ? { balance: '0', isLoading: false } // Skip blockchain query in miniapp
-    : useVBMSBalance(address as `0x${string}` | undefined);
+  // Get actual VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)
+  const { balance: vbmsWalletBalance, isLoading: isBalanceLoading } = useFarcasterVBMSBalance(address);
 
   // Debug logging (keep in production to diagnose miniapp issues)
   if (typeof window !== 'undefined') {
