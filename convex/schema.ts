@@ -24,6 +24,12 @@ export default defineSchema({
       openedCards: v.number(),
       unopenedCards: v.number(),
 
+      // Collection-specific power (for leaderboard filtering)
+      vibePower: v.optional(v.number()),
+      vbrsPower: v.optional(v.number()),
+      vibefidPower: v.optional(v.number()),
+      afclPower: v.optional(v.number()),
+
       // PvE Stats
       pveWins: v.number(),
       pveLosses: v.number(),
