@@ -2991,15 +2991,10 @@ export default function TCGPage() {
   }, [collectionPowerCache]);
 
   // Filter and re-rank leaderboard by collection
+  // SIMPLIFIED: Just sort by totalPower, no filtering
+  // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
   const filteredLeaderboard = useMemo(() => {
-    console.log('🔄 filteredLeaderboard recalculating...', Date.now());
-
-    // SIMPLIFIED TO FIX MOBILE FREEZE
-    // The previous implementation created new objects on every recalc,
-    // causing infinite re-render loops on slow mobile webviews.
-    // For now, just return leaderboard sorted by totalPower.
-    // Collection-specific filtering temporarily disabled until we can
-    // optimize this properly.
+    if (!leaderboard || leaderboard.length === 0) return [];
 
     return [...leaderboard].sort((a, b) =>
       (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0)
