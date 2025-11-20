@@ -37,8 +37,138 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
       console.error('Failed to fetch card data:', e);
     }
 
-    // Fallback if card not found
+    // Fallback if card not found - fetch from Neynar API
     if (!cardData) {
+      try {
+        // Fetch user data from Neynar
+        const neynarApiKey = process.env.NEYNAR_API_KEY!;
+        const neynarResponse = await fetch(
+          `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
+          {
+            headers: {
+              'accept': 'application/json',
+              'api_key': neynarApiKey,
+            },
+          }
+        );
+
+        if (neynarResponse.ok) {
+          const neynarData = await neynarResponse.json();
+          const userData = neynarData.users?.[0];
+
+          if (userData) {
+            // Generate preview card from Neynar data
+            return new ImageResponse(
+              (
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Card Container */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      background: 'rgba(20, 20, 20, 0.9)',
+                      border: '4px solid #FFD700',
+                      borderRadius: '16px',
+                      padding: '40px',
+                      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
+                    }}
+                  >
+                    {/* Preview Badge */}
+                    <div
+                      style={{
+                        fontSize: '32px',
+                        fontWeight: 700,
+                        color: '#FFD700',
+                        marginBottom: '20px',
+                      }}
+                    >
+                      🎴 VibeFID Card
+                    </div>
+
+                    {/* Profile Picture */}
+                    {userData.pfp_url && (
+                      <img
+                        src={userData.pfp_url}
+                        style={{
+                          width: '300px',
+                          height: '300px',
+                          borderRadius: '50%',
+                          border: '6px solid #FFD700',
+                          objectFit: 'cover',
+                          marginBottom: '20px',
+                        }}
+                      />
+                    )}
+
+                    {/* Username */}
+                    <div
+                      style={{
+                        fontSize: '48px',
+                        fontWeight: 900,
+                        color: '#FFD700',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      @{userData.username}
+                    </div>
+
+                    {/* Display Name */}
+                    <div
+                      style={{
+                        fontSize: '28px',
+                        color: '#D4AF37',
+                        marginBottom: '20px',
+                      }}
+                    >
+                      {userData.display_name}
+                    </div>
+
+                    {/* Call to Action */}
+                    <div
+                      style={{
+                        fontSize: '24px',
+                        color: '#FFD700',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Not minted yet - Mint now!
+                    </div>
+                  </div>
+
+                  {/* Branding */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '40px',
+                      fontSize: '28px',
+                      fontWeight: 700,
+                      color: 'rgba(255, 255, 255, 0.5)',
+                    }}
+                  >
+                    VIBE MOST WANTED
+                  </div>
+                </div>
+              ),
+              { ...size }
+            );
+          }
+        }
+      } catch (neynarError) {
+        console.error('Neynar fetch error:', neynarError);
+      }
+
+      // Ultimate fallback
       return new ImageResponse(
         (
           <div
@@ -46,15 +176,18 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
               width: '100%',
               height: '100%',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#000',
+              background: 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)',
               color: '#FFD700',
-              fontSize: '48px',
-              fontWeight: 900,
             }}
           >
-            VibeFID Card #{fid}
+            <div style={{ fontSize: '80px', marginBottom: '20px' }}>🎴</div>
+            <div style={{ fontSize: '48px', fontWeight: 900 }}>VibeFID Card #{fid}</div>
+            <div style={{ fontSize: '28px', color: '#D4AF37', marginTop: '10px' }}>
+              Mint your VibeFID card now!
+            </div>
           </div>
         ),
         { ...size }
