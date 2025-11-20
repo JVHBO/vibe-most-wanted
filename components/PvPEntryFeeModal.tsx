@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTransferVBMS, useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
+import { useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 import { parseEther } from "viem";
@@ -20,7 +21,7 @@ export function PvPEntryFeeModal({
   entryFeeAmount,
 }: PvPEntryFeeModalProps) {
   const { address } = useAccount();
-  const { balance: vbmsBalance } = useVBMSBalance(address);
+  const { balance: vbmsBalance } = useFarcasterVBMSBalance(address); // Miniapp-compatible
   const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
 
   const [step, setStep] = useState<"confirm" | "transferring" | "done">("confirm");

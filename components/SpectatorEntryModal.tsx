@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTransferVBMS, useVBMSBalance, useApproveVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useTransferVBMS, useApproveVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 
@@ -19,7 +20,7 @@ export function SpectatorEntryModal({
   battleId,
 }: SpectatorEntryModalProps) {
   const { address } = useAccount();
-  const { balance: vbmsBalance } = useVBMSBalance(address);
+  const { balance: vbmsBalance } = useFarcasterVBMSBalance(address); // Miniapp-compatible
   const { approve, isPending: isApproving } = useApproveVBMS();
   const { transfer, isPending: isTransferring } = useTransferVBMS();
 

@@ -6,7 +6,8 @@ import { useState, useEffect, useRef } from "react";
 import { Id } from "@/convex/_generated/dataModel";
 import { ShopNotification } from "./ShopNotification";
 import { PackOpeningAnimation } from "./PackOpeningAnimation";
-import { useVBMSBalance, useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 import { parseEther } from "viem";
@@ -24,9 +25,9 @@ export function ShopView({ address }: ShopViewProps) {
   // Mutations
   const openPack = useMutation(api.cardPacks.openPack);
 
-  // VBMS Blockchain hooks
+  // VBMS Blockchain hooks (using Farcaster-compatible hook for miniapp)
   const { address: walletAddress } = useAccount();
-  const { balance: vbmsBalance, refetch: refetchVBMS } = useVBMSBalance(walletAddress);
+  const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(walletAddress);
   const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
 
   // State
