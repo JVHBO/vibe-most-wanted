@@ -42,7 +42,7 @@ import { PokerMatchmaking } from "@/components/PokerMatchmaking";
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
-import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
+import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 // 📝 Development logger (silent in production)
 import { devLog, devError, devWarn } from "@/lib/utils/logger";
 // 🔊 Audio Manager
@@ -432,6 +432,7 @@ export default function TCGPage() {
 
   // 🚀 Performance: Memoized NFT calculations (only recomputes when nfts change)
   const totalNftPower = useTotalPower(nfts);
+  const collectionPowers = usePowerByCollection(nfts); // Powers separated by collection for leaderboards
   const openedCardsCount = useMemo(() => nfts.filter(nft => !isUnrevealed(nft)).length, [nfts]);
   const unopenedCardsCount = useMemo(() => nfts.filter(nft => isUnrevealed(nft)).length, [nfts]);
   const nftTokenIds = useMemo(() => nfts.map(nft => nft.tokenId), [nfts]);
