@@ -39,32 +39,6 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
 
     // Fallback if card not found
     if (!cardData) {
-      cardData = {
-        username: `FID ${fid}`,
-        rarity: 'Common',
-        foil: 'None',
-        power: 100,
-        rank: '2',
-        suitSymbol: '♠',
-        color: 'black',
-      };
-    }
-
-    // Proxy image URL for Edge Runtime compatibility
-    const proxyUrl = (url: string) => {
-      if (!url) return '';
-      if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
-      if (url.startsWith('https://ipfs.io/ipfs/')) {
-        return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
-      }
-      return url;
-    };
-
-    // Get card image URL from IPFS
-    const cardImageUrl = cardData.imageUrl ? proxyUrl(cardData.imageUrl) : '';
-
-    // If no card image, show fallback
-    if (!cardImageUrl) {
       return new ImageResponse(
         (
           <div
@@ -80,13 +54,17 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
               fontWeight: 900,
             }}
           >
-            VibeFID Card
+            VibeFID Card #{fid}
           </div>
         ),
         { ...size }
       );
     }
 
+    // Use profile picture (PNG) directly - much faster than IPFS
+    const pfpUrl = cardData.pfpUrl || '';
+
+    // Render card-style image with profile picture
     return new ImageResponse(
       (
         <div
@@ -100,19 +78,88 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
             position: 'relative',
           }}
         >
-          {/* Card Image from IPFS */}
-          <img
-            src={cardImageUrl}
+          {/* Card Container */}
+          <div
             style={{
-              maxWidth: '500px',
-              maxHeight: '630px',
-              width: 'auto',
-              height: 'auto',
-              objectFit: 'contain',
-              borderRadius: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              background: 'rgba(20, 20, 20, 0.9)',
+              border: '4px solid #FFD700',
+              borderRadius: '16px',
+              padding: '40px',
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
             }}
-          />
+          >
+            {/* Suit Symbol */}
+            <div
+              style={{
+                fontSize: '80px',
+                fontWeight: 900,
+                color: cardData.color === 'red' ? '#ef4444' : '#000',
+                marginBottom: '20px',
+              }}
+            >
+              {cardData.rank}{cardData.suitSymbol}
+            </div>
+
+            {/* Profile Picture */}
+            {pfpUrl && (
+              <img
+                src={pfpUrl}
+                style={{
+                  width: '300px',
+                  height: '300px',
+                  borderRadius: '50%',
+                  border: '6px solid #FFD700',
+                  objectFit: 'cover',
+                  marginBottom: '20px',
+                }}
+              />
+            )}
+
+            {/* Username */}
+            <div
+              style={{
+                fontSize: '48px',
+                fontWeight: 900,
+                color: '#FFD700',
+                marginBottom: '10px',
+              }}
+            >
+              @{cardData.username}
+            </div>
+
+            {/* Stats */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '40px',
+                fontSize: '32px',
+                color: '#D4AF37',
+              }}
+            >
+              <div style={{ display: 'flex' }}>
+                <span style={{ fontWeight: 700 }}>{cardData.rarity}</span>
+              </div>
+              <div style={{ display: 'flex' }}>
+                <span style={{ fontWeight: 700 }}>⚡ {cardData.power}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Branding */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '40px',
+              fontSize: '28px',
+              fontWeight: 700,
+              color: 'rgba(255, 255, 255, 0.5)',
+            }}
+          >
+            VIBE MOST WANTED
+          </div>
         </div>
       ),
       {
