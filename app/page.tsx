@@ -1294,9 +1294,24 @@ export default function TCGPage() {
         const enriched = await Promise.all(
           batch.map(async (nft) => {
             const imageUrl = await getImage(nft);
+
+            // 🎯 CRITICAL: Detect collection from contract address
+            let collection: CollectionId = 'vibe'; // default
+            const contractAddr = nft?.contract?.address?.toLowerCase();
+            if (contractAddr) {
+              if (contractAddr === getCollectionContract('vibefid')?.toLowerCase()) {
+                collection = 'vibefid';
+              } else if (contractAddr === getCollectionContract('americanfootball')?.toLowerCase()) {
+                collection = 'americanfootball';
+              } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
+                collection = 'gmvbrs';
+              }
+            }
+
             return {
               ...nft,
               imageUrl,
+              collection, // 🎯 ADD COLLECTION FIELD
               rarity: findAttr(nft, 'rarity'),
               status: findAttr(nft, 'status'),
               wear: findAttr(nft, 'wear'),
