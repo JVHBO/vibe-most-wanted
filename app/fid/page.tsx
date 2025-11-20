@@ -18,6 +18,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { generateCriminalBackstory } from "@/lib/generateCriminalBackstory";
 import type { CriminalBackstory } from "@/lib/generateCriminalBackstory";
 import CriminalBackstoryCard from "@/components/CriminalBackstoryCard";
+import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 
 interface GeneratedTraits {
   rarity: string;
@@ -268,27 +269,18 @@ export default function FidPage() {
       const foil = fidTraits.foil;
       const wear = fidTraits.wear;
 
-      // Calculate power with foil and wear multipliers
-      const basePower = getBasePowerFromRarity(rarity);
+      // Calculate power with VibeFID balanced config
+      const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
+      const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
 
-      // Wear multiplier
-      const wearMultiplier: Record<string, number> = {
-        Pristine: 1.8,
-        Mint: 1.4,
-        "Lightly Played": 1.0,
-        "Moderately Played": 1.0,
-        "Heavily Played": 1.0,
-      };
+      // Get wear multiplier from config
+      const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
+      const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
 
-      // Foil multiplier
-      const foilMultiplier: Record<string, number> = {
-        Prize: 15.0,
-        Standard: 2.5,
-        None: 1.0,
-      };
+      // Get foil multiplier from config
+      const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
+      const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
 
-      const wearMult = wearMultiplier[wear] || 1.0;
-      const foilMult = foilMultiplier[foil] || 1.0;
       const power = Math.round(basePower * wearMult * foilMult);
 
       // Save generated traits
@@ -380,22 +372,18 @@ export default function FidPage() {
         const foil = fidTraits.foil;
         const wear = fidTraits.wear;
 
-        // Calculate power with foil and wear multipliers
-        const basePower = getBasePowerFromRarity(rarity);
-        const wearMultiplier: Record<string, number> = {
-          Pristine: 1.8,
-          Mint: 1.4,
-          "Lightly Played": 1.0,
-          "Moderately Played": 1.0,
-          "Heavily Played": 1.0,
-        };
-        const foilMultiplier: Record<string, number> = {
-          Prize: 15.0,
-          Standard: 2.5,
-          None: 1.0,
-        };
-        const wearMult = wearMultiplier[wear] || 1.0;
-        const foilMult = foilMultiplier[foil] || 1.0;
+        // Calculate power with VibeFID balanced config
+        const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
+        const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
+
+        // Get wear multiplier from config
+        const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
+        const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
+
+        // Get foil multiplier from config
+        const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
+        const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
+
         const power = Math.round(basePower * wearMult * foilMult);
 
         traits = { rarity, suit, suitSymbol, color, rank, foil, wear, power };
@@ -762,11 +750,23 @@ export default function FidPage() {
                     </span>
                   </div>
 
-                  <img
-                    src={card.pfpUrl}
-                    alt={card.username}
-                    className="w-full aspect-square object-cover rounded-lg mb-2"
-                  />
+                  {/* Card Image/Video */}
+                  {card.imageUrl?.endsWith('.mp4') || card.imageUrl?.endsWith('.webm') ? (
+                    <video
+                      src={card.imageUrl}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full aspect-square object-cover rounded-lg mb-2"
+                    />
+                  ) : (
+                    <img
+                      src={card.imageUrl || card.pfpUrl}
+                      alt={card.username}
+                      className="w-full aspect-square object-cover rounded-lg mb-2"
+                    />
+                  )}
                   <p className="text-vintage-gold font-bold">{card.displayName}</p>
                   <p className="text-vintage-ice/70 text-sm">@{card.username}</p>
                   <div className="mt-2 flex items-center justify-between">
