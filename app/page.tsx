@@ -441,10 +441,10 @@ export default function TCGPage() {
   const { finishBattle: finishVBMSBattle } = useFinishVBMSBattle();
   const { battleId: activeBattleId, refetch: refetchActiveBattle } = useActiveBattle(address as `0x${string}`);
 
-  // 🎁 Welcome Pack (skip in miniapp for performance)
+  // 🎁 Welcome Pack (enabled in miniapp too)
   const hasReceivedWelcomePack = useQuery(
     api.welcomePack.hasReceivedWelcomePack,
-    (address && !isMiniappMode()) ? { address } : "skip"
+    address ? { address } : "skip"
   );
   const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
 
