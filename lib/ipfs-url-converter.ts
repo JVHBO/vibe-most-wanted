@@ -1,13 +1,15 @@
 /**
- * Converts old IPFS URLs to standard ipfs.io gateway with .mp4 extension
+ * Converts old IPFS URLs to standard ipfs.io gateway
  *
  * Handles:
- * - ipfs.io URLs without extension
+ * - ipfs.io URLs (returns as-is)
  * - cloudflare-ipfs.com URLs
  * - ipfs.filebase.io URLs
  * - Any IPFS gateway URL
  *
- * Converts to: ipfs.io with ?filename=card.mp4
+ * Converts to: ipfs.io/ipfs/{cid}
+ *
+ * Note: No extension needed - CardMedia auto-detects IPFS URLs as video
  */
 export function convertIpfsUrl(url: string | undefined): string | undefined {
   if (!url) return url;
@@ -22,6 +24,6 @@ export function convertIpfsUrl(url: string | undefined): string | undefined {
 
   const cid = ipfsMatch[1];
 
-  // Convert to standard ipfs.io gateway with .mp4 extension
-  return `https://ipfs.io/ipfs/${cid}?filename=card.mp4`;
+  // Convert to standard ipfs.io gateway (no extension needed)
+  return `https://ipfs.io/ipfs/${cid}`;
 }
