@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import FoilCardEffect from './FoilCardEffect';
+import TypewriterText from './TypewriterText';
 import type { CriminalBackstory } from '@/lib/generateCriminalBackstory';
 
 interface FidGenerationModalProps {
@@ -112,10 +113,12 @@ export default function FidGenerationModal({
                   </div>
                 </div>
 
-                <div className="bg-vintage-black/40 rounded-lg p-4 border border-vintage-gold/20">
-                  <p className="text-vintage-ice leading-relaxed text-justify">
-                    {backstory.story}
-                  </p>
+                <div className="bg-vintage-black/40 rounded-lg p-4 border border-vintage-gold/20 min-h-[120px]">
+                  <TypewriterText
+                    text={backstory.story}
+                    speed={15}
+                    className="text-vintage-ice leading-relaxed text-justify block"
+                  />
                 </div>
 
                 <div className="mt-4 p-3 bg-red-900/20 border border-red-600/50 rounded-lg">
