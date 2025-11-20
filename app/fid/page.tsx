@@ -20,6 +20,7 @@ import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import FidGenerationModal from "@/components/FidGenerationModal";
 import { useRouter } from "next/navigation";
 import { CardMedia } from "@/components/CardMedia";
+import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 
 interface GeneratedTraits {
   rarity: string;
@@ -554,7 +555,7 @@ export default function FidPage() {
 
                   {/* Card Image/Video */}
                   <CardMedia
-                    src={card.imageUrl || card.pfpUrl}
+                    src={convertIpfsUrl(card.imageUrl) || card.pfpUrl}
                     alt={card.username}
                     className="w-full aspect-square object-cover rounded-lg mb-2"
                   />
