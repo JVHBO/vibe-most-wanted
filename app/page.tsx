@@ -741,53 +741,47 @@ export default function TCGPage() {
         setIsInFarcaster(true);
         setIsCheckingFarcaster(true);
 
-          try {
-            // Find the Farcaster miniapp connector
-            const farcasterConnector = connectors.find((c) => c.id === 'farcasterMiniApp');
+        try {
+          // Find the Farcaster miniapp connector
+          const farcasterConnector = connectors.find((c) => c.id === 'farcasterMiniApp');
 
-            if (!farcasterConnector) {
-              console.error('[Farcaster] ❌ Farcaster connector not found in wagmi config');
-              setIsCheckingFarcaster(false);
-              return;
-            }
-
-            console.log('[Farcaster] 📡 Connecting with Farcaster wagmi connector...');
-
-            // Connect using wagmi - this will populate wagmiAddress automatically
-            await connect({ connector: farcasterConnector });
-
-            console.log('[Farcaster] ✅ Connected successfully');
-            devLog('✓ Auto-connected Farcaster wallet via wagmi');
-
-            // Wait for wagmiAddress to be populated
-            // The useAccount hook will update wagmiAddress after connection
-            // We'll save the address to localStorage in a separate useEffect
-
-            // ✓ Save FID to profile for notifications
-            try {
-              const context = await sdk.context;
-              const fid = context?.user?.fid;
-              if (fid) {
-                devLog('📱 Farcaster FID detected:', fid);
-                // FID will be saved when wagmiAddress is available
-              }
-            } catch (fidError) {
-              devLog('! Could not get FID:', fidError);
-            }
-          } catch (connectError: any) {
-            console.error('[Farcaster] ❌ Connection error:', connectError);
-            // Handle authorization errors
-            if (connectError?.message?.includes('not been authorized')) {
-              console.warn('[Farcaster] ⚠️ Wallet not authorized - user needs to enable in Farcaster settings');
-              devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
-            }
+          if (!farcasterConnector) {
+            console.error('[Farcaster] ❌ Farcaster connector not found in wagmi config');
+            setIsCheckingFarcaster(false);
+            return;
           }
+
+          console.log('[Farcaster] 📡 Connecting with Farcaster wagmi connector...');
+
+          // Connect using wagmi - this will populate wagmiAddress automatically
+          await connect({ connector: farcasterConnector });
+
+          console.log('[Farcaster] ✅ Connected successfully');
+          devLog('✓ Auto-connected Farcaster wallet via wagmi');
+
+          // ✓ Save FID to profile for notifications
+          try {
+            const context = await sdk.context;
+            const fid = context?.user?.fid;
+            if (fid) {
+              devLog('📱 Farcaster FID detected:', fid);
+            }
+          } catch (fidError) {
+            devLog('! Could not get FID:', fidError);
+          }
+        } catch (connectError: any) {
+          console.error('[Farcaster] ❌ Connection error:', connectError);
+          // Handle authorization errors
+          if (connectError?.message?.includes('not been authorized')) {
+            console.warn('[Farcaster] ⚠️ Wallet not authorized - user needs to enable in Farcaster settings');
+            devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
+          }
+        } finally {
+          setIsCheckingFarcaster(false);
         }
       } catch (err) {
         devLog('! Not in Farcaster context or wallet unavailable:', err);
         setIsInFarcaster(false);
-      } finally {
-        setIsCheckingFarcaster(false);
       }
     };
     initFarcasterWallet();
