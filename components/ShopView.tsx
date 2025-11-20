@@ -29,8 +29,19 @@ export function ShopView({ address }: ShopViewProps) {
   const { address: walletAddress } = useAccount();
   // Use address prop (works in miniapp) OR walletAddress (works in web) - prop takes priority
   const effectiveAddress = address || walletAddress;
+
+  // 🔍 Debug: Log address values
+  console.log('[ShopView] 🔍 Address values:', {
+    addressProp: address,
+    walletAddress,
+    effectiveAddress,
+  });
+
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(effectiveAddress);
   const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
+
+  // 🔍 Debug: Log balance
+  console.log('[ShopView] 💰 VBMS Balance:', vbmsBalance);
 
   // State
   const [quantity, setQuantity] = useState(1);
