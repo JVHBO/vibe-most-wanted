@@ -6,6 +6,7 @@
 
 import { AudioManager } from '@/lib/audio-manager';
 import FoilCardEffect from '@/components/FoilCardEffect';
+import { CardMedia } from '@/components/CardMedia';
 
 interface NFT {
   tokenId: string;
@@ -109,7 +110,7 @@ export function PveCardSelectionModal({
                   foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null}
                   className="w-full h-full"
                 >
-                  <img
+                  <CardMedia
                     src={card.imageUrl}
                     alt={`#${card.tokenId}`}
                     className="w-full h-full object-cover"
@@ -153,7 +154,7 @@ export function PveCardSelectionModal({
                     : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50'
                 }`}
               >
-                <img
+                <CardMedia
                   src={nft.imageUrl}
                   alt={`#${nft.tokenId}`}
                   className="w-full h-full object-cover"

@@ -10,11 +10,13 @@ interface CardMediaProps {
 
 /**
  * CardMedia component
- * Automatically detects if the source is an MP4/WebM video or image
- * and renders the appropriate HTML element
+ * Renders video for MP4/WebM files, image for everything else
+ * Images will show video thumbnails for IPFS videos without extensions
  */
 export function CardMedia({ src, alt, className, loading = "lazy", onClick }: CardMediaProps) {
-  const isVideo = src?.toLowerCase().endsWith('.mp4') || src?.toLowerCase().endsWith('.webm');
+  // Check if URL suggests it's a video by extension
+  const urlLower = src?.toLowerCase() || '';
+  const isVideo = urlLower.includes('.mp4') || urlLower.includes('.webm') || urlLower.includes('.mov');
 
   if (isVideo) {
     return (
@@ -27,13 +29,11 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         playsInline
         onClick={onClick}
         style={{ objectFit: 'cover' }}
-      >
-        <source src={src} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      />
     );
   }
 
+  // Default to image (works for both images and will show video thumbnail for IPFS)
   return (
     <img
       src={src}
