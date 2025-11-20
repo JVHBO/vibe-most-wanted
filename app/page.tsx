@@ -701,23 +701,45 @@ export default function TCGPage() {
     const initFarcasterWallet = async () => {
       console.log('[Farcaster] 🔍 Initializing wallet connection...');
       try {
-        // CRITICAL: First check if we're actually in a miniapp iframe
-        const isInIframe = isMiniappMode();
-
         console.log('[Farcaster] SDK check:', {
-          isInIframe,
           hasSdk: !!sdk,
           hasWallet: !!sdk?.wallet,
           hasEthProvider: !!sdk?.wallet?.ethProvider,
         });
 
-        // ONLY proceed if:
-        // 1. We're in an iframe (miniapp context)
-        // 2. SDK exists with wallet and ethProvider
-        if (isInIframe && sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
-          console.log('[Farcaster] ✅ Farcaster SDK detected, enabling miniapp mode');
-          setIsInFarcaster(true);
-          setIsCheckingFarcaster(true);
+        // CRITICAL: Don't use iframe detection - check if Farcaster SDK is ACTUALLY functional
+        // The SDK only exists and works in real Farcaster miniapp context
+        if (!sdk || typeof sdk.wallet === 'undefined' || !sdk.wallet.ethProvider) {
+          console.log('[Farcaster] ⚠️ Not in Farcaster miniapp - SDK not available');
+          setIsInFarcaster(false);
+          return;
+        }
+
+        // Verify SDK context is valid with a timeout (prevent hanging)
+        try {
+          const contextPromise = sdk.context;
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('SDK context timeout')), 2000)
+          );
+
+          const context = await Promise.race([contextPromise, timeoutPromise]) as any;
+
+          if (!context || !context.user || !context.user.fid) {
+            console.log('[Farcaster] ⚠️ SDK present but invalid context - not in miniapp');
+            setIsInFarcaster(false);
+            return;
+          }
+
+          console.log('[Farcaster] ✅ Farcaster miniapp confirmed - FID:', context.user.fid);
+        } catch (contextError) {
+          console.log('[Farcaster] ⚠️ Failed to get valid SDK context:', contextError);
+          setIsInFarcaster(false);
+          return;
+        }
+
+        console.log('[Farcaster] ✅ Enabling miniapp mode and connecting wallet');
+        setIsInFarcaster(true);
+        setIsCheckingFarcaster(true);
 
           try {
             // Find the Farcaster miniapp connector
