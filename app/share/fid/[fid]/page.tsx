@@ -5,9 +5,9 @@ export async function generateMetadata({ params }: { params: Promise<{ fid: stri
   const { fid } = await params;
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
-  // Use Next.js opengraph-image route
+  // Use API route instead of opengraph-image to avoid Vercel firewall blocking
   // Add timestamp to bust Farcaster cache
-  const imageUrl = `${baseUrl}/share/fid/${fid}/opengraph-image?v=5`;
+  const imageUrl = `${baseUrl}/api/og/fid/${fid}?v=6`;
 
   return {
     title: `VibeFID Card #${fid} - VIBE Most Wanted`,
