@@ -43,43 +43,63 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
           mixBlendMode: 'overlay',
         }}
       >
-        {/* Prize Foil - Very subtle, delicate shimmer */}
+        {/* Prize Foil - Strong holographic effect with rotating radial gradients */}
         {isPrize && (
-          <>
-            {/* Ultra-soft rainbow gradient */}
+          <div className="prize-foil-wrapper" style={{ overflow: 'hidden' }}>
+            {/* Rotating radial gradients */}
             <div
+              className="prize-foil-before"
               style={{
                 position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
                 background: `
-                  conic-gradient(from 45deg at -30% -30%, violet, blue, cyan, green, yellow, orange, red, violet),
-                  linear-gradient(135deg, transparent, rgba(255, 0, 0, .2) 10%, rgba(255, 255, 0, .2) 20%, rgba(0, 255, 0, .2) 30%, rgba(0, 255, 255, .2) 40%, rgba(0, 0, 255, .2) 50%, rgba(255, 0, 255, .15) 60%, transparent 70%)
+                  radial-gradient(ellipse at 25% 25%,
+                    rgba(255, 255, 255, 1) 0%,
+                    rgba(255, 100, 180, .9) 8%,
+                    rgba(100, 200, 255, .9) 16%,
+                    rgba(150, 255, 150, .9) 24%,
+                    rgba(255, 255, 100, .9) 32%,
+                    rgba(255, 150, 100, .9) 40%,
+                    rgba(200, 100, 255, .9) 48%,
+                    rgba(100, 255, 255, .8) 56%,
+                    rgba(255, 200, 150, .7) 64%,
+                    rgba(150, 255, 200, .6) 72%,
+                    rgba(255, 150, 255, .5) 80%,
+                    transparent 100%
+                  ),
+                  radial-gradient(circle at 70% 70%,
+                    rgba(255, 255, 255, .9) 0%,
+                    rgba(100, 255, 200, .8) 15%,
+                    rgba(255, 150, 255, .7) 30%,
+                    rgba(200, 255, 100, .6) 45%,
+                    transparent 60%
+                  )
                 `,
-                backgroundSize: '100% 100%, 200% 200%',
-                backgroundPosition: '0 0, -100% -100%',
-                animation: 'standardFoilShine 8s linear infinite',
-                opacity: 0.15,
-                mixBlendMode: 'hard-light',
+                backgroundSize: '120% 120%, 80% 80%',
+                backgroundPosition: '-20% -20%, 20% 20%',
+                animation: 'prizeFoilRotate 5s linear infinite',
+                transformOrigin: 'center',
+                opacity: 0.8,
               }}
             />
-            {/* Very subtle stripes */}
+            {/* Sweeping light gradient */}
             <div
+              className="prize-foil-after"
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, .04) 0, rgba(255, 255, 255, .04) 10px)',
-                mixBlendMode: 'overlay',
-                opacity: 0.2,
-                animation: 'prismMove 20s linear infinite',
+                background: 'linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .7) 45%, rgba(255, 255, 255, .6) 50%, transparent 55%)',
+                animation: 'prizeFoilSweep 7s ease-in-out infinite',
+                opacity: 0.3,
               }}
             />
-          </>
+          </div>
         )}
 
         {/* Standard Foil - Softer version of Prize effect */}
@@ -124,14 +144,21 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
 
       {/* CSS Animations */}
       <style jsx>{`
-        @keyframes prizeFoilShine {
+        @keyframes prizeFoilRotate {
           0% {
-            background-position: 0 0, -100% -100%;
-            filter: hue-rotate(0deg);
+            transform: rotate(0deg);
           }
           100% {
-            background-position: 0 0, 100% 100%;
-            filter: hue-rotate(360deg);
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes prizeFoilSweep {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
           }
         }
 
