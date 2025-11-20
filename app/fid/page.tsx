@@ -489,6 +489,28 @@ export default function FidPage() {
 
       const { rarity, suit, suitSymbol, color, rank, foil, wear, power } = traits;
 
+      // Upload static card PNG to IPFS first (for sharing)
+      setError("Uploading card image to IPFS...");
+      const cardPngBlob = await fetch(cardImageDataUrl).then(r => r.blob());
+      const pngFormData = new FormData();
+      pngFormData.append('image', cardPngBlob, `card-${userData.fid}.png`);
+
+      const pngUploadResponse = await fetch('/api/upload-nft-image', {
+        method: 'POST',
+        body: pngFormData,
+      });
+
+      if (!pngUploadResponse.ok) {
+        throw new Error('Failed to upload card image to IPFS');
+      }
+
+      const { ipfsUrl: cardImageIpfsUrl } = await pngUploadResponse.json();
+
+      console.log('🖼️ Card PNG IPFS URL:', cardImageIpfsUrl);
+      if (!cardImageIpfsUrl) {
+        throw new Error('Card PNG IPFS upload returned empty URL!');
+      }
+
       // Generate MP4 video with foil animation (8 seconds for better effect)
       setError("Generating video with foil animation (8 seconds)...");
       const videoBlob = await generateCardVideo({
@@ -514,7 +536,7 @@ export default function FidPage() {
 
       const { ipfsUrl } = await uploadResponse.json();
 
-      console.log('🔥 IPFS URL recebido:', ipfsUrl);
+      console.log('🔥 Video IPFS URL:', ipfsUrl);
       if (!ipfsUrl) {
         throw new Error('IPFS upload returned empty URL!');
       }
@@ -561,7 +583,8 @@ export default function FidPage() {
         rank,
         suitSymbol,
         color,
-        imageUrl: ipfsUrl,
+        imageUrl: ipfsUrl, // Video (MP4)
+        cardImageUrl: cardImageIpfsUrl, // Static PNG for sharing
       });
 
       // Mint NFT on smart contract
