@@ -2,7 +2,7 @@
 
 interface CardMediaProps {
   src: string | undefined;
-  alt: string;
+  alt: string | undefined;
   className?: string;
   loading?: "lazy" | "eager";
   onClick?: () => void;
@@ -42,7 +42,7 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
   return (
     <img
       src={src}
-      alt={alt}
+      alt={alt || ''}
       className={className}
       loading={loading}
       onClick={onClick}
