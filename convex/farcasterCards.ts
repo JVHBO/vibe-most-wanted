@@ -130,12 +130,15 @@ export const getFarcasterCardByFid = query({
     fid: v.number(),
   },
   handler: async (ctx, args) => {
-    const card = await ctx.db
+    // Get all cards for this FID and return the most recent one
+    const cards = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
-      .first();
+      .collect();
 
-    return card;
+    // Sort by creation time (most recent first) and return the first one
+    const sortedCards = cards.sort((a, b) => b._creationTime - a._creationTime);
+    return sortedCards[0] || null;
   },
 });
 
