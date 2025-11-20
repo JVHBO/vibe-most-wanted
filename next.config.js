@@ -50,6 +50,24 @@ module.exports = {
           },
         ],
       },
+      {
+        // Allow public access to opengraph images for Farcaster/social media
+        source: '/share/:path*/opengraph-image',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, OPTIONS',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate',
+          },
+        ],
+      },
     ];
   },
 };
