@@ -41,7 +41,7 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         autoPlay={loading === "eager"} // Only autoplay for eager (battle cards)
         preload={loading === "lazy" ? "none" : "metadata"} // Lazy = don't preload
         onClick={onClick}
-        style={{ objectFit: 'cover', pointerEvents: 'none' }}
+        style={{ objectFit: 'cover' }}
         onError={(e) => {
           console.warn('Video failed, trying image:', src);
           setUseImage(true);
