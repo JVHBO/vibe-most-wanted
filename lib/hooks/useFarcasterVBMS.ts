@@ -31,19 +31,30 @@ export function useFarcasterVBMSBalance(address?: string) {
         const sdk = (window as any).sdk;
         let provider: any;
 
+        console.log('[useFarcasterVBMS] 🔍 Checking providers...', {
+          hasSdk: !!sdk,
+          hasEthProvider: !!sdk?.wallet?.ethProvider,
+          hasGetEthereumProvider: !!sdk?.wallet?.getEthereumProvider,
+          hasWindowEthereum: !!(window as any).ethereum,
+          address,
+        });
+
         if (sdk?.wallet?.ethProvider) {
           // Miniapp: Use Farcaster SDK provider
           provider = sdk.wallet.ethProvider;
+          console.log('[useFarcasterVBMS] ✅ Using Farcaster SDK provider (ethProvider)');
         } else if (sdk?.wallet?.getEthereumProvider) {
           // Miniapp: New SDK API
           provider = await sdk.wallet.getEthereumProvider();
+          console.log('[useFarcasterVBMS] ✅ Using Farcaster SDK provider (getEthereumProvider)');
         } else if ((window as any).ethereum) {
           // Web: Use injected provider (MetaMask, etc)
           provider = (window as any).ethereum;
+          console.log('[useFarcasterVBMS] ✅ Using window.ethereum provider');
         }
 
         if (!provider) {
-          console.warn('[useFarcasterVBMS] No provider available');
+          console.warn('[useFarcasterVBMS] ❌ No provider available');
           setBalance('0');
           setIsLoading(false);
           return;

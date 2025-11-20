@@ -50,7 +50,8 @@ import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
 // 💎 VBMS Blockchain Contracts
-import { useVBMSBalance, useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
+import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
 import { CONTRACTS } from "@/lib/contracts";
 
 import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, type CollectionId } from "@/lib/collections/index";
@@ -432,8 +433,8 @@ export default function TCGPage() {
   const useEntryFee = useMutation(api.pvp.useEntryFee);
   const sendPvPRewardToInbox = useMutation(api.pvp.sendPvPRewardToInbox);
 
-  // 💎 VBMS Blockchain Contract Hooks
-  const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useVBMSBalance(address as `0x${string}`);
+  // 💎 VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
+  const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useFarcasterVBMSBalance(address);
   const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const { createBattle, isPending: isCreatingBattle } = useCreateBattle();
   const { joinBattle, isPending: isJoiningBattle } = useJoinBattle();
