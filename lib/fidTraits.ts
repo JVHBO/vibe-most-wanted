@@ -184,13 +184,17 @@ function getWearProbabilities(fid: number): Array<{ value: WearType; weight: num
 
 /**
  * Generate foil and wear traits based on FID
- * Uses deterministic randomness - same FID always gives same result
+ * @param fid - Farcaster ID
+ * @param extraSeed - Optional extra randomness (e.g., Date.now() for preview, omit for deterministic mint)
+ *
+ * Uses deterministic randomness by default - same FID always gives same result
+ * Pass extraSeed to add randomness for previews
  */
-export function getFidTraits(fid: number): FidTraits {
+export function getFidTraits(fid: number, extraSeed?: number): FidTraits {
   // Use FID as seed for foil, FID * 2 as seed for wear
-  // This ensures different random streams for each trait
-  const foilSeed = fid;
-  const wearSeed = fid * 2;
+  // If extraSeed provided, add it for randomness
+  const foilSeed = extraSeed ? fid + extraSeed : fid;
+  const wearSeed = extraSeed ? (fid * 2) + extraSeed : (fid * 2);
 
   const foil = weightedRoll(foilSeed, getFoilProbabilities(fid));
   const wear = weightedRoll(wearSeed, getWearProbabilities(fid));
