@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 export interface FarcasterUser {
   fid: number;
@@ -41,9 +42,7 @@ export function useFarcasterContext(): FarcasterContext {
     const initializeSdk = async () => {
       try {
         // Check if SDK is available
-        const sdk = (window as any).sdk;
-
-        if (!sdk) {
+        if (!sdk || typeof sdk.wallet === 'undefined') {
           // Not in miniapp context
           setContext({
             isReady: true,
@@ -54,13 +53,24 @@ export function useFarcasterContext(): FarcasterContext {
           return;
         }
 
-        // Wait for SDK to be ready
-        if (!sdk.context) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+        // Wait for SDK context to be ready with timeout
+        let sdkContext;
+        try {
+          const contextPromise = sdk.context;
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('SDK context timeout')), 2000)
+          );
+          sdkContext = await Promise.race([contextPromise, timeoutPromise]) as any;
+        } catch (contextError) {
+          console.log('[useFarcasterContext] Failed to get SDK context:', contextError);
+          setContext({
+            isReady: true,
+            isInMiniapp: false,
+            user: null,
+            error: 'Failed to get SDK context',
+          });
+          return;
         }
-
-        // Get user context
-        const sdkContext = sdk.context;
 
         if (!sdkContext?.user) {
           setContext({
