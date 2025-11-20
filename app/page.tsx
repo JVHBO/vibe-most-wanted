@@ -2995,7 +2995,7 @@ export default function TCGPage() {
     // This is much faster and doesn't require Alchemy API calls
     const getCollectionPower = (player: UserProfile): number => {
       const stats = player.stats;
-      if (!stats) return stats?.totalPower || 0;
+      if (!stats) return 0;
 
       switch (leaderboardCollection) {
         case 'vibe':
