@@ -4,11 +4,16 @@
  */
 
 /**
- * Fetch Farcaster account creation date by FID using Airstack API
+ * Fetch Farcaster account creation date by FID
+ * Priority: Farcaster Hub (free) → Airstack (free) → Neynar (paid endpoint)
  */
 export async function getFarcasterAccountCreationDate(fid: number): Promise<Date | null> {
   try {
-    // Try Airstack API first (has real onchain data)
+    // Try Farcaster Hub first (FREE - no API key needed!)
+    const hubDate = await fetchFromFarcasterHub(fid);
+    if (hubDate) return hubDate;
+
+    // Try Airstack API (free with API key)
     const airstackApiKey = process.env.AIRSTACK_API_KEY || process.env.NEXT_PUBLIC_AIRSTACK_API_KEY;
 
     if (airstackApiKey) {
@@ -16,7 +21,7 @@ export async function getFarcasterAccountCreationDate(fid: number): Promise<Date
       if (airstackDate) return airstackDate;
     }
 
-    // Fallback: Try Neynar API
+    // Fallback: Try Neynar API (may not return dates on free tier)
     const neynarApiKey = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
 
     if (neynarApiKey) {
@@ -25,12 +30,52 @@ export async function getFarcasterAccountCreationDate(fid: number): Promise<Date
     }
 
     // NO APPROXIMATIONS - Return null if no real data available
-    console.warn(`No API keys configured. Cannot fetch real creation date for FID ${fid}`);
-    console.warn('Configure AIRSTACK_API_KEY or NEYNAR_API_KEY for accurate dates');
+    console.warn(`Could not fetch real creation date for FID ${fid}`);
+    console.warn('Tried: Farcaster Hub (free), Airstack (needs key), Neynar (needs key)');
     return null;
 
   } catch (error) {
     console.error('Error fetching account creation date:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch creation date from Farcaster Hub (FREE - no API key needed!)
+ * Uses Pinata's free Hub endpoint to get onchain IdRegistry data
+ */
+async function fetchFromFarcasterHub(fid: number): Promise<Date | null> {
+  try {
+    // Try Pinata Hub first (most reliable free endpoint)
+    const response = await fetch(
+      `https://hub.pinata.cloud/v1/onChainEventsByFid?fid=${fid}&event_type=EVENT_TYPE_ID_REGISTER`,
+      {
+        headers: {
+          'accept': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.warn(`Farcaster Hub API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Extract registration timestamp from onchain event
+    if (data.events && data.events.length > 0) {
+      const registerEvent = data.events[0];
+
+      if (registerEvent.blockTimestamp) {
+        // blockTimestamp is in seconds since epoch
+        return new Date(registerEvent.blockTimestamp * 1000);
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Farcaster Hub fetch error:', error);
     return null;
   }
 }
