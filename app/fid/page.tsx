@@ -220,7 +220,6 @@ export default function FidPage() {
           setPreviewImage(null);
           setGeneratedTraits(null);
           setBackstoryData(null);
-          setFidInput("");
           setPendingMintData(null);
           setShowModal(false);
         } catch (err: any) {
