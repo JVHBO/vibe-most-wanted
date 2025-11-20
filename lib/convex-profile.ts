@@ -239,7 +239,13 @@ export class ConvexProfileService {
     openedCards: number,
     unopenedCards: number,
     totalPower: number,
-    tokenIds?: string[] // Optional: owned token IDs for defense deck validation
+    tokenIds?: string[], // Optional: owned token IDs for defense deck validation
+    collectionPowers?: { // Optional: collection-specific powers for leaderboard filtering
+      vibePower?: number;
+      vbrsPower?: number;
+      vibefidPower?: number;
+      afclPower?: number;
+    }
   ): Promise<void> {
     try {
       const normalizedAddress = address.toLowerCase();
@@ -258,6 +264,7 @@ export class ConvexProfileService {
           openedCards,
           unopenedCards,
           totalPower,
+          ...(collectionPowers || {}), // Spread collection powers if provided
         },
         tokenIds, // Pass tokenIds for validation
       });
