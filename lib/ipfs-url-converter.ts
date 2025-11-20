@@ -1,12 +1,13 @@
 /**
- * Converts old IPFS URLs to Cloudflare gateway with .mp4 extension
+ * Converts old IPFS URLs to standard ipfs.io gateway with .mp4 extension
  *
  * Handles:
- * - ipfs.io URLs
+ * - ipfs.io URLs without extension
+ * - cloudflare-ipfs.com URLs
  * - ipfs.filebase.io URLs
  * - Any IPFS gateway URL
  *
- * Converts to: cloudflare-ipfs.com with ?filename=card.mp4
+ * Converts to: ipfs.io with ?filename=card.mp4
  */
 export function convertIpfsUrl(url: string | undefined): string | undefined {
   if (!url) return url;
@@ -21,6 +22,6 @@ export function convertIpfsUrl(url: string | undefined): string | undefined {
 
   const cid = ipfsMatch[1];
 
-  // Convert to Cloudflare IPFS gateway with .mp4 extension
-  return `https://cloudflare-ipfs.com/ipfs/${cid}?filename=card.mp4`;
+  // Convert to standard ipfs.io gateway with .mp4 extension
+  return `https://ipfs.io/ipfs/${cid}?filename=card.mp4`;
 }
