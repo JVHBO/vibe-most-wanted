@@ -69,7 +69,7 @@ export const fidTranslations = {
     back: '← Voltar',
 
     // Story templates
-    criminalStory1: 'iniciou suas atividades criminosas em {date}, rapidamente ganhando notoriedade na comunidade underground.',
+    criminalStory1: 'Iniciou suas atividades criminosas em {date}, rapidamente ganhando notoriedade na comunidade underground.',
     criminalStory2: 'Com uma rede de {followers} cúmplices espalhados pelo submundo digital, {username} se tornou uma das figuras mais temidas.',
     criminalStory3: 'Conhecido(a) por {bio}, este criminoso é extremamente perigoso e deve ser abordado com cautela.',
     criminalStory4: 'As autoridades oferecem uma recompensa de ${bounty} pela captura vivo ou morto.',
@@ -154,7 +154,7 @@ export const fidTranslations = {
     back: '← Back',
 
     // Story templates
-    criminalStory1: 'began their criminal activities on {date}, quickly gaining notoriety in the underground community.',
+    criminalStory1: 'Began their criminal activities on {date}, quickly gaining notoriety in the underground community.',
     criminalStory2: 'With a network of {followers} accomplices spread across the digital underworld, {username} became one of the most feared figures.',
     criminalStory3: 'Known for {bio}, this criminal is extremely dangerous and should be approached with caution.',
     criminalStory4: 'Authorities offer a reward of ${bounty} for capture dead or alive.',
@@ -239,7 +239,7 @@ export const fidTranslations = {
     back: '← Atrás',
 
     // Story templates
-    criminalStory1: 'comenzó sus actividades criminales en {date}, ganando rápidamente notoriedad en la comunidad clandestina.',
+    criminalStory1: 'Comenzó sus actividades criminales en {date}, ganando rápidamente notoriedad en la comunidad clandestina.',
     criminalStory2: 'Con una red de {followers} cómplices esparcidos por el submundo digital, {username} se convirtió en una de las figuras más temidas.',
     criminalStory3: 'Conocido(a) por {bio}, este criminal es extremadamente peligroso y debe abordarse con precaución.',
     criminalStory4: 'Las autoridades ofrecen una recompensa de ${bounty} por la captura vivo o muerto.',
@@ -409,7 +409,7 @@ export const fidTranslations = {
     back: '← Назад',
 
     // Story templates
-    criminalStory1: 'начал преступную деятельность {date}, быстро завоевав печальную известность в подпольном сообществе.',
+    criminalStory1: 'Начал преступную деятельность {date}, быстро завоевав печальную известность в подпольном сообществе.',
     criminalStory2: 'С сетью из {followers} сообщников, распространенных по цифровому подполью, {username} стал одной из самых страшных фигур.',
     criminalStory3: 'Известен {bio}, этот преступник чрезвычайно опасен, и к нему следует подходить с осторожностью.',
     criminalStory4: 'Власти предлагают награду в ${bounty} за поимку живым или мертвым.',
