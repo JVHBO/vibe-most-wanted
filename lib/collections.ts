@@ -73,6 +73,45 @@ export const DEFAULT_POWER_CONFIG = {
 };
 
 /**
+ * Configuração de power balanceada para VibeFID
+ * Reduz multiplicadores para evitar cartas extremamente OP
+ *
+ * Exemplos de Power:
+ *
+ * FID ≤ 5,000 (100% Prize + Pristine):
+ *   - Mythic: 600 × 6.0 × 1.8 = 6,480 power
+ *   - Legendary: 100 × 6.0 × 1.8 = 1,080 power
+ *   - Epic: 50 × 6.0 × 1.8 = 540 power
+ *   - Rare: 20 × 6.0 × 1.8 = 216 power
+ *   - Common: 10 × 6.0 × 1.8 = 108 power
+ *
+ * FID 100,000 (probabilístico):
+ *   - Mythic + Prize + Pristine (15% × 40%): 600 × 6.0 × 1.8 = 6,480 power
+ *   - Mythic + Standard + Mint (50% × 40%): 600 × 2.0 × 1.4 = 1,680 power
+ *   - Mythic + None + Lightly Played (35% × 20%): 600 × 1.0 × 1.0 = 600 power
+ *   - Common + None + Lightly Played: 10 × 1.0 × 1.0 = 10 power
+ */
+export const VIBEFID_POWER_CONFIG = {
+  rarityBase: {
+    mythic: 600,    // Aumentado de 200
+    legendary: 100, // Mantido
+    epic: 50,       // Mantido
+    rare: 20,       // Mantido
+    common: 10,     // Mantido
+  },
+  wearMultiplier: {
+    pristine: 1.8,  // Padrão do site
+    mint: 1.4,      // Padrão do site
+    default: 1.0,
+  },
+  foilMultiplier: {
+    prize: 6.0,     // Aumentado de 3.0
+    standard: 2.0,  // Aumentado de 1.5
+    none: 1.0,
+  },
+};
+
+/**
  * Definição de todas as coleções disponíveis
  */
 export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
@@ -125,9 +164,9 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     contractAddress: '0x3e1e69e444261a5bc65b83c41036b5284c1e69ae',
     chain: 'base-mainnet',
     enabled: true,
-    marketplaceUrl: 'https://opensea.io/collection/vibefid',
-    buttonText: 'Opensea Link',
-    powerCalculation: DEFAULT_POWER_CONFIG,
+    marketplaceUrl: '/fid',
+    buttonText: 'Mint VibeFID',
+    powerCalculation: VIBEFID_POWER_CONFIG,
   },
 
   // Template para nova coleÃ§Ã£o customizada
