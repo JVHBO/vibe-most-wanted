@@ -17,8 +17,9 @@ import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { generateCriminalBackstory } from "@/lib/generateCriminalBackstory";
 import type { CriminalBackstory } from "@/lib/generateCriminalBackstory";
-import CriminalBackstoryCard from "@/components/CriminalBackstoryCard";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
+import FidGenerationModal from "@/components/FidGenerationModal";
+import { useRouter } from "next/navigation";
 
 interface GeneratedTraits {
   rarity: string;
@@ -34,7 +35,8 @@ interface GeneratedTraits {
 export default function FidPage() {
   const { address } = useAccount();
   const farcasterContext = useFarcasterContext();
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
+  const router = useRouter();
 
   // Password protection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -49,12 +51,11 @@ export default function FidPage() {
   const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
   const [criminalBackstory, setCriminalBackstory] = useState<CriminalBackstory | null>(null);
 
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
-
-  // Success modal state
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [mintedCardData, setMintedCardData] = useState<any>(null);
 
   // Auto-fill FID if in Farcaster miniapp
   useEffect(() => {
@@ -63,27 +64,121 @@ export default function FidPage() {
     }
   }, [farcasterContext.isReady, farcasterContext.user?.fid]);
 
-  // Regenerate backstory when language changes
-  useEffect(() => {
-    if (userData && generatedTraits) {
-      const regenerateBackstory = async () => {
-        const createdAt = await getFarcasterAccountCreationDate(userData.fid);
-        const backstory = generateCriminalBackstory({
-          username: userData.username,
-          displayName: userData.display_name,
-          bio: userData.profile?.bio?.text || "",
-          fid: userData.fid,
-          followerCount: userData.follower_count,
-          createdAt,
-          power: generatedTraits.power,
-          bounty: generatedTraits.power * 10,
-          rarity: generatedTraits.rarity,
-        }, lang);
-        setCriminalBackstory(backstory);
-      };
-      regenerateBackstory();
+  // Combined fetch and generate function
+  const handleGenerateCard = async () => {
+    if (!fidInput) {
+      setError("Please enter a FID");
+      return;
     }
-  }, [lang]);
+
+    const fid = parseInt(fidInput);
+    if (isNaN(fid) || fid <= 0) {
+      setError("Please enter a valid FID number");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Fetch user data
+      const user = await getUserByFid(fid);
+      if (!user) {
+        setError(`No user found for FID ${fid}`);
+        setLoading(false);
+        return;
+      }
+
+      setUserData(user);
+
+      // Generate card immediately
+      await generateCardForUser(user);
+
+      // Open modal
+      setShowModal(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to generate card");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateCardForUser = async (user: NeynarUser) => {
+    const score = user.experimental?.neynar_user_score || 0;
+    const rarity = calculateRarityFromScore(score);
+
+    // Generate random suit and rank
+    const suit = generateRandomSuit();
+    const suitSymbol = getSuitSymbol(suit);
+    const color = getSuitColor(suit);
+    const rank = generateRankFromRarity(rarity);
+
+    // Generate FID-based foil and wear traits with randomness for preview
+    const fidTraits = getFidTraits(user.fid, Date.now());
+    const foil = fidTraits.foil;
+    const wear = fidTraits.wear;
+
+    // Calculate power with VibeFID balanced config
+    const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
+    const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
+
+    const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
+    const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
+
+    const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
+    const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
+
+    const power = Math.round(basePower * wearMult * foilMult);
+
+    // Save generated traits
+    setGeneratedTraits({
+      rarity,
+      foil,
+      wear,
+      suit,
+      rank,
+      suitSymbol,
+      color,
+      power,
+    });
+
+    // Fetch account creation date
+    const createdAt = await getFarcasterAccountCreationDate(user.fid);
+
+    // Generate card image
+    const imageDataUrl = await generateFarcasterCardImage({
+      fid: user.fid,
+      username: user.username,
+      displayName: user.display_name,
+      pfpUrl: user.pfp_url,
+      bio: user.profile?.bio?.text || "",
+      neynarScore: score,
+      suit,
+      suitSymbol,
+      rank,
+      color,
+      rarity,
+      bounty: power * 10,
+      createdAt: createdAt || undefined,
+    });
+
+    setPreviewImage(imageDataUrl);
+
+    // Generate criminal backstory
+    const backstory = generateCriminalBackstory({
+      username: user.username,
+      displayName: user.display_name,
+      bio: user.profile?.bio?.text || "",
+      fid: user.fid,
+      followerCount: user.follower_count,
+      createdAt,
+      power,
+      bounty: power * 10,
+      rarity,
+    }, lang);
+
+    setCriminalBackstory(backstory);
+  };
 
   // Contract interaction
   const { writeContract, data: hash, isPending: isContractPending } = useWriteContract();
@@ -129,20 +224,17 @@ export default function FidPage() {
           await mintCard(validatedData);
           setError(null);
 
-          // Show success modal with card data
-          setMintedCardData({
-            ...validatedData,
-            cardImage: previewImage, // Card image for display
-            txHash: hash,
-          });
-          setShowSuccessModal(true);
+          // Redirect to individual FID page
+          router.push(`/fid/${validatedData.fid}`);
 
           // Reset form
           setUserData(null);
           setPreviewImage(null);
           setGeneratedTraits(null);
+          setCriminalBackstory(null);
           setFidInput("");
           setPendingMintData(null);
+          setShowModal(false);
         } catch (err: any) {
           console.error('❌ Convex save error:', err);
           setError(`NFT minted but failed to save metadata: ${err.message}`);
@@ -212,131 +304,6 @@ export default function FidPage() {
       </div>
     );
   }
-
-  const handleFetchUser = async () => {
-    setError(null);
-    setUserData(null);
-    setPreviewImage(null);
-    setGeneratedTraits(null);
-
-    const fid = parseInt(fidInput);
-    if (isNaN(fid) || fid <= 0) {
-      setError("Please enter a valid FID number");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const user = await getUserByFid(fid);
-
-      if (!user) {
-        setError(`No user found for FID ${fid}`);
-        setLoading(false);
-        return;
-      }
-
-      setUserData(user);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch user data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGeneratePreview = async () => {
-    if (!userData) {
-      setError("No user data loaded");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const score = userData.experimental?.neynar_user_score || 0;
-      const rarity = calculateRarityFromScore(score);
-
-      // Generate random suit and rank
-      const suit = generateRandomSuit();
-      const suitSymbol = getSuitSymbol(suit);
-      const color = getSuitColor(suit);
-      const rank = generateRankFromRarity(rarity);
-
-      // Generate FID-based foil and wear traits with randomness for preview
-      // Use Date.now() as extra seed so each preview regenerates traits
-      const fidTraits = getFidTraits(userData.fid, Date.now());
-      const foil = fidTraits.foil;
-      const wear = fidTraits.wear;
-
-      // Calculate power with VibeFID balanced config
-      const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
-      const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
-
-      // Get wear multiplier from config
-      const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
-      const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
-
-      // Get foil multiplier from config
-      const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
-      const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
-
-      const power = Math.round(basePower * wearMult * foilMult);
-
-      // Save generated traits
-      setGeneratedTraits({
-        rarity,
-        foil,
-        wear,
-        suit,
-        rank,
-        suitSymbol,
-        color,
-        power,
-      });
-
-      // Fetch account creation date
-      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
-
-      // Generate card image
-      const imageDataUrl = await generateFarcasterCardImage({
-        fid: userData.fid,
-        username: userData.username,
-        displayName: userData.display_name,
-        pfpUrl: userData.pfp_url,
-        bio: userData.profile?.bio?.text || "",
-        neynarScore: score,
-        suit,
-        suitSymbol,
-        rank,
-        color,
-        rarity,
-        bounty: power * 10, // Bounty = Power × 10
-        createdAt: createdAt || undefined,
-      });
-
-      setPreviewImage(imageDataUrl);
-
-      // Generate criminal backstory
-      const backstory = generateCriminalBackstory({
-        username: userData.username,
-        displayName: userData.display_name,
-        bio: userData.profile?.bio?.text || "",
-        fid: userData.fid,
-        followerCount: userData.follower_count,
-        createdAt,
-        power,
-        bounty: power * 10,
-        rarity,
-      }, lang);
-
-      setCriminalBackstory(backstory);
-    } catch (err: any) {
-      setError(err.message || "Failed to generate preview");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleMintCard = async () => {
     if (!address) {
@@ -504,23 +471,7 @@ export default function FidPage() {
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8 relative">
-          {/* Language Selector - Top Right */}
-          <div className="absolute top-0 right-0">
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value as any)}
-              className="px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm"
-            >
-              <option value="en">🇺🇸 English</option>
-              <option value="pt-BR">🇧🇷 Português</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="hi">🇮🇳 हिन्दी</option>
-              <option value="ru">🇷🇺 Русский</option>
-              <option value="zh-CN">🇨🇳 中文</option>
-            </select>
-          </div>
-
+        <div className="text-center mb-8">
           <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2">
             VibeFID
           </h1>
@@ -556,11 +507,11 @@ export default function FidPage() {
               className="flex-1 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold"
             />
             <button
-              onClick={handleFetchUser}
+              onClick={handleGenerateCard}
               disabled={loading}
               className="px-6 py-2 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50"
             >
-              {loading ? "Loading..." : "Fetch"}
+              {loading ? "Generating..." : "Generate Card"}
             </button>
           </div>
 
@@ -571,164 +522,17 @@ export default function FidPage() {
           )}
         </div>
 
-        {/* User Preview */}
-        {userData && (
-          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
-            <div className="flex items-start gap-6">
-              {/* PFP */}
-              <img
-                src={userData.pfp_url}
-                alt={userData.username}
-                className="w-32 h-32 rounded-lg border-2 border-vintage-gold"
-              />
-
-              {/* Info */}
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-vintage-gold mb-1">
-                  {userData.display_name}
-                </h2>
-                <p className="text-vintage-ice mb-2">@{userData.username}</p>
-                <p className="text-vintage-ice/80 text-sm mb-4">
-                  {userData.profile?.bio?.text || "No bio"}
-                </p>
-
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <span className="text-vintage-burnt-gold">FID:</span>{" "}
-                    <span className="text-vintage-ice">{userData.fid}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Score:</span>{" "}
-                    <span className="text-vintage-ice">
-                      {userData.experimental?.neynar_user_score?.toFixed(2) || "N/A"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Followers:</span>{" "}
-                    <span className="text-vintage-ice">{userData.follower_count}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Rarity:</span>{" "}
-                    <span className="text-vintage-ice">
-                      {calculateRarityFromScore(userData.experimental?.neynar_user_score || 0)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Card Range:</span>{" "}
-                    <span className="text-vintage-ice">
-                      {(() => {
-                        const rarity = calculateRarityFromScore(userData.experimental?.neynar_user_score || 0);
-                        if (rarity === 'Common') return '2-6';
-                        if (rarity === 'Rare') return '7-8';
-                        if (rarity === 'Epic') return '9-10-J';
-                        if (rarity === 'Legendary') return 'Q-K';
-                        return 'A';
-                      })()}
-                    </span>
-                  </div>
-                </div>
-
-                {userData.power_badge && (
-                  <div className="inline-block px-3 py-1 bg-purple-600 text-white text-sm rounded-full mb-4">
-                    ⚡ Power Badge
-                  </div>
-                )}
-
-                {/* Generate Preview Button */}
-                <button
-                  onClick={handleGeneratePreview}
-                  disabled={loading}
-                  className="w-full px-6 py-3 mb-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                  {loading ? "Generating..." : "Generate Card Preview"}
-                </button>
-
-                {/* Mint Button */}
-                <button
-                  onClick={handleMintCard}
-                  disabled={loading || !address}
-                  className="w-full px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50"
-                >
-                  {!address
-                    ? "Connect Wallet to Mint"
-                    : loading
-                    ? "Minting..."
-                    : "Mint Card"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Card Preview */}
-        {previewImage && generatedTraits && (
-          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
-            <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
-              Card Preview
-            </h2>
-            <div className="flex flex-col items-center gap-6">
-              {/* Card Image with Foil Effect */}
-              <FoilCardEffect
-                foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
-                className="w-full max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
-              >
-                <img
-                  src={previewImage}
-                  alt="Card Preview"
-                  className="w-full h-full object-cover"
-                />
-              </FoilCardEffect>
-
-              {/* Generated Traits */}
-              <div className="w-full max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-6">
-                <h3 className="text-xl font-bold text-vintage-gold mb-4 text-center">
-                  Generated Traits
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-vintage-burnt-gold font-semibold">Card:</span>{" "}
-                    <span className={`font-bold ${generatedTraits.color === 'red' ? 'text-red-500' : 'text-white'}`}>
-                      {generatedTraits.rank}{generatedTraits.suitSymbol}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold font-semibold">Rarity:</span>{" "}
-                    <span className="text-vintage-ice">{generatedTraits.rarity}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold font-semibold">Foil:</span>{" "}
-                    <span className={`font-bold ${
-                      generatedTraits.foil === 'Prize' ? 'text-purple-400' :
-                      generatedTraits.foil === 'Standard' ? 'text-blue-400' :
-                      'text-vintage-ice'
-                    }`}>
-                      {generatedTraits.foil}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold font-semibold">Wear:</span>{" "}
-                    <span className="text-vintage-ice">{generatedTraits.wear}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-vintage-burnt-gold font-semibold">Power:</span>{" "}
-                    <span className="text-vintage-gold font-bold text-lg">{generatedTraits.power}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Criminal Backstory Card */}
-        {criminalBackstory && userData && (
-          <div className="mb-8">
-            <CriminalBackstoryCard
-              backstory={criminalBackstory}
-              displayName={userData.display_name}
-              lang={lang}
-            />
-          </div>
-        )}
+        {/* Generation Modal */}
+        <FidGenerationModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          backstory={criminalBackstory}
+          displayName={userData?.display_name || ""}
+          previewImage={previewImage}
+          generatedTraits={generatedTraits}
+          onMint={handleMintCard}
+          isMinting={loading || isContractPending || isConfirming}
+        />
 
         {/* My Cards */}
         {myCards && myCards.length > 0 && (
@@ -795,99 +599,6 @@ export default function FidPage() {
                   </a>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* Success Modal */}
-        {showSuccessModal && mintedCardData && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-            <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold p-8 max-w-md w-full relative">
-              {/* Close button */}
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="absolute top-4 right-4 text-vintage-ice hover:text-vintage-gold text-3xl leading-none"
-              >
-                ×
-              </button>
-
-              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4 text-center">
-                VibeFID Minted! 🎉
-              </h2>
-
-              {/* Card Preview */}
-              {mintedCardData.cardImage && (
-                <div className="mb-6">
-                  <FoilCardEffect
-                    foilType={mintedCardData.foil === 'None' ? null : (mintedCardData.foil as 'Standard' | 'Prize')}
-                    className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
-                  >
-                    <img
-                      src={mintedCardData.cardImage}
-                      alt="Minted Card"
-                      className="w-full h-full object-cover"
-                    />
-                  </FoilCardEffect>
-                </div>
-              )}
-
-              {/* Card Stats */}
-              <div className="bg-vintage-black/50 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-vintage-burnt-gold">Rarity:</span>{" "}
-                    <span className="text-vintage-ice font-bold">{mintedCardData.rarity}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Foil:</span>{" "}
-                    <span className={`font-bold ${
-                      mintedCardData.foil === 'Prize' ? 'text-purple-400' :
-                      mintedCardData.foil === 'Standard' ? 'text-blue-400' :
-                      'text-vintage-ice'
-                    }`}>
-                      {mintedCardData.foil}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Wear:</span>{" "}
-                    <span className="text-vintage-ice">{mintedCardData.wear}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Power:</span>{" "}
-                    <span className="text-vintage-gold font-bold text-lg">{mintedCardData.power}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Share Button */}
-              <a
-                href={(() => {
-                  const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${mintedCardData.fid}`;
-                  const foilText = mintedCardData.foil !== 'None' ? ` with ${mintedCardData.foil} foil` : '';
-                  const castText = `Just minted my VibeFID!\n\n${mintedCardData.rarity}${foilText} • ${mintedCardData.power} power\n\n@jvhbo`;
-
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                })()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mb-3"
-              >
-                <span className="text-xl">🔮</span>
-                Share to Farcaster
-              </a>
-
-              {/* View on BaseScan */}
-              {mintedCardData.txHash && (
-                <a
-                  href={`https://basescan.org/tx/${mintedCardData.txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full px-6 py-3 bg-vintage-black/50 hover:bg-vintage-black text-vintage-ice font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>🔗</span>
-                  View on BaseScan
-                </a>
-              )}
             </div>
           </div>
         )}
