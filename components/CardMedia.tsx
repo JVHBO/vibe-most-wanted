@@ -30,10 +30,13 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
   const shouldTryVideo = hasVideoExtension || (isIpfs && !useImage);
 
   if (shouldTryVideo) {
-    // For IPFS/gallery videos, use metadata preload to ensure they show up
-    // For battle cards, use eager loading and autoplay
+    // MOBILE FIX: Use "none" for lazy loading to avoid IPFS loading issues on mobile
+    // Desktop can handle "metadata" but mobile browsers need lighter approach
     const shouldAutoplay = loading === "eager";
-    const preloadMode = shouldAutoplay ? "auto" : "metadata"; // Changed: always load metadata for gallery
+
+    // For eager (battle): autoplay + preload auto
+    // For lazy (gallery): no autoplay + preload none (let browser decide when to load)
+    const preloadMode = shouldAutoplay ? "auto" : "none";
 
     return (
       <video
@@ -44,7 +47,7 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         muted
         playsInline
         autoPlay={shouldAutoplay}
-        preload={preloadMode} // Load metadata for all videos so thumbnail shows
+        preload={preloadMode}
         onClick={onClick}
         style={{ objectFit: 'cover', pointerEvents: 'none' }}
         onError={(e) => {
