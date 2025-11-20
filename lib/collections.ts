@@ -79,34 +79,34 @@ export const DEFAULT_POWER_CONFIG = {
  * Exemplos de Power:
  *
  * FID ≤ 5,000 (100% Prize + Pristine):
- *   - Mythic: 200 × 3.0 × 1.2 = 720 power
- *   - Legendary: 100 × 3.0 × 1.2 = 360 power
- *   - Epic: 50 × 3.0 × 1.2 = 180 power
- *   - Rare: 20 × 3.0 × 1.2 = 72 power
- *   - Common: 10 × 3.0 × 1.2 = 36 power
+ *   - Mythic: 600 × 6.0 × 1.8 = 6,480 power
+ *   - Legendary: 100 × 6.0 × 1.8 = 1,080 power
+ *   - Epic: 50 × 6.0 × 1.8 = 540 power
+ *   - Rare: 20 × 6.0 × 1.8 = 216 power
+ *   - Common: 10 × 6.0 × 1.8 = 108 power
  *
  * FID 100,000 (probabilístico):
- *   - Mythic + Prize + Pristine (15% × 40%): 200 × 3.0 × 1.2 = 720 power
- *   - Mythic + Standard + Mint (50% × 40%): 200 × 1.5 × 1.1 = 330 power
- *   - Mythic + None + Lightly Played (35% × 20%): 200 × 1.0 × 1.0 = 200 power
+ *   - Mythic + Prize + Pristine (15% × 40%): 600 × 6.0 × 1.8 = 6,480 power
+ *   - Mythic + Standard + Mint (50% × 40%): 600 × 2.0 × 1.4 = 1,680 power
+ *   - Mythic + None + Lightly Played (35% × 20%): 600 × 1.0 × 1.0 = 600 power
  *   - Common + None + Lightly Played: 10 × 1.0 × 1.0 = 10 power
  */
 export const VIBEFID_POWER_CONFIG = {
   rarityBase: {
-    mythic: 200,    // Reduzido de 800
-    legendary: 100, // Reduzido de 240
-    epic: 50,       // Reduzido de 80
+    mythic: 600,    // Aumentado de 200
+    legendary: 100, // Mantido
+    epic: 50,       // Mantido
     rare: 20,       // Mantido
-    common: 10,     // Aumentado de 5
+    common: 10,     // Mantido
   },
   wearMultiplier: {
-    pristine: 1.2,  // Reduzido de 1.8
-    mint: 1.1,      // Reduzido de 1.4
+    pristine: 1.8,  // Padrão do site
+    mint: 1.4,      // Padrão do site
     default: 1.0,
   },
   foilMultiplier: {
-    prize: 3.0,     // Reduzido drasticamente de 15.0
-    standard: 1.5,  // Reduzido de 2.5
+    prize: 6.0,     // Aumentado de 3.0
+    standard: 2.0,  // Aumentado de 1.5
     none: 1.0,
   },
 };
