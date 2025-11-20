@@ -4565,11 +4565,11 @@ export default function TCGPage() {
           </div>
 
           {/* Content wrapper with padding for fixed bars in miniapp */}
-          <div className={isInFarcaster ? 'pt-[80px] pb-[75px]' : ''}>
+          <div className={isInFarcaster ? 'pt-[50px] pb-[75px]' : ''}>
 
-          {/* VibeFID Button - Mobile only, between header and content */}
-          {isInFarcaster && (
-            <div className="mb-4 px-2">
+          {/* VibeFID Button - Mobile only, between header and content, only on home view */}
+          {isInFarcaster && currentView === 'game' && (
+            <div className="mb-2 px-2">
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
