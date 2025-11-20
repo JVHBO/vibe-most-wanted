@@ -131,6 +131,7 @@ export default function FidCardPage() {
                     className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
                   />
                 )}
+              </div>
 
               {/* Card Stats */}
               <div className="w-full max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-6">
