@@ -1915,7 +1915,7 @@ export function PokerBattleTable({
                       <>
                         {(selectedDeck[i].imageUrl || selectedDeck[i].image) ? (
                           <CardMedia
-                            src={(selectedDeck[i].imageUrl || selectedDeck[i].image)}
+                            src={(selectedDeck[i].imageUrl || selectedDeck[i].image || '')}
                             alt={selectedDeck[i].name}
                             className="w-full h-full object-cover rounded-lg"
                           />
@@ -1957,7 +1957,7 @@ export function PokerBattleTable({
                   >
                     {(card.imageUrl || card.image) ? (
                       <CardMedia
-                        src={(card.imageUrl || card.image)}
+                        src={(card.imageUrl || card.image || '')}
                         alt={card.name}
                         className="w-full h-full object-cover"
                       />
@@ -2447,7 +2447,7 @@ export function PokerBattleTable({
                             <FoilCardEffect foilType={opponentSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
                                 <CardMedia
-                                  src={(opponentSelectedCard.imageUrl || opponentSelectedCard.image)}
+                                  src={(opponentSelectedCard.imageUrl || opponentSelectedCard.image || '')}
                                   alt={opponentSelectedCard.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -2522,7 +2522,7 @@ export function PokerBattleTable({
                             <FoilCardEffect foilType={playerSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(playerSelectedCard.imageUrl || playerSelectedCard.image) ? (
                                 <CardMedia
-                                  src={(playerSelectedCard.imageUrl || playerSelectedCard.image)}
+                                  src={(playerSelectedCard.imageUrl || playerSelectedCard.image || '')}
                                   alt={playerSelectedCard.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -2670,7 +2670,7 @@ export function PokerBattleTable({
                           <FoilCardEffect foilType={card.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                             {(card.imageUrl || card.image) ? (
                               <CardMedia
-                                src={(card.imageUrl || card.image)}
+                                src={(card.imageUrl || card.image || '')}
                                 alt={card.name}
                                 className="w-full h-full object-cover"
                               />
