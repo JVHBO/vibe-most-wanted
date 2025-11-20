@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import FoilCardEffect from './FoilCardEffect';
 import TypewriterText from './TypewriterText';
 import { CardMedia } from './CardMedia';
-import type { CriminalBackstory } from '@/lib/generateCriminalBackstory';
+import { generateCriminalBackstory } from '@/lib/generateCriminalBackstory';
+import type { CriminalBackstoryData } from '@/lib/generateCriminalBackstory';
+import { fidTranslations } from '@/lib/fidTranslations';
 
 interface FidGenerationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  backstory: CriminalBackstory | null;
+  backstoryData: CriminalBackstoryData | null;
   displayName: string;
   previewImage: string | null;
   generatedTraits: any;
@@ -21,7 +23,7 @@ interface FidGenerationModalProps {
 export default function FidGenerationModal({
   isOpen,
   onClose,
-  backstory,
+  backstoryData,
   displayName,
   previewImage,
   generatedTraits,
@@ -31,15 +33,24 @@ export default function FidGenerationModal({
   const { lang, setLang } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0); // 0 = backstory, 1 = card
 
+  // Get translations for current language
+  const t = fidTranslations[lang];
+
+  // Regenerate backstory whenever language changes
+  const backstory = useMemo(() => {
+    if (!backstoryData) return null;
+    return generateCriminalBackstory(backstoryData, lang);
+  }, [backstoryData, lang]);
+
   if (!isOpen || !backstory) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/95 flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
-      <div className="bg-vintage-charcoal rounded-lg sm:rounded-xl border-2 border-vintage-gold w-full max-w-4xl my-auto relative max-h-[95vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/95 flex items-center justify-center p-1 sm:p-2 md:p-4 z-50">
+      <div className="bg-vintage-charcoal rounded-lg sm:rounded-xl border-2 border-vintage-gold w-full h-full sm:h-auto max-w-full sm:max-w-lg md:max-w-2xl lg:max-w-4xl sm:my-auto relative sm:max-h-[95vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="sticky top-2 right-2 float-right text-vintage-ice hover:text-vintage-gold text-2xl sm:text-3xl leading-none z-10 bg-vintage-black/50 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
+          className="sticky top-2 right-2 float-right text-vintage-ice hover:text-vintage-gold text-xl sm:text-2xl md:text-3xl leading-none z-10 bg-vintage-black/70 rounded-full w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center"
           aria-label="Close"
         >
           ×
@@ -50,7 +61,7 @@ export default function FidGenerationModal({
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value as any)}
-            className="px-2 py-1 sm:px-3 sm:py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-xs sm:text-sm"
+            className="px-2 py-1 sm:px-3 sm:py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-md sm:rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-xs sm:text-sm"
           >
             <option value="en">🇺🇸</option>
             <option value="pt-BR">🇧🇷</option>
@@ -62,55 +73,55 @@ export default function FidGenerationModal({
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-8 pt-12 sm:pt-16 clear-both">
+        <div className="p-3 sm:p-4 md:p-6 lg:p-8 pt-10 sm:pt-12 md:pt-14 lg:pt-16 clear-both">
           {currentSlide === 0 ? (
             // Slide 1: Criminal Backstory
-            <div className="space-y-4 sm:space-y-6">
-              <h2 className="text-xl sm:text-3xl font-display font-bold text-vintage-gold text-center mb-4 sm:mb-6">
-                Criminal Record Generated
+            <div className="space-y-3 sm:space-y-6">
+              <h2 className="text-lg sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold text-center mb-3 sm:mb-6 px-2">
+                {t.criminalRecord}
               </h2>
 
               <div className="bg-vintage-charcoal/80 rounded-lg sm:rounded-xl border-2 border-vintage-gold/50 p-3 sm:p-6 shadow-2xl">
-                <div className="text-center mb-4 sm:mb-6 pb-3 sm:pb-4 border-b-2 border-vintage-gold/30">
-                  <h3 className="text-xl sm:text-3xl font-display font-bold text-vintage-gold mb-1">
-                    CRIMINAL RECORD
+                <div className="text-center mb-3 sm:mb-6 pb-2 sm:pb-4 border-b-2 border-vintage-gold/30">
+                  <h3 className="text-base sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-1">
+                    {t.criminalRecord}
                   </h3>
-                  <p className="text-vintage-ice text-sm sm:text-lg">{displayName}</p>
+                  <p className="text-vintage-ice text-sm sm:text-base md:text-lg break-words px-2">{displayName}</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6">
                   {/* Left column */}
-                  <div className="space-y-2 sm:space-y-4">
+                  <div className="space-y-2 sm:space-y-3 md:space-y-4">
                     <div>
-                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">WANTED FOR</p>
-                      <p className="text-vintage-gold font-bold text-sm sm:text-lg">{backstory.wantedFor}</p>
+                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">{t.wantedFor}</p>
+                      <p className="text-vintage-gold font-bold text-xs sm:text-base md:text-lg break-words">{backstory.wantedFor}</p>
                     </div>
                     <div>
-                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">DANGER LEVEL</p>
-                      <p className={`font-bold text-sm sm:text-lg ${
-                        backstory.dangerLevel.includes('EXTREME') ? 'text-red-500' :
-                        backstory.dangerLevel.includes('HIGH') ? 'text-orange-500' :
-                        backstory.dangerLevel.includes('MEDIUM') ? 'text-yellow-500' :
+                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">{t.dangerLevel}</p>
+                      <p className={`font-bold text-xs sm:text-base md:text-lg break-words ${
+                        backstory.dangerLevel.includes('EXTREME') || backstory.dangerLevel.includes('ЭКСТРЕМАЛЬНЫЙ') || backstory.dangerLevel.includes('极端') || backstory.dangerLevel.includes('अत्यधिक') || backstory.dangerLevel.includes('EXTREMO') ? 'text-red-500' :
+                        backstory.dangerLevel.includes('HIGH') || backstory.dangerLevel.includes('ВЫСОКИЙ') || backstory.dangerLevel.includes('高') || backstory.dangerLevel.includes('उच्च') || backstory.dangerLevel.includes('ALTO') ? 'text-orange-500' :
+                        backstory.dangerLevel.includes('MEDIUM') || backstory.dangerLevel.includes('СРЕДНИЙ') || backstory.dangerLevel.includes('中') || backstory.dangerLevel.includes('मध्यम') || backstory.dangerLevel.includes('MEDIO') || backstory.dangerLevel.includes('MÉDIO') ? 'text-yellow-500' :
                         'text-green-500'
                       }`}>
                         {backstory.dangerLevel}
                       </p>
                     </div>
                     <div>
-                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">DATE OF CRIME</p>
-                      <p className="text-vintage-ice text-sm">{backstory.dateOfCrime}</p>
+                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">{t.dateOfCrime}</p>
+                      <p className="text-vintage-ice text-xs sm:text-sm break-words">{backstory.dateOfCrime}</p>
                     </div>
                   </div>
 
                   {/* Right column */}
-                  <div className="space-y-2 sm:space-y-4">
+                  <div className="space-y-2 sm:space-y-3 md:space-y-4">
                     <div>
-                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">KNOWN ASSOCIATES</p>
-                      <p className="text-vintage-ice text-sm">{backstory.associates}</p>
+                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">{t.knownAssociates}</p>
+                      <p className="text-vintage-ice text-xs sm:text-sm break-words">{backstory.associates}</p>
                     </div>
                     <div>
-                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">LAST SEEN</p>
-                      <p className="text-vintage-ice text-sm">{backstory.lastSeen}</p>
+                      <p className="text-vintage-burnt-gold text-xs sm:text-sm font-bold mb-1">{t.lastSeen}</p>
+                      <p className="text-vintage-ice text-xs sm:text-sm break-words">{backstory.lastSeen}</p>
                     </div>
                   </div>
                 </div>
@@ -125,7 +136,7 @@ export default function FidGenerationModal({
 
                 <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-red-900/20 border border-red-600/50 rounded-lg">
                   <p className="text-red-300 text-xs sm:text-sm text-center font-bold">
-                    ⚠️ WARNING: Approach with extreme caution
+                    {t.warningCaution}
                   </p>
                 </div>
               </div>
@@ -133,16 +144,16 @@ export default function FidGenerationModal({
               {/* Next Button */}
               <button
                 onClick={() => setCurrentSlide(1)}
-                className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors text-sm sm:text-lg"
+                className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors text-sm sm:text-base"
               >
-                View Card →
+                {t.viewCard}
               </button>
             </div>
           ) : (
             // Slide 2: Card Preview
-            <div className="space-y-4 sm:space-y-6">
-              <h2 className="text-xl sm:text-3xl font-display font-bold text-vintage-gold text-center mb-4 sm:mb-6">
-                Your VibeFID Card
+            <div className="space-y-3 sm:space-y-6">
+              <h2 className="text-lg sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold text-center mb-3 sm:mb-6 px-2">
+                {t.yourVibeFidCard}
               </h2>
 
               <div className="flex flex-col items-center gap-4 sm:gap-6">
@@ -162,24 +173,24 @@ export default function FidGenerationModal({
 
                 {/* Generated Traits */}
                 {generatedTraits && (
-                  <div className="w-full max-w-sm sm:max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-4 sm:p-6">
-                    <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 sm:mb-4 text-center">
-                      Card Stats
+                  <div className="w-full max-w-sm sm:max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-3 sm:p-6">
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-vintage-gold mb-3 sm:mb-4 text-center">
+                      {t.cardStats}
                     </h3>
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                       <div>
-                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-base">Card:</span>{" "}
-                        <span className={`font-bold text-sm sm:text-base ${generatedTraits.color === 'red' ? 'text-red-500' : 'text-white'}`}>
+                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-sm md:text-base">{t.card}</span>{" "}
+                        <span className={`font-bold text-xs sm:text-sm md:text-base ${generatedTraits.color === 'red' ? 'text-red-500' : 'text-white'}`}>
                           {generatedTraits.rank}{generatedTraits.suitSymbol}
                         </span>
                       </div>
                       <div>
-                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-base">Rarity:</span>{" "}
-                        <span className="text-vintage-ice text-sm sm:text-base">{generatedTraits.rarity}</span>
+                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-sm md:text-base">{t.rarity}</span>{" "}
+                        <span className="text-vintage-ice text-xs sm:text-sm md:text-base break-words">{generatedTraits.rarity}</span>
                       </div>
                       <div>
-                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-base">Foil:</span>{" "}
-                        <span className={`font-bold text-sm sm:text-base ${
+                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-sm md:text-base">{t.foil}</span>{" "}
+                        <span className={`font-bold text-xs sm:text-sm md:text-base ${
                           generatedTraits.foil === 'Prize' ? 'text-purple-400' :
                           generatedTraits.foil === 'Standard' ? 'text-blue-400' :
                           'text-vintage-ice'
@@ -188,12 +199,12 @@ export default function FidGenerationModal({
                         </span>
                       </div>
                       <div>
-                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-base">Wear:</span>{" "}
-                        <span className="text-vintage-ice text-sm sm:text-base">{generatedTraits.wear}</span>
+                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-sm md:text-base">{t.wear}</span>{" "}
+                        <span className="text-vintage-ice text-xs sm:text-sm md:text-base break-words">{generatedTraits.wear}</span>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-base">Power:</span>{" "}
-                        <span className="text-vintage-gold font-bold text-base sm:text-lg">{generatedTraits.power}</span>
+                        <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-sm md:text-base">{t.power}</span>{" "}
+                        <span className="text-vintage-gold font-bold text-sm sm:text-base md:text-lg">{generatedTraits.power}</span>
                       </div>
                     </div>
                   </div>
@@ -204,16 +215,16 @@ export default function FidGenerationModal({
               <div className="flex gap-2 sm:gap-4">
                 <button
                   onClick={() => setCurrentSlide(0)}
-                  className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors text-sm sm:text-base"
+                  className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors text-xs sm:text-sm md:text-base"
                 >
-                  ← Back
+                  {t.back}
                 </button>
                 <button
                   onClick={onMint}
                   disabled={isMinting}
-                  className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-sm sm:text-lg"
+                  className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-xs sm:text-sm md:text-base"
                 >
-                  {isMinting ? "Minting..." : "Mint Card"}
+                  {isMinting ? t.minting : t.mintCard}
                 </button>
               </div>
             </div>
