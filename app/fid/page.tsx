@@ -14,6 +14,10 @@ import { VIBEFID_ABI, VIBEFID_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contrac
 import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { generateCriminalBackstory } from "@/lib/generateCriminalBackstory";
+import type { CriminalBackstory } from "@/lib/generateCriminalBackstory";
+import CriminalBackstoryCard from "@/components/CriminalBackstoryCard";
 
 interface GeneratedTraits {
   rarity: string;
@@ -29,6 +33,7 @@ interface GeneratedTraits {
 export default function FidPage() {
   const { address } = useAccount();
   const farcasterContext = useFarcasterContext();
+  const { language, setLanguage } = useLanguage();
 
   // Password protection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -41,6 +46,7 @@ export default function FidPage() {
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
+  const [criminalBackstory, setCriminalBackstory] = useState<CriminalBackstory | null>(null);
 
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
@@ -55,6 +61,28 @@ export default function FidPage() {
       setFidInput(farcasterContext.user.fid.toString());
     }
   }, [farcasterContext.isReady, farcasterContext.user?.fid]);
+
+  // Regenerate backstory when language changes
+  useEffect(() => {
+    if (userData && generatedTraits) {
+      const regenerateBackstory = async () => {
+        const createdAt = await getFarcasterAccountCreationDate(userData.fid);
+        const backstory = generateCriminalBackstory({
+          username: userData.username,
+          displayName: userData.display_name,
+          bio: userData.profile?.bio?.text || "",
+          fid: userData.fid,
+          followerCount: userData.follower_count,
+          createdAt,
+          power: generatedTraits.power,
+          bounty: generatedTraits.power * 10,
+          rarity: generatedTraits.rarity,
+        }, language);
+        setCriminalBackstory(backstory);
+      };
+      regenerateBackstory();
+    }
+  }, [language]);
 
   // Contract interaction
   const { writeContract, data: hash, isPending: isContractPending } = useWriteContract();
@@ -296,6 +324,21 @@ export default function FidPage() {
       });
 
       setPreviewImage(imageDataUrl);
+
+      // Generate criminal backstory
+      const backstory = generateCriminalBackstory({
+        username: userData.username,
+        displayName: userData.display_name,
+        bio: userData.profile?.bio?.text || "",
+        fid: userData.fid,
+        followerCount: userData.follower_count,
+        createdAt,
+        power,
+        bounty: power * 10,
+        rarity,
+      }, language);
+
+      setCriminalBackstory(backstory);
     } catch (err: any) {
       setError(err.message || "Failed to generate preview");
     } finally {
@@ -473,7 +516,23 @@ export default function FidPage() {
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
+          {/* Language Selector - Top Right */}
+          <div className="absolute top-0 right-0">
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as any)}
+              className="px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm"
+            >
+              <option value="en">🇺🇸 English</option>
+              <option value="pt-BR">🇧🇷 Português</option>
+              <option value="es">🇪🇸 Español</option>
+              <option value="hi">🇮🇳 हिन्दी</option>
+              <option value="ru">🇷🇺 Русский</option>
+              <option value="zh-CN">🇨🇳 中文</option>
+            </select>
+          </div>
+
           <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2">
             VibeFID
           </h1>
@@ -669,6 +728,17 @@ export default function FidPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Criminal Backstory Card */}
+        {criminalBackstory && userData && (
+          <div className="mb-8">
+            <CriminalBackstoryCard
+              backstory={criminalBackstory}
+              displayName={userData.display_name}
+              lang={language}
+            />
           </div>
         )}
 
