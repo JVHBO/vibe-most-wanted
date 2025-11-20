@@ -3065,6 +3065,7 @@ export function PokerBattleTable({
             setShowBettingInterface(true);
           }}
           battleId={roomId}
+          playerAddress={playerAddress}
         />
       )}
 

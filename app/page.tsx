@@ -3104,6 +3104,7 @@ export default function TCGPage() {
           setPvpMode('pvpMenu'); // Reopen PvP menu after payment
         }}
         entryFeeAmount={20}
+        playerAddress={address}
       />
 
       {/* Settings Modal */}
