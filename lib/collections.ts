@@ -75,6 +75,21 @@ export const DEFAULT_POWER_CONFIG = {
 /**
  * Configuração de power balanceada para VibeFID
  * Reduz multiplicadores para evitar cartas extremamente OP
+ *
+ * Exemplos de Power:
+ *
+ * FID ≤ 5,000 (100% Prize + Pristine):
+ *   - Mythic: 200 × 3.0 × 1.2 = 720 power
+ *   - Legendary: 100 × 3.0 × 1.2 = 360 power
+ *   - Epic: 50 × 3.0 × 1.2 = 180 power
+ *   - Rare: 20 × 3.0 × 1.2 = 72 power
+ *   - Common: 10 × 3.0 × 1.2 = 36 power
+ *
+ * FID 100,000 (probabilístico):
+ *   - Mythic + Prize + Pristine (15% × 40%): 200 × 3.0 × 1.2 = 720 power
+ *   - Mythic + Standard + Mint (50% × 40%): 200 × 1.5 × 1.1 = 330 power
+ *   - Mythic + None + Lightly Played (35% × 20%): 200 × 1.0 × 1.0 = 200 power
+ *   - Common + None + Lightly Played: 10 × 1.0 × 1.0 = 10 power
  */
 export const VIBEFID_POWER_CONFIG = {
   rarityBase: {
