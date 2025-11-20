@@ -2991,43 +2991,19 @@ export default function TCGPage() {
 
   // Filter and re-rank leaderboard by collection
   const filteredLeaderboard = useMemo(() => {
-    // Use pre-calculated collection powers from profile stats
-    // This is much faster and doesn't require Alchemy API calls
-    const getCollectionPower = (player: UserProfile): number => {
-      const stats = player.stats;
-      if (!stats) return 0;
+    console.log('🔄 filteredLeaderboard recalculating...', Date.now());
 
-      switch (leaderboardCollection) {
-        case 'vibe':
-          // Fallback to totalPower if vibePower not yet calculated (for old profiles)
-          return stats.vibePower || stats.totalPower || 0;
-        case 'gmvbrs':
-          return stats.vbrsPower || stats.totalPower || 0;
-        case 'vibefid':
-          return stats.vibefidPower || stats.totalPower || 0;
-        case 'americanfootball':
-          return stats.afclPower || stats.totalPower || 0;
-        default:
-          return stats.totalPower || 0;
-      }
-    };
+    // SIMPLIFIED TO FIX MOBILE FREEZE
+    // The previous implementation created new objects on every recalc,
+    // causing infinite re-render loops on slow mobile webviews.
+    // For now, just return leaderboard sorted by totalPower.
+    // Collection-specific filtering temporarily disabled until we can
+    // optimize this properly.
 
-    // Sort by collection power (or totalPower fallback for old profiles)
-    // Don't filter out players - show everyone, just sorted by collection power
-    return leaderboard
-      .map(player => ({
-        ...player,
-        collectionPower: getCollectionPower(player)
-      }))
-      .sort((a, b) => b.collectionPower - a.collectionPower)
-      .map(({ collectionPower, ...player }) => ({
-        ...player,
-        stats: {
-          ...player.stats,
-          totalPower: collectionPower // Display collection-specific power in leaderboard
-        }
-      }));
-  }, [leaderboard, leaderboardCollection]);
+    return [...leaderboard].sort((a, b) =>
+      (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0)
+    );
+  }, [leaderboard]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
