@@ -4144,7 +4144,7 @@ export default function TCGPage() {
         </div>
       )}
 
-      <header className={`flex flex-col items-center gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6 bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isInFarcaster ? 'mt-[70px]' : ''}`}>
+      <header className={`flex flex-col items-center gap-3 md:gap-6 ${isInFarcaster ? 'mb-2' : 'mb-4 md:mb-8'} p-3 md:p-6 bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isInFarcaster ? 'mt-[70px]' : ''}`}>
         {!isInFarcaster && (
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
