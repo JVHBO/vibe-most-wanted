@@ -73,6 +73,30 @@ export const DEFAULT_POWER_CONFIG = {
 };
 
 /**
+ * Configuração de power balanceada para VibeFID
+ * Reduz multiplicadores para evitar cartas extremamente OP
+ */
+export const VIBEFID_POWER_CONFIG = {
+  rarityBase: {
+    mythic: 200,    // Reduzido de 800
+    legendary: 100, // Reduzido de 240
+    epic: 50,       // Reduzido de 80
+    rare: 20,       // Mantido
+    common: 10,     // Aumentado de 5
+  },
+  wearMultiplier: {
+    pristine: 1.2,  // Reduzido de 1.8
+    mint: 1.1,      // Reduzido de 1.4
+    default: 1.0,
+  },
+  foilMultiplier: {
+    prize: 3.0,     // Reduzido drasticamente de 15.0
+    standard: 1.5,  // Reduzido de 2.5
+    none: 1.0,
+  },
+};
+
+/**
  * Definição de todas as coleções disponíveis
  */
 export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
@@ -127,7 +151,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: '/fid',
     buttonText: 'Mint VibeFID',
-    powerCalculation: DEFAULT_POWER_CONFIG,
+    powerCalculation: VIBEFID_POWER_CONFIG,
   },
 
   // Template para nova coleÃ§Ã£o customizada
