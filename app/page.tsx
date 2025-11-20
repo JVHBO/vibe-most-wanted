@@ -2903,15 +2903,25 @@ export default function TCGPage() {
   }, [collectionPowerCache]);
 
   // Filter and re-rank leaderboard by collection
-  // SIMPLIFIED: Just sort by totalPower, no filtering
   // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
   const filteredLeaderboard = useMemo(() => {
     if (!leaderboard || leaderboard.length === 0) return [];
 
-    return [...leaderboard].sort((a, b) =>
-      (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0)
-    );
-  }, [leaderboard]);
+    // Map collection ID to power field name
+    const powerField = {
+      'vibe': 'vibePower',
+      'gmvbrs': 'vbrsPower',
+      'vibefid': 'vibefidPower',
+      'americanfootball': 'afclPower',
+    }[leaderboardCollection] as 'vibePower' | 'vbrsPower' | 'vibefidPower' | 'afclPower';
+
+    // Sort by collection-specific power
+    return [...leaderboard].sort((a, b) => {
+      const aPower = a.stats?.[powerField] || 0;
+      const bPower = b.stats?.[powerField] || 0;
+      return bPower - aPower;
+    });
+  }, [leaderboard, leaderboardCollection]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
