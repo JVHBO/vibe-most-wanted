@@ -2818,194 +2818,23 @@ export default function TCGPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Cache for collection-based power calculations
-  const [collectionPowerCache, setCollectionPowerCache] = useState<Map<string, Map<string, number>>>(new Map());
-  const [isCalculatingCollectionPower, setIsCalculatingCollectionPower] = useState(false);
-
-  // Helper to calculate power from NFT attributes (matches nft-fetcher.ts logic)
-  const calculateCardPowerFromAttributes = useCallback((nft: any): number => {
-    const findAttr = (trait: string): string => {
-      const locs = [
-        nft?.raw?.metadata?.attributes,
-        nft?.metadata?.attributes,
-        nft?.metadata?.traits,
-        nft?.raw?.metadata?.traits
-      ];
-      for (const attrs of locs) {
-        if (!Array.isArray(attrs)) continue;
-        const found = attrs.find((a: any) => {
-          const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
-          const searchTrait = trait.toLowerCase().trim();
-          return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
-        });
-        if (found) {
-          return String(found?.value || found?.trait_value || found?.displayType || '').trim();
-        }
-      }
-      return '';
-    };
-
-    // Check if this is a free card - exclude from power calculation
-    const badgeType = findAttr('badgetype') || findAttr('badge_type') || findAttr('badge');
-    if (badgeType.toLowerCase().includes('free')) {
-      return 0; // Free cards don't contribute to power
-    }
-
-    const foil = findAttr('foil') || 'None';
-    const rarity = findAttr('rarity') || 'Common';
-    const wear = findAttr('wear') || 'Lightly Played';
-
-    // Also check if rarity is explicitly "free"
-    if (rarity.toLowerCase().includes('free')) {
-      return 0;
-    }
-
-    // Base power by rarity
-    let base = 5;
-    const r = rarity.toLowerCase();
-    if (r.includes('mythic')) base = 800;
-    else if (r.includes('legend')) base = 240;
-    else if (r.includes('epic')) base = 80;
-    else if (r.includes('rare')) base = 20;
-    else if (r.includes('common')) base = 5;
-
-    // Wear multiplier
-    let wearMult = 1.0;
-    const w = wear.toLowerCase();
-    if (w.includes('pristine')) wearMult = 1.8;
-    else if (w.includes('mint')) wearMult = 1.4;
-
-    // Foil multiplier
-    let foilMult = 1.0;
-    const f = foil.toLowerCase();
-    if (f.includes('prize')) foilMult = 15.0;
-    else if (f.includes('standard')) foilMult = 2.5;
-
-    const power = base * wearMult * foilMult;
-    return Math.max(1, Math.round(power));
-  }, []);
-
-  // Calculate power for a specific collection (smart approach: use Alchemy API)
-  const calculateCollectionPower = useCallback(async (address: string, collectionId: CollectionId): Promise<number> => {
-    // TEMPORARILY DISABLED: Alchemy API calls causing infinite loading
-    // Return 0 for now to prevent site from hanging
-    return 0;
-
-    /* DISABLED CODE - Uncomment when Alchemy API is fixed
-    // Check cache first
-    const addressCache = collectionPowerCache.get(address);
-    if (addressCache?.has(collectionId)) {
-      return addressCache.get(collectionId)!;
-    }
-
-    try {
-      // Get collection contract address from collections config
-      const contractAddress = getCollectionContract(collectionId);
-
-      if (!contractAddress) return 0;
-
-      // Fetch NFTs for this collection from Alchemy with retry logic
-      let response: Response;
-      let retries = 0;
-      const maxRetries = 3;
-
-      while (retries <= maxRetries) {
-        response = await fetch(
-          `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${address}&contractAddresses[]=${contractAddress}&withMetadata=true`
-        );
-
-        if (response.status === 429 && retries < maxRetries) {
-          // Exponential backoff: 1s, 2s, 4s
-          const delay = Math.pow(2, retries) * 1000;
-          devLog(`⏳ [Leaderboard] Rate limited for ${address.substring(0, 8)}..., retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          retries++;
-          continue;
-        }
-
-        break;
-      }
-
-      if (!response!.ok) throw new Error(`Alchemy API error: ${response!.status}`);
-
-      const data = await response!.json();
-      const nfts = data.ownedNfts || [];
-
-      // Calculate total power from attributes
-      let totalPower = 0;
-      for (const nft of nfts) {
-        const power = calculateCardPowerFromAttributes(nft);
-        totalPower += power;
-      }
-
-      // Update cache
-      setCollectionPowerCache(prev => {
-        const newCache = new Map(prev);
-        const addressCache = newCache.get(address) || new Map();
-        addressCache.set(collectionId, totalPower);
-        newCache.set(address, addressCache);
-        return newCache;
-      });
-
-      return totalPower;
-    } catch (error) {
-      devError('[Leaderboard] Error calculating collection power:', error);
-      return 0;
-    }
-    */
-  }, [collectionPowerCache]);
+  // 🚨 REMOVED: Collection power calculation code
+  // This was causing infinite loops by creating new objects in useMemo
+  // Collection-specific filtering will work after Convex schema is deployed with
+  // vibePower, vbrsPower, vibefidPower, afclPower fields
 
   // Filter and re-rank leaderboard by collection
+  // 🚨 SIMPLIFIED: No object creation to prevent infinite loop
   const filteredLeaderboard = useMemo(() => {
-    // If we're already calculating, return current leaderboard
-    if (isCalculatingCollectionPower) return leaderboard;
+    if (!leaderboard || leaderboard.length === 0) return [];
 
-    // Show players ranked by their collection-specific power
-    // This uses cached data when available, or triggers async calculation
-    const leaderboardWithCollectionPower = leaderboard.map(player => {
-      const cachedPower = collectionPowerCache.get(player.address)?.get(leaderboardCollection);
-      return {
-        ...player,
-        collectionPower: cachedPower ?? 0, // Default to 0 if not calculated yet (will calculate async)
-        needsCalculation: cachedPower === undefined
-      };
-    })
-    .filter(p => p.collectionPower > 0 || p.needsCalculation); // Only show players with power in this collection or being calculated
-
-    // Trigger async calculation for players that need it (but don't block render)
-    const playersNeedingCalculation = leaderboardWithCollectionPower
-      .filter(p => p.needsCalculation)
-      .slice(0, 20); // Only calculate top 20 to avoid overwhelming API
-
-    if (playersNeedingCalculation.length > 0 && !isCalculatingCollectionPower) {
-      setIsCalculatingCollectionPower(true);
-
-      // Calculate sequentially with delay to avoid rate limiting (not in parallel)
-      (async () => {
-        for (const player of playersNeedingCalculation) {
-          try {
-            await calculateCollectionPower(player.address, leaderboardCollection);
-            // Add 200ms delay between requests to avoid overwhelming API
-            await new Promise(resolve => setTimeout(resolve, 200));
-          } catch (err) {
-            devError(`[Leaderboard] Error calculating power for ${player.address}:`, err);
-          }
-        }
-        setIsCalculatingCollectionPower(false);
-      })();
-    }
-
-    // Sort by collection power (desc)
-    return leaderboardWithCollectionPower
-      .sort((a, b) => b.collectionPower - a.collectionPower)
-      .map(({ needsCalculation, collectionPower, ...player }) => ({
-        ...player,
-        stats: {
-          ...player.stats,
-          totalPower: collectionPower // Override display power with collection power
-        }
-      }));
-  }, [leaderboard, leaderboardCollection, collectionPowerCache, isCalculatingCollectionPower, calculateCollectionPower]);
+    // For now, just return sorted leaderboard by totalPower
+    // Collection-specific filtering will work after Convex schema is deployed
+    // This prevents the infinite loop caused by creating new objects
+    return [...leaderboard].sort((a, b) =>
+      (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0)
+    );
+  }, [leaderboard]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
