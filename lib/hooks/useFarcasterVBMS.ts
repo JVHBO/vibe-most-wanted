@@ -4,8 +4,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { formatEther } from 'viem';
+import { formatEther, parseEther } from 'viem';
 import { CONTRACTS, ERC20_ABI } from '../contracts';
+import { useWriteContract } from 'wagmi';
 
 /**
  * Get VBMS balance - works in both miniapp and web
@@ -171,5 +172,92 @@ export function useFarcasterVBMSAllowance(owner?: string, spender?: string) {
       // Trigger re-fetch by incrementing the trigger
       setRefetchTrigger(prev => prev + 1);
     },
+  };
+}
+
+/**
+ * Transfer VBMS - works in both miniapp and web
+ */
+export function useFarcasterTransferVBMS() {
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const { writeContractAsync: wagmiTransfer } = useWriteContract();
+
+  const transfer = async (to: `0x${string}`, amount: bigint): Promise<`0x${string}`> => {
+    setIsPending(true);
+    setError(null);
+
+    try {
+      console.log('[useFarcasterTransferVBMS] 💸 Transferring VBMS:', {
+        to,
+        amount: amount.toString(),
+        contractAddress: CONTRACTS.VBMSToken,
+      });
+
+      // Try to get Farcaster SDK provider first (miniapp)
+      const sdk = (window as any).sdk;
+
+      if (sdk?.wallet?.ethProvider || sdk?.wallet?.getEthereumProvider) {
+        // Miniapp: Use Farcaster SDK provider
+        let provider: any;
+        if (sdk.wallet.ethProvider) {
+          provider = sdk.wallet.ethProvider;
+          console.log('[useFarcasterTransferVBMS] ✅ Using Farcaster SDK provider (ethProvider)');
+        } else {
+          provider = await sdk.wallet.getEthereumProvider();
+          console.log('[useFarcasterTransferVBMS] ✅ Using Farcaster SDK provider (getEthereumProvider)');
+        }
+
+        // Get current account
+        const accounts = await provider.request({ method: 'eth_accounts' });
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts available');
+        }
+        const from = accounts[0];
+
+        // Encode transfer function call
+        const transferData = `0xa9059cbb${to.slice(2).padStart(64, '0')}${amount.toString(16).padStart(64, '0')}`;
+
+        // Send transaction via Farcaster provider
+        const txHash = await provider.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from,
+            to: CONTRACTS.VBMSToken,
+            data: transferData,
+            value: '0x0',
+          }],
+        });
+
+        console.log('[useFarcasterTransferVBMS] ✅ Transfer hash:', txHash);
+        setIsPending(false);
+        return txHash as `0x${string}`;
+      } else {
+        // Web: Use wagmi
+        console.log('[useFarcasterTransferVBMS] ✅ Using wagmi provider');
+        const hash = await wagmiTransfer({
+          address: CONTRACTS.VBMSToken as `0x${string}`,
+          abi: ERC20_ABI,
+          functionName: 'transfer',
+          args: [to, amount],
+          chainId: CONTRACTS.CHAIN_ID,
+        });
+
+        console.log('[useFarcasterTransferVBMS] ✅ Transfer hash:', hash);
+        setIsPending(false);
+        return hash;
+      }
+    } catch (err) {
+      console.error('[useFarcasterTransferVBMS] ❌ Transfer error:', err);
+      setError(err as Error);
+      setIsPending(false);
+      throw err;
+    }
+  };
+
+  return {
+    transfer,
+    isPending,
+    error,
   };
 }
