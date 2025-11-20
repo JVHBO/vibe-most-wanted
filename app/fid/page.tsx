@@ -55,6 +55,59 @@ export default function FidPage() {
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
 
+  // LocalStorage key for generated card
+  const getStorageKey = () => {
+    const fid = farcasterContext.user?.fid;
+    return fid ? `vibefid_generated_${fid}` : null;
+  };
+
+  // Save generated card to localStorage
+  const saveGeneratedCard = (data: any) => {
+    const key = getStorageKey();
+    if (key) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+  };
+
+  // Load generated card from localStorage
+  const loadGeneratedCard = () => {
+    const key = getStorageKey();
+    if (key) {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved card:', e);
+          localStorage.removeItem(key);
+        }
+      }
+    }
+    return null;
+  };
+
+  // Clear generated card from localStorage
+  const clearGeneratedCard = () => {
+    const key = getStorageKey();
+    if (key) {
+      localStorage.removeItem(key);
+    }
+  };
+
+  // Load saved card on mount (when user is ready)
+  useEffect(() => {
+    if (farcasterContext.isReady && farcasterContext.user) {
+      const saved = loadGeneratedCard();
+      if (saved) {
+        setUserData(saved.userData);
+        setPreviewImage(saved.previewImage);
+        setGeneratedTraits(saved.generatedTraits);
+        setBackstoryData(saved.backstoryData);
+        setShowModal(true);
+      }
+    }
+  }, [farcasterContext.isReady, farcasterContext.user]);
+
   // Combined fetch and generate function
   const handleGenerateCard = async () => {
     // Check if user is connected
@@ -158,7 +211,7 @@ export default function FidPage() {
     setPreviewImage(imageDataUrl);
 
     // Store backstory data (will be generated in modal based on language)
-    setBackstoryData({
+    const backstory = {
       username: user.username,
       displayName: user.display_name,
       bio: user.profile?.bio?.text || "",
@@ -168,6 +221,24 @@ export default function FidPage() {
       power,
       bounty: power * 10,
       rarity,
+    };
+    setBackstoryData(backstory);
+
+    // Save to localStorage so card persists if user leaves page
+    saveGeneratedCard({
+      userData: user,
+      previewImage: imageDataUrl,
+      generatedTraits: {
+        rarity,
+        foil,
+        wear,
+        suit,
+        rank,
+        suitSymbol,
+        color,
+        power,
+      },
+      backstoryData: backstory,
     });
   };
 
@@ -217,6 +288,9 @@ export default function FidPage() {
 
           // Redirect to individual FID page
           router.push(`/fid/${validatedData.fid}`);
+
+          // Clear localStorage (card has been minted)
+          clearGeneratedCard();
 
           // Reset form
           setUserData(null);
