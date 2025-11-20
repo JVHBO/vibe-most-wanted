@@ -233,7 +233,7 @@ export default function FidCardPage() {
             href="/fid"
             className="px-6 py-3 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors inline-block"
           >
-            ← Mint Another Card
+            ← Mint Your Card
           </Link>
         </div>
       </div>
