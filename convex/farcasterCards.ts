@@ -221,3 +221,22 @@ export const getFarcasterCardsByRarity = query({
     return cards;
   },
 });
+
+/**
+ * Get recent Farcaster cards (latest 20)
+ */
+export const getRecentFarcasterCards = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 20;
+
+    const cards = await ctx.db
+      .query("farcasterCards")
+      .order("desc")
+      .take(limit);
+
+    return cards;
+  },
+});

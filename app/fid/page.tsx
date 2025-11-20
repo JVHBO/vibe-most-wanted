@@ -19,6 +19,7 @@ import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import FidGenerationModal from "@/components/FidGenerationModal";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface GeneratedTraits {
   rarity: string;
@@ -54,6 +55,59 @@ export default function FidPage() {
 
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
+
+  // LocalStorage key for generated card
+  const getStorageKey = () => {
+    const fid = farcasterContext.user?.fid;
+    return fid ? `vibefid_generated_${fid}` : null;
+  };
+
+  // Save generated card to localStorage
+  const saveGeneratedCard = (data: any) => {
+    const key = getStorageKey();
+    if (key) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+  };
+
+  // Load generated card from localStorage
+  const loadGeneratedCard = () => {
+    const key = getStorageKey();
+    if (key) {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved card:', e);
+          localStorage.removeItem(key);
+        }
+      }
+    }
+    return null;
+  };
+
+  // Clear generated card from localStorage
+  const clearGeneratedCard = () => {
+    const key = getStorageKey();
+    if (key) {
+      localStorage.removeItem(key);
+    }
+  };
+
+  // Load saved card on mount (when user is ready)
+  useEffect(() => {
+    if (farcasterContext.isReady && farcasterContext.user) {
+      const saved = loadGeneratedCard();
+      if (saved) {
+        setUserData(saved.userData);
+        setPreviewImage(saved.previewImage);
+        setGeneratedTraits(saved.generatedTraits);
+        setBackstoryData(saved.backstoryData);
+        setShowModal(true);
+      }
+    }
+  }, [farcasterContext.isReady, farcasterContext.user]);
 
   // Combined fetch and generate function
   const handleGenerateCard = async () => {
@@ -158,7 +212,7 @@ export default function FidPage() {
     setPreviewImage(imageDataUrl);
 
     // Store backstory data (will be generated in modal based on language)
-    setBackstoryData({
+    const backstory = {
       username: user.username,
       displayName: user.display_name,
       bio: user.profile?.bio?.text || "",
@@ -168,6 +222,24 @@ export default function FidPage() {
       power,
       bounty: power * 10,
       rarity,
+    };
+    setBackstoryData(backstory);
+
+    // Save to localStorage so card persists if user leaves page
+    saveGeneratedCard({
+      userData: user,
+      previewImage: imageDataUrl,
+      generatedTraits: {
+        rarity,
+        foil,
+        wear,
+        suit,
+        rank,
+        suitSymbol,
+        color,
+        power,
+      },
+      backstoryData: backstory,
     });
   };
 
@@ -218,6 +290,9 @@ export default function FidPage() {
           // Redirect to individual FID page
           router.push(`/fid/${validatedData.fid}`);
 
+          // Clear localStorage (card has been minted)
+          clearGeneratedCard();
+
           // Reset form
           setUserData(null);
           setPreviewImage(null);
@@ -236,10 +311,10 @@ export default function FidPage() {
     }
   }, [isConfirmed, pendingMintData, hash]);
 
-  // Queries
-  const myCards = useQuery(
-    api.farcasterCards.getFarcasterCardsByAddress,
-    address ? { address } : "skip"
+  // Queries - Get recent cards instead of just user's cards
+  const recentCards = useQuery(
+    api.farcasterCards.getRecentFarcasterCards,
+    { limit: 12 }
   );
 
   // Password check
@@ -533,18 +608,19 @@ export default function FidPage() {
           isMinting={loading || isContractPending || isConfirming}
         />
 
-        {/* My Cards */}
-        {myCards && myCards.length > 0 && (
+        {/* Recent Cards */}
+        {recentCards && recentCards.length > 0 && (
           <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-3 sm:mb-4">
-              My Farcaster Cards ({myCards.length})
+              Recent Cards ({recentCards.length})
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {myCards.map((card: any) => (
-                <div
+              {recentCards.map((card: any) => (
+                <Link
                   key={card._id}
-                  className="bg-vintage-charcoal rounded-lg border border-vintage-gold/30 p-4"
+                  href={`/fid/${card.fid}`}
+                  className="bg-vintage-charcoal rounded-lg border border-vintage-gold/30 p-4 hover:border-vintage-gold transition-all hover:scale-105 cursor-pointer"
                 >
                   {/* Card Symbol */}
                   <div className="text-center mb-2">
@@ -573,23 +649,10 @@ export default function FidPage() {
                     Score: {card.neynarScore.toFixed(2)}
                   </div>
 
-                  {/* Share Button */}
-                  <a
-                    href={(() => {
-                      const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
-                      const foilText = card.foil !== 'None' ? ` with ${card.foil} foil` : '';
-                      const castText = `Just minted my VibeFID!\n\n${card.rarity}${foilText} • ${card.power} power\n\n@jvhbo`;
-
-                      return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                    })()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 w-full px-3 py-2 bg-purple-600/80 hover:bg-purple-600 text-white text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-1"
-                  >
-                    <span className="text-base">🔮</span>
-                    Share
-                  </a>
-                </div>
+                  <div className="mt-3 text-center text-xs text-vintage-burnt-gold">
+                    Click to view card →
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
