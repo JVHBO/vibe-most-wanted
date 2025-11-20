@@ -7,7 +7,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { useClaimVBMS, useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
+import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
@@ -52,8 +53,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const { claimVBMS } = useClaimVBMS();
 
-  // Get VBMS wallet balance from blockchain
-  const { balance: vbmsWalletBalance } = useVBMSBalance(address as `0x${string}`);
+  // Get VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)
+  const { balance: vbmsWalletBalance } = useFarcasterVBMSBalance(address);
 
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
