@@ -10,6 +10,7 @@ import { getFarcasterAccountCreationDate } from '@/lib/farcasterRegistry';
 import CriminalBackstoryCard from '@/components/CriminalBackstoryCard';
 import Link from 'next/link';
 import { CardMedia } from '@/components/CardMedia';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
 export default function FidCardPage() {
   const params = useParams();
@@ -111,7 +112,7 @@ export default function FidCardPage() {
               {/* Card Image/Video */}
               <div className="w-full max-w-md mb-6">
                 <CardMedia
-                  src={card.imageUrl || card.pfpUrl}
+                  src={convertIpfsUrl(card.imageUrl) || card.pfpUrl}
                   alt={card.username}
                   className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
                 />
@@ -210,7 +211,7 @@ export default function FidCardPage() {
 
                   <div className="aspect-square mb-2 rounded-lg overflow-hidden">
                     <CardMedia
-                      src={mintedCard.imageUrl || mintedCard.pfpUrl}
+                      src={convertIpfsUrl(mintedCard.imageUrl) || mintedCard.pfpUrl}
                       alt={mintedCard.username}
                       className="w-full h-full object-cover"
                     />
