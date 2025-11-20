@@ -121,29 +121,12 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
     ctx.font = '18px monospace';
     ctx.fillText(`neynar score: ${params.neynarScore.toFixed(2)}`, canvas.width / 2, 70);
 
-    // BOUNTY REWARD banner (above PFP location)
+    // BOUNTY REWARD text (above PFP, close to it - simple black text)
     const pfpY = 200; // PFP starts at y=200
-    const bannerY = pfpY - 60; // Banner 60px above PFP
-
-    // Banner background (red ribbon)
-    ctx.fillStyle = '#8B0000'; // Dark red
-    ctx.fillRect(50, bannerY - 25, canvas.width - 100, 50);
-
-    // Banner border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(50, bannerY - 25, canvas.width - 100, 50);
-
-    // BOUNTY REWARD text
-    ctx.fillStyle = '#FFD700'; // Gold text
-    ctx.font = 'bold 24px serif';
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 18px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('BOUNTY REWARD', canvas.width / 2, bannerY - 8);
-
-    // Bounty amount
-    ctx.fillStyle = '#FFFFFF'; // White text
-    ctx.font = 'bold 20px monospace';
-    ctx.fillText(`$${params.bounty.toLocaleString()}`, canvas.width / 2, bannerY + 15);
+    ctx.fillText(`BOUNTY REWARD: $${params.bounty.toLocaleString()}`, canvas.width / 2, pfpY - 20); // 20px above PFP
 
     // Load and draw PFP
     const pfpImg = new Image();
@@ -233,7 +216,7 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       ctx.fillText(params.suitSymbol, bottomRankWidth / 2, 100); // 130px from bottom, centered
       ctx.restore();
 
-      // Bottom left - WANTED SINCE
+      // Bottom left - WANTED SINCE (moved down slightly)
       ctx.fillStyle = '#000';
       ctx.font = 'bold 16px serif';
       ctx.textAlign = 'left';
@@ -243,9 +226,9 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const month = monthNames[params.createdAt.getMonth()];
         const year = params.createdAt.getFullYear();
-        ctx.fillText(`WANTED SINCE:`, 20, canvas.height - 60);
-        ctx.font = 'bold 18px monospace';
-        ctx.fillText(`${month} ${year}`, 20, canvas.height - 38);
+        ctx.fillText(`WANTED SINCE:`, 20, canvas.height - 50);
+        ctx.font = 'bold 16px serif'; // Same font for consistency
+        ctx.fillText(`${month} ${year}`, 20, canvas.height - 28);
       } else {
         // Fallback: Use FID as indicator
         let era = 'PIONEER'; // Default for very low FIDs
@@ -253,9 +236,9 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
         if (params.fid > 100000) era = 'MEMBER';
         if (params.fid > 500000) era = 'NEWCOMER';
 
-        ctx.fillText(`WANTED SINCE:`, 20, canvas.height - 60);
-        ctx.font = 'bold 16px monospace';
-        ctx.fillText(`FID ERA: ${era}`, 20, canvas.height - 38);
+        ctx.fillText(`WANTED SINCE:`, 20, canvas.height - 50);
+        ctx.font = 'bold 16px serif'; // Same font for consistency
+        ctx.fillText(`FID ERA: ${era}`, 20, canvas.height - 28);
       }
 
       // Convert to data URL

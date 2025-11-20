@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { ConvexProfileService, type UserProfile, type MatchHistory } from '@/lib/convex-profile';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -302,15 +303,25 @@ export default function ProfilePage() {
         if (sdk && typeof sdk.wallet !== 'undefined') {
           const provider = await sdk.wallet.getEthereumProvider();
           if (provider) {
-            const addresses = await provider.request({
-              method: "eth_requestAccounts"
-            });
-            if (addresses && addresses[0]) {
-              setFarcasterAddress(addresses[0]);
-              devLog('✅ Auto-connected Farcaster wallet in profile:', addresses[0]);
-            } else {
-              // Failed to get address, reset state
-              setFarcasterAddress(null);
+            try {
+              const addresses = await provider.request({
+                method: "eth_requestAccounts"
+              });
+              if (addresses && addresses[0]) {
+                setFarcasterAddress(addresses[0]);
+                devLog('✅ Auto-connected Farcaster wallet in profile:', addresses[0]);
+              } else {
+                // Failed to get address, reset state
+                setFarcasterAddress(null);
+              }
+            } catch (requestError: any) {
+              // Silently handle authorization errors
+              if (requestError?.message?.includes('not been authorized')) {
+                devLog('⚠️ Farcaster wallet not authorized yet');
+                setFarcasterAddress(null);
+                return;
+              }
+              throw requestError;
             }
           }
         }
@@ -1175,18 +1186,31 @@ export default function ProfilePage() {
                return collection?.marketplaceUrl;
              })() && (
               <div className="mt-6">
-                <a
-                  href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
-                  style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-base md:text-lg">◆</span>
-                    <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
-                  </div>
-                </a>
+                {COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
+                  <Link
+                    href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
+                    className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                    style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-base md:text-lg">◆</span>
+                      <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <a
+                    href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                    style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-base md:text-lg">◆</span>
+                      <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
+                    </div>
+                  </a>
+                )}
               </div>
             )}
           </div>
@@ -1287,20 +1311,35 @@ export default function ProfilePage() {
                  const collection = COLLECTIONS[selectedCollections[0]];
                  return collection?.marketplaceUrl;
                })() && (
-                <a
-                  href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
-                  style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                >
-                  <div className="flex flex-col items-center justify-center gap-2 text-center">
-                    <span className="text-2xl md:text-3xl">◆</span>
-                    <span className="text-xs md:text-sm leading-tight">
-                      {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
-                    </span>
-                  </div>
-                </a>
+                COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
+                  <Link
+                    href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
+                    className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                    style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                      <span className="text-2xl md:text-3xl">◆</span>
+                      <span className="text-xs md:text-sm leading-tight">
+                        {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
+                      </span>
+                    </div>
+                  </Link>
+                ) : (
+                  <a
+                    href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                    style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                      <span className="text-2xl md:text-3xl">◆</span>
+                      <span className="text-xs md:text-sm leading-tight">
+                        {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
+                      </span>
+                    </div>
+                  </a>
+                )
               )}
             </div>
 
