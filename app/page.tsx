@@ -38,6 +38,8 @@ import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
 import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
+// TEMPORARILY DISABLED - Causing performance issues
+// import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
@@ -260,7 +262,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
             className="relative rounded-lg"
           >
             <div style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}} className="rounded-lg overflow-hidden">
-            <img src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" onError={() => { if (imgError < fallbacks.length - 1) setImgError(imgError + 1); }} />
+            <CardMedia src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" />
 
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
               <div className="flex items-center justify-between">
@@ -292,107 +294,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
   );
 });
 
-// Match History Section Component
-const MatchHistorySection = memo(({ address }: { address: string }) => {
-  const { t } = useLanguage();
-
-  // 🚀 OPTIMIZED: Use summary query (95% bandwidth reduction)
-  const matchHistory = useQuery(
-    api.matches.getMatchHistorySummary,
-    address ? { address: address.toLowerCase(), limit: 20 } : "skip"
-  );
-
-  if (!matchHistory || matchHistory.length === 0) {
-    return (
-      <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6">
-        <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-          <NextImage src="/images/icons/battle.svg" alt="Battle" width={32} height={32} /> {t('matchHistory')}
-        </h2>
-        <div className="bg-vintage-black/50 border border-vintage-gold/20 rounded-xl p-8 text-center">
-          <p className="text-vintage-burnt-gold">{t('noMatches')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6">
-      <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-        <NextImage src="/images/icons/battle.svg" alt="Battle" width={32} height={32} /> {t('matchHistory')}
-      </h2>
-      <div className="space-y-3">
-        {matchHistory.map((match: any, index: number) => {
-          const isWin = match.result === 'win';
-          const isTie = match.result === 'tie';
-          const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
-          const resultColor = isWin ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-red-400';
-          const resultIcon = isWin ? '/images/icons/victory.svg' : isTie ? '/images/icons/cards.svg' : '/images/icons/defeat.svg';
-          const resultText = isWin ? t('victory').toUpperCase() : isTie ? t('tie').toUpperCase() : t('defeat').toUpperCase();
-
-          return (
-            <div
-              key={match._id || index}
-              className={`bg-vintage-charcoal border-2 ${borderColor} rounded-xl p-4 hover:scale-[1.01] transition-transform`}
-            >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                {/* Match Type & Result */}
-                <div className="flex items-center gap-4">
-                  <NextImage
-                    src={resultIcon}
-                    alt={resultText}
-                    width={48}
-                    height={48}
-                    className="text-vintage-gold"
-                    loading="lazy"
-                  />
-                  <div>
-                    <p className={`font-display font-bold text-lg ${resultColor} flex items-center gap-2`}>
-                      {resultText}
-                    </p>
-                    <p className="text-xs text-vintage-burnt-gold font-modern">
-                      {match.type === 'pvp' ? t('playerVsPlayer') :
-                       match.type === 'attack' ? t('attack') :
-                       match.type === 'defense' ? t('defense') :
-                       t('playerVsEnvironment')}
-                    </p>
-                    <p className="text-xs text-vintage-burnt-gold/70">
-                      {new Date(match.timestamp).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Power Stats */}
-                <div className="flex items-center gap-4">
-                  <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-gold/50">
-                    <p className="text-xs text-vintage-burnt-gold font-modern">{t('yourPower')}</p>
-                    <p className="text-xl font-bold text-vintage-gold">{match.playerPower}</p>
-                  </div>
-                  <div className="text-2xl text-vintage-burnt-gold font-bold">VS</div>
-                  <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-silver/50">
-                    <p className="text-xs text-vintage-burnt-gold font-modern">{t('opponent').toUpperCase()}</p>
-                    <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
-                  </div>
-                </div>
-
-                {/* Opponent Info (if PvP/Attack/Defense) */}
-                {match.opponentUsername && (
-                  <div className="text-xs font-modern">
-                    <p className="text-vintage-gold">vs @{match.opponentUsername}</p>
-                    {match.opponentAddress && (
-                      <p className="text-vintage-burnt-gold font-mono">
-                        {match.opponentAddress.slice(0, 6)}...{match.opponentAddress.slice(-4)}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-});
+// Match History Section Component - REMOVED from leaderboard (only in profile page now)
 
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
@@ -777,11 +679,24 @@ export default function TCGPage() {
             setTimeout(() => reject(new Error('Farcaster wallet connection timeout')), 5000)
           );
 
-          const accountsPromise = sdk.wallet.ethProvider.request({
-            method: "eth_requestAccounts"
-          });
-
-          const addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+          // Wrap in try-catch to prevent unhandled promise rejections
+          let addresses: string[] = [];
+          try {
+            const accountsPromise = sdk.wallet.ethProvider.request({
+              method: "eth_requestAccounts"
+            });
+            addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+          } catch (requestError: any) {
+            // Handle authorization errors - user needs to authorize in Farcaster settings
+            // Don't set isInFarcaster=false because we ARE in the miniapp, just not authorized
+            if (requestError?.message?.includes('not been authorized')) {
+              devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
+              // Keep isInFarcaster=true, just don't set address
+              setIsCheckingFarcaster(false);
+              return;
+            }
+            throw requestError;
+          }
 
           if (addresses && addresses[0]) {
             setFarcasterAddress(addresses[0]);
@@ -2651,6 +2566,12 @@ export default function TCGPage() {
 
     setIsLoadingMissions(true);
     try {
+      // TEMPORARILY DISABLED - Causing Convex errors until schema is synced
+      // Ensure welcome_gift exists for this player (migration for old users)
+      // await convex.mutation(api.missions.ensureWelcomeGift, {
+      //   playerAddress: address,
+      // });
+
       // Get completed missions from database
       const playerMissions = await convex.query(api.missions.getPlayerMissions, {
         playerAddress: address,
@@ -2800,8 +2721,28 @@ export default function TCGPage() {
       // 🚀 Performance: Using pre-computed memoized values
       devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards: openedCardsCount, totalPower: totalNftPower, tokenIds: nftTokenIds.length });
 
+      // Calculate collection-specific powers for leaderboard filtering
+      const collectionPowers = nfts.reduce((acc, nft) => {
+        const collection = nft.collection || 'vibe'; // Default to vibe if no collection specified
+        const power = nft.power || 0;
+
+        if (collection === 'vibe') {
+          acc.vibePower = (acc.vibePower || 0) + power;
+        } else if (collection === 'gmvbrs') {
+          acc.vbrsPower = (acc.vbrsPower || 0) + power;
+        } else if (collection === 'vibefid') {
+          acc.vibefidPower = (acc.vibefidPower || 0) + power;
+        } else if (collection === 'americanfootball') {
+          acc.afclPower = (acc.afclPower || 0) + power;
+        }
+
+        return acc;
+      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number; afclPower?: number });
+
+      devLog('📊 Collection powers:', collectionPowers);
+
       // Update stats and reload profile to show updated values
-      ConvexProfileService.updateStats(address, nfts.length, openedCardsCount, unopenedCardsCount, totalNftPower, nftTokenIds)
+      ConvexProfileService.updateStats(address, nfts.length, openedCardsCount, unopenedCardsCount, totalNftPower, nftTokenIds, collectionPowers)
         .then(() => {
           // Reload profile to get updated stats
           return ConvexProfileService.getProfile(address);
@@ -2841,23 +2782,173 @@ export default function TCGPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🚨 REMOVED: Collection power calculation code
-  // This was causing infinite loops by creating new objects in useMemo
-  // Collection-specific filtering will work after Convex schema is deployed with
-  // vibePower, vbrsPower, vibefidPower, afclPower fields
+  // Cache for collection-based power calculations
+  const [collectionPowerCache, setCollectionPowerCache] = useState<Map<string, Map<string, number>>>(new Map());
+  const [isCalculatingCollectionPower, setIsCalculatingCollectionPower] = useState(false);
+
+  // Helper to calculate power from NFT attributes (matches nft-fetcher.ts logic)
+  const calculateCardPowerFromAttributes = useCallback((nft: any): number => {
+    const findAttr = (trait: string): string => {
+      const locs = [
+        nft?.raw?.metadata?.attributes,
+        nft?.metadata?.attributes,
+        nft?.metadata?.traits,
+        nft?.raw?.metadata?.traits
+      ];
+      for (const attrs of locs) {
+        if (!Array.isArray(attrs)) continue;
+        const found = attrs.find((a: any) => {
+          const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
+          const searchTrait = trait.toLowerCase().trim();
+          return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
+        });
+        if (found) {
+          return String(found?.value || found?.trait_value || found?.displayType || '').trim();
+        }
+      }
+      return '';
+    };
+
+    // Check if this is a free card - exclude from power calculation
+    const badgeType = findAttr('badgetype') || findAttr('badge_type') || findAttr('badge');
+    if (badgeType.toLowerCase().includes('free')) {
+      return 0; // Free cards don't contribute to power
+    }
+
+    const foil = findAttr('foil') || 'None';
+    const rarity = findAttr('rarity') || 'Common';
+    const wear = findAttr('wear') || 'Lightly Played';
+
+    // Also check if rarity is explicitly "free"
+    if (rarity.toLowerCase().includes('free')) {
+      return 0;
+    }
+
+    // Base power by rarity
+    let base = 5;
+    const r = rarity.toLowerCase();
+    if (r.includes('mythic')) base = 800;
+    else if (r.includes('legend')) base = 240;
+    else if (r.includes('epic')) base = 80;
+    else if (r.includes('rare')) base = 20;
+    else if (r.includes('common')) base = 5;
+
+    // Wear multiplier
+    let wearMult = 1.0;
+    const w = wear.toLowerCase();
+    if (w.includes('pristine')) wearMult = 1.8;
+    else if (w.includes('mint')) wearMult = 1.4;
+
+    // Foil multiplier
+    let foilMult = 1.0;
+    const f = foil.toLowerCase();
+    if (f.includes('prize')) foilMult = 15.0;
+    else if (f.includes('standard')) foilMult = 2.5;
+
+    const power = base * wearMult * foilMult;
+    return Math.max(1, Math.round(power));
+  }, []);
+
+  // Calculate power for a specific collection (smart approach: use Alchemy API)
+  const calculateCollectionPower = useCallback(async (address: string, collectionId: CollectionId): Promise<number> => {
+    // TEMPORARILY DISABLED: Alchemy API calls causing infinite loading
+    // Update cache with 0 to prevent infinite calculation loop
+    setCollectionPowerCache(prev => {
+      const newCache = new Map(prev);
+      const addressCache = newCache.get(address) || new Map();
+      addressCache.set(collectionId, 0);
+      newCache.set(address, addressCache);
+      return newCache;
+    });
+
+    return 0;
+
+    /* DISABLED CODE - Uncomment when Alchemy API is fixed
+    // Check cache first
+    const addressCache = collectionPowerCache.get(address);
+    if (addressCache?.has(collectionId)) {
+      return addressCache.get(collectionId)!;
+    }
+
+    try {
+      // Get collection contract address from collections config
+      const contractAddress = getCollectionContract(collectionId);
+
+      if (!contractAddress) return 0;
+
+      // Fetch NFTs for this collection from Alchemy with retry logic
+      let response: Response;
+      let retries = 0;
+      const maxRetries = 3;
+
+      while (retries <= maxRetries) {
+        response = await fetch(
+          `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${address}&contractAddresses[]=${contractAddress}&withMetadata=true`
+        );
+
+        if (response.status === 429 && retries < maxRetries) {
+          // Exponential backoff: 1s, 2s, 4s
+          const delay = Math.pow(2, retries) * 1000;
+          devLog(`⏳ [Leaderboard] Rate limited for ${address.substring(0, 8)}..., retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retries++;
+          continue;
+        }
+
+        break;
+      }
+
+      if (!response!.ok) throw new Error(`Alchemy API error: ${response!.status}`);
+
+      const data = await response!.json();
+      const nfts = data.ownedNfts || [];
+
+      // Calculate total power from attributes
+      let totalPower = 0;
+      for (const nft of nfts) {
+        const power = calculateCardPowerFromAttributes(nft);
+        totalPower += power;
+      }
+
+      // Update cache
+      setCollectionPowerCache(prev => {
+        const newCache = new Map(prev);
+        const addressCache = newCache.get(address) || new Map();
+        addressCache.set(collectionId, totalPower);
+        newCache.set(address, addressCache);
+        return newCache;
+      });
+
+      return totalPower;
+    } catch (error) {
+      devError('[Leaderboard] Error calculating collection power:', error);
+      return 0;
+    }
+    */
+  }, [collectionPowerCache]);
 
   // Filter and re-rank leaderboard by collection
-  // 🚨 SIMPLIFIED: No object creation to prevent infinite loop
+  // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
   const filteredLeaderboard = useMemo(() => {
     if (!leaderboard || leaderboard.length === 0) return [];
 
-    // For now, just return sorted leaderboard by totalPower
-    // Collection-specific filtering will work after Convex schema is deployed
-    // This prevents the infinite loop caused by creating new objects
-    return [...leaderboard].sort((a, b) =>
-      (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0)
-    );
-  }, [leaderboard]);
+    // Map collection ID to power field name
+    const powerFieldMap: Record<string, 'vibePower' | 'vbrsPower' | 'vibefidPower' | 'afclPower'> = {
+      'vibe': 'vibePower',
+      'gmvbrs': 'vbrsPower',
+      'vibefid': 'vibefidPower',
+      'americanfootball': 'afclPower',
+      'custom': 'vibePower', // Fallback
+    };
+    const powerField = powerFieldMap[leaderboardCollection] || 'vibePower';
+
+    // Sort by collection-specific power
+    return [...leaderboard].sort((a, b) => {
+      const aPower = a.stats?.[powerField] || 0;
+      const bPower = b.stats?.[powerField] || 0;
+      return bPower - aPower;
+    });
+  }, [leaderboard, leaderboardCollection]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
@@ -4159,11 +4250,19 @@ export default function TCGPage() {
                             setTimeout(() => reject(new Error('Connection timeout')), 5000)
                           );
 
-                          const accountsPromise = sdk.wallet.ethProvider.request({
-                            method: "eth_requestAccounts"
-                          });
-
-                          const addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+                          let addresses: string[] = [];
+                          try {
+                            const accountsPromise = sdk.wallet.ethProvider.request({
+                              method: "eth_requestAccounts"
+                            });
+                            addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+                          } catch (requestError: any) {
+                            // Handle authorization errors gracefully
+                            if (requestError?.message?.includes('not been authorized')) {
+                              throw new Error('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
+                            }
+                            throw requestError;
+                          }
 
                           if (addresses && addresses[0]) {
                             setFarcasterAddress(addresses[0]);
@@ -4578,18 +4677,31 @@ export default function TCGPage() {
                  })() && (
                   <div className="text-center py-8 mb-6">
                     <p className="text-vintage-burnt-gold mb-4">You don't have any NFTs from this collection yet</p>
-                    <a
-                      href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
-                      style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-base md:text-lg">◆</span>
-                        <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
-                      </div>
-                    </a>
+                    {COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
+                      <Link
+                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
+                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-base md:text-lg">◆</span>
+                          <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
+                        </div>
+                      </Link>
+                    ) : (
+                      <a
+                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-base md:text-lg">◆</span>
+                          <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
+                        </div>
+                      </a>
+                    )}
                   </div>
                 )}
 
@@ -4610,20 +4722,35 @@ export default function TCGPage() {
                      const collection = COLLECTIONS[selectedCollections[0]];
                      return collection?.marketplaceUrl;
                    })() && (
-                    <a
-                      href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
-                      style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                    >
-                      <div className="flex flex-col items-center justify-center gap-2 text-center">
-                        <span className="text-2xl md:text-3xl">◆</span>
-                        <span className="text-xs md:text-sm leading-tight">
-                          {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
-                        </span>
-                      </div>
-                    </a>
+                    COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
+                      <Link
+                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
+                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex flex-col items-center justify-center gap-2 text-center">
+                          <span className="text-2xl md:text-3xl">◆</span>
+                          <span className="text-xs md:text-sm leading-tight">
+                            {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
+                          </span>
+                        </div>
+                      </Link>
+                    ) : (
+                      <a
+                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex flex-col items-center justify-center gap-2 text-center">
+                          <span className="text-2xl md:text-3xl">◆</span>
+                          <span className="text-xs md:text-sm leading-tight">
+                            {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
+                          </span>
+                        </div>
+                      </a>
+                    )
                   )}
                 </div>
 
@@ -4866,7 +4993,7 @@ export default function TCGPage() {
                       <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
                     </h1>
                     {/* Collection Filter Buttons */}
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-wrap gap-2 items-center">
                       <button
                         onClick={() => setLeaderboardCollection('vibe')}
                         className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
@@ -4886,6 +5013,26 @@ export default function TCGPage() {
                         }`}
                       >
                         VBRS
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardCollection('vibefid')}
+                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
+                          leaderboardCollection === 'vibefid'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        VibeFID
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardCollection('americanfootball')}
+                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
+                          leaderboardCollection === 'americanfootball'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        AFCL
                       </button>
                       {/* Export Top 10 Button */}
                       <button
@@ -4952,7 +5099,7 @@ export default function TCGPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {leaderboard
+                        {filteredLeaderboard
                           .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
                           .map((profile, sliceIndex) => {
                             const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
@@ -5043,18 +5190,27 @@ export default function TCGPage() {
                                       if (soundEnabled) AudioManager.buttonError();
                                       return;
                                     }
+                                    // Check if player has defense deck
+                                    // Note: defenseDeck is excluded from leaderboard response for performance
+                                    // Use hasDefenseDeck flag instead (set by getLeaderboardLite)
+                                    if (!profile.hasDefenseDeck) {
+                                      alert(`${profile.username} doesn't have a full defense deck. Cannot attack.`);
+                                      if (soundEnabled) AudioManager.buttonError();
+                                      return;
+                                    }
                                     // Open attack card selection
                                     if (soundEnabled) AudioManager.buttonClick();
                                     setTargetPlayer(profile);
                                     setShowAttackCardSelection(true);
                                     setAttackSelectedCards([]);
                                   }}
-                                  disabled={!userProfile || attacksRemaining <= 0}
+                                  disabled={!userProfile || attacksRemaining <= 0 || !profile.hasDefenseDeck}
                                   className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                                    userProfile && attacksRemaining > 0
+                                    userProfile && attacksRemaining > 0 && profile.hasDefenseDeck
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
+                                  title={!profile.hasDefenseDeck ? `No defense deck` : ''}
                                 >
                                   †<span className="hidden sm:inline"> Attack</span>
                                 </button>
@@ -5162,12 +5318,7 @@ export default function TCGPage() {
                   </div>
                 )}
 
-                {/* Match History Section */}
-                {userProfile && (
-                  <div className="mt-8">
-                    <MatchHistorySection address={userProfile.address} />
-                  </div>
-                )}
+                {/* Match History Section removed from leaderboard - only in profile page */}
               </div>
             </div>
           )}
@@ -5692,6 +5843,9 @@ export default function TCGPage() {
 
       {/* Easter Egg - Runaway Image */}
       <RunawayEasterEgg />
+
+      {/* TEMPORARILY DISABLED - Causing performance issues */}
+      {/* <MobileDebugConsole /> */}
 
       </div>
     </div>

@@ -14,6 +14,12 @@ import { VIBEFID_ABI, VIBEFID_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contrac
 import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
+import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
+import FidGenerationModal from "@/components/FidGenerationModal";
+import { useRouter } from "next/navigation";
+import { CardMedia } from "@/components/CardMedia";
 
 interface GeneratedTraits {
   rarity: string;
@@ -29,19 +35,27 @@ interface GeneratedTraits {
 export default function FidPage() {
   const { address } = useAccount();
   const farcasterContext = useFarcasterContext();
+  const { lang } = useLanguage();
+  const router = useRouter();
+
+  // Password protection
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
+
   const [fidInput, setFidInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
+  const [backstoryData, setBackstoryData] = useState<CriminalBackstoryData | null>(null);
+
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
 
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
-
-  // Success modal state
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [mintedCardData, setMintedCardData] = useState<any>(null);
 
   // Auto-fill FID if in Farcaster miniapp
   useEffect(() => {
@@ -49,6 +63,120 @@ export default function FidPage() {
       setFidInput(farcasterContext.user.fid.toString());
     }
   }, [farcasterContext.isReady, farcasterContext.user?.fid]);
+
+  // Combined fetch and generate function
+  const handleGenerateCard = async () => {
+    if (!fidInput) {
+      setError("Please enter a FID");
+      return;
+    }
+
+    const fid = parseInt(fidInput);
+    if (isNaN(fid) || fid <= 0) {
+      setError("Please enter a valid FID number");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Fetch user data
+      const user = await getUserByFid(fid);
+      if (!user) {
+        setError(`No user found for FID ${fid}`);
+        setLoading(false);
+        return;
+      }
+
+      setUserData(user);
+
+      // Generate card immediately
+      await generateCardForUser(user);
+
+      // Open modal
+      setShowModal(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to generate card");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateCardForUser = async (user: NeynarUser) => {
+    const score = user.experimental?.neynar_user_score || 0;
+    const rarity = calculateRarityFromScore(score);
+
+    // Generate random suit and rank
+    const suit = generateRandomSuit();
+    const suitSymbol = getSuitSymbol(suit);
+    const color = getSuitColor(suit);
+    const rank = generateRankFromRarity(rarity);
+
+    // Generate FID-based foil and wear traits with randomness for preview
+    const fidTraits = getFidTraits(user.fid, Date.now());
+    const foil = fidTraits.foil;
+    const wear = fidTraits.wear;
+
+    // Calculate power with VibeFID balanced config
+    const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
+    const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
+
+    const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
+    const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
+
+    const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
+    const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
+
+    const power = Math.round(basePower * wearMult * foilMult);
+
+    // Save generated traits
+    setGeneratedTraits({
+      rarity,
+      foil,
+      wear,
+      suit,
+      rank,
+      suitSymbol,
+      color,
+      power,
+    });
+
+    // Fetch account creation date
+    const createdAt = await getFarcasterAccountCreationDate(user.fid);
+
+    // Generate card image
+    const imageDataUrl = await generateFarcasterCardImage({
+      fid: user.fid,
+      username: user.username,
+      displayName: user.display_name,
+      pfpUrl: user.pfp_url,
+      bio: user.profile?.bio?.text || "",
+      neynarScore: score,
+      suit,
+      suitSymbol,
+      rank,
+      color,
+      rarity,
+      bounty: power * 10,
+      createdAt: createdAt || undefined,
+    });
+
+    setPreviewImage(imageDataUrl);
+
+    // Store backstory data (will be generated in modal based on language)
+    setBackstoryData({
+      username: user.username,
+      displayName: user.display_name,
+      bio: user.profile?.bio?.text || "",
+      fid: user.fid,
+      followerCount: user.follower_count,
+      createdAt,
+      power,
+      bounty: power * 10,
+      rarity,
+    });
+  };
 
   // Contract interaction
   const { writeContract, data: hash, isPending: isContractPending } = useWriteContract();
@@ -94,20 +222,17 @@ export default function FidPage() {
           await mintCard(validatedData);
           setError(null);
 
-          // Show success modal with card data
-          setMintedCardData({
-            ...validatedData,
-            cardImage: previewImage, // Card image for display
-            txHash: hash,
-          });
-          setShowSuccessModal(true);
+          // Redirect to individual FID page
+          router.push(`/fid/${validatedData.fid}`);
 
           // Reset form
           setUserData(null);
           setPreviewImage(null);
           setGeneratedTraits(null);
+          setBackstoryData(null);
           setFidInput("");
           setPendingMintData(null);
+          setShowModal(false);
         } catch (err: any) {
           console.error('❌ Convex save error:', err);
           setError(`NFT minted but failed to save metadata: ${err.message}`);
@@ -125,123 +250,58 @@ export default function FidPage() {
     address ? { address } : "skip"
   );
 
-  const handleFetchUser = async () => {
-    setError(null);
-    setUserData(null);
-    setPreviewImage(null);
-    setGeneratedTraits(null);
+  // Password check
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const correctPassword = process.env.NEXT_PUBLIC_FID_PAGE_PASSWORD || "vibefid2025";
 
-    const fid = parseInt(fidInput);
-    if (isNaN(fid) || fid <= 0) {
-      setError("Please enter a valid FID number");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const user = await getUserByFid(fid);
-
-      if (!user) {
-        setError(`No user found for FID ${fid}`);
-        setLoading(false);
-        return;
-      }
-
-      setUserData(user);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch user data");
-    } finally {
-      setLoading(false);
+    if (passwordInput === correctPassword) {
+      setIsAuthenticated(true);
+      setPasswordError(false);
+    } else {
+      setPasswordError(true);
     }
   };
 
-  const handleGeneratePreview = async () => {
-    if (!userData) {
-      setError("No user data loaded");
-      return;
-    }
+  // If not authenticated, show password form
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black flex items-center justify-center p-8">
+        <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-8 max-w-md w-full">
+          <h1 className="text-3xl font-display font-bold text-vintage-gold mb-2 text-center">
+            🔒 VibeFID Access
+          </h1>
+          <p className="text-vintage-ice text-center mb-6">
+            Enter password to access VibeFID minting
+          </p>
 
-    setLoading(true);
-    setError(null);
+          <form onSubmit={handlePasswordSubmit}>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Enter password"
+              className="w-full px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold mb-4"
+              autoFocus
+            />
 
-    try {
-      const score = userData.experimental?.neynar_user_score || 0;
-      const rarity = calculateRarityFromScore(score);
+            {passwordError && (
+              <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm text-center">
+                ❌ Incorrect password
+              </div>
+            )}
 
-      // Generate random suit and rank
-      const suit = generateRandomSuit();
-      const suitSymbol = getSuitSymbol(suit);
-      const color = getSuitColor(suit);
-      const rank = generateRankFromRarity(rarity);
-
-      // Generate FID-based foil and wear traits (deterministic based on FID)
-      const fidTraits = getFidTraits(userData.fid);
-      const foil = fidTraits.foil;
-      const wear = fidTraits.wear;
-
-      // Calculate power with foil and wear multipliers
-      const basePower = getBasePowerFromRarity(rarity);
-
-      // Wear multiplier
-      const wearMultiplier: Record<string, number> = {
-        Pristine: 1.8,
-        Mint: 1.4,
-        "Lightly Played": 1.0,
-        "Moderately Played": 1.0,
-        "Heavily Played": 1.0,
-      };
-
-      // Foil multiplier
-      const foilMultiplier: Record<string, number> = {
-        Prize: 15.0,
-        Standard: 2.5,
-        None: 1.0,
-      };
-
-      const wearMult = wearMultiplier[wear] || 1.0;
-      const foilMult = foilMultiplier[foil] || 1.0;
-      const power = Math.round(basePower * wearMult * foilMult);
-
-      // Save generated traits
-      setGeneratedTraits({
-        rarity,
-        foil,
-        wear,
-        suit,
-        rank,
-        suitSymbol,
-        color,
-        power,
-      });
-
-      // Fetch account creation date
-      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
-
-      // Generate card image
-      const imageDataUrl = await generateFarcasterCardImage({
-        fid: userData.fid,
-        username: userData.username,
-        displayName: userData.display_name,
-        pfpUrl: userData.pfp_url,
-        bio: userData.profile?.bio?.text || "",
-        neynarScore: score,
-        suit,
-        suitSymbol,
-        rank,
-        color,
-        rarity,
-        bounty: power * 10, // Bounty = Power × 10
-        createdAt: createdAt || undefined,
-      });
-
-      setPreviewImage(imageDataUrl);
-    } catch (err: any) {
-      setError(err.message || "Failed to generate preview");
-    } finally {
-      setLoading(false);
-    }
-  };
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors"
+            >
+              Unlock
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const handleMintCard = async () => {
     if (!address) {
@@ -271,27 +331,24 @@ export default function FidPage() {
         const color = getSuitColor(suit);
         const rank = generateRankFromRarity(rarity);
 
-        // Generate FID-based foil and wear traits (deterministic based on FID)
+        // Generate FID-based foil and wear traits (DETERMINISTIC for final mint)
+        // NO extraSeed - same FID always gives same traits on-chain
         const fidTraits = getFidTraits(userData.fid);
         const foil = fidTraits.foil;
         const wear = fidTraits.wear;
 
-        // Calculate power with foil and wear multipliers
-        const basePower = getBasePowerFromRarity(rarity);
-        const wearMultiplier: Record<string, number> = {
-          Pristine: 1.8,
-          Mint: 1.4,
-          "Lightly Played": 1.0,
-          "Moderately Played": 1.0,
-          "Heavily Played": 1.0,
-        };
-        const foilMultiplier: Record<string, number> = {
-          Prize: 15.0,
-          Standard: 2.5,
-          None: 1.0,
-        };
-        const wearMult = wearMultiplier[wear] || 1.0;
-        const foilMult = foilMultiplier[foil] || 1.0;
+        // Calculate power with VibeFID balanced config
+        const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
+        const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
+
+        // Get wear multiplier from config
+        const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
+        const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
+
+        // Get foil multiplier from config
+        const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
+        const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
+
         const power = Math.round(basePower * wearMult * foilMult);
 
         traits = { rarity, suit, suitSymbol, color, rank, foil, wear, power };
@@ -409,212 +466,76 @@ export default function FidPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-2 sm:p-4 md:p-8 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2">
+        <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-2">
             VibeFID
           </h1>
-          <p className="text-vintage-ice">
+          <p className="text-sm sm:text-base text-vintage-ice">
             Mint playable cards from Farcaster profiles
           </p>
         </div>
 
         {/* Success message when in miniapp */}
         {farcasterContext.isReady && farcasterContext.isInMiniapp && farcasterContext.user && (
-          <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mb-6 text-center">
-            <p className="text-green-300">
+          <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-center">
+            <p className="text-green-300 text-xs sm:text-sm md:text-base break-words">
               ✅ Conectado como <span className="font-bold">@{farcasterContext.user.username || `FID ${farcasterContext.user.fid}`}</span>
               {" "}(FID: {farcasterContext.user.fid})
             </p>
-            <p className="text-green-400 text-sm mt-1">
+            <p className="text-green-400 text-xs sm:text-sm mt-1 break-words">
               Seu FID foi pré-preenchido. Você pode mintar seu próprio card ou de outros usuários.
             </p>
           </div>
         )}
 
         {/* Input Section */}
-        <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
-          <label className="block text-vintage-gold mb-2">
+        <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
+          <label className="block text-vintage-gold mb-2 text-sm sm:text-base">
             Enter Farcaster FID
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="number"
               value={fidInput}
               onChange={(e) => setFidInput(e.target.value)}
               placeholder="e.g., 214746"
-              className="flex-1 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold"
+              className="flex-1 px-3 sm:px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm sm:text-base w-full"
             />
             <button
-              onClick={handleFetchUser}
+              onClick={handleGenerateCard}
               disabled={loading}
-              className="px-6 py-2 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50"
+              className="px-4 sm:px-6 py-2 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-sm sm:text-base whitespace-nowrap w-full sm:w-auto"
             >
-              {loading ? "Loading..." : "Fetch"}
+              {loading ? "Generating..." : "Generate Card"}
             </button>
           </div>
 
           {error && (
-            <div className="mt-4 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200">
+            <div className="mt-4 p-3 sm:p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm sm:text-base break-words">
               {error}
             </div>
           )}
         </div>
 
-        {/* User Preview */}
-        {userData && (
-          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
-            <div className="flex items-start gap-6">
-              {/* PFP */}
-              <img
-                src={userData.pfp_url}
-                alt={userData.username}
-                className="w-32 h-32 rounded-lg border-2 border-vintage-gold"
-              />
-
-              {/* Info */}
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-vintage-gold mb-1">
-                  {userData.display_name}
-                </h2>
-                <p className="text-vintage-ice mb-2">@{userData.username}</p>
-                <p className="text-vintage-ice/80 text-sm mb-4">
-                  {userData.profile?.bio?.text || "No bio"}
-                </p>
-
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <span className="text-vintage-burnt-gold">FID:</span>{" "}
-                    <span className="text-vintage-ice">{userData.fid}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Score:</span>{" "}
-                    <span className="text-vintage-ice">
-                      {userData.experimental?.neynar_user_score?.toFixed(2) || "N/A"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Followers:</span>{" "}
-                    <span className="text-vintage-ice">{userData.follower_count}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Rarity:</span>{" "}
-                    <span className="text-vintage-ice">
-                      {calculateRarityFromScore(userData.experimental?.neynar_user_score || 0)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Card Range:</span>{" "}
-                    <span className="text-vintage-ice">
-                      {(() => {
-                        const rarity = calculateRarityFromScore(userData.experimental?.neynar_user_score || 0);
-                        if (rarity === 'Common') return '2-6';
-                        if (rarity === 'Rare') return '7-8';
-                        if (rarity === 'Epic') return '9-10-J';
-                        if (rarity === 'Legendary') return 'Q-K';
-                        return 'A';
-                      })()}
-                    </span>
-                  </div>
-                </div>
-
-                {userData.power_badge && (
-                  <div className="inline-block px-3 py-1 bg-purple-600 text-white text-sm rounded-full mb-4">
-                    ⚡ Power Badge
-                  </div>
-                )}
-
-                {/* Generate Preview Button */}
-                <button
-                  onClick={handleGeneratePreview}
-                  disabled={loading}
-                  className="w-full px-6 py-3 mb-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                  {loading ? "Generating..." : "Generate Card Preview"}
-                </button>
-
-                {/* Mint Button */}
-                <button
-                  onClick={handleMintCard}
-                  disabled={loading || !address}
-                  className="w-full px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50"
-                >
-                  {!address
-                    ? "Connect Wallet to Mint"
-                    : loading
-                    ? "Minting..."
-                    : "Mint Card"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Card Preview */}
-        {previewImage && generatedTraits && (
-          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
-            <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
-              Card Preview
-            </h2>
-            <div className="flex flex-col items-center gap-6">
-              {/* Card Image with Foil Effect */}
-              <FoilCardEffect
-                foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
-                className="w-full max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
-              >
-                <img
-                  src={previewImage}
-                  alt="Card Preview"
-                  className="w-full h-full object-cover"
-                />
-              </FoilCardEffect>
-
-              {/* Generated Traits */}
-              <div className="w-full max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-6">
-                <h3 className="text-xl font-bold text-vintage-gold mb-4 text-center">
-                  Generated Traits
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-vintage-burnt-gold font-semibold">Card:</span>{" "}
-                    <span className={`font-bold ${generatedTraits.color === 'red' ? 'text-red-500' : 'text-white'}`}>
-                      {generatedTraits.rank}{generatedTraits.suitSymbol}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold font-semibold">Rarity:</span>{" "}
-                    <span className="text-vintage-ice">{generatedTraits.rarity}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold font-semibold">Foil:</span>{" "}
-                    <span className={`font-bold ${
-                      generatedTraits.foil === 'Prize' ? 'text-purple-400' :
-                      generatedTraits.foil === 'Standard' ? 'text-blue-400' :
-                      'text-vintage-ice'
-                    }`}>
-                      {generatedTraits.foil}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold font-semibold">Wear:</span>{" "}
-                    <span className="text-vintage-ice">{generatedTraits.wear}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-vintage-burnt-gold font-semibold">Power:</span>{" "}
-                    <span className="text-vintage-gold font-bold text-lg">{generatedTraits.power}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Generation Modal */}
+        <FidGenerationModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          backstoryData={backstoryData}
+          displayName={userData?.display_name || ""}
+          previewImage={previewImage}
+          generatedTraits={generatedTraits}
+          onMint={handleMintCard}
+          isMinting={loading || isContractPending || isConfirming}
+        />
 
         {/* My Cards */}
         {myCards && myCards.length > 0 && (
-          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6">
-            <h2 className="text-2xl font-bold text-vintage-gold mb-4">
+          <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-3 sm:mb-4">
               My Farcaster Cards ({myCards.length})
             </h2>
 
@@ -631,8 +552,9 @@ export default function FidPage() {
                     </span>
                   </div>
 
-                  <img
-                    src={card.pfpUrl}
+                  {/* Card Image/Video */}
+                  <CardMedia
+                    src={card.imageUrl || card.pfpUrl}
                     alt={card.username}
                     className="w-full aspect-square object-cover rounded-lg mb-2"
                   />
@@ -664,99 +586,6 @@ export default function FidPage() {
                   </a>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* Success Modal */}
-        {showSuccessModal && mintedCardData && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-            <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold p-8 max-w-md w-full relative">
-              {/* Close button */}
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="absolute top-4 right-4 text-vintage-ice hover:text-vintage-gold text-3xl leading-none"
-              >
-                ×
-              </button>
-
-              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4 text-center">
-                VibeFID Minted! 🎉
-              </h2>
-
-              {/* Card Preview */}
-              {mintedCardData.cardImage && (
-                <div className="mb-6">
-                  <FoilCardEffect
-                    foilType={mintedCardData.foil === 'None' ? null : (mintedCardData.foil as 'Standard' | 'Prize')}
-                    className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
-                  >
-                    <img
-                      src={mintedCardData.cardImage}
-                      alt="Minted Card"
-                      className="w-full h-full object-cover"
-                    />
-                  </FoilCardEffect>
-                </div>
-              )}
-
-              {/* Card Stats */}
-              <div className="bg-vintage-black/50 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-vintage-burnt-gold">Rarity:</span>{" "}
-                    <span className="text-vintage-ice font-bold">{mintedCardData.rarity}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Foil:</span>{" "}
-                    <span className={`font-bold ${
-                      mintedCardData.foil === 'Prize' ? 'text-purple-400' :
-                      mintedCardData.foil === 'Standard' ? 'text-blue-400' :
-                      'text-vintage-ice'
-                    }`}>
-                      {mintedCardData.foil}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Wear:</span>{" "}
-                    <span className="text-vintage-ice">{mintedCardData.wear}</span>
-                  </div>
-                  <div>
-                    <span className="text-vintage-burnt-gold">Power:</span>{" "}
-                    <span className="text-vintage-gold font-bold text-lg">{mintedCardData.power}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Share Button */}
-              <a
-                href={(() => {
-                  const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${mintedCardData.fid}`;
-                  const foilText = mintedCardData.foil !== 'None' ? ` with ${mintedCardData.foil} foil` : '';
-                  const castText = `Just minted my VibeFID!\n\n${mintedCardData.rarity}${foilText} • ${mintedCardData.power} power\n\n@jvhbo`;
-
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                })()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mb-3"
-              >
-                <span className="text-xl">🔮</span>
-                Share to Farcaster
-              </a>
-
-              {/* View on BaseScan */}
-              {mintedCardData.txHash && (
-                <a
-                  href={`https://basescan.org/tx/${mintedCardData.txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full px-6 py-3 bg-vintage-black/50 hover:bg-vintage-black text-vintage-ice font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>🔗</span>
-                  View on BaseScan
-                </a>
-              )}
             </div>
           </div>
         )}

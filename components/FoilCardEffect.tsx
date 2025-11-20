@@ -43,10 +43,9 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
           mixBlendMode: 'overlay',
         }}
       >
-        {/* Prize Foil - Very subtle, delicate shimmer */}
+        {/* Prize Foil - Strong, fast, aggressive rainbow effect */}
         {isPrize && (
           <>
-            {/* Ultra-soft rainbow gradient */}
             <div
               style={{
                 position: 'absolute',
@@ -55,17 +54,17 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
                 width: '100%',
                 height: '100%',
                 background: `
-                  conic-gradient(from 45deg at -30% -30%, violet, blue, cyan, green, yellow, orange, red, violet),
-                  linear-gradient(135deg, transparent, rgba(255, 0, 0, .2) 10%, rgba(255, 255, 0, .2) 20%, rgba(0, 255, 0, .2) 30%, rgba(0, 255, 255, .2) 40%, rgba(0, 0, 255, .2) 50%, rgba(255, 0, 255, .15) 60%, transparent 70%)
+                  conic-gradient(from 315deg at -30% -30%, violet, blue, cyan, green, yellow, orange, red, violet),
+                  linear-gradient(135deg, transparent, rgba(255, 0, 0, .7) 10%, rgba(255, 255, 0, .7) 20%, rgba(0, 255, 0, .7) 30%, rgba(0, 255, 255, .7) 40%, rgba(0, 0, 255, .7) 50%, rgba(255, 0, 255, .6) 60%, transparent 70%)
                 `,
                 backgroundSize: '100% 100%, 200% 200%',
                 backgroundPosition: '0 0, -100% -100%',
-                animation: 'standardFoilShine 8s linear infinite',
-                opacity: 0.15,
+                animation: 'prizeFoilShine 3s linear infinite', // 6s → 3s (faster!)
+                opacity: 0.45, // 0.35 → 0.45 (stronger!)
                 mixBlendMode: 'hard-light',
               }}
             />
-            {/* Very subtle stripes */}
+            {/* Diagonal stripes overlay (faster, more aggressive) */}
             <div
               style={{
                 position: 'absolute',
@@ -73,10 +72,10 @@ const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, .04) 0, rgba(255, 255, 255, .04) 10px)',
+                background: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, .12) 0, rgba(255, 255, 255, .12) 10px)', // 0.08 → 0.12 (more visible)
                 mixBlendMode: 'overlay',
-                opacity: 0.2,
-                animation: 'prismMove 20s linear infinite',
+                opacity: 0.45, // 0.35 → 0.45 (stronger!)
+                animation: 'prismMove 10s linear infinite', // 18s → 10s (faster!)
               }}
             />
           </>

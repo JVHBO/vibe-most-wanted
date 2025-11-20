@@ -9,6 +9,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import { PokerMatchmaking } from './PokerMatchmaking';
 import { PokerWaitingRoom } from './PokerWaitingRoom';
 import FoilCardEffect from './FoilCardEffect';
+import { CardMedia } from './CardMedia';
 import { SwordIcon, ShieldIcon, BoltIcon, HandIcon, TrophyIcon, SkullIcon, ChatIcon, EyeIcon, ClockIcon, CloseIcon } from './PokerIcons';
 import { useGroupVoiceChat } from '@/lib/hooks/useGroupVoiceChat';
 import { VoiceChannelPanel } from './VoiceChannelPanel';
@@ -1913,8 +1914,8 @@ export function PokerBattleTable({
                     {selectedDeck[i] ? (
                       <>
                         {(selectedDeck[i].imageUrl || selectedDeck[i].image) ? (
-                          <img
-                            src={(selectedDeck[i].imageUrl || selectedDeck[i].image)}
+                          <CardMedia
+                            src={(selectedDeck[i].imageUrl || selectedDeck[i].image || '')}
                             alt={selectedDeck[i].name}
                             className="w-full h-full object-cover rounded-lg"
                           />
@@ -1955,8 +1956,8 @@ export function PokerBattleTable({
                     }`}
                   >
                     {(card.imageUrl || card.image) ? (
-                      <img
-                        src={(card.imageUrl || card.image)}
+                      <CardMedia
+                        src={(card.imageUrl || card.image || '')}
                         alt={card.name}
                         className="w-full h-full object-cover"
                       />
@@ -2116,7 +2117,7 @@ export function PokerBattleTable({
                     {playerSelectedCard && (phase === 'resolution' || phase === 'reveal') ? (
                       <div className="relative w-full h-full">
                         {playerSelectedCard?.imageUrl || playerSelectedCard?.image ? (
-                          <img src={playerSelectedCard?.imageUrl || playerSelectedCard?.image} alt={playerSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
+                          <CardMedia src={playerSelectedCard?.imageUrl || playerSelectedCard?.image} alt={playerSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(playerSelectedCard?.rarity) }}>
                             <div className="text-white text-xs font-bold text-center">{playerSelectedCard?.name}</div>
@@ -2183,7 +2184,7 @@ export function PokerBattleTable({
                     {opponentSelectedCard && (phase === 'resolution' || showRoundWinner) ? (
                       <div className="relative w-full h-full">
                         {opponentSelectedCard?.imageUrl || opponentSelectedCard?.image ? (
-                          <img src={opponentSelectedCard?.imageUrl || opponentSelectedCard?.image} alt={opponentSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
+                          <CardMedia src={opponentSelectedCard?.imageUrl || opponentSelectedCard?.image} alt={opponentSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(opponentSelectedCard?.rarity) }}>
                             <div className="text-white text-xs font-bold text-center">{opponentSelectedCard?.name}</div>
@@ -2445,8 +2446,8 @@ export function PokerBattleTable({
                           <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
                             <FoilCardEffect foilType={opponentSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
-                                <img
-                                  src={(opponentSelectedCard.imageUrl || opponentSelectedCard.image)}
+                                <CardMedia
+                                  src={(opponentSelectedCard.imageUrl || opponentSelectedCard.image || '')}
                                   alt={opponentSelectedCard.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -2520,8 +2521,8 @@ export function PokerBattleTable({
                           <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
                             <FoilCardEffect foilType={playerSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(playerSelectedCard.imageUrl || playerSelectedCard.image) ? (
-                                <img
-                                  src={(playerSelectedCard.imageUrl || playerSelectedCard.image)}
+                                <CardMedia
+                                  src={(playerSelectedCard.imageUrl || playerSelectedCard.image || '')}
                                   alt={playerSelectedCard.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -2668,8 +2669,8 @@ export function PokerBattleTable({
                         ) : (
                           <FoilCardEffect foilType={card.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                             {(card.imageUrl || card.image) ? (
-                              <img
-                                src={(card.imageUrl || card.image)}
+                              <CardMedia
+                                src={(card.imageUrl || card.image || '')}
                                 alt={card.name}
                                 className="w-full h-full object-cover"
                               />

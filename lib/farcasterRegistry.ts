@@ -5,55 +5,188 @@
 
 /**
  * Fetch Farcaster account creation date by FID
- * Uses Neynar's FID registration API or falls back to approximation
+ * Priority: Farcaster Hub (free) → Airstack (free) → Neynar (paid endpoint)
  */
 export async function getFarcasterAccountCreationDate(fid: number): Promise<Date | null> {
   try {
-    // Try Neynar's user details endpoint which might have registration data
-    const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+    // Try Farcaster Hub first (FREE - no API key needed!)
+    const hubDate = await fetchFromFarcasterHub(fid);
+    if (hubDate) return hubDate;
 
-    if (!NEYNAR_API_KEY) {
-      console.warn('NEYNAR_API_KEY not found, using FID-based approximation');
-      return approximateCreationDate(fid);
+    // Try Airstack API (free with API key)
+    const airstackApiKey = process.env.AIRSTACK_API_KEY || process.env.NEXT_PUBLIC_AIRSTACK_API_KEY;
+
+    if (airstackApiKey) {
+      const airstackDate = await fetchFromAirstack(fid, airstackApiKey);
+      if (airstackDate) return airstackDate;
     }
 
-    // Try fetching from Neynar user endpoint
+    // Fallback: Try Neynar API (may not return dates on free tier)
+    const neynarApiKey = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+
+    if (neynarApiKey) {
+      const neynarDate = await fetchFromNeynar(fid, neynarApiKey);
+      if (neynarDate) return neynarDate;
+    }
+
+    // NO APPROXIMATIONS - Return null if no real data available
+    console.warn(`Could not fetch real creation date for FID ${fid}`);
+    console.warn('Tried: Farcaster Hub (free), Airstack (needs key), Neynar (needs key)');
+    return null;
+
+  } catch (error) {
+    console.error('Error fetching account creation date:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch creation date from Farcaster Hub (FREE - no API key needed!)
+ * Uses Pinata's free Hub endpoint to get onchain IdRegistry data
+ */
+async function fetchFromFarcasterHub(fid: number): Promise<Date | null> {
+  try {
+    // Try Pinata Hub first (most reliable free endpoint)
+    const response = await fetch(
+      `https://hub.pinata.cloud/v1/onChainEventsByFid?fid=${fid}&event_type=EVENT_TYPE_ID_REGISTER`,
+      {
+        headers: {
+          'accept': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.warn(`Farcaster Hub API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Extract registration timestamp from onchain event
+    if (data.events && data.events.length > 0) {
+      const registerEvent = data.events[0];
+
+      if (registerEvent.blockTimestamp) {
+        // blockTimestamp is in seconds since epoch
+        return new Date(registerEvent.blockTimestamp * 1000);
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Farcaster Hub fetch error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch creation date from Airstack API (GraphQL)
+ */
+async function fetchFromAirstack(fid: number, apiKey: string): Promise<Date | null> {
+  try {
+    const query = `
+      query GetFarcasterUser($fid: String!) {
+        Socials(
+          input: {
+            filter: {
+              dappName: { _eq: farcaster }
+              userId: { _eq: $fid }
+            }
+            blockchain: ethereum
+          }
+        ) {
+          Social {
+            userId
+            profileCreatedAtBlockTimestamp
+            createdAtBlockTimestamp
+          }
+        }
+      }
+    `;
+
+    const response = await fetch('https://api.airstack.xyz/gql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': apiKey,
+      },
+      body: JSON.stringify({
+        query,
+        variables: { fid: fid.toString() },
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`Airstack API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.data?.Socials?.Social?.[0]) {
+      const social = data.data.Socials.Social[0];
+      const timestamp = social.profileCreatedAtBlockTimestamp || social.createdAtBlockTimestamp;
+
+      if (timestamp) {
+        return new Date(timestamp);
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Airstack fetch error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch creation date from Neynar API
+ * Using bulk endpoint (free tier): GET /v2/farcaster/user/bulk?fids={FID}
+ */
+async function fetchFromNeynar(fid: number, apiKey: string): Promise<Date | null> {
+  try {
     const response = await fetch(
       `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
       {
         headers: {
           'accept': 'application/json',
-          'api_key': NEYNAR_API_KEY,
+          'api_key': apiKey,
         },
       }
     );
 
     if (!response.ok) {
       console.warn(`Neynar API error: ${response.status}`);
-      return approximateCreationDate(fid);
+      return null;
     }
 
     const data = await response.json();
 
-    // Check if there's a registered_at or created_at field
     if (data.users && data.users[0]) {
       const user = data.users[0];
 
       // Try various possible timestamp fields
+      // Note: bulk endpoint may not return creation dates (needs testing)
       if (user.registered_at) {
         return new Date(user.registered_at);
       }
       if (user.created_at) {
         return new Date(user.created_at);
       }
+      if (user.timestamp) {
+        return new Date(user.timestamp);
+      }
+
+      // If no date fields available, return null
+      // Don't use approximations per user request
+      console.warn(`No date fields found in Neynar response for FID ${fid}`);
     }
 
-    // Fallback to approximation
-    return approximateCreationDate(fid);
-
+    return null;
   } catch (error) {
-    console.error('Error fetching account creation date:', error);
-    return approximateCreationDate(fid);
+    console.error('Neynar fetch error:', error);
+    return null;
   }
 }
 
@@ -61,23 +194,26 @@ export async function getFarcasterAccountCreationDate(fid: number): Promise<Date
  * Approximate account creation date based on FID
  * Lower FIDs = earlier accounts
  *
- * Farcaster launched in 2021, with gradual rollout:
- * - FID 1-1000: Early 2021 (founders/team)
- * - FID 1k-10k: Mid 2021 - Early 2022 (alpha testers)
+ * Real data points:
+ * - FID 1 (@farcaster): Aug 13 2021 19:28 UTC
+ * - FID 1-1000: Aug-Oct 2021 (founders/team)
+ * - FID 1k-10k: Late 2021 - 2022 (alpha testers)
  * - FID 10k-100k: 2022-2023 (early adopters)
  * - FID 100k+: 2023+ (public growth)
  */
 function approximateCreationDate(fid: number): Date {
-  // FID 1-1000: Jan 2021 - Jun 2021
+  // FID 1-1000: Aug 2021 - Dec 2021 (5 months)
+  // FID 1 = Aug 13 2021
   if (fid <= 1000) {
-    const monthsOffset = Math.floor((fid / 1000) * 6);
-    return new Date(2021, monthsOffset, 1);
+    const daysOffset = Math.floor((fid / 1000) * 150); // ~5 months = 150 days
+    const baseDate = new Date(2021, 7, 13); // Aug 13 2021
+    return new Date(baseDate.getTime() + daysOffset * 24 * 60 * 60 * 1000);
   }
 
-  // FID 1k-10k: Jul 2021 - Dec 2022 (18 months)
+  // FID 1k-10k: Jan 2022 - Dec 2022 (12 months)
   if (fid <= 10000) {
-    const monthsOffset = Math.floor(((fid - 1000) / 9000) * 18);
-    return new Date(2021, 6 + monthsOffset, 1);
+    const monthsOffset = Math.floor(((fid - 1000) / 9000) * 12);
+    return new Date(2022, monthsOffset, 1);
   }
 
   // FID 10k-100k: Jan 2023 - Dec 2023 (12 months)
