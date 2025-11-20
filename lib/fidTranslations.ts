@@ -35,6 +35,7 @@ export const fidTranslations = {
     mintCard: 'Mintar Carta',
     minting: 'Mintando...',
     connectToMint: 'Conectar Carteira para Mintar',
+    mintPrice: 'Preço do Mint',
 
     // Card preview
     cardPreview: 'Preview da Carta',
@@ -160,6 +161,7 @@ export const fidTranslations = {
     mintCard: 'Mint Card',
     minting: 'Minting...',
     connectToMint: 'Connect Wallet to Mint',
+    mintPrice: 'Mint Price',
 
     // Card preview
     cardPreview: 'Card Preview',
@@ -285,6 +287,7 @@ export const fidTranslations = {
     mintCard: 'Mintear Carta',
     minting: 'Minteando...',
     connectToMint: 'Conectar Billetera para Mintear',
+    mintPrice: 'Precio de Mint',
 
     // Card preview
     cardPreview: 'Vista Previa de la Carta',
@@ -410,6 +413,7 @@ export const fidTranslations = {
     mintCard: 'कार्ड मिंट करें',
     minting: 'मिंट हो रहा है...',
     connectToMint: 'मिंट करने के लिए वॉलेट कनेक्ट करें',
+    mintPrice: 'मिंट मूल्य',
 
     // Card preview
     cardPreview: 'कार्ड पूर्वावलोकन',
@@ -535,6 +539,7 @@ export const fidTranslations = {
     mintCard: 'Минтить Карту',
     minting: 'Минтинг...',
     connectToMint: 'Подключить Кошелек для Минтинга',
+    mintPrice: 'Цена Минтинга',
 
     // Card preview
     cardPreview: 'Предпросмотр Карты',
@@ -660,6 +665,7 @@ export const fidTranslations = {
     mintCard: '铸造卡片',
     minting: '铸造中...',
     connectToMint: '连接钱包以铸造',
+    mintPrice: '铸造价格',
 
     // Card preview
     cardPreview: '卡片预览',
