@@ -2636,6 +2636,11 @@ export default function TCGPage() {
 
     setIsLoadingMissions(true);
     try {
+      // Ensure welcome_gift exists for this player (migration for old users)
+      await convex.mutation(api.missions.ensureWelcomeGift, {
+        playerAddress: address,
+      });
+
       // Get completed missions from database
       const playerMissions = await convex.query(api.missions.getPlayerMissions, {
         playerAddress: address,
