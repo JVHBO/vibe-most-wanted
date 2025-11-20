@@ -4545,19 +4545,6 @@ export default function TCGPage() {
                   </>
                 )}
               </button>
-              {/* VibeFID button - only show in mobile/miniapp */}
-              {isInFarcaster && (
-                <button
-                  onClick={() => {
-                    if (soundEnabled) AudioManager.buttonClick();
-                    window.location.href = '/fid';
-                  }}
-                  className="flex-1 min-w-0 px-1 py-2 flex flex-col items-center justify-center gap-0.5 rounded-lg font-modern font-semibold transition-all text-[10px] leading-tight bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30"
-                >
-                  <span className="text-[9px] font-bold whitespace-nowrap">VibeFID</span>
-                  <span className="text-xl leading-none">🎴</span>
-                </button>
-              )}
             </div>
           </div>
 
