@@ -553,11 +553,27 @@ export default function FidPage() {
                   </div>
 
                   {/* Card Image/Video */}
-                  <CardMedia
-                    src={card.imageUrl || card.pfpUrl}
-                    alt={card.username}
-                    className="w-full aspect-square object-cover rounded-lg mb-2"
-                  />
+                  {card.imageUrl && card.imageUrl.includes('ipfs') ? (
+                    <a
+                      href={card.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block mb-2 hover:opacity-90 transition-opacity"
+                      title="Open IPFS in new tab"
+                    >
+                      <CardMedia
+                        src={card.imageUrl || card.pfpUrl}
+                        alt={card.username}
+                        className="w-full aspect-square object-cover rounded-lg cursor-pointer"
+                      />
+                    </a>
+                  ) : (
+                    <CardMedia
+                      src={card.imageUrl || card.pfpUrl}
+                      alt={card.username}
+                      className="w-full aspect-square object-cover rounded-lg mb-2"
+                    />
+                  )}
                   <p className="text-vintage-gold font-bold">{card.displayName}</p>
                   <p className="text-vintage-ice/70 text-sm">@{card.username}</p>
                   <div className="mt-2 flex items-center justify-between">
