@@ -1209,9 +1209,24 @@ export default function TCGPage() {
         const enriched = await Promise.all(
           batch.map(async (nft) => {
             const imageUrl = await getImage(nft);
+
+            // 🎯 CRITICAL: Detect collection from contract address
+            let collection: CollectionId = 'vibe'; // default
+            const contractAddr = nft?.contract?.address?.toLowerCase();
+            if (contractAddr) {
+              if (contractAddr === getCollectionContract('vibefid')?.toLowerCase()) {
+                collection = 'vibefid';
+              } else if (contractAddr === getCollectionContract('americanfootball')?.toLowerCase()) {
+                collection = 'americanfootball';
+              } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
+                collection = 'gmvbrs';
+              }
+            }
+
             return {
               ...nft,
               imageUrl,
+              collection, // 🎯 ADD COLLECTION FIELD
               rarity: findAttr(nft, 'rarity'),
               status: findAttr(nft, 'status'),
               wear: findAttr(nft, 'wear'),
@@ -2749,8 +2764,16 @@ export default function TCGPage() {
 
   // Load leaderboard with 30-minute refresh (usando Convex agora! 🚀)
   useEffect(() => {
-    const loadLeaderboard = () => {
-      ConvexProfileService.getLeaderboard().then(setLeaderboard);
+    const loadLeaderboard = async () => {
+      try {
+        console.log("🔵 [Leaderboard] Starting load...", Date.now());
+        const profiles = await ConvexProfileService.getLeaderboard();
+        console.log("🟢 [Leaderboard] Loaded profiles:", profiles?.length, Date.now());
+        setLeaderboard(profiles);
+      } catch (error) {
+        console.error("🔴 [Leaderboard] Error loading:", error);
+        setLeaderboard([]);
+      }
     };
 
     loadLeaderboard();
