@@ -176,6 +176,94 @@ export function useFarcasterVBMSAllowance(owner?: string, spender?: string) {
 }
 
 /**
+ * Approve VBMS spending - works in both miniapp and web
+ */
+export function useFarcasterApproveVBMS() {
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const { writeContractAsync: wagmiApprove } = useWriteContract();
+
+  const approve = async (spender: `0x${string}`, amount: bigint): Promise<`0x${string}`> => {
+    setIsPending(true);
+    setError(null);
+
+    try {
+      console.log('[useFarcasterApproveVBMS] 📝 Approving VBMS:', {
+        spender,
+        amount: amount.toString(),
+        contractAddress: CONTRACTS.VBMSToken,
+      });
+
+      // Try to get Farcaster SDK provider first (miniapp)
+      const sdk = (window as any).sdk;
+
+      if (sdk?.wallet?.ethProvider || sdk?.wallet?.getEthereumProvider) {
+        // Miniapp: Use Farcaster SDK provider
+        let provider: any;
+        if (sdk.wallet.ethProvider) {
+          provider = sdk.wallet.ethProvider;
+          console.log('[useFarcasterApproveVBMS] ✅ Using Farcaster SDK provider (ethProvider)');
+        } else {
+          provider = await sdk.wallet.getEthereumProvider();
+          console.log('[useFarcasterApproveVBMS] ✅ Using Farcaster SDK provider (getEthereumProvider)');
+        }
+
+        // Get current account
+        const accounts = await provider.request({ method: 'eth_accounts' });
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts available');
+        }
+        const from = accounts[0];
+
+        // Encode approve function call
+        // approve(address spender, uint256 amount)
+        const approveData = `0x095ea7b3${spender.slice(2).padStart(64, '0')}${amount.toString(16).padStart(64, '0')}`;
+
+        // Send transaction via Farcaster provider
+        const txHash = await provider.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from,
+            to: CONTRACTS.VBMSToken,
+            data: approveData,
+            value: '0x0',
+          }],
+        });
+
+        console.log('[useFarcasterApproveVBMS] ✅ Approve hash:', txHash);
+        setIsPending(false);
+        return txHash as `0x${string}`;
+      } else {
+        // Web: Use wagmi
+        console.log('[useFarcasterApproveVBMS] ✅ Using wagmi provider');
+        const hash = await wagmiApprove({
+          address: CONTRACTS.VBMSToken as `0x${string}`,
+          abi: ERC20_ABI,
+          functionName: 'approve',
+          args: [spender, amount],
+          chainId: CONTRACTS.CHAIN_ID,
+        });
+
+        console.log('[useFarcasterApproveVBMS] ✅ Approve hash:', hash);
+        setIsPending(false);
+        return hash;
+      }
+    } catch (err) {
+      console.error('[useFarcasterApproveVBMS] ❌ Approve error:', err);
+      setError(err as Error);
+      setIsPending(false);
+      throw err;
+    }
+  };
+
+  return {
+    approve,
+    isPending,
+    error,
+  };
+}
+
+/**
  * Transfer VBMS - works in both miniapp and web
  */
 export function useFarcasterTransferVBMS() {
