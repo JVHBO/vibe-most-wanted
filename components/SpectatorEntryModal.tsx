@@ -11,6 +11,7 @@ interface SpectatorEntryModalProps {
   onClose: () => void;
   onSuccess: (bettingCredits: number) => void;
   battleId: string;
+  playerAddress?: string; // Optional: for Farcaster miniapp
 }
 
 export function SpectatorEntryModal({
@@ -18,9 +19,12 @@ export function SpectatorEntryModal({
   onClose,
   onSuccess,
   battleId,
+  playerAddress,
 }: SpectatorEntryModalProps) {
-  const { address } = useAccount();
-  const { balance: vbmsBalance } = useFarcasterVBMSBalance(address); // Miniapp-compatible
+  const { address: wagmiAddress } = useAccount();
+  // Use playerAddress (miniapp) OR wagmiAddress (web) - playerAddress takes priority
+  const effectiveAddress = playerAddress || wagmiAddress;
+  const { balance: vbmsBalance } = useFarcasterVBMSBalance(effectiveAddress); // Miniapp-compatible
   const { approve, isPending: isApproving } = useApproveVBMS();
   const { transfer, isPending: isTransferring } = useTransferVBMS();
 
@@ -32,7 +36,7 @@ export function SpectatorEntryModal({
   const PRESETS = [50, 100, 250, 500, 1000];
 
   const handleDeposit = async () => {
-    if (!address || !amount) return;
+    if (!effectiveAddress || !amount) return;
 
     const amountNum = parseFloat(amount);
     if (amountNum <= 0) {
@@ -63,7 +67,7 @@ export function SpectatorEntryModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          address,
+          address: effectiveAddress,
           amount,
           txHash,
         }),
