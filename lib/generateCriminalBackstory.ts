@@ -62,6 +62,9 @@ export function generateCriminalBackstory(
   // Format date of crime (account creation date)
   let dateOfCrime = 'Unknown';
   if (data.createdAt) {
+    // Convert to Date object if it's a string (from localStorage/JSON)
+    const createdAtDate = data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt);
+
     const monthNames = {
       'en': ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
       'pt-BR': ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
@@ -72,9 +75,9 @@ export function generateCriminalBackstory(
     };
 
     const months = monthNames[lang] || monthNames['en'];
-    const month = months[data.createdAt.getMonth()];
-    const day = data.createdAt.getDate();
-    const year = data.createdAt.getFullYear();
+    const month = months[createdAtDate.getMonth()];
+    const day = createdAtDate.getDate();
+    const year = createdAtDate.getFullYear();
 
     if (lang === 'zh-CN') {
       dateOfCrime = `${year}年${month}${day}日`;

@@ -26,8 +26,8 @@ const PACK_TYPES = {
   },
   basic: {
     name: "Basic Pack",
-    description: "Cheapest pack with mostly commons",
-    cards: 5,
+    description: "Quick pack with 3 cards",
+    cards: 3,
     price: 1000, // 1k coins - muito acessível
     rarityOdds: { Common: 88, Rare: 10, Epic: 1.5, Legendary: 0.5 },
   },
