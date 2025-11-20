@@ -62,6 +62,11 @@ export const fidTranslations = {
     dateOfCrime: 'DATA DO CRIME',
     dangerLevel: 'NÍVEL DE PERIGO',
     lastSeen: 'VISTO PELA ÚLTIMA VEZ',
+    warningCaution: '⚠️ AVISO: Abordar com extrema cautela',
+    viewCard: 'Ver Carta →',
+    yourVibeFidCard: 'Sua Carta VibeFID',
+    cardStats: 'Estatísticas da Carta',
+    back: '← Voltar',
 
     // Story templates
     criminalStory1: 'iniciou suas atividades criminosas em {date}, rapidamente ganhando notoriedade na comunidade underground.',
@@ -142,6 +147,11 @@ export const fidTranslations = {
     dateOfCrime: 'DATE OF CRIME',
     dangerLevel: 'DANGER LEVEL',
     lastSeen: 'LAST SEEN',
+    warningCaution: '⚠️ WARNING: Approach with extreme caution',
+    viewCard: 'View Card →',
+    yourVibeFidCard: 'Your VibeFID Card',
+    cardStats: 'Card Stats',
+    back: '← Back',
 
     // Story templates
     criminalStory1: 'began their criminal activities on {date}, quickly gaining notoriety in the underground community.',
@@ -222,6 +232,11 @@ export const fidTranslations = {
     dateOfCrime: 'FECHA DEL CRIMEN',
     dangerLevel: 'NIVEL DE PELIGRO',
     lastSeen: 'VISTO POR ÚLTIMA VEZ',
+    warningCaution: '⚠️ ADVERTENCIA: Acérquese con extrema precaución',
+    viewCard: 'Ver Carta →',
+    yourVibeFidCard: 'Tu Carta VibeFID',
+    cardStats: 'Estadísticas de la Carta',
+    back: '← Atrás',
 
     // Story templates
     criminalStory1: 'comenzó sus actividades criminales en {date}, ganando rápidamente notoriedad en la comunidad clandestina.',
@@ -302,6 +317,11 @@ export const fidTranslations = {
     dateOfCrime: 'अपराध की तारीख',
     dangerLevel: 'खतरे का स्तर',
     lastSeen: 'अंतिम बार देखा गया',
+    warningCaution: '⚠️ चेतावनी: अत्यधिक सावधानी से संपर्क करें',
+    viewCard: 'कार्ड देखें →',
+    yourVibeFidCard: 'आपका VibeFID कार्ड',
+    cardStats: 'कार्ड आंकड़े',
+    back: '← वापस',
 
     // Story templates
     criminalStory1: 'ने {date} को अपनी आपराधिक गतिविधियां शुरू कीं, भूमिगत समुदाय में तेजी से कुख्याति प्राप्त की।',
@@ -382,6 +402,11 @@ export const fidTranslations = {
     dateOfCrime: 'ДАТА ПРЕСТУПЛЕНИЯ',
     dangerLevel: 'УРОВЕНЬ ОПАСНОСТИ',
     lastSeen: 'ПОСЛЕДНИЙ РАЗ ВИДЕН',
+    warningCaution: '⚠️ ПРЕДУПРЕЖДЕНИЕ: Подходите с крайней осторожностью',
+    viewCard: 'Посмотреть карту →',
+    yourVibeFidCard: 'Ваша карта VibeFID',
+    cardStats: 'Статистика карты',
+    back: '← Назад',
 
     // Story templates
     criminalStory1: 'начал преступную деятельность {date}, быстро завоевав печальную известность в подпольном сообществе.',
@@ -462,6 +487,11 @@ export const fidTranslations = {
     dateOfCrime: '犯罪日期',
     dangerLevel: '危险等级',
     lastSeen: '最后出现',
+    warningCaution: '⚠️ 警告：请极度谨慎',
+    viewCard: '查看卡片 →',
+    yourVibeFidCard: '你的 VibeFID 卡片',
+    cardStats: '卡片属性',
+    back: '← 返回',
 
     // Story templates
     criminalStory1: '在 {date} 开始犯罪活动，迅速在地下社区中声名狼藉。',
