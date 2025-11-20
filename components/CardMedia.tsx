@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from 'react';
+
 interface CardMediaProps {
   src: string | undefined;
   alt: string | undefined;
@@ -10,22 +12,29 @@ interface CardMediaProps {
 
 /**
  * CardMedia component
- * Auto-detects MP4/WebM and renders as looping video
- * Falls back to img for regular images
+ * Tries to render as video first (for IPFS MP4s without extensions)
+ * Falls back to img if video fails to load
  */
 export function CardMedia({ src, alt, className, loading = "lazy", onClick }: CardMediaProps) {
+  const [useImage, setUseImage] = useState(false);
+
   // Handle undefined src
   if (!src) {
     return null;
   }
 
-  // Check if it's a video file
+  // Check if it's obviously a video file by extension
   const srcLower = src.toLowerCase();
-  const isVideo = srcLower.includes('.mp4') || srcLower.includes('.webm') || srcLower.includes('.mov');
+  const hasVideoExtension = srcLower.includes('.mp4') || srcLower.includes('.webm') || srcLower.includes('.mov');
 
-  if (isVideo) {
+  // For IPFS URLs without extension, also try video
+  const isIpfs = srcLower.includes('ipfs');
+  const shouldTryVideo = hasVideoExtension || (isIpfs && !useImage);
+
+  if (shouldTryVideo) {
     return (
       <video
+        key={src}
         src={src}
         className={className}
         autoPlay
@@ -35,7 +44,8 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         onClick={onClick}
         style={{ objectFit: 'cover', pointerEvents: 'none' }}
         onError={(e) => {
-          console.warn('Failed to load video:', src);
+          console.warn('Video failed, trying image:', src);
+          setUseImage(true);
         }}
       />
     );
