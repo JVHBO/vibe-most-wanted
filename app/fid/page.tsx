@@ -33,7 +33,7 @@ interface GeneratedTraits {
 export default function FidPage() {
   const { address } = useAccount();
   const farcasterContext = useFarcasterContext();
-  const { language, setLanguage } = useLanguage();
+  const { lang, setLang } = useLanguage();
 
   // Password protection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -77,12 +77,12 @@ export default function FidPage() {
           power: generatedTraits.power,
           bounty: generatedTraits.power * 10,
           rarity: generatedTraits.rarity,
-        }, language);
+        }, lang);
         setCriminalBackstory(backstory);
       };
       regenerateBackstory();
     }
-  }, [language]);
+  }, [lang]);
 
   // Contract interaction
   const { writeContract, data: hash, isPending: isContractPending } = useWriteContract();
@@ -336,7 +336,7 @@ export default function FidPage() {
         power,
         bounty: power * 10,
         rarity,
-      }, language);
+      }, lang);
 
       setCriminalBackstory(backstory);
     } catch (err: any) {
@@ -520,8 +520,8 @@ export default function FidPage() {
           {/* Language Selector - Top Right */}
           <div className="absolute top-0 right-0">
             <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as any)}
+              value={lang}
+              onChange={(e) => setLang(e.target.value as any)}
               className="px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm"
             >
               <option value="en">🇺🇸 English</option>
@@ -737,7 +737,7 @@ export default function FidPage() {
             <CriminalBackstoryCard
               backstory={criminalBackstory}
               displayName={userData.display_name}
-              lang={language}
+              lang={lang}
             />
           </div>
         )}
