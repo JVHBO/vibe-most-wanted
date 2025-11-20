@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTransferVBMS, useApproveVBMS } from "@/lib/hooks/useVBMSContracts";
-import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
+import { useApproveVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance, useFarcasterTransferVBMS } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 
@@ -26,7 +26,7 @@ export function SpectatorEntryModal({
   const effectiveAddress = playerAddress || wagmiAddress;
   const { balance: vbmsBalance } = useFarcasterVBMSBalance(effectiveAddress); // Miniapp-compatible
   const { approve, isPending: isApproving } = useApproveVBMS();
-  const { transfer, isPending: isTransferring } = useTransferVBMS();
+  const { transfer, isPending: isTransferring } = useFarcasterTransferVBMS();
 
   const [amount, setAmount] = useState<string>("100");
   const [step, setStep] = useState<"input" | "approving" | "transferring" | "done">("input");
