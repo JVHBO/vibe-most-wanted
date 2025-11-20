@@ -12,7 +12,11 @@
  * Note: No extension needed - CardMedia auto-detects IPFS URLs as video
  */
 export function convertIpfsUrl(url: string | undefined): string | undefined {
-  if (!url) return url;
+  // Handle empty, undefined, or invalid URLs
+  if (!url || url === 'undefined' || url === 'null' || url.trim() === '') {
+    console.warn('⚠️ Invalid IPFS URL:', url);
+    return undefined;
+  }
 
   // Extract CID from various IPFS URL formats
   const ipfsMatch = url.match(/\/ipfs\/([a-zA-Z0-9]+)/);
@@ -25,5 +29,7 @@ export function convertIpfsUrl(url: string | undefined): string | undefined {
   const cid = ipfsMatch[1];
 
   // Convert to standard ipfs.io gateway (no extension needed)
-  return `https://ipfs.io/ipfs/${cid}`;
+  const convertedUrl = `https://ipfs.io/ipfs/${cid}`;
+  console.log('✅ Converted IPFS URL:', url, '→', convertedUrl);
+  return convertedUrl;
 }
