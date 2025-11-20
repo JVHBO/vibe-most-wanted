@@ -308,16 +308,15 @@ export default function TCGPage() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
 
-  // State for Farcaster address (when in miniapp)
-  const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null);
+  // State for Farcaster context detection
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
-  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false); // Changed to false for testing
+  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false);
 
   // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
   const address = DEV_WALLET_BYPASS
     ? '0xbb4c7d8b2e32c7c99d358be999377c208cce53c2'
-    : (farcasterAddress || wagmiAddress);
+    : wagmiAddress;
 
   // Debug bypass (removed console.log for production)
 
@@ -333,11 +332,41 @@ export default function TCGPage() {
   useEffect(() => {
     devLog('🔍 Address state:', {
       wagmiAddress,
-      farcasterAddress,
       finalAddress: address,
-      isConnected
+      isConnected,
+      isInFarcaster,
     });
-  }, [wagmiAddress, farcasterAddress, address, isConnected]);
+  }, [wagmiAddress, address, isConnected, isInFarcaster]);
+
+  // Save wagmiAddress to localStorage and FID to profile when connected in Farcaster
+  useEffect(() => {
+    const saveFarcasterProfile = async () => {
+      if (!isInFarcaster || !wagmiAddress) return;
+
+      console.log('[Farcaster] 💾 Saving address to localStorage:', wagmiAddress);
+      localStorage.setItem('connectedAddress', wagmiAddress.toLowerCase());
+
+      // Save FID to profile
+      try {
+        const context = await sdk?.context;
+        const fid = context?.user?.fid;
+        if (fid) {
+          devLog('📱 Saving FID to profile:', fid);
+          const profile = await ConvexProfileService.getProfile(wagmiAddress);
+          if (profile && (!profile.fid || profile.fid !== fid.toString())) {
+            await ConvexProfileService.updateProfile(wagmiAddress, {
+              fid: fid.toString()
+            });
+            devLog('✓ FID saved to profile');
+          }
+        }
+      } catch (error) {
+        devLog('! Could not save FID:', error);
+      }
+    };
+
+    saveFarcasterProfile();
+  }, [isInFarcaster, wagmiAddress]);
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
@@ -677,45 +706,33 @@ export default function TCGPage() {
           hasEthProvider: !!sdk?.wallet?.ethProvider,
         });
 
-        // Check if we're in Farcaster context - use OLD API
+        // Check if we're in Farcaster context
         if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
           console.log('[Farcaster] ✅ Farcaster SDK detected, setting isInFarcaster=true');
           setIsInFarcaster(true);
           setIsCheckingFarcaster(true);
 
-          // Add timeout to prevent infinite loading
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Farcaster wallet connection timeout')), 5000)
-          );
-
-          // Wrap in try-catch to prevent unhandled promise rejections
-          let addresses: string[] = [];
           try {
-            console.log('[Farcaster] 📡 Requesting eth_requestAccounts...');
-            const accountsPromise = sdk.wallet.ethProvider.request({
-              method: "eth_requestAccounts"
-            });
-            addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
-            console.log('[Farcaster] ✅ Got addresses:', addresses);
-          } catch (requestError: any) {
-            console.error('[Farcaster] ❌ Request error:', requestError);
-            // Handle authorization errors - user needs to authorize in Farcaster settings
-            // Don't set isInFarcaster=false because we ARE in the miniapp, just not authorized
-            if (requestError?.message?.includes('not been authorized')) {
-              console.warn('[Farcaster] ⚠️ Wallet not authorized - user needs to enable in Farcaster settings');
-              devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
-              // Keep isInFarcaster=true, just don't set address
+            // Find the Farcaster miniapp connector
+            const farcasterConnector = connectors.find((c) => c.id === 'farcasterMiniApp');
+
+            if (!farcasterConnector) {
+              console.error('[Farcaster] ❌ Farcaster connector not found in wagmi config');
               setIsCheckingFarcaster(false);
               return;
             }
-            throw requestError;
-          }
 
-          if (addresses && addresses[0]) {
-            console.log('[Farcaster] ✅ Setting address:', addresses[0]);
-            setFarcasterAddress(addresses[0]);
-            localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
-            devLog('✓ Auto-connected Farcaster wallet:', addresses[0]);
+            console.log('[Farcaster] 📡 Connecting with Farcaster wagmi connector...');
+
+            // Connect using wagmi - this will populate wagmiAddress automatically
+            await connect({ connector: farcasterConnector });
+
+            console.log('[Farcaster] ✅ Connected successfully');
+            devLog('✓ Auto-connected Farcaster wallet via wagmi');
+
+            // Wait for wagmiAddress to be populated
+            // The useAccount hook will update wagmiAddress after connection
+            // We'll save the address to localStorage in a separate useEffect
 
             // ✓ Save FID to profile for notifications
             try {
@@ -723,35 +740,29 @@ export default function TCGPage() {
               const fid = context?.user?.fid;
               if (fid) {
                 devLog('📱 Farcaster FID detected:', fid);
-                // Update profile with FID
-                const profile = await ConvexProfileService.getProfile(addresses[0]);
-                if (profile && (!profile.fid || profile.fid !== fid.toString())) {
-                  await ConvexProfileService.updateProfile(addresses[0], {
-                    fid: fid.toString()
-                  });
-                  devLog('✓ FID saved to profile');
-                }
+                // FID will be saved when wagmiAddress is available
               }
             } catch (fidError) {
-              devLog('! Could not save FID:', fidError);
+              devLog('! Could not get FID:', fidError);
             }
-          } else {
-            // Failed to get address, reset Farcaster state
-            setIsInFarcaster(false);
+          } catch (connectError: any) {
+            console.error('[Farcaster] ❌ Connection error:', connectError);
+            // Handle authorization errors
+            if (connectError?.message?.includes('not been authorized')) {
+              console.warn('[Farcaster] ⚠️ Wallet not authorized - user needs to enable in Farcaster settings');
+              devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
+            }
           }
         }
       } catch (err) {
         devLog('! Not in Farcaster context or wallet unavailable:', err);
-        // Reset Farcaster state on error
         setIsInFarcaster(false);
-        setFarcasterAddress(null);
       } finally {
-        // Always set checking to false after checking
         setIsCheckingFarcaster(false);
       }
     };
     initFarcasterWallet();
-  }, []);
+  }, [connect, connectors]);
 
   // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
@@ -1146,8 +1157,6 @@ export default function TCGPage() {
   const disconnectWallet = useCallback(() => {
     if (soundEnabled) AudioManager.buttonNav();
     disconnect();
-    // Clear Farcaster address (but keep isInFarcaster - it's about context, not connection)
-    setFarcasterAddress(null);
     localStorage.removeItem('connectedAddress');
     setNfts([]);
     setSelectedCards([]);
@@ -4259,40 +4268,24 @@ export default function TCGPage() {
                         if (soundEnabled) AudioManager.buttonClick();
                         setIsCheckingFarcaster(true);
 
-                        if (sdk?.wallet?.ethProvider) {
-                          // Add timeout to prevent infinite loading
-                          const timeoutPromise = new Promise((_, reject) =>
-                            setTimeout(() => reject(new Error('Connection timeout')), 5000)
-                          );
-
-                          let addresses: string[] = [];
-                          try {
-                            const accountsPromise = sdk.wallet.ethProvider.request({
-                              method: "eth_requestAccounts"
-                            });
-                            addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
-                          } catch (requestError: any) {
-                            // Handle authorization errors gracefully
-                            if (requestError?.message?.includes('not been authorized')) {
-                              throw new Error('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
-                            }
-                            throw requestError;
-                          }
-
-                          if (addresses && addresses[0]) {
-                            setFarcasterAddress(addresses[0]);
-                            localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
-                            devLog('✓ Connected Farcaster wallet:', addresses[0]);
-                          } else {
-                            throw new Error('No address returned');
-                          }
-                        } else {
-                          throw new Error('Farcaster SDK not available');
+                        // Find and connect with Farcaster wagmi connector
+                        const farcasterConnector = connectors.find((c) => c.id === 'farcasterMiniApp');
+                        if (!farcasterConnector) {
+                          throw new Error('Farcaster connector not found');
                         }
-                      } catch (err) {
+
+                        await connect({ connector: farcasterConnector });
+                        devLog('✓ Connected Farcaster wallet via wagmi');
+                      } catch (err: any) {
                         devError('Failed to connect Farcaster wallet:', err);
                         if (soundEnabled) AudioManager.buttonError();
-                        alert('Failed to connect Farcaster wallet. Please try again.');
+
+                        // Show user-friendly error message
+                        if (err?.message?.includes('not been authorized')) {
+                          alert('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
+                        } else {
+                          alert('Failed to connect Farcaster wallet. Please try again.');
+                        }
                       } finally {
                         setIsCheckingFarcaster(false);
                       }
