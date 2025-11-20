@@ -9,6 +9,7 @@ import { generateCriminalBackstory } from '@/lib/generateCriminalBackstory';
 import { getFarcasterAccountCreationDate } from '@/lib/farcasterRegistry';
 import CriminalBackstoryCard from '@/components/CriminalBackstoryCard';
 import Link from 'next/link';
+import { CardMedia } from '@/components/CardMedia';
 
 export default function FidCardPage() {
   const params = useParams();
@@ -109,22 +110,11 @@ export default function FidCardPage() {
             <div className="flex flex-col items-center">
               {/* Card Image/Video */}
               <div className="w-full max-w-md mb-6">
-                {card.imageUrl?.endsWith('.mp4') || card.imageUrl?.endsWith('.webm') ? (
-                  <video
-                    src={card.imageUrl}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
-                  />
-                ) : (
-                  <img
-                    src={card.imageUrl || card.pfpUrl}
-                    alt={card.username}
-                    className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
-                  />
-                )}
+                <CardMedia
+                  src={card.imageUrl || card.pfpUrl}
+                  alt={card.username}
+                  className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
+                />
               </div>
 
               {/* Card Stats */}
@@ -219,22 +209,11 @@ export default function FidCardPage() {
                   </div>
 
                   <div className="aspect-square mb-2 rounded-lg overflow-hidden">
-                    {mintedCard.imageUrl?.endsWith('.mp4') || mintedCard.imageUrl?.endsWith('.webm') ? (
-                      <video
-                        src={mintedCard.imageUrl}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <img
-                        src={mintedCard.imageUrl || mintedCard.pfpUrl}
-                        alt={mintedCard.username}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
+                    <CardMedia
+                      src={mintedCard.imageUrl || mintedCard.pfpUrl}
+                      alt={mintedCard.username}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
