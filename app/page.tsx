@@ -700,16 +700,29 @@ export default function TCGPage() {
     const initFarcasterWallet = async () => {
       console.log('[Farcaster] 🔍 Initializing wallet connection...');
       try {
+        // Enhanced detection for Farcaster miniapp context
+        const isInIframe = window.self !== window.top;
+
         console.log('[Farcaster] SDK check:', {
           hasSdk: !!sdk,
           hasWallet: !!sdk?.wallet,
           hasEthProvider: !!sdk?.wallet?.ethProvider,
+          isInIframe,
         });
 
         // Check if we're in Farcaster context (SDK is present and functional)
         if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
-          console.log('[Farcaster] ✅ Farcaster SDK detected, setting isInFarcaster=true');
-          setIsInFarcaster(true);
+          // Only enable miniapp mode (compact layout) if we're in an iframe
+          // This covers both mobile app and browser miniapp contexts
+          const shouldEnableMiniappMode = isInIframe;
+
+          if (shouldEnableMiniappMode) {
+            console.log('[Farcaster] ✅ Farcaster miniapp detected (iframe), enabling miniapp mode');
+          } else {
+            console.log('[Farcaster] ✅ Farcaster SDK detected but not in iframe, using normal layout');
+          }
+
+          setIsInFarcaster(shouldEnableMiniappMode);
           setIsCheckingFarcaster(true);
 
           try {
