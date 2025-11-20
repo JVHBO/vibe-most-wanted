@@ -125,8 +125,8 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     contractAddress: '0x3e1e69e444261a5bc65b83c41036b5284c1e69ae',
     chain: 'base-mainnet',
     enabled: true,
-    marketplaceUrl: 'https://opensea.io/collection/vibefid',
-    buttonText: 'Opensea Link',
+    marketplaceUrl: '/fid',
+    buttonText: 'Mint VibeFID',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
