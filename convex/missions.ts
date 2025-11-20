@@ -407,3 +407,44 @@ export const claimAllMissions = mutation({
     };
   },
 });
+
+/**
+ * Ensure welcome gift exists for player (migration for old users)
+ * Creates welcome_gift mission if it doesn't exist
+ */
+export const ensureWelcomeGift = mutation({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    // Check if welcome_gift already exists
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("date"), "once"),
+          q.eq(q.field("missionType"), "welcome_gift")
+        )
+      )
+      .first();
+
+    if (!existing) {
+      // Create welcome_gift for old users who don't have it
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: "once",
+        missionType: "welcome_gift",
+        completed: true, // Auto-completed
+        claimed: false, // Not claimed yet
+        reward: 500,
+        completedAt: Date.now(),
+      });
+
+      console.log(`🎁 Created welcome_gift mission for ${normalizedAddress}`);
+      return { created: true };
+    }
+
+    return { created: false };
+  },
+});
