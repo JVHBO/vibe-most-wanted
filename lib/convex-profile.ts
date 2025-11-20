@@ -29,6 +29,10 @@ export interface UserProfile {
     totalCards: number;
     openedCards: number;
     unopenedCards: number;
+    vibePower?: number;
+    vbrsPower?: number;
+    vibefidPower?: number;
+    afclPower?: number;
     pveWins: number;
     pveLosses: number;
     pvpWins: number;
