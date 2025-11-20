@@ -4874,6 +4874,26 @@ export default function TCGPage() {
                   </button>
                 </div>
 
+                {/* VibeFID Button - Mobile only */}
+                {isInFarcaster && (
+                  <div className="mb-4">
+                    <button
+                      onClick={() => {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        window.location.href = '/fid';
+                      }}
+                      disabled={!userProfile}
+                      className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                        userProfile
+                          ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
+                          : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                      }`}
+                    >
+                      🎴 VibeFID
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
                     {t('yourHand')}
