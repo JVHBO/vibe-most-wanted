@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AudioManager } from '@/lib/audio-manager';
 
 interface TypewriterTextProps {
   text: string;
@@ -29,6 +30,12 @@ export default function TypewriterText({
       const timeout = setTimeout(() => {
         setDisplayedText(prev => prev + text[currentIndex]);
         setCurrentIndex(prev => prev + 1);
+
+        // Play typewriter sound (only for non-whitespace characters)
+        if (text[currentIndex] && text[currentIndex].trim()) {
+          // Typewriter click sound - short high-pitched tone
+          AudioManager.playTone(1200 + Math.random() * 200, 0.02, 0.08);
+        }
       }, speed);
 
       return () => clearTimeout(timeout);
