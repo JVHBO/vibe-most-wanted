@@ -303,15 +303,25 @@ export default function ProfilePage() {
         if (sdk && typeof sdk.wallet !== 'undefined') {
           const provider = await sdk.wallet.getEthereumProvider();
           if (provider) {
-            const addresses = await provider.request({
-              method: "eth_requestAccounts"
-            });
-            if (addresses && addresses[0]) {
-              setFarcasterAddress(addresses[0]);
-              devLog('✅ Auto-connected Farcaster wallet in profile:', addresses[0]);
-            } else {
-              // Failed to get address, reset state
-              setFarcasterAddress(null);
+            try {
+              const addresses = await provider.request({
+                method: "eth_requestAccounts"
+              });
+              if (addresses && addresses[0]) {
+                setFarcasterAddress(addresses[0]);
+                devLog('✅ Auto-connected Farcaster wallet in profile:', addresses[0]);
+              } else {
+                // Failed to get address, reset state
+                setFarcasterAddress(null);
+              }
+            } catch (requestError: any) {
+              // Silently handle authorization errors
+              if (requestError?.message?.includes('not been authorized')) {
+                devLog('⚠️ Farcaster wallet not authorized yet');
+                setFarcasterAddress(null);
+                return;
+              }
+              throw requestError;
             }
           }
         }
