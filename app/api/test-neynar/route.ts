@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(
-      `https://api.neynar.com/v2/farcaster/user?id=${fid}`,
+      `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
       {
         headers: {
           'accept': 'application/json',
@@ -40,19 +40,21 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
+    const user = data.users?.[0];
 
     // Return ALL fields to see what's available
     return NextResponse.json({
       success: true,
       fid: parseInt(fid),
-      userObject: data.user || null,
-      allFields: data.user ? Object.keys(data.user) : [],
+      userObject: user || null,
+      allFields: user ? Object.keys(user) : [],
       // Specifically check for timestamp fields
       dateFields: {
-        registered_at: data.user?.registered_at || null,
-        created_at: data.user?.created_at || null,
-        timestamp: data.user?.timestamp || null,
+        registered_at: user?.registered_at || null,
+        created_at: user?.created_at || null,
+        timestamp: user?.timestamp || null,
       },
+      note: 'Using /bulk endpoint (free tier). May not include date fields.',
     }, {
       headers: {
         'Content-Type': 'application/json',
