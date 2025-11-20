@@ -4557,13 +4557,6 @@ export default function TCGPage() {
             </div>
           )}
 
-          {status === 'fetching' && (
-            <div className="flex items-center justify-center gap-3 text-vintage-neon-blue mb-6 bg-vintage-charcoal/50 p-6 rounded-xl border border-vintage-gold/30">
-              <LoadingSpinner size="md" variant="purple" />
-              <p className="font-medium text-lg">{t('loading')}</p>
-            </div>
-          )}
-
           {/* Game View */}
           {currentView === 'game' && (
           <>
@@ -4673,6 +4666,13 @@ export default function TCGPage() {
                     </div>
                   )}
                 </div>
+
+                {status === 'fetching' && (
+                  <div className="flex items-center justify-center gap-3 text-vintage-neon-blue py-12">
+                    <LoadingSpinner size="md" variant="purple" />
+                    <p className="font-medium text-lg">{t('loading')}</p>
+                  </div>
+                )}
 
                 {nfts.length === 0 && status !== 'fetching' && (
                   <div className="text-center py-12">
