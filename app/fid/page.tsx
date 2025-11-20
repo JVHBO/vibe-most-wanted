@@ -110,10 +110,8 @@ export default function FidPage() {
     }
   }, [farcasterContext.isReady, farcasterContext.user]);
 
-  // Start background music when page loads
-  useEffect(() => {
-    AudioManager.startBackgroundMusic();
-  }, []);
+  // Background music is already playing from main page
+  // No need to start it again here
 
   // Combined fetch and generate function
   const handleGenerateCard = async () => {
