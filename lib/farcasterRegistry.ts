@@ -138,23 +138,26 @@ async function fetchFromNeynar(fid: number, apiKey: string): Promise<Date | null
  * Approximate account creation date based on FID
  * Lower FIDs = earlier accounts
  *
- * Farcaster launched in 2021, with gradual rollout:
- * - FID 1-1000: Early 2021 (founders/team)
- * - FID 1k-10k: Mid 2021 - Early 2022 (alpha testers)
+ * Real data points:
+ * - FID 1 (@farcaster): Aug 13 2021 19:28 UTC
+ * - FID 1-1000: Aug-Oct 2021 (founders/team)
+ * - FID 1k-10k: Late 2021 - 2022 (alpha testers)
  * - FID 10k-100k: 2022-2023 (early adopters)
  * - FID 100k+: 2023+ (public growth)
  */
 function approximateCreationDate(fid: number): Date {
-  // FID 1-1000: Jan 2021 - Jun 2021
+  // FID 1-1000: Aug 2021 - Dec 2021 (5 months)
+  // FID 1 = Aug 13 2021
   if (fid <= 1000) {
-    const monthsOffset = Math.floor((fid / 1000) * 6);
-    return new Date(2021, monthsOffset, 1);
+    const daysOffset = Math.floor((fid / 1000) * 150); // ~5 months = 150 days
+    const baseDate = new Date(2021, 7, 13); // Aug 13 2021
+    return new Date(baseDate.getTime() + daysOffset * 24 * 60 * 60 * 1000);
   }
 
-  // FID 1k-10k: Jul 2021 - Dec 2022 (18 months)
+  // FID 1k-10k: Jan 2022 - Dec 2022 (12 months)
   if (fid <= 10000) {
-    const monthsOffset = Math.floor(((fid - 1000) / 9000) * 18);
-    return new Date(2021, 6 + monthsOffset, 1);
+    const monthsOffset = Math.floor(((fid - 1000) / 9000) * 12);
+    return new Date(2022, monthsOffset, 1);
   }
 
   // FID 10k-100k: Jan 2023 - Dec 2023 (12 months)
