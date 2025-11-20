@@ -5164,9 +5164,10 @@ export default function TCGPage() {
                                       return;
                                     }
                                     // Check if player has defense deck
-                                    const defenseDeckSize = profile.defenseDeck?.length || 0;
-                                    if (defenseDeckSize < HAND_SIZE) {
-                                      alert(`${profile.username} doesn't have a full defense deck (${defenseDeckSize}/${HAND_SIZE} cards). Cannot attack.`);
+                                    // Note: defenseDeck is excluded from leaderboard response for performance
+                                    // Use hasDefenseDeck flag instead (set by getLeaderboardLite)
+                                    if (!profile.hasDefenseDeck) {
+                                      alert(`${profile.username} doesn't have a full defense deck. Cannot attack.`);
                                       if (soundEnabled) AudioManager.buttonError();
                                       return;
                                     }
@@ -5176,13 +5177,13 @@ export default function TCGPage() {
                                     setShowAttackCardSelection(true);
                                     setAttackSelectedCards([]);
                                   }}
-                                  disabled={!userProfile || attacksRemaining <= 0 || (profile.defenseDeck?.length || 0) < HAND_SIZE}
+                                  disabled={!userProfile || attacksRemaining <= 0 || !profile.hasDefenseDeck}
                                   className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                                    userProfile && attacksRemaining > 0 && (profile.defenseDeck?.length || 0) >= HAND_SIZE
+                                    userProfile && attacksRemaining > 0 && profile.hasDefenseDeck
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
-                                  title={(profile.defenseDeck?.length || 0) < HAND_SIZE ? `No defense deck (${profile.defenseDeck?.length || 0}/${HAND_SIZE})` : ''}
+                                  title={!profile.hasDefenseDeck ? `No defense deck` : ''}
                                 >
                                   †<span className="hidden sm:inline"> Attack</span>
                                 </button>
