@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ fid: stri
 
   // Use API route instead of opengraph-image to avoid Vercel firewall blocking
   // Add timestamp to bust Farcaster cache
-  const imageUrl = `${baseUrl}/api/og/fid/${fid}?v=6`;
+  const imageUrl = `${baseUrl}/api/card-image/${fid}?v=7`;
 
   return {
     title: `VibeFID Card #${fid} - VIBE Most Wanted`,
