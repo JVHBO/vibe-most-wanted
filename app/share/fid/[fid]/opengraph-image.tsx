@@ -66,6 +66,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
 
         // Try multiple gateways in order of speed/reliability
         const gateways = [
+          `https://ipfs.filebase.io/ipfs/${cid}`,
           `https://cloudflare-ipfs.com/ipfs/${cid}`,
           `https://ipfs.io/ipfs/${cid}`,
           `https://gateway.pinata.cloud/ipfs/${cid}`,
