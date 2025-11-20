@@ -2808,8 +2808,16 @@ export default function TCGPage() {
 
   // Load leaderboard with 30-minute refresh (usando Convex agora! 🚀)
   useEffect(() => {
-    const loadLeaderboard = () => {
-      ConvexProfileService.getLeaderboard().then(setLeaderboard);
+    const loadLeaderboard = async () => {
+      try {
+        console.log("🔵 [Leaderboard] Starting load...", Date.now());
+        const profiles = await ConvexProfileService.getLeaderboard();
+        console.log("🟢 [Leaderboard] Loaded profiles:", profiles?.length, Date.now());
+        setLeaderboard(profiles);
+      } catch (error) {
+        console.error("🔴 [Leaderboard] Error loading:", error);
+        setLeaderboard([]);
+      }
     };
 
     loadLeaderboard();
