@@ -2994,29 +2994,30 @@ export default function TCGPage() {
     // This is much faster and doesn't require Alchemy API calls
     const getCollectionPower = (player: UserProfile): number => {
       const stats = player.stats;
-      if (!stats) return 0;
+      if (!stats) return stats?.totalPower || 0;
 
       switch (leaderboardCollection) {
         case 'vibe':
-          return stats.vibePower || 0;
+          // Fallback to totalPower if vibePower not yet calculated (for old profiles)
+          return stats.vibePower || stats.totalPower || 0;
         case 'gmvbrs':
-          return stats.vbrsPower || 0;
+          return stats.vbrsPower || stats.totalPower || 0;
         case 'vibefid':
-          return stats.vibefidPower || 0;
+          return stats.vibefidPower || stats.totalPower || 0;
         case 'americanfootball':
-          return stats.afclPower || 0;
+          return stats.afclPower || stats.totalPower || 0;
         default:
           return stats.totalPower || 0;
       }
     };
 
-    // Filter out players with no power in the selected collection, then sort by power
+    // Sort by collection power (or totalPower fallback for old profiles)
+    // Don't filter out players - show everyone, just sorted by collection power
     return leaderboard
       .map(player => ({
         ...player,
         collectionPower: getCollectionPower(player)
       }))
-      .filter(player => player.collectionPower > 0) // Only show players with cards from this collection
       .sort((a, b) => b.collectionPower - a.collectionPower)
       .map(({ collectionPower, ...player }) => ({
         ...player,
