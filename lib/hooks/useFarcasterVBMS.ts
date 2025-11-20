@@ -18,7 +18,10 @@ export function useFarcasterVBMSBalance(address?: string) {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
+    console.log('[useFarcasterVBMSBalance] Effect triggered with address:', address);
+
     if (!address) {
+      console.log('[useFarcasterVBMSBalance] No address provided, setting balance to 0');
       setBalance('0');
       return;
     }
@@ -76,6 +79,11 @@ export function useFarcasterVBMSBalance(address?: string) {
         // Parse result
         const balanceWei = BigInt(data);
         const balanceFormatted = formatEther(balanceWei);
+        console.log('[useFarcasterVBMSBalance] ✅ Balance fetched successfully:', {
+          raw: data,
+          wei: balanceWei.toString(),
+          formatted: balanceFormatted
+        });
         setBalance(balanceFormatted);
       } catch (err) {
         console.error('[useFarcasterVBMS] Error fetching balance:', err);
@@ -86,6 +94,7 @@ export function useFarcasterVBMSBalance(address?: string) {
       }
     };
 
+    console.log('[useFarcasterVBMSBalance] Calling fetchBalance()...');
     fetchBalance();
   }, [address, refetchTrigger]);
 
