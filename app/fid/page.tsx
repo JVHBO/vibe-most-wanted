@@ -402,6 +402,11 @@ export default function FidPage() {
 
       const { ipfsUrl } = await uploadResponse.json();
 
+      console.log('🔥 IPFS URL recebido:', ipfsUrl);
+      if (!ipfsUrl) {
+        throw new Error('IPFS upload returned empty URL!');
+      }
+
       // Build metadata URL that OpenSea will read
       const metadataUrl = `https://www.vibemostwanted.xyz/api/metadata/fid/${userData.fid}`;
 
