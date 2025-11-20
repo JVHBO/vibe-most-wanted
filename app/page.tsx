@@ -5042,7 +5042,7 @@ export default function TCGPage() {
                       <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
                     </h1>
                     {/* Collection Filter Buttons */}
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-wrap gap-2 items-center">
                       <button
                         onClick={() => setLeaderboardCollection('vibe')}
                         className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
@@ -5062,6 +5062,26 @@ export default function TCGPage() {
                         }`}
                       >
                         VBRS
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardCollection('vibefid')}
+                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
+                          leaderboardCollection === 'vibefid'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        VibeFID
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardCollection('americanfootball')}
+                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
+                          leaderboardCollection === 'americanfootball'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        AFCL
                       </button>
                       {/* Export Top 10 Button */}
                       <button
@@ -5219,18 +5239,26 @@ export default function TCGPage() {
                                       if (soundEnabled) AudioManager.buttonError();
                                       return;
                                     }
+                                    // Check if player has defense deck
+                                    const defenseDeckSize = profile.defenseDeck?.length || 0;
+                                    if (defenseDeckSize < HAND_SIZE) {
+                                      alert(`${profile.username} doesn't have a full defense deck (${defenseDeckSize}/${HAND_SIZE} cards). Cannot attack.`);
+                                      if (soundEnabled) AudioManager.buttonError();
+                                      return;
+                                    }
                                     // Open attack card selection
                                     if (soundEnabled) AudioManager.buttonClick();
                                     setTargetPlayer(profile);
                                     setShowAttackCardSelection(true);
                                     setAttackSelectedCards([]);
                                   }}
-                                  disabled={!userProfile || attacksRemaining <= 0}
+                                  disabled={!userProfile || attacksRemaining <= 0 || (profile.defenseDeck?.length || 0) < HAND_SIZE}
                                   className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                                    userProfile && attacksRemaining > 0
+                                    userProfile && attacksRemaining > 0 && (profile.defenseDeck?.length || 0) >= HAND_SIZE
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
+                                  title={(profile.defenseDeck?.length || 0) < HAND_SIZE ? `No defense deck (${profile.defenseDeck?.length || 0}/${HAND_SIZE})` : ''}
                                 >
                                   †<span className="hidden sm:inline"> Attack</span>
                                 </button>
