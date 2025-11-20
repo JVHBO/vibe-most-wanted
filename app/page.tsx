@@ -4726,18 +4726,31 @@ export default function TCGPage() {
                  })() && (
                   <div className="text-center py-8 mb-6">
                     <p className="text-vintage-burnt-gold mb-4">You don't have any NFTs from this collection yet</p>
-                    <a
-                      href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
-                      style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-base md:text-lg">◆</span>
-                        <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
-                      </div>
-                    </a>
+                    {COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
+                      <Link
+                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
+                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-base md:text-lg">◆</span>
+                          <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
+                        </div>
+                      </Link>
+                    ) : (
+                      <a
+                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-base md:text-lg">◆</span>
+                          <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
+                        </div>
+                      </a>
+                    )}
                   </div>
                 )}
 
@@ -4758,20 +4771,35 @@ export default function TCGPage() {
                      const collection = COLLECTIONS[selectedCollections[0]];
                      return collection?.marketplaceUrl;
                    })() && (
-                    <a
-                      href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
-                      style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                    >
-                      <div className="flex flex-col items-center justify-center gap-2 text-center">
-                        <span className="text-2xl md:text-3xl">◆</span>
-                        <span className="text-xs md:text-sm leading-tight">
-                          {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
-                        </span>
-                      </div>
-                    </a>
+                    COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
+                      <Link
+                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
+                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex flex-col items-center justify-center gap-2 text-center">
+                          <span className="text-2xl md:text-3xl">◆</span>
+                          <span className="text-xs md:text-sm leading-tight">
+                            {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
+                          </span>
+                        </div>
+                      </Link>
+                    ) : (
+                      <a
+                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex flex-col items-center justify-center gap-2 text-center">
+                          <span className="text-2xl md:text-3xl">◆</span>
+                          <span className="text-xs md:text-sm leading-tight">
+                            {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
+                          </span>
+                        </div>
+                      </a>
+                    )
                   )}
                 </div>
 
