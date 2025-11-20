@@ -110,27 +110,12 @@ export default function FidCardPage() {
             <div className="flex flex-col items-center">
               {/* Card Image/Video */}
               <div className="w-full max-w-md mb-6">
-                {card.imageUrl && card.imageUrl.includes('ipfs') ? (
-                  <a
-                    href={card.imageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block hover:opacity-90 transition-opacity"
-                    title="Open IPFS in new tab"
-                  >
-                    <CardMedia
-                      src={card.imageUrl || card.pfpUrl}
-                      alt={card.username}
-                      className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold cursor-pointer"
-                    />
-                  </a>
-                ) : (
-                  <CardMedia
-                    src={card.imageUrl || card.pfpUrl}
-                    alt={card.username}
-                    className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
-                  />
-                )}
+                <CardMedia
+                  src={card.imageUrl || card.pfpUrl}
+                  alt={card.username}
+                  className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
+                />
+              </div>
 
               {/* Card Stats */}
               <div className="w-full max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-6">
@@ -224,27 +209,11 @@ export default function FidCardPage() {
                   </div>
 
                   <div className="aspect-square mb-2 rounded-lg overflow-hidden">
-                    {mintedCard.imageUrl && mintedCard.imageUrl.includes('ipfs') ? (
-                      <a
-                        href={mintedCard.imageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block hover:opacity-90 transition-opacity"
-                        title="Open IPFS in new tab"
-                      >
-                        <CardMedia
-                          src={mintedCard.imageUrl || mintedCard.pfpUrl}
-                          alt={mintedCard.username}
-                          className="w-full h-full object-cover cursor-pointer"
-                        />
-                      </a>
-                    ) : (
-                      <CardMedia
-                        src={mintedCard.imageUrl || mintedCard.pfpUrl}
-                        alt={mintedCard.username}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
+                    <CardMedia
+                      src={mintedCard.imageUrl || mintedCard.pfpUrl}
+                      alt={mintedCard.username}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
