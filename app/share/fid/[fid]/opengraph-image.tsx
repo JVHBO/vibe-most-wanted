@@ -40,14 +40,24 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
     // If card has saved PNG, return it
     if (cardData?.cardImageUrl) {
       try {
-        // Convert IPFS URL if needed
+        // Convert IPFS URL if needed - use Cloudflare gateway for speed
         let imageUrl = cardData.cardImageUrl;
         if (imageUrl.startsWith('ipfs://')) {
-          imageUrl = imageUrl.replace('ipfs://', 'https://ipfs.io/ipfs/');
+          imageUrl = imageUrl.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
+        } else if (imageUrl.includes('ipfs.io')) {
+          // Convert existing ipfs.io URLs to cloudflare
+          imageUrl = imageUrl.replace('https://ipfs.io/ipfs/', 'https://cloudflare-ipfs.com/ipfs/');
         }
 
-        // Fetch and return the exact PNG from IPFS
-        const imageResponse = await fetch(imageUrl);
+        // Fetch with timeout (8 seconds) to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        const imageResponse = await fetch(imageUrl, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
         if (imageResponse.ok) {
           const imageBuffer = await imageResponse.arrayBuffer();
 
@@ -60,6 +70,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
         }
       } catch (imageError) {
         console.error('Failed to fetch card PNG from IPFS:', imageError);
+        // Continue to fallback below
       }
     }
 
