@@ -1,7 +1,7 @@
 "use client";
 
 interface CardMediaProps {
-  src: string;
+  src: string | undefined;
   alt: string;
   className?: string;
   loading?: "lazy" | "eager";
@@ -14,8 +14,13 @@ interface CardMediaProps {
  * Images will show video thumbnails for IPFS videos without extensions
  */
 export function CardMedia({ src, alt, className, loading = "lazy", onClick }: CardMediaProps) {
+  // Handle undefined src
+  if (!src) {
+    return null;
+  }
+
   // Check if URL suggests it's a video by extension
-  const urlLower = src?.toLowerCase() || '';
+  const urlLower = src.toLowerCase();
   const isVideo = urlLower.includes('.mp4') || urlLower.includes('.webm') || urlLower.includes('.mov');
 
   if (isVideo) {
