@@ -2908,12 +2908,14 @@ export default function TCGPage() {
     if (!leaderboard || leaderboard.length === 0) return [];
 
     // Map collection ID to power field name
-    const powerField = {
+    const powerFieldMap: Record<string, 'vibePower' | 'vbrsPower' | 'vibefidPower' | 'afclPower'> = {
       'vibe': 'vibePower',
       'gmvbrs': 'vbrsPower',
       'vibefid': 'vibefidPower',
       'americanfootball': 'afclPower',
-    }[leaderboardCollection] as 'vibePower' | 'vbrsPower' | 'vibefidPower' | 'afclPower';
+      'custom': 'vibePower', // Fallback
+    };
+    const powerField = powerFieldMap[leaderboardCollection] || 'vibePower';
 
     // Sort by collection-specific power
     return [...leaderboard].sort((a, b) => {
