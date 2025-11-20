@@ -30,13 +30,12 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
   const shouldTryVideo = hasVideoExtension || (isIpfs && !useImage);
 
   if (shouldTryVideo) {
-    // MOBILE FIX: Use "none" for lazy loading to avoid IPFS loading issues on mobile
-    // Desktop can handle "metadata" but mobile browsers need lighter approach
     const shouldAutoplay = loading === "eager";
 
-    // For eager (battle): autoplay + preload auto
-    // For lazy (gallery): no autoplay + preload none (let browser decide when to load)
-    const preloadMode = shouldAutoplay ? "auto" : "none";
+    // For eager (battle cards): full auto preload + autoplay
+    // For lazy (gallery): use "metadata" to show first frame, browser will load when needed
+    // This shows the video thumbnail without loading the full video
+    const preloadMode = shouldAutoplay ? "auto" : "metadata";
 
     return (
       <video
