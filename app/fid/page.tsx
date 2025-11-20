@@ -44,7 +44,6 @@ export default function FidPage() {
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState(false);
 
-  const [fidInput, setFidInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
@@ -58,23 +57,13 @@ export default function FidPage() {
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
 
-  // Auto-fill FID if in Farcaster miniapp
-  useEffect(() => {
-    if (farcasterContext.isReady && farcasterContext.user?.fid && !fidInput) {
-      setFidInput(farcasterContext.user.fid.toString());
-    }
-  }, [farcasterContext.isReady, farcasterContext.user?.fid]);
-
   // Combined fetch and generate function
   const handleGenerateCard = async () => {
-    if (!fidInput) {
-      setError("Please enter a FID");
-      return;
-    }
+    // Use logged-in user's FID
+    const fid = farcasterContext.user?.fid;
 
-    const fid = parseInt(fidInput);
-    if (isNaN(fid) || fid <= 0) {
-      setError("Please enter a valid FID number");
+    if (!fid) {
+      setError("Please connect your Farcaster account to mint your VibeFID card");
       return;
     }
 
@@ -491,39 +480,43 @@ export default function FidPage() {
               ✅ Conectado como <span className="font-bold">@{farcasterContext.user.username || `FID ${farcasterContext.user.fid}`}</span>
               {" "}(FID: {farcasterContext.user.fid})
             </p>
-            <p className="text-green-400 text-xs sm:text-sm mt-1 break-words">
-              Seu FID foi pré-preenchido. Você pode mintar seu próprio card ou de outros usuários.
-            </p>
           </div>
         )}
 
-        {/* Input Section */}
+        {/* Example Card Section */}
         <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
-          <label className="block text-vintage-gold mb-2 text-sm sm:text-base">
-            Enter Farcaster FID
-          </label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="number"
-              value={fidInput}
-              onChange={(e) => setFidInput(e.target.value)}
-              placeholder="e.g., 214746"
-              className="flex-1 px-3 sm:px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm sm:text-base w-full"
-            />
+          <div className="text-center mb-4">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-2">
+              VibeFID Cards
+            </h2>
+            <p className="text-sm sm:text-base text-vintage-ice/70 mb-4">
+              Example: Card FID #2
+            </p>
+
+            {/* Example Card Image */}
+            <div className="max-w-md mx-auto mb-6">
+              <img
+                src="https://www.vibemostwanted.xyz/share/fid/2/opengraph-image"
+                alt="Example VibeFID Card"
+                className="w-full rounded-lg border-2 border-vintage-gold/30 shadow-[0_0_30px_rgba(255,215,0,0.3)]"
+              />
+            </div>
+
+            {/* Mint Button */}
             <button
               onClick={handleGenerateCard}
-              disabled={loading}
-              className="px-4 sm:px-6 py-2 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-sm sm:text-base whitespace-nowrap w-full sm:w-auto"
+              disabled={loading || !farcasterContext.user}
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-base sm:text-lg rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
             >
-              {loading ? "Generating..." : "Generate Card"}
+              {loading ? "Generating..." : farcasterContext.user ? "🎴 Mint My VibeFID Card" : "Connect Farcaster to Mint"}
             </button>
-          </div>
 
-          {error && (
-            <div className="mt-4 p-3 sm:p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm sm:text-base break-words">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="mt-4 p-3 sm:p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm sm:text-base break-words">
+                {error}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Generation Modal */}
