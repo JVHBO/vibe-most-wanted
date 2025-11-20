@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to retrieve CID from uploaded file');
     }
 
-    // Use public IPFS gateway so we can migrate providers later
-    const ipfsUrl = `https://ipfs.io/ipfs/${cid}`;
+    // Use Filebase gateway - faster since file is hosted there
+    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
 
     console.log(`✅ Image uploaded to IPFS via Filebase, CID: ${cid}`);
 
