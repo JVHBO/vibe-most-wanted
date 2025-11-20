@@ -14,6 +14,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
+import { CardMedia } from '@/components/CardMedia';
 
 interface Card {
   tokenId: string;
@@ -347,7 +348,7 @@ export function AttackCardSelectionModal({
                   foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null}
                   className="w-full h-full"
                 >
-                  <img src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
+                  <CardMedia src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
                 </FoilCardEffect>
                 <div className="absolute top-0 left-0 bg-red-600 text-white text-xs px-1 rounded-br font-bold">{card.power}</div>
               </div>
@@ -416,7 +417,7 @@ export function AttackCardSelectionModal({
                 }`}
                 title={isLocked ? "🔒 This card is locked in your defense deck" : undefined}
               >
-                <img src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
+                <CardMedia src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
                 <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
                   {nft.power}
                 </div>
