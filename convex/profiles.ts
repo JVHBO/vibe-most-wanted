@@ -66,41 +66,33 @@ export const getLeaderboard = query({
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 100 }) => {
-    // 🚀 OPTIMIZATION: Reduced default from 1000 to 100
-    // Most users only see top 10-20, no need to fetch 1000
-    // If needed, frontend can request more with explicit limit
-    const cappedLimit = Math.min(limit, 500); // Cap at 500 max
+    // 🚨 EMERGENCY FIX: Ultra-minimal query for mobile debugging
+    // Trying to identify what's causing the freeze
 
-    const profiles = await ctx.db
-      .query("profiles")
-      .withIndex("by_total_power")
-      .order("desc")
-      .take(cappedLimit);
+    try {
+      // Step 1: Get profiles (limit to 20 for testing)
+      const profiles = await ctx.db
+        .query("profiles")
+        .withIndex("by_total_power")
+        .order("desc")
+        .take(20); // VERY small limit for testing
 
-    // ✅ FILTER: Only show players with complete defense deck (5 cards)
-    const validProfiles = profiles.filter(p => p.defenseDeck && p.defenseDeck.length === 5);
-
-    // Return ONLY display fields for leaderboard
-    return validProfiles.map(p => ({
-      address: p.address,
-      username: p.username,
-      stats: {
-        totalPower: p.stats?.totalPower || 0,
-        openedCards: p.stats?.openedCards || 0,
-        pveWins: p.stats?.pveWins || 0,
-        pvpWins: p.stats?.pvpWins || 0,
-        pveLosses: p.stats?.pveLosses || 0,
-        pvpLosses: p.stats?.pvpLosses || 0,
-      },
-      // Add hasDefenseDeck flag for Attack button (without sending full deck data)
-      hasDefenseDeck: true, // Always true since we filtered above
-      userIndex: p.userIndex,
-      // Include twitter fields for battle shares (needed for opponent PFP in OG images)
-      twitter: p.twitter,
-      twitterProfileImageUrl: p.twitterProfileImageUrl,
-      // 🚫 EXCLUDED: defenseDeck, revealedCardsCache, ownedTokenIds,
-      //              fid, economy data, other stats fields
-    }));
+      // Step 2: Return RAW data (no filter, no map)
+      // Just return first 20 profiles with minimal fields
+      return profiles.slice(0, 20).map(p => ({
+        address: p.address || "unknown",
+        username: p.username || "unknown",
+        stats: {
+          totalPower: p.stats?.totalPower || 0,
+        },
+        hasDefenseDeck: true, // Fake it for now
+        userIndex: p.userIndex || 0,
+      }));
+    } catch (error) {
+      console.error("❌ getLeaderboardLite error:", error);
+      // Return empty array on error
+      return [];
+    }
   },
 });
 
