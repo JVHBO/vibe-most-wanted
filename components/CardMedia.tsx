@@ -10,11 +10,11 @@ interface CardMediaProps {
 
 /**
  * CardMedia component
- * Automatically detects if the source is an MP4 video or image
+ * Automatically detects if the source is an MP4/WebM video or image
  * and renders the appropriate HTML element
  */
 export function CardMedia({ src, alt, className, loading = "lazy", onClick }: CardMediaProps) {
-  const isVideo = src?.toLowerCase().endsWith('.mp4');
+  const isVideo = src?.toLowerCase().endsWith('.mp4') || src?.toLowerCase().endsWith('.webm');
 
   if (isVideo) {
     return (
