@@ -11,12 +11,18 @@ interface TypewriterTextProps {
 
 export default function TypewriterText({
   text,
-  speed = 20,
+  speed = 20, // Fast typing for mobile
   className = "",
   onComplete
 }: TypewriterTextProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    // Reset when text changes
+    setDisplayedText('');
+    setCurrentIndex(0);
+  }, [text]);
 
   useEffect(() => {
     if (currentIndex < text.length) {
@@ -31,17 +37,11 @@ export default function TypewriterText({
     }
   }, [currentIndex, text, speed, onComplete]);
 
-  // Reset when text changes
-  useEffect(() => {
-    setDisplayedText('');
-    setCurrentIndex(0);
-  }, [text]);
-
   return (
     <span className={className}>
       {displayedText}
       {currentIndex < text.length && (
-        <span className="animate-pulse">|</span>
+        <span className="animate-pulse">▊</span>
       )}
     </span>
   );
