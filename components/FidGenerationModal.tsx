@@ -45,8 +45,8 @@ export default function FidGenerationModal({
   if (!isOpen || !backstory) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/95 flex items-center justify-center p-1 sm:p-2 md:p-4 z-50">
-      <div className="bg-vintage-charcoal rounded-lg sm:rounded-xl border-2 border-vintage-gold w-full h-full sm:h-auto max-w-full sm:max-w-lg md:max-w-2xl lg:max-w-4xl sm:my-auto relative sm:max-h-[95vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/95 flex items-center justify-center p-0 sm:p-2 md:p-4 z-50 overflow-hidden">
+      <div className="bg-vintage-charcoal rounded-none sm:rounded-xl border-2 border-vintage-gold w-screen h-screen sm:w-full sm:h-auto sm:max-w-lg md:max-w-2xl lg:max-w-4xl relative sm:max-h-[95vh] overflow-y-auto overflow-x-hidden box-border">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -73,15 +73,15 @@ export default function FidGenerationModal({
         </div>
 
         {/* Content */}
-        <div className="p-3 sm:p-4 md:p-6 lg:p-8 pt-10 sm:pt-12 md:pt-14 lg:pt-16 clear-both">
+        <div className="p-2 sm:p-4 md:p-6 lg:p-8 pt-12 sm:pt-12 md:pt-14 lg:pt-16 clear-both w-full max-w-full box-border overflow-x-hidden">
           {currentSlide === 0 ? (
             // Slide 1: Criminal Backstory
-            <div className="space-y-3 sm:space-y-6">
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold text-center mb-3 sm:mb-6 px-2">
+            <div className="space-y-3 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+              <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-display font-bold text-vintage-gold text-center mb-3 sm:mb-6 px-1 break-words">
                 {t.criminalRecord}
               </h2>
 
-              <div className="bg-vintage-charcoal/80 rounded-lg sm:rounded-xl border-2 border-vintage-gold/50 p-3 sm:p-6 shadow-2xl">
+              <div className="bg-vintage-charcoal/80 rounded-lg sm:rounded-xl border-2 border-vintage-gold/50 p-2 sm:p-4 md:p-6 shadow-2xl w-full max-w-full box-border">
                 <div className="text-center mb-3 sm:mb-6 pb-2 sm:pb-4 border-b-2 border-vintage-gold/30">
                   <h3 className="text-base sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-1">
                     {t.criminalRecord}
@@ -89,7 +89,7 @@ export default function FidGenerationModal({
                   <p className="text-vintage-ice text-sm sm:text-base md:text-lg break-words px-2">{displayName}</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6 w-full max-w-full overflow-x-hidden">
                   {/* Left column */}
                   <div className="space-y-2 sm:space-y-3 md:space-y-4">
                     <div>
@@ -151,17 +151,17 @@ export default function FidGenerationModal({
             </div>
           ) : (
             // Slide 2: Card Preview
-            <div className="space-y-3 sm:space-y-6">
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold text-center mb-3 sm:mb-6 px-2">
+            <div className="space-y-3 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+              <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-display font-bold text-vintage-gold text-center mb-3 sm:mb-6 px-1 break-words">
                 {t.yourVibeFidCard}
               </h2>
 
-              <div className="flex flex-col items-center gap-4 sm:gap-6">
+              <div className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-full overflow-x-hidden">
                 {/* Card Image with Foil Effect */}
                 {previewImage && generatedTraits && (
                   <FoilCardEffect
                     foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
-                    className="w-full max-w-sm sm:max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
+                    className="w-full max-w-[280px] sm:max-w-sm md:max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden box-border"
                   >
                     <CardMedia
                       src={previewImage}
@@ -173,11 +173,11 @@ export default function FidGenerationModal({
 
                 {/* Generated Traits */}
                 {generatedTraits && (
-                  <div className="w-full max-w-sm sm:max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-3 sm:p-6">
+                  <div className="w-full max-w-[280px] sm:max-w-sm md:max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-2 sm:p-4 md:p-6 box-border">
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-vintage-gold mb-3 sm:mb-4 text-center">
                       {t.cardStats}
                     </h3>
-                    <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 w-full max-w-full overflow-x-hidden">
                       <div>
                         <span className="text-vintage-burnt-gold font-semibold text-xs sm:text-sm md:text-base">{t.card}</span>{" "}
                         <span className={`font-bold text-xs sm:text-sm md:text-base ${generatedTraits.color === 'red' ? 'text-red-500' : 'text-white'}`}>
@@ -212,7 +212,7 @@ export default function FidGenerationModal({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 sm:gap-4">
+              <div className="flex gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden box-border">
                 <button
                   onClick={() => setCurrentSlide(0)}
                   className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors text-xs sm:text-sm md:text-base"
