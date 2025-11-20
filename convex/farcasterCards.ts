@@ -148,10 +148,10 @@ export const getFarcasterCardsByFid = query({
     const cards = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
-      .order("desc") // Most recent first
       .collect();
 
-    return cards;
+    // Sort manually by creation time (most recent first)
+    return cards.sort((a, b) => b._creationTime - a._creationTime);
   },
 });
 
@@ -196,12 +196,15 @@ export const toggleEquipFarcasterCard = mutation({
 export const getAllFarcasterCards = query({
   args: {},
   handler: async (ctx) => {
-    const cards = await ctx.db
+    // Get all cards and sort manually by creation time
+    const allCards = await ctx.db
       .query("farcasterCards")
-      .order("desc")
-      .take(100); // Top 100
+      .collect();
 
-    return cards;
+    // Sort by creation time (most recent first) and limit to 100
+    return allCards
+      .sort((a, b) => b._creationTime - a._creationTime)
+      .slice(0, 100);
   },
 });
 
