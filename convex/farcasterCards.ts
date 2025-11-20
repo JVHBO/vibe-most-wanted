@@ -34,8 +34,9 @@ export const mintFarcasterCard = mutation({
     suitSymbol: v.string(), // "♥", "♦", "♠", "♣"
     color: v.string(), // "red" or "black"
 
-    // Generated image URL (from Nanobanana IA)
-    imageUrl: v.string(),
+    // Generated image URLs
+    imageUrl: v.string(), // Video (MP4)
+    cardImageUrl: v.optional(v.string()), // Static PNG for sharing
   },
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
@@ -79,8 +80,9 @@ export const mintFarcasterCard = mutation({
       followingCount: args.followingCount,
       powerBadge: args.powerBadge,
 
-      // Generated Image
-      imageUrl: args.imageUrl,
+      // Generated Images
+      imageUrl: args.imageUrl, // Video (MP4)
+      cardImageUrl: args.cardImageUrl, // Static PNG for sharing
 
       // Game State
       equipped: false,
