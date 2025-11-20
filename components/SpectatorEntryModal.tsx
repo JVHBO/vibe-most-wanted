@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useApproveVBMS } from "@/lib/hooks/useVBMSContracts";
-import { useFarcasterVBMSBalance, useFarcasterTransferVBMS } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
+import { useFarcasterVBMSBalance, useFarcasterTransferVBMS, useFarcasterApproveVBMS } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
+import { parseEther } from "viem";
 
 interface SpectatorEntryModalProps {
   isOpen: boolean;
@@ -25,7 +25,7 @@ export function SpectatorEntryModal({
   // Use playerAddress (miniapp) OR wagmiAddress (web) - playerAddress takes priority
   const effectiveAddress = playerAddress || wagmiAddress;
   const { balance: vbmsBalance } = useFarcasterVBMSBalance(effectiveAddress); // Miniapp-compatible
-  const { approve, isPending: isApproving } = useApproveVBMS();
+  const { approve, isPending: isApproving } = useFarcasterApproveVBMS();
   const { transfer, isPending: isTransferring } = useFarcasterTransferVBMS();
 
   const [amount, setAmount] = useState<string>("100");
@@ -54,11 +54,11 @@ export function SpectatorEntryModal({
     try {
       // Step 1: Approve
       setStep("approving");
-      await approve(CONTRACTS.VBMSBetting as `0x${string}`, amount);
+      await approve(CONTRACTS.VBMSBetting as `0x${string}`, parseEther(amount));
 
       // Step 2: Transfer
       setStep("transferring");
-      const txHash = await transfer(CONTRACTS.VBMSBetting as `0x${string}`, BigInt(amount));
+      const txHash = await transfer(CONTRACTS.VBMSBetting as `0x${string}`, parseEther(amount));
 
       console.log("✅ Deposited to betting:", txHash);
 
