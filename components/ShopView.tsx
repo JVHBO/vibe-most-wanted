@@ -6,8 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { Id } from "@/convex/_generated/dataModel";
 import { ShopNotification } from "./ShopNotification";
 import { PackOpeningAnimation } from "./PackOpeningAnimation";
-import { useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
-import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
+import { useFarcasterVBMSBalance, useFarcasterTransferVBMS } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 import { parseEther } from "viem";
@@ -38,7 +37,7 @@ export function ShopView({ address }: ShopViewProps) {
   });
 
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(effectiveAddress);
-  const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
+  const { transfer, isPending: isTransferring, error: transferError } = useFarcasterTransferVBMS();
 
   // 🔍 Debug: Log balance
   console.log('[ShopView] 💰 VBMS Balance:', vbmsBalance);
