@@ -27,7 +27,9 @@ export function ShopView({ address }: ShopViewProps) {
 
   // VBMS Blockchain hooks (using Farcaster-compatible hook for miniapp)
   const { address: walletAddress } = useAccount();
-  const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(walletAddress);
+  // Use address prop (works in miniapp) OR walletAddress (works in web) - prop takes priority
+  const effectiveAddress = address || walletAddress;
+  const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(effectiveAddress);
   const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
 
   // State
@@ -39,7 +41,7 @@ export function ShopView({ address }: ShopViewProps) {
 
   // Handle purchase with VBMS (blockchain)
   const handleBuyWithVBMS = async (packType: string, packPrice: number) => {
-    if (!address || !walletAddress) {
+    if (!effectiveAddress) {
       setNotification({
         type: 'error',
         message: "Please connect your wallet"
