@@ -59,13 +59,18 @@ export default function FidPage() {
 
   // Combined fetch and generate function
   const handleGenerateCard = async () => {
-    // Use logged-in user's FID
-    const fid = farcasterContext.user?.fid;
-
-    if (!fid) {
-      setError("Please connect your Farcaster account to mint your VibeFID card");
+    // Check if user is connected
+    if (!farcasterContext.user) {
+      // Redirect to main page to connect
+      setError("Redirecting to connect Farcaster wallet...");
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
       return;
     }
+
+    // Use logged-in user's FID
+    const fid = farcasterContext.user.fid;
 
     setLoading(true);
     setError(null);
@@ -504,10 +509,10 @@ export default function FidPage() {
             {/* Mint Button */}
             <button
               onClick={handleGenerateCard}
-              disabled={loading || !farcasterContext.user}
+              disabled={loading}
               className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-base sm:text-lg rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
             >
-              {loading ? "Generating..." : farcasterContext.user ? "🎴 Mint My VibeFID Card" : "Connect Farcaster to Mint"}
+              {loading ? "Generating..." : farcasterContext.user ? "🎴 Mint My VibeFID Card" : "🔗 Connect Farcaster to Mint"}
             </button>
 
             {error && (
