@@ -260,20 +260,20 @@ export const claimMission = mutation({
       // 🇨🇳 Apply language boost to mission reward
       boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
 
-      // Award coins to inbox (or just calculate if skipCoins)
+      // Award coins directly to balance (or just calculate if skipCoins)
       if (!skipCoins) {
-        const currentInbox = profile.coinsInbox || 0;
-        newBalance = currentInbox + boostedReward;
+        const currentBalance = profile.coins || 0;
+        newBalance = currentBalance + boostedReward;
         const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
         await ctx.db.patch(profile._id, {
-          coinsInbox: newBalance,
+          coins: newBalance,
           lifetimeEarned: newLifetimeEarned,
         });
 
-        console.log(`📬 Mission reward sent to inbox: ${boostedReward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newBalance}`);
+        console.log(`💰 Mission reward added to balance: ${boostedReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
       } else {
-        newBalance = profile.coinsInbox || 0;
+        newBalance = profile.coins || 0;
       }
     } else if (rewardInfo.type === "pack") {
       // Award pack(s)
@@ -377,17 +377,17 @@ export const claimAllMissions = mutation({
       return sum + boostedReward;
     }, 0);
 
-    // Award to inbox (not balance)
-    const currentInbox = profile.coinsInbox || 0;
-    const newInbox = currentInbox + totalReward;
+    // Award coins directly to balance
+    const currentBalance = profile.coins || 0;
+    const newBalance = currentBalance + totalReward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + totalReward;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned: newLifetimeEarned,
     });
 
-    console.log(`📬 Mission rewards sent to inbox: ${totalReward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`💰 Mission rewards added to balance: ${totalReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark all as claimed
     const now = Date.now();
@@ -403,7 +403,7 @@ export const claimAllMissions = mutation({
       success: true,
       claimed: missions.length,
       totalReward,
-      newBalance: newInbox,
+      newBalance: newBalance,
     };
   },
 });
