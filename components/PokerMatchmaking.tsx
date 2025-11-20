@@ -989,7 +989,7 @@ export function PokerMatchmaking({
                 <div className="text-3xl font-bold text-yellow-400 mb-2">$VBMS</div>
                 <div className="text-sm text-vintage-burnt-gold">
                   Your Balance: <span className="text-yellow-400 font-bold">
-                    {walletAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
+                    {effectiveAddress ? `${parseFloat(vbmsBalance).toFixed(2)}` : "Connect Wallet"}
                   </span>
                 </div>
               </div>
