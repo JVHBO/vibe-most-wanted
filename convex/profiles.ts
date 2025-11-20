@@ -76,18 +76,21 @@ export const getLeaderboardLite = query({
       .order("desc")
       .take(cappedLimit);
 
-    // 🚨 REMOVED: defenseDeck filter - was causing mobile freeze
-    // Now we check hasDefenseDeck without loading the full deck data
+    // ✅ FILTER: Only show players with complete defense deck (5 cards)
+    // We only check .length (a number), not the full array data
+    const validProfiles = profiles.filter(p =>
+      p.defenseDeck && p.defenseDeck.length === 5
+    );
 
     // Return ONLY essential fields (ultra-minimal)
-    return profiles.map(p => ({
+    return validProfiles.map(p => ({
       address: p.address,
       username: p.username,
       stats: {
         totalPower: p.stats?.totalPower || 0,
       },
-      // Check defenseDeck length WITHOUT loading full data
-      hasDefenseDeck: (p.defenseDeck?.length || 0) >= 5,
+      // Always true since we filtered above
+      hasDefenseDeck: true,
       userIndex: p.userIndex,
     }));
   },
