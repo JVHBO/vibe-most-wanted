@@ -2790,8 +2790,28 @@ export default function TCGPage() {
       // 🚀 Performance: Using pre-computed memoized values
       devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards: openedCardsCount, totalPower: totalNftPower, tokenIds: nftTokenIds.length });
 
+      // Calculate collection-specific powers for leaderboard filtering
+      const collectionPowers = nfts.reduce((acc, nft) => {
+        const collection = nft.collection || 'vibe'; // Default to vibe if no collection specified
+        const power = nft.power || 0;
+
+        if (collection === 'vibe') {
+          acc.vibePower = (acc.vibePower || 0) + power;
+        } else if (collection === 'gmvbrs') {
+          acc.vbrsPower = (acc.vbrsPower || 0) + power;
+        } else if (collection === 'vibefid') {
+          acc.vibefidPower = (acc.vibefidPower || 0) + power;
+        } else if (collection === 'americanfootball') {
+          acc.afclPower = (acc.afclPower || 0) + power;
+        }
+
+        return acc;
+      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number; afclPower?: number });
+
+      devLog('📊 Collection powers:', collectionPowers);
+
       // Update stats and reload profile to show updated values
-      ConvexProfileService.updateStats(address, nfts.length, openedCardsCount, unopenedCardsCount, totalNftPower, nftTokenIds)
+      ConvexProfileService.updateStats(address, nfts.length, openedCardsCount, unopenedCardsCount, totalNftPower, nftTokenIds, collectionPowers)
         .then(() => {
           // Reload profile to get updated stats
           return ConvexProfileService.getProfile(address);
@@ -2970,64 +2990,42 @@ export default function TCGPage() {
 
   // Filter and re-rank leaderboard by collection
   const filteredLeaderboard = useMemo(() => {
-    // If we're already calculating, return current leaderboard
-    if (isCalculatingCollectionPower) return leaderboard;
+    // Use pre-calculated collection powers from profile stats
+    // This is much faster and doesn't require Alchemy API calls
+    const getCollectionPower = (player: UserProfile): number => {
+      const stats = player.stats;
+      if (!stats) return 0;
 
-    // Show players ranked by their collection-specific power
-    // This uses cached data when available, or triggers async calculation
-    const leaderboardWithCollectionPower = leaderboard.map(player => {
-      const cachedPower = collectionPowerCache.get(player.address)?.get(leaderboardCollection);
-      return {
+      switch (leaderboardCollection) {
+        case 'vibe':
+          return stats.vibePower || 0;
+        case 'gmvbrs':
+          return stats.vbrsPower || 0;
+        case 'vibefid':
+          return stats.vibefidPower || 0;
+        case 'americanfootball':
+          return stats.afclPower || 0;
+        default:
+          return stats.totalPower || 0;
+      }
+    };
+
+    // Filter out players with no power in the selected collection, then sort by power
+    return leaderboard
+      .map(player => ({
         ...player,
-        collectionPower: cachedPower ?? 0, // Default to 0 if not calculated yet (will calculate async)
-        needsCalculation: cachedPower === undefined
-      };
-    });
-    // NOTE: Collection power calculation is temporarily disabled
-    // All players will have 0 collection power until Alchemy API is fixed
-    // So we show all players instead of filtering by collectionPower > 0
-    // This prevents empty leaderboards while calculation is disabled
-
-    // Trigger async calculation for players that need it (but don't block render)
-    const playersNeedingCalculation = leaderboardWithCollectionPower
-      .filter(p => p.needsCalculation)
-      .slice(0, 20); // Only calculate top 20 to avoid overwhelming API
-
-    if (playersNeedingCalculation.length > 0 && !isCalculatingCollectionPower) {
-      setIsCalculatingCollectionPower(true);
-
-      // Calculate sequentially with delay to avoid rate limiting (not in parallel)
-      (async () => {
-        for (const player of playersNeedingCalculation) {
-          try {
-            await calculateCollectionPower(player.address, leaderboardCollection);
-            // Add 200ms delay between requests to avoid overwhelming API
-            await new Promise(resolve => setTimeout(resolve, 200));
-          } catch (err) {
-            devError(`[Leaderboard] Error calculating power for ${player.address}:`, err);
-          }
-        }
-        setIsCalculatingCollectionPower(false);
-      })();
-    }
-
-    // Sort by collection power (desc), but use totalPower as fallback when collection power is 0
-    return leaderboardWithCollectionPower
-      .sort((a, b) => {
-        // If collection power is the same (both 0), fallback to totalPower
-        if (b.collectionPower === a.collectionPower) {
-          return (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0);
-        }
-        return b.collectionPower - a.collectionPower;
-      })
-      .map(({ needsCalculation, collectionPower, ...player }) => ({
+        collectionPower: getCollectionPower(player)
+      }))
+      .filter(player => player.collectionPower > 0) // Only show players with cards from this collection
+      .sort((a, b) => b.collectionPower - a.collectionPower)
+      .map(({ collectionPower, ...player }) => ({
         ...player,
         stats: {
           ...player.stats,
-          totalPower: collectionPower || player.stats?.totalPower || 0 // Use collection power if available, else use total
+          totalPower: collectionPower // Display collection-specific power in leaderboard
         }
       }));
-  }, [leaderboard, leaderboardCollection, collectionPowerCache, isCalculatingCollectionPower, calculateCollectionPower]);
+  }, [leaderboard, leaderboardCollection]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
