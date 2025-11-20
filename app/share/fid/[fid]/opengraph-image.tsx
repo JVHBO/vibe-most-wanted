@@ -110,11 +110,71 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
         // Continue to fallback below
       }
     } else {
-      console.log('[OG Image] No cardImageUrl, using fallback');
+      console.log('[OG Image] No cardImageUrl, generating from card data');
     }
 
-    // Fallback: If no card image available, generate a real PNG
-    // Farcaster doesn't accept ImageResponse, we need actual PNG
+    // Fallback: Generate card image from data (for old cards without cardImageUrl)
+    if (cardData) {
+      console.log('[OG Image] Generating card with data:', {
+        suit: cardData.suit,
+        rank: cardData.rank,
+        rarity: cardData.rarity,
+        power: cardData.power,
+      });
+
+      const rarityColors: Record<string, string> = {
+        Common: '#808080',
+        Uncommon: '#3CB371',
+        Rare: '#4169E1',
+        Epic: '#9333EA',
+        Legendary: '#FFD700',
+      };
+
+      const suitSymbols: Record<string, string> = {
+        hearts: '♥',
+        diamonds: '♦',
+        clubs: '♣',
+        spades: '♠',
+      };
+
+      const bgColor = rarityColors[cardData.rarity] || '#808080';
+      const symbol = cardData.suitSymbol || suitSymbols[cardData.suit?.toLowerCase()] || '♣';
+
+      return new ImageResponse(
+        (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `linear-gradient(135deg, ${bgColor} 0%, ${bgColor}DD 100%)`,
+              color: '#fff',
+              padding: '40px',
+            }}
+          >
+            <div style={{ fontSize: '100px', marginBottom: '20px' }}>{symbol}</div>
+            <div style={{ fontSize: '60px', fontWeight: 900, fontFamily: 'monospace' }}>
+              {cardData.rank}
+            </div>
+            <div style={{ fontSize: '24px', marginTop: '20px', opacity: 0.9 }}>
+              {cardData.rarity}
+            </div>
+            <div style={{ fontSize: '32px', marginTop: '10px', fontWeight: 900 }}>
+              ⚡ {cardData.power}
+            </div>
+            <div style={{ fontSize: '18px', marginTop: '30px', opacity: 0.8 }}>
+              {cardData.displayName || cardData.username}
+            </div>
+          </div>
+        ),
+        { ...size }
+      );
+    }
+
+    // Final fallback: Simple placeholder
     const fallbackImageResponse = new ImageResponse(
       (
         <div
