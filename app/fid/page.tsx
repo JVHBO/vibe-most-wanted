@@ -57,6 +57,30 @@ export default function FidPage() {
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
 
+  /**
+   * CARD GENERATION & PERSISTENCE FLOW:
+   *
+   * 1. Player clicks "Generate" → handleGenerateCard()
+   *    - Checks if card already exists in localStorage
+   *    - If exists: shows saved card (no new generation)
+   *    - If not exists: generates new card and saves to localStorage
+   *
+   * 2. Card persists even if player closes page
+   *    - useEffect loads saved card on mount
+   *    - Player can continue from where they left off
+   *
+   * 3. Player clicks "Mint" → handleMintCard()
+   *    - Generates video with foil effects
+   *    - Uploads video to IPFS (gets permanent URL)
+   *    - Gets signature from backend
+   *    - Mints NFT on-chain (contract ensures 1 mint per FID)
+   *    - After successful mint, clears localStorage
+   *
+   * 4. Contract prevents duplicate mints
+   *    - Each FID can only be minted once
+   *    - Enforced on smart contract level
+   */
+
   // LocalStorage key for generated card
   const getStorageKey = () => {
     const fid = farcasterContext.user?.fid;
@@ -125,6 +149,18 @@ export default function FidPage() {
       setTimeout(() => {
         window.location.href = '/';
       }, 1000);
+      return;
+    }
+
+    // Check if card already generated (saved in localStorage)
+    const existingCard = loadGeneratedCard();
+    if (existingCard) {
+      // Card already generated - show it instead of generating a new one
+      setUserData(existingCard.userData);
+      setPreviewImage(existingCard.previewImage);
+      setGeneratedTraits(existingCard.generatedTraits);
+      setBackstoryData(existingCard.backstoryData);
+      setShowModal(true);
       return;
     }
 
