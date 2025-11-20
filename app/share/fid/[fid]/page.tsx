@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ fid: stri
 
   // Use Next.js opengraph-image route
   // Add timestamp to bust Farcaster cache
-  const imageUrl = `${baseUrl}/share/fid/${fid}/opengraph-image?v=4`;
+  const imageUrl = `${baseUrl}/share/fid/${fid}/opengraph-image?v=5`;
 
   return {
     title: `VibeFID Card #${fid} - VIBE Most Wanted`,
