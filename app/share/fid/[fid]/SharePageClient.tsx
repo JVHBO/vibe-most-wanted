@@ -7,13 +7,13 @@ export default function SharePageClient({ fid }: { fid: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to FID page after 2 seconds
+    // Redirect to VibeFID main page after 2 seconds
     const timeout = setTimeout(() => {
-      router.push(`/fid/${fid}`);
+      router.push('/fid');
     }, 2000);
 
     return () => clearTimeout(timeout);
-  }, [router, fid]);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
