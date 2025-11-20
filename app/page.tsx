@@ -2962,55 +2962,18 @@ export default function TCGPage() {
 
   // Filter and re-rank leaderboard by collection
   const filteredLeaderboard = useMemo(() => {
-    // If we're already calculating, return current leaderboard
-    if (isCalculatingCollectionPower) return leaderboard;
+    // SIMPLIFIED: Collection power calculation is disabled, so just filter by collection
+    // without calculating collection-specific power (prevents infinite loop/freezing)
 
-    // Show players ranked by their collection-specific power
-    // This uses cached data when available, or triggers async calculation
-    const leaderboardWithCollectionPower = leaderboard.map(player => {
-      const cachedPower = collectionPowerCache.get(player.address)?.get(leaderboardCollection);
-      return {
-        ...player,
-        collectionPower: cachedPower ?? 0, // Default to 0 if not calculated yet (will calculate async)
-        needsCalculation: cachedPower === undefined
-      };
-    })
-    .filter(p => p.collectionPower > 0 || p.needsCalculation); // Only show players with power in this collection or being calculated
+    // For now, when a collection filter is active, just show the full leaderboard
+    // sorted by total power. This is a reasonable fallback until collection power
+    // calculation is re-enabled.
 
-    // Trigger async calculation for players that need it (but don't block render)
-    const playersNeedingCalculation = leaderboardWithCollectionPower
-      .filter(p => p.needsCalculation)
-      .slice(0, 20); // Only calculate top 20 to avoid overwhelming API
+    // In the future, we could filter by checking if user owns any NFTs from that collection,
+    // but that would also require API calls. For now, showing everyone is acceptable.
 
-    if (playersNeedingCalculation.length > 0 && !isCalculatingCollectionPower) {
-      setIsCalculatingCollectionPower(true);
-
-      // Calculate sequentially with delay to avoid rate limiting (not in parallel)
-      (async () => {
-        for (const player of playersNeedingCalculation) {
-          try {
-            await calculateCollectionPower(player.address, leaderboardCollection);
-            // Add 200ms delay between requests to avoid overwhelming API
-            await new Promise(resolve => setTimeout(resolve, 200));
-          } catch (err) {
-            devError(`[Leaderboard] Error calculating power for ${player.address}:`, err);
-          }
-        }
-        setIsCalculatingCollectionPower(false);
-      })();
-    }
-
-    // Sort by collection power (desc)
-    return leaderboardWithCollectionPower
-      .sort((a, b) => b.collectionPower - a.collectionPower)
-      .map(({ needsCalculation, collectionPower, ...player }) => ({
-        ...player,
-        stats: {
-          ...player.stats,
-          totalPower: collectionPower // Override display power with collection power
-        }
-      }));
-  }, [leaderboard, leaderboardCollection, collectionPowerCache, isCalculatingCollectionPower, calculateCollectionPower]);
+    return leaderboard;
+  }, [leaderboard]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
