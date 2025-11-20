@@ -24,13 +24,14 @@ export async function getFarcasterAccountCreationDate(fid: number): Promise<Date
       if (neynarDate) return neynarDate;
     }
 
-    // Final fallback: approximation
-    console.warn('No API keys found, using FID-based approximation');
-    return approximateCreationDate(fid);
+    // NO APPROXIMATIONS - Return null if no real data available
+    console.warn(`No API keys configured. Cannot fetch real creation date for FID ${fid}`);
+    console.warn('Configure AIRSTACK_API_KEY or NEYNAR_API_KEY for accurate dates');
+    return null;
 
   } catch (error) {
     console.error('Error fetching account creation date:', error);
-    return approximateCreationDate(fid);
+    return null;
   }
 }
 
