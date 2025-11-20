@@ -14,7 +14,7 @@ import { VIBEFID_ABI, VIBEFID_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contrac
 import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
-import { useLanguage } from "@/lib/LanguageContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { generateCriminalBackstory } from "@/lib/generateCriminalBackstory";
 import type { CriminalBackstory } from "@/lib/generateCriminalBackstory";
 import CriminalBackstoryCard from "@/components/CriminalBackstoryCard";
