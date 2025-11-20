@@ -92,13 +92,21 @@ export function generateCriminalBackstory(
     else dateOfCrime = '2025';
   }
 
-  // Build story from templates
+  // Helper function to randomly select from array
+  const getRandomVariant = (variants: string | string[]): string => {
+    if (Array.isArray(variants)) {
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+    return variants;
+  };
+
+  // Build story from templates with random variants
   const storyParts = [
-    t.criminalStory1.replace('{date}', dateOfCrime).replace('{username}', `@${data.username}`),
-    t.criminalStory2.replace('{followers}', data.followerCount.toLocaleString()).replace('{username}', `@${data.username}`),
-    t.criminalStory3.replace('{bio}', data.bio || t.noBio),
-    t.criminalStory4.replace('{bounty}', data.bounty.toLocaleString()),
-    t.criminalStory5,
+    getRandomVariant(t.criminalStory1).replace('{date}', dateOfCrime).replace('{username}', `@${data.username}`),
+    getRandomVariant(t.criminalStory2).replace('{followers}', data.followerCount.toLocaleString()).replace('{username}', `@${data.username}`),
+    getRandomVariant(t.criminalStory3).replace('{bio}', data.bio || t.noBio),
+    getRandomVariant(t.criminalStory4).replace('{bounty}', data.bounty.toLocaleString()),
+    getRandomVariant(t.criminalStory5),
   ];
 
   const story = storyParts.join(' ');
