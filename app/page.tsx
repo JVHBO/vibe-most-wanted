@@ -38,7 +38,8 @@ import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
 import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
-import { MobileDebugConsole } from "@/components/MobileDebugConsole";
+// TEMPORARILY DISABLED - Causing performance issues
+// import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
@@ -5891,8 +5892,8 @@ export default function TCGPage() {
       {/* Easter Egg - Runaway Image */}
       <RunawayEasterEgg />
 
-      {/* Mobile Debug Console - Only shows on mobile */}
-      <MobileDebugConsole />
+      {/* TEMPORARILY DISABLED - Causing performance issues */}
+      {/* <MobileDebugConsole /> */}
 
       </div>
     </div>
