@@ -121,7 +121,7 @@ export const getFarcasterCardsByAddress = query({
 });
 
 /**
- * Get a specific Farcaster card by FID
+ * Get a specific Farcaster card by FID (first mint only)
  */
 export const getFarcasterCardByFid = query({
   args: {
@@ -134,6 +134,24 @@ export const getFarcasterCardByFid = query({
       .first();
 
     return card;
+  },
+});
+
+/**
+ * Get ALL Farcaster cards for a specific FID (all mints)
+ */
+export const getFarcasterCardsByFid = query({
+  args: {
+    fid: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const cards = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .order("desc") // Most recent first
+      .collect();
+
+    return cards;
   },
 });
 
