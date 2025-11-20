@@ -18,6 +18,7 @@ interface CardMediaProps {
  */
 export function CardMedia({ src, alt, className, loading = "lazy", onClick }: CardMediaProps) {
   const [useImage, setUseImage] = useState(false);
+  const [error, setError] = useState(false);
 
   if (!src) {
     return null;
@@ -29,7 +30,7 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
   const isIpfs = srcLower.includes('ipfs');
   const shouldTryVideo = hasVideoExtension || (isIpfs && !useImage);
 
-  if (shouldTryVideo) {
+  if (shouldTryVideo && !error) {
     return (
       <video
         key={src}
@@ -43,10 +44,26 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         onClick={onClick}
         style={{ objectFit: 'cover' }}
         onError={(e) => {
-          console.warn('Video failed, trying image:', src);
+          console.error('❌ Video failed to load:', src);
           setUseImage(true);
+          setError(true);
+        }}
+        onLoadedData={() => {
+          console.log('✅ Video loaded:', src);
         }}
       />
+    );
+  }
+
+  // If error, show placeholder with IPFS link
+  if (error && isIpfs) {
+    return (
+      <div className={className} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff', fontSize: '12px', padding: '20px', textAlign: 'center', flexDirection: 'column' }}>
+        <div>⚠️ IPFS Loading Failed</div>
+        <a href={src} target="_blank" rel="noopener noreferrer" style={{ color: '#ffd700', marginTop: '10px', textDecoration: 'underline' }}>
+          Open in IPFS
+        </a>
+      </div>
     );
   }
 
@@ -58,7 +75,8 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
       loading={loading}
       onClick={onClick}
       onError={(e) => {
-        console.warn('Failed to load image:', src);
+        console.error('❌ Image failed to load:', src);
+        setError(true);
       }}
     />
   );
