@@ -583,7 +583,7 @@ export default function FidPage() {
             {/* Example Card Image */}
             <div className="max-w-md mx-auto mb-6">
               <img
-                src="https://www.vibemostwanted.xyz/share/fid/2/opengraph-image"
+                src="/api/fid/example-card"
                 alt="Example VibeFID Card"
                 className="w-full rounded-lg border-2 border-vintage-gold/30 shadow-[0_0_30px_rgba(255,215,0,0.3)]"
               />
