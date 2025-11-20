@@ -232,11 +232,16 @@ export const getRecentFarcasterCards = query({
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
 
-    const cards = await ctx.db
+    // Get all cards and sort by creation time (most recent first)
+    const allCards = await ctx.db
       .query("farcasterCards")
-      .order("desc")
-      .take(limit);
+      .collect();
 
-    return cards;
+    // Sort by _creationTime in descending order (newest first)
+    const sortedCards = allCards
+      .sort((a, b) => b._creationTime - a._creationTime)
+      .slice(0, limit);
+
+    return sortedCards;
   },
 });
