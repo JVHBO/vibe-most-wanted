@@ -175,8 +175,9 @@ export default function FidPage() {
       const color = getSuitColor(suit);
       const rank = generateRankFromRarity(rarity);
 
-      // Generate FID-based foil and wear traits (deterministic based on FID)
-      const fidTraits = getFidTraits(userData.fid);
+      // Generate FID-based foil and wear traits with randomness for preview
+      // Use Date.now() as extra seed so each preview regenerates traits
+      const fidTraits = getFidTraits(userData.fid, Date.now());
       const foil = fidTraits.foil;
       const wear = fidTraits.wear;
 
@@ -271,7 +272,8 @@ export default function FidPage() {
         const color = getSuitColor(suit);
         const rank = generateRankFromRarity(rarity);
 
-        // Generate FID-based foil and wear traits (deterministic based on FID)
+        // Generate FID-based foil and wear traits (DETERMINISTIC for final mint)
+        // NO extraSeed - same FID always gives same traits on-chain
         const fidTraits = getFidTraits(userData.fid);
         const foil = fidTraits.foil;
         const wear = fidTraits.wear;
