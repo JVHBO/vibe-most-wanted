@@ -4,42 +4,121 @@
  */
 
 /**
- * Fetch Farcaster account creation date by FID
- * Uses Neynar's FID registration API or falls back to approximation
+ * Fetch Farcaster account creation date by FID using Airstack API
  */
 export async function getFarcasterAccountCreationDate(fid: number): Promise<Date | null> {
   try {
-    // Try Neynar's user details endpoint which might have registration data
-    const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+    // Try Airstack API first (has real onchain data)
+    const airstackApiKey = process.env.AIRSTACK_API_KEY || process.env.NEXT_PUBLIC_AIRSTACK_API_KEY;
 
-    if (!NEYNAR_API_KEY) {
-      console.warn('NEYNAR_API_KEY not found, using FID-based approximation');
-      return approximateCreationDate(fid);
+    if (airstackApiKey) {
+      const airstackDate = await fetchFromAirstack(fid, airstackApiKey);
+      if (airstackDate) return airstackDate;
     }
 
-    // Try fetching from Neynar user endpoint
+    // Fallback: Try Neynar API
+    const neynarApiKey = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+
+    if (neynarApiKey) {
+      const neynarDate = await fetchFromNeynar(fid, neynarApiKey);
+      if (neynarDate) return neynarDate;
+    }
+
+    // Final fallback: approximation
+    console.warn('No API keys found, using FID-based approximation');
+    return approximateCreationDate(fid);
+
+  } catch (error) {
+    console.error('Error fetching account creation date:', error);
+    return approximateCreationDate(fid);
+  }
+}
+
+/**
+ * Fetch creation date from Airstack API (GraphQL)
+ */
+async function fetchFromAirstack(fid: number, apiKey: string): Promise<Date | null> {
+  try {
+    const query = `
+      query GetFarcasterUser($fid: String!) {
+        Socials(
+          input: {
+            filter: {
+              dappName: { _eq: farcaster }
+              userId: { _eq: $fid }
+            }
+            blockchain: ethereum
+          }
+        ) {
+          Social {
+            userId
+            profileCreatedAtBlockTimestamp
+            createdAtBlockTimestamp
+          }
+        }
+      }
+    `;
+
+    const response = await fetch('https://api.airstack.xyz/gql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': apiKey,
+      },
+      body: JSON.stringify({
+        query,
+        variables: { fid: fid.toString() },
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`Airstack API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.data?.Socials?.Social?.[0]) {
+      const social = data.data.Socials.Social[0];
+      const timestamp = social.profileCreatedAtBlockTimestamp || social.createdAtBlockTimestamp;
+
+      if (timestamp) {
+        return new Date(timestamp);
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Airstack fetch error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch creation date from Neynar API
+ */
+async function fetchFromNeynar(fid: number, apiKey: string): Promise<Date | null> {
+  try {
     const response = await fetch(
       `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
       {
         headers: {
           'accept': 'application/json',
-          'api_key': NEYNAR_API_KEY,
+          'api_key': apiKey,
         },
       }
     );
 
     if (!response.ok) {
       console.warn(`Neynar API error: ${response.status}`);
-      return approximateCreationDate(fid);
+      return null;
     }
 
     const data = await response.json();
 
-    // Check if there's a registered_at or created_at field
     if (data.users && data.users[0]) {
       const user = data.users[0];
 
-      // Try various possible timestamp fields
       if (user.registered_at) {
         return new Date(user.registered_at);
       }
@@ -48,12 +127,10 @@ export async function getFarcasterAccountCreationDate(fid: number): Promise<Date
       }
     }
 
-    // Fallback to approximation
-    return approximateCreationDate(fid);
-
+    return null;
   } catch (error) {
-    console.error('Error fetching account creation date:', error);
-    return approximateCreationDate(fid);
+    console.error('Neynar fetch error:', error);
+    return null;
   }
 }
 

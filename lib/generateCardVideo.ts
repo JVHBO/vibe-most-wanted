@@ -118,10 +118,10 @@ function drawFoilEffect(
 
   // Set blend mode
   ctx.globalCompositeOperation = 'hard-light';
-  ctx.globalAlpha = foilType === 'Prize' ? 0.35 : 0.25; // Prize: 0.35 (visible), Standard: 0.25
+  ctx.globalAlpha = foilType === 'Prize' ? 0.45 : 0.25; // Prize: 0.45 (stronger!), Standard: 0.25
 
   // Calculate animation progress (0 to 1)
-  const speed = foilType === 'Prize' ? 6 : 4; // Prize: 6s, Standard: 4s
+  const speed = foilType === 'Prize' ? 3 : 4; // Prize: 3s (fast & aggressive!), Standard: 4s
   const progress = (frame % (30 * speed)) / (30 * speed);
 
   // Create gradient that shifts with animation
@@ -133,15 +133,15 @@ function drawFoilEffect(
   );
 
   if (foilType === 'Prize') {
-    // Prize foil: enhanced rainbow shimmer
-    gradient.addColorStop(0, 'rgba(139, 0, 255, 0.5)'); // violet
-    gradient.addColorStop(0.143, 'rgba(0, 0, 255, 0.5)'); // blue
-    gradient.addColorStop(0.286, 'rgba(0, 255, 255, 0.5)'); // cyan
-    gradient.addColorStop(0.429, 'rgba(0, 255, 0, 0.5)'); // green
-    gradient.addColorStop(0.571, 'rgba(255, 255, 0, 0.5)'); // yellow
-    gradient.addColorStop(0.714, 'rgba(255, 127, 0, 0.5)'); // orange
-    gradient.addColorStop(0.857, 'rgba(255, 0, 0, 0.4)'); // red
-    gradient.addColorStop(1, 'rgba(139, 0, 255, 0.5)'); // violet
+    // Prize foil: strong, aggressive rainbow shimmer
+    gradient.addColorStop(0, 'rgba(139, 0, 255, 0.7)'); // violet (stronger!)
+    gradient.addColorStop(0.143, 'rgba(0, 0, 255, 0.7)'); // blue
+    gradient.addColorStop(0.286, 'rgba(0, 255, 255, 0.7)'); // cyan
+    gradient.addColorStop(0.429, 'rgba(0, 255, 0, 0.7)'); // green
+    gradient.addColorStop(0.571, 'rgba(255, 255, 0, 0.7)'); // yellow
+    gradient.addColorStop(0.714, 'rgba(255, 127, 0, 0.7)'); // orange
+    gradient.addColorStop(0.857, 'rgba(255, 0, 0, 0.6)'); // red
+    gradient.addColorStop(1, 'rgba(139, 0, 255, 0.7)'); // violet
   } else {
     // Standard foil: softer pastel
     gradient.addColorStop(0, 'rgba(139, 0, 255, 0.4)'); // violet
@@ -159,14 +159,14 @@ function drawFoilEffect(
 
   // Add diagonal stripes overlay
   ctx.globalCompositeOperation = 'overlay';
-  ctx.globalAlpha = foilType === 'Prize' ? 0.35 : 0.3; // Prize: 0.35, Standard: 0.3
+  ctx.globalAlpha = foilType === 'Prize' ? 0.45 : 0.3; // Prize: 0.45 (stronger!), Standard: 0.3
 
   const stripeWidth = 5;
   const stripeSpacing = 10;
   const offset = (progress * 100) % stripeSpacing;
 
-  // Prize and Standard stripes
-  ctx.strokeStyle = foilType === 'Prize' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.08)';
+  // Prize: more visible stripes, Standard: subtle
+  ctx.strokeStyle = foilType === 'Prize' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)';
   ctx.lineWidth = stripeWidth;
 
   for (let i = -height; i < width + height; i += stripeSpacing) {
