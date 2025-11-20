@@ -5153,7 +5153,7 @@ export default function TCGPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {leaderboard
+                        {filteredLeaderboard
                           .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
                           .map((profile, sliceIndex) => {
                             const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
