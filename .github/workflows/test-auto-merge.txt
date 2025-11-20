@@ -1,0 +1,4 @@
+Test auto-merge workflow - 2025-11-20
+This file tests the GitHub Actions auto-merge workflow.
+When this is pushed to claude/general-session-016K6difYynuZQcr1CF5VcWx,
+it should automatically merge to main branch.
