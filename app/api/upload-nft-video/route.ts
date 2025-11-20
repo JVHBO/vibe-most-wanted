@@ -78,20 +78,15 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to retrieve CID from uploaded file');
     }
 
-    // Use Cloudflare IPFS gateway (faster and more reliable than ipfs.io)
-    // Add .mp4 extension so CardMedia component detects it as video
-    const ipfsUrl = `https://cloudflare-ipfs.com/ipfs/${cid}?filename=card.mp4`;
-
-    // Filebase dedicated gateway as fallback
-    const filebaseUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
+    // Use standard ipfs.io gateway with .mp4 extension
+    // Extension allows CardMedia component to detect it as video
+    const ipfsUrl = `https://ipfs.io/ipfs/${cid}?filename=card.mp4`;
 
     console.log(`✅ Video uploaded to IPFS via Filebase, CID: ${cid}`);
-    console.log(`   Cloudflare URL: ${ipfsUrl}`);
-    console.log(`   Filebase URL: ${filebaseUrl}`);
+    console.log(`   IPFS URL: ${ipfsUrl}`);
 
     return NextResponse.json({
       ipfsUrl,
-      filebaseUrl,
       cid,
       success: true,
     });
