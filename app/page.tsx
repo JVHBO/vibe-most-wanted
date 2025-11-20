@@ -4545,19 +4545,6 @@ export default function TCGPage() {
                   </>
                 )}
               </button>
-              {/* VibeFID button - only show in mobile/miniapp */}
-              {isInFarcaster && (
-                <button
-                  onClick={() => {
-                    if (soundEnabled) AudioManager.buttonClick();
-                    window.location.href = '/fid';
-                  }}
-                  className="flex-1 min-w-0 px-1 py-2 flex flex-col items-center justify-center gap-0.5 rounded-lg font-modern font-semibold transition-all text-[10px] leading-tight bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30"
-                >
-                  <span className="text-[9px] font-bold whitespace-nowrap">VibeFID</span>
-                  <span className="text-xl leading-none">🎴</span>
-                </button>
-              )}
             </div>
           </div>
 
@@ -4886,6 +4873,26 @@ export default function TCGPage() {
                     Poker Battle PvP
                   </button>
                 </div>
+
+                {/* VibeFID Button - Mobile only */}
+                {isInFarcaster && (
+                  <div className="mb-4">
+                    <button
+                      onClick={() => {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        window.location.href = '/fid';
+                      }}
+                      disabled={!userProfile}
+                      className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                        userProfile
+                          ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
+                          : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                      }`}
+                    >
+                      🎴 VibeFID
+                    </button>
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
