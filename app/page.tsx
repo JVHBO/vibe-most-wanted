@@ -687,10 +687,12 @@ export default function TCGPage() {
             });
             addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
           } catch (requestError: any) {
-            // Silently handle authorization errors - user needs to authorize in Farcaster settings
+            // Handle authorization errors - user needs to authorize in Farcaster settings
+            // Don't set isInFarcaster=false because we ARE in the miniapp, just not authorized
             if (requestError?.message?.includes('not been authorized')) {
-              devLog('! Farcaster wallet not authorized yet - user needs to grant permission');
-              setIsInFarcaster(false);
+              devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
+              // Keep isInFarcaster=true, just don't set address
+              setIsCheckingFarcaster(false);
               return;
             }
             throw requestError;
