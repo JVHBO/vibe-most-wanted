@@ -158,7 +158,7 @@ export default function FidCardPage() {
               {/* Share Button */}
               <a
                 href={(() => {
-                  const shareUrl = `https://www.vibemostwanted.xyz/fid/${card.fid}`;
+                  const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
                   const foilText = card.foil !== 'None' ? ` with ${card.foil} foil` : '';
                   const castText = `Just minted my VibeFID!\n\n${card.rarity}${foilText} • ${card.power} power\n\n@jvhbo`;
 
