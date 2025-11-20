@@ -66,33 +66,33 @@ export const getLeaderboard = query({
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 100 }) => {
-    // 🚨 MOBILE FIX: Ultra-simplified query to prevent freezing
-    // Reduced limit to 50 for mobile performance
-    const cappedLimit = Math.min(limit, 50);
+    // 🚨 EMERGENCY FIX: Ultra-minimal query for mobile debugging
+    // Trying to identify what's causing the freeze
 
-    const profiles = await ctx.db
-      .query("profiles")
-      .withIndex("by_total_power")
-      .order("desc")
-      .take(cappedLimit);
+    try {
+      // Step 1: Get profiles (limit to 20 for testing)
+      const profiles = await ctx.db
+        .query("profiles")
+        .withIndex("by_total_power")
+        .order("desc")
+        .take(20); // VERY small limit for testing
 
-    // ✅ FILTER: Only show players with complete defense deck (5 cards)
-    // We only check .length (a number), not the full array data
-    const validProfiles = profiles.filter(p =>
-      p.defenseDeck && p.defenseDeck.length === 5
-    );
-
-    // Return ONLY essential fields (ultra-minimal)
-    return validProfiles.map(p => ({
-      address: p.address,
-      username: p.username,
-      stats: {
-        totalPower: p.stats?.totalPower || 0,
-      },
-      // Always true since we filtered above
-      hasDefenseDeck: true,
-      userIndex: p.userIndex,
-    }));
+      // Step 2: Return RAW data (no filter, no map)
+      // Just return first 20 profiles with minimal fields
+      return profiles.slice(0, 20).map(p => ({
+        address: p.address || "unknown",
+        username: p.username || "unknown",
+        stats: {
+          totalPower: p.stats?.totalPower || 0,
+        },
+        hasDefenseDeck: true, // Fake it for now
+        userIndex: p.userIndex || 0,
+      }));
+    } catch (error) {
+      console.error("❌ getLeaderboardLite error:", error);
+      // Return empty array on error
+      return [];
+    }
   },
 });
 
