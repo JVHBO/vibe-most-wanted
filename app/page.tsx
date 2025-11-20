@@ -4550,6 +4550,23 @@ export default function TCGPage() {
 
           {/* Content wrapper with padding for fixed bars in miniapp */}
           <div className={isInFarcaster ? 'pt-[80px] pb-[75px]' : ''}>
+
+          {/* VibeFID Button - Mobile only, between header and content */}
+          {isInFarcaster && (
+            <div className="mb-4 px-2">
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  window.location.href = '/fid';
+                }}
+                className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold transition-all shadow-gold hover:scale-105 flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <span className="text-2xl">♦</span>
+                VibeFID
+              </button>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
               <p className="text-red-400 font-bold">✗ {t('error')}</p>
@@ -4873,26 +4890,6 @@ export default function TCGPage() {
                     Poker Battle PvP
                   </button>
                 </div>
-
-                {/* VibeFID Button - Mobile only */}
-                {isInFarcaster && (
-                  <div className="mb-4">
-                    <button
-                      onClick={() => {
-                        if (soundEnabled) AudioManager.buttonClick();
-                        window.location.href = '/fid';
-                      }}
-                      disabled={!userProfile}
-                      className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
-                        userProfile
-                          ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
-                          : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                      }`}
-                    >
-                      🎴 VibeFID
-                    </button>
-                  </div>
-                )}
 
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
@@ -5760,8 +5757,6 @@ export default function TCGPage() {
               </div>
             </div>
           )}
-          </div>
-          {/* End content wrapper */}
 
           {/* 🏆 Achievements View */}
           {currentView === 'achievements' && (
@@ -5786,6 +5781,9 @@ export default function TCGPage() {
 
           {/* 🏪 Shop View */}
           {currentView === 'shop' && <ShopView address={address} />}
+
+          {/* End content wrapper */}
+          </div>
 
           {/* Create Profile Modal */}
           <CreateProfileModal
