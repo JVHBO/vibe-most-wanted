@@ -465,55 +465,55 @@ export default function FidPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-2 sm:p-4 md:p-8 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2">
+        <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-2">
             VibeFID
           </h1>
-          <p className="text-vintage-ice">
+          <p className="text-sm sm:text-base text-vintage-ice">
             Mint playable cards from Farcaster profiles
           </p>
         </div>
 
         {/* Success message when in miniapp */}
         {farcasterContext.isReady && farcasterContext.isInMiniapp && farcasterContext.user && (
-          <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mb-6 text-center">
-            <p className="text-green-300">
+          <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-center">
+            <p className="text-green-300 text-xs sm:text-sm md:text-base break-words">
               ✅ Conectado como <span className="font-bold">@{farcasterContext.user.username || `FID ${farcasterContext.user.fid}`}</span>
               {" "}(FID: {farcasterContext.user.fid})
             </p>
-            <p className="text-green-400 text-sm mt-1">
+            <p className="text-green-400 text-xs sm:text-sm mt-1 break-words">
               Seu FID foi pré-preenchido. Você pode mintar seu próprio card ou de outros usuários.
             </p>
           </div>
         )}
 
         {/* Input Section */}
-        <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
-          <label className="block text-vintage-gold mb-2">
+        <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
+          <label className="block text-vintage-gold mb-2 text-sm sm:text-base">
             Enter Farcaster FID
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="number"
               value={fidInput}
               onChange={(e) => setFidInput(e.target.value)}
               placeholder="e.g., 214746"
-              className="flex-1 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold"
+              className="flex-1 px-3 sm:px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm sm:text-base w-full"
             />
             <button
               onClick={handleGenerateCard}
               disabled={loading}
-              className="px-6 py-2 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50"
+              className="px-4 sm:px-6 py-2 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-sm sm:text-base whitespace-nowrap w-full sm:w-auto"
             >
               {loading ? "Generating..." : "Generate Card"}
             </button>
           </div>
 
           {error && (
-            <div className="mt-4 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200">
+            <div className="mt-4 p-3 sm:p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm sm:text-base break-words">
               {error}
             </div>
           )}
@@ -533,8 +533,8 @@ export default function FidPage() {
 
         {/* My Cards */}
         {myCards && myCards.length > 0 && (
-          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6">
-            <h2 className="text-2xl font-bold text-vintage-gold mb-4">
+          <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-3 sm:mb-4">
               My Farcaster Cards ({myCards.length})
             </h2>
 
