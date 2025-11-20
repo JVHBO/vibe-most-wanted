@@ -213,3 +213,48 @@ export function usePowerDistribution(nfts: NFT[]): Record<number, number> {
     return distribution;
   }, [nfts]);
 }
+
+/**
+ * Calculate power by collection (memoized)
+ * Returns object with power totals for each collection
+ *
+ * @example
+ * const powers = usePowerByCollection(nfts);
+ * // { vibePower: 500, vbrsPower: 300, vibefidPower: 200, afclPower: 100 }
+ */
+export function usePowerByCollection(nfts: NFT[]): {
+  vibePower: number;
+  vbrsPower: number;
+  vibefidPower: number;
+  afclPower: number;
+} {
+  return useMemo(() => {
+    const powers = {
+      vibePower: 0,
+      vbrsPower: 0,
+      vibefidPower: 0,
+      afclPower: 0,
+    };
+
+    nfts.forEach((nft) => {
+      const power = nft.power || 0;
+      const collectionId = nft.collectionId?.toLowerCase() || 'vibe';
+
+      // Map collection ID to power field
+      if (collectionId === 'vibe' || collectionId === 'custom') {
+        powers.vibePower += power;
+      } else if (collectionId === 'gmvbrs') {
+        powers.vbrsPower += power;
+      } else if (collectionId === 'vibefid') {
+        powers.vibefidPower += power;
+      } else if (collectionId === 'americanfootball') {
+        powers.afclPower += power;
+      } else {
+        // Default to vibe for unknown collections
+        powers.vibePower += power;
+      }
+    });
+
+    return powers;
+  }, [nfts]);
+}
