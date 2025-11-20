@@ -39,8 +39,8 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         loop
         muted
         playsInline
-        autoPlay={loading === "eager"} // Only autoplay for eager (battle cards)
-        preload={loading === "lazy" ? "none" : "metadata"} // Lazy = don't preload
+        autoPlay // Always autoplay (muted videos are safe)
+        preload="auto" // Always preload to ensure IPFS videos load
         onClick={onClick}
         style={{ objectFit: 'cover' }}
         onError={(e) => {
