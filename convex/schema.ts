@@ -9,6 +9,9 @@ import { v } from "convex/values";
  * - PvP card game mechanics
  * - Future Web3 betting (NFT/USDC)
  * - Turn-based gameplay
+ * - Collection-specific power tracking (VBMS, VBRS, VibeFID, AFCL)
+ *
+ * Last updated: 2025-11-20 - Added collection power fields
  */
 
 export default defineSchema({
