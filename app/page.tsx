@@ -669,9 +669,17 @@ export default function TCGPage() {
   // Auto-connect Farcaster wallet in miniapp context (Nov 14 simple version)
   useEffect(() => {
     const initFarcasterWallet = async () => {
+      console.log('[Farcaster] 🔍 Initializing wallet connection...');
       try {
+        console.log('[Farcaster] SDK check:', {
+          hasSdk: !!sdk,
+          hasWallet: !!sdk?.wallet,
+          hasEthProvider: !!sdk?.wallet?.ethProvider,
+        });
+
         // Check if we're in Farcaster context - use OLD API
         if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
+          console.log('[Farcaster] ✅ Farcaster SDK detected, setting isInFarcaster=true');
           setIsInFarcaster(true);
           setIsCheckingFarcaster(true);
 
@@ -683,14 +691,18 @@ export default function TCGPage() {
           // Wrap in try-catch to prevent unhandled promise rejections
           let addresses: string[] = [];
           try {
+            console.log('[Farcaster] 📡 Requesting eth_requestAccounts...');
             const accountsPromise = sdk.wallet.ethProvider.request({
               method: "eth_requestAccounts"
             });
             addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+            console.log('[Farcaster] ✅ Got addresses:', addresses);
           } catch (requestError: any) {
+            console.error('[Farcaster] ❌ Request error:', requestError);
             // Handle authorization errors - user needs to authorize in Farcaster settings
             // Don't set isInFarcaster=false because we ARE in the miniapp, just not authorized
             if (requestError?.message?.includes('not been authorized')) {
+              console.warn('[Farcaster] ⚠️ Wallet not authorized - user needs to enable in Farcaster settings');
               devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
               // Keep isInFarcaster=true, just don't set address
               setIsCheckingFarcaster(false);
@@ -700,6 +712,7 @@ export default function TCGPage() {
           }
 
           if (addresses && addresses[0]) {
+            console.log('[Farcaster] ✅ Setting address:', addresses[0]);
             setFarcasterAddress(addresses[0]);
             localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
             devLog('✓ Auto-connected Farcaster wallet:', addresses[0]);
