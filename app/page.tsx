@@ -779,11 +779,22 @@ export default function TCGPage() {
             setTimeout(() => reject(new Error('Farcaster wallet connection timeout')), 5000)
           );
 
-          const accountsPromise = sdk.wallet.ethProvider.request({
-            method: "eth_requestAccounts"
-          });
-
-          const addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+          // Wrap in try-catch to prevent unhandled promise rejections
+          let addresses: string[] = [];
+          try {
+            const accountsPromise = sdk.wallet.ethProvider.request({
+              method: "eth_requestAccounts"
+            });
+            addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+          } catch (requestError: any) {
+            // Silently handle authorization errors - user needs to authorize in Farcaster settings
+            if (requestError?.message?.includes('not been authorized')) {
+              devLog('! Farcaster wallet not authorized yet - user needs to grant permission');
+              setIsInFarcaster(false);
+              return;
+            }
+            throw requestError;
+          }
 
           if (addresses && addresses[0]) {
             setFarcasterAddress(addresses[0]);
@@ -4302,11 +4313,19 @@ export default function TCGPage() {
                             setTimeout(() => reject(new Error('Connection timeout')), 5000)
                           );
 
-                          const accountsPromise = sdk.wallet.ethProvider.request({
-                            method: "eth_requestAccounts"
-                          });
-
-                          const addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+                          let addresses: string[] = [];
+                          try {
+                            const accountsPromise = sdk.wallet.ethProvider.request({
+                              method: "eth_requestAccounts"
+                            });
+                            addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
+                          } catch (requestError: any) {
+                            // Handle authorization errors gracefully
+                            if (requestError?.message?.includes('not been authorized')) {
+                              throw new Error('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
+                            }
+                            throw requestError;
+                          }
 
                           if (addresses && addresses[0]) {
                             setFarcasterAddress(addresses[0]);
