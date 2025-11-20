@@ -19,6 +19,7 @@ import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import FidGenerationModal from "@/components/FidGenerationModal";
 import { useRouter } from "next/navigation";
+import { CardMedia } from "@/components/CardMedia";
 
 interface GeneratedTraits {
   rarity: string;
@@ -552,22 +553,11 @@ export default function FidPage() {
                   </div>
 
                   {/* Card Image/Video */}
-                  {card.imageUrl?.endsWith('.mp4') || card.imageUrl?.endsWith('.webm') ? (
-                    <video
-                      src={card.imageUrl}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="w-full aspect-square object-cover rounded-lg mb-2"
-                    />
-                  ) : (
-                    <img
-                      src={card.imageUrl || card.pfpUrl}
-                      alt={card.username}
-                      className="w-full aspect-square object-cover rounded-lg mb-2"
-                    />
-                  )}
+                  <CardMedia
+                    src={card.imageUrl || card.pfpUrl}
+                    alt={card.username}
+                    className="w-full aspect-square object-cover rounded-lg mb-2"
+                  />
                   <p className="text-vintage-gold font-bold">{card.displayName}</p>
                   <p className="text-vintage-ice/70 text-sm">@{card.username}</p>
                   <div className="mt-2 flex items-center justify-between">
