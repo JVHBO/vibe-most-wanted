@@ -84,6 +84,15 @@ export const getLeaderboardLite = query({
         username: p.username || "unknown",
         stats: {
           totalPower: p.stats?.totalPower || 0,
+          vibePower: p.stats?.vibePower || 0,
+          vbrsPower: p.stats?.vbrsPower || 0,
+          vibefidPower: p.stats?.vibefidPower || 0,
+          afclPower: p.stats?.afclPower || 0,
+          pveWins: p.stats?.pveWins || 0,
+          pveLosses: p.stats?.pveLosses || 0,
+          pvpWins: p.stats?.pvpWins || 0,
+          pvpLosses: p.stats?.pvpLosses || 0,
+          openedCards: p.stats?.openedCards || 0,
         },
         hasDefenseDeck: true, // Fake it for now
         userIndex: p.userIndex || 0,
