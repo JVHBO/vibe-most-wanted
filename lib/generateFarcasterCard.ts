@@ -121,6 +121,13 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
     ctx.font = '18px monospace';
     ctx.fillText(`neynar score: ${params.neynarScore.toFixed(2)}`, canvas.width / 2, 70);
 
+    // BOUNTY REWARD text (above PFP, close to it - simple black text)
+    const pfpY = 200; // PFP starts at y=200
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 18px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`BOUNTY REWARD: $${params.bounty.toLocaleString()}`, canvas.width / 2, pfpY - 20); // 20px above PFP
+
     // Load and draw PFP
     const pfpImg = new Image();
     pfpImg.crossOrigin = 'anonymous';
@@ -163,20 +170,14 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       ctx.textAlign = 'center';
       ctx.fillText(params.displayName || params.username, canvas.width / 2, pfpY + pfpSize + 40);
 
-      // BOUNTY REWARD text below username (simple black text)
-      ctx.fillStyle = '#000';
-      ctx.font = 'bold 18px serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`BOUNTY REWARD: $${params.bounty.toLocaleString()}`, canvas.width / 2, pfpY + pfpSize + 68);
-
-      // Meme crime text below bounty
+      // Meme crime text below username
       ctx.font = '14px serif';
       const crimeText = generateMemeCrime();
       // Word wrap for long text
       const maxWidth = 450;
       const words = crimeText.split(' ');
       let line = '';
-      let y = pfpY + pfpSize + 95; // Moved down to give space for bounty
+      let y = pfpY + pfpSize + 65;
 
       for (let i = 0; i < words.length; i++) {
         const testLine = line + words[i] + ' ';
