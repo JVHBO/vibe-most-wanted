@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { ConvexProfileService, type UserProfile, type MatchHistory } from '@/lib/convex-profile';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
