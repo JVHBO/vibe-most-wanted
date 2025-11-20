@@ -15,8 +15,7 @@ import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { generateCriminalBackstory } from "@/lib/generateCriminalBackstory";
-import type { CriminalBackstory } from "@/lib/generateCriminalBackstory";
+import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import FidGenerationModal from "@/components/FidGenerationModal";
 import { useRouter } from "next/navigation";
@@ -49,7 +48,7 @@ export default function FidPage() {
   const [userData, setUserData] = useState<NeynarUser | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
-  const [criminalBackstory, setCriminalBackstory] = useState<CriminalBackstory | null>(null);
+  const [backstoryData, setBackstoryData] = useState<CriminalBackstoryData | null>(null);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -164,8 +163,8 @@ export default function FidPage() {
 
     setPreviewImage(imageDataUrl);
 
-    // Generate criminal backstory
-    const backstory = generateCriminalBackstory({
+    // Store backstory data (will be generated in modal based on language)
+    setBackstoryData({
       username: user.username,
       displayName: user.display_name,
       bio: user.profile?.bio?.text || "",
@@ -175,9 +174,7 @@ export default function FidPage() {
       power,
       bounty: power * 10,
       rarity,
-    }, lang);
-
-    setCriminalBackstory(backstory);
+    });
   };
 
   // Contract interaction
@@ -231,7 +228,7 @@ export default function FidPage() {
           setUserData(null);
           setPreviewImage(null);
           setGeneratedTraits(null);
-          setCriminalBackstory(null);
+          setBackstoryData(null);
           setFidInput("");
           setPendingMintData(null);
           setShowModal(false);
@@ -526,7 +523,7 @@ export default function FidPage() {
         <FidGenerationModal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
-          backstory={criminalBackstory}
+          backstoryData={backstoryData}
           displayName={userData?.display_name || ""}
           previewImage={previewImage}
           generatedTraits={generatedTraits}
