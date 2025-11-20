@@ -221,25 +221,40 @@ export async function generateFarcasterCardImage(params: CardGenerationParams): 
       ctx.font = 'bold 16px serif';
       ctx.textAlign = 'left';
 
-      if (params.createdAt) {
-        // Format date as "Month Year" (e.g., "Jan 2023")
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const month = monthNames[params.createdAt.getMonth()];
-        const year = params.createdAt.getFullYear();
-        ctx.fillText(`WANTED SINCE:`, 20, canvas.height - 50);
-        ctx.font = 'bold 16px serif'; // Same font for consistency
-        ctx.fillText(`${month} ${year}`, 20, canvas.height - 28);
-      } else {
-        // Fallback: Use FID as indicator
-        let era = 'PIONEER'; // Default for very low FIDs
-        if (params.fid > 20000) era = 'EARLY';
-        if (params.fid > 100000) era = 'MEMBER';
-        if (params.fid > 500000) era = 'NEWCOMER';
+      // Generate vintage date from FID
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-        ctx.fillText(`WANTED SINCE:`, 20, canvas.height - 50);
-        ctx.font = 'bold 16px serif'; // Same font for consistency
-        ctx.fillText(`FID ERA: ${era}`, 20, canvas.height - 28);
+      let year: number;
+      let monthProgress: number; // 0-1 representing position within the range
+
+      if (params.fid <= 1000) {
+        // FID 1-1,000: 1920-1930 (10 years)
+        monthProgress = (params.fid - 1) / 999;
+        year = 1920 + Math.floor(monthProgress * 10);
+      } else if (params.fid <= 10000) {
+        // FID 1,001-10,000: 1930-1950 (20 years)
+        monthProgress = (params.fid - 1000) / 9000;
+        year = 1930 + Math.floor(monthProgress * 20);
+      } else if (params.fid <= 100000) {
+        // FID 10,001-100,000: 1950-1980 (30 years)
+        monthProgress = (params.fid - 10000) / 90000;
+        year = 1950 + Math.floor(monthProgress * 30);
+      } else if (params.fid <= 500000) {
+        // FID 100,001-500,000: 1980-2000 (20 years)
+        monthProgress = (params.fid - 100000) / 400000;
+        year = 1980 + Math.floor(monthProgress * 20);
+      } else {
+        // FID 500,001+: 2000-2020 (20 years)
+        monthProgress = Math.min((params.fid - 500000) / 500000, 1);
+        year = 2000 + Math.floor(monthProgress * 20);
       }
+
+      // Use FID to generate consistent month (modulo 12)
+      const month = monthNames[params.fid % 12];
+
+      ctx.fillText(`WANTED SINCE:`, 20, canvas.height - 50);
+      ctx.font = 'bold 16px serif'; // Same font for consistency
+      ctx.fillText(`${month} ${year}`, 20, canvas.height - 28);
 
       // Convert to data URL
       const dataUrl = canvas.toDataURL('image/png');
