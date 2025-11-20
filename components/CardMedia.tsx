@@ -30,13 +30,6 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
   const shouldTryVideo = hasVideoExtension || (isIpfs && !useImage);
 
   if (shouldTryVideo) {
-    const shouldAutoplay = loading === "eager";
-
-    // For eager (battle cards): full auto preload + autoplay
-    // For lazy (gallery): use "metadata" to show first frame, browser will load when needed
-    // This shows the video thumbnail without loading the full video
-    const preloadMode = shouldAutoplay ? "auto" : "metadata";
-
     return (
       <video
         key={src}
@@ -45,8 +38,8 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         loop
         muted
         playsInline
-        autoPlay={shouldAutoplay}
-        preload={preloadMode}
+        autoPlay={loading === "eager"} // Only autoplay for eager (battle cards)
+        preload={loading === "lazy" ? "none" : "metadata"} // Lazy = don't preload
         onClick={onClick}
         style={{ objectFit: 'cover', pointerEvents: 'none' }}
         onError={(e) => {
