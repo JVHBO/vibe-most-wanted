@@ -8,6 +8,7 @@ import { CardMedia } from './CardMedia';
 import { generateCriminalBackstory } from '@/lib/generateCriminalBackstory';
 import type { CriminalBackstoryData } from '@/lib/generateCriminalBackstory';
 import { fidTranslations } from '@/lib/fidTranslations';
+import { AudioManager } from '@/lib/audio-manager';
 
 interface FidGenerationModalProps {
   isOpen: boolean;
@@ -49,7 +50,10 @@ export default function FidGenerationModal({
       <div className="bg-vintage-charcoal rounded-none sm:rounded-xl border-2 border-vintage-gold w-screen h-screen sm:w-full sm:h-auto sm:max-w-lg md:max-w-2xl lg:max-w-4xl relative sm:max-h-[95vh] overflow-y-auto overflow-x-hidden box-border">
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            AudioManager.buttonClick();
+            onClose();
+          }}
           className="sticky top-2 right-2 float-right text-vintage-ice hover:text-vintage-gold text-xl sm:text-2xl md:text-3xl leading-none z-10 bg-vintage-black/70 rounded-full w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center"
           aria-label="Close"
         >
@@ -60,7 +64,10 @@ export default function FidGenerationModal({
         <div className="sticky top-2 left-2 float-left z-10">
           <select
             value={lang}
-            onChange={(e) => setLang(e.target.value as any)}
+            onChange={(e) => {
+              AudioManager.toggleOn();
+              setLang(e.target.value as any);
+            }}
             className="px-2 py-1 sm:px-3 sm:py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-md sm:rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-xs sm:text-sm"
           >
             <option value="en">🇺🇸</option>
@@ -143,7 +150,10 @@ export default function FidGenerationModal({
 
               {/* Next Button */}
               <button
-                onClick={() => setCurrentSlide(1)}
+                onClick={() => {
+                  AudioManager.buttonClick();
+                  setCurrentSlide(1);
+                }}
                 className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors text-sm sm:text-base"
               >
                 {t.viewCard}
@@ -214,13 +224,19 @@ export default function FidGenerationModal({
               {/* Action Buttons */}
               <div className="flex gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden box-border">
                 <button
-                  onClick={() => setCurrentSlide(0)}
+                  onClick={() => {
+                    AudioManager.buttonClick();
+                    setCurrentSlide(0);
+                  }}
                   className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors text-xs sm:text-sm md:text-base"
                 >
                   {t.back}
                 </button>
                 <button
-                  onClick={onMint}
+                  onClick={() => {
+                    AudioManager.buttonClick();
+                    onMint();
+                  }}
                   disabled={isMinting}
                   className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-xs sm:text-sm md:text-base"
                 >

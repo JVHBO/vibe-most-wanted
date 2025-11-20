@@ -20,6 +20,7 @@ import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import FidGenerationModal from "@/components/FidGenerationModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AudioManager } from "@/lib/audio-manager";
 
 interface GeneratedTraits {
   rarity: string;
@@ -109,8 +110,16 @@ export default function FidPage() {
     }
   }, [farcasterContext.isReady, farcasterContext.user]);
 
+  // Start background music when page loads
+  useEffect(() => {
+    AudioManager.startBackgroundMusic();
+  }, []);
+
   // Combined fetch and generate function
   const handleGenerateCard = async () => {
+    // Play button click sound
+    AudioManager.buttonClick();
+
     // Check if user is connected
     if (!farcasterContext.user) {
       // Redirect to main page to connect
@@ -257,6 +266,9 @@ export default function FidPage() {
     if (isConfirmed && pendingMintData) {
       const saveToConvex = async () => {
         try {
+          // Play victory sound on successful mint
+          AudioManager.win();
+
           setError("Saving card data...");
 
           // Validate all required fields
