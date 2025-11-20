@@ -2893,7 +2893,15 @@ export default function TCGPage() {
   // Calculate power for a specific collection (smart approach: use Alchemy API)
   const calculateCollectionPower = useCallback(async (address: string, collectionId: CollectionId): Promise<number> => {
     // TEMPORARILY DISABLED: Alchemy API calls causing infinite loading
-    // Return 0 for now to prevent site from hanging
+    // Update cache with 0 to prevent infinite calculation loop
+    setCollectionPowerCache(prev => {
+      const newCache = new Map(prev);
+      const addressCache = newCache.get(address) || new Map();
+      addressCache.set(collectionId, 0);
+      newCache.set(address, addressCache);
+      return newCache;
+    });
+
     return 0;
 
     /* DISABLED CODE - Uncomment when Alchemy API is fixed
@@ -2962,18 +2970,64 @@ export default function TCGPage() {
 
   // Filter and re-rank leaderboard by collection
   const filteredLeaderboard = useMemo(() => {
-    // SIMPLIFIED: Collection power calculation is disabled, so just filter by collection
-    // without calculating collection-specific power (prevents infinite loop/freezing)
+    // If we're already calculating, return current leaderboard
+    if (isCalculatingCollectionPower) return leaderboard;
 
-    // For now, when a collection filter is active, just show the full leaderboard
-    // sorted by total power. This is a reasonable fallback until collection power
-    // calculation is re-enabled.
+    // Show players ranked by their collection-specific power
+    // This uses cached data when available, or triggers async calculation
+    const leaderboardWithCollectionPower = leaderboard.map(player => {
+      const cachedPower = collectionPowerCache.get(player.address)?.get(leaderboardCollection);
+      return {
+        ...player,
+        collectionPower: cachedPower ?? 0, // Default to 0 if not calculated yet (will calculate async)
+        needsCalculation: cachedPower === undefined
+      };
+    });
+    // NOTE: Collection power calculation is temporarily disabled
+    // All players will have 0 collection power until Alchemy API is fixed
+    // So we show all players instead of filtering by collectionPower > 0
+    // This prevents empty leaderboards while calculation is disabled
 
-    // In the future, we could filter by checking if user owns any NFTs from that collection,
-    // but that would also require API calls. For now, showing everyone is acceptable.
+    // Trigger async calculation for players that need it (but don't block render)
+    const playersNeedingCalculation = leaderboardWithCollectionPower
+      .filter(p => p.needsCalculation)
+      .slice(0, 20); // Only calculate top 20 to avoid overwhelming API
 
-    return leaderboard;
-  }, [leaderboard]);
+    if (playersNeedingCalculation.length > 0 && !isCalculatingCollectionPower) {
+      setIsCalculatingCollectionPower(true);
+
+      // Calculate sequentially with delay to avoid rate limiting (not in parallel)
+      (async () => {
+        for (const player of playersNeedingCalculation) {
+          try {
+            await calculateCollectionPower(player.address, leaderboardCollection);
+            // Add 200ms delay between requests to avoid overwhelming API
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (err) {
+            devError(`[Leaderboard] Error calculating power for ${player.address}:`, err);
+          }
+        }
+        setIsCalculatingCollectionPower(false);
+      })();
+    }
+
+    // Sort by collection power (desc), but use totalPower as fallback when collection power is 0
+    return leaderboardWithCollectionPower
+      .sort((a, b) => {
+        // If collection power is the same (both 0), fallback to totalPower
+        if (b.collectionPower === a.collectionPower) {
+          return (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0);
+        }
+        return b.collectionPower - a.collectionPower;
+      })
+      .map(({ needsCalculation, collectionPower, ...player }) => ({
+        ...player,
+        stats: {
+          ...player.stats,
+          totalPower: collectionPower || player.stats?.totalPower || 0 // Use collection power if available, else use total
+        }
+      }));
+  }, [leaderboard, leaderboardCollection, collectionPowerCache, isCalculatingCollectionPower, calculateCollectionPower]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
