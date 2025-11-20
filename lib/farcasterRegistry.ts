@@ -97,11 +97,12 @@ async function fetchFromAirstack(fid: number, apiKey: string): Promise<Date | nu
 
 /**
  * Fetch creation date from Neynar API
+ * Using single user endpoint: GET /v2/farcaster/user?id={FID}
  */
 async function fetchFromNeynar(fid: number, apiKey: string): Promise<Date | null> {
   try {
     const response = await fetch(
-      `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
+      `https://api.neynar.com/v2/farcaster/user?id=${fid}`,
       {
         headers: {
           'accept': 'application/json',
@@ -117,14 +118,19 @@ async function fetchFromNeynar(fid: number, apiKey: string): Promise<Date | null
 
     const data = await response.json();
 
-    if (data.users && data.users[0]) {
-      const user = data.users[0];
+    // Single user endpoint returns { user: {...} } not { users: [...] }
+    if (data.user) {
+      const user = data.user;
 
+      // Try various possible timestamp fields
       if (user.registered_at) {
         return new Date(user.registered_at);
       }
       if (user.created_at) {
         return new Date(user.created_at);
+      }
+      if (user.timestamp) {
+        return new Date(user.timestamp);
       }
     }
 

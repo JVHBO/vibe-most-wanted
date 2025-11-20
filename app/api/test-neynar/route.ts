@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(
-      `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
+      `https://api.neynar.com/v2/farcaster/user?id=${fid}`,
       {
         headers: {
           'accept': 'application/json',
@@ -45,8 +45,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       fid: parseInt(fid),
-      userObject: data.users?.[0] || null,
-      allFields: data.users?.[0] ? Object.keys(data.users[0]) : [],
+      userObject: data.user || null,
+      allFields: data.user ? Object.keys(data.user) : [],
+      // Specifically check for timestamp fields
+      dateFields: {
+        registered_at: data.user?.registered_at || null,
+        created_at: data.user?.created_at || null,
+        timestamp: data.user?.timestamp || null,
+      },
     }, {
       headers: {
         'Content-Type': 'application/json',
