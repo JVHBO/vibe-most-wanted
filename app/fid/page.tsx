@@ -19,8 +19,6 @@ import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import FidGenerationModal from "@/components/FidGenerationModal";
 import { useRouter } from "next/navigation";
-import { CardMedia } from "@/components/CardMedia";
-import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 
 interface GeneratedTraits {
   rarity: string;
@@ -555,11 +553,15 @@ export default function FidPage() {
                     </span>
                   </div>
 
-                  {/* Card Image/Video */}
-                  <CardMedia
-                    src={convertIpfsUrl(card.imageUrl) || card.pfpUrl}
+                  {/* Card Image (PNG only, no foil effects) */}
+                  <img
+                    src={card.pfpUrl}
                     alt={card.username}
                     className="w-full aspect-square object-cover rounded-lg mb-2"
+                    onError={(e) => {
+                      // Fallback to a default image if pfpUrl fails
+                      (e.target as HTMLImageElement).src = '/default-avatar.png';
+                    }}
                   />
                   <p className="text-vintage-gold font-bold">{card.displayName}</p>
                   <p className="text-vintage-ice/70 text-sm">@{card.username}</p>
