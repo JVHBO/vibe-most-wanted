@@ -1,15 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { getUserByFid, calculateRarityFromScore, getSuitFromFid, getSuitSymbol, getSuitColor } from "@/lib/neynar";
+import { useAccount, useWriteContract } from "wagmi";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { getUserByFid, calculateRarityFromScore, getSuitFromFid, getSuitSymbol, getSuitColor, generateRankFromRarity } from "@/lib/neynar";
 import { getFidTraits } from "@/lib/fidTraits";
+import { getFarcasterAccountCreationDate } from "@/lib/farcasterRegistry";
 import { generateFarcasterCardImage } from "@/lib/generateFarcasterCard";
 import { generateCardVideo } from "@/lib/generateCardVideo";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
+import { VIBEFID_ABI, VIBEFID_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/contracts/VibeFIDABI";
+import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { CardMedia } from "@/components/CardMedia";
 
 export default function FidTestPage() {
+  const { address } = useAccount();
+  const { writeContract } = useWriteContract();
+  const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
+
   // Password protection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
@@ -17,10 +27,12 @@ export default function FidTestPage() {
 
   const [fid, setFid] = useState("");
   const [loading, setLoading] = useState(false);
+  const [minting, setMinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cardPng, setCardPng] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [traits, setTraits] = useState<any>(null);
+  const [userData, setUserData] = useState<any>(null);
 
   // Password check
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -43,6 +55,7 @@ export default function FidTestPage() {
     setCardPng(null);
     setVideoUrl(null);
     setTraits(null);
+    setUserData(null);
 
     try {
       // Fetch user
@@ -52,6 +65,8 @@ export default function FidTestPage() {
         return;
       }
 
+      setUserData(user);
+
       const score = user.experimental?.neynar_user_score || 0;
       const rarity = calculateRarityFromScore(score);
 
@@ -59,6 +74,7 @@ export default function FidTestPage() {
       const suit = getSuitFromFid(Number(fid));
       const suitSymbol = getSuitSymbol(suit);
       const color = getSuitColor(suit);
+      const rank = generateRankFromRarity(rarity);
       const fidTraits = getFidTraits(Number(fid));
       const foil = fidTraits.foil;
       const wear = fidTraits.wear;
@@ -72,7 +88,7 @@ export default function FidTestPage() {
       const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
       const power = Math.round(basePower * wearMult * foilMult);
 
-      setTraits({ rarity, foil, wear, power, suit: suit + ' ' + suitSymbol });
+      setTraits({ rarity, foil, wear, power, suit, suitSymbol, color, rank });
 
       // Generate PNG
       const cardImageDataUrl = await generateFarcasterCardImage({
@@ -84,7 +100,7 @@ export default function FidTestPage() {
         neynarScore: score,
         suit,
         suitSymbol,
-        rank: 'A',
+        rank,
         color,
         rarity,
         bounty: power * 10,
@@ -107,6 +123,190 @@ export default function FidTestPage() {
       setError(err.message || "Failed to generate");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMint = async () => {
+    if (!address || !userData || !traits || !cardPng) {
+      setError("Missing data for minting");
+      return;
+    }
+
+    setMinting(true);
+    setError(null);
+
+    try {
+      const { rarity, foil, wear, power, suit, suitSymbol, color, rank } = traits;
+
+      // Upload PNG to IPFS
+      setError("Uploading card image...");
+      const cardPngBlob = await fetch(cardPng).then(r => r.blob());
+      const pngFormData = new FormData();
+      pngFormData.append('image', cardPngBlob, `card-${userData.fid}.png`);
+
+      const pngUploadResponse = await fetch('/api/upload-nft-image', {
+        method: 'POST',
+        body: pngFormData,
+      });
+
+      if (!pngUploadResponse.ok) throw new Error('Failed to upload PNG');
+      const { ipfsUrl: cardImageIpfsUrl } = await pngUploadResponse.json();
+
+      // Generate share image
+      setError("Generating share image...");
+      const { generateShareImage } = await import('@/lib/generateShareImage');
+      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
+
+      const shareImageDataUrl = await generateShareImage({
+        cardImageDataUrl: cardPng,
+        backstoryData: {
+          username: userData.username,
+          displayName: userData.display_name,
+          bio: userData.profile?.bio?.text || "",
+          fid: userData.fid,
+          followerCount: userData.follower_count,
+          createdAt,
+          power,
+          bounty: power * 10,
+          rarity,
+        },
+        displayName: userData.display_name,
+        lang: 'en',
+      });
+
+      // Upload share image
+      setError("Uploading share image...");
+      const shareImageBlob = await fetch(shareImageDataUrl).then(r => r.blob());
+      const shareFormData = new FormData();
+      shareFormData.append('image', shareImageBlob, `share-${userData.fid}.png`);
+
+      const shareUploadResponse = await fetch('/api/upload-nft-image', {
+        method: 'POST',
+        body: shareFormData,
+      });
+
+      if (!shareUploadResponse.ok) throw new Error('Failed to upload share image');
+      const { ipfsUrl: shareImageIpfsUrl } = await shareUploadResponse.json();
+
+      // Generate and upload video
+      setError("Generating video...");
+      const videoBlob = await generateCardVideo({
+        cardImageDataUrl: cardPng,
+        foilType: foil as 'None' | 'Standard' | 'Prize',
+        duration: 8,
+        fps: 30,
+      });
+
+      const formData = new FormData();
+      formData.append('video', videoBlob, `card-${userData.fid}.webm`);
+
+      setError("Uploading video...");
+      const uploadResponse = await fetch('/api/upload-nft-video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) throw new Error('Failed to upload video');
+      const { ipfsUrl } = await uploadResponse.json();
+
+      // Get metadata URL
+      const metadataUrl = `https://www.vibemostwanted.xyz/api/metadata/fid/${userData.fid}`;
+
+      // Get signature
+      setError("Getting signature...");
+      const signatureResponse = await fetch('/api/farcaster/mint-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          fid: userData.fid,
+          ipfsURI: metadataUrl,
+        }),
+      });
+
+      if (!signatureResponse.ok) throw new Error('Failed to get signature');
+      const { signature } = await signatureResponse.json();
+
+      // Mint NFT
+      setError("Minting NFT (confirm in wallet)...");
+      await writeContract({
+        address: VIBEFID_CONTRACT_ADDRESS,
+        abi: VIBEFID_ABI,
+        functionName: 'presignedMint',
+        args: [BigInt(userData.fid), metadataUrl, signature as `0x${string}`],
+        value: parseEther(MINT_PRICE),
+      });
+
+      // Save to Convex
+      setError("Saving to database...");
+      await mintCard({
+        fid: userData.fid,
+        username: userData.username,
+        displayName: userData.display_name,
+        pfpUrl: userData.pfp_url,
+        bio: userData.profile?.bio?.text || "",
+        neynarScore: userData.experimental?.neynar_user_score || 0,
+        followerCount: userData.follower_count,
+        followingCount: userData.following_count,
+        powerBadge: userData.power_badge,
+        address,
+        rarity,
+        foil,
+        wear,
+        power,
+        suit,
+        rank,
+        suitSymbol,
+        color,
+        imageUrl: ipfsUrl,
+        cardImageUrl: cardImageIpfsUrl,
+        shareImageUrl: shareImageIpfsUrl,
+        contractAddress: VIBEFID_CONTRACT_ADDRESS.toLowerCase(),
+      });
+
+      setError("✅ Minted successfully!");
+
+    } catch (err: any) {
+      setError(err.message || "Failed to mint");
+    } finally {
+      setMinting(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!cardPng || !userData || !traits) return;
+
+    try {
+      setError("Generating share image...");
+      const { generateShareImage } = await import('@/lib/generateShareImage');
+      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
+
+      const shareImageDataUrl = await generateShareImage({
+        cardImageDataUrl: cardPng,
+        backstoryData: {
+          username: userData.username,
+          displayName: userData.display_name,
+          bio: userData.profile?.bio?.text || "",
+          fid: userData.fid,
+          followerCount: userData.follower_count,
+          createdAt,
+          power: traits.power,
+          bounty: traits.power * 10,
+          rarity: traits.rarity,
+        },
+        displayName: userData.display_name,
+        lang: 'en',
+      });
+
+      // Download share image
+      const link = document.createElement('a');
+      link.href = shareImageDataUrl;
+      link.download = `vibefid-${userData.fid}.png`;
+      link.click();
+
+      setError("✅ Share image downloaded!");
+    } catch (err: any) {
+      setError(err.message || "Failed to generate share image");
     }
   };
 
@@ -158,7 +358,7 @@ export default function FidTestPage() {
         </h1>
 
         <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-4">
             <input
               type="number"
               value={fid}
@@ -175,8 +375,27 @@ export default function FidTestPage() {
             </button>
           </div>
 
+          {traits && (
+            <div className="flex gap-4">
+              <button
+                onClick={handleShare}
+                disabled={!cardPng}
+                className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                📤 Download Share Image
+              </button>
+              <button
+                onClick={handleMint}
+                disabled={minting || !address}
+                className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {minting ? "Minting..." : address ? "🎴 Mint Card (0.0003 ETH)" : "Connect Wallet"}
+              </button>
+            </div>
+          )}
+
           {error && (
-            <div className="mt-4 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200">
+            <div className={`mt-4 p-4 rounded-lg ${error.includes('✅') ? 'bg-green-900/50 border-green-500 text-green-200' : 'bg-red-900/50 border-red-500 text-red-200'} border`}>
               {error}
             </div>
           )}
@@ -185,7 +404,7 @@ export default function FidTestPage() {
         {traits && (
           <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
             <h2 className="text-2xl font-bold text-vintage-gold mb-4">Traits (DETERMINISTIC based on FID)</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <span className="text-vintage-burnt-gold">Rarity:</span>{" "}
                 <span className="text-vintage-ice">{traits.rarity}</span>
@@ -206,9 +425,9 @@ export default function FidTestPage() {
                 <span className="text-vintage-burnt-gold">Power:</span>{" "}
                 <span className="text-vintage-gold font-bold">{traits.power}</span>
               </div>
-              <div className="col-span-2">
-                <span className="text-vintage-burnt-gold">Suit:</span>{" "}
-                <span className="text-vintage-ice">{traits.suit}</span>
+              <div>
+                <span className="text-vintage-burnt-gold">Card:</span>{" "}
+                <span className={traits.color === 'red' ? 'text-red-500' : 'text-white'}>{traits.rank}{traits.suitSymbol}</span>
               </div>
             </div>
           </div>
