@@ -245,7 +245,7 @@ export const getFarcasterCardsByRarity = query({
 export const deleteAllOldVibeFIDCards = mutation({
   args: {},
   handler: async (ctx) => {
-    const VIBEFID_CURRENT_CONTRACT = "0x5e834aE1a9aD1b6685a0B313dD911CF9D286c817";
+    const VIBEFID_CURRENT_CONTRACT = "0x30d595f40dee7AEd53f8993f13E87A34Ec0C8D25";
 
     // Get all cards
     const allCards = await ctx.db
