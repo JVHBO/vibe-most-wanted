@@ -481,45 +481,42 @@ export default function FidPage() {
     try {
       const score = userData.experimental?.neynar_user_score || 0;
 
-      // Use generated traits if available (from preview), otherwise generate new ones
-      let traits = generatedTraits;
+      // ALWAYS recalculate traits for mint (don't trust preview/localStorage)
+      // This ensures deterministic traits even if preview was generated with old random code
+      const rarity = calculateRarityFromScore(score);
+      const suit = getSuitFromFid(userData.fid); // DETERMINISTIC based on FID
+      const suitSymbol = getSuitSymbol(suit);
+      const color = getSuitColor(suit);
+      const rank = generateRankFromRarity(rarity);
+
+      // Generate FID-based foil and wear traits (DETERMINISTIC for final mint)
+      // NO extraSeed - same FID always gives same traits on-chain
+      const fidTraits = getFidTraits(userData.fid);
+      const foil = fidTraits.foil;
+      const wear = fidTraits.wear;
+
+      console.log('🎯 MINT DEBUG - FID:', userData.fid, 'Calculated Foil:', foil, 'Wear:', wear);
+
+      // Calculate power with VibeFID balanced config
+      const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
+      const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
+
+      // Get wear multiplier from config
+      const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
+      const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
+
+      // Get foil multiplier from config
+      const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
+      const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
+
+      const power = Math.round(basePower * wearMult * foilMult);
+
+      // Re-use preview image if available (avoid regenerating card PNG)
       let cardImageDataUrl = previewImage;
 
-      if (!traits || !cardImageDataUrl) {
-        const rarity = calculateRarityFromScore(score);
-        const suit = getSuitFromFid(userData.fid); // DETERMINISTIC based on FID
-        const suitSymbol = getSuitSymbol(suit);
-        const color = getSuitColor(suit);
-        const rank = generateRankFromRarity(rarity);
-
-        // Generate FID-based foil and wear traits (DETERMINISTIC for final mint)
-        // NO extraSeed - same FID always gives same traits on-chain
-        const fidTraits = getFidTraits(userData.fid);
-        const foil = fidTraits.foil;
-        const wear = fidTraits.wear;
-
-        console.log('🎯 MINT DEBUG - FID:', userData.fid, 'Calculated Foil:', foil, 'Wear:', wear);
-
-        // Calculate power with VibeFID balanced config
-        const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
-        const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
-
-        // Get wear multiplier from config
-        const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
-        const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
-
-        // Get foil multiplier from config
-        const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
-        const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
-
-        const power = Math.round(basePower * wearMult * foilMult);
-
-        traits = { rarity, suit, suitSymbol, color, rank, foil, wear, power };
-
-        // Fetch account creation date
+      // Generate card image if not already generated
+      if (!cardImageDataUrl) {
         const createdAt = await getFarcasterAccountCreationDate(userData.fid);
-
-        // Generate card image if not already generated
         cardImageDataUrl = await generateFarcasterCardImage({
           fid: userData.fid,
           username: userData.username,
@@ -536,8 +533,6 @@ export default function FidPage() {
           createdAt: createdAt || undefined,
         });
       }
-
-      const { rarity, suit, suitSymbol, color, rank, foil, wear, power } = traits;
 
       // Upload static card PNG to IPFS first (for sharing)
       setError("Uploading card image to IPFS...");
