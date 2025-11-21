@@ -69,6 +69,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Sua Carta VibeFID',
     cardStats: 'Estatísticas da Carta',
     back: '← Voltar',
+    mintToReveal: 'Mintar para Revelar Carta Completa',
 
     // Story templates (multiple variants for randomization)
     criminalStory1: [
@@ -196,6 +197,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Your VibeFID Card',
     cardStats: 'Card Stats',
     back: '← Back',
+    mintToReveal: 'Mint to Reveal Full Card',
 
     // Story templates (multiple variants for randomization)
     criminalStory1: [
@@ -323,6 +325,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Tu Carta VibeFID',
     cardStats: 'Estadísticas de la Carta',
     back: '← Atrás',
+    mintToReveal: 'Mintear para Revelar Carta Completa',
 
     // Story templates (multiple variants for randomization)
     criminalStory1: [
@@ -450,6 +453,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'आपका VibeFID कार्ड',
     cardStats: 'कार्ड आंकड़े',
     back: '← वापस',
+    mintToReveal: 'पूर्ण कार्ड प्रकट करने के लिए मिंट करें',
 
     // Story templates (multiple variants for randomization)
     criminalStory1: [
@@ -577,6 +581,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Ваша карта VibeFID',
     cardStats: 'Статистика карты',
     back: '← Назад',
+    mintToReveal: 'Минтить, чтобы показать полную карту',
 
     // Story templates (multiple variants for randomization)
     criminalStory1: [
@@ -704,6 +709,7 @@ export const fidTranslations = {
     yourVibeFidCard: '你的 VibeFID 卡片',
     cardStats: '卡片属性',
     back: '← 返回',
+    mintToReveal: '铸造以显示完整卡片',
 
     // Story templates (multiple variants for randomization)
     criminalStory1: [
