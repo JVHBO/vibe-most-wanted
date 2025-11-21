@@ -317,7 +317,7 @@ export default function FidTestPage() {
     if (!userData) return;
 
     const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${userData.fid}`;
-    const text = `Just minted my VibeFID card! Check it out 🎴`;
+    const text = `Check out this VibeFID card on VIBE Most Wanted!`;
     const farcasterShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
     window.open(farcasterShareUrl, '_blank');
