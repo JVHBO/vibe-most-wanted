@@ -51,8 +51,8 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
     cardImg.onload = () => {
       try {
         // Draw card on the left side
-        const cardWidth = 350;
-        const cardHeight = 490; // Maintain 500:700 aspect ratio
+        const cardWidth = 320;
+        const cardHeight = 448; // Maintain 500:700 aspect ratio (reduced to fit)
         const cardX = 40;
         const cardY = (canvas.height - cardHeight) / 2;
 
