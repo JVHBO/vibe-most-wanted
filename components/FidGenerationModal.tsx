@@ -84,7 +84,7 @@ ${emoji} ${generatedTraits.rarity}
 
   return (
     <div className="fixed inset-0 bg-black/95 flex items-center justify-center p-0 sm:p-2 md:p-4 z-50 overflow-hidden">
-      <div className="bg-vintage-charcoal rounded-none sm:rounded-xl border-2 border-vintage-gold w-screen h-screen sm:w-full sm:h-auto sm:max-w-lg md:max-w-2xl lg:max-w-4xl relative sm:max-h-[95vh] overflow-y-auto overflow-x-hidden box-border">
+      <div className="bg-vintage-charcoal rounded-none sm:rounded-xl border-2 border-vintage-gold w-screen h-screen sm:w-full sm:h-auto sm:max-w-lg md:max-w-2xl lg:max-w-4xl relative sm:max-h-[95vh] overflow-y-auto overflow-x-hidden box-border flex flex-col">
         {/* Close button */}
         <button
           onClick={() => {
@@ -117,7 +117,7 @@ ${emoji} ${generatedTraits.rarity}
         </div>
 
         {/* Content */}
-        <div className="p-2 sm:p-4 md:p-6 lg:p-8 pt-2 sm:pt-4 md:pt-6 clear-both w-full max-w-full box-border overflow-x-hidden">
+        <div className="p-2 sm:p-4 md:p-6 lg:p-8 pt-2 sm:pt-4 md:pt-6 clear-both w-full max-w-full box-border overflow-x-hidden flex-1 overflow-y-auto">
           {currentSlide === 0 ? (
             // Slide 1: Criminal Backstory
             <div className="space-y-3 sm:space-y-4 w-full max-w-full overflow-x-hidden">
@@ -194,15 +194,15 @@ ${emoji} ${generatedTraits.rarity}
             </div>
           ) : (
             // Slide 2: Card Preview
-            <div className="space-y-3 sm:space-y-6 w-full max-w-full overflow-x-hidden">
-              <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-display font-bold text-vintage-gold text-center mb-3 sm:mb-6 px-1 break-words">
+            <div className="space-y-2 sm:space-y-4 w-full max-w-full overflow-x-hidden pb-16 sm:pb-0">
+              <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-display font-bold text-vintage-gold text-center mb-2 sm:mb-4 px-1 break-words">
                 {t.yourVibeFidCard}
               </h2>
 
-              <div className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-full overflow-x-hidden">
+              <div className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden">
                 {/* Card Image with Foil Effect */}
                 {previewImage && generatedTraits && (
-                  <div className="relative w-full max-w-[280px] sm:max-w-sm md:max-w-md">
+                  <div className="relative w-full max-w-[240px] sm:max-w-[280px] md:max-w-sm">
                     <FoilCardEffect
                       foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
                       className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden box-border"
@@ -228,7 +228,7 @@ ${emoji} ${generatedTraits.rarity}
 
                 {/* Generated Traits */}
                 {generatedTraits && (
-                  <div className="w-full max-w-[280px] sm:max-w-sm md:max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-2 sm:p-4 md:p-6 box-border" style={{ filter: 'blur(4px)' }}>
+                  <div className="w-full max-w-[240px] sm:max-w-[280px] md:max-w-sm bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-2 sm:p-3 md:p-4 box-border" style={{ filter: 'blur(4px)' }}>
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-vintage-gold mb-3 sm:mb-4 text-center">
                       {t.cardStats}
                     </h3>
@@ -267,15 +267,15 @@ ${emoji} ${generatedTraits.rarity}
               </div>
 
               {/* Mint Price */}
-              <div className="text-center py-2 sm:py-3 bg-vintage-black/30 rounded-lg border border-vintage-gold/20">
+              <div className="text-center py-1 sm:py-2 bg-vintage-black/30 rounded-lg border border-vintage-gold/20">
                 <p className="text-vintage-ice/70 text-xs sm:text-sm">{t.mintPrice || 'Mint Price'}</p>
-                <p className="text-vintage-gold font-bold text-lg sm:text-xl md:text-2xl">0.0003 ETH</p>
-                <p className="text-vintage-ice/50 text-xs mt-1">~$0.90 USD</p>
+                <p className="text-vintage-gold font-bold text-base sm:text-xl">0.0003 ETH</p>
+                <p className="text-vintage-ice/50 text-xs">~$0.90 USD</p>
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons - Sticky on mobile */}
               {!isMintedSuccessfully ? (
-                <div className="flex gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden box-border">
+                <div className="fixed sm:relative bottom-0 left-0 right-0 sm:bottom-auto sm:left-auto sm:right-auto flex gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden box-border p-2 sm:p-0 bg-vintage-charcoal sm:bg-transparent border-t-2 sm:border-t-0 border-vintage-gold/30">
                   <button
                     onClick={() => {
                       AudioManager.buttonClick();
