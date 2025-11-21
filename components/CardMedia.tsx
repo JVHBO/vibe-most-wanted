@@ -24,11 +24,14 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
     return null;
   }
 
+  // Check if it's a data URL (base64 image) - these should ALWAYS render as images
+  const isDataUrl = src.startsWith('data:');
+
   // Check if it's a video file
   const srcLower = src.toLowerCase();
   const hasVideoExtension = srcLower.includes('.mp4') || srcLower.includes('.webm') || srcLower.includes('.mov');
   const isIpfs = srcLower.includes('ipfs');
-  const shouldTryVideo = hasVideoExtension || (isIpfs && !useImage);
+  const shouldTryVideo = !isDataUrl && (hasVideoExtension || (isIpfs && !useImage));
 
   if (shouldTryVideo && !error) {
     return (
@@ -55,8 +58,8 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
     );
   }
 
-  // If error, show placeholder with IPFS link
-  if (error && isIpfs) {
+  // If error, show placeholder with IPFS link (but NOT for data URLs)
+  if (error && isIpfs && !isDataUrl) {
     return (
       <div className={className} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff', fontSize: '12px', padding: '20px', textAlign: 'center', flexDirection: 'column' }}>
         <div>⚠️ IPFS Loading Failed</div>
