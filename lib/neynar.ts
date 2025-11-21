@@ -144,6 +144,14 @@ export function generateRandomSuit(): CardSuit {
 }
 
 /**
+ * Generate DETERMINISTIC suit from FID
+ */
+export function getSuitFromFid(fid: number): CardSuit {
+  const suits: CardSuit[] = ['hearts', 'diamonds', 'spades', 'clubs'];
+  return suits[fid % 4];
+}
+
+/**
  * Get suit symbol
  */
 export function getSuitSymbol(suit: CardSuit): string {
