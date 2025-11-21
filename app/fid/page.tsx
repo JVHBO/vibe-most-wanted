@@ -769,19 +769,38 @@ export default function FidPage() {
           <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 overflow-y-auto">
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-3xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header */}
-              <div className="sticky top-0 bg-vintage-charcoal border-b-2 border-vintage-gold/30 p-4 sm:p-6 flex items-center justify-between">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold">
-                  About VibeFID Traits
-                </h2>
-                <button
-                  onClick={() => {
-                    AudioManager.buttonClick();
-                    setShowAboutModal(false);
+              <div className="sticky top-0 bg-vintage-charcoal border-b-2 border-vintage-gold/30 p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold">
+                    About VibeFID Traits
+                  </h2>
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      setShowAboutModal(false);
+                    }}
+                    className="text-vintage-ice hover:text-vintage-gold text-2xl sm:text-3xl leading-none bg-vintage-black/70 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Language Selector */}
+                <select
+                  value={lang}
+                  onChange={(e) => {
+                    AudioManager.toggleOn();
+                    setLang(e.target.value as any);
                   }}
-                  className="text-vintage-ice hover:text-vintage-gold text-2xl sm:text-3xl leading-none bg-vintage-black/70 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
+                  className="px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm"
                 >
-                  ×
-                </button>
+                  <option value="en">🇺🇸 English</option>
+                  <option value="pt-BR">🇧🇷 Português</option>
+                  <option value="es">🇪🇸 Español</option>
+                  <option value="hi">🇮🇳 हिन्दी</option>
+                  <option value="ru">🇷🇺 Русский</option>
+                  <option value="zh-CN">🇨🇳 中文</option>
+                </select>
               </div>
 
               {/* Content */}
@@ -789,6 +808,24 @@ export default function FidPage() {
                 <p className="text-vintage-ice text-sm sm:text-base leading-relaxed">
                   VibeFID cards have unique traits that determine their power and value. All traits are <span className="text-vintage-gold font-bold">deterministic</span> - your FID always gets the same traits!
                 </p>
+
+                {/* FID & Neynar Score */}
+                <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg border-2 border-blue-500/50 p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-blue-300 mb-3 flex items-center gap-2">
+                    <span>🆔</span> FID & Neynar Score
+                  </h3>
+                  <div className="space-y-3 text-vintage-ice/80 text-sm">
+                    <p>
+                      <span className="font-bold text-blue-300">FID (Farcaster ID):</span> Your unique Farcaster identifier. It determines your <span className="font-bold">Suit</span> (♠ ♥ ♦ ♣), <span className="font-bold">Foil</span>, and <span className="font-bold">Wear</span> traits through deterministic algorithms - the same FID always gets the same traits!
+                    </p>
+                    <p>
+                      <span className="font-bold text-purple-300">Neynar Score:</span> Measures your Farcaster engagement and reputation (followers, casts, reactions, etc.). Higher scores = <span className="font-bold text-vintage-gold">rarer cards</span> with more base power!
+                    </p>
+                    <div className="mt-2 p-3 bg-vintage-black/40 rounded border border-blue-500/30 text-xs">
+                      💡 <span className="font-bold">Pro tip:</span> Engage more on Farcaster to increase your Neynar Score and get better cards!
+                    </div>
+                  </div>
+                </div>
 
                 {/* Rarity */}
                 <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-4">
