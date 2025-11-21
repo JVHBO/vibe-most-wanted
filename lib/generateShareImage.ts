@@ -9,6 +9,7 @@
 
 import type { CriminalBackstoryData } from './generateCriminalBackstory';
 import { generateCriminalBackstory } from './generateCriminalBackstory';
+import { fidTranslations } from './fidTranslations';
 
 interface ShareImageParams {
   cardImageDataUrl: string; // Base64 data URL of the card PNG
@@ -50,10 +51,10 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
 
     cardImg.onload = () => {
       try {
-        // Draw card on the left side
-        const cardWidth = 320;
-        const cardHeight = 448; // Maintain 500:700 aspect ratio (reduced to fit)
-        const cardX = 40;
+        // Draw card on the left side (5:7 ratio = 500:700)
+        const cardHeight = 500; // Fit in 630 height with top/bottom margins
+        const cardWidth = Math.floor(cardHeight * (5 / 7)); // 357px
+        const cardX = 50;
         const cardY = (canvas.height - cardHeight) / 2;
 
         // Card border
@@ -65,18 +66,22 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         ctx.drawImage(cardImg, cardX, cardY, cardWidth, cardHeight);
 
         // Right side - Criminal record text
-        const textStartX = cardX + cardWidth + 60;
+        const textStartX = cardX + cardWidth + 50;
         const textWidth = canvas.width - textStartX - 50;
         let currentY = 80;
 
+        // Get translations for current language
+        const lang = params.lang || 'en';
+        const t = fidTranslations[lang];
+
         // Generate backstory in user's language (defaults to English)
-        const backstory = generateCriminalBackstory(params.backstoryData, params.lang || 'en');
+        const backstory = generateCriminalBackstory(params.backstoryData, lang);
 
         // Title
         ctx.fillStyle = '#d4af37';
         ctx.font = 'bold 42px serif';
         ctx.textAlign = 'left';
-        ctx.fillText('CRIMINAL RECORD', textStartX, currentY);
+        ctx.fillText(t.criminalRecord, textStartX, currentY);
         currentY += 50;
 
         // Divider line
@@ -100,7 +105,7 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         // Wanted For
         ctx.fillStyle = '#c9a961';
         ctx.font = 'bold 20px serif';
-        ctx.fillText('WANTED FOR:', textStartX, currentY);
+        ctx.fillText(t.wantedFor, textStartX, currentY);
         currentY += 30;
 
         ctx.fillStyle = '#d4af37';
@@ -119,7 +124,7 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         // Danger Level
         ctx.fillStyle = '#c9a961';
         ctx.font = 'bold 20px serif';
-        ctx.fillText('DANGER LEVEL:', textStartX, currentY);
+        ctx.fillText(t.dangerLevel, textStartX, currentY);
         currentY += 30;
 
         // Danger level color based on level
@@ -134,7 +139,7 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         // Last Seen
         ctx.fillStyle = '#c9a961';
         ctx.font = 'bold 20px serif';
-        ctx.fillText('LAST SEEN:', textStartX, currentY);
+        ctx.fillText(t.lastSeen, textStartX, currentY);
         currentY += 28;
 
         ctx.fillStyle = '#f5f5dc';
@@ -161,7 +166,7 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         ctx.fillStyle = '#ff6666';
         ctx.font = 'bold 18px serif';
         ctx.textAlign = 'center';
-        ctx.fillText('⚠️ WARNING: ARMED AND DANGEROUS ⚠️',
+        ctx.fillText(t.warningCaution,
                     textStartX + textWidth / 2,
                     warningY + 20);
 
