@@ -49,6 +49,7 @@ export default function FidPage() {
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
   const [mintedSuccessfully, setMintedSuccessfully] = useState(false);
 
   // Temporary storage for mint data
@@ -639,13 +640,25 @@ export default function FidPage() {
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-2 sm:p-4 md:p-8 overflow-x-hidden">
       <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
-        <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2">
+        <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2 relative">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-2">
             VibeFID
           </h1>
-          <p className="text-sm sm:text-base text-vintage-ice">
+          <p className="text-sm sm:text-base text-vintage-ice mb-3">
             Mint playable cards from Farcaster profiles
           </p>
+
+          {/* About Button */}
+          <button
+            onClick={() => {
+              AudioManager.buttonClick();
+              setShowAboutModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/20 transition-colors text-sm"
+          >
+            <span>ℹ️</span>
+            <span>About Traits</span>
+          </button>
         </div>
 
         {/* Success message when in miniapp */}
@@ -674,7 +687,7 @@ export default function FidPage() {
               disabled={loading}
               className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-base sm:text-lg rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
             >
-              {loading ? "Generating..." : farcasterContext.user ? "🎴 Mint My VibeFID Card" : "🔗 Connect Farcaster to Mint"}
+              {loading ? "Generating..." : farcasterContext.user ? "Mint My VibeFID Card" : "🔗 Connect Farcaster to Mint"}
             </button>
 
             {error && (
@@ -747,6 +760,200 @@ export default function FidPage() {
                   </div>
                 </Link>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* About Traits Modal */}
+        {showAboutModal && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 bg-vintage-charcoal border-b-2 border-vintage-gold/30 p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold">
+                    About VibeFID Traits
+                  </h2>
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      setShowAboutModal(false);
+                    }}
+                    className="text-vintage-ice hover:text-vintage-gold text-2xl sm:text-3xl leading-none bg-vintage-black/70 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Language Selector */}
+                <select
+                  value={lang}
+                  onChange={(e) => {
+                    AudioManager.toggleOn();
+                    setLang(e.target.value as any);
+                  }}
+                  className="px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm"
+                >
+                  <option value="en">🇺🇸 English</option>
+                  <option value="pt-BR">🇧🇷 Português</option>
+                  <option value="es">🇪🇸 Español</option>
+                  <option value="hi">🇮🇳 हिन्दी</option>
+                  <option value="ru">🇷🇺 Русский</option>
+                  <option value="zh-CN">🇨🇳 中文</option>
+                </select>
+              </div>
+
+              {/* Content */}
+              <div className="p-4 sm:p-6 space-y-6">
+                <p className="text-vintage-ice text-sm sm:text-base leading-relaxed">
+                  VibeFID cards have unique traits that determine their power and value. All traits are <span className="text-vintage-gold font-bold">deterministic</span> - your FID always gets the same traits!
+                </p>
+
+                {/* FID & Neynar Score */}
+                <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg border-2 border-blue-500/50 p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-blue-300 mb-3 flex items-center gap-2">
+                    <span>🆔</span> FID & Neynar Score
+                  </h3>
+                  <div className="space-y-3 text-vintage-ice/80 text-sm">
+                    <p>
+                      <span className="font-bold text-blue-300">FID (Farcaster ID):</span> Your unique Farcaster identifier. It determines your <span className="font-bold">Suit</span> (♠ ♥ ♦ ♣), <span className="font-bold">Foil</span>, and <span className="font-bold">Wear</span> traits through deterministic algorithms - the same FID always gets the same traits!
+                    </p>
+                    <p>
+                      <span className="font-bold text-purple-300">Neynar Score:</span> Measures your Farcaster engagement and reputation (followers, casts, reactions, etc.). Higher scores = <span className="font-bold text-vintage-gold">rarer cards</span> with more base power!
+                    </p>
+                    <div className="mt-2 p-3 bg-vintage-black/40 rounded border border-blue-500/30 text-xs">
+                      💡 <span className="font-bold">Pro tip:</span> Engage more on Farcaster to increase your Neynar Score and get better cards!
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rarity */}
+                <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                    <span>🎯</span> Rarity
+                  </h3>
+                  <p className="text-vintage-ice/80 text-sm mb-3">
+                    Based on your Neynar Score. Higher scores = rarer cards with more base power.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-purple-400 font-bold">Mythic</span>
+                      <span className="text-vintage-ice text-sm">600 base power</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-orange-400 font-bold">Legendary</span>
+                      <span className="text-vintage-ice text-sm">100 base power</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-pink-400 font-bold">Epic</span>
+                      <span className="text-vintage-ice text-sm">50 base power</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-blue-400 font-bold">Rare</span>
+                      <span className="text-vintage-ice text-sm">20 base power</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 font-bold">Common</span>
+                      <span className="text-vintage-ice text-sm">10 base power</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Foil */}
+                <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                    <span>✨</span> Foil Type
+                  </h3>
+                  <p className="text-vintage-ice/80 text-sm mb-3">
+                    Randomly assigned based on your FID. Foil cards have visual effects and power multipliers!
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-purple-400 font-bold">Prize Foil</span>
+                      <span className="text-vintage-ice text-sm">×6.0 power • 15% chance</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-blue-400 font-bold">Standard Foil</span>
+                      <span className="text-vintage-ice text-sm">×2.0 power • 50% chance</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 font-bold">None</span>
+                      <span className="text-vintage-ice text-sm">×1.0 power • 35% chance</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Wear */}
+                <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                    <span>💎</span> Wear Condition
+                  </h3>
+                  <p className="text-vintage-ice/80 text-sm mb-3">
+                    Randomly assigned based on your FID. Better condition = higher power!
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-green-400 font-bold">Pristine</span>
+                      <span className="text-vintage-ice text-sm">×1.8 power • 40% chance</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-blue-400 font-bold">Mint</span>
+                      <span className="text-vintage-ice text-sm">×1.4 power • 40% chance</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 font-bold">Lightly Played</span>
+                      <span className="text-vintage-ice text-sm">×1.0 power • 20% chance</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Power Calculation */}
+                <div className="bg-gradient-to-br from-vintage-gold/20 to-vintage-burnt-gold/20 rounded-lg border-2 border-vintage-gold p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                    <span>⚡</span> Power Calculation
+                  </h3>
+                  <div className="text-center">
+                    <div className="text-vintage-ice text-sm sm:text-base mb-2">
+                      Power = <span className="text-vintage-gold font-bold">Base Power</span> × <span className="text-blue-400 font-bold">Foil</span> × <span className="text-green-400 font-bold">Wear</span>
+                    </div>
+                    <div className="text-vintage-ice/60 text-xs sm:text-sm mt-3">
+                      Example: Mythic (600) × Prize Foil (6.0) × Pristine (1.8) = <span className="text-vintage-gold font-bold">6,480 Power</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card & Suit */}
+                <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                    <span>🃏</span> Card & Suit
+                  </h3>
+                  <p className="text-vintage-ice/80 text-sm">
+                    <span className="font-bold">Suit</span> (♠ ♥ ♦ ♣) is deterministic based on FID.<br/>
+                    <span className="font-bold">Rank</span> (A, K, Q, J, 10-2) is based on your rarity - higher rarity = higher rank.
+                  </p>
+                </div>
+
+                {/* Bounty */}
+                <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 flex items-center gap-2">
+                    <span>💰</span> Bounty
+                  </h3>
+                  <p className="text-vintage-ice/80 text-sm">
+                    Your bounty reward = <span className="text-vintage-gold font-bold">Power × 10</span>
+                  </p>
+                </div>
+
+                {/* Close Button */}
+                <button
+                  onClick={() => {
+                    AudioManager.buttonClick();
+                    setShowAboutModal(false);
+                  }}
+                  className="w-full px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors"
+                >
+                  Got it!
+                </button>
+              </div>
             </div>
           </div>
         )}
