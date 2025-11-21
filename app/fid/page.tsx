@@ -430,7 +430,7 @@ export default function FidPage() {
     );
   }
 
-  const handleShare = async (currentLang: string) => {
+  const handleShare = async (currentLang: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN') => {
     if (!previewImage || !userData || !generatedTraits) return;
 
     try {
