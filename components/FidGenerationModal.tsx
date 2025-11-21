@@ -219,7 +219,7 @@ ${emoji} ${generatedTraits.rarity}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="bg-vintage-black/80 border-2 border-vintage-gold rounded-lg px-4 sm:px-6 py-2 sm:py-3 backdrop-blur-sm">
                         <p className="text-vintage-gold font-bold text-sm sm:text-base md:text-lg text-center">
-                          🎴 {t.mintToReveal || 'Mint to Reveal Full Card'}
+                          {t.mintToReveal || 'Mint to Reveal Full Card'}
                         </p>
                       </div>
                     </div>
