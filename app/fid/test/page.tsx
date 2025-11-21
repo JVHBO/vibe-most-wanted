@@ -311,6 +311,16 @@ export default function FidTestPage() {
     }
   };
 
+  const handleShareFarcaster = () => {
+    if (!userData) return;
+
+    const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${userData.fid}`;
+    const text = `Just minted my VibeFID card! Check it out 🎴`;
+    const farcasterShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+
+    window.open(farcasterShareUrl, '_blank');
+  };
+
   // If not authenticated, show password form
   if (!isAuthenticated) {
     return (
@@ -377,35 +387,45 @@ export default function FidTestPage() {
           </div>
 
           {traits && (
-            <div className="flex gap-4">
-              <button
-                onClick={handleShare}
-                disabled={!cardPng}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                📤 Download Share Image
-              </button>
-
-              {address ? (
+            <div className="space-y-3">
+              <div className="flex gap-4">
                 <button
-                  onClick={handleMint}
-                  disabled={minting}
-                  className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  onClick={handleShare}
+                  disabled={!cardPng}
+                  className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
-                  {minting ? "Minting..." : "🎴 Mint Card (0.0003 ETH)"}
+                  📤 Download Share Image
                 </button>
-              ) : (
-                <ConnectButton.Custom>
-                  {({ openConnectModal }) => (
-                    <button
-                      onClick={openConnectModal}
-                      className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Connect Wallet to Mint
-                    </button>
-                  )}
-                </ConnectButton.Custom>
-              )}
+
+                {address ? (
+                  <button
+                    onClick={handleMint}
+                    disabled={minting}
+                    className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  >
+                    {minting ? "Minting..." : "🎴 Mint Card (0.0003 ETH)"}
+                  </button>
+                ) : (
+                  <ConnectButton.Custom>
+                    {({ openConnectModal }) => (
+                      <button
+                        onClick={openConnectModal}
+                        className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Connect Wallet to Mint
+                      </button>
+                    )}
+                  </ConnectButton.Custom>
+                )}
+              </div>
+
+              <button
+                onClick={handleShareFarcaster}
+                disabled={!userData}
+                className="w-full px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+              >
+                🎭 Share on Farcaster
+              </button>
             </div>
           )}
 
