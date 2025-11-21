@@ -177,7 +177,7 @@ export default function FidCardPage() {
 
                 {/* View on OpenSea */}
                 <a
-                  href={`https://opensea.io/assets/base/${card.contractAddress || '0x10D7758F70d0534ac7908caC97D6EdafC763472D'}/${card.fid}`}
+                  href={`https://opensea.io/assets/base/${card.contractAddress || '0x5e834aE1a9aD1b6685a0B313dD911CF9D286c817'}/${card.fid}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 px-6 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
