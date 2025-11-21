@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
+import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, getSuitFromFid, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
 import { getFidTraits } from "@/lib/fidTraits";
 import { getFarcasterAccountCreationDate } from "@/lib/farcasterRegistry";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/neynar";
@@ -204,14 +204,14 @@ export default function FidPage() {
     const score = user.experimental?.neynar_user_score || 0;
     const rarity = calculateRarityFromScore(score);
 
-    // Generate random suit and rank
-    const suit = generateRandomSuit();
+    // Generate DETERMINISTIC suit and rank based on FID
+    const suit = getSuitFromFid(user.fid); // DETERMINISTIC based on FID
     const suitSymbol = getSuitSymbol(suit);
     const color = getSuitColor(suit);
     const rank = generateRankFromRarity(rarity);
 
-    // Generate FID-based foil and wear traits with randomness for preview
-    const fidTraits = getFidTraits(user.fid, Date.now());
+    // Generate FID-based foil and wear traits (DETERMINISTIC - NO extraSeed!)
+    const fidTraits = getFidTraits(user.fid); // REMOVED Date.now()
     const foil = fidTraits.foil;
     const wear = fidTraits.wear;
 
@@ -459,7 +459,7 @@ export default function FidPage() {
 
       if (!traits || !cardImageDataUrl) {
         const rarity = calculateRarityFromScore(score);
-        const suit = generateRandomSuit();
+        const suit = getSuitFromFid(userData.fid); // DETERMINISTIC based on FID
         const suitSymbol = getSuitSymbol(suit);
         const color = getSuitColor(suit);
         const rank = generateRankFromRarity(rarity);
