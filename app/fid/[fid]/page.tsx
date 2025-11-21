@@ -167,8 +167,20 @@ export default function FidCardPage() {
                 <a
                   href={(() => {
                     const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
-                    const foilText = card.foil !== 'None' ? ` with ${card.foil} foil` : '';
-                    const castText = `Just minted my VibeFID!\n\n${card.rarity}${foilText} • ${card.power} power\n\n@jvhbo`;
+
+                    // Build dynamic share text with emojis
+                    const rarityEmoji = {
+                      'Mythic': '👑',
+                      'Legendary': '⚡',
+                      'Epic': '💎',
+                      'Rare': '🔥',
+                      'Common': '⭐'
+                    }[card.rarity] || '🎴';
+
+                    const foilEmoji = card.foil === 'Prize' ? '✨' : card.foil === 'Standard' ? '💫' : '';
+                    const foilText = card.foil !== 'None' ? ` ${card.foil} Foil` : '';
+
+                    const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${card.power} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎮 Mint yours now! @jvhbo`;
 
                     return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                   })()}
