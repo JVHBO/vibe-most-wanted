@@ -190,4 +190,4 @@ export const VIBEFID_ABI = [
 
 export const VIBEFID_CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_VIBEFID_CONTRACT_ADDRESS || '0x10D7758F70d0534ac7908caC97D6EdafC763472D') as `0x${string}`;
 
-export const MINT_PRICE = "0.0001"; // ETH
+export const MINT_PRICE = "0.0003"; // ETH
