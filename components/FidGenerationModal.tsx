@@ -80,7 +80,7 @@ export default function FidGenerationModal({
         </div>
 
         {/* Content */}
-        <div className="p-2 sm:p-4 md:p-6 lg:p-8 pt-6 sm:pt-8 md:pt-10 lg:pt-12 clear-both w-full max-w-full box-border overflow-x-hidden">
+        <div className="p-2 sm:p-4 md:p-6 lg:p-8 pt-2 sm:pt-4 md:pt-6 clear-both w-full max-w-full box-border overflow-x-hidden">
           {currentSlide === 0 ? (
             // Slide 1: Criminal Backstory
             <div className="space-y-3 sm:space-y-4 w-full max-w-full overflow-x-hidden">
