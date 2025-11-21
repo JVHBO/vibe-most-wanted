@@ -21,7 +21,7 @@ interface FidGenerationModalProps {
   isMinting: boolean;
   isMintedSuccessfully?: boolean;
   fid?: number;
-  onShare?: (lang: string) => void;
+  onShare?: (lang: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN') => void;
   username?: string;
 }
 
