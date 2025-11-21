@@ -511,28 +511,25 @@ export default function FidPage() {
 
       const power = Math.round(basePower * wearMult * foilMult);
 
-      // Re-use preview image if available (avoid regenerating card PNG)
-      let cardImageDataUrl = previewImage;
-
-      // Generate card image if not already generated
-      if (!cardImageDataUrl) {
-        const createdAt = await getFarcasterAccountCreationDate(userData.fid);
-        cardImageDataUrl = await generateFarcasterCardImage({
-          fid: userData.fid,
-          username: userData.username,
-          displayName: userData.display_name,
-          pfpUrl: userData.pfp_url,
-          bio: userData.profile?.bio?.text || "",
-          neynarScore: score,
-          suit,
-          suitSymbol,
-          rank,
-          color,
-          rarity,
-          bounty: power * 10, // Bounty = Power × 10
-          createdAt: createdAt || undefined,
-        });
-      }
+      // ALWAYS regenerate card image with recalculated power/bounty
+      // This ensures the bounty on the image matches the metadata trait
+      // (Don't reuse preview - it might have old bounty from before deterministic fix)
+      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
+      const cardImageDataUrl = await generateFarcasterCardImage({
+        fid: userData.fid,
+        username: userData.username,
+        displayName: userData.display_name,
+        pfpUrl: userData.pfp_url,
+        bio: userData.profile?.bio?.text || "",
+        neynarScore: score,
+        suit,
+        suitSymbol,
+        rank,
+        color,
+        rarity,
+        bounty: power * 10, // Bounty = Power × 10 (matches metadata API)
+        createdAt: createdAt || undefined,
+      });
 
       // Upload static card PNG to IPFS first (for sharing)
       setError("Uploading card image to IPFS...");
