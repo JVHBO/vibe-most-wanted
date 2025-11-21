@@ -155,22 +155,37 @@ export default function FidCardPage() {
                 </div>
               </div>
 
-              {/* Share Button */}
-              <a
-                href={(() => {
-                  const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
-                  const foilText = card.foil !== 'None' ? ` with ${card.foil} foil` : '';
-                  const castText = `Just minted my VibeFID!\n\n${card.rarity}${foilText} • ${card.power} power\n\n@jvhbo`;
+              {/* Action Buttons */}
+              <div className="mt-6 w-full max-w-md flex gap-4">
+                {/* Share to Farcaster */}
+                <a
+                  href={(() => {
+                    const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
+                    const foilText = card.foil !== 'None' ? ` with ${card.foil} foil` : '';
+                    const castText = `Just minted my VibeFID!\n\n${card.rarity}${foilText} • ${card.power} power\n\n@jvhbo`;
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                })()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 w-full max-w-md px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                <span className="text-xl">🔮</span>
-                Share to Farcaster
-              </a>
+                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="text-xl">🔮</span>
+                  <span className="hidden sm:inline">Share to Farcaster</span>
+                  <span className="sm:hidden">Share</span>
+                </a>
+
+                {/* View on OpenSea */}
+                <a
+                  href={`https://opensea.io/assets/base/${card.contractAddress || '0x10D7758F70d0534ac7908caC97D6EdafC763472D'}/${card.fid}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-6 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="hidden sm:inline">View on OpenSea</span>
+                  <span className="sm:hidden">OpenSea</span>
+                </a>
+              </div>
             </div>
           </div>
         )}
