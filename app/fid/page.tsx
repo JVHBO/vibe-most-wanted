@@ -340,6 +340,11 @@ export default function FidPage() {
             validatedData.cardImageUrl = String(pendingMintData.cardImageUrl);
           }
 
+          // Add shareImageUrl only if it exists (optional field)
+          if (pendingMintData.shareImageUrl) {
+            validatedData.shareImageUrl = String(pendingMintData.shareImageUrl);
+          }
+
           console.log('💾 Saving to Convex:', validatedData);
 
           await mintCard(validatedData);
@@ -523,6 +528,49 @@ export default function FidPage() {
         throw new Error('Card PNG IPFS upload returned empty URL!');
       }
 
+      // Generate share image (card + criminal text for social sharing)
+      setError("Generating share image...");
+      const { generateShareImage } = await import('@/lib/generateShareImage');
+      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
+
+      const shareImageDataUrl = await generateShareImage({
+        cardImageDataUrl,
+        backstoryData: {
+          username: userData.username,
+          displayName: userData.display_name,
+          bio: userData.profile?.bio?.text || "",
+          fid: userData.fid,
+          followerCount: userData.follower_count,
+          createdAt,
+          power,
+          bounty: power * 10,
+          rarity,
+        },
+        displayName: userData.display_name,
+      });
+
+      // Upload share image to IPFS
+      setError("Uploading share image to IPFS...");
+      const shareImageBlob = await fetch(shareImageDataUrl).then(r => r.blob());
+      const shareFormData = new FormData();
+      shareFormData.append('image', shareImageBlob, `share-${userData.fid}.png`);
+
+      const shareUploadResponse = await fetch('/api/upload-nft-image', {
+        method: 'POST',
+        body: shareFormData,
+      });
+
+      if (!shareUploadResponse.ok) {
+        throw new Error('Failed to upload share image to IPFS');
+      }
+
+      const { ipfsUrl: shareImageIpfsUrl } = await shareUploadResponse.json();
+
+      console.log('📤 Share Image IPFS URL:', shareImageIpfsUrl);
+      if (!shareImageIpfsUrl) {
+        throw new Error('Share image IPFS upload returned empty URL!');
+      }
+
       // Generate MP4 video with foil animation (8 seconds for better effect)
       setError("Generating video with foil animation (8 seconds)...");
       const videoBlob = await generateCardVideo({
@@ -597,6 +645,7 @@ export default function FidPage() {
         color,
         imageUrl: ipfsUrl, // Video (MP4)
         cardImageUrl: cardImageIpfsUrl, // Static PNG for sharing
+        shareImageUrl: shareImageIpfsUrl, // Share image with criminal text
       });
 
       // Mint NFT on smart contract
