@@ -15,6 +15,7 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Crie cartas jogáveis a partir de perfis do Farcaster',
+    connectedAs: 'Conectado como',
     enterFid: 'Digite o FID do Farcaster',
     fetch: 'Buscar',
     loading: 'Carregando...',
@@ -141,6 +142,7 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Create playable cards from Farcaster profiles',
+    connectedAs: 'Connected as',
     enterFid: 'Enter Farcaster FID',
     fetch: 'Fetch',
     loading: 'Loading...',
@@ -267,6 +269,7 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Crear cartas jugables desde perfiles de Farcaster',
+    connectedAs: 'Conectado como',
     enterFid: 'Ingrese el FID de Farcaster',
     fetch: 'Buscar',
     loading: 'Cargando...',
@@ -393,6 +396,7 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Farcaster प्रोफाइल से खेलने योग्य कार्ड बनाएं',
+    connectedAs: 'के रूप में कनेक्ट किया गया',
     enterFid: 'Farcaster FID दर्ज करें',
     fetch: 'प्राप्त करें',
     loading: 'लोड हो रहा है...',
@@ -519,6 +523,7 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Создавайте игровые карты из профилей Farcaster',
+    connectedAs: 'Подключен как',
     enterFid: 'Введите Farcaster FID',
     fetch: 'Получить',
     loading: 'Загрузка...',
@@ -645,6 +650,7 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: '从 Farcaster 个人资料创建可玩卡片',
+    connectedAs: '已连接为',
     enterFid: '输入 Farcaster FID',
     fetch: '获取',
     loading: '加载中...',
