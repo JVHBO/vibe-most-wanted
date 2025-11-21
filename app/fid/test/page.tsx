@@ -21,7 +21,7 @@ export default function FidTestPage() {
   const { address } = useAccount();
   const { writeContract } = useWriteContract();
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
-  const { lang } = useLanguage();
+  const { lang, setLang } = useLanguage();
 
   // Password protection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -388,9 +388,25 @@ ${emoji} ${traits.rarity}
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-display font-bold text-vintage-gold mb-8 text-center">
-          VibeFID Test Page
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-display font-bold text-vintage-gold text-center flex-1">
+            VibeFID Test Page
+          </h1>
+
+          {/* Language Selector */}
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value as any)}
+            className="px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold"
+          >
+            <option value="en">🇺🇸 English</option>
+            <option value="pt-BR">🇧🇷 Português</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="hi">🇮🇳 हिन्दी</option>
+            <option value="ru">🇷🇺 Русский</option>
+            <option value="zh-CN">🇨🇳 中文</option>
+          </select>
+        </div>
 
         <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
           <div className="flex gap-4 mb-4">
