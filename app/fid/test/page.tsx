@@ -338,7 +338,7 @@ ${emoji} ${traits.rarity}
 🗡️ Fight in PvE
 💰 Earn $VBMS
 
-🎮 Mint yours & start playing! @${userData.username}`;
+🎮 Mint yours & start playing! @jvhbo`;
 
     const farcasterShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
