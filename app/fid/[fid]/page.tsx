@@ -169,13 +169,14 @@ export default function FidCardPage() {
                     const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
 
                     // Build dynamic share text with emojis
-                    const rarityEmoji = {
+                    const rarityEmojiMap: Record<string, string> = {
                       'Mythic': '👑',
                       'Legendary': '⚡',
                       'Epic': '💎',
                       'Rare': '🔥',
                       'Common': '⭐'
-                    }[card.rarity] || '🎴';
+                    };
+                    const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
 
                     const foilEmoji = card.foil === 'Prize' ? '✨' : card.foil === 'Standard' ? '💫' : '';
                     const foilText = card.foil !== 'None' ? ` ${card.foil} Foil` : '';
