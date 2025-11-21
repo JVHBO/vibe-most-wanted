@@ -70,10 +70,16 @@ export async function GET(
       None: 1.0,
     };
 
-    const basePower = rarityBasePower[cardData.rarity] || 5;
-    const wearMult = wearMultiplier[traits.wear] || 1.0;
-    const foilMult = foilMultiplier[traits.foil] || 1.0;
-    const correctPower = Math.round(basePower * wearMult * foilMult);
+    // Use power from Convex if available, otherwise recalculate
+    let correctPower = cardData.power;
+
+    // Fallback: recalculate if power not saved in Convex (for old cards)
+    if (!correctPower || correctPower === 0) {
+      const basePower = rarityBasePower[cardData.rarity] || 5;
+      const wearMult = wearMultiplier[traits.wear] || 1.0;
+      const foilMult = foilMultiplier[traits.foil] || 1.0;
+      correctPower = Math.round(basePower * wearMult * foilMult);
+    }
 
     // Build OpenSea-compatible metadata
     const metadata = {
