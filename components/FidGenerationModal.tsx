@@ -22,6 +22,7 @@ interface FidGenerationModalProps {
   isMintedSuccessfully?: boolean;
   fid?: number;
   onShare?: () => void;
+  username?: string;
 }
 
 export default function FidGenerationModal({
@@ -36,14 +37,36 @@ export default function FidGenerationModal({
   isMintedSuccessfully = false,
   fid,
   onShare,
+  username,
 }: FidGenerationModalProps) {
   const { lang, setLang } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0); // 0 = backstory, 1 = card
 
   const handleShareFarcaster = () => {
-    if (!fid) return;
+    if (!fid || !generatedTraits) return;
+
+    const rarityEmojis: Record<string, string> = {
+      'Mythic': '🌟',
+      'Legendary': '💎',
+      'Epic': '💎',
+      'Rare': '💜',
+      'Common': '⚪'
+    };
+
+    const emoji = rarityEmojis[generatedTraits.rarity] || '💎';
     const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${fid}`;
-    const text = `Check out this VibeFID card on VIBE Most Wanted!`;
+    const text = `Just minted my VibeFID!
+
+${emoji} ${generatedTraits.rarity}
+⚡ ${generatedTraits.power} Power
+🎯 FID #${fid}
+
+🎲 Play Poker Battles
+🗡️ Fight in PvE
+💰 Earn $VBMS
+
+🎮 Mint yours & start playing!${username ? ` @${username}` : ''}`;
+
     const farcasterShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
     window.open(farcasterShareUrl, '_blank');
   };
