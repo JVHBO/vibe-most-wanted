@@ -687,7 +687,7 @@ export default function FidPage() {
               disabled={loading}
               className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-base sm:text-lg rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
             >
-              {loading ? "Generating..." : farcasterContext.user ? "🎴 Mint My VibeFID Card" : "🔗 Connect Farcaster to Mint"}
+              {loading ? "Generating..." : farcasterContext.user ? "Mint My VibeFID Card" : "🔗 Connect Farcaster to Mint"}
             </button>
 
             {error && (
