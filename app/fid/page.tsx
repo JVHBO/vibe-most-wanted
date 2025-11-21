@@ -53,6 +53,7 @@ export default function FidPage() {
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
+  const [mintedSuccessfully, setMintedSuccessfully] = useState(false);
 
   // Temporary storage for mint data
   const [pendingMintData, setPendingMintData] = useState<any>(null);
@@ -353,19 +354,11 @@ export default function FidPage() {
           await mintCard(validatedData);
           setError(null);
 
-          // Redirect to individual FID page
-          router.push(`/fid/${validatedData.fid}`);
+          // Mark as successfully minted (show share buttons in modal)
+          setMintedSuccessfully(true);
 
           // Clear localStorage (card has been minted)
           clearGeneratedCard();
-
-          // Reset form
-          setUserData(null);
-          setPreviewImage(null);
-          setGeneratedTraits(null);
-          setBackstoryData(null);
-          setPendingMintData(null);
-          setShowModal(false);
         } catch (err: any) {
           console.error('❌ Convex save error:', err);
           setError(`NFT minted but failed to save metadata: ${err.message}`);
@@ -435,6 +428,40 @@ export default function FidPage() {
       </div>
     );
   }
+
+  const handleShare = async () => {
+    if (!previewImage || !userData || !generatedTraits) return;
+
+    try {
+      const { generateShareImage } = await import('@/lib/generateShareImage');
+      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
+
+      const shareImageDataUrl = await generateShareImage({
+        cardImageDataUrl: previewImage,
+        backstoryData: {
+          username: userData.username,
+          displayName: userData.display_name,
+          bio: userData.profile?.bio?.text || "",
+          fid: userData.fid,
+          followerCount: userData.follower_count,
+          createdAt,
+          power: generatedTraits.power,
+          bounty: generatedTraits.power * 10,
+          rarity: generatedTraits.rarity,
+        },
+        displayName: userData.display_name,
+        lang,
+      });
+
+      // Download share image
+      const link = document.createElement('a');
+      link.href = shareImageDataUrl;
+      link.download = `vibefid-${userData.fid}.png`;
+      link.click();
+    } catch (err: any) {
+      console.error('Failed to generate share image:', err);
+    }
+  };
 
   const handleMintCard = async () => {
     if (!address) {
@@ -731,6 +758,10 @@ export default function FidPage() {
           generatedTraits={generatedTraits}
           onMint={handleMintCard}
           isMinting={loading || isContractPending || isConfirming}
+          isMintedSuccessfully={mintedSuccessfully}
+          fid={userData?.fid}
+          onShare={handleShare}
+          username={userData?.username}
         />
 
         {/* Recent Cards */}
