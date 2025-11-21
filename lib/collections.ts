@@ -155,13 +155,13 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-  // Collection VibeFID
+  // Collection VibeFID V2
   vibefid: {
     id: 'vibefid',
     name: 'vibefid',
     displayName: 'VibeFID',
     description: 'Collection VibeFID NFT',
-    contractAddress: '0x30d595f40dee7AEd53f8993f13E87A34Ec0C8D25',
+    contractAddress: '0x60274A138d026E3cB337B40567100FdEC3127565',
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: '/fid',
