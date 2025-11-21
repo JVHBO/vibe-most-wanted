@@ -637,7 +637,7 @@ export default function FidPage() {
         neynarScore: score,
         followerCount: userData.follower_count,
         followingCount: userData.following_count,
-        powerBadge: userData.power_badge,
+        powerBadge: userData.power_badge || false,
         address,
         rarity,
         foil,
