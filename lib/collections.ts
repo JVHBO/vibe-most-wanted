@@ -161,7 +161,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     name: 'vibefid',
     displayName: 'VibeFID',
     description: 'Collection VibeFID NFT',
-    contractAddress: '0x5e834aE1a9aD1b6685a0B313dD911CF9D286c817',
+    contractAddress: '0x30d595f40dee7AEd53f8993f13E87A34Ec0C8D25',
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: '/fid',
