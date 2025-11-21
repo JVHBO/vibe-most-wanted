@@ -224,8 +224,8 @@ export default function FidGenerationModal({
               {/* Mint Price */}
               <div className="text-center py-2 sm:py-3 bg-vintage-black/30 rounded-lg border border-vintage-gold/20">
                 <p className="text-vintage-ice/70 text-xs sm:text-sm">{t.mintPrice || 'Mint Price'}</p>
-                <p className="text-vintage-gold font-bold text-lg sm:text-xl md:text-2xl">0.0001 ETH</p>
-                <p className="text-vintage-ice/50 text-xs mt-1">~$0.30 USD</p>
+                <p className="text-vintage-gold font-bold text-lg sm:text-xl md:text-2xl">0.0003 ETH</p>
+                <p className="text-vintage-ice/50 text-xs mt-1">~$0.90 USD</p>
               </div>
 
               {/* Action Buttons */}
