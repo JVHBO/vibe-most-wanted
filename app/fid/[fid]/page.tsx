@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import FoilCardEffect from '@/components/FoilCardEffect';
+import { getFidTraits } from '@/lib/fidTraits';
 
 export default function FidCardPage() {
   const params = useParams();
@@ -23,6 +24,10 @@ export default function FidCardPage() {
 
   // Get the most recent card (first one)
   const card = fidCards?.[0];
+
+  // Calculate CURRENT deterministic traits (matches OpenSea metadata)
+  // This ignores old random traits stored in Convex from before deterministic fix
+  const currentTraits = card ? getFidTraits(card.fid) : null;
 
   const [backstory, setBackstory] = useState<any>(null);
 
@@ -113,7 +118,7 @@ export default function FidCardPage() {
               {/* Card Image/Video */}
               <div className="w-full max-w-md mb-6">
                 <FoilCardEffect
-                  foilType={card.foil === 'None' ? null : (card.foil as 'Standard' | 'Prize')}
+                  foilType={currentTraits?.foil === 'None' ? null : (currentTraits?.foil as 'Standard' | 'Prize' | null)}
                   className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
                 >
                   <CardMedia
@@ -143,16 +148,16 @@ export default function FidCardPage() {
                   <div>
                     <span className="text-vintage-burnt-gold font-semibold">Foil:</span>{" "}
                     <span className={`font-bold ${
-                      card.foil === 'Prize' ? 'text-purple-400' :
-                      card.foil === 'Standard' ? 'text-blue-400' :
+                      currentTraits?.foil === 'Prize' ? 'text-purple-400' :
+                      currentTraits?.foil === 'Standard' ? 'text-blue-400' :
                       'text-vintage-ice'
                     }`}>
-                      {card.foil}
+                      {currentTraits?.foil || 'None'}
                     </span>
                   </div>
                   <div>
                     <span className="text-vintage-burnt-gold font-semibold">Wear:</span>{" "}
-                    <span className="text-vintage-ice">{card.wear}</span>
+                    <span className="text-vintage-ice">{currentTraits?.wear || 'Unknown'}</span>
                   </div>
                   <div className="col-span-2">
                     <span className="text-vintage-burnt-gold font-semibold">Power:</span>{" "}
@@ -178,8 +183,8 @@ export default function FidCardPage() {
                     };
                     const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
 
-                    const foilEmoji = card.foil === 'Prize' ? '✨' : card.foil === 'Standard' ? '💫' : '';
-                    const foilText = card.foil !== 'None' ? ` ${card.foil} Foil` : '';
+                    const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
+                    const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
 
                     const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${card.power} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn $VBMS\n\n🎮 Mint yours & start playing! @jvhbo`;
 
