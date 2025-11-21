@@ -202,16 +202,28 @@ ${emoji} ${generatedTraits.rarity}
               <div className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-full overflow-x-hidden">
                 {/* Card Image with Foil Effect */}
                 {previewImage && generatedTraits && (
-                  <FoilCardEffect
-                    foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
-                    className="w-full max-w-[280px] sm:max-w-sm md:max-w-md rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden box-border"
-                  >
-                    <CardMedia
-                      src={previewImage}
-                      alt="Card Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  </FoilCardEffect>
+                  <div className="relative w-full max-w-[280px] sm:max-w-sm md:max-w-md">
+                    <FoilCardEffect
+                      foilType={generatedTraits.foil === 'None' ? null : (generatedTraits.foil as 'Standard' | 'Prize')}
+                      className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden box-border"
+                      style={{ filter: 'blur(8px)' }}
+                    >
+                      <CardMedia
+                        src={previewImage}
+                        alt="Card Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </FoilCardEffect>
+
+                    {/* Overlay text */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="bg-vintage-black/80 border-2 border-vintage-gold rounded-lg px-4 sm:px-6 py-2 sm:py-3 backdrop-blur-sm">
+                        <p className="text-vintage-gold font-bold text-sm sm:text-base md:text-lg text-center">
+                          🎴 {t.mintToReveal || 'Mint to Reveal Full Card'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {/* Generated Traits */}
