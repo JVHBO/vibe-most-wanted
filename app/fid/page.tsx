@@ -37,7 +37,7 @@ interface GeneratedTraits {
 export default function FidPage() {
   const { address } = useAccount();
   const farcasterContext = useFarcasterContext();
-  const { lang } = useLanguage();
+  const { lang, setLang } = useLanguage();
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
