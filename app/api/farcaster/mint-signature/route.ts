@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
     // 4. Create wallet from private key
     const wallet = new ethers.Wallet(SIGNER_PRIVATE_KEY);
 
-    // 5. Get contract address (VibeFIDV3)
-    const contractAddress = process.env.VIBEFID_CONTRACT_ADDRESS || '0x30d595f40dee7AEd53f8993f13E87A34Ec0C8D25';
+    // 5. Get contract address (VibeFIDV2)
+    const contractAddress = process.env.VIBEFID_CONTRACT_ADDRESS || '0x60274A138d026E3cB337B40567100FdEC3127565';
     if (!contractAddress) {
       throw new Error('VIBEFID_CONTRACT_ADDRESS not configured');
     }
