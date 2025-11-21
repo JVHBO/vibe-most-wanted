@@ -306,7 +306,7 @@ export default function FidPage() {
           setError("Saving card data...");
 
           // Validate all required fields
-          const validatedData = {
+          const validatedData: any = {
             fid: Number(pendingMintData.fid),
             username: String(pendingMintData.username),
             displayName: String(pendingMintData.displayName),
@@ -327,6 +327,11 @@ export default function FidPage() {
             color: String(pendingMintData.color),
             imageUrl: String(pendingMintData.imageUrl),
           };
+
+          // Add cardImageUrl only if it exists (optional field)
+          if (pendingMintData.cardImageUrl) {
+            validatedData.cardImageUrl = String(pendingMintData.cardImageUrl);
+          }
 
           console.log('💾 Saving to Convex:', validatedData);
 
