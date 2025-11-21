@@ -498,6 +498,8 @@ export default function FidPage() {
         const foil = fidTraits.foil;
         const wear = fidTraits.wear;
 
+        console.log('🎯 MINT DEBUG - FID:', userData.fid, 'Calculated Foil:', foil, 'Wear:', wear);
+
         // Calculate power with VibeFID balanced config
         const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
         const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
@@ -605,6 +607,7 @@ export default function FidPage() {
 
       // Generate MP4 video with foil animation (8 seconds for better effect)
       setError("Generating video with foil animation (8 seconds)...");
+      console.log('🎬 VIDEO DEBUG - About to generate video with foil:', foil);
       const videoBlob = await generateCardVideo({
         cardImageDataUrl,
         foilType: foil as 'None' | 'Standard' | 'Prize',
