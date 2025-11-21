@@ -11,6 +11,7 @@ import CriminalBackstoryCard from '@/components/CriminalBackstoryCard';
 import Link from 'next/link';
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import FoilCardEffect from '@/components/FoilCardEffect';
 
 export default function FidCardPage() {
   const params = useParams();
@@ -111,11 +112,16 @@ export default function FidCardPage() {
             <div className="flex flex-col items-center">
               {/* Card Image/Video */}
               <div className="w-full max-w-md mb-6">
-                <CardMedia
-                  src={convertIpfsUrl(card.imageUrl) || card.pfpUrl}
-                  alt={card.username}
-                  className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
-                />
+                <FoilCardEffect
+                  foilType={card.foil === 'None' ? null : (card.foil as 'Standard' | 'Prize')}
+                  className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
+                >
+                  <CardMedia
+                    src={convertIpfsUrl(card.imageUrl) || card.pfpUrl}
+                    alt={card.username}
+                    className="w-full"
+                  />
+                </FoilCardEffect>
               </div>
 
               {/* Card Stats */}
