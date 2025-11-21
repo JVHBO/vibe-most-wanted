@@ -237,13 +237,13 @@ export const getFarcasterCardsByRarity = query({
 });
 
 /**
- * Delete all old VibeFID V1 cards
- * (cards without contractAddress or with V1 contract address)
+ * Delete all old VibeFID V1/V2 cards
+ * (cards without contractAddress or with old contract addresses)
  */
 export const deleteAllOldVibeFIDCards = mutation({
   args: {},
   handler: async (ctx) => {
-    const VIBEFIDV2_CONTRACT = "0x10D7758F70d0534ac7908caC97D6EdafC763472D";
+    const VIBEFIDV3_CONTRACT = "0x5e834aE1a9aD1b6685a0B313dD911CF9D286c817";
 
     // Get all cards
     const allCards = await ctx.db
@@ -252,17 +252,17 @@ export const deleteAllOldVibeFIDCards = mutation({
 
     let deletedCount = 0;
 
-    // Delete cards that are NOT from VibeFIDV2
+    // Delete cards that are NOT from VibeFIDV3
     for (const card of allCards) {
-      const isV2Card = card.contractAddress?.toLowerCase() === VIBEFIDV2_CONTRACT.toLowerCase();
+      const isV3Card = card.contractAddress?.toLowerCase() === VIBEFIDV3_CONTRACT.toLowerCase();
 
-      if (!isV2Card) {
+      if (!isV3Card) {
         await ctx.db.delete(card._id);
         deletedCount++;
       }
     }
 
-    console.log(`🗑️ Deleted ${deletedCount} old VibeFID V1 cards`);
+    console.log(`🗑️ Deleted ${deletedCount} old VibeFID V1/V2 cards`);
 
     return {
       success: true,
