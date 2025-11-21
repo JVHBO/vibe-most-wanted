@@ -556,7 +556,6 @@ export default function FidPage() {
       // Generate share image (card + criminal text for social sharing)
       setError("Generating share image...");
       const { generateShareImage } = await import('@/lib/generateShareImage');
-      const createdAt = await getFarcasterAccountCreationDate(userData.fid);
 
       const shareImageDataUrl = await generateShareImage({
         cardImageDataUrl,
