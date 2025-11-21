@@ -39,6 +39,11 @@ export default function FidPage() {
   const { lang } = useLanguage();
   const router = useRouter();
 
+  // Password protection
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<NeynarUser | null>(null);
@@ -377,6 +382,59 @@ export default function FidPage() {
     api.farcasterCards.getRecentFarcasterCards,
     { limit: 12 }
   );
+
+  // Password check
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const correctPassword = process.env.NEXT_PUBLIC_FID_PAGE_PASSWORD || "vibefid2025";
+
+    if (passwordInput === correctPassword) {
+      setIsAuthenticated(true);
+      setPasswordError(false);
+    } else {
+      setPasswordError(true);
+    }
+  };
+
+  // If not authenticated, show password form
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black flex items-center justify-center p-8">
+        <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-8 max-w-md w-full">
+          <h1 className="text-3xl font-display font-bold text-vintage-gold mb-2 text-center">
+            🔒 VibeFID Access
+          </h1>
+          <p className="text-vintage-ice text-center mb-6">
+            Enter password to access VibeFID minting
+          </p>
+
+          <form onSubmit={handlePasswordSubmit}>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Enter password"
+              className="w-full px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold mb-4"
+              autoFocus
+            />
+
+            {passwordError && (
+              <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm text-center">
+                ❌ Incorrect password
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors"
+            >
+              Unlock
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const handleMintCard = async () => {
     if (!address) {
