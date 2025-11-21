@@ -648,17 +648,26 @@ export default function FidPage() {
             Mint playable cards from Farcaster profiles
           </p>
 
-          {/* About Button */}
-          <button
-            onClick={() => {
-              AudioManager.buttonClick();
-              setShowAboutModal(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/20 transition-colors text-sm"
-          >
-            <span>ℹ️</span>
-            <span>About Traits</span>
-          </button>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Link
+              href="/"
+              onClick={() => AudioManager.buttonClick()}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors text-sm"
+            >
+              <span>←</span>
+              <span>Home</span>
+            </Link>
+            <button
+              onClick={() => {
+                AudioManager.buttonClick();
+                setShowAboutModal(true);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/20 transition-colors text-sm"
+            >
+              <span>About Traits</span>
+            </button>
+          </div>
         </div>
 
         {/* Success message when in miniapp */}
