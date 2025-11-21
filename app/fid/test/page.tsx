@@ -34,6 +34,7 @@ export default function FidTestPage() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [traits, setTraits] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
+  const [mintedSuccessfully, setMintedSuccessfully] = useState(false);
 
   // Password check
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -266,6 +267,7 @@ export default function FidTestPage() {
       });
 
       setError("✅ Minted successfully!");
+      setMintedSuccessfully(true);
 
     } catch (err: any) {
       setError(err.message || "Failed to mint");
@@ -386,7 +388,7 @@ export default function FidTestPage() {
             </button>
           </div>
 
-          {traits && (
+          {traits && !mintedSuccessfully && (
             <div className="space-y-3">
               <div className="flex gap-4">
                 <button
@@ -418,14 +420,38 @@ export default function FidTestPage() {
                   </ConnectButton.Custom>
                 )}
               </div>
+            </div>
+          )}
 
-              <button
-                onClick={handleShareFarcaster}
-                disabled={!userData}
-                className="w-full px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+          {mintedSuccessfully && userData && (
+            <div className="space-y-3">
+              <div className="bg-green-900/30 border border-green-500 rounded-lg p-4 text-center">
+                <p className="text-green-300 font-bold mb-2">✅ Card minted successfully!</p>
+                <p className="text-vintage-ice text-sm">FID: {userData.fid}</p>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleShare}
+                  className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  📤 Download Share Image
+                </button>
+
+                <button
+                  onClick={handleShareFarcaster}
+                  className="flex-1 px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  🎭 Share on Farcaster
+                </button>
+              </div>
+
+              <a
+                href={`/fid/${userData.fid}`}
+                className="block w-full px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors text-center"
               >
-                🎭 Share on Farcaster
-              </button>
+                View Card Page →
+              </a>
             </div>
           )}
 
