@@ -5,6 +5,7 @@ import { useAccount, useWriteContract } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getUserByFid, calculateRarityFromScore, getSuitFromFid, getSuitSymbol, getSuitColor, generateRankFromRarity } from "@/lib/neynar";
 import { getFidTraits } from "@/lib/fidTraits";
 import { getFarcasterAccountCreationDate } from "@/lib/farcasterRegistry";
@@ -20,6 +21,7 @@ export default function FidTestPage() {
   const { address } = useAccount();
   const { writeContract } = useWriteContract();
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
+  const { lang } = useLanguage();
 
   // Password protection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -298,7 +300,7 @@ export default function FidTestPage() {
           rarity: traits.rarity,
         },
         displayName: userData.display_name,
-        lang: 'en',
+        lang,
       });
 
       // Download share image
