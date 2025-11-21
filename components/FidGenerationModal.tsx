@@ -80,14 +80,10 @@ export default function FidGenerationModal({
         </div>
 
         {/* Content */}
-        <div className="p-2 sm:p-4 md:p-6 lg:p-8 pt-12 sm:pt-12 md:pt-14 lg:pt-16 clear-both w-full max-w-full box-border overflow-x-hidden">
+        <div className="p-2 sm:p-4 md:p-6 lg:p-8 pt-6 sm:pt-8 md:pt-10 lg:pt-12 clear-both w-full max-w-full box-border overflow-x-hidden">
           {currentSlide === 0 ? (
             // Slide 1: Criminal Backstory
-            <div className="space-y-3 sm:space-y-6 w-full max-w-full overflow-x-hidden">
-              <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-display font-bold text-vintage-gold text-center mb-3 sm:mb-6 px-1 break-words">
-                {t.criminalRecord}
-              </h2>
-
+            <div className="space-y-3 sm:space-y-4 w-full max-w-full overflow-x-hidden">
               <div className="bg-vintage-charcoal/80 rounded-lg sm:rounded-xl border-2 border-vintage-gold/50 p-2 sm:p-4 md:p-6 shadow-2xl w-full max-w-full box-border">
                 <div className="text-center mb-3 sm:mb-6 pb-2 sm:pb-4 border-b-2 border-vintage-gold/30">
                   <h3 className="text-base sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-1">
@@ -136,7 +132,7 @@ export default function FidGenerationModal({
                 <div className="bg-vintage-black/40 rounded-lg p-3 sm:p-4 border border-vintage-gold/20">
                   <TypewriterText
                     text={backstory.story}
-                    speed={15}
+                    speed={35}
                     className="text-vintage-ice text-xs sm:text-base leading-relaxed text-justify block"
                   />
                 </div>
