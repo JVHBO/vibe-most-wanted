@@ -14,6 +14,7 @@ interface ShareImageParams {
   cardImageDataUrl: string; // Base64 data URL of the card PNG
   backstoryData: CriminalBackstoryData;
   displayName: string;
+  lang?: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN'; // Language for backstory (defaults to 'en')
 }
 
 export async function generateShareImage(params: ShareImageParams): Promise<string> {
@@ -68,8 +69,8 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         const textWidth = canvas.width - textStartX - 50;
         let currentY = 80;
 
-        // Generate backstory in English for share
-        const backstory = generateCriminalBackstory(params.backstoryData, 'en');
+        // Generate backstory in user's language (defaults to English)
+        const backstory = generateCriminalBackstory(params.backstoryData, params.lang || 'en');
 
         // Title
         ctx.fillStyle = '#d4af37';
@@ -105,8 +106,12 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         ctx.fillStyle = '#d4af37';
         ctx.font = 'bold 22px serif';
         const wantedText = wrapText(ctx, backstory.wantedFor, textWidth, 22);
-        wantedText.forEach(line => {
-          ctx.fillText(line, textStartX, currentY);
+        // Limit to 4 lines max to prevent overflow
+        const wantedLines = wantedText.slice(0, 4);
+        wantedLines.forEach((line, idx) => {
+          // Add ellipsis to last line if text was truncated
+          const displayLine = (idx === 3 && wantedText.length > 4) ? line + '...' : line;
+          ctx.fillText(displayLine, textStartX, currentY);
           currentY += 28;
         });
         currentY += 15;
@@ -135,8 +140,12 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         ctx.fillStyle = '#f5f5dc';
         ctx.font = '18px serif';
         const lastSeenText = wrapText(ctx, backstory.lastSeen, textWidth, 18);
-        lastSeenText.forEach(line => {
-          ctx.fillText(line, textStartX, currentY);
+        // Limit to 3 lines max to prevent overflow
+        const lastSeenLines = lastSeenText.slice(0, 3);
+        lastSeenLines.forEach((line, idx) => {
+          // Add ellipsis to last line if text was truncated
+          const displayLine = (idx === 2 && lastSeenText.length > 3) ? line + '...' : line;
+          ctx.fillText(displayLine, textStartX, currentY);
           currentY += 24;
         });
 
