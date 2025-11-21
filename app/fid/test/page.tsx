@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { generateFarcasterCardImage } from '@/lib/generateFarcasterCard';
 import { getFidTraits } from '@/lib/fidTraits';
 import { generateCardVideo } from '@/lib/generateCardVideo';
-import { VIBEFID_POWER_CONFIG } from '@/lib/utils/card-power';
+import { VIBEFID_POWER_CONFIG } from '@/lib/collections';
 import FoilCardEffect from '@/components/FoilCardEffect';
 
 export default function FidTestPage() {
