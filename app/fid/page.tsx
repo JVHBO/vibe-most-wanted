@@ -550,6 +550,7 @@ export default function FidPage() {
           rarity,
         },
         displayName: userData.display_name,
+        lang, // Use current language from context
       });
 
       // Upload share image to IPFS
