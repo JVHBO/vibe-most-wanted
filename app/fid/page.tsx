@@ -102,7 +102,14 @@ export default function FidPage() {
       const saved = localStorage.getItem(key);
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          // Validate that previewImage is a data URL (not IPFS or other URL)
+          if (parsed.previewImage && !parsed.previewImage.startsWith('data:')) {
+            console.warn('⚠️ Invalid preview image in localStorage (not a data URL), clearing cache');
+            localStorage.removeItem(key);
+            return null;
+          }
+          return parsed;
         } catch (e) {
           console.error('Failed to parse saved card:', e);
           localStorage.removeItem(key);
