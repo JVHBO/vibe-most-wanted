@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAccount, useWriteContract } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getSuitFromFid, getSuitSymbol, getSuitColor, generateRankFromRarity } from "@/lib/neynar";
@@ -384,13 +385,27 @@ export default function FidTestPage() {
               >
                 📤 Download Share Image
               </button>
-              <button
-                onClick={handleMint}
-                disabled={minting || !address}
-                className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                {minting ? "Minting..." : address ? "🎴 Mint Card (0.0003 ETH)" : "Connect Wallet"}
-              </button>
+
+              {address ? (
+                <button
+                  onClick={handleMint}
+                  disabled={minting}
+                  className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  {minting ? "Minting..." : "🎴 Mint Card (0.0003 ETH)"}
+                </button>
+              ) : (
+                <ConnectButton.Custom>
+                  {({ openConnectModal }) => (
+                    <button
+                      onClick={openConnectModal}
+                      className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Connect Wallet to Mint
+                    </button>
+                  )}
+                </ConnectButton.Custom>
+              )}
             </div>
           )}
 
