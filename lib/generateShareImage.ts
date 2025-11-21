@@ -20,6 +20,8 @@ interface ShareImageParams {
 
 export async function generateShareImage(params: ShareImageParams): Promise<string> {
   return new Promise((resolve, reject) => {
+    console.log('🎨 generateShareImage called with cardImageDataUrl:', params.cardImageDataUrl?.substring(0, 50));
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -45,7 +47,8 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
     const cardImg = new Image();
     cardImg.crossOrigin = 'anonymous';
 
-    cardImg.onerror = () => {
+    cardImg.onerror = (e) => {
+      console.error('❌ Card image failed to load:', e);
       reject(new Error('Failed to load card image'));
     };
 
