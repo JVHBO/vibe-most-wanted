@@ -28,9 +28,9 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
       return;
     }
 
-    // Standard OG image size
+    // Farcaster Frame size (3:2 aspect ratio)
     canvas.width = 1200;
-    canvas.height = 630;
+    canvas.height = 800;
 
     // Background - vintage charcoal
     ctx.fillStyle = '#1a1a1a';
@@ -52,8 +52,8 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
     cardImg.onload = () => {
       try {
         // Draw card on the left side
-        const cardWidth = 350;
-        const cardHeight = 490; // Maintain 500:700 aspect ratio
+        const cardWidth = 400;
+        const cardHeight = 560; // Maintain 500:700 aspect ratio (5:7)
         const cardX = 40;
         const cardY = (canvas.height - cardHeight) / 2;
 
@@ -66,9 +66,9 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         ctx.drawImage(cardImg, cardX, cardY, cardWidth, cardHeight);
 
         // Right side - Criminal record text
-        const textStartX = cardX + cardWidth + 60;
+        const textStartX = cardX + cardWidth + 50;
         const textWidth = canvas.width - textStartX - 50;
-        let currentY = 80;
+        let currentY = 100;
 
         // Get translations for current language
         const lang = params.lang || 'en';
@@ -155,7 +155,7 @@ export async function generateShareImage(params: ShareImageParams): Promise<stri
         });
 
         // Warning box at bottom
-        const warningY = canvas.height - 80;
+        const warningY = canvas.height - 100;
         ctx.fillStyle = 'rgba(139, 0, 0, 0.3)';
         ctx.fillRect(textStartX - 10, warningY - 10, textWidth + 20, 60);
 
