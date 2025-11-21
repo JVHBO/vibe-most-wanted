@@ -4575,10 +4575,11 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   window.location.href = '/fid';
                 }}
-                className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold transition-all shadow-gold hover:scale-105 flex items-center justify-center gap-2 uppercase tracking-wide"
+                className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold transition-all shadow-gold hover:scale-105 flex items-center justify-center gap-2 uppercase tracking-wide animate-[pulse_3s_ease-in-out_infinite]"
+                style={{ animationDuration: '3s' }}
               >
                 <span className="text-2xl">♦</span>
-                VibeFID
+                MINT your VIBEFID
               </button>
             </div>
           )}
