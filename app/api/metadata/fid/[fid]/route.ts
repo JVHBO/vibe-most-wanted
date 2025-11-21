@@ -47,13 +47,13 @@ export async function GET(
     const fidNumber = parseInt(fid);
     const traits = getFidTraits(fidNumber);
 
-    // Recalculate power with correct foil/wear multipliers
+    // Recalculate power with VIBEFID_POWER_CONFIG (balanced for VibeFID cards)
     const rarityBasePower: Record<string, number> = {
-      Common: 5,
+      Common: 10,
       Rare: 20,
-      Epic: 80,
-      Legendary: 240,
-      Mythic: 800,
+      Epic: 50,
+      Legendary: 100,
+      Mythic: 600,
     };
 
     const wearMultiplier: Record<string, number> = {
@@ -65,8 +65,8 @@ export async function GET(
     };
 
     const foilMultiplier: Record<string, number> = {
-      Prize: 15.0,
-      Standard: 2.5,
+      Prize: 6.0,
+      Standard: 2.0,
       None: 1.0,
     };
 
@@ -95,8 +95,13 @@ export async function GET(
           value: traits.wear,
         },
         {
+          trait_type: 'Power',
+          value: correctPower,
+          display_type: 'number',
+        },
+        {
           trait_type: 'Bounty',
-          value: correctPower * 10, // Bounty = Power × 10 (using recalculated power)
+          value: correctPower * 10, // Bounty = Power × 10
           display_type: 'number',
         },
         {
