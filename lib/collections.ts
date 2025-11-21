@@ -155,7 +155,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-  // Collection VibeFID V3
+  // Collection VibeFID
   vibefid: {
     id: 'vibefid',
     name: 'vibefid',

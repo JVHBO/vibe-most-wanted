@@ -1,11 +1,7 @@
 /**
- * VibeFIDV3 Smart Contract ABI
+ * VibeFID Smart Contract ABI
  * Deployed on Base Mainnet at: 0x5e834aE1a9aD1b6685a0B313dD911CF9D286c817
  * Mint Price: 0.0003 ETH
- *
- * Previous versions:
- * - V2: 0x10D7758F70d0534ac7908caC97D6EdafC763472D (0.0001 ETH)
- * - V1 (deprecated): 0x3e1E69e444261A5bc65B83c41036b5284c1E69aE
  */
 
 export const VIBEFID_ABI = [

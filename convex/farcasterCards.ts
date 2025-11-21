@@ -237,13 +237,13 @@ export const getFarcasterCardsByRarity = query({
 });
 
 /**
- * Delete all old VibeFID V1/V2 cards
+ * Delete all old VibeFID cards from previous contracts
  * (cards without contractAddress or with old contract addresses)
  */
 export const deleteAllOldVibeFIDCards = mutation({
   args: {},
   handler: async (ctx) => {
-    const VIBEFIDV3_CONTRACT = "0x5e834aE1a9aD1b6685a0B313dD911CF9D286c817";
+    const VIBEFID_CURRENT_CONTRACT = "0x5e834aE1a9aD1b6685a0B313dD911CF9D286c817";
 
     // Get all cards
     const allCards = await ctx.db
@@ -252,17 +252,17 @@ export const deleteAllOldVibeFIDCards = mutation({
 
     let deletedCount = 0;
 
-    // Delete cards that are NOT from VibeFIDV3
+    // Delete cards that are NOT from the current VibeFID contract
     for (const card of allCards) {
-      const isV3Card = card.contractAddress?.toLowerCase() === VIBEFIDV3_CONTRACT.toLowerCase();
+      const isCurrentContract = card.contractAddress?.toLowerCase() === VIBEFID_CURRENT_CONTRACT.toLowerCase();
 
-      if (!isV3Card) {
+      if (!isCurrentContract) {
         await ctx.db.delete(card._id);
         deletedCount++;
       }
     }
 
-    console.log(`🗑️ Deleted ${deletedCount} old VibeFID V1/V2 cards`);
+    console.log(`🗑️ Deleted ${deletedCount} old VibeFID cards from previous contracts`);
 
     return {
       success: true,
@@ -273,7 +273,7 @@ export const deleteAllOldVibeFIDCards = mutation({
 
 /**
  * Get recent Farcaster cards (latest 20)
- * Shows all cards (V1 and V2) until old V1 cards are manually deleted
+ * Shows all cards until old cards from previous contracts are manually deleted
  */
 export const getRecentFarcasterCards = query({
   args: {
@@ -282,8 +282,8 @@ export const getRecentFarcasterCards = query({
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
 
-    // Get all cards (V1 and V2 mixed)
-    // After running deleteAllOldVibeFIDCards, only V2 cards will remain
+    // Get all cards (mixed contracts)
+    // After running deleteAllOldVibeFIDCards, only current contract cards will remain
     const allCards = await ctx.db
       .query("farcasterCards")
       .collect();
