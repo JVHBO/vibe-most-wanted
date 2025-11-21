@@ -17,6 +17,7 @@ import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
+import { fidTranslations } from "@/lib/fidTranslations";
 import FidGenerationModal from "@/components/FidGenerationModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -429,7 +430,7 @@ export default function FidPage() {
     );
   }
 
-  const handleShare = async () => {
+  const handleShare = async (currentLang: string) => {
     if (!previewImage || !userData || !generatedTraits) return;
 
     try {
@@ -450,7 +451,7 @@ export default function FidPage() {
           rarity: generatedTraits.rarity,
         },
         displayName: userData.display_name,
-        lang,
+        lang: currentLang,
       });
 
       // Download share image
@@ -715,7 +716,7 @@ export default function FidPage() {
         {farcasterContext.isReady && farcasterContext.isInMiniapp && farcasterContext.user && (
           <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-center">
             <p className="text-green-300 text-xs sm:text-sm md:text-base break-words">
-              ✅ Conectado como <span className="font-bold">@{farcasterContext.user.username || `FID ${farcasterContext.user.fid}`}</span>
+              ✅ {fidTranslations[lang].connectedAs} <span className="font-bold">@{farcasterContext.user.username || `FID ${farcasterContext.user.fid}`}</span>
               {" "}(FID: {farcasterContext.user.fid})
             </p>
           </div>

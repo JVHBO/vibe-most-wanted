@@ -21,7 +21,7 @@ interface FidGenerationModalProps {
   isMinting: boolean;
   isMintedSuccessfully?: boolean;
   fid?: number;
-  onShare?: () => void;
+  onShare?: (lang: string) => void;
   username?: string;
 }
 
@@ -296,7 +296,7 @@ ${emoji} ${generatedTraits.rarity}
                       <button
                         onClick={() => {
                           AudioManager.buttonClick();
-                          onShare();
+                          onShare(lang);
                         }}
                         className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
                       >
