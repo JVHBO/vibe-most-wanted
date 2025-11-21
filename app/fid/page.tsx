@@ -696,24 +696,15 @@ export default function FidPage() {
           </div>
         )}
 
-        {/* Example Card Section */}
+        {/* Mint Section */}
         <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
-          <div className="text-center mb-4">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-2">
-              VibeFID Cards
+          <div className="text-center">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-4">
+              Mint Your VibeFID Card
             </h2>
-            <p className="text-sm sm:text-base text-vintage-ice/70 mb-4">
-              Example: Card FID #2
+            <p className="text-sm sm:text-base text-vintage-ice/70 mb-6">
+              Transform your Farcaster profile into a playable card • Mint Price: 0.0003 ETH
             </p>
-
-            {/* Example Card Image */}
-            <div className="max-w-md mx-auto mb-6">
-              <img
-                src="/api/fid/example-card"
-                alt="Example VibeFID Card"
-                className="w-full rounded-lg border-2 border-vintage-gold/30 shadow-[0_0_30px_rgba(255,215,0,0.3)]"
-              />
-            </div>
 
             {/* Mint Button */}
             <button
