@@ -167,13 +167,6 @@ export const VIBEFID_ABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "closeMinting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
