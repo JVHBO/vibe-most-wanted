@@ -37,6 +37,7 @@ export const mintFarcasterCard = mutation({
     // Generated image URLs
     imageUrl: v.string(), // Video (MP4)
     cardImageUrl: v.optional(v.string()), // Static PNG for sharing
+    shareImageUrl: v.optional(v.string()), // Share image with card + criminal text
 
     // Contract
     contractAddress: v.optional(v.string()), // NFT contract address
@@ -89,6 +90,7 @@ export const mintFarcasterCard = mutation({
       // Generated Images
       imageUrl: args.imageUrl, // Video (MP4)
       cardImageUrl: args.cardImageUrl, // Static PNG for sharing
+      shareImageUrl: args.shareImageUrl, // Share image with card + criminal text
 
       // Game State
       equipped: false,
