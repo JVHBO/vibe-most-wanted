@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // 6. Define EIP-712 domain (must match contract)
     const domain = {
-      name: 'Vibe Most Wanted - FID Edition',
+      name: 'VibeFID',
       version: '1',
       chainId: 8453, // Base mainnet
       verifyingContract: contractAddress,
