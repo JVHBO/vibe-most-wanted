@@ -81,10 +81,7 @@ export async function generateCardVideo({
 
         // Apply foil effect overlay
         if (foilType !== 'None') {
-          if (frame === 0) console.log('🎨 Drawing foil effect:', foilType);
           drawFoilEffect(ctx, width, height, frame, foilType);
-        } else {
-          if (frame === 0) console.log('⚠️ NO foil effect (foilType is None)');
         }
 
         frame++;
