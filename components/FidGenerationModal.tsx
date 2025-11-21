@@ -228,7 +228,7 @@ ${emoji} ${generatedTraits.rarity}
 
                 {/* Generated Traits */}
                 {generatedTraits && (
-                  <div className="w-full max-w-[280px] sm:max-w-sm md:max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-2 sm:p-4 md:p-6 box-border">
+                  <div className="w-full max-w-[280px] sm:max-w-sm md:max-w-md bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-2 sm:p-4 md:p-6 box-border" style={{ filter: 'blur(4px)' }}>
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-vintage-gold mb-3 sm:mb-4 text-center">
                       {t.cardStats}
                     </h3>
