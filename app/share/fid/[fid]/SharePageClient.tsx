@@ -7,13 +7,13 @@ export default function SharePageClient({ fid }: { fid: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to VibeFID main page after 2 seconds
+    // Redirect to specific VibeFID card page after 1 second
     const timeout = setTimeout(() => {
-      router.push('/fid');
-    }, 2000);
+      router.push(`/fid/${fid}`);
+    }, 1000);
 
     return () => clearTimeout(timeout);
-  }, [router]);
+  }, [router, fid]);
 
   return (
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
@@ -21,8 +21,11 @@ export default function SharePageClient({ fid }: { fid: string }) {
         <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
           VibeFID Card #{fid}
         </h1>
-        <p className="text-vintage-burnt-gold mb-4">Redirecting to VibeFID...</p>
-        <div className="animate-pulse text-6xl">🎴</div>
+        <p className="text-vintage-burnt-gold mb-4">Loading card details...</p>
+        <div className="animate-pulse text-6xl mb-4">🎴</div>
+        <p className="text-vintage-ice/50 text-sm">
+          Redirecting to card page...
+        </p>
       </div>
     </div>
   );
