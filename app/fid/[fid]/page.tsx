@@ -78,25 +78,25 @@ export default function FidCardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header with Language Selector */}
-        <div className="text-center mb-8 relative">
-          {/* Language Selector - Top Right */}
-          <div className="absolute top-0 right-0">
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value as any)}
-              className="px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm"
-            >
-              <option value="en">🇺🇸 English</option>
-              <option value="pt-BR">🇧🇷 Português</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="hi">🇮🇳 हिन्दी</option>
-              <option value="ru">🇷🇺 Русский</option>
-              <option value="zh-CN">🇨🇳 中文</option>
-            </select>
-          </div>
+      {/* Language Selector - Fixed Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <select
+          value={lang}
+          onChange={(e) => setLang(e.target.value as any)}
+          className="px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm shadow-lg hover:border-vintage-gold transition-colors"
+        >
+          <option value="en">🇺🇸 English</option>
+          <option value="pt-BR">🇧🇷 Português</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+          <option value="ru">🇷🇺 Русский</option>
+          <option value="zh-CN">🇨🇳 中文</option>
+        </select>
+      </div>
 
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
           <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2">
             VibeFID #{fid}
           </h1>
