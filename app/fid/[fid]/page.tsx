@@ -180,7 +180,7 @@ export default function FidCardPage() {
                     const foilEmoji = card.foil === 'Prize' ? '✨' : card.foil === 'Standard' ? '💫' : '';
                     const foilText = card.foil !== 'None' ? ` ${card.foil} Foil` : '';
 
-                    const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${card.power} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎮 Mint yours now! @jvhbo`;
+                    const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${card.power} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn $VBMS\n\n🎮 Mint yours & start playing! @jvhbo`;
 
                     return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                   })()}
