@@ -19,6 +19,9 @@ interface FidGenerationModalProps {
   generatedTraits: any;
   onMint: () => void;
   isMinting: boolean;
+  isMintedSuccessfully?: boolean;
+  fid?: number;
+  onShare?: () => void;
 }
 
 export default function FidGenerationModal({
@@ -30,9 +33,20 @@ export default function FidGenerationModal({
   generatedTraits,
   onMint,
   isMinting,
+  isMintedSuccessfully = false,
+  fid,
+  onShare,
 }: FidGenerationModalProps) {
   const { lang, setLang } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0); // 0 = backstory, 1 = card
+
+  const handleShareFarcaster = () => {
+    if (!fid) return;
+    const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${fid}`;
+    const text = `Check out this VibeFID card on VIBE Most Wanted!`;
+    const farcasterShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+    window.open(farcasterShareUrl, '_blank');
+  };
 
   // Get translations for current language
   const t = fidTranslations[lang];
@@ -225,27 +239,69 @@ export default function FidGenerationModal({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden box-border">
-                <button
-                  onClick={() => {
-                    AudioManager.buttonClick();
-                    setCurrentSlide(0);
-                  }}
-                  className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors text-xs sm:text-sm md:text-base"
-                >
-                  {t.back}
-                </button>
-                <button
-                  onClick={() => {
-                    AudioManager.buttonClick();
-                    onMint();
-                  }}
-                  disabled={isMinting}
-                  className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-xs sm:text-sm md:text-base"
-                >
-                  {isMinting ? t.minting : t.mintCard}
-                </button>
-              </div>
+              {!isMintedSuccessfully ? (
+                <div className="flex gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden box-border">
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      setCurrentSlide(0);
+                    }}
+                    className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors text-xs sm:text-sm md:text-base"
+                  >
+                    {t.back}
+                  </button>
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      onMint();
+                    }}
+                    disabled={isMinting}
+                    className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-xs sm:text-sm md:text-base"
+                  >
+                    {isMinting ? t.minting : t.mintCard}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3 w-full">
+                  <div className="bg-green-900/30 border border-green-500 rounded-lg p-3 sm:p-4 text-center">
+                    <p className="text-green-300 font-bold text-sm sm:text-base">✅ Card minted successfully!</p>
+                    {fid && <p className="text-vintage-ice text-xs sm:text-sm">FID: {fid}</p>}
+                  </div>
+
+                  <div className="flex gap-2 sm:gap-3 w-full">
+                    {onShare && (
+                      <button
+                        onClick={() => {
+                          AudioManager.buttonClick();
+                          onShare();
+                        }}
+                        className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+                      >
+                        📤 Download
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        AudioManager.buttonClick();
+                        handleShareFarcaster();
+                      }}
+                      className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors text-xs sm:text-sm"
+                    >
+                      🎭 Share
+                    </button>
+                  </div>
+
+                  {fid && (
+                    <a
+                      href={`/fid/${fid}`}
+                      className="block w-full px-3 sm:px-6 py-2 sm:py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors text-center text-xs sm:text-sm"
+                    >
+                      View Card Page →
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
