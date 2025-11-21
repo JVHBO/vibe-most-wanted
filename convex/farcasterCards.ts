@@ -273,7 +273,7 @@ export const deleteAllOldVibeFIDCards = mutation({
 
 /**
  * Get recent Farcaster cards (latest 20)
- * Filters to only show VibeFIDV2 cards (new contract)
+ * Shows all cards (V1 and V2) until old V1 cards are manually deleted
  */
 export const getRecentFarcasterCards = query({
   args: {
@@ -281,16 +281,15 @@ export const getRecentFarcasterCards = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
-    const VIBEFIDV2_CONTRACT = "0x10D7758F70d0534ac7908caC97D6EdafC763472D";
 
-    // Get only VibeFIDV2 cards (new contract)
-    const v2Cards = await ctx.db
+    // Get all cards (V1 and V2 mixed)
+    // After running deleteAllOldVibeFIDCards, only V2 cards will remain
+    const allCards = await ctx.db
       .query("farcasterCards")
-      .filter((q) => q.eq(q.field("contractAddress"), VIBEFIDV2_CONTRACT.toLowerCase()))
       .collect();
 
     // Sort by _creationTime in descending order (newest first)
-    const sortedCards = v2Cards
+    const sortedCards = allCards
       .sort((a, b) => b._creationTime - a._creationTime)
       .slice(0, limit);
 
