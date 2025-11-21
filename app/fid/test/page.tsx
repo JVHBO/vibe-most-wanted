@@ -314,10 +314,30 @@ export default function FidTestPage() {
   };
 
   const handleShareFarcaster = () => {
-    if (!userData) return;
+    if (!userData || !traits) return;
 
+    const rarityEmojis: Record<string, string> = {
+      'Mythic': '🌟',
+      'Legendary': '💎',
+      'Epic': '💎',
+      'Rare': '💜',
+      'Common': '⚪'
+    };
+
+    const emoji = rarityEmojis[traits.rarity] || '💎';
     const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${userData.fid}`;
-    const text = `Check out this VibeFID card on VIBE Most Wanted!`;
+    const text = `Just minted my VibeFID!
+
+${emoji} ${traits.rarity}
+⚡ ${traits.power} Power
+🎯 FID #${userData.fid}
+
+🎲 Play Poker Battles
+🗡️ Fight in PvE
+💰 Earn $VBMS
+
+🎮 Mint yours & start playing! @${userData.username}`;
+
     const farcasterShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
     window.open(farcasterShareUrl, '_blank');
