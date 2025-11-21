@@ -340,6 +340,9 @@ export default function FidPage() {
             validatedData.cardImageUrl = String(pendingMintData.cardImageUrl);
           }
 
+          // Add contractAddress (VibeFIDV2)
+          validatedData.contractAddress = VIBEFID_CONTRACT_ADDRESS.toLowerCase();
+
           // TODO: Re-enable after Convex schema deploy
           // Add shareImageUrl only if it exists (optional field)
           // if (pendingMintData.shareImageUrl) {

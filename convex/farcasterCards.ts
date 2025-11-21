@@ -37,6 +37,9 @@ export const mintFarcasterCard = mutation({
     // Generated image URLs
     imageUrl: v.string(), // Video (MP4)
     cardImageUrl: v.optional(v.string()), // Static PNG for sharing
+
+    // Contract
+    contractAddress: v.optional(v.string()), // NFT contract address
   },
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
@@ -59,6 +62,9 @@ export const mintFarcasterCard = mutation({
 
       // Owner
       address: normalizedAddress,
+
+      // Contract
+      contractAddress: args.contractAddress,
 
       // Card Properties
       cardId,
@@ -231,7 +237,43 @@ export const getFarcasterCardsByRarity = query({
 });
 
 /**
+ * Delete all old VibeFID V1 cards
+ * (cards without contractAddress or with V1 contract address)
+ */
+export const deleteAllOldVibeFIDCards = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const VIBEFIDV2_CONTRACT = "0x10D7758F70d0534ac7908caC97D6EdafC763472D";
+
+    // Get all cards
+    const allCards = await ctx.db
+      .query("farcasterCards")
+      .collect();
+
+    let deletedCount = 0;
+
+    // Delete cards that are NOT from VibeFIDV2
+    for (const card of allCards) {
+      const isV2Card = card.contractAddress?.toLowerCase() === VIBEFIDV2_CONTRACT.toLowerCase();
+
+      if (!isV2Card) {
+        await ctx.db.delete(card._id);
+        deletedCount++;
+      }
+    }
+
+    console.log(`🗑️ Deleted ${deletedCount} old VibeFID V1 cards`);
+
+    return {
+      success: true,
+      deletedCount,
+    };
+  },
+});
+
+/**
  * Get recent Farcaster cards (latest 20)
+ * Filters to only show VibeFIDV2 cards (new contract)
  */
 export const getRecentFarcasterCards = query({
   args: {
@@ -239,14 +281,16 @@ export const getRecentFarcasterCards = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
+    const VIBEFIDV2_CONTRACT = "0x10D7758F70d0534ac7908caC97D6EdafC763472D";
 
-    // Get all cards and sort by creation time (most recent first)
-    const allCards = await ctx.db
+    // Get only VibeFIDV2 cards (new contract)
+    const v2Cards = await ctx.db
       .query("farcasterCards")
+      .filter((q) => q.eq(q.field("contractAddress"), VIBEFIDV2_CONTRACT.toLowerCase()))
       .collect();
 
     // Sort by _creationTime in descending order (newest first)
-    const sortedCards = allCards
+    const sortedCards = v2Cards
       .sort((a, b) => b._creationTime - a._creationTime)
       .slice(0, limit);
 
