@@ -249,7 +249,7 @@ export default function FidTestPage() {
         neynarScore: userData.experimental?.neynar_user_score || 0,
         followerCount: userData.follower_count,
         followingCount: userData.following_count,
-        powerBadge: userData.power_badge,
+        powerBadge: userData.power_badge || false,
         address,
         rarity,
         foil,
