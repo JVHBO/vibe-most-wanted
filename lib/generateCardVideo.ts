@@ -116,9 +116,9 @@ function drawFoilEffect(
   // Save context
   ctx.save();
 
-  // Set blend mode
-  ctx.globalCompositeOperation = 'hard-light';
-  ctx.globalAlpha = foilType === 'Prize' ? 0.45 : 0.25; // Prize: 0.45 (stronger!), Standard: 0.25
+  // Set blend mode (overlay works better on varied backgrounds)
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.globalAlpha = foilType === 'Prize' ? 0.45 : 0.25; // Prize: 0.45, Standard: 0.25 (same as CSS)
 
   // Calculate animation progress (0 to 1)
   const speed = foilType === 'Prize' ? 3 : 4; // Prize: 3s (fast & aggressive!), Standard: 4s
