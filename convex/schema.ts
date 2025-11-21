@@ -740,6 +740,9 @@ export default defineSchema({
     // Owner
     address: v.string(), // Wallet address of card owner
 
+    // Contract Info
+    contractAddress: v.optional(v.string()), // NFT contract address (VibeFID V1 or V2)
+
     // Card Properties (same as other cards)
     cardId: v.string(), // Unique card ID (farcaster_{fid})
     rarity: v.string(), // "Common", "Rare", "Epic", "Legendary", "Mythic"
@@ -776,7 +779,8 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_address_equipped", ["address", "equipped"])
     .index("by_rarity", ["rarity"])
-    .index("by_score", ["neynarScore"]),
+    .index("by_score", ["neynarScore"])
+    .index("by_contract", ["contractAddress"]),
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // WEBRTC VOICE CHAT SIGNALING
