@@ -26,9 +26,12 @@ export async function generateMetadata({ params }: { params: Promise<{ fid: stri
         const data = await response.json();
         const card = data.value;
 
-        // If card has cardImageUrl, use IPFS directly (bypasses Vercel firewall)
-        if (card?.cardImageUrl) {
-          let ipfsUrl = card.cardImageUrl;
+        // Prefer shareImageUrl (card + criminal text), fallback to cardImageUrl (just card)
+        const sourceUrl = card?.shareImageUrl || card?.cardImageUrl;
+
+        // If card has share/card image, use IPFS directly (bypasses Vercel firewall)
+        if (sourceUrl) {
+          let ipfsUrl = sourceUrl;
 
           // Convert to Filebase gateway if needed
           if (ipfsUrl.startsWith('ipfs://')) {
