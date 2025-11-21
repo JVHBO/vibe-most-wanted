@@ -763,6 +763,7 @@ export default defineSchema({
     // Card Images
     imageUrl: v.string(), // Video with foil animation (MP4)
     cardImageUrl: v.optional(v.string()), // Static card image (PNG) for sharing
+    shareImageUrl: v.optional(v.string()), // Share image with card + criminal text (PNG)
 
     // Game State
     equipped: v.boolean(), // If card is equipped in deck
