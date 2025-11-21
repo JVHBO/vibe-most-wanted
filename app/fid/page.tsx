@@ -577,14 +577,12 @@ export default function FidPage() {
 
       // Generate MP4 video with foil animation (8 seconds for better effect)
       setError("Generating video with foil animation (8 seconds)...");
-      console.log('🎬 Generating video with foilType:', foil);
       const videoBlob = await generateCardVideo({
         cardImageDataUrl,
         foilType: foil as 'None' | 'Standard' | 'Prize',
         duration: 8, // Increased from 3 to 8 seconds
         fps: 30,
       });
-      console.log('🎬 Video generated, size:', videoBlob.size);
 
       // Upload video to IPFS
       setError("Uploading video to IPFS...");
