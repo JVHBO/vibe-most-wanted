@@ -106,4 +106,21 @@ crons.interval(
   internal.notifications.sendPeriodicTip
 );
 
+// ============================================================================
+// RAID BOSS AUTO-ATTACKS
+// ============================================================================
+
+/**
+ * ⚔️ Process automatic raid boss attacks
+ *
+ * Schedule: Every 5 minutes
+ * Logic: All cards with energy attack the current boss automatically
+ * Rewards: Distributed when boss is defeated (contribution-based)
+ */
+crons.interval(
+  "raid boss auto attacks",
+  { minutes: 5 },
+  internal.raidBoss.processAutoAttacks
+);
+
 export default crons;
