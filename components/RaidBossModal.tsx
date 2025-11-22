@@ -13,6 +13,8 @@ import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { RaidDeckSelectionModal } from '@/components/RaidDeckSelectionModal';
+import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
 
 interface RaidBossModalProps {
@@ -21,6 +23,7 @@ interface RaidBossModalProps {
   userAddress: string;
   soundEnabled: boolean;
   t: (key: string) => string;
+  allNfts: Card[]; // All player's NFTs for deck selection
 }
 
 type NFT = Card;
@@ -31,9 +34,11 @@ export function RaidBossModal({
   userAddress,
   soundEnabled,
   t,
+  allNfts,
 }: RaidBossModalProps) {
   const [showDeckSelector, setShowDeckSelector] = useState(false);
   const [selectedCards, setSelectedCards] = useState<NFT[]>([]);
+  const [sortByPower, setSortByPower] = useState(true);
   const [timeUntilNextAttack, setTimeUntilNextAttack] = useState(0);
 
   // Query current boss
@@ -98,11 +103,35 @@ export function RaidBossModal({
 
   const hasDeck = playerDeck && playerDeck.deck.length > 0;
 
+  // Handle deck confirmation
+  const handleDeckConfirm = async (deck: NFT[]) => {
+    // TODO: Implement VBMS payment and deck setting
+    console.log('Setting raid deck:', deck);
+    setShowDeckSelector(false);
+    // Will call mutation to set deck after payment confirmation
+  };
+
   return (
-    <div
-      className="fixed inset-0 bg-black/95 flex items-center justify-center z-[200] p-4"
-      onClick={onClose}
-    >
+    <>
+      {/* Raid Deck Selection Modal */}
+      <RaidDeckSelectionModal
+        isOpen={showDeckSelector}
+        onClose={() => setShowDeckSelector(false)}
+        onConfirm={handleDeckConfirm}
+        t={t}
+        selectedCards={selectedCards}
+        setSelectedCards={setSelectedCards}
+        availableCards={allNfts}
+        sortByPower={sortByPower}
+        setSortByPower={setSortByPower}
+        soundEnabled={soundEnabled}
+      />
+
+      {/* Main Raid Boss Modal */}
+      <div
+        className="fixed inset-0 bg-black/95 flex items-center justify-center z-[200] p-4"
+        onClick={onClose}
+      >
       <div
         className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-6xl w-full p-4 md:p-6 lg:p-8 shadow-neon h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -442,5 +471,6 @@ export function RaidBossModal({
         </div>
       </div>
     </div>
+    </>
   );
 }
