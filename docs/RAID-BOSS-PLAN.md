@@ -9,8 +9,10 @@ Raid Boss is a **global cooperative mode** where all players attack the same bos
 
 ### 1. Boss System
 - **Global Boss**: All players attack the same boss
-- **Boss Progression**: Common → Rare → Epic → Legendary (using game cards as bosses)
-- **HP Scaling**: Starts at 1M HP, increases each tier
+- **Boss Rotation**: 5 tiers that cycle continuously
+  - Common → Rare → Epic → Legendary → Mythic → Common (loops forever)
+- **Using Game Cards**: Each boss is represented by a card from collections matching the tier
+- **HP Scaling**: Increases significantly each tier
 - **Visual**: Use existing card images from collections as boss sprites
 
 ### 2. Card Energy System
@@ -56,7 +58,8 @@ raidBosses: defineTable({
     v.literal("common"),
     v.literal("rare"),
     v.literal("epic"),
-    v.literal("legendary")
+    v.literal("legendary"),
+    v.literal("mythic")
   ),
 
   // Boss Card (from game collections)
@@ -198,7 +201,7 @@ export const getCurrentBoss = query(async (ctx) => {
 
 // Create next boss (when current defeated)
 export const createNextBoss = mutation(async (ctx, args: {
-  tier: "common" | "rare" | "epic" | "legendary"
+  tier: "common" | "rare" | "epic" | "legendary" | "mythic"
 }) => {
   // 1. Select random card from tier
   // 2. Calculate boss HP based on tier
@@ -302,7 +305,7 @@ export const processRaidAttacks = mutation(async (ctx) => {
 ```typescript
 // Get random card from tier for boss
 export const selectBossCard = query(async (ctx, args: {
-  tier: "common" | "rare" | "epic" | "legendary"
+  tier: "common" | "rare" | "epic" | "legendary" | "mythic"
 }) => {
   // Use JC NFTs or player NFTs from collections
   // Filter by rarity matching tier
@@ -454,10 +457,11 @@ const REFUEL_COST = {
 ```typescript
 // Reward pool calculation
 const BOSS_REWARDS = {
-  common: 10000,     // 10k $TESTVBMS
-  rare: 50000,       // 50k
-  epic: 250000,      // 250k
-  legendary: 1000000 // 1M
+  common: 10000,      // 10k $TESTVBMS
+  rare: 50000,        // 50k
+  epic: 250000,       // 250k
+  legendary: 1000000, // 1M
+  mythic: 5000000     // 5M
 };
 
 // Distribution formula
