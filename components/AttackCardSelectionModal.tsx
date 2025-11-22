@@ -5,13 +5,14 @@
  * Updated to match Poker Battle deck-building format with pagination
  */
 
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useState, useMemo } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { filterCardsByCollections, COLLECTIONS, type CollectionId } from '@/lib/collections/index';
 
 interface Card {
   tokenId: string;
@@ -138,13 +139,22 @@ export function AttackCardSelectionModal({
   maxAttacks,
 }: AttackCardSelectionModalProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const CARDS_PER_PAGE = 50;
 
   if (!showAttackCardSelection || !targetPlayer) return null;
 
+  // Apply collection filter
+  const filteredCards = useMemo(() => {
+    if (selectedCollections.length === 0) {
+      return sortedAttackNfts;
+    }
+    return filterCardsByCollections(sortedAttackNfts, selectedCollections);
+  }, [sortedAttackNfts, selectedCollections]);
+
   // Pagination
-  const totalPages = Math.ceil(sortedAttackNfts.length / CARDS_PER_PAGE);
-  const paginatedCards = sortedAttackNfts.slice(
+  const totalPages = Math.ceil(filteredCards.length / CARDS_PER_PAGE);
+  const paginatedCards = filteredCards.slice(
     currentPage * CARDS_PER_PAGE,
     (currentPage + 1) * CARDS_PER_PAGE
   );
@@ -362,11 +372,35 @@ export function AttackCardSelectionModal({
           † ATTACK {targetPlayer.username.toUpperCase()}
         </h2>
 
-        {/* Controls Row: Counter + Sort Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2 flex-shrink-0">
-          <p className="text-vintage-burnt-gold text-center text-sm sm:text-base font-modern">
+        {/* Counter */}
+        <div className="text-center mb-2 flex-shrink-0">
+          <p className="text-vintage-burnt-gold text-sm sm:text-base font-modern">
             Select {HAND_SIZE} cards ({attackSelectedCards.length}/{HAND_SIZE})
           </p>
+        </div>
+
+        {/* Controls Row: Collection Filter + Sort Button */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-4 flex-shrink-0">
+          <select
+            value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
+            onChange={(e) => {
+              if (e.target.value === 'all') {
+                setSelectedCollections([]);
+              } else {
+                setSelectedCollections([e.target.value as CollectionId]);
+              }
+              setCurrentPage(0);
+              if (soundEnabled) AudioManager.buttonClick();
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
+          >
+            <option value="all">All Collections</option>
+            <option value="vibe">VBMS</option>
+            <option value="vibefid">VIBEFID</option>
+            <option value="americanfootball">AFCL</option>
+            <option value="gmvbrs">VBRS</option>
+          </select>
+
           <button
             onClick={() => {
               setSortAttackByPower(!sortAttackByPower);
