@@ -12,7 +12,7 @@ import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { filterCardsByCollections, COLLECTIONS, type CollectionId, type Card } from '@/lib/collections/index';
+import { filterCardsByCollections, COLLECTIONS, type CollectionId, type Card, type CardRarity, type CardFoil } from '@/lib/collections/index';
 
 interface PvPPreviewData {
   // Define based on your API response
@@ -196,7 +196,7 @@ export function AttackCardSelectionModal({
     devLog(`◆ Using saved defense deck data (no NFT fetch needed)`);
 
     const defenderCards = (targetPlayer.defenseDeck || [])
-      .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } => typeof card === 'object')
+      .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string } => typeof card === 'object')
       .map((card, i) => {
         devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);
         return {
@@ -204,8 +204,10 @@ export function AttackCardSelectionModal({
           power: card.power,
           imageUrl: card.imageUrl,
           name: card.name,
-          rarity: card.rarity,
-        };
+          rarity: card.rarity as CardRarity,
+          collection: card.collection as CollectionId | undefined,
+          foil: card.foil as CardFoil | undefined,
+        } as Card;
       });
     devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
