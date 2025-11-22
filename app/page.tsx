@@ -743,15 +743,26 @@ export default function TCGPage() {
 
         try {
           // Find the Farcaster miniapp connector
-          const farcasterConnector = connectors.find((c) => c.id === 'farcasterMiniApp');
+          console.log('[Farcaster] 🔍 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
+
+          // Try multiple possible connector IDs (case variations)
+          const farcasterConnector = connectors.find((c) =>
+            c.id === 'farcasterMiniApp' ||
+            c.id === 'farcaster' ||
+            c.name?.toLowerCase().includes('farcaster')
+          );
 
           if (!farcasterConnector) {
             console.error('[Farcaster] ❌ Farcaster connector not found in wagmi config');
+            console.error('[Farcaster] Available connector IDs:', connectors.map(c => c.id));
+
+            // Show user-friendly error
+            alert('⚠️ Erro: Connector Farcaster não encontrado. Por favor, recarregue a página.');
             setIsCheckingFarcaster(false);
             return;
           }
 
-          console.log('[Farcaster] 📡 Connecting with Farcaster wagmi connector...');
+          console.log('[Farcaster] 📡 Connecting with Farcaster wagmi connector:', farcasterConnector.id);
 
           // Connect using wagmi - this will populate wagmiAddress automatically
           await connect({ connector: farcasterConnector });
@@ -4292,10 +4303,21 @@ export default function TCGPage() {
                         setIsCheckingFarcaster(true);
 
                         // Find and connect with Farcaster wagmi connector
-                        const farcasterConnector = connectors.find((c) => c.id === 'farcasterMiniApp');
+                        console.log('[Connect Button] 🔍 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
+
+                        // Try multiple possible connector IDs (case variations)
+                        const farcasterConnector = connectors.find((c) =>
+                          c.id === 'farcasterMiniApp' ||
+                          c.id === 'farcaster' ||
+                          c.name?.toLowerCase().includes('farcaster')
+                        );
+
                         if (!farcasterConnector) {
-                          throw new Error('Farcaster connector not found');
+                          console.error('[Connect Button] ❌ Available connector IDs:', connectors.map(c => c.id));
+                          throw new Error('Farcaster connector not found. Available: ' + connectors.map(c => c.id).join(', '));
                         }
+
+                        console.log('[Connect Button] ✅ Found connector:', farcasterConnector.id);
 
                         await connect({ connector: farcasterConnector });
                         devLog('✓ Connected Farcaster wallet via wagmi');
