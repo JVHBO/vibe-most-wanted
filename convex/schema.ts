@@ -802,4 +802,156 @@ export default defineSchema({
   })
     .index("by_room", ["roomId", "timestamp"])
     .index("by_recipient", ["recipient", "processed", "timestamp"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // RAID BOSS MODE (Global Cooperative Boss Battles)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Global Raid Boss State (only 1 active boss at a time)
+  raidBoss: defineTable({
+    // Boss Info
+    bossIndex: v.number(), // 0-19 (loops through 20 bosses)
+    collection: v.string(), // 'gmvbrs', 'vibe', 'vibefid', 'americanfootball'
+    rarity: v.string(), // 'Common', 'Rare', 'Epic', 'Legendary', 'Mythic'
+
+    // Boss Card Data
+    tokenId: v.string(), // Boss card tokenId
+    name: v.string(), // Boss name
+    imageUrl: v.string(), // Boss image
+    power: v.number(), // Boss power
+
+    // Boss Stats
+    maxHp: v.number(), // Max HP based on rarity
+    currentHp: v.number(), // Current HP remaining
+
+    // Boss State
+    status: v.union(
+      v.literal("active"), // Currently active, taking damage
+      v.literal("defeated"), // Defeated, transitioning to next
+      v.literal("transitioning") // Brief period between bosses
+    ),
+
+    // Timestamps
+    spawnedAt: v.number(), // When this boss spawned
+    defeatedAt: v.optional(v.number()), // When defeated
+    lastAttackAt: v.optional(v.number()), // Last automatic attack cycle
+  })
+    .index("by_status", ["status"])
+    .index("by_boss_index", ["bossIndex"]),
+
+  // Player Raid Decks & Energy
+  raidAttacks: defineTable({
+    // Player Info
+    address: v.string(), // Player wallet address
+
+    // Raid Deck (5 cards)
+    deck: v.array(v.object({
+      tokenId: v.string(),
+      collection: v.optional(v.string()),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+    })),
+
+    // Deck Stats
+    deckPower: v.number(), // Total power of all 5 cards
+
+    // Energy System (each card has energy)
+    cardEnergy: v.array(v.object({
+      tokenId: v.string(),
+      energy: v.number(), // 0-100% (depletes after each attack)
+      lastAttackAt: v.optional(v.number()), // Last time this card attacked
+      nextAttackAt: v.optional(v.number()), // When card can attack again (5 min cooldown)
+    })),
+
+    // Entry Fee
+    entryFeePaid: v.boolean(), // Whether 5 VBMS entry fee was paid
+    entryTxHash: v.optional(v.string()), // Blockchain TX hash for entry
+    entryPaidAt: v.optional(v.number()), // When entry fee was paid
+
+    // Stats
+    totalDamageDealt: v.number(), // Total damage dealt to all bosses (lifetime)
+    bossesKilled: v.number(), // Number of bosses player helped kill
+
+    // Timestamps
+    createdAt: v.number(),
+    lastUpdated: v.number(),
+  })
+    .index("by_address", ["address"])
+    .index("by_total_damage", ["totalDamageDealt"]),
+
+  // Raid Contributions (per boss, per player)
+  raidContributions: defineTable({
+    // Boss Info
+    bossIndex: v.number(), // Which boss (0-19)
+
+    // Player Info
+    address: v.string(), // Player wallet address
+    username: v.string(), // Player username
+
+    // Contribution Stats
+    damageDealt: v.number(), // Total damage dealt to this boss
+    attackCount: v.number(), // Number of attacks on this boss
+
+    // Rewards
+    rewardEarned: v.number(), // $TESTVBMS earned (based on % contribution)
+    rewardClaimed: v.boolean(), // Whether reward was claimed
+    claimedAt: v.optional(v.number()),
+
+    // Timestamps
+    firstAttackAt: v.number(), // First attack on this boss
+    lastAttackAt: v.number(), // Last attack on this boss
+  })
+    .index("by_boss", ["bossIndex", "damageDealt"]) // For leaderboard
+    .index("by_player", ["address", "bossIndex"])
+    .index("by_boss_player", ["bossIndex", "address"]),
+
+  // Raid History (defeated bosses)
+  raidHistory: defineTable({
+    // Boss Info
+    bossIndex: v.number(), // Which boss was defeated
+    collection: v.string(),
+    rarity: v.string(),
+    name: v.string(),
+    imageUrl: v.string(),
+    maxHp: v.number(),
+
+    // Battle Stats
+    totalDamage: v.number(), // Total damage dealt by all players
+    totalPlayers: v.number(), // Number of players who participated
+    totalAttacks: v.number(), // Total number of attacks
+
+    // Top Contributors (top 10 players)
+    topContributors: v.array(v.object({
+      address: v.string(),
+      username: v.string(),
+      damage: v.number(),
+      reward: v.number(),
+    })),
+
+    // Timestamps
+    spawnedAt: v.number(), // When boss spawned
+    defeatedAt: v.number(), // When boss was defeated
+    duration: v.number(), // How long it took to defeat (seconds)
+  })
+    .index("by_boss_index", ["bossIndex"])
+    .index("by_defeated_at", ["defeatedAt"]),
+
+  // Raid Energy Refuel Transactions
+  raidRefuels: defineTable({
+    // Player Info
+    address: v.string(), // Player wallet address
+
+    // Refuel Info
+    cardsRefueled: v.array(v.string()), // Token IDs of cards refueled
+    amount: v.number(), // VBMS amount paid (1 per card, or 4 for 5 cards)
+    txHash: v.string(), // Blockchain transaction hash
+
+    // Timestamps
+    timestamp: v.number(),
+  })
+    .index("by_address", ["address", "timestamp"])
+    .index("by_txHash", ["txHash"]),
 });
