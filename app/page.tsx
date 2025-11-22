@@ -4665,7 +4665,7 @@ export default function TCGPage() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 order-2 lg:order-1">
               <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/50 p-6">
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
                   <h2 className="text-2xl font-display font-bold text-vintage-gold flex items-center gap-2">
@@ -4850,7 +4850,7 @@ export default function TCGPage() {
               </div>
             </div>
 
-            <div>
+            <div className="order-1 lg:order-2">
               <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{boxShadow: '0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5)'}}>
                 {/* 🎴 POKER MODE Button */}
                 <div className="mb-4">
@@ -4987,21 +4987,56 @@ export default function TCGPage() {
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
-                    {t('yourHand')}
-                  </h2>
-                  <div className="flex gap-2">
-                    {nfts.length >= HAND_SIZE && selectedCards.length === 0 && (
-                      <button onClick={selectStrongest} className="px-3 py-1 bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-gold/30 transition font-modern font-semibold">
-                        {t('selectStrongest')}
-                      </button>
-                    )}
-                    {selectedCards.length > 0 && (
-                      <button onClick={clearSelection} className="px-3 py-1 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-black/70 transition font-modern">
-                        {t('clearSelection')}
-                      </button>
-                    )}
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
+                      {t('yourHand')}
+                    </h2>
+                    <div className="flex gap-2">
+                      {nfts.length >= HAND_SIZE && selectedCards.length === 0 && (
+                        <button onClick={selectStrongest} className="px-3 py-1 bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-gold/30 transition font-modern font-semibold">
+                          {t('selectStrongest')}
+                        </button>
+                      )}
+                      {selectedCards.length > 0 && (
+                        <button onClick={clearSelection} className="px-3 py-1 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-black/70 transition font-modern">
+                          {t('clearSelection')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Filters Row */}
+                  <div className="flex gap-2 flex-wrap">
+                    <select
+                      value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
+                      onChange={(e) => {
+                        if (e.target.value === 'all') {
+                          setSelectedCollections([]);
+                        } else {
+                          setSelectedCollections([e.target.value as CollectionId]);
+                        }
+                        setCurrentPage(1); // Reset to first page when filtering
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
+                    >
+                      <option value="all">All Collections</option>
+                      <option value="vibe">VBMS</option>
+                      <option value="vibefid">VIBEFID</option>
+                      <option value="americanfootball">AFCL</option>
+                      <option value="gmvbrs">VBRS</option>
+                    </select>
+
+                    <button
+                      onClick={() => setSortByPower(!sortByPower)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all ${
+                        sortByPower
+                          ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                          : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                      }`}
+                    >
+                      {sortByPower ? '↓ Sort by Power' : '⇄ Default Order'}
+                    </button>
                   </div>
                 </div>
 
