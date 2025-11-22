@@ -8,12 +8,30 @@ Raid Boss is a **global cooperative mode** where all players attack the same bos
 ## 🎯 Core Features
 
 ### 1. Boss System
-- **Global Boss**: All players attack the same boss
-- **Boss Rotation**: 5 tiers that cycle continuously
-  - Common → Rare → Epic → Legendary → Mythic → Common (loops forever)
-- **Using Game Cards**: Each boss is represented by a card from collections matching the tier
-- **HP Scaling**: Increases significantly each tier
-- **Visual**: Use existing card images from collections as boss sprites
+- **Global Boss**: All players attack the same boss simultaneously
+- **Boss Rotation**: 20 bosses total (5 rarities × 4 collections), loops infinitely
+  ```
+  1-5:   GM VBRS (Common → Rare → Epic → Legendary → Mythic)
+  6-10:  VBMS (Common → Rare → Epic → Legendary → Mythic)
+  11-15: VIBEFID (Common → Rare → Epic → Legendary → Mythic)
+  16-20: AFCL (Common → Rare → Epic → Legendary → Mythic)
+  Then loops back to GM VBRS Common
+  ```
+- **Boss Cards Source**: Use JC's NFTs from `JC_CONTRACT_ADDRESS` (same as PvE difficulty system)
+  - Filter by collection and rarity
+  - Select random card matching tier + collection
+  - If no match found, use any card from collection
+- **HP Per Tier**:
+  ```typescript
+  const BOSS_HP = {
+    common: 1_000_000,      // 1M HP
+    rare: 5_000_000,        // 5M HP
+    epic: 25_000_000,       // 25M HP
+    legendary: 100_000_000, // 100M HP
+    mythic: 500_000_000     // 500M HP
+  };
+  ```
+- **Visual**: Boss card image displayed large in modal
 
 ### 2. Card Energy System
 - **Energy Cost**: Each card consumes energy per attack
@@ -200,13 +218,42 @@ export const getCurrentBoss = query(async (ctx) => {
 });
 
 // Create next boss (when current defeated)
-export const createNextBoss = mutation(async (ctx, args: {
-  tier: "common" | "rare" | "epic" | "legendary" | "mythic"
-}) => {
-  // 1. Select random card from tier
-  // 2. Calculate boss HP based on tier
-  // 3. Set reward pool
-  // 4. Create boss record
+export const createNextBoss = mutation(async (ctx) => {
+  // 1. Get next boss config from rotation
+  const bossConfig = await getNextBossConfig();
+  // { collection: 'gmvbrs', rarity: 'Common' }
+
+  // 2. Select card from JC's NFTs
+  const bossCard = await selectBossCard({
+    collection: bossConfig.collection,
+    rarity: bossConfig.rarity
+  });
+
+  // 3. Calculate HP based on rarity tier
+  const tier = bossConfig.rarity.toLowerCase();
+  const maxHp = BOSS_HP[tier];
+
+  // 4. Set reward pool based on tier
+  const rewardPool = BOSS_REWARDS[tier];
+
+  // 5. Create boss record
+  await ctx.db.insert("raidBosses", {
+    bossId: `boss_${Date.now()}`,
+    tier: tier,
+    cardTokenId: bossCard.tokenId,
+    cardName: bossCard.name,
+    cardImageUrl: bossCard.imageUrl,
+    cardRarity: bossConfig.rarity,
+    cardCollection: bossConfig.collection,
+    maxHp: maxHp,
+    currentHp: maxHp,
+    status: "active",
+    rewardPool: rewardPool,
+    rewardsDistributed: false,
+    totalDamage: 0,
+    participantCount: 0,
+    createdAt: Date.now(),
+  });
 });
 
 // Update boss HP (subtract damage)
@@ -303,13 +350,52 @@ export const processRaidAttacks = mutation(async (ctx) => {
 #### 4. Card Selection (`convex/raidBoss.ts`)
 
 ```typescript
-// Get random card from tier for boss
-export const selectBossCard = query(async (ctx, args: {
-  tier: "common" | "rare" | "epic" | "legendary" | "mythic"
+// Boss rotation logic
+const BOSS_ROTATION = [
+  { collection: 'gmvbrs', rarity: 'Common' },
+  { collection: 'gmvbrs', rarity: 'Rare' },
+  { collection: 'gmvbrs', rarity: 'Epic' },
+  { collection: 'gmvbrs', rarity: 'Legendary' },
+  { collection: 'gmvbrs', rarity: 'Mythic' },
+  { collection: 'vibe', rarity: 'Common' },
+  { collection: 'vibe', rarity: 'Rare' },
+  { collection: 'vibe', rarity: 'Epic' },
+  { collection: 'vibe', rarity: 'Legendary' },
+  { collection: 'vibe', rarity: 'Mythic' },
+  { collection: 'vibefid', rarity: 'Common' },
+  { collection: 'vibefid', rarity: 'Rare' },
+  { collection: 'vibefid', rarity: 'Epic' },
+  { collection: 'vibefid', rarity: 'Legendary' },
+  { collection: 'vibefid', rarity: 'Mythic' },
+  { collection: 'americanfootball', rarity: 'Common' },
+  { collection: 'americanfootball', rarity: 'Rare' },
+  { collection: 'americanfootball', rarity: 'Epic' },
+  { collection: 'americanfootball', rarity: 'Legendary' },
+  { collection: 'americanfootball', rarity: 'Mythic' },
+];
+
+// Get next boss in rotation
+export const getNextBossConfig = query(async (ctx) => {
+  // Get total bosses defeated count
+  const allBosses = await ctx.db.query("raidBosses").collect();
+  const defeatedCount = allBosses.filter(b => b.status === "defeated").length;
+
+  // Rotation index (loops every 20 bosses)
+  const rotationIndex = defeatedCount % 20;
+
+  return BOSS_ROTATION[rotationIndex];
+});
+
+// Select card for boss from JC's collection
+export const selectBossCard = mutation(async (ctx, args: {
+  collection: CollectionId,
+  rarity: CardRarity
 }) => {
-  // Use JC NFTs or player NFTs from collections
-  // Filter by rarity matching tier
-  // Return random card
+  // 1. Fetch JC's NFTs from Alchemy
+  // 2. Filter by collection AND rarity
+  // 3. If matches found, pick random
+  // 4. If no matches, pick any card from collection
+  // 5. Return card data (tokenId, imageUrl, name, power)
 });
 ```
 
