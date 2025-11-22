@@ -12,16 +12,7 @@ import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { filterCardsByCollections, COLLECTIONS, type CollectionId } from '@/lib/collections/index';
-
-interface Card {
-  tokenId: string;
-  power: number;
-  imageUrl: string;
-  name: string;
-  rarity?: string;
-  foil?: string;
-}
+import { filterCardsByCollections, COLLECTIONS, type CollectionId, type Card } from '@/lib/collections/index';
 
 interface PvPPreviewData {
   // Define based on your API response

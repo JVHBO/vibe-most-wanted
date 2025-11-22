@@ -10,15 +10,10 @@ import { AudioManager } from '@/lib/audio-manager';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { filterCardsByCollections, COLLECTIONS, type CollectionId } from '@/lib/collections/index';
+import { filterCardsByCollections, COLLECTIONS, type CollectionId, type Card } from '@/lib/collections/index';
 
-interface NFT {
-  tokenId: string;
-  power?: number;
-  imageUrl: string;
-  foil?: string;
-  rarity?: string;
-}
+// Using Card type from lib/collections which has proper typing
+type NFT = Card;
 
 interface PveCardSelectionModalProps {
   isOpen: boolean;
