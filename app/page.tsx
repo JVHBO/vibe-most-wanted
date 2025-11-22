@@ -417,6 +417,7 @@ export default function TCGPage() {
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
   const [pvpMode, setPvpMode] = useState<'menu' | 'pvpMenu' | 'autoMatch' | 'selectMode' | 'createRoom' | 'joinRoom' | 'inRoom' | null>(null);
+  const [modeMenuOpen, setModeMenuOpen] = useState<'poker' | 'battle' | 'boss' | null>(null);
   const [roomCode, setRoomCode] = useState<string>('');
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -4851,82 +4852,138 @@ export default function TCGPage() {
 
             <div>
               <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{boxShadow: '0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5)'}}>
-                {/* Battle vs AI Button */}
+                {/* 🎴 POKER MODE Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      setPokerMode('pvp'); // Reset poker mode to prevent confusion with poker CPU
-                      setShowPveCardSelection(true);
-                      setPveSelectedCards([]);
+                      setModeMenuOpen(modeMenuOpen === 'poker' ? null : 'poker');
                     }}
                     disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
-                      userProfile
-                        ? 'bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black shadow-neon hover:scale-105'
-                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                    }`}
-                  >
-                    Battle vs AI
-                  </button>
-                </div>
-
-                {/* Battle vs Player Button */}
-                <div className="mb-4">
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setPokerMode('pvp'); // Reset poker mode to prevent confusion with poker CPU
-                      setGameMode('pvp');
-                      setPvpMode('pvpMenu');
-                    }}
-                    disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between ${
                       userProfile
                         ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    Battle vs Player
+                    <span className="flex items-center gap-2">
+                      <span className="text-2xl">♠</span>
+                      Poker Mode
+                    </span>
+                    <span className="text-xl">{modeMenuOpen === 'poker' ? '▼' : '▶'}</span>
                   </button>
+
+                  {/* Poker Submenu */}
+                  {modeMenuOpen === 'poker' && (
+                    <div className="mt-2 ml-4 space-y-2 border-l-2 border-vintage-gold/30 pl-4">
+                      {/* Poker vs CPU */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setPokerMode('cpu');
+                          setTempSelectedDifficulty(pokerCpuDifficulty);
+                          setIsDifficultyModalOpen(true);
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 hover:border-purple-500/60"
+                      >
+                        ♣ vs CPU
+                      </button>
+
+                      {/* Poker vs Player */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setPokerMode('pvp');
+                          setShowPokerBattle(true);
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 hover:border-orange-500/60"
+                      >
+                        ♥ vs Player
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Poker Battle CPU Button */}
+                {/* ⚔️ BATTLE AUTO MODE Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      setPokerMode('cpu');
-                      setTempSelectedDifficulty(pokerCpuDifficulty);
-                      setIsDifficultyModalOpen(true);
+                      setModeMenuOpen(modeMenuOpen === 'battle' ? null : 'battle');
                     }}
                     disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between ${
                       userProfile
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-neon hover:scale-105'
+                        ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    Poker Battle CPU
+                    <span className="flex items-center gap-2">
+                      <span className="text-2xl">♦</span>
+                      Battle Auto
+                    </span>
+                    <span className="text-xl">{modeMenuOpen === 'battle' ? '▼' : '▶'}</span>
                   </button>
+
+                  {/* Battle Submenu */}
+                  {modeMenuOpen === 'battle' && (
+                    <div className="mt-2 ml-4 space-y-2 border-l-2 border-vintage-gold/30 pl-4">
+                      {/* Battle vs AI */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setPokerMode('pvp'); // Reset poker mode
+                          setShowPveCardSelection(true);
+                          setPveSelectedCards([]);
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 hover:border-blue-500/60"
+                      >
+                        ♣ vs AI
+                      </button>
+
+                      {/* Battle vs Player */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setPokerMode('pvp'); // Reset poker mode
+                          setGameMode('pvp');
+                          setPvpMode('pvpMenu');
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/30 hover:border-red-500/60"
+                      >
+                        ♥ vs Player
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Poker Battle PvP Button */}
+                {/* 💀 BOSS RAID Button (Password Protected) */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      setPokerMode('pvp');
-                      setShowPokerBattle(true);
+                      const password = prompt('Enter Boss Raid Password:');
+                      if (password === 'vibe2025') {
+                        setModeMenuOpen('boss');
+                        alert('🔓 Boss Raid mode unlocked! (Coming soon...)');
+                      } else if (password !== null) {
+                        alert('❌ Incorrect password');
+                      }
                     }}
                     disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
                       userProfile
-                        ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white shadow-neon hover:scale-105'
+                        ? 'bg-gradient-to-r from-red-900 to-purple-900 hover:from-red-800 hover:to-purple-800 text-red-200 shadow-neon hover:scale-105 border-2 border-red-500/50'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    Poker Battle PvP
+                    <span className="text-2xl">💀</span>
+                    Boss Raid
+                    <span className="text-sm">🔒</span>
                   </button>
                 </div>
 
@@ -4950,19 +5007,28 @@ export default function TCGPage() {
 
                 {/* Felt Table Surface */}
                 <div className="bg-vintage-felt-green p-4 rounded-xl border-2 border-vintage-gold/40 mb-4" style={{boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.6)', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,.05) 2px, rgba(0,0,0,.05) 4px)'}}>
-                  <div className="grid grid-cols-5 gap-2 min-h-[120px]">
-                    {selectedCards.map((c, i) => (
-                      <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
-                        <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
-                      </FoilCardEffect>
-                    ))}
-                    {[...Array(HAND_SIZE - selectedCards.length)].map((_, i) => (
-                      <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
-                        <span className="text-2xl font-bold">+</span>
+                  {(status === "fetching" || (status === "idle" && nfts.length === 0)) ? (
+                    <div className="flex items-center justify-center min-h-[120px]">
+                      <div className="text-center">
+                        <LoadingSpinner />
+                        <p className="text-vintage-gold/70 text-sm mt-2 font-modern">Loading cards...</p>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-5 gap-2 min-h-[120px]">
+                      {selectedCards.map((c, i) => (
+                        <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
+                          <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
+                          <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
+                        </FoilCardEffect>
+                      ))}
+                      {[...Array(HAND_SIZE - selectedCards.length)].map((_, i) => (
+                        <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
+                          <span className="text-2xl font-bold">+</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Illuminated Casino Panel for Defense Deck Button */}
