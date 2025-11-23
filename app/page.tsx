@@ -330,22 +330,6 @@ export default function TCGPage() {
   // 🎯 Weekly Quests & Missions
   const weeklyProgress = useQuery(api.quests.getWeeklyProgress, address ? { address } : "skip");
 
-  // 🎮 Farcaster SDK - Signal that app is ready (MUST be called early to hide splash screen)
-  useEffect(() => {
-    const initFarcasterSDK = async () => {
-      try {
-        if (typeof window !== 'undefined') {
-          await sdk.actions.ready();
-          devLog('✅ Farcaster SDK ready called');
-        }
-      } catch (error) {
-        devError('❌ Error calling Farcaster SDK ready:', error);
-      }
-    };
-
-    initFarcasterSDK();
-  }, []);
-
   // Debug logging for address changes
   useEffect(() => {
     devLog('🔍 Address state:', {
