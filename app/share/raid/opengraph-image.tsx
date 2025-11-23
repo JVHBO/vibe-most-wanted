@@ -45,15 +45,25 @@ export default async function Image() {
     console.error('Failed to fetch raid boss data:', e);
   }
 
-  // Proxy external images for Edge Runtime
-  const proxyUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
-    if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
-    return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
-  };
+  // Try to fetch the boss image directly (like VibeFID does)
+  try {
+    if (bossImageUrl) {
+      const imageResponse = await fetch(bossImageUrl);
+      if (imageResponse.ok) {
+        const imageBuffer = await imageResponse.arrayBuffer();
+        return new Response(imageBuffer, {
+          headers: {
+            'Content-Type': 'image/png',
+            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+          },
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Failed to fetch boss image:', e);
+  }
 
-  const finalBossImageUrl = proxyUrl(bossImageUrl);
+  // Fallback: Generate OG image without external image
 
   // HP bar color based on percentage
   const getHpColor = (hp: number) => {
@@ -99,7 +109,7 @@ export default async function Image() {
             gap: '40px',
           }}
         >
-          {/* Left Side - Boss Image */}
+          {/* Left Side - Boss Icon */}
           <div
             style={{
               display: 'flex',
@@ -109,17 +119,14 @@ export default async function Image() {
               flex: 1,
             }}
           >
-            <img
-              src={finalBossImageUrl}
+            <div
               style={{
-                width: '400px',
-                height: '560px',
-                objectFit: 'cover',
-                borderRadius: '20px',
-                border: '6px solid #dc2626',
-                boxShadow: '0 0 60px rgba(220, 38, 38, 0.6)',
+                fontSize: '280px',
+                display: 'flex',
               }}
-            />
+            >
+              💀
+            </div>
           </div>
 
           {/* Right Side - Boss Info */}
