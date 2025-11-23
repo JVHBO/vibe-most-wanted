@@ -184,50 +184,6 @@ export const getRaidHistory = query({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Initialize the first raid boss (called once on deployment)
- */
-export const initializeRaidBoss = mutation({
-  handler: async (ctx) => {
-    // Check if boss already exists
-    const existingBoss = await ctx.db
-      .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "active"))
-      .first();
-
-    if (existingBoss) {
-      return { success: false, message: "Raid boss already initialized" };
-    }
-
-    // Get first boss (index 0)
-    const bossCard = getCurrentBoss(0);
-
-    if (!bossCard) {
-      throw new Error("Failed to get first boss card");
-    }
-
-    const rarity = bossCard.rarity.toLowerCase() as Lowercase<CardRarity>;
-    const maxHp = BOSS_HP_BY_RARITY[rarity];
-
-    // Create first boss
-    await ctx.db.insert("raidBoss", {
-      bossIndex: 0,
-      collection: bossCard.collection!,
-      rarity: bossCard.rarity,
-      tokenId: bossCard.tokenId,
-      name: bossCard.name,
-      imageUrl: bossCard.imageUrl,
-      power: bossCard.power,
-      maxHp,
-      currentHp: maxHp,
-      status: "active",
-      spawnedAt: Date.now(),
-    });
-
-    return { success: true, message: "Raid boss initialized", boss: bossCard };
-  },
-});
-
-/**
  * Set player's raid deck (costs 5 VBMS entry fee)
  */
 export const setRaidDeck = mutation({
