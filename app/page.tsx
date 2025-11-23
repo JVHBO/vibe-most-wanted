@@ -5546,6 +5546,8 @@ export default function TCGPage() {
                       </div>
                     )}
                   </div>
+                    )}
+                  </>
                 )}
 
                 {/* Match History Section removed from leaderboard - only in profile page */}
