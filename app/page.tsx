@@ -2617,6 +2617,11 @@ export default function TCGPage() {
         title: 'Welcome Gift',
         description: 'Welcome to Vibe Most Wanted!',
       },
+      vibefid_minted: {
+        icon: '/images/icons/achievement.svg',
+        title: 'VibeFID Minted',
+        description: 'Mint your first VibeFID card!',
+      },
     };
 
     return missionData[missionType] || {
@@ -2656,6 +2661,7 @@ export default function TCGPage() {
         { type: 'streak_5', reward: 300, date: 'today' },
         { type: 'streak_10', reward: 750, date: 'today' },
         { type: 'welcome_gift', reward: 500, date: 'once' },
+        { type: 'vibefid_minted', reward: 200, date: 'once' },
       ];
 
       // Merge with existing missions from DB
@@ -2693,6 +2699,7 @@ export default function TCGPage() {
         { _id: 'placeholder_streak_5', missionType: 'streak_5', completed: false, claimed: false, reward: 300, date: 'today' },
         { _id: 'placeholder_streak_10', missionType: 'streak_10', completed: false, claimed: false, reward: 750, date: 'today' },
         { _id: 'placeholder_welcome_gift', missionType: 'welcome_gift', completed: false, claimed: false, reward: 500, date: 'once' },
+        { _id: 'placeholder_vibefid_minted', missionType: 'vibefid_minted', completed: false, claimed: false, reward: 200, date: 'once' },
       ];
       setMissions(fallbackMissions);
     } finally {
@@ -2721,12 +2728,12 @@ export default function TCGPage() {
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog('✅ Mission claimed - TESTVBMS sent to inbox:', result);
+      devLog('✅ Mission claimed:', result);
 
-      // TESTVBMS sent to inbox - player can claim later
-
-      // Reload missions
+      // Reload missions and profile to update UI
       await loadMissions();
+      const updatedProfile = await ConvexProfileService.getProfile(address);
+      setUserProfile(updatedProfile);
     } catch (error: any) {
       devError('Error claiming mission:', error);
       if (soundEnabled) AudioManager.buttonError();

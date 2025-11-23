@@ -13,17 +13,18 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { applyLanguageBoost } from "./languageBoost";
 
-// Mission rewards (coins OR packs)
+// Mission rewards (all coins for simplicity)
 const MISSION_REWARDS = {
   daily_login: { type: "coins", amount: 100 },
   first_pve_win: { type: "coins", amount: 50 },
-  first_pvp_match: { type: "pack", packType: "mission", amount: 1 }, // Changed to pack!
-  play_3_games: { type: "pack", packType: "mission", amount: 1 }, // NEW
-  win_5_games: { type: "pack", packType: "mission", amount: 2 }, // NEW
+  first_pvp_match: { type: "coins", amount: 100 },
+  play_3_games: { type: "coins", amount: 100 },
+  win_5_games: { type: "coins", amount: 200 },
   streak_3: { type: "coins", amount: 150 },
-  streak_5: { type: "pack", packType: "achievement", amount: 1 }, // Changed to pack!
-  streak_10: { type: "pack", packType: "achievement", amount: 3 }, // Changed to pack!
-  vibefid_minted: { type: "pack", packType: "mission", amount: 2 }, // VibeFID mint reward
+  streak_5: { type: "coins", amount: 300 },
+  streak_10: { type: "coins", amount: 750 },
+  vibefid_minted: { type: "coins", amount: 200 },
+  welcome_gift: { type: "coins", amount: 500 },
 };
 
 /**
