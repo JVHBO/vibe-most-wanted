@@ -58,6 +58,7 @@ import { CONTRACTS } from "@/lib/contracts";
 import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, type CollectionId } from "@/lib/collections/index";
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
 import { getImage, fetchNFTs } from "@/lib/nft/fetcher";
+import type { Card } from "@/lib/types/card";
 import { RunawayEasterEgg } from "@/components/RunawayEasterEgg";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -3921,7 +3922,7 @@ export default function TCGPage() {
           userAddress={address}
           soundEnabled={soundEnabled}
           t={t as (key: string, params?: Record<string, any>) => string}
-          allNfts={sortedNfts}
+          allNfts={sortedNfts as Card[]}
         />
       )}
 
