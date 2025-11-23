@@ -125,8 +125,8 @@ export function CardReplacementModal({
                   }`}
                 >
                   <CardMedia
-                    imageUrl={card.imageUrl}
-                    name={card.name}
+                    src={card.imageUrl}
+                    alt={card.name}
                     className="rounded-lg aspect-[3/4] object-cover"
                   />
 
