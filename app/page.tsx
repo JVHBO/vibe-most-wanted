@@ -3917,7 +3917,7 @@ export default function TCGPage() {
           onClose={() => setShowRaidBoss(false)}
           userAddress={address}
           soundEnabled={soundEnabled}
-          t={t}
+          t={t as (key: string, params?: Record<string, any>) => string}
           allNfts={sortedNfts}
         />
       )}
