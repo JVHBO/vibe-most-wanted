@@ -1049,132 +1049,6 @@ export function RaidBossModal({
               </div>
             )}
 
-            {/* Leaderboard */}
-            {topContributors && topContributors.length > 0 && (
-              <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-red-600/30">
-                <h3 className="text-lg font-display font-bold text-red-400 mb-3">
-                  {t('raidBossDamageRanking')}
-                </h3>
-
-                {/* Reward Pool Info */}
-                <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-3 mb-3">
-                  <p className="text-red-400 text-sm font-bold text-center">
-                    {t('raidBossRewardPool')}
-                  </p>
-                  <p className="text-vintage-burnt-gold text-xs text-center mt-1">
-                    {t('raidBossRewardPoolDesc')}
-                  </p>
-                </div>
-
-                {/* Total Damage */}
-                {(() => {
-                  const totalDamage = topContributors.reduce(
-                    (sum: number, c: any) => sum + c.damageDealt,
-                    0
-                  );
-                  // Calculate reward pool based on current boss rarity
-                  const bossRarity = currentBoss.rarity.toLowerCase() as Lowercase<'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic'>;
-                  const REWARD_POOL = BOSS_REWARDS_BY_RARITY[bossRarity];
-
-                  return (
-                    <>
-                      <div className="bg-vintage-charcoal/50 rounded-lg p-2 mb-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-vintage-burnt-gold text-xs">{t('raidBossTotalDamage')}</span>
-                          <span className="text-vintage-neon-blue font-bold text-sm">
-                            {totalDamage.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Contributors List */}
-                      <div className="space-y-2 max-h-80 overflow-y-auto">
-                        {topContributors.map((contributor: any, index: number) => {
-                          const contributionPercent =
-                            totalDamage > 0 ? (contributor.damageDealt / totalDamage) * 100 : 0;
-                          const estimatedReward = Math.floor(
-                            (contributor.damageDealt / totalDamage) * REWARD_POOL
-                          );
-
-                          return (
-                            <div
-                              key={contributor.address}
-                              className={`p-3 rounded-lg transition-all ${
-                                contributor.address === userAddress.toLowerCase()
-                                  ? 'bg-vintage-neon-blue/20 border-2 border-vintage-neon-blue/50 scale-105'
-                                  : 'bg-vintage-charcoal/50 border border-red-600/20'
-                              }`}
-                            >
-                              {/* Rank & Username */}
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`font-bold w-8 ${
-                                      index === 0
-                                        ? 'text-yellow-400'
-                                        : index === 1
-                                        ? 'text-gray-300'
-                                        : index === 2
-                                        ? 'text-orange-400'
-                                        : 'text-red-400'
-                                    }`}
-                                  >
-                                    {index === 0
-                                      ? '🥇'
-                                      : index === 1
-                                      ? '🥈'
-                                      : index === 2
-                                      ? '🥉'
-                                      : `#${index + 1}`}
-                                  </span>
-                                  <span className="text-vintage-burnt-gold font-bold text-sm">
-                                    {contributor.username}
-                                    {contributor.address === userAddress.toLowerCase() && (
-                                      <span className="text-vintage-neon-blue ml-1">{t('raidBossYou')}</span>
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Damage & Contribution % */}
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-vintage-burnt-gold text-xs">{t('raidBossDamage')}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-vintage-neon-blue font-bold text-sm">
-                                    {contributor.damageDealt.toLocaleString()}
-                                  </span>
-                                  <span className="text-red-400 text-xs">
-                                    ({contributionPercent.toFixed(2)}%)
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Contribution Bar */}
-                              <div className="w-full h-2 bg-vintage-black rounded overflow-hidden mb-2">
-                                <div
-                                  className="h-full bg-gradient-to-r from-vintage-neon-blue to-vintage-gold transition-all duration-500"
-                                  style={{ width: `${contributionPercent}%` }}
-                                />
-                              </div>
-
-                              {/* Estimated Reward */}
-                              <div className="flex items-center justify-between">
-                                <span className="text-vintage-burnt-gold text-xs">
-                                  {t('raidBossEstReward')}
-                                </span>
-                                <span className="text-green-400 font-bold text-sm">
-                                  +{estimatedReward.toLocaleString()} $TESTVBMS
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
           </div>
         )}
 
@@ -1201,6 +1075,23 @@ export function RaidBossModal({
         </div>
       </div>
     </div>
+
+    {/* Current Boss Leaderboard Modal */}
+    {showCurrentBossLeaderboard && currentBoss && topContributors && (
+      <CurrentBossLeaderboardModal
+        isOpen={showCurrentBossLeaderboard}
+        onClose={() => setShowCurrentBossLeaderboard(false)}
+        topContributors={topContributors}
+        currentBoss={{
+          name: currentBoss.name,
+          rarity: currentBoss.rarity,
+          bossIndex: currentBoss.bossIndex,
+        }}
+        userAddress={userAddress}
+        soundEnabled={soundEnabled}
+        t={t}
+      />
+    )}
 
     {/* Help Modal */}
     {showHelp && (
