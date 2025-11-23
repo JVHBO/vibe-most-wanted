@@ -31,7 +31,7 @@ interface RaidDeckSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (deck: NFT[]) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
   selectedCards: NFT[];
   setSelectedCards: (cards: NFT[] | ((prev: NFT[]) => NFT[])) => void;
   availableCards: NFT[];
