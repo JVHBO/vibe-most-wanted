@@ -118,6 +118,20 @@ export function RaidDeckSelectionModal({
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
   const setRaidDeck = useMutation(api.raidBoss.setRaidDeck);
 
+  // Sort cards
+  const sortedCards = sortByPower
+    ? sortCardsByPower(availableCards, false) // false = descending order
+    : availableCards;
+
+  // Filter by collections
+  const filteredCards = useMemo(() => {
+    if (selectedCollections.length === 0) {
+      return sortedCards;
+    }
+    return filterCardsByCollections(sortedCards, selectedCollections);
+  }, [sortedCards, selectedCollections]);
+
+  // Early return AFTER all hooks
   if (!isOpen) return null;
 
   // Helper function to calculate buff for a card
@@ -135,19 +149,6 @@ export function RaidDeckSelectionModal({
 
     return null;
   };
-
-  // Sort cards
-  const sortedCards = sortByPower
-    ? sortCardsByPower(availableCards, false) // false = descending order
-    : availableCards;
-
-  // Filter by collections
-  const filteredCards = useMemo(() => {
-    if (selectedCollections.length === 0) {
-      return sortedCards;
-    }
-    return filterCardsByCollections(sortedCards, selectedCollections);
-  }, [sortedCards, selectedCollections]);
 
   // Pagination
   const totalPages = Math.ceil(filteredCards.length / CARDS_PER_PAGE);
