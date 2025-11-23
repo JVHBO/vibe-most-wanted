@@ -131,6 +131,11 @@ export function RaidDeckSelectionModal({
     return filterCardsByCollections(sortedCards, selectedCollections);
   }, [sortedCards, selectedCollections]);
 
+  // Check if user has VibeFID cards
+  const vibeFIDCards = useMemo(() => {
+    return availableCards.filter(card => card.collection === 'vibefid');
+  }, [availableCards]);
+
   // Early return AFTER all hooks
   if (!isOpen) return null;
 
@@ -182,11 +187,6 @@ export function RaidDeckSelectionModal({
       }
     }
   };
-
-  // Check if user has VibeFID cards
-  const vibeFIDCards = useMemo(() => {
-    return availableCards.filter(card => card.collection === 'vibefid');
-  }, [availableCards]);
 
   // Step 1: Handle initial 5-card confirmation - go to VibeFID step if available
   const handleConfirm = () => {
