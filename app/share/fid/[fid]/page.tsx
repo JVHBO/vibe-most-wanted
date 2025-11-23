@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: { params: Promise<{ fid: stri
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
-            url: baseUrl,
+            url: `${baseUrl}/fid`,
           },
         },
       }),
@@ -95,7 +95,7 @@ export async function generateMetadata({ params }: { params: Promise<{ fid: stri
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
-            url: baseUrl,
+            url: `${baseUrl}/fid`,
           },
         },
       }),
