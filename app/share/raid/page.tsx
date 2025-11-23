@@ -25,7 +25,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         {
           url: imageUrl,
           width: 1200,
-          height: 630,
+          height: 800,
           alt: "VIBE MOST WANTED - Raid Boss Battle"
         }
       ],
