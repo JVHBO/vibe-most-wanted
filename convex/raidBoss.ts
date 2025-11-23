@@ -759,3 +759,88 @@ export const defeatBossAndSpawnNext = mutation({
     };
   },
 });
+
+/**
+ * Get player's unclaimed raid boss rewards
+ */
+export const getUnclaimedRewards = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    // Get all unclaimed contributions with rewards
+    const unclaimedContributions = await ctx.db
+      .query("raidContributions")
+      .withIndex("by_player", (q) => q.eq("address", normalizedAddress))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("rewardClaimed"), false),
+          q.gt(q.field("rewardEarned"), 0)
+        )
+      )
+      .collect();
+
+    const totalUnclaimed = unclaimedContributions.reduce(
+      (sum, c) => sum + c.rewardEarned,
+      0
+    );
+
+    return {
+      contributions: unclaimedContributions,
+      totalUnclaimed,
+      count: unclaimedContributions.length,
+    };
+  },
+});
+
+/**
+ * Claim all pending raid boss rewards
+ */
+export const claimRaidRewards = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    // Get all unclaimed contributions
+    const unclaimedContributions = await ctx.db
+      .query("raidContributions")
+      .withIndex("by_player", (q) => q.eq("address", normalizedAddress))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("rewardClaimed"), false),
+          q.gt(q.field("rewardEarned"), 0)
+        )
+      )
+      .collect();
+
+    if (unclaimedContributions.length === 0) {
+      return {
+        success: false,
+        message: "No unclaimed rewards",
+        totalClaimed: 0,
+      };
+    }
+
+    const totalReward = unclaimedContributions.reduce(
+      (sum, c) => sum + c.rewardEarned,
+      0
+    );
+
+    // Mark all as claimed
+    for (const contribution of unclaimedContributions) {
+      await ctx.db.patch(contribution._id, {
+        rewardClaimed: true,
+      });
+    }
+
+    console.log(
+      `🎁 ${normalizedAddress} claimed ${totalReward} TESTVBMS from ${unclaimedContributions.length} raid boss battles`
+    );
+
+    return {
+      success: true,
+      totalClaimed: totalReward,
+      claimedCount: unclaimedContributions.length,
+    };
+  },
+});
