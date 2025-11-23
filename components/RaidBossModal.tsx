@@ -465,7 +465,7 @@ export function RaidBossModal({
                 {/* Total Damage */}
                 {(() => {
                   const totalDamage = topContributors.reduce(
-                    (sum: number, c) => sum + c.damageDealt,
+                    (sum: number, c: any) => sum + c.damageDealt,
                     0
                   );
                   const REWARD_POOL = 1000;
