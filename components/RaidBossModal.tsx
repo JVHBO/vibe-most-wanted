@@ -680,7 +680,7 @@ export function RaidBossModal({
                   }}
                   className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-bold transition-all uppercase shadow-gold"
                 >
-                  Set Raid Deck (5 VBMS)
+                  Set Raid Deck
                 </button>
               </div>
             )}
