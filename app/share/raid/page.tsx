@@ -65,6 +65,18 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default function ShareRaidPage() {
-  // Redirect to main page after social media crawlers grab meta tags
-  redirect('/');
+  return (
+    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
+      <div className="text-center">
+        <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
+          VIBE MOST WANTED
+        </h1>
+        <p className="text-vintage-burnt-gold mb-4">⚔️ Join the Raid Boss Battle!</p>
+        <div className="animate-pulse text-6xl">🎮</div>
+        <script dangerouslySetInnerHTML={{
+          __html: `setTimeout(() => { window.location.href = '/'; }, 2000);`
+        }} />
+      </div>
+    </div>
+  );
 }
