@@ -39,13 +39,27 @@ export const getProfile = query({
 export const getLeaderboard = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 1000 }) => {
-    const profiles = await ctx.db
+    // Get all profiles and sort by honor (primary) and power (secondary)
+    const allProfiles = await ctx.db
       .query("profiles")
-      .withIndex("by_total_power")
-      .order("desc")
-      .take(limit);
+      .collect();
 
-    return profiles;
+    // Sort by honor (descending), then by totalPower (descending)
+    const sorted = allProfiles.sort((a, b) => {
+      const honorA = a.stats?.honor ?? 500; // Default 500 for existing profiles
+      const honorB = b.stats?.honor ?? 500;
+
+      if (honorA !== honorB) {
+        return honorB - honorA; // Higher honor first
+      }
+
+      // If honor is equal, sort by power
+      const powerA = a.stats?.totalPower ?? 0;
+      const powerB = b.stats?.totalPower ?? 0;
+      return powerB - powerA; // Higher power first
+    });
+
+    return sorted.slice(0, limit);
   },
 });
 
@@ -66,23 +80,33 @@ export const getLeaderboard = query({
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 100 }) => {
-    // 🚨 EMERGENCY FIX: Ultra-minimal query for mobile debugging
-    // Trying to identify what's causing the freeze
-
     try {
-      // Step 1: Get profiles (limit to 20 for testing)
-      const profiles = await ctx.db
+      // Get all profiles for honor-based sorting
+      const allProfiles = await ctx.db
         .query("profiles")
-        .withIndex("by_total_power")
-        .order("desc")
-        .take(20); // VERY small limit for testing
+        .collect();
 
-      // Step 2: Return RAW data (no filter, no map)
-      // Just return first 20 profiles with minimal fields
-      return profiles.slice(0, 20).map(p => ({
+      // Sort by honor (descending), then by totalPower (descending)
+      const sorted = allProfiles.sort((a, b) => {
+        const honorA = a.stats?.honor ?? 500;
+        const honorB = b.stats?.honor ?? 500;
+
+        if (honorA !== honorB) {
+          return honorB - honorA; // Higher honor first
+        }
+
+        // If honor is equal, sort by power
+        const powerA = a.stats?.totalPower ?? 0;
+        const powerB = b.stats?.totalPower ?? 0;
+        return powerB - powerA; // Higher power first
+      });
+
+      // Return minimal fields
+      return sorted.slice(0, limit).map(p => ({
         address: p.address || "unknown",
         username: p.username || "unknown",
         stats: {
+          honor: p.stats?.honor ?? 500, // Include honor
           totalPower: p.stats?.totalPower || 0,
           vibePower: p.stats?.vibePower || 0,
           vbrsPower: p.stats?.vbrsPower || 0,
@@ -217,6 +241,7 @@ export const upsertProfile = mutation({
           totalCards: 0,
           openedCards: 0,
           unopenedCards: 0,
+          honor: 500, // Initial honor for new players
           pveWins: 0,
           pveLosses: 0,
           pvpWins: 0,
