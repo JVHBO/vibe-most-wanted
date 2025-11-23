@@ -8,6 +8,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useAccount } from 'wagmi';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -17,6 +20,10 @@ import {
   type CollectionId,
   type Card,
 } from '@/lib/collections/index';
+import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
+import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
+import { CONTRACTS } from '@/lib/contracts';
+import { parseEther } from 'viem';
 
 type NFT = Card;
 
@@ -24,13 +31,14 @@ interface RaidDeckSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (deck: NFT[]) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
   selectedCards: NFT[];
   setSelectedCards: (cards: NFT[] | ((prev: NFT[]) => NFT[])) => void;
   availableCards: NFT[];
   sortByPower: boolean;
   setSortByPower: (sort: boolean) => void;
   soundEnabled: boolean;
+  playerAddress: string;
 }
 
 const DECK_SIZE = 5;
@@ -46,12 +54,50 @@ export function RaidDeckSelectionModal({
   sortByPower,
   setSortByPower,
   soundEnabled,
+  playerAddress,
 }: RaidDeckSelectionModalProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
+  const [isSettingDeck, setIsSettingDeck] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const CARDS_PER_PAGE = 50;
 
+  // Web3 hooks
+  const { address: walletAddress } = useAccount();
+  const effectiveAddress = (playerAddress || walletAddress) as `0x${string}` | undefined;
+
+  // Detect miniapp
+  const isInMiniapp = typeof window !== 'undefined' && (
+    window.parent !== window ||
+    !!(window as any).sdk?.wallet
+  );
+
+  // Use Farcaster or Wagmi hooks based on environment
+  const wagmiTransfer = useTransferVBMS();
+  const farcasterTransfer = useFarcasterTransferVBMS();
+  const { transfer: transferVBMS, isPending: isTransferring } = isInMiniapp ? farcasterTransfer : wagmiTransfer;
+
+  // Convex queries and mutations
+  const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
+  const setRaidDeck = useMutation(api.raidBoss.setRaidDeck);
+
   if (!isOpen) return null;
+
+  // Helper function to calculate buff for a card
+  const getCardBuff = (card: NFT): { multiplier: number; label: string; color: string } | null => {
+    const isFree = (card as any).isFreeCard;
+    if (isFree) return null; // Free cards don't get buffs
+
+    if (card.collection === 'vibefid') {
+      return { multiplier: 1.5, label: '+50%', color: 'text-purple-400' };
+    }
+
+    if (currentBoss && card.collection === currentBoss.collection) {
+      return { multiplier: 1.2, label: '+20%', color: 'text-blue-400' };
+    }
+
+    return null;
+  };
 
   // Sort cards
   const sortedCards = sortByPower
@@ -73,8 +119,14 @@ export function RaidDeckSelectionModal({
     (currentPage + 1) * CARDS_PER_PAGE
   );
 
-  // Calculate total power
-  const totalPower = selectedCards.reduce((sum, card) => sum + card.power, 0);
+  // Calculate total power (with buffs)
+  const totalPower = selectedCards.reduce((sum, card) => {
+    const buff = getCardBuff(card);
+    const cardPower = buff ? Math.floor(card.power * buff.multiplier) : card.power;
+    return sum + cardPower;
+  }, 0);
+
+  const totalBasePower = selectedCards.reduce((sum, card) => sum + card.power, 0);
 
   const handleCardClick = (card: NFT) => {
     const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
@@ -93,10 +145,53 @@ export function RaidDeckSelectionModal({
     }
   };
 
-  const handleConfirm = () => {
-    if (selectedCards.length === DECK_SIZE) {
+  const handleConfirm = async () => {
+    if (selectedCards.length !== DECK_SIZE) return;
+
+    setIsSettingDeck(true);
+    setErrorMessage(null);
+
+    try {
       if (soundEnabled) AudioManager.buttonClick();
+
+      console.log('💰 Transferring 5 VBMS to pool for raid deck entry...');
+
+      // Transfer 5 VBMS to pool
+      const txHash = await transferVBMS(
+        CONTRACTS.VBMSPoolTroll as `0x${string}`,
+        parseEther('5')
+      );
+
+      console.log('✅ Transfer successful, txHash:', txHash);
+
+      // Format deck for Convex
+      const deckData = selectedCards.map((card) => ({
+        tokenId: card.tokenId,
+        name: card.name,
+        imageUrl: card.imageUrl,
+        power: card.power,
+        rarity: card.rarity,
+        collection: card.collection,
+        foil: card.foil,
+        isFreeCard: (card as any).isFreeCard || false, // For buff system: free cards don't get buffs
+      }));
+
+      // Call Convex mutation to set raid deck
+      await setRaidDeck({
+        address: playerAddress.toLowerCase(),
+        deck: deckData,
+        txHash,
+      });
+
+      console.log('✅ Raid deck set successfully!');
       onConfirm(selectedCards);
+
+    } catch (error: any) {
+      console.error('❌ Error setting raid deck:', error);
+      setErrorMessage(error?.message || 'Failed to set raid deck. Please try again.');
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
+    } finally {
+      setIsSettingDeck(false);
     }
   };
 
@@ -128,6 +223,19 @@ export function RaidDeckSelectionModal({
           <p className="text-vintage-neon-blue text-xs font-modern mt-1">
             Cards attack automatically every 5 minutes
           </p>
+          {currentBoss && (
+            <div className="text-xs font-modern mt-2 space-y-0.5">
+              <p className="text-purple-400">VibeFID cards: +50% power boost</p>
+              <p className="text-blue-400">
+                {currentBoss.collection === 'vibe' ? 'VBMS' :
+                 currentBoss.collection === 'gmvbrs' ? 'GM VBRS' :
+                 currentBoss.collection === 'vibefid' ? 'VibeFID' :
+                 currentBoss.collection === 'americanfootball' ? 'AFCL' : currentBoss.collection}
+                {' '}cards: +20% vs current boss
+              </p>
+              <p className="text-gray-500">Free cards: no bonus</p>
+            </div>
+          )}
         </div>
 
         {/* Counter */}
@@ -203,6 +311,9 @@ export function RaidDeckSelectionModal({
           <div className="mt-3 text-center">
             <p className="text-xs text-vintage-burnt-gold">Total Power</p>
             <p className="text-2xl font-bold text-vintage-gold">{totalPower.toLocaleString()}</p>
+            {totalPower !== totalBasePower && (
+              <p className="text-xs text-green-400">Base: {totalBasePower.toLocaleString()}</p>
+            )}
           </div>
         </div>
 
@@ -216,6 +327,7 @@ export function RaidDeckSelectionModal({
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-4">
               {paginatedCards.map((card) => {
                 const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
+                const buff = getCardBuff(card);
                 return (
                   <button
                     key={card.tokenId}
@@ -234,6 +346,11 @@ export function RaidDeckSelectionModal({
                     <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
                       {card.power?.toLocaleString()}
                     </div>
+                    {buff && (
+                      <div className={`absolute top-0 right-0 bg-black/80 ${buff.color} text-xs px-1 rounded-bl font-bold`}>
+                        {buff.label}
+                      </div>
+                    )}
                     {isSelected && (
                       <div className="absolute inset-0 bg-vintage-gold/20 flex items-center justify-center">
                         <span className="text-4xl text-vintage-gold">✓</span>
@@ -279,23 +396,38 @@ export function RaidDeckSelectionModal({
 
         {/* Action Buttons */}
         <div className="space-y-2 flex-shrink-0">
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="bg-red-900/50 border border-red-500 rounded-lg p-3 text-sm text-red-200">
+              {errorMessage}
+            </div>
+          )}
+
           <button
             onClick={handleConfirm}
-            disabled={selectedCards.length !== DECK_SIZE}
+            disabled={selectedCards.length !== DECK_SIZE || isSettingDeck}
             className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
-              selectedCards.length === DECK_SIZE
+              selectedCards.length === DECK_SIZE && !isSettingDeck
                 ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                 : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
             }`}
           >
-            {selectedCards.length === DECK_SIZE
-              ? 'SET RAID DECK (5 VBMS)'
-              : `SELECT ${DECK_SIZE - selectedCards.length} MORE`}
+            {isSettingDeck ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoadingSpinner />
+                Processing...
+              </span>
+            ) : selectedCards.length === DECK_SIZE ? (
+              'SET RAID DECK (5 VBMS)'
+            ) : (
+              `SELECT ${DECK_SIZE - selectedCards.length} MORE`
+            )}
           </button>
 
           <button
             onClick={handleCancel}
-            className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
+            disabled={isSettingDeck}
+            className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>

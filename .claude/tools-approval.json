@@ -1,0 +1,7 @@
+{
+  "autoApprove": {
+    "Bash": {
+      "git push*main": true
+    }
+  }
+}
