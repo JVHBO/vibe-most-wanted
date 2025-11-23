@@ -6,8 +6,10 @@ type Props = {
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  // Use dynamic OG image if provided, otherwise use default
-  const imageUrl = searchParams.ogImage || 'https://www.vibemostwanted.xyz/images/raid-bosses/vibe/legendary.png';
+  const baseUrl = 'https://www.vibemostwanted.xyz';
+
+  // Use dynamic opengraph-image (shows current boss + stats)
+  const imageUrl = `${baseUrl}/share/raid/opengraph-image?v=${Date.now()}`;
 
   return {
     title: "RAID BOSS BATTLE - VIBE Most Wanted",
