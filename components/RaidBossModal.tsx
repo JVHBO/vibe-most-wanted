@@ -646,7 +646,8 @@ export function RaidBossModal({
                     {refuelError}
                   </div>
                 )}
-                <div className="grid grid-cols-5 gap-2">
+                <div className={`grid gap-2 ${playerDeck.vibefidCard ? 'grid-cols-6' : 'grid-cols-5'}`}>
+                  {/* Main 5 cards */}
                   {playerDeck.deck.map((card: NFT, index: number) => {
                     const cardEnergy = playerDeck.cardEnergy[index];
                     const now = Date.now();
@@ -709,6 +710,42 @@ export function RaidBossModal({
                       </div>
                     );
                   })}
+
+                  {/* Optional VibeFID 6th card */}
+                  {playerDeck.vibefidCard && (() => {
+                    const card = playerDeck.vibefidCard;
+                    const vibefidIndex = 5; // VibeFID is always the 6th card
+                    const cardEnergy = playerDeck.cardEnergy[vibefidIndex];
+                    const now = Date.now();
+
+                    // VibeFID has infinite energy (energyExpiresAt = 0)
+                    const hasEnergy = !cardEnergy || cardEnergy.energyExpiresAt === 0 || now < cardEnergy.energyExpiresAt;
+
+                    return (
+                      <div key={card.tokenId} className="relative">
+                        {/* Card with purple border for VibeFID */}
+                        <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 border-purple-400 relative ${attackingCardIndex === vibefidIndex ? 'animate-card-attack' : ''}`}>
+                          <CardMedia
+                            src={card.imageUrl}
+                            alt={card.name}
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Power Badge with VibeFID indicator */}
+                          <div className="absolute top-1 left-1 bg-purple-400 text-vintage-black text-xs px-1 rounded font-bold">
+                            {card.power} ⚔️
+                          </div>
+                          {/* VibeFID Label */}
+                          <div className="absolute top-1 right-1 bg-purple-400/90 text-vintage-black text-[8px] px-1 rounded font-bold">
+                            VibeFID
+                          </div>
+                        </div>
+                        {/* Infinite Energy Bar (always full, purple) */}
+                        <div className="mt-1 h-1 bg-vintage-black rounded overflow-hidden">
+                          <div className="h-full bg-purple-400" style={{ width: '100%' }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Refuel Button */}
