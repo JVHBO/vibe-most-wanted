@@ -4,7 +4,7 @@ export const runtime = 'edge';
 export const alt = 'Raid Boss Battle - VIBE Most Wanted';
 export const size = {
   width: 1200,
-  height: 630,
+  height: 800,
 };
 export const contentType = 'image/png';
 
@@ -63,7 +63,7 @@ export default async function Image() {
     console.error('Failed to fetch boss image:', e);
   }
 
-  // Fallback: Generate OG image without external image
+  // Fallback: Generate OG image with emoji
 
   // HP bar color based on percentage
   const getHpColor = (hp: number) => {
@@ -121,7 +121,7 @@ export default async function Image() {
           >
             <div
               style={{
-                fontSize: '280px',
+                fontSize: '200px',
                 display: 'flex',
               }}
             >
