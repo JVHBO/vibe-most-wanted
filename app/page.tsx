@@ -5038,25 +5038,6 @@ export default function TCGPage() {
 
                   {/* Filters Row */}
                   <div className="flex gap-2 flex-wrap">
-                    <select
-                      value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
-                      onChange={(e) => {
-                        if (e.target.value === 'all') {
-                          setSelectedCollections([]);
-                        } else {
-                          setSelectedCollections([e.target.value as CollectionId]);
-                        }
-                        setCurrentPage(1); // Reset to first page when filtering
-                      }}
-                      className="px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
-                    >
-                      <option value="all">All Collections</option>
-                      <option value="vibe">VBMS</option>
-                      <option value="vibefid">VIBEFID</option>
-                      <option value="americanfootball">AFCL</option>
-                      <option value="gmvbrs">VBRS</option>
-                    </select>
-
                     <button
                       onClick={() => setSortByPower(!sortByPower)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all ${
