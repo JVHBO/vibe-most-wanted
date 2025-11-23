@@ -403,7 +403,7 @@ export function RaidBossModal({
 
   // Find the card being replaced
   const replacingCard = replacingCardTokenId
-    ? playerDeck?.deck.find((card) => card.tokenId === replacingCardTokenId)
+    ? playerDeck?.deck.find((card: NFT) => card.tokenId === replacingCardTokenId)
     : null;
 
   return (
