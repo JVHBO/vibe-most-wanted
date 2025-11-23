@@ -952,47 +952,42 @@ export function RaidBossModal({
     {/* Help Modal */}
     {showHelp && (
       <div
-        className="fixed inset-0 bg-black/90 flex items-center justify-center z-[300] p-4"
+        className="fixed inset-0 bg-black/90 flex items-center justify-center z-[300] p-2"
         onClick={() => setShowHelp(false)}
       >
         <div
-          className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-2xl w-full p-6 shadow-neon"
+          className="bg-vintage-charcoal rounded-lg border-2 border-vintage-gold max-w-md w-full p-3 shadow-neon max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="text-2xl font-display font-bold text-vintage-gold mb-4">
+          <h2 className="text-lg font-display font-bold text-vintage-gold mb-2">
             How Boss Raid Works
           </h2>
-          <div className="space-y-4 text-vintage-burnt-gold font-modern">
+          <div className="space-y-2 text-vintage-burnt-gold font-modern text-xs">
             <div>
-              <h3 className="text-vintage-gold font-bold mb-2">Global Cooperative Battle</h3>
+              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Global Cooperative Battle</h3>
               <p>All players attack the same boss together. Work as a team to defeat powerful bosses and earn rewards.</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-2">Set Your Raid Deck</h3>
+              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Set Your Raid Deck</h3>
               <p>Select 5 cards to form your raid deck. Your deck will automatically attack the boss every 5 minutes.</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-2">Card Energy System</h3>
-              <p>Cards attack every 5 minutes until their energy expires. Energy duration depends on rarity:<br/>
-              • Common: 12 hours<br/>
-              • Rare: 1 day<br/>
-              • Epic: 2 days<br/>
-              • Legendary: 4 days<br/>
-              • Mythic: 5 days<br/>
-              • VibeFID: Infinite (never expires)<br/>
-              Refuel individual cards (1 VBMS) or all cards at once (4 VBMS for all 5 - save 1 VBMS!).</p>
+              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Card Energy System</h3>
+              <p className="text-[10px] leading-tight">Cards attack every 5 minutes until their energy expires. Energy duration depends on rarity:<br/>
+              • Common: 12h • Rare: 1d • Epic: 2d • Legendary: 4d • Mythic: 5d • VibeFID: ∞<br/>
+              Refuel: 1 VBMS per card or 4 VBMS for all 5 (save 1!).</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-2">Damage Buffs</h3>
-              <p>• VibeFID cards: +50% power against all bosses<br/>• Same collection cards: +20% power<br/>• Critical hits: 15% chance for 2x damage</p>
+              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Damage Buffs</h3>
+              <p className="text-[10px]">• VibeFID: +50% • Same collection: +20% • Critical: 15% chance for 2x</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-2">Boss Rotation</h3>
-              <p>Bosses rotate through 4 collections (GM VBRS, VBMS, VibeFID, AFCL) with increasing difficulty (Common to Mythic).</p>
+              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Boss Rotation</h3>
+              <p className="text-[10px]">Bosses rotate through 4 collections (VBRS, VBMS, VibeFID, AFCL) with increasing difficulty.</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-2">Leaderboard & Rewards</h3>
-              <p>Top contributors earn special rewards when the boss is defeated. Keep attacking to climb the leaderboard!</p>
+              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Leaderboard & Rewards</h3>
+              <p className="text-[10px]">Top contributors earn special rewards when the boss is defeated!</p>
             </div>
           </div>
           <button
@@ -1000,7 +995,7 @@ export function RaidBossModal({
               if (soundEnabled) AudioManager.buttonClick();
               setShowHelp(false);
             }}
-            className="w-full mt-6 px-4 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-bold transition"
+            className="w-full mt-3 px-3 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-bold transition text-sm"
           >
             Got it!
           </button>
