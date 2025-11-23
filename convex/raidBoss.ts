@@ -81,6 +81,7 @@ export const initializeRaidBoss = mutation({
 
     const newBoss = await ctx.db.insert("raidBoss", {
       bossIndex,
+      tokenId: bossData.tokenId,
       name: bossData.name,
       collection: bossData.collection!,
       rarity: bossData.rarity as CardRarity,
