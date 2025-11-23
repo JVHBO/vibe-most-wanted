@@ -761,10 +761,17 @@ export function RaidBossModal({
                       energyPercent = duration > 0 ? (remaining / duration) * 100 : 0;
                     }
 
+                    // Check if card has collection buff (same collection as boss)
+                    const hasCollectionBuff = currentBoss && card.collection && card.collection === currentBoss.collection;
+
                     return (
                       <div key={card.tokenId} className="relative">
                         {/* Card */}
-                        <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 border-red-600/50 relative ${attackingCardIndex === index ? 'animate-card-attack' : ''}`}>
+                        <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 ${
+                          hasCollectionBuff
+                            ? 'border-yellow-400 shadow-lg shadow-yellow-400/60 animate-pulse-glow'
+                            : 'border-red-600/50'
+                        } relative ${attackingCardIndex === index ? 'animate-card-attack' : ''}`}>
                           <CardMedia
                             src={card.imageUrl}
                             alt={card.name}
@@ -774,6 +781,12 @@ export function RaidBossModal({
                           <div className="absolute top-1 left-1 bg-red-600 text-white text-xs px-1 rounded font-bold">
                             {card.power}
                           </div>
+                          {/* Collection Buff Badge */}
+                          {hasCollectionBuff && (
+                            <div className="absolute bottom-1 left-1 bg-yellow-400 text-black text-[10px] px-1.5 py-0.5 rounded font-bold shadow-lg animate-bounce">
+                              ⚡ BUFF
+                            </div>
+                          )}
                           {/* Replace Card Button - Always Visible */}
                           <button
                             onClick={() => {
@@ -831,10 +844,17 @@ export function RaidBossModal({
                     // VibeFID has infinite energy (energyExpiresAt = 0)
                     const hasEnergy = !cardEnergy || cardEnergy.energyExpiresAt === 0 || now < cardEnergy.energyExpiresAt;
 
+                    // Check if VibeFID card has collection buff
+                    const hasCollectionBuff = currentBoss && card.collection && card.collection === currentBoss.collection;
+
                     return (
                       <div key={card.tokenId} className="relative">
                         {/* Card with purple border for VibeFID */}
-                        <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 border-purple-400 relative ${attackingCardIndex === vibefidIndex ? 'animate-card-attack' : ''}`}>
+                        <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 ${
+                          hasCollectionBuff
+                            ? 'border-yellow-400 shadow-lg shadow-yellow-400/60 animate-pulse-glow'
+                            : 'border-purple-400'
+                        } relative ${attackingCardIndex === vibefidIndex ? 'animate-card-attack' : ''}`}>
                           <CardMedia
                             src={card.imageUrl}
                             alt={card.name}
@@ -844,6 +864,12 @@ export function RaidBossModal({
                           <div className="absolute top-1 left-1 bg-purple-400 text-vintage-black text-xs px-1 rounded font-bold">
                             {card.power}
                           </div>
+                          {/* Collection Buff Badge */}
+                          {hasCollectionBuff && (
+                            <div className="absolute bottom-1 left-1 bg-yellow-400 text-black text-[10px] px-1.5 py-0.5 rounded font-bold shadow-lg animate-bounce">
+                              ⚡ BUFF
+                            </div>
+                          )}
                           {/* Replace Card Button - Always Visible */}
                           <button
                             onClick={() => {
