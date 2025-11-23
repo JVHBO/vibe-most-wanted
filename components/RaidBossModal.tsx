@@ -125,6 +125,7 @@ export function RaidBossModal({
         sortByPower={sortByPower}
         setSortByPower={setSortByPower}
         soundEnabled={soundEnabled}
+        playerAddress={userAddress}
       />
 
       {/* Main Raid Boss Modal */}
