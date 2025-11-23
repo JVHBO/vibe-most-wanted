@@ -320,6 +320,7 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
   vibe: VBMS_BOSSES,
   vibefid: VIBEFID_BOSSES,
   americanfootball: AFCL_BOSSES,
+  coquettish: {} as Record<CardRarity, BossCard>, // Not used for raid bosses yet
   custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
 };
 
