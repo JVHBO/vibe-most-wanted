@@ -15,6 +15,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { RaidDeckSelectionModal } from '@/components/RaidDeckSelectionModal';
+import { CardReplacementModal } from '@/components/CardReplacementModal';
 import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
 import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
@@ -69,6 +70,7 @@ export function RaidBossModal({
   const refuelCardsMutation = useMutation(api.raidBoss.refuelCards);
   const replaceCardMutation = useMutation(api.raidBoss.replaceCard);
   const initializeBossMutation = useMutation(api.raidBoss.initializeRaidBoss);
+  const claimRewardsMutation = useMutation(api.raidBoss.claimRaidRewards);
 
   // Query current boss
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
@@ -85,6 +87,11 @@ export function RaidBossModal({
 
   // Query top contributors
   const topContributors = useQuery(api.raidBoss.getTopContributors, { limit: 10 });
+
+  // Query unclaimed rewards
+  const unclaimedRewards = useQuery(api.raidBoss.getUnclaimedRewards, {
+    address: userAddress.toLowerCase(),
+  });
 
   // Initialize boss if none exists
   useEffect(() => {
@@ -230,7 +237,6 @@ export function RaidBossModal({
           name: newCard.name,
           rarity: newCard.rarity,
           foil: newCard.foil,
-          isFreeCard: newCard.isFreeCard,
         },
         txHash,
       });
@@ -245,6 +251,30 @@ export function RaidBossModal({
       if (soundEnabled) AudioManager.hapticFeedback('heavy');
     } finally {
       setIsRefueling(false);
+    }
+  };
+
+  // Claim raid boss rewards
+  const handleClaimRewards = async () => {
+    if (!unclaimedRewards || unclaimedRewards.totalUnclaimed === 0) return;
+
+    try {
+      if (soundEnabled) AudioManager.buttonClick();
+
+      const result = await claimRewardsMutation({
+        address: userAddress.toLowerCase(),
+      });
+
+      if (result.success) {
+        console.log(`✅ Claimed ${result.totalClaimed} TESTVBMS from ${result.claimedCount} battles!`);
+        if (soundEnabled) AudioManager.win();
+
+        // Show success notification (you could add a toast here)
+        alert(`🎁 Claimed ${result.totalClaimed} TESTVBMS from ${result.claimedCount} raid battles!`);
+      }
+    } catch (error: any) {
+      console.error('❌ Error claiming rewards:', error);
+      if (soundEnabled) AudioManager.buttonError();
     }
   };
 
@@ -300,6 +330,11 @@ export function RaidBossModal({
     // Will call mutation to set deck after payment confirmation
   };
 
+  // Find the card being replaced
+  const replacingCard = replacingCardTokenId
+    ? playerDeck?.deck.find((card) => card.tokenId === replacingCardTokenId)
+    : null;
+
   return (
     <>
       {/* Raid Deck Selection Modal */}
@@ -315,6 +350,21 @@ export function RaidBossModal({
         setSortByPower={setSortByPower}
         soundEnabled={soundEnabled}
         playerAddress={userAddress}
+      />
+
+      {/* Card Replacement Modal */}
+      <CardReplacementModal
+        isOpen={!!replacingCardTokenId}
+        onClose={() => setReplacingCardTokenId(null)}
+        onConfirm={(newCard) => {
+          if (replacingCard) {
+            handleReplaceCard(replacingCard, newCard);
+          }
+        }}
+        availableCards={allNfts}
+        oldCard={replacingCard || null}
+        soundEnabled={soundEnabled}
+        t={t}
       />
 
       {/* Main Raid Boss Modal */}
@@ -334,6 +384,22 @@ export function RaidBossModal({
           <p className="text-center text-vintage-burnt-gold text-sm mt-2">
             Cooperative Global Boss Battle
           </p>
+
+          {/* Claim Rewards Button (Gift Icon) */}
+          {unclaimedRewards && unclaimedRewards.totalUnclaimed > 0 && (
+            <button
+              onClick={handleClaimRewards}
+              className="absolute top-0 right-12 w-8 h-8 rounded-full bg-green-600/80 hover:bg-green-600 border-2 border-green-400 flex items-center justify-center text-white font-bold transition-all hover:scale-110 animate-pulse"
+              title={`Claim ${unclaimedRewards.totalUnclaimed} TESTVBMS`}
+            >
+              🎁
+              {/* Notification Badge */}
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {unclaimedRewards.count}
+              </span>
+            </button>
+          )}
+
           {/* Help Button */}
           <button
             onClick={() => setShowHelp(true)}
