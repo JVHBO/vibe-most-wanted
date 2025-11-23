@@ -36,7 +36,7 @@ interface RaidBossModalProps {
   allNfts: Card[]; // All player's NFTs for deck selection
 }
 
-type NFT = Card;
+type NFT = Card | any; // Allow Convex types that may not match exactly
 
 export function RaidBossModal({
   isOpen,
@@ -497,7 +497,7 @@ export function RaidBossModal({
           }
         }}
         availableCards={allNfts}
-        oldCard={replacingCard || null}
+        oldCard={(replacingCard as Card) || null}
         currentBoss={currentBoss}
         soundEnabled={soundEnabled}
       />

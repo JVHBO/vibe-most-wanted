@@ -1598,7 +1598,7 @@ export default function ProfilePage() {
                             }
 
                             // Check if ATTACKER has defense deck (required to attack)
-                            if (!userProfile?.hasDefenseDeck) {
+                            if (!profile?.hasDefenseDeck) {
                               alert('You need to set up your defense deck before attacking other players! Go to your profile to set it up.');
                               return;
                             }

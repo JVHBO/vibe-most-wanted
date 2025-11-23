@@ -5381,7 +5381,7 @@ export default function TCGPage() {
                                     }
                                     // Check if ATTACKER has defense deck (required to attack)
                                     if (!userProfile?.hasDefenseDeck) {
-                                      alert(t('attackRequiresDefenseDeck', { default: 'You need to set up your defense deck before attacking other players! Go to your profile to set it up.' }));
+                                      alert('You need to set up your defense deck before attacking other players! Go to your profile to set it up.');
                                       if (soundEnabled) AudioManager.buttonError();
                                       return;
                                     }
