@@ -65,6 +65,7 @@ export function RaidBossModal({
 
   // Convex mutations
   const refuelCardsMutation = useMutation(api.raidBoss.refuelCards);
+  const initializeBossMutation = useMutation(api.raidBoss.initializeRaidBoss);
 
   // Query current boss
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
@@ -81,6 +82,16 @@ export function RaidBossModal({
 
   // Query top contributors
   const topContributors = useQuery(api.raidBoss.getTopContributors, { limit: 10 });
+
+  // Initialize boss if none exists
+  useEffect(() => {
+    if (currentBoss === undefined && isOpen) {
+      // currentBoss is undefined means no boss exists, initialize the system
+      initializeBossMutation().catch((err) => {
+        console.error('Failed to initialize raid boss:', err);
+      });
+    }
+  }, [currentBoss, isOpen]);
 
   // Calculate next attack time
   useEffect(() => {
