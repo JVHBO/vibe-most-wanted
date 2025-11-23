@@ -52,8 +52,6 @@ export function PveCardSelectionModal({
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const CARDS_PER_PAGE = 50;
 
-  if (!isOpen || isDifficultyModalOpen) return null;
-
   // Apply collection filter
   const filteredCards = useMemo(() => {
     if (selectedCollections.length === 0) {
@@ -71,6 +69,9 @@ export function PveCardSelectionModal({
 
   // Loading state
   const isLoading = sortedPveNfts.length === 0;
+
+  // Early return AFTER all hooks
+  if (!isOpen || isDifficultyModalOpen) return null;
 
   const handleCardClick = (nft: NFT) => {
     const isSelected = pveSelectedCards.find(c => c.tokenId === nft.tokenId);
