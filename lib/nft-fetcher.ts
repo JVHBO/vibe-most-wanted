@@ -285,6 +285,11 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
       return 'vibefid';
     }
 
+    // Coquettish collection
+    if (contractAddr === '0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea') {
+      return 'coquettish';
+    }
+
     // Default to VBMS collection
     return 'vibe';
   };
