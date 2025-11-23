@@ -601,9 +601,16 @@ export const awardPvECoins = mutation({
     // Award coins to balance (direct)
     if (!skipCoins) {
       const currentBalance = profile.coins || 0;
+      const currentHonor = profile.stats?.honor ?? 500;
+      const honorReward = won ? 5 : 0; // +5 honor for winning PvE
+
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
+        stats: {
+          ...profile.stats,
+          honor: currentHonor + honorReward, // Award honor for PvE win
+        },
         dailyLimits: {
           ...dailyLimits,
           pveWins: dailyLimits.pveWins + 1,
@@ -611,7 +618,7 @@ export const awardPvECoins = mutation({
         // lastPvEAward already updated immediately after rate limit check (line 491)
       });
 
-      console.log(`💰 PvE reward added to balance: ${totalReward} TESTVBMS for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}`);
+      console.log(`💰 PvE reward: ${totalReward} TESTVBMS + ${honorReward} honor for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Honor: ${currentHonor} → ${currentHonor + honorReward}`);
     }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
@@ -799,9 +806,16 @@ export const awardPvPCoins = mutation({
 
       // Award coins to balance (direct)
       const currentBalance = profile.coins || 0;
+      const currentHonor = profile.stats?.honor ?? 500;
+      const honorReward = 10; // +10 honor for winning PvP
+
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
+        stats: {
+          ...profile.stats,
+          honor: currentHonor + honorReward, // Award honor for PvP win
+        },
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
         dailyLimits: {
@@ -811,7 +825,7 @@ export const awardPvPCoins = mutation({
         // lastPvPAward already updated immediately after rate limit check (line 652)
       });
 
-      console.log(`💰 PvP reward added to balance: ${totalReward} TESTVBMS for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}`);
+      console.log(`💰 PvP reward: ${totalReward} TESTVBMS + ${honorReward} honor for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Honor: ${currentHonor} → ${currentHonor + honorReward}`);
 
       // 🎯 Track weekly quest progress (async, non-blocking)
       // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
@@ -842,6 +856,10 @@ export const awardPvPCoins = mutation({
       const currentCoins = profile.coins || 0;
       const newCoins = Math.max(0, currentCoins + penalty); // Can't go below 0
 
+      const currentHonor = profile.stats?.honor ?? 500;
+      const honorPenalty = -5; // -5 honor for losing PvP
+      const newHonor = Math.max(0, currentHonor + honorPenalty); // Can't go below 0
+
       // ✅ Add penalty reduction message
       if (rankingMultiplier < 1.0 && opponentAddress) {
         const reduction = Math.abs(penalty - basePenalty);
@@ -851,6 +869,10 @@ export const awardPvPCoins = mutation({
       await ctx.db.patch(profile!._id, {
         coins: newCoins,
         lifetimeSpent: (profile.lifetimeSpent || 0) + Math.abs(penalty),
+        stats: {
+          ...profile.stats,
+          honor: newHonor, // Lose honor for PvP loss
+        },
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
         // lastPvPAward already updated immediately after rate limit check (line 652)
@@ -1472,14 +1494,63 @@ export const recordAttackResult = mutation({
 
     // ===== STEP 5: Update profile stats (all at once) =====
     const newStats = { ...profile.stats };
+    const currentHonor = profile.stats?.honor ?? 500;
+    let honorChange = 0;
 
-    // Update attack win/loss stats
+    // Update attack win/loss stats and honor
     if (args.result === "win") {
       newStats.attackWins = (newStats.attackWins || 0) + 1;
       newStats.pvpWins = (newStats.pvpWins || 0) + 1;
+
+      // ATTACKER WINS: Gains +20 honor
+      honorChange = 20;
+      newStats.honor = currentHonor + honorChange;
+
+      // DEFENDER LOSES: Loses -20 honor
+      const defenderProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
+        .first();
+
+      if (defenderProfile) {
+        const defenderHonor = defenderProfile.stats?.honor ?? 500;
+        const honorLoss = 20;
+        const newDefenderHonor = Math.max(0, defenderHonor - honorLoss); // Can't go below 0
+
+        await ctx.db.patch(defenderProfile._id, {
+          stats: {
+            ...defenderProfile.stats,
+            honor: newDefenderHonor,
+            defenseWins: (defenderProfile.stats?.defenseWins || 0),
+            defenseLosses: (defenderProfile.stats?.defenseLosses || 0) + 1, // Track defense loss
+          },
+        });
+
+        console.log(`⚔️ Honor transfer: Attacker ${normalizedPlayerAddress} +${honorChange} (${currentHonor} → ${currentHonor + honorChange}), Defender ${normalizedOpponentAddress} -${honorLoss} (${defenderHonor} → ${newDefenderHonor})`);
+      }
     } else if (args.result === "loss") {
       newStats.attackLosses = (newStats.attackLosses || 0) + 1;
       newStats.pvpLosses = (newStats.pvpLosses || 0) + 1;
+
+      // ATTACKER LOSES: No honor change (already punishing with coin loss)
+      honorChange = 0;
+      newStats.honor = currentHonor;
+
+      // DEFENDER WINS: Track defense win
+      const defenderProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
+        .first();
+
+      if (defenderProfile) {
+        await ctx.db.patch(defenderProfile._id, {
+          stats: {
+            ...defenderProfile.stats,
+            defenseWins: (defenderProfile.stats?.defenseWins || 0) + 1, // Track defense win
+            defenseLosses: (defenderProfile.stats?.defenseLosses || 0),
+          },
+        });
+      }
     }
 
     // Update profile atomically (all fields at once)

@@ -306,12 +306,19 @@ export const claimMission = mutation({
       newBalance = currentBalance + boostedReward;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
+      const currentHonor = profile.stats?.honor ?? 500;
+      const honorReward = 3; // +3 honor for completing missions
+
       await ctx.db.patch(profile._id, {
         coins: newBalance,
         lifetimeEarned: newLifetimeEarned,
+        stats: {
+          ...profile.stats,
+          honor: currentHonor + honorReward, // Award honor for mission completion
+        },
       });
 
-      console.log(`💰 Mission reward added to balance: ${boostedReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
+      console.log(`💰 Mission reward: ${boostedReward} TESTVBMS + ${honorReward} honor for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}, Honor: ${currentHonor} → ${currentHonor + honorReward}`);
     }
 
     // Mark mission as claimed
