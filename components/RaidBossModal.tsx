@@ -302,7 +302,7 @@ export function RaidBossModal({
         oldCardTokenId: oldCard.tokenId,
         newCard: {
           tokenId: newCard.tokenId,
-          collection: newCard.collection,
+          collection: newCard.collection!,
           power: newCard.power,
           imageUrl: newCard.imageUrl,
           name: newCard.name,
@@ -522,7 +522,7 @@ export function RaidBossModal({
                     {currentBoss.name}
                   </h3>
                   <p className="text-vintage-burnt-gold text-sm mb-4">
-                    {currentBoss.collection.toUpperCase()} - {currentBoss.rarity}
+                    {currentBoss.collection?.toUpperCase() || 'UNKNOWN'} - {currentBoss.rarity}
                   </p>
 
                   {/* HP Bar */}

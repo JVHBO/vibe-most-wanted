@@ -216,7 +216,7 @@ export function RaidDeckSelectionModal({
         imageUrl: card.imageUrl,
         power: card.power,
         rarity: card.rarity,
-        collection: card.collection,
+        collection: card.collection!,
         foil: card.foil,
         isFreeCard: (card as any).isFreeCard || false,
       }));
@@ -228,7 +228,7 @@ export function RaidDeckSelectionModal({
         imageUrl: selectedVibeFID.imageUrl,
         power: selectedVibeFID.power,
         rarity: selectedVibeFID.rarity,
-        collection: selectedVibeFID.collection,
+        collection: selectedVibeFID.collection!,
         foil: selectedVibeFID.foil,
       } : undefined;
 
