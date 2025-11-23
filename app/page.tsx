@@ -2642,7 +2642,7 @@ export default function TCGPage() {
         playerAddress: address,
       });
 
-      // Mark daily login as completed (if not already done today)
+      // Mark daily login mission as completed (auto-unlock on login)
       await convex.mutation(api.missions.markDailyLogin, {
         playerAddress: address,
       });
@@ -2652,7 +2652,7 @@ export default function TCGPage() {
         playerAddress: address,
       });
 
-      // Define all possible missions
+      // Define all possible missions (rewards match backend)
       const allMissionTypes = [
         { type: 'daily_login', reward: 100, date: 'today' },
         { type: 'first_pve_win', reward: 50, date: 'today' },
