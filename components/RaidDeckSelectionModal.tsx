@@ -215,6 +215,56 @@ export function RaidDeckSelectionModal({
           ⚔️ BUILD YOUR RAID DECK ⚔️
         </h2>
 
+        {/* VibeFID Benefits Box */}
+        {(() => {
+          const hasVibeFID = availableCards.some(card => card.collection === 'vibefid');
+
+          return (
+            <div className="mb-3 flex-shrink-0">
+              <div className={`border-2 rounded-xl p-3 ${hasVibeFID ? 'bg-purple-900/20 border-purple-500/50' : 'bg-vintage-gold/10 border-vintage-gold/50'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-vintage-gold">VibeFID - 6th Slot Special Card</h3>
+                  {!hasVibeFID && (
+                    <a
+                      href="/fid"
+                      className="px-3 py-1 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black text-xs font-bold rounded-lg transition"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (soundEnabled) AudioManager.buttonClick();
+                      }}
+                    >
+                      Mint VibeFID
+                    </a>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="text-purple-400">⚡</span>
+                    <span className="text-vintage-burnt-gold">Infinite Energy</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-blue-400">📈</span>
+                    <span className="text-vintage-burnt-gold">+10% Deck Power</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-400">🎯</span>
+                    <span className="text-vintage-burnt-gold">+50% Boss Damage</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-green-400">🔄</span>
+                    <span className="text-vintage-burnt-gold">Use in All Modes</span>
+                  </div>
+                </div>
+                {!hasVibeFID && (
+                  <p className="text-vintage-burnt-gold text-[10px] mt-2 italic">
+                    You don't have a VibeFID yet. Mint one to unlock these powerful benefits!
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Info */}
         <div className="text-center mb-2 flex-shrink-0">
           <p className="text-vintage-burnt-gold text-sm font-modern">
