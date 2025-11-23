@@ -228,7 +228,7 @@ export function RaidBossModal({
                   Your Raid Deck ({playerDeck.deckPower.toLocaleString()} Power)
                 </h3>
                 <div className="grid grid-cols-5 gap-2">
-                  {playerDeck.deck.map((card, index) => {
+                  {playerDeck.deck.map((card: NFT, index: number) => {
                     const energy = playerDeck.cardEnergy[index];
                     const hasEnergy = energy.energy > 0;
 
