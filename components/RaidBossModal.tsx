@@ -510,10 +510,10 @@ export function RaidBossModal({
         {/* Header */}
         <div className="flex-shrink-0 mb-2 relative">
           <h2 className="text-xl md:text-3xl font-display font-bold text-center text-red-500">
-            RAID BOSS
+            {t('raidBossTitle')}
           </h2>
           <p className="text-center text-vintage-burnt-gold text-xs md:text-sm mt-1">
-            Cooperative Global Boss Battle
+            {t('raidBossSubtitle')}
           </p>
 
           {/* Claim Rewards Button (Gift Icon) */}
@@ -521,7 +521,7 @@ export function RaidBossModal({
             <button
               onClick={handleClaimRewards}
               className="absolute top-0 right-12 w-8 h-8 rounded-full bg-green-600/80 hover:bg-green-600 border-2 border-green-400 flex items-center justify-center text-white font-bold transition-all hover:scale-110 animate-pulse"
-              title={`Claim ${unclaimedRewards.totalUnclaimed} TESTVBMS`}
+              title={t('raidBossClaimRewards', { amount: unclaimedRewards.totalUnclaimed })}
             >
               🎁
               {/* Notification Badge */}
@@ -723,14 +723,14 @@ export function RaidBossModal({
               <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-neon-blue/30">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-display font-bold text-vintage-neon-blue">
-                    Your Raid Deck ({playerDeck.deckPower.toLocaleString()} Power)
+                    {t('raidBossYourDeck', { power: playerDeck.deckPower.toLocaleString() })}
                   </h3>
                   <button
                     onClick={handleRefuelAll}
                     disabled={isRefueling}
                     className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isRefueling ? '...' : '⛽ Refuel All (4 VBMS)'}
+                    {isRefueling ? '...' : t('raidBossRefuelAll')}
                   </button>
                 </div>
 
@@ -779,7 +779,7 @@ export function RaidBossModal({
                                 disabled={isRefueling}
                                 className="w-full px-1.5 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-bold transition disabled:opacity-50"
                               >
-                                {isRefueling ? '...' : 'Refuel 1 VBMS'}
+                                {isRefueling ? '...' : t('raidBossRefuelCard')}
                               </button>
                               <button
                                 onClick={() => {
@@ -789,7 +789,7 @@ export function RaidBossModal({
                                 disabled={isRefueling}
                                 className="w-full px-1.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold transition disabled:opacity-50"
                               >
-                                Trocar Carta
+                                {t('raidBossReplaceCard')}
                               </button>
                             </div>
                           )}
@@ -842,10 +842,10 @@ export function RaidBossModal({
               /* No Deck - Set Deck CTA */
               <div className="mb-6 bg-red-600/20 border-2 border-red-600/50 rounded-xl p-6 text-center">
                 <h3 className="text-xl font-display font-bold text-red-400 mb-2">
-                  Join the Raid!
+                  {t('raidBossJoinRaid')}
                 </h3>
                 <p className="text-vintage-burnt-gold mb-4">
-                  Set your 5-card raid deck to start attacking automatically every 5 minutes.
+                  {t('raidBossJoinDesc')}
                 </p>
                 <button
                   onClick={() => {
@@ -854,7 +854,7 @@ export function RaidBossModal({
                   }}
                   className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all uppercase shadow-lg"
                 >
-                  Set Raid Deck
+                  {t('raidBossSetDeck')}
                 </button>
               </div>
             )}
@@ -863,17 +863,17 @@ export function RaidBossModal({
             {playerContribution && (
               <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-burnt-gold/30">
                 <h3 className="text-lg font-display font-bold text-vintage-burnt-gold mb-2">
-                  Your Contribution
+                  {t('raidBossYourContribution')}
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-red-400 text-xs">Damage Dealt</p>
+                    <p className="text-red-400 text-xs">{t('raidBossDamageDealt')}</p>
                     <p className="text-vintage-neon-blue text-xl font-bold">
                       {playerContribution.damageDealt.toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-red-400 text-xs">Attacks</p>
+                    <p className="text-red-400 text-xs">{t('raidBossAttacks')}</p>
                     <p className="text-vintage-neon-blue text-xl font-bold">
                       {playerContribution.attackCount}
                     </p>
@@ -886,16 +886,16 @@ export function RaidBossModal({
             {topContributors && topContributors.length > 0 && (
               <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-red-600/30">
                 <h3 className="text-lg font-display font-bold text-red-400 mb-3">
-                  🏆 Damage Ranking
+                  {t('raidBossDamageRanking')}
                 </h3>
 
                 {/* Reward Pool Info */}
                 <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-3 mb-3">
                   <p className="text-red-400 text-sm font-bold text-center">
-                    💰 Reward Pool: 1,000 $TESTVBMS
+                    {t('raidBossRewardPool')}
                   </p>
                   <p className="text-vintage-burnt-gold text-xs text-center mt-1">
-                    Distributed based on damage contribution
+                    {t('raidBossRewardPoolDesc')}
                   </p>
                 </div>
 
@@ -911,7 +911,7 @@ export function RaidBossModal({
                     <>
                       <div className="bg-vintage-charcoal/50 rounded-lg p-2 mb-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-vintage-burnt-gold text-xs">Total Damage</span>
+                          <span className="text-vintage-burnt-gold text-xs">{t('raidBossTotalDamage')}</span>
                           <span className="text-vintage-neon-blue font-bold text-sm">
                             {totalDamage.toLocaleString()}
                           </span>
@@ -961,7 +961,7 @@ export function RaidBossModal({
                                   <span className="text-vintage-burnt-gold font-bold text-sm">
                                     {contributor.username}
                                     {contributor.address === userAddress.toLowerCase() && (
-                                      <span className="text-vintage-neon-blue ml-1">(You)</span>
+                                      <span className="text-vintage-neon-blue ml-1">{t('raidBossYou')}</span>
                                     )}
                                   </span>
                                 </div>
@@ -969,7 +969,7 @@ export function RaidBossModal({
 
                               {/* Damage & Contribution % */}
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-vintage-burnt-gold text-xs">Damage</span>
+                                <span className="text-vintage-burnt-gold text-xs">{t('raidBossDamage')}</span>
                                 <div className="flex items-center gap-2">
                                   <span className="text-vintage-neon-blue font-bold text-sm">
                                     {contributor.damageDealt.toLocaleString()}
@@ -991,7 +991,7 @@ export function RaidBossModal({
                               {/* Estimated Reward */}
                               <div className="flex items-center justify-between">
                                 <span className="text-vintage-burnt-gold text-xs">
-                                  Est. Reward
+                                  {t('raidBossEstReward')}
                                 </span>
                                 <span className="text-green-400 font-bold text-sm">
                                   +{estimatedReward.toLocaleString()} $TESTVBMS
@@ -1016,7 +1016,7 @@ export function RaidBossModal({
               onClick={handleShare}
               className="flex-1 px-4 py-3 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-bold transition"
             >
-              Share
+              {t('raidBossShare')}
             </button>
           )}
           <button
@@ -1026,7 +1026,7 @@ export function RaidBossModal({
             }}
             className="flex-1 px-4 py-3 bg-vintage-black hover:bg-red-600/10 text-red-400 border border-red-600/50 rounded-xl font-bold transition"
           >
-            Close
+            {t('raidBossClose')}
           </button>
         </div>
       </div>
@@ -1043,34 +1043,32 @@ export function RaidBossModal({
           onClick={(e) => e.stopPropagation()}
         >
           <h2 className="text-lg font-display font-bold text-red-400 mb-2">
-            How Boss Raid Works
+            {t('raidBossHelp')}
           </h2>
           <div className="space-y-2 text-vintage-burnt-gold font-modern text-xs">
             <div>
-              <h3 className="text-red-400 font-bold mb-1 text-sm">Global Cooperative Battle</h3>
-              <p>All players attack the same boss together. Work as a team to defeat powerful bosses and earn rewards.</p>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpGlobal')}</h3>
+              <p>{t('raidBossHelpGlobalDesc')}</p>
             </div>
             <div>
-              <h3 className="text-red-400 font-bold mb-1 text-sm">Set Your Raid Deck</h3>
-              <p>Select 5 cards to form your raid deck. Your deck will automatically attack the boss every 5 minutes.</p>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpSetDeck')}</h3>
+              <p>{t('raidBossHelpSetDeckDesc')}</p>
             </div>
             <div>
-              <h3 className="text-red-400 font-bold mb-1 text-sm">Card Energy System</h3>
-              <p className="text-[10px] leading-tight">Cards attack every 5 minutes until their energy expires. Energy duration depends on rarity:<br/>
-              • Common: 12h • Rare: 1d • Epic: 2d • Legendary: 4d • Mythic: 5d • VibeFID: ∞<br/>
-              Refuel: 1 VBMS per card or 4 VBMS for all 5 (save 1!).</p>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpEnergy')}</h3>
+              <p className="text-[10px] leading-tight">{t('raidBossHelpEnergyDesc')}</p>
             </div>
             <div>
-              <h3 className="text-red-400 font-bold mb-1 text-sm">Damage Buffs</h3>
-              <p className="text-[10px]">• VibeFID: +50% • Same collection: +20% • Critical: 15% chance for 2x</p>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpBuffs')}</h3>
+              <p className="text-[10px]">{t('raidBossHelpBuffsDesc')}</p>
             </div>
             <div>
-              <h3 className="text-red-400 font-bold mb-1 text-sm">Boss Rotation</h3>
-              <p className="text-[10px]">Bosses rotate through 4 collections (VBRS, VBMS, VibeFID, AFCL) with increasing difficulty.</p>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpRotation')}</h3>
+              <p className="text-[10px]">{t('raidBossHelpRotationDesc')}</p>
             </div>
             <div>
-              <h3 className="text-red-400 font-bold mb-1 text-sm">Leaderboard & Rewards</h3>
-              <p className="text-[10px]">Top contributors earn special rewards when the boss is defeated!</p>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpRewards')}</h3>
+              <p className="text-[10px]">{t('raidBossHelpRewardsDesc')}</p>
             </div>
           </div>
           <button
@@ -1080,7 +1078,7 @@ export function RaidBossModal({
             }}
             className="w-full mt-3 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition text-sm"
           >
-            Got it!
+            {t('raidBossHelpGotIt')}
           </button>
         </div>
       </div>
