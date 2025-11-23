@@ -120,13 +120,13 @@ export function RaidDeckSelectionModal({
   );
 
   // Calculate total power (with buffs)
-  const totalPower = selectedCards.reduce((sum, card) => {
+  const totalPower = selectedCards.reduce((sum: number, card) => {
     const buff = getCardBuff(card);
     const cardPower = buff ? Math.floor(card.power * buff.multiplier) : card.power;
     return sum + cardPower;
   }, 0);
 
-  const totalBasePower = selectedCards.reduce((sum, card) => sum + card.power, 0);
+  const totalBasePower = selectedCards.reduce((sum: number, card) => sum + card.power, 0);
 
   const handleCardClick = (card: NFT) => {
     const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
