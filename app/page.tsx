@@ -5015,11 +5015,13 @@ export default function TCGPage() {
                     disabled={!userProfile}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
                       userProfile
-                        ? 'bg-gradient-to-r from-red-900 to-purple-900 hover:from-red-800 hover:to-purple-800 text-red-200 shadow-neon hover:scale-105 border-2 border-red-500/50'
+                        ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg hover:scale-105 border-2 border-red-500/50'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    <span className="text-2xl">💀</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" className="w-6 h-6 bg-white rounded-full p-0.5">
+                      <path d="M12 2C6.5 2 2 6 2 10.5c0 2.5 1.2 4.8 3 6.3v3.2c0 1.1.9 2 2 2h2c.6 0 1-.4 1-1s-.4-1-1-1H7v-2.3c.7.2 1.4.3 2 .3 1.4 0 2.8-.4 4-.4s2.6.4 4 .4c.6 0 1.3-.1 2-.3V20h-2c-.6 0-1 .4-1 1s.4 1 1 1h2c1.1 0 2-.9 2-2v-3.2c1.8-1.5 3-3.8 3-6.3C22 6 17.5 2 12 2zm-3 9.5c-.8 0-1.5-.7-1.5-1.5S8.2 8.5 9 8.5s1.5.7 1.5 1.5-.7 1.5-1.5 1.5zm6 0c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5zm-3 3c-1.4 0-2.5.6-3 1.5h6c-.5-.9-1.6-1.5-3-1.5z"/>
+                    </svg>
                     Boss Raid
                   </button>
                 </div>
