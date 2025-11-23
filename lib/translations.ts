@@ -569,7 +569,16 @@ export const translations = {
     raidBossHelpBossTable: 'Boss HP & Rewards',
     raidBossHelpTableRarity: 'Rarity',
     raidBossHelpTableHP: 'HP',
-    raidBossHelpTableReward: 'Reward Pool'
+    raidBossHelpTableReward: 'Reward Pool',
+    // Raid Boss Rotation Carousel
+    raidRotationTitle: 'Boss Rotation Schedule',
+    raidCurrent: 'CURRENT BOSS',
+    raidDefeated: 'Defeated',
+    raidNext: 'Next Boss',
+    raidLeaderboard: 'Leaderboard',
+    raidCurrentStats: 'Current Stats',
+    raidBuyPacks: 'Buy Packs',
+    raidDragHint: 'Drag or scroll to browse all bosses'
   },
   es: {
     title: 'Home',
