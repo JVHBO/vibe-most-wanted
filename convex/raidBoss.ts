@@ -195,6 +195,69 @@ export const getRaidHistory = query({
   },
 });
 
+/**
+ * Get raid boss leaderboard (ordered by totalDamageDealt)
+ * Returns all players with raid decks, enriched with profile data
+ */
+export const getRaidBossLeaderboard = query({
+  handler: async (ctx) => {
+    // Get all raid attacks ordered by total damage dealt
+    const raidAttacks = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_total_damage")
+      .order("desc")
+      .collect();
+
+    // Enrich with profile data
+    const leaderboard = await Promise.all(
+      raidAttacks.map(async (raid) => {
+        const profile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q) => q.eq("address", raid.address))
+          .first();
+
+        if (!profile) {
+          // Return basic data if profile not found
+          return {
+            address: raid.address,
+            username: raid.address.slice(0, 8),
+            stats: {
+              totalPower: 0,
+              totalCards: 0,
+              openedCards: 0,
+              unopenedCards: 0,
+              honor: 500,
+              pveWins: 0,
+              pveLosses: 0,
+              pvpWins: 0,
+              pvpLosses: 0,
+              attackWins: 0,
+              attackLosses: 0,
+              defenseWins: 0,
+              defenseLosses: 0,
+              raidBossDamage: raid.totalDamageDealt,
+              bossesKilled: raid.bossesKilled,
+            },
+            createdAt: raid.createdAt,
+            lastUpdated: raid.lastUpdated,
+          };
+        }
+
+        return {
+          ...profile,
+          stats: {
+            ...profile.stats,
+            raidBossDamage: raid.totalDamageDealt,
+            bossesKilled: raid.bossesKilled,
+          },
+        };
+      })
+    );
+
+    return leaderboard;
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MUTATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
