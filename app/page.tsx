@@ -1023,6 +1023,7 @@ export default function TCGPage() {
         rank: index + 1,
         username: player.username,
         address: player.address,
+        honor: player.stats?.honor ?? 500,
         power: player.stats?.totalPower || 0,
         openedCards: player.stats?.openedCards || 0,
         wins: (player.stats?.pveWins || 0) + (player.stats?.pvpWins || 0),
@@ -5320,6 +5321,7 @@ export default function TCGPage() {
                         <tr className="border-b border-vintage-gold/20">
                           <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
                           <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Honor</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Opened</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
@@ -5358,6 +5360,7 @@ export default function TCGPage() {
                                 </div>
                               </Link>
                             </td>
+                            <td className="p-2 md:p-4 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.honor ?? 500).toLocaleString()} ⚔️</td>
                             <td className="p-2 md:p-4 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
                             <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
                             <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
@@ -5841,6 +5844,7 @@ export default function TCGPage() {
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
+                            <span className="text-xs text-purple-400 font-bold">{(profile.stats?.honor ?? 500).toLocaleString()} ⚔️</span>
                             <span className="text-xs text-yellow-400">{(profile.stats?.totalPower || 0).toLocaleString()} PWR</span>
                             <span className="text-xs text-green-400 font-bold min-w-[60px] text-right">+{rewardAmount}</span>
                           </div>
