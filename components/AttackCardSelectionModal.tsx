@@ -180,6 +180,14 @@ export function AttackCardSelectionModal({
     // Prevent multiple clicks
     setIsAttacking(true);
 
+    // Validate opponent has a defense deck
+    if (!targetPlayer.defenseDeck || targetPlayer.defenseDeck.length !== HAND_SIZE) {
+      setErrorMessage(`${targetPlayer.username} doesn't have a defense deck set up. You can only attack players with a complete defense deck (${HAND_SIZE} cards).`);
+      setIsAttacking(false);
+      if (soundEnabled) AudioManager.defeat();
+      return;
+    }
+
     try {
       // Pay entry fee BEFORE attacking
       await payEntryFee({ address: address || '', mode: 'attack' });

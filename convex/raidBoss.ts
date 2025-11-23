@@ -160,13 +160,18 @@ export const getTopContributors = query({
 
     const limit = args.limit || 10;
 
-    const contributors = await ctx.db
+    // Fetch all contributors for this boss
+    const allContributors = await ctx.db
       .query("raidContributions")
-      .withIndex("by_boss", (q) => q.eq("bossIndex", boss.bossIndex))
-      .order("desc")
-      .take(limit);
+      .withIndex("by_boss_player", (q) => q.eq("bossIndex", boss.bossIndex))
+      .collect();
 
-    return contributors;
+    // Sort by damage dealt (descending) and return top N
+    const sorted = allContributors
+      .sort((a, b) => b.damageDealt - a.damageDealt)
+      .slice(0, limit);
+
+    return sorted;
   },
 });
 
