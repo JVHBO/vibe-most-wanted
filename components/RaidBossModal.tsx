@@ -367,6 +367,22 @@ export function RaidBossModal({
     }
   };
 
+  // Share raid deck on Farcaster
+  const handleShare = () => {
+    if (!playerDeck || !currentBoss) return;
+
+    const deckPower = playerDeck.deckPower.toLocaleString();
+    const bossName = currentBoss.name;
+    const bossHp = Math.round((currentBoss.currentHp / currentBoss.maxHp) * 100);
+
+    const shareText = `⚔️ RAID BOSS BATTLE ⚔️\n\nMy Deck Power: ${deckPower}\nVs ${bossName}\nBoss HP: ${bossHp}%\n\nJoin the raid at vibemostwanted.xyz!`;
+
+    const shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent('https://vibemostwanted.xyz')}`;
+
+    window.open(shareUrl, '_blank');
+    if (soundEnabled) AudioManager.buttonClick();
+  };
+
   // Claim raid boss rewards
   const handleClaimRewards = async () => {
     if (!unclaimedRewards || unclaimedRewards.totalUnclaimed === 0) return;
@@ -881,13 +897,10 @@ export function RaidBossModal({
         <div className="flex-shrink-0 flex gap-3 mt-4">
           {hasDeck && (
             <button
-              onClick={() => {
-                // TODO: Implement share
-                if (soundEnabled) AudioManager.buttonClick();
-              }}
+              onClick={handleShare}
               className="flex-1 px-4 py-3 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-bold transition"
             >
-              Share
+              📤 Share
             </button>
           )}
           <button

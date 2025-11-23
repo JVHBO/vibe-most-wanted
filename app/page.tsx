@@ -1336,6 +1336,19 @@ export default function TCGPage() {
       setNfts([...processed]);
       setStatus("loaded");
       devLog('🎉 Cards loaded successfully (NFTs + FREE):', processed.length);
+
+      // Check if player has VibeFID and mark achievement
+      const hasVibeFID = processed.some((card: any) => card.collection === 'vibefid');
+      if (hasVibeFID && address) {
+        try {
+          await convex.mutation(api.missions.markVibeFIDMinted, {
+            playerAddress: address.toLowerCase(),
+          });
+          devLog('✅ VibeFID achievement checked');
+        } catch (error) {
+          devWarn('⚠️ Failed to mark VibeFID achievement:', error);
+        }
+      }
     } catch (e: any) {
       devLog('✗ Error loading NFTs:', e);
       setStatus("failed");
