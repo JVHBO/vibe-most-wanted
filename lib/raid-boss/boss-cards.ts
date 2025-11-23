@@ -332,106 +332,56 @@ export const AFCL_BOSSES: Record<CardRarity, BossCard> = {
  */
 
 export const COQUETTISH_BOSSES: Record<CardRarity, BossCard> = {
-
   Common: {
-
     tokenId: 'coquettish-boss-common',
-
     collection: 'coquettish',
-
     name: 'Flirty Charmer',
-
     rarity: 'Common',
-
     power: 15,
-
     imageUrl: '/images/raid-bosses/coquettish/common.png',
-
     hp: BOSS_HP_BY_RARITY.common,
-
     description: 'A playful trickster with irresistible charm',
-
-  },
-
-  Rare: {
-
+    },
+    Rare: {
     tokenId: 'coquettish-boss-rare',
-
     collection: 'coquettish',
-
     name: 'Seductive Vixen',
-
     rarity: 'Rare',
-
     power: 20,
-
     imageUrl: '/images/raid-bosses/coquettish/rare.png',
-
     hp: BOSS_HP_BY_RARITY.rare,
-
     description: 'Enchanting beauty that captivates all who dare challenge',
-
-  },
-
-  Epic: {
-
+    },
+    Epic: {
     tokenId: 'coquettish-boss-epic',
-
     collection: 'coquettish',
-
     name: 'Enchanting Temptress',
-
     rarity: 'Epic',
-
     power: 80,
-
     imageUrl: '/images/raid-bosses/coquettish/epic.png',
-
     hp: BOSS_HP_BY_RARITY.epic,
-
     description: 'Bewitching power that leaves opponents spellbound',
-
-  },
-
-  Legendary: {
-
+    },
+    Legendary: {
     tokenId: 'coquettish-boss-legendary',
-
     collection: 'coquettish',
-
     name: 'Alluring Siren',
-
     rarity: 'Legendary',
-
     power: 240,
-
     imageUrl: '/images/raid-bosses/coquettish/legendary.png',
-
     hp: BOSS_HP_BY_RARITY.legendary,
-
     description: 'Legendary seductress whose beauty is matched only by her strength',
-
-  },
-
-  Mythic: {
-
+    },
+    Mythic: {
     tokenId: 'coquettish-boss-mythic',
-
     collection: 'coquettish',
-
     name: 'Divine Seductress',
-
     rarity: 'Mythic',
-
     power: 800,
-
     imageUrl: '/images/raid-bosses/coquettish/mythic.png',
-
     hp: BOSS_HP_BY_RARITY.mythic,
-
     description: 'The ultimate embodiment of allure and power combined',
-
-  },
+    },
 
 };
 
