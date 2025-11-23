@@ -367,11 +367,12 @@ export default function FidPage() {
     }
   }, [isConfirmed, pendingMintData, hash]);
 
-  // Queries - Get recent cards instead of just user's cards
-  const recentCards = useQuery(
-    api.farcasterCards.getRecentFarcasterCards,
-    { limit: 12 }
-  );
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const cardsPerPage = 12;
+
+  // Queries - Get all cards instead of just recent
+  const allCards = useQuery(api.farcasterCards.getAllFarcasterCards);
 
   const handleShare = async (currentLang: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN') => {
     if (!previewImage || !userData || !generatedTraits) return;
@@ -723,55 +724,147 @@ export default function FidPage() {
           username={userData?.username}
         />
 
-        {/* Recent Cards */}
-        {recentCards && recentCards.length > 0 && (
-          <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-3 sm:mb-4">
-              Recent Cards ({recentCards.length})
-            </h2>
+        {/* All Minted Cards with Pagination */}
+        {allCards && allCards.length > 0 && (() => {
+          // Calculate pagination
+          const totalCards = allCards.length;
+          const totalPages = Math.ceil(totalCards / cardsPerPage);
+          const startIndex = (currentPage - 1) * cardsPerPage;
+          const endIndex = startIndex + cardsPerPage;
+          const currentCards = allCards.slice(startIndex, endIndex);
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {recentCards.map((card: any) => (
-                <Link
-                  key={card._id}
-                  href={`/fid/${card.fid}`}
-                  className="bg-vintage-charcoal rounded-lg border border-vintage-gold/30 p-4 hover:border-vintage-gold transition-all hover:scale-105 cursor-pointer"
-                >
-                  {/* Card Symbol */}
-                  <div className="text-center mb-2">
-                    <span className={`text-4xl font-bold ${card.color === 'red' ? 'text-red-500' : 'text-black'}`}>
-                      {card.rank}{card.suitSymbol}
-                    </span>
-                  </div>
+          return (
+            <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-3 sm:mb-4">
+                Todos os Mintados ({totalCards})
+              </h2>
 
-                  {/* Card Image (PNG only, no foil effects) */}
-                  <img
-                    src={card.pfpUrl}
-                    alt={card.username}
-                    className="w-full aspect-square object-cover rounded-lg mb-2"
-                    onError={(e) => {
-                      // Fallback to a default image if pfpUrl fails
-                      (e.target as HTMLImageElement).src = '/default-avatar.png';
+              {/* Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {currentCards.map((card: any) => (
+                  <Link
+                    key={card._id}
+                    href={`/fid/${card.fid}`}
+                    onClick={() => AudioManager.buttonClick()}
+                    className="bg-vintage-charcoal rounded-lg border border-vintage-gold/30 p-4 hover:border-vintage-gold transition-all hover:scale-105 cursor-pointer"
+                  >
+                    {/* Card Symbol */}
+                    <div className="text-center mb-2">
+                      <span className={`text-4xl font-bold ${card.color === 'red' ? 'text-red-500' : 'text-black'}`}>
+                        {card.rank}{card.suitSymbol}
+                      </span>
+                    </div>
+
+                    {/* Card Image (PNG only, no foil effects) */}
+                    <img
+                      src={card.pfpUrl}
+                      alt={card.username}
+                      className="w-full aspect-square object-cover rounded-lg mb-2"
+                      onError={(e) => {
+                        // Fallback to a default image if pfpUrl fails
+                        (e.target as HTMLImageElement).src = '/default-avatar.png';
+                      }}
+                    />
+                    <p className="text-vintage-gold font-bold truncate">{card.displayName}</p>
+                    <p className="text-vintage-ice/70 text-sm truncate">@{card.username}</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-vintage-burnt-gold text-sm">{card.rarity}</span>
+                      <span className="text-vintage-ice text-sm">⚡ {card.power}</span>
+                    </div>
+                    <div className="mt-1 text-center text-xs text-vintage-ice/50">
+                      Score: {card.neynarScore.toFixed(2)}
+                    </div>
+
+                    <div className="mt-3 text-center text-xs text-vintage-burnt-gold">
+                      Click to view card →
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      setCurrentPage(prev => Math.max(1, prev - 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                  />
-                  <p className="text-vintage-gold font-bold">{card.displayName}</p>
-                  <p className="text-vintage-ice/70 text-sm">@{card.username}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-vintage-burnt-gold text-sm">{card.rarity}</span>
-                    <span className="text-vintage-ice text-sm">⚡ {card.power}</span>
-                  </div>
-                  <div className="mt-1 text-center text-xs text-vintage-ice/50">
-                    Score: {card.neynarScore.toFixed(2)}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    ← Anterior
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                      // Show first page, last page, current page, and pages around current
+                      const showPage =
+                        pageNum === 1 ||
+                        pageNum === totalPages ||
+                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1);
+
+                      // Show ellipsis
+                      const showEllipsisBefore = pageNum === currentPage - 2 && currentPage > 3;
+                      const showEllipsisAfter = pageNum === currentPage + 2 && currentPage < totalPages - 2;
+
+                      if (!showPage && !showEllipsisBefore && !showEllipsisAfter) {
+                        return null;
+                      }
+
+                      if (showEllipsisBefore || showEllipsisAfter) {
+                        return (
+                          <span key={pageNum} className="px-2 py-2 text-vintage-ice/50">
+                            ...
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => {
+                            AudioManager.buttonClick();
+                            setCurrentPage(pageNum);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+                            currentPage === pageNum
+                              ? 'bg-vintage-gold text-vintage-black font-bold'
+                              : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  <div className="mt-3 text-center text-xs text-vintage-burnt-gold">
-                    Click to view card →
-                  </div>
-                </Link>
-              ))}
+                  {/* Next Button */}
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    Próximo →
+                  </button>
+                </div>
+              )}
+
+              {/* Page Info */}
+              <div className="mt-4 text-center text-sm text-vintage-ice/70">
+                Página {currentPage} de {totalPages} • Mostrando {startIndex + 1}-{Math.min(endIndex, totalCards)} de {totalCards} cards
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* About Traits Modal */}
         {showAboutModal && (
