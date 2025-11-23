@@ -291,53 +291,23 @@ export const claimMission = mutation({
     // Get reward info
     const rewardInfo = MISSION_REWARDS[mission.missionType as keyof typeof MISSION_REWARDS];
 
-    let boostedReward = 0;
+    // 🇨🇳 Apply language boost to mission reward
+    const boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+
     let newBalance = profile.coins || 0;
 
-    if (rewardInfo.type === "coins") {
-      // 🇨🇳 Apply language boost to mission reward
-      boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+    // Award coins directly to balance (or just calculate if skipCoins)
+    if (!skipCoins) {
+      const currentBalance = profile.coins || 0;
+      newBalance = currentBalance + boostedReward;
+      const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
-      // Award coins directly to balance (or just calculate if skipCoins)
-      if (!skipCoins) {
-        const currentBalance = profile.coins || 0;
-        newBalance = currentBalance + boostedReward;
-        const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
+      await ctx.db.patch(profile._id, {
+        coins: newBalance,
+        lifetimeEarned: newLifetimeEarned,
+      });
 
-        await ctx.db.patch(profile._id, {
-          coins: newBalance,
-          lifetimeEarned: newLifetimeEarned,
-        });
-
-        console.log(`💰 Mission reward added to balance: ${boostedReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
-      } else {
-        newBalance = profile.coins || 0;
-      }
-    } else if (rewardInfo.type === "pack") {
-      // Award pack(s)
-      if (!("packType" in rewardInfo)) {
-        throw new Error("Pack reward missing packType");
-      }
-
-      const existingPack = await ctx.db
-        .query("cardPacks")
-        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-        .filter((q) => q.eq(q.field("packType"), rewardInfo.packType))
-        .first();
-
-      if (existingPack) {
-        await ctx.db.patch(existingPack._id, {
-          unopened: existingPack.unopened + rewardInfo.amount,
-        });
-      } else {
-        await ctx.db.insert("cardPacks", {
-          address: normalizedAddress,
-          packType: rewardInfo.packType,
-          unopened: rewardInfo.amount,
-          sourceId: mission.missionType,
-          earnedAt: Date.now(),
-        });
-      }
+      console.log(`💰 Mission reward added to balance: ${boostedReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
     }
 
     // Mark mission as claimed
