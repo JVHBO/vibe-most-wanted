@@ -537,6 +537,7 @@ export default function TCGPage() {
   const [profileUsername, setProfileUsername] = useState<string>('');
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
+  const [raidBossLeaderboard, setRaidBossLeaderboard] = useState<UserProfile[]>([]);
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
   // Removed: leaderboardCollection (unified leaderboard now)
@@ -2876,6 +2877,26 @@ export default function TCGPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Load Raid Boss leaderboard with 5-minute refresh (updates more frequently for active battles)
+  useEffect(() => {
+    const loadRaidBossLeaderboard = async () => {
+      try {
+        console.log("🐉 [Raid Boss Leaderboard] Starting load...", Date.now());
+        const raidProfiles = await convex.query(api.raidBoss.getRaidBossLeaderboard);
+        console.log("🟢 [Raid Boss Leaderboard] Loaded profiles:", raidProfiles?.length, Date.now());
+        setRaidBossLeaderboard(raidProfiles as UserProfile[]);
+      } catch (error) {
+        console.error("🔴 [Raid Boss Leaderboard] Error loading:", error);
+        setRaidBossLeaderboard([]);
+      }
+    };
+
+    loadRaidBossLeaderboard();
+    const interval = setInterval(loadRaidBossLeaderboard, 5 * 60 * 1000); // 5 minutes (faster for raid boss battles)
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Cache for collection-based power calculations
   const [collectionPowerCache, setCollectionPowerCache] = useState<Map<string, Map<string, number>>>(new Map());
   const [isCalculatingCollectionPower, setIsCalculatingCollectionPower] = useState(false);
@@ -3024,10 +3045,17 @@ export default function TCGPage() {
   // Unified leaderboard (already sorted by honor → power from backend)
   // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
   const filteredLeaderboard = useMemo(() => {
+    // Return raid boss leaderboard when on raid boss tab
+    if (leaderboardTab === 'raidboss') {
+      if (!raidBossLeaderboard || raidBossLeaderboard.length === 0) return [];
+      return raidBossLeaderboard;
+    }
+
+    // Return collections leaderboard (honor-based)
     if (!leaderboard || leaderboard.length === 0) return [];
     // Return as-is, already sorted by honor (primary) and power (secondary) from backend
     return leaderboard;
-  }, [leaderboard]);
+  }, [leaderboard, raidBossLeaderboard, leaderboardTab]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
@@ -5469,6 +5497,174 @@ export default function TCGPage() {
                                     currentLeaderboardPage === page
                                       ? 'bg-vintage-gold text-vintage-black border-2 border-vintage-gold'
                                       : 'bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              );
+                            });
+                          })()}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setCurrentLeaderboardPage(Math.min(Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }}
+                          disabled={currentLeaderboardPage === Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE)}
+                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
+                        >
+                          {t('next')} →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                    )}
+                  </>
+                )}
+
+                {/* Raid Boss Leaderboard */}
+                {leaderboardTab === 'raidboss' && (
+                  <>
+                    {filteredLeaderboard.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-6xl mb-4">🐉</p>
+                        <p className="text-vintage-burnt-gold">No players have joined Raid Boss yet!</p>
+                      </div>
+                    ) : (
+                  <div className="overflow-x-auto -mx-3 md:mx-0">
+                    <table className="w-full text-sm md:text-base">
+                      <thead>
+                        <tr className="border-b border-vintage-gold/20">
+                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
+                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Total Damage</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Bosses Killed</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
+                          <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredLeaderboard
+                          .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
+                          .map((profile, sliceIndex) => {
+                            const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
+                            return (
+                          <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
+                            <td className="p-2 md:p-4">
+                              <span className={`text-lg md:text-2xl font-bold ${
+                                index === 0 ? 'text-yellow-400' :
+                                index === 1 ? 'text-gray-300' :
+                                index === 2 ? 'text-orange-400' :
+                                'text-gray-500'
+                              }`}>
+                                #{index + 1}
+                              </span>
+                            </td>
+                            <td className="p-2 md:p-4">
+                              <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
+                                <div>
+                                  <div className="flex items-center gap-1 md:gap-2 mb-1">
+                                    <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base">{profile.username}</p>
+                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
+                                  </div>
+                                  <p className="text-[10px] md:text-xs text-vintage-burnt-gold font-mono hidden sm:block">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
+                                </div>
+                              </Link>
+                            </td>
+                            {/* @ts-expect-error - raidBossDamage field is added dynamically */}
+                            <td className="p-2 md:p-4 text-right text-red-400 font-bold text-base md:text-xl">{(profile.stats?.raidBossDamage ?? 0).toLocaleString()} 💥</td>
+                            {/* @ts-expect-error - bossesKilled field is added dynamically */}
+                            <td className="p-2 md:p-4 text-right text-orange-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.bossesKilled || 0} 🐉</td>
+                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
+                            <td className="p-1 md:p-4 text-center">
+                              {profile.address.toLowerCase() !== address?.toLowerCase() && (
+                                <Link
+                                  href={`/profile/${profile.username}`}
+                                  onClick={() => {
+                                    if (soundEnabled) AudioManager.buttonClick();
+                                  }}
+                                  className="inline-block px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-vintage-gold/20 border border-vintage-gold/50 hover:bg-vintage-gold/30 text-vintage-gold font-semibold text-xs md:text-sm transition-all hover:scale-105"
+                                >
+                                  <span className="hidden sm:inline">{t('viewProfile')}</span>
+                                  <span className="sm:hidden">View</span>
+                                </Link>
+                              )}
+                              {profile.address.toLowerCase() === address?.toLowerCase() && (
+                                <span className="text-[10px] md:text-xs text-vintage-burnt-gold">(You)</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                          })}
+                      </tbody>
+                    </table>
+
+                    {/* Pagination Controls */}
+                    {filteredLeaderboard.length > LEADERBOARD_PER_PAGE && (
+                      <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => {
+                            setCurrentLeaderboardPage(Math.max(1, currentLeaderboardPage - 1));
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }}
+                          disabled={currentLeaderboardPage === 1}
+                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
+                        >
+                          ← {t('previous')}
+                        </button>
+
+                        {/* Page numbers with ellipsis */}
+                        <div className="flex gap-1 md:gap-2">
+                          {(() => {
+                            const totalPages = Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE);
+                            const current = currentLeaderboardPage;
+                            const pages: (number | string)[] = [];
+
+                            if (totalPages <= 7) {
+                              // Show all pages if 7 or fewer
+                              for (let i = 1; i <= totalPages; i++) {
+                                pages.push(i);
+                              }
+                            } else {
+                              // Always show first page
+                              pages.push(1);
+
+                              // Show ellipsis or pages around current
+                              if (current > 3) {
+                                pages.push('ellipsis-start');
+                              }
+
+                              // Show current page ± 1
+                              for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
+                                pages.push(i);
+                              }
+
+                              // Show ellipsis before last page
+                              if (current < totalPages - 2) {
+                                pages.push('ellipsis-end');
+                              }
+
+                              // Always show last page
+                              pages.push(totalPages);
+                            }
+
+                            return pages.map((page, idx) => {
+                              if (typeof page === 'string') {
+                                return <span key={page} className="px-2 text-vintage-burnt-gold">...</span>;
+                              }
+
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    setCurrentLeaderboardPage(page);
+                                    if (soundEnabled) AudioManager.buttonClick();
+                                  }}
+                                  className={`px-2 md:px-3 py-2 rounded-lg font-semibold transition text-sm md:text-base ${
+                                    page === currentLeaderboardPage
+                                      ? 'bg-vintage-gold text-vintage-black'
+                                      : 'bg-vintage-charcoal border border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold'
                                   }`}
                                 >
                                   {page}
