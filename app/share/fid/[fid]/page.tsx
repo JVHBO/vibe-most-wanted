@@ -79,11 +79,11 @@ export async function generateMetadata({ params }: { params: Promise<{ fid: stri
         version: '1',
         imageUrl: imageUrl,
         button: {
-          title: 'Mint Your VibeFID',
+          title: 'View Card',
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
-            url: `${baseUrl}/fid`,
+            url: `${baseUrl}/fid/${fid}`,
           },
         },
       }),
@@ -91,11 +91,11 @@ export async function generateMetadata({ params }: { params: Promise<{ fid: stri
         version: '1',
         imageUrl: imageUrl,
         button: {
-          title: 'Mint Your VibeFID',
+          title: 'View Card',
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
-            url: `${baseUrl}/fid`,
+            url: `${baseUrl}/fid/${fid}`,
           },
         },
       }),
