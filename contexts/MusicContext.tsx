@@ -105,6 +105,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    * Load new audio and fade in
    */
   const loadAndFadeIn = useCallback((trackUrl: string, targetVolume: number) => {
+    // FORCE STOP any previous audio to prevent dual playback bug
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+
     // Stop old AudioManager music if it exists (prevent dual playback)
     if (typeof window !== 'undefined' && (window as any).globalAudioManager) {
       const oldManager = (window as any).globalAudioManager;
