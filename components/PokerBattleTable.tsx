@@ -15,7 +15,7 @@ import { useGroupVoiceChat } from '@/lib/hooks/useGroupVoiceChat';
 import { VoiceChannelPanel } from './VoiceChannelPanel';
 import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { SpectatorEntryModal } from './SpectatorEntryModal';
-import { BettingInterface } from './BettingInterface';
+import { SimpleBettingOverlay } from './SimpleBettingOverlay';
 import { GamePopups } from './GamePopups';
 
 interface Card {
@@ -76,8 +76,8 @@ export function PokerBattleTable({
 
   // Betting system state
   const [showSpectatorEntryModal, setShowSpectatorEntryModal] = useState(false);
+  const [spectatorType, setSpectatorType] = useState<'free' | 'betting' | null>(null); // NEW
   const [hasBettingCredits, setHasBettingCredits] = useState(false);
-  const [showBettingInterface, setShowBettingInterface] = useState(false);
 
   // Real-time room data for multiplayer
   const room = useQuery(
@@ -3060,27 +3060,45 @@ export function PokerBattleTable({
           onClose={() => setShowSpectatorEntryModal(false)}
           onSuccess={(credits) => {
             console.log(`🎰 Received ${credits} betting credits`);
+            setSpectatorType('betting');
             setHasBettingCredits(true);
             setShowSpectatorEntryModal(false);
-            setShowBettingInterface(true);
+          }}
+          onJoinFree={() => {
+            console.log('👁️ Joined as free spectator');
+            setSpectatorType('free');
+            setIsSpectatorMode(true);
+            setShowSpectatorEntryModal(false);
           }}
           battleId={roomId}
           playerAddress={playerAddress}
         />
       )}
 
-      {/* Betting Interface - Show for spectators with credits (any phase except game-over) */}
-      {isSpectatorMode && hasBettingCredits && showBettingInterface && room && phase !== 'game-over' && (
-        <div className="fixed bottom-4 right-4 z-[250] max-w-md">
-          <BettingInterface
-            roomId={roomId}
-            player1Address={room.hostAddress || ''}
-            player1Username={room.hostUsername || 'Player 1'}
-            player2Address={room.guestAddress || ''}
-            player2Username={room.guestUsername || 'Player 2'}
-            isGameStarted={phase !== 'deck-building' && phase !== 'card-selection'}
-            isGameOver={false}
-          />
+      {/* Simple Betting Overlay - Show during card-selection and reveal phases */}
+      {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room &&
+       (phase === 'card-selection' || phase === 'reveal') && (
+        <SimpleBettingOverlay
+          roomId={roomId}
+          currentRound={currentRound}
+          player1Address={room.hostAddress || ''}
+          player1Username={room.hostUsername || 'Player 1'}
+          player2Address={room.guestAddress || ''}
+          player2Username={room.guestUsername || 'Player 2'}
+          spectatorAddress={playerAddress || ''}
+          onBetPlaced={() => {
+            console.log('✅ Bet placed successfully!');
+          }}
+        />
+      )}
+
+      {/* Free Spectator Badge - Show if watching for free */}
+      {isSpectatorMode && spectatorType === 'free' && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-blue-600/90 backdrop-blur-md border-2 border-blue-400 rounded-lg px-4 py-2">
+          <p className="text-white text-sm font-bold text-center flex items-center gap-2">
+            <span>👁️</span>
+            <span>Free Viewer</span>
+          </p>
         </div>
       )}
 
