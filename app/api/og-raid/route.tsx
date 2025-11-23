@@ -22,26 +22,37 @@ export async function GET(request: Request) {
 
     const cards = [card1, card2, card3, card4, card5].filter(Boolean);
 
-    // Fetch boss image if needed
-    let bossImageBase64 = '';
+    // Fetch boss image and convert to base64 (required for ImageResponse)
+    let bossImageData = '';
     if (bossImage) {
       try {
-        const fullBossImageUrl = bossImage.startsWith('http')
+        // Use absolute URL for the image
+        const imageUrl = bossImage.startsWith('http')
           ? bossImage
           : `https://www.vibemostwanted.xyz${bossImage}`;
 
+        // Fetch with longer timeout and proper headers
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-        const response = await fetch(fullBossImageUrl, { signal: controller.signal });
-        clearTimeout(timeout);
+        const response = await fetch(imageUrl, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'Vercel-OG-Image-Generator',
+          },
+        });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
-          const buffer = await response.arrayBuffer();
-          bossImageBase64 = `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`;
+          const arrayBuffer = await response.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          bossImageData = `data:image/png;base64,${base64}`;
+        } else {
+          console.error('Image fetch failed:', response.status, response.statusText);
         }
-      } catch (e) {
-        console.log('Failed to fetch boss image:', e);
+      } catch (error) {
+        console.error('Failed to fetch boss image:', error);
       }
     }
 
@@ -197,7 +208,7 @@ export async function GET(request: Request) {
               }}
             >
               {/* Boss Image */}
-              {bossImageBase64 && (
+              {bossImageData && (
                 <div
                   style={{
                     display: 'flex',
@@ -205,7 +216,7 @@ export async function GET(request: Request) {
                   }}
                 >
                   <img
-                    src={bossImageBase64}
+                    src={bossImageData}
                     alt={bossName}
                     width="200"
                     height="280"
