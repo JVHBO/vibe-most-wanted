@@ -280,6 +280,11 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
       return 'americanfootball';
     }
 
+    // VibeFID collection
+    if (contractAddr === '0x60274a138d026e3cb337b40567100fdec3127565') {
+      return 'vibefid';
+    }
+
     // Default to VBMS collection
     return 'vibe';
   };
