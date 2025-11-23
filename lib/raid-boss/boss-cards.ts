@@ -26,6 +26,15 @@ export const BOSS_HP_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
   mythic: 5_000_000_000,    // 5B HP
 };
 
+// Reward Pool by Rarity (scales with difficulty/HP)
+export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
+  common: 1_000,       // 1,000 $TESTVBMS
+  rare: 5_000,         // 5,000 $TESTVBMS (5x harder)
+  epic: 25_000,        // 25,000 $TESTVBMS (25x harder)
+  legendary: 100_000,  // 100,000 $TESTVBMS (100x harder)
+  mythic: 500_000,     // 500,000 $TESTVBMS (500x harder)
+};
+
 // Boss Rotation Order (20 bosses total)
 // Alternating collections with escalating rarities for variety
 // Pattern: GM VBRS → VBMS → VIBEFID → AFCL (rotating rarities)
