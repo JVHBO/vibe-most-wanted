@@ -14,6 +14,7 @@ export {
   VBMS_BOSSES,
   VIBEFID_BOSSES,
   AFCL_BOSSES,
+  COQUETTISH_BOSSES,
   ALL_BOSS_CARDS,
   getBossCard,
   getCurrentBoss,

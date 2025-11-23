@@ -35,30 +35,35 @@ export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
   mythic: 500_000,     // 500,000 $TESTVBMS (500x harder)
 };
 
-// Boss Rotation Order (20 bosses total)
+// Boss Rotation Order (25 bosses total)
 // Alternating collections with escalating rarities for variety
-// Pattern: GM VBRS → VBMS → VIBEFID → AFCL (rotating rarities)
+// Pattern: GM VBRS → VBMS → VIBEFID → AFCL → COQUETTISH (rotating rarities)
 export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'gmvbrs',           // 1. GM VBRS Common
   'vibe',             // 2. VBMS Rare
   'vibefid',          // 3. VIBEFID Epic
   'americanfootball', // 4. AFCL Legendary
-  'gmvbrs',           // 5. GM VBRS Mythic
-  'vibe',             // 6. VBMS Common
-  'vibefid',          // 7. VIBEFID Rare
-  'americanfootball', // 8. AFCL Epic
-  'gmvbrs',           // 9. GM VBRS Legendary
-  'vibe',             // 10. VBMS Mythic
-  'vibefid',          // 11. VIBEFID Common
-  'americanfootball', // 12. AFCL Rare
-  'gmvbrs',           // 13. GM VBRS Epic
-  'vibe',             // 14. VBMS Legendary
-  'vibefid',          // 15. VIBEFID Mythic
-  'americanfootball', // 16. AFCL Common
-  'gmvbrs',           // 17. GM VBRS Rare
-  'vibe',             // 18. VBMS Epic
-  'vibefid',          // 19. VIBEFID Legendary
-  'americanfootball', // 20. AFCL Mythic
+  'coquettish',       // 5. COQUETTISH Mythic
+  'gmvbrs',           // 6. GM VBRS Rare
+  'vibe',             // 7. VBMS Epic
+  'vibefid',          // 8. VIBEFID Legendary
+  'americanfootball', // 9. AFCL Mythic
+  'coquettish',       // 10. COQUETTISH Common
+  'gmvbrs',           // 11. GM VBRS Epic
+  'vibe',             // 12. VBMS Legendary
+  'vibefid',          // 13. VIBEFID Mythic
+  'americanfootball', // 14. AFCL Common
+  'coquettish',       // 15. COQUETTISH Rare
+  'gmvbrs',           // 16. GM VBRS Legendary
+  'vibe',             // 17. VBMS Mythic
+  'vibefid',          // 18. VIBEFID Common
+  'americanfootball', // 19. AFCL Rare
+  'coquettish',       // 20. COQUETTISH Epic
+  'gmvbrs',           // 21. GM VBRS Mythic
+  'vibe',             // 22. VBMS Common
+  'vibefid',          // 23. VIBEFID Rare
+  'americanfootball', // 24. AFCL Epic
+  'coquettish',       // 25. COQUETTISH Legendary
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
@@ -66,22 +71,27 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Rare',      // 2. VBMS
   'Epic',      // 3. VIBEFID
   'Legendary', // 4. AFCL
-  'Mythic',    // 5. GM VBRS
-  'Common',    // 6. VBMS
-  'Rare',      // 7. VIBEFID
-  'Epic',      // 8. AFCL
-  'Legendary', // 9. GM VBRS
-  'Mythic',    // 10. VBMS
-  'Common',    // 11. VIBEFID
-  'Rare',      // 12. AFCL
-  'Epic',      // 13. GM VBRS
-  'Legendary', // 14. VBMS
-  'Mythic',    // 15. VIBEFID
-  'Common',    // 16. AFCL
-  'Rare',      // 17. GM VBRS
-  'Epic',      // 18. VBMS
-  'Legendary', // 19. VIBEFID
-  'Mythic',    // 20. AFCL
+  'Mythic',    // 5. COQUETTISH
+  'Rare',      // 6. GM VBRS
+  'Epic',      // 7. VBMS
+  'Legendary', // 8. VIBEFID
+  'Mythic',    // 9. AFCL
+  'Common',    // 10. COQUETTISH
+  'Epic',      // 11. GM VBRS
+  'Legendary', // 12. VBMS
+  'Mythic',    // 13. VIBEFID
+  'Common',    // 14. AFCL
+  'Rare',      // 15. COQUETTISH
+  'Legendary', // 16. GM VBRS
+  'Mythic',    // 17. VBMS
+  'Common',    // 18. VIBEFID
+  'Rare',      // 19. AFCL
+  'Epic',      // 20. COQUETTISH
+  'Mythic',    // 21. GM VBRS
+  'Common',    // 22. VBMS
+  'Rare',      // 23. VIBEFID
+  'Epic',      // 24. AFCL
+  'Legendary', // 25. COQUETTISH
 ];
 
 /**
@@ -312,6 +322,120 @@ export const AFCL_BOSSES: Record<CardRarity, BossCard> = {
   },
 };
 
+
+ 
+
+/**
+
+ * Coquettish Boss Cards
+
+ */
+
+export const COQUETTISH_BOSSES: Record<CardRarity, BossCard> = {
+
+  Common: {
+
+    tokenId: 'coquettish-boss-common',
+
+    collection: 'coquettish',
+
+    name: 'Flirty Charmer',
+
+    rarity: 'Common',
+
+    power: 15,
+
+    imageUrl: '/images/raid-bosses/coquettish/common.png',
+
+    hp: BOSS_HP_BY_RARITY.common,
+
+    description: 'A playful trickster with irresistible charm',
+
+  },
+
+  Rare: {
+
+    tokenId: 'coquettish-boss-rare',
+
+    collection: 'coquettish',
+
+    name: 'Seductive Vixen',
+
+    rarity: 'Rare',
+
+    power: 20,
+
+    imageUrl: '/images/raid-bosses/coquettish/rare.png',
+
+    hp: BOSS_HP_BY_RARITY.rare,
+
+    description: 'Enchanting beauty that captivates all who dare challenge',
+
+  },
+
+  Epic: {
+
+    tokenId: 'coquettish-boss-epic',
+
+    collection: 'coquettish',
+
+    name: 'Enchanting Temptress',
+
+    rarity: 'Epic',
+
+    power: 80,
+
+    imageUrl: '/images/raid-bosses/coquettish/epic.png',
+
+    hp: BOSS_HP_BY_RARITY.epic,
+
+    description: 'Bewitching power that leaves opponents spellbound',
+
+  },
+
+  Legendary: {
+
+    tokenId: 'coquettish-boss-legendary',
+
+    collection: 'coquettish',
+
+    name: 'Alluring Siren',
+
+    rarity: 'Legendary',
+
+    power: 240,
+
+    imageUrl: '/images/raid-bosses/coquettish/legendary.png',
+
+    hp: BOSS_HP_BY_RARITY.legendary,
+
+    description: 'Legendary seductress whose beauty is matched only by her strength',
+
+  },
+
+  Mythic: {
+
+    tokenId: 'coquettish-boss-mythic',
+
+    collection: 'coquettish',
+
+    name: 'Divine Seductress',
+
+    rarity: 'Mythic',
+
+    power: 800,
+
+    imageUrl: '/images/raid-bosses/coquettish/mythic.png',
+
+    hp: BOSS_HP_BY_RARITY.mythic,
+
+    description: 'The ultimate embodiment of allure and power combined',
+
+  },
+
+};
+
+
 /**
  * All Boss Cards organized by collection
  */
@@ -320,7 +444,8 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
   vibe: VBMS_BOSSES,
   vibefid: VIBEFID_BOSSES,
   americanfootball: AFCL_BOSSES,
-  coquettish: {} as Record<CardRarity, BossCard>, // Not used for raid bosses yet
+  coquettish: COQUETTISH_BOSSES,
+
   custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
 };
 
@@ -333,10 +458,10 @@ export function getBossCard(collection: CollectionId, rarity: CardRarity): BossC
 
 /**
  * Get current boss based on rotation index
- * @param bossIndex - Current boss index (0-19)
+ * @param bossIndex - Current boss index (0-24)
  */
 export function getCurrentBoss(bossIndex: number): BossCard | undefined {
-  const normalizedIndex = bossIndex % 20; // Loop through 20 bosses
+  const normalizedIndex = bossIndex % 25; // Loop through 25 bosses
   const collection = BOSS_ROTATION_ORDER[normalizedIndex];
   const rarity = BOSS_RARITY_ORDER[normalizedIndex];
 
@@ -361,7 +486,7 @@ export function getPreviousBoss(currentBossIndex: number): BossCard | undefined 
  * Get boss rotation info
  */
 export function getBossRotationInfo(bossIndex: number) {
-  const normalizedIndex = bossIndex % 20;
+  const normalizedIndex = bossIndex % 25;
   return {
     index: normalizedIndex,
     collection: BOSS_ROTATION_ORDER[normalizedIndex],

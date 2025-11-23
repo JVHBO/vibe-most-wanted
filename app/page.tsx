@@ -5379,7 +5379,13 @@ export default function TCGPage() {
                                       if (soundEnabled) AudioManager.buttonError();
                                       return;
                                     }
-                                    // Check if player has defense deck
+                                    // Check if ATTACKER has defense deck (required to attack)
+                                    if (!userProfile?.hasDefenseDeck) {
+                                      alert(t('attackRequiresDefenseDeck', { default: 'You need to set up your defense deck before attacking other players! Go to your profile to set it up.' }));
+                                      if (soundEnabled) AudioManager.buttonError();
+                                      return;
+                                    }
+                                    // Check if TARGET has defense deck
                                     // Note: defenseDeck is excluded from leaderboard response for performance
                                     // Use hasDefenseDeck flag instead (set by getLeaderboardLite)
                                     if (!profile.hasDefenseDeck) {
@@ -5393,13 +5399,13 @@ export default function TCGPage() {
                                     setShowAttackCardSelection(true);
                                     setAttackSelectedCards([]);
                                   }}
-                                  disabled={!userProfile || attacksRemaining <= 0 || !profile.hasDefenseDeck}
+                                  disabled={!userProfile || !userProfile.hasDefenseDeck || attacksRemaining <= 0 || !profile.hasDefenseDeck}
                                   className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                                    userProfile && attacksRemaining > 0 && profile.hasDefenseDeck
+                                    userProfile && userProfile.hasDefenseDeck && attacksRemaining > 0 && profile.hasDefenseDeck
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
-                                  title={!profile.hasDefenseDeck ? `No defense deck` : ''}
+                                  title={!userProfile?.hasDefenseDeck ? 'You need a defense deck to attack' : !profile.hasDefenseDeck ? `${profile.username} has no defense deck` : ''}
                                 >
                                   †<span className="hidden sm:inline"> Attack</span>
                                 </button>
