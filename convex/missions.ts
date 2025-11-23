@@ -13,17 +13,18 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { applyLanguageBoost } from "./languageBoost";
 
-// Mission rewards (coins OR packs)
+// Mission rewards (all coins for simplicity)
 const MISSION_REWARDS = {
   daily_login: { type: "coins", amount: 100 },
   first_pve_win: { type: "coins", amount: 50 },
-  first_pvp_match: { type: "pack", packType: "mission", amount: 1 }, // Changed to pack!
-  play_3_games: { type: "pack", packType: "mission", amount: 1 }, // NEW
-  win_5_games: { type: "pack", packType: "mission", amount: 2 }, // NEW
+  first_pvp_match: { type: "coins", amount: 100 },
+  play_3_games: { type: "coins", amount: 100 },
+  win_5_games: { type: "coins", amount: 200 },
   streak_3: { type: "coins", amount: 150 },
-  streak_5: { type: "pack", packType: "achievement", amount: 1 }, // Changed to pack!
-  streak_10: { type: "pack", packType: "achievement", amount: 3 }, // Changed to pack!
-  vibefid_minted: { type: "pack", packType: "mission", amount: 2 }, // VibeFID mint reward
+  streak_5: { type: "coins", amount: 300 },
+  streak_10: { type: "coins", amount: 750 },
+  vibefid_minted: { type: "coins", amount: 1000 },
+  welcome_gift: { type: "coins", amount: 500 },
 };
 
 /**
@@ -290,53 +291,27 @@ export const claimMission = mutation({
     // Get reward info
     const rewardInfo = MISSION_REWARDS[mission.missionType as keyof typeof MISSION_REWARDS];
 
-    let boostedReward = 0;
+    if (!rewardInfo) {
+      throw new Error(`Unknown mission type: ${mission.missionType}`);
+    }
+
+    // 🇨🇳 Apply language boost to mission reward
+    const boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+
     let newBalance = profile.coins || 0;
 
-    if (rewardInfo.type === "coins") {
-      // 🇨🇳 Apply language boost to mission reward
-      boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+    // Award coins directly to balance (or just calculate if skipCoins)
+    if (!skipCoins) {
+      const currentBalance = profile.coins || 0;
+      newBalance = currentBalance + boostedReward;
+      const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
-      // Award coins directly to balance (or just calculate if skipCoins)
-      if (!skipCoins) {
-        const currentBalance = profile.coins || 0;
-        newBalance = currentBalance + boostedReward;
-        const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
+      await ctx.db.patch(profile._id, {
+        coins: newBalance,
+        lifetimeEarned: newLifetimeEarned,
+      });
 
-        await ctx.db.patch(profile._id, {
-          coins: newBalance,
-          lifetimeEarned: newLifetimeEarned,
-        });
-
-        console.log(`💰 Mission reward added to balance: ${boostedReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
-      } else {
-        newBalance = profile.coins || 0;
-      }
-    } else if (rewardInfo.type === "pack") {
-      // Award pack(s)
-      if (!("packType" in rewardInfo)) {
-        throw new Error("Pack reward missing packType");
-      }
-
-      const existingPack = await ctx.db
-        .query("cardPacks")
-        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-        .filter((q) => q.eq(q.field("packType"), rewardInfo.packType))
-        .first();
-
-      if (existingPack) {
-        await ctx.db.patch(existingPack._id, {
-          unopened: existingPack.unopened + rewardInfo.amount,
-        });
-      } else {
-        await ctx.db.insert("cardPacks", {
-          address: normalizedAddress,
-          packType: rewardInfo.packType,
-          unopened: rewardInfo.amount,
-          sourceId: mission.missionType,
-          earnedAt: Date.now(),
-        });
-      }
+      console.log(`💰 Mission reward added to balance: ${boostedReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
     }
 
     // Mark mission as claimed
