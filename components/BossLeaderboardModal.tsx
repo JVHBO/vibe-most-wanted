@@ -289,7 +289,7 @@ export function BossLeaderboardModal({
           {/* Total Rewards */}
           <div className="mt-4 bg-green-600/20 border border-green-600/50 rounded-lg p-3 text-center">
             <p className="text-green-400 font-bold">
-              Total Rewards Distributed: {bossHistory.topContributors.reduce((sum, c) => sum + c.reward, 0).toLocaleString()} $TESTVBMS
+              Total Rewards Distributed: {bossHistory.topContributors.reduce((sum: number, c: { reward: number }) => sum + c.reward, 0).toLocaleString()} $TESTVBMS
             </p>
           </div>
         </div>
