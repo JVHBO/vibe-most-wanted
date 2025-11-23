@@ -155,7 +155,7 @@ export function RaidBossModal({
     } catch (error: any) {
       console.error('❌ Error refueling card:', error);
       setRefuelError(error?.message || 'Failed to refuel card');
-      if (soundEnabled) AudioManager.hapticFeedback('error');
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
     } finally {
       setIsRefueling(false);
     }
@@ -195,7 +195,7 @@ export function RaidBossModal({
     } catch (error: any) {
       console.error('❌ Error refueling cards:', error);
       setRefuelError(error?.message || 'Failed to refuel cards');
-      if (soundEnabled) AudioManager.hapticFeedback('error');
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
     } finally {
       setIsRefueling(false);
     }
