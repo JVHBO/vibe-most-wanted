@@ -390,7 +390,7 @@ export function RaidBossModal({
     });
 
     // Add card images (up to 5)
-    playerDeck.deck.slice(0, 5).forEach((card, index) => {
+    playerDeck.deck.slice(0, 5).forEach((card: any, index: number) => {
       ogImageParams.append(`card${index + 1}`, card.imageUrl);
     });
 
