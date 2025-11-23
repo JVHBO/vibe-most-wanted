@@ -283,7 +283,7 @@ export function RaidDeckSelectionModal({
               <div className="grid grid-cols-5 gap-2">
                 {selectedCards.map((card, idx) => (
                   <div key={idx} className="relative">
-                    <CardMedia imageUrl={card.imageUrl} name={card.name} className="rounded-lg aspect-[3/4] object-cover" />
+                    <CardMedia src={card.imageUrl} alt={card.name} className="rounded-lg aspect-[3/4] object-cover" />
                     <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1 rounded-b-lg">
                       <div className="text-white text-[10px] font-bold truncate">{card.name}</div>
                       <div className="text-vintage-gold text-[10px]">⚡ {card.power}</div>
@@ -350,7 +350,7 @@ export function RaidDeckSelectionModal({
                           : 'hover:ring-2 hover:ring-purple-400/50'
                       }`}
                     >
-                      <CardMedia imageUrl={card.imageUrl} name={card.name} className="rounded-lg aspect-[3/4] object-cover" />
+                      <CardMedia src={card.imageUrl} alt={card.name} className="rounded-lg aspect-[3/4] object-cover" />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 rounded-b-lg">
                         <div className="text-white text-xs font-bold truncate">{card.name}</div>
                         <div className="text-purple-400 text-xs">⚡ {card.power}</div>
