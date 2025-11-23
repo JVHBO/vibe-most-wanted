@@ -93,16 +93,26 @@ export function RaidDeckSelectionModal({
   const { address: walletAddress } = useAccount();
   const effectiveAddress = (playerAddress || walletAddress) as `0x${string}` | undefined;
 
-  // Detect miniapp
+  // Detect miniapp - check multiple conditions
   const isInMiniapp = typeof window !== 'undefined' && (
-    window.parent !== window ||
-    !!(window as any).sdk?.wallet
+    window.parent !== window || // In iframe
+    !!(window as any).sdk?.wallet || // Farcaster SDK available
+    window.location.href.includes('frames.farcaster.xyz') // Farcaster domain
   );
 
-  // Use Farcaster or Wagmi hooks based on environment
-  const wagmiTransfer = useTransferVBMS();
+  // Always use Farcaster hooks (works for both miniapp and web via wagmi)
   const farcasterTransfer = useFarcasterTransferVBMS();
-  const { transfer: transferVBMS, isPending: isTransferring } = isInMiniapp ? farcasterTransfer : wagmiTransfer;
+  const { transfer: transferVBMS, isPending: isTransferring } = farcasterTransfer;
+
+  // Debug log
+  if (typeof window !== 'undefined') {
+    console.log('[RaidDeckSelection] Environment:', {
+      isInMiniapp,
+      inIframe: window.parent !== window,
+      hasSDK: !!(window as any).sdk?.wallet,
+      isFarcasterDomain: window.location.href.includes('frames.farcaster.xyz'),
+    });
+  }
 
   // Convex queries and mutations
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
