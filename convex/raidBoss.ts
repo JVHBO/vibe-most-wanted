@@ -6,7 +6,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY } from "../lib/raid-boss";
+import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
 import type { CardRarity } from "../lib/types/card";
 
 // Constants
@@ -745,8 +745,9 @@ export const defeatBossAndSpawnNext = mutation({
     const totalDamage = contributions.reduce((sum, c) => sum + c.damageDealt, 0);
 
     // Distribute rewards based on contribution percentage
-    // Total reward pool: 1000 $TESTVBMS (example, can be adjusted)
-    const REWARD_POOL = 1000;
+    // Reward pool scales with boss rarity/difficulty
+    const bossRarity = defeatedBoss.rarity.toLowerCase() as Lowercase<CardRarity>;
+    const REWARD_POOL = BOSS_REWARDS_BY_RARITY[bossRarity];
 
     for (const contribution of contributions) {
       const contributionPercent = totalDamage > 0 ? contribution.damageDealt / totalDamage : 0;
