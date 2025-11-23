@@ -193,7 +193,7 @@ export function RaidBossModal({
         if (isCritical) {
           AudioManager.criticalHit?.();
         } else {
-          AudioManager.attack?.();
+          AudioManager.cardBattle?.();
         }
       }
     }, 2000 + Math.random() * 1000); // 2-3 seconds between attacks
