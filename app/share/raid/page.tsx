@@ -38,15 +38,12 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       "fc:miniapp": JSON.stringify({
         "version": "1",
         "imageUrl": imageUrl,
-        "aspectRatio": "1.91:1",
         "button": {
           "title": "Join Raid",
           "action": {
-            "type": "launch_frame",
-            "name": "VIBE MOST WANTED - Raid Boss",
+            "type": "launch_miniapp",
+            "name": "VIBE MOST WANTED",
             "url": "https://www.vibemostwanted.xyz",
-            "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
-            "splashBackgroundColor": "#FFD700"
           }
         }
       }),
@@ -54,15 +51,12 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       "fc:frame": JSON.stringify({
         "version": "1",
         "imageUrl": imageUrl,
-        "aspectRatio": "1.91:1",
         "button": {
           "title": "Join Raid",
           "action": {
-            "type": "launch_frame",
-            "name": "VIBE MOST WANTED - Raid Boss",
+            "type": "launch_miniapp",
+            "name": "VIBE MOST WANTED",
             "url": "https://www.vibemostwanted.xyz",
-            "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
-            "splashBackgroundColor": "#FFD700"
           }
         }
       }),
