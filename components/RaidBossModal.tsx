@@ -375,9 +375,9 @@ export function RaidBossModal({
     const bossName = currentBoss.name;
     const bossHp = Math.round((currentBoss.currentHp / currentBoss.maxHp) * 100);
 
-    const shareText = `⚔️ RAID BOSS BATTLE ⚔️\n\nMy Deck Power: ${deckPower}\nVs ${bossName}\nBoss HP: ${bossHp}%\n\nJoin the raid at vibemostwanted.xyz!`;
+    const castText = `⚔️ RAID BOSS BATTLE ⚔️\n\nMy Deck Power: ${deckPower}\nVs ${bossName}\nBoss HP: ${bossHp}%\n\nJoin the raid! 🎮\n\n@jvhbo`;
 
-    const shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent('https://vibemostwanted.xyz')}`;
+    const shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}`;
 
     window.open(shareUrl, '_blank');
     if (soundEnabled) AudioManager.buttonClick();
