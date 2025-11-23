@@ -854,6 +854,7 @@ export default defineSchema({
       name: v.string(),
       rarity: v.string(),
       foil: v.optional(v.string()),
+      isFreeCard: v.optional(v.boolean()), // For buff system: free cards don't get buffs
     })),
 
     // Deck Stats
