@@ -64,8 +64,8 @@ export function RaidBossModal({
     const interval = setInterval(() => {
       const now = Date.now();
       const nextAttacks = playerDeck.cardEnergy
-        .map((card) => card.nextAttackAt || 0)
-        .filter((time) => time > now);
+        .map((card: { nextAttackAt?: number }) => card.nextAttackAt || 0)
+        .filter((time: number) => time > now);
 
       if (nextAttacks.length > 0) {
         const soonest = Math.min(...nextAttacks);
