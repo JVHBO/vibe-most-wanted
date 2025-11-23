@@ -23,7 +23,7 @@ const MISSION_REWARDS = {
   streak_3: { type: "coins", amount: 150 },
   streak_5: { type: "coins", amount: 300 },
   streak_10: { type: "coins", amount: 750 },
-  vibefid_minted: { type: "coins", amount: 200 },
+  vibefid_minted: { type: "coins", amount: 1000 },
   welcome_gift: { type: "coins", amount: 500 },
 };
 
