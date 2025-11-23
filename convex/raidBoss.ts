@@ -353,6 +353,14 @@ export const processAutoAttacks = mutation({
             }
           }
 
+          // 🎯 CRITICAL HIT SYSTEM (15% chance, 2x damage)
+          const criticalHitChance = 0.15; // 15% chance
+          const isCriticalHit = Math.random() < criticalHitChance;
+          if (isCriticalHit) {
+            cardPower = Math.floor(cardPower * 2); // 2x damage on crit
+            console.log(`💥 CRITICAL HIT! Card ${card.tokenId} dealt ${cardPower} damage (2x multiplier)`);
+          }
+
           playerDamage += cardPower;
 
           // Deplete energy and set cooldown
