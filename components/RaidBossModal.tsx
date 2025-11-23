@@ -778,8 +778,10 @@ export function RaidBossModal({
                             className="w-full h-full object-cover"
                           />
                           {/* Power Badge */}
-                          <div className="absolute top-1 left-1 bg-red-600 text-white text-sm px-2 py-1 rounded font-bold">
-                            {card.power}
+                          <div className={`absolute top-1 left-1 text-white text-sm px-2 py-1 rounded font-bold ${
+                            hasCollectionBuff ? 'bg-yellow-500' : 'bg-red-600'
+                          }`}>
+                            {hasCollectionBuff ? Math.floor(card.power * 1.2) : card.power}
                           </div>
                           {/* Collection Buff Badge */}
                           {hasCollectionBuff && (
@@ -861,8 +863,10 @@ export function RaidBossModal({
                             className="w-full h-full object-cover"
                           />
                           {/* Power Badge */}
-                          <div className="absolute top-1 left-1 bg-purple-400 text-vintage-black text-xs px-1 rounded font-bold">
-                            {card.power}
+                          <div className={`absolute top-1 left-1 text-vintage-black text-xs px-1 rounded font-bold ${
+                            hasCollectionBuff ? 'bg-yellow-500' : 'bg-purple-400'
+                          }`}>
+                            {hasCollectionBuff ? Math.floor(card.power * 1.2) : card.power}
                           </div>
                           {/* Collection Buff Badge */}
                           {hasCollectionBuff && (
