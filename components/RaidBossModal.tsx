@@ -18,6 +18,7 @@ import { RaidDeckSelectionModal } from '@/components/RaidDeckSelectionModal';
 import { CardReplacementModal } from '@/components/CardReplacementModal';
 import { DamageNumber } from '@/components/DamageNumber';
 import { BossLeaderboardModal } from '@/components/BossLeaderboardModal';
+import { BossRotationCarousel } from '@/components/BossRotationCarousel';
 import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
 import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
@@ -1066,6 +1067,20 @@ export function RaidBossModal({
                 })()}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Boss Rotation Carousel */}
+        {currentBoss && (
+          <div className="flex-shrink-0 mt-4 border-t-2 border-red-600/30 pt-4">
+            <BossRotationCarousel
+              currentBossIndex={currentBoss.bossIndex}
+              onSelectBoss={(index) => {
+                setSelectedBossIndex(index);
+                setShowBossLeaderboard(true);
+              }}
+              t={t}
+            />
           </div>
         )}
 
