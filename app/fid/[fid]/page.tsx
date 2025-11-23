@@ -35,19 +35,41 @@ export default function FidCardPage() {
   useEffect(() => {
     if (card) {
       const generateBackstory = async () => {
-        const createdAt = await getFarcasterAccountCreationDate(card.fid);
-        const story = generateCriminalBackstory({
-          username: card.username,
-          displayName: card.displayName,
-          bio: card.bio || "",
-          fid: card.fid,
-          followerCount: card.followerCount,
-          createdAt,
-          power: card.power,
-          bounty: card.power * 10,
-          rarity: card.rarity,
-        }, lang);
-        setBackstory(story);
+        try {
+          // Fetch creation date with timeout
+          const createdAt = await Promise.race([
+            getFarcasterAccountCreationDate(card.fid),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)) // 3s timeout
+          ]);
+
+          const story = generateCriminalBackstory({
+            username: card.username,
+            displayName: card.displayName,
+            bio: card.bio || "",
+            fid: card.fid,
+            followerCount: card.followerCount,
+            createdAt,
+            power: card.power,
+            bounty: card.power * 10,
+            rarity: card.rarity,
+          }, lang);
+          setBackstory(story);
+        } catch (error) {
+          console.error('Error generating backstory:', error);
+          // Generate backstory without creation date if it fails
+          const story = generateCriminalBackstory({
+            username: card.username,
+            displayName: card.displayName,
+            bio: card.bio || "",
+            fid: card.fid,
+            followerCount: card.followerCount,
+            createdAt: null,
+            power: card.power,
+            bounty: card.power * 10,
+            rarity: card.rarity,
+          }, lang);
+          setBackstory(story);
+        }
       };
       generateBackstory();
     }
