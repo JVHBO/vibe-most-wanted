@@ -9,7 +9,7 @@
 
 import { useState, useMemo } from 'react';
 import { useAccount } from 'wagmi';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { CardMedia } from '@/components/CardMedia';
@@ -77,10 +77,27 @@ export function RaidDeckSelectionModal({
   const farcasterTransfer = useFarcasterTransferVBMS();
   const { transfer: transferVBMS, isPending: isTransferring } = isInMiniapp ? farcasterTransfer : wagmiTransfer;
 
-  // Convex mutation
+  // Convex queries and mutations
+  const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
   const setRaidDeck = useMutation(api.raidBoss.setRaidDeck);
 
   if (!isOpen) return null;
+
+  // Helper function to calculate buff for a card
+  const getCardBuff = (card: NFT): { multiplier: number; label: string; color: string } | null => {
+    const isFree = (card as any).isFreeCard;
+    if (isFree) return null; // Free cards don't get buffs
+
+    if (card.collection === 'vibefid') {
+      return { multiplier: 1.5, label: '+50%', color: 'text-purple-400' };
+    }
+
+    if (currentBoss && card.collection === currentBoss.collection) {
+      return { multiplier: 1.2, label: '+20%', color: 'text-blue-400' };
+    }
+
+    return null;
+  };
 
   // Sort cards
   const sortedCards = sortByPower
@@ -102,8 +119,14 @@ export function RaidDeckSelectionModal({
     (currentPage + 1) * CARDS_PER_PAGE
   );
 
-  // Calculate total power
-  const totalPower = selectedCards.reduce((sum, card) => sum + card.power, 0);
+  // Calculate total power (with buffs)
+  const totalPower = selectedCards.reduce((sum, card) => {
+    const buff = getCardBuff(card);
+    const cardPower = buff ? Math.floor(card.power * buff.multiplier) : card.power;
+    return sum + cardPower;
+  }, 0);
+
+  const totalBasePower = selectedCards.reduce((sum, card) => sum + card.power, 0);
 
   const handleCardClick = (card: NFT) => {
     const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
@@ -200,6 +223,19 @@ export function RaidDeckSelectionModal({
           <p className="text-vintage-neon-blue text-xs font-modern mt-1">
             Cards attack automatically every 5 minutes
           </p>
+          {currentBoss && (
+            <div className="text-xs font-modern mt-2 space-y-0.5">
+              <p className="text-purple-400">VibeFID cards: +50% power boost</p>
+              <p className="text-blue-400">
+                {currentBoss.collection === 'vibe' ? 'VBMS' :
+                 currentBoss.collection === 'gmvbrs' ? 'GM VBRS' :
+                 currentBoss.collection === 'vibefid' ? 'VibeFID' :
+                 currentBoss.collection === 'americanfootball' ? 'AFCL' : currentBoss.collection}
+                {' '}cards: +20% vs current boss
+              </p>
+              <p className="text-gray-500">Free cards: no bonus</p>
+            </div>
+          )}
         </div>
 
         {/* Counter */}
@@ -275,6 +311,9 @@ export function RaidDeckSelectionModal({
           <div className="mt-3 text-center">
             <p className="text-xs text-vintage-burnt-gold">Total Power</p>
             <p className="text-2xl font-bold text-vintage-gold">{totalPower.toLocaleString()}</p>
+            {totalPower !== totalBasePower && (
+              <p className="text-xs text-green-400">Base: {totalBasePower.toLocaleString()}</p>
+            )}
           </div>
         </div>
 
@@ -288,6 +327,7 @@ export function RaidDeckSelectionModal({
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-4">
               {paginatedCards.map((card) => {
                 const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
+                const buff = getCardBuff(card);
                 return (
                   <button
                     key={card.tokenId}
@@ -306,6 +346,11 @@ export function RaidDeckSelectionModal({
                     <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
                       {card.power?.toLocaleString()}
                     </div>
+                    {buff && (
+                      <div className={`absolute top-0 right-0 bg-black/80 ${buff.color} text-xs px-1 rounded-bl font-bold`}>
+                        {buff.label}
+                      </div>
+                    )}
                     {isSelected && (
                       <div className="absolute inset-0 bg-vintage-gold/20 flex items-center justify-center">
                         <span className="text-4xl text-vintage-gold">✓</span>
