@@ -378,8 +378,19 @@ export function RaidBossModal({
                 )}
                 <div className="grid grid-cols-5 gap-2">
                   {playerDeck.deck.map((card: NFT, index: number) => {
-                    const energy = playerDeck.cardEnergy[index];
-                    const hasEnergy = energy.energy > 0;
+                    const cardEnergy = playerDeck.cardEnergy[index];
+                    const now = Date.now();
+
+                    // Check if energy has expired (0 = infinite for VibeFID)
+                    const hasEnergy = cardEnergy.energyExpiresAt === 0 || now < cardEnergy.energyExpiresAt;
+
+                    // Calculate energy percentage for progress bar
+                    let energyPercent = 100;
+                    if (cardEnergy.energyExpiresAt !== 0) {
+                      const duration = cardEnergy.energyExpiresAt - (cardEnergy.lastAttackAt || now);
+                      const remaining = Math.max(0, cardEnergy.energyExpiresAt - now);
+                      energyPercent = duration > 0 ? (remaining / duration) * 100 : 0;
+                    }
 
                     return (
                       <div key={card.tokenId} className="relative">
@@ -412,7 +423,7 @@ export function RaidBossModal({
                         <div className="mt-1 h-1 bg-vintage-black rounded overflow-hidden">
                           <div
                             className={`h-full ${hasEnergy ? 'bg-green-500' : 'bg-red-500'}`}
-                            style={{ width: `${energy.energy}%` }}
+                            style={{ width: `${energyPercent}%` }}
                           />
                         </div>
                       </div>
@@ -652,7 +663,14 @@ export function RaidBossModal({
             </div>
             <div>
               <h3 className="text-vintage-gold font-bold mb-2">Card Energy System</h3>
-              <p>Each card attacks once, then needs to recharge. Refuel individual cards (1 VBMS) or all cards at once (4 VBMS for all 5 - save 1 VBMS!).</p>
+              <p>Cards attack every 5 minutes until their energy expires. Energy duration depends on rarity:<br/>
+              • Common: 12 hours<br/>
+              • Rare: 1 day<br/>
+              • Epic: 2 days<br/>
+              • Legendary: 4 days<br/>
+              • Mythic: 5 days<br/>
+              • VibeFID: Infinite (never expires)<br/>
+              Refuel individual cards (1 VBMS) or all cards at once (4 VBMS for all 5 - save 1 VBMS!).</p>
             </div>
             <div>
               <h3 className="text-vintage-gold font-bold mb-2">Damage Buffs</h3>

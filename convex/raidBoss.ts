@@ -10,12 +10,23 @@ import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY } f
 import type { CardRarity } from "../lib/types/card";
 
 // Constants
-const ENTRY_FEE = 5; // 5 VBMS to set raid deck
+const ENTRY_FEE = 5; // 5 VBMS to set raid deck (5 regular + 1 VibeFID special)
 const REFUEL_COST_PER_CARD = 1; // 1 VBMS per card
 const REFUEL_COST_ALL = 4; // 4 VBMS for all 5 cards (discount)
-const ATTACK_COOLDOWN = 5 * 60 * 1000; // 5 minutes in milliseconds
-const INITIAL_ENERGY = 100; // 100% energy when deck is set
-const ENERGY_DEPLETION = 100; // Energy depletes to 0 after attack
+const ATTACK_INTERVAL = 5 * 60 * 1000; // Cards attack every 5 minutes
+
+// Energy duration by rarity (how long the card can attack before needing refuel)
+const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
+  common: 12 * 60 * 60 * 1000,      // 12 hours
+  rare: 1 * 24 * 60 * 60 * 1000,    // 1 day
+  epic: 2 * 24 * 60 * 60 * 1000,    // 2 days
+  legendary: 4 * 24 * 60 * 60 * 1000, // 4 days
+  mythic: 5 * 24 * 60 * 60 * 1000,  // 5 days
+  vibefid: 0,                         // Infinite (never expires)
+};
+
+// VibeFID special slot bonus
+const VIBEFID_DECK_BONUS = 0.10; // +10% power to entire deck
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // QUERIES
@@ -244,13 +255,20 @@ export const setRaidDeck = mutation({
     // Calculate total deck power
     const deckPower = args.deck.reduce((sum, card) => sum + card.power, 0);
 
-    // Initialize card energy (all cards start at 100% energy)
-    const cardEnergy = args.deck.map((card) => ({
-      tokenId: card.tokenId,
-      energy: INITIAL_ENERGY,
-      lastAttackAt: undefined,
-      nextAttackAt: Date.now(), // Can attack immediately
-    }));
+    const now = Date.now();
+
+    // Initialize card energy based on rarity (energy expires after duration)
+    const cardEnergy = args.deck.map((card) => {
+      const rarity = card.rarity.toLowerCase();
+      const duration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
+
+      return {
+        tokenId: card.tokenId,
+        energyExpiresAt: duration === 0 ? 0 : now + duration, // 0 = infinite (VibeFID)
+        lastAttackAt: undefined,
+        nextAttackAt: now, // Can attack immediately
+      };
+    });
 
     // Check if player already has a raid deck
     const existingDeck = await ctx.db
@@ -316,16 +334,25 @@ export const refuelCards = mutation({
     const numCards = args.cardTokenIds.length;
     const expectedCost = numCards === 5 ? REFUEL_COST_ALL : numCards * REFUEL_COST_PER_CARD;
 
-    // Update card energy
-    const updatedCardEnergy = raidDeck.cardEnergy.map((card) => {
-      if (args.cardTokenIds.includes(card.tokenId)) {
+    const now = Date.now();
+
+    // Update card energy - reset energy expiry based on rarity
+    const updatedCardEnergy = raidDeck.cardEnergy.map((cardEnergy) => {
+      if (args.cardTokenIds.includes(cardEnergy.tokenId)) {
+        // Find card in deck to get rarity
+        const deckCard = raidDeck.deck.find((c) => c.tokenId === cardEnergy.tokenId);
+        if (!deckCard) return cardEnergy;
+
+        const rarity = deckCard.rarity.toLowerCase();
+        const duration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
+
         return {
-          ...card,
-          energy: INITIAL_ENERGY,
-          nextAttackAt: Date.now(), // Can attack immediately after refuel
+          ...cardEnergy,
+          energyExpiresAt: duration === 0 ? 0 : now + duration, // 0 = infinite (VibeFID)
+          nextAttackAt: now, // Can attack immediately after refuel
         };
       }
-      return card;
+      return cardEnergy;
     });
 
     // Update raid deck
@@ -378,10 +405,14 @@ export const processAutoAttacks = mutation({
       let playerDamage = 0;
 
       // Check each card's energy and attack if ready
-      for (const card of deck.cardEnergy) {
-        if (card.energy > 0 && (!card.nextAttackAt || card.nextAttackAt <= now)) {
-          // Card has energy and cooldown is ready - ATTACK!
-          const deckCard = deck.deck.find((c) => c.tokenId === card.tokenId);
+      for (const cardEnergy of deck.cardEnergy) {
+        // Check if energy has expired (0 = infinite for VibeFID)
+        const hasEnergy = cardEnergy.energyExpiresAt === 0 || now < cardEnergy.energyExpiresAt;
+        const isReady = !cardEnergy.nextAttackAt || cardEnergy.nextAttackAt <= now;
+
+        if (hasEnergy && isReady) {
+          // Card has energy and is ready to attack - ATTACK!
+          const deckCard = deck.deck.find((c) => c.tokenId === cardEnergy.tokenId);
           let cardPower = deckCard?.power || 0;
 
           // Apply buff system (only for NFTs, not free cards)
@@ -401,21 +432,20 @@ export const processAutoAttacks = mutation({
           const isCriticalHit = Math.random() < criticalHitChance;
           if (isCriticalHit) {
             cardPower = Math.floor(cardPower * 2); // 2x damage on crit
-            console.log(`💥 CRITICAL HIT! Card ${card.tokenId} dealt ${cardPower} damage (2x multiplier)`);
+            console.log(`💥 CRITICAL HIT! Card ${cardEnergy.tokenId} dealt ${cardPower} damage (2x multiplier)`);
           }
 
           playerDamage += cardPower;
 
-          // Deplete energy and set cooldown
+          // Update next attack time (card attacks again in 5 minutes)
           updatedCardEnergy.push({
-            tokenId: card.tokenId,
-            energy: 0, // Energy depleted
+            ...cardEnergy,
             lastAttackAt: now,
-            nextAttackAt: now + ATTACK_COOLDOWN, // 5 min cooldown
+            nextAttackAt: now + ATTACK_INTERVAL, // Next attack in 5 minutes
           });
         } else {
-          // Card not ready to attack
-          updatedCardEnergy.push(card);
+          // Card not ready to attack or energy expired
+          updatedCardEnergy.push(cardEnergy);
         }
       }
 

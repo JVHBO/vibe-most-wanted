@@ -845,7 +845,7 @@ export default defineSchema({
     // Player Info
     address: v.string(), // Player wallet address
 
-    // Raid Deck (5 cards)
+    // Raid Deck (5 regular cards)
     deck: v.array(v.object({
       tokenId: v.string(),
       collection: v.optional(v.string()),
@@ -857,15 +857,26 @@ export default defineSchema({
       isFreeCard: v.optional(v.boolean()), // For buff system: free cards don't get buffs
     })),
 
-    // Deck Stats
-    deckPower: v.number(), // Total power of all 5 cards
+    // VibeFID Special Slot (6th card - optional, infinite energy, +10% deck power)
+    vibefidCard: v.optional(v.object({
+      tokenId: v.string(),
+      collection: v.string(),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+    })),
 
-    // Energy System (each card has energy)
+    // Deck Stats
+    deckPower: v.number(), // Total power of all cards (including VibeFID bonus)
+
+    // Energy System (duration-based: cards attack every 5 min until energy expires)
     cardEnergy: v.array(v.object({
       tokenId: v.string(),
-      energy: v.number(), // 0-100% (depletes after each attack)
+      energyExpiresAt: v.number(), // Timestamp when energy expires (0 = infinite for VibeFID)
       lastAttackAt: v.optional(v.number()), // Last time this card attacked
-      nextAttackAt: v.optional(v.number()), // When card can attack again (5 min cooldown)
+      nextAttackAt: v.optional(v.number()), // When card can attack again (every 5 minutes)
     })),
 
     // Entry Fee
