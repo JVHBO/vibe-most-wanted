@@ -1108,6 +1108,50 @@ export function RaidBossModal({
               <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpGlobal')}</h3>
               <p>{t('raidBossHelpGlobalDesc')}</p>
             </div>
+
+            {/* Boss HP & Rewards Table */}
+            <div>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpBossTable')}</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px] border-collapse">
+                  <thead>
+                    <tr className="border-b border-red-600/30">
+                      <th className="text-left py-1 px-2 text-red-400">{t('raidBossHelpTableRarity')}</th>
+                      <th className="text-right py-1 px-2 text-red-400">{t('raidBossHelpTableHP')}</th>
+                      <th className="text-right py-1 px-2 text-red-400">{t('raidBossHelpTableReward')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-red-600/20">
+                      <td className="py-1 px-2 text-gray-400">Common</td>
+                      <td className="text-right py-1 px-2 text-vintage-neon-blue">10M</td>
+                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                    </tr>
+                    <tr className="border-b border-red-600/20">
+                      <td className="py-1 px-2 text-blue-400">Rare</td>
+                      <td className="text-right py-1 px-2 text-vintage-neon-blue">50M</td>
+                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                    </tr>
+                    <tr className="border-b border-red-600/20">
+                      <td className="py-1 px-2 text-purple-400">Epic</td>
+                      <td className="text-right py-1 px-2 text-vintage-neon-blue">250M</td>
+                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                    </tr>
+                    <tr className="border-b border-red-600/20">
+                      <td className="py-1 px-2 text-orange-400">Legendary</td>
+                      <td className="text-right py-1 px-2 text-vintage-neon-blue">1B</td>
+                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1 px-2 text-red-400">Mythic</td>
+                      <td className="text-right py-1 px-2 text-vintage-neon-blue">5B</td>
+                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <div>
               <h3 className="text-red-400 font-bold mb-1 text-sm">{t('raidBossHelpSetDeck')}</h3>
               <p>{t('raidBossHelpSetDeckDesc')}</p>
