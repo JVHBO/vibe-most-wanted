@@ -555,7 +555,7 @@ export default function TCGPage() {
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
   // Removed: leaderboardCollection (unified leaderboard now)
-  const [leaderboardTab, setLeaderboardTab] = useState<'collections' | 'raidboss'>('collections');
+  const [leaderboardTab, setLeaderboardTab] = useState<'honor' | 'raidboss'>('honor');
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -5198,14 +5198,14 @@ export default function TCGPage() {
                     {/* Leaderboard Tabs */}
                     <div className="flex gap-2 mb-3">
                       <button
-                        onClick={() => setLeaderboardTab('collections')}
+                        onClick={() => setLeaderboardTab('honor')}
                         className={`px-4 py-2 rounded-lg font-modern font-bold transition ${
-                          leaderboardTab === 'collections'
+                          leaderboardTab === 'honor'
                             ? 'bg-vintage-gold text-vintage-black'
                             : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
                         }`}
                       >
-                        Collections
+                        Honor
                       </button>
                       <button
                         onClick={() => setLeaderboardTab('raidboss')}
@@ -5219,7 +5219,7 @@ export default function TCGPage() {
                       </button>
                     </div>
                     {/* Export Button */}
-                    {leaderboardTab === 'collections' && (
+                    {leaderboardTab === 'honor' && (
                       <div className="flex flex-wrap gap-2 items-center">
                       <button
                         onClick={handleExportLeaderboard}
@@ -5263,8 +5263,8 @@ export default function TCGPage() {
                   </div>
                 </div>
 
-                {/* Collections Leaderboard */}
-                {leaderboardTab === 'collections' && (
+                {/* Honor Leaderboard */}
+                {leaderboardTab === 'honor' && (
                   <>
                     {filteredLeaderboard.length === 0 ? (
                       <div className="text-center py-12">

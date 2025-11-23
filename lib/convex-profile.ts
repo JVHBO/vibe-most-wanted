@@ -135,9 +135,9 @@ export class ConvexProfileService {
 
   /**
    * Get leaderboard (top players by power)
-   * 🚨 MOBILE FIX: Reduced default from 1000 to 50
+   * Shows all players (increased limit to 1000)
    */
-  static async getLeaderboard(limit: number = 50): Promise<UserProfile[]> {
+  static async getLeaderboard(limit: number = 1000): Promise<UserProfile[]> {
     try {
       // 🚀 OPTIMIZED: Use lite query (97% bandwidth reduction)
       const profiles = await getConvex().query(api.profiles.getLeaderboardLite, {
