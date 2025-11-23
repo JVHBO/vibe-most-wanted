@@ -539,7 +539,7 @@ export default function TCGPage() {
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
-  const [leaderboardCollection, setLeaderboardCollection] = useState<CollectionId>('vibe');
+  // Removed: leaderboardCollection (unified leaderboard now)
   const [leaderboardTab, setLeaderboardTab] = useState<'collections' | 'raidboss'>('collections');
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
@@ -1029,7 +1029,6 @@ export default function TCGPage() {
         openedCards: player.stats?.openedCards || 0,
         wins: (player.stats?.pveWins || 0) + (player.stats?.pvpWins || 0),
         losses: (player.stats?.pveLosses || 0) + (player.stats?.pvpLosses || 0),
-        collection: leaderboardCollection
       }));
 
       // Create JSON blob
@@ -1040,7 +1039,7 @@ export default function TCGPage() {
       // Create download link
       const link = document.createElement('a');
       link.href = url;
-      link.download = `leaderboard-top10-${leaderboardCollection}-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `leaderboard-top10-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -3022,28 +3021,13 @@ export default function TCGPage() {
     */
   }, [collectionPowerCache]);
 
-  // Filter and re-rank leaderboard by collection
+  // Unified leaderboard (already sorted by honor → power from backend)
   // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
   const filteredLeaderboard = useMemo(() => {
     if (!leaderboard || leaderboard.length === 0) return [];
-
-    // Map collection ID to power field name
-    const powerFieldMap: Record<string, 'vibePower' | 'vbrsPower' | 'vibefidPower' | 'afclPower'> = {
-      'vibe': 'vibePower',
-      'gmvbrs': 'vbrsPower',
-      'vibefid': 'vibefidPower',
-      'americanfootball': 'afclPower',
-      'custom': 'vibePower', // Fallback
-    };
-    const powerField = powerFieldMap[leaderboardCollection] || 'vibePower';
-
-    // Sort by collection-specific power
-    return [...leaderboard].sort((a, b) => {
-      const aPower = a.stats?.[powerField] || 0;
-      const bPower = b.stats?.[powerField] || 0;
-      return bPower - aPower;
-    });
-  }, [leaderboard, leaderboardCollection]);
+    // Return as-is, already sorted by honor (primary) and power (secondary) from backend
+    return leaderboard;
+  }, [leaderboard]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
@@ -5221,50 +5205,9 @@ export default function TCGPage() {
                         Raid Boss
                       </button>
                     </div>
-                    {/* Collection Filter Buttons */}
+                    {/* Export Button */}
                     {leaderboardTab === 'collections' && (
                       <div className="flex flex-wrap gap-2 items-center">
-                      <button
-                        onClick={() => setLeaderboardCollection('vibe')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'vibe'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        VBMS
-                      </button>
-                      <button
-                        onClick={() => setLeaderboardCollection('gmvbrs')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'gmvbrs'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        VBRS
-                      </button>
-                      <button
-                        onClick={() => setLeaderboardCollection('vibefid')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'vibefid'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        VibeFID
-                      </button>
-                      <button
-                        onClick={() => setLeaderboardCollection('americanfootball')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'americanfootball'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        AFCL
-                      </button>
-                      {/* Export Top 10 Button */}
                       <button
                         onClick={handleExportLeaderboard}
                         className="px-3 py-1 rounded-lg text-xs font-modern font-semibold transition bg-vintage-charcoal border border-green-500/50 text-green-400 hover:bg-green-500/10 hover:border-green-500 flex items-center gap-1"
@@ -5327,9 +5270,7 @@ export default function TCGPage() {
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
-                          {leaderboardCollection === 'vibe' && (
-                            <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
-                          )}
+                          <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
                           <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
                         </tr>
                       </thead>
@@ -5367,8 +5308,7 @@ export default function TCGPage() {
                             <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
                             <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
                             <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveLosses || 0) + (profile.stats?.pvpLosses || 0)}</td>
-                            {leaderboardCollection === 'vibe' && (
-                              <td className="p-2 md:p-4 text-center">
+                            <td className="p-2 md:p-4 text-center">
                                 {/* Weekly Reward Claim Button (TOP 10 only) */}
                                 {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
                                   const rank = index + 1;
@@ -5415,8 +5355,7 @@ export default function TCGPage() {
                                 {index >= 10 && (
                                   <div className="text-[10px] md:text-xs text-gray-500">-</div>
                                 )}
-                              </td>
-                            )}
+                            </td>
                             <td className="p-1 md:p-4 text-center">
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <button
