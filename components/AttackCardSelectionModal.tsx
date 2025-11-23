@@ -133,8 +133,6 @@ export function AttackCardSelectionModal({
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const CARDS_PER_PAGE = 50;
 
-  if (!showAttackCardSelection || !targetPlayer) return null;
-
   // Apply collection filter
   const filteredCards = useMemo(() => {
     if (selectedCollections.length === 0) {
@@ -149,6 +147,9 @@ export function AttackCardSelectionModal({
     currentPage * CARDS_PER_PAGE,
     (currentPage + 1) * CARDS_PER_PAGE
   );
+
+  // Early return AFTER all hooks
+  if (!showAttackCardSelection || !targetPlayer) return null;
 
   // Loading state
   const isLoading = isLoadingCards || sortedAttackNfts.length === 0;
