@@ -774,6 +774,18 @@ export function RaidBossModal({
                           <div className="absolute top-1 left-1 bg-red-600 text-white text-xs px-1 rounded font-bold">
                             {card.power}
                           </div>
+                          {/* Replace Card Button - Always Visible */}
+                          <button
+                            onClick={() => {
+                              setReplacingCardTokenId(card.tokenId);
+                              if (soundEnabled) AudioManager.buttonClick();
+                            }}
+                            disabled={isRefueling}
+                            className="absolute top-1 right-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-1.5 py-0.5 rounded font-bold transition disabled:opacity-50 shadow-lg"
+                            title={t('raidBossReplaceCard')}
+                          >
+                            🔄
+                          </button>
                           {/* Energy Status */}
                           {!hasEnergy && (
                             <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center gap-1 p-1">
@@ -832,6 +844,18 @@ export function RaidBossModal({
                           <div className="absolute top-1 left-1 bg-purple-400 text-vintage-black text-xs px-1 rounded font-bold">
                             {card.power}
                           </div>
+                          {/* Replace Card Button - Always Visible */}
+                          <button
+                            onClick={() => {
+                              setReplacingCardTokenId(card.tokenId);
+                              if (soundEnabled) AudioManager.buttonClick();
+                            }}
+                            disabled={isRefueling}
+                            className="absolute top-1 right-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-1.5 py-0.5 rounded font-bold transition disabled:opacity-50 shadow-lg"
+                            title={t('raidBossReplaceCard')}
+                          >
+                            🔄
+                          </button>
                         </div>
                         {/* Infinite Energy Bar (always full, purple) */}
                         <div className="mt-1 h-1 bg-vintage-black rounded overflow-hidden">
