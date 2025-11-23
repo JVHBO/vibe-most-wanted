@@ -180,8 +180,29 @@ export function AttackCardSelectionModal({
     // Prevent multiple clicks
     setIsAttacking(true);
 
-    // Validate opponent has a defense deck
-    if (!targetPlayer.defenseDeck || targetPlayer.defenseDeck.length !== HAND_SIZE) {
+    // Fetch complete profile to get defense deck (leaderboard doesn't include it for performance)
+    let completeProfile;
+    try {
+      completeProfile = await convex.query(api.profiles.getProfile, {
+        address: targetPlayer.address
+      });
+
+      if (!completeProfile) {
+        setErrorMessage(`Could not load ${targetPlayer.username}'s profile. Please try again.`);
+        setIsAttacking(false);
+        if (soundEnabled) AudioManager.buttonError();
+        return;
+      }
+    } catch (error) {
+      devError('Error fetching target player profile:', error);
+      setErrorMessage(`Error loading ${targetPlayer.username}'s profile. Please try again.`);
+      setIsAttacking(false);
+      if (soundEnabled) AudioManager.buttonError();
+      return;
+    }
+
+    // Validate opponent has a complete defense deck
+    if (!completeProfile.defenseDeck || completeProfile.defenseDeck.length !== HAND_SIZE) {
       setErrorMessage(`${targetPlayer.username} doesn't have a defense deck set up. You can only attack players with a complete defense deck (${HAND_SIZE} cards).`);
       setIsAttacking(false);
       if (soundEnabled) AudioManager.buttonError();
@@ -204,7 +225,7 @@ export function AttackCardSelectionModal({
     devLog(`✦ ATTACKING: ${targetPlayer.username}`);
     devLog(`◆ Using saved defense deck data (no NFT fetch needed)`);
 
-    const defenderCards = (targetPlayer.defenseDeck || [])
+    const defenderCards = (completeProfile.defenseDeck || [])
       .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string } => typeof card === 'object')
       .map((card, i) => {
         devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);

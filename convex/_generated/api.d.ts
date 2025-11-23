@@ -38,6 +38,7 @@ import type * as pokerCpu from "../pokerCpu.js";
 import type * as profiles from "../profiles.js";
 import type * as pvp from "../pvp.js";
 import type * as quests from "../quests.js";
+import type * as raidBoss from "../raidBoss.js";
 import type * as rewardsChoice from "../rewardsChoice.js";
 import type * as rooms from "../rooms.js";
 import type * as roundBetting from "../roundBetting.js";
@@ -94,6 +95,7 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   pvp: typeof pvp;
   quests: typeof quests;
+  raidBoss: typeof raidBoss;
   rewardsChoice: typeof rewardsChoice;
   rooms: typeof rooms;
   roundBetting: typeof roundBetting;
