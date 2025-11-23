@@ -118,7 +118,7 @@ export const getLeaderboardLite = query({
           pvpLosses: p.stats?.pvpLosses || 0,
           openedCards: p.stats?.openedCards || 0,
         },
-        hasDefenseDeck: true, // Fake it for now
+        hasDefenseDeck: (p.defenseDeck?.length || 0) === 5, // Check if has exactly 5 cards
         userIndex: p.userIndex || 0,
       }));
     } catch (error) {
