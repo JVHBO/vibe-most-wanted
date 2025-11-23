@@ -23,6 +23,7 @@ const MISSION_REWARDS = {
   streak_3: { type: "coins", amount: 150 },
   streak_5: { type: "pack", packType: "achievement", amount: 1 }, // Changed to pack!
   streak_10: { type: "pack", packType: "achievement", amount: 3 }, // Changed to pack!
+  vibefid_minted: { type: "pack", packType: "mission", amount: 2 }, // VibeFID mint reward
 };
 
 /**
@@ -195,6 +196,42 @@ export const markWinStreak = mutation({
       });
 
       // devLog (server-side)(`🔥 ${streak}-win streak mission created for`, normalizedAddress);
+    }
+  },
+});
+
+/**
+ * Mark VibeFID minted mission as completed (one-time reward)
+ */
+export const markVibeFIDMinted = mutation({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    // Check if mission already exists (one-time mission)
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("date"), "once"),
+          q.eq(q.field("missionType"), "vibefid_minted")
+        )
+      )
+      .first();
+
+    if (!existing) {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: "once", // One-time mission
+        missionType: "vibefid_minted",
+        completed: true,
+        claimed: false,
+        reward: MISSION_REWARDS.vibefid_minted.amount,
+        completedAt: Date.now(),
+      });
+
+      console.log("🎴 VibeFID mint mission created for", normalizedAddress);
     }
   },
 });

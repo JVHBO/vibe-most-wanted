@@ -386,7 +386,8 @@ export default defineSchema({
       v.literal("welcome_gift"),
       v.literal("streak_3"),
       v.literal("streak_5"),
-      v.literal("streak_10")
+      v.literal("streak_10"),
+      v.literal("vibefid_minted")
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player
@@ -853,6 +854,7 @@ export default defineSchema({
       name: v.string(),
       rarity: v.string(),
       foil: v.optional(v.string()),
+      isFreeCard: v.optional(v.boolean()), // For buff system: free cards don't get buffs
     })),
 
     // Deck Stats
