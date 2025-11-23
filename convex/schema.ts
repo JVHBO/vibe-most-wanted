@@ -386,7 +386,8 @@ export default defineSchema({
       v.literal("welcome_gift"),
       v.literal("streak_3"),
       v.literal("streak_5"),
-      v.literal("streak_10")
+      v.literal("streak_10"),
+      v.literal("vibefid_minted")
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player
