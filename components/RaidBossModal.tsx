@@ -48,6 +48,7 @@ export function RaidBossModal({
   const [timeUntilNextAttack, setTimeUntilNextAttack] = useState(0);
   const [isRefueling, setIsRefueling] = useState(false);
   const [refuelError, setRefuelError] = useState<string | null>(null);
+  const [replacingCardTokenId, setReplacingCardTokenId] = useState<string | null>(null);
 
   // Web3 hooks
   const { address: walletAddress } = useAccount();
@@ -66,6 +67,7 @@ export function RaidBossModal({
 
   // Convex mutations
   const refuelCardsMutation = useMutation(api.raidBoss.refuelCards);
+  const replaceCardMutation = useMutation(api.raidBoss.replaceCard);
   const initializeBossMutation = useMutation(api.raidBoss.initializeRaidBoss);
 
   // Query current boss
@@ -178,6 +180,68 @@ export function RaidBossModal({
     } catch (error: any) {
       console.error('❌ Error refueling card:', error);
       setRefuelError(error?.message || 'Failed to refuel card');
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
+    } finally {
+      setIsRefueling(false);
+    }
+  };
+
+  // Replace card (costs VBMS based on rarity)
+  const handleReplaceCard = async (oldCard: NFT, newCard: NFT) => {
+    if (!playerDeck || isRefueling) return;
+
+    setIsRefueling(true);
+    setRefuelError(null);
+
+    try {
+      console.log('🔄 Replacing card:', oldCard.tokenId, '→', newCard.tokenId);
+
+      // Calculate cost based on new card rarity
+      const rarity = newCard.rarity.toLowerCase();
+      const REPLACE_COSTS: Record<string, number> = {
+        common: 1,
+        rare: 3,
+        epic: 5,
+        legendary: 10,
+        mythic: 15,
+        vibefid: 50,
+      };
+      const cost = REPLACE_COSTS[rarity] || 1;
+
+      console.log(`💰 Cost to replace: ${cost} VBMS`);
+
+      // Transfer VBMS to pool
+      const txHash = await transferVBMS(
+        CONTRACTS.VBMSPoolTroll as `0x${string}`,
+        parseEther(cost.toString())
+      );
+
+      console.log('✅ Transfer successful, txHash:', txHash);
+
+      // Call Convex mutation
+      await replaceCardMutation({
+        address: userAddress.toLowerCase(),
+        oldCardTokenId: oldCard.tokenId,
+        newCard: {
+          tokenId: newCard.tokenId,
+          collection: newCard.collection,
+          power: newCard.power,
+          imageUrl: newCard.imageUrl,
+          name: newCard.name,
+          rarity: newCard.rarity,
+          foil: newCard.foil,
+          isFreeCard: newCard.isFreeCard,
+        },
+        txHash,
+      });
+
+      console.log('✅ Card replaced successfully!');
+      if (soundEnabled) AudioManager.buttonSuccess();
+      setReplacingCardTokenId(null); // Close selection modal
+
+    } catch (error: any) {
+      console.error('❌ Error replacing card:', error);
+      setRefuelError(error?.message || 'Failed to replace card');
       if (soundEnabled) AudioManager.hapticFeedback('heavy');
     } finally {
       setIsRefueling(false);
@@ -407,14 +471,24 @@ export function RaidBossModal({
                           </div>
                           {/* Energy Status */}
                           {!hasEnergy && (
-                            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-1 p-2">
-                              <span className="text-red-400 text-xl">⚡</span>
+                            <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center gap-1 p-1">
+                              <span className="text-red-400 text-sm">⚡</span>
                               <button
                                 onClick={() => handleRefuelCard(card.tokenId)}
                                 disabled={isRefueling}
-                                className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold transition disabled:opacity-50"
+                                className="w-full px-1.5 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-bold transition disabled:opacity-50"
                               >
                                 {isRefueling ? '...' : 'Refuel 1 VBMS'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setReplacingCardTokenId(card.tokenId);
+                                  if (soundEnabled) AudioManager.buttonClick();
+                                }}
+                                disabled={isRefueling}
+                                className="w-full px-1.5 py-1 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded text-[10px] font-bold transition disabled:opacity-50"
+                              >
+                                Trocar Carta
                               </button>
                             </div>
                           )}
