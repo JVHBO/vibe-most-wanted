@@ -189,7 +189,7 @@ export function RaidDeckSelectionModal({
     } catch (error: any) {
       console.error('❌ Error setting raid deck:', error);
       setErrorMessage(error?.message || 'Failed to set raid deck. Please try again.');
-      if (soundEnabled) AudioManager.hapticFeedback('error');
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
     } finally {
       setIsSettingDeck(false);
     }
