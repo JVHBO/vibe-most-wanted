@@ -935,7 +935,7 @@ export function RaidBossModal({
               onClick={handleShare}
               className="flex-1 px-4 py-3 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-bold transition"
             >
-              📤 Share
+              Share
             </button>
           )}
           <button
