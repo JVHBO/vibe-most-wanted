@@ -443,15 +443,15 @@ export function RaidBossModal({
         onClick={onClose}
       >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-6xl w-full p-4 md:p-6 lg:p-8 shadow-neon h-[90vh] flex flex-col overflow-hidden"
+        className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-6xl w-full p-3 md:p-6 lg:p-8 shadow-neon max-h-[85vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex-shrink-0 mb-4 relative">
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-center text-vintage-gold">
+        <div className="flex-shrink-0 mb-2 relative">
+          <h2 className="text-xl md:text-3xl font-display font-bold text-center text-vintage-gold">
             RAID BOSS
           </h2>
-          <p className="text-center text-vintage-burnt-gold text-sm mt-2">
+          <p className="text-center text-vintage-burnt-gold text-xs md:text-sm mt-1">
             Cooperative Global Boss Battle
           </p>
 
@@ -490,10 +490,10 @@ export function RaidBossModal({
         {currentBoss && (
           <div className="flex-1 overflow-y-auto">
             {/* Boss Card & HP */}
-            <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-gold/30">
-              <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="mb-3 md:mb-6 bg-vintage-black/50 rounded-xl p-2 md:p-4 border-2 border-vintage-gold/30">
+              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
                 {/* Boss Card Image */}
-                <div className={`w-48 h-72 flex-shrink-0 relative rounded-xl overflow-hidden border-4 border-vintage-gold shadow-neon ${bossIsHit ? 'animate-boss-hit' : ''}`}>
+                <div className={`w-32 h-48 md:w-48 md:h-72 flex-shrink-0 relative rounded-xl overflow-hidden border-4 border-vintage-gold shadow-neon ${bossIsHit ? 'animate-boss-hit' : ''}`}>
                   <CardMedia
                     src={currentBoss.imageUrl}
                     alt={currentBoss.name}
