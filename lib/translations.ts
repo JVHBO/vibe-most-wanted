@@ -282,7 +282,11 @@ export const translations = {
     raidBossHelpGotIt: 'Entendi!',
     raidBossDamage: 'Dano',
     raidBossEstReward: 'Recompensa Est.',
-    raidBossYou: '(Você)'
+    raidBossYou: '(Você)',
+    raidBossHelpBossTable: 'HP e Recompensas dos Bosses',
+    raidBossHelpTableRarity: 'Raridade',
+    raidBossHelpTableHP: 'HP',
+    raidBossHelpTableReward: 'Pool de Recompensa'
   },
   en: {
     title: 'Home',
@@ -561,7 +565,11 @@ export const translations = {
     raidBossHelpGotIt: 'Got it!',
     raidBossDamage: 'Damage',
     raidBossEstReward: 'Est. Reward',
-    raidBossYou: '(You)'
+    raidBossYou: '(You)',
+    raidBossHelpBossTable: 'Boss HP & Rewards',
+    raidBossHelpTableRarity: 'Rarity',
+    raidBossHelpTableHP: 'HP',
+    raidBossHelpTableReward: 'Reward Pool'
   },
   es: {
     title: 'Home',
