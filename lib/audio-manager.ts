@@ -263,5 +263,47 @@ export const AudioManager = {
       await this.selectCardCommon();
       this.hapticFeedback('light');
     }
+  },
+  // Boss Raid Epic Sounds
+  async bossAttack() {
+    // Epic attack sound - heavy impact
+    await this.playTone(200, 0.15, 0.4);
+    setTimeout(() => this.playTone(150, 0.2, 0.45), 80);
+    setTimeout(() => this.playTone(100, 0.25, 0.5), 150);
+    this.hapticFeedback('heavy');
+  },
+  async criticalHit() {
+    // Critical hit sound - explosive!
+    await this.playTone(1500, 0.08, 0.35);
+    setTimeout(() => this.playTone(1800, 0.08, 0.4), 40);
+    setTimeout(() => this.playTone(2200, 0.1, 0.45), 80);
+    setTimeout(() => this.playTone(2500, 0.12, 0.5), 120);
+    setTimeout(() => this.playTone(300, 0.2, 0.4), 180); // Bass drop
+    this.hapticFeedback('heavy');
+  },
+  async bossDefeat() {
+    // Epic boss defeat sound - triumphant!
+    await this.playTone(400, 0.15, 0.4);
+    setTimeout(() => this.playTone(500, 0.15, 0.4), 100);
+    setTimeout(() => this.playTone(600, 0.15, 0.4), 200);
+    setTimeout(() => this.playTone(800, 0.2, 0.45), 300);
+    setTimeout(() => this.playTone(1000, 0.25, 0.5), 400);
+    setTimeout(() => this.playTone(1200, 0.3, 0.55), 500);
+    this.hapticFeedback('heavy');
+  },
+  async bossSpawn() {
+    // Boss spawn sound - ominous
+    await this.playTone(100, 0.3, 0.5);
+    setTimeout(() => this.playTone(150, 0.25, 0.45), 150);
+    setTimeout(() => this.playTone(200, 0.2, 0.4), 280);
+    setTimeout(() => this.playTone(300, 0.15, 0.35), 380);
+    this.hapticFeedback('heavy');
+  },
+  async refuelCard() {
+    // Refuel card sound - power up
+    await this.playTone(600, 0.1, 0.25);
+    setTimeout(() => this.playTone(800, 0.1, 0.3), 60);
+    setTimeout(() => this.playTone(1000, 0.15, 0.35), 120);
+    this.hapticFeedback('medium');
   }
 };
