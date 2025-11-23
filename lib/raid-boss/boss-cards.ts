@@ -27,51 +27,52 @@ export const BOSS_HP_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
 };
 
 // Boss Rotation Order (20 bosses total)
-// GM VBRS → VBMS → VIBEFID → AFCL → loop
+// Alternating collections with escalating rarities for variety
+// Pattern: GM VBRS → VBMS → VIBEFID → AFCL (rotating rarities)
 export const BOSS_ROTATION_ORDER: CollectionId[] = [
-  'gmvbrs',
-  'gmvbrs',
-  'gmvbrs',
-  'gmvbrs',
-  'gmvbrs',
-  'vibe',
-  'vibe',
-  'vibe',
-  'vibe',
-  'vibe',
-  'vibefid',
-  'vibefid',
-  'vibefid',
-  'vibefid',
-  'vibefid',
-  'americanfootball',
-  'americanfootball',
-  'americanfootball',
-  'americanfootball',
-  'americanfootball',
+  'gmvbrs',           // 1. GM VBRS Common
+  'vibe',             // 2. VBMS Rare
+  'vibefid',          // 3. VIBEFID Epic
+  'americanfootball', // 4. AFCL Legendary
+  'gmvbrs',           // 5. GM VBRS Mythic
+  'vibe',             // 6. VBMS Common
+  'vibefid',          // 7. VIBEFID Rare
+  'americanfootball', // 8. AFCL Epic
+  'gmvbrs',           // 9. GM VBRS Legendary
+  'vibe',             // 10. VBMS Mythic
+  'vibefid',          // 11. VIBEFID Common
+  'americanfootball', // 12. AFCL Rare
+  'gmvbrs',           // 13. GM VBRS Epic
+  'vibe',             // 14. VBMS Legendary
+  'vibefid',          // 15. VIBEFID Mythic
+  'americanfootball', // 16. AFCL Common
+  'gmvbrs',           // 17. GM VBRS Rare
+  'vibe',             // 18. VBMS Epic
+  'vibefid',          // 19. VIBEFID Legendary
+  'americanfootball', // 20. AFCL Mythic
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
-  'Common',
-  'Rare',
-  'Epic',
-  'Legendary',
-  'Mythic',
-  'Common',
-  'Rare',
-  'Epic',
-  'Legendary',
-  'Mythic',
-  'Common',
-  'Rare',
-  'Epic',
-  'Legendary',
-  'Mythic',
-  'Common',
-  'Rare',
-  'Epic',
-  'Legendary',
-  'Mythic',
+  'Common',    // 1. GM VBRS
+  'Rare',      // 2. VBMS
+  'Epic',      // 3. VIBEFID
+  'Legendary', // 4. AFCL
+  'Mythic',    // 5. GM VBRS
+  'Common',    // 6. VBMS
+  'Rare',      // 7. VIBEFID
+  'Epic',      // 8. AFCL
+  'Legendary', // 9. GM VBRS
+  'Mythic',    // 10. VBMS
+  'Common',    // 11. VIBEFID
+  'Rare',      // 12. AFCL
+  'Epic',      // 13. GM VBRS
+  'Legendary', // 14. VBMS
+  'Mythic',    // 15. VIBEFID
+  'Common',    // 16. AFCL
+  'Rare',      // 17. GM VBRS
+  'Epic',      // 18. VBMS
+  'Legendary', // 19. VIBEFID
+  'Mythic',    // 20. AFCL
 ];
 
 /**
