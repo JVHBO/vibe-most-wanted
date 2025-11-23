@@ -832,7 +832,7 @@ export default function ProfilePage() {
                       const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
 
                       // Farcaster cast text
-                      const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
+                      const castText = `Check out my Vibe Most Wanted profile!\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
 
                       const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
@@ -872,7 +872,7 @@ export default function ProfilePage() {
                   <button
                     onClick={async () => {
                       const profileUrl = `${window.location.origin}/profile/${profile.username}`;
-                      const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
+                      const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
 
                       const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
 
@@ -932,7 +932,7 @@ export default function ProfilePage() {
         <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
           <span className="text-3xl">♦</span> Statistics
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♠ TOTAL CARDS</p>
             <p className="text-3xl font-bold text-vintage-gold">{nfts.length || profile.stats.totalCards}</p>
@@ -940,6 +940,10 @@ export default function ProfilePage() {
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">◆ TOTAL POWER</p>
             <p className="text-3xl font-bold text-vintage-gold">{(profile.stats.totalPower || 0).toLocaleString()}</p>
+          </div>
+          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-purple-400/50">
+            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">⚔️ HONOR</p>
+            <p className="text-3xl font-bold text-purple-400">{(profile.stats.honor ?? 500).toLocaleString()}</p>
           </div>
           <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-6 rounded-xl border-2 border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern flex items-center gap-1">💰 COINS</p>

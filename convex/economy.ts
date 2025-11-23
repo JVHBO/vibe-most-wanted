@@ -1494,14 +1494,63 @@ export const recordAttackResult = mutation({
 
     // ===== STEP 5: Update profile stats (all at once) =====
     const newStats = { ...profile.stats };
+    const currentHonor = profile.stats?.honor ?? 500;
+    let honorChange = 0;
 
-    // Update attack win/loss stats
+    // Update attack win/loss stats and honor
     if (args.result === "win") {
       newStats.attackWins = (newStats.attackWins || 0) + 1;
       newStats.pvpWins = (newStats.pvpWins || 0) + 1;
+
+      // ATTACKER WINS: Gains +20 honor
+      honorChange = 20;
+      newStats.honor = currentHonor + honorChange;
+
+      // DEFENDER LOSES: Loses -20 honor
+      const defenderProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
+        .first();
+
+      if (defenderProfile) {
+        const defenderHonor = defenderProfile.stats?.honor ?? 500;
+        const honorLoss = 20;
+        const newDefenderHonor = Math.max(0, defenderHonor - honorLoss); // Can't go below 0
+
+        await ctx.db.patch(defenderProfile._id, {
+          stats: {
+            ...defenderProfile.stats,
+            honor: newDefenderHonor,
+            defenseWins: (defenderProfile.stats?.defenseWins || 0),
+            defenseLosses: (defenderProfile.stats?.defenseLosses || 0) + 1, // Track defense loss
+          },
+        });
+
+        console.log(`⚔️ Honor transfer: Attacker ${normalizedPlayerAddress} +${honorChange} (${currentHonor} → ${currentHonor + honorChange}), Defender ${normalizedOpponentAddress} -${honorLoss} (${defenderHonor} → ${newDefenderHonor})`);
+      }
     } else if (args.result === "loss") {
       newStats.attackLosses = (newStats.attackLosses || 0) + 1;
       newStats.pvpLosses = (newStats.pvpLosses || 0) + 1;
+
+      // ATTACKER LOSES: No honor change (already punishing with coin loss)
+      honorChange = 0;
+      newStats.honor = currentHonor;
+
+      // DEFENDER WINS: Track defense win
+      const defenderProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
+        .first();
+
+      if (defenderProfile) {
+        await ctx.db.patch(defenderProfile._id, {
+          stats: {
+            ...defenderProfile.stats,
+            defenseWins: (defenderProfile.stats?.defenseWins || 0) + 1, // Track defense win
+            defenseLosses: (defenderProfile.stats?.defenseLosses || 0),
+          },
+        });
+      }
     }
 
     // Update profile atomically (all fields at once)
