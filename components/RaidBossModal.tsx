@@ -745,17 +745,6 @@ export function RaidBossModal({
                     );
                   })()}
                 </div>
-
-                {/* Refuel Button */}
-                <button
-                  onClick={() => {
-                    // TODO: Implement refuel logic
-                    if (soundEnabled) AudioManager.buttonClick();
-                  }}
-                  className="w-full mt-4 px-4 py-2 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-lg font-bold transition"
-                >
-                  ⚡ Refuel All Cards (4 VBMS)
-                </button>
               </div>
             ) : (
               /* No Deck - Set Deck CTA */
