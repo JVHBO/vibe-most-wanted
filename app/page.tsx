@@ -370,6 +370,21 @@ export default function TCGPage() {
     saveFarcasterProfile();
   }, [isInFarcaster, wagmiAddress]);
 
+  // Notify Farcaster SDK that app is ready
+  useEffect(() => {
+    const initFarcasterSDK = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          await sdk.actions.ready();
+          devLog('✅ Farcaster SDK ready called');
+        }
+      } catch (error) {
+        devError('Error calling Farcaster SDK ready:', error);
+      }
+    };
+    initFarcasterSDK();
+  }, []);
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
