@@ -195,10 +195,6 @@ export function SpectatorEntryModal({
           </>
         )}
 
-        {/* Deposit Amount Selection */}
-        {step === "deposit-amount" && (
-          <>
-
         {/* Balance - Only show in deposit flow */}
         {(step === "deposit-amount" || step === "approving" || step === "transferring") && (
           <div className="bg-vintage-black/40 rounded-lg p-4 mb-6">
@@ -209,6 +205,7 @@ export function SpectatorEntryModal({
           </div>
         )}
 
+        {/* Deposit Amount Selection */}
         {step === "deposit-amount" && (
           <>
             {/* Amount Input */}
