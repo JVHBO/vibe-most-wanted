@@ -39,7 +39,6 @@ import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal"
 import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
 import { RaidBossModal } from "@/components/RaidBossModal";
-import { RaidBossPasswordModal } from "@/components/RaidBossPasswordModal";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
@@ -579,7 +578,6 @@ export default function TCGPage() {
 
   // Raid Boss States
   const [showRaidBoss, setShowRaidBoss] = useState<boolean>(false);
-  const [showRaidBossPassword, setShowRaidBossPassword] = useState<boolean>(false);
 
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
@@ -3955,17 +3953,6 @@ export default function TCGPage() {
         />
       )}
 
-      {/* Raid Boss Password Modal */}
-      <RaidBossPasswordModal
-        isOpen={showRaidBossPassword}
-        onClose={() => setShowRaidBossPassword(false)}
-        onSuccess={() => {
-          setShowRaidBossPassword(false);
-          setShowRaidBoss(true);
-        }}
-        soundEnabled={soundEnabled}
-      />
-
       {/* Raid Boss Modal */}
       {showRaidBoss && address && (
         <RaidBossModal
@@ -5038,7 +5025,7 @@ export default function TCGPage() {
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      setShowRaidBossPassword(true);
+                      setShowRaidBoss(true);
                     }}
                     disabled={!userProfile}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
