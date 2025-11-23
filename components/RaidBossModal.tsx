@@ -435,7 +435,6 @@ export function RaidBossModal({
         availableCards={allNfts}
         oldCard={replacingCard || null}
         soundEnabled={soundEnabled}
-        t={t}
       />
 
       {/* Main Raid Boss Modal */}
