@@ -2632,20 +2632,24 @@ export default function TCGPage() {
 
     setIsLoadingMissions(true);
     try {
-      // TEMPORARILY DISABLED - Causing Convex errors until schema is synced
       // Ensure welcome_gift exists for this player (migration for old users)
-      // await convex.mutation(api.missions.ensureWelcomeGift, {
-      //   playerAddress: address,
-      // });
+      await convex.mutation(api.missions.ensureWelcomeGift, {
+        playerAddress: address,
+      });
+
+      // Mark daily login mission as completed (auto-unlock on login)
+      await convex.mutation(api.missions.markDailyLogin, {
+        playerAddress: address,
+      });
 
       // Get completed missions from database
       const playerMissions = await convex.query(api.missions.getPlayerMissions, {
         playerAddress: address,
       });
 
-      // Define all possible missions
+      // Define all possible missions (rewards match backend)
       const allMissionTypes = [
-        { type: 'daily_login', reward: 25, date: 'today' },
+        { type: 'daily_login', reward: 100, date: 'today' },
         { type: 'first_pve_win', reward: 50, date: 'today' },
         { type: 'first_pvp_match', reward: 100, date: 'today' },
         { type: 'streak_3', reward: 150, date: 'today' },
