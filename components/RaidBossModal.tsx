@@ -730,13 +730,9 @@ export function RaidBossModal({
                             alt={card.name}
                             className="w-full h-full object-cover"
                           />
-                          {/* Power Badge with VibeFID indicator */}
+                          {/* Power Badge */}
                           <div className="absolute top-1 left-1 bg-purple-400 text-vintage-black text-xs px-1 rounded font-bold">
-                            {card.power} ⚔️
-                          </div>
-                          {/* VibeFID Label */}
-                          <div className="absolute top-1 right-1 bg-purple-400/90 text-vintage-black text-[8px] px-1 rounded font-bold">
-                            VibeFID
+                            {card.power}
                           </div>
                         </div>
                         {/* Infinite Energy Bar (always full, purple) */}
