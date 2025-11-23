@@ -217,8 +217,8 @@ export default function FidCardPage() {
               {/* Action Buttons */}
               <div className="mt-6 w-full max-w-md flex gap-4">
                 {/* Share to Farcaster */}
-                <a
-                  href={(() => {
+                <button
+                  onClick={async () => {
                     const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
 
                     // Build dynamic share text with emojis
@@ -236,16 +236,27 @@ export default function FidCardPage() {
 
                     const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${card.power} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn $VBMS\n\n🎮 Mint yours & start playing! @jvhbo`;
 
-                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                  })()}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                    const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+
+                    // Try to open in miniapp using SDK
+                    try {
+                      if (typeof window !== 'undefined' && (window as any).sdk?.actions?.openUrl) {
+                        await sdk.actions.openUrl(warpcastUrl);
+                      } else {
+                        // Fallback to regular window.open
+                        window.open(warpcastUrl, '_blank');
+                      }
+                    } catch (error) {
+                      console.error('Error opening share URL:', error);
+                      window.open(warpcastUrl, '_blank');
+                    }
+                  }}
                   className="flex-1 px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <span className="text-xl">🔮</span>
                   <span className="hidden sm:inline">Share to Farcaster</span>
                   <span className="sm:hidden">Share</span>
-                </a>
+                </button>
 
                 {/* View on OpenSea */}
                 <a
