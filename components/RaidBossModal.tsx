@@ -27,7 +27,7 @@ interface RaidBossModalProps {
   onClose: () => void;
   userAddress: string;
   soundEnabled: boolean;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
   allNfts: Card[]; // All player's NFTs for deck selection
 }
 
