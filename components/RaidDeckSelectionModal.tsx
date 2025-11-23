@@ -118,10 +118,10 @@ export function RaidDeckSelectionModal({
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
   const setRaidDeck = useMutation(api.raidBoss.setRaidDeck);
 
-  // Sort cards
+  // Sort cards (exclude VibeFID in Step 1)
   const sortedCards = sortByPower
-    ? sortCardsByPower(availableCards, false) // false = descending order
-    : availableCards;
+    ? sortCardsByPower(availableCards.filter(card => showVibeFIDStep || card.collection !== 'vibefid'), false) // false = descending order
+    : availableCards.filter(card => showVibeFIDStep || card.collection !== 'vibefid');
 
   // Filter by collections
   const filteredCards = useMemo(() => {
