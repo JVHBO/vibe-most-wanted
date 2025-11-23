@@ -1597,6 +1597,11 @@ export default function ProfilePage() {
                               devError('Failed to update rematch count:', err);
                             }
 
+                            // Check if ATTACKER has defense deck (required to attack)
+                            if (!userProfile?.hasDefenseDeck) {
+                              alert('You need to set up your defense deck before attacking other players! Go to your profile to set it up.');
+                              return;
+                            }
                             // ✅ Open attack modal directly in profile (no redirect!)
                             setTargetOpponent(opponentProfile);
                             setAttackSelectedCards([]);
