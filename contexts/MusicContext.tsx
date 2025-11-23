@@ -172,7 +172,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    */
   const setMusicMode = useCallback((mode: MusicMode) => {
     setMusicModeState(mode);
-    localStorage.setItem('musicMode', mode);
+    try {
+      localStorage.setItem('musicMode', mode);
+    } catch (error) {
+      // localStorage might not be available in some contexts (e.g., Farcaster miniapp iframe)
+      console.warn('localStorage not available, cannot persist music mode preference');
+    }
   }, []);
 
   /**
@@ -246,9 +251,14 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    * Load music mode from localStorage on mount
    */
   useEffect(() => {
-    const stored = localStorage.getItem('musicMode') as MusicMode;
-    if (stored && (stored === 'default' || stored === 'language')) {
-      setMusicModeState(stored);
+    try {
+      const stored = localStorage.getItem('musicMode') as MusicMode;
+      if (stored && (stored === 'default' || stored === 'language')) {
+        setMusicModeState(stored);
+      }
+    } catch (error) {
+      // localStorage might not be available in some contexts (e.g., Farcaster miniapp iframe)
+      console.warn('localStorage not available, using default music mode');
     }
   }, []);
 
