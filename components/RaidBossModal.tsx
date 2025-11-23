@@ -375,13 +375,30 @@ export function RaidBossModal({
   const handleShare = () => {
     if (!playerDeck || !currentBoss) return;
 
-    const deckPower = playerDeck.deckPower.toLocaleString();
+    const deckPower = playerDeck.deckPower;
     const bossName = currentBoss.name;
     const bossHp = Math.round((currentBoss.currentHp / currentBoss.maxHp) * 100);
+    const bossImage = encodeURIComponent(currentBoss.imageUrl);
 
-    const castText = `⚔️ RAID BOSS BATTLE ⚔️\n\nMy Deck Power: ${deckPower}\nVs ${bossName}\nBoss HP: ${bossHp}%\n\nJoin the raid! 🎮\n\n@jvhbo`;
+    // Build dynamic OG image URL with raid data
+    const ogImageParams = new URLSearchParams({
+      bossName,
+      bossHp: bossHp.toString(),
+      deckPower: deckPower.toString(),
+      username: playerDeck.username || 'Player',
+      bossImage: currentBoss.imageUrl,
+    });
 
-    const embedUrl = encodeURIComponent('https://vibemostwanted.xyz/share/raid');
+    // Add card images (up to 5)
+    playerDeck.deck.slice(0, 5).forEach((card, index) => {
+      ogImageParams.append(`card${index + 1}`, card.imageUrl);
+    });
+
+    const ogImageUrl = `https://www.vibemostwanted.xyz/api/og-raid?${ogImageParams.toString()}`;
+
+    const castText = `⚔️ RAID BOSS BATTLE ⚔️\n\nMy Deck Power: ${deckPower.toLocaleString()}\nVs ${bossName}\nBoss HP: ${bossHp}%\n\nJoin the raid! 🎮\n\n@jvhbo`;
+
+    const embedUrl = encodeURIComponent(`https://vibemostwanted.xyz/share/raid?ogImage=${encodeURIComponent(ogImageUrl)}`);
 
     const shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${embedUrl}`;
 
