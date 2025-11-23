@@ -13,6 +13,7 @@ import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { getFidTraits } from '@/lib/fidTraits';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 export default function FidCardPage() {
   const params = useParams();
@@ -30,6 +31,21 @@ export default function FidCardPage() {
   const currentTraits = card ? getFidTraits(card.fid) : null;
 
   const [backstory, setBackstory] = useState<any>(null);
+
+  // Notify Farcaster SDK that app is ready
+  useEffect(() => {
+    const initFarcasterSDK = async () => {
+      try {
+        if (typeof window !== 'undefined' && (window as any).sdk?.actions?.ready) {
+          await sdk.actions.ready();
+          console.log('✅ Farcaster SDK ready called');
+        }
+      } catch (error) {
+        console.error('Error calling Farcaster SDK ready:', error);
+      }
+    };
+    initFarcasterSDK();
+  }, []);
 
   // Generate backstory for the card
   useEffect(() => {
