@@ -19,7 +19,6 @@ interface CardReplacementModalProps {
   availableCards: Card[];
   oldCard: Card | null;
   soundEnabled: boolean;
-  t: (key: string, params?: Record<string, any>) => string;
 }
 
 // Replacement cost by rarity (in VBMS)
@@ -39,7 +38,6 @@ export function CardReplacementModal({
   availableCards,
   oldCard,
   soundEnabled,
-  t,
 }: CardReplacementModalProps) {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [sortByPower, setSortByPower] = useState(true);
@@ -83,17 +81,17 @@ export function CardReplacementModal({
         {/* Header */}
         <div className="flex-shrink-0 mb-4">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-center text-vintage-gold">
-            {t('raid_boss.replace_card', 'Replace Card')}
+            Replace Card
           </h2>
           <p className="text-center text-vintage-burnt-gold text-sm mt-2">
-            {t('raid_boss.select_replacement', 'Select a card to replace')} {oldCard?.name || ''}
+            Select a card to replace {oldCard?.name || ''}
           </p>
         </div>
 
         {/* Sort Toggle */}
         <div className="flex-shrink-0 mb-3 flex items-center justify-between">
           <div className="text-sm text-vintage-burnt-gold">
-            {sortedCards.length} {t('available_cards', 'Available Cards')}
+            {sortedCards.length} Available Cards
           </div>
           <button
             onClick={() => {
@@ -163,7 +161,7 @@ export function CardReplacementModal({
             onClick={handleClose}
             className="flex-1 px-4 py-3 bg-vintage-red/80 hover:bg-vintage-red text-white rounded-lg font-bold transition"
           >
-            {t('cancel', 'Cancel')}
+            Cancel
           </button>
           <button
             onClick={handleConfirm}
@@ -171,8 +169,8 @@ export function CardReplacementModal({
             className="flex-1 px-4 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-bold transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {selectedCard
-              ? `${t('replace', 'Replace')} (${replacementCost} VBMS)`
-              : t('select_card', 'Select a Card')}
+              ? `Replace (${replacementCost} VBMS)`
+              : 'Select a Card'}
           </button>
         </div>
       </div>
