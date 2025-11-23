@@ -150,6 +150,13 @@ add-collection-to-raid.bat
 temp_update_script.js
 COMO_USAR_ADD_COLLECTION.txt
 
+# PowerShell scripts for raid boss integration
+add-raid-bosses.ps1
+update-raid-rotation.ps1
+create-raid-images-dir.ps1
+RAID_BOSS_MENU_ADDITION.bat
+INTEGRACAO_RAID_BOSS.txt
+
 # Raid boss images - only commit default collections
 # Custom collections should not be committed
 public/images/raid-bosses/*
