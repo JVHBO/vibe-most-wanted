@@ -15,6 +15,16 @@ const REFUEL_COST_PER_CARD = 1; // 1 VBMS per card
 const REFUEL_COST_ALL = 4; // 4 VBMS for all 5 cards (discount)
 const ATTACK_INTERVAL = 5 * 60 * 1000; // Cards attack every 5 minutes
 
+// Card replacement cost by rarity (cost to swap a new card in)
+const REPLACE_COST_BY_RARITY: Record<string, number> = {
+  common: 1,      // 1 VBMS
+  rare: 3,        // 3 VBMS
+  epic: 5,        // 5 VBMS
+  legendary: 10,  // 10 VBMS
+  mythic: 15,     // 15 VBMS
+  vibefid: 50,    // 50 VBMS (infinite energy)
+};
+
 // Energy duration by rarity (how long the card can attack before needing refuel)
 const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
   common: 12 * 60 * 60 * 1000,      // 12 hours
@@ -182,6 +192,89 @@ export const getRaidHistory = query({
 // ═══════════════════════════════════════════════════════════════════════════════
 // MUTATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Replace a card in the raid deck (costs VBMS based on new card rarity)
+ * Common: 1 VBMS, Rare: 3, Epic: 5, Legendary: 10, Mythic: 15, VibeFID: 50
+ */
+export const replaceCard = mutation({
+  args: {
+    address: v.string(),
+    oldCardTokenId: v.string(), // Card to remove
+    newCard: v.object({
+      tokenId: v.string(),
+      collection: v.optional(v.string()),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+      isFreeCard: v.optional(v.boolean()),
+    }),
+    txHash: v.string(), // VBMS payment transaction hash
+  },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    // Get player's raid deck
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!raidDeck) {
+      throw new Error("Player has no raid deck");
+    }
+
+    // Find the card to replace
+    const cardIndex = raidDeck.deck.findIndex((c) => c.tokenId === args.oldCardTokenId);
+    if (cardIndex === -1) {
+      throw new Error("Card not found in deck");
+    }
+
+    const now = Date.now();
+
+    // Calculate cost based on new card rarity
+    const rarity = args.newCard.rarity.toLowerCase();
+    const cost = REPLACE_COST_BY_RARITY[rarity] || REPLACE_COST_BY_RARITY.common;
+
+    // Replace card in deck
+    const updatedDeck = [...raidDeck.deck];
+    updatedDeck[cardIndex] = args.newCard;
+
+    // Calculate new deck power
+    const newDeckPower = updatedDeck.reduce((sum, card) => sum + card.power, 0);
+
+    // Replace card energy
+    const updatedCardEnergy = [...raidDeck.cardEnergy];
+    const duration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
+
+    updatedCardEnergy[cardIndex] = {
+      tokenId: args.newCard.tokenId,
+      energyExpiresAt: duration === 0 ? 0 : now + duration, // 0 = infinite (VibeFID)
+      lastAttackAt: undefined,
+      nextAttackAt: now, // Can attack immediately
+    };
+
+    // Update raid deck
+    await ctx.db.patch(raidDeck._id, {
+      deck: updatedDeck,
+      deckPower: newDeckPower,
+      cardEnergy: updatedCardEnergy,
+      lastUpdated: now,
+    });
+
+    console.log(`🔄 Card replaced: ${args.oldCardTokenId} → ${args.newCard.tokenId} for ${address} (cost: ${cost} VBMS)`);
+
+    return {
+      success: true,
+      oldCard: args.oldCardTokenId,
+      newCard: args.newCard.tokenId,
+      newDeckPower,
+      cost,
+    };
+  },
+});
 
 /**
  * Set player's raid deck (costs 5 VBMS entry fee)
