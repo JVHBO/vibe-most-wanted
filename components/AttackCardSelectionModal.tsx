@@ -227,7 +227,7 @@ export function AttackCardSelectionModal({
 
     const defenderCards = (completeProfile.defenseDeck || [])
       .filter((card: string | { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string }): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string } => typeof card === 'object')
-      .map((card, i) => {
+      .map((card: { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string }, i: number) => {
         devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);
         return {
           tokenId: card.tokenId,
@@ -257,8 +257,8 @@ export function AttackCardSelectionModal({
     if (soundEnabled) AudioManager.playHand();
 
     // Calculate power totals
-    const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
-    const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+    const playerTotal = attackSelectedCards.reduce((sum: number, c: Card) => sum + (c.power || 0), 0);
+    const dealerTotal = defenderCards.reduce((sum: number, c: Card) => sum + (c.power || 0), 0);
 
     // Animate battle
     setTimeout(() => {
