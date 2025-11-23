@@ -671,7 +671,7 @@ export function RaidBossModal({
             {/* Boss Rotation: All 25 Bosses */}
             <div className="mb-6">
               <h3 className="text-lg font-display font-bold text-vintage-gold mb-3 text-center">
-                {t('raid.rotation.title', { default: 'Boss Rotation Schedule' })} (25)
+                {t('raidRotationTitle')} (25)
               </h3>
               <div
                 ref={bossScrollRef}
@@ -720,11 +720,11 @@ export function RaidBossModal({
                             : 'text-gray-400'
                         }`}>
                           {isCurrent
-                            ? t('raid.current', { default: 'CURRENT BOSS' })
+                            ? t('raidCurrent')
                             : isPrevious
-                            ? t('raid.defeated', { default: 'Defeated' })
+                            ? t('raidDefeated')
                             : isNext
-                            ? t('raid.next', { default: 'Next Boss' })
+                            ? t('raidNext')
                             : `#${index + 1}`}
                         </h4>
 
@@ -766,7 +766,7 @@ export function RaidBossModal({
                               {collection.displayName}
                             </p>
                             <p className="text-[10px] text-gray-400 mt-1">
-                              {isPrevious && !isCurrent ? t('raid.defeated', { default: 'Defeated' }) : `${(boss.hp / 1_000_000).toFixed(0)}M HP`}
+                              {isPrevious && !isCurrent ? t('raidDefeated') : `${(boss.hp / 1_000_000).toFixed(0)}M HP`}
                             </p>
                           </div>
                         </div>
@@ -783,7 +783,7 @@ export function RaidBossModal({
                               }}
                               className="w-full px-2 py-1 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded text-[10px] font-bold transition"
                             >
-                              {t('raid.leaderboard', { default: 'Leaderboard' })}
+                              {t('raidLeaderboard')}
                             </button>
                           )}
 
@@ -797,7 +797,7 @@ export function RaidBossModal({
                               }}
                               className="w-full px-2 py-1 bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-400 border border-yellow-400/50 rounded text-[10px] font-bold transition"
                             >
-                              {t('raid.currentStats', { default: 'Current Stats' })}
+                              {t('raidCurrentStats')}
                             </button>
                           )}
 
@@ -813,7 +813,7 @@ export function RaidBossModal({
                                 if (soundEnabled) AudioManager.buttonClick();
                               }}
                             >
-                              {collection.buttonText || t('raid.buyPacks', { default: 'Buy Packs' })}
+                              {collection.buttonText || t('raidBuyPacks')}
                             </a>
                           )}
                         </div>
@@ -823,7 +823,7 @@ export function RaidBossModal({
                 </div>
               </div>
               <p className="text-center text-xs text-gray-500 mt-2">
-                {t('raid.dragHint', { default: 'Drag or scroll to browse all bosses' })}
+                {t('raidDragHint')}
               </p>
             </div>
 
