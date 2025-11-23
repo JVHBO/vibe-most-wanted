@@ -273,15 +273,15 @@ export function RaidDeckSelectionModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/95 flex items-center justify-center z-[250] p-4"
+      className="fixed inset-0 bg-black/95 flex items-center justify-center z-[250] p-2"
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-6xl w-full p-4 md:p-6 lg:p-8 shadow-neon h-[90vh] flex flex-col"
+        className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-6xl w-full p-2 md:p-3 shadow-neon max-h-[95vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <h2 className="text-2xl md:text-3xl font-display font-bold text-center mb-2 text-vintage-gold flex-shrink-0">
+        <h2 className="text-lg md:text-2xl font-display font-bold text-center mb-1 text-vintage-gold flex-shrink-0">
           {showVibeFIDStep ? '🎴 ADD VIBEFID CARD? 🎴' : '⚔️ BUILD YOUR RAID DECK ⚔️'}
         </h2>
 
@@ -289,15 +289,14 @@ export function RaidDeckSelectionModal({
         {showVibeFIDStep ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Selected 5 Cards Summary */}
-            <div className="flex-shrink-0 mb-4">
-              <h3 className="text-lg font-bold text-vintage-burnt-gold mb-2">Your Selected Deck ({selectedCards.length} cards)</h3>
-              <div className="grid grid-cols-5 gap-2">
+            <div className="flex-shrink-0 mb-2">
+              <h3 className="text-sm font-bold text-vintage-burnt-gold mb-1">Your Selected Deck ({selectedCards.length} cards)</h3>
+              <div className="grid grid-cols-5 gap-1">
                 {selectedCards.map((card, idx) => (
                   <div key={idx} className="relative">
-                    <CardMedia src={card.imageUrl} alt={card.name} className="rounded-lg aspect-[3/4] object-cover" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1 rounded-b-lg">
-                      <div className="text-white text-[10px] font-bold truncate">{card.name}</div>
-                      <div className="text-vintage-gold text-[10px]">⚡ {card.power}</div>
+                    <CardMedia src={card.imageUrl} alt={card.name} className="rounded-lg aspect-[2/3] object-cover" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 px-0.5 py-0.5 rounded-b-lg">
+                      <div className="text-vintage-gold text-[9px] font-bold text-center">⚡{card.power}</div>
                     </div>
                   </div>
                 ))}
@@ -305,47 +304,35 @@ export function RaidDeckSelectionModal({
             </div>
 
             {/* VibeFID Benefits */}
-            <div className="flex-shrink-0 mb-4 bg-purple-900/30 border-2 border-purple-500/50 rounded-xl p-4">
-              <h3 className="text-lg font-bold text-purple-400 mb-3">✨ VibeFID 6th Slot Benefits ✨</h3>
-              <div className="grid grid-cols-2 gap-3 text-sm mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">⚡</span>
-                  <div>
-                    <div className="font-bold text-purple-300">Infinite Energy</div>
-                    <div className="text-xs text-vintage-burnt-gold">Never needs refueling</div>
-                  </div>
+            <div className="flex-shrink-0 mb-2 bg-purple-900/30 border border-purple-500/50 rounded-lg p-2">
+              <h3 className="text-sm font-bold text-purple-400 mb-1">✨ VibeFID 6th Slot Benefits ✨</h3>
+              <div className="grid grid-cols-2 gap-1 text-[10px] mb-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">⚡</span>
+                  <div className="font-bold text-purple-300">Infinite Energy</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">📈</span>
-                  <div>
-                    <div className="font-bold text-blue-300">+10% Deck Power</div>
-                    <div className="text-xs text-vintage-burnt-gold">Boosts all 5 cards</div>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">📈</span>
+                  <div className="font-bold text-blue-300">+10% Deck Power</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🎯</span>
-                  <div>
-                    <div className="font-bold text-red-300">+50% Boss Damage</div>
-                    <div className="text-xs text-vintage-burnt-gold">Deals massive damage</div>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">🎯</span>
+                  <div className="font-bold text-red-300">+50% Boss Damage</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🔄</span>
-                  <div>
-                    <div className="font-bold text-green-300">Use in All Modes</div>
-                    <div className="text-xs text-vintage-burnt-gold">PvE, PvP, Defense</div>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">🔄</span>
+                  <div className="font-bold text-green-300">Use in All Modes</div>
                 </div>
               </div>
-              <div className="text-center text-vintage-gold font-bold text-lg">
+              <div className="text-center text-vintage-gold font-bold text-xs">
                 Cost: +50 VBMS
               </div>
             </div>
 
             {/* VibeFID Card Selection */}
-            <div className="flex-1 overflow-y-auto mb-4">
-              <h3 className="text-md font-bold text-vintage-gold mb-2">Select VibeFID Card (Optional)</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+            <div className="flex-1 overflow-y-auto mb-2">
+              <h3 className="text-sm font-bold text-vintage-gold mb-1">Select VibeFID Card (Optional)</h3>
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
                 {vibeFIDCards.map((card) => {
                   const isSelected = selectedVibeFID?.tokenId === card.tokenId;
                   return (
@@ -380,7 +367,7 @@ export function RaidDeckSelectionModal({
             </div>
 
             {/* VibeFID Step Footer */}
-            <div className="flex-shrink-0 flex gap-3">
+            <div className="flex-shrink-0 flex gap-1">
               <button
                 onClick={() => {
                   setShowVibeFIDStep(false);
@@ -388,7 +375,7 @@ export function RaidDeckSelectionModal({
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
                 disabled={isSettingDeck}
-                className="flex-1 px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition disabled:opacity-50"
+                className="flex-1 px-3 py-2 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern font-semibold text-xs transition disabled:opacity-50"
               >
                 ← Back
               </button>
@@ -398,21 +385,21 @@ export function RaidDeckSelectionModal({
                   proceedWithPayment();
                 }}
                 disabled={isSettingDeck}
-                className="flex-1 px-6 py-3 bg-vintage-red/80 hover:bg-vintage-red text-white rounded-xl font-bold transition disabled:opacity-50"
+                className="flex-1 px-3 py-2 bg-vintage-red/80 hover:bg-vintage-red text-white rounded-lg font-bold text-xs transition disabled:opacity-50"
               >
-                Continue Without VibeFID
+                Skip VibeFID
               </button>
               <button
                 onClick={proceedWithPayment}
                 disabled={!selectedVibeFID || isSettingDeck}
-                className={`flex-1 px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase ${
+                className={`flex-1 px-3 py-2 rounded-lg font-display font-bold text-xs transition-all uppercase ${
                   selectedVibeFID && !isSettingDeck
-                    ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-neon hover:scale-105'
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-neon'
                     : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                 }`}
               >
                 {isSettingDeck ? (
-                  <span className="flex items-center justify-center gap-2">
+                  <span className="flex items-center justify-center gap-1 text-[10px]">
                     <LoadingSpinner />
                     Processing...
                   </span>
@@ -432,10 +419,10 @@ export function RaidDeckSelectionModal({
           const hasVibeFID = availableCards.some(card => card.collection === 'vibefid');
 
           return (
-            <div className="mb-3 flex-shrink-0">
-              <div className={`border-2 rounded-xl p-3 ${hasVibeFID ? 'bg-purple-900/20 border-purple-500/50' : 'bg-vintage-gold/10 border-vintage-gold/50'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-bold text-vintage-gold">VibeFID - 6th Slot Special Card</h3>
+            <div className="mb-2 flex-shrink-0">
+              <div className={`border rounded-lg p-2 ${hasVibeFID ? 'bg-purple-900/20 border-purple-500/50' : 'bg-vintage-gold/10 border-vintage-gold/50'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-xs font-bold text-vintage-gold">VibeFID - 6th Slot Special Card</h3>
                   {!hasVibeFID && (
                     <a
                       href="/fid"
@@ -449,26 +436,26 @@ export function RaidDeckSelectionModal({
                     </a>
                   )}
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <span className="text-purple-400">⚡</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-1 text-[10px]">
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-purple-400 text-xs">⚡</span>
                     <span className="text-vintage-burnt-gold">Infinite Energy</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-blue-400">📈</span>
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-blue-400 text-xs">📈</span>
                     <span className="text-vintage-burnt-gold">+10% Deck Power</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-red-400">🎯</span>
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-red-400 text-xs">🎯</span>
                     <span className="text-vintage-burnt-gold">+50% Boss Damage</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-green-400">🔄</span>
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-green-400 text-xs">🔄</span>
                     <span className="text-vintage-burnt-gold">Use in All Modes</span>
                   </div>
                 </div>
                 {!hasVibeFID && (
-                  <p className="text-vintage-burnt-gold text-[10px] mt-2 italic">
+                  <p className="text-vintage-burnt-gold text-[9px] mt-1 italic">
                     You don't have a VibeFID yet. Mint one to unlock these powerful benefits!
                   </p>
                 )}
@@ -478,37 +465,25 @@ export function RaidDeckSelectionModal({
         })()}
 
         {/* Info */}
-        <div className="text-center mb-2 flex-shrink-0">
-          <p className="text-vintage-burnt-gold text-sm font-modern">
-            Select {DECK_SIZE} cards • Entry Fee: {totalCost > 0 ? `${totalCost} VBMS` : 'Based on rarities'}
-          </p>
-          <p className="text-vintage-neon-blue text-xs font-modern mt-1">
-            Cards attack automatically every 5 minutes
+        <div className="text-center mb-1 flex-shrink-0">
+          <p className="text-vintage-burnt-gold text-[10px] font-modern">
+            Select {DECK_SIZE} cards • Fee: {totalCost > 0 ? `${totalCost} VBMS` : 'Based on rarities'} • Selected {selectedCards.length}/{DECK_SIZE}
           </p>
           {currentBoss && (
-            <div className="text-xs font-modern mt-2 space-y-0.5">
-              <p className="text-purple-400">VibeFID cards: +50% power boost</p>
-              <p className="text-blue-400">
+            <div className="text-[9px] font-modern mt-0.5 flex gap-2 justify-center">
+              <span className="text-purple-400">VibeFID: +50%</span>
+              <span className="text-blue-400">
                 {currentBoss.collection === 'vibe' ? 'VBMS' :
                  currentBoss.collection === 'gmvbrs' ? 'GM VBRS' :
                  currentBoss.collection === 'vibefid' ? 'VibeFID' :
-                 currentBoss.collection === 'americanfootball' ? 'AFCL' : currentBoss.collection}
-                {' '}cards: +20% vs current boss
-              </p>
-              <p className="text-gray-500">Free cards: no bonus</p>
+                 currentBoss.collection === 'americanfootball' ? 'AFCL' : currentBoss.collection}: +20%
+              </span>
             </div>
           )}
         </div>
 
-        {/* Counter */}
-        <div className="text-center mb-2 flex-shrink-0">
-          <p className="text-vintage-burnt-gold text-sm sm:text-base font-modern">
-            Selected {selectedCards.length}/{DECK_SIZE}
-          </p>
-        </div>
-
         {/* Controls Row: Collection Filter + Sort Button */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-4 flex-shrink-0">
+        <div className="flex flex-wrap items-center justify-center gap-1 mb-2 flex-shrink-0">
           <select
             value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
             onChange={(e) => {
@@ -520,11 +495,10 @@ export function RaidDeckSelectionModal({
               setCurrentPage(0);
               if (soundEnabled) AudioManager.buttonClick();
             }}
-            className="px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
+            className="px-2 py-1 rounded-lg text-[10px] font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
           >
             <option value="all">All Collections</option>
             <option value="vibe">VBMS</option>
-            <option value="vibefid">VIBEFID</option>
             <option value="americanfootball">AFCL</option>
             <option value="gmvbrs">VBRS</option>
           </select>
@@ -535,7 +509,7 @@ export function RaidDeckSelectionModal({
               setCurrentPage(0);
               if (soundEnabled) AudioManager.buttonClick();
             }}
-            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+            className={`px-2 py-1 rounded-lg font-bold text-[10px] transition-all ${
               sortByPower
                 ? 'bg-vintage-gold text-vintage-black'
                 : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
@@ -546,35 +520,34 @@ export function RaidDeckSelectionModal({
         </div>
 
         {/* Selected Deck Display */}
-        <div className="mb-4 bg-vintage-gold/20 border-2 border-vintage-gold/50 rounded-xl p-3 flex-shrink-0">
-          <div className="grid grid-cols-5 gap-2">
+        <div className="mb-2 bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg p-2 flex-shrink-0">
+          <div className="grid grid-cols-5 gap-1">
             {Array.from({ length: DECK_SIZE }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-[2/3] border-2 border-dashed border-vintage-gold/50 rounded-lg flex flex-col items-center justify-center overflow-hidden relative"
+                className="aspect-[2/3] border border-dashed border-vintage-gold/50 rounded-md flex flex-col items-center justify-center overflow-hidden relative"
               >
                 {selectedCards[i] ? (
                   <>
                     <CardMedia
                       src={selectedCards[i].imageUrl}
                       alt={`#${selectedCards[i].tokenId}`}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-cover rounded-md"
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-vintage-gold text-xs font-bold text-center">
-                      {selectedCards[i].power?.toLocaleString()}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-vintage-gold text-[9px] font-bold text-center">
+                      ⚡{selectedCards[i].power?.toLocaleString()}
                     </div>
                   </>
                 ) : (
-                  <span className="text-vintage-gold text-3xl">+</span>
+                  <span className="text-vintage-gold text-xl">+</span>
                 )}
               </div>
             ))}
           </div>
-          <div className="mt-3 text-center">
-            <p className="text-xs text-vintage-burnt-gold">Total Power</p>
-            <p className="text-2xl font-bold text-vintage-gold">{totalPower.toLocaleString()}</p>
+          <div className="mt-1 text-center">
+            <p className="text-vintage-gold font-bold text-sm">{totalPower.toLocaleString()}</p>
             {totalPower !== totalBasePower && (
-              <p className="text-xs text-green-400">Base: {totalBasePower.toLocaleString()}</p>
+              <p className="text-[9px] text-green-400">Base: {totalBasePower.toLocaleString()}</p>
             )}
           </div>
         </div>
@@ -585,8 +558,8 @@ export function RaidDeckSelectionModal({
             <LoadingSpinner />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto mb-4">
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-4">
+          <div className="flex-1 overflow-y-auto mb-2">
+            <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-1.5 pb-2">
               {paginatedCards.map((card) => {
                 const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
                 const buff = getCardBuff(card);
@@ -627,11 +600,11 @@ export function RaidDeckSelectionModal({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mb-4 flex-shrink-0">
+          <div className="flex items-center justify-center gap-1 mb-2 flex-shrink-0">
             <button
               onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
               disabled={currentPage === 0}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
+              className={`px-3 py-1 rounded-lg font-bold text-[10px] transition ${
                 currentPage === 0
                   ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
@@ -639,13 +612,13 @@ export function RaidDeckSelectionModal({
             >
               ← Prev
             </button>
-            <span className="text-vintage-gold font-bold">
+            <span className="text-vintage-gold font-bold text-[10px]">
               {currentPage + 1}/{totalPages}
             </span>
             <button
               onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
               disabled={currentPage === totalPages - 1}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
+              className={`px-3 py-1 rounded-lg font-bold text-[10px] transition ${
                 currentPage === totalPages - 1
                   ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
@@ -657,10 +630,10 @@ export function RaidDeckSelectionModal({
         )}
 
         {/* Action Buttons */}
-        <div className="space-y-2 flex-shrink-0">
+        <div className="space-y-1 flex-shrink-0">
           {/* Error Message */}
           {errorMessage && (
-            <div className="bg-red-900/50 border border-red-500 rounded-lg p-3 text-sm text-red-200">
+            <div className="bg-red-900/50 border border-red-500 rounded-lg p-2 text-[10px] text-red-200">
               {errorMessage}
             </div>
           )}
@@ -668,14 +641,14 @@ export function RaidDeckSelectionModal({
           <button
             onClick={handleConfirm}
             disabled={selectedCards.length !== DECK_SIZE || isSettingDeck}
-            className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
+            className={`w-full px-4 py-2 rounded-lg font-display font-bold text-sm transition-all uppercase ${
               selectedCards.length === DECK_SIZE && !isSettingDeck
-                ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
+                ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold'
                 : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
             }`}
           >
             {isSettingDeck ? (
-              <span className="flex items-center justify-center gap-2">
+              <span className="flex items-center justify-center gap-1 text-xs">
                 <LoadingSpinner />
                 Processing...
               </span>
@@ -689,7 +662,7 @@ export function RaidDeckSelectionModal({
           <button
             onClick={handleCancel}
             disabled={isSettingDeck}
-            className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern font-semibold text-xs transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
