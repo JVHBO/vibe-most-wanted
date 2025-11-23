@@ -1288,6 +1288,7 @@ export default function TCGPage() {
             return {
               ...nft,
               imageUrl,
+              name: nft.title || nft.name || `Card #${nft.tokenId}`, // Add name for Card type compatibility
               collection, // 🎯 ADD COLLECTION FIELD
               rarity: findAttr(nft, 'rarity'),
               status: findAttr(nft, 'status'),
@@ -1311,6 +1312,7 @@ export default function TCGPage() {
           const freeCardsFormatted = freeCards.map((card: any) => ({
             tokenId: card.cardId,
             title: `FREE ${card.rarity} Card`,
+            name: card.name || `FREE ${card.rarity} Card`, // Add name for Card type compatibility
             description: `Free card from pack opening`,
             imageUrl: card.imageUrl,
             rarity: card.rarity,
@@ -1406,6 +1408,7 @@ export default function TCGPage() {
           return {
             ...nft,
             imageUrl: normalizeUrl(imageUrl),
+            name: nft.title || nft.name || `Card #${nft.tokenId}`, // Add name for Card type compatibility
             rarity: findAttr(nft, 'rarity'),
             status: findAttr(nft, 'status'),
             wear: findAttr(nft, 'wear'),
