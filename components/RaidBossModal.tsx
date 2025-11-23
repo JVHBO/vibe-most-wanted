@@ -264,7 +264,7 @@ export function RaidBossModal({
     }
   };
 
-  // Replace card (costs VBMS based on rarity)
+  // Replace card (costs VBMS based on rarity and energy usage)
   const handleReplaceCard = async (oldCard: NFT, newCard: NFT) => {
     if (!playerDeck || isRefueling) return;
 
@@ -274,27 +274,69 @@ export function RaidBossModal({
     try {
       console.log('🔄 Replacing card:', oldCard.tokenId, '→', newCard.tokenId);
 
-      // Calculate cost based on new card rarity
-      const rarity = newCard.rarity.toLowerCase();
-      const REPLACE_COSTS: Record<string, number> = {
-        common: 1,
-        rare: 3,
-        epic: 5,
-        legendary: 10,
-        mythic: 15,
-        vibefid: 50,
-      };
-      const cost = REPLACE_COSTS[rarity] || 1;
-
-      console.log(`💰 Cost to replace: ${cost} VBMS`);
-
-      // Transfer VBMS to pool
-      const txHash = await transferVBMS(
-        CONTRACTS.VBMSPoolTroll as `0x${string}`,
-        parseEther(cost.toString())
+      // Find the old card's energy data
+      const cardEnergy = playerDeck.cardEnergy.find(
+        (ce: { tokenId: string; energyExpiresAt: number }) => ce.tokenId === oldCard.tokenId
       );
 
-      console.log('✅ Transfer successful, txHash:', txHash);
+      if (!cardEnergy) {
+        throw new Error('Card energy data not found');
+      }
+
+      // Energy durations by rarity (same as backend)
+      const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
+        common: 12 * 60 * 60 * 1000,      // 12 hours
+        rare: 1 * 24 * 60 * 60 * 1000,    // 1 day
+        epic: 2 * 24 * 60 * 60 * 1000,    // 2 days
+        legendary: 4 * 24 * 60 * 60 * 1000, // 4 days
+        mythic: 5 * 24 * 60 * 60 * 1000,  // 5 days
+        vibefid: 0,                         // Infinite (never expires)
+      };
+
+      // Calculate energy used percentage
+      const oldRarity = oldCard.rarity.toLowerCase();
+      const duration = ENERGY_DURATION_BY_RARITY[oldRarity] || ENERGY_DURATION_BY_RARITY.common;
+
+      let energyUsedPercentage = 0;
+      if (duration > 0 && cardEnergy.energyExpiresAt > 0) {
+        const now = Date.now();
+        const energyStartedAt = cardEnergy.energyExpiresAt - duration;
+        const timeUsed = now - energyStartedAt;
+        energyUsedPercentage = timeUsed / duration;
+      }
+
+      console.log(`⚡ Energy used: ${(energyUsedPercentage * 100).toFixed(1)}%`);
+
+      // If more than 50% energy used, charge full cost
+      // If less than 50% energy used, replacement is free
+      let txHash: `0x${string}` | undefined;
+
+      if (energyUsedPercentage > 0.5) {
+        // Calculate cost based on new card rarity
+        const rarity = newCard.rarity.toLowerCase();
+        const REPLACE_COSTS: Record<string, number> = {
+          common: 1,
+          rare: 3,
+          epic: 5,
+          legendary: 10,
+          mythic: 15,
+          vibefid: 50,
+        };
+        const cost = REPLACE_COSTS[rarity] || 1;
+
+        console.log(`💰 Energy >50% used, cost to replace: ${cost} VBMS`);
+
+        // Transfer VBMS to pool
+        txHash = await transferVBMS(
+          CONTRACTS.VBMSPoolTroll as `0x${string}`,
+          parseEther(cost.toString())
+        );
+
+        console.log('✅ Transfer successful, txHash:', txHash);
+      } else {
+        console.log(`🆓 Energy <50% used, replacement is FREE`);
+        txHash = '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`;
+      }
 
       // Call Convex mutation
       await replaceCardMutation({
