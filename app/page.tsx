@@ -1294,6 +1294,8 @@ export default function TCGPage() {
                 collection = 'americanfootball';
               } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
                 collection = 'gmvbrs';
+              } else if (contractAddr === getCollectionContract('coquettish')?.toLowerCase()) {
+                collection = 'coquettish';
               }
             }
 
@@ -2821,10 +2823,12 @@ export default function TCGPage() {
           acc.vibefidPower = (acc.vibefidPower || 0) + power;
         } else if (collection === 'americanfootball') {
           acc.afclPower = (acc.afclPower || 0) + power;
+        } else if (collection === 'coquettish') {
+          acc.coqPower = (acc.coqPower || 0) + power;
         }
 
         return acc;
-      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number; afclPower?: number });
+      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number; afclPower?: number; coqPower?: number });
 
       devLog('📊 Collection powers:', collectionPowers);
 
@@ -4753,6 +4757,7 @@ export default function TCGPage() {
                         <option value="vibefid" className="bg-vintage-charcoal text-vintage-gold">VIBEFID</option>
                         <option value="americanfootball" className="bg-vintage-charcoal text-vintage-gold">AFCL</option>
                         <option value="gmvbrs" className="bg-vintage-charcoal text-vintage-gold">VBRS</option>
+                        <option value="coquettish" className="bg-vintage-charcoal text-vintage-gold">COQ</option>
                       </select>
                       <button
                         onClick={() => setSortByPower(!sortByPower)}
