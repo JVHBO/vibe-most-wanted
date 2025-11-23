@@ -161,9 +161,8 @@ export function BossRotationCarousel({
             {/* Boss Image */}
             <div className="relative h-64 bg-gray-900">
               <CardMedia
-                imageUrl={boss.imageUrl}
-                name={boss.name}
-                rarity={boss.rarity}
+                src={boss.imageUrl}
+                alt={boss.name}
                 className="w-full h-full object-cover"
               />
 
