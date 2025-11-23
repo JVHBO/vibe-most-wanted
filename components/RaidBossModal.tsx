@@ -17,6 +17,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { RaidDeckSelectionModal } from '@/components/RaidDeckSelectionModal';
 import { CardReplacementModal } from '@/components/CardReplacementModal';
 import { DamageNumber } from '@/components/DamageNumber';
+import { BossLeaderboardModal } from '@/components/BossLeaderboardModal';
 import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
 import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
@@ -46,6 +47,8 @@ export function RaidBossModal({
 }: RaidBossModalProps) {
   const [showDeckSelector, setShowDeckSelector] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showBossLeaderboard, setShowBossLeaderboard] = useState(false);
+  const [selectedBossIndex, setSelectedBossIndex] = useState<number | null>(null);
   const [selectedCards, setSelectedCards] = useState<NFT[]>([]);
   const [sortByPower, setSortByPower] = useState(true);
   const [timeUntilNextAttack, setTimeUntilNextAttack] = useState(0);
@@ -664,8 +667,9 @@ export function RaidBossModal({
                     </div>
                     <button
                       onClick={() => {
-                        // TODO: Open leaderboard modal for previous boss
                         if (soundEnabled) AudioManager.buttonClick();
+                        setSelectedBossIndex(currentBoss.bossIndex - 1);
+                        setShowBossLeaderboard(true);
                       }}
                       className="w-full px-3 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold text-sm transition"
                     >
@@ -1082,6 +1086,21 @@ export function RaidBossModal({
           </button>
         </div>
       </div>
+    )}
+
+    {/* Boss Leaderboard History Modal */}
+    {showBossLeaderboard && selectedBossIndex !== null && (
+      <BossLeaderboardModal
+        isOpen={showBossLeaderboard}
+        onClose={() => {
+          setShowBossLeaderboard(false);
+          setSelectedBossIndex(null);
+        }}
+        bossIndex={selectedBossIndex}
+        userAddress={userAddress}
+        soundEnabled={soundEnabled}
+        t={t}
+      />
     )}
     </>
   );
