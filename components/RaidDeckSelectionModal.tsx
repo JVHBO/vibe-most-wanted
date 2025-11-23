@@ -150,6 +150,7 @@ export function RaidDeckSelectionModal({
         rarity: card.rarity,
         collection: card.collection,
         foil: card.foil,
+        isFreeCard: (card as any).isFreeCard || false, // For buff system: free cards don't get buffs
       }));
 
       // Call Convex mutation to set raid deck

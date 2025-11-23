@@ -338,7 +338,21 @@ export const processAutoAttacks = mutation({
       for (const card of deck.cardEnergy) {
         if (card.energy > 0 && (!card.nextAttackAt || card.nextAttackAt <= now)) {
           // Card has energy and cooldown is ready - ATTACK!
-          const cardPower = deck.deck.find((c) => c.tokenId === card.tokenId)?.power || 0;
+          const deckCard = deck.deck.find((c) => c.tokenId === card.tokenId);
+          let cardPower = deckCard?.power || 0;
+
+          // Apply buff system (only for NFTs, not free cards)
+          if (deckCard && !deckCard.isFreeCard) {
+            // VibeFID cards get +50% power against all bosses
+            if (deckCard.collection === 'vibefid') {
+              cardPower = Math.floor(cardPower * 1.5);
+            }
+            // Cards matching boss collection get +20% power
+            else if (deckCard.collection === boss.collection) {
+              cardPower = Math.floor(cardPower * 1.2);
+            }
+          }
+
           playerDamage += cardPower;
 
           // Deplete energy and set cooldown
