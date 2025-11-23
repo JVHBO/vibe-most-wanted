@@ -17,13 +17,13 @@ export interface BossCard extends Card {
   description?: string; // Flavor text for the boss
 }
 
-// HP Scaling by Rarity
+// HP Scaling by Rarity (10x original values for longer boss battles)
 export const BOSS_HP_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
-  common: 1_000_000,      // 1M HP
-  rare: 5_000_000,        // 5M HP
-  epic: 25_000_000,       // 25M HP
-  legendary: 100_000_000, // 100M HP
-  mythic: 500_000_000,    // 500M HP
+  common: 10_000_000,       // 10M HP
+  rare: 50_000_000,         // 50M HP
+  epic: 250_000_000,        // 250M HP
+  legendary: 1_000_000_000, // 1B HP
+  mythic: 5_000_000_000,    // 5B HP
 };
 
 // Boss Rotation Order (20 bosses total)
