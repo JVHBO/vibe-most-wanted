@@ -330,6 +330,22 @@ export default function TCGPage() {
   // 🎯 Weekly Quests & Missions
   const weeklyProgress = useQuery(api.quests.getWeeklyProgress, address ? { address } : "skip");
 
+  // 🎮 Farcaster SDK - Signal that app is ready (MUST be called early to hide splash screen)
+  useEffect(() => {
+    const initFarcasterSDK = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          await sdk.actions.ready();
+          devLog('✅ Farcaster SDK ready called');
+        }
+      } catch (error) {
+        devError('❌ Error calling Farcaster SDK ready:', error);
+      }
+    };
+
+    initFarcasterSDK();
+  }, []);
+
   // Debug logging for address changes
   useEffect(() => {
     devLog('🔍 Address state:', {
@@ -1069,13 +1085,6 @@ export default function TCGPage() {
       AudioManager.setVolume(musicVolume);
     }
   }, [musicVolume]);
-
-  // Farcaster SDK - Informa que o app está pronto
-  useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).sdk?.actions?.ready) {
-      (window as any).sdk.actions.ready();
-    }
-  }, []);
 
   // 🎁 Show welcome pack popup if user hasn't received it (only AFTER profile is created)
   useEffect(() => {
@@ -2545,20 +2554,6 @@ export default function TCGPage() {
       };
     }
   }, [pvpMode, isSearching, address]);
-
-  // Farcaster SDK - Call ready() when app loads
-  useEffect(() => {
-    const initFarcasterSDK = async () => {
-      try {
-        await sdk.actions.ready();
-        devLog('✓ Farcaster SDK ready called');
-      } catch (error) {
-        devError('✗ Error calling Farcaster ready:', error);
-      }
-    };
-
-    initFarcasterSDK();
-  }, []);
 
   // Load user profile when wallet connects
   useEffect(() => {
