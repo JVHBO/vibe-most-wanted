@@ -5016,6 +5016,33 @@ export default function TCGPage() {
 
                 {/* 💀 BOSS RAID Button */}
                 <div className="mb-4">
+                  <style jsx>{`
+                    @keyframes fire-flicker {
+                      0%, 100% {
+                        box-shadow: 0 0 20px rgba(239, 68, 68, 0.8),
+                                    0 0 40px rgba(234, 88, 12, 0.6),
+                                    0 0 60px rgba(251, 146, 60, 0.4);
+                      }
+                      50% {
+                        box-shadow: 0 0 30px rgba(239, 68, 68, 0.9),
+                                    0 0 50px rgba(234, 88, 12, 0.7),
+                                    0 0 70px rgba(251, 146, 60, 0.5);
+                      }
+                    }
+
+                    @keyframes flame-wave {
+                      0% { background-position: 0% 50%; }
+                      50% { background-position: 100% 50%; }
+                      100% { background-position: 0% 50%; }
+                    }
+
+                    .boss-raid-fire {
+                      animation: fire-flicker 2s ease-in-out infinite;
+                      background: linear-gradient(135deg, #dc2626, #ea580c, #f97316, #ea580c, #dc2626);
+                      background-size: 200% 200%;
+                      animation: fire-flicker 2s ease-in-out infinite, flame-wave 3s ease infinite;
+                    }
+                  `}</style>
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
@@ -5024,11 +5051,11 @@ export default function TCGPage() {
                     disabled={!userProfile}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
                       userProfile
-                        ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg hover:scale-105 border-2 border-red-500/50'
+                        ? 'boss-raid-fire text-white hover:scale-105 border-2 border-orange-400/50'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    Boss Raid
+                    🔥 Boss Raid 🔥
                   </button>
                 </div>
 

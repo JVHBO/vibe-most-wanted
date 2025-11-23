@@ -515,6 +515,7 @@ export function RaidBossModal({
         }}
         availableCards={allNfts}
         oldCard={replacingCard || null}
+        currentBoss={currentBoss}
         soundEnabled={soundEnabled}
       />
 
@@ -761,7 +762,7 @@ export function RaidBossModal({
                     {refuelError}
                   </div>
                 )}
-                <div className={`grid gap-2 ${playerDeck.vibefidCard ? 'grid-cols-6' : 'grid-cols-5'}`}>
+                <div className={`grid gap-3 ${playerDeck.vibefidCard ? 'grid-cols-3' : 'grid-cols-3'}`}>
                   {/* Main 5 cards */}
                   {playerDeck.deck.map((card: NFT, index: number) => {
                     const cardEnergy = playerDeck.cardEnergy[index];
@@ -795,26 +796,26 @@ export function RaidBossModal({
                             className="w-full h-full object-cover"
                           />
                           {/* Power Badge */}
-                          <div className="absolute top-1 left-1 bg-red-600 text-white text-xs px-1 rounded font-bold">
+                          <div className="absolute top-1 left-1 bg-red-600 text-white text-sm px-2 py-1 rounded font-bold">
                             {card.power}
                           </div>
                           {/* Collection Buff Badge */}
                           {hasCollectionBuff && (
-                            <div className="absolute bottom-1 left-1 bg-yellow-400 text-black text-[10px] px-1.5 py-0.5 rounded font-bold shadow-lg animate-bounce">
-                              ⚡ BUFF
+                            <div className="absolute top-1 right-1 bg-yellow-400 text-black text-xs px-2 py-1 rounded font-bold shadow-lg animate-bounce">
+                              ⚡ +20%
                             </div>
                           )}
-                          {/* Replace Card Button - Always Visible */}
+                          {/* Replace Card Button - Bottom */}
                           <button
                             onClick={() => {
                               setReplacingCardTokenId(card.tokenId);
                               if (soundEnabled) AudioManager.buttonClick();
                             }}
                             disabled={isRefueling}
-                            className="absolute top-1 right-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-1.5 py-0.5 rounded font-bold transition disabled:opacity-50 shadow-lg"
+                            className="absolute bottom-1 right-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 rounded font-bold transition disabled:opacity-50 shadow-lg"
                             title={t('raidBossReplaceCard')}
                           >
-                            🔄
+                            🔄 Replace
                           </button>
                           {/* Energy Status */}
                           {!hasEnergy && (
