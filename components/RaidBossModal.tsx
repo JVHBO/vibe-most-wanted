@@ -503,12 +503,12 @@ export function RaidBossModal({
         onClick={onClose}
       >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-6xl w-full p-3 md:p-6 lg:p-8 shadow-neon max-h-[85vh] flex flex-col overflow-hidden"
+        className="bg-vintage-charcoal rounded-2xl border-4 border-red-600 max-w-6xl w-full p-3 md:p-6 lg:p-8 shadow-neon max-h-[85vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex-shrink-0 mb-2 relative">
-          <h2 className="text-xl md:text-3xl font-display font-bold text-center text-vintage-gold">
+          <h2 className="text-xl md:text-3xl font-display font-bold text-center text-red-500">
             RAID BOSS
           </h2>
           <p className="text-center text-vintage-burnt-gold text-xs md:text-sm mt-1">
@@ -533,7 +533,7 @@ export function RaidBossModal({
           {/* Help Button */}
           <button
             onClick={() => setShowHelp(true)}
-            className="absolute top-0 right-0 w-8 h-8 rounded-full bg-vintage-gold/20 hover:bg-vintage-gold/40 border-2 border-vintage-gold flex items-center justify-center text-vintage-gold font-bold transition-all hover:scale-110"
+            className="absolute top-0 right-0 w-8 h-8 rounded-full bg-red-600/20 hover:bg-red-600/40 border-2 border-red-500 flex items-center justify-center text-red-400 font-bold transition-all hover:scale-110"
           >
             ?
           </button>
@@ -550,16 +550,16 @@ export function RaidBossModal({
         {currentBoss && (
           <div className="flex-1 overflow-y-auto">
             {/* Boss Card & HP */}
-            <div className="mb-3 md:mb-6 bg-vintage-black/50 rounded-xl p-2 md:p-4 border-2 border-vintage-gold/30">
+            <div className="mb-3 md:mb-6 bg-vintage-black/50 rounded-xl p-2 md:p-4 border-2 border-red-600/30">
               <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
                 {/* Boss Card Image */}
-                <div className={`w-32 h-48 md:w-48 md:h-72 flex-shrink-0 relative rounded-xl overflow-hidden border-4 border-vintage-gold shadow-neon ${bossIsHit ? 'animate-boss-hit' : ''}`}>
+                <div className={`w-32 h-48 md:w-48 md:h-72 flex-shrink-0 relative rounded-xl overflow-hidden border-4 border-red-600 shadow-neon ${bossIsHit ? 'animate-boss-hit' : ''}`}>
                   <CardMedia
                     src={currentBoss.imageUrl}
                     alt={currentBoss.name}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-2 left-2 bg-vintage-gold text-vintage-black px-2 py-1 rounded text-xs font-bold">
+                  <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
                     {currentBoss.rarity}
                   </div>
 
@@ -588,12 +588,12 @@ export function RaidBossModal({
                   {/* HP Bar */}
                   <div className="mb-2">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-vintage-gold font-bold">HP</span>
+                      <span className="text-red-400 font-bold">HP</span>
                       <span className="text-vintage-neon-blue font-bold">
                         {currentBoss.currentHp.toLocaleString()} / {currentBoss.maxHp.toLocaleString()}
                       </span>
                     </div>
-                    <div className="w-full h-8 bg-vintage-black rounded-lg overflow-hidden border-2 border-vintage-gold/50">
+                    <div className="w-full h-8 bg-vintage-black rounded-lg overflow-hidden border-2 border-red-600/50">
                       <div
                         className={`h-full ${getHpBarColor(hpPercentage)} transition-all duration-1000 flex items-center justify-center`}
                         style={{ width: `${hpPercentage}%` }}
@@ -607,8 +607,8 @@ export function RaidBossModal({
 
                   {/* Next Attack Timer */}
                   {hasDeck && timeUntilNextAttack > 0 && (
-                    <div className="bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg p-3 mt-4">
-                      <p className="text-vintage-gold text-sm font-bold text-center">
+                    <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-3 mt-4">
+                      <p className="text-red-400 text-sm font-bold text-center">
                         ⏱️ Next Auto-Attack in: {formatTime(timeUntilNextAttack)}
                       </p>
                     </div>
@@ -668,14 +668,14 @@ export function RaidBossModal({
                     return (
                       <div key={card.tokenId} className="relative">
                         {/* Card */}
-                        <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 border-vintage-gold/50 relative ${attackingCardIndex === index ? 'animate-card-attack' : ''}`}>
+                        <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 border-red-600/50 relative ${attackingCardIndex === index ? 'animate-card-attack' : ''}`}>
                           <CardMedia
                             src={card.imageUrl}
                             alt={card.name}
                             className="w-full h-full object-cover"
                           />
                           {/* Power Badge */}
-                          <div className="absolute top-1 left-1 bg-vintage-gold text-vintage-black text-xs px-1 rounded font-bold">
+                          <div className="absolute top-1 left-1 bg-red-600 text-white text-xs px-1 rounded font-bold">
                             {card.power}
                           </div>
                           {/* Energy Status */}
@@ -695,7 +695,7 @@ export function RaidBossModal({
                                   if (soundEnabled) AudioManager.buttonClick();
                                 }}
                                 disabled={isRefueling}
-                                className="w-full px-1.5 py-1 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded text-[10px] font-bold transition disabled:opacity-50"
+                                className="w-full px-1.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold transition disabled:opacity-50"
                               >
                                 Trocar Carta
                               </button>
@@ -759,8 +759,8 @@ export function RaidBossModal({
               </div>
             ) : (
               /* No Deck - Set Deck CTA */
-              <div className="mb-6 bg-vintage-gold/20 border-2 border-vintage-gold/50 rounded-xl p-6 text-center">
-                <h3 className="text-xl font-display font-bold text-vintage-gold mb-2">
+              <div className="mb-6 bg-red-600/20 border-2 border-red-600/50 rounded-xl p-6 text-center">
+                <h3 className="text-xl font-display font-bold text-red-400 mb-2">
                   Join the Raid!
                 </h3>
                 <p className="text-vintage-burnt-gold mb-4">
@@ -771,7 +771,7 @@ export function RaidBossModal({
                     setShowDeckSelector(true);
                     if (soundEnabled) AudioManager.buttonClick();
                   }}
-                  className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-bold transition-all uppercase shadow-gold"
+                  className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all uppercase shadow-lg"
                 >
                   Set Raid Deck
                 </button>
@@ -786,13 +786,13 @@ export function RaidBossModal({
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-vintage-gold text-xs">Damage Dealt</p>
+                    <p className="text-red-400 text-xs">Damage Dealt</p>
                     <p className="text-vintage-neon-blue text-xl font-bold">
                       {playerContribution.damageDealt.toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-vintage-gold text-xs">Attacks</p>
+                    <p className="text-red-400 text-xs">Attacks</p>
                     <p className="text-vintage-neon-blue text-xl font-bold">
                       {playerContribution.attackCount}
                     </p>
@@ -803,14 +803,14 @@ export function RaidBossModal({
 
             {/* Leaderboard */}
             {topContributors && topContributors.length > 0 && (
-              <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-gold/30">
-                <h3 className="text-lg font-display font-bold text-vintage-gold mb-3">
+              <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-red-600/30">
+                <h3 className="text-lg font-display font-bold text-red-400 mb-3">
                   🏆 Damage Ranking
                 </h3>
 
                 {/* Reward Pool Info */}
-                <div className="bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg p-3 mb-3">
-                  <p className="text-vintage-gold text-sm font-bold text-center">
+                <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-3 mb-3">
+                  <p className="text-red-400 text-sm font-bold text-center">
                     💰 Reward Pool: 1,000 $TESTVBMS
                   </p>
                   <p className="text-vintage-burnt-gold text-xs text-center mt-1">
@@ -852,7 +852,7 @@ export function RaidBossModal({
                               className={`p-3 rounded-lg transition-all ${
                                 contributor.address === userAddress.toLowerCase()
                                   ? 'bg-vintage-neon-blue/20 border-2 border-vintage-neon-blue/50 scale-105'
-                                  : 'bg-vintage-charcoal/50 border border-vintage-gold/20'
+                                  : 'bg-vintage-charcoal/50 border border-red-600/20'
                               }`}
                             >
                               {/* Rank & Username */}
@@ -866,7 +866,7 @@ export function RaidBossModal({
                                         ? 'text-gray-300'
                                         : index === 2
                                         ? 'text-orange-400'
-                                        : 'text-vintage-gold'
+                                        : 'text-red-400'
                                     }`}
                                   >
                                     {index === 0
@@ -893,7 +893,7 @@ export function RaidBossModal({
                                   <span className="text-vintage-neon-blue font-bold text-sm">
                                     {contributor.damageDealt.toLocaleString()}
                                   </span>
-                                  <span className="text-vintage-gold text-xs">
+                                  <span className="text-red-400 text-xs">
                                     ({contributionPercent.toFixed(2)}%)
                                   </span>
                                 </div>
@@ -943,7 +943,7 @@ export function RaidBossModal({
               if (soundEnabled) AudioManager.buttonNav();
               onClose();
             }}
-            className="flex-1 px-4 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-bold transition"
+            className="flex-1 px-4 py-3 bg-vintage-black hover:bg-red-600/10 text-red-400 border border-red-600/50 rounded-xl font-bold transition"
           >
             Close
           </button>
@@ -958,37 +958,37 @@ export function RaidBossModal({
         onClick={() => setShowHelp(false)}
       >
         <div
-          className="bg-vintage-charcoal rounded-lg border-2 border-vintage-gold max-w-md w-full p-3 shadow-neon max-h-[90vh] overflow-y-auto"
+          className="bg-vintage-charcoal rounded-lg border-2 border-red-600 max-w-md w-full p-3 shadow-neon max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="text-lg font-display font-bold text-vintage-gold mb-2">
+          <h2 className="text-lg font-display font-bold text-red-400 mb-2">
             How Boss Raid Works
           </h2>
           <div className="space-y-2 text-vintage-burnt-gold font-modern text-xs">
             <div>
-              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Global Cooperative Battle</h3>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">Global Cooperative Battle</h3>
               <p>All players attack the same boss together. Work as a team to defeat powerful bosses and earn rewards.</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Set Your Raid Deck</h3>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">Set Your Raid Deck</h3>
               <p>Select 5 cards to form your raid deck. Your deck will automatically attack the boss every 5 minutes.</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Card Energy System</h3>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">Card Energy System</h3>
               <p className="text-[10px] leading-tight">Cards attack every 5 minutes until their energy expires. Energy duration depends on rarity:<br/>
               • Common: 12h • Rare: 1d • Epic: 2d • Legendary: 4d • Mythic: 5d • VibeFID: ∞<br/>
               Refuel: 1 VBMS per card or 4 VBMS for all 5 (save 1!).</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Damage Buffs</h3>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">Damage Buffs</h3>
               <p className="text-[10px]">• VibeFID: +50% • Same collection: +20% • Critical: 15% chance for 2x</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Boss Rotation</h3>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">Boss Rotation</h3>
               <p className="text-[10px]">Bosses rotate through 4 collections (VBRS, VBMS, VibeFID, AFCL) with increasing difficulty.</p>
             </div>
             <div>
-              <h3 className="text-vintage-gold font-bold mb-1 text-sm">Leaderboard & Rewards</h3>
+              <h3 className="text-red-400 font-bold mb-1 text-sm">Leaderboard & Rewards</h3>
               <p className="text-[10px]">Top contributors earn special rewards when the boss is defeated!</p>
             </div>
           </div>
@@ -997,7 +997,7 @@ export function RaidBossModal({
               if (soundEnabled) AudioManager.buttonClick();
               setShowHelp(false);
             }}
-            className="w-full mt-3 px-3 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-bold transition text-sm"
+            className="w-full mt-3 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition text-sm"
           >
             Got it!
           </button>
