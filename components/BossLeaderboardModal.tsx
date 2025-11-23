@@ -76,7 +76,7 @@ export function BossLeaderboardModal({
 
   // Find user's rank
   const userRank = bossHistory.topContributors.findIndex(
-    (c) => c.address.toLowerCase() === userAddress.toLowerCase()
+    (c: { address: string }) => c.address.toLowerCase() === userAddress.toLowerCase()
   );
   const userContribution = userRank !== -1 ? bossHistory.topContributors[userRank] : null;
 
