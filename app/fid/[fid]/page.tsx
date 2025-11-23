@@ -36,7 +36,7 @@ export default function FidCardPage() {
   useEffect(() => {
     const initFarcasterSDK = async () => {
       try {
-        if (typeof window !== 'undefined' && (window as any).sdk?.actions?.ready) {
+        if (typeof window !== 'undefined') {
           await sdk.actions.ready();
           console.log('✅ Farcaster SDK ready called');
         }
