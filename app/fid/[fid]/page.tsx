@@ -139,6 +139,16 @@ export default function FidCardPage() {
       </div>
 
       <div className="max-w-4xl mx-auto">
+        {/* Mint Your Card Button - Top */}
+        <div className="mb-6 text-center">
+          <Link
+            href="/fid"
+            className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors inline-block"
+          >
+            ← Mint Your Card
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2">
@@ -265,9 +275,9 @@ export default function FidCardPage() {
 
         {/* Mint History for this FID */}
         {fidCards && fidCards.length > 1 && (
-          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6">
+          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
             <h2 className="text-2xl font-bold text-vintage-gold mb-4">
-              Mint History ({fidCards.length} mints)
+              All Mints ({fidCards.length} total)
             </h2>
             <p className="text-vintage-ice/70 mb-4 text-sm">
               All mints of FID #{fid}
@@ -303,16 +313,6 @@ export default function FidCardPage() {
             </div>
           </div>
         )}
-
-        {/* Back Button */}
-        <div className="mt-8 text-center">
-          <Link
-            href="/fid"
-            className="px-6 py-3 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors inline-block"
-          >
-            ← Mint Your Card
-          </Link>
-        </div>
       </div>
     </div>
   );
