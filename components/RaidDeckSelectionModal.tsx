@@ -101,7 +101,7 @@ export function RaidDeckSelectionModal({
 
   // Sort cards
   const sortedCards = sortByPower
-    ? sortCardsByPower(availableCards, 'desc')
+    ? sortCardsByPower(availableCards, false) // false = descending order
     : availableCards;
 
   // Filter by collections
