@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -182,6 +182,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/coquettish-1?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY COQ PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Viberuto
+  viberuto: {
+    id: 'viberuto',
+    name: 'viberuto',
+    displayName: 'Viberuto',
+    description: 'Collection Viberuto NFT',
+    contractAddress: '0xb8546a8e4d47d28debc544eee4582db7c643c24f',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY VIBERUTO PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
