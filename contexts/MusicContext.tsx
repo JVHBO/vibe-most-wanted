@@ -57,6 +57,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentTrackRef = useRef<string | null>(null);
+  const hasUserInteractedRef = useRef(false); // Track if user has clicked anything
 
   /**
    * Fade out current audio, then fade in new audio
@@ -239,6 +240,28 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setMusicModeState(stored);
     }
   }, []);
+
+  /**
+   * Resume music on first user interaction (fixes browser autoplay block)
+   */
+  useEffect(() => {
+    const handleFirstClick = () => {
+      if (!hasUserInteractedRef.current && isMusicEnabled && audioRef.current) {
+        hasUserInteractedRef.current = true;
+        audioRef.current.play().catch(() => {
+          // Still blocked, will try again on next click
+        });
+      }
+    };
+
+    document.addEventListener('click', handleFirstClick, { once: false });
+    document.addEventListener('touchstart', handleFirstClick, { once: false });
+
+    return () => {
+      document.removeEventListener('click', handleFirstClick);
+      document.removeEventListener('touchstart', handleFirstClick);
+    };
+  }, [isMusicEnabled]);
 
   /**
    * Cleanup on unmount
