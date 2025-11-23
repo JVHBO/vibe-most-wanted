@@ -377,7 +377,7 @@ export function RaidBossModal({
 
     const castText = `⚔️ RAID BOSS BATTLE ⚔️\n\nMy Deck Power: ${deckPower}\nVs ${bossName}\nBoss HP: ${bossHp}%\n\nJoin the raid! 🎮\n\n@jvhbo`;
 
-    const embedUrl = encodeURIComponent('https://vibemostwanted.xyz');
+    const embedUrl = encodeURIComponent('https://vibemostwanted.xyz/share/raid');
 
     const shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${embedUrl}`;
 
