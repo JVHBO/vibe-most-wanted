@@ -126,6 +126,8 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     ownerAddress: process.env.NEXT_PUBLIC_JC_CONTRACT || '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
     enabled: true,
     powerCalculation: DEFAULT_POWER_CONFIG,
+    marketplaceUrl: 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY VBMS PACKS',
   },
 
   // Coleção GM VBRS
