@@ -17,6 +17,7 @@ import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts'
 import { SpectatorEntryModal } from './SpectatorEntryModal';
 import { SimpleBettingOverlay } from './SimpleBettingOverlay';
 import { GamePopups } from './GamePopups';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
 interface Card {
   tokenId: string;
@@ -1915,7 +1916,7 @@ export function PokerBattleTable({
                       <>
                         {(selectedDeck[i].imageUrl || selectedDeck[i].image) ? (
                           <CardMedia
-                            src={(selectedDeck[i].imageUrl || selectedDeck[i].image || '')}
+                            src={convertIpfsUrl(selectedDeck[i].imageUrl || selectedDeck[i].image) || ''}
                             alt={selectedDeck[i].name}
                             className="w-full h-full object-cover rounded-lg"
                           />
@@ -1957,7 +1958,7 @@ export function PokerBattleTable({
                   >
                     {(card.imageUrl || card.image) ? (
                       <CardMedia
-                        src={(card.imageUrl || card.image || '')}
+                        src={convertIpfsUrl(card.imageUrl || card.image) || ''}
                         alt={card.name}
                         className="w-full h-full object-cover"
                       />
@@ -2117,7 +2118,7 @@ export function PokerBattleTable({
                     {playerSelectedCard && (phase === 'resolution' || phase === 'reveal') ? (
                       <div className="relative w-full h-full">
                         {playerSelectedCard?.imageUrl || playerSelectedCard?.image ? (
-                          <CardMedia src={playerSelectedCard?.imageUrl || playerSelectedCard?.image} alt={playerSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
+                          <CardMedia src={convertIpfsUrl(playerSelectedCard?.imageUrl || playerSelectedCard?.image) || ''} alt={playerSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(playerSelectedCard?.rarity) }}>
                             <div className="text-white text-xs font-bold text-center">{playerSelectedCard?.name}</div>
@@ -2184,7 +2185,7 @@ export function PokerBattleTable({
                     {opponentSelectedCard && (phase === 'resolution' || showRoundWinner) ? (
                       <div className="relative w-full h-full">
                         {opponentSelectedCard?.imageUrl || opponentSelectedCard?.image ? (
-                          <CardMedia src={opponentSelectedCard?.imageUrl || opponentSelectedCard?.image} alt={opponentSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
+                          <CardMedia src={convertIpfsUrl(opponentSelectedCard?.imageUrl || opponentSelectedCard?.image) || ''} alt={opponentSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(opponentSelectedCard?.rarity) }}>
                             <div className="text-white text-xs font-bold text-center">{opponentSelectedCard?.name}</div>
@@ -2447,7 +2448,7 @@ export function PokerBattleTable({
                             <FoilCardEffect foilType={opponentSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
                                 <CardMedia
-                                  src={(opponentSelectedCard.imageUrl || opponentSelectedCard.image || '')}
+                                  src={convertIpfsUrl(opponentSelectedCard.imageUrl || opponentSelectedCard.image) || ''}
                                   alt={opponentSelectedCard.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -2522,7 +2523,7 @@ export function PokerBattleTable({
                             <FoilCardEffect foilType={playerSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(playerSelectedCard.imageUrl || playerSelectedCard.image) ? (
                                 <CardMedia
-                                  src={(playerSelectedCard.imageUrl || playerSelectedCard.image || '')}
+                                  src={convertIpfsUrl(playerSelectedCard.imageUrl || playerSelectedCard.image) || ''}
                                   alt={playerSelectedCard.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -2670,7 +2671,7 @@ export function PokerBattleTable({
                           <FoilCardEffect foilType={card.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                             {(card.imageUrl || card.image) ? (
                               <CardMedia
-                                src={(card.imageUrl || card.image || '')}
+                                src={convertIpfsUrl(card.imageUrl || card.image) || ''}
                                 alt={card.name}
                                 className="w-full h-full object-cover"
                               />
