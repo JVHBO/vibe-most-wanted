@@ -196,6 +196,23 @@ export const getRaidHistory = query({
 });
 
 /**
+ * Get leaderboard for a specific boss by index
+ */
+export const getBossLeaderboard = query({
+  args: {
+    bossIndex: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const history = await ctx.db
+      .query("raidHistory")
+      .withIndex("by_boss_index", (q) => q.eq("bossIndex", args.bossIndex))
+      .first();
+
+    return history;
+  },
+});
+
+/**
  * Get raid boss leaderboard (ordered by totalDamageDealt)
  * Returns all players with raid decks, enriched with profile data
  */
