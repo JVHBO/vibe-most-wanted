@@ -18,14 +18,21 @@ import { RaidDeckSelectionModal } from '@/components/RaidDeckSelectionModal';
 import { CardReplacementModal } from '@/components/CardReplacementModal';
 import { DamageNumber } from '@/components/DamageNumber';
 import { BossLeaderboardModal } from '@/components/BossLeaderboardModal';
-import { BossRotationCarousel } from '@/components/BossRotationCarousel';
 import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
 import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
 import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
 import { CONTRACTS } from '@/lib/contracts';
 import { parseEther } from 'viem';
-import { getNextBoss, getPreviousBoss, BOSS_REWARDS_BY_RARITY } from '@/lib/raid-boss';
+import {
+  getNextBoss,
+  getPreviousBoss,
+  BOSS_REWARDS_BY_RARITY,
+  BOSS_ROTATION_ORDER,
+  BOSS_RARITY_ORDER,
+  getBossCard
+} from '@/lib/raid-boss';
+import { COLLECTIONS } from '@/lib/collections';
 
 interface RaidBossModalProps {
   isOpen: boolean;
@@ -631,96 +638,161 @@ export function RaidBossModal({
               </div>
             </div>
 
-            {/* Boss Rotation: Previous & Next */}
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Previous Boss (with Leaderboard) */}
-              {currentBoss.bossIndex > 0 && (() => {
-                const previousBoss = getPreviousBoss(currentBoss.bossIndex);
-                if (!previousBoss) return null;
+            {/* Boss Rotation: All 25 Bosses */}
+            <div className="mb-6">
+              <h3 className="text-lg font-display font-bold text-vintage-gold mb-3 text-center">
+                🎯 Boss Rotation Schedule (25 Bosses)
+              </h3>
+              <div className="overflow-x-auto pb-2 -mx-2 px-2">
+                <div className="flex gap-3 min-w-max">
+                  {(() => {
+                    const allBosses = [];
+                    for (let i = 0; i < 25; i++) {
+                      const collectionId = BOSS_ROTATION_ORDER[i];
+                      const rarity = BOSS_RARITY_ORDER[i];
+                      const boss = getBossCard(collectionId, rarity);
+                      const collection = COLLECTIONS[collectionId];
 
-                return (
-                  <div className="bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-gold/30">
-                    <h4 className="text-sm font-display font-bold text-vintage-gold mb-2 text-center">
-                      📜 Previous Boss (Defeated)
-                    </h4>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-20 h-28 flex-shrink-0 relative rounded-lg overflow-hidden border-2 border-vintage-gold/50 opacity-70">
-                        <CardMedia
-                          src={previousBoss.imageUrl}
-                          alt={previousBoss.name}
-                          className="w-full h-full object-cover grayscale"
-                        />
-                        <div className="absolute top-1 left-1 bg-vintage-gold text-vintage-black px-1 py-0.5 rounded text-[10px] font-bold">
-                          {previousBoss.rarity}
+                      if (boss && collection) {
+                        allBosses.push({ index: i, boss, collection });
+                      }
+                    }
+
+                    return allBosses.map(({ index, boss, collection }) => {
+                      const isCurrent = index === currentBoss.bossIndex;
+                      const isPrevious = index < currentBoss.bossIndex;
+                      const isNext = index === currentBoss.bossIndex + 1;
+
+                      return (
+                        <div
+                          key={index}
+                          className={`flex-shrink-0 w-48 bg-vintage-black/50 rounded-xl p-3 border-2 ${
+                            isCurrent
+                              ? 'border-yellow-400 shadow-lg shadow-yellow-400/50'
+                              : isPrevious
+                              ? 'border-vintage-gold/30'
+                              : isNext
+                              ? 'border-vintage-neon-blue/30'
+                              : 'border-gray-700'
+                          }`}
+                        >
+                          {/* Status Header */}
+                          <h4 className={`text-xs font-bold mb-2 text-center ${
+                            isCurrent
+                              ? 'text-yellow-400'
+                              : isPrevious
+                              ? 'text-vintage-gold'
+                              : isNext
+                              ? 'text-vintage-neon-blue'
+                              : 'text-gray-400'
+                          }`}>
+                            {isCurrent
+                              ? '⚡ CURRENT BOSS'
+                              : isPrevious
+                              ? '📜 Defeated'
+                              : isNext
+                              ? '🔮 Next Boss'
+                              : `#${index + 1}`}
+                          </h4>
+
+                          {/* Boss Card */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-16 h-24 flex-shrink-0 relative rounded-lg overflow-hidden border-2 ${
+                              isCurrent
+                                ? 'border-yellow-400'
+                                : isPrevious
+                                ? 'border-vintage-gold/50 opacity-70'
+                                : 'border-gray-600'
+                            }`}>
+                              <CardMedia
+                                src={boss.imageUrl}
+                                alt={boss.name}
+                                className={`w-full h-full object-cover ${isPrevious && !isCurrent ? 'grayscale' : ''}`}
+                              />
+                              <div className={`absolute top-1 left-1 px-1 py-0.5 rounded text-[9px] font-bold ${
+                                boss.rarity === 'Mythic' ? 'bg-red-500 text-white' :
+                                boss.rarity === 'Legendary' ? 'bg-orange-500 text-white' :
+                                boss.rarity === 'Epic' ? 'bg-purple-500 text-white' :
+                                boss.rarity === 'Rare' ? 'bg-blue-500 text-white' :
+                                'bg-gray-500 text-white'
+                              }`}>
+                                {boss.rarity}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-bold truncate ${
+                                isCurrent
+                                  ? 'text-yellow-400'
+                                  : isPrevious
+                                  ? 'text-vintage-gold'
+                                  : 'text-vintage-neon-blue'
+                              }`}>
+                                {boss.name}
+                              </p>
+                              <p className="text-[10px] text-vintage-burnt-gold truncate">
+                                {collection.displayName}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">
+                                {isPrevious && !isCurrent ? '✓ Defeated' : `${(boss.hp / 1_000_000).toFixed(0)}M HP`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="space-y-1">
+                            {/* Leaderboard Button (Previous bosses) */}
+                            {isPrevious && !isCurrent && (
+                              <button
+                                onClick={() => {
+                                  if (soundEnabled) AudioManager.buttonClick();
+                                  setSelectedBossIndex(index);
+                                  setShowBossLeaderboard(true);
+                                }}
+                                className="w-full px-2 py-1 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded text-[10px] font-bold transition"
+                              >
+                                📊 Leaderboard
+                              </button>
+                            )}
+
+                            {/* View Current Button */}
+                            {isCurrent && (
+                              <button
+                                onClick={() => {
+                                  if (soundEnabled) AudioManager.buttonClick();
+                                  setSelectedBossIndex(index);
+                                  setShowBossLeaderboard(true);
+                                }}
+                                className="w-full px-2 py-1 bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-400 border border-yellow-400/50 rounded text-[10px] font-bold transition"
+                              >
+                                📊 Current Stats
+                              </button>
+                            )}
+
+                            {/* Marketplace Button */}
+                            {collection.marketplaceUrl && (
+                              <a
+                                href={collection.marketplaceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full px-2 py-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/50 rounded text-[10px] font-bold transition text-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (soundEnabled) AudioManager.buttonClick();
+                                }}
+                              >
+                                🛒 Buy Packs
+                              </a>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-vintage-gold">
-                          {previousBoss.name}
-                        </p>
-                        <p className="text-xs text-vintage-burnt-gold">
-                          {previousBoss.collection?.toUpperCase()} - {previousBoss.rarity}
-                        </p>
-                        <p className="text-xs text-green-400 mt-1">
-                          ✓ Defeated
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (soundEnabled) AudioManager.buttonClick();
-                        setSelectedBossIndex(currentBoss.bossIndex - 1);
-                        setShowBossLeaderboard(true);
-                      }}
-                      className="w-full px-3 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold text-sm transition"
-                    >
-                      📊 View Leaderboard
-                    </button>
-                  </div>
-                );
-              })()}
-
-              {/* Next Boss (Preview/Spoiler) */}
-              {(() => {
-                const nextBoss = getNextBoss(currentBoss.bossIndex);
-                if (!nextBoss) return null;
-
-                return (
-                  <div className="bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-neon-blue/30">
-                    <h4 className="text-sm font-display font-bold text-vintage-neon-blue mb-2 text-center">
-                      🔮 Next Boss (Coming Soon)
-                    </h4>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-20 h-28 flex-shrink-0 relative rounded-lg overflow-hidden border-2 border-vintage-neon-blue/50">
-                        <CardMedia
-                          src={nextBoss.imageUrl}
-                          alt={nextBoss.name}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-1 left-1 bg-vintage-neon-blue text-vintage-black px-1 py-0.5 rounded text-[10px] font-bold">
-                          {nextBoss.rarity}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-vintage-neon-blue">
-                          {nextBoss.name}
-                        </p>
-                        <p className="text-xs text-vintage-burnt-gold">
-                          {nextBoss.collection?.toUpperCase()} - {nextBoss.rarity}
-                        </p>
-                        <p className="text-xs text-vintage-neon-blue/70 mt-1">
-                          HP: {nextBoss.hp.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="w-full px-3 py-2 bg-vintage-neon-blue/10 border border-vintage-neon-blue/30 rounded-lg text-center">
-                      <p className="text-xs text-vintage-neon-blue/70 font-bold">
-                        Defeat current boss to unlock
-                      </p>
-                    </div>
-                  </div>
-                );
-              })()}
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+              <p className="text-center text-xs text-gray-500 mt-2">
+                ← Scroll to browse all bosses →
+              </p>
             </div>
 
             {/* Player's Raid Deck */}
@@ -1070,19 +1142,6 @@ export function RaidBossModal({
           </div>
         )}
 
-        {/* Boss Rotation Carousel */}
-        {currentBoss && (
-          <div className="flex-shrink-0 mt-4 border-t-2 border-red-600/30 pt-4">
-            <BossRotationCarousel
-              currentBossIndex={currentBoss.bossIndex}
-              onSelectBoss={(index) => {
-                setSelectedBossIndex(index);
-                setShowBossLeaderboard(true);
-              }}
-              t={t}
-            />
-          </div>
-        )}
 
         {/* Footer Buttons */}
         <div className="flex-shrink-0 flex gap-3 mt-4">
