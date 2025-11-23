@@ -2632,11 +2632,15 @@ export default function TCGPage() {
 
     setIsLoadingMissions(true);
     try {
-      // TEMPORARILY DISABLED - Causing Convex errors until schema is synced
       // Ensure welcome_gift exists for this player (migration for old users)
-      // await convex.mutation(api.missions.ensureWelcomeGift, {
-      //   playerAddress: address,
-      // });
+      await convex.mutation(api.missions.ensureWelcomeGift, {
+        playerAddress: address,
+      });
+
+      // Mark daily login as completed (if not already done today)
+      await convex.mutation(api.missions.markDailyLogin, {
+        playerAddress: address,
+      });
 
       // Get completed missions from database
       const playerMissions = await convex.query(api.missions.getPlayerMissions, {
@@ -2645,7 +2649,7 @@ export default function TCGPage() {
 
       // Define all possible missions
       const allMissionTypes = [
-        { type: 'daily_login', reward: 25, date: 'today' },
+        { type: 'daily_login', reward: 100, date: 'today' },
         { type: 'first_pve_win', reward: 50, date: 'today' },
         { type: 'first_pvp_match', reward: 100, date: 'today' },
         { type: 'streak_3', reward: 150, date: 'today' },
@@ -2682,7 +2686,7 @@ export default function TCGPage() {
 
       // Fallback: Always show locked missions even on error
       const fallbackMissions = [
-        { _id: 'placeholder_daily_login', missionType: 'daily_login', completed: false, claimed: false, reward: 25, date: 'today' },
+        { _id: 'placeholder_daily_login', missionType: 'daily_login', completed: false, claimed: false, reward: 100, date: 'today' },
         { _id: 'placeholder_first_pve_win', missionType: 'first_pve_win', completed: false, claimed: false, reward: 50, date: 'today' },
         { _id: 'placeholder_first_pvp_match', missionType: 'first_pvp_match', completed: false, claimed: false, reward: 100, date: 'today' },
         { _id: 'placeholder_streak_3', missionType: 'streak_3', completed: false, claimed: false, reward: 150, date: 'today' },
