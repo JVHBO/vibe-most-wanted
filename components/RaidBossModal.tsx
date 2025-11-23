@@ -24,7 +24,7 @@ import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
 import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
 import { CONTRACTS } from '@/lib/contracts';
 import { parseEther } from 'viem';
-import { getNextBoss, getPreviousBoss } from '@/lib/raid-boss';
+import { getNextBoss, getPreviousBoss, BOSS_REWARDS_BY_RARITY } from '@/lib/raid-boss';
 
 interface RaidBossModalProps {
   isOpen: boolean;
@@ -963,7 +963,9 @@ export function RaidBossModal({
                     (sum: number, c: any) => sum + c.damageDealt,
                     0
                   );
-                  const REWARD_POOL = 1000;
+                  // Calculate reward pool based on current boss rarity
+                  const bossRarity = currentBoss.rarity.toLowerCase() as Lowercase<'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic'>;
+                  const REWARD_POOL = BOSS_REWARDS_BY_RARITY[bossRarity];
 
                   return (
                     <>
@@ -1130,22 +1132,22 @@ export function RaidBossModal({
                     <tr className="border-b border-red-600/20">
                       <td className="py-1 px-2 text-blue-400">Rare</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">50M</td>
-                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">5,000 $TESTVBMS</td>
                     </tr>
                     <tr className="border-b border-red-600/20">
                       <td className="py-1 px-2 text-purple-400">Epic</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">250M</td>
-                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">25,000 $TESTVBMS</td>
                     </tr>
                     <tr className="border-b border-red-600/20">
                       <td className="py-1 px-2 text-orange-400">Legendary</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">1B</td>
-                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">100,000 $TESTVBMS</td>
                     </tr>
                     <tr>
                       <td className="py-1 px-2 text-red-400">Mythic</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">5B</td>
-                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">500,000 $TESTVBMS</td>
                     </tr>
                   </tbody>
                 </table>
