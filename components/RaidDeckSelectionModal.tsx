@@ -2,7 +2,7 @@
  * Raid Deck Selection Modal
  *
  * Modal for selecting 5 cards for the Raid Boss deck
- * Entry fee: 5 VBMS
+ * Entry fee: Based on card rarities (Common: 1, Rare: 3, Epic: 5, Legendary: 10, Mythic: 15)
  */
 
 'use client';
@@ -43,6 +43,16 @@ interface RaidDeckSelectionModalProps {
 
 const DECK_SIZE = 5;
 
+// Cost by rarity (in VBMS)
+const COST_BY_RARITY: Record<string, number> = {
+  common: 1,
+  rare: 3,
+  epic: 5,
+  legendary: 10,
+  mythic: 15,
+  vibefid: 50,
+};
+
 export function RaidDeckSelectionModal({
   isOpen,
   onClose,
@@ -60,7 +70,24 @@ export function RaidDeckSelectionModal({
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const [isSettingDeck, setIsSettingDeck] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showVibeFIDStep, setShowVibeFIDStep] = useState(false); // Step 2: VibeFID optional selection
+  const [selectedVibeFID, setSelectedVibeFID] = useState<NFT | null>(null); // Optional 6th card
   const CARDS_PER_PAGE = 50;
+
+  // Calculate dynamic cost based on selected cards (including optional VibeFID)
+  const totalCost = useMemo(() => {
+    let cost = selectedCards.reduce((sum, card) => {
+      const rarity = card.rarity.toLowerCase();
+      return sum + (COST_BY_RARITY[rarity] || COST_BY_RARITY.common);
+    }, 0);
+
+    // Add VibeFID cost if selected
+    if (selectedVibeFID) {
+      cost += COST_BY_RARITY.vibefid;
+    }
+
+    return cost;
+  }, [selectedCards, selectedVibeFID]);
 
   // Web3 hooks
   const { address: walletAddress } = useAccount();
@@ -145,26 +172,44 @@ export function RaidDeckSelectionModal({
     }
   };
 
-  const handleConfirm = async () => {
+  // Check if user has VibeFID cards
+  const vibeFIDCards = useMemo(() => {
+    return availableCards.filter(card => card.collection === 'vibefid');
+  }, [availableCards]);
+
+  // Step 1: Handle initial 5-card confirmation - go to VibeFID step if available
+  const handleConfirm = () => {
     if (selectedCards.length !== DECK_SIZE) return;
 
+    // If user has VibeFID cards, show VibeFID selection step
+    if (vibeFIDCards.length > 0) {
+      setShowVibeFIDStep(true);
+      if (soundEnabled) AudioManager.buttonClick();
+    } else {
+      // No VibeFID available, proceed directly to payment
+      proceedWithPayment();
+    }
+  };
+
+  // Step 2: Proceed with payment and deck setting (called from VibeFID step or directly)
+  const proceedWithPayment = async () => {
     setIsSettingDeck(true);
     setErrorMessage(null);
 
     try {
       if (soundEnabled) AudioManager.buttonClick();
 
-      console.log('💰 Transferring 5 VBMS to pool for raid deck entry...');
+      console.log(`💰 Transferring ${totalCost} VBMS to pool for raid deck entry...`);
 
-      // Transfer 5 VBMS to pool
+      // Transfer dynamic cost to pool
       const txHash = await transferVBMS(
         CONTRACTS.VBMSPoolTroll as `0x${string}`,
-        parseEther('5')
+        parseEther(totalCost.toString())
       );
 
       console.log('✅ Transfer successful, txHash:', txHash);
 
-      // Format deck for Convex
+      // Format deck for Convex (5 regular cards)
       const deckData = selectedCards.map((card) => ({
         tokenId: card.tokenId,
         name: card.name,
@@ -173,13 +218,25 @@ export function RaidDeckSelectionModal({
         rarity: card.rarity,
         collection: card.collection,
         foil: card.foil,
-        isFreeCard: (card as any).isFreeCard || false, // For buff system: free cards don't get buffs
+        isFreeCard: (card as any).isFreeCard || false,
       }));
 
-      // Call Convex mutation to set raid deck
+      // Format VibeFID card if selected
+      const vibefidCardData = selectedVibeFID ? {
+        tokenId: selectedVibeFID.tokenId,
+        name: selectedVibeFID.name,
+        imageUrl: selectedVibeFID.imageUrl,
+        power: selectedVibeFID.power,
+        rarity: selectedVibeFID.rarity,
+        collection: selectedVibeFID.collection,
+        foil: selectedVibeFID.foil,
+      } : undefined;
+
+      // Call Convex mutation to set raid deck (with optional VibeFID)
       await setRaidDeck({
         address: playerAddress.toLowerCase(),
         deck: deckData,
+        vibefidCard: vibefidCardData,
         txHash,
       });
 
@@ -199,6 +256,8 @@ export function RaidDeckSelectionModal({
     if (soundEnabled) AudioManager.buttonNav();
     onClose();
     setSelectedCards([]);
+    setShowVibeFIDStep(false);
+    setSelectedVibeFID(null);
   };
 
   return (
@@ -212,10 +271,152 @@ export function RaidDeckSelectionModal({
       >
         {/* Header */}
         <h2 className="text-2xl md:text-3xl font-display font-bold text-center mb-2 text-vintage-gold flex-shrink-0">
-          ⚔️ BUILD YOUR RAID DECK ⚔️
+          {showVibeFIDStep ? '🎴 ADD VIBEFID CARD? 🎴' : '⚔️ BUILD YOUR RAID DECK ⚔️'}
         </h2>
 
-        {/* VibeFID Benefits Box */}
+        {/* Step 2: VibeFID Selection */}
+        {showVibeFIDStep ? (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Selected 5 Cards Summary */}
+            <div className="flex-shrink-0 mb-4">
+              <h3 className="text-lg font-bold text-vintage-burnt-gold mb-2">Your Selected Deck ({selectedCards.length} cards)</h3>
+              <div className="grid grid-cols-5 gap-2">
+                {selectedCards.map((card, idx) => (
+                  <div key={idx} className="relative">
+                    <CardMedia imageUrl={card.imageUrl} name={card.name} className="rounded-lg aspect-[3/4] object-cover" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1 rounded-b-lg">
+                      <div className="text-white text-[10px] font-bold truncate">{card.name}</div>
+                      <div className="text-vintage-gold text-[10px]">⚡ {card.power}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* VibeFID Benefits */}
+            <div className="flex-shrink-0 mb-4 bg-purple-900/30 border-2 border-purple-500/50 rounded-xl p-4">
+              <h3 className="text-lg font-bold text-purple-400 mb-3">✨ VibeFID 6th Slot Benefits ✨</h3>
+              <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <div className="font-bold text-purple-300">Infinite Energy</div>
+                    <div className="text-xs text-vintage-burnt-gold">Never needs refueling</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">📈</span>
+                  <div>
+                    <div className="font-bold text-blue-300">+10% Deck Power</div>
+                    <div className="text-xs text-vintage-burnt-gold">Boosts all 5 cards</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎯</span>
+                  <div>
+                    <div className="font-bold text-red-300">+50% Boss Damage</div>
+                    <div className="text-xs text-vintage-burnt-gold">Deals massive damage</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🔄</span>
+                  <div>
+                    <div className="font-bold text-green-300">Use in All Modes</div>
+                    <div className="text-xs text-vintage-burnt-gold">PvE, PvP, Defense</div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center text-vintage-gold font-bold text-lg">
+                Cost: +50 VBMS
+              </div>
+            </div>
+
+            {/* VibeFID Card Selection */}
+            <div className="flex-1 overflow-y-auto mb-4">
+              <h3 className="text-md font-bold text-vintage-gold mb-2">Select VibeFID Card (Optional)</h3>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                {vibeFIDCards.map((card) => {
+                  const isSelected = selectedVibeFID?.tokenId === card.tokenId;
+                  return (
+                    <div
+                      key={card.tokenId}
+                      onClick={() => {
+                        setSelectedVibeFID(isSelected ? null : card);
+                        if (soundEnabled) AudioManager.selectCardByRarity('vibefid');
+                      }}
+                      className={`relative cursor-pointer transition-all transform hover:scale-105 ${
+                        isSelected
+                          ? 'ring-4 ring-purple-500 shadow-neon scale-105'
+                          : 'hover:ring-2 hover:ring-purple-400/50'
+                      }`}
+                    >
+                      <CardMedia imageUrl={card.imageUrl} name={card.name} className="rounded-lg aspect-[3/4] object-cover" />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 rounded-b-lg">
+                        <div className="text-white text-xs font-bold truncate">{card.name}</div>
+                        <div className="text-purple-400 text-xs">⚡ {card.power}</div>
+                      </div>
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                          <div className="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">
+                            ✓
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* VibeFID Step Footer */}
+            <div className="flex-shrink-0 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowVibeFIDStep(false);
+                  setSelectedVibeFID(null);
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                disabled={isSettingDeck}
+                className="flex-1 px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition disabled:opacity-50"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedVibeFID(null);
+                  proceedWithPayment();
+                }}
+                disabled={isSettingDeck}
+                className="flex-1 px-6 py-3 bg-vintage-red/80 hover:bg-vintage-red text-white rounded-xl font-bold transition disabled:opacity-50"
+              >
+                Continue Without VibeFID
+              </button>
+              <button
+                onClick={proceedWithPayment}
+                disabled={!selectedVibeFID || isSettingDeck}
+                className={`flex-1 px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase ${
+                  selectedVibeFID && !isSettingDeck
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-neon hover:scale-105'
+                    : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                }`}
+              >
+                {isSettingDeck ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <LoadingSpinner />
+                    Processing...
+                  </span>
+                ) : selectedVibeFID ? (
+                  `ADD VIBEFID (+${COST_BY_RARITY.vibefid} VBMS)`
+                ) : (
+                  'SELECT VIBEFID'
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Step 1: Regular Card Selection */
+          <>
+            {/* VibeFID Benefits Box */}
         {(() => {
           const hasVibeFID = availableCards.some(card => card.collection === 'vibefid');
 
@@ -268,7 +469,7 @@ export function RaidDeckSelectionModal({
         {/* Info */}
         <div className="text-center mb-2 flex-shrink-0">
           <p className="text-vintage-burnt-gold text-sm font-modern">
-            Select {DECK_SIZE} cards • Entry Fee: 5 VBMS
+            Select {DECK_SIZE} cards • Entry Fee: {totalCost > 0 ? `${totalCost} VBMS` : 'Based on rarities'}
           </p>
           <p className="text-vintage-neon-blue text-xs font-modern mt-1">
             Cards attack automatically every 5 minutes
@@ -468,7 +669,7 @@ export function RaidDeckSelectionModal({
                 Processing...
               </span>
             ) : selectedCards.length === DECK_SIZE ? (
-              'SET RAID DECK (5 VBMS)'
+              `SET RAID DECK (${totalCost} VBMS)`
             ) : (
               `SELECT ${DECK_SIZE - selectedCards.length} MORE`
             )}
@@ -482,6 +683,8 @@ export function RaidDeckSelectionModal({
             Cancel
           </button>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
