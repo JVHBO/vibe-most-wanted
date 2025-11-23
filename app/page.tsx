@@ -539,6 +539,7 @@ export default function TCGPage() {
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
   const [leaderboardCollection, setLeaderboardCollection] = useState<CollectionId>('vibe');
+  const [leaderboardTab, setLeaderboardTab] = useState<'collections' | 'raidboss'>('collections');
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -5193,8 +5194,32 @@ export default function TCGPage() {
                     <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3 mb-2">
                       <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
                     </h1>
+                    {/* Leaderboard Tabs */}
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        onClick={() => setLeaderboardTab('collections')}
+                        className={`px-4 py-2 rounded-lg font-modern font-bold transition ${
+                          leaderboardTab === 'collections'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        Collections
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardTab('raidboss')}
+                        className={`px-4 py-2 rounded-lg font-modern font-bold transition ${
+                          leaderboardTab === 'raidboss'
+                            ? 'bg-vintage-gold text-vintage-black'
+                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                        }`}
+                      >
+                        Raid Boss
+                      </button>
+                    </div>
                     {/* Collection Filter Buttons */}
-                    <div className="flex flex-wrap gap-2 items-center">
+                    {leaderboardTab === 'collections' && (
+                      <div className="flex flex-wrap gap-2 items-center">
                       <button
                         onClick={() => setLeaderboardCollection('vibe')}
                         className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
@@ -5244,6 +5269,7 @@ export default function TCGPage() {
                         <span>↓</span> Export
                       </button>
                     </div>
+                    )}
                   </div>
                   <div className="text-left md:text-right">
                     {userProfile && (
@@ -5277,12 +5303,15 @@ export default function TCGPage() {
                   </div>
                 </div>
 
-                {filteredLeaderboard.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-6xl mb-4">§</p>
-                    <p className="text-vintage-burnt-gold">{t('noProfile')}</p>
-                  </div>
-                ) : (
+                {/* Collections Leaderboard */}
+                {leaderboardTab === 'collections' && (
+                  <>
+                    {filteredLeaderboard.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-6xl mb-4">§</p>
+                        <p className="text-vintage-burnt-gold">{t('noProfile')}</p>
+                      </div>
+                    ) : (
                   <div className="overflow-x-auto -mx-3 md:mx-0">
                     <table className="w-full text-sm md:text-base">
                       <thead>
