@@ -483,7 +483,7 @@ export function RaidBossModal({
 
                       {/* Contributors List */}
                       <div className="space-y-2 max-h-80 overflow-y-auto">
-                        {topContributors.map((contributor, index) => {
+                        {topContributors.map((contributor: any, index: number) => {
                           const contributionPercent =
                             totalDamage > 0 ? (contributor.damageDealt / totalDamage) * 100 : 0;
                           const estimatedReward = Math.floor(
