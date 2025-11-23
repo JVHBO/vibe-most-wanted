@@ -82,7 +82,7 @@ export const initializeRaidBoss = mutation({
     const newBoss = await ctx.db.insert("raidBoss", {
       bossIndex,
       name: bossData.name,
-      collection: bossData.collection,
+      collection: bossData.collection!,
       rarity: bossData.rarity as CardRarity,
       imageUrl: bossData.imageUrl,
       power: bossData.power,
@@ -694,7 +694,7 @@ export const defeatBossAndSpawnNext = mutation({
 
     await ctx.db.insert("raidHistory", {
       bossIndex: defeatedBoss.bossIndex,
-      collection: defeatedBoss.collection,
+      collection: defeatedBoss.collection!,
       rarity: defeatedBoss.rarity,
       name: defeatedBoss.name,
       imageUrl: defeatedBoss.imageUrl,
