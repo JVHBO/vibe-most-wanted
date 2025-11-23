@@ -18,6 +18,7 @@ import { RaidDeckSelectionModal } from '@/components/RaidDeckSelectionModal';
 import { CardReplacementModal } from '@/components/CardReplacementModal';
 import { DamageNumber } from '@/components/DamageNumber';
 import { BossLeaderboardModal } from '@/components/BossLeaderboardModal';
+import { CurrentBossLeaderboardModal } from '@/components/CurrentBossLeaderboardModal';
 import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
 import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
@@ -56,6 +57,7 @@ export function RaidBossModal({
   const [showDeckSelector, setShowDeckSelector] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showBossLeaderboard, setShowBossLeaderboard] = useState(false);
+  const [showCurrentBossLeaderboard, setShowCurrentBossLeaderboard] = useState(false);
   const [selectedBossIndex, setSelectedBossIndex] = useState<number | null>(null);
   const [selectedCards, setSelectedCards] = useState<NFT[]>([]);
   const [sortByPower, setSortByPower] = useState(true);
@@ -69,6 +71,9 @@ export function RaidBossModal({
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+
+  // Leaderboard scroll ref
+  const leaderboardRef = useRef<HTMLDivElement>(null);
 
   // Visual attack animation states
   const [damageNumbers, setDamageNumbers] = useState<Array<{
@@ -792,8 +797,7 @@ export function RaidBossModal({
                             <button
                               onClick={() => {
                                 if (soundEnabled) AudioManager.buttonClick();
-                                setSelectedBossIndex(index);
-                                setShowBossLeaderboard(true);
+                                setShowCurrentBossLeaderboard(true);
                               }}
                               className="w-full px-2 py-1 bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-400 border border-yellow-400/50 rounded text-[10px] font-bold transition"
                             >
