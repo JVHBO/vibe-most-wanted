@@ -832,6 +832,7 @@ export default function ProfilePage() {
                       const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
 
                       // Farcaster cast text
+                      // @ts-expect-error - honor field is added to schema but types not yet regenerated
                       const castText = `Check out my Vibe Most Wanted profile!\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
 
                       const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
@@ -872,6 +873,7 @@ export default function ProfilePage() {
                   <button
                     onClick={async () => {
                       const profileUrl = `${window.location.origin}/profile/${profile.username}`;
+                      // @ts-expect-error - honor field is added to schema but types not yet regenerated
                       const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
 
                       const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
@@ -943,6 +945,7 @@ export default function ProfilePage() {
           </div>
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-purple-400/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">⚔️ HONOR</p>
+            {/* @ts-expect-error - honor field is added to schema but types not yet regenerated */}
             <p className="text-3xl font-bold text-purple-400">{(profile.stats.honor ?? 500).toLocaleString()}</p>
           </div>
           <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-6 rounded-xl border-2 border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
