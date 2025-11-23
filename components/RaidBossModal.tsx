@@ -16,6 +16,7 @@ import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { RaidDeckSelectionModal } from '@/components/RaidDeckSelectionModal';
 import { CardReplacementModal } from '@/components/CardReplacementModal';
+import { DamageNumber } from '@/components/DamageNumber';
 import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
 import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
@@ -50,6 +51,17 @@ export function RaidBossModal({
   const [isRefueling, setIsRefueling] = useState(false);
   const [refuelError, setRefuelError] = useState<string | null>(null);
   const [replacingCardTokenId, setReplacingCardTokenId] = useState<string | null>(null);
+
+  // Visual attack animation states
+  const [damageNumbers, setDamageNumbers] = useState<Array<{
+    id: string;
+    damage: number;
+    isCritical: boolean;
+    x: number;
+    y: number;
+  }>>([]);
+  const [bossIsHit, setBossIsHit] = useState(false);
+  const [attackingCardIndex, setAttackingCardIndex] = useState<number | null>(null);
 
   // Web3 hooks
   const { address: walletAddress } = useAccount();
@@ -134,6 +146,65 @@ export function RaidBossModal({
 
     return () => clearInterval(interval);
   }, [playerDeck]);
+
+  // Visual attack animation system (attacks every 2-3 seconds)
+  useEffect(() => {
+    if (!playerDeck?.deck || !currentBoss || !isOpen) return;
+
+    // Trigger visual attack every 2-3 seconds
+    const attackInterval = setInterval(() => {
+      const deck = playerDeck.deck;
+      if (deck.length === 0) return;
+
+      // Pick a random card to attack
+      const randomIndex = Math.floor(Math.random() * deck.length);
+      const attackingCard = deck[randomIndex];
+
+      // Calculate visual damage (this is just for animation, real damage is backend)
+      const baseDamage = attackingCard.power * 10; // Scale for visibility
+      const variance = 0.8 + Math.random() * 0.4; // 80-120% of base
+      const isCritical = Math.random() < 0.15; // 15% critical chance
+      const critMultiplier = isCritical ? 2.0 : 1.0;
+      const finalDamage = Math.floor(baseDamage * variance * critMultiplier);
+
+      // Trigger card attack animation
+      setAttackingCardIndex(randomIndex);
+      setTimeout(() => setAttackingCardIndex(null), 500);
+
+      // Trigger boss hit animation
+      setBossIsHit(true);
+      setTimeout(() => setBossIsHit(false), 400);
+
+      // Show damage number
+      const damageId = `dmg-${Date.now()}-${Math.random()}`;
+      const randomX = 45 + Math.random() * 10; // 45-55% horizontal position
+      const randomY = 30 + Math.random() * 20; // 30-50% vertical position
+
+      setDamageNumbers(prev => [...prev, {
+        id: damageId,
+        damage: finalDamage,
+        isCritical,
+        x: randomX,
+        y: randomY,
+      }]);
+
+      // Play sound
+      if (soundEnabled) {
+        if (isCritical) {
+          AudioManager.criticalHit?.();
+        } else {
+          AudioManager.attack?.();
+        }
+      }
+    }, 2000 + Math.random() * 1000); // 2-3 seconds between attacks
+
+    return () => clearInterval(attackInterval);
+  }, [playerDeck, currentBoss, isOpen, soundEnabled]);
+
+  // Remove completed damage numbers
+  const removeDamageNumber = (id: string) => {
+    setDamageNumbers(prev => prev.filter(dmg => dmg.id !== id));
+  };
 
   // Format time remaining
   const formatTime = (ms: number) => {
@@ -423,7 +494,7 @@ export function RaidBossModal({
             <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-gold/30">
               <div className="flex flex-col md:flex-row items-center gap-4">
                 {/* Boss Card Image */}
-                <div className="w-48 h-72 flex-shrink-0 relative rounded-xl overflow-hidden border-4 border-vintage-gold shadow-neon">
+                <div className={`w-48 h-72 flex-shrink-0 relative rounded-xl overflow-hidden border-4 border-vintage-gold shadow-neon ${bossIsHit ? 'animate-boss-hit' : ''}`}>
                   <CardMedia
                     src={currentBoss.imageUrl}
                     alt={currentBoss.name}
@@ -432,6 +503,18 @@ export function RaidBossModal({
                   <div className="absolute top-2 left-2 bg-vintage-gold text-vintage-black px-2 py-1 rounded text-xs font-bold">
                     {currentBoss.rarity}
                   </div>
+
+                  {/* Floating Damage Numbers */}
+                  {damageNumbers.map((dmg) => (
+                    <DamageNumber
+                      key={dmg.id}
+                      damage={dmg.damage}
+                      isCritical={dmg.isCritical}
+                      x={dmg.x}
+                      y={dmg.y}
+                      onComplete={() => removeDamageNumber(dmg.id)}
+                    />
+                  ))}
                 </div>
 
                 {/* Boss Info */}
@@ -525,7 +608,7 @@ export function RaidBossModal({
                     return (
                       <div key={card.tokenId} className="relative">
                         {/* Card */}
-                        <div className="aspect-[2/3] rounded-lg overflow-hidden border-2 border-vintage-gold/50 relative">
+                        <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 border-vintage-gold/50 relative ${attackingCardIndex === index ? 'animate-card-attack' : ''}`}>
                           <CardMedia
                             src={card.imageUrl}
                             alt={card.name}

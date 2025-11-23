@@ -46,7 +46,7 @@ export function CardReplacementModal({
 
   // Sort available cards
   const sortedCards = useMemo(() => {
-    return sortCardsByPower(availableCards, sortByPower ? 'power-desc' : 'tokenId-asc');
+    return sortCardsByPower(availableCards, !sortByPower); // ascending when sortByPower is false
   }, [availableCards, sortByPower]);
 
   // Calculate replacement cost for selected card
