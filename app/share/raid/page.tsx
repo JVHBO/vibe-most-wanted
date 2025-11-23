@@ -34,31 +34,30 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       images: [imageUrl],
     },
     other: {
-      // Farcaster Mini App Meta Tag
-      "fc:miniapp": JSON.stringify({
-        "version": "1",
-        "imageUrl": imageUrl,
-        "button": {
-          "title": "Join Raid",
-          "action": {
-            "type": "launch_miniapp",
-            "name": "VIBE MOST WANTED",
-            "url": "https://www.vibemostwanted.xyz",
-          }
-        }
+      // Farcaster miniapp format with embedded image
+      'fc:miniapp': JSON.stringify({
+        version: '1',
+        imageUrl: imageUrl,
+        button: {
+          title: 'Join Raid',
+          action: {
+            type: 'launch_miniapp',
+            name: 'VIBE MOST WANTED',
+            url: 'https://www.vibemostwanted.xyz',
+          },
+        },
       }),
-      // Backward compatibility with old frame spec
-      "fc:frame": JSON.stringify({
-        "version": "1",
-        "imageUrl": imageUrl,
-        "button": {
-          "title": "Join Raid",
-          "action": {
-            "type": "launch_miniapp",
-            "name": "VIBE MOST WANTED",
-            "url": "https://www.vibemostwanted.xyz",
-          }
-        }
+      'fc:frame': JSON.stringify({
+        version: '1',
+        imageUrl: imageUrl,
+        button: {
+          title: 'Join Raid',
+          action: {
+            type: 'launch_miniapp',
+            name: 'VIBE MOST WANTED',
+            url: 'https://www.vibemostwanted.xyz',
+          },
+        },
       }),
     }
   };
