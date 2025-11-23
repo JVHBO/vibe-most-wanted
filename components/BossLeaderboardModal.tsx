@@ -206,7 +206,7 @@ export function BossLeaderboardModal({
           </h3>
 
           <div className="space-y-2">
-            {bossHistory.topContributors.map((contributor, index) => {
+            {bossHistory.topContributors.map((contributor: { address: string; username: string; damage: number; reward: number }, index: number) => {
               const isUser = contributor.address.toLowerCase() === userAddress.toLowerCase();
               const contributionPercent =
                 bossHistory.totalDamage > 0
