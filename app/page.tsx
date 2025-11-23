@@ -38,6 +38,7 @@ import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
 import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
+import { RaidBossModal } from "@/components/RaidBossModal";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
@@ -571,6 +572,9 @@ export default function TCGPage() {
   // Poker Battle States
   const [showPokerBattle, setShowPokerBattle] = useState<boolean>(false);
   const [pokerMode, setPokerMode] = useState<'cpu' | 'pvp'>('pvp');
+
+  // Raid Boss States
+  const [showRaidBoss, setShowRaidBoss] = useState<boolean>(false);
 
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
@@ -3906,6 +3910,18 @@ export default function TCGPage() {
         />
       )}
 
+      {/* Raid Boss Modal */}
+      {showRaidBoss && address && (
+        <RaidBossModal
+          isOpen={showRaidBoss}
+          onClose={() => setShowRaidBoss(false)}
+          userAddress={address}
+          soundEnabled={soundEnabled}
+          t={t}
+          allNfts={sortedNfts}
+        />
+      )}
+
       {/* PvP Menu Modals (Game mode selection, PvP menu, Create/Join room, Auto-match) */}
       <PvPMenuModals
         pvpMode={pvpMode}
@@ -4961,18 +4977,12 @@ export default function TCGPage() {
                   )}
                 </div>
 
-                {/* 💀 BOSS RAID Button (Password Protected) */}
+                {/* 💀 BOSS RAID Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      const password = prompt('Enter Boss Raid Password:');
-                      if (password === 'vibe2025') {
-                        setModeMenuOpen('boss');
-                        alert('🔓 Boss Raid mode unlocked! (Coming soon...)');
-                      } else if (password !== null) {
-                        alert('❌ Incorrect password');
-                      }
+                      setShowRaidBoss(true);
                     }}
                     disabled={!userProfile}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
@@ -4983,7 +4993,6 @@ export default function TCGPage() {
                   >
                     <span className="text-2xl">💀</span>
                     Boss Raid
-                    <span className="text-sm">🔒</span>
                   </button>
                 </div>
 
