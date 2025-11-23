@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internal } from "./_generated/server";
 
 /**
  * Mint a Farcaster Card
@@ -100,6 +100,15 @@ export const mintFarcasterCard = mutation({
     });
 
     console.log(`✅ Farcaster card minted: FID ${args.fid} (${args.rarity}) by ${normalizedAddress}`);
+
+    // Mark VibeFID minted mission as completed (one-time reward)
+    try {
+      await ctx.scheduler.runAfter(0, internal.missions.markVibeFIDMinted, {
+        playerAddress: normalizedAddress,
+      });
+    } catch (error) {
+      console.error("Failed to mark VibeFID mission:", error);
+    }
 
     return {
       success: true,

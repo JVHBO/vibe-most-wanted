@@ -8,7 +8,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useQuery } from 'convex/react';
+import { useAccount } from 'wagmi';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { CardMedia } from '@/components/CardMedia';
@@ -16,13 +17,17 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { RaidDeckSelectionModal } from '@/components/RaidDeckSelectionModal';
 import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
+import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
+import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
+import { CONTRACTS } from '@/lib/contracts';
+import { parseEther } from 'viem';
 
 interface RaidBossModalProps {
   isOpen: boolean;
   onClose: () => void;
   userAddress: string;
   soundEnabled: boolean;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
   allNfts: Card[]; // All player's NFTs for deck selection
 }
 
@@ -40,6 +45,26 @@ export function RaidBossModal({
   const [selectedCards, setSelectedCards] = useState<NFT[]>([]);
   const [sortByPower, setSortByPower] = useState(true);
   const [timeUntilNextAttack, setTimeUntilNextAttack] = useState(0);
+  const [isRefueling, setIsRefueling] = useState(false);
+  const [refuelError, setRefuelError] = useState<string | null>(null);
+
+  // Web3 hooks
+  const { address: walletAddress } = useAccount();
+  const effectiveAddress = (userAddress || walletAddress) as `0x${string}` | undefined;
+
+  // Detect miniapp
+  const isInMiniapp = typeof window !== 'undefined' && (
+    window.parent !== window ||
+    !!(window as any).sdk?.wallet
+  );
+
+  // Use Farcaster or Wagmi hooks based on environment
+  const wagmiTransfer = useTransferVBMS();
+  const farcasterTransfer = useFarcasterTransferVBMS();
+  const { transfer: transferVBMS, isPending: isTransferring } = isInMiniapp ? farcasterTransfer : wagmiTransfer;
+
+  // Convex mutations
+  const refuelCardsMutation = useMutation(api.raidBoss.refuelCards);
 
   // Query current boss
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
@@ -99,6 +124,83 @@ export function RaidBossModal({
     return 'bg-red-500';
   };
 
+  // Refuel individual card
+  const handleRefuelCard = async (tokenId: string) => {
+    if (!playerDeck || isRefueling) return;
+
+    setIsRefueling(true);
+    setRefuelError(null);
+
+    try {
+      console.log('⛽ Refueling card:', tokenId);
+
+      // Transfer 1 VBMS to pool
+      const txHash = await transferVBMS(
+        CONTRACTS.VBMSPoolTroll as `0x${string}`,
+        parseEther('1')
+      );
+
+      console.log('✅ Transfer successful, txHash:', txHash);
+
+      // Call Convex mutation
+      await refuelCardsMutation({
+        address: userAddress.toLowerCase(),
+        cardTokenIds: [tokenId],
+        txHash,
+      });
+
+      console.log('✅ Card refueled successfully!');
+      if (soundEnabled) AudioManager.buttonClick();
+
+    } catch (error: any) {
+      console.error('❌ Error refueling card:', error);
+      setRefuelError(error?.message || 'Failed to refuel card');
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
+    } finally {
+      setIsRefueling(false);
+    }
+  };
+
+  // Refuel all cards (5 cards for 4 VBMS)
+  const handleRefuelAll = async () => {
+    if (!playerDeck || isRefueling) return;
+
+    setIsRefueling(true);
+    setRefuelError(null);
+
+    try {
+      console.log('⛽ Refueling all cards...');
+
+      // Transfer 4 VBMS to pool
+      const txHash = await transferVBMS(
+        CONTRACTS.VBMSPoolTroll as `0x${string}`,
+        parseEther('4')
+      );
+
+      console.log('✅ Transfer successful, txHash:', txHash);
+
+      // Get all card token IDs
+      const allTokenIds = playerDeck.deck.map((card: NFT) => card.tokenId);
+
+      // Call Convex mutation
+      await refuelCardsMutation({
+        address: userAddress.toLowerCase(),
+        cardTokenIds: allTokenIds,
+        txHash,
+      });
+
+      console.log('✅ All cards refueled successfully!');
+      if (soundEnabled) AudioManager.buttonClick();
+
+    } catch (error: any) {
+      console.error('❌ Error refueling cards:', error);
+      setRefuelError(error?.message || 'Failed to refuel cards');
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
+    } finally {
+      setIsRefueling(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   const hasDeck = playerDeck && playerDeck.deck.length > 0;
@@ -125,6 +227,7 @@ export function RaidBossModal({
         sortByPower={sortByPower}
         setSortByPower={setSortByPower}
         soundEnabled={soundEnabled}
+        playerAddress={userAddress}
       />
 
       {/* Main Raid Boss Modal */}
@@ -224,11 +327,27 @@ export function RaidBossModal({
             {/* Player's Raid Deck */}
             {hasDeck ? (
               <div className="mb-6 bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-neon-blue/30">
-                <h3 className="text-lg font-display font-bold text-vintage-neon-blue mb-3">
-                  Your Raid Deck ({playerDeck.deckPower.toLocaleString()} Power)
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-display font-bold text-vintage-neon-blue">
+                    Your Raid Deck ({playerDeck.deckPower.toLocaleString()} Power)
+                  </h3>
+                  <button
+                    onClick={handleRefuelAll}
+                    disabled={isRefueling}
+                    className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isRefueling ? '...' : '⛽ Refuel All (4 VBMS)'}
+                  </button>
+                </div>
+
+                {/* Error Message */}
+                {refuelError && (
+                  <div className="bg-red-900/50 border border-red-500 rounded-lg p-2 mb-3 text-sm text-red-200">
+                    {refuelError}
+                  </div>
+                )}
                 <div className="grid grid-cols-5 gap-2">
-                  {playerDeck.deck.map((card, index) => {
+                  {playerDeck.deck.map((card: NFT, index: number) => {
                     const energy = playerDeck.cardEnergy[index];
                     const hasEnergy = energy.energy > 0;
 
@@ -247,8 +366,15 @@ export function RaidBossModal({
                           </div>
                           {/* Energy Status */}
                           {!hasEnergy && (
-                            <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                              <span className="text-red-400 text-2xl">⚡</span>
+                            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-1 p-2">
+                              <span className="text-red-400 text-xl">⚡</span>
+                              <button
+                                onClick={() => handleRefuelCard(card.tokenId)}
+                                disabled={isRefueling}
+                                className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold transition disabled:opacity-50"
+                              >
+                                {isRefueling ? '...' : 'Refuel 1 VBMS'}
+                              </button>
                             </div>
                           )}
                         </div>
