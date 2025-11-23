@@ -28,6 +28,32 @@ function getOddsForRound(roundNumber: number): number {
 }
 
 /**
+ * GET ROUND BET FOR A SPECIFIC USER
+ * Check if user already bet on this round
+ */
+export const getRoundBet = query({
+  args: {
+    roomId: v.string(),
+    roundNumber: v.number(),
+    bettor: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { roomId, roundNumber, bettor } = args;
+    const normalizedBettor = bettor.toLowerCase();
+
+    const bet = await ctx.db
+      .query("roundBets")
+      .withIndex("by_room_round", (q) =>
+        q.eq("roomId", roomId).eq("roundNumber", roundNumber)
+      )
+      .filter((q) => q.eq(q.field("bettor"), normalizedBettor))
+      .first();
+
+    return bet;
+  },
+});
+
+/**
  * PLACE BET ON A SPECIFIC ROUND
  * Spectator bets credits on who will win this round
  */
