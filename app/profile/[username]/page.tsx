@@ -1155,6 +1155,7 @@ export default function ProfilePage() {
                 <option value="vibefid" className="bg-vintage-black text-vintage-gold">VIBEFID</option>
                 <option value="americanfootball" className="bg-vintage-black text-vintage-gold">AFCL</option>
                 <option value="gmvbrs" className="bg-vintage-black text-vintage-gold">VBRS</option>
+                <option value="coquettish" className="bg-vintage-black text-vintage-gold">COQ</option>
               </select>
             </div>
           </div>
