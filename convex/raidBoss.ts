@@ -277,7 +277,9 @@ export const replaceCard = mutation({
 });
 
 /**
- * Set player's raid deck (costs 5 VBMS entry fee)
+ * Set player's raid deck
+ * Cost = sum of card rarities (Common:1, Rare:3, Epic:5, Legendary:10, Mythic:15, VibeFID:50)
+ * Can have 5 regular cards OR 5 regular + 1 VibeFID (6th slot)
  */
 export const setRaidDeck = mutation({
   args: {
@@ -290,21 +292,48 @@ export const setRaidDeck = mutation({
       name: v.string(),
       rarity: v.string(),
       foil: v.optional(v.string()),
+      isFreeCard: v.optional(v.boolean()),
     })),
-    txHash: v.string(), // VBMS entry fee transaction hash
+    vibefidCard: v.optional(v.object({
+      tokenId: v.string(),
+      collection: v.optional(v.string()),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+    })),
+    txHash: v.string(), // VBMS payment transaction hash
   },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
-    // Validate deck size
+    // Validate deck size (5 regular, optionally +1 VibeFID)
     if (args.deck.length !== 5) {
       throw new Error("Raid deck must contain exactly 5 cards");
     }
 
-    // Calculate total deck power
-    const deckPower = args.deck.reduce((sum, card) => sum + card.power, 0);
-
     const now = Date.now();
+
+    // Calculate total cost based on card rarities
+    let totalCost = 0;
+    for (const card of args.deck) {
+      const rarity = card.rarity.toLowerCase();
+      totalCost += REPLACE_COST_BY_RARITY[rarity] || REPLACE_COST_BY_RARITY.common;
+    }
+
+    // Add VibeFID cost if included
+    if (args.vibefidCard) {
+      totalCost += REPLACE_COST_BY_RARITY.vibefid; // +50 VBMS
+    }
+
+    // Calculate total deck power (including VibeFID if present)
+    let deckPower = args.deck.reduce((sum, card) => sum + card.power, 0);
+    if (args.vibefidCard) {
+      deckPower += args.vibefidCard.power;
+      // Apply +10% deck bonus for having VibeFID
+      deckPower = Math.floor(deckPower * (1 + VIBEFID_DECK_BONUS));
+    }
 
     // Initialize card energy based on rarity (energy expires after duration)
     const cardEnergy = args.deck.map((card) => {
@@ -319,6 +348,16 @@ export const setRaidDeck = mutation({
       };
     });
 
+    // Add VibeFID energy if included (infinite energy)
+    if (args.vibefidCard) {
+      cardEnergy.push({
+        tokenId: args.vibefidCard.tokenId,
+        energyExpiresAt: 0, // Infinite energy
+        lastAttackAt: undefined,
+        nextAttackAt: now,
+      });
+    }
+
     // Check if player already has a raid deck
     const existingDeck = await ctx.db
       .query("raidAttacks")
@@ -329,6 +368,7 @@ export const setRaidDeck = mutation({
       // Update existing deck
       await ctx.db.patch(existingDeck._id, {
         deck: args.deck,
+        vibefidCard: args.vibefidCard,
         deckPower,
         cardEnergy,
         entryFeePaid: true,
@@ -341,6 +381,7 @@ export const setRaidDeck = mutation({
       await ctx.db.insert("raidAttacks", {
         address,
         deck: args.deck,
+        vibefidCard: args.vibefidCard,
         deckPower,
         cardEnergy,
         entryFeePaid: true,
@@ -353,7 +394,14 @@ export const setRaidDeck = mutation({
       });
     }
 
-    return { success: true, deckPower };
+    console.log(`🎴 Raid deck set for ${address}: ${args.deck.length} cards${args.vibefidCard ? ' + VibeFID' : ''} (cost: ${totalCost} VBMS, power: ${deckPower})`);
+
+    return {
+      success: true,
+      deckPower,
+      totalCost,
+      hasVibeFID: !!args.vibefidCard,
+    };
   },
 });
 
