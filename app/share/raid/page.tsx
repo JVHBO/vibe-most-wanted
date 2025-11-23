@@ -8,8 +8,40 @@ type Props = {
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
-  // Use dynamic opengraph-image (shows current boss + stats)
-  const imageUrl = `${baseUrl}/share/raid/opengraph-image?v=${Date.now()}`;
+  // Fetch current boss data from Convex to pass to API route
+  let bossName = 'Raid Boss';
+  let bossHp = '100';
+  let bossImage = '/images/raid-bosses/vibe/legendary.png';
+
+  try {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+    const response = await fetch(`${convexUrl}/api/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: 'raidBoss:getCurrentRaidBoss',
+        args: {},
+        format: 'json',
+      }),
+      cache: 'no-store',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.value) {
+        bossName = data.value.name || 'Raid Boss';
+        bossImage = data.value.imageUrl || bossImage;
+        const maxHp = data.value.maxHp || 1000000;
+        const currentHp = data.value.currentHp || maxHp;
+        bossHp = Math.round((currentHp / maxHp) * 100).toString();
+      }
+    }
+  } catch (e) {
+    console.error('Failed to fetch raid boss data for metadata:', e);
+  }
+
+  // Use API route for OG image (more reliable than opengraph-image.tsx)
+  const imageUrl = `${baseUrl}/api/og-raid?bossName=${encodeURIComponent(bossName)}&bossHp=${bossHp}&bossImage=${encodeURIComponent(bossImage)}&username=Player&deckPower=0&v=${Date.now()}`;
 
   return {
     title: "RAID BOSS BATTLE - VIBE Most Wanted",
