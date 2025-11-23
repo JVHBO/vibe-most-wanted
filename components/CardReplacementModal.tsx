@@ -56,7 +56,8 @@ export function CardReplacementModal({
     let buffType = '';
 
     // Only apply buffs to NFTs (not free cards)
-    if (!card.isFreeCard && currentBoss) {
+    const isFree = (card as any).isFreeCard;
+    if (!isFree && currentBoss) {
       // VibeFID cards get +50% power against all bosses
       if (card.collection === 'vibefid') {
         buffPercent = 50;
