@@ -4986,7 +4986,12 @@ export default function TCGPage() {
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      setShowRaidBoss(true);
+                      const password = prompt('Enter Boss Raid Password:');
+                      if (password === 'vibe2025') {
+                        setShowRaidBoss(true);
+                      } else if (password !== null) {
+                        alert('❌ Invalid password');
+                      }
                     }}
                     disabled={!userProfile}
                     className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
