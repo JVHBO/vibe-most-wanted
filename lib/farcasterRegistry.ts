@@ -47,14 +47,20 @@ export async function getFarcasterAccountCreationDate(fid: number): Promise<Date
 async function fetchFromFarcasterHub(fid: number): Promise<Date | null> {
   try {
     // Try Pinata Hub first (most reliable free endpoint)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
     const response = await fetch(
       `https://hub.pinata.cloud/v1/onChainEventsByFid?fid=${fid}&event_type=EVENT_TYPE_ID_REGISTER`,
       {
         headers: {
           'accept': 'application/json',
         },
+        signal: controller.signal,
       }
     );
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.warn(`Farcaster Hub API error: ${response.status}`);
@@ -105,6 +111,9 @@ async function fetchFromAirstack(fid: number, apiKey: string): Promise<Date | nu
       }
     `;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
     const response = await fetch('https://api.airstack.xyz/gql', {
       method: 'POST',
       headers: {
@@ -115,7 +124,10 @@ async function fetchFromAirstack(fid: number, apiKey: string): Promise<Date | nu
         query,
         variables: { fid: fid.toString() },
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.warn(`Airstack API error: ${response.status}`);
@@ -146,6 +158,9 @@ async function fetchFromAirstack(fid: number, apiKey: string): Promise<Date | nu
  */
 async function fetchFromNeynar(fid: number, apiKey: string): Promise<Date | null> {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
     const response = await fetch(
       `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
       {
@@ -153,8 +168,11 @@ async function fetchFromNeynar(fid: number, apiKey: string): Promise<Date | null
           'accept': 'application/json',
           'api_key': apiKey,
         },
+        signal: controller.signal,
       }
     );
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.warn(`Neynar API error: ${response.status}`);
