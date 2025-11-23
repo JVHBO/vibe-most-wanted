@@ -291,6 +291,10 @@ export const claimMission = mutation({
     // Get reward info
     const rewardInfo = MISSION_REWARDS[mission.missionType as keyof typeof MISSION_REWARDS];
 
+    if (!rewardInfo) {
+      throw new Error(`Unknown mission type: ${mission.missionType}`);
+    }
+
     // 🇨🇳 Apply language boost to mission reward
     const boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
 
