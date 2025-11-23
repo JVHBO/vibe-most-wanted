@@ -341,6 +341,13 @@ export function getNextBoss(currentBossIndex: number): BossCard | undefined {
 }
 
 /**
+ * Get previous boss based on current index
+ */
+export function getPreviousBoss(currentBossIndex: number): BossCard | undefined {
+  return getCurrentBoss(currentBossIndex - 1);
+}
+
+/**
  * Get boss rotation info
  */
 export function getBossRotationInfo(bossIndex: number) {

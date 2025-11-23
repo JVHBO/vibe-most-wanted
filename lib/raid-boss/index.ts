@@ -17,5 +17,6 @@ export {
   getBossCard,
   getCurrentBoss,
   getNextBoss,
+  getPreviousBoss,
   getBossRotationInfo,
 } from './boss-cards';
