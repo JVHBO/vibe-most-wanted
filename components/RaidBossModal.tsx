@@ -42,6 +42,7 @@ export function RaidBossModal({
   allNfts,
 }: RaidBossModalProps) {
   const [showDeckSelector, setShowDeckSelector] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [selectedCards, setSelectedCards] = useState<NFT[]>([]);
   const [sortByPower, setSortByPower] = useState(true);
   const [timeUntilNextAttack, setTimeUntilNextAttack] = useState(0);
@@ -87,11 +88,22 @@ export function RaidBossModal({
   useEffect(() => {
     if (currentBoss === undefined && isOpen) {
       // currentBoss is undefined means no boss exists, initialize the system
-      initializeBossMutation().catch((err) => {
-        console.error('Failed to initialize raid boss:', err);
-      });
+      initializeBossMutation()
+        .then(() => {
+          if (soundEnabled) AudioManager.bossSpawn();
+        })
+        .catch((err) => {
+          console.error('Failed to initialize raid boss:', err);
+        });
     }
   }, [currentBoss, isOpen]);
+
+  // Play boss spawn sound when boss appears
+  useEffect(() => {
+    if (currentBoss && isOpen && soundEnabled) {
+      AudioManager.bossSpawn();
+    }
+  }, [currentBoss?.bossIndex]); // Only trigger when boss changes
 
   // Calculate next attack time
   useEffect(() => {
@@ -161,7 +173,7 @@ export function RaidBossModal({
       });
 
       console.log('✅ Card refueled successfully!');
-      if (soundEnabled) AudioManager.buttonClick();
+      if (soundEnabled) AudioManager.refuelCard();
 
     } catch (error: any) {
       console.error('❌ Error refueling card:', error);
@@ -201,7 +213,7 @@ export function RaidBossModal({
       });
 
       console.log('✅ All cards refueled successfully!');
-      if (soundEnabled) AudioManager.buttonClick();
+      if (soundEnabled) AudioManager.refuelCard();
 
     } catch (error: any) {
       console.error('❌ Error refueling cards:', error);
@@ -251,13 +263,20 @@ export function RaidBossModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex-shrink-0 mb-4">
+        <div className="flex-shrink-0 mb-4 relative">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-center text-vintage-gold">
-            ⚔️ RAID BOSS ⚔️
+            RAID BOSS
           </h2>
           <p className="text-center text-vintage-burnt-gold text-sm mt-2">
             Cooperative Global Boss Battle
           </p>
+          {/* Help Button */}
+          <button
+            onClick={() => setShowHelp(true)}
+            className="absolute top-0 right-0 w-8 h-8 rounded-full bg-vintage-gold/20 hover:bg-vintage-gold/40 border-2 border-vintage-gold flex items-center justify-center text-vintage-gold font-bold transition-all hover:scale-110"
+          >
+            ?
+          </button>
         </div>
 
         {/* Loading State */}
@@ -593,7 +612,7 @@ export function RaidBossModal({
               }}
               className="flex-1 px-4 py-3 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-xl font-bold transition"
             >
-              📤 Share
+              Share
             </button>
           )}
           <button
@@ -608,6 +627,58 @@ export function RaidBossModal({
         </div>
       </div>
     </div>
+
+    {/* Help Modal */}
+    {showHelp && (
+      <div
+        className="fixed inset-0 bg-black/90 flex items-center justify-center z-[300] p-4"
+        onClick={() => setShowHelp(false)}
+      >
+        <div
+          className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-2xl w-full p-6 shadow-neon"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className="text-2xl font-display font-bold text-vintage-gold mb-4">
+            How Boss Raid Works
+          </h2>
+          <div className="space-y-4 text-vintage-burnt-gold font-modern">
+            <div>
+              <h3 className="text-vintage-gold font-bold mb-2">Global Cooperative Battle</h3>
+              <p>All players attack the same boss together. Work as a team to defeat powerful bosses and earn rewards.</p>
+            </div>
+            <div>
+              <h3 className="text-vintage-gold font-bold mb-2">Set Your Raid Deck</h3>
+              <p>Select 5 cards to form your raid deck. Your deck will automatically attack the boss every 5 minutes.</p>
+            </div>
+            <div>
+              <h3 className="text-vintage-gold font-bold mb-2">Card Energy System</h3>
+              <p>Each card attacks once, then needs to recharge. Refuel individual cards (1 VBMS) or all cards at once (4 VBMS for all 5 - save 1 VBMS!).</p>
+            </div>
+            <div>
+              <h3 className="text-vintage-gold font-bold mb-2">Damage Buffs</h3>
+              <p>• VibeFID cards: +50% power against all bosses<br/>• Same collection cards: +20% power<br/>• Critical hits: 15% chance for 2x damage</p>
+            </div>
+            <div>
+              <h3 className="text-vintage-gold font-bold mb-2">Boss Rotation</h3>
+              <p>Bosses rotate through 4 collections (GM VBRS, VBMS, VibeFID, AFCL) with increasing difficulty (Common to Mythic).</p>
+            </div>
+            <div>
+              <h3 className="text-vintage-gold font-bold mb-2">Leaderboard & Rewards</h3>
+              <p>Top contributors earn special rewards when the boss is defeated. Keep attacking to climb the leaderboard!</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (soundEnabled) AudioManager.buttonClick();
+              setShowHelp(false);
+            }}
+            className="w-full mt-6 px-4 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-bold transition"
+          >
+            Got it!
+          </button>
+        </div>
+      </div>
+    )}
     </>
   );
 }
