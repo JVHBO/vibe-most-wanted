@@ -369,7 +369,10 @@ export const setRaidDeck = mutation({
       // Update existing deck
       await ctx.db.patch(existingDeck._id, {
         deck: args.deck,
-        vibefidCard: args.vibefidCard,
+        vibefidCard: args.vibefidCard ? {
+          ...args.vibefidCard,
+          collection: args.vibefidCard.collection!,
+        } : undefined,
         deckPower,
         cardEnergy,
         entryFeePaid: true,
@@ -382,7 +385,10 @@ export const setRaidDeck = mutation({
       await ctx.db.insert("raidAttacks", {
         address,
         deck: args.deck,
-        vibefidCard: args.vibefidCard,
+        vibefidCard: args.vibefidCard ? {
+          ...args.vibefidCard,
+          collection: args.vibefidCard.collection!,
+        } : undefined,
         deckPower,
         cardEnergy,
         entryFeePaid: true,
