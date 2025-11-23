@@ -36,6 +36,49 @@ export const getCurrentRaidBoss = query({
 });
 
 /**
+ * Initialize the raid boss system (creates first boss if none exists)
+ */
+export const initializeRaidBoss = mutation({
+  handler: async (ctx) => {
+    // Check if there's already an active boss
+    const existingBoss = await ctx.db
+      .query("raidBoss")
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .first();
+
+    if (existingBoss) {
+      return existingBoss; // Boss already exists
+    }
+
+    // Create the first boss (index 0)
+    const bossIndex = 0;
+    const bossData = getCurrentBoss(bossIndex);
+
+    if (!bossData) {
+      throw new Error("Failed to get boss data for index 0");
+    }
+
+    const newBoss = await ctx.db.insert("raidBoss", {
+      bossIndex,
+      name: bossData.name,
+      collection: bossData.collection,
+      rarity: bossData.rarity as CardRarity,
+      imageUrl: bossData.imageUrl,
+      power: bossData.power,
+      maxHp: bossData.hp,
+      currentHp: bossData.hp,
+      status: "active",
+      spawnedAt: Date.now(),
+      defeatedAt: undefined,
+    });
+
+    console.log(`🐉 First Raid Boss spawned: ${bossData.name} (${bossData.rarity})`);
+
+    return await ctx.db.get(newBoss);
+  },
+});
+
+/**
  * Get player's raid deck and energy status
  */
 export const getPlayerRaidDeck = query({
