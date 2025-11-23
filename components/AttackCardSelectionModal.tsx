@@ -226,7 +226,7 @@ export function AttackCardSelectionModal({
     devLog(`◆ Using saved defense deck data (no NFT fetch needed)`);
 
     const defenderCards = (completeProfile.defenseDeck || [])
-      .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string } => typeof card === 'object')
+      .filter((card: string | { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string }): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string } => typeof card === 'object')
       .map((card, i) => {
         devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);
         return {
