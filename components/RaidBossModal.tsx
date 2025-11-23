@@ -23,6 +23,7 @@ import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
 import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
 import { CONTRACTS } from '@/lib/contracts';
 import { parseEther } from 'viem';
+import { getNextBoss, getPreviousBoss } from '@/lib/raid-boss';
 
 interface RaidBossModalProps {
   isOpen: boolean;
@@ -624,6 +625,97 @@ export function RaidBossModal({
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Boss Rotation: Previous & Next */}
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Previous Boss (with Leaderboard) */}
+              {currentBoss.bossIndex > 0 && (() => {
+                const previousBoss = getPreviousBoss(currentBoss.bossIndex);
+                if (!previousBoss) return null;
+
+                return (
+                  <div className="bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-gold/30">
+                    <h4 className="text-sm font-display font-bold text-vintage-gold mb-2 text-center">
+                      📜 Previous Boss (Defeated)
+                    </h4>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-20 h-28 flex-shrink-0 relative rounded-lg overflow-hidden border-2 border-vintage-gold/50 opacity-70">
+                        <CardMedia
+                          src={previousBoss.imageUrl}
+                          alt={previousBoss.name}
+                          className="w-full h-full object-cover grayscale"
+                        />
+                        <div className="absolute top-1 left-1 bg-vintage-gold text-vintage-black px-1 py-0.5 rounded text-[10px] font-bold">
+                          {previousBoss.rarity}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-vintage-gold">
+                          {previousBoss.name}
+                        </p>
+                        <p className="text-xs text-vintage-burnt-gold">
+                          {previousBoss.collection?.toUpperCase()} - {previousBoss.rarity}
+                        </p>
+                        <p className="text-xs text-green-400 mt-1">
+                          ✓ Defeated
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        // TODO: Open leaderboard modal for previous boss
+                        if (soundEnabled) AudioManager.buttonClick();
+                      }}
+                      className="w-full px-3 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold text-sm transition"
+                    >
+                      📊 View Leaderboard
+                    </button>
+                  </div>
+                );
+              })()}
+
+              {/* Next Boss (Preview/Spoiler) */}
+              {(() => {
+                const nextBoss = getNextBoss(currentBoss.bossIndex);
+                if (!nextBoss) return null;
+
+                return (
+                  <div className="bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-neon-blue/30">
+                    <h4 className="text-sm font-display font-bold text-vintage-neon-blue mb-2 text-center">
+                      🔮 Next Boss (Coming Soon)
+                    </h4>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-20 h-28 flex-shrink-0 relative rounded-lg overflow-hidden border-2 border-vintage-neon-blue/50">
+                        <CardMedia
+                          src={nextBoss.imageUrl}
+                          alt={nextBoss.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-1 left-1 bg-vintage-neon-blue text-vintage-black px-1 py-0.5 rounded text-[10px] font-bold">
+                          {nextBoss.rarity}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-vintage-neon-blue">
+                          {nextBoss.name}
+                        </p>
+                        <p className="text-xs text-vintage-burnt-gold">
+                          {nextBoss.collection?.toUpperCase()} - {nextBoss.rarity}
+                        </p>
+                        <p className="text-xs text-vintage-neon-blue/70 mt-1">
+                          HP: {nextBoss.hp.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-full px-3 py-2 bg-vintage-neon-blue/10 border border-vintage-neon-blue/30 rounded-lg text-center">
+                      <p className="text-xs text-vintage-neon-blue/70 font-bold">
+                        Defeat current boss to unlock
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Player's Raid Deck */}
