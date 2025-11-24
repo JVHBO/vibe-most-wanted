@@ -5414,7 +5414,17 @@ export default function TCGPage() {
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
-                                  title={!userProfile?.hasDefenseDeck ? 'You need a defense deck to attack' : !profile.hasDefenseDeck ? `${profile.username} has no defense deck` : ''}
+                                  title={
+                                    !userProfile
+                                      ? 'Connect your wallet and create a profile to attack'
+                                      : !userProfile.hasDefenseDeck
+                                        ? 'You need to set up your defense deck before attacking (go to Profile)'
+                                        : attacksRemaining <= 0
+                                          ? `No attacks remaining (${attacksRemaining}/${maxAttacks}). Resets at midnight UTC.`
+                                          : !profile.hasDefenseDeck
+                                            ? `${profile.username} doesn't have a defense deck`
+                                            : 'Click to attack!'
+                                  }
                                 >
                                   †<span className="hidden sm:inline"> Attack</span>
                                 </button>
