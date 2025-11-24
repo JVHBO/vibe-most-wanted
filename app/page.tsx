@@ -4246,18 +4246,19 @@ export default function TCGPage() {
         )}
 
         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto">
-          <a
-            href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base"
+          <button
+            onClick={() => {
+              if (soundEnabled) AudioManager.buttonClick();
+              window.location.href = 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT';
+            }}
+            className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
           >
             <div className="flex items-center justify-center gap-2">
               <span className="text-base md:text-lg">◆</span> <span className="hidden md:inline">{t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}</span><span className="md:hidden">Buy Cards</span>
             </div>
             <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('orOpenYourPacks') || 'or open your sealed packs'}</span>
-          </a>
+          </button>
 
           {!isInFarcaster && (
             <a
@@ -4822,18 +4823,19 @@ export default function TCGPage() {
                         </div>
                       </Link>
                     ) : (
-                      <a
-                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          window.location.href = COLLECTIONS[selectedCollections[0]].marketplaceUrl!;
+                        }}
+                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex items-center justify-center gap-2">
                           <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
                         </div>
-                      </a>
+                      </button>
                     )}
                   </div>
                 )}
@@ -4869,11 +4871,12 @@ export default function TCGPage() {
                         </div>
                       </Link>
                     ) : (
-                      <a
-                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          window.location.href = COLLECTIONS[selectedCollections[0]].marketplaceUrl!;
+                        }}
+                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex flex-col items-center justify-center gap-2 text-center">
@@ -4882,7 +4885,7 @@ export default function TCGPage() {
                             {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
                           </span>
                         </div>
-                      </a>
+                      </button>
                     )
                   )}
                 </div>
