@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Raid Boss Cards Database
  *
  * This file contains the hardcoded boss cards for each collection.
@@ -386,6 +386,63 @@ export const COQUETTISH_BOSSES: Record<CardRarity, BossCard> = {
 };
 
 
+
+/**
+ * Viberuto Boss Cards
+ */
+export const VIBERUTO_BOSSES: Record<CardRarity, BossCard> = {
+  Common: {
+    tokenId: 'viberuto-boss-common',
+    collection: 'viberuto',
+    name: 'Vibeten',
+    rarity: 'Common',
+    power: 15,
+    imageUrl: '/images/raid-bosses/viberuto/common.png',
+    hp: BOSS_HP_BY_RARITY.common,
+    description: 'The ninja who defeated Uchiha Madara',
+  },
+  Rare: {
+    tokenId: 'viberuto-boss-rare',
+    collection: 'viberuto',
+    name: 'Vibe-bee',
+    rarity: 'Rare',
+    power: 20,
+    imageUrl: '/images/raid-bosses/viberuto/rare.png',
+    hp: BOSS_HP_BY_RARITY.rare,
+    description: 'Super rapper and jinchuuriki',
+  },
+  Epic: {
+    tokenId: 'viberuto-boss-epic',
+    collection: 'viberuto',
+    name: 'Vibenato',
+    rarity: 'Epic',
+    power: 80,
+    imageUrl: '/images/raid-bosses/viberuto/epic.png',
+    hp: BOSS_HP_BY_RARITY.epic,
+    description: 'Teleports, still late',
+  },
+  Legendary: {
+    tokenId: 'viberuto-boss-legendary',
+    collection: 'viberuto',
+    name: 'Viberama',
+    rarity: 'Legendary',
+    power: 240,
+    imageUrl: '/images/raid-bosses/viberuto/legendary.png',
+    hp: BOSS_HP_BY_RARITY.legendary,
+    description: 'Broke every rival, including his wallet',
+  },
+  Mythic: {
+    tokenId: 'viberuto-boss-mythic',
+    collection: 'viberuto',
+    name: 'Vibomoro',
+    rarity: 'Mythic',
+    power: 800,
+    imageUrl: '/images/raid-bosses/viberuto/mythic.png',
+    hp: BOSS_HP_BY_RARITY.mythic,
+    description: 'Inherited chakra, distributed it like free samples',
+  },
+};
+
 /**
  * All Boss Cards organized by collection
  */
@@ -395,6 +452,8 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
   vibefid: VIBEFID_BOSSES,
   americanfootball: AFCL_BOSSES,
   coquettish: COQUETTISH_BOSSES,
+
+  viberuto: VIBERUTO_BOSSES,
 
   custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
 };

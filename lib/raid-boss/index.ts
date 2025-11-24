@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Raid Boss System - Main Export
  *
  * Central export point for the raid boss system
@@ -15,6 +15,7 @@ export {
   VIBEFID_BOSSES,
   AFCL_BOSSES,
   COQUETTISH_BOSSES,
+  VIBERUTO_BOSSES,
   ALL_BOSS_CARDS,
   getBossCard,
   getCurrentBoss,
