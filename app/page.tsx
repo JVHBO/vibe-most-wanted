@@ -1296,6 +1296,8 @@ export default function TCGPage() {
                 collection = 'gmvbrs';
               } else if (contractAddr === getCollectionContract('coquettish')?.toLowerCase()) {
                 collection = 'coquettish';
+              } else if (contractAddr === getCollectionContract('viberuto')?.toLowerCase()) {
+                collection = 'viberuto';
               }
             }
 
