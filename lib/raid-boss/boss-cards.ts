@@ -44,31 +44,31 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'vibefid',          // 3. VIBEFID Epic
   'americanfootball', // 4. AFCL Legendary
   'coquettish',       // 5. COQUETTISH Mythic
-  'gmvbrs',           // 6. GM VBRS Rare
-  'vibe',             // 7. VBMS Epic
-  'vibefid',          // 8. VIBEFID Legendary
-  'americanfootball', // 9. AFCL Mythic
-  'coquettish',       // 10. COQUETTISH Common
-  'gmvbrs',           // 11. GM VBRS Epic
-  'vibe',             // 12. VBMS Legendary
-  'vibefid',          // 13. VIBEFID Mythic
-  'americanfootball', // 14. AFCL Common
-  'coquettish',       // 15. COQUETTISH Rare
-  'gmvbrs',           // 16. GM VBRS Legendary
-  'vibe',             // 17. VBMS Mythic
-  'vibefid',          // 18. VIBEFID Common
-  'americanfootball', // 19. AFCL Rare
-  'coquettish',       // 20. COQUETTISH Epic
-  'gmvbrs',           // 21. GM VBRS Mythic
-  'vibe',             // 22. VBMS Common
-  'vibefid',          // 23. VIBEFID Rare
-  'americanfootball', // 24. AFCL Epic
-  'coquettish',       // 25. COQUETTISH Legendary
-  'viberuto',         // 26. Viberuto Common
-  'viberuto',         // 27. Viberuto Rare
-  'viberuto',         // 28. Viberuto Epic
-  'viberuto',         // 29. Viberuto Legendary
-  'viberuto',         // 30. Viberuto Mythic
+  'viberuto',         // 6. VIBERUTO Common
+  'gmvbrs',           // 7. GM VBRS Rare
+  'vibe',             // 8. VBMS Epic
+  'vibefid',          // 9. VIBEFID Legendary
+  'americanfootball', // 10. AFCL Mythic
+  'coquettish',       // 11. COQUETTISH Common
+  'viberuto',         // 12. VIBERUTO Rare
+  'gmvbrs',           // 13. GM VBRS Epic
+  'vibe',             // 14. VBMS Legendary
+  'vibefid',          // 15. VIBEFID Mythic
+  'americanfootball', // 16. AFCL Common
+  'coquettish',       // 17. COQUETTISH Rare
+  'viberuto',         // 18. VIBERUTO Epic
+  'gmvbrs',           // 19. GM VBRS Legendary
+  'vibe',             // 20. VBMS Mythic
+  'vibefid',          // 21. VIBEFID Common
+  'americanfootball', // 22. AFCL Rare
+  'coquettish',       // 23. COQUETTISH Epic
+  'viberuto',         // 24. VIBERUTO Legendary
+  'gmvbrs',           // 25. GM VBRS Mythic
+  'vibe',             // 26. VBMS Common
+  'vibefid',          // 27. VIBEFID Rare
+  'americanfootball', // 28. AFCL Epic
+  'coquettish',       // 29. COQUETTISH Legendary
+  'viberuto',         // 30. VIBERUTO Mythic
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
@@ -77,31 +77,31 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Epic',      // 3. VIBEFID
   'Legendary', // 4. AFCL
   'Mythic',    // 5. COQUETTISH
-  'Rare',      // 6. GM VBRS
-  'Epic',      // 7. VBMS
-  'Legendary', // 8. VIBEFID
-  'Mythic',    // 9. AFCL
-  'Common',    // 10. COQUETTISH
-  'Epic',      // 11. GM VBRS
-  'Legendary', // 12. VBMS
-  'Mythic',    // 13. VIBEFID
-  'Common',    // 14. AFCL
-  'Rare',      // 15. COQUETTISH
-  'Legendary', // 16. GM VBRS
-  'Mythic',    // 17. VBMS
-  'Common',    // 18. VIBEFID
-  'Rare',      // 19. AFCL
-  'Epic',      // 20. COQUETTISH
-  'Mythic',    // 21. GM VBRS
-  'Common',    // 22. VBMS
-  'Rare',      // 23. VIBEFID
-  'Epic',      // 24. AFCL
-  'Legendary', // 25. COQUETTISH
-  'Common',    // 26. Viberuto
-  'Rare',      // 27. Viberuto
-  'Epic',      // 28. Viberuto
-  'Legendary', // 29. Viberuto
-  'Mythic',    // 30. Viberuto
+  'Common',    // 6. VIBERUTO
+  'Rare',      // 7. GM VBRS
+  'Epic',      // 8. VBMS
+  'Legendary', // 9. VIBEFID
+  'Mythic',    // 10. AFCL
+  'Common',    // 11. COQUETTISH
+  'Rare',      // 12. VIBERUTO
+  'Epic',      // 13. GM VBRS
+  'Legendary', // 14. VBMS
+  'Mythic',    // 15. VIBEFID
+  'Common',    // 16. AFCL
+  'Rare',      // 17. COQUETTISH
+  'Epic',      // 18. VIBERUTO
+  'Legendary', // 19. GM VBRS
+  'Mythic',    // 20. VBMS
+  'Common',    // 21. VIBEFID
+  'Rare',      // 22. AFCL
+  'Epic',      // 23. COQUETTISH
+  'Legendary', // 24. VIBERUTO
+  'Mythic',    // 25. GM VBRS
+  'Common',    // 26. VBMS
+  'Rare',      // 27. VIBEFID
+  'Epic',      // 28. AFCL
+  'Legendary', // 29. COQUETTISH
+  'Mythic',    // 30. VIBERUTO
 ];
 
 /**
