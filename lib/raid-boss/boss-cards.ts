@@ -35,73 +35,83 @@ export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
   mythic: 500_000,     // 500,000 $TESTVBMS (500x harder)
 };
 
-// Boss Rotation Order (30 bosses total)
+// Boss Rotation Order (35 bosses total)
 // Alternating collections with escalating rarities for variety
 // Pattern: GM VBRS → VBMS → VIBEFID → AFCL → COQUETTISH → VIBERUTO (rotating rarities)
 export const BOSS_ROTATION_ORDER: CollectionId[] = [
-  'gmvbrs',           // 1. GM VBRS Common
-  'vibe',             // 2. VBMS Rare
-  'vibefid',          // 3. VIBEFID Epic
-  'americanfootball', // 4. AFCL Legendary
-  'coquettish',       // 5. COQUETTISH Mythic
-  'viberuto',         // 6. VIBERUTO Common
-  'gmvbrs',           // 7. GM VBRS Rare
-  'vibe',             // 8. VBMS Epic
-  'vibefid',          // 9. VIBEFID Legendary
-  'americanfootball', // 10. AFCL Mythic
-  'coquettish',       // 11. COQUETTISH Common
-  'viberuto',         // 12. VIBERUTO Rare
-  'gmvbrs',           // 13. GM VBRS Epic
-  'vibe',             // 14. VBMS Legendary
-  'vibefid',          // 15. VIBEFID Mythic
-  'americanfootball', // 16. AFCL Common
-  'coquettish',       // 17. COQUETTISH Rare
-  'viberuto',         // 18. VIBERUTO Epic
-  'gmvbrs',           // 19. GM VBRS Legendary
-  'vibe',             // 20. VBMS Mythic
-  'vibefid',          // 21. VIBEFID Common
-  'americanfootball', // 22. AFCL Rare
-  'coquettish',       // 23. COQUETTISH Epic
-  'viberuto',         // 24. VIBERUTO Legendary
-  'gmvbrs',           // 25. GM VBRS Mythic
-  'vibe',             // 26. VBMS Common
-  'vibefid',          // 27. VIBEFID Rare
-  'americanfootball', // 28. AFCL Epic
-  'coquettish',       // 29. COQUETTISH Legendary
-  'viberuto',         // 30. VIBERUTO Mythic
+  'gmvbrs',           // 1. GMVBRS Common
+  'vibe',           // 2. VIBE Rare
+  'vibefid',           // 3. VIBEFID Epic
+  'americanfootball',           // 4. AMERICANFOOTBALL Legendary
+  'coquettish',           // 5. COQUETTISH Mythic
+  'viberuto',           // 6. VIBERUTO Common
+  'meowverse',           // 7. MEOWVERSE Rare
+  'gmvbrs',           // 8. GMVBRS Rare
+  'vibe',           // 9. VIBE Epic
+  'vibefid',           // 10. VIBEFID Legendary
+  'americanfootball',           // 11. AMERICANFOOTBALL Mythic
+  'coquettish',           // 12. COQUETTISH Common
+  'viberuto',           // 13. VIBERUTO Rare
+  'meowverse',           // 14. MEOWVERSE Epic
+  'gmvbrs',           // 15. GMVBRS Epic
+  'vibe',           // 16. VIBE Legendary
+  'vibefid',           // 17. VIBEFID Mythic
+  'americanfootball',           // 18. AMERICANFOOTBALL Common
+  'coquettish',           // 19. COQUETTISH Rare
+  'viberuto',           // 20. VIBERUTO Epic
+  'meowverse',           // 21. MEOWVERSE Legendary
+  'gmvbrs',           // 22. GMVBRS Legendary
+  'vibe',           // 23. VIBE Mythic
+  'vibefid',           // 24. VIBEFID Common
+  'americanfootball',           // 25. AMERICANFOOTBALL Rare
+  'coquettish',           // 26. COQUETTISH Epic
+  'viberuto',           // 27. VIBERUTO Legendary
+  'meowverse',           // 28. MEOWVERSE Mythic
+  'gmvbrs',           // 29. GMVBRS Mythic
+  'vibe',           // 30. VIBE Common
+  'vibefid',           // 31. VIBEFID Rare
+  'americanfootball',           // 32. AMERICANFOOTBALL Epic
+  'coquettish',           // 33. COQUETTISH Legendary
+  'viberuto',           // 34. VIBERUTO Mythic
+  'meowverse',           // 35. MEOWVERSE Common
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
-  'Common',    // 1. GM VBRS
-  'Rare',      // 2. VBMS
-  'Epic',      // 3. VIBEFID
-  'Legendary', // 4. AFCL
+  'Common',    // 1. GMVBRS
+  'Rare',    // 2. VIBE
+  'Epic',    // 3. VIBEFID
+  'Legendary',    // 4. AMERICANFOOTBALL
   'Mythic',    // 5. COQUETTISH
   'Common',    // 6. VIBERUTO
-  'Rare',      // 7. GM VBRS
-  'Epic',      // 8. VBMS
-  'Legendary', // 9. VIBEFID
-  'Mythic',    // 10. AFCL
-  'Common',    // 11. COQUETTISH
-  'Rare',      // 12. VIBERUTO
-  'Epic',      // 13. GM VBRS
-  'Legendary', // 14. VBMS
-  'Mythic',    // 15. VIBEFID
-  'Common',    // 16. AFCL
-  'Rare',      // 17. COQUETTISH
-  'Epic',      // 18. VIBERUTO
-  'Legendary', // 19. GM VBRS
-  'Mythic',    // 20. VBMS
-  'Common',    // 21. VIBEFID
-  'Rare',      // 22. AFCL
-  'Epic',      // 23. COQUETTISH
-  'Legendary', // 24. VIBERUTO
-  'Mythic',    // 25. GM VBRS
-  'Common',    // 26. VBMS
-  'Rare',      // 27. VIBEFID
-  'Epic',      // 28. AFCL
-  'Legendary', // 29. COQUETTISH
-  'Mythic',    // 30. VIBERUTO
+  'Rare',    // 7. MEOWVERSE
+  'Rare',    // 8. GMVBRS
+  'Epic',    // 9. VIBE
+  'Legendary',    // 10. VIBEFID
+  'Mythic',    // 11. AMERICANFOOTBALL
+  'Common',    // 12. COQUETTISH
+  'Rare',    // 13. VIBERUTO
+  'Epic',    // 14. MEOWVERSE
+  'Epic',    // 15. GMVBRS
+  'Legendary',    // 16. VIBE
+  'Mythic',    // 17. VIBEFID
+  'Common',    // 18. AMERICANFOOTBALL
+  'Rare',    // 19. COQUETTISH
+  'Epic',    // 20. VIBERUTO
+  'Legendary',    // 21. MEOWVERSE
+  'Legendary',    // 22. GMVBRS
+  'Mythic',    // 23. VIBE
+  'Common',    // 24. VIBEFID
+  'Rare',    // 25. AMERICANFOOTBALL
+  'Epic',    // 26. COQUETTISH
+  'Legendary',    // 27. VIBERUTO
+  'Mythic',    // 28. MEOWVERSE
+  'Mythic',    // 29. GMVBRS
+  'Common',    // 30. VIBE
+  'Rare',    // 31. VIBEFID
+  'Epic',    // 32. AMERICANFOOTBALL
+  'Legendary',    // 33. COQUETTISH
+  'Mythic',    // 34. VIBERUTO
+  'Common',    // 35. MEOWVERSE
 ];
 
 /**
@@ -453,6 +463,63 @@ export const VIBERUTO_BOSSES: Record<CardRarity, BossCard> = {
   },
 };
 
+
+/**
+ * Meowverse Boss Cards
+ */
+export const MEOWVERSE_BOSSES: Record<CardRarity, BossCard> = {
+  Common: {
+    tokenId: '2429',
+    collection: 'meowverse',
+    name: 'Heavenly Chonk',
+    rarity: 'Common',
+    power: 15,
+    imageUrl: '/images/raid-bosses/meowverse/common.png',
+    hp: BOSS_HP_BY_RARITY.common,
+    description: 'A gentle sky guardian powered by serenity… and snacks',
+  },
+  Rare: {
+    tokenId: '2430',
+    collection: 'meowverse',
+    name: 'Noodle Nimbus',
+    rarity: 'Rare',
+    power: 20,
+    imageUrl: '/images/raid-bosses/meowverse/rare.png',
+    hp: BOSS_HP_BY_RARITY.rare,
+    description: 'Rides a legendary cloud, powering up between noodle bites',
+  },
+  Epic: {
+    tokenId: '2431',
+    collection: 'meowverse',
+    name: 'Blade Paws',
+    rarity: 'Epic',
+    power: 80,
+    imageUrl: '/images/raid-bosses/meowverse/epic.png',
+    hp: BOSS_HP_BY_RARITY.epic,
+    description: 'A brave cat warrior on a quest, swinging a legendary sword of light',
+  },
+  Legendary: {
+    tokenId: '2432',
+    collection: 'meowverse',
+    name: 'Goldra, the Nine Claws',
+    rarity: 'Legendary',
+    power: 240,
+    imageUrl: '/images/raid-bosses/meowverse/legendary.png',
+    hp: BOSS_HP_BY_RARITY.legendary,
+    description: 'A golden beast with living serpents for fur and a petrifying glare',
+  },
+  Mythic: {
+    tokenId: '2433',
+    collection: 'meowverse',
+    name: 'King Clawster',
+    rarity: 'Mythic',
+    power: 800,
+    imageUrl: '/images/raid-bosses/meowverse/mythic.png',
+    hp: BOSS_HP_BY_RARITY.mythic,
+    description: 'A streetwise feline king who rules with sharp claws and sharper instincts',
+  },
+};
+
 /**
  * All Boss Cards organized by collection
  */
@@ -464,6 +531,9 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
   coquettish: COQUETTISH_BOSSES,
 
   viberuto: VIBERUTO_BOSSES,
+
+  meowverse: MEOWVERSE_BOSSES,
+
 
   custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
 };
@@ -480,7 +550,7 @@ export function getBossCard(collection: CollectionId, rarity: CardRarity): BossC
  * @param bossIndex - Current boss index (0-24)
  */
 export function getCurrentBoss(bossIndex: number): BossCard | undefined {
-  const normalizedIndex = bossIndex % 30; // Loop through 30 bosses
+  const normalizedIndex = bossIndex % 35; // Loop through 30 bosses
   const collection = BOSS_ROTATION_ORDER[normalizedIndex];
   const rarity = BOSS_RARITY_ORDER[normalizedIndex];
 
@@ -505,7 +575,7 @@ export function getPreviousBoss(currentBossIndex: number): BossCard | undefined 
  * Get boss rotation info
  */
 export function getBossRotationInfo(bossIndex: number) {
-  const normalizedIndex = bossIndex % 30;
+  const normalizedIndex = bossIndex % 35;
   return {
     index: normalizedIndex,
     collection: BOSS_ROTATION_ORDER[normalizedIndex],
