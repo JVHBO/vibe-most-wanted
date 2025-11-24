@@ -270,6 +270,11 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
   const getCollectionFromContract = (nft: any): string => {
     const contractAddr = nft?.contract?.address?.toLowerCase();
 
+    // PRESERVE existing collection tag if already set (from fetchAndProcessNFTs)
+    if (nft.collection) {
+      return nft.collection;
+    }
+
     // GM VBRS collection
     if (contractAddr === '0xefe512e73ca7356c20a21aa9433bad5fc9342d46') {
       return 'gmvbrs';
@@ -293,6 +298,12 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
     // Viberuto collection
     if (contractAddr === '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f') {
       return 'viberuto';
+    }
+
+
+    // Meowverse collection
+    if (contractAddr === '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150') {
+      return 'meowverse';
     }
 
     // Default to VBMS collection
