@@ -736,7 +736,7 @@ export default function FidPage() {
           return (
             <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-3 sm:mb-4">
-                Todos os Mintados ({totalCards})
+                All Minted ({totalCards})
               </h2>
 
               {/* Cards Grid */}
