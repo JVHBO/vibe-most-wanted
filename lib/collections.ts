@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -196,6 +196,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY VBRTO PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Meowverse
+  meowverse: {
+    id: 'meowverse',
+    name: 'meowverse',
+    displayName: 'Meowverse',
+    description: 'Collection Meowverse NFT',
+    contractAddress: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY MEOVV PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
