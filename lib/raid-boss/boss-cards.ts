@@ -35,9 +35,9 @@ export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
   mythic: 500_000,     // 500,000 $TESTVBMS (500x harder)
 };
 
-// Boss Rotation Order (25 bosses total)
+// Boss Rotation Order (30 bosses total)
 // Alternating collections with escalating rarities for variety
-// Pattern: GM VBRS → VBMS → VIBEFID → AFCL → COQUETTISH (rotating rarities)
+// Pattern: GM VBRS → VBMS → VIBEFID → AFCL → COQUETTISH → VIBERUTO (rotating rarities)
 export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'gmvbrs',           // 1. GM VBRS Common
   'vibe',             // 2. VBMS Rare
@@ -64,6 +64,11 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'vibefid',          // 23. VIBEFID Rare
   'americanfootball', // 24. AFCL Epic
   'coquettish',       // 25. COQUETTISH Legendary
+  'viberuto',         // 26. Viberuto Common
+  'viberuto',         // 27. Viberuto Rare
+  'viberuto',         // 28. Viberuto Epic
+  'viberuto',         // 29. Viberuto Legendary
+  'viberuto',         // 30. Viberuto Mythic
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
@@ -92,6 +97,11 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Rare',      // 23. VIBEFID
   'Epic',      // 24. AFCL
   'Legendary', // 25. COQUETTISH
+  'Common',    // 26. Viberuto
+  'Rare',      // 27. Viberuto
+  'Epic',      // 28. Viberuto
+  'Legendary', // 29. Viberuto
+  'Mythic',    // 30. Viberuto
 ];
 
 /**
@@ -470,7 +480,7 @@ export function getBossCard(collection: CollectionId, rarity: CardRarity): BossC
  * @param bossIndex - Current boss index (0-24)
  */
 export function getCurrentBoss(bossIndex: number): BossCard | undefined {
-  const normalizedIndex = bossIndex % 25; // Loop through 25 bosses
+  const normalizedIndex = bossIndex % 30; // Loop through 30 bosses
   const collection = BOSS_ROTATION_ORDER[normalizedIndex];
   const rarity = BOSS_RARITY_ORDER[normalizedIndex];
 
@@ -495,7 +505,7 @@ export function getPreviousBoss(currentBossIndex: number): BossCard | undefined 
  * Get boss rotation info
  */
 export function getBossRotationInfo(bossIndex: number) {
-  const normalizedIndex = bossIndex % 25;
+  const normalizedIndex = bossIndex % 30;
   return {
     index: normalizedIndex,
     collection: BOSS_ROTATION_ORDER[normalizedIndex],

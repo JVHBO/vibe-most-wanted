@@ -290,6 +290,11 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
       return 'coquettish';
     }
 
+    // Viberuto collection
+    if (contractAddr === '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f') {
+      return 'viberuto';
+    }
+
     // Default to VBMS collection
     return 'vibe';
   };

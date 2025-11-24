@@ -185,7 +185,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-    // Collection Viberuto
+  // Collection Viberuto
   viberuto: {
     id: 'viberuto',
     name: 'viberuto',
@@ -195,7 +195,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
-    buttonText: '"BUY',
+    buttonText: 'BUY VBRTO PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
