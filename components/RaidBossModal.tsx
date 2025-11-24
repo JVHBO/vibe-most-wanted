@@ -673,10 +673,10 @@ export function RaidBossModal({
               </div>
             </div>
 
-            {/* Boss Rotation: All 25 Bosses */}
+            {/* Boss Rotation: All 35 Bosses */}
             <div className="mb-6">
               <h3 className="text-lg font-display font-bold text-vintage-gold mb-3 text-center">
-                {t('raidRotationTitle')} (25)
+                {t('raidRotationTitle')} ({BOSS_ROTATION_ORDER.length})
               </h3>
               <div
                 ref={bossScrollRef}
@@ -688,7 +688,7 @@ export function RaidBossModal({
                 style={{ scrollbarWidth: 'thin', scrollbarColor: '#d4af37 #1f2937' }}
               >
                 <div className="flex gap-3 pb-2">
-                  {Array.from({ length: 25 }, (_, i) => {
+                  {Array.from({ length: BOSS_ROTATION_ORDER.length }, (_, i) => {
                     const collectionId = BOSS_ROTATION_ORDER[i];
                     const rarity = BOSS_RARITY_ORDER[i];
                     const boss = getBossCard(collectionId, rarity);

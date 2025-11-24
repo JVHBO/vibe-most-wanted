@@ -1,7 +1,7 @@
 /**
  * Boss Rotation Carousel Component
  *
- * Displays all 25 bosses in the raid rotation with swipeable/draggable carousel
+ * Displays all 35 bosses in the raid rotation with swipeable/draggable carousel
  * Each boss card shows collection info and marketplace link
  */
 
@@ -95,7 +95,7 @@ export function BossRotationCarousel({
     buttonText?: string;
   }> = [];
 
-  for (let i = 0; i < 25; i++) {
+  for (let i = 0; i < BOSS_ROTATION_ORDER.length; i++) {
     const collectionId = BOSS_ROTATION_ORDER[i];
     const rarity = BOSS_RARITY_ORDER[i];
     const boss = getBossCard(collectionId, rarity);
