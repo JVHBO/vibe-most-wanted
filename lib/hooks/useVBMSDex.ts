@@ -151,9 +151,9 @@ export function useBuyVBMS() {
           abi: VBMS_ROUTER_ABI,
           functionName: 'buyVBMS',
           args: [
-            VBMS_CONTRACTS.boosterDrop,  // target (BoosterDrop address)
             BigInt(packCount),            // quantity
-            startingTokenId               // startingTokenId (from storage slot 7)
+            startingTokenId,              // startingTokenId
+            VBMS_DEX_CONSTANTS.DEFAULT_REFERRER  // referrer
           ],
           value: priceWei,
           chainId: VBMS_CONTRACTS.chainId,
