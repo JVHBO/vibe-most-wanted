@@ -1152,7 +1152,6 @@ export default function ProfilePage() {
               >
                 <option value="all" className="bg-vintage-black text-vintage-gold">All</option>
                 <option value="vibe" className="bg-vintage-black text-vintage-gold">VBMS</option>
-                <option value="baseballcabal" className="bg-vintage-black text-vintage-gold">BBCL</option>
                 <option value="teampothead" className="bg-vintage-black text-vintage-gold">TMPT</option>
                 <option value="poorlydrawnpepes" className="bg-vintage-black text-vintage-gold">PDP</option>
                 <option value="meowverse" className="bg-vintage-black text-vintage-gold">MEOVV</option>
