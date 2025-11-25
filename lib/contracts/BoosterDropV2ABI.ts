@@ -24,9 +24,8 @@ export const BOOSTER_DROP_V2_ABI = [
 export const VBMS_CONTRACTS = {
   boosterDrop: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728' as `0x${string}`,
   boosterToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827' as `0x${string}`,
-  // VBMSRouter V2 - our custom router (NEEDS DEPLOYMENT!)
-  // TODO: Update this address after deploying VBMSRouter.sol
-  vbmsRouter: '0xbA7Fcc6437bBEbC60A3116D340B14e8429718EE8' as `0x${string}`,
+  // VBMSRouter V2 - deployed with fixed mint signature
+  vbmsRouter: '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52' as `0x${string}`,
   // Storage slot 7 of BoosterDrop contains the next token ID counter
   nextTokenIdSlot: 7,
   chainId: 8453,
