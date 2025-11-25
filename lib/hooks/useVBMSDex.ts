@@ -158,6 +158,10 @@ export function useBuyVBMS() {
           ],
           value: priceWithBuffer,  // Use buffered price to handle slippage
           chainId: VBMS_CONTRACTS.chainId,
+          // Explicit gas limit to ensure enough for nested calls:
+          // Router -> BoosterDrop -> BoosterToken -> Gnosis Safe proxy
+          // Safe proxy requires ~400k gas, auto-estimation underestimates
+          gas: BigInt(700000),
         });
 
         setStep('waiting');
