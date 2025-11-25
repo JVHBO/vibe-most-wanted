@@ -567,6 +567,23 @@ export default function TCGPage() {
   const [isClaimingMission, setIsClaimingMission] = useState<string | null>(null);
   const [isClaimingAll, setIsClaimingAll] = useState<boolean>(false);
 
+  // Check if any missions are claimable (for pulsing button)
+  const hasClaimableMissions = useMemo(() => {
+    // Daily quest claimable?
+    const dailyClaimable = questProgress?.completed && !questProgress?.claimed;
+
+    // Weekly quests claimable?
+    const weeklyQuests = weeklyProgress?.quests;
+    const weeklyClaimable = weeklyQuests && (
+      (weeklyQuests.weekly_attack_wins?.completed && !weeklyQuests.weekly_attack_wins?.claimed) ||
+      (weeklyQuests.weekly_total_matches?.completed && !weeklyQuests.weekly_total_matches?.claimed) ||
+      (weeklyQuests.weekly_defense_wins?.completed && !weeklyQuests.weekly_defense_wins?.claimed) ||
+      (weeklyQuests.weekly_pve_streak?.completed && !weeklyQuests.weekly_pve_streak?.claimed)
+    );
+
+    return dailyClaimable || weeklyClaimable;
+  }, [questProgress, weeklyProgress]);
+
   // Defense Deck States
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
   const [defenseDeckSaveStatus, setDefenseDeckSaveStatus] = useState<string>(''); // For retry feedback
@@ -4313,12 +4330,15 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               setCurrentView('missions');
             }}
-            className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base ${
-              currentView === 'missions' ? 'border-vintage-gold bg-vintage-gold/20' : 'border-vintage-gold'
+            className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base relative ${
+              hasClaimableMissions ? 'border-green-500 animate-notification-pulse' : currentView === 'missions' ? 'border-vintage-gold bg-vintage-gold/20' : 'border-vintage-gold'
             }`}
-            title={t('missions')}
+            title={hasClaimableMissions ? 'Missao pronta para claimar!' : t('missions')}
           >
             <span className="text-base md:text-lg">◈</span>
+            {hasClaimableMissions && (
+              <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-3 h-3 animate-pulse" />
+            )}
           </button>
 
           <button
