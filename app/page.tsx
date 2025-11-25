@@ -569,8 +569,11 @@ export default function TCGPage() {
 
   // Check if any missions are claimable (for pulsing button)
   const hasClaimableMissions = useMemo(() => {
+    // Daily LOGIN bonus claimable?
+    const dailyLoginClaimable = !loginBonusClaimed && address && userProfile;
+
     // Daily quest claimable?
-    const dailyClaimable = questProgress?.completed && !questProgress?.claimed;
+    const dailyQuestClaimable = questProgress?.completed && !questProgress?.claimed;
 
     // Weekly quests claimable?
     const weeklyQuests = weeklyProgress?.quests;
@@ -581,8 +584,8 @@ export default function TCGPage() {
       (weeklyQuests.weekly_pve_streak?.completed && !weeklyQuests.weekly_pve_streak?.claimed)
     );
 
-    return dailyClaimable || weeklyClaimable;
-  }, [questProgress, weeklyProgress]);
+    return dailyLoginClaimable || dailyQuestClaimable || weeklyClaimable;
+  }, [questProgress, weeklyProgress, loginBonusClaimed, address, userProfile]);
 
   // Defense Deck States
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
