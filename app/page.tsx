@@ -4609,13 +4609,13 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">Claim</span>
-                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5" />
+                    <span className="text-[10px] font-bold whitespace-nowrap">Claim/DEX</span>
+                    <NextImage src="/images/icons/inbox.svg" alt="Claim/DEX" width={20} height={20} className="w-5 h-5" />
                   </>
                 ) : (
                   <>
-                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
-                    <span className="hidden sm:inline">Claim</span>
+                    <NextImage src="/images/icons/inbox.svg" alt="Claim/DEX" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
+                    <span className="hidden sm:inline">Claim/DEX</span>
                   </>
                 )}
               </button>
