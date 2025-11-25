@@ -330,6 +330,9 @@ export default function TCGPage() {
   // 🎯 Weekly Quests & Missions
   const weeklyProgress = useQuery(api.quests.getWeeklyProgress, address ? { address } : "skip");
 
+  // 🎴 Personal missions (VibeFID, welcome gift, etc.)
+  const playerMissions = useQuery(api.missions.getPlayerMissions, address ? { playerAddress: address } : "skip");
+
   // Debug logging for address changes
   useEffect(() => {
     devLog('🔍 Address state:', {
@@ -584,8 +587,13 @@ export default function TCGPage() {
       (weeklyQuests.weekly_pve_streak?.completed && !weeklyQuests.weekly_pve_streak?.claimed)
     );
 
-    return dailyLoginClaimable || dailyQuestClaimable || weeklyClaimable;
-  }, [questProgress, weeklyProgress, loginBonusClaimed, address, userProfile]);
+    // Personal missions claimable? (VibeFID, welcome_gift, streaks, etc.)
+    const personalMissionsClaimable = playerMissions && playerMissions.some(
+      (m: { completed: boolean; claimed: boolean }) => m.completed && !m.claimed
+    );
+
+    return dailyLoginClaimable || dailyQuestClaimable || weeklyClaimable || personalMissionsClaimable;
+  }, [questProgress, weeklyProgress, loginBonusClaimed, address, userProfile, playerMissions]);
 
   // Defense Deck States
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
@@ -947,15 +955,35 @@ export default function TCGPage() {
     if (!address || loginBonusClaimed) return;
 
     try {
-      devLog('💎 Daily claim - creating mission and triggering reward choice modal...');
+      devLog('💎 Daily claim - creating and claiming mission...');
 
-      // Create the daily login mission
+      // Step 1: Create the daily login mission
       const result = await claimLoginBonus({ address });
 
       if (result.reason?.includes('Mission created')) {
-        devLog('✓ Daily mission created - TESTVBMS added');
-        // TESTVBMS sent to inbox - player can claim later
+        devLog('✓ Daily mission created');
+
+        // Step 2: Immediately claim all unclaimed missions (including the one just created)
+        const claimResult = await convex.mutation(api.missions.claimAllMissions, {
+          playerAddress: address,
+          language: lang,
+        });
+
+        if (claimResult && claimResult.claimed > 0) {
+          devLog(`✅ Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} TESTVBMS)`);
+          if (soundEnabled) AudioManager.buttonSuccess();
+
+          // Refresh profile to show new balance
+          const updatedProfile = await ConvexProfileService.getProfile(address);
+          setUserProfile(updatedProfile);
+        }
+
         setLoginBonusClaimed(true);
+      } else if (result.awarded > 0) {
+        // Old flow - already paid
+        devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
+        setLoginBonusClaimed(true);
+        if (soundEnabled) AudioManager.buttonClick();
       } else {
         devLog(`! ${result.reason}`);
         if (soundEnabled) AudioManager.buttonError();
