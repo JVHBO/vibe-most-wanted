@@ -142,20 +142,21 @@ export function useBuyVBMS() {
         console.log('Starting token ID:', startingTokenId.toString());
 
         setStep('buying');
-
-        // Step 2: Call third-party router with (target, quantity, startingTokenId)
-        console.log('Buying', packCount, 'pack(s) worth of VBMS with', formatEther(priceWei), 'ETH...');
+        // Step 2: Call YOUR router with (quantity, startingTokenId, referrer)
+        // Add 1% buffer to handle price changes between quote and execution
+        const priceWithBuffer = priceWei + (priceWei / BigInt(100));
+        console.log('Buying', packCount, 'pack(s) worth of VBMS with', formatEther(priceWithBuffer), 'ETH (includes 1% buffer)...');
 
         const buyHash = await writeContractAsync({
           address: VBMS_CONTRACTS.vbmsRouter,
           abi: VBMS_ROUTER_ABI,
           functionName: 'buyVBMS',
           args: [
-            BigInt(packCount),            // quantity
-            startingTokenId,              // startingTokenId
-            VBMS_DEX_CONSTANTS.DEFAULT_REFERRER  // referrer
+            BigInt(packCount),                        // quantity
+            startingTokenId,                          // startingTokenId
+            VBMS_DEX_CONSTANTS.DEFAULT_REFERRER       // referrer (you!)
           ],
-          value: priceWei,
+          value: priceWithBuffer,  // Use buffered price to handle slippage
           chainId: VBMS_CONTRACTS.chainId,
         });
 

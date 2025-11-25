@@ -24,14 +24,14 @@ export const BOOSTER_DROP_V2_ABI = [
 export const VBMS_CONTRACTS = {
   boosterDrop: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728' as `0x${string}`,
   boosterToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827' as `0x${string}`,
-  // VBMSRouter V2 - deployed with fixed mint signature
+  // VBMSRouter V2 - SEU contrato deployado
   vbmsRouter: '0x55C0ac3A23536881eBE007655eA5E30b53D6E01d' as `0x${string}`,
   // Storage slot 7 of BoosterDrop contains the next token ID counter
   nextTokenIdSlot: 7,
   chainId: 8453,
 } as const;
 
-// VBMSRouter V2 ABI
+// VBMSRouter V2 ABI (SEU router)
 // buyVBMS(uint256 quantity, uint256 startingTokenId, address referrer)
 export const VBMS_ROUTER_ABI = [
   {
