@@ -13,6 +13,7 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import Image from "next/image";
+import Link from "next/link";
 
 const NextImage = Image;
 
@@ -289,6 +290,15 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               </p>
             </div>
           )}
+
+          {/* DEX Link - Sell VBMS for ETH */}
+          <Link
+            href="/dex"
+            className="w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">💱</span>
+            <span>Sell VBMS → ETH (DEX)</span>
+          </Link>
           </div>
         </div>
       </div>
