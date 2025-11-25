@@ -1296,6 +1296,8 @@ export default function TCGPage() {
                 collection = 'gmvbrs';
               } else if (contractAddr === getCollectionContract('coquettish')?.toLowerCase()) {
                 collection = 'coquettish';
+              } else if (contractAddr === getCollectionContract('poorlydrawnpepes')?.toLowerCase()) {
+                collection = 'poorlydrawnpepes';
               } else if (contractAddr === getCollectionContract('meowverse')?.toLowerCase()) {
                 collection = 'meowverse';
               } else if (contractAddr === getCollectionContract('viberuto')?.toLowerCase()) {
@@ -4759,6 +4761,7 @@ export default function TCGPage() {
                       >
                         <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
                         <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
+                        <option value="poorlydrawnpepes" className="bg-vintage-charcoal text-vintage-gold">PDP</option>
                         <option value="meowverse" className="bg-vintage-charcoal text-vintage-gold">MEOVV</option>
                         <option value="viberuto" className="bg-vintage-charcoal text-vintage-gold">VBRTO</option>
                         <option value="vibefid" className="bg-vintage-charcoal text-vintage-gold">VIBEFID</option>
