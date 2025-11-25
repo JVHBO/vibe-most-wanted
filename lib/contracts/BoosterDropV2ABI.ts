@@ -24,26 +24,44 @@ export const BOOSTER_DROP_V2_ABI = [
 export const VBMS_CONTRACTS = {
   boosterDrop: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728' as `0x${string}`,
   boosterToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827' as `0x${string}`,
-  // Third-party working router (our custom router doesn't work because BoosterDrop lacks tokenOfOwnerByIndex)
-  vbmsRouter: '0xe08287f93ffc3d1d36334b12485467e2618eaf39' as `0x${string}`,
+  // VBMSRouter V2 - our custom router (NEEDS DEPLOYMENT!)
+  // TODO: Update this address after deploying VBMSRouter.sol
+  vbmsRouter: '0x0000000000000000000000000000000000000000' as `0x${string}`,
   // Storage slot 7 of BoosterDrop contains the next token ID counter
   nextTokenIdSlot: 7,
   chainId: 8453,
 } as const;
 
-// Third-party router ABI - function selector 0xc5059715
-// Takes: target (BoosterDrop address), quantity, startingTokenId
+// VBMSRouter V2 ABI
+// buyVBMS(uint256 quantity, uint256 startingTokenId, address referrer)
 export const VBMS_ROUTER_ABI = [
   {
     type: 'function',
     name: 'buyVBMS',
     inputs: [
-      { name: 'target', type: 'address' },
       { name: 'quantity', type: 'uint256' },
-      { name: 'startingTokenId', type: 'uint256' }
+      { name: 'startingTokenId', type: 'uint256' },
+      { name: 'referrer', type: 'address' }
     ],
     outputs: [],
     stateMutability: 'payable'
+  },
+  {
+    type: 'function',
+    name: 'getMintPrice',
+    inputs: [{ name: 'quantity', type: 'uint256' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view'
+  },
+  {
+    type: 'event',
+    name: 'VBMSPurchased',
+    inputs: [
+      { name: 'buyer', type: 'address', indexed: true },
+      { name: 'quantity', type: 'uint256', indexed: false },
+      { name: 'ethSpent', type: 'uint256', indexed: false },
+      { name: 'vbmsReceived', type: 'uint256', indexed: false }
+    ]
   },
 ] as const;
 
