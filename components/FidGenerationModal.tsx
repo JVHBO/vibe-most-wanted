@@ -55,7 +55,7 @@ export default function FidGenerationModal({
 
     const emoji = rarityEmojis[generatedTraits.rarity] || '💎';
     const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${fid}`;
-    const text = `Just minted my VibeFID!
+    const text = `Just minted my VibeFID & claimed 1000 $VBMS!
 
 ${emoji} ${generatedTraits.rarity}
 ⚡ ${generatedTraits.power} Power
@@ -65,7 +65,7 @@ ${emoji} ${generatedTraits.rarity}
 🗡️ Fight in PvE
 💰 Earn $VBMS
 
-🎮 Mint yours & start playing! @jvhbo`;
+🎮 Mint yours & claim 1000 $VBMS! @jvhbo`;
 
     const farcasterShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
     window.open(farcasterShareUrl, '_blank');
