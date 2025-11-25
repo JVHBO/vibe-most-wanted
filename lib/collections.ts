@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -224,6 +224,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY PDP PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Team Pothead
+  teampothead: {
+    id: 'teampothead',
+    name: 'teampothead',
+    displayName: 'Team Pothead',
+    description: 'Collection Team Pothead NFT',
+    contractAddress: '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY TMPT PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
