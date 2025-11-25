@@ -18,11 +18,12 @@ pragma solidity ^0.8.20;
  */
 
 interface IBoosterDrop {
+    // Correct signature: mint(uint256,address,address,address) = 0x70c7ff94
     function mint(
         uint256 quantity,
         address recipient,
         address referrer,
-        string calldata comment
+        address orderReferrer
     ) external payable;
 
     function sellAndClaimOffer(
@@ -92,7 +93,7 @@ contract VBMSRouter is IERC721Receiver {
             quantity,
             address(this), // Mint to this contract
             ref,
-            ""
+            ref  // orderReferrer - same as referrer
         );
 
         // Step 2: Sell each pack for VBMS using pre-calculated token IDs
