@@ -687,7 +687,7 @@ export const BASEBALLCABAL_BOSSES: Record<CardRarity, BossCard> = {
     power: 20,
     imageUrl: '/images/raid-bosses/baseballcabal/rare.png',
     hp: BOSS_HP_BY_RARITY.rare,
-    description: 'SIUUU Perfection in cleats. Doesn't lose. Doesn't age. Doesn't miss',
+    description: "SIUUU Perfection in cleats. Doesn't lose. Doesn't age. Doesn't miss",
   },
   Epic: {
     tokenId: '7162',
