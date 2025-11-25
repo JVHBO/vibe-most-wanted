@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -210,6 +210,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY MEOVV PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Poorly Drawn Pepes
+  poorlydrawnpepes: {
+    id: 'poorlydrawnpepes',
+    name: 'poorlydrawnpepes',
+    displayName: 'Poorly Drawn Pepes',
+    description: 'Collection Poorly Drawn Pepes NFT',
+    contractAddress: '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY PDP PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
