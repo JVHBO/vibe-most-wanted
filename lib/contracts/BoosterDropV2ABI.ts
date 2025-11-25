@@ -26,7 +26,7 @@ export const VBMS_CONTRACTS = {
   boosterToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827' as `0x${string}`,
   // VBMSRouter V2 - our custom router (NEEDS DEPLOYMENT!)
   // TODO: Update this address after deploying VBMSRouter.sol
-  vbmsRouter: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+  vbmsRouter: '0xbA7Fcc6437bBEbC60A3116D340B14e8429718EE8' as `0x${string}`,
   // Storage slot 7 of BoosterDrop contains the next token ID counter
   nextTokenIdSlot: 7,
   chainId: 8453,
