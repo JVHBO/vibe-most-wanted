@@ -38,9 +38,18 @@ function weightedRoll<T>(seed: number, choices: Array<{ value: T; weight: number
 
 /**
  * Get foil probabilities based on FID
+ * Updated probability table:
+ * FID Range          Prize   Standard  None
+ * <= 5,000            100%    0%        0%
+ * 5,001 - 20,000     75%     25%       0%
+ * 20,001 - 100,000   20%     70%       10%
+ * 100,001 - 250,000  10%     60%       30%
+ * 250,001 - 500,000  5%      40%       55%
+ * 500,001 - 1,200,000 2%     20%       78%
+ * > 1,200,000        0%      10%       90%
  */
 function getFoilProbabilities(fid: number): Array<{ value: FoilType; weight: number }> {
-  // FID ≤ 5,000: 100% Prize (guaranteed!)
+  // FID <= 5,000: 100% Prize (guaranteed!)
   if (fid <= 5000) {
     return [
       { value: 'Prize', weight: 100 },
@@ -53,52 +62,52 @@ function getFoilProbabilities(fid: number): Array<{ value: FoilType; weight: num
   if (fid <= 20000) {
     return [
       { value: 'Prize', weight: 75 },
-      { value: 'Standard', weight: 20 },
-      { value: 'None', weight: 5 },
+      { value: 'Standard', weight: 25 },
+      { value: 'None', weight: 0 },
     ];
   }
 
   // FID 20,001 - 100,000: Good Standard chance, some Prize
   if (fid <= 100000) {
     return [
-      { value: 'Prize', weight: 15 },
-      { value: 'Standard', weight: 50 },
-      { value: 'None', weight: 35 },
+      { value: 'Prize', weight: 20 },
+      { value: 'Standard', weight: 70 },
+      { value: 'None', weight: 10 },
     ];
   }
 
   // FID 100,001 - 250,000: Good Standard chance, low Prize
   if (fid <= 250000) {
     return [
-      { value: 'Prize', weight: 8 },
-      { value: 'Standard', weight: 45 },
-      { value: 'None', weight: 47 },
+      { value: 'Prize', weight: 10 },
+      { value: 'Standard', weight: 60 },
+      { value: 'None', weight: 30 },
     ];
   }
 
-  // FID 250,001 - 500,000: Mostly None, some Standard
+  // FID 250,001 - 500,000: Moderate Standard, some Prize
   if (fid <= 500000) {
     return [
-      { value: 'Prize', weight: 2 },
-      { value: 'Standard', weight: 25 },
-      { value: 'None', weight: 73 },
+      { value: 'Prize', weight: 5 },
+      { value: 'Standard', weight: 40 },
+      { value: 'None', weight: 55 },
     ];
   }
 
-  // FID 500,001 - 1,200,000: Almost all None
+  // FID 500,001 - 1,200,000: Low Prize, some Standard
   if (fid <= 1200000) {
     return [
-      { value: 'Prize', weight: 0 },
-      { value: 'Standard', weight: 8 },
-      { value: 'None', weight: 92 },
+      { value: 'Prize', weight: 2 },
+      { value: 'Standard', weight: 20 },
+      { value: 'None', weight: 78 },
     ];
   }
 
-  // FID > 1,200,000: 100% None (guaranteed)
+  // FID > 1,200,000: No Prize, mostly None
   return [
     { value: 'Prize', weight: 0 },
-    { value: 'Standard', weight: 0 },
-    { value: 'None', weight: 100 },
+    { value: 'Standard', weight: 10 },
+    { value: 'None', weight: 90 },
   ];
 }
 
@@ -106,7 +115,7 @@ function getFoilProbabilities(fid: number): Array<{ value: FoilType; weight: num
  * Get wear probabilities based on FID
  */
 function getWearProbabilities(fid: number): Array<{ value: WearType; weight: number }> {
-  // FID ≤ 5,000: 100% Pristine (guaranteed!)
+  // FID <= 5,000: 100% Pristine (guaranteed!)
   if (fid <= 5000) {
     return [
       { value: 'Pristine', weight: 100 },
@@ -210,19 +219,19 @@ export function getFidTraitInfo(fid: number): string {
     return 'Super Early Adopter - 100% Prize Foil + Pristine';
   }
   if (fid <= 20000) {
-    return 'Early Adopter - 75% Prize, 85% Pristine';
+    return 'Early Adopter - 75% Prize, 25% Standard';
   }
   if (fid <= 100000) {
-    return 'Established User - 15% Prize, 50% Standard';
+    return 'Established User - 20% Prize, 70% Standard';
   }
   if (fid <= 250000) {
-    return 'Active User - 8% Prize, 45% Standard';
+    return 'Active User - 10% Prize, 60% Standard';
   }
   if (fid <= 500000) {
-    return 'Regular User - 2% Prize, 25% Standard';
+    return 'Regular User - 5% Prize, 40% Standard';
   }
   if (fid <= 1200000) {
-    return 'New User - 8% Standard only';
+    return 'New User - 2% Prize, 20% Standard';
   }
-  return 'Very New User - 100% None + Heavily Played';
+  return 'Very New User - 10% Standard, 90% None';
 }

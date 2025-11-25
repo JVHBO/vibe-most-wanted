@@ -25,22 +25,22 @@ export const VBMS_CONTRACTS = {
   boosterDrop: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728' as `0x${string}`,
   boosterToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827' as `0x${string}`,
   // VBMSRouter V2 - SEU contrato deployado
-  vbmsRouter: '0x55C0ac3A23536881eBE007655eA5E30b53D6E01d' as `0x${string}`,
+  vbmsRouter: '0xA684567a8AF2c911dac608F72f8293e4863E51AB' as `0x${string}`,
   // Storage slot 7 of BoosterDrop contains the next token ID counter
   nextTokenIdSlot: 7,
   chainId: 8453,
 } as const;
 
-// VBMSRouter V2 ABI (SEU router)
-// buyVBMS(uint256 quantity, uint256 startingTokenId, address referrer)
+// VBMSRouter V6 ABI - Race-condition proof with callback + fallback
+// buyVBMS(uint256 quantity, uint256 expectedStartTokenId)
+// Referrer is hardcoded in contract constructor
 export const VBMS_ROUTER_ABI = [
   {
     type: 'function',
     name: 'buyVBMS',
     inputs: [
       { name: 'quantity', type: 'uint256' },
-      { name: 'startingTokenId', type: 'uint256' },
-      { name: 'referrer', type: 'address' }
+      { name: 'expectedStartTokenId', type: 'uint256' }
     ],
     outputs: [],
     stateMutability: 'payable'
