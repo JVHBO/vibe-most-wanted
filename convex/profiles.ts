@@ -29,7 +29,13 @@ export const getProfile = query({
       .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
-    return profile;
+    if (!profile) return null;
+
+    // Add computed hasDefenseDeck field (required for leaderboard attack button)
+    return {
+      ...profile,
+      hasDefenseDeck: (profile.defenseDeck?.length || 0) === 5,
+    };
   },
 });
 
