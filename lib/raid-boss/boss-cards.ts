@@ -48,7 +48,6 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 7. MEOWVERSE Rare
   'poorlydrawnpepes',           // 8. POORLYDRAWNPEPES Epic
   'teampothead',           // 9. TEAMPOTHEAD Legendary
-  'baseballcabal',           // 10. BASEBALLCABAL Mythic
   'gmvbrs',           // 11. GMVBRS Rare
   'vibe',           // 12. VIBE Epic
   'vibefid',           // 13. VIBEFID Legendary
@@ -58,7 +57,6 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 17. MEOWVERSE Epic
   'poorlydrawnpepes',           // 18. POORLYDRAWNPEPES Legendary
   'teampothead',           // 19. TEAMPOTHEAD Mythic
-  'baseballcabal',           // 20. BASEBALLCABAL Common
   'gmvbrs',           // 21. GMVBRS Epic
   'vibe',           // 22. VIBE Legendary
   'vibefid',           // 23. VIBEFID Mythic
@@ -68,7 +66,6 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 27. MEOWVERSE Legendary
   'poorlydrawnpepes',           // 28. POORLYDRAWNPEPES Mythic
   'teampothead',           // 29. TEAMPOTHEAD Common
-  'baseballcabal',           // 30. BASEBALLCABAL Rare
   'gmvbrs',           // 31. GMVBRS Legendary
   'vibe',           // 32. VIBE Mythic
   'vibefid',           // 33. VIBEFID Common
@@ -78,7 +75,6 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 37. MEOWVERSE Mythic
   'poorlydrawnpepes',           // 38. POORLYDRAWNPEPES Common
   'teampothead',           // 39. TEAMPOTHEAD Rare
-  'baseballcabal',           // 40. BASEBALLCABAL Epic
   'gmvbrs',           // 41. GMVBRS Mythic
   'vibe',           // 42. VIBE Common
   'vibefid',           // 43. VIBEFID Rare
@@ -88,7 +84,6 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 47. MEOWVERSE Common
   'poorlydrawnpepes',           // 48. POORLYDRAWNPEPES Rare
   'teampothead',           // 49. TEAMPOTHEAD Epic
-  'baseballcabal',           // 50. BASEBALLCABAL Legendary
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
@@ -664,62 +659,7 @@ export const TEAMPOTHEAD_BOSSES: Record<CardRarity, BossCard> = {
   },
 };
 
-
-/**
- * Baseball Cabal Boss Cards
- */
-export const BASEBALLCABAL_BOSSES: Record<CardRarity, BossCard> = {
-  Common: {
-    tokenId: '7160',
-    collection: 'baseballcabal',
-    name: 'The Xenobatter',
-    rarity: 'Common',
-    power: 15,
-    imageUrl: '/images/raid-bosses/baseballcabal/common.png',
-    hp: BOSS_HP_BY_RARITY.common,
-    description: 'Came from the stars to dominate the diamond. His swing is lethal... literally',
-  },
-  Rare: {
-    tokenId: '7161',
-    collection: 'baseballcabal',
-    name: 'CR7 - The GOAT ',
-    rarity: 'Rare',
-    power: 20,
-    imageUrl: '/images/raid-bosses/baseballcabal/rare.png',
-    hp: BOSS_HP_BY_RARITY.rare,
-    description: "SIUUU Perfection in cleats. Doesn't lose. Doesn't age. Doesn't miss",
-  },
-  Epic: {
-    tokenId: '7162',
-    collection: 'baseballcabal',
-    name: 'Yeezus Diamond',
-    rarity: 'Epic',
-    power: 80,
-    imageUrl: '/images/raid-bosses/baseballcabal/epic.png',
-    hp: BOSS_HP_BY_RARITY.epic,
-    description: 'Genius. Visionary. Unhinged. His ego hits harder than his swing.',
-  },
-  Legendary: {
-    tokenId: '7163',
-    collection: 'baseballcabal',
-    name: 'The Golden Boomer',
-    rarity: 'Legendary',
-    power: 240,
-    imageUrl: '/images/raid-bosses/baseballcabal/legendary.png',
-    hp: BOSS_HP_BY_RARITY.legendary,
-    description: 'Old school legend. His golden ball is worth more than his investment advice',
-  },
-  Mythic: {
-    tokenId: '7164',
-    collection: 'baseballcabal',
-    name: 'The Vault Keeper',
-    rarity: 'Mythic',
-    power: 800,
-    imageUrl: '/images/raid-bosses/baseballcabal/mythic.png',
-    hp: BOSS_HP_BY_RARITY.mythic,
-    description: 'Guardian of the sacred vault. Collects packs like trophies of war',
-  },
-};
+
 
 /**
  * All Boss Cards organized by collection
@@ -740,18 +680,7 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
 
 
 
-  teampothead: TEAMPOTHEAD_BOSSES,
-
-
-
-
-  baseballcabal: BASEBALLCABAL_BOSSES,
-
-
-
-
-
-  custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
+  teampothead: TEAMPOTHEAD_BOSSES,  custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
 };
 
 /**
@@ -766,7 +695,7 @@ export function getBossCard(collection: CollectionId, rarity: CardRarity): BossC
  * @param bossIndex - Current boss index (0-24)
  */
 export function getCurrentBoss(bossIndex: number): BossCard | undefined {
-  const normalizedIndex = bossIndex % 50; // Loop through 30 bosses
+  const normalizedIndex = bossIndex % 25; // Loop through 30 bosses
   const collection = BOSS_ROTATION_ORDER[normalizedIndex];
   const rarity = BOSS_RARITY_ORDER[normalizedIndex];
 
@@ -791,7 +720,7 @@ export function getPreviousBoss(currentBossIndex: number): BossCard | undefined 
  * Get boss rotation info
  */
 export function getBossRotationInfo(bossIndex: number) {
-  const normalizedIndex = bossIndex % 50;
+  const normalizedIndex = bossIndex % 25;
   return {
     index: normalizedIndex,
     collection: BOSS_ROTATION_ORDER[normalizedIndex],
