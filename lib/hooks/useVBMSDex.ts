@@ -153,8 +153,7 @@ export function useBuyVBMS() {
           functionName: 'buyVBMS',
           args: [
             BigInt(packCount),                        // quantity
-            startingTokenId,                          // startingTokenId
-            VBMS_DEX_CONSTANTS.DEFAULT_REFERRER       // referrer (you!)
+            startingTokenId,                          // expectedStartTokenId (V6: used for fallback only)
           ],
           value: priceWithBuffer,  // Use buffered price to handle slippage
           chainId: VBMS_CONTRACTS.chainId,
