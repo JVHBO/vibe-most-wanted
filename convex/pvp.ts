@@ -7,13 +7,62 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { isValidTxHash } from "./blockchainVerify";
+
+// VBMSPoolTroll address for verification
+const VBMS_POOL_TROLL = '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b';
 
 /**
- * RECORD ENTRY FEE
+ * RECORD ENTRY FEE (ACTION)
  * Called after player deposits VBMS to VBMSPoolTroll contract
+ * Now verifies the transaction on blockchain before recording
  */
-export const recordEntryFee = mutation({
+export const recordEntryFee = action({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    txHash: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean }> => {
+    const { address, amount, txHash } = args;
+    const normalizedAddress = address.toLowerCase();
+
+    // Validate txHash format
+    if (!isValidTxHash(txHash)) {
+      throw new Error("Invalid transaction hash format");
+    }
+
+    // Verify transaction on blockchain
+    const verification = await ctx.runAction(internal.blockchainVerify.verifyTransaction, {
+      txHash,
+      expectedFrom: normalizedAddress,
+      expectedTo: VBMS_POOL_TROLL,
+      expectedAmountWei: (BigInt(amount) * BigInt(10 ** 18)).toString(),
+      isERC20: true, // VBMS is an ERC20 token
+    });
+
+    if (!verification.isValid) {
+      console.error(`[PvP] TX verification failed for ${txHash}: ${verification.error}`);
+      throw new Error(`Transaction verification failed: ${verification.error}`);
+    }
+
+    // Record in database via internal mutation
+    await ctx.runMutation(internal.pvp.recordEntryFeeInternal, {
+      address: normalizedAddress,
+      amount,
+      txHash,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Internal mutation to record entry fee after verification
+ */
+export const recordEntryFeeInternal = internalMutation({
   args: {
     address: v.string(),
     amount: v.number(),
@@ -21,9 +70,8 @@ export const recordEntryFee = mutation({
   },
   handler: async (ctx, args) => {
     const { address, amount, txHash } = args;
-    const normalizedAddress = address.toLowerCase();
 
-    // Check if this txHash was already processed
+    // Check if this txHash was already processed (double-check)
     const existingEntry = await ctx.db
       .query("pvpEntryFees")
       .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
@@ -35,14 +83,15 @@ export const recordEntryFee = mutation({
 
     // Record entry fee payment
     await ctx.db.insert("pvpEntryFees", {
-      address: normalizedAddress,
+      address,
       amount,
       txHash,
       timestamp: Date.now(),
-      used: false, // Mark as not used yet
+      used: false,
+      verified: true, // Mark as blockchain-verified
     });
 
-    console.log(`⚔️ PvP entry fee recorded: ${amount} VBMS from ${address}`);
+    console.log(`⚔️ PvP entry fee recorded (VERIFIED): ${amount} VBMS from ${address}`);
 
     return {
       success: true,
