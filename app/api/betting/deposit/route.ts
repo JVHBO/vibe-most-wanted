@@ -17,6 +17,9 @@ const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const VBMS_TOKEN = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
 const VBMS_BETTING = '0x668c8d288b8670fdb9005fa91be046e4c2585af4';
 
+// SECURITY: Max deposit limit to prevent abuse
+const MAX_DEPOSIT_AMOUNT = 1000000; // 1M VBMS max per deposit
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -25,6 +28,43 @@ export async function POST(request: NextRequest) {
     if (!address || !amount || !txHash) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Validate amount parameter
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
+      return NextResponse.json(
+        { error: 'Invalid amount: must be a valid number' },
+        { status: 400 }
+      );
+    }
+    if (parsedAmount <= 0) {
+      return NextResponse.json(
+        { error: 'Invalid amount: must be greater than 0' },
+        { status: 400 }
+      );
+    }
+    if (parsedAmount > MAX_DEPOSIT_AMOUNT) {
+      return NextResponse.json(
+        { error: `Invalid amount: exceeds maximum deposit of ${MAX_DEPOSIT_AMOUNT} VBMS` },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Validate address format (basic Ethereum address check)
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      return NextResponse.json(
+        { error: 'Invalid address format' },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Validate txHash format
+    if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+      return NextResponse.json(
+        { error: 'Invalid transaction hash format' },
         { status: 400 }
       );
     }
