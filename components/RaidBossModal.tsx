@@ -580,7 +580,7 @@ export function RaidBossModal({
           {unclaimedRewards && unclaimedRewards.totalUnclaimed > 0 && (
             <button
               onClick={handleClaimRewards}
-              className="absolute top-0 right-12 w-8 h-8 rounded-full bg-green-600/80 hover:bg-green-600 border-2 border-green-400 flex items-center justify-center text-white font-bold transition-all hover:scale-110 animate-pulse"
+              className="absolute top-0 right-14 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-green-600/80 hover:bg-green-600 border-2 border-green-400 flex items-center justify-center text-white font-bold transition-all hover:scale-110 animate-pulse"
               title={t('raidBossClaimRewards', { amount: unclaimedRewards.totalUnclaimed })}
             >
               🎁
@@ -594,7 +594,7 @@ export function RaidBossModal({
           {/* Help Button */}
           <button
             onClick={() => setShowHelp(true)}
-            className="absolute top-0 right-0 w-8 h-8 rounded-full bg-red-600/20 hover:bg-red-600/40 border-2 border-red-500 flex items-center justify-center text-red-400 font-bold transition-all hover:scale-110"
+            className="absolute top-0 right-0 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-red-600/20 hover:bg-red-600/40 border-2 border-red-500 flex items-center justify-center text-red-400 font-bold transition-all hover:scale-110"
           >
             ?
           </button>

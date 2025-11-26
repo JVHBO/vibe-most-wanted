@@ -11,18 +11,23 @@ interface BadgeProps {
 export default function Badge({ badge, size = 'md' }: BadgeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // Minimum text sizes for mobile readability (10px min, 12px preferred)
   const sizeClasses = {
-    xs: 'text-[7px] px-0.5 py-0',
-    sm: 'text-[10px] px-1.5 py-0.5',
-    md: 'text-xs px-2 py-0.5',
-    lg: 'text-sm px-3 py-1',
+    xs: 'text-[10px] px-1 py-0.5',      // Was 7px - increased for readability
+    sm: 'text-[11px] px-1.5 py-1',      // Was 10px - increased + better touch target
+    md: 'text-xs px-2 py-1',            // 12px - good
+    lg: 'text-sm px-3 py-1.5',          // 14px - good + better touch target
   };
+
+  // Toggle tooltip on touch for mobile
+  const handleTouch = () => setShowTooltip(prev => !prev);
 
   return (
     <div
       className="relative inline-block"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
+      onTouchStart={handleTouch}
     >
       {/* Badge */}
       {badge.type === 'gey' ? (
@@ -43,10 +48,10 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
               hover:scale-105 hover:shadow-lg
               shadow-md
               backdrop-blur-sm
-              m-[2px]
+              m-0.5
             `}
           >
-            {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
+            {badge.icon && <span className="text-[10px] sm:text-xs leading-none">{badge.icon}</span>}
             <span className="leading-none">{badge.label}</span>
           </div>
         </div>
@@ -68,10 +73,10 @@ export default function Badge({ badge, size = 'md' }: BadgeProps) {
               hover:scale-105 hover:shadow-lg
               shadow-md
               backdrop-blur-sm
-              m-[2px]
+              m-0.5
             `}
           >
-            {badge.icon && <span className="text-xs leading-none">{badge.icon}</span>}
+            {badge.icon && <span className="text-[10px] sm:text-xs leading-none">{badge.icon}</span>}
             <span className="leading-none">{badge.label}</span>
           </div>
         </div>
