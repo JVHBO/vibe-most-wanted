@@ -51,13 +51,8 @@ export const verifyTransaction = internalAction({
     const apiKey = process.env.BASESCAN_API_KEY;
     if (!apiKey) {
       console.error("[BlockchainVerify] BASESCAN_API_KEY not configured");
-      // In development, allow transactions to pass without verification
-      // In production, this should fail
-      if (process.env.NODE_ENV === 'production') {
-        return { isValid: false, error: "Blockchain verification not configured" };
-      }
-      console.warn("[BlockchainVerify] Skipping verification in development");
-      return { isValid: true };
+      // SECURITY: Always require verification - no bypass in any environment
+      return { isValid: false, error: "Blockchain verification not configured" };
     }
 
     try {

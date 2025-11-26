@@ -2,6 +2,44 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
+// SECURITY: Whitelist of allowed domains for PFP URLs to prevent SSRF
+const ALLOWED_PFP_DOMAINS = [
+  'pbs.twimg.com',
+  'abs.twimg.com',
+  'imagedelivery.net',
+  'i.imgur.com',
+  'res.cloudinary.com',
+  'lh3.googleusercontent.com',
+  'i.seadn.io',
+  'openseauserdata.com',
+  'warpcast.com',
+  'far.quest',
+];
+
+function isAllowedPfpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase();
+    // Block private/internal IPs
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.') ||
+      hostname.endsWith('.local') ||
+      hostname === '0.0.0.0'
+    ) {
+      return false;
+    }
+    return ALLOWED_PFP_DOMAINS.some(domain =>
+      hostname === domain || hostname.endsWith('.' + domain)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -36,9 +74,9 @@ export async function GET(request: Request) {
       return name.substring(0, 2).toUpperCase();
     };
 
-    // Try to fetch PFP if provided (with timeout)
+    // Try to fetch PFP if provided (with timeout and SSRF protection)
     let pfpBase64 = '';
-    if (pfpUrl) {
+    if (pfpUrl && isAllowedPfpUrl(pfpUrl)) {
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 2000); // 2 second timeout
