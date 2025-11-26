@@ -870,8 +870,11 @@ export function RaidBossModal({
                 <div className={`grid gap-3 ${playerDeck.vibefidCard ? 'grid-cols-3' : 'grid-cols-3'}`}>
                   {/* Main 5 cards */}
                   {playerDeck.deck.map((card: NFT, index: number) => {
-                    const cardEnergy = playerDeck.cardEnergy[index];
+                    const cardEnergy = playerDeck.cardEnergy?.[index];
                     const now = Date.now();
+
+                    // Safety check - if cardEnergy is missing, skip this card
+                    if (!cardEnergy) return null;
 
                     // Check if energy has expired (0 = infinite for VibeFID)
                     const hasEnergy = cardEnergy.energyExpiresAt === 0 || now < cardEnergy.energyExpiresAt;
