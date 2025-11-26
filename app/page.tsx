@@ -548,7 +548,7 @@ export default function TCGPage() {
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
   // Profile States
-  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'achievements' | 'shop' | 'inbox'>('game');
+  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'shop' | 'inbox'>('game');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
@@ -569,6 +569,7 @@ export default function TCGPage() {
   const [isLoadingMissions, setIsLoadingMissions] = useState<boolean>(false);
   const [isClaimingMission, setIsClaimingMission] = useState<string | null>(null);
   const [isClaimingAll, setIsClaimingAll] = useState<boolean>(false);
+  const [missionsSubView, setMissionsSubView] = useState<'missions' | 'achievements'>('missions');
 
   // Check if any missions are claimable (for pulsing button)
   const hasClaimableMissions = useMemo(() => {
@@ -4609,29 +4610,6 @@ export default function TCGPage() {
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
-                  setCurrentView('achievements');
-                }}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
-                  currentView === 'achievements'
-                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
-                }`}
-              >
-                {isInFarcaster ? (
-                  <>
-                    <span className="text-[9px] font-bold whitespace-nowrap">{t('achievements')}</span>
-                    <span className="text-xl leading-none">★</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-base md:text-lg">★</span>
-                    <span className="hidden sm:inline">{t('achievements')}</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('inbox');
                 }}
                 className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
@@ -5771,6 +5749,39 @@ export default function TCGPage() {
           {/* 🎯 Missions View */}
           {currentView === 'missions' && (
             <div className="max-w-6xl mx-auto space-y-6">
+              {/* Toggle Buttons: Missions / Achievements */}
+              <div className="flex justify-center gap-2 mb-4">
+                <button
+                  onClick={() => {
+                    if (soundEnabled) AudioManager.buttonNav();
+                    setMissionsSubView('missions');
+                  }}
+                  className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
+                    missionsSubView === 'missions'
+                      ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                      : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
+                  }`}
+                >
+                  ◈ {t('missions')}
+                </button>
+                <button
+                  onClick={() => {
+                    if (soundEnabled) AudioManager.buttonNav();
+                    setMissionsSubView('achievements');
+                  }}
+                  className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
+                    missionsSubView === 'achievements'
+                      ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                      : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
+                  }`}
+                >
+                  🏆 {t('achievements')}
+                </button>
+              </div>
+
+              {/* Missions Sub-View */}
+              {missionsSubView === 'missions' && (
+              <>
               {/* Weekly Quests Section */}
               <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6 shadow-gold">
                 <div className="flex items-center gap-3 mb-6">
@@ -6063,12 +6074,8 @@ export default function TCGPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Missions View */}
-          {currentView === 'missions' && (
-            <div className="max-w-4xl mx-auto">
+              {/* Daily Missions Section */}
               <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-4 md:p-8">
                 <div className="text-center mb-6">
                   <h1 className="text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-2">
@@ -6170,17 +6177,19 @@ export default function TCGPage() {
                   </>
                 )}
               </div>
-            </div>
-          )}
+              </>
+              )}
 
-          {/* 🏆 Achievements View */}
-          {currentView === 'achievements' && (
-            <AchievementsView
-              playerAddress={address}
-              nfts={nfts}
-              onSuccess={setSuccessMessage}
-              onError={setErrorMessage}
-            />
+              {/* Achievements Sub-View */}
+              {missionsSubView === 'achievements' && (
+                <AchievementsView
+                  playerAddress={address}
+                  nfts={nfts}
+                  onSuccess={setSuccessMessage}
+                  onError={setErrorMessage}
+                />
+              )}
+            </div>
           )}
 
           {/* 💰 Inbox/Claim View */}

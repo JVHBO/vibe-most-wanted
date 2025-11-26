@@ -9,13 +9,17 @@ Raid Boss is a **global cooperative mode** where all players attack the same bos
 
 ### 1. Boss System
 - **Global Boss**: All players attack the same boss simultaneously
-- **Boss Rotation**: 20 bosses total (5 rarities × 4 collections), loops infinitely
+- **Boss Rotation**: Bosses rotate through all game collections (5 rarities per collection), loops infinitely
   ```
-  1-5:   GM VBRS (Common → Rare → Epic → Legendary → Mythic)
-  6-10:  VBMS (Common → Rare → Epic → Legendary → Mythic)
-  11-15: VIBEFID (Common → Rare → Epic → Legendary → Mythic)
-  16-20: AFCL (Common → Rare → Epic → Legendary → Mythic)
-  Then loops back to GM VBRS Common
+  For each collection:
+    - Common boss (lowest HP)
+    - Rare boss
+    - Epic boss
+    - Legendary boss
+    - Mythic boss (highest HP)
+  Then loops back to the first collection's Common boss
+
+  Note: Collections can be added/removed via BOSS_ROTATION config in convex/collections.ts
   ```
 - **Boss Cards Source**: Use JC's NFTs from `JC_CONTRACT_ADDRESS` (same as PvE difficulty system)
   - Filter by collection and rarity
@@ -350,29 +354,21 @@ export const processRaidAttacks = mutation(async (ctx) => {
 #### 4. Card Selection (`convex/raidBoss.ts`)
 
 ```typescript
-// Boss rotation logic
-const BOSS_ROTATION = [
-  { collection: 'gmvbrs', rarity: 'Common' },
-  { collection: 'gmvbrs', rarity: 'Rare' },
-  { collection: 'gmvbrs', rarity: 'Epic' },
-  { collection: 'gmvbrs', rarity: 'Legendary' },
-  { collection: 'gmvbrs', rarity: 'Mythic' },
-  { collection: 'vibe', rarity: 'Common' },
-  { collection: 'vibe', rarity: 'Rare' },
-  { collection: 'vibe', rarity: 'Epic' },
-  { collection: 'vibe', rarity: 'Legendary' },
-  { collection: 'vibe', rarity: 'Mythic' },
-  { collection: 'vibefid', rarity: 'Common' },
-  { collection: 'vibefid', rarity: 'Rare' },
-  { collection: 'vibefid', rarity: 'Epic' },
-  { collection: 'vibefid', rarity: 'Legendary' },
-  { collection: 'vibefid', rarity: 'Mythic' },
-  { collection: 'americanfootball', rarity: 'Common' },
-  { collection: 'americanfootball', rarity: 'Rare' },
-  { collection: 'americanfootball', rarity: 'Epic' },
-  { collection: 'americanfootball', rarity: 'Legendary' },
-  { collection: 'americanfootball', rarity: 'Mythic' },
-];
+// Boss rotation logic - automatically generated from COLLECTIONS config
+// See convex/collections.ts for the current list of supported collections
+// Each collection cycles through all 5 rarities before moving to the next
+
+import { BOSS_ROTATION } from './collections';
+
+// The rotation is dynamically generated:
+// BOSS_ROTATION = COLLECTIONS.flatMap(collection =>
+//   ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'].map(rarity => ({
+//     collection: collection.id,
+//     rarity
+//   }))
+// );
+//
+// This allows adding new collections without changing the rotation logic
 
 // Get next boss in rotation
 export const getNextBossConfig = query(async (ctx) => {
@@ -380,8 +376,8 @@ export const getNextBossConfig = query(async (ctx) => {
   const allBosses = await ctx.db.query("raidBosses").collect();
   const defeatedCount = allBosses.filter(b => b.status === "defeated").length;
 
-  // Rotation index (loops every 20 bosses)
-  const rotationIndex = defeatedCount % 20;
+  // Rotation index (loops through all collections * 5 rarities)
+  const rotationIndex = defeatedCount % BOSS_ROTATION.length;
 
   return BOSS_ROTATION[rotationIndex];
 });

@@ -13,6 +13,8 @@ import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { filterCardsByCollections, COLLECTIONS, type CollectionId, type Card, type CardRarity, type CardFoil } from '@/lib/collections/index';
+import { useBodyScrollLock, useEscapeKey } from '@/hooks';
+import { Z_INDEX } from '@/lib/z-index';
 
 interface PvPPreviewData {
   // Define based on your API response
@@ -132,6 +134,18 @@ export function AttackCardSelectionModal({
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const CARDS_PER_PAGE = 50;
+
+  // Modal close handler (defined early for ESC key hook)
+  const closeModal = () => {
+    if (soundEnabled) AudioManager.buttonNav();
+    setShowAttackCardSelection(false);
+    setAttackSelectedCards([]);
+    setTargetPlayer(null);
+  };
+
+  // Modal accessibility hooks
+  useBodyScrollLock(showAttackCardSelection && !!targetPlayer);
+  useEscapeKey(closeModal, showAttackCardSelection && !!targetPlayer);
 
   // Apply collection filter
   const filteredCards = useMemo(() => {
@@ -374,16 +388,12 @@ export function AttackCardSelectionModal({
     }, 4500);
   };
 
-  const handleCancel = () => {
-    if (soundEnabled) AudioManager.buttonNav();
-    setShowAttackCardSelection(false);
-    setAttackSelectedCards([]);
-    setTargetPlayer(null);
-  };
+  const handleCancel = closeModal;
 
   return (
     <div
-      className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4"
+      className="fixed inset-0 bg-black/90 flex items-center justify-center p-4"
+      style={{ zIndex: Z_INDEX.modal }}
       onClick={handleCancel}
     >
       <div

@@ -7,6 +7,17 @@
 import { ConvexProfileService } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { SupportedLanguage } from '@/lib/translations';
+
+const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string }[] = [
+  { value: 'en', label: 'English', flag: '🇺🇸' },
+  { value: 'pt-BR', label: 'Português', flag: '🇧🇷' },
+  { value: 'es', label: 'Español', flag: '🇪🇸' },
+  { value: 'hi', label: 'हिन्दी', flag: '🇮🇳' },
+  { value: 'ru', label: 'Русский', flag: '🇷🇺' },
+  { value: 'zh-CN', label: '中文', flag: '🇨🇳' },
+];
 
 interface CreateProfileModalProps {
   isOpen: boolean;
@@ -35,6 +46,8 @@ export function CreateProfileModal({
   soundEnabled,
   t,
 }: CreateProfileModalProps) {
+  const { lang, setLang } = useLanguage();
+
   if (!isOpen) return null;
 
   const handleCreateProfile = async () => {
@@ -109,6 +122,35 @@ export function CreateProfileModal({
             <p className="text-xs text-gray-500 mt-1">
               ※ {t('twitterHint')}
             </p>
+          </div>
+
+          {/* Language Selector */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">
+              {t('language')}
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {LANGUAGE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setLang(option.value);
+                    if (soundEnabled) AudioManager.buttonNav();
+                  }}
+                  className={`
+                    flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all
+                    ${lang === option.value
+                      ? 'border-vintage-gold bg-vintage-gold/20 text-vintage-gold'
+                      : 'border-vintage-gold/30 bg-vintage-charcoal text-gray-400 hover:border-vintage-gold/50 hover:text-gray-300'
+                    }
+                  `}
+                >
+                  <span className="text-xl mb-1">{option.flag}</span>
+                  <span className="text-xs font-modern">{option.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <button
