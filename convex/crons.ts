@@ -123,4 +123,17 @@ crons.interval(
   internal.raidBoss.processAutoAttacks
 );
 
+/**
+ * ⚡ Send low energy notifications for raid boss cards
+ *
+ * Schedule: Every hour (at minute 30)
+ * Logic: Check all players' raid decks for cards with <1 hour energy remaining
+ * Target: Players with low/expired energy cards who have notifications enabled
+ */
+crons.hourly(
+  "raid boss low energy notifications",
+  { minuteUTC: 30 },
+  internal.notifications.sendLowEnergyNotifications
+);
+
 export default crons;
