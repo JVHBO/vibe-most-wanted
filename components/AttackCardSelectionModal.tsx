@@ -12,7 +12,7 @@ import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { filterCardsByCollections, COLLECTIONS, type CollectionId, type Card, type CardRarity, type CardFoil } from '@/lib/collections/index';
+import { filterCardsByCollections, COLLECTIONS, getEnabledCollections, type CollectionId, type Card, type CardRarity, type CardFoil } from '@/lib/collections/index';
 import { useBodyScrollLock, useEscapeKey } from '@/hooks';
 import { Z_INDEX } from '@/lib/z-index';
 
@@ -428,10 +428,9 @@ export function AttackCardSelectionModal({
             className="px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
           >
             <option value="all">All Collections</option>
-            <option value="vibe">VBMS</option>
-            <option value="vibefid">VIBEFID</option>
-            <option value="americanfootball">AFCL</option>
-            <option value="gmvbrs">VBRS</option>
+            {getEnabledCollections().map(col => (
+              <option key={col.id} value={col.id}>{col.displayName}</option>
+            ))}
           </select>
 
           <button
