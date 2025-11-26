@@ -819,7 +819,7 @@ export const defeatBossAndSpawnNext = mutation({
     await ctx.db.delete(defeatedBoss._id);
 
     // Spawn next boss
-    const nextBossIndex = (defeatedBoss.bossIndex + 1) % 20; // Loop through 20 bosses
+    const nextBossIndex = (defeatedBoss.bossIndex + 1) % 50; // Loop through 50 bosses
     const nextBossCard = getCurrentBoss(nextBossIndex);
 
     if (!nextBossCard) {
