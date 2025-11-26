@@ -97,6 +97,7 @@ export interface UserProfile {
   twitterProfileImageUrl?: string;
   fid?: string;
   farcasterFid?: number;
+  farcasterPfpUrl?: string;
   userIndex?: number;
   createdAt: number;
   lastUpdated: number;
@@ -445,12 +446,13 @@ export class ConvexProfileService {
         });
       }
 
-      // Handle FID (Farcaster ID) update
-      if (updates.fid) {
+      // Handle FID (Farcaster ID) and pfpUrl update
+      if (updates.fid || updates.farcasterPfpUrl) {
         await getConvex().mutation(api.profiles.upsertProfile, {
           address: normalizedAddress,
           username: profile.username,
           fid: updates.fid,
+          farcasterPfpUrl: updates.farcasterPfpUrl,
         });
       }
     } catch (error: any) {
