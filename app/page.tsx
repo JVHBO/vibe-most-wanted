@@ -69,15 +69,20 @@ const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 // ✅ Image caching moved to lib/nft/fetcher.ts
 
 // 🎨 Avatar URL helper - Uses real Twitter profile pic when available, DiceBear as fallback
-const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterProfileImageUrl?: string }): string | null => {
+const getAvatarUrl = (profileData?: string | null | { twitter?: string; twitterProfileImageUrl?: string; farcasterPfpUrl?: string }): string | null => {
   // Handle different input types
-  if (!twitterData) return null;
+  if (!profileData) return null;
 
-  // If it's an object with profile image URL, use that (real Twitter photo)
-  if (typeof twitterData === 'object' && twitterData.twitterProfileImageUrl) {
+  // Priority 1: Farcaster PFP (if available)
+  if (typeof profileData === 'object' && profileData.farcasterPfpUrl) {
+    return profileData.farcasterPfpUrl;
+  }
+
+  // Priority 2: Twitter profile image (real Twitter photo)
+  if (typeof profileData === 'object' && profileData.twitterProfileImageUrl) {
     // IMPORTANT: Only use real Twitter CDN URLs (pbs.twimg.com)
     // Skip unavatar.io URLs as the service is unreliable (frequent 503 errors)
-    const profileImageUrl = twitterData.twitterProfileImageUrl;
+    const profileImageUrl = profileData.twitterProfileImageUrl;
     if (profileImageUrl.includes('pbs.twimg.com')) {
       // Twitter returns "_normal" size (48x48), replace with "_400x400" for better quality
       return profileImageUrl.replace('_normal', '_400x400');
@@ -86,7 +91,7 @@ const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterP
   }
 
   // Fall back to DiceBear generated avatar
-  const twitter = typeof twitterData === 'string' ? twitterData : twitterData?.twitter;
+  const twitter = typeof profileData === 'string' ? profileData : profileData?.twitter;
   if (!twitter) return null;
   const username = twitter.replace('@', '');
   return `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}&backgroundColor=1a1414`;
@@ -351,18 +356,25 @@ export default function TCGPage() {
       console.log('[Farcaster] 💾 Saving address to localStorage:', wagmiAddress);
       localStorage.setItem('connectedAddress', wagmiAddress.toLowerCase());
 
-      // Save FID to profile
+      // Save FID and pfpUrl to profile
       try {
         const context = await sdk?.context;
         const fid = context?.user?.fid;
+        const pfpUrl = context?.user?.pfpUrl;
         if (fid) {
-          devLog('📱 Saving FID to profile:', fid);
+          devLog('📱 Saving FID to profile:', fid, 'pfpUrl:', pfpUrl);
           const profile = await ConvexProfileService.getProfile(wagmiAddress);
-          if (profile && (!profile.fid || profile.fid !== fid.toString())) {
+          const needsUpdate = profile && (
+            !profile.fid ||
+            profile.fid !== fid.toString() ||
+            (pfpUrl && profile.farcasterPfpUrl !== pfpUrl)
+          );
+          if (needsUpdate) {
             await ConvexProfileService.updateProfile(wagmiAddress, {
-              fid: fid.toString()
+              fid: fid.toString(),
+              farcasterPfpUrl: pfpUrl || undefined,
             });
-            devLog('✓ FID saved to profile');
+            devLog('✓ FID and pfpUrl saved to profile');
           }
         }
       } catch (error) {
@@ -1686,7 +1698,7 @@ export default function TCGPage() {
     setBattlePlayerName(userProfile?.username || 'You'); // Show player username
     setBattleOpponentPfp(`/images/mecha-george-floyd.jpg?v=${Date.now()}`); // Mecha George pfp with cache bust
     // Player pfp from Twitter if available (same logic as profile/home)
-    setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl } : null));
+    setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl, farcasterPfpUrl: userProfile.farcasterPfpUrl } : null));
     setShowLossPopup(false);
     setShowWinPopup(false);
     setResult('');
@@ -2397,7 +2409,7 @@ export default function TCGPage() {
             // Opponent pfp from Twitter if available
             setBattleOpponentPfp(getAvatarUrl(opponentTwitter));
             // Player pfp from Twitter if available
-            setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl } : null));
+            setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl, farcasterPfpUrl: userProfile.farcasterPfpUrl } : null));
             setShowLossPopup(false);
             setShowWinPopup(false);
             setResult('');
@@ -3791,7 +3803,7 @@ export default function TCGPage() {
                     setBattleOpponentName(targetPlayer.username);
                     setBattlePlayerName(userProfile?.username || 'You');
                     setBattleOpponentPfp(getAvatarUrl(targetPlayer.twitter));
-                    setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl } : null));
+                    setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl, farcasterPfpUrl: userProfile.farcasterPfpUrl } : null));
                     setShowAttackCardSelection(false);
                     setIsBattling(true);
                     setShowBattleScreen(true);
