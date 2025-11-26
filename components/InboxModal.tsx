@@ -296,7 +296,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-vintage-deep-black/50 hover:bg-vintage-gold/20 text-vintage-gold/60 hover:text-vintage-gold transition-all"
+          className="absolute top-2 right-2 z-10 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-vintage-deep-black/50 hover:bg-vintage-gold/20 text-vintage-gold/60 hover:text-vintage-gold transition-all"
         >
           ✕
         </button>

@@ -159,6 +159,7 @@ export default function DifficultyModal({
                   className="relative w-full md:w-auto"
                   onMouseEnter={() => isUnlocked && setHoveredDiff(diff)}
                   onMouseLeave={() => setHoveredDiff(null)}
+                  onTouchStart={() => isUnlocked && setHoveredDiff(hoveredDiff === diff ? null : diff)}
                 >
                   {/* Card */}
                   <button
@@ -208,16 +209,16 @@ export default function DifficultyModal({
                       </div>
                     )}
 
-                    {/* Info Overlay (appears on hover or when selected) */}
+                    {/* Info Overlay (appears on hover, touch, or when selected) */}
                     {isUnlocked && (isHovered || isSelected) && (
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col justify-end p-2 lg:p-4 z-50">
-                        <div className="text-vintage-gold text-[10px] lg:text-base font-bold mb-0.5 lg:mb-1 font-display uppercase tracking-wide">
+                        <div className="text-vintage-gold text-xs lg:text-base font-bold mb-0.5 lg:mb-1 font-display uppercase tracking-wide">
                           {info.name}
                         </div>
-                        <div className="text-vintage-neon-blue text-[8px] lg:text-xs mb-0.5 lg:mb-2 font-modern font-bold">
+                        <div className="text-vintage-neon-blue text-[10px] lg:text-xs mb-0.5 lg:mb-2 font-modern font-bold">
                           POWER: {info.power}
                         </div>
-                        <div className="text-white text-[8px] lg:text-xs font-modern">
+                        <div className="text-white text-[10px] lg:text-xs font-modern">
                           {info.description}
                         </div>
                       </div>

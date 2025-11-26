@@ -72,7 +72,7 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold"
+          className="absolute top-2 right-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-10 h-10 min-w-[44px] min-h-[44px] flex items-center justify-center text-xl font-bold"
         >
           ×
         </button>
