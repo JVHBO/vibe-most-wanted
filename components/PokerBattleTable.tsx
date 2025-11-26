@@ -3069,6 +3069,7 @@ export function PokerBattleTable({
             console.log('👁️ Joined as free spectator');
             setSpectatorType('free');
             setIsSpectatorMode(true);
+            setHasBettingCredits(true); // Set to true to prevent modal from reopening
             setShowSpectatorEntryModal(false);
           }}
           battleId={roomId}
