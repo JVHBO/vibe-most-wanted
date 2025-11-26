@@ -83,26 +83,26 @@ crons.interval(
 /**
  * 📬 Send daily login reminder to all users
  *
- * Schedule: Every day at 04:00 UTC (01:00 BRT)
+ * Schedule: Every day at 13:00 UTC (10:00 BRT)
  * Content: "💰 Daily Login Bonus! Claim your free coins!"
  * Target: All users with notification tokens enabled
  */
 crons.daily(
   "send daily login reminder",
-  { hourUTC: 4, minuteUTC: 5 },
+  { hourUTC: 13, minuteUTC: 0 },
   internal.notifications.sendDailyLoginReminder
 );
 
 /**
  * 💡 Send periodic gaming tips to all users
  *
- * Schedule: Every 12 hours (00:00 and 12:00 UTC)
- * Content: Rotates through gaming tips array (including real $VBMS announcement)
+ * Schedule: Every day at 21:00 UTC (18:00 BRT)
+ * Content: Rotates through gaming tips array
  * Target: All users with notification tokens enabled
  */
-crons.interval(
+crons.daily(
   "send periodic gaming tips",
-  { hours: 12 },
+  { hourUTC: 21, minuteUTC: 0 },
   internal.notifications.sendPeriodicTip
 );
 

@@ -48,6 +48,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 7. MEOWVERSE Rare
   'poorlydrawnpepes',           // 8. POORLYDRAWNPEPES Epic
   'teampothead',           // 9. TEAMPOTHEAD Legendary
+  'tarot',           // 10. TAROT Mythic
   'gmvbrs',           // 11. GMVBRS Rare
   'vibe',           // 12. VIBE Epic
   'vibefid',           // 13. VIBEFID Legendary
@@ -57,6 +58,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 17. MEOWVERSE Epic
   'poorlydrawnpepes',           // 18. POORLYDRAWNPEPES Legendary
   'teampothead',           // 19. TEAMPOTHEAD Mythic
+  'tarot',           // 20. TAROT Common
   'gmvbrs',           // 21. GMVBRS Epic
   'vibe',           // 22. VIBE Legendary
   'vibefid',           // 23. VIBEFID Mythic
@@ -66,6 +68,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 27. MEOWVERSE Legendary
   'poorlydrawnpepes',           // 28. POORLYDRAWNPEPES Mythic
   'teampothead',           // 29. TEAMPOTHEAD Common
+  'tarot',           // 30. TAROT Rare
   'gmvbrs',           // 31. GMVBRS Legendary
   'vibe',           // 32. VIBE Mythic
   'vibefid',           // 33. VIBEFID Common
@@ -75,6 +78,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 37. MEOWVERSE Mythic
   'poorlydrawnpepes',           // 38. POORLYDRAWNPEPES Common
   'teampothead',           // 39. TEAMPOTHEAD Rare
+  'tarot',           // 40. TAROT Epic
   'gmvbrs',           // 41. GMVBRS Mythic
   'vibe',           // 42. VIBE Common
   'vibefid',           // 43. VIBEFID Rare
@@ -84,6 +88,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'meowverse',           // 47. MEOWVERSE Common
   'poorlydrawnpepes',           // 48. POORLYDRAWNPEPES Rare
   'teampothead',           // 49. TEAMPOTHEAD Epic
+  'tarot',           // 50. TAROT Legendary
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
@@ -96,7 +101,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Rare',    // 7. MEOWVERSE
   'Epic',    // 8. POORLYDRAWNPEPES
   'Legendary',    // 9. TEAMPOTHEAD
-  'Mythic',    // 10. BASEBALLCABAL
+  'Mythic',    // 10. TAROT
   'Rare',    // 11. GMVBRS
   'Epic',    // 12. VIBE
   'Legendary',    // 13. VIBEFID
@@ -106,7 +111,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Epic',    // 17. MEOWVERSE
   'Legendary',    // 18. POORLYDRAWNPEPES
   'Mythic',    // 19. TEAMPOTHEAD
-  'Common',    // 20. BASEBALLCABAL
+  'Common',    // 20. TAROT
   'Epic',    // 21. GMVBRS
   'Legendary',    // 22. VIBE
   'Mythic',    // 23. VIBEFID
@@ -116,7 +121,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Legendary',    // 27. MEOWVERSE
   'Mythic',    // 28. POORLYDRAWNPEPES
   'Common',    // 29. TEAMPOTHEAD
-  'Rare',    // 30. BASEBALLCABAL
+  'Rare',    // 30. TAROT
   'Legendary',    // 31. GMVBRS
   'Mythic',    // 32. VIBE
   'Common',    // 33. VIBEFID
@@ -126,7 +131,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Mythic',    // 37. MEOWVERSE
   'Common',    // 38. POORLYDRAWNPEPES
   'Rare',    // 39. TEAMPOTHEAD
-  'Epic',    // 40. BASEBALLCABAL
+  'Epic',    // 40. TAROT
   'Mythic',    // 41. GMVBRS
   'Common',    // 42. VIBE
   'Rare',    // 43. VIBEFID
@@ -136,7 +141,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Common',    // 47. MEOWVERSE
   'Rare',    // 48. POORLYDRAWNPEPES
   'Epic',    // 49. TEAMPOTHEAD
-  'Legendary',    // 50. BASEBALLCABAL
+  'Legendary',    // 50. TAROT
 ];
 
 /**
@@ -661,6 +666,63 @@ export const TEAMPOTHEAD_BOSSES: Record<CardRarity, BossCard> = {
 
 
 
+
+/**
+ * Tarot Boss Cards
+ */
+export const TAROT_BOSSES: Record<CardRarity, BossCard> = {
+  Common: {
+    tokenId: '2274',
+    collection: 'tarot',
+    name: 'Feet Juggler',
+    rarity: 'Common',
+    power: 15,
+    imageUrl: '/images/raid-bosses/tarot/common.png',
+    hp: BOSS_HP_BY_RARITY.common,
+    description: 'A playful performer looping enchanted feet through the air with impossible precision',
+  },
+  Rare: {
+    tokenId: '2275',
+    collection: 'tarot',
+    name: 'The Ink',
+    rarity: 'Rare',
+    power: 20,
+    imageUrl: '/images/raid-bosses/tarot/rare.png',
+    hp: BOSS_HP_BY_RARITY.rare,
+    description: 'A hooded figure holding a glowing tablet, blending art and mystery by the water’s edge',
+  },
+  Epic: {
+    tokenId: '2276',
+    collection: 'tarot',
+    name: 'Computer Historian',
+    rarity: 'Epic',
+    power: 80,
+    imageUrl: '/images/raid-bosses/tarot/epic.png',
+    hp: BOSS_HP_BY_RARITY.epic,
+    description: 'A quirky scholar stacked with glowing screens, preserving the digital tales of every era',
+  },
+  Legendary: {
+    tokenId: '2277',
+    collection: 'tarot',
+    name: 'New God',
+    rarity: 'Legendary',
+    power: 240,
+    imageUrl: '/images/raid-bosses/tarot/legendary.png',
+    hp: BOSS_HP_BY_RARITY.legendary,
+    description: 'A serene blue entity sits between two ancient pillars, radiating quiet, mysterious power',
+  },
+  Mythic: {
+    tokenId: '2278',
+    collection: 'tarot',
+    name: 'The Builders',
+    rarity: 'Mythic',
+    power: 800,
+    imageUrl: '/images/raid-bosses/tarot/mythic.png',
+    hp: BOSS_HP_BY_RARITY.mythic,
+    description: 'Guided by a radiant winged figure, two creators stand ready to shape a new world',
+  },
+};
+
 /**
  * All Boss Cards organized by collection
  */
@@ -680,7 +742,8 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
 
 
 
-  teampothead: TEAMPOTHEAD_BOSSES,  custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
+  teampothead: TEAMPOTHEAD_BOSSES,  tarot: TAROT_BOSSES,
+  custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
 };
 
 /**
@@ -695,7 +758,7 @@ export function getBossCard(collection: CollectionId, rarity: CardRarity): BossC
  * @param bossIndex - Current boss index (0-24)
  */
 export function getCurrentBoss(bossIndex: number): BossCard | undefined {
-  const normalizedIndex = bossIndex % 25; // Loop through 30 bosses
+  const normalizedIndex = bossIndex % 50; // Loop through 30 bosses
   const collection = BOSS_ROTATION_ORDER[normalizedIndex];
   const rarity = BOSS_RARITY_ORDER[normalizedIndex];
 
@@ -720,7 +783,7 @@ export function getPreviousBoss(currentBossIndex: number): BossCard | undefined 
  * Get boss rotation info
  */
 export function getBossRotationInfo(bossIndex: number) {
-  const normalizedIndex = bossIndex % 25;
+  const normalizedIndex = bossIndex % 50;
   return {
     index: normalizedIndex,
     collection: BOSS_ROTATION_ORDER[normalizedIndex],
