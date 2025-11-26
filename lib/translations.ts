@@ -1122,7 +1122,6 @@ export const translations = {
     saveLaterDesc: 'इनबॉक्स में जाता है',
     saveLaterExplain: 'सिक्के आपके इनबॉक्स में जाते हैं जब चाहें प्राप्त करें',
     decideLater: 'बाद में तय करें',
-    connectTwitter: 'X कनेक्ट करें',
     // Raid Boss translations
     raidBossTitle: 'रेड बॉस',
     raidBossSubtitle: 'ग्लोबल कोऑपरेटिव बैटल',
