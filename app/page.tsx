@@ -4974,7 +4974,7 @@ export default function TCGPage() {
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-2xl">♠</span>
-                      Poker Mode
+                      Poker Battle
                     </span>
                     <span className="text-xl">{modeMenuOpen === 'poker' ? '▼' : '▶'}</span>
                   </button>
