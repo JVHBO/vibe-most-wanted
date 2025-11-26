@@ -333,8 +333,8 @@ function sleep(ms: number) {
 
 const GAMING_TIPS = [
   {
-    title: "🚀 Coming Soon: Real $VBMS!",
-    body: "Get ready! Real $VBMS tokens are coming to Vibe Most Wanted! Keep playing to maximize your rewards! 💰"
+    title: "💰 Real $VBMS is LIVE!",
+    body: "Earn real $VBMS tokens playing Vibe Most Wanted! Win battles, defeat bosses, and stack your rewards! 🚀"
   },
   {
     title: "💡 VIBE Most Wanted Tip",
@@ -353,8 +353,8 @@ const GAMING_TIPS = [
     body: "Open more packs to get stronger cards! Higher power = more wins = more coins! 💰"
   },
   {
-    title: "🎮 PvP Master Tip",
-    body: "Challenge other players in PvP rooms for epic battles! Win or lose, you always earn coins! 🏆"
+    title: "🎮 Poker Battle Tip",
+    body: "Challenge players in Poker Battles! Bet your $VBMS and prove you are the best card shark! 🃏"
   },
   {
     title: "💎 Daily Rewards",
@@ -367,6 +367,10 @@ const GAMING_TIPS = [
   {
     title: "🎵 Music Easter Egg",
     body: "Switch languages to discover different music tracks! Each language has its own vibe! 🌍"
+  },
+  {
+    title: "🆔 Mint Your VibeFID!",
+    body: "Get a unique card linked to your Farcaster with special buffs! Mint your VibeFID now! ⚡"
   },
 ];
 

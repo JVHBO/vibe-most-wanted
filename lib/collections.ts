@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -241,6 +241,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
+
+    // Collection Tarot
+  tarot: {
+    id: 'tarot',
+    name: 'tarot',
+    displayName: 'Tarot',
+    description: 'Collection Tarot NFT',
+    contractAddress: '0x34d639c63384a00a2d25a58f73bea73856aa0550',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY TRT PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
 
   // Template para nova coleÃ§Ã£o customizada
   custom: {
