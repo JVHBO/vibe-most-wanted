@@ -75,9 +75,10 @@ export function CardReplacementModal({
     return { power, buffPercent, buffType };
   };
 
-  // Sort available cards
+  // Filter out VibeFID cards (they are special 6th slot only) and sort
   const sortedCards = useMemo(() => {
-    return sortCardsByPower(availableCards, !sortByPower); // ascending when sortByPower is false
+    const filteredCards = availableCards.filter(card => card.collection !== 'vibefid');
+    return sortCardsByPower(filteredCards, !sortByPower); // ascending when sortByPower is false
   }, [availableCards, sortByPower]);
 
   // Calculate replacement cost for selected card
