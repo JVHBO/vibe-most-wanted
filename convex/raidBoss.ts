@@ -318,6 +318,19 @@ export const replaceCard = mutation({
       throw new Error("Card not found in deck");
     }
 
+    // 🔒 SECURITY: Check if new card is already in the deck (prevent duplicates)
+    const isDuplicateInDeck = raidDeck.deck.some(
+      (c, idx) => c.tokenId === args.newCard.tokenId && idx !== cardIndex
+    );
+    if (isDuplicateInDeck) {
+      throw new Error("This card is already in your raid deck. Cannot have duplicate cards.");
+    }
+
+    // Also check VibeFID slot for duplicates
+    if (raidDeck.vibefidCard && raidDeck.vibefidCard.tokenId === args.newCard.tokenId) {
+      throw new Error("This card is already in your raid deck (VibeFID slot). Cannot have duplicate cards.");
+    }
+
     const now = Date.now();
 
     // Calculate cost based on new card rarity
@@ -397,6 +410,18 @@ export const setRaidDeck = mutation({
     // Validate deck size (5 regular, optionally +1 VibeFID)
     if (args.deck.length !== 5) {
       throw new Error("Raid deck must contain exactly 5 cards");
+    }
+
+    // 🔒 SECURITY: Check for duplicate cards in deck
+    const tokenIds = args.deck.map(c => c.tokenId);
+    const uniqueTokenIds = new Set(tokenIds);
+    if (uniqueTokenIds.size !== tokenIds.length) {
+      throw new Error("Deck cannot contain duplicate cards");
+    }
+
+    // Check if VibeFID card is duplicate of any deck card
+    if (args.vibefidCard && tokenIds.includes(args.vibefidCard.tokenId)) {
+      throw new Error("VibeFID card cannot be duplicate of deck cards");
     }
 
     const now = Date.now();
@@ -696,15 +721,18 @@ export const processAutoAttacks = mutation({
     });
 
     // Check if boss is defeated
-    if (newHp <= 0) {
-      // Mark boss as defeated
+    if (newHp <= 0 && boss.status === "active") {
+      // 🔒 SECURITY: Mark boss as "transitioning" FIRST to prevent race conditions
+      // This prevents multiple defeat processing if cron runs again quickly
       await ctx.db.patch(boss._id, {
-        status: "defeated",
+        status: "transitioning", // Intermediate status to prevent double-processing
         defeatedAt: now,
       });
 
-      // Trigger boss transition (will spawn next boss)
-      // This will be handled by a separate function
+      console.log(`🐉 Boss ${boss.name} defeated! Transitioning to next boss...`);
+
+      // Trigger boss transition (will spawn next boss and change status to "defeated")
+      // Schedule immediate processing of rewards and next boss spawn
     }
 
     return {
@@ -725,11 +753,19 @@ export const defeatBossAndSpawnNext = mutation({
   handler: async (ctx) => {
     const now = Date.now();
 
-    // Get defeated boss
-    const defeatedBoss = await ctx.db
+    // Get transitioning or defeated boss
+    let defeatedBoss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "defeated"))
+      .filter((q) => q.eq(q.field("status"), "transitioning"))
       .first();
+
+    // Fallback to "defeated" status for backward compatibility
+    if (!defeatedBoss) {
+      defeatedBoss = await ctx.db
+        .query("raidBoss")
+        .filter((q) => q.eq(q.field("status"), "defeated"))
+        .first();
+    }
 
     if (!defeatedBoss) {
       return { success: false, message: "No defeated boss found" };
