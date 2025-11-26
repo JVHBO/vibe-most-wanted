@@ -14,6 +14,8 @@ import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import Image from "next/image";
 import Link from "next/link";
+import { useBodyScrollLock, useEscapeKey } from "@/hooks";
+import { Z_INDEX } from "@/lib/z-index";
 
 const NextImage = Image;
 
@@ -34,6 +36,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+
+  // Modal accessibility hooks
+  useBodyScrollLock(true);
+  useEscapeKey(onClose);
 
   // Check if we should use Farcaster SDK for transactions
   useEffect(() => {
@@ -198,7 +204,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      style={{ zIndex: Z_INDEX.modal }}
       onClick={onClose}
     >
       <div
