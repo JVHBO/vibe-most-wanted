@@ -86,6 +86,9 @@ export function RaidBossModal({
   const [bossIsHit, setBossIsHit] = useState(false);
   const [attackingCardIndex, setAttackingCardIndex] = useState<number | null>(null);
 
+  // Energy bar update ticker (forces re-render every minute for smooth energy updates)
+  const [energyTick, setEnergyTick] = useState(0);
+
   // Web3 hooks
   const { address: walletAddress } = useAccount();
   const effectiveAddress = (userAddress || walletAddress) as `0x${string}` | undefined;
@@ -169,6 +172,17 @@ export function RaidBossModal({
 
     return () => clearInterval(interval);
   }, [playerDeck]);
+
+  // Update energy bars every 60 seconds for smooth visual updates (local re-render only, no Convex calls)
+  useEffect(() => {
+    if (!playerDeck?.cardEnergy || !isOpen) return;
+
+    const energyInterval = setInterval(() => {
+      setEnergyTick(prev => prev + 1);
+    }, 60000); // Update every 60 seconds
+
+    return () => clearInterval(energyInterval);
+  }, [playerDeck, isOpen]);
 
   // Visual attack animation system (attacks every 2-3 seconds)
   useEffect(() => {
@@ -862,12 +876,23 @@ export function RaidBossModal({
                     // Check if energy has expired (0 = infinite for VibeFID)
                     const hasEnergy = cardEnergy.energyExpiresAt === 0 || now < cardEnergy.energyExpiresAt;
 
-                    // Calculate energy percentage for progress bar
+                    // Energy duration by rarity (matches backend constants)
+                    const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
+                      common: 12 * 60 * 60 * 1000,      // 12 hours
+                      rare: 1 * 24 * 60 * 60 * 1000,    // 1 day
+                      epic: 2 * 24 * 60 * 60 * 1000,    // 2 days
+                      legendary: 4 * 24 * 60 * 60 * 1000, // 4 days
+                      mythic: 5 * 24 * 60 * 60 * 1000,  // 5 days
+                      vibefid: 0,                         // Infinite
+                    };
+
+                    // Calculate energy percentage using full rarity duration
                     let energyPercent = 100;
                     if (cardEnergy.energyExpiresAt !== 0) {
-                      const duration = cardEnergy.energyExpiresAt - (cardEnergy.lastAttackAt || now);
+                      const rarity = card.rarity?.toLowerCase() || 'common';
+                      const fullDuration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
                       const remaining = Math.max(0, cardEnergy.energyExpiresAt - now);
-                      energyPercent = duration > 0 ? (remaining / duration) * 100 : 0;
+                      energyPercent = fullDuration > 0 ? Math.min(100, (remaining / fullDuration) * 100) : 0;
                     }
 
                     // Check if card has collection buff (same collection as boss)
@@ -934,12 +959,41 @@ export function RaidBossModal({
                             </div>
                           )}
                         </div>
-                        {/* Energy Bar */}
-                        <div className="mt-1 h-1 bg-vintage-black rounded overflow-hidden">
-                          <div
-                            className={`h-full ${hasEnergy ? 'bg-green-500' : 'bg-red-500'}`}
-                            style={{ width: `${energyPercent}%` }}
-                          />
+                        {/* Energy Bar with gradient colors and time remaining */}
+                        <div className="mt-1">
+                          {/* Time remaining text */}
+                          {cardEnergy.energyExpiresAt !== 0 && hasEnergy && (
+                            <div className="text-[8px] text-center mb-0.5">
+                              <span className={`font-bold ${
+                                energyPercent > 50 ? 'text-green-400' :
+                                energyPercent > 25 ? 'text-yellow-400' :
+                                energyPercent > 10 ? 'text-orange-400' :
+                                'text-red-400 animate-pulse'
+                              }`}>
+                                {(() => {
+                                  const remaining = Math.max(0, cardEnergy.energyExpiresAt - now);
+                                  const hours = Math.floor(remaining / (60 * 60 * 1000));
+                                  const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+                                  if (hours > 0) return `${hours}h ${minutes}m`;
+                                  return `${minutes}m`;
+                                })()}
+                              </span>
+                            </div>
+                          )}
+                          {/* Progress bar */}
+                          <div className="h-2 bg-vintage-black rounded-full overflow-hidden border border-gray-600">
+                            <div
+                              className={`h-full transition-all duration-1000 ease-linear ${
+                                !hasEnergy ? 'bg-red-600' :
+                                energyPercent > 75 ? 'bg-gradient-to-r from-green-500 to-green-400' :
+                                energyPercent > 50 ? 'bg-gradient-to-r from-green-500 to-yellow-400' :
+                                energyPercent > 25 ? 'bg-gradient-to-r from-yellow-500 to-orange-400' :
+                                energyPercent > 10 ? 'bg-gradient-to-r from-orange-500 to-red-400' :
+                                'bg-gradient-to-r from-red-600 to-red-400 animate-pulse'
+                              }`}
+                              style={{ width: `${energyPercent}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
                     );
