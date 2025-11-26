@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useEscapeKey } from '@/hooks';
+import { Z_INDEX } from '@/lib/z-index';
 
 type Difficulty = 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad';
 
@@ -80,6 +82,9 @@ export default function DifficultyModal({
 
   const hasAttemptsLeft = remainingAttempts > 0;
 
+  // Modal accessibility hooks
+  useEscapeKey(onClose, isOpen);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -94,15 +99,15 @@ export default function DifficultyModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 p-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/95 p-4" style={{ zIndex: Z_INDEX.modal }}>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/95 z-[9990]"
+        className="fixed inset-0 bg-black/95"
         onClick={onClose}
       />
 
       {/* Content Container */}
-      <div className="relative z-[10000] w-full max-w-7xl mx-auto h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-7xl mx-auto h-[90vh] flex flex-col" style={{ zIndex: 1 }}>
         {/* Title */}
         <div className="mb-4 md:mb-6 flex-shrink-0">
           <h2 className="text-lg md:text-3xl font-bold text-vintage-gold font-display text-center drop-shadow-lg uppercase tracking-wider">
