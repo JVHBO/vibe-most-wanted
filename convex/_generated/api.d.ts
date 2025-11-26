@@ -14,6 +14,7 @@ import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as backup from "../backup.js";
 import type * as bettingCredits from "../bettingCredits.js";
+import type * as blockchainVerify from "../blockchainVerify.js";
 import type * as cardPacks from "../cardPacks.js";
 import type * as coinsInbox from "../coinsInbox.js";
 import type * as crons from "../crons.js";
@@ -71,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   backup: typeof backup;
   bettingCredits: typeof bettingCredits;
+  blockchainVerify: typeof blockchainVerify;
   cardPacks: typeof cardPacks;
   coinsInbox: typeof coinsInbox;
   crons: typeof crons;

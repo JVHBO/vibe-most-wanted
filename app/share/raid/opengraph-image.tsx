@@ -45,26 +45,6 @@ export default async function Image() {
     console.error('Failed to fetch raid boss data:', e);
   }
 
-  // Try to fetch the boss image directly (like VibeFID does)
-  try {
-    if (bossImageUrl) {
-      const imageResponse = await fetch(bossImageUrl);
-      if (imageResponse.ok) {
-        const imageBuffer = await imageResponse.arrayBuffer();
-        return new Response(imageBuffer, {
-          headers: {
-            'Content-Type': 'image/png',
-            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-          },
-        });
-      }
-    }
-  } catch (e) {
-    console.error('Failed to fetch boss image:', e);
-  }
-
-  // Fallback: Generate OG image with emoji
-
   // HP bar color based on percentage
   const getHpColor = (hp: number) => {
     if (hp > 50) return '#22c55e'; // green
@@ -109,7 +89,7 @@ export default async function Image() {
             gap: '40px',
           }}
         >
-          {/* Left Side - Boss Icon */}
+          {/* Left Side - Boss Image */}
           <div
             style={{
               display: 'flex',
@@ -119,14 +99,19 @@ export default async function Image() {
               flex: 1,
             }}
           >
-            <div
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={bossImageUrl}
+              alt={bossName}
+              width={400}
+              height={400}
               style={{
-                fontSize: '200px',
-                display: 'flex',
+                borderRadius: '24px',
+                border: '6px solid #dc2626',
+                boxShadow: '0 0 60px rgba(220, 38, 38, 0.6)',
+                objectFit: 'cover',
               }}
-            >
-              💀
-            </div>
+            />
           </div>
 
           {/* Right Side - Boss Info */}

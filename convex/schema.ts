@@ -645,6 +645,7 @@ export default defineSchema({
     timestamp: v.number(), // When entry fee was paid
     used: v.boolean(), // Whether this entry fee was used for a battle
     usedAt: v.optional(v.number()), // When it was used
+    verified: v.optional(v.boolean()), // Whether TX was verified on blockchain
   })
     .index("by_address", ["address"])
     .index("by_txHash", ["txHash"])

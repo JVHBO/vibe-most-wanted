@@ -1460,17 +1460,25 @@ export const recordAttackResult = mutation({
         }
       }
 
-      // Apply inbox debt to attacker (can go negative!)
+      // Apply inbox debt to attacker (NEVER allow negative inbox)
       if (inboxDebt > 0) {
         const currentInbox = profile.coinsInbox || 0;
-        const newInbox = currentInbox - inboxDebt;
+        const currentPoolDebt = profile.poolDebt || 0;
+
+        // 🔒 SECURITY FIX: Never allow negative inbox
+        // Deduct what we can from inbox, rest becomes pool debt
+        const inboxDeduction = Math.min(currentInbox, inboxDebt);
+        const newInbox = Math.max(0, currentInbox - inboxDebt);
+        const remainingDebt = inboxDebt - inboxDeduction;
+        const newPoolDebt = currentPoolDebt + remainingDebt;
 
         // Update attacker's inbox with debt
         await ctx.db.patch(profile._id, {
-          coinsInbox: newInbox, // Can be negative!
+          coinsInbox: newInbox,
+          poolDebt: newPoolDebt, // Track remaining debt separately
         });
 
-        console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (${coinsDeducted} from coins, ${inboxDebt} inbox debt). Inbox: ${currentInbox} → ${newInbox}`);
+        console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (${coinsDeducted} from coins, ${inboxDeduction} from inbox, ${remainingDebt} pool debt). Inbox: ${currentInbox} → ${newInbox}, Debt: ${currentPoolDebt} → ${newPoolDebt}`);
       } else {
         console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (all from coins)`);
       }
