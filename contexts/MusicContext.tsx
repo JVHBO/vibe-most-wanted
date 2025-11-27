@@ -26,6 +26,8 @@ interface MusicContextType {
   setCurrentPlaylistIndex: (index: number) => void;
   skipToNext: () => void;
   skipToPrevious: () => void;
+  // Track info
+  currentTrackName: string | null;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -91,6 +93,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   // Playlist state
   const [playlist, setPlaylistState] = useState<string[]>([]);
   const [currentPlaylistIndex, setCurrentPlaylistIndexState] = useState(0);
+  const [currentTrackName, setCurrentTrackName] = useState<string | null>(null);
 
   // Audio references
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -503,6 +506,41 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, [volume, isMusicEnabled]);
 
   /**
+   * Remove invalid track from playlist and skip to next
+   */
+  const handleInvalidTrack = useCallback((failedIndex: number) => {
+    console.warn(`🚫 Removing invalid track at index ${failedIndex}`);
+    setPlaylistState(prev => {
+      const newList = prev.filter((_, i) => i !== failedIndex);
+      try {
+        localStorage.setItem('musicPlaylist', JSON.stringify(newList));
+      } catch (error) {
+        console.warn('localStorage not available');
+      }
+      if (newList.length === 0) {
+        setMusicModeState('default');
+        isPlaylistModeRef.current = false;
+        setCurrentTrackName(null);
+      } else {
+        const nextIndex = Math.min(failedIndex, newList.length - 1);
+        setCurrentPlaylistIndexState(nextIndex);
+      }
+      return newList;
+    });
+  }, []);
+
+  /**
+   * Extract a friendly name from URL
+   */
+  const getTrackNameFromUrl = useCallback((url: string): string => {
+    if (isYouTubeUrl(url)) {
+      return 'YouTube Music';
+    }
+    const filename = url.split('/').pop() || url;
+    return filename.replace(/\.(mp3|m4a|wav|ogg)$/i, '').replace(/[-_]/g, ' ');
+  }, []);
+
+  /**
    * Play track from playlist (with progression callback)
    */
   const playPlaylistTrack = useCallback((index: number) => {
@@ -511,13 +549,30 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const safeIndex = index % playlist.length;
     const trackUrl = playlist[safeIndex];
 
-    console.log(`🎵 Playing playlist track ${safeIndex + 1}/${playlist.length}: ${trackUrl}`);
+    // If this track is already playing, don't restart it
+    if (currentTrackRef.current === trackUrl && audioRef.current && !audioRef.current.paused) {
+      console.log(`🎵 Track already playing, skipping restart`);
+      setIsCustomMusicLoading(false);
+      return;
+    }
 
-    // Check if it's a YouTube URL - use YouTube IFrame API instead of Audio element
+    // For YouTube, check if same video is already playing
+    if (isYouTubeUrl(trackUrl)) {
+      const videoId = extractYouTubeId(trackUrl);
+      if (videoId && currentTrackRef.current === `youtube:${videoId}` && youtubePlayerRef.current) {
+        console.log(`🎵 YouTube track already playing, skipping restart`);
+        setIsCustomMusicLoading(false);
+        return;
+      }
+    }
+
+    console.log(`🎵 Playing playlist track ${safeIndex + 1}/${playlist.length}: ${trackUrl}`);
+    setCurrentTrackName(getTrackNameFromUrl(trackUrl));
+
+    // Check if it's a YouTube URL
     if (isYouTubeUrl(trackUrl)) {
       const videoId = extractYouTubeId(trackUrl);
       if (videoId) {
-        // Stop regular audio first
         if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current = null;
@@ -525,25 +580,66 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         playYouTubeAudio(videoId, volume);
         setIsCustomMusicLoading(false);
         return;
+      } else {
+        console.warn('🚫 Invalid YouTube URL, removing from playlist');
+        handleInvalidTrack(safeIndex);
+        return;
       }
     }
 
-    // For non-YouTube URLs, use direct audio playback
-    // For single track playlist, just loop
-    if (playlist.length === 1) {
-      loadAndFadeIn(trackUrl, volume, false); // Loop single track
-    } else {
-      // Multiple tracks: don't loop, play next on end
-      loadAndFadeIn(trackUrl, volume, true, () => {
-        // Play next track when this one ends
+    // For non-YouTube URLs
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      } catch (e) {}
+    }
+    stopYouTubePlayer();
+
+    const newAudio = new Audio(trackUrl);
+    newAudio.loop = playlist.length === 1;
+    newAudio.volume = 0;
+
+    if (playlist.length > 1) {
+      newAudio.onended = () => {
+        console.log('🎵 Playlist track ended, playing next...');
         const nextIndex = (safeIndex + 1) % playlist.length;
         setCurrentPlaylistIndexState(nextIndex);
-        // This will trigger the effect below to play the next track
-      });
+      };
     }
 
-    setIsCustomMusicLoading(false);
-  }, [playlist, volume, loadAndFadeIn, playYouTubeAudio]);
+    newAudio.onerror = () => {
+      console.warn(`🚫 Failed to load track: ${trackUrl}`);
+      setCustomMusicError(`Failed to load: ${trackUrl}`);
+      handleInvalidTrack(safeIndex);
+    };
+
+    newAudio.play().then(() => {
+      const fadeInSteps = 30;
+      const fadeInInterval = FADE_DURATION / fadeInSteps;
+      const volumeIncrement = volume / fadeInSteps;
+      let step = 0;
+      const fadeInTimer = setInterval(() => {
+        step++;
+        if (step >= fadeInSteps || !newAudio) {
+          clearInterval(fadeInTimer);
+          if (newAudio) newAudio.volume = volume;
+        } else {
+          newAudio.volume = Math.min(volume, newAudio.volume + volumeIncrement);
+        }
+      }, fadeInInterval);
+      setIsCustomMusicLoading(false);
+      setCustomMusicError(null);
+    }).catch(err => {
+      console.warn('⚠️ Failed to play playlist track:', err);
+      setCustomMusicError(`Failed to play: ${trackUrl}`);
+      handleInvalidTrack(safeIndex);
+    });
+
+    audioRef.current = newAudio;
+    currentTrackRef.current = trackUrl;
+  }, [playlist, volume, playYouTubeAudio, stopYouTubePlayer, handleInvalidTrack, getTrackNameFromUrl]);
 
   /**
    * Handle music mode or language changes
@@ -712,6 +808,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setCurrentPlaylistIndex,
       skipToNext,
       skipToPrevious,
+      currentTrackName,
     }}>
       {children}
     </MusicContext.Provider>
