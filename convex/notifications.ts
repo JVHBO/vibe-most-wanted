@@ -933,3 +933,127 @@ export const sendCustomNotification = action({
     }
   },
 });
+
+// ============================================================================
+// RAID BOSS DEFEATED NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Send notification to all contributors when a boss is defeated
+ * Called by defeatBossAndSpawnNext via scheduler
+ */
+/* @ts-ignore */
+export const sendBossDefeatedNotifications = internalAction({
+  args: {
+    bossName: v.string(),
+    bossRarity: v.string(),
+    totalContributors: v.number(),
+    contributorAddresses: v.array(v.string()),
+  },
+  // @ts-ignore
+  handler: async (ctx, { bossName, bossRarity, totalContributors, contributorAddresses }) => {
+    // Import api here to avoid circular reference
+    // @ts-ignore
+    const { api } = await import("./_generated/api");
+
+    try {
+      console.log("🐉 Sending boss defeated notifications for: " + bossName);
+
+      let sent = 0;
+      let failed = 0;
+      const DELAY_MS = 100;
+
+      // Send to all contributors
+      for (let i = 0; i < contributorAddresses.length; i++) {
+        const address = contributorAddresses[i];
+
+        try {
+          // Get player profile to find FID
+          const profile = await ctx.runQuery(api.notifications.getProfileByAddress, {
+            address,
+          });
+
+          if (!profile) {
+            console.log("⚠️ No profile found for " + address);
+            continue;
+          }
+
+          // Get FID (try both fields)
+          const fid = profile.fid || (profile.farcasterFid ? profile.farcasterFid.toString() : null);
+
+          if (!fid) {
+            console.log("⚠️ No FID found for " + address);
+            continue;
+          }
+
+          // Get notification token
+          const tokenData = await ctx.runQuery(api.notifications.getTokenByFid, { fid });
+
+          if (!tokenData) {
+            console.log("⚠️ No notification token for FID " + fid);
+            continue;
+          }
+
+          // Build notification message
+          const rarityEmojis: Record<string, string> = {
+            common: "⚪",
+            rare: "🔵",
+            epic: "🟣",
+            legendary: "🟡",
+            mythic: "🔴",
+          };
+          const rarityEmoji = rarityEmojis[bossRarity.toLowerCase()] || "⚫";
+
+          const notificationId = "boss_defeated_" + bossName + "_" + Date.now() + "_" + fid;
+          const title = "🎉 Boss Defeated!";
+          const body = rarityEmoji + " " + bossName + " was slain! Claim your reward now! 💰";
+
+          const payload = {
+            notificationId: notificationId.slice(0, 128),
+            title: title.slice(0, 32),
+            body: body.slice(0, 128),
+            tokens: [tokenData.token],
+            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
+          };
+
+          const response = await fetch(tokenData.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (!result.invalidTokens?.includes(tokenData.token) &&
+                !result.rateLimitedTokens?.includes(tokenData.token)) {
+              sent++;
+            } else {
+              failed++;
+            }
+          } else {
+            failed++;
+            console.error("❌ Failed for FID " + fid + ": " + response.status);
+          }
+
+        } catch (error) {
+          console.error("❌ Exception for " + address + ":", error);
+          failed++;
+        }
+
+        // Add delay between notifications
+        if (i < contributorAddresses.length - 1) {
+          await sleep(DELAY_MS);
+        }
+      }
+
+      console.log("📊 Boss defeated notifications: " + sent + " sent, " + failed + " failed out of " + totalContributors + " contributors");
+      return { sent, failed, total: totalContributors };
+
+    } catch (error: any) {
+      console.error("❌ Error in sendBossDefeatedNotifications:", error);
+      throw error;
+    }
+  },
+});
