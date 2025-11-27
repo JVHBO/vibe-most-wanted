@@ -1356,6 +1356,28 @@ export const getCpuVsCpuRooms = query({
 });
 
 /**
+ * Get available collections for CPU Arena
+ */
+export const getAvailableCollections = query({
+  args: {},
+  handler: async () => {
+    // Return all available collections
+    return [
+      "gmvbrs",
+      "vibe",
+      "coquettish",
+      "viberuto",
+      "meowverse",
+      "poorlydrawnpepes",
+      "teampothead",
+      "tarot",
+      "americanfootball",
+      "vibefid",
+    ];
+  },
+});
+
+/**
  * CPU makes a move (internal - called by scheduler)
  */
 export const cpuMakeMove = internalMutation({
