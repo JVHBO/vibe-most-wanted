@@ -196,24 +196,17 @@ export const getPendingReward = mutation({
 
 /**
  * Mark match as claimed after processing reward choice
- * SECURITY: Now requires address to verify ownership
  */
 export const markMatchAsClaimed = mutation({
   args: {
     matchId: v.id("matches"),
     claimType: v.union(v.literal("immediate"), v.literal("inbox")),
-    address: v.string(), // SECURITY: Required for ownership verification
   },
-  handler: async (ctx, { matchId, claimType, address }) => {
+  handler: async (ctx, { matchId, claimType }) => {
     const match = await ctx.db.get(matchId);
 
     if (!match) {
       throw new Error("Match not found");
-    }
-
-    // SECURITY: Verify ownership - only match owner can mark as claimed
-    if (match.playerAddress.toLowerCase() !== address.toLowerCase()) {
-      throw new Error("Unauthorized: Not your match");
     }
 
     if (match.rewardsClaimed) {
