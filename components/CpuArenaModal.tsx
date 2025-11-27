@@ -52,7 +52,7 @@ export function CpuArenaModal({
   const [isJoining, setIsJoining] = useState(false);
 
   // Get available collections
-  const availableCollections = useQuery(api.cpuArena.getAvailableCollections);
+  const availableCollections = useQuery(api.pokerBattle.getAvailableCollections);
 
   // Get active CPU rooms with spectator counts
   const cpuRooms = useQuery(api.pokerBattle.getCpuVsCpuRooms);
@@ -185,7 +185,7 @@ export function CpuArenaModal({
                   };
 
                   // Get spectator count for this collection
-                  const roomData = cpuRooms?.find((r) => r.collection === collection);
+                  const roomData = cpuRooms?.find((r: any) => r.collection === collection);
                   const spectatorCount = roomData?.spectatorCount || 0;
 
                   return (
