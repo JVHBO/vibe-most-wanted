@@ -45,13 +45,31 @@ const VIBEFID_DECK_BONUS = 0.10; // +10% power to entire deck
 
 /**
  * Get current active raid boss
+ * Also returns transitioning/defeated boss to prevent re-initialization during transition
  */
 export const getCurrentRaidBoss = query({
   handler: async (ctx) => {
-    const boss = await ctx.db
+    // First try to get active boss
+    let boss = await ctx.db
       .query("raidBoss")
       .filter((q) => q.eq(q.field("status"), "active"))
       .first();
+
+    // If no active boss, check for transitioning (being processed after defeat)
+    if (!boss) {
+      boss = await ctx.db
+        .query("raidBoss")
+        .filter((q) => q.eq(q.field("status"), "transitioning"))
+        .first();
+    }
+
+    // If no transitioning boss, check for defeated (waiting to be processed)
+    if (!boss) {
+      boss = await ctx.db
+        .query("raidBoss")
+        .filter((q) => q.eq(q.field("status"), "defeated"))
+        .first();
+    }
 
     return boss;
   },
@@ -62,14 +80,14 @@ export const getCurrentRaidBoss = query({
  */
 export const initializeRaidBoss = mutation({
   handler: async (ctx) => {
-    // Check if there's already an active boss
+    // Check if there's ANY boss (active, transitioning, or defeated)
+    // This prevents re-initialization during boss transition period
     const existingBoss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "active"))
       .first();
 
     if (existingBoss) {
-      return existingBoss; // Boss already exists
+      return existingBoss; // Boss exists (in some state)
     }
 
     // Create the first boss (index 0)
