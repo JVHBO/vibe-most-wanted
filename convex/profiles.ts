@@ -19,9 +19,9 @@ import { normalizeAddress, isValidAddress } from "./utils";
 export const getProfile = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
-    // Validate address format
-    if (!isValidAddress(address)) {
-      throw new Error('Invalid Ethereum address format');
+    // Validate address format - return null instead of throwing for invalid/empty addresses
+    if (!address || address.length === 0 || !isValidAddress(address)) {
+      return null;
     }
 
     const profile = await ctx.db
