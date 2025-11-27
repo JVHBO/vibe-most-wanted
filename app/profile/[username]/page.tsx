@@ -708,27 +708,7 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="w-32 h-32 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex items-center justify-center text-6xl font-display font-bold shadow-gold overflow-hidden">
               {(() => {
-                // Priority 1: Use Farcaster PFP if available
-                if (profile.farcasterPfpUrl) {
-                  return (
-                    <img
-                      src={profile.farcasterPfpUrl}
-                      alt={profile.username}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // Fallback to Twitter or DiceBear if Farcaster image fails
-                        const img = e.target as HTMLImageElement;
-                        if (profile.twitterProfileImageUrl?.includes('pbs.twimg.com')) {
-                          img.src = profile.twitterProfileImageUrl.replace('_normal', '_400x400');
-                        } else if (profile.twitter) {
-                          img.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`;
-                        }
-                      }}
-                    />
-                  );
-                }
-
-                // Priority 2: Use twitterProfileImageUrl if available (Twitter CDN or local images)
+                // Priority 1: Use twitterProfileImageUrl if available (Twitter CDN or local images)
                 if (profile.twitterProfileImageUrl) {
                   // For Twitter CDN URLs, use high-res version
                   const imageUrl = profile.twitterProfileImageUrl.includes('pbs.twimg.com')
@@ -751,7 +731,7 @@ export default function ProfilePage() {
                   );
                 }
 
-                // Priority 3: Use DiceBear with Twitter username if available
+                // Priority 2: Use DiceBear with Twitter username if available
                 if (profile.twitter) {
                   return (
                     <img
@@ -769,7 +749,7 @@ export default function ProfilePage() {
                   );
                 }
 
-                // Priority 4: Use initials as final fallback
+                // Priority 3: Use initials as final fallback
                 return <span>{profile.username.substring(0, 2).toUpperCase()}</span>;
               })()}
             </div>
