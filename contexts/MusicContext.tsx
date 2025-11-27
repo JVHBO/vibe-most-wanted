@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { useLanguage } from './LanguageContext';
 import type { SupportedLanguage } from '@/lib/translations';
 
-type MusicMode = 'default' | 'language' | 'custom';
+type MusicMode = 'default' | 'language' | 'custom' | 'playlist';
 
 interface MusicContextType {
   musicMode: MusicMode;
@@ -17,6 +17,15 @@ interface MusicContextType {
   setCustomMusicUrl: (url: string | null) => void;
   isCustomMusicLoading: boolean;
   customMusicError: string | null;
+  // Playlist support
+  playlist: string[];
+  setPlaylist: (urls: string[]) => void;
+  addToPlaylist: (url: string) => void;
+  removeFromPlaylist: (index: number) => void;
+  currentPlaylistIndex: number;
+  setCurrentPlaylistIndex: (index: number) => void;
+  skipToNext: () => void;
+  skipToPrevious: () => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -79,6 +88,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [isCustomMusicLoading, setIsCustomMusicLoading] = useState(false);
   const [customMusicError, setCustomMusicError] = useState<string | null>(null);
 
+  // Playlist state
+  const [playlist, setPlaylistState] = useState<string[]>([]);
+  const [currentPlaylistIndex, setCurrentPlaylistIndexState] = useState(0);
+
   // Audio references
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -86,6 +99,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const hasUserInteractedRef = useRef(false); // Track if user has clicked anything
   const youtubePlayerRef = useRef<any>(null);
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
+  const isPlaylistModeRef = useRef(false); // Track if we're in playlist mode
 
   /**
    * Stop YouTube player if exists
@@ -225,8 +239,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Load new audio and fade in
+   * @param trackUrl - URL of the track to play
+   * @param targetVolume - Target volume (0-1)
+   * @param isPlaylist - Whether this is a playlist track (don't loop, trigger next on end)
+   * @param onTrackEnd - Callback when track ends (for playlist progression)
    */
-  const loadAndFadeIn = useCallback((trackUrl: string, targetVolume: number) => {
+  const loadAndFadeIn = useCallback((
+    trackUrl: string,
+    targetVolume: number,
+    isPlaylist: boolean = false,
+    onTrackEnd?: () => void
+  ) => {
     // FORCE STOP any previous audio to prevent dual playback bug
     if (audioRef.current) {
       try {
@@ -264,8 +287,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     // Create new audio element
     const newAudio = new Audio(trackUrl);
-    newAudio.loop = true;
+    // Loop only if NOT in playlist mode (or if playlist has single track)
+    newAudio.loop = !isPlaylist;
     newAudio.volume = 0; // Start at 0
+
+    // Handle track end for playlist progression
+    if (isPlaylist && onTrackEnd) {
+      newAudio.onended = () => {
+        console.log('🎵 Playlist track ended, playing next...');
+        onTrackEnd();
+      };
+    }
 
     newAudio.play().then(() => {
       // Fade in
@@ -288,7 +320,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setCustomMusicError('Failed to play audio. Try a different URL.');
       setIsCustomMusicLoading(false);
       // Fallback to default if custom music fails
-      if (musicMode === 'custom') {
+      if (musicMode === 'custom' || musicMode === 'playlist') {
         setMusicModeState('default');
       }
     });
@@ -327,6 +359,97 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       console.warn('localStorage not available');
     }
   }, []);
+
+  /**
+   * Set playlist URLs
+   */
+  const setPlaylist = useCallback((urls: string[]) => {
+    setPlaylistState(urls);
+    if (urls.length > 0) {
+      setMusicModeState('playlist');
+      isPlaylistModeRef.current = true;
+    }
+    try {
+      localStorage.setItem('musicPlaylist', JSON.stringify(urls));
+    } catch (error) {
+      console.warn('localStorage not available');
+    }
+  }, []);
+
+  /**
+   * Add URL to playlist
+   */
+  const addToPlaylist = useCallback((url: string) => {
+    setPlaylistState(prev => {
+      const newList = [...prev, url];
+      try {
+        localStorage.setItem('musicPlaylist', JSON.stringify(newList));
+      } catch (error) {
+        console.warn('localStorage not available');
+      }
+      if (newList.length > 0) {
+        setMusicModeState('playlist');
+        isPlaylistModeRef.current = true;
+      }
+      return newList;
+    });
+  }, []);
+
+  /**
+   * Remove URL from playlist by index
+   */
+  const removeFromPlaylist = useCallback((index: number) => {
+    setPlaylistState(prev => {
+      const newList = prev.filter((_, i) => i !== index);
+      try {
+        localStorage.setItem('musicPlaylist', JSON.stringify(newList));
+      } catch (error) {
+        console.warn('localStorage not available');
+      }
+      // If removing current song, play next or reset
+      if (index === currentPlaylistIndex && newList.length > 0) {
+        setCurrentPlaylistIndexState(Math.min(index, newList.length - 1));
+      } else if (index < currentPlaylistIndex) {
+        setCurrentPlaylistIndexState(prev => Math.max(0, prev - 1));
+      }
+      // If playlist empty, switch back to default
+      if (newList.length === 0) {
+        setMusicModeState('default');
+        isPlaylistModeRef.current = false;
+      }
+      return newList;
+    });
+  }, [currentPlaylistIndex]);
+
+  /**
+   * Set current playlist index (which track is playing)
+   */
+  const setCurrentPlaylistIndex = useCallback((index: number) => {
+    setCurrentPlaylistIndexState(index);
+    try {
+      localStorage.setItem('playlistIndex', String(index));
+    } catch (error) {
+      console.warn('localStorage not available');
+    }
+  }, []);
+
+  /**
+   * Skip to next track in playlist
+   */
+  const skipToNext = useCallback(() => {
+    if (playlist.length === 0) return;
+    const nextIndex = (currentPlaylistIndex + 1) % playlist.length;
+    setCurrentPlaylistIndex(nextIndex);
+  }, [playlist, currentPlaylistIndex, setCurrentPlaylistIndex]);
+
+  /**
+   * Skip to previous track in playlist
+   */
+  const skipToPrevious = useCallback(() => {
+    if (playlist.length === 0) return;
+    const prevIndex = currentPlaylistIndex === 0 ? playlist.length - 1 : currentPlaylistIndex - 1;
+    setCurrentPlaylistIndex(prevIndex);
+  }, [playlist, currentPlaylistIndex, setCurrentPlaylistIndex]);
 
   /**
    * Update music enabled state
@@ -380,6 +503,33 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, [volume, isMusicEnabled]);
 
   /**
+   * Play track from playlist (with progression callback)
+   */
+  const playPlaylistTrack = useCallback((index: number) => {
+    if (playlist.length === 0) return;
+
+    const safeIndex = index % playlist.length;
+    const trackUrl = playlist[safeIndex];
+
+    console.log(`🎵 Playing playlist track ${safeIndex + 1}/${playlist.length}: ${trackUrl}`);
+
+    // For single track playlist, just loop
+    if (playlist.length === 1) {
+      loadAndFadeIn(trackUrl, volume, false); // Loop single track
+    } else {
+      // Multiple tracks: don't loop, play next on end
+      loadAndFadeIn(trackUrl, volume, true, () => {
+        // Play next track when this one ends
+        const nextIndex = (safeIndex + 1) % playlist.length;
+        setCurrentPlaylistIndexState(nextIndex);
+        // This will trigger the effect below to play the next track
+      });
+    }
+
+    setIsCustomMusicLoading(false);
+  }, [playlist, volume, loadAndFadeIn]);
+
+  /**
    * Handle music mode or language changes
    */
   useEffect(() => {
@@ -398,7 +548,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If custom mode with custom URL
+    // If playlist mode with tracks
+    if (musicMode === 'playlist' && playlist.length > 0) {
+      setIsCustomMusicLoading(true);
+      setCustomMusicError(null);
+      playPlaylistTrack(currentPlaylistIndex);
+      return;
+    }
+
+    // If custom mode with custom URL (legacy single URL)
     if (musicMode === 'custom' && customMusicUrl) {
       setIsCustomMusicLoading(true);
       setCustomMusicError(null);
@@ -433,20 +591,40 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       : LANGUAGE_MUSIC[lang];
 
     crossfade(trackUrl);
-  }, [musicMode, lang, isMusicEnabled, customMusicUrl, crossfade, playYouTubeAudio, stopYouTubePlayer, volume]);
+  }, [musicMode, lang, isMusicEnabled, customMusicUrl, playlist, currentPlaylistIndex, crossfade, playYouTubeAudio, stopYouTubePlayer, volume, playPlaylistTrack]);
 
   /**
-   * Load music mode and custom URL from localStorage on mount
+   * Load music mode, custom URL, and playlist from localStorage on mount
    */
   useEffect(() => {
     try {
       const storedMode = localStorage.getItem('musicMode') as MusicMode;
-      if (storedMode && (storedMode === 'default' || storedMode === 'language' || storedMode === 'custom')) {
+      if (storedMode && (storedMode === 'default' || storedMode === 'language' || storedMode === 'custom' || storedMode === 'playlist')) {
         setMusicModeState(storedMode);
       }
       const storedUrl = localStorage.getItem('customMusicUrl');
       if (storedUrl) {
         setCustomMusicUrlState(storedUrl);
+      }
+
+      // Load playlist
+      const storedPlaylist = localStorage.getItem('musicPlaylist');
+      if (storedPlaylist) {
+        try {
+          const parsed = JSON.parse(storedPlaylist);
+          if (Array.isArray(parsed)) {
+            setPlaylistState(parsed);
+            isPlaylistModeRef.current = parsed.length > 0;
+          }
+        } catch (e) {
+          console.warn('Failed to parse stored playlist');
+        }
+      }
+
+      // Load playlist index
+      const storedIndex = localStorage.getItem('playlistIndex');
+      if (storedIndex) {
+        setCurrentPlaylistIndexState(parseInt(storedIndex, 10) || 0);
       }
     } catch (error) {
       // localStorage might not be available in some contexts (e.g., Farcaster miniapp iframe)
@@ -509,6 +687,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setCustomMusicUrl,
       isCustomMusicLoading,
       customMusicError,
+      // Playlist support
+      playlist,
+      setPlaylist,
+      addToPlaylist,
+      removeFromPlaylist,
+      currentPlaylistIndex,
+      setCurrentPlaylistIndex,
+      skipToNext,
+      skipToPrevious,
     }}>
       {children}
     </MusicContext.Provider>
