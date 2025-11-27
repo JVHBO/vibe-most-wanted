@@ -387,3 +387,72 @@ export const executeResetFreeCards = mutation({
     };
   },
 });
+
+/**
+ * Move all coinsInbox to coins for all profiles
+ * Admin function to fix coinsInbox not being claimed
+ */
+export const claimAllCoinsInboxForAll = mutation({
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("profiles").collect();
+    
+    let totalMoved = 0;
+    const updates: { address: string; moved: number }[] = [];
+    
+    for (const profile of profiles) {
+      const coinsInbox = profile.coinsInbox || 0;
+      if (coinsInbox > 0) {
+        await ctx.db.patch(profile._id, {
+          coins: (profile.coins || 0) + coinsInbox,
+          coinsInbox: 0,
+        });
+        totalMoved += coinsInbox;
+        updates.push({ address: profile.address, moved: coinsInbox });
+      }
+    }
+    
+    console.log("Moved " + totalMoved + " coins from coinsInbox to coins for " + updates.length + " profiles");
+    
+    return {
+      success: true,
+      totalMoved,
+      profilesUpdated: updates.length,
+      updates,
+    };
+  },
+});
+
+/**
+ * Move all inbox to coins for all profiles
+ * Admin function to fix raid rewards that went to inbox instead of coins
+ */
+export const moveInboxToCoinsForAll = mutation({
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("profiles").collect();
+    
+    let totalMoved = 0;
+    const updates: { address: string; moved: number }[] = [];
+    
+    for (const profile of profiles) {
+      const inbox = profile.inbox || 0;
+      if (inbox > 0) {
+        await ctx.db.patch(profile._id, {
+          coins: (profile.coins || 0) + inbox,
+          inbox: 0,
+          lifetimeEarned: (profile.lifetimeEarned || 0) + inbox,
+        });
+        totalMoved += inbox;
+        updates.push({ address: profile.address, moved: inbox });
+      }
+    }
+    
+    console.log("Moved " + totalMoved + " from inbox to coins for " + updates.length + " profiles");
+    
+    return {
+      success: true,
+      totalMoved,
+      profilesUpdated: updates.length,
+      updates,
+    };
+  },
+});
