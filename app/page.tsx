@@ -25,6 +25,7 @@ import AchievementsView from "@/components/AchievementsView";
 import { ShopView } from "@/components/ShopView";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { CpuArenaModal } from "@/components/CpuArenaModal";
 import { InboxDisplay } from "@/components/InboxDisplay";
 import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
 import { CoinsInboxModal } from "@/components/CoinsInboxModal";
@@ -301,7 +302,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
 
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
-  const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume } = useMusic();
+  const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume, customMusicUrl, setCustomMusicUrl, isCustomMusicLoading, customMusicError } = useMusic();
   const router = useRouter();
   const playButtonsRef = useRef<HTMLDivElement>(null);
 
@@ -562,6 +563,7 @@ export default function TCGPage() {
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
   const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
 
   // Missions States
@@ -3280,6 +3282,19 @@ export default function TCGPage() {
         address={address}
         setUserProfile={setUserProfile}
         setErrorMessage={setErrorMessage}
+        customMusicUrl={customMusicUrl || ''}
+        setCustomMusicUrl={setCustomMusicUrl}
+        isCustomMusicLoading={isCustomMusicLoading}
+        customMusicError={customMusicError}
+      />
+
+      {/* CPU Arena Modal */}
+      <CpuArenaModal
+        isOpen={showCpuArena}
+        onClose={() => setShowCpuArena(false)}
+        address={address || ''}
+        soundEnabled={soundEnabled}
+        t={t}
       />
 
       {/* Elimination Mode - Card Ordering Screen */}
@@ -5007,6 +5022,18 @@ export default function TCGPage() {
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 hover:border-orange-500/60"
                       >
                         ♥ vs Player
+                      </button>
+
+                      {/* CPU Arena */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setShowCpuArena(true);
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-pink-600/20 hover:bg-pink-600/40 text-pink-300 border border-pink-500/30 hover:border-pink-500/60"
+                      >
+                        🤖 CPU Arena
                       </button>
                     </div>
                   )}
