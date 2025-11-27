@@ -485,6 +485,10 @@ export default defineSchema({
     // Blockchain Integration
     blockchainBattleId: v.optional(v.number()), // ID from smart contract
 
+    // CPU vs CPU Mode
+    isCpuVsCpu: v.optional(v.boolean()), // If true, both players are CPUs
+    cpuCollection: v.optional(v.string()), // Collection for CPU decks (e.g., "gmvbrs")
+
     // Players
     hostAddress: v.string(),
     hostUsername: v.string(),
@@ -524,6 +528,11 @@ export default defineSchema({
       hostBet: v.optional(v.number()),
       guestBet: v.optional(v.number()),
       lastAction: v.optional(v.string()), // Last player action for turn order
+
+      // CPU vs CPU fields
+      roundWinner: v.optional(v.union(v.literal("host"), v.literal("guest"), v.literal("tie"))), // Winner of current round
+      hostUsedCards: v.optional(v.array(v.number())), // Indices of cards used by host
+      guestUsedCards: v.optional(v.array(v.number())), // Indices of cards used by guest
     })),
 
     // Round History (for displaying all 7 rounds to all players/spectators)

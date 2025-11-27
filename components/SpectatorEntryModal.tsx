@@ -10,9 +10,10 @@ interface SpectatorEntryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (bettingCredits: number) => void;
-  onJoinFree: () => void; // NEW: Join as free spectator
+  onJoinFree?: () => void; // Optional: Join as free spectator
   battleId: string;
   playerAddress?: string; // Optional: for Farcaster miniapp
+  hideFreePick?: boolean; // Hide the free spectator option
 }
 
 export function SpectatorEntryModal({
@@ -22,6 +23,7 @@ export function SpectatorEntryModal({
   onJoinFree,
   battleId,
   playerAddress,
+  hideFreePick = false,
 }: SpectatorEntryModalProps) {
   const { address: wagmiAddress } = useAccount();
   // Use playerAddress (miniapp) OR wagmiAddress (web) - playerAddress takes priority
@@ -112,28 +114,30 @@ export function SpectatorEntryModal({
 
         {/* Mode Selection - Only show if not in deposit flow */}
         {step === "input" && (
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {/* Free Spectator */}
-            <button
-              onClick={() => {
-                onJoinFree();
-                onClose();
-              }}
-              className="group relative bg-gradient-to-br from-blue-600/30 to-blue-800/30 hover:from-blue-500/50 hover:to-blue-700/50 border-2 border-blue-500/50 hover:border-blue-400 rounded-xl p-6 transition-all hover:scale-105"
-            >
-              <div className="text-center">
-                <div className="text-5xl mb-3">👁️</div>
-                <p className="text-blue-400 font-display font-bold text-lg mb-1">
-                  Watch Free
-                </p>
-                <p className="text-vintage-ice/70 text-xs">
-                  Chat & Watch
-                </p>
-                <p className="text-vintage-ice/50 text-xs mt-1">
-                  No betting
-                </p>
-              </div>
-            </button>
+          <div className={`grid ${hideFreePick ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-6`}>
+            {/* Free Spectator - Hidden when hideFreePick is true */}
+            {!hideFreePick && onJoinFree && (
+              <button
+                onClick={() => {
+                  onJoinFree();
+                  onClose();
+                }}
+                className="group relative bg-gradient-to-br from-blue-600/30 to-blue-800/30 hover:from-blue-500/50 hover:to-blue-700/50 border-2 border-blue-500/50 hover:border-blue-400 rounded-xl p-6 transition-all hover:scale-105"
+              >
+                <div className="text-center">
+                  <div className="text-5xl mb-3">👁️</div>
+                  <p className="text-blue-400 font-display font-bold text-lg mb-1">
+                    Watch Free
+                  </p>
+                  <p className="text-vintage-ice/70 text-xs">
+                    Chat & Watch
+                  </p>
+                  <p className="text-vintage-ice/50 text-xs mt-1">
+                    No betting
+                  </p>
+                </div>
+              </button>
+            )}
 
             {/* Betting Spectator */}
             <button
@@ -143,7 +147,7 @@ export function SpectatorEntryModal({
               <div className="text-center">
                 <div className="text-5xl mb-3">💰</div>
                 <p className="text-purple-400 font-display font-bold text-lg mb-1">
-                  With Betting
+                  {hideFreePick ? 'Deposit VBMS to Enter' : 'With Betting'}
                 </p>
                 <p className="text-vintage-ice/70 text-xs">
                   Bet on rounds

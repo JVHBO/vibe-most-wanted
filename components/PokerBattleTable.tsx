@@ -42,6 +42,8 @@ interface PokerBattleTableProps {
   isSpectator?: boolean; // If true, view-only mode (no interactions)
   isInFarcaster?: boolean; // If true, optimize UI for Farcaster miniapp
   soundEnabled?: boolean; // Sound effects enabled
+  initialRoomId?: string; // For spectator mode - skip matchmaking and go directly to game
+  skipSpectatorModal?: boolean; // Skip spectator entry modal (e.g., when already deposited via CPU Arena)
 }
 
 type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'card-reveal-animation' | 'resolution' | 'game-over';
@@ -66,19 +68,25 @@ export function PokerBattleTable({
   isSpectator = false,
   isInFarcaster = false,
   soundEnabled = true,
+  initialRoomId = '',
+  skipSpectatorModal = false,
 }: PokerBattleTableProps) {
-  // View Mode state
-  const [currentView, setCurrentView] = useState<ViewMode>(isCPUMode ? 'game' : 'matchmaking');
-  const [roomId, setRoomId] = useState<string>('');
+  // View Mode state - go directly to game if initialRoomId provided (spectator mode)
+  const [currentView, setCurrentView] = useState<ViewMode>(
+    isCPUMode ? 'game' : (initialRoomId ? 'game' : 'matchmaking')
+  );
+  const [roomId, setRoomId] = useState<string>(initialRoomId);
   const [isHost, setIsHost] = useState(false);
-  const [selectedAnte, setSelectedAnte] = useState(25);
-  const [isSpectatorMode, setIsSpectatorMode] = useState(isSpectator);
+  const [selectedAnte, setSelectedAnte] = useState(initialRoomId ? 0 : 25); // No ante for spectators
+  const [isSpectatorMode, setIsSpectatorMode] = useState(isSpectator || !!initialRoomId);
   const [selectedToken, setSelectedToken] = useState<'VBMS' | 'TESTVBMS' | 'VIBE_NFT'>('VBMS');
 
   // Betting system state
   const [showSpectatorEntryModal, setShowSpectatorEntryModal] = useState(false);
-  const [spectatorType, setSpectatorType] = useState<'free' | 'betting' | null>(null); // NEW
-  const [hasBettingCredits, setHasBettingCredits] = useState(false);
+  const [spectatorType, setSpectatorType] = useState<'free' | 'betting' | null>(
+    skipSpectatorModal ? 'betting' : null
+  ); // Set to betting if skipping modal
+  const [hasBettingCredits, setHasBettingCredits] = useState(skipSpectatorModal); // Already has credits if skipping modal
 
   // Real-time room data for multiplayer
   const room = useQuery(
