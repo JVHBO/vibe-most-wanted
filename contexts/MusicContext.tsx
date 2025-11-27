@@ -513,6 +513,22 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     console.log(`🎵 Playing playlist track ${safeIndex + 1}/${playlist.length}: ${trackUrl}`);
 
+    // Check if it's a YouTube URL - use YouTube IFrame API instead of Audio element
+    if (isYouTubeUrl(trackUrl)) {
+      const videoId = extractYouTubeId(trackUrl);
+      if (videoId) {
+        // Stop regular audio first
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        playYouTubeAudio(videoId, volume);
+        setIsCustomMusicLoading(false);
+        return;
+      }
+    }
+
+    // For non-YouTube URLs, use direct audio playback
     // For single track playlist, just loop
     if (playlist.length === 1) {
       loadAndFadeIn(trackUrl, volume, false); // Loop single track
@@ -527,7 +543,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
 
     setIsCustomMusicLoading(false);
-  }, [playlist, volume, loadAndFadeIn]);
+  }, [playlist, volume, loadAndFadeIn, playYouTubeAudio]);
 
   /**
    * Handle music mode or language changes
