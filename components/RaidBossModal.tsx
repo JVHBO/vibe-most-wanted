@@ -556,6 +556,7 @@ export function RaidBossModal({
         oldCard={(replacingCard as Card) || null}
         currentBoss={currentBoss}
         soundEnabled={soundEnabled}
+        currentDeckTokenIds={playerDeck?.deck?.map((card: NFT) => card.tokenId) || []}
       />
 
       {/* Main Raid Boss Modal */}
@@ -867,9 +868,9 @@ export function RaidBossModal({
                     {refuelError}
                   </div>
                 )}
-                <div className={`grid gap-3 ${playerDeck.vibefidCard ? 'grid-cols-3' : 'grid-cols-3'}`}>
-                  {/* Main 5 cards */}
-                  {playerDeck.deck.map((card: NFT, index: number) => {
+                <div className={`grid gap-3 ${playerDeck.vibefidCard ? 'grid-cols-3' : 'grid-cols-3'}`} key={playerDeck.deck.map((c: NFT) => c.tokenId).join('-')}>
+                  {/* Main 5 cards (max 5 to prevent visual bugs) */}
+                  {playerDeck.deck.slice(0, 5).map((card: NFT, index: number) => {
                     const cardEnergy = playerDeck.cardEnergy?.[index];
                     const now = Date.now();
 
