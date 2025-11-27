@@ -151,6 +151,9 @@ export default defineSchema({
     lastActiveDate: v.optional(v.number()), // Last time player was active (for reminder eligibility)
     notificationsEnabled: v.optional(v.boolean()), // Opt-out flag (default true)
 
+    // Custom Music Settings
+    customMusicUrl: v.optional(v.string()), // YouTube URL or direct audio URL for background music
+
     // Metadata
     userIndex: v.optional(v.number()),
     createdAt: v.number(), // timestamp
@@ -974,4 +977,105 @@ export default defineSchema({
   })
     .index("by_address", ["address", "timestamp"])
     .index("by_txHash", ["txHash"]),
+
+  // =============================================
+  // CPU vs CPU ARENA (Spectator Betting)
+  // =============================================
+
+  // CPU Arena - Automated CPU vs CPU battles
+  cpuArena: defineTable({
+    status: v.string(), // 'waiting' | 'betting' | 'revealing' | 'finished'
+    currentRound: v.number(), // 1-7
+
+    // CPU Players (auto-generated)
+    cpu1Name: v.string(),
+    cpu1Deck: v.array(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      power: v.number(),
+      rarity: v.string(),
+      collection: v.optional(v.string()),
+    })),
+    cpu1Score: v.number(),
+    cpu1Card: v.optional(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      power: v.number(),
+      rarity: v.string(),
+    })),
+
+    cpu2Name: v.string(),
+    cpu2Deck: v.array(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      power: v.number(),
+      rarity: v.string(),
+      collection: v.optional(v.string()),
+    })),
+    cpu2Score: v.number(),
+    cpu2Card: v.optional(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      power: v.number(),
+      rarity: v.string(),
+    })),
+
+    // Round winner
+    roundWinner: v.optional(v.string()), // 'cpu1' | 'cpu2' | 'tie'
+
+    // Timing
+    roundStartedAt: v.number(),
+    bettingEndsAt: v.number(), // +15 seconds from round start
+
+    // Spectators
+    spectators: v.array(v.object({
+      address: v.string(),
+      username: v.string(),
+      joinedAt: v.number(),
+    })),
+
+    // Round History
+    roundHistory: v.array(v.object({
+      round: v.number(),
+      cpu1Card: v.object({
+        name: v.string(),
+        power: v.number(),
+        imageUrl: v.string(),
+      }),
+      cpu2Card: v.object({
+        name: v.string(),
+        power: v.number(),
+        imageUrl: v.string(),
+      }),
+      winner: v.string(), // 'cpu1' | 'cpu2' | 'tie'
+    })),
+
+    // Final result
+    winner: v.optional(v.string()), // 'cpu1' | 'cpu2'
+
+    // Timestamps
+    createdAt: v.number(),
+    finishedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"]),
+
+  // Arena Bets - Per-round betting
+  arenaBets: defineTable({
+    arenaId: v.id("cpuArena"),
+    roundNumber: v.number(),
+    address: v.string(),
+    username: v.string(),
+    betOn: v.string(), // 'cpu1' | 'cpu2'
+    amount: v.number(), // Betting credits
+    odds: v.number(), // 1.5, 1.8, or 2.0
+    status: v.string(), // 'pending' | 'won' | 'lost'
+    payout: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_arena_round", ["arenaId", "roundNumber"])
+    .index("by_address", ["address"]),
 });
