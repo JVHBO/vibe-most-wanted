@@ -1167,3 +1167,503 @@ export const forceDeleteRoom = mutation({
     };
   },
 });
+
+// ============================================================================
+// CPU VS CPU MODE - Same table as PvP, but both players are CPUs
+// ============================================================================
+
+import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
+import { internal } from "./_generated/api";
+
+// CPU Names for battles
+const CPU_BATTLE_NAMES = [
+  { name: "Alpha Bot", emoji: "🤖" },
+  { name: "Beta Machine", emoji: "🦾" },
+  { name: "Gamma Core", emoji: "💎" },
+  { name: "Delta Unit", emoji: "⚡" },
+  { name: "Epsilon AI", emoji: "🧠" },
+  { name: "Zeta Protocol", emoji: "🔮" },
+];
+
+/**
+ * Generate a CPU deck from a collection (10 cards for poker battle)
+ */
+function generateCpuPokerDeck(collection: string) {
+  const cards = COLLECTION_CARDS[collection] || COLLECTION_CARDS["gmvbrs"];
+  if (!cards || cards.length < 10) {
+    // Fallback to gmvbrs if collection doesn't have enough cards
+    const fallbackCards = COLLECTION_CARDS["gmvbrs"] || [];
+    const shuffled = [...fallbackCards].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 10).map((card) => ({
+      tokenId: card.tokenId,
+      name: card.name,
+      image: card.imageUrl,
+      imageUrl: card.imageUrl,
+      power: card.power,
+      rarity: card.rarity,
+      collection: "gmvbrs",
+    }));
+  }
+
+  const shuffled = [...cards].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 10).map((card) => ({
+    tokenId: card.tokenId,
+    name: card.name,
+    image: card.imageUrl,
+    imageUrl: card.imageUrl,
+    power: card.power,
+    rarity: card.rarity,
+    collection: collection,
+  }));
+}
+
+/**
+ * Create a CPU vs CPU poker room
+ * Returns roomId for spectators to join
+ */
+export const createCpuVsCpuRoom = mutation({
+  args: {
+    collection: v.string(), // Which NFT collection to use for CPU decks
+  },
+  handler: async (ctx, { collection }) => {
+    const now = Date.now();
+
+    // Check if there's already an active CPU vs CPU room for this collection
+    const existingRoom = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("isCpuVsCpu"), true))
+      .filter((q) => q.eq(q.field("cpuCollection"), collection))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "waiting"),
+          q.eq(q.field("status"), "ready"),
+          q.eq(q.field("status"), "in-progress")
+        )
+      )
+      .first();
+
+    if (existingRoom) {
+      return { roomId: existingRoom.roomId, isNew: false };
+    }
+
+    // Generate random CPU names
+    const shuffledNames = [...CPU_BATTLE_NAMES].sort(() => Math.random() - 0.5);
+    const cpu1 = shuffledNames[0];
+    const cpu2 = shuffledNames[1];
+
+    // Generate decks for both CPUs
+    const cpu1Deck = generateCpuPokerDeck(collection);
+    const cpu2Deck = generateCpuPokerDeck(collection);
+
+    // Create room ID
+    const roomId = `cpu-${collection}-${Date.now()}`;
+
+    // Create the room - both players are CPUs (ready immediately)
+    const room = await ctx.db.insert("pokerRooms", {
+      roomId,
+      status: "in-progress", // Start immediately
+      ante: 0, // No ante for CPU vs CPU
+      token: "VBMS",
+
+      isCpuVsCpu: true,
+      cpuCollection: collection,
+
+      // CPU 1 (Host)
+      hostAddress: `cpu1-${collection}`.toLowerCase(),
+      hostUsername: `${cpu1.emoji} ${cpu1.name}`,
+      hostDeck: cpu1Deck,
+      hostReady: true,
+      hostBankroll: 1000,
+      hostBoostCoins: 10,
+
+      // CPU 2 (Guest)
+      guestAddress: `cpu2-${collection}`.toLowerCase(),
+      guestUsername: `${cpu2.emoji} ${cpu2.name}`,
+      guestDeck: cpu2Deck,
+      guestReady: true,
+      guestBankroll: 1000,
+      guestBoostCoins: 10,
+
+      // Spectators start empty
+      spectators: [],
+
+      // Game state - start round 1
+      gameState: {
+        currentRound: 1,
+        hostScore: 0,
+        guestScore: 0,
+        pot: 0,
+        currentBet: 0,
+        phase: "card-selection",
+        hostSelectedCard: undefined,
+        guestSelectedCard: undefined,
+        hostAction: undefined,
+        guestAction: undefined,
+        hostBet: undefined,
+        guestBet: undefined,
+        roundWinner: undefined,
+        hostUsedCards: [],
+        guestUsedCards: [],
+      },
+
+      createdAt: now,
+      expiresAt: now + 30 * 60 * 1000, // 30 minutes
+      finishedAt: undefined,
+    });
+
+    console.log(`🤖 CPU vs CPU room created: ${roomId} (${collection})`);
+
+    // Schedule CPU to make first move after 3 seconds
+    await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuMakeMove, {
+      roomId,
+      isHost: true,
+    });
+
+    return { roomId, isNew: true };
+  },
+});
+
+/**
+ * Get active CPU vs CPU rooms (for room selection)
+ */
+export const getCpuVsCpuRooms = query({
+  args: {},
+  handler: async (ctx) => {
+    const rooms = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("isCpuVsCpu"), true))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "waiting"),
+          q.eq(q.field("status"), "ready"),
+          q.eq(q.field("status"), "in-progress")
+        )
+      )
+      .collect();
+
+    return rooms.map((room) => ({
+      roomId: room.roomId,
+      collection: room.cpuCollection,
+      status: room.status,
+      hostUsername: room.hostUsername,
+      guestUsername: room.guestUsername,
+      spectatorCount: room.spectators?.length || 0,
+      currentRound: room.gameState?.currentRound || 1,
+      hostScore: room.gameState?.hostScore || 0,
+      guestScore: room.gameState?.guestScore || 0,
+    }));
+  },
+});
+
+/**
+ * CPU makes a move (internal - called by scheduler)
+ */
+export const cpuMakeMove = internalMutation({
+  args: {
+    roomId: v.string(),
+    isHost: v.boolean(),
+  },
+  handler: async (ctx, { roomId, isHost }) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (!room || !room.isCpuVsCpu) {
+      console.log(`[cpuMakeMove] Room ${roomId} not found or not CPU vs CPU`);
+      return;
+    }
+
+    if (room.status === "finished" || room.status === "cancelled") {
+      console.log(`[cpuMakeMove] Room ${roomId} is ${room.status}, skipping`);
+      return;
+    }
+
+    const gameState = room.gameState;
+    if (!gameState) return;
+
+    const deck = isHost ? room.hostDeck : room.guestDeck;
+    const usedCards = isHost ? gameState.hostUsedCards : gameState.guestUsedCards;
+    const selectedCard = isHost ? gameState.hostSelectedCard : gameState.guestSelectedCard;
+
+    // Phase: card-selection - CPU selects a card
+    if (gameState.phase === "card-selection" && !selectedCard && deck) {
+      // Find available cards (not used yet)
+      const availableCards = deck.filter(
+        (card: any) => !usedCards?.includes(card.tokenId)
+      );
+
+      if (availableCards.length === 0) {
+        console.log(`[cpuMakeMove] No available cards for CPU ${isHost ? 'host' : 'guest'}`);
+        return;
+      }
+
+      // CPU strategy: pick a random card (could be improved with AI later)
+      const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+
+      // Update game state with selected card
+      const newUsedCards = [...(usedCards || []), randomCard.tokenId];
+
+      await ctx.db.patch(room._id, {
+        gameState: {
+          ...gameState,
+          [isHost ? "hostSelectedCard" : "guestSelectedCard"]: randomCard,
+          [isHost ? "hostUsedCards" : "guestUsedCards"]: newUsedCards,
+        },
+      });
+
+      console.log(`🤖 CPU ${isHost ? 'host' : 'guest'} selected card: ${randomCard.name} (power: ${randomCard.power})`);
+
+      // Check if both CPUs have selected - if so, move to reveal
+      const otherSelected = isHost ? gameState.guestSelectedCard : gameState.hostSelectedCard;
+      if (otherSelected) {
+        // Both selected, move to reveal phase after 2 seconds
+        await ctx.scheduler.runAfter(2000, internal.pokerBattle.cpuRevealRound, {
+          roomId,
+        });
+      } else {
+        // Schedule other CPU to select after 2 seconds
+        await ctx.scheduler.runAfter(2000, internal.pokerBattle.cpuMakeMove, {
+          roomId,
+          isHost: !isHost,
+        });
+      }
+    }
+  },
+});
+
+/**
+ * Reveal round and determine winner (internal)
+ */
+export const cpuRevealRound = internalMutation({
+  args: {
+    roomId: v.string(),
+  },
+  handler: async (ctx, { roomId }) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (!room || !room.isCpuVsCpu || room.status === "finished") return;
+
+    const gameState = room.gameState;
+    if (!gameState) return;
+
+    const hostCard = gameState.hostSelectedCard;
+    const guestCard = gameState.guestSelectedCard;
+
+    if (!hostCard || !guestCard) return;
+
+    // Move to reveal phase
+    await ctx.db.patch(room._id, {
+      gameState: {
+        ...gameState,
+        phase: "reveal",
+      },
+    });
+
+    // After 3 seconds, resolve the round
+    await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuResolveRound, {
+      roomId,
+    });
+  },
+});
+
+/**
+ * Resolve round and start next (internal)
+ */
+export const cpuResolveRound = internalMutation({
+  args: {
+    roomId: v.string(),
+  },
+  handler: async (ctx, { roomId }) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (!room || !room.isCpuVsCpu || room.status === "finished") return;
+
+    const gameState = room.gameState;
+    if (!gameState) return;
+
+    const hostCard = gameState.hostSelectedCard;
+    const guestCard = gameState.guestSelectedCard;
+
+    if (!hostCard || !guestCard) return;
+
+    // Determine winner
+    const hostPower = hostCard.power || 0;
+    const guestPower = guestCard.power || 0;
+
+    let newHostScore = gameState.hostScore;
+    let newGuestScore = gameState.guestScore;
+    let roundWinner: "host" | "guest" | "tie" | undefined;
+
+    if (hostPower > guestPower) {
+      newHostScore++;
+      roundWinner = "host";
+    } else if (guestPower > hostPower) {
+      newGuestScore++;
+      roundWinner = "guest";
+    } else {
+      roundWinner = "tie";
+    }
+
+    const currentRound = gameState.currentRound;
+    const nextRound = currentRound + 1;
+
+    // Check if game is over (first to 4 wins or 7 rounds)
+    const isGameOver = newHostScore >= 4 || newGuestScore >= 4 || currentRound >= 7;
+
+    if (isGameOver) {
+      // Game over
+      const winner = newHostScore > newGuestScore ? "host" : newGuestScore > newHostScore ? "guest" : "tie";
+
+      await ctx.db.patch(room._id, {
+        status: "finished",
+        finishedAt: Date.now(),
+        gameState: {
+          ...gameState,
+          phase: "game-over",
+          hostScore: newHostScore,
+          guestScore: newGuestScore,
+          roundWinner,
+        },
+      });
+
+      console.log(`🏆 CPU vs CPU game finished: ${room.hostUsername} ${newHostScore} - ${newGuestScore} ${room.guestUsername}`);
+
+      // Start a new game after 10 seconds if there are spectators
+      if (room.spectators && room.spectators.length > 0) {
+        await ctx.scheduler.runAfter(10000, internal.pokerBattle.cpuRestartGame, {
+          roomId,
+        });
+      }
+    } else {
+      // Move to resolution phase briefly, then next round
+      await ctx.db.patch(room._id, {
+        gameState: {
+          ...gameState,
+          phase: "resolution",
+          hostScore: newHostScore,
+          guestScore: newGuestScore,
+          roundWinner,
+        },
+      });
+
+      // After 3 seconds, start next round
+      await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuStartNextRound, {
+        roomId,
+        nextRound,
+      });
+    }
+  },
+});
+
+/**
+ * Start next round (internal)
+ */
+export const cpuStartNextRound = internalMutation({
+  args: {
+    roomId: v.string(),
+    nextRound: v.number(),
+  },
+  handler: async (ctx, { roomId, nextRound }) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (!room || !room.isCpuVsCpu || room.status === "finished") return;
+
+    const gameState = room.gameState;
+    if (!gameState) return;
+
+    // Reset for next round
+    await ctx.db.patch(room._id, {
+      gameState: {
+        ...gameState,
+        currentRound: nextRound,
+        phase: "card-selection",
+        hostSelectedCard: undefined,
+        guestSelectedCard: undefined,
+        hostAction: undefined,
+        guestAction: undefined,
+        roundWinner: undefined,
+      },
+    });
+
+    console.log(`🎮 CPU vs CPU starting round ${nextRound}`);
+
+    // Schedule CPU host to select card after 2 seconds
+    await ctx.scheduler.runAfter(2000, internal.pokerBattle.cpuMakeMove, {
+      roomId,
+      isHost: true,
+    });
+  },
+});
+
+/**
+ * Restart CPU vs CPU game (internal)
+ */
+export const cpuRestartGame = internalMutation({
+  args: {
+    roomId: v.string(),
+  },
+  handler: async (ctx, { roomId }) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (!room || !room.isCpuVsCpu) return;
+
+    // Only restart if there are still spectators
+    if (!room.spectators || room.spectators.length === 0) {
+      // No spectators, delete the room
+      await ctx.db.delete(room._id);
+      console.log(`🗑️ CPU vs CPU room ${roomId} deleted (no spectators)`);
+      return;
+    }
+
+    // Generate new decks
+    const collection = room.cpuCollection || "gmvbrs";
+    const cpu1Deck = generateCpuPokerDeck(collection);
+    const cpu2Deck = generateCpuPokerDeck(collection);
+
+    // Reset game state
+    await ctx.db.patch(room._id, {
+      status: "in-progress",
+      hostDeck: cpu1Deck,
+      guestDeck: cpu2Deck,
+      finishedAt: undefined,
+      gameState: {
+        currentRound: 1,
+        hostScore: 0,
+        guestScore: 0,
+        pot: 0,
+        currentBet: 0,
+        phase: "card-selection",
+        hostSelectedCard: undefined,
+        guestSelectedCard: undefined,
+        hostAction: undefined,
+        guestAction: undefined,
+        hostBet: undefined,
+        guestBet: undefined,
+        roundWinner: undefined,
+        hostUsedCards: [],
+        guestUsedCards: [],
+      },
+    });
+
+    console.log(`🔄 CPU vs CPU game restarted: ${roomId}`);
+
+    // Schedule first move
+    await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuMakeMove, {
+      roomId,
+      isHost: true,
+    });
+  },
+});

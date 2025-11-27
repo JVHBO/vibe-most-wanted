@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { SpectatorEntryModal } from "./SpectatorEntryModal";
+import { PokerBattleTable } from "./PokerBattleTable";
 
 interface CpuArenaModalProps {
   isOpen: boolean;
@@ -29,13 +30,14 @@ const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: stri
   vibefid: { name: "VibeFID", emoji: "🆔", color: "from-cyan-500 to-blue-600" },
 };
 
-type ViewMode = "rooms" | "spectator-entry" | "arena";
+type ViewMode = "rooms" | "spectator-entry" | "battle";
 
 /**
  * CPU ARENA MODAL
  *
  * Shows available arena rooms (one per collection).
- * Users can enter as spectators and bet on CPU vs CPU battles.
+ * Users deposit VBMS to enter as spectators and watch CPU vs CPU battles on the same poker table.
+ * Uses the exact same PokerBattleTable component for a consistent experience.
  */
 export function CpuArenaModal({
   isOpen,
@@ -46,46 +48,21 @@ export function CpuArenaModal({
 }: CpuArenaModalProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("rooms");
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
-  const [spectatorType, setSpectatorType] = useState<'free' | 'betting' | null>(null);
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [roomId, setRoomId] = useState<string | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
 
   // Get available collections
   const availableCollections = useQuery(api.cpuArena.getAvailableCollections);
 
-  // Get active arena for selected collection
-  const activeArena = useQuery(
-    api.cpuArena.getActiveArena,
-    viewMode === "arena" ? {} : "skip"
-  );
+  // Mutations
+  const createCpuRoom = useMutation(api.pokerBattle.createCpuVsCpuRoom);
+  const spectateRoom = useMutation(api.pokerBattle.spectateRoom);
 
-  // Get betting credits
-  const credits = useQuery(
-    api.bettingCredits.getBettingCredits,
+  // Get profile for username
+  const profile = useQuery(
+    api.profiles.getProfile,
     address ? { address } : "skip"
   );
-
-  // Mutations
-  const joinArena = useMutation(api.cpuArena.joinArena);
-  const leaveArena = useMutation(api.cpuArena.leaveArena);
-  const placeBet = useMutation(api.cpuArena.placeBet);
-
-  // Countdown timer for betting phase
-  useEffect(() => {
-    if (!activeArena || activeArena.status !== "betting") {
-      setTimeLeft(0);
-      return;
-    }
-
-    const updateTimer = () => {
-      const now = Date.now();
-      const remaining = Math.max(0, Math.ceil((activeArena.bettingEndsAt - now) / 1000));
-      setTimeLeft(remaining);
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 100);
-    return () => clearInterval(interval);
-  }, [activeArena]);
 
   // Handle room selection
   const handleSelectRoom = (collection: string) => {
@@ -96,80 +73,66 @@ export function CpuArenaModal({
 
   // Handle spectator entry success (deposited VBMS)
   const handleDepositSuccess = async (creditsAdded: number) => {
-    setSpectatorType("betting");
-    await joinArenaAsSpectator();
-  };
+    if (!address || !selectedCollection) return;
 
-  // Handle free spectator join
-  const handleJoinFree = async () => {
-    setSpectatorType("free");
-    await joinArenaAsSpectator();
-  };
-
-  // Join arena as spectator
-  const joinArenaAsSpectator = async () => {
-    if (!address) return;
+    setIsJoining(true);
     try {
-      await joinArena({ address });
-      setViewMode("arena");
-      if (soundEnabled) AudioManager.buttonSuccess();
-    } catch (err) {
-      console.error("Failed to join arena:", err);
-      if (soundEnabled) AudioManager.buttonError();
-    }
-  };
+      // 1. Create or get CPU vs CPU room for this collection
+      const result = await createCpuRoom({ collection: selectedCollection });
+      console.log("🤖 CPU Arena room:", result.roomId, result.isNew ? "(new)" : "(existing)");
 
-  // Leave arena (called when exiting arena view)
-  const handleLeaveArena = async () => {
-    if (!address || !activeArena) {
-      setViewMode("rooms");
-      setSelectedCollection(null);
-      return;
-    }
-
-    try {
-      await leaveArena({ address, arenaId: activeArena._id });
-    } catch (err) {
-      console.error("Failed to leave arena:", err);
-    }
-
-    setViewMode("rooms");
-    setSelectedCollection(null);
-  };
-
-  // Handle betting
-  const handleBet = async (betOn: "cpu1" | "cpu2") => {
-    if (!address || !activeArena || spectatorType !== "betting") return;
-
-    const betAmount = 10; // Fixed amount
-    if (!credits || credits.balance < betAmount) {
-      alert("Insufficient betting credits!");
-      return;
-    }
-
-    try {
-      await placeBet({
-        address,
-        arenaId: activeArena._id,
-        betOn,
-        amount: betAmount,
+      // 2. Join as spectator
+      const username = profile?.username || address.slice(0, 8);
+      await spectateRoom({
+        roomId: result.roomId,
+        address: address,
+        username: username,
       });
+      console.log("👁️ Joined as spectator");
+
+      // 3. Open PokerBattleTable in spectator mode
+      setRoomId(result.roomId);
+      setViewMode("battle");
       if (soundEnabled) AudioManager.buttonSuccess();
     } catch (err: any) {
-      console.error("Failed to place bet:", err);
+      console.error("Failed to join CPU Arena:", err);
       if (soundEnabled) AudioManager.buttonError();
-      alert(err.message || "Failed to place bet");
+      alert(err.message || "Failed to join CPU Arena");
+    } finally {
+      setIsJoining(false);
     }
+  };
+
+  // Handle closing battle table
+  const handleCloseBattle = () => {
+    setViewMode("rooms");
+    setRoomId(null);
+    setSelectedCollection(null);
   };
 
   // SSR check
   if (typeof window === "undefined") return null;
   if (!isOpen) return null;
 
-  // Get current odds
-  const currentOdds = activeArena
-    ? activeArena.currentRound <= 3 ? 1.5 : activeArena.currentRound <= 5 ? 1.8 : 2.0
-    : 1.5;
+  // If in battle mode, render PokerBattleTable directly in portal
+  if (viewMode === "battle" && roomId) {
+    return createPortal(
+      <PokerBattleTable
+        onClose={() => {
+          handleCloseBattle();
+          onClose();
+        }}
+        playerCards={[]} // Empty - spectator mode doesn't need cards
+        playerAddress={address}
+        playerUsername={profile?.username || address.slice(0, 8)}
+        isSpectator={true}
+        soundEnabled={soundEnabled}
+        initialRoomId={roomId} // Skip matchmaking - go directly to spectating this room
+        skipSpectatorModal={true} // Already deposited via CPU Arena entry
+      />,
+      document.body
+    );
+  }
 
   return createPortal(
     <div
@@ -252,7 +215,8 @@ export function CpuArenaModal({
                 <h3 className="text-purple-400 font-bold mb-2">💡 How it works</h3>
                 <ul className="text-vintage-ice/70 text-sm space-y-1">
                   <li>• Each arena features cards from that collection</li>
-                  <li>• Two CPUs battle automatically</li>
+                  <li>• Two CPUs battle automatically on the poker table</li>
+                  <li>• Same chat, sounds and experience as regular battles</li>
                   <li>• Bet on each round (1-7) with growing odds: 1.5x → 2.0x</li>
                   <li>• Deposit VBMS to get betting credits</li>
                 </ul>
@@ -270,196 +234,19 @@ export function CpuArenaModal({
               setSelectedCollection(null);
             }}
             onSuccess={handleDepositSuccess}
-            onJoinFree={handleJoinFree}
             battleId={`cpu-arena-${selectedCollection}`}
             playerAddress={address}
+            hideFreePick={true}
           />
         )}
 
-        {/* ============ ARENA VIEW ============ */}
-        {viewMode === "arena" && activeArena && (
-          <>
-            {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-purple-600/20 border-b-2 border-purple-500/30 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-xl sm:text-2xl font-display font-bold text-purple-400">
-                    🤖 CPU ARENA
-                  </h2>
-                  <div className="bg-purple-500/30 px-3 py-1 rounded-full">
-                    <span className="text-purple-300 text-sm font-bold">
-                      Credits: {credits?.balance || 0}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleLeaveArena}
-                  className="text-vintage-gold hover:text-red-400 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
+        {/* Loading state */}
+        {isJoining && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
+              <p className="text-vintage-gold font-bold">Joining CPU Arena...</p>
             </div>
-
-            {/* Status Bar */}
-            <div className="bg-purple-900/30 border-b border-purple-500/30 p-3 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div>
-                  <span className="text-purple-400 text-xs">Round</span>
-                  <p className="text-2xl font-bold text-vintage-gold">{activeArena.currentRound}/7</p>
-                </div>
-                <div>
-                  <span className="text-purple-400 text-xs">Odds</span>
-                  <p className="text-2xl font-bold text-green-400">{currentOdds}x</p>
-                </div>
-              </div>
-
-              {activeArena.status === "betting" && (
-                <div className="text-center">
-                  <span className="text-purple-400 text-xs">Betting Ends</span>
-                  <p className={`text-3xl font-bold ${timeLeft <= 5 ? "text-red-400 animate-pulse" : "text-vintage-gold"}`}>
-                    {timeLeft}s
-                  </p>
-                </div>
-              )}
-
-              {activeArena.status === "revealing" && (
-                <p className="text-xl font-bold text-yellow-400 animate-pulse">⚔️ Revealing...</p>
-              )}
-
-              {activeArena.status === "finished" && (
-                <p className="text-xl font-bold text-green-400">🏆 Battle Complete!</p>
-              )}
-            </div>
-
-            {/* Battle Arena */}
-            <div className="p-4">
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                {/* CPU 1 */}
-                <div
-                  className={`bg-gradient-to-br ${
-                    activeArena.roundWinner === "cpu1"
-                      ? "from-green-600/40 to-green-800/40 border-green-400"
-                      : "from-purple-600/30 to-purple-800/30 border-purple-500/50"
-                  } border-2 rounded-xl p-4 text-center relative cursor-pointer transition-all hover:scale-102`}
-                  onClick={() => activeArena.status === "betting" && handleBet("cpu1")}
-                >
-                  {activeArena.roundWinner === "cpu1" && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                      WINNER!
-                    </div>
-                  )}
-                  <p className="text-4xl mb-2">{activeArena.cpu1Name.split(" ")[0]}</p>
-                  <p className="text-lg font-bold text-purple-300">{activeArena.cpu1Name}</p>
-                  <p className="text-4xl font-bold text-vintage-gold mt-2">{activeArena.cpu1Score}</p>
-
-                  {activeArena.cpu1Card && (
-                    <div className="mt-4 bg-vintage-black/50 rounded-lg p-3">
-                      <p className="text-sm text-vintage-ice font-bold">{activeArena.cpu1Card.name}</p>
-                      <p className="text-3xl font-bold text-vintage-gold">{activeArena.cpu1Card.power}</p>
-                      <p className="text-xs text-purple-400">{activeArena.cpu1Card.rarity}</p>
-                    </div>
-                  )}
-
-                  {activeArena.status === "betting" && spectatorType === "betting" && (
-                    <div className="mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 rounded-lg">
-                      Tap to bet 10
-                    </div>
-                  )}
-                </div>
-
-                {/* VS */}
-                <div className="flex flex-col items-center justify-center">
-                  <div className="text-5xl font-bold text-vintage-gold mb-2">VS</div>
-                  <p className="text-sm text-purple-400">First to 4</p>
-                </div>
-
-                {/* CPU 2 */}
-                <div
-                  className={`bg-gradient-to-br ${
-                    activeArena.roundWinner === "cpu2"
-                      ? "from-green-600/40 to-green-800/40 border-green-400"
-                      : "from-pink-600/30 to-pink-800/30 border-pink-500/50"
-                  } border-2 rounded-xl p-4 text-center relative cursor-pointer transition-all hover:scale-102`}
-                  onClick={() => activeArena.status === "betting" && handleBet("cpu2")}
-                >
-                  {activeArena.roundWinner === "cpu2" && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                      WINNER!
-                    </div>
-                  )}
-                  <p className="text-4xl mb-2">{activeArena.cpu2Name.split(" ")[0]}</p>
-                  <p className="text-lg font-bold text-pink-300">{activeArena.cpu2Name}</p>
-                  <p className="text-4xl font-bold text-vintage-gold mt-2">{activeArena.cpu2Score}</p>
-
-                  {activeArena.cpu2Card && (
-                    <div className="mt-4 bg-vintage-black/50 rounded-lg p-3">
-                      <p className="text-sm text-vintage-ice font-bold">{activeArena.cpu2Card.name}</p>
-                      <p className="text-3xl font-bold text-vintage-gold">{activeArena.cpu2Card.power}</p>
-                      <p className="text-xs text-pink-400">{activeArena.cpu2Card.rarity}</p>
-                    </div>
-                  )}
-
-                  {activeArena.status === "betting" && spectatorType === "betting" && (
-                    <div className="mt-4 bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 rounded-lg">
-                      Tap to bet 10
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Round History */}
-              {activeArena.roundHistory && activeArena.roundHistory.length > 0 && (
-                <div className="bg-vintage-black/50 rounded-xl p-4 mb-4">
-                  <h3 className="text-lg font-bold text-purple-400 mb-3">Round History</h3>
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {activeArena.roundHistory.map((round: any, idx: number) => (
-                      <div key={idx} className="flex-shrink-0 bg-vintage-charcoal rounded-lg p-2 border border-purple-500/30 min-w-[100px]">
-                        <p className="text-xs text-purple-400 text-center">Round {round.round}</p>
-                        <div className="flex items-center justify-center gap-2 mt-1">
-                          <span className={`text-sm font-bold ${round.winner === "cpu1" ? "text-green-400" : "text-vintage-ice/50"}`}>
-                            {round.cpu1Card.power}
-                          </span>
-                          <span className="text-xs text-vintage-burnt-gold">vs</span>
-                          <span className={`text-sm font-bold ${round.winner === "cpu2" ? "text-green-400" : "text-vintage-ice/50"}`}>
-                            {round.cpu2Card.power}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Spectators */}
-              <div className="bg-vintage-black/50 rounded-xl p-4">
-                <h3 className="text-lg font-bold text-purple-400 mb-2">
-                  👥 Spectators ({activeArena.spectators?.length || 0})
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {activeArena.spectators?.map((spec: any, idx: number) => (
-                    <span
-                      key={idx}
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        spec.address.toLowerCase() === address?.toLowerCase()
-                          ? "bg-purple-500 text-white"
-                          : "bg-vintage-charcoal text-vintage-ice"
-                      }`}
-                    >
-                      {spec.username}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Loading state for arena */}
-        {viewMode === "arena" && !activeArena && (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-            <p className="text-vintage-gold font-bold">Starting arena battle...</p>
           </div>
         )}
       </div>
