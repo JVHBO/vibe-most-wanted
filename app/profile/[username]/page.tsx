@@ -56,8 +56,12 @@ const setCache = (key: string, value: string): void => {
 function normalizeUrl(url: string): string {
   if (!url) return '';
   let u = url.trim();
-  if (u.startsWith('ipfs://')) u = 'https://ipfs.io/ipfs/' + u.slice(7);
-  else if (u.startsWith('ipfs/')) u = 'https://ipfs.io/ipfs/' + u.slice(5);
+  // Use Cloudflare IPFS gateway
+  const IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs/';
+  if (u.startsWith('ipfs://')) u = IPFS_GATEWAY + u.slice(7);
+  else if (u.startsWith('ipfs/')) u = IPFS_GATEWAY + u.slice(5);
+  // Convert existing ipfs.io URLs to Cloudflare gateway
+  else if (u.includes('ipfs.io/ipfs/')) u = u.replace('https://ipfs.io/ipfs/', IPFS_GATEWAY);
   u = u.replace(/^http:\/\//i, 'https://');
   return u;
 }
