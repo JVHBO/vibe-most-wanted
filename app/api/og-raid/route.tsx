@@ -2,24 +2,6 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-// SECURITY: Only allow images from our own domain to prevent SSRF
-function isAllowedBossImageUrl(url: string): boolean {
-  // Only allow relative paths or our own domain
-  if (!url.startsWith('http')) {
-    return true; // Relative paths are safe (they'll be prefixed with our domain)
-  }
-  try {
-    const parsed = new URL(url);
-    const hostname = parsed.hostname.toLowerCase();
-    // Only allow our own domain for external URLs
-    return hostname === 'vibemostwanted.xyz' ||
-           hostname === 'www.vibemostwanted.xyz' ||
-           hostname === 'vibemarketplace.vercel.app';
-  } catch {
-    return false;
-  }
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -41,11 +23,10 @@ export async function GET(request: Request) {
     const cards = [card1, card2, card3, card4, card5].filter(Boolean);
 
     // Fetch boss image and convert to base64 (required for ImageResponse)
-    // SECURITY: Validate URL before fetching to prevent SSRF
     let bossImageData = '';
-    if (bossImage && isAllowedBossImageUrl(bossImage)) {
+    if (bossImage) {
       try {
-        // Use absolute URL for the image (only our domain or relative paths allowed)
+        // Use absolute URL for the image
         const imageUrl = bossImage.startsWith('http')
           ? bossImage
           : `https://www.vibemostwanted.xyz${bossImage}`;
