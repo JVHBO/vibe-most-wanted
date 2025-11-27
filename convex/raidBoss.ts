@@ -5,7 +5,8 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
 import type { CardRarity } from "../lib/types/card";
 
@@ -800,12 +801,7 @@ export const defeatBossAndSpawnNext = mutation({
         .withIndex("by_address", (q) => q.eq("address", contribution.address))
         .first();
 
-      if (profile) {
-        await ctx.db.patch(profile._id, {
-          rewardClaimed: false, // Must claim via UI
-          
-        });
-      }
+      // Reward saved in contribution, player must claim via UI
     }
 
     // Get top 10 contributors for history
@@ -879,6 +875,19 @@ export const defeatBossAndSpawnNext = mutation({
       status: "active",
       spawnedAt: now,
     });
+
+    // Schedule notifications to all contributors
+    try {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendBossDefeatedNotifications, {
+        bossName: defeatedBoss.name,
+        bossRarity: defeatedBoss.rarity,
+        totalContributors: contributions.length,
+        contributorAddresses: contributions.map(c => c.address),
+      });
+      console.log(`📢 Scheduled boss defeated notifications for ${contributions.length} contributors`);
+    } catch (error) {
+      console.error("Failed to schedule boss notifications:", error);
+    }
 
     return {
       success: true,
@@ -1048,10 +1057,7 @@ export const manualDistributeRewards = mutation({
         .first();
 
       if (profile) {
-        await ctx.db.patch(profile._id, {
-          rewardClaimed: false, // Must claim via UI
-          
-        });
+        // Reward saved in contribution, player must claim via UI
         totalDistributed += reward;
         rewards.push({ address: contribution.address, reward });
       }

@@ -97,12 +97,9 @@ export function PlayerRaidDeckModal({
                   className="relative bg-vintage-black rounded-lg overflow-hidden border-2 border-purple-600/50"
                 >
                   <CardMedia
-                    imageUrl={card.imageUrl}
-                    name={card.name}
-                    rarity={card.rarity}
-                    foil={card.foil}
-                    size="sm"
-                    showFoilEffect={true}
+                    src={card.imageUrl}
+                    alt={card.name}
+                    className="w-full aspect-[2/3] object-cover"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
                     <p className="text-vintage-burnt-gold text-xs text-center font-bold">
@@ -133,12 +130,9 @@ export function PlayerRaidDeckModal({
                 <div className="flex justify-center mb-4">
                   <div className="relative w-24 bg-vintage-black rounded-lg overflow-hidden border-2 border-cyan-500">
                     <CardMedia
-                      imageUrl={playerDeck.vibefidCard.imageUrl}
-                      name={playerDeck.vibefidCard.name}
-                      rarity={playerDeck.vibefidCard.rarity}
-                      foil={playerDeck.vibefidCard.foil}
-                      size="sm"
-                      showFoilEffect={true}
+                      src={playerDeck.vibefidCard.imageUrl}
+                      alt={playerDeck.vibefidCard.name}
+                      className="w-full aspect-[2/3] object-cover"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
                       <p className="text-cyan-400 text-xs text-center font-bold">

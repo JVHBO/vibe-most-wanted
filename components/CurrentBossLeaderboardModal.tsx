@@ -96,14 +96,20 @@ export function CurrentBossLeaderboardModal({
               return (
                 <div
                   key={contributor.address}
-                  className={}
+                  className={`bg-vintage-black/50 rounded-lg p-3 border ${
+                    contributor.address === userAddress.toLowerCase()
+                      ? "border-vintage-neon-blue"
+                      : "border-red-600/30"
+                  }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span
-                        className={}
+                        className={`text-xl ${
+                          index === 0 ? "text-yellow-400" : index === 1 ? "text-gray-400" : index === 2 ? "text-amber-600" : "text-vintage-burnt-gold/50"
+                        }`}
                       >
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : }
+                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                       </span>
                       <span className="text-vintage-burnt-gold font-bold text-sm">
                         {contributor.username}
@@ -136,7 +142,7 @@ export function CurrentBossLeaderboardModal({
                   <div className="w-full h-2 bg-vintage-black rounded overflow-hidden mb-2">
                     <div
                       className="h-full bg-gradient-to-r from-vintage-neon-blue to-vintage-gold transition-all duration-500"
-                      style={{ width:  }}
+                      style={{ width: `${Math.min(contributionPercent, 100)}%` }}
                     />
                   </div>
 
