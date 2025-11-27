@@ -949,6 +949,71 @@ export const updateCustomMusic = mutation({
   },
 });
 
+/**
+ * Update music playlist (multiple URLs)
+ * User can add/remove URLs from their playlist
+ */
+export const updateMusicPlaylist = mutation({
+  args: {
+    address: v.string(),
+    playlist: v.array(v.string()), // Array of URLs (can be empty)
+    lastPlayedIndex: v.optional(v.number()), // Track which song was last played
+  },
+  handler: async (ctx, { address, playlist, lastPlayedIndex }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Update the music playlist
+    await ctx.db.patch(profile._id, {
+      musicPlaylist: playlist.length > 0 ? playlist : undefined,
+      lastPlayedIndex: lastPlayedIndex ?? 0,
+      // Clear legacy customMusicUrl if using playlist
+      customMusicUrl: playlist.length > 0 ? undefined : profile.customMusicUrl,
+      lastUpdated: Date.now(),
+    });
+
+    return {
+      success: true,
+      playlist,
+      lastPlayedIndex: lastPlayedIndex ?? 0,
+    };
+  },
+});
+
+/**
+ * Get music playlist for a user
+ */
+export const getMusicPlaylist = query({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      return { playlist: [], lastPlayedIndex: 0 };
+    }
+
+    return {
+      playlist: profile.musicPlaylist || [],
+      lastPlayedIndex: profile.lastPlayedIndex || 0,
+    };
+  },
+});
+
 // ============================================================================
 // PUBLIC QUERIES (for external scripts/monitoring)
 // ============================================================================
