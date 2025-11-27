@@ -794,7 +794,7 @@ export const defeatBossAndSpawnNext = mutation({
         rewardEarned: reward,
       });
 
-      // Add reward to player's coins
+      // Mark reward as earned but NOT claimed - player must click claim button
       const profile = await ctx.db
         .query("profiles")
         .withIndex("by_address", (q) => q.eq("address", contribution.address))
@@ -802,8 +802,8 @@ export const defeatBossAndSpawnNext = mutation({
 
       if (profile) {
         await ctx.db.patch(profile._id, {
-          coins: (profile.coins || 0) + reward,
-          lifetimeEarned: (profile.lifetimeEarned || 0) + reward,
+          rewardClaimed: false, // Must claim via UI
+          
         });
       }
     }
@@ -956,6 +956,16 @@ export const claimRaidRewards = mutation({
       0
     );
 
+    // Get player profile to add coins
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      return { success: false, message: "Profile not found", totalClaimed: 0 };
+    }
+
     // Mark all as claimed
     for (const contribution of unclaimedContributions) {
       await ctx.db.patch(contribution._id, {
@@ -963,14 +973,131 @@ export const claimRaidRewards = mutation({
       });
     }
 
-    console.log(
-      `🎁 ${normalizedAddress} claimed ${totalReward} TESTVBMS from ${unclaimedContributions.length} raid boss battles`
-    );
+    // Add total reward to player COINS
+    await ctx.db.patch(profile._id, {
+      coins: (profile.coins || 0) + totalReward,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
+    });
+
+    console.log("Claimed " + totalReward + " coins for " + normalizedAddress);
 
     return {
       success: true,
       totalClaimed: totalReward,
       claimedCount: unclaimedContributions.length,
+      newBalance: (profile.coins || 0) + totalReward,
+    };
+  },
+});
+
+/**
+ * Get ALL raid contributions (admin function)
+ */
+export const getAllContributions = query({
+  handler: async (ctx) => {
+    const allContributions = await ctx.db.query("raidContributions").collect();
+    return allContributions;
+  },
+});
+
+/**
+ * Manually distribute rewards for a boss (admin function)
+ * Use this when boss was defeated but rewards weren't distributed
+ */
+export const manualDistributeRewards = mutation({
+  args: { bossIndex: v.number() },
+  handler: async (ctx, { bossIndex }) => {
+    // Get all contributions for this boss
+    const contributions = await ctx.db
+      .query("raidContributions")
+      .withIndex("by_boss_player", (q) => q.eq("bossIndex", bossIndex))
+      .collect();
+
+    if (contributions.length === 0) {
+      return { success: false, message: "No contributions found for this boss" };
+    }
+
+    // Calculate total damage
+    const totalDamage = contributions.reduce((sum, c) => sum + c.damageDealt, 0);
+
+    // Get boss rarity (default to common if not found)
+    const boss = await ctx.db
+      .query("raidBoss")
+      .filter((q) => q.eq(q.field("bossIndex"), bossIndex))
+      .first();
+
+    const bossRarity = (boss?.rarity?.toLowerCase() || "common") as Lowercase<CardRarity>;
+    const REWARD_POOL = BOSS_REWARDS_BY_RARITY[bossRarity];
+
+    let totalDistributed = 0;
+    const rewards: { address: string; reward: number }[] = [];
+
+    for (const contribution of contributions) {
+      const contributionPercent = totalDamage > 0 ? contribution.damageDealt / totalDamage : 0;
+      const reward = Math.max(1, Math.floor(REWARD_POOL * contributionPercent));
+
+      // Update contribution with reward
+      await ctx.db.patch(contribution._id, {
+        rewardEarned: reward,
+      });
+
+      // Add reward to player's inbox
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", contribution.address))
+        .first();
+
+      if (profile) {
+        await ctx.db.patch(profile._id, {
+          rewardClaimed: false, // Must claim via UI
+          
+        });
+        totalDistributed += reward;
+        rewards.push({ address: contribution.address, reward });
+      }
+    }
+
+    console.log("Manually distributed " + totalDistributed + " TESTVBMS to " + contributions.length + " players for boss #" + bossIndex);
+
+    return {
+      success: true,
+      totalDistributed,
+      contributors: contributions.length,
+      rewards,
+    };
+  },
+});
+
+/**
+ * Get any player's raid deck by address (for viewing from leaderboard)
+ */
+export const getPlayerRaidDeckByAddress = query({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", args.address.toLowerCase()))
+      .first();
+
+    if (!raidDeck) return null;
+
+    // Get player profile for username
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", args.address.toLowerCase()))
+      .first();
+
+    return {
+      address: raidDeck.address,
+      username: profile?.username || raidDeck.address.slice(0, 8),
+      deck: raidDeck.deck,
+      vibefidCard: raidDeck.vibefidCard,
+      deckPower: raidDeck.deckPower,
+      totalDamageDealt: raidDeck.totalDamageDealt,
+      bossesKilled: raidDeck.bossesKilled,
+      cardEnergy: raidDeck.cardEnergy,
     };
   },
 });
