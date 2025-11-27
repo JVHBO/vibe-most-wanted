@@ -26,13 +26,13 @@ export const BOSS_HP_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
   mythic: 5_000_000_000,    // 5B HP
 };
 
-// Reward Pool by Rarity (scales with difficulty/HP)
+// Reward Pool by Rarity (scales with difficulty/HP) - 10x multiplier
 export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
-  common: 1_000,       // 1,000 $TESTVBMS
-  rare: 5_000,         // 5,000 $TESTVBMS (5x harder)
-  epic: 25_000,        // 25,000 $TESTVBMS (25x harder)
-  legendary: 100_000,  // 100,000 $TESTVBMS (100x harder)
-  mythic: 500_000,     // 500,000 $TESTVBMS (500x harder)
+  common: 10_000,        // 10,000 $TESTVBMS
+  rare: 50_000,          // 50,000 $TESTVBMS (5x harder)
+  epic: 250_000,         // 250,000 $TESTVBMS (25x harder)
+  legendary: 1_000_000,  // 1,000,000 $TESTVBMS (100x harder)
+  mythic: 5_000_000,     // 5,000,000 $TESTVBMS (500x harder)
 };
 
 // Boss Rotation Order (50 bosses total)

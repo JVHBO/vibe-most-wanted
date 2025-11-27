@@ -88,7 +88,7 @@ export function PokerBattleTable({
   ); // Set to betting if skipping modal
   const [hasBettingCredits, setHasBettingCredits] = useState(skipSpectatorModal); // Already has credits if skipping modal
 
-  // Real-time room data for multiplayer
+  // Real-time room data for multiplayer (includes CPU vs CPU spectator mode)
   const room = useQuery(
     api.pokerBattle.getPokerRoom,
     currentView === 'game' && !isCPUMode && roomId ? { roomId } : "skip"
