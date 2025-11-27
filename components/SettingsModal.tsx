@@ -53,6 +53,7 @@ interface SettingsModalProps {
   currentPlaylistIndex: number;
   skipToNext: () => void;
   skipToPrevious: () => void;
+  currentTrackName: string | null;
 }
 
 export function SettingsModal({
@@ -89,6 +90,7 @@ export function SettingsModal({
   currentPlaylistIndex,
   skipToNext,
   skipToPrevious,
+  currentTrackName,
 }: SettingsModalProps) {
   const { address: walletAddress } = useAccount();
   const [isRevoking, setIsRevoking] = useState(false);
@@ -438,7 +440,7 @@ export function SettingsModal({
                 : musicMode === 'language'
                 ? 'Playing music based on selected language'
                 : musicMode === 'playlist'
-                ? `Playlist: ${playlist.length} track${playlist.length !== 1 ? 's' : ''} (${currentPlaylistIndex + 1}/${playlist.length || 1})`
+                ? `Playlist: ${currentTrackName || `Track ${currentPlaylistIndex + 1}`} (${currentPlaylistIndex + 1}/${playlist.length})`
                 : 'Playing your custom music'}
             </p>
 
