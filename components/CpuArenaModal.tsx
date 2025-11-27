@@ -64,7 +64,7 @@ export function CpuArenaModal({
   // Get profile for username
   const profile = useQuery(
     api.profiles.getProfile,
-    address ? { address } : "skip"
+    address && address.length > 0 ? { address } : "skip"
   );
 
   // Handle room selection
@@ -116,6 +116,9 @@ export function CpuArenaModal({
   // SSR check
   if (typeof window === "undefined") return null;
   if (!isOpen) return null;
+
+  // Must have address to use CPU Arena
+  if (!address || address.length === 0) return null;
 
   // If in battle mode, render PokerBattleTable directly in portal
   if (viewMode === "battle" && roomId) {
