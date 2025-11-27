@@ -210,7 +210,6 @@ export const upsertProfile = mutation({
     twitterHandle: v.optional(v.string()),
     twitterProfileImageUrl: v.optional(v.string()),
     fid: v.optional(v.string()),
-    farcasterPfpUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Validate address format

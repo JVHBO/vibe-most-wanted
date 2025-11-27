@@ -137,7 +137,6 @@ export default defineSchema({
     twitterProfileImageUrl: v.optional(v.string()), // Twitter profile picture URL
     fid: v.optional(v.string()), // Farcaster ID
     farcasterFid: v.optional(v.number()), // Farcaster numeric FID for notifications
-    farcasterPfpUrl: v.optional(v.string()), // Farcaster profile picture URL
 
     // Share Incentives
     dailyShares: v.optional(v.number()), // Shares today (resets daily)
