@@ -43,6 +43,7 @@ function normalizeUrl(url: string): string {
 }
 
 // Get image URL with caching
+// Priority: 1. Alchemy cache (avoids CORS), 2. raw metadata, 3. tokenUri fetch, 4. placeholder
 async function getImage(nft: any): Promise<string> {
   const tid = nft.tokenId;
   const cached = getFromCache(tid);
@@ -55,6 +56,45 @@ async function getImage(nft: any): Promise<string> {
     return null;
   };
 
+  // 1. Try Alchemy cached URLs FIRST (avoids CORS issues with VibeFID tokenUri)
+  const alchemyUrls = [
+    extractUrl(nft?.image?.cachedUrl),
+    extractUrl(nft?.image?.thumbnailUrl),
+    extractUrl(nft?.image?.pngUrl),
+    extractUrl(nft?.image?.originalUrl),
+  ];
+
+  for (const url of alchemyUrls) {
+    if (url) {
+      if (url.includes('wieldcd.net')) {
+        const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(url)}`;
+        setCache(tid, proxyUrl);
+        return proxyUrl;
+      }
+      const norm = normalizeUrl(String(url));
+      if (norm && !norm.includes("undefined")) {
+        setCache(tid, norm);
+        return norm;
+      }
+    }
+  }
+
+  // 2. Try raw metadata image
+  let rawImage = extractUrl(nft?.raw?.metadata?.image);
+  if (rawImage) {
+    if (rawImage.includes('wieldcd.net')) {
+      const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(rawImage)}`;
+      setCache(tid, proxyUrl);
+      return proxyUrl;
+    }
+    rawImage = normalizeUrl(rawImage);
+    if (rawImage && !rawImage.includes('undefined')) {
+      setCache(tid, rawImage);
+      return rawImage;
+    }
+  }
+
+  // 3. Try fetching from tokenUri (may fail with CORS for VibeFID)
   try {
     const uri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
     if (uri) {
@@ -81,45 +121,10 @@ async function getImage(nft: any): Promise<string> {
       }
     }
   } catch (error) {
-    console.warn(`⚠️ Failed to fetch image from tokenUri for NFT #${tid}:`, error);
+    console.warn(`Failed to fetch image from tokenUri for NFT #${tid}:`, error);
   }
 
-  let rawImage = extractUrl(nft?.raw?.metadata?.image);
-  if (rawImage) {
-    if (rawImage.includes('wieldcd.net')) {
-      const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(rawImage)}`;
-      setCache(tid, proxyUrl);
-      return proxyUrl;
-    }
-    rawImage = normalizeUrl(rawImage);
-    if (rawImage && !rawImage.includes('undefined')) {
-      setCache(tid, rawImage);
-      return rawImage;
-    }
-  }
-
-  const alchemyUrls = [
-    extractUrl(nft?.image?.cachedUrl),
-    extractUrl(nft?.image?.thumbnailUrl),
-    extractUrl(nft?.image?.pngUrl),
-    extractUrl(nft?.image?.originalUrl),
-  ];
-
-  for (const url of alchemyUrls) {
-    if (url) {
-      if (url.includes('wieldcd.net')) {
-        const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(url)}`;
-        setCache(tid, proxyUrl);
-        return proxyUrl;
-      }
-      const norm = normalizeUrl(String(url));
-      if (norm && !norm.includes("undefined")) {
-        setCache(tid, norm);
-        return norm;
-      }
-    }
-  }
-
+  // 4. Fallback to placeholder
   const placeholder = `https://via.placeholder.com/300x420/6366f1/ffffff?text=NFT+%23${tid}`;
   setCache(tid, placeholder);
   return placeholder;
