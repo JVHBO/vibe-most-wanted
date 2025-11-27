@@ -25,6 +25,7 @@ interface CardReplacementModalProps {
   oldCard: Card | null;
   currentBoss: RaidBoss | null | undefined;
   soundEnabled: boolean;
+  currentDeckTokenIds?: string[]; // TokenIds of cards currently in the deck
 }
 
 // Replacement cost by rarity (in VBMS)
@@ -45,6 +46,7 @@ export function CardReplacementModal({
   oldCard,
   currentBoss,
   soundEnabled,
+  currentDeckTokenIds = [],
 }: CardReplacementModalProps) {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [sortByPower, setSortByPower] = useState(true);
@@ -145,18 +147,23 @@ export function CardReplacementModal({
               const isSelected = selectedCard?.tokenId === card.tokenId;
               const cost = REPLACE_COST_BY_RARITY[card.rarity.toLowerCase()] || 1;
               const { power, buffPercent, buffType } = getBuffedPower(card);
+              // Check if card is already in deck (but not the card being replaced)
+              const isAlreadyInDeck = currentDeckTokenIds.includes(card.tokenId) && oldCard?.tokenId !== card.tokenId;
 
               return (
                 <div
                   key={card.tokenId}
                   onClick={() => {
+                    if (isAlreadyInDeck) return; // Block selection
                     setSelectedCard(card);
                     if (soundEnabled) AudioManager.selectCardByRarity(card.rarity);
                   }}
-                  className={`relative cursor-pointer transition-all transform hover:scale-105 ${
-                    isSelected
-                      ? 'ring-4 ring-vintage-gold shadow-neon scale-105'
-                      : 'hover:ring-2 hover:ring-vintage-gold/50'
+                  className={`relative transition-all transform ${
+                    isAlreadyInDeck
+                      ? 'opacity-50 cursor-not-allowed grayscale'
+                      : isSelected
+                        ? 'ring-4 ring-vintage-gold shadow-neon scale-105 cursor-pointer hover:scale-105'
+                        : 'cursor-pointer hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50'
                   }`}
                 >
                   <CardMedia
@@ -169,6 +176,15 @@ export function CardReplacementModal({
                   <div className="absolute top-1 right-1 bg-vintage-gold text-vintage-black text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
                     {cost} VBMS
                   </div>
+
+                  {/* Already in Deck Badge */}
+                  {isAlreadyInDeck && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
+                      <div className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg transform -rotate-12">
+                        IN DECK
+                      </div>
+                    </div>
+                  )}
 
                   {/* Buff Badge */}
                   {buffPercent > 0 && (
