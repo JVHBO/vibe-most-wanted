@@ -118,6 +118,18 @@ export function CpuArenaModal({
     setSelectedCollection(null);
   };
 
+  // Handle password verification
+  const handlePasswordSubmit = () => {
+    if (passwordInput === CPU_ARENA_PASSWORD) {
+      setViewMode("rooms");
+      setPasswordError(false);
+      if (soundEnabled) AudioManager.buttonSuccess();
+    } else {
+      setPasswordError(true);
+      if (soundEnabled) AudioManager.buttonError();
+    }
+  };
+
   // SSR check
   if (typeof window === "undefined") return null;
   if (!isOpen) return null;
@@ -154,6 +166,59 @@ export function CpuArenaModal({
         className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-2 border-purple-500/50 max-w-5xl w-full max-h-[95vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* ============ PASSWORD VIEW ============ */}
+        {viewMode === "password" && (
+          <div className="p-6 sm:p-8">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="text-6xl mb-4">🔐</div>
+              <h1 className="text-2xl sm:text-3xl font-display font-bold text-purple-400 mb-2">
+                CPU ARENA
+              </h1>
+              <p className="text-vintage-ice/70">
+                Enter password to access the arena
+              </p>
+            </div>
+
+            {/* Password Input */}
+            <div className="max-w-sm mx-auto">
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  setPasswordError(false);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+                placeholder="Enter password..."
+                className={`w-full px-4 py-3 bg-vintage-black/50 border-2 ${
+                  passwordError ? "border-red-500" : "border-purple-500/50"
+                } rounded-xl text-vintage-ice placeholder-vintage-ice/50 focus:outline-none focus:border-purple-400 text-center text-lg`}
+                autoFocus
+              />
+              {passwordError && (
+                <p className="text-red-400 text-sm mt-2 text-center">
+                  Incorrect password. Try again.
+                </p>
+              )}
+
+              <button
+                onClick={handlePasswordSubmit}
+                className="w-full mt-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl transition-all transform hover:scale-105"
+              >
+                Enter Arena
+              </button>
+
+              <button
+                onClick={onClose}
+                className="w-full mt-3 py-2 text-vintage-ice/70 hover:text-vintage-ice transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ============ ROOM SELECTION VIEW ============ */}
         {viewMode === "rooms" && (
           <>
