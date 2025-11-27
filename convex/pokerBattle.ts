@@ -12,6 +12,8 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
+import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
 
 // Create a new poker room
 export const createPokerRoom = mutation({
@@ -276,6 +278,114 @@ export const spectateRoom = mutation({
     }
 
     return { success: true, room };
+  },
+});
+
+/**
+ * LEAVE SPECTATE - Spectator leaves room
+ * Converts betting credits to TESTVBMS and removes from room
+ * Closes CPU vs CPU room if last spectator
+ */
+export const leaveSpectate = mutation({
+  args: {
+    roomId: v.string(),
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { roomId, address } = args;
+    const normalizedAddress = address.toLowerCase();
+
+    // Get room
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    // Remove spectator from list
+    const spectators = room.spectators || [];
+    const newSpectators = spectators.filter(
+      (s) => s.address !== normalizedAddress
+    );
+
+    // Convert betting credits to TESTVBMS
+    const credits = await ctx.db
+      .query("bettingCredits")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    let convertedAmount = 0;
+    if (credits && credits.balance > 0) {
+      convertedAmount = credits.balance;
+
+      // Get profile and add to coins
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+        .first();
+
+      if (profile) {
+        const currentBalance = profile.coins || 0;
+        await ctx.db.patch(profile._id, {
+          coins: currentBalance + convertedAmount,
+          lifetimeEarned: (profile.lifetimeEarned || 0) + convertedAmount,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      // Reset betting credits to 0
+      await ctx.db.patch(credits._id, {
+        balance: 0,
+      });
+
+      // Log transaction
+      await ctx.db.insert("bettingTransactions", {
+        address: normalizedAddress,
+        type: "withdraw",
+        amount: convertedAmount,
+        roomId,
+        timestamp: Date.now(),
+      });
+
+      console.log(`💰 Converted ${convertedAmount} credits to TESTVBMS for ${normalizedAddress} on leave`);
+    }
+
+    // Check if this is a CPU vs CPU room and no more spectators
+    const isCpuRoom = room.isCpuVsCpu === true;
+    const isLastSpectator = newSpectators.length === 0;
+
+    if (isCpuRoom && isLastSpectator) {
+      // Delete the CPU vs CPU room - no more spectators
+      await ctx.db.delete(room._id);
+      console.log(`🗑️ CPU vs CPU room ${roomId} deleted - last spectator left`);
+
+      return {
+        success: true,
+        converted: convertedAmount,
+        roomDeleted: true,
+        message: `Converted ${convertedAmount} credits to TESTVBMS. Room closed.`,
+      };
+    }
+
+    // Update room with removed spectator
+    await ctx.db.patch(room._id, {
+      spectators: newSpectators,
+    });
+
+    console.log(`👁️ Spectator ${normalizedAddress} left room ${roomId}. ${newSpectators.length} remaining.`);
+
+    return {
+      success: true,
+      converted: convertedAmount,
+      roomDeleted: false,
+      remainingSpectators: newSpectators.length,
+      message: convertedAmount > 0
+        ? `Converted ${convertedAmount} credits to TESTVBMS`
+        : "Left room successfully",
+    };
   },
 });
 
@@ -1172,9 +1282,6 @@ export const forceDeleteRoom = mutation({
 // CPU VS CPU MODE - Same table as PvP, but both players are CPUs
 // ============================================================================
 
-import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
-import { internal } from "./_generated/api";
-
 // CPU Names for battles
 const CPU_BATTLE_NAMES = [
   { name: "Alpha Bot", emoji: "🤖" },
@@ -1411,9 +1518,11 @@ export const cpuMakeMove = internalMutation({
     // Phase: card-selection - CPU selects a card
     if (gameState.phase === "card-selection" && !selectedCard && deck) {
       // Find available cards (not used yet)
-      const availableCards = deck.filter(
-        (card: any) => !usedCards?.includes(card.tokenId)
-      );
+      // tokenId in deck can be string, usedCards stores numbers
+      const availableCards = deck.filter((card: any) => {
+        const cardTokenId = typeof card.tokenId === 'string' ? parseInt(card.tokenId, 10) : card.tokenId;
+        return !usedCards?.includes(cardTokenId);
+      });
 
       if (availableCards.length === 0) {
         console.log(`[cpuMakeMove] No available cards for CPU ${isHost ? 'host' : 'guest'}`);
@@ -1423,8 +1532,9 @@ export const cpuMakeMove = internalMutation({
       // CPU strategy: pick a random card (could be improved with AI later)
       const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
 
-      // Update game state with selected card
-      const newUsedCards = [...(usedCards || []), randomCard.tokenId];
+      // Update game state with selected card (tokenId must be number for schema)
+      const tokenIdNum = typeof randomCard.tokenId === 'string' ? parseInt(randomCard.tokenId, 10) : randomCard.tokenId;
+      const newUsedCards = [...(usedCards || []), tokenIdNum];
 
       await ctx.db.patch(room._id, {
         gameState: {

@@ -120,6 +120,17 @@ export function PokerBattleTable({
   // Round betting mutations (instant payouts on each round)
   const resolveRoundBetsMutation = useMutation(api.roundBetting.resolveRoundBets);
   const convertCreditsMutation = useMutation(api.roundBetting.convertCreditsToCoins);
+  const leaveSpectateMutation = useMutation(api.pokerBattle.leaveSpectate);
+
+  // Get betting credits balance for spectator exit confirmation
+  const bettingCreditsData = useQuery(
+    api.bettingCredits.getBettingCredits,
+    isSpectatorMode && playerAddress ? { address: playerAddress } : "skip"
+  );
+
+  // State for exit confirmation modal
+  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   // Chat system
   const messages = useQuery(
@@ -1361,6 +1372,50 @@ export function PokerBattleTable({
     onClose();
   };
 
+  // Handler for spectator trying to exit
+  const handleSpectatorExitClick = () => {
+    // If spectator has betting credits, show confirmation modal
+    const creditsBalance = bettingCreditsData?.balance || 0;
+    if (isSpectatorMode && creditsBalance > 0) {
+      setShowExitConfirmation(true);
+    } else {
+      // No credits, just exit
+      handleConfirmExit();
+    }
+  };
+
+  // Confirm exit - convert credits and leave
+  const handleConfirmExit = async () => {
+    if (!roomId || !playerAddress) {
+      onClose();
+      return;
+    }
+
+    setIsLeaving(true);
+    try {
+      const result = await leaveSpectateMutation({
+        roomId,
+        address: playerAddress,
+      });
+
+      console.log("Left spectator mode:", result);
+
+      if (result.converted > 0) {
+        toast.success(`Converted ${result.converted} credits to TESTVBMS!`);
+      }
+
+      if (result.roomDeleted) {
+        toast.info("CPU Arena room closed (you were the last spectator)");
+      }
+    } catch (error) {
+      console.error("Error leaving spectate:", error);
+    } finally {
+      setIsLeaving(false);
+      setShowExitConfirmation(false);
+      onClose();
+    }
+  };
+
   // Load opponent deck when both players ready (multiplayer only)
   useEffect(() => {
     if (!isCPUMode && room && room.status === 'ready' && currentView === 'waiting') {
@@ -1849,7 +1904,7 @@ export function PokerBattleTable({
 
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={isSpectatorMode ? handleSpectatorExitClick : onClose}
           className="absolute -top-2 -right-2 z-10 bg-vintage-gold text-vintage-black w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-vintage-burnt-gold transition"
         >
           ×
@@ -3100,6 +3155,58 @@ export function PokerBattleTable({
             console.log('✅ Bet placed successfully!');
           }}
         />
+      )}
+
+      {/* Exit Confirmation Modal for Spectators */}
+      {showExitConfirmation && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] animate-in fade-in duration-300">
+          <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-yellow-500 p-6 text-center shadow-2xl max-w-md mx-4 animate-in zoom-in duration-300">
+            <div className="text-5xl mb-4">💰</div>
+            <h3 className="text-2xl font-display font-bold text-vintage-gold mb-4">
+              Exit CPU Arena?
+            </h3>
+            <div className="mb-6 space-y-3">
+              <p className="text-vintage-ice text-lg">
+                You have <span className="text-yellow-400 font-bold">{bettingCreditsData?.balance || 0}</span> betting credits
+              </p>
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                <p className="text-yellow-300 text-sm">
+                  If you leave, your credits will be converted to <span className="font-bold">TESTVBMS</span> and added to your balance.
+                </p>
+              </div>
+              {room?.isCpuVsCpu && room?.spectators?.length === 1 && (
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                  <p className="text-orange-300 text-sm">
+                    ⚠️ You are the last spectator. The CPU Arena room will be closed.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowExitConfirmation(false)}
+                disabled={isLeaving}
+                className="px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmExit}
+                disabled={isLeaving}
+                className="px-6 py-3 bg-gradient-to-br from-yellow-500 to-orange-500 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-orange-400 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLeaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    Leaving...
+                  </>
+                ) : (
+                  <>Exit & Convert</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Free Spectator Badge - Show if watching for free */}
