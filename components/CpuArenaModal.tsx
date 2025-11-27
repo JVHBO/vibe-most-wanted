@@ -30,7 +30,10 @@ const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: stri
   vibefid: { name: "VibeFID", emoji: "🆔", color: "from-cyan-500 to-blue-600" },
 };
 
-type ViewMode = "rooms" | "spectator-entry" | "battle";
+type ViewMode = "password" | "rooms" | "spectator-entry" | "battle";
+
+// Password for CPU Arena access
+const CPU_ARENA_PASSWORD = "vibe2025";
 
 /**
  * CPU ARENA MODAL
@@ -46,10 +49,12 @@ export function CpuArenaModal({
   soundEnabled,
   t,
 }: CpuArenaModalProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("rooms");
+  const [viewMode, setViewMode] = useState<ViewMode>("password");
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
 
   // Get available collections
   const availableCollections = useQuery(api.pokerBattle.getAvailableCollections);
