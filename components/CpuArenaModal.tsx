@@ -54,6 +54,9 @@ export function CpuArenaModal({
   // Get available collections
   const availableCollections = useQuery(api.cpuArena.getAvailableCollections);
 
+  // Get active CPU rooms with spectator counts
+  const cpuRooms = useQuery(api.pokerBattle.getCpuVsCpuRooms);
+
   // Mutations
   const createCpuRoom = useMutation(api.pokerBattle.createCpuVsCpuRoom);
   const spectateRoom = useMutation(api.pokerBattle.spectateRoom);
@@ -181,6 +184,10 @@ export function CpuArenaModal({
                     color: "from-gray-600 to-gray-700"
                   };
 
+                  // Get spectator count for this collection
+                  const roomData = cpuRooms?.find((r) => r.collection === collection);
+                  const spectatorCount = roomData?.spectatorCount || 0;
+
                   return (
                     <button
                       key={collection}
@@ -199,10 +206,16 @@ export function CpuArenaModal({
                           Arena
                         </p>
 
-                        {/* Status indicator */}
-                        <div className="mt-3 flex items-center justify-center gap-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          <span className="text-white/80 text-xs">Live</span>
+                        {/* Spectator count and status */}
+                        <div className="mt-3 flex items-center justify-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg">👁️</span>
+                            <span className="text-white font-bold">{spectatorCount}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            <span className="text-white/80 text-xs">Live</span>
+                          </div>
                         </div>
                       </div>
                     </button>
