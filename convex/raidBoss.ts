@@ -158,7 +158,7 @@ export const getTopContributors = query({
 
     if (!boss) return [];
 
-    const limit = args.limit || 10;
+    const limit = args.limit || 100; // Show all contributors (up to 100)
 
     // Fetch all contributors for this boss
     const allContributors = await ctx.db
@@ -787,7 +787,8 @@ export const defeatBossAndSpawnNext = mutation({
 
     for (const contribution of contributions) {
       const contributionPercent = totalDamage > 0 ? contribution.damageDealt / totalDamage : 0;
-      const reward = Math.floor(REWARD_POOL * contributionPercent);
+      // Minimum 1 coin for anyone who participated
+      const reward = Math.max(1, Math.floor(REWARD_POOL * contributionPercent));
 
       await ctx.db.patch(contribution._id, {
         rewardEarned: reward,

@@ -124,7 +124,7 @@ export function RaidBossModal({
   });
 
   // Query top contributors
-  const topContributors = useQuery(api.raidBoss.getTopContributors, { limit: 10 });
+  const topContributors = useQuery(api.raidBoss.getTopContributors, { limit: 100 });
 
   // Query unclaimed rewards
   const unclaimedRewards = useQuery(api.raidBoss.getUnclaimedRewards, {
