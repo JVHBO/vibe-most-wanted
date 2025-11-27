@@ -152,7 +152,9 @@ export default defineSchema({
     notificationsEnabled: v.optional(v.boolean()), // Opt-out flag (default true)
 
     // Custom Music Settings
-    customMusicUrl: v.optional(v.string()), // YouTube URL or direct audio URL for background music
+    customMusicUrl: v.optional(v.string()), // YouTube URL or direct audio URL for background music (legacy)
+    musicPlaylist: v.optional(v.array(v.string())), // Array of URLs for playlist mode
+    lastPlayedIndex: v.optional(v.number()), // Track which song was last played
 
     // Metadata
     userIndex: v.optional(v.number()),

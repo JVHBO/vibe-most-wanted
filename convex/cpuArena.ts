@@ -422,6 +422,7 @@ export const joinArena = mutation({
 
 /**
  * Leave arena
+ * If no spectators remain, close the battle
  */
 export const leaveArena = mutation({
   args: {
@@ -441,11 +442,23 @@ export const leaveArena = mutation({
       (s) => s.address.toLowerCase() !== normalizedAddress
     );
 
+    // If no spectators left, close the battle
+    if (updatedSpectators.length === 0 && arena.status !== "finished") {
+      console.log(`🚪 All spectators left arena ${arenaId}, closing battle`);
+      await ctx.db.patch(arenaId, {
+        spectators: [],
+        status: "finished",
+        finishedAt: Date.now(),
+        winner: undefined, // No winner - battle abandoned
+      });
+      return { success: true, arenaClosed: true };
+    }
+
     await ctx.db.patch(arenaId, {
       spectators: updatedSpectators,
     });
 
-    return { success: true };
+    return { success: true, arenaClosed: false };
   },
 });
 
