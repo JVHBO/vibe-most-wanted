@@ -10,6 +10,7 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
 
 // ================================
 // CONSTANTS & CONFIGURATION
@@ -47,24 +48,8 @@ interface CpuCard {
   collection?: string;
 }
 
-// Sample cards for CPU decks (these will be randomly assigned)
-const CPU_CARD_POOL = [
-  { name: "Cyber Warrior", power: 85, rarity: "Epic", imageUrl: "/images/cards/cpu/cyber-warrior.png" },
-  { name: "Data Guardian", power: 78, rarity: "Rare", imageUrl: "/images/cards/cpu/data-guardian.png" },
-  { name: "Neon Striker", power: 92, rarity: "Legendary", imageUrl: "/images/cards/cpu/neon-striker.png" },
-  { name: "Code Breaker", power: 65, rarity: "Common", imageUrl: "/images/cards/cpu/code-breaker.png" },
-  { name: "Binary Beast", power: 88, rarity: "Epic", imageUrl: "/images/cards/cpu/binary-beast.png" },
-  { name: "Pixel Phantom", power: 72, rarity: "Rare", imageUrl: "/images/cards/cpu/pixel-phantom.png" },
-  { name: "Digital Dragon", power: 95, rarity: "Mythic", imageUrl: "/images/cards/cpu/digital-dragon.png" },
-  { name: "Byte Blaster", power: 68, rarity: "Common", imageUrl: "/images/cards/cpu/byte-blaster.png" },
-  { name: "Circuit Sage", power: 82, rarity: "Epic", imageUrl: "/images/cards/cpu/circuit-sage.png" },
-  { name: "Quantum Queen", power: 90, rarity: "Legendary", imageUrl: "/images/cards/cpu/quantum-queen.png" },
-  { name: "Firewall Fox", power: 75, rarity: "Rare", imageUrl: "/images/cards/cpu/firewall-fox.png" },
-  { name: "Virus Viper", power: 70, rarity: "Rare", imageUrl: "/images/cards/cpu/virus-viper.png" },
-  { name: "Memory Maven", power: 63, rarity: "Common", imageUrl: "/images/cards/cpu/memory-maven.png" },
-  { name: "Protocol Prime", power: 87, rarity: "Epic", imageUrl: "/images/cards/cpu/protocol-prime.png" },
-  { name: "Syntax Samurai", power: 79, rarity: "Rare", imageUrl: "/images/cards/cpu/syntax-samurai.png" },
-];
+// Default collection for arena
+const DEFAULT_COLLECTION = "gmvbrs";
 
 // ================================
 // HELPER FUNCTIONS
@@ -80,17 +65,21 @@ function getOddsForRound(roundNumber: number): number {
 }
 
 /**
- * Generate a random CPU deck (5 cards from pool)
+ * Generate a random CPU deck (5 cards from real collection)
  */
-function generateCpuDeck(): CpuCard[] {
-  const shuffled = [...CPU_CARD_POOL].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 5).map((card, index) => ({
-    tokenId: `cpu-${Date.now()}-${index}`,
+function generateCpuDeck(collection: string = DEFAULT_COLLECTION): CpuCard[] {
+  const cards = COLLECTION_CARDS[collection] || COLLECTION_CARDS[DEFAULT_COLLECTION];
+  if (!cards || cards.length < 5) {
+    throw new Error(`Collection ${collection} not found or has insufficient cards`);
+  }
+  const shuffled = [...cards].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 5).map((card) => ({
+    tokenId: card.tokenId,
     name: card.name,
     imageUrl: card.imageUrl,
     power: card.power,
     rarity: card.rarity,
-    collection: "CPU Arena",
+    collection: collection,
   }));
 }
 
@@ -151,6 +140,16 @@ function getRandomCpuNames(): [typeof CPU_NAMES[0], typeof CPU_NAMES[0]] {
 // ================================
 // QUERIES
 // ================================
+
+/**
+ * Get available collections for arena
+ */
+export const getAvailableCollections = query({
+  args: {},
+  handler: async () => {
+    return AVAILABLE_COLLECTIONS;
+  },
+});
 
 /**
  * Get the currently active arena (if any)
