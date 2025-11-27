@@ -913,6 +913,43 @@ export const updateRevealedCardsCache = mutation({
 });
 
 // ============================================================================
+// CUSTOM MUSIC SETTINGS
+// ============================================================================
+
+/**
+ * Update custom music URL for background music
+ */
+export const updateCustomMusic = mutation({
+  args: {
+    address: v.string(),
+    customMusicUrl: v.union(v.string(), v.null()), // URL or null to clear
+  },
+  handler: async (ctx, { address, customMusicUrl }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Update the custom music URL
+    await ctx.db.patch(profile._id, {
+      customMusicUrl: customMusicUrl || undefined, // Convert null to undefined for removal
+      lastUpdated: Date.now(),
+    });
+
+    return {
+      success: true,
+      customMusicUrl: customMusicUrl || null,
+    };
+  },
+});
+
+// ============================================================================
 // PUBLIC QUERIES (for external scripts/monitoring)
 // ============================================================================
 
