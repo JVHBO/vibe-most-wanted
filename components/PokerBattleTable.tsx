@@ -2944,7 +2944,8 @@ export function PokerBattleTable({
         )}
 
         {/* ROUND WINNER ANNOUNCEMENT - Semi-transparent overlay positioned at top */}
-        {showRoundWinner && roundWinner && (
+        {/* Hide for spectators - they have their own bet feedback */}
+        {showRoundWinner && roundWinner && !isSpectatorMode && (
           <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] flex items-start justify-center pt-12 z-[240] animate-in fade-in duration-300 pointer-events-none">
             <div className={`bg-gradient-to-b rounded-2xl border-4 p-6 text-center shadow-2xl animate-in slide-in-from-top duration-500 ${
               roundWinner === 'player'
