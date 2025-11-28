@@ -401,7 +401,7 @@ export function PokerBattleTable({
 
             // Enhanced sound for spectators
             if (isSpectator) {
-              AudioManager.swordSlash(); // Dramatic reveal sound
+              AudioManager.cardBattle(); // Dramatic reveal sound
             } else {
               AudioManager.buttonSuccess();
             }
@@ -1145,10 +1145,10 @@ export function PokerBattleTable({
           // Enhanced sounds for spectators
           if (isSpectator) {
             if (isTie) {
-              AudioManager.buttonClick(); // Neutral sound for tie
+              AudioManager.tie(); // Neutral sound for tie
             } else {
               // Exciting sounds for round results
-              AudioManager.victory(); // Victory fanfare for spectators
+              AudioManager.win(); // Victory fanfare for spectators
             }
           }
 
