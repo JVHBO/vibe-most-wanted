@@ -754,6 +754,102 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/44fb820b41d00520604d96998431f961",
       "collection": "americanfootball"
     },
+    {
+      "tokenId": "6604",
+      "name": "AMERICAN FOOTBALL #6604",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fab9dc125-9529-46e3-4d2a-1c97adbcb300%2Fpublic",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "1520",
+      "name": "AMERICAN FOOTBALL #1520",
+      "rarity": "Legendary",
+      "power": 240,
+      "imageUrl": "https://i2c.seadn.io/base/0xe3910325daaef5d969e6db5eca1ff0117bb160ae/5018280c52ee6d6ac75698423fc9cd/d75018280c52ee6d6ac75698423fc9cd.png",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "5185",
+      "name": "AMERICAN FOOTBALL #5185",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://i2c.seadn.io/base/0xe3910325daaef5d969e6db5eca1ff0117bb160ae/24c8f28d7dd44665db23f81c33c9bf/d424c8f28d7dd44665db23f81c33c9bf.png",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "4848",
+      "name": "AMERICAN FOOTBALL #4848",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://i2c.seadn.io/base/0xe3910325daaef5d969e6db5eca1ff0117bb160ae/3350116cf4dfa7972c29b44aaaa1ab/643350116cf4dfa7972c29b44aaaa1ab.png",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "5643",
+      "name": "AMERICAN FOOTBALL #5643",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F57ec57e3-0550-42a1-3bc3-f7d340ec5600%2Fpublic",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "5449",
+      "name": "AMERICAN FOOTBALL #5449",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://i2c.seadn.io/base/0xe3910325daaef5d969e6db5eca1ff0117bb160ae/a97110f623ccf5b2c02b4347934490/8ea97110f623ccf5b2c02b4347934490.png",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "8512",
+      "name": "AMERICAN FOOTBALL #8512",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fe93ebec3-6630-4901-2cd1-5920e30b2d00%2Fpublic",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "11195",
+      "name": "AMERICAN FOOTBALL #11195",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F3a7fa506-d78c-492f-347f-671e63bd3d00%2Fpublic",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "4246",
+      "name": "AMERICAN FOOTBALL #4246",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F3492b5c6-01ad-4ce6-d74b-e06658dc6200%2Fpublic",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "5122",
+      "name": "AMERICAN FOOTBALL #5122",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fe0bd3e64-ed3b-4a21-8659-224d93a4aa00%2Fpublic",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "4874",
+      "name": "AMERICAN FOOTBALL #4874",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F50d5c6f7-cd8f-4059-dcc5-afcfaa146d00%2Fpublic",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "4165",
+      "name": "AMERICAN FOOTBALL #4165",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F8300b5e1-7625-467b-c873-b10dbd7a4200%2Fpublic",
+      "collection": "americanfootball"
+    },
   ],
   "coquettish": [
     {
@@ -1166,6 +1262,102 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/668143f79a10e8a63e5f311311c230bf",
       "collection": "viberuto"
     },
+    {
+      "tokenId": "5598",
+      "name": "Viberuto  Packs #5598",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9c8dded46fbfc76e82a7c0eee83bb58",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "4980",
+      "name": "Viberuto  Packs #4980",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/93aca71eee8e6c1e1ee9b1f0cf93cd2e",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "4633",
+      "name": "Viberuto  Packs #4633",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e9e6f47e31c797d55570efbb0d5d8d5",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "4983",
+      "name": "Viberuto  Packs #4983",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5668ed2c4d574e0a1a0f61b42f7c6e54",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "5414",
+      "name": "Viberuto  Packs #5414",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e8c78e80fbef5bc7d8f00c57d49eb93e",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "7023",
+      "name": "Viberuto  Packs #7023",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/faaf74d68cd2da4ba2f18ad51d3bfafc",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "7063",
+      "name": "Viberuto  Packs #7063",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4efdc9ecf0aa3419c15d2eb3992c7b98",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "5071",
+      "name": "Viberuto  Packs #5071",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fc0e27e37e5c8e13cc14bf7f026e9c89",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "2206",
+      "name": "Viberuto  Packs #2206",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dcf4ec44f4d0cb45ce98823ccdfe74b0",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "4143",
+      "name": "Viberuto  Packs #4143",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e66a2c7b2e24cabb20e2a13aacf9b3df",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "6317",
+      "name": "Viberuto  Packs #6317",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3d293c3cc8f2d0f0fc0d00b30e165f90",
+      "collection": "viberuto"
+    },
+    {
+      "tokenId": "2607",
+      "name": "Viberuto  Packs #2607",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c2b1a62c67ac8afe8a7b57d8cd9b88bb",
+      "collection": "viberuto"
+    },
   ],
   "meowverse": [
     {
@@ -1384,6 +1576,102 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/76e5688ccc192abdad64cbb4d809fca3",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "4460",
+      "name": "poorly drawn pepes #4460",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e73aac9bb3bb38090e42b394fa4b2c0",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "1710",
+      "name": "poorly drawn pepes #1710",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9e7c09fd0bb1090efe1d1f8962e41c2d",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "597",
+      "name": "poorly drawn pepes #597",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/10d287e20aaf3bb7aab3d4b17ec1c738",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "3121",
+      "name": "poorly drawn pepes #3121",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/07ebef3a8734b08e3e42f8b7fb64fdbb",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "6087",
+      "name": "poorly drawn pepes #6087",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/99e75f6cf00b44562c1b0cf18e9adb21",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "758",
+      "name": "poorly drawn pepes #758",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/08aefea62dc2d38a6d12c62b94b065ca",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "3784",
+      "name": "poorly drawn pepes #3784",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/56c789f73cedf3c2ef0d3c4afefbdb72",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "600",
+      "name": "poorly drawn pepes #600",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2fcc6e50e2b94b66c56f72d4e8af789b",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "5434",
+      "name": "poorly drawn pepes #5434",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d58c72d61e1b43d1652db89f006e6b99",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "5921",
+      "name": "poorly drawn pepes #5921",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1959cd39bfc08f99e1cdfd26b7f8da62",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "2201",
+      "name": "poorly drawn pepes #2201",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/87fb34f53cfb68a30d63f40b5870dd8a",
+      "collection": "poorlydrawnpepes"
+    },
+    {
+      "tokenId": "3790",
+      "name": "poorly drawn pepes #3790",
+      "rarity": "Rare",
+      "power": 20,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6dc4734f3e0c0f6b44e0c14b20ca1bc7",
       "collection": "poorlydrawnpepes"
     },
   ],
