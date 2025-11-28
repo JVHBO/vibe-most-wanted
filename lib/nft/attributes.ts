@@ -113,12 +113,13 @@ export function calcPower(nft: any): number {
 
 /**
  * Normalize various URL formats (IPFS, HTTP → HTTPS)
+ * Uses Filebase gateway for IPFS (more reliable than ipfs.io)
  */
 export function normalizeUrl(url: string): string {
   if (!url) return '';
   let u = url.trim();
-  if (u.startsWith('ipfs://')) u = 'https://ipfs.io/ipfs/' + u.slice(7);
-  else if (u.startsWith('ipfs/')) u = 'https://ipfs.io/ipfs/' + u.slice(5);
+  if (u.startsWith('ipfs://')) u = 'https://ipfs.filebase.io/ipfs/' + u.slice(7);
+  else if (u.startsWith('ipfs/')) u = 'https://ipfs.filebase.io/ipfs/' + u.slice(5);
   u = u.replace(/^http:\/\//i, 'https://');
   return u;
 }
