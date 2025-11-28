@@ -1073,7 +1073,7 @@ export const COQUETTISH_CARDS: ArenaCard[] = [
     "name": "❦Coquettish❦ #17",
     "rarity": "Epic",
     "power": 80,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9145036a0f3e07a031b46130b4171084",
+    "imageUrl": "https://i2c.seadn.io/base/0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea/c428d7158e42cae9b29202d3f56d47/f1c428d7158e42cae9b29202d3f56d47.png?w=350",
     "collection": "coquettish"
   },
   {
@@ -1081,7 +1081,7 @@ export const COQUETTISH_CARDS: ArenaCard[] = [
     "name": "❦Coquettish❦ #20",
     "rarity": "Epic",
     "power": 80,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9145036a0f3e07a031b46130b4171084",
+    "imageUrl": "https://i2c.seadn.io/base/0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea/c428d7158e42cae9b29202d3f56d47/f1c428d7158e42cae9b29202d3f56d47.png?w=350",
     "collection": "coquettish"
   },
   {
@@ -1225,7 +1225,7 @@ export const COQUETTISH_CARDS: ArenaCard[] = [
     "name": "❦Coquettish❦ #24",
     "rarity": "Common",
     "power": 5,
-    "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9145036a0f3e07a031b46130b4171084",
+    "imageUrl": "https://i2c.seadn.io/base/0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea/c428d7158e42cae9b29202d3f56d47/f1c428d7158e42cae9b29202d3f56d47.png?w=350",
     "collection": "coquettish"
   }
 ];

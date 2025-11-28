@@ -54,6 +54,10 @@ interface SettingsModalProps {
   skipToNext: () => void;
   skipToPrevious: () => void;
   currentTrackName: string | null;
+  // Playback control
+  isPaused: boolean;
+  pause: () => void;
+  play: () => void;
 }
 
 export function SettingsModal({
@@ -91,6 +95,9 @@ export function SettingsModal({
   skipToNext,
   skipToPrevious,
   currentTrackName,
+  isPaused,
+  pause,
+  play,
 }: SettingsModalProps) {
   const { address: walletAddress } = useAccount();
   const [isRevoking, setIsRevoking] = useState(false);
@@ -579,8 +586,8 @@ export function SettingsModal({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-vintage-gold text-sm font-bold">{playlist.length} track{playlist.length !== 1 ? 's' : ''}</span>
-                      {playlist.length > 1 && (
-                        <div className="flex gap-2">
+                      <div className="flex gap-2">
+                        {playlist.length > 1 && (
                           <button
                             onClick={() => {
                               skipToPrevious();
@@ -590,6 +597,21 @@ export function SettingsModal({
                           >
                             ◀ Prev
                           </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (isPaused) {
+                              play();
+                            } else {
+                              pause();
+                            }
+                            if (soundEnabled) AudioManager.buttonNav();
+                          }}
+                          className="px-3 py-1 bg-vintage-black hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30 rounded text-sm"
+                        >
+                          {isPaused ? '▶ Play' : '⏸ Pause'}
+                        </button>
+                        {playlist.length > 1 && (
                           <button
                             onClick={() => {
                               skipToNext();
@@ -599,8 +621,8 @@ export function SettingsModal({
                           >
                             Next ▶
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
 
                     <div className="max-h-40 overflow-y-auto space-y-1">
