@@ -654,9 +654,9 @@ export const processAutoAttacks = mutation({
             if (deckCard.collection === 'vibefid') {
               cardPower = Math.floor(cardPower * 1.5);
             }
-            // Cards matching boss collection get +20% power
+            // Cards matching boss collection get 2x power (100% bonus)
             else if (deckCard.collection === boss.collection) {
-              cardPower = Math.floor(cardPower * 1.2);
+              cardPower = Math.floor(cardPower * 2.0);
             }
           }
 
