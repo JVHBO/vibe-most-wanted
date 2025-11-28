@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -267,6 +267,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY BBCL PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Vibe FX
+  vibefx: {
+    id: 'vibefx',
+    name: 'vibefx',
+    displayName: 'Vibe FX',
+    description: 'Collection Vibe FX NFT',
+    contractAddress: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY VBFX PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
