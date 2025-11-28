@@ -82,7 +82,7 @@ export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
  * - Mythic: ≥ 1.00
  */
 export function calculateRarityFromScore(score: number): 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic' {
-  if (score >= 1.0) return 'Mythic';
+  if (score >= 0.99) return 'Mythic';
   if (score >= 0.90) return 'Legendary';
   if (score >= 0.79) return 'Epic';
   if (score >= 0.70) return 'Rare';

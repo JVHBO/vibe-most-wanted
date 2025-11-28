@@ -1404,8 +1404,112 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/85b5a75fbe9c1f329e98c725cc244bf0",
       "collection": "teampothead"
     },
+    {
+      "tokenId": "1",
+      "name": "Team Pothead #1",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/424d819355fda9eb262b42ca3b1c885b",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2",
+      "name": "Team Pothead #2",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "3",
+      "name": "Team Pothead #3",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "4",
+      "name": "Team Pothead #4",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "5",
+      "name": "Team Pothead #5",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b1de81e518df53cfb0f30f9f32d1e13a",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "6",
+      "name": "Team Pothead #6",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/714a3e77c44975ba392f93aa8f7c5f41",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "7",
+      "name": "Team Pothead #7",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/714a3e77c44975ba392f93aa8f7c5f41",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "8",
+      "name": "Team Pothead #8",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b1de81e518df53cfb0f30f9f32d1e13a",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "9",
+      "name": "Team Pothead #9",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "10",
+      "name": "Team Pothead #10",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a5a0bbf7612109de29a0929528178d60",
+      "collection": "teampothead"
+    },
   ],
   "tarot": [
+    {
+      "tokenId": "9",
+      "name": "Tarot #9",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7bee18caf26fe481c7546a9db36e9f4d",
+      "collection": "tarot"
+    },
+    {
+      "tokenId": "10",
+      "name": "Tarot #10",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c445f87a04de29073e07adf0f43622fc",
+      "collection": "tarot"
+    },
+    {
+      "tokenId": "28",
+      "name": "Tarot #28",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/72ea458dbad1ce6a722306d811a42252",
+      "collection": "tarot"
+    },
     {
       "tokenId": "2",
       "name": "Tarot #2",
@@ -1468,38 +1572,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Rare",
       "power": 20,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e0d5e06357d3e49c392e59bd8bddf0ae",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "4",
-      "name": "Tarot #4",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8fb867fd084ba19a1c3ef3767bf9c81b",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "5",
-      "name": "Tarot #5",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/01f9eff4381c53fa595cebe5a08a2994",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "6",
-      "name": "Tarot #6",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4057e58d9c2a7adbb30f6df10d638ff4",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "8",
-      "name": "Tarot #8",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3d9c289f5b5768f6cd530e850ef4fc10",
       "collection": "tarot"
     },
     {
