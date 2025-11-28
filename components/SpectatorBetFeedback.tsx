@@ -85,7 +85,8 @@ export function SpectatorBetFeedback({
   const losses = myBets?.filter((b: RoundBet) => b.status === 'lost').length || 0;
   const totalWon = myBets?.filter((b: RoundBet) => b.status === 'won').reduce((sum: number, b: RoundBet) => sum + (b.payout || 0), 0) || 0;
   const totalLost = myBets?.filter((b: RoundBet) => b.status === 'lost').reduce((sum: number, b: RoundBet) => sum + b.amount, 0) || 0;
-  const netProfit = totalWon - totalLost;
+  const totalBetAmount = myBets?.reduce((sum: number, b: RoundBet) => sum + b.amount, 0) || 0;
+  const netProfit = totalWon - totalBetAmount; // Correct: payout - all bets placed
 
   return (
     <>
