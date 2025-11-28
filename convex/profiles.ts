@@ -792,6 +792,7 @@ export const cleanOldDefenseDecks = mutation({
  * - Cards in defense deck are LOCKED and cannot be used in PvP Attack/Rooms
  * - PvE battles still allow defense cards (fighting AI is OK)
  * - Forces strategic decisions: strong defense OR strong offense
+ * - EXCEPTION: VibeFID cards are NEVER locked - they can be used in both attack and defense
  *
  * @param address - Player wallet address
  * @param allNFTs - All NFTs owned by player (from Alchemy/NFT fetch)
@@ -824,9 +825,14 @@ export const getAvailableCards = query({
     }
 
     // Extract token IDs from defense deck
+    // EXCEPTION: VibeFID cards are NOT locked - they can be used in both attack and defense
     const lockedTokenIds: string[] = [];
     for (const card of profile.defenseDeck) {
       if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+        // Skip VibeFID cards - they're exempt from the lock system
+        if (card.collection === 'vibefid') {
+          continue;
+        }
         lockedTokenIds.push(card.tokenId);
       } else if (typeof card === 'string') {
         lockedTokenIds.push(card);
