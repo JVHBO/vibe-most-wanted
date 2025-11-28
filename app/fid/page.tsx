@@ -768,7 +768,17 @@ export default function FidPage() {
                       }}
                     />
                     <p className="text-vintage-gold font-bold truncate">{card.displayName}</p>
-                    <p className="text-vintage-ice/70 text-sm truncate">@{card.username}</p>
+                    <p className="text-vintage-ice/70 text-sm truncate">
+                      <a
+                        href={`https://farcaster.xyz/${card.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-vintage-gold hover:text-vintage-burnt-gold transition-colors underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        @{card.username}
+                      </a>
+                    </p>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-vintage-burnt-gold text-sm">{card.rarity}</span>
                       <span className="text-vintage-ice text-sm">⚡ {card.power}</span>
