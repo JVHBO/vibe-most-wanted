@@ -1,8 +1,9 @@
 // AUTO-GENERATED - Real NFT cards for CPU Arena
-// Generated: 2025-11-27T03:38:33.118Z
+// Generated: 2025-11-28T02:48:22.295Z
+// CLEANED: Removed 79 cards with duplicate images (unrevealed/cover cards)
 
 export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; rarity: string; power: number; imageUrl: string; collection?: string}[]> = {
-  vibefid: [
+  "vibefid": [
     {
       "tokenId": "17355",
       "name": "VibeFID #17355",
@@ -244,7 +245,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "vibefid"
     }
   ],
-  gmvbrs: [
+  "gmvbrs": [
     {
       "tokenId": "8310",
       "name": "GM VBRS #8310",
@@ -267,14 +268,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Legendary",
       "power": 240,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7fd7c45a7c1f3358eda3d6874a44e921",
-      "collection": "gmvbrs"
-    },
-    {
-      "tokenId": "5496",
-      "name": "GM VBRS #5496",
-      "rarity": "Legendary",
-      "power": 336,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/cf4d0c296aba8dcf42813bca4d9f6407",
       "collection": "gmvbrs"
     },
     {
@@ -331,14 +324,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Legendary",
       "power": 240,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9ab999ef5c9030b5d1c991ea82e6048f",
-      "collection": "gmvbrs"
-    },
-    {
-      "tokenId": "12427",
-      "name": "GM VBRS #12427",
-      "rarity": "Legendary",
-      "power": 336,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/cf4d0c296aba8dcf42813bca4d9f6407",
       "collection": "gmvbrs"
     },
     {
@@ -422,14 +407,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "gmvbrs"
     },
     {
-      "tokenId": "1",
-      "name": "GM VBRS #1",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ff61e03a90184f9d7c1aa6d07dad5d82",
-      "collection": "gmvbrs"
-    },
-    {
       "tokenId": "4",
       "name": "GM VBRS #4",
       "rarity": "Common",
@@ -462,14 +439,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "gmvbrs"
     },
     {
-      "tokenId": "10",
-      "name": "GM VBRS #10",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ff61e03a90184f9d7c1aa6d07dad5d82",
-      "collection": "gmvbrs"
-    },
-    {
       "tokenId": "11",
       "name": "GM VBRS #11",
       "rarity": "Common",
@@ -486,7 +455,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "gmvbrs"
     }
   ],
-  vibe: [
+  "vibe": [
     {
       "tokenId": "3067",
       "name": "Vibe Most Wanted #3067",
@@ -728,7 +697,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "vibe"
     }
   ],
-  americanfootball: [
+  "americanfootball": [
     {
       "tokenId": "14",
       "name": "AMERICAN FOOTBALL #14",
@@ -759,14 +728,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Rare",
       "power": 20,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/cc5aa34f86f3802f2c0e0e1ca9ab8ba6",
-      "collection": "americanfootball"
-    },
-    {
-      "tokenId": "1",
-      "name": "AMERICAN FOOTBALL #1",
-      "rarity": "Common",
-      "power": 7,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e74d1cd7453716aba311f6625bcdce30",
       "collection": "americanfootball"
     },
     {
@@ -826,14 +787,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "americanfootball"
     },
     {
-      "tokenId": "10",
-      "name": "AMERICAN FOOTBALL #10",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e74d1cd7453716aba311f6625bcdce30",
-      "collection": "americanfootball"
-    },
-    {
       "tokenId": "12",
       "name": "AMERICAN FOOTBALL #12",
       "rarity": "Common",
@@ -847,38 +800,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Common",
       "power": 7,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f582a6d149ca8c2f7265994b2a8c4b69",
-      "collection": "americanfootball"
-    },
-    {
-      "tokenId": "16",
-      "name": "AMERICAN FOOTBALL #16",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/223e5bd4c22739bd3702834ac774499a",
-      "collection": "americanfootball"
-    },
-    {
-      "tokenId": "17",
-      "name": "AMERICAN FOOTBALL #17",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/46aecdd97cf87abc7d9a0a28c834daf7",
-      "collection": "americanfootball"
-    },
-    {
-      "tokenId": "18",
-      "name": "AMERICAN FOOTBALL #18",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5f1459773af68ab004af97924080a962",
-      "collection": "americanfootball"
-    },
-    {
-      "tokenId": "19",
-      "name": "AMERICAN FOOTBALL #19",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/46aecdd97cf87abc7d9a0a28c834daf7",
       "collection": "americanfootball"
     },
     {
@@ -898,43 +819,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "americanfootball"
     },
     {
-      "tokenId": "22",
-      "name": "AMERICAN FOOTBALL #22",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6becb504ee0bfb36308d8313a6d96298",
-      "collection": "americanfootball"
-    },
-    {
       "tokenId": "23",
       "name": "AMERICAN FOOTBALL #23",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2def954a3429151877a21327088cf135",
-      "collection": "americanfootball"
-    },
-    {
-      "tokenId": "24",
-      "name": "AMERICAN FOOTBALL #24",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/223e5bd4c22739bd3702834ac774499a",
-      "collection": "americanfootball"
-    },
-    {
-      "tokenId": "25",
-      "name": "AMERICAN FOOTBALL #25",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fa7d64487c90c97f875570963d556848",
-      "collection": "americanfootball"
-    },
-    {
-      "tokenId": "26",
-      "name": "AMERICAN FOOTBALL #26",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6becb504ee0bfb36308d8313a6d96298",
       "collection": "americanfootball"
     },
     {
@@ -946,31 +835,15 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "americanfootball"
     },
     {
-      "tokenId": "28",
-      "name": "AMERICAN FOOTBALL #28",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5f1459773af68ab004af97924080a962",
-      "collection": "americanfootball"
-    },
-    {
       "tokenId": "29",
       "name": "AMERICAN FOOTBALL #29",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f733f6ea4cad95f7ac6f291d44150027",
       "collection": "americanfootball"
-    },
-    {
-      "tokenId": "30",
-      "name": "AMERICAN FOOTBALL #30",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fa7d64487c90c97f875570963d556848",
-      "collection": "americanfootball"
     }
   ],
-  coquettish: [
+  "coquettish": [
     {
       "tokenId": "830",
       "name": "❦Coquettish❦ #830",
@@ -1052,22 +925,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "coquettish"
     },
     {
-      "tokenId": "17",
-      "name": "❦Coquettish❦ #17",
-      "rarity": "Epic",
-      "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9145036a0f3e07a031b46130b4171084",
-      "collection": "coquettish"
-    },
-    {
-      "tokenId": "20",
-      "name": "❦Coquettish❦ #20",
-      "rarity": "Epic",
-      "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9145036a0f3e07a031b46130b4171084",
-      "collection": "coquettish"
-    },
-    {
       "tokenId": "21",
       "name": "❦Coquettish❦ #21",
       "rarity": "Epic",
@@ -1124,14 +981,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "coquettish"
     },
     {
-      "tokenId": "3",
-      "name": "❦Coquettish❦ #3",
-      "rarity": "Common",
-      "power": 7,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a31935254f537c84ec9fa749c54a281c",
-      "collection": "coquettish"
-    },
-    {
       "tokenId": "4",
       "name": "❦Coquettish❦ #4",
       "rarity": "Common",
@@ -1180,14 +1029,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "coquettish"
     },
     {
-      "tokenId": "18",
-      "name": "❦Coquettish❦ #18",
-      "rarity": "Common",
-      "power": 7,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a31935254f537c84ec9fa749c54a281c",
-      "collection": "coquettish"
-    },
-    {
       "tokenId": "19",
       "name": "❦Coquettish❦ #19",
       "rarity": "Common",
@@ -1202,17 +1043,9 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/11a0f20714f19c107f90a1c8de5a63e4",
       "collection": "coquettish"
-    },
-    {
-      "tokenId": "24",
-      "name": "❦Coquettish❦ #24",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9145036a0f3e07a031b46130b4171084",
-      "collection": "coquettish"
     }
   ],
-  viberuto: [
+  "viberuto": [
     {
       "tokenId": "2360",
       "name": "Viberuto  Packs #2360",
@@ -1422,27 +1255,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "viberuto"
     },
     {
-      "tokenId": "21",
-      "name": "Viberuto  Packs #21",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ed1ca3f26be27c00091b03037916d092",
-      "collection": "viberuto"
-    },
-    {
       "tokenId": "22",
       "name": "Viberuto  Packs #22",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ec58759f6df558aa4193d58ae9b0e74f",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "23",
-      "name": "Viberuto  Packs #23",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ed1ca3f26be27c00091b03037916d092",
       "collection": "viberuto"
     },
     {
@@ -1454,7 +1271,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "viberuto"
     }
   ],
-  meowverse: [
+  "meowverse": [
     {
       "tokenId": "15743",
       "name": "Meowverse #15743",
@@ -1544,14 +1361,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "meowverse"
     },
     {
-      "tokenId": "2",
-      "name": "Meowverse #2",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/768e80de64c4cbbc84c7cd76d4b0d4c7",
-      "collection": "meowverse"
-    },
-    {
       "tokenId": "3",
       "name": "Meowverse #3",
       "rarity": "Common",
@@ -1568,35 +1377,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "meowverse"
     },
     {
-      "tokenId": "5",
-      "name": "Meowverse #5",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5e31e92a68aeef0eafe078f268d9574d",
-      "collection": "meowverse"
-    },
-    {
-      "tokenId": "6",
-      "name": "Meowverse #6",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/768e80de64c4cbbc84c7cd76d4b0d4c7",
-      "collection": "meowverse"
-    },
-    {
       "tokenId": "7",
       "name": "Meowverse #7",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9c12283d90a4df768e7064928be26558",
-      "collection": "meowverse"
-    },
-    {
-      "tokenId": "9",
-      "name": "Meowverse #9",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5e31e92a68aeef0eafe078f268d9574d",
       "collection": "meowverse"
     },
     {
@@ -1696,7 +1481,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "meowverse"
     }
   ],
-  poorlydrawnpepes: [
+  "poorlydrawnpepes": [
     {
       "tokenId": "1119",
       "name": "poorly drawn pepes #1119",
@@ -1754,59 +1539,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "poorlydrawnpepes"
     },
     {
-      "tokenId": "2",
-      "name": "poorly drawn pepes #2",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/94aee810866dbd253a1734d7f8f58a85",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "3",
-      "name": "poorly drawn pepes #3",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/94aee810866dbd253a1734d7f8f58a85",
-      "collection": "poorlydrawnpepes"
-    },
-    {
       "tokenId": "4",
       "name": "poorly drawn pepes #4",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/96282462557a81c42fad965a48c34f4c",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "5",
-      "name": "poorly drawn pepes #5",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2f54fae0aa74f8c8eaa83bf7adf604e4",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "6",
-      "name": "poorly drawn pepes #6",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5e813452c8a1a8161c606ef888c25db8",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "7",
-      "name": "poorly drawn pepes #7",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/25e05f5cc203a8a8ff6221a4a82a64dd",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "8",
-      "name": "poorly drawn pepes #8",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/94aee810866dbd253a1734d7f8f58a85",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1826,99 +1563,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "poorlydrawnpepes"
     },
     {
-      "tokenId": "11",
-      "name": "poorly drawn pepes #11",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6448be1c3551fea9af692e6c3a04ab31",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "12",
-      "name": "poorly drawn pepes #12",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2f54fae0aa74f8c8eaa83bf7adf604e4",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "13",
-      "name": "poorly drawn pepes #13",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/94aee810866dbd253a1734d7f8f58a85",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "14",
-      "name": "poorly drawn pepes #14",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6224cbfb9c77ec4431ee4aa96446d865",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "15",
-      "name": "poorly drawn pepes #15",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2f54fae0aa74f8c8eaa83bf7adf604e4",
-      "collection": "poorlydrawnpepes"
-    },
-    {
       "tokenId": "16",
       "name": "poorly drawn pepes #16",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9c93bb993c0ba7c441bcddf4beb3c162",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "17",
-      "name": "poorly drawn pepes #17",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6224cbfb9c77ec4431ee4aa96446d865",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "18",
-      "name": "poorly drawn pepes #18",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6448be1c3551fea9af692e6c3a04ab31",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "19",
-      "name": "poorly drawn pepes #19",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a7d4ff58ec6b4320800afabbcb8df86b",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "20",
-      "name": "poorly drawn pepes #20",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/25e05f5cc203a8a8ff6221a4a82a64dd",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "21",
-      "name": "poorly drawn pepes #21",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/94aee810866dbd253a1734d7f8f58a85",
-      "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "22",
-      "name": "poorly drawn pepes #22",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5e813452c8a1a8161c606ef888c25db8",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1928,17 +1577,9 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c62c920f598ed4b2699cbf9fdc660819",
       "collection": "poorlydrawnpepes"
-    },
-    {
-      "tokenId": "24",
-      "name": "poorly drawn pepes #24",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a7d4ff58ec6b4320800afabbcb8df86b",
-      "collection": "poorlydrawnpepes"
     }
   ],
-  teampothead: [
+  "teampothead": [
     {
       "tokenId": "100",
       "name": "Team Pothead #100",
@@ -1956,115 +1597,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "teampothead"
     },
     {
-      "tokenId": "1",
-      "name": "Team Pothead #1",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/424d819355fda9eb262b42ca3b1c885b",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "2",
-      "name": "Team Pothead #2",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "3",
-      "name": "Team Pothead #3",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
-      "collection": "teampothead"
-    },
-    {
       "tokenId": "4",
       "name": "Team Pothead #4",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "5",
-      "name": "Team Pothead #5",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b1de81e518df53cfb0f30f9f32d1e13a",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "6",
-      "name": "Team Pothead #6",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/714a3e77c44975ba392f93aa8f7c5f41",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "7",
-      "name": "Team Pothead #7",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/714a3e77c44975ba392f93aa8f7c5f41",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "8",
-      "name": "Team Pothead #8",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b1de81e518df53cfb0f30f9f32d1e13a",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "9",
-      "name": "Team Pothead #9",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "10",
-      "name": "Team Pothead #10",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a5a0bbf7612109de29a0929528178d60",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "11",
-      "name": "Team Pothead #11",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "12",
-      "name": "Team Pothead #12",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/df194d3fddc293783f03a56c5797cf00",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "13",
-      "name": "Team Pothead #13",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/424d819355fda9eb262b42ca3b1c885b",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "14",
-      "name": "Team Pothead #14",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/92375eeb70a07e239aaa7140b185393f",
       "collection": "teampothead"
     },
     {
@@ -2076,75 +1613,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "teampothead"
     },
     {
-      "tokenId": "16",
-      "name": "Team Pothead #16",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a6a6e6354a2349a68332450144fee993",
-      "collection": "teampothead"
-    },
-    {
       "tokenId": "17",
       "name": "Team Pothead #17",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/28211fdf617c6ed14505368709620478",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "18",
-      "name": "Team Pothead #18",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/424d819355fda9eb262b42ca3b1c885b",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "19",
-      "name": "Team Pothead #19",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b1de81e518df53cfb0f30f9f32d1e13a",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "20",
-      "name": "Team Pothead #20",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/24ea7bcac97016d062cd1b10e8c4c5d6",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "21",
-      "name": "Team Pothead #21",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/92375eeb70a07e239aaa7140b185393f",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "22",
-      "name": "Team Pothead #22",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a5a0bbf7612109de29a0929528178d60",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "23",
-      "name": "Team Pothead #23",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a6a6e6354a2349a68332450144fee993",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "24",
-      "name": "Team Pothead #24",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/714a3e77c44975ba392f93aa8f7c5f41",
       "collection": "teampothead"
     },
     {
@@ -2156,22 +1629,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "teampothead"
     },
     {
-      "tokenId": "26",
-      "name": "Team Pothead #26",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/24ea7bcac97016d062cd1b10e8c4c5d6",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "27",
-      "name": "Team Pothead #27",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/df194d3fddc293783f03a56c5797cf00",
-      "collection": "teampothead"
-    },
-    {
       "tokenId": "28",
       "name": "Team Pothead #28",
       "rarity": "Common",
@@ -2180,7 +1637,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "teampothead"
     }
   ],
-  tarot: [
+  "tarot": [
     {
       "tokenId": "9",
       "name": "Tarot #9",
@@ -2230,51 +1687,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "tarot"
     },
     {
-      "tokenId": "21",
-      "name": "Tarot #21",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0488f3344fae9e26edadcb61a1a366c6",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "22",
-      "name": "Tarot #22",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0488f3344fae9e26edadcb61a1a366c6",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "29",
-      "name": "Tarot #29",
-      "rarity": "Rare",
-      "power": 36,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/31da061cd1dcad7969c0cfc8f2c4604e",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "50",
-      "name": "Tarot #50",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0488f3344fae9e26edadcb61a1a366c6",
-      "collection": "tarot"
-    },
-    {
       "tokenId": "100",
       "name": "Tarot #100",
       "rarity": "Rare",
       "power": 20,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/01d77c5e90fd74a5e37d801f7256ddb0",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "150",
-      "name": "Tarot #150",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/31da061cd1dcad7969c0cfc8f2c4604e",
       "collection": "tarot"
     },
     {
@@ -2310,22 +1727,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "tarot"
     },
     {
-      "tokenId": "1",
-      "name": "Tarot #1",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d78652585c178bab6acfce5a8989aa9b",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "3",
-      "name": "Tarot #3",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/76ad99d281db9595dbea36d2431c84a9",
-      "collection": "tarot"
-    },
-    {
       "tokenId": "4",
       "name": "Tarot #4",
       "rarity": "Common",
@@ -2350,14 +1751,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "tarot"
     },
     {
-      "tokenId": "7",
-      "name": "Tarot #7",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/976fc21df6f9e1ecf8dc3c8b9cbabcdd",
-      "collection": "tarot"
-    },
-    {
       "tokenId": "8",
       "name": "Tarot #8",
       "rarity": "Common",
@@ -2366,27 +1759,11 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "tarot"
     },
     {
-      "tokenId": "11",
-      "name": "Tarot #11",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d78652585c178bab6acfce5a8989aa9b",
-      "collection": "tarot"
-    },
-    {
       "tokenId": "13",
       "name": "Tarot #13",
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f85eb17240e1f45ea4b65bcee8f632b3",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "15",
-      "name": "Tarot #15",
-      "rarity": "Common",
-      "power": 7,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/76ad99d281db9595dbea36d2431c84a9",
       "collection": "tarot"
     },
     {
@@ -2412,20 +1789,8 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "power": 7,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d177b1ec182a745b28b7de14adbd9723",
       "collection": "tarot"
-    },
-    {
-      "tokenId": "19",
-      "name": "Tarot #19",
-      "rarity": "Common",
-      "power": 7,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/976fc21df6f9e1ecf8dc3c8b9cbabcdd",
-      "collection": "tarot"
     }
-  ],
+  ]
 };
 
-export const AVAILABLE_COLLECTIONS = Object.keys(COLLECTION_CARDS);
-
-export function getCollectionCards(collection: string) {
-  return COLLECTION_CARDS[collection] || [];
-}
+export const AVAILABLE_COLLECTIONS = Object.keys(COLLECTION_CARDS).filter(k => COLLECTION_CARDS[k].length >= 10);
