@@ -3415,6 +3415,7 @@ export default function TCGPage() {
         onClose={() => setShowCpuArena(false)}
         address={address || ''}
         soundEnabled={soundEnabled}
+        isInFarcaster={isInFarcaster}
         t={t}
       />
 

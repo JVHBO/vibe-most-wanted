@@ -14,6 +14,7 @@ interface CpuArenaModalProps {
   address: string;
   soundEnabled: boolean;
   t: (key: any) => string;
+  isInFarcaster?: boolean;
 }
 
 // Collection display names and emojis
@@ -48,6 +49,7 @@ export function CpuArenaModal({
   address,
   soundEnabled,
   t,
+  isInFarcaster = false,
 }: CpuArenaModalProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("password");
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
@@ -149,6 +151,7 @@ export function CpuArenaModal({
         playerAddress={address}
         playerUsername={profile?.username || address.slice(0, 8)}
         isSpectator={true}
+        isInFarcaster={isInFarcaster}
         soundEnabled={soundEnabled}
         initialRoomId={roomId} // Skip matchmaking - go directly to spectating this room
         skipSpectatorModal={true} // Already deposited via CPU Arena entry
