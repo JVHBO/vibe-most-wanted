@@ -146,7 +146,7 @@ export function RaidDeckSelectionModal({
     if (isFree) return null; // Free cards don't get buffs
 
     if (card.collection === 'vibefid') {
-      return { multiplier: 1.5, label: '+50%', color: 'text-purple-400' };
+      return { multiplier: 10.0, label: '10x', color: 'text-red-400' };
     }
 
     if (currentBoss && card.collection === currentBoss.collection) {
@@ -309,20 +309,20 @@ export function RaidDeckSelectionModal({
               <h3 className="text-sm font-bold text-purple-400 mb-1">✨ VibeFID 6th Slot Benefits ✨</h3>
               <div className="grid grid-cols-2 gap-1 text-[10px] mb-1">
                 <div className="flex items-center gap-1">
+                  <span className="text-xs">💥</span>
+                  <div className="font-bold text-red-400">10x Card Damage!</div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">👥</span>
+                  <div className="font-bold text-yellow-300">+50% Team Buff</div>
+                </div>
+                <div className="flex items-center gap-1">
                   <span className="text-xs">⚡</span>
                   <div className="font-bold text-purple-300">Infinite Energy</div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-xs">📈</span>
-                  <div className="font-bold text-blue-300">+10% Deck Power</div>
-                </div>
-                <div className="flex items-center gap-1">
                   <span className="text-xs">🎯</span>
-                  <div className="font-bold text-red-300">+50% Boss Damage</div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs">🔄</span>
-                  <div className="font-bold text-green-300">Use in All Modes</div>
+                  <div className="font-bold text-green-300">30% Crit Chance</div>
                 </div>
               </div>
               <div className="text-center text-vintage-gold font-bold text-xs">
@@ -352,7 +352,7 @@ export function RaidDeckSelectionModal({
                       <CardMedia src={card.imageUrl} alt={card.name} className="rounded-lg aspect-[3/4] object-cover" />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 rounded-b-lg">
                         <div className="text-white text-xs font-bold truncate">{card.name}</div>
-                        <div className="text-purple-400 text-xs">⚡ {card.power}</div>
+                        <div className="text-purple-400 text-xs">⚡ {card.power} <span className="text-red-400">(10x = {card.power * 10})</span></div>
                       </div>
                       {isSelected && (
                         <div className="absolute inset-0 bg-purple-500/20 rounded-lg flex items-center justify-center">
@@ -439,20 +439,20 @@ export function RaidDeckSelectionModal({
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-1 text-[10px]">
                   <div className="flex items-center gap-0.5">
+                    <span className="text-red-400 text-xs">💥</span>
+                    <span className="text-vintage-burnt-gold">10x Card Damage!</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-yellow-400 text-xs">👥</span>
+                    <span className="text-vintage-burnt-gold">+50% Team Buff</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
                     <span className="text-purple-400 text-xs">⚡</span>
                     <span className="text-vintage-burnt-gold">Infinite Energy</span>
                   </div>
                   <div className="flex items-center gap-0.5">
-                    <span className="text-blue-400 text-xs">📈</span>
-                    <span className="text-vintage-burnt-gold">+10% Deck Power</span>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    <span className="text-red-400 text-xs">🎯</span>
-                    <span className="text-vintage-burnt-gold">+50% Boss Damage</span>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    <span className="text-green-400 text-xs">🔄</span>
-                    <span className="text-vintage-burnt-gold">Use in All Modes</span>
+                    <span className="text-green-400 text-xs">🎯</span>
+                    <span className="text-vintage-burnt-gold">30% Crit Chance</span>
                   </div>
                 </div>
                 {!hasVibeFID && (
