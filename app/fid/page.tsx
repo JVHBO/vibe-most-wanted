@@ -19,6 +19,7 @@ import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import { fidTranslations } from "@/lib/fidTranslations";
 import FidGenerationModal from "@/components/FidGenerationModal";
+import FidAboutTraitsModal from "@/components/FidAboutTraitsModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
@@ -868,14 +869,20 @@ export default function FidPage() {
         })()}
 
         {/* About Traits Modal */}
-        {showAboutModal && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <FidAboutTraitsModal
+          isOpen={showAboutModal}
+          onClose={() => setShowAboutModal(false)}
+        />
+
+        {/* OLD MODAL REMOVED - replaced with FidAboutTraitsModal component */}
+        {false && showAboutModal && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 overflow-y-auto hidden">
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-3xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header */}
               <div className="sticky top-0 bg-vintage-charcoal border-b-2 border-vintage-gold/30 p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold">
-                    About VibeFID Traits
+                    {fidTranslations[lang].aboutTraits}
                   </h2>
                   <button
                     onClick={() => {
@@ -1054,7 +1061,7 @@ export default function FidPage() {
                   }}
                   className="w-full px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors"
                 >
-                  Got it!
+                  {fidTranslations[lang].gotIt}
                 </button>
               </div>
             </div>
