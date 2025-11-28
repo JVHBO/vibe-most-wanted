@@ -1267,7 +1267,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #5598",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9c8dded46fbfc76e82a7c0eee83bb58",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a013762-f2ae-4fe7-7d5d-2a597b2e4b00%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1275,7 +1275,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #4980",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/93aca71eee8e6c1e1ee9b1f0cf93cd2e",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F70a26cb7-c66e-415c-6f9f-6ff614b65d00%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1283,7 +1283,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #4633",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e9e6f47e31c797d55570efbb0d5d8d5",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F346cd4f5-80c2-4aa9-49d7-382e06dfc200%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1291,7 +1291,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #4983",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5668ed2c4d574e0a1a0f61b42f7c6e54",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F22a0bd8a-a147-46c7-34e0-39655785e500%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1299,7 +1299,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #5414",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e8c78e80fbef5bc7d8f00c57d49eb93e",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1dfeb6a4-1074-42d5-aa06-0675f8430300%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1307,7 +1307,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #7023",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/faaf74d68cd2da4ba2f18ad51d3bfafc",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6c3b57d4-a310-4887-c588-51c2bb652500%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1315,7 +1315,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #7063",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4efdc9ecf0aa3419c15d2eb3992c7b98",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F34a9c84b-8644-458b-2286-f87fb18fcf00%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1323,7 +1323,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #5071",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fc0e27e37e5c8e13cc14bf7f026e9c89",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F393565e5-ad08-4642-aab9-a846856b4000%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1331,7 +1331,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #2206",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dcf4ec44f4d0cb45ce98823ccdfe74b0",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fa417f4d2-8d17-43d5-e043-4f661ccdc800%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1339,7 +1339,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #4143",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e66a2c7b2e24cabb20e2a13aacf9b3df",
+      "imageUrl": "https://i2c.seadn.io/base/0x70b4005a83a0b39325d27cf31bd4a7a30b15069f/d3abe28a1ec25bb8c73b6f468855b8/b0d3abe28a1ec25bb8c73b6f468855b8.png",
       "collection": "viberuto"
     },
     {
@@ -1347,7 +1347,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #6317",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3d293c3cc8f2d0f0fc0d00b30e165f90",
+      "imageUrl": "https://i2c.seadn.io/base/0x70b4005a83a0b39325d27cf31bd4a7a30b15069f/e6630662718cca9f1840cbdd2c88f5/e8e6630662718cca9f1840cbdd2c88f5.png",
       "collection": "viberuto"
     },
     {
@@ -1355,7 +1355,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #2607",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c2b1a62c67ac8afe8a7b57d8cd9b88bb",
+      "imageUrl": "https://i2c.seadn.io/base/0x70b4005a83a0b39325d27cf31bd4a7a30b15069f/8d57784026cda686f0a7ebfa5ca668/ce8d57784026cda686f0a7ebfa5ca668.png",
       "collection": "viberuto"
     },
   ],
@@ -1583,7 +1583,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #4460",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e73aac9bb3bb38090e42b394fa4b2c0",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F97baf65f-6363-4231-db61-be7765c09300%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1591,7 +1591,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #1710",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9e7c09fd0bb1090efe1d1f8962e41c2d",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fe5aa17c9-50fb-4ffa-76a7-0e8bb0a46e00%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1599,7 +1599,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #597",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/10d287e20aaf3bb7aab3d4b17ec1c738",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fb5d0ad19-ab01-4c40-d7fc-af0d47a72d00%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1607,7 +1607,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #3121",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/07ebef3a8734b08e3e42f8b7fb64fdbb",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F596ffdae-1f15-4830-1bf1-1f17b1faeb00%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1615,7 +1615,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #6087",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/99e75f6cf00b44562c1b0cf18e9adb21",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F274d3780-1d9b-46c9-b438-b3b3a81f2800%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1623,7 +1623,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #758",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/08aefea62dc2d38a6d12c62b94b065ca",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F596ffdae-1f15-4830-1bf1-1f17b1faeb00%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1631,7 +1631,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #3784",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/56c789f73cedf3c2ef0d3c4afefbdb72",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Feae08439-1f94-423e-8bf5-4b2c79953500%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1639,7 +1639,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #600",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2fcc6e50e2b94b66c56f72d4e8af789b",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fe5aa17c9-50fb-4ffa-76a7-0e8bb0a46e00%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1647,7 +1647,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #5434",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d58c72d61e1b43d1652db89f006e6b99",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fec4a8dff-f40c-45d5-8126-87a447328a00%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1655,7 +1655,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #5921",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1959cd39bfc08f99e1cdfd26b7f8da62",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Feae08439-1f94-423e-8bf5-4b2c79953500%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1663,7 +1663,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #2201",
       "rarity": "Epic",
       "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/87fb34f53cfb68a30d63f40b5870dd8a",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F97baf65f-6363-4231-db61-be7765c09300%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
     {
@@ -1671,7 +1671,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "poorly drawn pepes #3790",
       "rarity": "Rare",
       "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6dc4734f3e0c0f6b44e0c14b20ca1bc7",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F596ffdae-1f15-4830-1bf1-1f17b1faeb00%2Fpublic",
       "collection": "poorlydrawnpepes"
     },
   ],
