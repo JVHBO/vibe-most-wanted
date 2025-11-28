@@ -1649,6 +1649,8 @@ export const cpuResolveRound = internalMutation({
     if (roundWinner !== "tie") {
       const winnerAddress = roundWinner === "host" ? room.hostAddress : room.guestAddress;
 
+      console.log(`🎰 CPU Arena resolving bets for round ${currentRound}, winner: ${winnerAddress} [roomId: ${roomId}]`);
+
       // Get all active bets for this round
       const bets = await ctx.db
         .query("roundBets")
@@ -1657,6 +1659,8 @@ export const cpuResolveRound = internalMutation({
         )
         .filter((q) => q.eq(q.field("status"), "active"))
         .collect();
+
+      console.log(`🎰 Found ${bets.length} active bets for round ${currentRound}`);
 
       // Process each bet
       for (const bet of bets) {

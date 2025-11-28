@@ -107,64 +107,39 @@ export function SimpleBettingOverlay({
   }
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border-2 border-purple-500 rounded-xl p-3 shadow-2xl max-w-sm">
-      {/* Header */}
-      <div className="text-center mb-3">
-        <p className="text-purple-400 font-display font-bold text-lg">
-          Round {currentRound}/7 • {odds}x Odds
-        </p>
-        <p className="text-vintage-ice/70 text-xs">
-          Tap card to bet {betAmount} credits • Balance: {credits?.balance || 0}
+    <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500 rounded-lg p-2 shadow-xl w-64">
+      {/* Compact Header */}
+      <div className="text-center mb-2">
+        <p className="text-purple-400 font-bold text-sm">
+          R{currentRound}/7 • {odds}x • 💰{credits?.balance || 0}
         </p>
       </div>
 
-      {/* Player Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Player 1 */}
+      {/* Compact Player Buttons */}
+      <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => handleBet(player1Address, player1Username)}
           disabled={isBetting || !credits || credits.balance < betAmount}
-          className="relative group bg-gradient-to-br from-purple-600/30 to-purple-800/30 hover:from-purple-500/50 hover:to-purple-700/50 border-2 border-purple-500/50 hover:border-purple-400 rounded-lg p-4 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="bg-purple-600/40 hover:bg-purple-500/60 border border-purple-500/50 rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
-
-          <div className="text-center">
-            <div className="text-3xl mb-2">🎮</div>
-            <p className="text-vintage-gold font-bold text-sm">
-              {player1Username}
-            </p>
-            <p className="text-purple-300 text-xs mt-1">
-              Win: +{betAmount * odds}
-            </p>
-          </div>
+          <p className="text-vintage-gold font-bold text-xs truncate">{player1Username}</p>
+          <p className="text-purple-300 text-[10px]">+{betAmount * odds}c</p>
         </button>
 
-        {/* Player 2 */}
         <button
           onClick={() => handleBet(player2Address, player2Username)}
           disabled={isBetting || !credits || credits.balance < betAmount}
-          className="relative group bg-gradient-to-br from-pink-600/30 to-pink-800/30 hover:from-pink-500/50 hover:to-pink-700/50 border-2 border-pink-500/50 hover:border-pink-400 rounded-lg p-4 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="bg-pink-600/40 hover:bg-pink-500/60 border border-pink-500/50 rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-pink-500/20 blur-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
-
-          <div className="text-center">
-            <div className="text-3xl mb-2">🎯</div>
-            <p className="text-vintage-gold font-bold text-sm">
-              {player2Username}
-            </p>
-            <p className="text-pink-300 text-xs mt-1">
-              Win: +{betAmount * odds}
-            </p>
-          </div>
+          <p className="text-vintage-gold font-bold text-xs truncate">{player2Username}</p>
+          <p className="text-pink-300 text-[10px]">+{betAmount * odds}c</p>
         </button>
       </div>
 
       {/* Loading state */}
       {isBetting && (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-xl flex items-center justify-center">
-          <div className="text-white font-bold">Placing bet...</div>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-lg flex items-center justify-center">
+          <div className="text-white text-sm">Betting...</div>
         </div>
       )}
     </div>

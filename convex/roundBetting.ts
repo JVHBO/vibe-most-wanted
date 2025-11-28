@@ -118,7 +118,7 @@ export const placeBetOnRound = mutation({
       timestamp: Date.now(),
     });
 
-    console.log(`🎰 Round bet placed: ${normalizedAddress} bet ${amount} credits on round ${roundNumber} at ${odds}x odds`);
+    console.log(`🎰 Round bet placed: ${normalizedAddress} bet ${amount} credits on round ${roundNumber} at ${odds}x odds [roomId: ${roomId}]`);
 
     // Get bettor's username for chat message
     const bettorProfile = await ctx.db
