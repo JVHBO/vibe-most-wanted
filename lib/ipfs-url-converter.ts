@@ -1,13 +1,13 @@
 /**
- * Converts old IPFS URLs to Cloudflare IPFS gateway (faster and more reliable)
+ * Converts old IPFS URLs to Filebase IPFS gateway (faster and more reliable)
  *
  * Handles:
  * - ipfs.io URLs
- * - cloudflare-ipfs.com URLs (returns as-is)
- * - ipfs.filebase.io URLs
+ * - cloudflare-ipfs.com URLs
+ * - ipfs.filebase.io URLs (returns as-is)
  * - Any IPFS gateway URL
  *
- * Converts to: cloudflare-ipfs.com/ipfs/{cid}
+ * Converts to: ipfs.filebase.io/ipfs/{cid}
  *
  * Note: No extension needed - CardMedia auto-detects IPFS URLs as video
  */
@@ -18,8 +18,8 @@ export function convertIpfsUrl(url: string | undefined): string | undefined {
     return undefined;
   }
 
-  // Already using Cloudflare gateway - return as-is
-  if (url.includes('cloudflare-ipfs.com')) {
+  // Already using Filebase gateway - return as-is
+  if (url.includes('ipfs.filebase.io')) {
     return url;
   }
 
@@ -33,7 +33,7 @@ export function convertIpfsUrl(url: string | undefined): string | undefined {
 
   const cid = ipfsMatch[1];
 
-  // Convert to Cloudflare IPFS gateway (faster and more reliable than ipfs.io)
-  const convertedUrl = `https://cloudflare-ipfs.com/ipfs/${cid}`;
+  // Convert to Filebase IPFS gateway (faster and more reliable)
+  const convertedUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
   return convertedUrl;
 }
