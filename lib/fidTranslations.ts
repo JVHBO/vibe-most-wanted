@@ -15,6 +15,11 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Crie cartas jogáveis a partir de perfis do Farcaster',
+    home: 'Início',
+    mintYourCard: 'Mintar Sua Carta VibeFID',
+    transformProfile: 'Transforme seu perfil Farcaster em uma carta jogável • Preço: 0.0003 ETH',
+    allMinted: 'Todas Mintadas',
+    connectFarcasterToMint: '🔗 Conectar Farcaster para Mintar',
     connectedAs: 'Conectado como',
     enterFid: 'Digite o FID do Farcaster',
     fetch: 'Buscar',
@@ -34,9 +39,18 @@ export const fidTranslations = {
     generatePreview: 'Gerar Preview da Carta',
     generating: 'Gerando...',
     mintCard: 'Mintar Carta',
+    mintMyCard: 'Mintar Minha Carta VibeFID',
     minting: 'Mintando...',
     connectToMint: 'Conectar Carteira para Mintar',
     mintPrice: 'Preço do Mint',
+
+    // Pagination
+    previous: '← Anterior',
+    next: 'Próximo →',
+    pageOf: 'Página',
+    of: 'de',
+    showing: 'Mostrando',
+    cards: 'cartas',
 
     // Card preview
     cardPreview: 'Preview da Carta',
@@ -194,6 +208,11 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Create playable cards from Farcaster profiles',
+    home: 'Home',
+    mintYourCard: 'Mint Your VibeFID Card',
+    transformProfile: 'Transform your Farcaster profile into a playable card • Mint Price: 0.0003 ETH',
+    allMinted: 'All Minted',
+    connectFarcasterToMint: '🔗 Connect Farcaster to Mint',
     connectedAs: 'Connected as',
     enterFid: 'Enter Farcaster FID',
     fetch: 'Fetch',
@@ -213,9 +232,18 @@ export const fidTranslations = {
     generatePreview: 'Generate Card Preview',
     generating: 'Generating...',
     mintCard: 'Mint Card',
+    mintMyCard: 'Mint My VibeFID Card',
     minting: 'Minting...',
     connectToMint: 'Connect Wallet to Mint',
     mintPrice: 'Mint Price',
+
+    // Pagination
+    previous: '← Previous',
+    next: 'Next →',
+    pageOf: 'Page',
+    of: 'of',
+    showing: 'Showing',
+    cards: 'cards',
 
     // Card preview
     cardPreview: 'Card Preview',
@@ -373,6 +401,11 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Crear cartas jugables desde perfiles de Farcaster',
+    home: 'Inicio',
+    mintYourCard: 'Mintear Tu Carta VibeFID',
+    transformProfile: 'Transforma tu perfil de Farcaster en una carta jugable • Precio: 0.0003 ETH',
+    allMinted: 'Todas Minteadas',
+    connectFarcasterToMint: '🔗 Conectar Farcaster para Mintear',
     connectedAs: 'Conectado como',
     enterFid: 'Ingrese el FID de Farcaster',
     fetch: 'Buscar',
@@ -392,9 +425,18 @@ export const fidTranslations = {
     generatePreview: 'Generar Vista Previa',
     generating: 'Generando...',
     mintCard: 'Mintear Carta',
+    mintMyCard: 'Mintear Mi Carta VibeFID',
     minting: 'Minteando...',
     connectToMint: 'Conectar Billetera para Mintear',
     mintPrice: 'Precio de Mint',
+
+    // Pagination
+    previous: '← Anterior',
+    next: 'Siguiente →',
+    pageOf: 'Página',
+    of: 'de',
+    showing: 'Mostrando',
+    cards: 'cartas',
 
     // Card preview
     cardPreview: 'Vista Previa de la Carta',
@@ -552,6 +594,11 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Farcaster प्रोफाइल से खेलने योग्य कार्ड बनाएं',
+    home: 'होम',
+    mintYourCard: 'अपना VibeFID कार्ड मिंट करें',
+    transformProfile: 'अपनी Farcaster प्रोफाइल को खेलने योग्य कार्ड में बदलें • मूल्य: 0.0003 ETH',
+    allMinted: 'सभी मिंट किए गए',
+    connectFarcasterToMint: '🔗 मिंट करने के लिए Farcaster कनेक्ट करें',
     connectedAs: 'के रूप में कनेक्ट किया गया',
     enterFid: 'Farcaster FID दर्ज करें',
     fetch: 'प्राप्त करें',
@@ -571,9 +618,18 @@ export const fidTranslations = {
     generatePreview: 'कार्ड पूर्वावलोकन उत्पन्न करें',
     generating: 'उत्पन्न हो रहा है...',
     mintCard: 'कार्ड मिंट करें',
+    mintMyCard: 'मेरा VibeFID कार्ड मिंट करें',
     minting: 'मिंट हो रहा है...',
     connectToMint: 'मिंट करने के लिए वॉलेट कनेक्ट करें',
     mintPrice: 'मिंट मूल्य',
+
+    // Pagination
+    previous: '← पिछला',
+    next: 'अगला →',
+    pageOf: 'पृष्ठ',
+    of: 'का',
+    showing: 'दिखा रहा है',
+    cards: 'कार्ड',
 
     // Card preview
     cardPreview: 'कार्ड पूर्वावलोकन',
@@ -731,6 +787,11 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: 'Создавайте игровые карты из профилей Farcaster',
+    home: 'Главная',
+    mintYourCard: 'Минтить Вашу Карту VibeFID',
+    transformProfile: 'Превратите свой профиль Farcaster в игровую карту • Цена: 0.0003 ETH',
+    allMinted: 'Все Сминченные',
+    connectFarcasterToMint: '🔗 Подключить Farcaster для Минтинга',
     connectedAs: 'Подключен как',
     enterFid: 'Введите Farcaster FID',
     fetch: 'Получить',
@@ -750,9 +811,18 @@ export const fidTranslations = {
     generatePreview: 'Создать Предпросмотр',
     generating: 'Генерация...',
     mintCard: 'Минтить Карту',
+    mintMyCard: 'Минтить Мою Карту VibeFID',
     minting: 'Минтинг...',
     connectToMint: 'Подключить Кошелек для Минтинга',
     mintPrice: 'Цена Минтинга',
+
+    // Pagination
+    previous: '← Предыдущая',
+    next: 'Следующая →',
+    pageOf: 'Страница',
+    of: 'из',
+    showing: 'Показано',
+    cards: 'карты',
 
     // Card preview
     cardPreview: 'Предпросмотр Карты',
@@ -910,6 +980,11 @@ export const fidTranslations = {
     // Main page
     fidPageTitle: 'VibeFID',
     fidPageDesc: '从 Farcaster 个人资料创建可玩卡片',
+    home: '主页',
+    mintYourCard: '铸造您的 VibeFID 卡片',
+    transformProfile: '将您的 Farcaster 个人资料转换为可玩卡片 • 价格：0.0003 ETH',
+    allMinted: '全部已铸造',
+    connectFarcasterToMint: '🔗 连接 Farcaster 进行铸造',
     connectedAs: '已连接为',
     enterFid: '输入 Farcaster FID',
     fetch: '获取',
@@ -929,9 +1004,18 @@ export const fidTranslations = {
     generatePreview: '生成卡片预览',
     generating: '生成中...',
     mintCard: '铸造卡片',
+    mintMyCard: '铸造我的 VibeFID 卡片',
     minting: '铸造中...',
     connectToMint: '连接钱包以铸造',
     mintPrice: '铸造价格',
+
+    // Pagination
+    previous: '← 上一页',
+    next: '下一页 →',
+    pageOf: '第',
+    of: '页，共',
+    showing: '显示',
+    cards: '张卡片',
 
     // Card preview
     cardPreview: '卡片预览',

@@ -38,6 +38,7 @@ export default function FidPage() {
   const { address } = useAccount();
   const farcasterContext = useFarcasterContext();
   const { lang, setLang } = useLanguage();
+  const t = fidTranslations[lang];
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
@@ -643,10 +644,10 @@ export default function FidPage() {
         {/* Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2 relative">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-2">
-            VibeFID
+            {t.fidPageTitle}
           </h1>
           <p className="text-sm sm:text-base text-vintage-ice mb-3">
-            Mint playable cards from Farcaster profiles
+            {t.fidPageDesc}
           </p>
 
           {/* Action Buttons */}
@@ -657,7 +658,7 @@ export default function FidPage() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors text-sm"
             >
               <span>←</span>
-              <span>Home</span>
+              <span>{t.home}</span>
             </Link>
             <button
               onClick={() => {
@@ -666,7 +667,7 @@ export default function FidPage() {
               }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/20 transition-colors text-sm"
             >
-              <span>About Traits</span>
+              <span>{t.aboutTraits}</span>
             </button>
           </div>
         </div>
@@ -675,7 +676,7 @@ export default function FidPage() {
         {farcasterContext.isReady && farcasterContext.isInMiniapp && farcasterContext.user && (
           <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-center">
             <p className="text-green-300 text-xs sm:text-sm md:text-base break-words">
-              ✅ {fidTranslations[lang].connectedAs} <span className="font-bold">@{farcasterContext.user.username || `FID ${farcasterContext.user.fid}`}</span>
+              ✅ {t.connectedAs} <span className="font-bold">@{farcasterContext.user.username || `FID ${farcasterContext.user.fid}`}</span>
               {" "}(FID: {farcasterContext.user.fid})
             </p>
           </div>
@@ -685,10 +686,10 @@ export default function FidPage() {
         <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
           <div className="text-center">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-4">
-              Mint Your VibeFID Card
+              {t.mintYourCard}
             </h2>
             <p className="text-sm sm:text-base text-vintage-ice/70 mb-6">
-              Transform your Farcaster profile into a playable card • Mint Price: 0.0003 ETH
+              {t.transformProfile}
             </p>
 
             {/* Mint Button */}
@@ -697,7 +698,7 @@ export default function FidPage() {
               disabled={loading}
               className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-base sm:text-lg rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
             >
-              {loading ? "Generating..." : farcasterContext.user ? "Mint My VibeFID Card" : "🔗 Connect Farcaster to Mint"}
+              {loading ? t.generating : farcasterContext.user ? t.mintMyCard : t.connectFarcasterToMint}
             </button>
 
             {error && (
@@ -736,7 +737,7 @@ export default function FidPage() {
           return (
             <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-3 sm:mb-4">
-                All Minted ({totalCards})
+                {t.allMinted} ({totalCards})
               </h2>
 
               {/* Cards Grid */}
@@ -795,7 +796,7 @@ export default function FidPage() {
                     disabled={currentPage === 1}
                     className="px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
-                    ← Anterior
+                    {t.previous}
                   </button>
 
                   {/* Page Numbers */}
@@ -853,14 +854,14 @@ export default function FidPage() {
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
-                    Próximo →
+                    {t.next}
                   </button>
                 </div>
               )}
 
               {/* Page Info */}
               <div className="mt-4 text-center text-sm text-vintage-ice/70">
-                Página {currentPage} de {totalPages} • Mostrando {startIndex + 1}-{Math.min(endIndex, totalCards)} de {totalCards} cards
+                {t.pageOf} {currentPage} {t.of} {totalPages} • {t.showing} {startIndex + 1}-{Math.min(endIndex, totalCards)} {t.of} {totalCards} {t.cards}
               </div>
             </div>
           );
