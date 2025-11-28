@@ -556,6 +556,11 @@ export default function TCGPage() {
 
   // Clean conflicting cards from defense deck on load
   const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
+
+  // 🛡️ Defense Deck Warning - Show popup if player has no defense deck
+  const [showDefenseDeckWarning, setShowDefenseDeckWarning] = useState<boolean>(false);
+  const [defenseDeckWarningDismissed, setDefenseDeckWarningDismissed] = useState<boolean>(false);
+
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
   const [showWelcomePackPopup, setShowWelcomePackPopup] = useState<boolean>(false);
@@ -1171,6 +1176,24 @@ export default function TCGPage() {
       setShowWelcomePackPopup(true);
     }
   }, [address, userProfile, hasReceivedWelcomePack]);
+
+  // 🛡️ Show defense deck warning if player has no defense deck set up
+  useEffect(() => {
+    // Only show if: has profile, no defense deck, hasn't been dismissed, and has cards to select
+    if (
+      address &&
+      userProfile &&
+      !userProfile.hasDefenseDeck &&
+      !defenseDeckWarningDismissed &&
+      nfts.length >= 5 // Only show if player has enough cards
+    ) {
+      // Small delay to not overwhelm with popups
+      const timer = setTimeout(() => {
+        setShowDefenseDeckWarning(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [address, userProfile, defenseDeckWarningDismissed, nfts.length]);
 
   // Sync login bonus claimed status and show popup on login
   useEffect(() => {
@@ -3291,6 +3314,47 @@ export default function TCGPage() {
         handleClaimWelcomePack={handleClaimWelcomePack}
         t={t}
       />
+
+      {/* Defense Deck Warning Popup */}
+      {showDefenseDeckWarning && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-vintage-charcoal to-vintage-black border-2 border-vintage-gold rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h2 className="text-2xl font-display font-bold text-vintage-gold text-center mb-4">
+              {t('defenseDeckWarningTitle')}
+            </h2>
+            <p className="text-vintage-burnt-gold text-center mb-6 font-modern">
+              {t('defenseDeckWarningMessage')}
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowDefenseDeckWarning(false);
+                  setDefenseDeckWarningDismissed(true);
+                  // Scroll to defense deck section
+                  const defenseDeckButton = document.getElementById('defense-deck-button');
+                  if (defenseDeckButton) {
+                    defenseDeckButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className="w-full px-6 py-3 bg-gradient-to-r from-vintage-gold to-yellow-500 text-vintage-black font-display font-bold text-lg rounded-xl hover:scale-105 transition-all shadow-lg"
+              >
+                {t('defenseDeckWarningButton')}
+              </button>
+              <button
+                onClick={() => {
+                  setShowDefenseDeckWarning(false);
+                  setDefenseDeckWarningDismissed(true);
+                  if (soundEnabled) AudioManager.buttonNav();
+                }}
+                className="w-full px-6 py-2 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/30 font-modern rounded-xl hover:bg-vintage-gold/10 transition-all"
+              >
+                {t('defenseDeckWarningDismiss')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PvP Entry Fee Modal */}
       <PvPEntryFeeModal

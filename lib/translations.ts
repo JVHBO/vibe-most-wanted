@@ -295,7 +295,12 @@ export const translations = {
     raidLeaderboard: 'Ranking',
     raidCurrentStats: 'Stats Atuais',
     raidBuyPacks: 'Comprar Packs',
-    raidDragHint: '← Arraste para ver mais →'
+    raidDragHint: '← Arraste para ver mais →',
+    // Defense Deck Warning
+    defenseDeckWarningTitle: '🛡️ Configure seu Deck de Defesa!',
+    defenseDeckWarningMessage: 'Você ainda não configurou seu deck de defesa. Sem ele, você não pode atacar outros jogadores e fica vulnerável a ataques!',
+    defenseDeckWarningButton: 'Configurar Agora',
+    defenseDeckWarningDismiss: 'Depois'
   },
   en: {
     title: 'Home',
@@ -587,7 +592,12 @@ export const translations = {
     raidLeaderboard: 'Leaderboard',
     raidCurrentStats: 'Current Stats',
     raidBuyPacks: 'Buy Packs',
-    raidDragHint: 'Drag or scroll to browse all bosses'
+    raidDragHint: 'Drag or scroll to browse all bosses',
+    // Defense Deck Warning
+    defenseDeckWarningTitle: '🛡️ Set Up Your Defense Deck!',
+    defenseDeckWarningMessage: 'You haven\'t set up your defense deck yet. Without it, you can\'t attack other players and you\'re vulnerable to attacks!',
+    defenseDeckWarningButton: 'Set Up Now',
+    defenseDeckWarningDismiss: 'Later'
   },
   es: {
     title: 'Home',
@@ -882,7 +892,12 @@ export const translations = {
     raidLeaderboard: 'Clasificación',
     raidCurrentStats: 'Stats Actuales',
     raidBuyPacks: 'Comprar Packs',
-    raidDragHint: '← Desliza para ver más →'
+    raidDragHint: '← Desliza para ver más →',
+    // Defense Deck Warning
+    defenseDeckWarningTitle: '🛡️ ¡Configura tu Deck de Defensa!',
+    defenseDeckWarningMessage: 'Aún no has configurado tu deck de defensa. Sin él, ¡no puedes atacar a otros jugadores y eres vulnerable a ataques!',
+    defenseDeckWarningButton: 'Configurar Ahora',
+    defenseDeckWarningDismiss: 'Después'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -1178,7 +1193,12 @@ export const translations = {
     raidLeaderboard: 'लीडरबोर्ड',
     raidCurrentStats: 'वर्तमान स्टैट्स',
     raidBuyPacks: 'पैक खरीदें',
-    raidDragHint: '← और देखने के लिए स्वाइप करें →'
+    raidDragHint: '← और देखने के लिए स्वाइप करें →',
+    // Defense Deck Warning
+    defenseDeckWarningTitle: '🛡️ अपना डिफेंस डेक सेट करें!',
+    defenseDeckWarningMessage: 'आपने अभी तक अपना डिफेंस डेक सेट नहीं किया है। इसके बिना आप अन्य खिलाड़ियों पर हमला नहीं कर सकते और आप हमलों के लिए असुरक्षित हैं!',
+    defenseDeckWarningButton: 'अभी सेट करें',
+    defenseDeckWarningDismiss: 'बाद में'
   },
   ru: {
     title: 'Главная',
@@ -1470,7 +1490,12 @@ export const translations = {
     raidLeaderboard: 'Рейтинг',
     raidCurrentStats: 'Текущие статы',
     raidBuyPacks: 'Купить паки',
-    raidDragHint: '← Свайп для просмотра →'
+    raidDragHint: '← Свайп для просмотра →',
+    // Defense Deck Warning
+    defenseDeckWarningTitle: '🛡️ Настройте свою защитную колоду!',
+    defenseDeckWarningMessage: 'Вы еще не настроили защитную колоду. Без нее вы не сможете атаковать других игроков и будете уязвимы для атак!',
+    defenseDeckWarningButton: 'Настроить сейчас',
+    defenseDeckWarningDismiss: 'Позже'
   },
   "zh-CN": {
     title: '首页',
@@ -1762,6 +1787,11 @@ export const translations = {
     raidLeaderboard: '排行榜',
     raidCurrentStats: '当前状态',
     raidBuyPacks: '购买卡包',
-    raidDragHint: '← 滑动查看更多 →'
+    raidDragHint: '← 滑动查看更多 →',
+    // Defense Deck Warning
+    defenseDeckWarningTitle: '🛡️ 设置你的防御卡组！',
+    defenseDeckWarningMessage: '你还没有设置防御卡组。没有它，你无法攻击其他玩家，而且容易受到攻击！',
+    defenseDeckWarningButton: '立即设置',
+    defenseDeckWarningDismiss: '稍后'
   }
 } as const;
