@@ -9,6 +9,13 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
+  // Fetch card images for background
+  const cardImage1 = fetch(new URL('../../public/images/cards/1866.png', import.meta.url)).then(res => res.arrayBuffer());
+  const cardImage2 = fetch(new URL('../../public/images/cards/2486.png', import.meta.url)).then(res => res.arrayBuffer());
+  const cardImage3 = fetch(new URL('../../public/images/cards/2761.png', import.meta.url)).then(res => res.arrayBuffer());
+
+  const [card1, card2, card3] = await Promise.all([cardImage1, cardImage2, cardImage3]);
+
   return new ImageResponse(
     (
       <div
@@ -23,7 +30,7 @@ export default async function Image() {
           position: 'relative',
         }}
       >
-        {/* Background Pattern */}
+        {/* Background Cards with Dark Overlay */}
         <div
           style={{
             position: 'absolute',
@@ -31,58 +38,113 @@ export default async function Image() {
             left: 0,
             right: 0,
             bottom: 0,
-            opacity: 0.3,
             display: 'flex',
+            opacity: 0.15,
           }}
         >
-          <div
+          {/* Card 1 - Left */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(card1).toString('base64')}`}
             style={{
               position: 'absolute',
-              top: 40,
-              left: 40,
-              fontSize: 150,
-              color: '#FFD700',
-              opacity: 0.15,
+              left: -50,
+              top: '50%',
+              transform: 'translateY(-50%) rotate(-15deg)',
+              width: 300,
+              height: 420,
+              objectFit: 'cover',
             }}
-          >
-            ♠
-          </div>
-          <div
+          />
+
+          {/* Card 2 - Center */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(card2).toString('base64')}`}
             style={{
               position: 'absolute',
-              top: 40,
-              right: 40,
-              fontSize: 150,
-              color: '#FF4444',
-              opacity: 0.15,
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%) rotate(5deg)',
+              width: 280,
+              height: 400,
+              objectFit: 'cover',
             }}
-          >
-            ♥
-          </div>
-          <div
+          />
+
+          {/* Card 3 - Right */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(card3).toString('base64')}`}
             style={{
               position: 'absolute',
-              bottom: 40,
-              left: 40,
-              fontSize: 150,
-              color: '#FF4444',
-              opacity: 0.15,
+              right: -50,
+              top: '50%',
+              transform: 'translateY(-50%) rotate(12deg)',
+              width: 300,
+              height: 420,
+              objectFit: 'cover',
             }}
-          >
-            ♦
-          </div>
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 40,
-              right: 40,
-              fontSize: 150,
-              color: '#FFD700',
-              opacity: 0.15,
-            }}
-          >
-            ♣
-          </div>
+          />
+        </div>
+
+        {/* Dark Overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+          }}
+        />
+
+        {/* Card Symbols Decoration */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 40,
+            left: 40,
+            fontSize: 120,
+            color: '#FFD700',
+            opacity: 0.2,
+          }}
+        >
+          ♠
+        </div>
+        <div
+          style={{
+            position: 'absolute',
+            top: 40,
+            right: 40,
+            fontSize: 120,
+            color: '#FF4444',
+            opacity: 0.2,
+          }}
+        >
+          ♥
+        </div>
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 40,
+            left: 40,
+            fontSize: 120,
+            color: '#FF4444',
+            opacity: 0.2,
+          }}
+        >
+          ♦
+        </div>
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 40,
+            right: 40,
+            fontSize: 120,
+            color: '#FFD700',
+            opacity: 0.2,
+          }}
+        >
+          ♣
         </div>
 
         {/* Main Content */}
@@ -135,8 +197,9 @@ export default async function Image() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 padding: '20px 30px',
-                background: 'rgba(255, 215, 0, 0.1)',
+                background: 'rgba(255, 215, 0, 0.15)',
                 borderRadius: 16,
+                border: '2px solid rgba(255, 215, 0, 0.3)',
               }}
             >
               <div
@@ -164,8 +227,9 @@ export default async function Image() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 padding: '20px 30px',
-                background: 'rgba(255, 215, 0, 0.1)',
+                background: 'rgba(255, 215, 0, 0.15)',
                 borderRadius: 16,
+                border: '2px solid rgba(255, 215, 0, 0.3)',
               }}
             >
               <div
@@ -193,8 +257,9 @@ export default async function Image() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 padding: '20px 30px',
-                background: 'rgba(255, 215, 0, 0.1)',
+                background: 'rgba(255, 215, 0, 0.15)',
                 borderRadius: 16,
+                border: '2px solid rgba(255, 215, 0, 0.3)',
               }}
             >
               <div
@@ -235,7 +300,8 @@ export default async function Image() {
             position: 'absolute',
             bottom: 40,
             fontSize: 24,
-            color: '#666666',
+            color: '#888888',
+            zIndex: 1,
           }}
         >
           vibemostwanted.xyz/fid
