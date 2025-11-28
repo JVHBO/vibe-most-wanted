@@ -88,3 +88,42 @@ export const addMintedCardMetadata = mutation({
     };
   },
 });
+
+/**
+ * ADMIN: Update card traits and images for existing card
+ */
+export const updateCardTraits = mutation({
+  args: {
+    fid: v.number(),
+    foil: v.optional(v.string()),
+    wear: v.optional(v.string()),
+    power: v.optional(v.number()),
+    imageUrl: v.optional(v.string()),
+    cardImageUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const cards = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .collect();
+
+    if (cards.length === 0) {
+      throw new Error(`No card found for FID ${args.fid}`);
+    }
+
+    const card = cards.sort((a, b) => b._creationTime - a._creationTime)[0];
+
+    const updates: Record<string, any> = {};
+    if (args.foil !== undefined) updates.foil = args.foil;
+    if (args.wear !== undefined) updates.wear = args.wear;
+    if (args.power !== undefined) updates.power = args.power;
+    if (args.imageUrl !== undefined) updates.imageUrl = args.imageUrl;
+    if (args.cardImageUrl !== undefined) updates.cardImageUrl = args.cardImageUrl;
+
+    await ctx.db.patch(card._id, updates);
+
+    console.log(`Updated FID ${args.fid}:`, updates);
+
+    return { success: true, fid: args.fid, updates };
+  },
+});
