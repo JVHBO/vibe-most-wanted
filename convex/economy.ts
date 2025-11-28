@@ -229,26 +229,46 @@ export const resetDailyLimits = mutation({
 });
 
 /**
- * Get opponent's leaderboard ranking
+ * Get opponent's leaderboard ranking (OPTIMIZED V2)
  * Returns ranking position (1 = first place) or 999 if not ranked
+ *
+ * OPTIMIZATION V2: Use honor-based ranking with efficient counting
+ * - Gets opponent's honor from their profile (1 read)
+ * - Uses take() with limit to avoid reading all docs
+ * - Falls back to approximate ranking for very low ranks
  */
 async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<number> {
-  const leaderboard = await ctx.db
+  // Step 1: Get opponent's profile to know their honor
+  const opponent = await ctx.db
     .query("profiles")
-    .filter((q: any) => q.gte(q.field("stats.totalPower"), 0))
-    .collect();
+    .withIndex("by_address", (q: any) => q.eq("address", opponentAddress.toLowerCase()))
+    .first();
 
-  // Sort by total power (descending)
-  const sorted = leaderboard.sort((a: any, b: any) =>
-    (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0)
-  );
+  if (!opponent) {
+    return 999; // Not found = unranked
+  }
 
-  // Find opponent's position
-  const position = sorted.findIndex((p: any) =>
-    p.address.toLowerCase() === opponentAddress.toLowerCase()
-  );
+  const opponentHonor = opponent.stats?.honor ?? 500;
 
-  return position === -1 ? 999 : position + 1; // 1-indexed
+  // Step 2: Count profiles with higher honor (limited to top 200 for efficiency)
+  // For ranking bonuses, we only care about approximate position
+  const MAX_RANK_CHECK = 200;
+
+  const higherHonorProfiles = await ctx.db
+    .query("profiles")
+    .withIndex("by_honor")
+    .order("desc")
+    .filter((q: any) => q.gt(q.field("stats.honor"), opponentHonor))
+    .take(MAX_RANK_CHECK);
+
+  // If we found MAX_RANK_CHECK profiles with higher honor, return MAX_RANK_CHECK+1 as approximate
+  // This is good enough for ranking bonus calculations
+  if (higherHonorProfiles.length >= MAX_RANK_CHECK) {
+    return MAX_RANK_CHECK + 1;
+  }
+
+  // Ranking = number of players with higher honor + 1
+  return higherHonorProfiles.length + 1;
 }
 
 /**
