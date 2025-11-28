@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -253,6 +253,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY TRT PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Baseball Cabal
+  baseballcabal: {
+    id: 'baseballcabal',
+    name: 'baseballcabal',
+    displayName: 'Baseball Cabal',
+    description: 'Collection Baseball Cabal NFT',
+    contractAddress: '0x374f753fc5f923923fc5b460fc19ee9f0a9666a8',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY BBCL PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
