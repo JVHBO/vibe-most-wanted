@@ -1693,94 +1693,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "teampothead"
     },
     {
-      "tokenId": "1",
-      "name": "Team Pothead #1",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/424d819355fda9eb262b42ca3b1c885b",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "2",
-      "name": "Team Pothead #2",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "3",
-      "name": "Team Pothead #3",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "4",
-      "name": "Team Pothead #4",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "5",
-      "name": "Team Pothead #5",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b1de81e518df53cfb0f30f9f32d1e13a",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "6",
-      "name": "Team Pothead #6",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/714a3e77c44975ba392f93aa8f7c5f41",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "7",
-      "name": "Team Pothead #7",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/714a3e77c44975ba392f93aa8f7c5f41",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "8",
-      "name": "Team Pothead #8",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b1de81e518df53cfb0f30f9f32d1e13a",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "9",
-      "name": "Team Pothead #9",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/838c602af55e4900cb1c12dfa5af09bd",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "10",
-      "name": "Team Pothead #10",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a5a0bbf7612109de29a0929528178d60",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "1803",
-      "name": "Team Pothead #1803",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fc0407ab53fbfa5ba2656d8d68b20af5",
-      "collection": "teampothead"
-    },
-    {
       "tokenId": "2425",
       "name": "Team Pothead #2425",
       "rarity": "Rare",
@@ -1914,6 +1826,142 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Rare",
       "power": 20,
       "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F0ba9233c-bf68-4b08-8595-4e8d32972700%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1233",
+      "name": "Team Pothead #1233",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dfb3f6b54c62095a16bf66009a00526f",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1875",
+      "name": "Team Pothead #1875",
+      "rarity": "Legendary",
+      "power": 240,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/011127b7231a745ecb918d0187212dc1",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2105",
+      "name": "Team Pothead #2105",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F227bea90-9cde-4e44-d495-542fe7523000%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "880",
+      "name": "Team Pothead #880",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fb1620a8d-1b1b-499e-b728-9cc7027de000%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "411",
+      "name": "Team Pothead #411",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1284d791-3c1d-4f21-bee3-82511b472100%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "134",
+      "name": "Team Pothead #134",
+      "rarity": "Legendary",
+      "power": 240,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F3996379e-5dcd-4b30-c81a-9ba40292b300%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1572",
+      "name": "Team Pothead #1572",
+      "rarity": "Legendary",
+      "power": 240,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fee2a659e-41fb-42ed-9f6c-9dd17dc7c900%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "534",
+      "name": "Team Pothead #534",
+      "rarity": "Legendary",
+      "power": 240,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fee2a659e-41fb-42ed-9f6c-9dd17dc7c900%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1828",
+      "name": "Team Pothead #1828",
+      "rarity": "Legendary",
+      "power": 240,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F64b28bf4-46c6-4dde-ccdd-70ac1a84d400%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "286",
+      "name": "Team Pothead #286",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F227bea90-9cde-4e44-d495-542fe7523000%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2336",
+      "name": "Team Pothead #2336",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F5643052e-2b47-49fa-c64e-1e4501a3f900%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1061",
+      "name": "Team Pothead #1061",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F98bd294c-136d-422e-3670-35c9fa581c00%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "624",
+      "name": "Team Pothead #624",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F374f20c7-e9ab-4c16-8465-1a7bc2440300%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2132",
+      "name": "Team Pothead #2132",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F16c995dc-8bae-4941-af2f-98bb3d552000%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2174",
+      "name": "Team Pothead #2174",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F2cc14112-c2f4-40ee-4685-cde6644a6600%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "397",
+      "name": "Team Pothead #397",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F8937b7ed-b924-4cf2-9217-a5c3d6957100%2Fpublic",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2372",
+      "name": "Team Pothead #2372",
+      "rarity": "Common",
+      "power": 5,
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F0c5027a8-8368-48b5-d8b5-c4949fa4ba00%2Fpublic",
       "collection": "teampothead"
     },
   ],
