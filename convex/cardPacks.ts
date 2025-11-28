@@ -22,42 +22,42 @@ const PACK_TYPES = {
     description: "Welcome pack for new players",
     cards: 3,
     price: 0, // Free
-    rarityOdds: { Common: 90, Rare: 9, Epic: 1, Legendary: 0 },
+    rarityOdds: { Common: 95, Rare: 4.5, Epic: 0.5, Legendary: 0 }, // NERFED
   },
   basic: {
     name: "Basic Pack",
     description: "Quick pack with 3 cards",
     cards: 3,
     price: 1000, // 1k coins - muito acessível
-    rarityOdds: { Common: 88, Rare: 10, Epic: 1.5, Legendary: 0.5 },
+    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 }, // NERFED
   },
   premium: {
     name: "Premium Pack",
     description: "Better odds for rare and epic",
     cards: 5,
     price: 10000, // 10k coins - 5x mais caro
-    rarityOdds: { Common: 70, Rare: 25, Epic: 4, Legendary: 1 },
+    rarityOdds: { Common: 82, Rare: 15, Epic: 2.5, Legendary: 0.5 }, // NERFED
   },
   elite: {
     name: "Elite Pack",
     description: "Best odds - Guaranteed rare or better",
     cards: 5,
     price: 100000, // 100k coins - EQUIVALENTE A 1 PACK NFT REAL!
-    rarityOdds: { Common: 0, Rare: 70, Epic: 25, Legendary: 5 },
+    rarityOdds: { Common: 30, Rare: 55, Epic: 12, Legendary: 3 }, // NERFED (was 0/70/25/5)
   },
   mission: {
     name: "Mission Reward",
     description: "Earned from completing missions",
     cards: 2, // Reduced from 3 (-40%)
     price: 0, // Earned, not bought
-    rarityOdds: { Common: 65, Rare: 27, Epic: 6, Legendary: 2 },
+    rarityOdds: { Common: 80, Rare: 17, Epic: 2.5, Legendary: 0.5 }, // NERFED (was 65/27/6/2)
   },
   achievement: {
     name: "Achievement Pack",
     description: "Special achievement reward",
     cards: 3, // Reduced from 5 (-40%)
     price: 0, // Earned, not bought
-    rarityOdds: { Common: 50, Rare: 35, Epic: 12, Legendary: 3 },
+    rarityOdds: { Common: 70, Rare: 24, Epic: 5, Legendary: 1 }, // NERFED (was 50/35/12/3)
   },
 };
 
@@ -101,13 +101,13 @@ const CARD_IMAGES = {
   legendary: 2,   // proxy, proxy (4)
 };
 
-// Foil types (EXACTLY like NFTs)
+// Foil types (NERFED for FREE cards - much harder to get foil)
 const FOIL_TYPES = ["None", "Standard", "Prize"];
-const FOIL_ODDS = { None: 70, Standard: 25, Prize: 5 };
+const FOIL_ODDS = { None: 92, Standard: 7, Prize: 1 }; // Only 8% foil chance (was 30%)
 
-// Wear levels (EXACTLY like NFTs)
+// Wear levels (NERFED for FREE cards - harder to get good wear)
 const WEAR_LEVELS = ["Pristine", "Mint", "Lightly Played", "Moderately Played", "Heavily Played"];
-const WEAR_ODDS = { Pristine: 5, Mint: 20, "Lightly Played": 40, "Moderately Played": 25, "Heavily Played": 10 };
+const WEAR_ODDS = { Pristine: 2, Mint: 10, "Lightly Played": 33, "Moderately Played": 35, "Heavily Played": 20 }; // More bad wear
 
 /**
  * Calculate card power (FREE cards have 20% less power than NFTs)
