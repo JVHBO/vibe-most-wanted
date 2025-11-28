@@ -848,6 +848,168 @@ export const getAvailableCards = query({
 });
 
 /**
+ * 🔒 Get all locked cards for a player (defense deck + raid deck)
+ * Used by RaidDeckSelectionModal and DefenseDeckModal to show which cards are unavailable
+ *
+ * CARD LOCK SYSTEM:
+ * - Cards in defense deck cannot be used in raid
+ * - Cards in raid deck cannot be used in defense
+ * - VibeFID cards are EXEMPT from this restriction
+ */
+export const getLockedCardsForDeckBuilding = query({
+  args: {
+    address: v.string(),
+    mode: v.union(v.literal("defense"), v.literal("raid")),
+  },
+  handler: async (ctx, { address, mode }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    // Get profile for defense deck
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    // Get raid deck
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    const lockedTokenIds: string[] = [];
+    const lockedByRaid: string[] = [];
+    const lockedByDefense: string[] = [];
+
+    if (mode === "defense") {
+      // When building defense deck, raid cards are locked
+      if (raidDeck?.deck) {
+        for (const card of raidDeck.deck) {
+          // VibeFID cards are exempt
+          if (card.collection === 'vibefid') continue;
+          lockedTokenIds.push(card.tokenId);
+          lockedByRaid.push(card.tokenId);
+        }
+      }
+      // Also check VibeFID slot
+      if (raidDeck?.vibefidCard && raidDeck.vibefidCard.collection !== 'vibefid') {
+        lockedTokenIds.push(raidDeck.vibefidCard.tokenId);
+        lockedByRaid.push(raidDeck.vibefidCard.tokenId);
+      }
+    } else if (mode === "raid") {
+      // When building raid deck, defense cards are locked
+      if (profile?.defenseDeck) {
+        for (const card of profile.defenseDeck) {
+          if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+            // VibeFID cards are exempt
+            if (card.collection === 'vibefid') continue;
+            lockedTokenIds.push(card.tokenId);
+            lockedByDefense.push(card.tokenId);
+          } else if (typeof card === 'string') {
+            lockedTokenIds.push(card);
+            lockedByDefense.push(card);
+          }
+        }
+      }
+    }
+
+    return {
+      lockedTokenIds,
+      lockedByRaid,
+      lockedByDefense,
+      hasConflicts: false, // Will be set by migration check
+    };
+  },
+});
+
+/**
+ * 🧹 Clean conflicting cards from defense deck
+ * If a card is in both raid and defense, remove it from defense
+ * This runs once when user opens defense deck modal
+ */
+export const cleanConflictingDefenseCards = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    // Get profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile || !profile.defenseDeck || profile.defenseDeck.length === 0) {
+      return { cleaned: 0, removed: [] };
+    }
+
+    // Get raid deck
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!raidDeck || !raidDeck.deck || raidDeck.deck.length === 0) {
+      return { cleaned: 0, removed: [] };
+    }
+
+    // Get all raid card token IDs (excluding VibeFID)
+    const raidTokenIds = new Set<string>();
+    for (const card of raidDeck.deck) {
+      if (card.collection !== 'vibefid') {
+        raidTokenIds.add(card.tokenId);
+      }
+    }
+    if (raidDeck.vibefidCard && raidDeck.vibefidCard.collection !== 'vibefid') {
+      raidTokenIds.add(raidDeck.vibefidCard.tokenId);
+    }
+
+    // Filter defense deck to remove conflicting cards
+    const removedCards: string[] = [];
+    const cleanedDefenseDeck = profile.defenseDeck.filter((card) => {
+      let tokenId: string;
+      let collection: string | undefined;
+
+      if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+        tokenId = card.tokenId;
+        collection = card.collection;
+      } else if (typeof card === 'string') {
+        tokenId = card;
+      } else {
+        return true; // Keep unknown formats
+      }
+
+      // VibeFID cards are always kept
+      if (collection === 'vibefid') {
+        return true;
+      }
+
+      // Remove if in raid deck
+      if (raidTokenIds.has(tokenId)) {
+        removedCards.push(tokenId);
+        return false;
+      }
+
+      return true;
+    });
+
+    // Update if any cards were removed
+    if (removedCards.length > 0) {
+      await ctx.db.patch(profile._id, {
+        defenseDeck: cleanedDefenseDeck,
+      });
+
+      console.log(`🧹 Cleaned ${removedCards.length} conflicting cards from ${normalizedAddress}'s defense deck`);
+    }
+
+    return {
+      cleaned: removedCards.length,
+      removed: removedCards,
+    };
+  },
+});
+
+/**
  * 🎴 UPDATE REVEALED CARDS CACHE
  * Saves metadata of revealed cards to prevent disappearing when Alchemy fails
  * Smart merge: only adds new cards, keeps existing cache

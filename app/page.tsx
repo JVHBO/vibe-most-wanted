@@ -133,7 +133,7 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
   return allNfts;
 }
 
-const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean; onSelect: (nft: any) => void }) => {
+const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }: { nft: any; selected: boolean; onSelect: (nft: any) => void; locked?: boolean; lockedReason?: string }) => {
   const tid = nft.tokenId;
   const [imgError, setImgError] = useState(0);
 
@@ -172,8 +172,9 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (locked) return; // Don't allow selection if locked
     onSelect(nft);
-  }, [nft, onSelect]);
+  }, [nft, onSelect, locked]);
 
   return (
     <>
@@ -255,9 +256,15 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
       `}</style>
       
-      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick} style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}>
+      <div
+        className={`relative group transition-all duration-300 ${locked ? 'opacity-50 cursor-not-allowed' : selected ? 'scale-95' : 'hover:scale-105'} ${locked ? '' : 'cursor-pointer'}`}
+        onClick={handleClick}
+        title={locked ? lockedReason : undefined}
+        style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}
+      >
         {/* Ring wrapper OUTSIDE overflow-hidden */}
         <div className={`rounded-lg ${
+          locked ? 'ring-2 ring-red-500/50' :
           selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
           'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
         }`}>
@@ -290,6 +297,15 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
                 </div>
               )}
             </div>
+            {/* Locked overlay for cards in raid deck */}
+            {locked && (
+              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-30 rounded-lg">
+                <div className="text-3xl mb-1">⚔️</div>
+                <div className="text-[10px] text-white font-bold bg-red-600/80 px-2 py-0.5 rounded">
+                  IN RAID
+                </div>
+              </div>
+            )}
           </div>
           </FoilCardEffect>
         </div>
@@ -527,6 +543,19 @@ export default function TCGPage() {
     api.profiles.getAvailableCards,
     address ? { address, mode: "pvp" } : "skip"
   );
+
+  // 🔒 Defense/Raid Lock System - Cards in raid cannot be used in defense and vice-versa
+  const defenseLockedCards = useQuery(
+    api.profiles.getLockedCardsForDeckBuilding,
+    address ? { address, mode: "defense" } : "skip"
+  );
+  const defenseLockedTokenIds = useMemo(() =>
+    new Set(defenseLockedCards?.lockedTokenIds || []),
+    [defenseLockedCards]
+  );
+
+  // Clean conflicting cards from defense deck on load
+  const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
   const [showWelcomePackPopup, setShowWelcomePackPopup] = useState<boolean>(false);
@@ -1555,6 +1584,13 @@ export default function TCGPage() {
   }, []);
 
   const handleSelectCard = useCallback((card: any) => {
+    // Check if card is locked (in raid deck) - VibeFID cards are exempt
+    const isLockedInRaid = card.collection !== 'vibefid' && defenseLockedTokenIds.has(card.tokenId);
+    if (isLockedInRaid) {
+      if (soundEnabled) AudioManager.buttonError();
+      return;
+    }
+
     setSelectedCards(prev => {
       const isSelected = prev.find(c => c.tokenId === card.tokenId);
       if (isSelected) {
@@ -1578,7 +1614,7 @@ export default function TCGPage() {
       }
       return prev;
     });
-  }, [soundEnabled]);
+  }, [soundEnabled, defenseLockedTokenIds]);
 
   const clearSelection = useCallback(() => {
     setSelectedCards([]);
@@ -3157,6 +3193,16 @@ export default function TCGPage() {
       setTutorialPage(1);
     }
   }, [showTutorial]);
+
+  // Clean conflicting cards from defense deck on initial load
+  // (cards that are now in raid deck should be removed from defense)
+  useEffect(() => {
+    if (address && defenseLockedCards?.lockedTokenIds?.length) {
+      cleanConflictingDefense({ address }).catch(err => {
+        console.error('Error cleaning conflicting defense cards:', err);
+      });
+    }
+  }, [address, defenseLockedCards?.lockedTokenIds?.length, cleanConflictingDefense]);
 
   // Load defenses received (attacks from other players)
   useEffect(() => {
@@ -4906,14 +4952,20 @@ export default function TCGPage() {
                 )}
 
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
-                  {displayNfts.map((nft) => (
+                  {displayNfts.map((nft) => {
+                    // Check if card is locked (in raid deck) - VibeFID cards are exempt
+                    const isLockedInRaid = nft.collection !== 'vibefid' && defenseLockedTokenIds.has(nft.tokenId);
+                    return (
                     <NFTCard
                       key={nft.tokenId}
                       nft={nft}
                       selected={selectedCards.some(c => c.tokenId === nft.tokenId)}
                       onSelect={handleSelectCard}
+                      locked={isLockedInRaid}
+                      lockedReason="This card is in your Raid Deck"
                     />
-                  ))}
+                    );
+                  })}
 
                   {/* Buy Collection Button - Show as grid item when filtering by collection */}
                   {selectedCollections.length > 0 &&

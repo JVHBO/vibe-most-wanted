@@ -119,6 +119,13 @@ export function RaidDeckSelectionModal({
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
   const setRaidDeck = useMutation(api.raidBoss.setRaidDeck);
 
+  // Get locked cards (cards in defense deck cannot be used in raid)
+  const lockedCardsData = useQuery(
+    api.profiles.getLockedCardsForDeckBuilding,
+    playerAddress ? { address: playerAddress, mode: "raid" as const } : "skip"
+  );
+  const lockedTokenIds = new Set(lockedCardsData?.lockedTokenIds || []);
+
   // Sort cards (exclude VibeFID in Step 1)
   const sortedCards = sortByPower
     ? sortCardsByPower(availableCards.filter(card => showVibeFIDStep || card.collection !== 'vibefid'), false) // false = descending order
@@ -172,7 +179,20 @@ export function RaidDeckSelectionModal({
 
   const totalBasePower = selectedCards.reduce((sum: number, card) => sum + card.power, 0);
 
+  // Check if card is locked (in defense deck)
+  const isCardLocked = (card: NFT): boolean => {
+    // VibeFID cards are never locked
+    if (card.collection === 'vibefid') return false;
+    return lockedTokenIds.has(card.tokenId);
+  };
+
   const handleCardClick = (card: NFT) => {
+    // Check if card is locked (in defense deck)
+    if (isCardLocked(card)) {
+      if (soundEnabled) AudioManager.buttonError();
+      return;
+    }
+
     const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
 
     if (isSelected) {
@@ -563,13 +583,18 @@ export function RaidDeckSelectionModal({
             <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-1.5 pb-2">
               {paginatedCards.map((card) => {
                 const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
+                const locked = isCardLocked(card);
                 const buff = getCardBuff(card);
                 return (
                   <button
                     key={card.tokenId}
                     onClick={() => handleCardClick(card)}
+                    disabled={locked}
+                    title={locked ? "🔒 This card is in your Defense Deck" : undefined}
                     className={`aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition ${
-                      isSelected
+                      locked
+                        ? 'opacity-50 cursor-not-allowed border-vintage-gold/30'
+                        : isSelected
                         ? 'border-vintage-gold shadow-gold scale-95'
                         : 'border-vintage-gold/30 hover:border-vintage-gold/60 hover:scale-105'
                     }`}
@@ -587,7 +612,15 @@ export function RaidDeckSelectionModal({
                         {buff.label}
                       </div>
                     )}
-                    {isSelected && (
+                    {locked && (
+                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                        <div className="text-2xl mb-0.5">🛡️</div>
+                        <div className="text-[8px] text-white font-bold bg-black/50 px-1 rounded">
+                          IN DEFENSE
+                        </div>
+                      </div>
+                    )}
+                    {isSelected && !locked && (
                       <div className="absolute inset-0 bg-vintage-gold/20 flex items-center justify-center">
                         <span className="text-4xl text-vintage-gold">✓</span>
                       </div>
