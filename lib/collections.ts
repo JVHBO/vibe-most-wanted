@@ -262,7 +262,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     name: 'baseballcabal',
     displayName: 'Baseball Cabal',
     description: 'Collection Baseball Cabal NFT',
-    contractAddress: '0x374f753fc5f923923fc5b460fc19ee9f0a9666a8',
+    contractAddress: '0x3ff41af61d092657189b1d4f7d74d994514724bb',
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
