@@ -42,9 +42,9 @@ export default function FidCardPage() {
     const foilMultiplier = {
       Prize: 6.0, Standard: 2.0, None: 1.0,
     };
-    const basePower = rarityBasePower[card.rarity] || 5;
-    const wearMult = wearMultiplier[currentTraits.wear] || 1.0;
-    const foilMult = foilMultiplier[currentTraits.foil] || 1.0;
+    const basePower = rarityBasePower[card.rarity as keyof typeof rarityBasePower] || 5;
+    const wearMult = wearMultiplier[currentTraits.wear as keyof typeof wearMultiplier] || 1.0;
+    const foilMult = foilMultiplier[currentTraits.foil as keyof typeof foilMultiplier] || 1.0;
     return Math.round(basePower * wearMult * foilMult);
   })() : 0;
 
