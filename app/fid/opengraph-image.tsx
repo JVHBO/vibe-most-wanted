@@ -19,7 +19,7 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #1a1a1a 0%, #000000 100%)',
+          background: '#000000',
           position: 'relative',
         }}
       >
@@ -31,68 +31,58 @@ export default async function Image() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundImage: `repeating-linear-gradient(
-              45deg,
-              transparent,
-              transparent 50px,
-              rgba(255, 215, 0, 0.03) 50px,
-              rgba(255, 215, 0, 0.03) 100px
-            )`,
-          }}
-        />
-
-        {/* Card Symbols Background */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 40,
-            left: 40,
-            fontSize: 120,
-            opacity: 0.1,
-            color: '#FFD700',
+            opacity: 0.3,
             display: 'flex',
           }}
         >
-          ♠
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            top: 40,
-            right: 40,
-            fontSize: 120,
-            opacity: 0.1,
-            color: '#FF4444',
-            display: 'flex',
-          }}
-        >
-          ♥
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            left: 40,
-            fontSize: 120,
-            opacity: 0.1,
-            color: '#FF4444',
-            display: 'flex',
-          }}
-        >
-          ♦
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            right: 40,
-            fontSize: 120,
-            opacity: 0.1,
-            color: '#FFD700',
-            display: 'flex',
-          }}
-        >
-          ♣
+          <div
+            style={{
+              position: 'absolute',
+              top: 40,
+              left: 40,
+              fontSize: 150,
+              color: '#FFD700',
+              opacity: 0.15,
+            }}
+          >
+            ♠
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              top: 40,
+              right: 40,
+              fontSize: 150,
+              color: '#FF4444',
+              opacity: 0.15,
+            }}
+          >
+            ♥
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 40,
+              left: 40,
+              fontSize: 150,
+              color: '#FF4444',
+              opacity: 0.15,
+            }}
+          >
+            ♦
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 40,
+              right: 40,
+              fontSize: 150,
+              color: '#FFD700',
+              opacity: 0.15,
+            }}
+          >
+            ♣
+          </div>
         </div>
 
         {/* Main Content */}
@@ -102,7 +92,6 @@ export default async function Image() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '60px',
             zIndex: 1,
           }}
         >
@@ -111,14 +100,9 @@ export default async function Image() {
             style={{
               fontSize: 120,
               fontWeight: 900,
-              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
-              backgroundClip: 'text',
-              color: 'transparent',
-              letterSpacing: '-0.05em',
-              textAlign: 'center',
-              marginBottom: 20,
-              display: 'flex',
-              textShadow: '0 0 60px rgba(255, 215, 0, 0.5)',
+              color: '#FFD700',
+              letterSpacing: '-0.02em',
+              marginBottom: 30,
             }}
           >
             VibeFID
@@ -127,13 +111,11 @@ export default async function Image() {
           {/* Subtitle */}
           <div
             style={{
-              fontSize: 36,
-              color: '#E8E8E8',
+              fontSize: 32,
+              color: '#CCCCCC',
               textAlign: 'center',
-              marginBottom: 40,
-              maxWidth: 900,
-              lineHeight: 1.4,
-              display: 'flex',
+              marginBottom: 50,
+              maxWidth: 800,
             }}
           >
             Mint Playable Cards from Farcaster Profiles
@@ -143,8 +125,8 @@ export default async function Image() {
           <div
             style={{
               display: 'flex',
-              gap: 40,
-              marginTop: 20,
+              gap: 30,
+              marginBottom: 40,
             }}
           >
             <div
@@ -154,26 +136,22 @@ export default async function Image() {
                 alignItems: 'center',
                 padding: '20px 30px',
                 background: 'rgba(255, 215, 0, 0.1)',
-                borderRadius: 12,
-                border: '2px solid rgba(255, 215, 0, 0.3)',
+                borderRadius: 16,
               }}
             >
               <div
                 style={{
                   fontSize: 48,
-                  color: '#FFD700',
-                  marginBottom: 8,
-                  display: 'flex',
+                  marginBottom: 10,
                 }}
               >
                 🎴
               </div>
               <div
                 style={{
-                  fontSize: 24,
-                  color: '#E8E8E8',
+                  fontSize: 22,
+                  color: '#FFFFFF',
                   fontWeight: 600,
-                  display: 'flex',
                 }}
               >
                 Unique Traits
@@ -187,26 +165,22 @@ export default async function Image() {
                 alignItems: 'center',
                 padding: '20px 30px',
                 background: 'rgba(255, 215, 0, 0.1)',
-                borderRadius: 12,
-                border: '2px solid rgba(255, 215, 0, 0.3)',
+                borderRadius: 16,
               }}
             >
               <div
                 style={{
                   fontSize: 48,
-                  color: '#FFD700',
-                  marginBottom: 8,
-                  display: 'flex',
+                  marginBottom: 10,
                 }}
               >
                 ⚡
               </div>
               <div
                 style={{
-                  fontSize: 24,
-                  color: '#E8E8E8',
+                  fontSize: 22,
+                  color: '#FFFFFF',
                   fontWeight: 600,
-                  display: 'flex',
                 }}
               >
                 Power Based
@@ -220,26 +194,22 @@ export default async function Image() {
                 alignItems: 'center',
                 padding: '20px 30px',
                 background: 'rgba(255, 215, 0, 0.1)',
-                borderRadius: 12,
-                border: '2px solid rgba(255, 215, 0, 0.3)',
+                borderRadius: 16,
               }}
             >
               <div
                 style={{
                   fontSize: 48,
-                  color: '#FFD700',
-                  marginBottom: 8,
-                  display: 'flex',
+                  marginBottom: 10,
                 }}
               >
                 🔗
               </div>
               <div
                 style={{
-                  fontSize: 24,
-                  color: '#E8E8E8',
+                  fontSize: 22,
+                  color: '#FFFFFF',
                   fontWeight: 600,
-                  display: 'flex',
                 }}
               >
                 On-Chain NFT
@@ -250,24 +220,12 @@ export default async function Image() {
           {/* Mint Price */}
           <div
             style={{
-              marginTop: 40,
               fontSize: 28,
-              color: '#A0A0A0',
+              color: '#999999',
               display: 'flex',
-              alignItems: 'center',
-              gap: 12,
             }}
           >
-            <span style={{ display: 'flex' }}>Mint Price:</span>
-            <span
-              style={{
-                color: '#FFD700',
-                fontWeight: 700,
-                display: 'flex',
-              }}
-            >
-              0.0003 ETH
-            </span>
+            Mint Price: <span style={{ color: '#FFD700', marginLeft: 10, fontWeight: 700 }}>0.0003 ETH</span>
           </div>
         </div>
 
@@ -275,13 +233,9 @@ export default async function Image() {
         <div
           style={{
             position: 'absolute',
-            bottom: 30,
-            left: 0,
-            right: 0,
-            display: 'flex',
-            justifyContent: 'center',
-            fontSize: 22,
-            color: '#808080',
+            bottom: 40,
+            fontSize: 24,
+            color: '#666666',
           }}
         >
           vibemostwanted.xyz/fid
