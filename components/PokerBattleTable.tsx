@@ -20,24 +20,21 @@ import { SpectatorBetFeedback } from './SpectatorBetFeedback';
 import { GamePopups } from './GamePopups';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
-// Card back images per collection for Mecha Arena
-const COLLECTION_CARD_BACKS: Record<string, string> = {
-  vibefid: '/images/card-backs/vibefid.png',
-  gmvbrs: '/images/card-backs/gmvbrs.png',
-  vibe: '/images/card-backs/vibe.png',
-  americanfootball: '/images/card-backs/americanfootball.png',
-  coquettish: '/images/card-backs/coquettish.png',
-  viberuto: '/images/card-backs/viberuto.png',
-  meowverse: '/images/card-backs/meowverse.png',
-  poorlydrawnpepes: '/images/card-backs/poorlydrawnpepes.png',
-  teampothead: '/images/card-backs/teampothead.png',
-  tarot: '/images/card-backs/tarot.png',
+// Collection cover images for Mecha Arena (sealed/unrevealed card backs)
+const COLLECTION_COVERS: Record<string, string> = {
+  gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/cf4d0c296aba8dcf42813bca4d9f6407',
+  americanfootball: 'https://nft-cdn.alchemy.com/base-mainnet/e74d1cd7453716aba311f6625bcdce30',
+  coquettish: 'https://nft-cdn.alchemy.com/base-mainnet/9145036a0f3e07a031b46130b4171084',
+  viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/a31935254f537c84ec9fa749c54a281c',
+  meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/64bdc8568c59f33d9b43e94b6f5e8a7d',
+  poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/3c5d7e9f1a2b4c6d8e0f1a2b3c4d5e6f',
+  tarot: 'https://nft-cdn.alchemy.com/base-mainnet/7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d',
 };
 
-// Get card back image for a collection (fallback to default)
+// Get card cover image for a collection (fallback to default card-back)
 function getCardBack(collection?: string): string {
-  if (collection && COLLECTION_CARD_BACKS[collection]) {
-    return COLLECTION_CARD_BACKS[collection];
+  if (collection && COLLECTION_COVERS[collection]) {
+    return COLLECTION_COVERS[collection];
   }
   return '/images/card-back.png';
 }
