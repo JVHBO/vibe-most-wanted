@@ -16,6 +16,7 @@ import { VoiceChannelPanel } from './VoiceChannelPanel';
 import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { SpectatorEntryModal } from './SpectatorEntryModal';
 import { SimpleBettingOverlay } from './SimpleBettingOverlay';
+import { SpectatorBetFeedback } from './SpectatorBetFeedback';
 import { GamePopups } from './GamePopups';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
@@ -485,6 +486,10 @@ export function PokerBattleTable({
   // Round winner display
   const [showRoundWinner, setShowRoundWinner] = useState(false);
   const [roundWinner, setRoundWinner] = useState<'player' | 'opponent' | null>(null);
+
+  // Spectator bet feedback state
+  const [lastRoundWinnerAddress, setLastRoundWinnerAddress] = useState<string | null>(null);
+  const [showBetResult, setShowBetResult] = useState(false);
 
   // Round history - for CPU mode (local state), for PvP mode (synced from room)
   const [cpuRoundHistory, setCpuRoundHistory] = useState<Array<{
@@ -1120,6 +1125,10 @@ export function PokerBattleTable({
               ? (isHost ? room.hostAddress : room.guestAddress)
               : (isHost ? room.guestAddress : room.hostAddress);
 
+            // Set winner address for spectator bet feedback
+            setLastRoundWinnerAddress(winnerAddress);
+            setShowBetResult(true);
+
             resolveRoundBetsMutation({
               roomId,
               roundNumber: currentRound,
@@ -1127,6 +1136,11 @@ export function PokerBattleTable({
             }).catch((error) => {
               console.error('[PokerBattle] PvP Mode - Failed to resolve round bets:', error);
             });
+
+            // Hide bet result after 3 seconds
+            setTimeout(() => {
+              setShowBetResult(false);
+            }, 3000);
           }
 
           // Add to round history
@@ -1545,6 +1559,37 @@ export function PokerBattleTable({
       setShowSpectatorEntryModal(true);
     }
   }, [isSpectatorMode, hasBettingCredits, showSpectatorEntryModal]);
+
+  // Spectator mode: Detect when a round ends via roundHistory changes
+  // This is important for CPU vs CPU mode where resolution happens in backend
+  const prevRoundHistoryLength = useRef(0);
+  useEffect(() => {
+    if (!isSpectatorMode || !room?.roundHistory) return;
+
+    const currentLength = room.roundHistory.length;
+    if (currentLength > prevRoundHistoryLength.current && prevRoundHistoryLength.current > 0) {
+      // A new round was resolved
+      const lastResult = room.roundHistory[currentLength - 1];
+      if (lastResult && lastResult.winner !== 'tie') {
+        // Determine winner address from last round
+        const winnerAddress = lastResult.winner === 'player'
+          ? room.hostAddress
+          : room.guestAddress;
+
+        if (winnerAddress) {
+          console.log('[Spectator] Round resolved, showing bet feedback for:', winnerAddress);
+          setLastRoundWinnerAddress(winnerAddress);
+          setShowBetResult(true);
+
+          // Hide after 3 seconds
+          setTimeout(() => {
+            setShowBetResult(false);
+          }, 3000);
+        }
+      }
+    }
+    prevRoundHistoryLength.current = currentLength;
+  }, [isSpectatorMode, room?.roundHistory, room?.hostAddress, room?.guestAddress]);
 
   // Resolve bets when game ends (PvP mode only)
   useEffect(() => {
@@ -3154,6 +3199,17 @@ export function PokerBattleTable({
           onBetPlaced={() => {
             console.log('✅ Bet placed successfully!');
           }}
+        />
+      )}
+
+      {/* Spectator Bet Feedback - History panel + win/loss animations */}
+      {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room && (
+        <SpectatorBetFeedback
+          roomId={roomId}
+          spectatorAddress={playerAddress || ''}
+          currentRound={currentRound}
+          lastRoundWinner={lastRoundWinnerAddress}
+          showResultAnimation={showBetResult}
         />
       )}
 
