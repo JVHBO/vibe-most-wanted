@@ -1059,7 +1059,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #2360",
       "rarity": "Mythic",
       "power": 800,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e4e07d276b9c409c414a927cc6796bb6",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1e2565c1-2784-4287-f1de-a66794d9ae00%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1067,7 +1067,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #5142",
       "rarity": "Mythic",
       "power": 1440,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/504da7dd68a20561ef6eead42732141c",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1e2565c1-2784-4287-f1de-a66794d9ae00%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1075,7 +1075,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #664",
       "rarity": "Legendary",
       "power": 240,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/30d863b665b4f73ba6b28d0caf726acc",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F3fc8d2b8-f76e-47a5-8370-ab0233bc2800%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1083,7 +1083,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #1071",
       "rarity": "Legendary",
       "power": 240,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fc6285424dda6a55cd0cc8f1b7407302",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1bcbc7e7-4de6-41ca-bf77-56423f322000%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1091,7 +1091,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #3481",
       "rarity": "Legendary",
       "power": 240,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9573749ae8055a6d5eafeba65a6cc348",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F137200cd-ab9d-4268-1c48-4cecb792cc00%2Fpublic",
       "collection": "viberuto"
     },
     {
@@ -1099,167 +1099,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "name": "Viberuto  Packs #3712",
       "rarity": "Legendary",
       "power": 240,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7b0a27673b433d32b6579c665be001fa",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "1",
-      "name": "Viberuto  Packs #1",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b7f9be9e7bd9303234d914086091b66c",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "5",
-      "name": "Viberuto  Packs #5",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e9e1bc092b69b09d2d1ad454925b90e3",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "6",
-      "name": "Viberuto  Packs #6",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2a371ae686496c28f2a15221b0aacfe5",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "9",
-      "name": "Viberuto  Packs #9",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/693cbeb2632c7e6f7dac48f7fb7f2ec0",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "20",
-      "name": "Viberuto  Packs #20",
-      "rarity": "Rare",
-      "power": 20,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4c87763f7dbba0943b5d9bb62701324c",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "2",
-      "name": "Viberuto  Packs #2",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e5142c1acff95acc25196ce474e5eaeb",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "3",
-      "name": "Viberuto  Packs #3",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/79765f93660fc9288b672851a068de45",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "4",
-      "name": "Viberuto  Packs #4",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/73acd95c51b41039561baabc74bcb5cd",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "7",
-      "name": "Viberuto  Packs #7",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/185879c241bdc379706e539f44ce9f69",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "8",
-      "name": "Viberuto  Packs #8",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1503a035d2191cc90a606a4047638073",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "10",
-      "name": "Viberuto  Packs #10",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/677e1db855ae88652083e1ed963df2c4",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "11",
-      "name": "Viberuto  Packs #11",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/37cdd5c8f8d91ada89f827aca1bdaf1a",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "12",
-      "name": "Viberuto  Packs #12",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3383140a7459dc1a59fbd3f5a1b2b690",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "13",
-      "name": "Viberuto  Packs #13",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9955f704a8969ed8296f602049d6e5b",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "14",
-      "name": "Viberuto  Packs #14",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a36d10a32e552ad83d15b48136e6eea2",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "15",
-      "name": "Viberuto  Packs #15",
-      "rarity": "Common",
-      "power": 9,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/eae1814a2614c449af53104b802918f5",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "16",
-      "name": "Viberuto  Packs #16",
-      "rarity": "Common",
-      "power": 7,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1480405bc707773b4fc4d12778dcc389",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "17",
-      "name": "Viberuto  Packs #17",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/14ea48e9470d65bc0444bc4ad414623d",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "18",
-      "name": "Viberuto  Packs #18",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a7c81f422ac238b554406dec50bc70e6",
-      "collection": "viberuto"
-    },
-    {
-      "tokenId": "19",
-      "name": "Viberuto  Packs #19",
-      "rarity": "Common",
-      "power": 5,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/668143f79a10e8a63e5f311311c230bf",
+      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6b09472f-3eff-4d37-fe7e-084eb81a9f00%2Fpublic",
       "collection": "viberuto"
     },
     {
