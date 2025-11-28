@@ -20,7 +20,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economia",
-    economyIntro: "O Vibe Most Wanted possui um sistema de moedas virtuais ($TESTVBMS) que você ganha jogando e pode usar para participar de partidas ranqueadas.",
+    economyIntro: "O Vibe Most Wanted possui duas moedas: TESTVBMS (moeda do jogo que você ganha jogando) e $VBMS (token blockchain). TESTVBMS é usado para partidas ranqueadas e recompensas.",
 
     howToEarnCoins: "Como Ganhar Moedas",
     earnPve: "PvE (Jogador vs IA)",
@@ -76,11 +76,11 @@ export const docsTranslations = {
     achievementCount: "63 conquistas",
 
     rarityAchievements: "Conquistas de Raridade",
-    rarityDesc: "Colete cartas de diferentes raridades (Common, Uncommon, Rare, Epic, Legendary)",
+    rarityDesc: "Colete cartas de diferentes raridades (Common, Rare, Epic, Legendary, Mythic)",
     rarityCount: "27 conquistas baseadas em raridade",
 
     wearAchievements: "Conquistas de Condição",
-    wearDesc: "Colete cartas em diferentes condições (Poor, Good, Excellent, Pristine)",
+    wearDesc: "Colete cartas em diferentes condições (Pristine, Mint, Lightly Played, Moderately Played, Heavily Played)",
     wearCount: "18 conquistas baseadas em condição",
 
     foilAchievements: "Conquistas de Foil",
@@ -118,15 +118,15 @@ export const docsTranslations = {
 
     cardAttributes: "Atributos das Cartas",
     cardRarity: "Raridade",
-    cardRarityDesc: "Common (1x), Uncommon (2x), Rare (3x), Epic (4x), Legendary (5x)",
+    cardRarityDesc: "Common (5), Rare (20), Epic (80), Legendary (240), Mythic (800) - valores de poder base",
     cardWear: "Condição (Wear)",
-    cardWearDesc: "Poor (0.7x), Good (0.85x), Excellent (1x), Pristine (1.15x)",
+    cardWearDesc: "Pristine (×1.8), Mint (×1.4), Lightly Played (×1.0), Moderately Played (×1.0), Heavily Played (×1.0)",
     cardFoil: "Foil",
-    cardFoilDesc: "Cartas foil ganham +10% de poder extra",
+    cardFoilDesc: "Prize Foil (×15), Standard Foil (×2.5), No Foil (×1.0) - multiplicadores de poder",
 
     powerCalculation: "Cálculo de Poder",
-    powerFormula: "Poder = Raridade × Condição × (1 + Foil Bonus)",
-    powerExample: "Exemplo: Legendary (5) × Pristine (1.15) × Foil (1.1) = 6.325 poder",
+    powerFormula: "Poder = Poder Base × Multiplicador Foil × Multiplicador Condição",
+    powerExample: "Exemplo: Mythic (800) × Prize Foil (15.0) × Pristine (1.8) = 21.600 poder",
 
     defenseDeck: "Deck de Defesa",
     defenseDeckDesc: "Configure suas 5 melhores cartas para defender quando outros jogadores atacarem você. Atualize sempre que conseguir cartas mais fortes!",
@@ -175,7 +175,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Economy System",
-    economyIntro: "Vibe Most Wanted features a virtual currency system ($TESTVBMS) that you earn by playing and can use to participate in ranked matches.",
+    economyIntro: "Vibe Most Wanted has two currencies: TESTVBMS (in-game currency you earn by playing) and $VBMS (blockchain token). TESTVBMS is used for ranked matches and rewards.",
 
     howToEarnCoins: "How to Earn Coins",
     earnPve: "PvE (Player vs AI)",
@@ -231,11 +231,11 @@ export const docsTranslations = {
     achievementCount: "63 achievements",
 
     rarityAchievements: "Rarity Achievements",
-    rarityDesc: "Collect cards of different rarities (Common, Uncommon, Rare, Epic, Legendary)",
+    rarityDesc: "Collect cards of different rarities (Common, Rare, Epic, Legendary, Mythic)",
     rarityCount: "27 rarity-based achievements",
 
     wearAchievements: "Wear Achievements",
-    wearDesc: "Collect cards in different conditions (Poor, Good, Excellent, Pristine)",
+    wearDesc: "Collect cards in different conditions (Pristine, Mint, Lightly Played, Moderately Played, Heavily Played)",
     wearCount: "18 wear-based achievements",
 
     foilAchievements: "Foil Achievements",
@@ -273,15 +273,15 @@ export const docsTranslations = {
 
     cardAttributes: "Card Attributes",
     cardRarity: "Rarity",
-    cardRarityDesc: "Common (1x), Uncommon (2x), Rare (3x), Epic (4x), Legendary (5x)",
+    cardRarityDesc: "Common (5), Rare (20), Epic (80), Legendary (240), Mythic (800) - base power values",
     cardWear: "Wear Condition",
-    cardWearDesc: "Poor (0.7x), Good (0.85x), Excellent (1x), Pristine (1.15x)",
+    cardWearDesc: "Pristine (×1.8), Mint (×1.4), Lightly Played (×1.0), Moderately Played (×1.0), Heavily Played (×1.0)",
     cardFoil: "Foil",
-    cardFoilDesc: "Foil cards gain +10% extra power",
+    cardFoilDesc: "Prize Foil (×15), Standard Foil (×2.5), No Foil (×1.0) - power multipliers",
 
     powerCalculation: "Power Calculation",
-    powerFormula: "Power = Rarity × Wear × (1 + Foil Bonus)",
-    powerExample: "Example: Legendary (5) × Pristine (1.15) × Foil (1.1) = 6.325 power",
+    powerFormula: "Power = Base Power × Foil Multiplier × Wear Multiplier",
+    powerExample: "Example: Mythic (800) × Prize Foil (15.0) × Pristine (1.8) = 21,600 power",
 
     defenseDeck: "Defense Deck",
     defenseDeckDesc: "Set up your 5 best cards to defend when other players attack you. Update whenever you get stronger cards!",
@@ -330,7 +330,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economía",
-    economyIntro: "Vibe Most Wanted cuenta con un sistema de moneda virtual ($TESTVBMS) que ganas jugando y puedes usar para participar en partidas clasificatorias.",
+    economyIntro: "Vibe Most Wanted tiene dos monedas: TESTVBMS (moneda del juego que ganas jugando) y $VBMS (token blockchain). TESTVBMS se usa para partidas clasificatorias y recompensas.",
 
     howToEarnCoins: "Cómo Ganar Monedas",
     earnPve: "PvE (Jugador vs IA)",
@@ -386,11 +386,11 @@ export const docsTranslations = {
     achievementCount: "63 logros",
 
     rarityAchievements: "Logros de Rareza",
-    rarityDesc: "Colecciona cartas de diferentes rarezas (Común, Poco Común, Raro, Épico, Legendario)",
+    rarityDesc: "Colecciona cartas de diferentes rarezas (Común, Raro, Épico, Legendario, Mítico)",
     rarityCount: "27 logros basados en rareza",
 
     wearAchievements: "Logros de Condición",
-    wearDesc: "Colecciona cartas en diferentes condiciones (Pobre, Buena, Excelente, Impecable)",
+    wearDesc: "Colecciona cartas en diferentes condiciones (Impecable, Mint, Ligeramente Jugada, Moderadamente Jugada, Muy Jugada)",
     wearCount: "18 logros basados en condición",
 
     foilAchievements: "Logros de Foil",
@@ -428,15 +428,15 @@ export const docsTranslations = {
 
     cardAttributes: "Atributos de Cartas",
     cardRarity: "Rareza",
-    cardRarityDesc: "Común (1x), Poco Común (2x), Raro (3x), Épico (4x), Legendario (5x)",
+    cardRarityDesc: "Común (5), Raro (20), Épico (80), Legendario (240), Mítico (800) - valores de poder base",
     cardWear: "Condición (Wear)",
-    cardWearDesc: "Pobre (0.7x), Buena (0.85x), Excelente (1x), Impecable (1.15x)",
+    cardWearDesc: "Impecable (×1.8), Mint (×1.4), Ligeramente Jugada (×1.0), Moderadamente Jugada (×1.0), Muy Jugada (×1.0)",
     cardFoil: "Foil",
-    cardFoilDesc: "Las cartas foil ganan +10% de poder extra",
+    cardFoilDesc: "Prize Foil (×15), Standard Foil (×2.5), No Foil (×1.0) - multiplicadores de poder",
 
     powerCalculation: "Cálculo de Poder",
-    powerFormula: "Poder = Rareza × Condición × (1 + Bonus Foil)",
-    powerExample: "Ejemplo: Legendario (5) × Impecable (1.15) × Foil (1.1) = 6.325 poder",
+    powerFormula: "Poder = Poder Base × Multiplicador Foil × Multiplicador Condición",
+    powerExample: "Ejemplo: Mítico (800) × Prize Foil (15.0) × Impecable (1.8) = 21,600 poder",
 
     defenseDeck: "Mazo de Defensa",
     defenseDeckDesc: "Configura tus 5 mejores cartas para defender cuando otros jugadores te ataquen. ¡Actualiza cuando consigas cartas más fuertes!",
@@ -485,7 +485,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated for brevity - full translation recommended)
     economyTitle: "अर्थव्यवस्था प्रणाली",
-    economyIntro: "Vibe Most Wanted में एक वर्चुअल करेंसी सिस्टम ($TESTVBMS) है जो आप खेलकर कमाते हैं और रैंक मैचों में भाग लेने के लिए उपयोग कर सकते हैं।",
+    economyIntro: "Vibe Most Wanted में दो करेंसी हैं: TESTVBMS (इन-गेम करेंसी जो आप खेलकर कमाते हैं) और $VBMS (ब्लॉकचेन टोकन)। TESTVBMS रैंक मैचों और पुरस्कारों के लिए उपयोग की जाती है।",
 
     howToEarnCoins: "सिक्के कैसे कमाएं",
     earnPve: "PvE (खिलाड़ी बनाम AI)",
@@ -553,10 +553,10 @@ export const docsTranslations = {
     totalRewards: "कुल पुरस्कार: 302,300 सिक्के",
     achievementCount: "63 उपलब्धियाँ",
     rarityAchievements: "दुर्लभता उपलब्धियाँ",
-    rarityDesc: "विभिन्न दुर्लभताओं के कार्ड इकट्ठा करें (सामान्य, असामान्य, दुर्लभ, महाकाव्य, पौराणिक)",
+    rarityDesc: "विभिन्न दुर्लभताओं के कार्ड इकट्ठा करें (सामान्य, दुर्लभ, महाकाव्य, पौराणिक, मिथकीय)",
     rarityCount: "27 दुर्लभता-आधारित उपलब्धियाँ",
     wearAchievements: "स्थिति उपलब्धियाँ",
-    wearDesc: "विभिन्न स्थितियों में कार्ड इकट्ठा करें (खराब, अच्छा, उत्कृष्ट, बेदाग)",
+    wearDesc: "विभिन्न स्थितियों में कार्ड इकट्ठा करें (बेदाग, मिंट, हल्का खेला, मध्यम खेला, भारी खेला)",
     wearCount: "18 स्थिति-आधारित उपलब्धियाँ",
     foilAchievements: "फ़ॉयल उपलब्धियाँ",
     foilDesc: "विशेष चमकदार फ़ॉयल कार्ड इकट्ठा करें",
@@ -577,14 +577,14 @@ export const docsTranslations = {
     weeklyTier4: "4th-10th स्थान: 300 सिक्के प्रत्येक",
     cardAttributes: "कार्ड विशेषताएं",
     cardRarity: "दुर्लभता",
-    cardRarityDesc: "सामान्य (1x), असामान्य (2x), दुर्लभ (3x), महाकाव्य (4x), पौराणिक (5x)",
+    cardRarityDesc: "सामान्य (5), दुर्लभ (20), महाकाव्य (80), पौराणिक (240), मिथकीय (800) - आधार शक्ति मान",
     cardWear: "स्थिति (Wear)",
-    cardWearDesc: "खराब (0.7x), अच्छा (0.85x), उत्कृष्ट (1x), बेदाग (1.15x)",
+    cardWearDesc: "बेदाग (×1.8), मिंट (×1.4), हल्का खेला (×1.0), मध्यम खेला (×1.0), भारी खेला (×1.0)",
     cardFoil: "फ़ॉयल",
-    cardFoilDesc: "फ़ॉयल कार्ड +10% अतिरिक्त शक्ति प्राप्त करते हैं",
+    cardFoilDesc: "Prize Foil (×15), Standard Foil (×2.5), No Foil (×1.0) - शक्ति गुणक",
     powerCalculation: "शक्ति गणना",
-    powerFormula: "शक्ति = दुर्लभता × स्थिति × (1 + फ़ॉयल बोनस)",
-    powerExample: "उदाहरण: पौराणिक (5) × बेदाग (1.15) × फ़ॉयल (1.1) = 6.325 शक्ति",
+    powerFormula: "शक्ति = आधार शक्ति × फ़ॉयल गुणक × स्थिति गुणक",
+    powerExample: "उदाहरण: मिथकीय (800) × Prize Foil (15.0) × बेदाग (1.8) = 21,600 शक्ति",
     defenseDeck: "रक्षा डेक",
     defenseDeckDesc: "जब अन्य खिलाड़ी आप पर हमला करें तो रक्षा के लिए अपने 5 सर्वश्रेष्ठ कार्ड सेट करें। जब भी आपको मजबूत कार्ड मिलें तो अपडेट करें!",
     faq2Q: "मुझे और कार्ड कैसे मिलें?",
@@ -619,7 +619,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated - full translation recommended)
     economyTitle: "Экономическая система",
-    economyIntro: "Vibe Most Wanted имеет систему виртуальной валюты ($TESTVBMS), которую вы зарабатываете, играя, и можете использовать для участия в рейтинговых матчах.",
+    economyIntro: "Vibe Most Wanted имеет две валюты: TESTVBMS (игровая валюта, которую вы зарабатываете) и $VBMS (блокчейн токен). TESTVBMS используется для рейтинговых матчей и наград.",
 
     howToEarnCoins: "Как заработать монеты",
     earnPve: "PvE (Игрок против ИИ)",
@@ -675,11 +675,11 @@ export const docsTranslations = {
     achievementCount: "63 достижения",
 
     rarityAchievements: "Достижения по редкости",
-    rarityDesc: "Собирайте карты разной редкости (Обычный, Необычный, Редкий, Эпический, Легендарный)",
+    rarityDesc: "Собирайте карты разной редкости (Обычный, Редкий, Эпический, Легендарный, Мифический)",
     rarityCount: "27 достижений по редкости",
 
     wearAchievements: "Достижения по состоянию",
-    wearDesc: "Собирайте карты в разных состояниях (Плохое, Хорошее, Отличное, Идеальное)",
+    wearDesc: "Собирайте карты в разных состояниях (Идеальное, Mint, Слегка играная, Средне играная, Сильно играная)",
     wearCount: "18 достижений по состоянию",
 
     foilAchievements: "Фольгированные достижения",
@@ -717,15 +717,15 @@ export const docsTranslations = {
 
     cardAttributes: "Атрибуты карт",
     cardRarity: "Редкость",
-    cardRarityDesc: "Обычный (1x), Необычный (2x), Редкий (3x), Эпический (4x), Легендарный (5x)",
+    cardRarityDesc: "Обычный (5), Редкий (20), Эпический (80), Легендарный (240), Мифический (800) - базовые значения мощности",
     cardWear: "Состояние (Wear)",
-    cardWearDesc: "Плохое (0.7x), Хорошее (0.85x), Отличное (1x), Идеальное (1.15x)",
+    cardWearDesc: "Идеальное (×1.8), Mint (×1.4), Слегка играная (×1.0), Средне играная (×1.0), Сильно играная (×1.0)",
     cardFoil: "Фольга",
-    cardFoilDesc: "Фольгированные карты получают +10% дополнительной мощности",
+    cardFoilDesc: "Prize Foil (×15), Standard Foil (×2.5), No Foil (×1.0) - множители мощности",
 
     powerCalculation: "Расчет мощности",
-    powerFormula: "Мощность = Редкость × Состояние × (1 + Бонус фольги)",
-    powerExample: "Пример: Легендарный (5) × Идеальное (1.15) × Фольга (1.1) = 6.325 мощности",
+    powerFormula: "Мощность = Базовая мощность × Множитель фольги × Множитель состояния",
+    powerExample: "Пример: Мифический (800) × Prize Foil (15.0) × Идеальное (1.8) = 21,600 мощности",
 
     defenseDeck: "Защитная колода",
     defenseDeckDesc: "Установите свои 5 лучших карт для защиты, когда другие игроки атакуют вас. Обновляйте, когда получаете более сильные карты!",
@@ -774,7 +774,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated)
     economyTitle: "经济系统",
-    economyIntro: "Vibe Most Wanted 拥有虚拟货币系统 ($TESTVBMS)，您可以通过游戏赚取并用于参与排名赛。",
+    economyIntro: "Vibe Most Wanted 有两种货币：TESTVBMS（游戏内货币，通过游戏赚取）和 $VBMS（区块链代币）。TESTVBMS 用于排名赛和奖励。",
 
     howToEarnCoins: "如何赚取金币",
     earnPve: "PvE (玩家对AI)",
@@ -830,11 +830,11 @@ export const docsTranslations = {
     achievementCount: "63 项成就",
 
     rarityAchievements: "稀有度成就",
-    rarityDesc: "收集不同稀有度的卡牌 (普通、罕见、稀有、史诗、传说)",
+    rarityDesc: "收集不同稀有度的卡牌 (普通、稀有、史诗、传说、神话)",
     rarityCount: "27项基于稀有度的成就",
 
     wearAchievements: "状态成就",
-    wearDesc: "收集不同状态的卡牌 (差、良好、优秀、完美)",
+    wearDesc: "收集不同状态的卡牌 (完美、Mint、轻度使用、中度使用、重度使用)",
     wearCount: "18项基于状态的成就",
 
     foilAchievements: "闪卡成就",
@@ -872,15 +872,15 @@ export const docsTranslations = {
 
     cardAttributes: "卡牌属性",
     cardRarity: "稀有度",
-    cardRarityDesc: "普通 (1x)、罕见 (2x)、稀有 (3x)、史诗 (4x)、传说 (5x)",
+    cardRarityDesc: "普通 (5)、稀有 (20)、史诗 (80)、传说 (240)、神话 (800) - 基础力量值",
     cardWear: "状态 (Wear)",
-    cardWearDesc: "差 (0.7x)、良好 (0.85x)、优秀 (1x)、完美 (1.15x)",
+    cardWearDesc: "完美 (×1.8)、Mint (×1.4)、轻度使用 (×1.0)、中度使用 (×1.0)、重度使用 (×1.0)",
     cardFoil: "闪卡",
-    cardFoilDesc: "闪卡获得 +10% 额外力量",
+    cardFoilDesc: "Prize Foil (×15)、Standard Foil (×2.5)、No Foil (×1.0) - 力量倍数",
 
     powerCalculation: "力量计算",
-    powerFormula: "力量 = 稀有度 × 状态 × (1 + 闪卡加成)",
-    powerExample: "示例: 传说 (5) × 完美 (1.15) × 闪卡 (1.1) = 6.325 力量",
+    powerFormula: "力量 = 基础力量 × 闪卡倍数 × 状态倍数",
+    powerExample: "示例: 神话 (800) × Prize Foil (15.0) × 完美 (1.8) = 21,600 力量",
 
     defenseDeck: "防守卡组",
     defenseDeckDesc: "设置您最好的5张卡牌，当其他玩家攻击您时进行防守。获得更强卡牌时立即更新！",
