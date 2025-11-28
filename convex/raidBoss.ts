@@ -655,7 +655,8 @@ export const processAutoAttacks = mutation({
 
           // Apply buff system (only for NFTs, not free cards)
           const isVibeFID = deckCard?.collection === 'vibefid';
-          if (deckCard && !deckCard.isFreeCard) {
+          // VibeFID cards don't have isFreeCard property, so use optional chaining
+          if (deckCard && !('isFreeCard' in deckCard && deckCard.isFreeCard)) {
             // VibeFID cards get 10x power against all bosses (SUPER ROUBADO!)
             if (isVibeFID) {
               cardPower = Math.floor(cardPower * 10.0);
