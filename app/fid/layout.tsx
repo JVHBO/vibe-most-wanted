@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 const baseUrl = 'https://www.vibemostwanted.xyz';
-const imageUrl = `${baseUrl}/fid/opengraph-image?v=2`; // v=2 for cache busting
+const imageUrl = `${baseUrl}/fid/opengraph-image?v=3`; // v=3 for cache busting
 
 export const metadata: Metadata = {
   title: 'VibeFID - Mint Your Farcaster Card',
