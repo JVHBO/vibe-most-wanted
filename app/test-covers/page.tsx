@@ -146,7 +146,8 @@ export default function TestCoversPage() {
                 {cards.map((card, idx) => {
                   const key = `${collection}-${card.tokenId}`;
                   const imageUrl = convertIpfsUrl(card.imageUrl) || card.imageUrl;
-                  const isVideo = imageUrl.includes('ipfs') || imageUrl.endsWith('.webm') || imageUrl.endsWith('.mp4');
+                  // VibeFID cards are all videos (WebM), even Alchemy CDN URLs
+                  const isVideo = collection === 'vibefid' || imageUrl.includes('ipfs') || imageUrl.endsWith('.webm') || imageUrl.endsWith('.mp4');
 
                   return (
                     <div key={key} className="bg-vintage-charcoal rounded-lg p-2 border border-vintage-gold/20">
