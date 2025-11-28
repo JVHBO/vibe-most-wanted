@@ -20,6 +20,28 @@ import { SpectatorBetFeedback } from './SpectatorBetFeedback';
 import { GamePopups } from './GamePopups';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
+// Card back images per collection for Mecha Arena
+const COLLECTION_CARD_BACKS: Record<string, string> = {
+  vibefid: '/images/card-backs/vibefid.png',
+  gmvbrs: '/images/card-backs/gmvbrs.png',
+  vibe: '/images/card-backs/vibe.png',
+  americanfootball: '/images/card-backs/americanfootball.png',
+  coquettish: '/images/card-backs/coquettish.png',
+  viberuto: '/images/card-backs/viberuto.png',
+  meowverse: '/images/card-backs/meowverse.png',
+  poorlydrawnpepes: '/images/card-backs/poorlydrawnpepes.png',
+  teampothead: '/images/card-backs/teampothead.png',
+  tarot: '/images/card-backs/tarot.png',
+};
+
+// Get card back image for a collection (fallback to default)
+function getCardBack(collection?: string): string {
+  if (collection && COLLECTION_CARD_BACKS[collection]) {
+    return COLLECTION_CARD_BACKS[collection];
+  }
+  return '/images/card-back.png';
+}
+
 interface Card {
   tokenId: string;
   collection?: string; // NFT collection
@@ -2241,7 +2263,7 @@ export function PokerBattleTable({
                         </div>
                       </div>
                     ) : playerSelectedCard ? (
-                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover rounded-lg" />
+                      <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover rounded-lg" />
                     ) : (
                       <span className="text-blue-400 text-2xl animate-pulse">?</span>
                     )}
@@ -2253,7 +2275,7 @@ export function PokerBattleTable({
                   {playerHand.map((card, i) => (
                     <div key={i} className={`aspect-[2/3] rounded border ${playerSelectedCard?.tokenId === card.tokenId ? 'border-2 border-yellow-400 ring-2 ring-yellow-400' : 'border border-blue-500/30'} overflow-hidden bg-black/50`}>
                       {/* Show card back for spectators, real cards for players */}
-                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
+                      <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
@@ -2308,7 +2330,7 @@ export function PokerBattleTable({
                         </div>
                       </div>
                     ) : opponentSelectedCard ? (
-                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover rounded-lg" />
+                      <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover rounded-lg" />
                     ) : (
                       <span className="text-red-400 text-2xl animate-pulse">?</span>
                     )}
@@ -2320,7 +2342,7 @@ export function PokerBattleTable({
                   {opponentHand.map((card, i) => (
                     <div key={i} className={`aspect-[2/3] rounded border ${opponentSelectedCard?.tokenId === card.tokenId ? 'border-2 border-yellow-400 ring-2 ring-yellow-400' : 'border border-red-500/30'} overflow-hidden bg-black/50`}>
                       {/* Show card back for spectators, real cards for players */}
-                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
+                      <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
@@ -2584,7 +2606,7 @@ export function PokerBattleTable({
                           </div>
                         ) : opponentSelectedCard ? (
                           <img
-                            src="/images/card-back.png"
+                            src={getCardBack(room?.cpuCollection)}
                             alt="Hidden Card"
                             className="w-full h-full object-cover animate-pulse"
                           />
@@ -2659,7 +2681,7 @@ export function PokerBattleTable({
                           </div>
                         ) : playerSelectedCard ? (
                           <img
-                            src="/images/card-back.png"
+                            src={getCardBack(room?.cpuCollection)}
                             alt="Hidden Card"
                             className="w-full h-full object-cover animate-pulse"
                           />
@@ -2773,8 +2795,8 @@ export function PokerBattleTable({
                         } ${phase !== 'card-selection' || selectedAnte === 0 || isSpectatorMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}`}
                       >
                         {isSpectatorMode ? (
-                          // Show card back for spectators
-                          <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
+                          // Show card back for spectators (collection-specific)
+                          <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover" />
                         ) : (
                           <FoilCardEffect foilType={card.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                             {(card.imageUrl || card.image) ? (
