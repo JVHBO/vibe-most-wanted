@@ -620,7 +620,8 @@ export default defineSchema({
       v.literal("bet"), // Placed a bet
       v.literal("win"), // Won a bet
       v.literal("loss"), // Lost a bet
-      v.literal("withdraw") // Withdrew credits to VBMS
+      v.literal("withdraw"), // Withdrew credits to VBMS
+      v.literal("refund") // Refunded bet (tie round)
     ),
     amount: v.number(), // Transaction amount (negative for bets/losses)
     roomId: v.optional(v.string()), // Room ID if bet-related
