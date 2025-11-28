@@ -12,7 +12,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
 
 // Create a new poker room
@@ -773,6 +773,16 @@ export const resolveRound = mutation({
     // Pot stays fixed at ante * 2 throughout the entire game
     // Winner only receives pot at the end of the match (game-over)
 
+    // RESOLVE ROUND BETTING - Determine winner address for bets
+    const roundWinnerAddress = isTie ? "tie" : (hostWins ? room.hostAddress : room.guestAddress);
+
+    // Call resolveRoundBets to process spectator bets on this round
+    await ctx.runMutation(api.roundBetting.resolveRoundBets, {
+      roomId: args.roomId,
+      roundNumber: currentRound,
+      winnerAddress: roundWinnerAddress,
+    });
+
     // Check if game is over (best of 7 = first to 4)
     if (gameState.hostScore >= 4 || gameState.guestScore >= 4) {
       gameState.phase = "game-over";
@@ -959,13 +969,13 @@ export const cleanupOldPokerRooms = internalMutation({
   },
 });
 
-// Place a bet on a player (spectators only)
+// Place a bet on a player or tie (spectators only)
 export const placeBet = mutation({
   args: {
     roomId: v.string(),
     bettor: v.string(),
     bettorUsername: v.string(),
-    betOn: v.string(), // Address of player to bet on
+    betOn: v.string(), // Address of player to bet on OR "tie" for draw bet
     amount: v.number(),
   },
   handler: async (ctx, args) => {
@@ -994,13 +1004,14 @@ export const placeBet = mutation({
       throw new Error(`Betting is only allowed during active rounds. Current phase: ${room.gameState?.phase || 'unknown'}`);
     }
 
-    // Verify betOn is a player in the room
-    const isHost = room.hostAddress === args.betOn.toLowerCase();
-    const isGuest = room.guestAddress === args.betOn.toLowerCase();
+    // Verify betOn is a player in the room OR "tie"
+    const isTieBet = args.betOn.toLowerCase() === "tie";
+    const isHost = !isTieBet && room.hostAddress === args.betOn.toLowerCase();
+    const isGuest = !isTieBet && room.guestAddress === args.betOn.toLowerCase();
 
-    if (!isHost && !isGuest) {
+    if (!isHost && !isGuest && !isTieBet) {
       console.error(`❌ Invalid bet target: ${args.betOn}`);
-      throw new Error("Can only bet on players in the room");
+      throw new Error("Can only bet on players in the room or tie");
     }
 
     // Cannot bet if you're a player in the room
@@ -1033,24 +1044,33 @@ export const placeBet = mutation({
       lifetimeSpent: (profile.lifetimeSpent || 0) + args.amount,
     });
 
+    // Calculate odds (tie pays more since it's harder to hit)
+    const odds = isTieBet ? 6 : 3; // 6x for tie, 3x for player win
+    const betOnUsername = isTieBet
+      ? "Tie/Draw"
+      : (isHost ? room.hostUsername : (room.guestUsername || ""));
+
     // Create bet
     await ctx.db.insert("pokerBets", {
       roomId: args.roomId,
       bettor: bettorAddr,
       bettorUsername: args.bettorUsername,
       betOn: args.betOn.toLowerCase(),
-      betOnUsername: isHost ? room.hostUsername : (room.guestUsername || ""),
+      betOnUsername,
       amount: args.amount,
       token: room.token,
+      odds,
       status: "active",
       timestamp: Date.now(),
     });
 
-    console.log(`💰 Bet placed: ${args.bettorUsername} bet ${args.amount} on ${isHost ? room.hostUsername : room.guestUsername} in ${args.roomId}`);
+    console.log(`💰 Bet placed: ${args.bettorUsername} bet ${args.amount} on ${betOnUsername} at ${odds}x odds in ${args.roomId}`);
 
     return {
       success: true,
       newBalance: currentCoins - args.amount,
+      odds,
+      potentialWin: args.amount * odds,
     };
   },
 });
@@ -1089,7 +1109,7 @@ export const endSpectatorBetting = mutation({
 export const resolveBets = mutation({
   args: {
     roomId: v.string(),
-    winnerId: v.string(), // Address of the winner
+    winnerId: v.string(), // Address of the winner OR "tie" for draw
   },
   handler: async (ctx, args) => {
     // Get all active bets for this room
@@ -1110,8 +1130,9 @@ export const resolveBets = mutation({
       const won = bet.betOn === winnerAddr;
 
       if (won) {
-        // Winner gets 3x their bet (1x return + 2x profit)
-        const payout = bet.amount * 3;
+        // Winner gets odds multiplier (3x for player, 6x for tie)
+        const odds = bet.odds || 3; // Default to 3x for old bets
+        const payout = bet.amount * odds;
 
         // Get bettor's profile
         const profile = await ctx.db
@@ -1713,54 +1734,17 @@ export const cpuResolveRound = internalMutation({
 
     console.log(`🎰 CPU Arena: Round ${currentRound} result: ${roundWinner}, found ${bets.length} active bets [roomId: ${roomId}]`);
 
-    if (roundWinner === "tie") {
-      // TIE: Refund all bets
+    // Determine winner address (or "tie")
+    const winnerAddress = roundWinner === "tie" ? "tie" : (roundWinner === "host" ? room.hostAddress : room.guestAddress);
+
+    if (bets.length > 0) {
+      // Process all bets (WIN/LOSS/TIE)
       for (const bet of bets) {
-        // Get bettor's credits and refund
-        const credits = await ctx.db
-          .query("bettingCredits")
-          .withIndex("by_address", (q) => q.eq("address", bet.bettor))
-          .first();
-
-        if (credits) {
-          await ctx.db.patch(credits._id, {
-            balance: credits.balance + bet.amount,
-          });
-          console.log(`🔄 CPU Arena bet refunded: ${bet.bettor} got ${bet.amount} credits back (tie)`);
-        }
-
-        // Update bet status
-        await ctx.db.patch(bet._id, {
-          status: "refunded",
-          payout: bet.amount, // Return original amount
-          resolvedAt: Date.now(),
-        });
-
-        // Log transaction
-        await ctx.db.insert("bettingTransactions", {
-          address: bet.bettor,
-          type: "refund",
-          amount: bet.amount,
-          roomId,
-          timestamp: Date.now(),
-        });
-      }
-
-      if (bets.length > 0) {
-        console.log(`🔄 Refunded ${bets.length} bets for round ${currentRound} (tie)`);
-      }
-    } else {
-      // WIN/LOSS: Process normally
-      const winnerAddress = roundWinner === "host" ? room.hostAddress : room.guestAddress;
-
-      console.log(`🎰 CPU Arena resolving bets for round ${currentRound}, winner: ${winnerAddress}`);
-
-      // Process each bet
-      for (const bet of bets) {
-        const isWinner = bet.betOn.toLowerCase() === winnerAddress?.toLowerCase();
+        const isTieBet = bet.betOn.toLowerCase() === "tie";
+        const isWinner = (roundWinner === "tie" && isTieBet) || (bet.betOn.toLowerCase() === winnerAddress?.toLowerCase());
 
         if (isWinner) {
-          // WINNER: Calculate payout and add credits back
+          // WINNER: Pay out with odds multiplier
           const payout = Math.floor(bet.amount * bet.odds);
 
           // Get bettor's credits
@@ -1773,7 +1757,7 @@ export const cpuResolveRound = internalMutation({
             await ctx.db.patch(credits._id, {
               balance: credits.balance + payout,
             });
-            console.log(`✅ CPU Arena bet won: ${bet.bettor} won ${payout} credits`);
+            console.log(`✅ CPU Arena bet won: ${bet.bettor} won ${payout} credits (${bet.amount} × ${bet.odds}x)`);
           }
 
           // Update bet status
@@ -1811,10 +1795,9 @@ export const cpuResolveRound = internalMutation({
         }
       }
 
-      if (bets.length > 0) {
-        console.log(`🎰 Resolved ${bets.length} bets for round ${currentRound}`);
-      }
+      console.log(`🎰 Resolved ${bets.length} bets for round ${currentRound} (winner: ${winnerAddress})`);
     }
+
     const nextRound = currentRound + 1;
 
     // Check if game is over (first to 4 wins or 7 rounds)

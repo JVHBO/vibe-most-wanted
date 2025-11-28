@@ -16,12 +16,14 @@ const ODDS_CONFIG = {
   rounds1to3: 1.5, // Early rounds: 1.5x
   rounds4to5: 1.8, // Mid rounds: 1.8x
   rounds6to7: 2.0, // Final rounds: 2.0x
+  tie: 3.5, // Tie bet: 3.5x (higher since it's harder to predict)
 };
 
 /**
- * Get odds for a specific round
+ * Get odds for a specific round and bet type
  */
-function getOddsForRound(roundNumber: number): number {
+function getOddsForRound(roundNumber: number, isTieBet: boolean = false): number {
+  if (isTieBet) return ODDS_CONFIG.tie;
   if (roundNumber <= 3) return ODDS_CONFIG.rounds1to3;
   if (roundNumber <= 5) return ODDS_CONFIG.rounds4to5;
   return ODDS_CONFIG.rounds6to7;
@@ -55,14 +57,14 @@ export const getRoundBet = query({
 
 /**
  * PLACE BET ON A SPECIFIC ROUND
- * Spectator bets credits on who will win this round
+ * Spectator bets credits on who will win this round OR on a tie
  */
 export const placeBetOnRound = mutation({
   args: {
     address: v.string(),
     roomId: v.string(),
     roundNumber: v.number(),
-    betOn: v.string(), // Address of player to bet on
+    betOn: v.string(), // Address of player to bet on OR "tie" for draw bet
     amount: v.number(),
   },
   handler: async (ctx, args) => {
@@ -103,8 +105,11 @@ export const placeBetOnRound = mutation({
       balance: credits.balance - amount,
     });
 
+    // Check if this is a tie bet
+    const isTieBet = normalizedBetOn === "tie";
+
     // Get odds for this round
-    const odds = getOddsForRound(roundNumber);
+    const odds = getOddsForRound(roundNumber, isTieBet);
 
     // Create bet
     await ctx.db.insert("roundBets", {
@@ -126,18 +131,24 @@ export const placeBetOnRound = mutation({
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
-    // Get player's username that was bet on
-    const betOnProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedBetOn))
-      .first();
+    // Get player's username that was bet on or "Tie"
+    let betOnUsername = "Player";
+    if (isTieBet) {
+      betOnUsername = "Tie/Draw";
+    } else {
+      const betOnProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedBetOn))
+        .first();
+      betOnUsername = betOnProfile?.username || "Player";
+    }
 
     // Send chat message visible to everyone
     await ctx.db.insert("pokerChatMessages", {
       roomId,
       sender: normalizedAddress,
       senderUsername: bettorProfile?.username || "Spectator",
-      message: `🎰 Bet ${amount} credits on ${betOnProfile?.username || "Player"} at ${odds}x odds for Round ${roundNumber}`,
+      message: `🎰 Bet ${amount} credits on ${betOnUsername} at ${odds}x odds for Round ${roundNumber}`,
       timestamp: Date.now(),
       type: "text" as const,
     });
@@ -193,9 +204,13 @@ export const resolveRoundBets = mutation({
     let winnersCount = 0;
     let losersCount = 0;
 
+    // Check if the round was a tie (no winner)
+    const isTieRound = !normalizedWinner || normalizedWinner === "tie";
+
     // Process each bet
     for (const bet of bets) {
-      const isWinner = bet.betOn.toLowerCase() === normalizedWinner;
+      const isTieBet = bet.betOn.toLowerCase() === "tie";
+      const isWinner = isTieRound ? isTieBet : (bet.betOn.toLowerCase() === normalizedWinner);
 
       // Get bettor's profile for username
       const bettorProfile = await ctx.db
