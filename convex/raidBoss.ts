@@ -637,8 +637,8 @@ export const processAutoAttacks = mutation({
       const updatedCardEnergy = [];
       let playerDamage = 0;
 
-      // Check if deck has VibeFID card (for team buff)
-      const hasVibeFIDInDeck = deck.deck.some((c) => c.collection === 'vibefid');
+      // Check if deck has VibeFID card (for team buff) - check both regular deck AND VibeFID slot
+      const hasVibeFIDInDeck = deck.deck.some((c) => c.collection === 'vibefid') || !!deck.vibefidCard;
 
       // Check each card's energy and attack if ready
       for (const cardEnergy of deck.cardEnergy) {
@@ -648,7 +648,9 @@ export const processAutoAttacks = mutation({
 
         if (hasEnergy && isReady) {
           // Card has energy and is ready to attack - ATTACK!
-          const deckCard = deck.deck.find((c) => c.tokenId === cardEnergy.tokenId);
+          // 🔧 FIX: Also check vibefidCard slot, not just regular deck
+          const deckCard = deck.deck.find((c) => c.tokenId === cardEnergy.tokenId) ||
+                          (deck.vibefidCard?.tokenId === cardEnergy.tokenId ? deck.vibefidCard : undefined);
           let cardPower = deckCard?.power || 0;
 
           // Apply buff system (only for NFTs, not free cards)
