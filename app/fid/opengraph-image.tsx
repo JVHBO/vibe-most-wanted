@@ -9,10 +9,10 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
-  // Fetch card images for background
-  const cardImage1 = fetch(new URL('../../public/images/cards/1866.png', import.meta.url)).then(res => res.arrayBuffer());
-  const cardImage2 = fetch(new URL('../../public/images/cards/2486.png', import.meta.url)).then(res => res.arrayBuffer());
-  const cardImage3 = fetch(new URL('../../public/images/cards/2761.png', import.meta.url)).then(res => res.arrayBuffer());
+  // Fetch VibeFID card images for background
+  const cardImage1 = fetch(new URL('../../public/images/raid-bosses/vibefid/rare.png', import.meta.url)).then(res => res.arrayBuffer());
+  const cardImage2 = fetch(new URL('../../public/images/raid-bosses/vibefid/epic.png', import.meta.url)).then(res => res.arrayBuffer());
+  const cardImage3 = fetch(new URL('../../public/images/raid-bosses/vibefid/legendary.png', import.meta.url)).then(res => res.arrayBuffer());
 
   const [card1, card2, card3] = await Promise.all([cardImage1, cardImage2, cardImage3]);
 
@@ -39,7 +39,7 @@ export default async function Image() {
             right: 0,
             bottom: 0,
             display: 'flex',
-            opacity: 0.15,
+            opacity: 0.4,
           }}
         >
           {/* Card 1 - Left */}
@@ -47,11 +47,11 @@ export default async function Image() {
             src={`data:image/png;base64,${Buffer.from(card1).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: -50,
+              left: -80,
               top: '50%',
               transform: 'translateY(-50%) rotate(-15deg)',
-              width: 300,
-              height: 420,
+              width: 400,
+              height: 560,
               objectFit: 'cover',
             }}
           />
@@ -64,8 +64,8 @@ export default async function Image() {
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%) rotate(5deg)',
-              width: 280,
-              height: 400,
+              width: 380,
+              height: 540,
               objectFit: 'cover',
             }}
           />
@@ -75,11 +75,11 @@ export default async function Image() {
             src={`data:image/png;base64,${Buffer.from(card3).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: -50,
+              right: -80,
               top: '50%',
               transform: 'translateY(-50%) rotate(12deg)',
-              width: 300,
-              height: 420,
+              width: 400,
+              height: 560,
               objectFit: 'cover',
             }}
           />
@@ -93,7 +93,7 @@ export default async function Image() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
+            background: 'rgba(0, 0, 0, 0.65)',
           }}
         />
 
@@ -292,19 +292,6 @@ export default async function Image() {
           >
             Mint Price: <span style={{ color: '#FFD700', marginLeft: 10, fontWeight: 700 }}>0.0003 ETH</span>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            fontSize: 24,
-            color: '#888888',
-            zIndex: 1,
-          }}
-        >
-          vibemostwanted.xyz/fid
         </div>
       </div>
     ),
