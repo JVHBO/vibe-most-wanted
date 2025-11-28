@@ -1305,14 +1305,18 @@ export const forceDeleteRoom = mutation({
 // CPU VS CPU MODE - Same table as PvP, but both players are CPUs
 // ============================================================================
 
-// CPU Names for battles
+// CPU Names for Mecha Arena battles
 const CPU_BATTLE_NAMES = [
-  { name: "Alpha Bot", emoji: "🤖" },
-  { name: "Beta Machine", emoji: "🦾" },
-  { name: "Gamma Core", emoji: "💎" },
-  { name: "Delta Unit", emoji: "⚡" },
-  { name: "Epsilon AI", emoji: "🧠" },
-  { name: "Zeta Protocol", emoji: "🔮" },
+  { name: "Mecha Alpha", emoji: "🤖" },
+  { name: "Mecha Prime", emoji: "🦾" },
+  { name: "Mecha Nova", emoji: "💎" },
+  { name: "Mecha Striker", emoji: "⚡" },
+  { name: "Mecha Titan", emoji: "🧠" },
+  { name: "Mecha Zero", emoji: "🔮" },
+  { name: "Mecha Fury", emoji: "🔥" },
+  { name: "Mecha Storm", emoji: "🌪️" },
+  { name: "Mecha Blade", emoji: "⚔️" },
+  { name: "Mecha Shadow", emoji: "👤" },
 ];
 
 /**
