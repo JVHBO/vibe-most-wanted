@@ -398,7 +398,13 @@ export function PokerBattleTable({
           if (phase !== 'card-reveal-animation' && phase !== 'resolution' && phase !== 'game-over') {
             console.log('[PokerBattle] Moving to card-reveal-animation phase');
             setPhase('card-reveal-animation');
-            AudioManager.buttonSuccess();
+
+            // Enhanced sound for spectators
+            if (isSpectator) {
+              AudioManager.swordSlash(); // Dramatic reveal sound
+            } else {
+              AudioManager.buttonSuccess();
+            }
 
             // Dramatic pause before resolving (2.5 seconds)
             setTimeout(() => {
@@ -1135,6 +1141,16 @@ export function PokerBattleTable({
           // Set round winner for display
           setRoundWinner(isTie ? null : (playerWins ? 'player' : 'opponent'));
           setShowRoundWinner(true);
+
+          // Enhanced sounds for spectators
+          if (isSpectator) {
+            if (isTie) {
+              AudioManager.buttonClick(); // Neutral sound for tie
+            } else {
+              // Exciting sounds for round results
+              AudioManager.victory(); // Victory fanfare for spectators
+            }
+          }
 
           console.log('[PokerBattle] PvP Mode - Showing round winner', {
             winner: isTie ? 'tie' : (playerWins ? 'player' : 'opponent')
@@ -2575,11 +2591,11 @@ export function PokerBattleTable({
                         isInFarcaster ? 'w-20' : 'w-24 sm:w-28 md:w-32'
                       } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
-                          ? 'border-red-500 shadow-lg shadow-red-500/50'
+                          ? 'border-red-500 shadow-lg shadow-red-500/50 animate-pulse'
                           : 'border-vintage-gold/50'
                       }`}>
                         {opponentSelectedCard && (phase === 'card-reveal-animation' || phase === 'resolution' || showRoundWinner) ? (
-                          <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
+                          <div className={`relative w-full h-full ${isSpectator ? 'animate-[flip_0.6s_ease-out,glow_1.5s_ease-in-out_infinite]' : 'animate-in fade-in zoom-in duration-700'}`}>
                             <FoilCardEffect foilType={opponentSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
                                 <CardMedia
@@ -2622,7 +2638,7 @@ export function PokerBattleTable({
                         )}
                       </div>
                       {opponentAction && opponentAction !== 'PASS' && (phase === 'card-reveal-animation' || phase === 'resolution') && (
-                        <div className="mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500">
+                        <div className={`mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500 ${isSpectator ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
                           <span className="text-red-300 text-xs font-bold flex items-center justify-center gap-1">
                             {opponentAction === 'BOOST' && <><SwordIcon className="inline-block text-yellow-400" size={12} /> BOOST</>}
                             {opponentAction === 'SHIELD' && <><ShieldIcon className="inline-block text-blue-400" size={12} /> SHIELD</>}
@@ -2650,11 +2666,11 @@ export function PokerBattleTable({
                         isInFarcaster ? 'w-20' : 'w-32 sm:w-40 md:w-48'
                       } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
-                          ? 'border-green-500 shadow-lg shadow-green-500/50'
+                          ? 'border-green-500 shadow-lg shadow-green-500/50 animate-pulse'
                           : 'border-vintage-gold/50'
                       }`}>
                         {playerSelectedCard && (phase === 'card-reveal-animation' || phase === 'resolution' || showRoundWinner) ? (
-                          <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
+                          <div className={`relative w-full h-full ${isSpectator ? 'animate-[flip_0.6s_ease-out,glow_1.5s_ease-in-out_infinite]' : 'animate-in fade-in zoom-in duration-700'}`}>
                             <FoilCardEffect foilType={playerSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(playerSelectedCard.imageUrl || playerSelectedCard.image) ? (
                                 <CardMedia
@@ -3332,6 +3348,38 @@ export function PokerBattleTable({
         handleClaimWelcomePack={() => {}}
         t={(key: string) => key} // Simple mock translation
       />
+
+      {/* Custom animations for spectator mode */}
+      <style jsx>{`
+        @keyframes flip {
+          0% {
+            transform: rotateY(90deg) scale(0.8);
+            opacity: 0;
+          }
+          50% {
+            transform: rotateY(45deg) scale(1.05);
+          }
+          100% {
+            transform: rotateY(0deg) scale(1);
+            opacity: 1;
+          }
+        }
+
+        @keyframes glow {
+          0%, 100% {
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+          }
+          50% {
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.9));
+          }
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+          20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+      `}</style>
     </div>
   );
 }
