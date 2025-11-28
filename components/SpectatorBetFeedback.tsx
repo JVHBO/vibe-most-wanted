@@ -146,13 +146,15 @@ export function SpectatorBetFeedback({
                     ? 'bg-green-500/20 text-green-300'
                     : bet.status === 'lost'
                     ? 'bg-red-500/20 text-red-300'
+                    : bet.status === 'refunded'
+                    ? 'bg-yellow-500/20 text-yellow-300'
                     : 'bg-purple-500/20 text-purple-300'
                 }`}
               >
                 <span>R{bet.roundNumber}</span>
                 <span className="font-mono">{bet.amount}c @ {bet.odds}x</span>
                 <span className="font-bold">
-                  {bet.status === 'won' ? `+${bet.payout}` : bet.status === 'lost' ? `-${bet.amount}` : '⏳'}
+                  {bet.status === 'won' ? `+${bet.payout}` : bet.status === 'lost' ? `-${bet.amount}` : bet.status === 'refunded' ? '🔄' : '⏳'}
                 </span>
               </div>
             ))}
