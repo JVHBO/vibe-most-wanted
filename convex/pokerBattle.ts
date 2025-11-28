@@ -412,6 +412,12 @@ export const initializeGame = mutation({
       throw new Error("You are not a player in this room");
     }
 
+    // OPTIMIZATION: Prevent duplicate initialization (both players might call at same time)
+    if (room.gameState && room.status === "in-progress") {
+      console.log(`[initializeGame] Game already initialized, skipping duplicate write`);
+      return { success: true, alreadyInitialized: true };
+    }
+
     // Initialize game state
     await ctx.db.patch(room._id, {
       gameState: {
@@ -499,6 +505,16 @@ export const selectCard = mutation({
         expectedPhase: "card-selection",
       });
       throw new Error(`Not in card selection phase. Current phase: ${room.gameState.phase}`);
+    }
+
+    // OPTIMIZATION: Check if player already selected a card (prevent duplicate writes)
+    if (isHost && room.gameState.hostSelectedCard) {
+      console.log(`[selectCard] Host already selected card, skipping duplicate write`);
+      return { success: true, alreadySelected: true };
+    }
+    if (isGuest && room.gameState.guestSelectedCard) {
+      console.log(`[selectCard] Guest already selected card, skipping duplicate write`);
+      return { success: true, alreadySelected: true };
     }
 
     // Validate card data
@@ -636,6 +652,13 @@ export const resolveRound = mutation({
 
     if (!isHost && !isGuest) {
       throw new Error("You are not a player in this room");
+    }
+
+    // OPTIMIZATION: Prevent duplicate resolution calls (both players might call at same time)
+    // Only resolve if we're in the "resolution" phase
+    if (room.gameState.phase !== "resolution") {
+      console.log(`[resolveRound] Not in resolution phase (${room.gameState.phase}), skipping`);
+      return { success: true, alreadyResolved: true };
     }
 
     const gameState = { ...room.gameState };

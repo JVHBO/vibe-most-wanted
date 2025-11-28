@@ -73,19 +73,22 @@ export const markDailyLogin = mutation({
       )
       .first();
 
-    if (!existing) {
-      await ctx.db.insert("personalMissions", {
-        playerAddress: normalizedAddress,
-        date: today,
-        missionType: "daily_login",
-        completed: true,
-        claimed: false,
-        reward: MISSION_REWARDS.daily_login.amount,
-        completedAt: Date.now(),
-      });
-
-      // devLog (server-side)("✅ Daily login mission created for", normalizedAddress);
+    // OPTIMIZATION: Return early if already exists (prevents duplicate writes on concurrent calls)
+    if (existing) {
+      return { success: true, alreadyExists: true };
     }
+
+    await ctx.db.insert("personalMissions", {
+      playerAddress: normalizedAddress,
+      date: today,
+      missionType: "daily_login",
+      completed: true,
+      claimed: false,
+      reward: MISSION_REWARDS.daily_login.amount,
+      completedAt: Date.now(),
+    });
+
+    return { success: true, created: true };
   },
 });
 
