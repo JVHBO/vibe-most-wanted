@@ -1563,21 +1563,50 @@ export const cpuMakeMove = internalMutation({
       const tokenIdNum = typeof randomCard.tokenId === 'string' ? parseInt(randomCard.tokenId, 10) : randomCard.tokenId;
       const newUsedCards = [...(usedCards || []), tokenIdNum];
 
+      console.log(`🤖 CPU ${isHost ? 'host' : 'guest'} selected card: ${randomCard.name} (power: ${randomCard.power})`);
+
+      // CPU also selects an action (BOOST, SHIELD, PASS)
+      // CPU strategy: 25% BOOST, 15% SHIELD, 60% PASS (mostly passes to save coins)
+      const actionRoll = Math.random();
+      let cpuAction: "BOOST" | "SHIELD" | "DOUBLE" | "PASS";
+      if (actionRoll < 0.25) {
+        cpuAction = "BOOST";
+      } else if (actionRoll < 0.40) {
+        cpuAction = "SHIELD";
+      } else {
+        cpuAction = "PASS";
+      }
+
+      // Deduct boost costs
+      const boostCosts: Record<string, number> = {
+        BOOST: 100,
+        SHIELD: 80,
+        DOUBLE: 200,
+        PASS: 0,
+      };
+      const cost = boostCosts[cpuAction] || 0;
+      const currentBoostCoins = isHost ? (room.hostBoostCoins ?? 1000) : (room.guestBoostCoins ?? 1000);
+      const newBoostCoins = currentBoostCoins - cost;
+
+      console.log(`🤖 CPU ${isHost ? 'host' : 'guest'} selected action: ${cpuAction} (cost: ${cost}, balance: ${newBoostCoins})`);
+
+      // Update game state with action and boost coins
       await ctx.db.patch(room._id, {
         gameState: {
           ...gameState,
           [isHost ? "hostSelectedCard" : "guestSelectedCard"]: randomCard,
           [isHost ? "hostUsedCards" : "guestUsedCards"]: newUsedCards,
+          [isHost ? "hostAction" : "guestAction"]: cpuAction,
         },
+        [isHost ? "hostBoostCoins" : "guestBoostCoins"]: newBoostCoins,
       });
-
-      console.log(`🤖 CPU ${isHost ? 'host' : 'guest'} selected card: ${randomCard.name} (power: ${randomCard.power})`);
 
       // Check if both CPUs have selected - if so, move to reveal
       const otherSelected = isHost ? gameState.guestSelectedCard : gameState.hostSelectedCard;
       if (otherSelected) {
-        // Both selected, move to reveal phase after 2 seconds
-        await ctx.scheduler.runAfter(2000, internal.pokerBattle.cpuRevealRound, {
+        // Both selected, wait 8 seconds (give spectators time to bet) then reveal
+        console.log(`🤖 Both CPUs selected - waiting 8s for spectator bets before reveal`);
+        await ctx.scheduler.runAfter(8000, internal.pokerBattle.cpuRevealRound, {
           roomId,
         });
       } else {
