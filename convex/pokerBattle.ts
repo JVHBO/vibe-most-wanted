@@ -1646,21 +1646,58 @@ export const cpuResolveRound = internalMutation({
     const currentRound = gameState.currentRound;
 
     // RESOLVE SPECTATOR BETS for this round
-    if (roundWinner !== "tie") {
+    // Get all active bets for this round
+    const bets = await ctx.db
+      .query("roundBets")
+      .withIndex("by_room_round", (q) =>
+        q.eq("roomId", roomId).eq("roundNumber", currentRound)
+      )
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    console.log(`🎰 CPU Arena: Round ${currentRound} result: ${roundWinner}, found ${bets.length} active bets [roomId: ${roomId}]`);
+
+    if (roundWinner === "tie") {
+      // TIE: Refund all bets
+      for (const bet of bets) {
+        // Get bettor's credits and refund
+        const credits = await ctx.db
+          .query("bettingCredits")
+          .withIndex("by_address", (q) => q.eq("address", bet.bettor))
+          .first();
+
+        if (credits) {
+          await ctx.db.patch(credits._id, {
+            balance: credits.balance + bet.amount,
+          });
+          console.log(`🔄 CPU Arena bet refunded: ${bet.bettor} got ${bet.amount} credits back (tie)`);
+        }
+
+        // Update bet status
+        await ctx.db.patch(bet._id, {
+          status: "refunded",
+          payout: bet.amount, // Return original amount
+          resolvedAt: Date.now(),
+        });
+
+        // Log transaction
+        await ctx.db.insert("bettingTransactions", {
+          address: bet.bettor,
+          type: "refund",
+          amount: bet.amount,
+          roomId,
+          timestamp: Date.now(),
+        });
+      }
+
+      if (bets.length > 0) {
+        console.log(`🔄 Refunded ${bets.length} bets for round ${currentRound} (tie)`);
+      }
+    } else {
+      // WIN/LOSS: Process normally
       const winnerAddress = roundWinner === "host" ? room.hostAddress : room.guestAddress;
 
-      console.log(`🎰 CPU Arena resolving bets for round ${currentRound}, winner: ${winnerAddress} [roomId: ${roomId}]`);
-
-      // Get all active bets for this round
-      const bets = await ctx.db
-        .query("roundBets")
-        .withIndex("by_room_round", (q) =>
-          q.eq("roomId", roomId).eq("roundNumber", currentRound)
-        )
-        .filter((q) => q.eq(q.field("status"), "active"))
-        .collect();
-
-      console.log(`🎰 Found ${bets.length} active bets for round ${currentRound}`);
+      console.log(`🎰 CPU Arena resolving bets for round ${currentRound}, winner: ${winnerAddress}`);
 
       // Process each bet
       for (const bet of bets) {
