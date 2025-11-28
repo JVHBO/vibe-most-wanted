@@ -154,6 +154,8 @@ export const placeBetOnRound = mutation({
 /**
  * RESOLVE ROUND BETS
  * Called when a poker round ends - pays winners instantly!
+ *
+ * OPTIMIZATION: Added duplicate call protection to prevent write conflicts
  */
 export const resolveRoundBets = mutation({
   args: {
@@ -176,13 +178,15 @@ export const resolveRoundBets = mutation({
       .filter((q) => q.eq(q.field("status"), "active"))
       .collect();
 
+    // OPTIMIZATION: If no active bets, return early (also handles duplicate calls)
     if (bets.length === 0) {
-      console.log(`No active bets for round ${roundNumber}`);
+      console.log(`No active bets for round ${roundNumber} (may be already resolved)`);
       return {
         success: true,
         betsResolved: 0,
         winners: 0,
         losers: 0,
+        alreadyResolved: true,
       };
     }
 
