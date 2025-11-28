@@ -30,6 +30,25 @@ export default function FidCardPage() {
   // This ignores old random traits stored in Convex from before deterministic fix
   const currentTraits = card ? getFidTraits(card.fid) : null;
 
+  // Calculate deterministic power based on current traits (matches metadata API)
+  const correctPower = card && currentTraits ? (() => {
+    const rarityBasePower = {
+      Common: 10, Rare: 20, Epic: 50, Legendary: 100, Mythic: 600,
+    };
+    const wearMultiplier = {
+      Pristine: 1.8, Mint: 1.4, 'Lightly Played': 1.0,
+      'Moderately Played': 1.0, 'Heavily Played': 1.0,
+    };
+    const foilMultiplier = {
+      Prize: 6.0, Standard: 2.0, None: 1.0,
+    };
+    const basePower = rarityBasePower[card.rarity] || 5;
+    const wearMult = wearMultiplier[currentTraits.wear] || 1.0;
+    const foilMult = foilMultiplier[currentTraits.foil] || 1.0;
+    return Math.round(basePower * wearMult * foilMult);
+  })() : 0;
+
+
   const [backstory, setBackstory] = useState<any>(null);
 
   // Notify Farcaster SDK that app is ready
@@ -209,7 +228,7 @@ export default function FidCardPage() {
                   </div>
                   <div className="col-span-2">
                     <span className="text-vintage-burnt-gold font-semibold">Power:</span>{" "}
-                    <span className="text-vintage-gold font-bold text-lg">{card.power}</span>
+                    <span className="text-vintage-gold font-bold text-lg">{correctPower}</span>
                   </div>
                 </div>
               </div>
@@ -234,7 +253,7 @@ export default function FidCardPage() {
                     const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
                     const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
 
-                    const castText = `🃏 Just minted my VibeFID & claimed 1000 $VBMS!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${card.power} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn $VBMS\n\n🎮 Mint yours & claim 1000 $VBMS! @jvhbo`;
+                    const castText = `🃏 Just minted my VibeFID & claimed 1000 $VBMS!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${correctPower} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn $VBMS\n\n🎮 Mint yours & claim 1000 $VBMS! @jvhbo`;
 
                     return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                   })()}
