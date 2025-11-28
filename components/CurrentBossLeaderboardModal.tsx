@@ -72,7 +72,7 @@ export function CurrentBossLeaderboardModal({
 
           <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-3 mb-4">
             <p className="text-red-400 text-sm font-bold text-center">
-              {t('raidBossRewardPool')}
+              💰 {t('raidBossRewardPoolLabel')}: {REWARD_POOL.toLocaleString()} $TESTVBMS
             </p>
             <p className="text-vintage-burnt-gold text-xs text-center mt-1">
               {t('raidBossRewardPoolDesc')}
