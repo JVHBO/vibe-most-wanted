@@ -1644,6 +1644,80 @@ export const cpuResolveRound = internalMutation({
     }
 
     const currentRound = gameState.currentRound;
+
+    // RESOLVE SPECTATOR BETS for this round
+    if (roundWinner !== "tie") {
+      const winnerAddress = roundWinner === "host" ? room.hostAddress : room.guestAddress;
+
+      // Get all active bets for this round
+      const bets = await ctx.db
+        .query("roundBets")
+        .withIndex("by_room_round", (q) =>
+          q.eq("roomId", roomId).eq("roundNumber", currentRound)
+        )
+        .filter((q) => q.eq(q.field("status"), "active"))
+        .collect();
+
+      // Process each bet
+      for (const bet of bets) {
+        const isWinner = bet.betOn.toLowerCase() === winnerAddress?.toLowerCase();
+
+        if (isWinner) {
+          // WINNER: Calculate payout and add credits back
+          const payout = Math.floor(bet.amount * bet.odds);
+
+          // Get bettor's credits
+          const credits = await ctx.db
+            .query("bettingCredits")
+            .withIndex("by_address", (q) => q.eq("address", bet.bettor))
+            .first();
+
+          if (credits) {
+            await ctx.db.patch(credits._id, {
+              balance: credits.balance + payout,
+            });
+            console.log(`✅ CPU Arena bet won: ${bet.bettor} won ${payout} credits`);
+          }
+
+          // Update bet status
+          await ctx.db.patch(bet._id, {
+            status: "won",
+            payout,
+            resolvedAt: Date.now(),
+          });
+
+          // Log transaction
+          await ctx.db.insert("bettingTransactions", {
+            address: bet.bettor,
+            type: "win",
+            amount: payout,
+            roomId,
+            timestamp: Date.now(),
+          });
+        } else {
+          // LOSER: Credits already deducted
+          await ctx.db.patch(bet._id, {
+            status: "lost",
+            resolvedAt: Date.now(),
+          });
+
+          // Log transaction
+          await ctx.db.insert("bettingTransactions", {
+            address: bet.bettor,
+            type: "loss",
+            amount: -bet.amount,
+            roomId,
+            timestamp: Date.now(),
+          });
+
+          console.log(`❌ CPU Arena bet lost: ${bet.bettor} lost ${bet.amount} credits`);
+        }
+      }
+
+      if (bets.length > 0) {
+        console.log(`🎰 Resolved ${bets.length} bets for round ${currentRound}`);
+      }
+    }
     const nextRound = currentRound + 1;
 
     // Check if game is over (first to 4 wins or 7 rounds)
