@@ -576,9 +576,19 @@ export const fidTranslations = {
     powerWord: 'poder',
 
     // About Traits Modal - Detailed
-    aboutTraitsModalTitle: 'Sobre las Traits VibeFID',
+    aboutTraitsModalTitle: 'Sobre el VibeFID',
     aboutTraitsModalIntro: 'Las cartas VibeFID tienen traits únicas determinadas por tu FID y Puntuación Neynar.',
     howItWorks: 'Cómo Funciona',
+
+    // VibeFID Benefits
+    vibeFidBenefits: 'Beneficios VibeFID',
+    vibeFidBenefitsIntro: 'Las cartas VibeFID tienen ventajas especiales en Vibe Most Wanted:',
+    powerBoost: 'Boost de Poder',
+    powerBoostDesc: 'Las cartas VibeFID reciben multiplicadores de poder de bonificación en batallas',
+    infiniteEnergy: 'Energía Infinita',
+    infiniteEnergyDesc: 'Nunca se queda sin energía - siempre lista para batallar',
+    noDeckRestriction: 'Sin Restricción de Deck',
+    noDeckRestrictionDesc: '¡Puede usarse simultáneamente en el Deck de Ataque (Raids) y Deck de Defensa - sin limitaciones!',
     neynarScoreSection: 'Puntuación Neynar → Rareza',
     neynarScoreDescription: 'Tu puntuación Neynar (compromiso en Farcaster) determina la rareza de tu carta:',
     scoreRange: 'Puntuación',
@@ -787,9 +797,19 @@ export const fidTranslations = {
     powerWord: 'शक्ति',
 
     // About Traits Modal - Detailed
-    aboutTraitsModalTitle: 'VibeFID विशेषताओं के बारे में',
+    aboutTraitsModalTitle: 'VibeFID के बारे में',
     aboutTraitsModalIntro: 'VibeFID कार्ड में अद्वितीय विशेषताएं हैं जो आपके FID और Neynar स्कोर द्वारा निर्धारित होती हैं।',
     howItWorks: 'यह कैसे काम करता है',
+
+    // VibeFID Benefits
+    vibeFidBenefits: 'VibeFID लाभ',
+    vibeFidBenefitsIntro: 'VibeFID कार्ड में Vibe Most Wanted में विशेष फायदे हैं:',
+    powerBoost: 'पावर बूस्ट',
+    powerBoostDesc: 'VibeFID कार्ड को युद्धों में बोनस पावर गुणक मिलते हैं',
+    infiniteEnergy: 'अनंत ऊर्जा',
+    infiniteEnergyDesc: 'कभी ऊर्जा खत्म नहीं होती - हमेशा लड़ने के लिए तैयार',
+    noDeckRestriction: 'कोई डेक प्रतिबंध नहीं',
+    noDeckRestrictionDesc: 'एक साथ Attack Deck (Raids) और Defense Deck में इस्तेमाल किया जा सकता है - कोई सीमा नहीं!',
     neynarScoreSection: 'Neynar स्कोर → दुर्लभता',
     neynarScoreDescription: 'आपका Neynar स्कोर (Farcaster सहभागिता) आपके कार्ड की दुर्लभता निर्धारित करता है:',
     scoreRange: 'स्कोर',
@@ -998,9 +1018,19 @@ export const fidTranslations = {
     powerWord: 'сила',
 
     // About Traits Modal - Detailed
-    aboutTraitsModalTitle: 'О характеристиках VibeFID',
+    aboutTraitsModalTitle: 'О VibeFID',
     aboutTraitsModalIntro: 'Карты VibeFID имеют уникальные характеристики, определяемые вашим FID и счётом Neynar.',
     howItWorks: 'Как это работает',
+
+    // VibeFID Benefits
+    vibeFidBenefits: 'Преимущества VibeFID',
+    vibeFidBenefitsIntro: 'Карты VibeFID имеют особые преимущества в Vibe Most Wanted:',
+    powerBoost: 'Усиление Силы',
+    powerBoostDesc: 'Карты VibeFID получают бонусные множители силы в битвах',
+    infiniteEnergy: 'Бесконечная Энергия',
+    infiniteEnergyDesc: 'Никогда не заканчивается энергия - всегда готова к битве',
+    noDeckRestriction: 'Без Ограничений Колоды',
+    noDeckRestrictionDesc: 'Может использоваться одновременно в Атакующей Колоде (Raids) и Защитной Колоде - без ограничений!',
     neynarScoreSection: 'Счёт Neynar → Редкость',
     neynarScoreDescription: 'Ваш счёт Neynar (активность в Farcaster) определяет редкость вашей карты:',
     scoreRange: 'Счёт',
@@ -1209,9 +1239,19 @@ export const fidTranslations = {
     powerWord: '力量',
 
     // About Traits Modal - Detailed
-    aboutTraitsModalTitle: '关于 VibeFID 特征',
+    aboutTraitsModalTitle: '关于 VibeFID',
     aboutTraitsModalIntro: 'VibeFID 卡片具有由您的 FID 和 Neynar 分数决定的独特特征。',
     howItWorks: '工作原理',
+
+    // VibeFID Benefits
+    vibeFidBenefits: 'VibeFID 优势',
+    vibeFidBenefitsIntro: 'VibeFID 卡片在 Vibe Most Wanted 中具有特殊优势：',
+    powerBoost: '力量提升',
+    powerBoostDesc: 'VibeFID 卡片在战斗中获得额外力量乘数',
+    infiniteEnergy: '无限能量',
+    infiniteEnergyDesc: '永不耗尽能量 - 随时准备战斗',
+    noDeckRestriction: '无牌组限制',
+    noDeckRestrictionDesc: '可以同时在进攻牌组（Raids）和防御牌组中使用 - 无限制！',
     neynarScoreSection: 'Neynar 分数 → 稀有度',
     neynarScoreDescription: '您的 Neynar 分数（Farcaster 参与度）决定您的卡片稀有度：',
     scoreRange: '分数',
