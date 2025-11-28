@@ -228,10 +228,10 @@ export function CpuArenaModal({
                 <div>
                   <h1 className="text-2xl sm:text-4xl font-display font-bold text-purple-400 flex items-center gap-3">
                     <span className="text-3xl sm:text-5xl">🤖</span>
-                    CPU ARENA
+                    MECHA ARENA
                   </h1>
                   <p className="text-sm sm:text-base text-purple-300/70 mt-1">
-                    Watch CPU vs CPU battles and bet on rounds!
+                    Watch Mecha battles and bet on rounds!
                   </p>
                 </div>
                 <button
