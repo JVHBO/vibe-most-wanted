@@ -327,22 +327,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "gmvbrs"
     },
     {
-      "tokenId": "3",
-      "name": "GM VBRS #3",
-      "rarity": "Epic",
-      "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dd42f5b10549752d4e00bff70a89eaad",
-      "collection": "gmvbrs"
-    },
-    {
-      "tokenId": "5",
-      "name": "GM VBRS #5",
-      "rarity": "Epic",
-      "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d2160515b8592a6d8799202764f150e2",
-      "collection": "gmvbrs"
-    },
-    {
       "tokenId": "19",
       "name": "GM VBRS #19",
       "rarity": "Epic",
@@ -752,6 +736,22 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Common",
       "power": 7,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f582a6d149ca8c2f7265994b2a8c4b69",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "5329",
+      "name": "AMERICAN FOOTBALL #5329",
+      "rarity": "Legendary",
+      "power": 240,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/32f14aef41b7cc44b236d295ffd9381b",
+      "collection": "americanfootball"
+    },
+    {
+      "tokenId": "12039",
+      "name": "#12039",
+      "rarity": "Epic",
+      "power": 80,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/44fb820b41d00520604d96998431f961",
       "collection": "americanfootball"
     },
   ],
