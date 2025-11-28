@@ -111,21 +111,21 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
                   <span className="text-purple-400 font-bold">{t.mythic}</span>
                   <span className="text-vintage-ice/60 text-sm ml-2">(≥ 0.99)</span>
                 </div>
-                <span className="text-vintage-gold font-bold">600 {t.basePower}</span>
+                <span className="text-vintage-gold font-bold">800 {t.basePower}</span>
               </div>
               <div className="flex items-center justify-between bg-vintage-black/40 p-3 rounded">
                 <div>
                   <span className="text-orange-400 font-bold">{t.legendary}</span>
                   <span className="text-vintage-ice/60 text-sm ml-2">(≥ 0.90)</span>
                 </div>
-                <span className="text-vintage-gold font-bold">100 {t.basePower}</span>
+                <span className="text-vintage-gold font-bold">240 {t.basePower}</span>
               </div>
               <div className="flex items-center justify-between bg-vintage-black/40 p-3 rounded">
                 <div>
                   <span className="text-pink-400 font-bold">{t.epic}</span>
                   <span className="text-vintage-ice/60 text-sm ml-2">(≥ 0.79)</span>
                 </div>
-                <span className="text-vintage-gold font-bold">50 {t.basePower}</span>
+                <span className="text-vintage-gold font-bold">80 {t.basePower}</span>
               </div>
               <div className="flex items-center justify-between bg-vintage-black/40 p-3 rounded">
                 <div>
@@ -139,7 +139,7 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
                   <span className="text-gray-400 font-bold">{t.common}</span>
                   <span className="text-vintage-ice/60 text-sm ml-2">(&lt; 0.70)</span>
                 </div>
-                <span className="text-vintage-gold font-bold">10 {t.basePower}</span>
+                <span className="text-vintage-gold font-bold">5 {t.basePower}</span>
               </div>
             </div>
           </div>
@@ -265,11 +265,11 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span>{t.prizeFoil}</span>
-                    <span className="text-vintage-gold font-bold">×6.0</span>
+                    <span className="text-vintage-gold font-bold">×15.0</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t.standardFoil}</span>
-                    <span className="text-vintage-gold font-bold">×2.0</span>
+                    <span className="text-vintage-gold font-bold">×2.5</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t.noFoil}</span>
@@ -304,7 +304,7 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
                 {t.powerFormula} <span className="text-vintage-gold font-bold">{t.basePowerLabel}</span> × <span className="text-purple-400 font-bold">{t.foilLabel}</span> × <span className="text-green-400 font-bold">{t.wearLabel}</span>
               </div>
               <div className="text-center text-xs sm:text-sm mt-2 text-vintage-ice/60">
-                {t.example} Mythic (600) × Prize (6.0) × Pristine (1.8) = <span className="text-vintage-gold font-bold">6,480 {t.powerWord}</span>
+                {t.example} Mythic (800) × Prize (15.0) × Pristine (1.8) = <span className="text-vintage-gold font-bold">21,600 {t.powerWord}</span>
               </div>
             </div>
           </div>
