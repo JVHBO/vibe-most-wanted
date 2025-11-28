@@ -26,6 +26,10 @@ interface MusicContextType {
   setCurrentPlaylistIndex: (index: number) => void;
   skipToNext: () => void;
   skipToPrevious: () => void;
+  // Playback control
+  isPaused: boolean;
+  pause: () => void;
+  play: () => void;
   // Track info
   currentTrackName: string | null;
 }
@@ -94,6 +98,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [playlist, setPlaylistState] = useState<string[]>([]);
   const [currentPlaylistIndex, setCurrentPlaylistIndexState] = useState(0);
   const [currentTrackName, setCurrentTrackName] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Audio references
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -462,6 +467,34 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, [playlist, currentPlaylistIndex, setCurrentPlaylistIndex]);
 
   /**
+   * Pause playback
+   */
+  const pause = useCallback(() => {
+    setIsPaused(true);
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+    }
+    if (youtubePlayerRef.current && typeof youtubePlayerRef.current.pauseVideo === 'function') {
+      youtubePlayerRef.current.pauseVideo();
+    }
+  }, []);
+
+  /**
+   * Resume playback
+   */
+  const play = useCallback(() => {
+    setIsPaused(false);
+    if (audioRef.current && audioRef.current.paused) {
+      audioRef.current.play().catch(() => {
+        // Ignore errors
+      });
+    }
+    if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
+      youtubePlayerRef.current.playVideo();
+    }
+  }, []);
+
+  /**
    * Update music enabled state
    */
   const setMusicEnabledWrapper = useCallback((enabled: boolean) => {
@@ -820,6 +853,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setCurrentPlaylistIndex,
       skipToNext,
       skipToPrevious,
+      // Playback control
+      isPaused,
+      pause,
+      play,
       currentTrackName,
     }}>
       {children}
