@@ -118,34 +118,21 @@ export function SpectatorBetFeedback({
         </div>
       )}
 
-      {/* Bet History Panel - Fixed at bottom left */}
-      <div className="fixed bottom-4 left-4 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border-2 border-purple-500/50 rounded-xl p-3 shadow-xl max-w-xs">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2 pb-2 border-b border-purple-500/30">
-          <h3 className="text-purple-400 font-display font-bold text-sm flex items-center gap-1">
-            <span>🎰</span> Your Bets
-          </h3>
-          <div className="text-vintage-gold font-bold text-sm">
-            💰 {credits?.balance || 0}
-          </div>
+      {/* Bet History Panel - Fixed at bottom right (out of the way) */}
+      <div className="fixed bottom-16 right-2 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500/50 rounded-lg p-2 shadow-xl w-36 text-xs">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between mb-1 pb-1 border-b border-purple-500/30">
+          <span className="text-purple-400 font-bold">🎰 Bets</span>
+          <span className="text-vintage-gold font-bold">💰{credits?.balance || 0}</span>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-2 mb-2 text-center text-xs">
-          <div className="bg-green-500/20 rounded px-2 py-1">
-            <div className="text-green-400 font-bold">{wins}</div>
-            <div className="text-green-300/70">Wins</div>
-          </div>
-          <div className="bg-red-500/20 rounded px-2 py-1">
-            <div className="text-red-400 font-bold">{losses}</div>
-            <div className="text-red-300/70">Losses</div>
-          </div>
-          <div className={`rounded px-2 py-1 ${netProfit >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-            <div className={`font-bold ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {netProfit >= 0 ? '+' : ''}{netProfit}
-            </div>
-            <div className={`${netProfit >= 0 ? 'text-green-300/70' : 'text-red-300/70'}`}>Net</div>
-          </div>
+        {/* Compact Stats Row */}
+        <div className="flex justify-between mb-1 text-center">
+          <span className="text-green-400">{wins}W</span>
+          <span className="text-red-400">{losses}L</span>
+          <span className={netProfit >= 0 ? 'text-green-400' : 'text-red-400'}>
+            {netProfit >= 0 ? '+' : ''}{netProfit}
+          </span>
         </div>
 
         {/* Bet History List */}
