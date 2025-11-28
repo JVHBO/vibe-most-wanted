@@ -1822,6 +1822,12 @@ export function PokerBattleTable({
       setGameOverShown(true);
       console.log('[PokerBattle] Game over - configuring popups');
 
+      // Don't show victory/defeat popups in spectator mode (CPU Arena / Mecha Arena)
+      if (isSpectatorMode) {
+        console.log('[PokerBattle] Spectator mode - skipping victory/defeat popups');
+        return;
+      }
+
       // Configure victory/defeat/tie popups
       if (playerScore > opponentScore) {
         // Victory - select random victory image
@@ -1860,7 +1866,7 @@ export function PokerBattleTable({
         });
       }
     }
-  }, [phase, gameOverShown, playerScore, opponentScore, selectedAnte, isCPUMode, room]);
+  }, [phase, gameOverShown, playerScore, opponentScore, selectedAnte, isCPUMode, room, isSpectatorMode]);
 
   // REMOVED: Auto-close room (user wants to see victory screen without auto-closing)
   // Room is marked as 'finished' in database but UI stays open for user to close manually
