@@ -9,10 +9,11 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
-  // Fetch VibeFID card images for background
-  const cardImage1 = fetch(new URL('../../public/images/raid-bosses/vibefid/rare.png', import.meta.url)).then(res => res.arrayBuffer());
-  const cardImage2 = fetch(new URL('../../public/images/raid-bosses/vibefid/epic.png', import.meta.url)).then(res => res.arrayBuffer());
-  const cardImage3 = fetch(new URL('../../public/images/raid-bosses/vibefid/legendary.png', import.meta.url)).then(res => res.arrayBuffer());
+  // Fetch VibeFID card images from public URLs
+  const baseUrl = 'https://www.vibemostwanted.xyz';
+  const cardImage1 = fetch(`${baseUrl}/images/raid-bosses/vibefid/rare.png`).then(res => res.arrayBuffer());
+  const cardImage2 = fetch(`${baseUrl}/images/raid-bosses/vibefid/epic.png`).then(res => res.arrayBuffer());
+  const cardImage3 = fetch(`${baseUrl}/images/raid-bosses/vibefid/legendary.png`).then(res => res.arrayBuffer());
 
   const [card1, card2, card3] = await Promise.all([cardImage1, cardImage2, cardImage3]);
 
