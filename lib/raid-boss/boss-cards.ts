@@ -833,7 +833,7 @@ export const VIBEFX_BOSSES: Record<CardRarity, BossCard> = {
     power: 80,
     imageUrl: '/images/raid-bosses/vibefx/epic.png',
     hp: BOSS_HP_BY_RARITY.epic,
-    description: 'Cute face, killer instincts. Don't let the cupcake head fool you',
+    description: 'Cute face, killer instincts. Do not let the cupcake head fool you',
   },
   Legendary: {
     tokenId: '10387',

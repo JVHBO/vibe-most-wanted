@@ -1429,7 +1429,7 @@ export const createCpuVsCpuRoom = mutation({
       hostDeck: cpu1Deck,
       hostReady: true,
       hostBankroll: 1000,
-      hostBoostCoins: 10,
+      hostBoostCoins: 1500, // Increased from 10 to 1500 for more boost usage
 
       // CPU 2 (Guest)
       guestAddress: `cpu2-${collection}`.toLowerCase(),
@@ -1437,7 +1437,7 @@ export const createCpuVsCpuRoom = mutation({
       guestDeck: cpu2Deck,
       guestReady: true,
       guestBankroll: 1000,
-      guestBoostCoins: 10,
+      guestBoostCoins: 1500, // Increased from 10 to 1500 for more boost usage
 
       // Spectators start empty
       spectators: [],
@@ -1586,16 +1586,21 @@ export const cpuMakeMove = internalMutation({
 
       console.log(`🤖 CPU ${isHost ? 'host' : 'guest'} selected card: ${randomCard.name} (power: ${randomCard.power})`);
 
-      // CPU also selects an action (BOOST, SHIELD, PASS)
-      // CPU strategy: 25% BOOST, 15% SHIELD, 60% PASS (mostly passes to save coins)
+      // CPU also selects an action (BOOST, SHIELD, DOUBLE, PASS)
+      // CPU strategy: 50% BOOST, 25% SHIELD, 10% DOUBLE, 15% PASS
+      // More aggressive to avoid ties
+      const currentBoostCoins = isHost ? (room.hostBoostCoins ?? 1500) : (room.guestBoostCoins ?? 1500);
       const actionRoll = Math.random();
       let cpuAction: "BOOST" | "SHIELD" | "DOUBLE" | "PASS";
-      if (actionRoll < 0.25) {
-        cpuAction = "BOOST";
-      } else if (actionRoll < 0.40) {
-        cpuAction = "SHIELD";
+
+      if (actionRoll < 0.50 && currentBoostCoins >= 100) {
+        cpuAction = "BOOST"; // 50% chance if has coins
+      } else if (actionRoll < 0.75 && currentBoostCoins >= 80) {
+        cpuAction = "SHIELD"; // 25% chance if has coins
+      } else if (actionRoll < 0.85 && currentBoostCoins >= 200) {
+        cpuAction = "DOUBLE"; // 10% chance if has coins
       } else {
-        cpuAction = "PASS";
+        cpuAction = "PASS"; // 15% or when not enough coins
       }
 
       // Deduct boost costs
@@ -1606,7 +1611,6 @@ export const cpuMakeMove = internalMutation({
         PASS: 0,
       };
       const cost = boostCosts[cpuAction] || 0;
-      const currentBoostCoins = isHost ? (room.hostBoostCoins ?? 1000) : (room.guestBoostCoins ?? 1000);
       const newBoostCoins = currentBoostCoins - cost;
 
       console.log(`🤖 CPU ${isHost ? 'host' : 'guest'} selected action: ${cpuAction} (cost: ${cost}, balance: ${newBoostCoins})`);
