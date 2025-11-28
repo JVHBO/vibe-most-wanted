@@ -174,7 +174,16 @@ export default function FidCardPage() {
             VibeFID #{fid}
           </h1>
           <p className="text-vintage-ice">
-            {card?.displayName} (@{card?.username})
+            {card?.displayName} (
+            <a
+              href={`https://farcaster.xyz/${card?.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-vintage-gold hover:text-vintage-burnt-gold transition-colors underline"
+            >
+              @{card?.username}
+            </a>
+            )
           </p>
         </div>
 
