@@ -16,6 +16,7 @@ import { CardLoadingSpinner } from '@/components/LoadingSpinner';
 import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
 import { filterCardsByCollections, COLLECTIONS, type CollectionId } from "@/lib/collections/index";
 import { CardMedia } from '@/components/CardMedia';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -1031,14 +1032,10 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-5 gap-4">
                     {validCards.map((card, i) => (
                       <FoilCardEffect key={i} foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
-                        <img
-                          src={card.imageUrl}
+                        <CardMedia
+                          src={convertIpfsUrl(card.imageUrl) || card.imageUrl}
                           alt={`#${card.tokenId}`}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            // Fallback for broken images
-                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300"%3E%3Crect width="200" height="300" fill="%23222"%2F%3E%3Ctext x="50%25" y="50%25" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle" font-family="monospace"%3E%23' + card.tokenId + '%3C/text%3E%3C/svg%3E';
-                          }}
                         />
                         <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
                           {card.power}
