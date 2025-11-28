@@ -637,6 +637,9 @@ export const processAutoAttacks = mutation({
       const updatedCardEnergy = [];
       let playerDamage = 0;
 
+      // Check if deck has VibeFID card (for team buff)
+      const hasVibeFIDInDeck = deck.deck.some((c) => c.collection === 'vibefid');
+
       // Check each card's energy and attack if ready
       for (const cardEnergy of deck.cardEnergy) {
         // Check if energy has expired (0 = infinite for VibeFID)
@@ -651,13 +654,18 @@ export const processAutoAttacks = mutation({
           // Apply buff system (only for NFTs, not free cards)
           const isVibeFID = deckCard?.collection === 'vibefid';
           if (deckCard && !deckCard.isFreeCard) {
-            // VibeFID cards get 3x power against all bosses (ROUBADO!)
+            // VibeFID cards get 10x power against all bosses (SUPER ROUBADO!)
             if (isVibeFID) {
-              cardPower = Math.floor(cardPower * 3.0);
+              cardPower = Math.floor(cardPower * 10.0);
             }
             // Cards matching boss collection get 2x power (100% bonus)
             else if (deckCard.collection === boss.collection) {
               cardPower = Math.floor(cardPower * 2.0);
+            }
+
+            // 🌟 VIBEFID TEAM BUFF: All cards get +50% when VibeFID is in deck
+            if (hasVibeFIDInDeck && !isVibeFID) {
+              cardPower = Math.floor(cardPower * 1.5);
             }
           }
 
