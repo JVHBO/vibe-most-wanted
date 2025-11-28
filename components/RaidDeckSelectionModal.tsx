@@ -150,7 +150,7 @@ export function RaidDeckSelectionModal({
     }
 
     if (currentBoss && card.collection === currentBoss.collection) {
-      return { multiplier: 1.2, label: '+20%', color: 'text-blue-400' };
+      return { multiplier: 2.0, label: '2x', color: 'text-blue-400' };
     }
 
     return null;
@@ -477,7 +477,7 @@ export function RaidDeckSelectionModal({
                 {currentBoss.collection === 'vibe' ? 'VBMS' :
                  currentBoss.collection === 'gmvbrs' ? 'GM VBRS' :
                  currentBoss.collection === 'vibefid' ? 'VibeFID' :
-                 currentBoss.collection === 'americanfootball' ? 'AFCL' : currentBoss.collection}: +20%
+                 currentBoss.collection === 'americanfootball' ? 'AFCL' : currentBoss.collection}: 2x
               </span>
             </div>
           )}

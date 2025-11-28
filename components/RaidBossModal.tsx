@@ -919,12 +919,12 @@ export function RaidBossModal({
                           <div className={`absolute top-1 left-1 text-white text-sm px-2 py-1 rounded font-bold ${
                             hasCollectionBuff ? 'bg-yellow-500' : 'bg-red-600'
                           }`}>
-                            {hasCollectionBuff ? Math.floor(card.power * 1.2) : card.power}
+                            {hasCollectionBuff ? Math.floor(card.power * 2) : card.power}
                           </div>
                           {/* Collection Buff Badge */}
                           {hasCollectionBuff && (
                             <div className="absolute top-1 right-1 bg-yellow-400 text-black text-xs px-2 py-1 rounded font-bold shadow-lg animate-bounce">
-                              ⚡ +20%
+                              ⚡ 2x
                             </div>
                           )}
                           {/* Replace Card Button - Bottom */}
