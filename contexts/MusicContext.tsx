@@ -126,7 +126,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   /**
    * Play YouTube audio (invisible iframe)
    */
-  const playYouTubeAudio = useCallback((videoId: string, targetVolume: number) => {
+  const playYouTubeAudio = useCallback((videoId: string, targetVolume: number, shouldLoop: boolean = true, onTrackEnd?: () => void) => {
     // Stop any existing audio
     if (audioRef.current) {
       audioRef.current.pause();
@@ -149,14 +149,14 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
       (window as any).onYouTubeIframeAPIReady = () => {
-        createYouTubePlayer(videoId, targetVolume);
+        createYouTubePlayer(videoId, targetVolume, shouldLoop, onTrackEnd);
       };
     } else {
-      createYouTubePlayer(videoId, targetVolume);
+      createYouTubePlayer(videoId, targetVolume, shouldLoop, onTrackEnd);
     }
   }, [stopYouTubePlayer]);
 
-  const createYouTubePlayer = useCallback((videoId: string, targetVolume: number) => {
+  const createYouTubePlayer = useCallback((videoId: string, targetVolume: number, shouldLoop: boolean = true, onTrackEnd?: () => void) => {
     if (!youtubeContainerRef.current) return;
 
     const playerDiv = document.createElement('div');
@@ -169,8 +169,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       videoId: videoId,
       playerVars: {
         autoplay: 1,
-        loop: 1,
-        playlist: videoId, // Required for loop to work
+        loop: shouldLoop ? 1 : 0,
+        playlist: shouldLoop ? videoId : undefined, // Required for loop to work
         controls: 0,
         showinfo: 0,
         modestbranding: 1,
@@ -183,6 +183,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           setIsCustomMusicLoading(false);
           setCustomMusicError(null);
           currentTrackRef.current = `youtube:${videoId}`;
+        },
+        onStateChange: (event: any) => {
+          // YT.PlayerState.ENDED = 0
+          if (event.data === 0 && !shouldLoop && onTrackEnd) {
+            console.log('🎵 YouTube track ended, playing next...');
+            onTrackEnd();
+          }
         },
         onError: (event: any) => {
           console.error('YouTube player error:', event.data);
@@ -577,7 +584,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           audioRef.current.pause();
           audioRef.current = null;
         }
-        playYouTubeAudio(videoId, volume);
+        const shouldLoop = playlist.length === 1;
+        const onEnd = playlist.length > 1 ? () => {
+          const nextIndex = (safeIndex + 1) % playlist.length;
+          setCurrentPlaylistIndexState(nextIndex);
+        } : undefined;
+        playYouTubeAudio(videoId, volume, shouldLoop, onEnd);
         setIsCustomMusicLoading(false);
         return;
       } else {
