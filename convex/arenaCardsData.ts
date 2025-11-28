@@ -1484,6 +1484,150 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a5a0bbf7612109de29a0929528178d60",
       "collection": "teampothead"
     },
+    {
+      "tokenId": "1803",
+      "name": "Team Pothead #1803",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fc0407ab53fbfa5ba2656d8d68b20af5",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2425",
+      "name": "Team Pothead #2425",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d69d5668451b48a566a5cfe8b5105f64",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2591",
+      "name": "Team Pothead #2591",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a04d8a57b901a8e665f8be3095cc476e",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2127",
+      "name": "Team Pothead #2127",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7ee55eb4ffbd7a87d0edfc52e1e47e0a",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1870",
+      "name": "Team Pothead #1870",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/011127b7231a745ecb918d0187212dc1",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1876",
+      "name": "Team Pothead #1876",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a62b1ebaa1e95c301f07cae40a5d9b8e",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1875",
+      "name": "Team Pothead #1875",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/011127b7231a745ecb918d0187212dc1",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2632",
+      "name": "Team Pothead #2632",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3c9bcbd1671a92b265419ae680e03d19",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2633",
+      "name": "Team Pothead #2633",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/298f0acb80f4711248e01fdf9fa9939b",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2181",
+      "name": "Team Pothead #2181",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f14f75a1c48c306c7233efdc1cb5a77c",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2431",
+      "name": "Team Pothead #2431",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/95535e58b346cd374dfb68cacbab720c",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2562",
+      "name": "Team Pothead #2562",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ea4fa089d5ff294e553691d294645161",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2435",
+      "name": "Team Pothead #2435",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/84cfc20fe175dd2f95b585451d742899",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2049",
+      "name": "Team Pothead #2049",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d9fd20b1f85963e348939102962b9aa4",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2096",
+      "name": "Team Pothead #2096",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e19a130cc0150653af95216244bac97",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1874",
+      "name": "Team Pothead #1874",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dfc79ffa7c34a15b6df8e8f1eabf1e3b",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "1204",
+      "name": "Team Pothead #1204",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bd83ede372d2daece5e2460008d2abfd",
+      "collection": "teampothead"
+    },
+    {
+      "tokenId": "2626",
+      "name": "Team Pothead #2626",
+      "rarity": "Unopened",
+      "power": 5,
+      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5767e24b01e68e15e75215d56f591ca2",
+      "collection": "teampothead"
+    },
   ],
   "tarot": [
     {
