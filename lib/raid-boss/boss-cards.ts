@@ -746,7 +746,7 @@ export const BASEBALLCABAL_BOSSES: Record<CardRarity, BossCard> = {
     power: 15,
     imageUrl: '/images/raid-bosses/baseballcabal/common.png',
     hp: BOSS_HP_BY_RARITY.common,
-    description: 'You'll never see the ball coming',
+    description: "You'll never see the ball coming",
   },
   Rare: {
     tokenId: '7161',

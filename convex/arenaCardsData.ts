@@ -1733,14 +1733,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "collection": "teampothead"
     },
     {
-      "tokenId": "1875",
-      "name": "Team Pothead #1875",
-      "rarity": "Legendary",
-      "power": 240,
-      "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F64b28bf4-46c6-4dde-ccdd-70ac1a84d400%2Fpublic",
-      "collection": "teampothead"
-    },
-    {
       "tokenId": "2632",
       "name": "Team Pothead #2632",
       "rarity": "Rare",
@@ -1834,14 +1826,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
       "rarity": "Common",
       "power": 5,
       "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dfb3f6b54c62095a16bf66009a00526f",
-      "collection": "teampothead"
-    },
-    {
-      "tokenId": "1875",
-      "name": "Team Pothead #1875",
-      "rarity": "Legendary",
-      "power": 240,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/011127b7231a745ecb918d0187212dc1",
       "collection": "teampothead"
     },
     {
@@ -1966,30 +1950,6 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
     },
   ],
   "tarot": [
-    {
-      "tokenId": "9",
-      "name": "Tarot #9",
-      "rarity": "Epic",
-      "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7bee18caf26fe481c7546a9db36e9f4d",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "10",
-      "name": "Tarot #10",
-      "rarity": "Epic",
-      "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c445f87a04de29073e07adf0f43622fc",
-      "collection": "tarot"
-    },
-    {
-      "tokenId": "28",
-      "name": "Tarot #28",
-      "rarity": "Epic",
-      "power": 80,
-      "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/72ea458dbad1ce6a722306d811a42252",
-      "collection": "tarot"
-    },
     {
       "tokenId": "2",
       "name": "Tarot #2",
