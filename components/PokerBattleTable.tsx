@@ -2973,7 +2973,7 @@ export function PokerBattleTable({
         {/* ROUND WINNER ANNOUNCEMENT - Semi-transparent overlay positioned at top */}
         {/* Hide for spectators - they have their own bet feedback */}
         {showRoundWinner && roundWinner && !isSpectatorMode && (
-          <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] flex items-start justify-center pt-12 z-[240] animate-in fade-in duration-300 pointer-events-none">
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] flex items-start justify-center pt-12 z-[100] animate-in fade-in duration-300 pointer-events-none">
             <div className={`bg-gradient-to-b rounded-2xl border-4 p-6 text-center shadow-2xl animate-in slide-in-from-top duration-500 ${
               roundWinner === 'player'
                 ? 'from-green-900/95 to-green-950/95 border-green-500'
