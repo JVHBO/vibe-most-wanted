@@ -577,8 +577,8 @@ export default defineSchema({
     roomId: v.string(), // Which poker room this bet is for
     bettor: v.string(), // Spectator's wallet address (lowercase)
     bettorUsername: v.string(), // Display name
-    betOn: v.string(), // Address of player being bet on (hostAddress or guestAddress)
-    betOnUsername: v.string(), // Username of player being bet on
+    betOn: v.string(), // Address of player being bet on (hostAddress or guestAddress) or "tie" for draw bets
+    betOnUsername: v.string(), // Username of player being bet on or "Tie/Draw"
     amount: v.number(), // Bet amount in tokens
     token: v.union(
       v.literal("TESTVBMS"),
@@ -593,6 +593,7 @@ export default defineSchema({
       v.literal("refunded") // Game cancelled, bet refunded
     ),
     payout: v.optional(v.number()), // Amount paid out if won
+    odds: v.optional(v.number()), // Payout multiplier (3x for player win, higher for tie)
     timestamp: v.number(), // When bet was placed
     resolvedAt: v.optional(v.number()), // When bet was resolved
   })
@@ -636,9 +637,9 @@ export default defineSchema({
     roomId: v.string(), // Which poker room
     roundNumber: v.number(), // 1-7
     bettor: v.string(), // Spectator's address (lowercase)
-    betOn: v.string(), // Address of player bet on (hostAddress or guestAddress)
+    betOn: v.string(), // Address of player bet on (hostAddress or guestAddress) or "tie" for draw bets
     amount: v.number(), // Credits bet
-    odds: v.number(), // Multiplier (1.5, 1.8, 2.0)
+    odds: v.number(), // Multiplier (1.5, 1.8, 2.0 for players; higher for tie)
     status: v.union(
       v.literal("active"), // Round in progress
       v.literal("won"), // Won - credits paid
