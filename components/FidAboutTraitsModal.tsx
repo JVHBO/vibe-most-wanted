@@ -59,6 +59,44 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
             {t.aboutTraitsModalIntro}
           </p>
 
+          {/* VibeFID Benefits */}
+          <div className="bg-gradient-to-br from-vintage-gold/20 to-vintage-burnt-gold/20 rounded-lg border-2 border-vintage-gold p-4">
+            <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 flex items-center gap-2">
+              <span>⭐</span> {t.vibeFidBenefits}
+            </h3>
+            <p className="text-vintage-ice/80 text-sm mb-4">
+              {t.vibeFidBenefitsIntro}
+            </p>
+            <div className="space-y-3">
+              {/* Power Boost */}
+              <div className="bg-vintage-black/40 p-3 rounded border border-vintage-gold/30">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">⚡</span>
+                  <span className="text-vintage-gold font-bold">{t.powerBoost}</span>
+                </div>
+                <p className="text-vintage-ice/70 text-sm ml-7">{t.powerBoostDesc}</p>
+              </div>
+
+              {/* Infinite Energy */}
+              <div className="bg-vintage-black/40 p-3 rounded border border-vintage-gold/30">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">♾️</span>
+                  <span className="text-vintage-gold font-bold">{t.infiniteEnergy}</span>
+                </div>
+                <p className="text-vintage-ice/70 text-sm ml-7">{t.infiniteEnergyDesc}</p>
+              </div>
+
+              {/* No Deck Restriction */}
+              <div className="bg-vintage-black/40 p-3 rounded border border-vintage-gold/30">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">🃏</span>
+                  <span className="text-vintage-gold font-bold">{t.noDeckRestriction}</span>
+                </div>
+                <p className="text-vintage-ice/70 text-sm ml-7">{t.noDeckRestrictionDesc}</p>
+              </div>
+            </div>
+          </div>
+
           {/* Neynar Score → Rarity */}
           <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-lg border-2 border-purple-500/50 p-4">
             <h3 className="text-lg sm:text-xl font-bold text-purple-300 mb-3 flex items-center gap-2">

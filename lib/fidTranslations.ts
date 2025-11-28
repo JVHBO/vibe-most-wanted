@@ -134,9 +134,19 @@ export const fidTranslations = {
     powerWord: 'poder',
 
     // About Traits Modal - Detailed
-    aboutTraitsModalTitle: 'Sobre as Traits VibeFID',
+    aboutTraitsModalTitle: 'Sobre o VibeFID',
     aboutTraitsModalIntro: 'As cartas VibeFID têm traits únicas determinadas pelo seu FID e Pontuação Neynar.',
     howItWorks: 'Como Funciona',
+
+    // VibeFID Benefits
+    vibeFidBenefits: 'Benefícios VibeFID',
+    vibeFidBenefitsIntro: 'Cartas VibeFID têm vantagens especiais no Vibe Most Wanted:',
+    powerBoost: 'Boost de Poder',
+    powerBoostDesc: 'Cartas VibeFID recebem multiplicadores de poder bônus em batalhas',
+    infiniteEnergy: 'Energia Infinita',
+    infiniteEnergyDesc: 'Nunca fica sem energia - sempre pronta para batalhar',
+    noDeckRestriction: 'Sem Restrição de Deck',
+    noDeckRestrictionDesc: 'Pode ser usada simultaneamente no Deck de Ataque (Raids) e Deck de Defesa - sem limitações!',
     neynarScoreSection: 'Pontuação Neynar → Raridade',
     neynarScoreDescription: 'Sua pontuação Neynar (engajamento no Farcaster) determina a raridade da sua carta:',
     scoreRange: 'Pontuação',
@@ -345,9 +355,19 @@ export const fidTranslations = {
     powerWord: 'power',
 
     // About Traits Modal - Detailed
-    aboutTraitsModalTitle: 'About VibeFID Traits',
+    aboutTraitsModalTitle: 'About VibeFID',
     aboutTraitsModalIntro: 'VibeFID cards have unique traits determined by your FID and Neynar Score.',
     howItWorks: 'How It Works',
+
+    // VibeFID Benefits
+    vibeFidBenefits: 'VibeFID Benefits',
+    vibeFidBenefitsIntro: 'VibeFID cards have special advantages in Vibe Most Wanted:',
+    powerBoost: 'Power Boost',
+    powerBoostDesc: 'VibeFID cards receive bonus power multipliers in battles',
+    infiniteEnergy: 'Infinite Energy',
+    infiniteEnergyDesc: 'Never runs out of energy - always ready to battle',
+    noDeckRestriction: 'No Deck Restriction',
+    noDeckRestrictionDesc: 'Can be used simultaneously in Attack Deck (Raids) and Defense Deck - no limitations!',
     neynarScoreSection: 'Neynar Score → Rarity',
     neynarScoreDescription: 'Your Neynar Score (Farcaster engagement) determines your card rarity:',
     scoreRange: 'Score',
