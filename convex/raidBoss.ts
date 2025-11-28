@@ -649,10 +649,11 @@ export const processAutoAttacks = mutation({
           let cardPower = deckCard?.power || 0;
 
           // Apply buff system (only for NFTs, not free cards)
+          const isVibeFID = deckCard?.collection === 'vibefid';
           if (deckCard && !deckCard.isFreeCard) {
-            // VibeFID cards get +50% power against all bosses
-            if (deckCard.collection === 'vibefid') {
-              cardPower = Math.floor(cardPower * 1.5);
+            // VibeFID cards get 3x power against all bosses (ROUBADO!)
+            if (isVibeFID) {
+              cardPower = Math.floor(cardPower * 3.0);
             }
             // Cards matching boss collection get 2x power (100% bonus)
             else if (deckCard.collection === boss.collection) {
@@ -660,8 +661,8 @@ export const processAutoAttacks = mutation({
             }
           }
 
-          // 🎯 CRITICAL HIT SYSTEM (15% chance, 2x damage)
-          const criticalHitChance = 0.15; // 15% chance
+          // 🎯 CRITICAL HIT SYSTEM (VibeFID: 30% chance, Others: 15% chance)
+          const criticalHitChance = isVibeFID ? 0.30 : 0.15; // VibeFID has 2x crit chance!
           const isCriticalHit = Math.random() < criticalHitChance;
           if (isCriticalHit) {
             cardPower = Math.floor(cardPower * 2); // 2x damage on crit
