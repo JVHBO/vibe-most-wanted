@@ -6,13 +6,15 @@ import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 
 // Collection cover images for Mecha Arena (sealed/unrevealed card backs)
 const COLLECTION_COVERS: Record<string, string> = {
-  gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/cf4d0c296aba8dcf42813bca4d9f6407',
-  americanfootball: 'https://nft-cdn.alchemy.com/base-mainnet/e74d1cd7453716aba311f6625bcdce30',
+  gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/d0de7e9fa12eadb1ea2204e67d43e166',
+  vibe: 'https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f',
+  americanfootball: 'https://nft-cdn.alchemy.com/base-mainnet/5c023b39577f02927478fbd60c26d75e',
   coquettish: 'https://nft-cdn.alchemy.com/base-mainnet/9145036a0f3e07a031b46130b4171084',
-  viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/a31935254f537c84ec9fa749c54a281c',
-  meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/64bdc8568c59f33d9b43e94b6f5e8a7d',
-  poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/3c5d7e9f1a2b4c6d8e0f1a2b3c4d5e6f',
-  tarot: 'https://nft-cdn.alchemy.com/base-mainnet/7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d',
+  viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/ec58759f6df558aa4193d58ae9b0e74f',
+  meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/16a8f93f75def1a771cca7e417b5d05e',
+  poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/96282462557a81c42fad965a48c34f4c',
+  teampothead: 'https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0',
+  tarot: 'https://nft-cdn.alchemy.com/base-mainnet/72ea458dbad1ce6a722306d811a42252',
 };
 
 // Collection display names
