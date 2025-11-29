@@ -16,7 +16,7 @@ import { VoiceChannelPanel } from './VoiceChannelPanel';
 import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { SpectatorEntryModal } from './SpectatorEntryModal';
 import { SimpleBettingOverlay } from './SimpleBettingOverlay';
-import { SpectatorBetFeedback } from './SpectatorBetFeedback';
+// import { SpectatorBetFeedback } from './SpectatorBetFeedback'; // REMOVED - no longer showing bet history modal
 import { GamePopups } from './GamePopups';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
@@ -3246,8 +3246,8 @@ export function PokerBattleTable({
         />
       )}
 
-      {/* Spectator Bet Feedback - History panel + win/loss animations */}
-      {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room && (
+      {/* REMOVED - Spectator Bet Feedback modal showing R1-R7 history */}
+      {/* {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room && (
         <SpectatorBetFeedback
           roomId={roomId}
           spectatorAddress={playerAddress || ''}
@@ -3255,7 +3255,7 @@ export function PokerBattleTable({
           lastRoundWinner={lastRoundWinnerAddress}
           showResultAnimation={showBetResult}
         />
-      )}
+      )} */}
 
       {/* Exit Confirmation Modal for Spectators */}
       {showExitConfirmation && (
