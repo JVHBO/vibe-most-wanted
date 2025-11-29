@@ -1559,7 +1559,7 @@ export const cpuMakeMove = internalMutation({
     const gameState = room.gameState;
     if (!gameState) return;
 
-    const currentRound = room.currentRound || 1;
+    const currentRound = gameState.currentRound || 1;
     const deck = isHost ? room.hostDeck : room.guestDeck;
     const usedCards = isHost ? gameState.hostUsedCards : gameState.guestUsedCards;
     const selectedCard = isHost ? gameState.hostSelectedCard : gameState.guestSelectedCard;
@@ -1636,7 +1636,7 @@ export const cpuMakeMove = internalMutation({
         console.log(`🤖 Both CPUs selected - waiting 30s for spectator bets before reveal (will shorten to 8s if bet placed)`);
 
         await ctx.db.patch(room._id, {
-          [`gameState.${currentRound - 1}.bettingWindowEndsAt`]: bettingWindowEndsAt,
+          "gameState.bettingWindowEndsAt": bettingWindowEndsAt,
         });
 
         await ctx.scheduler.runAfter(30000, internal.pokerBattle.cpuRevealRound, {
@@ -1668,10 +1668,11 @@ export const shortenBettingWindow = mutation({
 
     if (!room || !room.isCpuVsCpu) return;
 
-    const currentRound = room.currentRound || 1;
-    const gameState = room.gameState?.[currentRound - 1];
+    const gameState = room.gameState;
+    if (!gameState) return;
 
-    if (!gameState?.bettingWindowEndsAt) return;
+    const currentRound = gameState.currentRound || 1;
+    if (!gameState.bettingWindowEndsAt) return;
 
     const now = Date.now();
     const newEndsAt = now + 8000; // 8 seconds from now
@@ -1681,7 +1682,7 @@ export const shortenBettingWindow = mutation({
       console.log(`⚡ Bet placed! Shortening betting window from 30s to 8s for round ${currentRound}`);
 
       await ctx.db.patch(room._id, {
-        [`gameState.${currentRound - 1}.bettingWindowEndsAt`]: newEndsAt,
+        "gameState.bettingWindowEndsAt": newEndsAt,
       });
 
       // Schedule a new reveal for 8 seconds if not already scheduled sooner
@@ -1708,10 +1709,12 @@ export const cpuRevealRound = internalMutation({
     if (!room || !room.isCpuVsCpu || room.status === "finished") return;
 
     // Check if betting window is still open
-    const currentRound = room.currentRound || 1;
-    const gameState = room.gameState?.[currentRound - 1];
+    const gameState = room.gameState;
+    if (!gameState) return;
 
-    if (gameState?.bettingWindowEndsAt && Date.now() < gameState.bettingWindowEndsAt) {
+    const currentRound = gameState.currentRound || 1;
+
+    if (gameState.bettingWindowEndsAt && Date.now() < gameState.bettingWindowEndsAt) {
       // Window still open, wait more
       const remainingTime = gameState.bettingWindowEndsAt - Date.now();
       console.log(`⏰ Betting window still open, waiting ${remainingTime}ms more`);
@@ -1720,8 +1723,6 @@ export const cpuRevealRound = internalMutation({
       });
       return;
     }
-
-    if (!gameState) return;
 
     const hostCard = gameState.hostSelectedCard;
     const guestCard = gameState.guestSelectedCard;
