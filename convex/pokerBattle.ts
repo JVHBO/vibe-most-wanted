@@ -1629,9 +1629,16 @@ export const cpuMakeMove = internalMutation({
       // Check if both CPUs have selected - if so, move to reveal
       const otherSelected = isHost ? gameState.guestSelectedCard : gameState.hostSelectedCard;
       if (otherSelected) {
-        // Both selected, wait 8 seconds (give spectators time to bet) then reveal
-        console.log(`🤖 Both CPUs selected - waiting 8s for spectator bets before reveal`);
-        await ctx.scheduler.runAfter(8000, internal.pokerBattle.cpuRevealRound, {
+        // Both selected, wait 30 seconds (give spectators time to bet) then reveal
+        // If someone bets, the window will be shortened to 8 seconds via shortenBettingWindow
+        const bettingWindowEndsAt = Date.now() + 30000; // 30 seconds from now
+        console.log(`🤖 Both CPUs selected - waiting 30s for spectator bets before reveal (will shorten to 8s if bet placed)`);
+
+        await ctx.db.patch(room._id, {
+          [`gameState.${currentRound - 1}.bettingWindowEndsAt`]: bettingWindowEndsAt,
+        });
+
+        await ctx.scheduler.runAfter(30000, internal.pokerBattle.cpuRevealRound, {
           roomId,
         });
       } else {
@@ -1641,6 +1648,45 @@ export const cpuMakeMove = internalMutation({
           isHost: !isHost,
         });
       }
+    }
+  },
+});
+
+/**
+ * Shorten betting window when first bet is placed in CPU vs CPU
+ */
+export const shortenBettingWindow = mutation({
+  args: {
+    roomId: v.string(),
+  },
+  handler: async (ctx, { roomId }) => {
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (!room || !room.isCpuVsCpu) return;
+
+    const currentRound = room.currentRound || 1;
+    const gameState = room.gameState?.[currentRound - 1];
+
+    if (!gameState?.bettingWindowEndsAt) return;
+
+    const now = Date.now();
+    const newEndsAt = now + 8000; // 8 seconds from now
+
+    // Only shorten if the new time is sooner than the current window
+    if (newEndsAt < gameState.bettingWindowEndsAt) {
+      console.log(`⚡ Bet placed! Shortening betting window from 30s to 8s for round ${currentRound}`);
+
+      await ctx.db.patch(room._id, {
+        [`gameState.${currentRound - 1}.bettingWindowEndsAt`]: newEndsAt,
+      });
+
+      // Schedule a new reveal for 8 seconds if not already scheduled sooner
+      await ctx.scheduler.runAfter(8000, internal.pokerBattle.cpuRevealRound, {
+        roomId,
+      });
     }
   },
 });
@@ -1660,7 +1706,20 @@ export const cpuRevealRound = internalMutation({
 
     if (!room || !room.isCpuVsCpu || room.status === "finished") return;
 
-    const gameState = room.gameState;
+    // Check if betting window is still open
+    const currentRound = room.currentRound || 1;
+    const gameState = room.gameState?.[currentRound - 1];
+
+    if (gameState?.bettingWindowEndsAt && Date.now() < gameState.bettingWindowEndsAt) {
+      // Window still open, wait more
+      const remainingTime = gameState.bettingWindowEndsAt - Date.now();
+      console.log(`⏰ Betting window still open, waiting ${remainingTime}ms more`);
+      await ctx.scheduler.runAfter(remainingTime, internal.pokerBattle.cpuRevealRound, {
+        roomId,
+      });
+      return;
+    }
+
     if (!gameState) return;
 
     const hostCard = gameState.hostSelectedCard;
