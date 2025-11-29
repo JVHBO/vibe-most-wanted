@@ -78,10 +78,12 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to retrieve CID from uploaded file');
     }
 
-    // Use public IPFS gateway so we can migrate providers later
-    const ipfsUrl = `https://ipfs.io/ipfs/${cid}`;
+    // Use Filebase gateway - faster since file is hosted there
+    // CardMedia auto-detects IPFS URLs as video (no extension needed)
+    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
 
     console.log(`✅ Video uploaded to IPFS via Filebase, CID: ${cid}`);
+    console.log(`   IPFS URL: ${ipfsUrl}`);
 
     return NextResponse.json({
       ipfsUrl,

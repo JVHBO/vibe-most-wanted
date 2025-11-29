@@ -1,37 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { useTransferVBMS, useVBMSBalance, useApproveVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance, useFarcasterTransferVBMS, useFarcasterApproveVBMS } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
+import { parseEther } from "viem";
 
 interface SpectatorEntryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (bettingCredits: number) => void;
+  onJoinFree?: () => void; // Optional: Join as free spectator
   battleId: string;
+  playerAddress?: string; // Optional: for Farcaster miniapp
+  hideFreePick?: boolean; // Hide the free spectator option
 }
 
 export function SpectatorEntryModal({
   isOpen,
   onClose,
   onSuccess,
+  onJoinFree,
   battleId,
+  playerAddress,
+  hideFreePick = false,
 }: SpectatorEntryModalProps) {
-  const { address } = useAccount();
-  const { balance: vbmsBalance } = useVBMSBalance(address);
-  const { approve, isPending: isApproving } = useApproveVBMS();
-  const { transfer, isPending: isTransferring } = useTransferVBMS();
+  const { address: wagmiAddress } = useAccount();
+  // Use playerAddress (miniapp) OR wagmiAddress (web) - playerAddress takes priority
+  const effectiveAddress = playerAddress || wagmiAddress;
+  const { balance: vbmsBalance } = useFarcasterVBMSBalance(effectiveAddress); // Miniapp-compatible
+  const { approve, isPending: isApproving } = useFarcasterApproveVBMS();
+  const { transfer, isPending: isTransferring } = useFarcasterTransferVBMS();
 
   const [amount, setAmount] = useState<string>("100");
-  const [step, setStep] = useState<"input" | "approving" | "transferring" | "done">("input");
+  const [step, setStep] = useState<"input" | "deposit-intro" | "deposit-amount" | "approving" | "transferring" | "done">("input");
   const [error, setError] = useState<string | null>(null);
 
   // Preset amounts
   const PRESETS = [50, 100, 250, 500, 1000];
 
   const handleDeposit = async () => {
-    if (!address || !amount) return;
+    if (!effectiveAddress || !amount) return;
 
     const amountNum = parseFloat(amount);
     if (amountNum <= 0) {
@@ -49,11 +58,11 @@ export function SpectatorEntryModal({
     try {
       // Step 1: Approve
       setStep("approving");
-      await approve(CONTRACTS.VBMSBetting as `0x${string}`, amount);
+      await approve(CONTRACTS.VBMSBetting as `0x${string}`, parseEther(amount));
 
       // Step 2: Transfer
       setStep("transferring");
-      const txHash = await transfer(CONTRACTS.VBMSBetting as `0x${string}`, BigInt(amount));
+      const txHash = await transfer(CONTRACTS.VBMSBetting as `0x${string}`, parseEther(amount));
 
       console.log("✅ Deposited to betting:", txHash);
 
@@ -62,7 +71,7 @@ export function SpectatorEntryModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          address,
+          address: effectiveAddress,
           amount,
           txHash,
         }),
@@ -96,22 +105,112 @@ export function SpectatorEntryModal({
         {/* Header */}
         <div className="text-center mb-6">
           <h2 className="text-3xl font-display font-bold text-vintage-gold mb-2">
-            Enter Spectator Mode
+            Spectator Mode
           </h2>
           <p className="text-vintage-ice/70">
-            Deposit VBMS to get betting credits for this battle
+            Watch the battle and chat with players
           </p>
         </div>
 
-        {/* Balance */}
-        <div className="bg-vintage-black/40 rounded-lg p-4 mb-6">
-          <p className="text-vintage-ice/70 text-sm mb-1">Your VBMS Balance</p>
-          <p className="text-2xl font-display font-bold text-purple-400">
-            {parseFloat(vbmsBalance).toFixed(2)} VBMS
-          </p>
-        </div>
-
+        {/* Mode Selection - Only show if not in deposit flow */}
         {step === "input" && (
+          <div className={`grid ${hideFreePick ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-6`}>
+            {/* Free Spectator - Hidden when hideFreePick is true */}
+            {!hideFreePick && onJoinFree && (
+              <button
+                onClick={() => {
+                  onJoinFree();
+                  onClose();
+                }}
+                className="group relative bg-gradient-to-br from-blue-600/30 to-blue-800/30 hover:from-blue-500/50 hover:to-blue-700/50 border-2 border-blue-500/50 hover:border-blue-400 rounded-xl p-6 transition-all hover:scale-105"
+              >
+                <div className="text-center">
+                  <div className="text-5xl mb-3">👁️</div>
+                  <p className="text-blue-400 font-display font-bold text-lg mb-1">
+                    Watch Free
+                  </p>
+                  <p className="text-vintage-ice/70 text-xs">
+                    Chat & Watch
+                  </p>
+                  <p className="text-vintage-ice/50 text-xs mt-1">
+                    No betting
+                  </p>
+                </div>
+              </button>
+            )}
+
+            {/* Betting Spectator */}
+            <button
+              onClick={() => setStep("deposit-intro")}
+              className="group relative bg-gradient-to-br from-purple-600/30 to-pink-800/30 hover:from-purple-500/50 hover:to-pink-700/50 border-2 border-purple-500/50 hover:border-purple-400 rounded-xl p-6 transition-all hover:scale-105"
+            >
+              <div className="text-center">
+                <div className="text-5xl mb-3">💰</div>
+                <p className="text-purple-400 font-display font-bold text-lg mb-1">
+                  {hideFreePick ? 'Deposit VBMS to Enter' : 'With Betting'}
+                </p>
+                <p className="text-vintage-ice/70 text-xs">
+                  Bet on rounds
+                </p>
+                <p className="text-vintage-ice/50 text-xs mt-1">
+                  Deposit VBMS
+                </p>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Deposit Intro - Explain betting */}
+        {step === "deposit-intro" && (
+          <>
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 mb-4">
+              <p className="text-purple-400 text-sm mb-2">
+                💰 <span className="font-bold">Round Betting System</span>
+              </p>
+              <ul className="text-vintage-ice/70 text-xs space-y-1">
+                <li>• Bet on each round (1-7)</li>
+                <li>• Growing odds: 1.5x → 2.0x</li>
+                <li>• Instant payouts</li>
+                <li>• Simple: tap card to bet</li>
+              </ul>
+            </div>
+
+            <div className="text-center mb-4">
+              <p className="text-vintage-gold font-bold mb-2">How much to deposit?</p>
+              <p className="text-vintage-ice/70 text-sm">
+                You'll receive 1:1 betting credits
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep("input")}
+                className="flex-1 bg-vintage-charcoal hover:bg-vintage-charcoal/80 text-vintage-ice border border-vintage-gold/30 py-3 rounded-lg font-display font-bold transition-all"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => setStep("deposit-amount")}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 rounded-lg font-display font-bold transition-all"
+              >
+                Continue
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Balance - Only show in deposit flow */}
+        {(step === "deposit-amount" || step === "approving" || step === "transferring") && (
+          <div className="bg-vintage-black/40 rounded-lg p-4 mb-6">
+            <p className="text-vintage-ice/70 text-sm mb-1">Your VBMS Balance</p>
+            <p className="text-2xl font-display font-bold text-purple-400">
+              {parseFloat(vbmsBalance).toFixed(2)} VBMS
+            </p>
+          </div>
+        )}
+
+        {/* Deposit Amount Selection */}
+        {step === "deposit-amount" && (
           <>
             {/* Amount Input */}
             <div className="mb-6">
@@ -159,17 +258,17 @@ export function SpectatorEntryModal({
             {/* Buttons */}
             <div className="flex gap-3">
               <button
-                onClick={onClose}
+                onClick={() => setStep("deposit-intro")}
                 className="flex-1 bg-vintage-charcoal hover:bg-vintage-charcoal/80 text-vintage-ice border border-vintage-gold/30 py-3 rounded-lg font-display font-bold transition-all"
               >
-                Cancel
+                Back
               </button>
               <button
                 onClick={handleDeposit}
                 disabled={!amount || parseFloat(amount) <= 0}
                 className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 rounded-lg font-display font-bold transition-all disabled:cursor-not-allowed"
               >
-                Enter Spectator Mode
+                Deposit & Enter
               </button>
             </div>
           </>

@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -126,6 +126,8 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     ownerAddress: process.env.NEXT_PUBLIC_JC_CONTRACT || '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
     enabled: true,
     powerCalculation: DEFAULT_POWER_CONFIG,
+    marketplaceUrl: 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY VBMS PACKS',
   },
 
   // Coleção GM VBRS
@@ -155,18 +157,145 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-  // Collection VibeFID
+  // Collection VibeFID V2
   vibefid: {
     id: 'vibefid',
     name: 'vibefid',
     displayName: 'VibeFID',
     description: 'Collection VibeFID NFT',
-    contractAddress: '0x3e1e69e444261a5bc65b83c41036b5284c1e69ae',
+    contractAddress: '0x60274A138d026E3cB337B40567100FdEC3127565',
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: '/fid',
     buttonText: 'Mint VibeFID',
     powerCalculation: VIBEFID_POWER_CONFIG,
+  },
+
+  // Coleção Coquettish
+  coquettish: {
+    id: 'coquettish',
+    name: 'coquettish',
+    displayName: 'Coquettish',
+    description: 'Coleção Coquettish NFT',
+    contractAddress: '0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/coquettish-1?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY COQ PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+  // Collection Viberuto
+  viberuto: {
+    id: 'viberuto',
+    name: 'viberuto',
+    displayName: 'Viberuto',
+    description: 'Collection Viberuto NFT',
+    contractAddress: '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY VBRTO PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Meowverse
+  meowverse: {
+    id: 'meowverse',
+    name: 'meowverse',
+    displayName: 'Meowverse',
+    description: 'Collection Meowverse NFT',
+    contractAddress: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY MEOVV PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Poorly Drawn Pepes
+  poorlydrawnpepes: {
+    id: 'poorlydrawnpepes',
+    name: 'poorlydrawnpepes',
+    displayName: 'Poorly Drawn Pepes',
+    description: 'Collection Poorly Drawn Pepes NFT',
+    contractAddress: '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY PDP PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Team Pothead
+  teampothead: {
+    id: 'teampothead',
+    name: 'teampothead',
+    displayName: 'Team Pothead',
+    description: 'Collection Team Pothead NFT',
+    contractAddress: '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY TMPT PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+
+    // Collection Tarot
+  tarot: {
+    id: 'tarot',
+    name: 'tarot',
+    displayName: 'Tarot',
+    description: 'Collection Tarot NFT',
+    contractAddress: '0x34d639c63384a00a2d25a58f73bea73856aa0550',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY TRT PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Baseball Cabal
+  baseballcabal: {
+    id: 'baseballcabal',
+    name: 'baseballcabal',
+    displayName: 'Baseball Cabal',
+    description: 'Collection Baseball Cabal NFT',
+    contractAddress: '0x3ff41af61d092657189b1d4f7d74d994514724bb',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY BBCL PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Vibe FX
+  vibefx: {
+    id: 'vibefx',
+    name: 'vibefx',
+    displayName: 'Vibe FX',
+    description: 'Collection Vibe FX NFT',
+    contractAddress: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY VBFX PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection History of Computer
+  historyofcomputer: {
+    id: 'historyofcomputer',
+    name: 'historyofcomputer',
+    displayName: 'History of Computer',
+    description: 'Collection History of Computer NFT',
+    contractAddress: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY HSTR PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
   // Template para nova coleÃ§Ã£o customizada

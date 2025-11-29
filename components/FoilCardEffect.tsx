@@ -6,6 +6,7 @@ interface FoilCardEffectProps {
   children: React.ReactNode;
   foilType?: 'Standard' | 'Prize' | null;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 /**
@@ -15,17 +16,18 @@ interface FoilCardEffectProps {
 const FoilCardEffect: React.FC<FoilCardEffectProps> = ({
   children,
   foilType,
-  className = ''
+  className = '',
+  style
 }) => {
   // No foil effect for non-foil cards
   if (!foilType || foilType === null) {
-    return <div className={className}>{children}</div>;
+    return <div className={className} style={style}>{children}</div>;
   }
 
   const isPrize = foilType === 'Prize';
 
   return (
-    <div className={`relative inline-block overflow-hidden rounded ${className}`} style={{ userSelect: 'none' }}>
+    <div className={`relative inline-block overflow-hidden rounded ${className}`} style={{ userSelect: 'none', ...style }}>
       {/* Card content FIRST */}
       {children}
 

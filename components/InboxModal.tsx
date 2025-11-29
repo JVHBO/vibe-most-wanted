@@ -11,6 +11,8 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import Image from "next/image";
+import { useBodyScrollLock, useEscapeKey } from "@/hooks";
+import { Z_INDEX } from "@/lib/z-index";
 
 const NextImage = Image;
 
@@ -28,6 +30,10 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   const { address } = useAccount();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+
+  // Modal accessibility hooks
+  useBodyScrollLock(true);
+  useEscapeKey(onClose);
 
   // Check if we should use Farcaster SDK for transactions
   useEffect(() => {
@@ -276,7 +282,8 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+      style={{ zIndex: Z_INDEX.modal }}
       onClick={onClose}
     >
       <div
@@ -289,7 +296,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-vintage-deep-black/50 hover:bg-vintage-gold/20 text-vintage-gold/60 hover:text-vintage-gold transition-all"
+          className="absolute top-2 right-2 z-10 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-vintage-deep-black/50 hover:bg-vintage-gold/20 text-vintage-gold/60 hover:text-vintage-gold transition-all"
         >
           ✕
         </button>

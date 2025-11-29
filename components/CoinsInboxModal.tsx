@@ -7,11 +7,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { useClaimVBMS, useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
+import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import Image from "next/image";
+import Link from "next/link";
+import { useBodyScrollLock, useEscapeKey } from "@/hooks";
+import { Z_INDEX } from "@/lib/z-index";
 
 const NextImage = Image;
 
@@ -33,6 +37,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
 
+  // Modal accessibility hooks
+  useBodyScrollLock(true);
+  useEscapeKey(onClose);
+
   // Check if we should use Farcaster SDK for transactions
   useEffect(() => {
     const checkFarcasterSDK = async () => {
@@ -52,8 +60,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const { claimVBMS } = useClaimVBMS();
 
-  // Get VBMS wallet balance from blockchain
-  const { balance: vbmsWalletBalance } = useVBMSBalance(address as `0x${string}`);
+  // Get VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)
+  const { balance: vbmsWalletBalance } = useFarcasterVBMSBalance(address);
 
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
@@ -196,7 +204,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      style={{ zIndex: Z_INDEX.modal }}
       onClick={onClose}
     >
       <div
@@ -288,6 +297,15 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               </p>
             </div>
           )}
+
+          {/* DEX Link - Sell VBMS for ETH */}
+          <Link
+            href="/dex"
+            className="w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">💱</span>
+            <span>Sell VBMS → ETH (DEX)</span>
+          </Link>
           </div>
         </div>
       </div>

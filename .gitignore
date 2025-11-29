@@ -141,3 +141,35 @@ DEPLOY_REMIX.md
 
 # XSS Fix Script
 fix_xss.py
+
+# ============================================================
+# RAID BOSS ADMIN SCRIPTS - PRIVATE (DO NOT COMMIT)
+# ============================================================
+# Script para adicionar coleções ao raid - uso interno apenas
+add-collection-to-raid.bat
+temp_update_script.js
+COMO_USAR_ADD_COLLECTION.txt
+
+# PowerShell scripts for raid boss integration
+add-raid-bosses.ps1
+update-raid-rotation.ps1
+create-raid-images-dir.ps1
+RAID_BOSS_MENU_ADDITION.bat
+INTEGRACAO_RAID_BOSS.txt
+
+# Raid boss images - only commit default collections
+# Custom collections should not be committed
+public/images/raid-bosses/*
+!public/images/raid-bosses/gmvbrs/
+!public/images/raid-bosses/vibe/
+!public/images/raid-bosses/vibefid/
+!public/images/raid-bosses/afcl/
+!public/images/raid-bosses/coquettish/
+!public/images/raid-bosses/viberuto/
+!public/images/raid-bosses/meowverse/
+!public/images/raid-bosses/poorlydrawnpepes/
+!public/images/raid-bosses/teampothead/
+!public/images/raid-bosses/tarot/
+!public/images/raid-bosses/baseballcabal/
+!public/images/raid-bosses/vibefx/
+!public/images/raid-bosses/historyofcomputer/

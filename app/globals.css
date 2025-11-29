@@ -384,3 +384,95 @@ body > * {
     transform: translateY(-200px) scale(1.5);
   }
 }
+
+/* Raid Boss Attack Animations */
+@keyframes damageFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(1.2);
+  }
+}
+
+@keyframes cardAttack {
+  0% {
+    transform: translateX(0) scale(1);
+  }
+  50% {
+    transform: translateX(20px) scale(1.1);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes bossHit {
+  0% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translateX(-10px);
+    filter: brightness(1.5) hue-rotate(10deg);
+  }
+  50% {
+    transform: translateX(5px);
+    filter: brightness(1.3);
+  }
+  75% {
+    transform: translateX(-5px);
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+}
+
+.animate-card-attack {
+  animation: cardAttack 0.5s ease-in-out;
+}
+
+.animate-boss-hit {
+  animation: bossHit 0.4s ease-out;
+}
+
+/* ACCESSIBILITY: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* RESPONSIVE CONTAINER: Mobile-first approach for miniapp */
+.responsive-container {
+  max-width: 100%;
+  width: 100%;
+  padding: 12px;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    max-width: 600px;
+    padding: 20px;
+  }
+}
+
+/* MINIAPP PORTAL ROOT: Target for createPortal */
+#miniapp-root {
+  position: relative;
+  z-index: 0;
+}

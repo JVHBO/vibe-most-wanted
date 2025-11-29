@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { Id } from "@/convex/_generated/dataModel";
 import { ShopNotification } from "./ShopNotification";
 import { PackOpeningAnimation } from "./PackOpeningAnimation";
-import { useVBMSBalance, useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance, useFarcasterTransferVBMS } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 import { parseEther } from "viem";
@@ -24,10 +24,23 @@ export function ShopView({ address }: ShopViewProps) {
   // Mutations
   const openPack = useMutation(api.cardPacks.openPack);
 
-  // VBMS Blockchain hooks
+  // VBMS Blockchain hooks (using Farcaster-compatible hook for miniapp)
   const { address: walletAddress } = useAccount();
-  const { balance: vbmsBalance, refetch: refetchVBMS } = useVBMSBalance(walletAddress);
-  const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
+  // Use address prop (works in miniapp) OR walletAddress (works in web) - prop takes priority
+  const effectiveAddress = address || walletAddress;
+
+  // 🔍 Debug: Log address values
+  console.log('[ShopView] 🔍 Address values:', {
+    addressProp: address,
+    walletAddress,
+    effectiveAddress,
+  });
+
+  const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(effectiveAddress);
+  const { transfer, isPending: isTransferring, error: transferError } = useFarcasterTransferVBMS();
+
+  // 🔍 Debug: Log balance
+  console.log('[ShopView] 💰 VBMS Balance:', vbmsBalance);
 
   // State
   const [quantity, setQuantity] = useState(1);
@@ -38,7 +51,7 @@ export function ShopView({ address }: ShopViewProps) {
 
   // Handle purchase with VBMS (blockchain)
   const handleBuyWithVBMS = async (packType: string, packPrice: number) => {
-    if (!address || !walletAddress) {
+    if (!effectiveAddress) {
       setNotification({
         type: 'error',
         message: "Please connect your wallet"

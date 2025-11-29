@@ -10,33 +10,62 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 
 // Odds configuration (can be adjusted)
 const ODDS_CONFIG = {
   rounds1to3: 1.5, // Early rounds: 1.5x
   rounds4to5: 1.8, // Mid rounds: 1.8x
   rounds6to7: 2.0, // Final rounds: 2.0x
+  tie: 3.5, // Tie bet: 3.5x (higher since it's harder to predict)
 };
 
 /**
- * Get odds for a specific round
+ * Get odds for a specific round and bet type
  */
-function getOddsForRound(roundNumber: number): number {
+function getOddsForRound(roundNumber: number, isTieBet: boolean = false): number {
+  if (isTieBet) return ODDS_CONFIG.tie;
   if (roundNumber <= 3) return ODDS_CONFIG.rounds1to3;
   if (roundNumber <= 5) return ODDS_CONFIG.rounds4to5;
   return ODDS_CONFIG.rounds6to7;
 }
 
 /**
+ * GET ROUND BET FOR A SPECIFIC USER
+ * Check if user already bet on this round
+ */
+export const getRoundBet = query({
+  args: {
+    roomId: v.string(),
+    roundNumber: v.number(),
+    bettor: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { roomId, roundNumber, bettor } = args;
+    const normalizedBettor = bettor.toLowerCase();
+
+    const bet = await ctx.db
+      .query("roundBets")
+      .withIndex("by_room_round", (q) =>
+        q.eq("roomId", roomId).eq("roundNumber", roundNumber)
+      )
+      .filter((q) => q.eq(q.field("bettor"), normalizedBettor))
+      .first();
+
+    return bet;
+  },
+});
+
+/**
  * PLACE BET ON A SPECIFIC ROUND
- * Spectator bets credits on who will win this round
+ * Spectator bets credits on who will win this round OR on a tie
  */
 export const placeBetOnRound = mutation({
   args: {
     address: v.string(),
     roomId: v.string(),
     roundNumber: v.number(),
-    betOn: v.string(), // Address of player to bet on
+    betOn: v.string(), // Address of player to bet on OR "tie" for draw bet
     amount: v.number(),
   },
   handler: async (ctx, args) => {
@@ -77,8 +106,11 @@ export const placeBetOnRound = mutation({
       balance: credits.balance - amount,
     });
 
+    // Check if this is a tie bet
+    const isTieBet = normalizedBetOn === "tie";
+
     // Get odds for this round
-    const odds = getOddsForRound(roundNumber);
+    const odds = getOddsForRound(roundNumber, isTieBet);
 
     // Create bet
     await ctx.db.insert("roundBets", {
@@ -92,7 +124,18 @@ export const placeBetOnRound = mutation({
       timestamp: Date.now(),
     });
 
-    console.log(`🎰 Round bet placed: ${normalizedAddress} bet ${amount} credits on round ${roundNumber} at ${odds}x odds`);
+    console.log(`🎰 Round bet placed: ${normalizedAddress} bet ${amount} credits on round ${roundNumber} at ${odds}x odds [roomId: ${roomId}]`);
+
+    // Check if this is a CPU vs CPU room - if so, shorten betting window
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (room?.isCpuVsCpu) {
+      // Call shortenBettingWindow mutation
+      await ctx.runMutation(api.pokerBattle.shortenBettingWindow, { roomId });
+    }
 
     // Get bettor's username for chat message
     const bettorProfile = await ctx.db
@@ -100,18 +143,24 @@ export const placeBetOnRound = mutation({
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
-    // Get player's username that was bet on
-    const betOnProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedBetOn))
-      .first();
+    // Get player's username that was bet on or "Tie"
+    let betOnUsername = "Player";
+    if (isTieBet) {
+      betOnUsername = "Tie/Draw";
+    } else {
+      const betOnProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedBetOn))
+        .first();
+      betOnUsername = betOnProfile?.username || "Player";
+    }
 
     // Send chat message visible to everyone
     await ctx.db.insert("pokerChatMessages", {
       roomId,
       sender: normalizedAddress,
       senderUsername: bettorProfile?.username || "Spectator",
-      message: `🎰 Bet ${amount} credits on ${betOnProfile?.username || "Player"} at ${odds}x odds for Round ${roundNumber}`,
+      message: `🎰 Bet ${amount} credits on ${betOnUsername} at ${odds}x odds for Round ${roundNumber}`,
       timestamp: Date.now(),
       type: "text" as const,
     });
@@ -128,6 +177,8 @@ export const placeBetOnRound = mutation({
 /**
  * RESOLVE ROUND BETS
  * Called when a poker round ends - pays winners instantly!
+ *
+ * OPTIMIZATION: Added duplicate call protection to prevent write conflicts
  */
 export const resolveRoundBets = mutation({
   args: {
@@ -150,22 +201,28 @@ export const resolveRoundBets = mutation({
       .filter((q) => q.eq(q.field("status"), "active"))
       .collect();
 
+    // OPTIMIZATION: If no active bets, return early (also handles duplicate calls)
     if (bets.length === 0) {
-      console.log(`No active bets for round ${roundNumber}`);
+      console.log(`No active bets for round ${roundNumber} (may be already resolved)`);
       return {
         success: true,
         betsResolved: 0,
         winners: 0,
         losers: 0,
+        alreadyResolved: true,
       };
     }
 
     let winnersCount = 0;
     let losersCount = 0;
 
+    // Check if the round was a tie (no winner)
+    const isTieRound = !normalizedWinner || normalizedWinner === "tie";
+
     // Process each bet
     for (const bet of bets) {
-      const isWinner = bet.betOn.toLowerCase() === normalizedWinner;
+      const isTieBet = bet.betOn.toLowerCase() === "tie";
+      const isWinner = isTieRound ? isTieBet : (bet.betOn.toLowerCase() === normalizedWinner);
 
       // Get bettor's profile for username
       const bettorProfile = await ctx.db

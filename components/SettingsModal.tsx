@@ -40,6 +40,24 @@ interface SettingsModalProps {
   address: string | undefined;
   setUserProfile: (profile: UserProfile | null) => void;
   setErrorMessage: (message: string) => void;
+  // Custom Music props
+  customMusicUrl: string;
+  setCustomMusicUrl: (url: string) => void;
+  isCustomMusicLoading: boolean;
+  customMusicError: string | null;
+  // Playlist props
+  playlist: string[];
+  setPlaylist: (urls: string[]) => void;
+  addToPlaylist: (url: string) => void;
+  removeFromPlaylist: (index: number) => void;
+  currentPlaylistIndex: number;
+  skipToNext: () => void;
+  skipToPrevious: () => void;
+  currentTrackName: string | null;
+  // Playback control
+  isPaused: boolean;
+  pause: () => void;
+  play: () => void;
 }
 
 export function SettingsModal({
@@ -65,11 +83,82 @@ export function SettingsModal({
   address,
   setUserProfile,
   setErrorMessage,
+  customMusicUrl,
+  setCustomMusicUrl,
+  isCustomMusicLoading,
+  customMusicError,
+  playlist,
+  setPlaylist,
+  addToPlaylist,
+  removeFromPlaylist,
+  currentPlaylistIndex,
+  skipToNext,
+  skipToPrevious,
+  currentTrackName,
+  isPaused,
+  pause,
+  play,
 }: SettingsModalProps) {
   const { address: walletAddress } = useAccount();
   const [isRevoking, setIsRevoking] = useState(false);
+  const [customUrlInput, setCustomUrlInput] = useState(customMusicUrl || '');
+  const [playlistUrlInput, setPlaylistUrlInput] = useState('');
+  const updateCustomMusic = useMutation(api.profiles.updateCustomMusic);
+  const updateMusicPlaylist = useMutation(api.profiles.updateMusicPlaylist);
+
+  // Detect if running in miniapp via desktop browser (has audio restrictions)
+  const isInMiniappBrowser = typeof window !== 'undefined' &&
+    window.self !== window.top && // In iframe
+    !/Mobile|Android|iPhone|iPad/i.test(navigator.userAgent); // Desktop browser
 
   if (!isOpen) return null;
+
+  // Helper to detect if URL is YouTube
+  const isYouTubeUrl = (url: string) => {
+    return url.includes('youtube.com') || url.includes('youtu.be');
+  };
+
+  // Handle custom music URL save
+  const handleSaveCustomMusic = async () => {
+    if (soundEnabled) AudioManager.buttonClick();
+
+    if (!customUrlInput.trim()) {
+      // Clear custom music
+      setCustomMusicUrl('');
+      setMusicMode('default');
+      if (address) {
+        try {
+          await updateCustomMusic({ address, customMusicUrl: null });
+        } catch (e) {
+          console.error('Failed to clear custom music:', e);
+        }
+      }
+      return;
+    }
+
+    // Validate URL
+    try {
+      new URL(customUrlInput);
+    } catch {
+      alert('Invalid URL format');
+      return;
+    }
+
+    // Set the custom music
+    setCustomMusicUrl(customUrlInput);
+    setMusicMode('custom');
+
+    // Save to profile
+    if (address) {
+      try {
+        await updateCustomMusic({ address, customMusicUrl: customUrlInput });
+        if (soundEnabled) AudioManager.buttonSuccess();
+      } catch (e) {
+        console.error('Failed to save custom music:', e);
+        if (soundEnabled) AudioManager.buttonError();
+      }
+    }
+  };
 
   const handleRevokeApproval = async () => {
     if (!walletAddress) {
@@ -266,6 +355,19 @@ export function SettingsModal({
                 />
               </div>
             )}
+
+            {/* Warning for miniapp in desktop browser */}
+            {isInMiniappBrowser && (
+              <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+                <p className="text-sm text-yellow-300 font-modern flex items-center gap-2">
+                  <span className="text-lg">⚠️</span>
+                  <span>
+                    Custom music may not work in this mode due to browser restrictions.
+                    Use the mobile app or access the site directly for full audio support.
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Language Selector */}
@@ -320,23 +422,284 @@ export function SettingsModal({
             <select
               onChange={(e) => {
                 if (soundEnabled) AudioManager.buttonClick();
-                setMusicMode(e.target.value as any);
+                const mode = e.target.value;
+                setMusicMode(mode as any);
               }}
               value={musicMode}
               className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
             >
               <option value="default" className="bg-vintage-charcoal text-vintage-ice">
-                🎵 Default Music
+                Default Music
               </option>
               <option value="language" className="bg-vintage-charcoal text-vintage-ice">
-                🌍 Language Music
+                Language Music
+              </option>
+              <option value="custom" className="bg-vintage-charcoal text-vintage-ice">
+                Custom URL (Single)
+              </option>
+              <option value="playlist" className="bg-vintage-charcoal text-vintage-ice">
+                🎵 Playlist (Multiple URLs)
               </option>
             </select>
             <p className="text-xs text-vintage-burnt-gold mt-2 font-modern">
               {musicMode === 'default'
-                ? '🎵 Playing default background music'
-                : '🌍 Playing music based on selected language'}
+                ? 'Playing default background music'
+                : musicMode === 'language'
+                ? 'Playing music based on selected language'
+                : musicMode === 'playlist'
+                ? `Playlist: ${currentTrackName || `Track ${currentPlaylistIndex + 1}`} (${currentPlaylistIndex + 1}/${playlist.length})`
+                : 'Playing your custom music'}
             </p>
+
+            {/* Custom URL Input - shown when custom mode selected */}
+            {musicMode === 'custom' && (
+              <div className="mt-4 space-y-3">
+                <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3">
+                  <p className="text-vintage-gold text-xs font-modern font-semibold mb-1">
+                    SUPPORTED FORMATS
+                  </p>
+                  <p className="text-vintage-burnt-gold text-xs">
+                    YouTube URL (audio only) or direct audio URL (.mp3, .wav, .ogg)
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={customUrlInput}
+                    onChange={(e) => setCustomUrlInput(e.target.value)}
+                    placeholder="https://youtube.com/watch?v=... or audio URL"
+                    className="flex-1 bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 focus:border-vintage-gold focus:outline-none font-modern text-sm placeholder:text-vintage-burnt-gold/50"
+                  />
+                  <button
+                    onClick={handleSaveCustomMusic}
+                    disabled={isCustomMusicLoading}
+                    className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark disabled:bg-vintage-gold/50 text-vintage-black rounded-lg font-modern font-semibold transition"
+                  >
+                    {isCustomMusicLoading ? '...' : 'Set'}
+                  </button>
+                </div>
+
+                {/* Loading indicator */}
+                {isCustomMusicLoading && (
+                  <div className="flex items-center gap-2 text-vintage-burnt-gold text-sm">
+                    <div className="animate-spin w-4 h-4 border-2 border-vintage-gold border-t-transparent rounded-full" />
+                    <span>Loading music...</span>
+                  </div>
+                )}
+
+                {/* Error message */}
+                {customMusicError && (
+                  <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3">
+                    <p className="text-sm text-red-300 font-modern">
+                      {customMusicError}
+                    </p>
+                  </div>
+                )}
+
+                {/* Current URL info */}
+                {customMusicUrl && !customMusicError && (
+                  <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3">
+                    <p className="text-sm text-green-300 font-modern flex items-center gap-2">
+                      <span className="text-lg">{isYouTubeUrl(customMusicUrl) ? '▶' : '♫'}</span>
+                      <span className="truncate">
+                        {isYouTubeUrl(customMusicUrl) ? 'YouTube audio playing' : 'Audio playing'}
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Clear button */}
+                {customMusicUrl && (
+                  <button
+                    onClick={() => {
+                      setCustomUrlInput('');
+                      setCustomMusicUrl('');
+                      setMusicMode('default');
+                      if (address) {
+                        updateCustomMusic({ address, customMusicUrl: null }).catch(console.error);
+                      }
+                      if (soundEnabled) AudioManager.buttonNav();
+                    }}
+                    className="w-full px-4 py-2 bg-vintage-black hover:bg-red-900/30 text-vintage-gold border border-vintage-gold/30 hover:border-red-500/50 rounded-lg font-modern text-sm transition"
+                  >
+                    Clear Custom Music
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Playlist UI - shown when playlist mode selected */}
+            {musicMode === 'playlist' && (
+              <div className="mt-4 space-y-3">
+                <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3">
+                  <p className="text-purple-400 text-xs font-modern font-semibold mb-1">
+                    🎵 PLAYLIST MODE
+                  </p>
+                  <p className="text-vintage-burnt-gold text-xs">
+                    Add multiple URLs. 1 track = loops. Multiple tracks = plays in sequence. Saved to your account.
+                  </p>
+                </div>
+
+                {/* Add URL input */}
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={playlistUrlInput}
+                    onChange={(e) => setPlaylistUrlInput(e.target.value)}
+                    placeholder="Paste audio URL or YouTube link"
+                    className="flex-1 bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 focus:border-purple-500 focus:outline-none font-modern text-sm placeholder:text-vintage-burnt-gold/50"
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!playlistUrlInput.trim()) return;
+                      try {
+                        new URL(playlistUrlInput);
+                      } catch {
+                        alert('Invalid URL');
+                        return;
+                      }
+                      addToPlaylist(playlistUrlInput);
+                      setPlaylistUrlInput('');
+                      if (soundEnabled) AudioManager.buttonSuccess();
+                      // Save to profile
+                      if (address) {
+                        try {
+                          await updateMusicPlaylist({
+                            address,
+                            playlist: [...playlist, playlistUrlInput],
+                            lastPlayedIndex: currentPlaylistIndex,
+                          });
+                        } catch (e) {
+                          console.error('Failed to save playlist:', e);
+                        }
+                      }
+                    }}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-modern font-semibold transition"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* Playlist tracks */}
+                {playlist.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-vintage-gold text-sm font-bold">{playlist.length} track{playlist.length !== 1 ? 's' : ''}</span>
+                      <div className="flex gap-2">
+                        {playlist.length > 1 && (
+                          <button
+                            onClick={() => {
+                              skipToPrevious();
+                              if (soundEnabled) AudioManager.buttonNav();
+                            }}
+                            className="px-3 py-1 bg-vintage-black hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30 rounded text-sm"
+                          >
+                            ◀ Prev
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (isPaused) {
+                              play();
+                            } else {
+                              pause();
+                            }
+                            if (soundEnabled) AudioManager.buttonNav();
+                          }}
+                          className="px-3 py-1 bg-vintage-black hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30 rounded text-sm"
+                        >
+                          {isPaused ? '▶ Play' : '⏸ Pause'}
+                        </button>
+                        {playlist.length > 1 && (
+                          <button
+                            onClick={() => {
+                              skipToNext();
+                              if (soundEnabled) AudioManager.buttonNav();
+                            }}
+                            className="px-3 py-1 bg-vintage-black hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30 rounded text-sm"
+                          >
+                            Next ▶
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {playlist.map((url, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-center gap-2 p-2 rounded-lg ${
+                            idx === currentPlaylistIndex
+                              ? 'bg-purple-600/30 border border-purple-500/50'
+                              : 'bg-vintage-black/50 border border-transparent'
+                          }`}
+                        >
+                          <span className="text-purple-400 text-xs font-bold w-6">
+                            {idx === currentPlaylistIndex ? '▶' : `${idx + 1}.`}
+                          </span>
+                          <span className="flex-1 text-vintage-ice text-xs truncate">
+                            {url.includes('youtube') || url.includes('youtu.be')
+                              ? '🎬 YouTube'
+                              : '🎵 Audio'}: {url.split('/').pop()?.substring(0, 30) || url.substring(0, 30)}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              removeFromPlaylist(idx);
+                              if (soundEnabled) AudioManager.buttonNav();
+                              // Save to profile
+                              if (address) {
+                                try {
+                                  const newPlaylist = playlist.filter((_, i) => i !== idx);
+                                  await updateMusicPlaylist({
+                                    address,
+                                    playlist: newPlaylist,
+                                    lastPlayedIndex: Math.min(currentPlaylistIndex, Math.max(0, newPlaylist.length - 1)),
+                                  });
+                                } catch (e) {
+                                  console.error('Failed to save playlist:', e);
+                                }
+                              }
+                            }}
+                            className="text-red-400 hover:text-red-300 text-lg"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {playlist.length === 0 && (
+                  <div className="text-center py-4 text-vintage-burnt-gold/50 text-sm">
+                    No tracks added yet. Add some URLs above!
+                  </div>
+                )}
+
+                {/* Clear all button */}
+                {playlist.length > 0 && (
+                  <button
+                    onClick={async () => {
+                      setPlaylist([]);
+                      setMusicMode('default');
+                      if (soundEnabled) AudioManager.buttonNav();
+                      if (address) {
+                        try {
+                          await updateMusicPlaylist({ address, playlist: [], lastPlayedIndex: 0 });
+                        } catch (e) {
+                          console.error('Failed to clear playlist:', e);
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-vintage-black hover:bg-red-900/30 text-vintage-gold border border-vintage-gold/30 hover:border-red-500/50 rounded-lg font-modern text-sm transition"
+                  >
+                    Clear Playlist
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Change Username */}

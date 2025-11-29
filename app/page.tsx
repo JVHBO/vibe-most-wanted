@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 // Updated: Removed warning banners
 import React, { useEffect, useState, useCallback, useMemo, memo, useRef } from "react";
 import Link from "next/link";
@@ -25,6 +25,7 @@ import AchievementsView from "@/components/AchievementsView";
 import { ShopView } from "@/components/ShopView";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { CpuArenaModal } from "@/components/CpuArenaModal";
 import { InboxDisplay } from "@/components/InboxDisplay";
 import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
 import { CoinsInboxModal } from "@/components/CoinsInboxModal";
@@ -38,11 +39,12 @@ import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
 import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
+import { RaidBossModal } from "@/components/RaidBossModal";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
-import { useTotalPower, useSortedByPower, useStrongestCards } from "@/hooks/useCardCalculations";
+import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 // 📝 Development logger (silent in production)
 import { devLog, devError, devWarn } from "@/lib/utils/logger";
 // 🔊 Audio Manager
@@ -50,12 +52,14 @@ import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
 // 💎 VBMS Blockchain Contracts
-import { useVBMSBalance, useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
+import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
 import { CONTRACTS } from "@/lib/contracts";
 
 import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, type CollectionId } from "@/lib/collections/index";
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
 import { getImage, fetchNFTs } from "@/lib/nft/fetcher";
+import type { Card } from "@/lib/types/card";
 import { RunawayEasterEgg } from "@/components/RunawayEasterEgg";
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -129,7 +133,7 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
   return allNfts;
 }
 
-const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean; onSelect: (nft: any) => void }) => {
+const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }: { nft: any; selected: boolean; onSelect: (nft: any) => void; locked?: boolean; lockedReason?: string }) => {
   const tid = nft.tokenId;
   const [imgError, setImgError] = useState(0);
 
@@ -168,8 +172,9 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (locked) return; // Don't allow selection if locked
     onSelect(nft);
-  }, [nft, onSelect]);
+  }, [nft, onSelect, locked]);
 
   return (
     <>
@@ -251,9 +256,15 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
         }
       `}</style>
       
-      <div className={`relative group transition-all duration-300 ${selected ? 'scale-95' : 'hover:scale-105'} cursor-pointer`} onClick={handleClick} style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}>
+      <div
+        className={`relative group transition-all duration-300 ${locked ? 'opacity-50 cursor-not-allowed' : selected ? 'scale-95' : 'hover:scale-105'} ${locked ? '' : 'cursor-pointer'}`}
+        onClick={handleClick}
+        title={locked ? lockedReason : undefined}
+        style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}
+      >
         {/* Ring wrapper OUTSIDE overflow-hidden */}
         <div className={`rounded-lg ${
+          locked ? 'ring-2 ring-red-500/50' :
           selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
           'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
         }`}>
@@ -286,6 +297,15 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
                 </div>
               )}
             </div>
+            {/* Locked overlay for cards in raid deck */}
+            {locked && (
+              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-30 rounded-lg">
+                <div className="text-3xl mb-1">⚔️</div>
+                <div className="text-[10px] text-white font-bold bg-red-600/80 px-2 py-0.5 rounded">
+                  IN RAID
+                </div>
+              </div>
+            )}
           </div>
           </FoilCardEffect>
         </div>
@@ -298,7 +318,7 @@ const NFTCard = memo(({ nft, selected, onSelect }: { nft: any; selected: boolean
 
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
-  const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume } = useMusic();
+  const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume, customMusicUrl, setCustomMusicUrl, isCustomMusicLoading, customMusicError, playlist, setPlaylist, addToPlaylist, removeFromPlaylist, currentPlaylistIndex, skipToNext, skipToPrevious, currentTrackName, isPaused, pause, play } = useMusic();
   const router = useRouter();
   const playButtonsRef = useRef<HTMLDivElement>(null);
 
@@ -307,16 +327,15 @@ export default function TCGPage() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
 
-  // State for Farcaster address (when in miniapp)
-  const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null);
+  // State for Farcaster context detection
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
-  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false); // Changed to false for testing
+  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false);
 
   // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
   const address = DEV_WALLET_BYPASS
     ? '0xbb4c7d8b2e32c7c99d358be999377c208cce53c2'
-    : (farcasterAddress || wagmiAddress);
+    : wagmiAddress;
 
   // Debug bypass (removed console.log for production)
 
@@ -328,15 +347,63 @@ export default function TCGPage() {
   // 🎯 Weekly Quests & Missions
   const weeklyProgress = useQuery(api.quests.getWeeklyProgress, address ? { address } : "skip");
 
+  // 🎴 Personal missions (VibeFID, welcome gift, etc.)
+  const playerMissions = useQuery(api.missions.getPlayerMissions, address ? { playerAddress: address } : "skip");
+
   // Debug logging for address changes
   useEffect(() => {
     devLog('🔍 Address state:', {
       wagmiAddress,
-      farcasterAddress,
       finalAddress: address,
-      isConnected
+      isConnected,
+      isInFarcaster,
     });
-  }, [wagmiAddress, farcasterAddress, address, isConnected]);
+  }, [wagmiAddress, address, isConnected, isInFarcaster]);
+
+  // Save wagmiAddress to localStorage and FID to profile when connected in Farcaster
+  useEffect(() => {
+    const saveFarcasterProfile = async () => {
+      if (!isInFarcaster || !wagmiAddress) return;
+
+      console.log('[Farcaster] 💾 Saving address to localStorage:', wagmiAddress);
+      localStorage.setItem('connectedAddress', wagmiAddress.toLowerCase());
+
+      // Save FID to profile
+      try {
+        const context = await sdk?.context;
+        const fid = context?.user?.fid;
+        if (fid) {
+          devLog('📱 Saving FID to profile:', fid);
+          const profile = await ConvexProfileService.getProfile(wagmiAddress);
+          if (profile && (!profile.fid || profile.fid !== fid.toString())) {
+            await ConvexProfileService.updateProfile(wagmiAddress, {
+              fid: fid.toString()
+            });
+            devLog('✓ FID saved to profile');
+          }
+        }
+      } catch (error) {
+        devLog('! Could not save FID:', error);
+      }
+    };
+
+    saveFarcasterProfile();
+  }, [isInFarcaster, wagmiAddress]);
+
+  // Notify Farcaster SDK that app is ready
+  useEffect(() => {
+    const initFarcasterSDK = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          await sdk.actions.ready();
+          devLog('✅ Farcaster SDK ready called');
+        }
+      } catch (error) {
+        devError('Error calling Farcaster SDK ready:', error);
+      }
+    };
+    initFarcasterSDK();
+  }, []);
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
@@ -387,6 +454,7 @@ export default function TCGPage() {
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
   const [pvpMode, setPvpMode] = useState<'menu' | 'pvpMenu' | 'autoMatch' | 'selectMode' | 'createRoom' | 'joinRoom' | 'inRoom' | null>(null);
+  const [modeMenuOpen, setModeMenuOpen] = useState<'poker' | 'battle' | 'boss' | null>(null);
   const [roomCode, setRoomCode] = useState<string>('');
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -402,6 +470,7 @@ export default function TCGPage() {
 
   // 🚀 Performance: Memoized NFT calculations (only recomputes when nfts change)
   const totalNftPower = useTotalPower(nfts);
+  const collectionPowers = usePowerByCollection(nfts); // Powers separated by collection for leaderboards
   const openedCardsCount = useMemo(() => nfts.filter(nft => !isUnrevealed(nft)).length, [nfts]);
   const unopenedCardsCount = useMemo(() => nfts.filter(nft => isUnrevealed(nft)).length, [nfts]);
   const nftTokenIds = useMemo(() => nfts.map(nft => nft.tokenId), [nfts]);
@@ -432,18 +501,18 @@ export default function TCGPage() {
   const useEntryFee = useMutation(api.pvp.useEntryFee);
   const sendPvPRewardToInbox = useMutation(api.pvp.sendPvPRewardToInbox);
 
-  // 💎 VBMS Blockchain Contract Hooks
-  const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useVBMSBalance(address as `0x${string}`);
+  // 💎 VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
+  const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useFarcasterVBMSBalance(address);
   const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const { createBattle, isPending: isCreatingBattle } = useCreateBattle();
   const { joinBattle, isPending: isJoiningBattle } = useJoinBattle();
   const { finishBattle: finishVBMSBattle } = useFinishVBMSBattle();
   const { battleId: activeBattleId, refetch: refetchActiveBattle } = useActiveBattle(address as `0x${string}`);
 
-  // 🎁 Welcome Pack (skip in miniapp for performance)
+  // 🎁 Welcome Pack (enabled in miniapp too)
   const hasReceivedWelcomePack = useQuery(
     api.welcomePack.hasReceivedWelcomePack,
-    (address && !isMiniappMode()) ? { address } : "skip"
+    address ? { address } : "skip"
   );
   const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
 
@@ -474,6 +543,24 @@ export default function TCGPage() {
     api.profiles.getAvailableCards,
     address ? { address, mode: "pvp" } : "skip"
   );
+
+  // 🔒 Defense/Raid Lock System - Cards in raid cannot be used in defense and vice-versa
+  const defenseLockedCards = useQuery(
+    api.profiles.getLockedCardsForDeckBuilding,
+    address ? { address, mode: "defense" } : "skip"
+  );
+  const defenseLockedTokenIds = useMemo(() =>
+    new Set(defenseLockedCards?.lockedTokenIds || []),
+    [defenseLockedCards]
+  );
+
+  // Clean conflicting cards from defense deck on load
+  const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
+
+  // 🛡️ Defense Deck Warning - Show popup if player has no defense deck
+  const [showDefenseDeckWarning, setShowDefenseDeckWarning] = useState<boolean>(false);
+  const [defenseDeckWarningDismissed, setDefenseDeckWarningDismissed] = useState<boolean>(false);
+
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
   const [showWelcomePackPopup, setShowWelcomePackPopup] = useState<boolean>(false);
@@ -496,18 +583,21 @@ export default function TCGPage() {
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
   // Profile States
-  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'achievements' | 'shop' | 'inbox'>('game');
+  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'shop' | 'inbox'>('game');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
+  const [raidBossLeaderboard, setRaidBossLeaderboard] = useState<UserProfile[]>([]);
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
-  const [leaderboardCollection, setLeaderboardCollection] = useState<CollectionId>('vibe');
+  // Removed: leaderboardCollection (unified leaderboard now)
+  const [leaderboardTab, setLeaderboardTab] = useState<'honor' | 'raidboss'>('honor');
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
   const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
 
   // Missions States
@@ -515,6 +605,32 @@ export default function TCGPage() {
   const [isLoadingMissions, setIsLoadingMissions] = useState<boolean>(false);
   const [isClaimingMission, setIsClaimingMission] = useState<string | null>(null);
   const [isClaimingAll, setIsClaimingAll] = useState<boolean>(false);
+  const [missionsSubView, setMissionsSubView] = useState<'missions' | 'achievements'>('missions');
+
+  // Check if any missions are claimable (for pulsing button)
+  const hasClaimableMissions = useMemo(() => {
+    // Daily LOGIN bonus claimable?
+    const dailyLoginClaimable = !loginBonusClaimed && address && userProfile;
+
+    // Daily quest claimable?
+    const dailyQuestClaimable = questProgress?.completed && !questProgress?.claimed;
+
+    // Weekly quests claimable?
+    const weeklyQuests = weeklyProgress?.quests;
+    const weeklyClaimable = weeklyQuests && (
+      (weeklyQuests.weekly_attack_wins?.completed && !weeklyQuests.weekly_attack_wins?.claimed) ||
+      (weeklyQuests.weekly_total_matches?.completed && !weeklyQuests.weekly_total_matches?.claimed) ||
+      (weeklyQuests.weekly_defense_wins?.completed && !weeklyQuests.weekly_defense_wins?.claimed) ||
+      (weeklyQuests.weekly_pve_streak?.completed && !weeklyQuests.weekly_pve_streak?.claimed)
+    );
+
+    // Personal missions claimable? (VibeFID, welcome_gift, streaks, etc.)
+    const personalMissionsClaimable = playerMissions && playerMissions.some(
+      (m: { completed: boolean; claimed: boolean }) => m.completed && !m.claimed
+    );
+
+    return dailyLoginClaimable || dailyQuestClaimable || weeklyClaimable || personalMissionsClaimable;
+  }, [questProgress, weeklyProgress, loginBonusClaimed, address, userProfile, playerMissions]);
 
   // Defense Deck States
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
@@ -539,6 +655,9 @@ export default function TCGPage() {
   // Poker Battle States
   const [showPokerBattle, setShowPokerBattle] = useState<boolean>(false);
   const [pokerMode, setPokerMode] = useState<'cpu' | 'pvp'>('pvp');
+
+  // Raid Boss States
+  const [showRaidBoss, setShowRaidBoss] = useState<boolean>(false);
 
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
@@ -668,76 +787,104 @@ export default function TCGPage() {
   // Auto-connect Farcaster wallet in miniapp context (Nov 14 simple version)
   useEffect(() => {
     const initFarcasterWallet = async () => {
+      console.log('[Farcaster] 🔍 Initializing wallet connection...');
       try {
-        // Check if we're in Farcaster context - use OLD API
-        if (sdk && typeof sdk.wallet !== 'undefined' && sdk.wallet.ethProvider) {
-          setIsInFarcaster(true);
-          setIsCheckingFarcaster(true);
+        console.log('[Farcaster] SDK check:', {
+          hasSdk: !!sdk,
+          hasWallet: !!sdk?.wallet,
+          hasEthProvider: !!sdk?.wallet?.ethProvider,
+        });
 
-          // Add timeout to prevent infinite loading
+        // CRITICAL: Don't use iframe detection - check if Farcaster SDK is ACTUALLY functional
+        // The SDK only exists and works in real Farcaster miniapp context
+        if (!sdk || typeof sdk.wallet === 'undefined' || !sdk.wallet.ethProvider) {
+          console.log('[Farcaster] ⚠️ Not in Farcaster miniapp - SDK not available');
+          setIsInFarcaster(false);
+          return;
+        }
+
+        // Verify SDK context is valid with a timeout (prevent hanging)
+        try {
+          const contextPromise = sdk.context;
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Farcaster wallet connection timeout')), 5000)
+            setTimeout(() => reject(new Error('SDK context timeout')), 2000)
           );
 
-          // Wrap in try-catch to prevent unhandled promise rejections
-          let addresses: string[] = [];
-          try {
-            const accountsPromise = sdk.wallet.ethProvider.request({
-              method: "eth_requestAccounts"
-            });
-            addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
-          } catch (requestError: any) {
-            // Handle authorization errors - user needs to authorize in Farcaster settings
-            // Don't set isInFarcaster=false because we ARE in the miniapp, just not authorized
-            if (requestError?.message?.includes('not been authorized')) {
-              devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
-              // Keep isInFarcaster=true, just don't set address
-              setIsCheckingFarcaster(false);
-              return;
-            }
-            throw requestError;
-          }
+          const context = await Promise.race([contextPromise, timeoutPromise]) as any;
 
-          if (addresses && addresses[0]) {
-            setFarcasterAddress(addresses[0]);
-            localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
-            devLog('✓ Auto-connected Farcaster wallet:', addresses[0]);
-
-            // ✓ Save FID to profile for notifications
-            try {
-              const context = await sdk.context;
-              const fid = context?.user?.fid;
-              if (fid) {
-                devLog('📱 Farcaster FID detected:', fid);
-                // Update profile with FID
-                const profile = await ConvexProfileService.getProfile(addresses[0]);
-                if (profile && (!profile.fid || profile.fid !== fid.toString())) {
-                  await ConvexProfileService.updateProfile(addresses[0], {
-                    fid: fid.toString()
-                  });
-                  devLog('✓ FID saved to profile');
-                }
-              }
-            } catch (fidError) {
-              devLog('! Could not save FID:', fidError);
-            }
-          } else {
-            // Failed to get address, reset Farcaster state
+          if (!context || !context.user || !context.user.fid) {
+            console.log('[Farcaster] ⚠️ SDK present but invalid context - not in miniapp');
             setIsInFarcaster(false);
+            return;
           }
+
+          console.log('[Farcaster] ✅ Farcaster miniapp confirmed - FID:', context.user.fid);
+        } catch (contextError) {
+          console.log('[Farcaster] ⚠️ Failed to get valid SDK context:', contextError);
+          setIsInFarcaster(false);
+          return;
+        }
+
+        console.log('[Farcaster] ✅ Enabling miniapp mode and connecting wallet');
+        setIsInFarcaster(true);
+        setIsCheckingFarcaster(true);
+
+        try {
+          // Find the Farcaster miniapp connector
+          console.log('[Farcaster] 🔍 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
+
+          // Try multiple possible connector IDs (case variations)
+          const farcasterConnector = connectors.find((c) =>
+            c.id === 'farcasterMiniApp' ||
+            c.id === 'farcaster' ||
+            c.name?.toLowerCase().includes('farcaster')
+          );
+
+          if (!farcasterConnector) {
+            console.error('[Farcaster] ❌ Farcaster connector not found in wagmi config');
+            console.error('[Farcaster] Available connector IDs:', connectors.map(c => c.id));
+
+            // Show user-friendly error
+            alert('⚠️ Erro: Connector Farcaster não encontrado. Por favor, recarregue a página.');
+            setIsCheckingFarcaster(false);
+            return;
+          }
+
+          console.log('[Farcaster] 📡 Connecting with Farcaster wagmi connector:', farcasterConnector.id);
+
+          // Connect using wagmi - this will populate wagmiAddress automatically
+          await connect({ connector: farcasterConnector });
+
+          console.log('[Farcaster] ✅ Connected successfully');
+          devLog('✓ Auto-connected Farcaster wallet via wagmi');
+
+          // ✓ Save FID to profile for notifications
+          try {
+            const context = await sdk.context;
+            const fid = context?.user?.fid;
+            if (fid) {
+              devLog('📱 Farcaster FID detected:', fid);
+            }
+          } catch (fidError) {
+            devLog('! Could not get FID:', fidError);
+          }
+        } catch (connectError: any) {
+          console.error('[Farcaster] ❌ Connection error:', connectError);
+          // Handle authorization errors
+          if (connectError?.message?.includes('not been authorized')) {
+            console.warn('[Farcaster] ⚠️ Wallet not authorized - user needs to enable in Farcaster settings');
+            devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
+          }
+        } finally {
+          setIsCheckingFarcaster(false);
         }
       } catch (err) {
         devLog('! Not in Farcaster context or wallet unavailable:', err);
-        // Reset Farcaster state on error
         setIsInFarcaster(false);
-        setFarcasterAddress(null);
-      } finally {
-        // Always set checking to false after checking
-        setIsCheckingFarcaster(false);
       }
     };
     initFarcasterWallet();
-  }, []);
+  }, [connect, connectors]);
 
   // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
@@ -845,15 +992,35 @@ export default function TCGPage() {
     if (!address || loginBonusClaimed) return;
 
     try {
-      devLog('💎 Daily claim - creating mission and triggering reward choice modal...');
+      devLog('💎 Daily claim - creating and claiming mission...');
 
-      // Create the daily login mission
+      // Step 1: Create the daily login mission
       const result = await claimLoginBonus({ address });
 
       if (result.reason?.includes('Mission created')) {
-        devLog('✓ Daily mission created - TESTVBMS added');
-        // TESTVBMS sent to inbox - player can claim later
+        devLog('✓ Daily mission created');
+
+        // Step 2: Immediately claim all unclaimed missions (including the one just created)
+        const claimResult = await convex.mutation(api.missions.claimAllMissions, {
+          playerAddress: address,
+          language: lang,
+        });
+
+        if (claimResult && claimResult.claimed > 0) {
+          devLog(`✅ Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} TESTVBMS)`);
+          if (soundEnabled) AudioManager.buttonSuccess();
+
+          // Refresh profile to show new balance
+          const updatedProfile = await ConvexProfileService.getProfile(address);
+          setUserProfile(updatedProfile);
+        }
+
         setLoginBonusClaimed(true);
+      } else if (result.awarded > 0) {
+        // Old flow - already paid
+        devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
+        setLoginBonusClaimed(true);
+        if (soundEnabled) AudioManager.buttonClick();
       } else {
         devLog(`! ${result.reason}`);
         if (soundEnabled) AudioManager.buttonError();
@@ -955,11 +1122,12 @@ export default function TCGPage() {
         rank: index + 1,
         username: player.username,
         address: player.address,
+        // @ts-expect-error - honor field is added to schema but types not yet regenerated
+        honor: player.stats?.honor ?? 500,
         power: player.stats?.totalPower || 0,
         openedCards: player.stats?.openedCards || 0,
         wins: (player.stats?.pveWins || 0) + (player.stats?.pvpWins || 0),
         losses: (player.stats?.pveLosses || 0) + (player.stats?.pvpLosses || 0),
-        collection: leaderboardCollection
       }));
 
       // Create JSON blob
@@ -970,7 +1138,7 @@ export default function TCGPage() {
       // Create download link
       const link = document.createElement('a');
       link.href = url;
-      link.download = `leaderboard-top10-${leaderboardCollection}-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `leaderboard-top10-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1002,19 +1170,30 @@ export default function TCGPage() {
     }
   }, [musicVolume]);
 
-  // Farcaster SDK - Informa que o app está pronto
-  useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).sdk?.actions?.ready) {
-      (window as any).sdk.actions.ready();
-    }
-  }, []);
-
   // 🎁 Show welcome pack popup if user hasn't received it (only AFTER profile is created)
   useEffect(() => {
     if (address && userProfile && hasReceivedWelcomePack === false) {
       setShowWelcomePackPopup(true);
     }
   }, [address, userProfile, hasReceivedWelcomePack]);
+
+  // 🛡️ Show defense deck warning if player has no defense deck set up
+  useEffect(() => {
+    // Only show if: has profile, no defense deck, hasn't been dismissed, and has cards to select
+    if (
+      address &&
+      userProfile &&
+      !userProfile.hasDefenseDeck &&
+      !defenseDeckWarningDismissed &&
+      nfts.length >= 5 // Only show if player has enough cards
+    ) {
+      // Small delay to not overwhelm with popups
+      const timer = setTimeout(() => {
+        setShowDefenseDeckWarning(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [address, userProfile, defenseDeckWarningDismissed, nfts.length]);
 
   // Sync login bonus claimed status and show popup on login
   useEffect(() => {
@@ -1132,8 +1311,6 @@ export default function TCGPage() {
   const disconnectWallet = useCallback(() => {
     if (soundEnabled) AudioManager.buttonNav();
     disconnect();
-    // Clear Farcaster address (but keep isInFarcaster - it's about context, not connection)
-    setFarcasterAddress(null);
     localStorage.removeItem('connectedAddress');
     setNfts([]);
     setSelectedCards([]);
@@ -1209,9 +1386,44 @@ export default function TCGPage() {
         const enriched = await Promise.all(
           batch.map(async (nft) => {
             const imageUrl = await getImage(nft);
+
+            // 🎯 CRITICAL: Detect collection from contract address
+            let collection: CollectionId = 'vibe'; // default
+            const contractAddr = nft?.contract?.address?.toLowerCase();
+            if (contractAddr) {
+              if (contractAddr === getCollectionContract('vibefid')?.toLowerCase()) {
+                collection = 'vibefid';
+              } else if (contractAddr === getCollectionContract('americanfootball')?.toLowerCase()) {
+                collection = 'americanfootball';
+              } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
+                collection = 'gmvbrs';
+              } else if (contractAddr === getCollectionContract('coquettish')?.toLowerCase()) {
+                collection = 'coquettish';
+              } else if (contractAddr === getCollectionContract('historyofcomputer')?.toLowerCase()) {
+                collection = 'historyofcomputer';
+              } else if (contractAddr === getCollectionContract('vibefx')?.toLowerCase()) {
+                collection = 'vibefx';
+              } else if (contractAddr === getCollectionContract('baseballcabal')?.toLowerCase()) {
+                collection = 'baseballcabal';
+              } else if (contractAddr === getCollectionContract('tarot')?.toLowerCase()) {
+                collection = 'tarot';
+              
+              } else if (contractAddr === getCollectionContract('teampothead')?.toLowerCase()) {
+                collection = 'teampothead';
+              } else if (contractAddr === getCollectionContract('poorlydrawnpepes')?.toLowerCase()) {
+                collection = 'poorlydrawnpepes';
+              } else if (contractAddr === getCollectionContract('meowverse')?.toLowerCase()) {
+                collection = 'meowverse';
+              } else if (contractAddr === getCollectionContract('viberuto')?.toLowerCase()) {
+                collection = 'viberuto';
+              }
+            }
+
             return {
               ...nft,
               imageUrl,
+              name: nft.title || nft.name || `Card #${nft.tokenId}`, // Add name for Card type compatibility
+              collection, // 🎯 ADD COLLECTION FIELD
               rarity: findAttr(nft, 'rarity'),
               status: findAttr(nft, 'status'),
               wear: findAttr(nft, 'wear'),
@@ -1234,6 +1446,7 @@ export default function TCGPage() {
           const freeCardsFormatted = freeCards.map((card: any) => ({
             tokenId: card.cardId,
             title: `FREE ${card.rarity} Card`,
+            name: card.name || `FREE ${card.rarity} Card`, // Add name for Card type compatibility
             description: `Free card from pack opening`,
             imageUrl: card.imageUrl,
             rarity: card.rarity,
@@ -1253,6 +1466,19 @@ export default function TCGPage() {
       setNfts([...processed]);
       setStatus("loaded");
       devLog('🎉 Cards loaded successfully (NFTs + FREE):', processed.length);
+
+      // Check if player has VibeFID and mark achievement
+      const hasVibeFID = processed.some((card: any) => card.collection === 'vibefid');
+      if (hasVibeFID && address) {
+        try {
+          await convex.mutation(api.missions.markVibeFIDMinted, {
+            playerAddress: address.toLowerCase(),
+          });
+          devLog('✅ VibeFID achievement checked');
+        } catch (error) {
+          devWarn('⚠️ Failed to mark VibeFID achievement:', error);
+        }
+      }
     } catch (e: any) {
       devLog('✗ Error loading NFTs:', e);
       setStatus("failed");
@@ -1329,6 +1555,7 @@ export default function TCGPage() {
           return {
             ...nft,
             imageUrl: normalizeUrl(imageUrl),
+            name: nft.title || nft.name || `Card #${nft.tokenId}`, // Add name for Card type compatibility
             rarity: findAttr(nft, 'rarity'),
             status: findAttr(nft, 'status'),
             wear: findAttr(nft, 'wear'),
@@ -1386,6 +1613,13 @@ export default function TCGPage() {
   }, []);
 
   const handleSelectCard = useCallback((card: any) => {
+    // Check if card is locked (in raid deck) - VibeFID cards are exempt
+    const isLockedInRaid = card.collection !== 'vibefid' && defenseLockedTokenIds.has(card.tokenId);
+    if (isLockedInRaid) {
+      if (soundEnabled) AudioManager.buttonError();
+      return;
+    }
+
     setSelectedCards(prev => {
       const isSelected = prev.find(c => c.tokenId === card.tokenId);
       if (isSelected) {
@@ -1409,7 +1643,7 @@ export default function TCGPage() {
       }
       return prev;
     });
-  }, [soundEnabled]);
+  }, [soundEnabled, defenseLockedTokenIds]);
 
   const clearSelection = useCallback(() => {
     setSelectedCards([]);
@@ -2449,20 +2683,6 @@ export default function TCGPage() {
     }
   }, [pvpMode, isSearching, address]);
 
-  // Farcaster SDK - Call ready() when app loads
-  useEffect(() => {
-    const initFarcasterSDK = async () => {
-      try {
-        await sdk.actions.ready();
-        devLog('✓ Farcaster SDK ready called');
-      } catch (error) {
-        devError('✗ Error calling Farcaster ready:', error);
-      }
-    };
-
-    initFarcasterSDK();
-  }, []);
-
   // Load user profile when wallet connects
   useEffect(() => {
     if (address) {
@@ -2536,6 +2756,11 @@ export default function TCGPage() {
         title: 'Welcome Gift',
         description: 'Welcome to Vibe Most Wanted!',
       },
+      vibefid_minted: {
+        icon: '/images/icons/achievement.svg',
+        title: 'VibeFID Collection',
+        description: 'Own at least one VibeFID card!',
+      },
     };
 
     return missionData[missionType] || {
@@ -2551,26 +2776,31 @@ export default function TCGPage() {
 
     setIsLoadingMissions(true);
     try {
-      // TEMPORARILY DISABLED - Causing Convex errors until schema is synced
       // Ensure welcome_gift exists for this player (migration for old users)
-      // await convex.mutation(api.missions.ensureWelcomeGift, {
-      //   playerAddress: address,
-      // });
+      await convex.mutation(api.missions.ensureWelcomeGift, {
+        playerAddress: address,
+      });
+
+      // Mark daily login mission as completed (auto-unlock on login)
+      await convex.mutation(api.missions.markDailyLogin, {
+        playerAddress: address,
+      });
 
       // Get completed missions from database
       const playerMissions = await convex.query(api.missions.getPlayerMissions, {
         playerAddress: address,
       });
 
-      // Define all possible missions
+      // Define all possible missions (rewards match backend)
       const allMissionTypes = [
-        { type: 'daily_login', reward: 25, date: 'today' },
+        { type: 'daily_login', reward: 100, date: 'today' },
         { type: 'first_pve_win', reward: 50, date: 'today' },
         { type: 'first_pvp_match', reward: 100, date: 'today' },
         { type: 'streak_3', reward: 150, date: 'today' },
         { type: 'streak_5', reward: 300, date: 'today' },
         { type: 'streak_10', reward: 750, date: 'today' },
         { type: 'welcome_gift', reward: 500, date: 'once' },
+        { type: 'vibefid_minted', reward: 1000, date: 'once' },
       ];
 
       // Merge with existing missions from DB
@@ -2601,13 +2831,14 @@ export default function TCGPage() {
 
       // Fallback: Always show locked missions even on error
       const fallbackMissions = [
-        { _id: 'placeholder_daily_login', missionType: 'daily_login', completed: false, claimed: false, reward: 25, date: 'today' },
+        { _id: 'placeholder_daily_login', missionType: 'daily_login', completed: false, claimed: false, reward: 100, date: 'today' },
         { _id: 'placeholder_first_pve_win', missionType: 'first_pve_win', completed: false, claimed: false, reward: 50, date: 'today' },
         { _id: 'placeholder_first_pvp_match', missionType: 'first_pvp_match', completed: false, claimed: false, reward: 100, date: 'today' },
         { _id: 'placeholder_streak_3', missionType: 'streak_3', completed: false, claimed: false, reward: 150, date: 'today' },
         { _id: 'placeholder_streak_5', missionType: 'streak_5', completed: false, claimed: false, reward: 300, date: 'today' },
         { _id: 'placeholder_streak_10', missionType: 'streak_10', completed: false, claimed: false, reward: 750, date: 'today' },
         { _id: 'placeholder_welcome_gift', missionType: 'welcome_gift', completed: false, claimed: false, reward: 500, date: 'once' },
+        { _id: 'placeholder_vibefid_minted', missionType: 'vibefid_minted', completed: false, claimed: false, reward: 1000, date: 'once' },
       ];
       setMissions(fallbackMissions);
     } finally {
@@ -2636,12 +2867,12 @@ export default function TCGPage() {
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog('✅ Mission claimed - TESTVBMS sent to inbox:', result);
+      devLog('✅ Mission claimed:', result);
 
-      // TESTVBMS sent to inbox - player can claim later
-
-      // Reload missions
+      // Reload missions and profile to update UI
       await loadMissions();
+      const updatedProfile = await ConvexProfileService.getProfile(address);
+      setUserProfile(updatedProfile);
     } catch (error: any) {
       devError('Error claiming mission:', error);
       if (soundEnabled) AudioManager.buttonError();
@@ -2719,10 +2950,12 @@ export default function TCGPage() {
           acc.vibefidPower = (acc.vibefidPower || 0) + power;
         } else if (collection === 'americanfootball') {
           acc.afclPower = (acc.afclPower || 0) + power;
+        } else if (collection === 'coquettish') {
+          acc.coqPower = (acc.coqPower || 0) + power;
         }
 
         return acc;
-      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number; afclPower?: number });
+      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number; afclPower?: number; coqPower?: number });
 
       devLog('📊 Collection powers:', collectionPowers);
 
@@ -2749,12 +2982,40 @@ export default function TCGPage() {
 
   // Load leaderboard with 30-minute refresh (usando Convex agora! 🚀)
   useEffect(() => {
-    const loadLeaderboard = () => {
-      ConvexProfileService.getLeaderboard().then(setLeaderboard);
+    const loadLeaderboard = async () => {
+      try {
+        console.log("🔵 [Leaderboard] Starting load...", Date.now());
+        const profiles = await ConvexProfileService.getLeaderboard();
+        console.log("🟢 [Leaderboard] Loaded profiles:", profiles?.length, Date.now());
+        setLeaderboard(profiles);
+      } catch (error) {
+        console.error("🔴 [Leaderboard] Error loading:", error);
+        setLeaderboard([]);
+      }
     };
 
     loadLeaderboard();
     const interval = setInterval(loadLeaderboard, 30 * 60 * 1000); // 30 minutes (sem limites com Convex!)
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Load Raid Boss leaderboard with 5-minute refresh (updates more frequently for active battles)
+  useEffect(() => {
+    const loadRaidBossLeaderboard = async () => {
+      try {
+        console.log("🐉 [Raid Boss Leaderboard] Starting load...", Date.now());
+        const raidProfiles = await convex.query(api.raidBoss.getRaidBossLeaderboard);
+        console.log("🟢 [Raid Boss Leaderboard] Loaded profiles:", raidProfiles?.length, Date.now());
+        setRaidBossLeaderboard(raidProfiles as UserProfile[]);
+      } catch (error) {
+        console.error("🔴 [Raid Boss Leaderboard] Error loading:", error);
+        setRaidBossLeaderboard([]);
+      }
+    };
+
+    loadRaidBossLeaderboard();
+    const interval = setInterval(loadRaidBossLeaderboard, 5 * 60 * 1000); // 5 minutes (faster for raid boss battles)
 
     return () => clearInterval(interval);
   }, []);
@@ -2904,28 +3165,20 @@ export default function TCGPage() {
     */
   }, [collectionPowerCache]);
 
-  // Filter and re-rank leaderboard by collection
+  // Unified leaderboard (already sorted by honor → power from backend)
   // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
   const filteredLeaderboard = useMemo(() => {
+    // Return raid boss leaderboard when on raid boss tab
+    if (leaderboardTab === 'raidboss') {
+      if (!raidBossLeaderboard || raidBossLeaderboard.length === 0) return [];
+      return raidBossLeaderboard;
+    }
+
+    // Return collections leaderboard (honor-based)
     if (!leaderboard || leaderboard.length === 0) return [];
-
-    // Map collection ID to power field name
-    const powerFieldMap: Record<string, 'vibePower' | 'vbrsPower' | 'vibefidPower' | 'afclPower'> = {
-      'vibe': 'vibePower',
-      'gmvbrs': 'vbrsPower',
-      'vibefid': 'vibefidPower',
-      'americanfootball': 'afclPower',
-      'custom': 'vibePower', // Fallback
-    };
-    const powerField = powerFieldMap[leaderboardCollection] || 'vibePower';
-
-    // Sort by collection-specific power
-    return [...leaderboard].sort((a, b) => {
-      const aPower = a.stats?.[powerField] || 0;
-      const bPower = b.stats?.[powerField] || 0;
-      return bPower - aPower;
-    });
-  }, [leaderboard, leaderboardCollection]);
+    // Return as-is, already sorted by honor (primary) and power (secondary) from backend
+    return leaderboard;
+  }, [leaderboard, raidBossLeaderboard, leaderboardTab]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
@@ -2969,6 +3222,16 @@ export default function TCGPage() {
       setTutorialPage(1);
     }
   }, [showTutorial]);
+
+  // Clean conflicting cards from defense deck on initial load
+  // (cards that are now in raid deck should be removed from defense)
+  useEffect(() => {
+    if (address && defenseLockedCards?.lockedTokenIds?.length) {
+      cleanConflictingDefense({ address }).catch(err => {
+        console.error('Error cleaning conflicting defense cards:', err);
+      });
+    }
+  }, [address, defenseLockedCards?.lockedTokenIds?.length, cleanConflictingDefense]);
 
   // Load defenses received (attacks from other players)
   useEffect(() => {
@@ -3058,6 +3321,47 @@ export default function TCGPage() {
         t={t}
       />
 
+      {/* Defense Deck Warning Popup */}
+      {showDefenseDeckWarning && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-vintage-charcoal to-vintage-black border-2 border-vintage-gold rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h2 className="text-2xl font-display font-bold text-vintage-gold text-center mb-4">
+              {t('defenseDeckWarningTitle')}
+            </h2>
+            <p className="text-vintage-burnt-gold text-center mb-6 font-modern">
+              {t('defenseDeckWarningMessage')}
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowDefenseDeckWarning(false);
+                  setDefenseDeckWarningDismissed(true);
+                  // Scroll to defense deck section
+                  const defenseDeckButton = document.getElementById('defense-deck-button');
+                  if (defenseDeckButton) {
+                    defenseDeckButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className="w-full px-6 py-3 bg-gradient-to-r from-vintage-gold to-yellow-500 text-vintage-black font-display font-bold text-lg rounded-xl hover:scale-105 transition-all shadow-lg"
+              >
+                {t('defenseDeckWarningButton')}
+              </button>
+              <button
+                onClick={() => {
+                  setShowDefenseDeckWarning(false);
+                  setDefenseDeckWarningDismissed(true);
+                  if (soundEnabled) AudioManager.buttonNav();
+                }}
+                className="w-full px-6 py-2 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/30 font-modern rounded-xl hover:bg-vintage-gold/10 transition-all"
+              >
+                {t('defenseDeckWarningDismiss')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PvP Entry Fee Modal */}
       <PvPEntryFeeModal
         isOpen={showPvPEntryFeeModal}
@@ -3067,6 +3371,7 @@ export default function TCGPage() {
           setPvpMode('pvpMenu'); // Reopen PvP menu after payment
         }}
         entryFeeAmount={20}
+        playerAddress={address}
       />
 
       {/* Settings Modal */}
@@ -3093,6 +3398,31 @@ export default function TCGPage() {
         address={address}
         setUserProfile={setUserProfile}
         setErrorMessage={setErrorMessage}
+        customMusicUrl={customMusicUrl || ''}
+        setCustomMusicUrl={setCustomMusicUrl}
+        isCustomMusicLoading={isCustomMusicLoading}
+        customMusicError={customMusicError}
+        playlist={playlist}
+        setPlaylist={setPlaylist}
+        addToPlaylist={addToPlaylist}
+        removeFromPlaylist={removeFromPlaylist}
+        currentPlaylistIndex={currentPlaylistIndex}
+        skipToNext={skipToNext}
+        skipToPrevious={skipToPrevious}
+        currentTrackName={currentTrackName}
+        isPaused={isPaused}
+        pause={pause}
+        play={play}
+      />
+
+      {/* Mecha Arena Modal */}
+      <CpuArenaModal
+        isOpen={showCpuArena}
+        onClose={() => setShowCpuArena(false)}
+        address={address || ''}
+        soundEnabled={soundEnabled}
+        isInFarcaster={isInFarcaster}
+        t={t}
       />
 
       {/* Elimination Mode - Card Ordering Screen */}
@@ -3824,6 +4154,18 @@ export default function TCGPage() {
         />
       )}
 
+      {/* Raid Boss Modal */}
+      {showRaidBoss && address && (
+        <RaidBossModal
+          isOpen={showRaidBoss}
+          onClose={() => setShowRaidBoss(false)}
+          userAddress={address}
+          soundEnabled={soundEnabled}
+          t={t as (key: string, params?: Record<string, any>) => string}
+          allNfts={sortedNfts as Card[]}
+        />
+      )}
+
       {/* PvP Menu Modals (Game mode selection, PvP menu, Create/Join room, Auto-match) */}
       <PvPMenuModals
         pvpMode={pvpMode}
@@ -4093,7 +4435,7 @@ export default function TCGPage() {
         </div>
       )}
 
-      <header className={`flex flex-col items-center gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6 bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isInFarcaster ? 'mt-[70px]' : ''}`}>
+      <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-2 mb-0 p-2' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isInFarcaster ? 'mt-[70px]' : ''}`}>
         {!isInFarcaster && (
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
@@ -4105,18 +4447,19 @@ export default function TCGPage() {
         )}
 
         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto">
-          <a
-            href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base"
+          <button
+            onClick={() => {
+              if (soundEnabled) AudioManager.buttonClick();
+              window.location.href = 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT';
+            }}
+            className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
           >
             <div className="flex items-center justify-center gap-2">
               <span className="text-base md:text-lg">◆</span> <span className="hidden md:inline">{t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}</span><span className="md:hidden">Buy Cards</span>
             </div>
             <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('orOpenYourPacks') || 'or open your sealed packs'}</span>
-          </a>
+          </button>
 
           {!isInFarcaster && (
             <a
@@ -4164,12 +4507,15 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               setCurrentView('missions');
             }}
-            className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base ${
-              currentView === 'missions' ? 'border-vintage-gold bg-vintage-gold/20' : 'border-vintage-gold'
+            className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base relative ${
+              hasClaimableMissions ? 'border-green-500 animate-notification-pulse' : currentView === 'missions' ? 'border-vintage-gold bg-vintage-gold/20' : 'border-vintage-gold'
             }`}
-            title={t('missions')}
+            title={hasClaimableMissions ? 'Missao pronta para claimar!' : t('missions')}
           >
             <span className="text-base md:text-lg">◈</span>
+            {hasClaimableMissions && (
+              <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-3 h-3 animate-pulse" />
+            )}
           </button>
 
           <button
@@ -4221,40 +4567,35 @@ export default function TCGPage() {
                         if (soundEnabled) AudioManager.buttonClick();
                         setIsCheckingFarcaster(true);
 
-                        if (sdk?.wallet?.ethProvider) {
-                          // Add timeout to prevent infinite loading
-                          const timeoutPromise = new Promise((_, reject) =>
-                            setTimeout(() => reject(new Error('Connection timeout')), 5000)
-                          );
+                        // Find and connect with Farcaster wagmi connector
+                        console.log('[Connect Button] 🔍 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
 
-                          let addresses: string[] = [];
-                          try {
-                            const accountsPromise = sdk.wallet.ethProvider.request({
-                              method: "eth_requestAccounts"
-                            });
-                            addresses = await Promise.race([accountsPromise, timeoutPromise]) as string[];
-                          } catch (requestError: any) {
-                            // Handle authorization errors gracefully
-                            if (requestError?.message?.includes('not been authorized')) {
-                              throw new Error('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
-                            }
-                            throw requestError;
-                          }
+                        // Try multiple possible connector IDs (case variations)
+                        const farcasterConnector = connectors.find((c) =>
+                          c.id === 'farcasterMiniApp' ||
+                          c.id === 'farcaster' ||
+                          c.name?.toLowerCase().includes('farcaster')
+                        );
 
-                          if (addresses && addresses[0]) {
-                            setFarcasterAddress(addresses[0]);
-                            localStorage.setItem('connectedAddress', addresses[0].toLowerCase());
-                            devLog('✓ Connected Farcaster wallet:', addresses[0]);
-                          } else {
-                            throw new Error('No address returned');
-                          }
-                        } else {
-                          throw new Error('Farcaster SDK not available');
+                        if (!farcasterConnector) {
+                          console.error('[Connect Button] ❌ Available connector IDs:', connectors.map(c => c.id));
+                          throw new Error('Farcaster connector not found. Available: ' + connectors.map(c => c.id).join(', '));
                         }
-                      } catch (err) {
+
+                        console.log('[Connect Button] ✅ Found connector:', farcasterConnector.id);
+
+                        await connect({ connector: farcasterConnector });
+                        devLog('✓ Connected Farcaster wallet via wagmi');
+                      } catch (err: any) {
                         devError('Failed to connect Farcaster wallet:', err);
                         if (soundEnabled) AudioManager.buttonError();
-                        alert('Failed to connect Farcaster wallet. Please try again.');
+
+                        // Show user-friendly error message
+                        if (err?.message?.includes('not been authorized')) {
+                          alert('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
+                        } else {
+                          alert('Failed to connect Farcaster wallet. Please try again.');
+                        }
                       } finally {
                         setIsCheckingFarcaster(false);
                       }
@@ -4412,29 +4753,6 @@ export default function TCGPage() {
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
-                  setCurrentView('achievements');
-                }}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
-                  currentView === 'achievements'
-                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
-                }`}
-              >
-                {isInFarcaster ? (
-                  <>
-                    <span className="text-[9px] font-bold whitespace-nowrap">{t('achievements')}</span>
-                    <span className="text-xl leading-none">★</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-base md:text-lg">★</span>
-                    <span className="hidden sm:inline">{t('achievements')}</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('inbox');
                 }}
                 className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
@@ -4445,13 +4763,13 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">Claim</span>
-                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5" />
+                    <span className="text-[10px] font-bold whitespace-nowrap">Claim/DEX</span>
+                    <NextImage src="/images/icons/inbox.svg" alt="Claim/DEX" width={20} height={20} className="w-5 h-5" />
                   </>
                 ) : (
                   <>
-                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
-                    <span className="hidden sm:inline">Claim</span>
+                    <NextImage src="/images/icons/inbox.svg" alt="Claim/DEX" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
+                    <span className="hidden sm:inline">Claim/DEX</span>
                   </>
                 )}
               </button>
@@ -4511,19 +4829,30 @@ export default function TCGPage() {
           </div>
 
           {/* Content wrapper with padding for fixed bars in miniapp */}
-          <div className={isInFarcaster ? 'pt-[80px] pb-[75px]' : ''}>
+          <div className={isInFarcaster ? 'pt-[50px] pb-[75px]' : ''}>
+
+          {/* VibeFID Button - Mobile only, between header and content, only on home view */}
+          {isInFarcaster && currentView === 'game' && (
+            <div className="mb-2 px-2">
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  window.location.href = '/fid';
+                }}
+                className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold transition-all shadow-gold hover:scale-105 flex items-center justify-center gap-2 uppercase tracking-wide animate-[pulse_3s_ease-in-out_infinite]"
+                style={{ animationDuration: '3s' }}
+              >
+                <span className="text-2xl">♦</span>
+                MINT your VIBEFID
+              </button>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
               <p className="text-red-400 font-bold">✗ {t('error')}</p>
               <p className="text-red-300 text-sm mt-1">{errorMsg}</p>
               <button onClick={loadNFTs} className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">{t('retryButton')}</button>
-            </div>
-          )}
-
-          {status === 'fetching' && (
-            <div className="flex items-center justify-center gap-3 text-vintage-neon-blue mb-6 bg-vintage-charcoal/50 p-6 rounded-xl border border-vintage-gold/30">
-              <LoadingSpinner size="md" variant="purple" />
-              <p className="font-medium text-lg">{t('loading')}</p>
             </div>
           )}
 
@@ -4577,7 +4906,7 @@ export default function TCGPage() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 order-2 lg:order-1">
               <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/50 p-6">
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
                   <h2 className="text-2xl font-display font-bold text-vintage-gold flex items-center gap-2">
@@ -4609,9 +4938,18 @@ export default function TCGPage() {
                       >
                         <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
                         <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
+                        <option value="historyofcomputer" className="bg-vintage-charcoal text-vintage-gold">HSTR</option>
+                        <option value="vibefx" className="bg-vintage-charcoal text-vintage-gold">VBFX</option>
+                        <option value="baseballcabal" className="bg-vintage-charcoal text-vintage-gold">BBCL</option>
+                        <option value="tarot" className="bg-vintage-charcoal text-vintage-gold">TRT</option>
+                        <option value="teampothead" className="bg-vintage-charcoal text-vintage-gold">TMPT</option>
+                        <option value="poorlydrawnpepes" className="bg-vintage-charcoal text-vintage-gold">PDP</option>
+                        <option value="meowverse" className="bg-vintage-charcoal text-vintage-gold">MEOVV</option>
+                        <option value="viberuto" className="bg-vintage-charcoal text-vintage-gold">VBRTO</option>
                         <option value="vibefid" className="bg-vintage-charcoal text-vintage-gold">VIBEFID</option>
                         <option value="americanfootball" className="bg-vintage-charcoal text-vintage-gold">AFCL</option>
                         <option value="gmvbrs" className="bg-vintage-charcoal text-vintage-gold">VBRS</option>
+                        <option value="coquettish" className="bg-vintage-charcoal text-vintage-gold">COQ</option>
                       </select>
                       <button
                         onClick={() => setSortByPower(!sortByPower)}
@@ -4636,6 +4974,13 @@ export default function TCGPage() {
                     </div>
                   )}
                 </div>
+
+                {status === 'fetching' && (
+                  <div className="flex items-center justify-center gap-3 text-vintage-neon-blue py-12">
+                    <LoadingSpinner size="md" variant="purple" />
+                    <p className="font-medium text-lg">{t('loading')}</p>
+                  </div>
+                )}
 
                 {nfts.length === 0 && status !== 'fetching' && (
                   <div className="text-center py-12">
@@ -4666,31 +5011,38 @@ export default function TCGPage() {
                         </div>
                       </Link>
                     ) : (
-                      <a
-                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          window.location.href = COLLECTIONS[selectedCollections[0]].marketplaceUrl!;
+                        }}
+                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex items-center justify-center gap-2">
                           <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
                         </div>
-                      </a>
+                      </button>
                     )}
                   </div>
                 )}
 
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
-                  {displayNfts.map((nft) => (
+                  {displayNfts.map((nft) => {
+                    // Check if card is locked (in raid deck) - VibeFID cards are exempt
+                    const isLockedInRaid = nft.collection !== 'vibefid' && defenseLockedTokenIds.has(nft.tokenId);
+                    return (
                     <NFTCard
                       key={nft.tokenId}
                       nft={nft}
                       selected={selectedCards.some(c => c.tokenId === nft.tokenId)}
                       onSelect={handleSelectCard}
+                      locked={isLockedInRaid}
+                      lockedReason="This card is in your Raid Deck"
                     />
-                  ))}
+                    );
+                  })}
 
                   {/* Buy Collection Button - Show as grid item when filtering by collection */}
                   {selectedCollections.length > 0 &&
@@ -4713,11 +5065,12 @@ export default function TCGPage() {
                         </div>
                       </Link>
                     ) : (
-                      <a
-                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          window.location.href = COLLECTIONS[selectedCollections[0]].marketplaceUrl!;
+                        }}
+                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex flex-col items-center justify-center gap-2 text-center">
@@ -4726,7 +5079,7 @@ export default function TCGPage() {
                             {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
                           </span>
                         </div>
-                      </a>
+                      </button>
                     )
                   )}
                 </div>
@@ -4755,120 +5108,205 @@ export default function TCGPage() {
               </div>
             </div>
 
-            <div>
+            <div className="order-1 lg:order-2">
               <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{boxShadow: '0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5)'}}>
-                {/* Battle vs AI Button */}
+                {/* 🎴 POKER MODE Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      setPokerMode('pvp'); // Reset poker mode to prevent confusion with poker CPU
-                      setShowPveCardSelection(true);
-                      setPveSelectedCards([]);
+                      setModeMenuOpen(modeMenuOpen === 'poker' ? null : 'poker');
                     }}
                     disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
-                      userProfile
-                        ? 'bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black shadow-neon hover:scale-105'
-                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                    }`}
-                  >
-                    Battle vs AI
-                  </button>
-                </div>
-
-                {/* Battle vs Player Button */}
-                <div className="mb-4">
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setPokerMode('pvp'); // Reset poker mode to prevent confusion with poker CPU
-                      setGameMode('pvp');
-                      setPvpMode('pvpMenu');
-                    }}
-                    disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between ${
                       userProfile
                         ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    Battle vs Player
+                    <span className="flex items-center gap-2">
+                      <span className="text-2xl">♠</span>
+                      Poker Battle
+                    </span>
+                    <span className="text-xl">{modeMenuOpen === 'poker' ? '▼' : '▶'}</span>
                   </button>
+
+                  {/* Poker Submenu */}
+                  {modeMenuOpen === 'poker' && (
+                    <div className="mt-2 ml-4 space-y-2 border-l-2 border-vintage-gold/30 pl-4">
+                      {/* Poker vs CPU */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setPokerMode('cpu');
+                          setTempSelectedDifficulty(pokerCpuDifficulty);
+                          setIsDifficultyModalOpen(true);
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 hover:border-purple-500/60"
+                      >
+                        ♣ vs CPU
+                      </button>
+
+                      {/* Poker vs Player */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setPokerMode('pvp');
+                          setShowPokerBattle(true);
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 hover:border-orange-500/60"
+                      >
+                        ♥ vs Player
+                      </button>
+
+                      {/* Mecha Arena */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setShowCpuArena(true);
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-pink-600/20 hover:bg-pink-600/40 text-pink-300 border border-pink-500/30 hover:border-pink-500/60"
+                      >
+                        🤖 Mecha Arena
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Poker Battle CPU Button */}
+                {/* ⚔️ BATTLE AUTO MODE Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      setPokerMode('cpu');
-                      setTempSelectedDifficulty(pokerCpuDifficulty);
-                      setIsDifficultyModalOpen(true);
+                      setModeMenuOpen(modeMenuOpen === 'battle' ? null : 'battle');
                     }}
                     disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between ${
                       userProfile
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-neon hover:scale-105'
+                        ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    Poker Battle CPU
+                    <span className="flex items-center gap-2">
+                      <span className="text-2xl">♦</span>
+                      Battle Auto
+                    </span>
+                    <span className="text-xl">{modeMenuOpen === 'battle' ? '▼' : '▶'}</span>
                   </button>
+
+                  {/* Battle Submenu */}
+                  {modeMenuOpen === 'battle' && (
+                    <div className="mt-2 ml-4 space-y-2 border-l-2 border-vintage-gold/30 pl-4">
+                      {/* Battle vs AI */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setPokerMode('pvp'); // Reset poker mode
+                          setShowPveCardSelection(true);
+                          setPveSelectedCards([]);
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 hover:border-blue-500/60"
+                      >
+                        ♣ vs AI
+                      </button>
+
+                      {/* Battle vs Player */}
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setPokerMode('pvp'); // Reset poker mode
+                          setGameMode('pvp');
+                          setPvpMode('pvpMenu');
+                          setModeMenuOpen(null);
+                        }}
+                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/30 hover:border-red-500/60"
+                      >
+                        ♥ vs Player
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Poker Battle PvP Button */}
+                {/* 💀 BOSS RAID Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
                       if (soundEnabled) AudioManager.buttonClick();
-                      setPokerMode('pvp');
-                      setShowPokerBattle(true);
+                      setShowRaidBoss(true);
                     }}
                     disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide ${
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
                       userProfile
-                        ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white shadow-neon hover:scale-105'
+                        ? 'bg-gradient-to-r from-red-600 via-orange-600 to-red-600 text-white hover:scale-105 shadow-lg shadow-red-500/50 border-2 border-orange-400/50'
                         : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
                     }`}
                   >
-                    Poker Battle PvP
+                    Boss Raid
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
-                    {t('yourHand')}
-                  </h2>
-                  <div className="flex gap-2">
-                    {nfts.length >= HAND_SIZE && selectedCards.length === 0 && (
-                      <button onClick={selectStrongest} className="px-3 py-1 bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-gold/30 transition font-modern font-semibold">
-                        {t('selectStrongest')}
-                      </button>
-                    )}
-                    {selectedCards.length > 0 && (
-                      <button onClick={clearSelection} className="px-3 py-1 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-black/70 transition font-modern">
-                        {t('clearSelection')}
-                      </button>
-                    )}
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'}}>
+                      {t('yourHand')}
+                    </h2>
+                    <div className="flex gap-2">
+                      {nfts.length >= HAND_SIZE && selectedCards.length === 0 && (
+                        <button onClick={selectStrongest} className="px-3 py-1 bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-gold/30 transition font-modern font-semibold">
+                          {t('selectStrongest')}
+                        </button>
+                      )}
+                      {selectedCards.length > 0 && (
+                        <button onClick={clearSelection} className="px-3 py-1 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-black/70 transition font-modern">
+                          {t('clearSelection')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Filters Row */}
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => setSortByPower(!sortByPower)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all ${
+                        sortByPower
+                          ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                          : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                      }`}
+                    >
+                      {sortByPower ? '↓ Sort by Power' : '⇄ Default Order'}
+                    </button>
                   </div>
                 </div>
 
                 {/* Felt Table Surface */}
                 <div className="bg-vintage-felt-green p-4 rounded-xl border-2 border-vintage-gold/40 mb-4" style={{boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.6)', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,.05) 2px, rgba(0,0,0,.05) 4px)'}}>
-                  <div className="grid grid-cols-5 gap-2 min-h-[120px]">
-                    {selectedCards.map((c, i) => (
-                      <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
-                        <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
-                      </FoilCardEffect>
-                    ))}
-                    {[...Array(HAND_SIZE - selectedCards.length)].map((_, i) => (
-                      <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
-                        <span className="text-2xl font-bold">+</span>
+                  {(status === "fetching" || (status === "idle" && nfts.length === 0)) ? (
+                    <div className="flex items-center justify-center min-h-[120px]">
+                      <div className="text-center">
+                        <LoadingSpinner />
+                        <p className="text-vintage-gold/70 text-sm mt-2 font-modern">Loading cards...</p>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-5 gap-2 min-h-[120px]">
+                      {selectedCards.map((c, i) => (
+                        <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold">
+                          <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
+                          <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
+                        </FoilCardEffect>
+                      ))}
+                      {[...Array(HAND_SIZE - selectedCards.length)].map((_, i) => (
+                        <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
+                          <span className="text-2xl font-bold">+</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Illuminated Casino Panel for Defense Deck Button */}
@@ -4969,49 +5407,32 @@ export default function TCGPage() {
                     <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3 mb-2">
                       <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
                     </h1>
-                    {/* Collection Filter Buttons */}
-                    <div className="flex flex-wrap gap-2 items-center">
+                    {/* Leaderboard Tabs */}
+                    <div className="flex gap-2 mb-3">
                       <button
-                        onClick={() => setLeaderboardCollection('vibe')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'vibe'
+                        onClick={() => setLeaderboardTab('honor')}
+                        className={`px-4 py-2 rounded-lg font-modern font-bold transition ${
+                          leaderboardTab === 'honor'
                             ? 'bg-vintage-gold text-vintage-black'
                             : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
                         }`}
                       >
-                        VBMS
+                        Honor
                       </button>
                       <button
-                        onClick={() => setLeaderboardCollection('gmvbrs')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'gmvbrs'
+                        onClick={() => setLeaderboardTab('raidboss')}
+                        className={`px-4 py-2 rounded-lg font-modern font-bold transition ${
+                          leaderboardTab === 'raidboss'
                             ? 'bg-vintage-gold text-vintage-black'
                             : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
                         }`}
                       >
-                        VBRS
+                        Raid Boss
                       </button>
-                      <button
-                        onClick={() => setLeaderboardCollection('vibefid')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'vibefid'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        VibeFID
-                      </button>
-                      <button
-                        onClick={() => setLeaderboardCollection('americanfootball')}
-                        className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition ${
-                          leaderboardCollection === 'americanfootball'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        AFCL
-                      </button>
-                      {/* Export Top 10 Button */}
+                    </div>
+                    {/* Export Button */}
+                    {leaderboardTab === 'honor' && (
+                      <div className="flex flex-wrap gap-2 items-center">
                       <button
                         onClick={handleExportLeaderboard}
                         className="px-3 py-1 rounded-lg text-xs font-modern font-semibold transition bg-vintage-charcoal border border-green-500/50 text-green-400 hover:bg-green-500/10 hover:border-green-500 flex items-center gap-1"
@@ -5020,6 +5441,7 @@ export default function TCGPage() {
                         <span>↓</span> Export
                       </button>
                     </div>
+                    )}
                   </div>
                   <div className="text-left md:text-right">
                     {userProfile && (
@@ -5053,25 +5475,27 @@ export default function TCGPage() {
                   </div>
                 </div>
 
-                {filteredLeaderboard.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-6xl mb-4">§</p>
-                    <p className="text-vintage-burnt-gold">{t('noProfile')}</p>
-                  </div>
-                ) : (
+                {/* Honor Leaderboard */}
+                {leaderboardTab === 'honor' && (
+                  <>
+                    {filteredLeaderboard.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-6xl mb-4">§</p>
+                        <p className="text-vintage-burnt-gold">{t('noProfile')}</p>
+                      </div>
+                    ) : (
                   <div className="overflow-x-auto -mx-3 md:mx-0">
                     <table className="w-full text-sm md:text-base">
                       <thead>
                         <tr className="border-b border-vintage-gold/20">
                           <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
                           <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Honor</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Opened</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
-                          {leaderboardCollection === 'vibe' && (
-                            <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
-                          )}
+                          <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
                           <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
                         </tr>
                       </thead>
@@ -5103,12 +5527,13 @@ export default function TCGPage() {
                                 </div>
                               </Link>
                             </td>
+                            {/* @ts-expect-error - honor field is added to schema but types not yet regenerated */}
+                            <td className="p-2 md:p-4 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.honor ?? 500).toLocaleString()} ⚔️</td>
                             <td className="p-2 md:p-4 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
                             <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
                             <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
                             <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveLosses || 0) + (profile.stats?.pvpLosses || 0)}</td>
-                            {leaderboardCollection === 'vibe' && (
-                              <td className="p-2 md:p-4 text-center">
+                            <td className="p-2 md:p-4 text-center">
                                 {/* Weekly Reward Claim Button (TOP 10 only) */}
                                 {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
                                   const rank = index + 1;
@@ -5155,8 +5580,7 @@ export default function TCGPage() {
                                 {index >= 10 && (
                                   <div className="text-[10px] md:text-xs text-gray-500">-</div>
                                 )}
-                              </td>
-                            )}
+                            </td>
                             <td className="p-1 md:p-4 text-center">
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <button
@@ -5167,7 +5591,13 @@ export default function TCGPage() {
                                       if (soundEnabled) AudioManager.buttonError();
                                       return;
                                     }
-                                    // Check if player has defense deck
+                                    // Check if ATTACKER has defense deck (required to attack)
+                                    if (!userProfile?.hasDefenseDeck) {
+                                      alert('You need to set up your defense deck before attacking other players! Go to your profile to set it up.');
+                                      if (soundEnabled) AudioManager.buttonError();
+                                      return;
+                                    }
+                                    // Check if TARGET has defense deck
                                     // Note: defenseDeck is excluded from leaderboard response for performance
                                     // Use hasDefenseDeck flag instead (set by getLeaderboardLite)
                                     if (!profile.hasDefenseDeck) {
@@ -5181,13 +5611,23 @@ export default function TCGPage() {
                                     setShowAttackCardSelection(true);
                                     setAttackSelectedCards([]);
                                   }}
-                                  disabled={!userProfile || attacksRemaining <= 0 || !profile.hasDefenseDeck}
+                                  disabled={!userProfile || !userProfile.hasDefenseDeck || attacksRemaining <= 0 || !profile.hasDefenseDeck}
                                   className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                                    userProfile && attacksRemaining > 0 && profile.hasDefenseDeck
+                                    userProfile && userProfile.hasDefenseDeck && attacksRemaining > 0 && profile.hasDefenseDeck
                                       ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
                                       : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
                                   }`}
-                                  title={!profile.hasDefenseDeck ? `No defense deck` : ''}
+                                  title={
+                                    !userProfile
+                                      ? 'Connect your wallet and create a profile to attack'
+                                      : !userProfile.hasDefenseDeck
+                                        ? 'You need to set up your defense deck before attacking (go to Profile)'
+                                        : attacksRemaining <= 0
+                                          ? `No attacks remaining (${attacksRemaining}/${maxAttacks}). Resets at midnight UTC.`
+                                          : !profile.hasDefenseDeck
+                                            ? `${profile.username} doesn't have a defense deck`
+                                            : 'Click to attack!'
+                                  }
                                 >
                                   †<span className="hidden sm:inline"> Attack</span>
                                 </button>
@@ -5293,6 +5733,176 @@ export default function TCGPage() {
                       </div>
                     )}
                   </div>
+                    )}
+                  </>
+                )}
+
+                {/* Raid Boss Leaderboard */}
+                {leaderboardTab === 'raidboss' && (
+                  <>
+                    {filteredLeaderboard.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-6xl mb-4">🐉</p>
+                        <p className="text-vintage-burnt-gold">No players have joined Raid Boss yet!</p>
+                      </div>
+                    ) : (
+                  <div className="overflow-x-auto -mx-3 md:mx-0">
+                    <table className="w-full text-sm md:text-base">
+                      <thead>
+                        <tr className="border-b border-vintage-gold/20">
+                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
+                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Total Damage</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Bosses Killed</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
+                          <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredLeaderboard
+                          .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
+                          .map((profile, sliceIndex) => {
+                            const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
+                            return (
+                          <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
+                            <td className="p-2 md:p-4">
+                              <span className={`text-lg md:text-2xl font-bold ${
+                                index === 0 ? 'text-yellow-400' :
+                                index === 1 ? 'text-gray-300' :
+                                index === 2 ? 'text-orange-400' :
+                                'text-gray-500'
+                              }`}>
+                                #{index + 1}
+                              </span>
+                            </td>
+                            <td className="p-2 md:p-4">
+                              <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
+                                <div>
+                                  <div className="flex items-center gap-1 md:gap-2 mb-1">
+                                    <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base">{profile.username}</p>
+                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
+                                  </div>
+                                  <p className="text-[10px] md:text-xs text-vintage-burnt-gold font-mono hidden sm:block">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
+                                </div>
+                              </Link>
+                            </td>
+                            {/* @ts-expect-error - raidBossDamage field is added dynamically */}
+                            <td className="p-2 md:p-4 text-right text-red-400 font-bold text-base md:text-xl">{(profile.stats?.raidBossDamage ?? 0).toLocaleString()} 💥</td>
+                            {/* @ts-expect-error - bossesKilled field is added dynamically */}
+                            <td className="p-2 md:p-4 text-right text-orange-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.bossesKilled || 0} 🐉</td>
+                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
+                            <td className="p-1 md:p-4 text-center">
+                              {profile.address.toLowerCase() !== address?.toLowerCase() && (
+                                <Link
+                                  href={`/profile/${profile.username}`}
+                                  onClick={() => {
+                                    if (soundEnabled) AudioManager.buttonClick();
+                                  }}
+                                  className="inline-block px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-vintage-gold/20 border border-vintage-gold/50 hover:bg-vintage-gold/30 text-vintage-gold font-semibold text-xs md:text-sm transition-all hover:scale-105"
+                                >
+                                  <span className="hidden sm:inline">{t('viewProfile')}</span>
+                                  <span className="sm:hidden">View</span>
+                                </Link>
+                              )}
+                              {profile.address.toLowerCase() === address?.toLowerCase() && (
+                                <span className="text-[10px] md:text-xs text-vintage-burnt-gold">(You)</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                          })}
+                      </tbody>
+                    </table>
+
+                    {/* Pagination Controls */}
+                    {filteredLeaderboard.length > LEADERBOARD_PER_PAGE && (
+                      <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => {
+                            setCurrentLeaderboardPage(Math.max(1, currentLeaderboardPage - 1));
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }}
+                          disabled={currentLeaderboardPage === 1}
+                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
+                        >
+                          ← {t('previous')}
+                        </button>
+
+                        {/* Page numbers with ellipsis */}
+                        <div className="flex gap-1 md:gap-2">
+                          {(() => {
+                            const totalPages = Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE);
+                            const current = currentLeaderboardPage;
+                            const pages: (number | string)[] = [];
+
+                            if (totalPages <= 7) {
+                              // Show all pages if 7 or fewer
+                              for (let i = 1; i <= totalPages; i++) {
+                                pages.push(i);
+                              }
+                            } else {
+                              // Always show first page
+                              pages.push(1);
+
+                              // Show ellipsis or pages around current
+                              if (current > 3) {
+                                pages.push('ellipsis-start');
+                              }
+
+                              // Show current page ± 1
+                              for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
+                                pages.push(i);
+                              }
+
+                              // Show ellipsis before last page
+                              if (current < totalPages - 2) {
+                                pages.push('ellipsis-end');
+                              }
+
+                              // Always show last page
+                              pages.push(totalPages);
+                            }
+
+                            return pages.map((page, idx) => {
+                              if (typeof page === 'string') {
+                                return <span key={page} className="px-2 text-vintage-burnt-gold">...</span>;
+                              }
+
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    setCurrentLeaderboardPage(page);
+                                    if (soundEnabled) AudioManager.buttonClick();
+                                  }}
+                                  className={`px-2 md:px-3 py-2 rounded-lg font-semibold transition text-sm md:text-base ${
+                                    page === currentLeaderboardPage
+                                      ? 'bg-vintage-gold text-vintage-black'
+                                      : 'bg-vintage-charcoal border border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              );
+                            });
+                          })()}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setCurrentLeaderboardPage(Math.min(Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }}
+                          disabled={currentLeaderboardPage === Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE)}
+                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
+                        >
+                          {t('next')} →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                    )}
+                  </>
                 )}
 
                 {/* Match History Section removed from leaderboard - only in profile page */}
@@ -5303,6 +5913,39 @@ export default function TCGPage() {
           {/* 🎯 Missions View */}
           {currentView === 'missions' && (
             <div className="max-w-6xl mx-auto space-y-6">
+              {/* Toggle Buttons: Missions / Achievements */}
+              <div className="flex justify-center gap-2 mb-4">
+                <button
+                  onClick={() => {
+                    if (soundEnabled) AudioManager.buttonNav();
+                    setMissionsSubView('missions');
+                  }}
+                  className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
+                    missionsSubView === 'missions'
+                      ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                      : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
+                  }`}
+                >
+                  ◈ {t('missions')}
+                </button>
+                <button
+                  onClick={() => {
+                    if (soundEnabled) AudioManager.buttonNav();
+                    setMissionsSubView('achievements');
+                  }}
+                  className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
+                    missionsSubView === 'achievements'
+                      ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                      : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
+                  }`}
+                >
+                  🏆 {t('achievements')}
+                </button>
+              </div>
+
+              {/* Missions Sub-View */}
+              {missionsSubView === 'missions' && (
+              <>
               {/* Weekly Quests Section */}
               <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6 shadow-gold">
                 <div className="flex items-center gap-3 mb-6">
@@ -5584,6 +6227,8 @@ export default function TCGPage() {
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
+                            {/* @ts-expect-error - honor field is added to schema but types not yet regenerated */}
+                            <span className="text-xs text-purple-400 font-bold">{(profile.stats?.honor ?? 500).toLocaleString()} ⚔️</span>
                             <span className="text-xs text-yellow-400">{(profile.stats?.totalPower || 0).toLocaleString()} PWR</span>
                             <span className="text-xs text-green-400 font-bold min-w-[60px] text-right">+{rewardAmount}</span>
                           </div>
@@ -5593,12 +6238,8 @@ export default function TCGPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Missions View */}
-          {currentView === 'missions' && (
-            <div className="max-w-4xl mx-auto">
+              {/* Daily Missions Section */}
               <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-4 md:p-8">
                 <div className="text-center mb-6">
                   <h1 className="text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-2">
@@ -5700,19 +6341,19 @@ export default function TCGPage() {
                   </>
                 )}
               </div>
-            </div>
-          )}
-          </div>
-          {/* End content wrapper */}
+              </>
+              )}
 
-          {/* 🏆 Achievements View */}
-          {currentView === 'achievements' && (
-            <AchievementsView
-              playerAddress={address}
-              nfts={nfts}
-              onSuccess={setSuccessMessage}
-              onError={setErrorMessage}
-            />
+              {/* Achievements Sub-View */}
+              {missionsSubView === 'achievements' && (
+                <AchievementsView
+                  playerAddress={address}
+                  nfts={nfts}
+                  onSuccess={setSuccessMessage}
+                  onError={setErrorMessage}
+                />
+              )}
+            </div>
           )}
 
           {/* 💰 Inbox/Claim View */}
@@ -5728,6 +6369,9 @@ export default function TCGPage() {
 
           {/* 🏪 Shop View */}
           {currentView === 'shop' && <ShopView address={address} />}
+
+          {/* End content wrapper */}
+          </div>
 
           {/* Create Profile Modal */}
           <CreateProfileModal

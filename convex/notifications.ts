@@ -216,6 +216,193 @@ export const importTokens = mutation({
 });
 
 // ============================================================================
+// RAID BOSS LOW ENERGY NOTIFICATIONS
+// ============================================================================
+
+// Energy duration by rarity (same as backend constants)
+const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
+  common: 12 * 60 * 60 * 1000,      // 12 hours
+  rare: 1 * 24 * 60 * 60 * 1000,    // 1 day
+  epic: 2 * 24 * 60 * 60 * 1000,    // 2 days
+  legendary: 4 * 24 * 60 * 60 * 1000, // 4 days
+  mythic: 5 * 24 * 60 * 60 * 1000,  // 5 days
+  vibefid: 0,                         // Infinite
+};
+
+// Low energy threshold (notify when less than 1 hour remaining)
+const LOW_ENERGY_THRESHOLD = 1 * 60 * 60 * 1000; // 1 hour
+
+/**
+ * Check all raid decks and send notifications to players with low energy cards
+ * Called by scheduled function (cron job) every hour
+ */
+/* @ts-ignore */
+export const sendLowEnergyNotifications = internalAction({
+  args: {},
+  // @ts-ignore
+  handler: async (ctx) => {
+    // Import api here to avoid circular reference
+    // @ts-ignore
+    const { api } = await import("./_generated/api");
+
+    try {
+      console.log("⚡ Checking for low energy raid decks...");
+
+      // Get all raid decks
+      const raidDecks = await ctx.runQuery(api.notifications.getAllRaidDecks);
+
+      if (!raidDecks || raidDecks.length === 0) {
+        console.log("⚠️ No raid decks found");
+        return { sent: 0, failed: 0, total: 0 };
+      }
+
+      console.log(`📊 Found ${raidDecks.length} raid decks to check`);
+
+      const now = Date.now();
+      let sent = 0;
+      let failed = 0;
+      const DELAY_MS = 100;
+
+      for (let i = 0; i < raidDecks.length; i++) {
+        const deck = raidDecks[i];
+
+        // Check each card's energy
+        let lowEnergyCards = 0;
+        let expiredCards = 0;
+
+        for (const cardEnergy of deck.cardEnergy) {
+          // Skip VibeFID cards (infinite energy)
+          if (cardEnergy.energyExpiresAt === 0) continue;
+
+          const remaining = cardEnergy.energyExpiresAt - now;
+
+          if (remaining <= 0) {
+            expiredCards++;
+          } else if (remaining <= LOW_ENERGY_THRESHOLD) {
+            lowEnergyCards++;
+          }
+        }
+
+        // Only notify if there are low or expired cards
+        if (lowEnergyCards === 0 && expiredCards === 0) continue;
+
+        try {
+          // Get player profile to find FID
+          const profile = await ctx.runQuery(api.notifications.getProfileByAddress, {
+            address: deck.address,
+          });
+
+          if (!profile) {
+            console.log(`⚠️ No profile found for ${deck.address}`);
+            continue;
+          }
+
+          // Get FID (try both fields)
+          const fid = profile.fid || (profile.farcasterFid ? profile.farcasterFid.toString() : null);
+
+          if (!fid) {
+            console.log(`⚠️ No FID found for ${deck.address}`);
+            continue;
+          }
+
+          // Get notification token
+          const tokenData = await ctx.runQuery(api.notifications.getTokenByFid, { fid });
+
+          if (!tokenData) {
+            console.log(`⚠️ No notification token for FID ${fid}`);
+            continue;
+          }
+
+          // Build notification message
+          let title = "";
+          let body = "";
+
+          if (expiredCards > 0) {
+            title = "⚡ Raid Cards Exhausted!";
+            body = `${expiredCards} card${expiredCards > 1 ? 's' : ''} ran out of energy! Refuel now to keep attacking the boss!`;
+          } else {
+            title = "⚡ Low Energy Warning!";
+            const minutes = Math.round(LOW_ENERGY_THRESHOLD / 60000);
+            body = `${lowEnergyCards} card${lowEnergyCards > 1 ? 's' : ''} will run out of energy in less than ${minutes} minutes!`;
+          }
+
+          const payload = {
+            notificationId: `raid_energy_${deck.address}_${now}`.slice(0, 128),
+            title: title.slice(0, 32),
+            body: body.slice(0, 128),
+            tokens: [tokenData.token],
+            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
+          };
+
+          const response = await fetch(tokenData.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (!result.invalidTokens?.includes(tokenData.token) &&
+                !result.rateLimitedTokens?.includes(tokenData.token)) {
+              sent++;
+              console.log(`✅ Sent low energy notification to FID ${fid}`);
+            } else {
+              failed++;
+            }
+          } else {
+            failed++;
+            console.error(`❌ Failed for FID ${fid}: ${response.status}`);
+          }
+
+        } catch (error) {
+          console.error(`❌ Exception for ${deck.address}:`, error);
+          failed++;
+        }
+
+        // Add delay between notifications
+        if (i < raidDecks.length - 1) {
+          await sleep(DELAY_MS);
+        }
+      }
+
+      console.log(`📊 Low energy notifications: ${sent} sent, ${failed} failed`);
+      return { sent, failed, total: raidDecks.length };
+
+    } catch (error: any) {
+      console.error("❌ Error in sendLowEnergyNotifications:", error);
+      throw error;
+    }
+  },
+});
+
+/**
+ * Get all raid decks (internal query for low energy check)
+ */
+export const getAllRaidDecks = query({
+  args: {},
+  handler: async (ctx) => {
+    const decks = await ctx.db.query("raidAttacks").collect();
+    return decks;
+  },
+});
+
+/**
+ * Get profile by address (for FID lookup)
+ */
+export const getProfileByAddress = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+    return profile;
+  },
+});
+
+// ============================================================================
 // BROADCAST NOTIFICATIONS (internal functions)
 // ============================================================================
 
@@ -333,8 +520,8 @@ function sleep(ms: number) {
 
 const GAMING_TIPS = [
   {
-    title: "🚀 Coming Soon: Real $VBMS!",
-    body: "Get ready! Real $VBMS tokens are coming to Vibe Most Wanted! Keep playing to maximize your rewards! 💰"
+    title: "💰 Real $VBMS is LIVE!",
+    body: "Earn real $VBMS tokens playing Vibe Most Wanted! Win battles, defeat bosses, and stack your rewards! 🚀"
   },
   {
     title: "💡 VIBE Most Wanted Tip",
@@ -353,8 +540,8 @@ const GAMING_TIPS = [
     body: "Open more packs to get stronger cards! Higher power = more wins = more coins! 💰"
   },
   {
-    title: "🎮 PvP Master Tip",
-    body: "Challenge other players in PvP rooms for epic battles! Win or lose, you always earn coins! 🏆"
+    title: "🎮 Poker Battle Tip",
+    body: "Challenge players in Poker Battles! Bet your $VBMS and prove you are the best card shark! 🃏"
   },
   {
     title: "💎 Daily Rewards",
@@ -367,6 +554,10 @@ const GAMING_TIPS = [
   {
     title: "🎵 Music Easter Egg",
     body: "Switch languages to discover different music tracks! Each language has its own vibe! 🌍"
+  },
+  {
+    title: "🆔 Mint Your VibeFID!",
+    body: "Get a unique card linked to your Farcaster with special buffs! Mint your VibeFID now! ⚡"
   },
 ];
 
@@ -738,6 +929,130 @@ export const sendCustomNotification = action({
       return { sent, failed, total: tokens.length };
     } catch (error: any) {
       console.error("❌ Error in sendCustomNotification:", error);
+      throw error;
+    }
+  },
+});
+
+// ============================================================================
+// RAID BOSS DEFEATED NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Send notification to all contributors when a boss is defeated
+ * Called by defeatBossAndSpawnNext via scheduler
+ */
+/* @ts-ignore */
+export const sendBossDefeatedNotifications = internalAction({
+  args: {
+    bossName: v.string(),
+    bossRarity: v.string(),
+    totalContributors: v.number(),
+    contributorAddresses: v.array(v.string()),
+  },
+  // @ts-ignore
+  handler: async (ctx, { bossName, bossRarity, totalContributors, contributorAddresses }) => {
+    // Import api here to avoid circular reference
+    // @ts-ignore
+    const { api } = await import("./_generated/api");
+
+    try {
+      console.log("🐉 Sending boss defeated notifications for: " + bossName);
+
+      let sent = 0;
+      let failed = 0;
+      const DELAY_MS = 100;
+
+      // Send to all contributors
+      for (let i = 0; i < contributorAddresses.length; i++) {
+        const address = contributorAddresses[i];
+
+        try {
+          // Get player profile to find FID
+          const profile = await ctx.runQuery(api.notifications.getProfileByAddress, {
+            address,
+          });
+
+          if (!profile) {
+            console.log("⚠️ No profile found for " + address);
+            continue;
+          }
+
+          // Get FID (try both fields)
+          const fid = profile.fid || (profile.farcasterFid ? profile.farcasterFid.toString() : null);
+
+          if (!fid) {
+            console.log("⚠️ No FID found for " + address);
+            continue;
+          }
+
+          // Get notification token
+          const tokenData = await ctx.runQuery(api.notifications.getTokenByFid, { fid });
+
+          if (!tokenData) {
+            console.log("⚠️ No notification token for FID " + fid);
+            continue;
+          }
+
+          // Build notification message
+          const rarityEmojis: Record<string, string> = {
+            common: "⚪",
+            rare: "🔵",
+            epic: "🟣",
+            legendary: "🟡",
+            mythic: "🔴",
+          };
+          const rarityEmoji = rarityEmojis[bossRarity.toLowerCase()] || "⚫";
+
+          const notificationId = "boss_defeated_" + bossName + "_" + Date.now() + "_" + fid;
+          const title = "🎉 Boss Defeated!";
+          const body = rarityEmoji + " " + bossName + " was slain! Claim your reward now! 💰";
+
+          const payload = {
+            notificationId: notificationId.slice(0, 128),
+            title: title.slice(0, 32),
+            body: body.slice(0, 128),
+            tokens: [tokenData.token],
+            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
+          };
+
+          const response = await fetch(tokenData.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (!result.invalidTokens?.includes(tokenData.token) &&
+                !result.rateLimitedTokens?.includes(tokenData.token)) {
+              sent++;
+            } else {
+              failed++;
+            }
+          } else {
+            failed++;
+            console.error("❌ Failed for FID " + fid + ": " + response.status);
+          }
+
+        } catch (error) {
+          console.error("❌ Exception for " + address + ":", error);
+          failed++;
+        }
+
+        // Add delay between notifications
+        if (i < contributorAddresses.length - 1) {
+          await sleep(DELAY_MS);
+        }
+      }
+
+      console.log("📊 Boss defeated notifications: " + sent + " sent, " + failed + " failed out of " + totalContributors + " contributors");
+      return { sent, failed, total: totalContributors };
+
+    } catch (error: any) {
+      console.error("❌ Error in sendBossDefeatedNotifications:", error);
       throw error;
     }
   },

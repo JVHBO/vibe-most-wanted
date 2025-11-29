@@ -13,16 +13,18 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { applyLanguageBoost } from "./languageBoost";
 
-// Mission rewards (coins OR packs)
+// Mission rewards (all coins for simplicity)
 const MISSION_REWARDS = {
   daily_login: { type: "coins", amount: 100 },
   first_pve_win: { type: "coins", amount: 50 },
-  first_pvp_match: { type: "pack", packType: "mission", amount: 1 }, // Changed to pack!
-  play_3_games: { type: "pack", packType: "mission", amount: 1 }, // NEW
-  win_5_games: { type: "pack", packType: "mission", amount: 2 }, // NEW
+  first_pvp_match: { type: "coins", amount: 100 },
+  play_3_games: { type: "coins", amount: 100 },
+  win_5_games: { type: "coins", amount: 200 },
   streak_3: { type: "coins", amount: 150 },
-  streak_5: { type: "pack", packType: "achievement", amount: 1 }, // Changed to pack!
-  streak_10: { type: "pack", packType: "achievement", amount: 3 }, // Changed to pack!
+  streak_5: { type: "coins", amount: 300 },
+  streak_10: { type: "coins", amount: 750 },
+  vibefid_minted: { type: "coins", amount: 1000 },
+  welcome_gift: { type: "coins", amount: 500 },
 };
 
 /**
@@ -71,19 +73,22 @@ export const markDailyLogin = mutation({
       )
       .first();
 
-    if (!existing) {
-      await ctx.db.insert("personalMissions", {
-        playerAddress: normalizedAddress,
-        date: today,
-        missionType: "daily_login",
-        completed: true,
-        claimed: false,
-        reward: MISSION_REWARDS.daily_login.amount,
-        completedAt: Date.now(),
-      });
-
-      // devLog (server-side)("✅ Daily login mission created for", normalizedAddress);
+    // OPTIMIZATION: Return early if already exists (prevents duplicate writes on concurrent calls)
+    if (existing) {
+      return { success: true, alreadyExists: true };
     }
+
+    await ctx.db.insert("personalMissions", {
+      playerAddress: normalizedAddress,
+      date: today,
+      missionType: "daily_login",
+      completed: true,
+      claimed: false,
+      reward: MISSION_REWARDS.daily_login.amount,
+      completedAt: Date.now(),
+    });
+
+    return { success: true, created: true };
   },
 });
 
@@ -200,6 +205,42 @@ export const markWinStreak = mutation({
 });
 
 /**
+ * Mark VibeFID minted mission as completed (one-time reward)
+ */
+export const markVibeFIDMinted = mutation({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    // Check if mission already exists (one-time mission)
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("date"), "once"),
+          q.eq(q.field("missionType"), "vibefid_minted")
+        )
+      )
+      .first();
+
+    if (!existing) {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: "once", // One-time mission
+        missionType: "vibefid_minted",
+        completed: true,
+        claimed: false,
+        reward: MISSION_REWARDS.vibefid_minted.amount,
+        completedAt: Date.now(),
+      });
+
+      console.log("🎴 VibeFID mint mission created for", normalizedAddress);
+    }
+  },
+});
+
+/**
  * Claim mission reward
  */
 export const claimMission = mutation({
@@ -253,53 +294,34 @@ export const claimMission = mutation({
     // Get reward info
     const rewardInfo = MISSION_REWARDS[mission.missionType as keyof typeof MISSION_REWARDS];
 
-    let boostedReward = 0;
+    if (!rewardInfo) {
+      throw new Error(`Unknown mission type: ${mission.missionType}`);
+    }
+
+    // 🇨🇳 Apply language boost to mission reward
+    const boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+
     let newBalance = profile.coins || 0;
 
-    if (rewardInfo.type === "coins") {
-      // 🇨🇳 Apply language boost to mission reward
-      boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+    // Award coins directly to balance (or just calculate if skipCoins)
+    if (!skipCoins) {
+      const currentBalance = profile.coins || 0;
+      newBalance = currentBalance + boostedReward;
+      const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
-      // Award coins to inbox (or just calculate if skipCoins)
-      if (!skipCoins) {
-        const currentInbox = profile.coinsInbox || 0;
-        newBalance = currentInbox + boostedReward;
-        const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
+      const currentHonor = profile.stats?.honor ?? 500;
+      const honorReward = 3; // +3 honor for completing missions
 
-        await ctx.db.patch(profile._id, {
-          coinsInbox: newBalance,
-          lifetimeEarned: newLifetimeEarned,
-        });
+      await ctx.db.patch(profile._id, {
+        coins: newBalance,
+        lifetimeEarned: newLifetimeEarned,
+        stats: {
+          ...profile.stats,
+          honor: currentHonor + honorReward, // Award honor for mission completion
+        },
+      });
 
-        console.log(`📬 Mission reward sent to inbox: ${boostedReward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newBalance}`);
-      } else {
-        newBalance = profile.coinsInbox || 0;
-      }
-    } else if (rewardInfo.type === "pack") {
-      // Award pack(s)
-      if (!("packType" in rewardInfo)) {
-        throw new Error("Pack reward missing packType");
-      }
-
-      const existingPack = await ctx.db
-        .query("cardPacks")
-        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-        .filter((q) => q.eq(q.field("packType"), rewardInfo.packType))
-        .first();
-
-      if (existingPack) {
-        await ctx.db.patch(existingPack._id, {
-          unopened: existingPack.unopened + rewardInfo.amount,
-        });
-      } else {
-        await ctx.db.insert("cardPacks", {
-          address: normalizedAddress,
-          packType: rewardInfo.packType,
-          unopened: rewardInfo.amount,
-          sourceId: mission.missionType,
-          earnedAt: Date.now(),
-        });
-      }
+      console.log(`💰 Mission reward: ${boostedReward} TESTVBMS + ${honorReward} honor for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}, Honor: ${currentHonor} → ${currentHonor + honorReward}`);
     }
 
     // Mark mission as claimed
@@ -377,17 +399,17 @@ export const claimAllMissions = mutation({
       return sum + boostedReward;
     }, 0);
 
-    // Award to inbox (not balance)
-    const currentInbox = profile.coinsInbox || 0;
-    const newInbox = currentInbox + totalReward;
+    // Award coins directly to balance
+    const currentBalance = profile.coins || 0;
+    const newBalance = currentBalance + totalReward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + totalReward;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: newInbox,
+      coins: newBalance,
       lifetimeEarned: newLifetimeEarned,
     });
 
-    console.log(`📬 Mission rewards sent to inbox: ${totalReward} TESTVBMS for ${normalizedAddress}. Inbox: ${currentInbox} → ${newInbox}`);
+    console.log(`💰 Mission rewards added to balance: ${totalReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark all as claimed
     const now = Date.now();
@@ -403,7 +425,7 @@ export const claimAllMissions = mutation({
       success: true,
       claimed: missions.length,
       totalReward,
-      newBalance: newInbox,
+      newBalance: newBalance,
     };
   },
 });

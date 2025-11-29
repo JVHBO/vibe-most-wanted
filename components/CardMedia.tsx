@@ -18,18 +18,22 @@ interface CardMediaProps {
  */
 export function CardMedia({ src, alt, className, loading = "lazy", onClick }: CardMediaProps) {
   const [useImage, setUseImage] = useState(false);
+  const [error, setError] = useState(false);
 
   if (!src) {
     return null;
   }
 
+  // Check if it's a data URL (base64 image) - these should ALWAYS render as images
+  const isDataUrl = src.startsWith('data:');
+
   // Check if it's a video file
   const srcLower = src.toLowerCase();
   const hasVideoExtension = srcLower.includes('.mp4') || srcLower.includes('.webm') || srcLower.includes('.mov');
   const isIpfs = srcLower.includes('ipfs');
-  const shouldTryVideo = hasVideoExtension || (isIpfs && !useImage);
+  const shouldTryVideo = !isDataUrl && (hasVideoExtension || (isIpfs && !useImage));
 
-  if (shouldTryVideo) {
+  if (shouldTryVideo && !error) {
     return (
       <video
         key={src}
@@ -38,15 +42,31 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         loop
         muted
         playsInline
-        autoPlay={loading === "eager"} // Only autoplay for eager (battle cards)
-        preload={loading === "lazy" ? "none" : "metadata"} // Lazy = don't preload
+        autoPlay // Always autoplay (muted videos are safe)
+        preload="auto" // Always preload to ensure IPFS videos load
         onClick={onClick}
-        style={{ objectFit: 'cover', pointerEvents: 'none' }}
+        style={{ objectFit: 'cover' }}
         onError={(e) => {
-          console.warn('Video failed, trying image:', src);
+          console.error('❌ Video failed to load:', src);
           setUseImage(true);
+          setError(true);
+        }}
+        onLoadedData={() => {
+          console.log('✅ Video loaded:', src);
         }}
       />
+    );
+  }
+
+  // If error, show placeholder with IPFS link (but NOT for data URLs)
+  if (error && isIpfs && !isDataUrl) {
+    return (
+      <div className={className} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff', fontSize: '12px', padding: '20px', textAlign: 'center', flexDirection: 'column' }}>
+        <div>⚠️ IPFS Loading Failed</div>
+        <a href={src} target="_blank" rel="noopener noreferrer" style={{ color: '#ffd700', marginTop: '10px', textDecoration: 'underline' }}>
+          Open in IPFS
+        </a>
+      </div>
     );
   }
 
@@ -58,7 +78,8 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
       loading={loading}
       onClick={onClick}
       onError={(e) => {
-        console.warn('Failed to load image:', src);
+        console.error('❌ Image failed to load:', src);
+        setError(true);
       }}
     />
   );

@@ -82,7 +82,7 @@ export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
  * - Mythic: ≥ 1.00
  */
 export function calculateRarityFromScore(score: number): 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic' {
-  if (score >= 1.0) return 'Mythic';
+  if (score >= 0.99) return 'Mythic';
   if (score >= 0.90) return 'Legendary';
   if (score >= 0.79) return 'Epic';
   if (score >= 0.70) return 'Rare';
@@ -141,6 +141,14 @@ export type CardRank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J
 export function generateRandomSuit(): CardSuit {
   const suits: CardSuit[] = ['hearts', 'diamonds', 'spades', 'clubs'];
   return suits[Math.floor(Math.random() * suits.length)];
+}
+
+/**
+ * Generate DETERMINISTIC suit from FID
+ */
+export function getSuitFromFid(fid: number): CardSuit {
+  const suits: CardSuit[] = ['hearts', 'diamonds', 'spades', 'clubs'];
+  return suits[fid % 4];
 }
 
 /**

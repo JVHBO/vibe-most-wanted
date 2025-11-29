@@ -238,6 +238,13 @@ export const claimAchievementReward = mutation({
       throw new Error("Profile not found");
     }
 
+    // 🔒 SECURITY FIX: Mark as claimed FIRST to prevent race condition double-claim
+    // If two requests come in simultaneously, only the first will succeed past here
+    // Better to mark claimed but fail on coins than to give double coins
+    await ctx.db.patch(achievement._id, {
+      claimedAt: Date.now(),
+    });
+
     // Add coins (TESTVBMS) to player profile
     const oldCoins = profile.coins || 0;
     const newCoins = oldCoins + definition.reward;
@@ -255,11 +262,6 @@ export const claimAchievementReward = mutation({
       coins: newCoins,
       lifetimeEarned,
       lastUpdated: Date.now(),
-    });
-
-    // Mark achievement as claimed
-    await ctx.db.patch(achievement._id, {
-      claimedAt: Date.now(),
     });
 
     return {
