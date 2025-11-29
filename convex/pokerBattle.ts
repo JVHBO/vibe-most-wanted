@@ -1559,6 +1559,7 @@ export const cpuMakeMove = internalMutation({
     const gameState = room.gameState;
     if (!gameState) return;
 
+    const currentRound = room.currentRound || 1;
     const deck = isHost ? room.hostDeck : room.guestDeck;
     const usedCards = isHost ? gameState.hostUsedCards : gameState.guestUsedCards;
     const selectedCard = isHost ? gameState.hostSelectedCard : gameState.guestSelectedCard;
