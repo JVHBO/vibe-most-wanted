@@ -533,6 +533,7 @@ export default defineSchema({
       roundWinner: v.optional(v.union(v.literal("host"), v.literal("guest"), v.literal("tie"))), // Winner of current round
       hostUsedCards: v.optional(v.array(v.number())), // Indices of cards used by host
       guestUsedCards: v.optional(v.array(v.number())), // Indices of cards used by guest
+      bettingWindowEndsAt: v.optional(v.number()), // Timestamp when betting window closes (for CPU vs CPU)
     })),
 
     // Round History (for displaying all 7 rounds to all players/spectators)

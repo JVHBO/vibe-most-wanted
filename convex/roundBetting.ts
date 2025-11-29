@@ -125,6 +125,17 @@ export const placeBetOnRound = mutation({
 
     console.log(`🎰 Round bet placed: ${normalizedAddress} bet ${amount} credits on round ${roundNumber} at ${odds}x odds [roomId: ${roomId}]`);
 
+    // Check if this is a CPU vs CPU room - if so, shorten betting window
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    if (room?.isCpuVsCpu) {
+      // Call shortenBettingWindow mutation
+      await ctx.runMutation(api.pokerBattle.shortenBettingWindow, { roomId });
+    }
+
     // Get bettor's username for chat message
     const bettorProfile = await ctx.db
       .query("profiles")
