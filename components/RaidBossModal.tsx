@@ -1029,18 +1029,14 @@ export function RaidBossModal({
                             alt={card.name}
                             className="w-full h-full object-cover"
                           />
-                          {/* Power Badge */}
-                          <div className={`absolute top-1 left-1 text-vintage-black text-xs px-1 rounded font-bold ${
-                            hasCollectionBuff ? 'bg-yellow-500' : 'bg-purple-400'
-                          }`}>
-                            {hasCollectionBuff ? Math.floor(card.power * 1.2) : card.power}
+                          {/* Power Badge - VibeFID ALWAYS has 10x power */}
+                          <div className="absolute top-1 left-1 bg-purple-600 text-white text-xs px-1 rounded font-bold">
+                            {Math.floor(card.power * 10)}
                           </div>
-                          {/* Collection Buff Badge */}
-                          {hasCollectionBuff && (
-                            <div className="absolute bottom-1 left-1 bg-yellow-400 text-black text-[10px] px-1.5 py-0.5 rounded font-bold shadow-lg animate-bounce">
-                              ⚡ BUFF
-                            </div>
-                          )}
+                          {/* VibeFID 10x Buff Badge - ALWAYS shown */}
+                          <div className="absolute bottom-1 left-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold shadow-lg animate-pulse">
+                            ⚡ 10x POWER
+                          </div>
                           {/* Replace Card Button - Always Visible */}
                           <button
                             onClick={() => {
