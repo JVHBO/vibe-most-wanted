@@ -1636,7 +1636,10 @@ export const cpuMakeMove = internalMutation({
         console.log(`🤖 Both CPUs selected - waiting 30s for spectator bets before reveal (will shorten to 8s if bet placed)`);
 
         await ctx.db.patch(room._id, {
-          "gameState.bettingWindowEndsAt": bettingWindowEndsAt,
+          gameState: {
+            ...gameState,
+            bettingWindowEndsAt,
+          },
         });
 
         await ctx.scheduler.runAfter(30000, internal.pokerBattle.cpuRevealRound, {
@@ -1682,7 +1685,10 @@ export const shortenBettingWindow = mutation({
       console.log(`⚡ Bet placed! Shortening betting window from 30s to 8s for round ${currentRound}`);
 
       await ctx.db.patch(room._id, {
-        "gameState.bettingWindowEndsAt": newEndsAt,
+        gameState: {
+          ...gameState,
+          bettingWindowEndsAt: newEndsAt,
+        },
       });
 
       // Schedule a new reveal for 8 seconds if not already scheduled sooner
