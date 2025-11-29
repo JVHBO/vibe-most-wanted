@@ -293,8 +293,8 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     contractAddress: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
     chain: 'base-mainnet',
     enabled: true,
-    marketplaceUrl: 'BUY HSTR PACKS',
-    buttonText: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
+    marketplaceUrl: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY HSTR PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
