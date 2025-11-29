@@ -777,11 +777,13 @@ export const resolveRound = mutation({
     const roundWinnerAddress = isTie ? "tie" : (hostWins ? room.hostAddress : room.guestAddress);
 
     // Call resolveRoundBets to process spectator bets on this round
-    await ctx.runMutation(api.roundBetting.resolveRoundBets, {
-      roomId: args.roomId,
-      roundNumber: currentRound,
-      winnerAddress: roundWinnerAddress,
-    });
+    if (roundWinnerAddress) {
+      await ctx.runMutation(api.roundBetting.resolveRoundBets, {
+        roomId: args.roomId,
+        roundNumber: currentRound,
+        winnerAddress: roundWinnerAddress,
+      });
+    }
 
     // Check if game is over (best of 7 = first to 4)
     if (gameState.hostScore >= 4 || gameState.guestScore >= 4) {
