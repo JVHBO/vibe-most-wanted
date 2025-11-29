@@ -1,5 +1,5 @@
 /**
- * CPU Arena Cards Database
+ * Mecha Arena Cards Database
  * Auto-generated: 2025-11-27T03:35:06.275Z
  *
  * VibeFID: All cards

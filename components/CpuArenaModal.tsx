@@ -33,7 +33,7 @@ const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: stri
 
 type ViewMode = "password" | "rooms" | "spectator-entry" | "battle";
 
-// Password for CPU Arena access
+// Password for Mecha Arena access
 const CPU_ARENA_PASSWORD = "vibe2025";
 
 /**
@@ -89,7 +89,7 @@ export function CpuArenaModal({
     try {
       // 1. Create or get CPU vs CPU room for this collection
       const result = await createCpuRoom({ collection: selectedCollection });
-      console.log("🤖 CPU Arena room:", result.roomId, result.isNew ? "(new)" : "(existing)");
+      console.log("🤖 Mecha Arena room:", result.roomId, result.isNew ? "(new)" : "(existing)");
 
       // 2. Join as spectator
       const username = profile?.username || address.slice(0, 8);
@@ -105,9 +105,9 @@ export function CpuArenaModal({
       setViewMode("battle");
       if (soundEnabled) AudioManager.buttonSuccess();
     } catch (err: any) {
-      console.error("Failed to join CPU Arena:", err);
+      console.error("Failed to join Mecha Arena:", err);
       if (soundEnabled) AudioManager.buttonError();
-      alert(err.message || "Failed to join CPU Arena");
+      alert(err.message || "Failed to join Mecha Arena");
     } finally {
       setIsJoining(false);
     }
@@ -136,7 +136,7 @@ export function CpuArenaModal({
   if (typeof window === "undefined") return null;
   if (!isOpen) return null;
 
-  // Must have address to use CPU Arena
+  // Must have address to use Mecha Arena
   if (!address || address.length === 0) return null;
 
   // If in battle mode, render PokerBattleTable directly in portal
@@ -154,7 +154,7 @@ export function CpuArenaModal({
         isInFarcaster={isInFarcaster}
         soundEnabled={soundEnabled}
         initialRoomId={roomId} // Skip matchmaking - go directly to spectating this room
-        skipSpectatorModal={true} // Already deposited via CPU Arena entry
+        skipSpectatorModal={true} // Already deposited via Mecha Arena entry
       />,
       document.body
     );
@@ -334,7 +334,7 @@ export function CpuArenaModal({
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-              <p className="text-vintage-gold font-bold">Joining CPU Arena...</p>
+              <p className="text-vintage-gold font-bold">Joining Mecha Arena...</p>
             </div>
           </div>
         )}
