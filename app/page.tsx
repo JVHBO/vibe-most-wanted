@@ -3413,7 +3413,7 @@ export default function TCGPage() {
         play={play}
       />
 
-      {/* CPU Arena Modal */}
+      {/* Mecha Arena Modal */}
       <CpuArenaModal
         isOpen={showCpuArena}
         onClose={() => setShowCpuArena(false)}
@@ -5158,7 +5158,7 @@ export default function TCGPage() {
                         ♥ vs Player
                       </button>
 
-                      {/* CPU Arena */}
+                      {/* Mecha Arena */}
                       <button
                         onClick={() => {
                           if (soundEnabled) AudioManager.buttonClick();
@@ -5167,7 +5167,7 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-pink-600/20 hover:bg-pink-600/40 text-pink-300 border border-pink-500/30 hover:border-pink-500/60"
                       >
-                        🤖 CPU Arena
+                        🤖 Mecha Arena
                       </button>
                     </div>
                   )}
