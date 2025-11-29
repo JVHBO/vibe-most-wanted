@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -281,6 +281,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY VBFX PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection History of Computer
+  historyofcomputer: {
+    id: 'historyofcomputer',
+    name: 'historyofcomputer',
+    displayName: 'History of Computer',
+    description: 'Collection History of Computer NFT',
+    contractAddress: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'BUY HSTR PACKS',
+    buttonText: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
