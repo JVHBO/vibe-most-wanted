@@ -23,6 +23,7 @@ import FidAboutTraitsModal from "@/components/FidAboutTraitsModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 interface GeneratedTraits {
   rarity: string;
@@ -140,6 +141,21 @@ export default function FidPage() {
       }
     }
   }, [farcasterContext.isReady, farcasterContext.user]);
+
+  // Notify Farcaster SDK that miniapp is ready
+  useEffect(() => {
+    const initFarcasterSDK = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          await sdk.actions.ready();
+          console.log('[SDK] Farcaster SDK ready called');
+        }
+      } catch (error) {
+        console.error('Error calling Farcaster SDK ready:', error);
+      }
+    };
+    initFarcasterSDK();
+  }, []);
 
   // Background music is already playing from main page
   // No need to start it again here
