@@ -315,6 +315,10 @@ export function PokerBattleTable({
     opponentTwitter?: string;
   } | null>(null);
 
+  // Spectator betting results (Mecha Arena)
+  const [showSpectatorResult, setShowSpectatorResult] = useState(false);
+  const [spectatorNetGains, setSpectatorNetGains] = useState(0);
+
   // Deck & Hand
   const [selectedDeck, setSelectedDeck] = useState<Card[]>([]);
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
@@ -1860,7 +1864,39 @@ export function PokerBattleTable({
       setGameOverShown(true);
       console.log('[PokerBattle] Game over - configuring popups');
 
-      // Don't show victory/defeat popups in spectator mode (CPU Arena / Mecha Arena)
+      // Custom result screen for spectator mode (Mecha Arena)
+      if (isSpectatorMode && spectatorType === 'betting' && playerAddress && roomId) {
+        console.log('[PokerBattle] Spectator mode - calculating betting results');
+
+        // Fetch all bets for this room by this spectator
+        convex.query(api.roundBetting.getSpectatorBetsForRoom, {
+          roomId,
+          spectatorAddress: playerAddress,
+        }).then((bets) => {
+          // Calculate net gains: (total winnings) - (total bet amount)
+          const totalBet = bets.reduce((sum: number, bet: any) => sum + bet.amount, 0);
+          const totalWinnings = bets.reduce((sum: number, bet: any) => {
+            if (bet.status === 'won' && bet.payout) {
+              return sum + bet.payout;
+            }
+            return sum;
+          }, 0);
+
+          const netGain = totalWinnings - totalBet;
+          console.log('[PokerBattle] Betting results:', { totalBet, totalWinnings, netGain });
+
+          setSpectatorNetGains(netGain);
+          setShowSpectatorResult(true);
+        }).catch((err) => {
+          console.error('[PokerBattle] Failed to fetch betting results:', err);
+          setSpectatorNetGains(0);
+          setShowSpectatorResult(true);
+        });
+
+        return;
+      }
+
+      // Don't show victory/defeat popups for other spectator modes
       if (isSpectatorMode) {
         console.log('[PokerBattle] Spectator mode - skipping victory/defeat popups');
         return;
@@ -3272,6 +3308,53 @@ export function PokerBattleTable({
             <span>👁️</span>
             <span>Free Viewer</span>
           </p>
+        </div>
+      )}
+
+      {/* Spectator Betting Result (Mecha Arena) */}
+      {showSpectatorResult && spectatorType === 'betting' && (
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[400] p-4">
+          <div className="bg-vintage-charcoal border-4 border-vintage-gold rounded-xl p-6 max-w-md w-full text-center space-y-6 shadow-2xl">
+            {/* Title */}
+            <h2 className="text-vintage-gold font-display font-bold text-3xl">
+              🎰 MECHA ARENA
+            </h2>
+
+            {/* Result */}
+            <div className="space-y-2">
+              <p className="text-white text-xl font-semibold">
+                {spectatorNetGains >= 0 ? '🎉 YOU WON!' : '💔 YOU LOST'}
+              </p>
+              <div className={`text-5xl font-bold ${spectatorNetGains >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {spectatorNetGains >= 0 ? '+' : ''}{spectatorNetGains} $VBMS
+              </div>
+              <p className="text-gray-400 text-sm">
+                from betting on Mecha Arena
+              </p>
+            </div>
+
+            {/* Share Button */}
+            <button
+              onClick={() => {
+                const text = spectatorNetGains >= 0
+                  ? `I won +${spectatorNetGains} $VBMS betting on Mecha Arena! 🎰\n\ncc @jvhbo`
+                  : `I lost ${spectatorNetGains} $VBMS betting on Mecha Arena 💔\n\ncc @jvhbo`;
+                const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+                window.open(url, '_blank');
+              }}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+            >
+              📣 Share Result
+            </button>
+
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
 
