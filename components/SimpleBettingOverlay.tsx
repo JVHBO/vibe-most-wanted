@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
@@ -35,12 +35,33 @@ export function SimpleBettingOverlay({
 }: SimpleBettingOverlayProps) {
   const [betAmount] = useState(10); // Fixed amount for simplicity
   const [isBetting, setIsBetting] = useState(false);
+  const [claimedFreeCredits, setClaimedFreeCredits] = useState(false);
 
   // Get betting credits balance
   const credits = useQuery(
     api.bettingCredits.getBettingCredits,
     spectatorAddress ? { address: spectatorAddress } : "skip"
   );
+
+  // Claim starter credits mutation
+  const claimStarterCredits = useMutation(api.bettingCredits.claimStarterCredits);
+
+  // Auto-claim free credits for new users
+  useEffect(() => {
+    if (spectatorAddress && credits && credits.balance === 0 && !claimedFreeCredits) {
+      setClaimedFreeCredits(true);
+      claimStarterCredits({ address: spectatorAddress })
+        .then((result) => {
+          if (result.success) {
+            console.log("✅ Free starter credits claimed!");
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to claim starter credits:", err);
+          setClaimedFreeCredits(false); // Allow retry
+        });
+    }
+  }, [spectatorAddress, credits, claimedFreeCredits, claimStarterCredits]);
 
   // Check if already bet on this round
   const existingBet = useQuery(
@@ -95,7 +116,7 @@ export function SimpleBettingOverlay({
   // Don't show if already bet on this round
   if (existingBet) {
     return (
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-green-600/90 backdrop-blur-md border-2 border-green-400 rounded-lg px-4 py-2">
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] bg-green-600/90 backdrop-blur-md border-2 border-green-400 rounded-lg px-4 py-2">
         <p className="text-white text-sm font-bold text-center">
           ✅ Bet placed: {existingBet.amount} on {existingBet.betOn === player1Address ? player1Username : player2Username}
         </p>
@@ -107,7 +128,7 @@ export function SimpleBettingOverlay({
   }
 
   return (
-    <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500 rounded-lg p-2 shadow-xl w-64">
+    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500 rounded-lg p-2 shadow-xl w-64 sm:w-80">
       {/* Compact Header */}
       <div className="text-center mb-2">
         <p className="text-purple-400 font-bold text-sm">
