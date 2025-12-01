@@ -33,7 +33,6 @@ export function SimpleBettingOverlay({
   spectatorAddress,
   onBetPlaced,
 }: SimpleBettingOverlayProps) {
-  const [betAmount] = useState(10); // Fixed amount for simplicity
   const [isBetting, setIsBetting] = useState(false);
   const [claimedFreeCredits, setClaimedFreeCredits] = useState(false);
 
@@ -84,6 +83,9 @@ export function SimpleBettingOverlay({
   };
 
   const odds = getOdds(currentRound);
+
+  // Calculate bet amount as 15% of total deposited (or 15% of current balance if no deposits yet)
+  const betAmount = Math.floor((credits?.totalDeposited || credits?.balance || 100) * 0.15);
 
   // Handle bet
   const handleBet = async (playerAddress: string, playerName: string) => {
