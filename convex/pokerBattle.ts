@@ -2034,3 +2034,25 @@ export const cpuRestartGame = internalMutation({
     });
   },
 });
+
+/**
+ * ADMIN: Force reset all CPU vs CPU rooms (for bug fixes)
+ */
+export const forceResetAllCpuRooms = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const rooms = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("isCpuVsCpu"), true))
+      .collect();
+
+    console.log(`🔄 Force resetting ${rooms.length} CPU rooms...`);
+
+    for (const room of rooms) {
+      await ctx.db.delete(room._id);
+      console.log(`✅ Deleted room: ${room.roomId}`);
+    }
+
+    return { deleted: rooms.length };
+  },
+});
