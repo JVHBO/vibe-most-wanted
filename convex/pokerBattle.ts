@@ -1701,10 +1701,9 @@ export const shortenBettingWindow = mutation({
         },
       });
 
-      // Schedule a new reveal for 8 seconds if not already scheduled sooner
-      await ctx.scheduler.runAfter(8000, internal.pokerBattle.cpuRevealRound, {
-        roomId,
-      });
+      // Don't schedule a new reveal - the existing scheduled reveal will check bettingWindowEndsAt
+      // and execute at the right time (avoids duplicate scheduling causing delays)
+      console.log(`⏰ Existing reveal task will execute in ~8s (when bettingWindowEndsAt is reached)`);
     }
   },
 });
@@ -1731,13 +1730,20 @@ export const cpuRevealRound = internalMutation({
     const currentRound = gameState.currentRound || 1;
 
     if (gameState.bettingWindowEndsAt && Date.now() < gameState.bettingWindowEndsAt) {
-      // Window still open, wait more
+      // Window still open
       const remainingTime = gameState.bettingWindowEndsAt - Date.now();
-      console.log(`⏰ Betting window still open, waiting ${remainingTime}ms more`);
-      await ctx.scheduler.runAfter(remainingTime, internal.pokerBattle.cpuRevealRound, {
-        roomId,
-      });
-      return;
+
+      // If less than 1 second remaining, just wait here instead of re-scheduling
+      if (remainingTime < 1000) {
+        console.log(`⏰ Betting window closing in ${remainingTime}ms, waiting...`);
+        // Don't re-schedule, just continue after the check
+      } else {
+        console.log(`⏰ Betting window still open, waiting ${remainingTime}ms more`);
+        await ctx.scheduler.runAfter(remainingTime, internal.pokerBattle.cpuRevealRound, {
+          roomId,
+        });
+        return;
+      }
     }
 
     const hostCard = gameState.hostSelectedCard;
