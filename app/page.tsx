@@ -3768,7 +3768,7 @@ export default function TCGPage() {
 
       {/* ✅ PvP Preview Modal - Shows potential gains/losses before battle */}
       {showPvPPreview && pvpPreviewData && targetPlayer && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[200] p-2 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300] p-2 sm:p-4 overflow-y-auto">
           <div className="bg-gradient-to-br from-vintage-charcoal via-vintage-black to-vintage-charcoal rounded-xl sm:rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-4 sm:p-6 md:p-8 shadow-2xl shadow-vintage-gold/30 my-4">
             {/* Header */}
             <div className="text-center mb-4 sm:mb-6">
