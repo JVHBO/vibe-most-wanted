@@ -2721,20 +2721,28 @@ export function PokerBattleTable({
                   {(phase === 'card-selection' || phase === 'reveal') && (
                     <div className="mt-2 sm:mt-3">
                       <div className={`inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
-                        timeRemaining <= 5
+                        timeRemaining === 0 && phase === 'card-selection'
+                          ? 'bg-purple-900/50 border-purple-500 animate-pulse'
+                          : timeRemaining <= 5
                           ? 'bg-red-900/50 border-red-500 animate-pulse'
                           : timeRemaining <= 10
                           ? 'bg-yellow-900/50 border-yellow-500'
                           : 'bg-vintage-deep-black/50 border-vintage-gold'
                       }`}>
                         <div className={`font-display font-bold text-lg sm:text-2xl ${
-                          timeRemaining <= 5
+                          timeRemaining === 0 && phase === 'card-selection'
+                            ? 'text-purple-300'
+                            : timeRemaining <= 5
                             ? 'text-red-300'
                             : timeRemaining <= 10
                             ? 'text-yellow-300'
                             : 'text-vintage-gold'
                         }`}>
-                          <ClockIcon className="inline-block" size={24} /> {timeRemaining}s
+                          {timeRemaining === 0 && phase === 'card-selection' ? (
+                            <>⚡ REVEALING...</>
+                          ) : (
+                            <><ClockIcon className="inline-block" size={24} /> {timeRemaining}s</>
+                          )}
                         </div>
                       </div>
                     </div>
