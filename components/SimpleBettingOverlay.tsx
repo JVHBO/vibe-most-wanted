@@ -111,7 +111,7 @@ export function SimpleBettingOverlay({
       {/* Compact Header */}
       <div className="text-center mb-2">
         <p className="text-purple-400 font-bold text-sm">
-          R{currentRound}/7 • {odds}x • 💰{credits?.balance || 0}
+          {odds}x • 💰{credits?.balance || 0}
         </p>
       </div>
 
