@@ -2439,8 +2439,8 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Meme Sound Panel - Floating on left side */}
-            <div className="absolute left-2 sm:left-4 top-2 sm:top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
+            {/* Meme Sound Panel - Floating on left side (moved down to not overlap with game) */}
+            <div className="absolute left-2 sm:left-4 top-32 sm:top-40 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
                 <div className="text-vintage-gold font-display font-bold text-[10px] mb-1.5 text-center border-b border-vintage-gold/30 pb-1">
                   🔊 MEME SOUNDS
                 </div>
@@ -2560,12 +2560,7 @@ export function PokerBattleTable({
                 isInFarcaster ? 'p-2' : 'p-4 md:p-6'
               }`}>
 
-                {/* OPPONENT SECTION - Bankroll only */}
-                <div className="text-center">
-                  <div className="text-vintage-gold font-display font-bold mb-4">
-                    OPPONENT • {opponentBankroll} {selectedToken}
-                  </div>
-                </div>
+                {/* OPPONENT SECTION - Removed for cleaner UI in Mecha Arena */}
 
                 {/* CENTER - CARD BATTLE AREA */}
                 <div className="text-center flex-1 flex flex-col items-center justify-center">
