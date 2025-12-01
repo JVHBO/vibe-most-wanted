@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
@@ -34,33 +34,12 @@ export function SimpleBettingOverlay({
   onBetPlaced,
 }: SimpleBettingOverlayProps) {
   const [isBetting, setIsBetting] = useState(false);
-  const [claimedFreeCredits, setClaimedFreeCredits] = useState(false);
 
   // Get betting credits balance
   const credits = useQuery(
     api.bettingCredits.getBettingCredits,
     spectatorAddress ? { address: spectatorAddress } : "skip"
   );
-
-  // Claim starter credits mutation
-  const claimStarterCredits = useMutation(api.bettingCredits.claimStarterCredits);
-
-  // Auto-claim free credits for new users
-  useEffect(() => {
-    if (spectatorAddress && credits && credits.balance === 0 && !claimedFreeCredits) {
-      setClaimedFreeCredits(true);
-      claimStarterCredits({ address: spectatorAddress })
-        .then((result) => {
-          if (result.success) {
-            console.log("✅ Free starter credits claimed!");
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to claim starter credits:", err);
-          setClaimedFreeCredits(false); // Allow retry
-        });
-    }
-  }, [spectatorAddress, credits, claimedFreeCredits, claimStarterCredits]);
 
   // Check if already bet on this round
   const existingBet = useQuery(
