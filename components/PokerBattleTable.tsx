@@ -2376,75 +2376,7 @@ export function PokerBattleTable({
         {phase !== 'deck-building' && phase !== 'game-over' && (selectedAnte !== 0 || isSpectatorMode) && (
           <div className="h-full flex flex-col relative">
 
-            {/* Round History Panel - Inside green table */}
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-vintage-charcoal/90 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl w-[140px]">
-                <div className="text-vintage-gold font-display font-bold text-[10px] mb-1 text-center border-b border-vintage-gold/30 pb-1">
-                  ROUNDS
-                </div>
-                <div className="space-y-0.5">
-                  {[1, 2, 3, 4, 5, 6, 7].map((roundNum) => {
-                    const entry = roundHistory.find((h: any) => h.round === roundNum);
-                    const isPlayed = !!entry;
-
-                    // Get winner name for tooltip
-                    const getWinnerName = () => {
-                      if (!isPlayed || !entry) return '';
-                      if (entry.winner === 'tie') return 'Tie';
-
-                      // In PvP mode, use room names
-                      if (!isCPUMode && room) {
-                        // winner='player' means host won, winner='opponent' means guest won
-                        return entry.winner === 'player' ? room.hostUsername : room.guestUsername;
-                      }
-
-                      // In CPU mode
-                      return entry.winner === 'player' ? playerUsername : 'CPU';
-                    };
-
-                    return (
-                      <div
-                        key={roundNum}
-                        className={`flex items-center justify-between px-1.5 py-0.5 rounded text-[9px] font-modern ${
-                          !isPlayed
-                            ? 'bg-gray-800/30 border border-gray-600/30'
-                            : entry.winner === 'player'
-                            ? 'bg-green-500/20 border border-green-500/50'
-                            : entry.winner === 'opponent'
-                            ? 'bg-red-500/20 border border-red-500/50'
-                            : 'bg-yellow-500/20 border border-yellow-500/50'
-                        }`}
-                        title={isPlayed ? `Round ${roundNum}: ${getWinnerName()} won (${entry.playerScore}-${entry.opponentScore})` : `Round ${roundNum}: Not played yet`}
-                      >
-                        <span className={`font-bold ${isPlayed ? 'text-vintage-burnt-gold' : 'text-gray-600'}`}>
-                          R{roundNum}
-                        </span>
-                        {isPlayed ? (
-                          <>
-                            <span className={`font-bold text-[8px] ${
-                              // For host: winner=player is WIN, winner=opponent is LOSS
-                              // For guest: winner=player is LOSS, winner=opponent is WIN
-                              (isHost && entry.winner === 'player') || (!isHost && entry.winner === 'opponent') ? 'text-green-400' :
-                              (isHost && entry.winner === 'opponent') || (!isHost && entry.winner === 'player') ? 'text-red-400' :
-                              'text-yellow-400'
-                            }`}>
-                              {
-                                // For host: winner=player → WIN, winner=opponent → LOSS
-                                // For guest: winner=player → LOSS, winner=opponent → WIN
-                                (isHost && entry.winner === 'player') || (!isHost && entry.winner === 'opponent') ? 'WIN' :
-                                (isHost && entry.winner === 'opponent') || (!isHost && entry.winner === 'player') ? 'LOSS' :
-                                'TIE'
-                              }
-                            </span>
-                            <span className="text-vintage-ice text-[8px]">{entry.playerScore}-{entry.opponentScore}</span>
-                          </>
-                        ) : (
-                          <span className="text-gray-600 text-[8px]">-</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-            </div>
+            {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
             {/* Meme Sound Panel - Floating on left side */}
             <div className="absolute left-2 sm:left-4 top-2 sm:top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
