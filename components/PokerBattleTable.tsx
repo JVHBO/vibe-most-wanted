@@ -3229,8 +3229,8 @@ export function PokerBattleTable({
         />
       )}
 
-      {/* REMOVED - Simple Betting Overlay showing R{round}/7 */}
-      {/* {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room &&
+      {/* Simple Betting Overlay - Restored without R{round}/7 display */}
+      {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room &&
        (phase === 'card-selection' || phase === 'reveal') && (
         <SimpleBettingOverlay
           roomId={roomId}
@@ -3244,7 +3244,7 @@ export function PokerBattleTable({
             console.log('✅ Bet placed successfully!');
           }}
         />
-      )} */}
+      )}
 
       {/* Spectator Bet Feedback - History panel + win/loss animations */}
       {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room && (
