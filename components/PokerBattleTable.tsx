@@ -15,6 +15,7 @@ import { useGroupVoiceChat } from '@/lib/hooks/useGroupVoiceChat';
 import { VoiceChannelPanel } from './VoiceChannelPanel';
 import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { SpectatorEntryModal } from './SpectatorEntryModal';
+import { SimpleBettingOverlay } from './SimpleBettingOverlay';
 import { SpectatorBetFeedback } from './SpectatorBetFeedback';
 import { GamePopups } from './GamePopups';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
@@ -3227,6 +3228,23 @@ export function PokerBattleTable({
           playerAddress={playerAddress}
         />
       )}
+
+      {/* REMOVED - Simple Betting Overlay showing R{round}/7 */}
+      {/* {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room &&
+       (phase === 'card-selection' || phase === 'reveal') && (
+        <SimpleBettingOverlay
+          roomId={roomId}
+          currentRound={currentRound}
+          player1Address={room.hostAddress || ''}
+          player1Username={room.hostUsername || 'Player 1'}
+          player2Address={room.guestAddress || ''}
+          player2Username={room.guestUsername || 'Player 2'}
+          spectatorAddress={playerAddress || ''}
+          onBetPlaced={() => {
+            console.log('✅ Bet placed successfully!');
+          }}
+        />
+      )} */}
 
       {/* Spectator Bet Feedback - History panel + win/loss animations */}
       {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room && (
