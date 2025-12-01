@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -93,6 +93,9 @@ export function PokerBattleTable({
   initialRoomId = '',
   skipSpectatorModal = false,
 }: PokerBattleTableProps) {
+  // Convex client for imperative queries
+  const convex = useConvex();
+
   // View Mode state - go directly to game if initialRoomId provided (spectator mode)
   const [currentView, setCurrentView] = useState<ViewMode>(
     isCPUMode ? 'game' : (initialRoomId ? 'game' : 'matchmaking')
