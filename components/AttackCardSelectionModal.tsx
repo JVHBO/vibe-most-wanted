@@ -169,26 +169,43 @@ export function AttackCardSelectionModal({
   const isLoading = isLoadingCards || sortedAttackNfts.length === 0;
 
   const handleAttack = async () => {
-    if (attackSelectedCards.length !== HAND_SIZE || !targetPlayer || isAttacking) return;
+    devLog('🔴 handleAttack called!', {
+      cardsLength: attackSelectedCards.length,
+      HAND_SIZE,
+      hasTarget: !!targetPlayer,
+      isAttacking,
+      address,
+      targetAddress: targetPlayer?.address
+    });
+
+    if (attackSelectedCards.length !== HAND_SIZE || !targetPlayer || isAttacking) {
+      devLog('❌ Early return - conditions not met');
+      return;
+    }
 
     // Show preview of gains/losses before attacking
     if (address && targetPlayer.address) {
+      devLog('📊 Fetching PvP preview...');
       try {
         setIsLoadingPreview(true);
         const preview = await convex.query(api.economy.previewPvPRewards, {
           playerAddress: address,
           opponentAddress: targetPlayer.address
         });
+        devLog('✅ Preview fetched:', preview);
         setPvpPreviewData(preview);
         setShowPvPPreview(true);
         setIsLoadingPreview(false);
         if (soundEnabled) AudioManager.buttonClick();
+        devLog('✅ Preview modal should be visible now');
         return; // Stop here - battle only starts after confirming in modal
       } catch (error) {
-        devError('Error fetching PvP preview:', error);
+        devError('❌ Error fetching PvP preview:', error);
         setIsLoadingPreview(false);
         // If preview fails, continue normally
       }
+    } else {
+      devLog('⚠️ Skipping preview - missing address or targetPlayer.address');
     }
 
     // Prevent multiple clicks
