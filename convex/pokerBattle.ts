@@ -1629,14 +1629,8 @@ export const cpuMakeMove = internalMutation({
         [isHost ? "hostBoostCoins" : "guestBoostCoins"]: newBoostCoins,
       });
 
-      // Re-fetch room to get updated gameState from database
-      const updatedRoom = await ctx.db.get(room._id);
-      if (!updatedRoom || !updatedRoom.gameState) return;
-
-      const updatedGameState = updatedRoom.gameState;
-
       // Check if both CPUs have selected - if so, move to reveal
-      const otherSelected = isHost ? updatedGameState.guestSelectedCard : updatedGameState.hostSelectedCard;
+      const otherSelected = isHost ? gameState.guestSelectedCard : gameState.hostSelectedCard;
       if (otherSelected) {
         // Both selected, wait 30 seconds (give spectators time to bet) then reveal
         // If someone bets, the window will be shortened to 8 seconds via shortenBettingWindow
@@ -1645,7 +1639,7 @@ export const cpuMakeMove = internalMutation({
 
         await ctx.db.patch(room._id, {
           gameState: {
-            ...updatedGameState,
+            ...gameState,
             bettingWindowEndsAt,
           },
         });
