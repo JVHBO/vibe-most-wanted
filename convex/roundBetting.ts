@@ -57,6 +57,29 @@ export const getRoundBet = query({
 });
 
 /**
+ * GET ALL BETS FOR A SPECTATOR IN A ROOM
+ * Used to calculate net gains when game ends
+ */
+export const getSpectatorBetsForRoom = query({
+  args: {
+    roomId: v.string(),
+    spectatorAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { roomId, spectatorAddress } = args;
+    const normalizedAddress = spectatorAddress.toLowerCase();
+
+    const bets = await ctx.db
+      .query("roundBets")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .filter((q) => q.eq(q.field("bettor"), normalizedAddress))
+      .collect();
+
+    return bets;
+  },
+});
+
+/**
  * PLACE BET ON A SPECIFIC ROUND
  * Spectator bets credits on who will win this round OR on a tie
  */
