@@ -428,8 +428,30 @@ export function PokerBattleTable({
     }
   }, [phase]); // Only depend on phase
 
+  // CPU vs CPU betting window timer (for Mecha Arena spectators)
+  useEffect(() => {
+    if (!isCPUMode || !room?.gameState?.bettingWindowEndsAt) return;
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((room.gameState.bettingWindowEndsAt - now) / 1000));
+      setTimeRemaining(remaining);
+    };
+
+    // Update immediately
+    updateTimer();
+
+    // Update every second
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [isCPUMode, room?.gameState?.bettingWindowEndsAt]);
+
   // Timer countdown for actions
   useEffect(() => {
+    // Skip timer if in CPU vs CPU mode (betting window timer handles it)
+    if (isCPUMode) return;
+
     // Clear any existing timer when effect runs
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -2729,9 +2751,11 @@ export function PokerBattleTable({
 
                 {/* PLAYER SECTION - YOUR HAND */}
                 <div className="text-center">
-                  <div className="text-vintage-gold font-display font-bold mb-2 text-sm">
-                    YOUR HAND
-                  </div>
+                  {!isSpectatorMode && (
+                    <div className="text-vintage-gold font-display font-bold mb-2 text-sm">
+                      YOUR HAND
+                    </div>
+                  )}
 
                   {/* Hand cards - Hidden for spectators */}
                   <div className="flex justify-center gap-1 sm:gap-2 mb-2">
