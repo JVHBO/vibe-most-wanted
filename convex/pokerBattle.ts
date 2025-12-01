@@ -1649,6 +1649,7 @@ export const cpuMakeMove = internalMutation({
           gameState: {
             ...updatedRoom.gameState,
             bettingWindowEndsAt,
+            revealScheduledFor: bettingWindowEndsAt, // Mark when reveal should happen
           },
         });
 
@@ -1698,12 +1699,16 @@ export const shortenBettingWindow = mutation({
         gameState: {
           ...gameState,
           bettingWindowEndsAt: newEndsAt,
+          revealScheduledFor: newEndsAt, // Mark when reveal should happen
         },
       });
 
-      // Don't schedule a new reveal - the existing scheduled reveal will check bettingWindowEndsAt
-      // and execute at the right time (avoids duplicate scheduling causing delays)
-      console.log(`⏰ Existing reveal task will execute in ~8s (when bettingWindowEndsAt is reached)`);
+      // Schedule reveal for 8 seconds (the original 30s reveal will be ignored via revealScheduledFor check)
+      await ctx.scheduler.runAfter(8000, internal.pokerBattle.cpuRevealRound, {
+        roomId,
+      });
+
+      console.log(`⏰ Scheduled new reveal for 8s, original 30s reveal will be skipped`);
     }
   },
 });
@@ -1728,6 +1733,13 @@ export const cpuRevealRound = internalMutation({
     if (!gameState) return;
 
     const currentRound = gameState.currentRound || 1;
+
+    // Check if this reveal is still valid (not superseded by a shortened window)
+    if (gameState.revealScheduledFor && Date.now() < gameState.revealScheduledFor - 1000) {
+      // This reveal was scheduled before the window was shortened - skip it
+      console.log(`⏸️ Skipping early reveal - window was shortened, new reveal already scheduled`);
+      return;
+    }
 
     if (gameState.bettingWindowEndsAt && Date.now() < gameState.bettingWindowEndsAt) {
       // Window still open
