@@ -22,7 +22,7 @@ export const BADGES_CONFIG = {
   BIGDOG_WALLET: '0xba918b37cd34cb8f123081a01c8f5733996a3682',
 
   // Número máximo de early testers por userIndex (fallback)
-  MAX_EARLY_TESTERS: 9999,
+  MAX_EARLY_TESTERS: 10,
 };
 
 export type BadgeType = 'dev' | 'early_tester' | 'gey' | 'ai' | 'bigdog';
