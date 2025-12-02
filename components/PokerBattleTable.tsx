@@ -22,7 +22,7 @@ import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
 // Collection cover images for Mecha Arena (sealed/unrevealed card backs)
 const COLLECTION_COVERS: Record<string, string> = {
-  vibefid: 'https://ipfs.filebase.io/ipfs/QmaWKKQXrVkPRNdPuUuiyYhNDYcmgqd4vyhrSeavqub8aS',
+  vibefid: '/covers/vibefid-cover.png',
   gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/d0de7e9fa12eadb1ea2204e67d43e166',
   vibe: 'https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f',
   americanfootball: 'https://nft-cdn.alchemy.com/base-mainnet/5c023b39577f02927478fbd60c26d75e',
