@@ -14,7 +14,7 @@
     "buttonTitle": "Play Now",
     "splashImageUrl": "https://www.vibemostwanted.xyz/splash-200.png",
     "splashBackgroundColor": "#FFD700",
-    "webhookUrl": "https://www.vibemostwanted.xyz/api/farcaster/webhook",
+    "webhookUrl": "https://api.neynar.com/f/app/e4b053fc-a6bd-4975-a6bc-a3174e617d19/event",
     "castShareUrl": "https://www.vibemostwanted.xyz",
     "subtitle": "NFT Card Battle Game",
     "description": "Battle with your VIBE NFT cards in PvE and PvP modes. Join the most wanted card game on Base!",
