@@ -232,13 +232,13 @@ export const resetDailyLimits = mutation({
  * Get opponent's leaderboard ranking (OPTIMIZED V2)
  * Returns ranking position (1 = first place) or 999 if not ranked
  *
- * OPTIMIZATION V2: Use honor-based ranking with efficient counting
- * - Gets opponent's honor from their profile (1 read)
+ * OPTIMIZATION V2: Use aura-based ranking with efficient counting
+ * - Gets opponent's aura from their profile (1 read)
  * - Uses take() with limit to avoid reading all docs
  * - Falls back to approximate ranking for very low ranks
  */
 async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<number> {
-  // Step 1: Get opponent's profile to know their honor
+  // Step 1: Get opponent's profile to know their aura
   const opponent = await ctx.db
     .query("profiles")
     .withIndex("by_address", (q: any) => q.eq("address", opponentAddress.toLowerCase()))
@@ -248,27 +248,27 @@ async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<nu
     return 999; // Not found = unranked
   }
 
-  const opponentHonor = opponent.stats?.honor ?? 500;
+  const opponentAura = opponent.stats?.aura ?? 500;
 
-  // Step 2: Count profiles with higher honor (limited to top 200 for efficiency)
+  // Step 2: Count profiles with higher aura (limited to top 200 for efficiency)
   // For ranking bonuses, we only care about approximate position
   const MAX_RANK_CHECK = 200;
 
-  const higherHonorProfiles = await ctx.db
+  const higherAuraProfiles = await ctx.db
     .query("profiles")
-    .withIndex("by_honor")
+    .withIndex("by_aura")
     .order("desc")
-    .filter((q: any) => q.gt(q.field("stats.honor"), opponentHonor))
+    .filter((q: any) => q.gt(q.field("stats.aura"), opponentAura))
     .take(MAX_RANK_CHECK);
 
-  // If we found MAX_RANK_CHECK profiles with higher honor, return MAX_RANK_CHECK+1 as approximate
+  // If we found MAX_RANK_CHECK profiles with higher aura, return MAX_RANK_CHECK+1 as approximate
   // This is good enough for ranking bonus calculations
-  if (higherHonorProfiles.length >= MAX_RANK_CHECK) {
+  if (higherAuraProfiles.length >= MAX_RANK_CHECK) {
     return MAX_RANK_CHECK + 1;
   }
 
-  // Ranking = number of players with higher honor + 1
-  return higherHonorProfiles.length + 1;
+  // Ranking = number of players with higher aura + 1
+  return higherAuraProfiles.length + 1;
 }
 
 /**
@@ -621,15 +621,15 @@ export const awardPvECoins = mutation({
     // Award coins to balance (direct)
     if (!skipCoins) {
       const currentBalance = profile.coins || 0;
-      const currentHonor = profile.stats?.honor ?? 500;
-      const honorReward = won ? 5 : 0; // +5 honor for winning PvE
+      const currentAura = profile.stats?.aura ?? 500;
+      const auraReward = won ? 5 : 0; // +5 aura for winning PvE
 
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         stats: {
           ...profile.stats,
-          honor: currentHonor + honorReward, // Award honor for PvE win
+          aura: currentAura + auraReward, // Award aura for PvE win
         },
         dailyLimits: {
           ...dailyLimits,
@@ -638,7 +638,7 @@ export const awardPvECoins = mutation({
         // lastPvEAward already updated immediately after rate limit check (line 491)
       });
 
-      console.log(`💰 PvE reward: ${totalReward} TESTVBMS + ${honorReward} honor for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Honor: ${currentHonor} → ${currentHonor + honorReward}`);
+      console.log(`💰 PvE reward: ${totalReward} TESTVBMS + ${auraReward} aura for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Aura: ${currentAura} → ${currentAura + auraReward}`);
     }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
@@ -826,15 +826,15 @@ export const awardPvPCoins = mutation({
 
       // Award coins to balance (direct)
       const currentBalance = profile.coins || 0;
-      const currentHonor = profile.stats?.honor ?? 500;
-      const honorReward = 10; // +10 honor for winning PvP
+      const currentAura = profile.stats?.aura ?? 500;
+      const auraReward = 10; // +10 aura for winning PvP
 
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
         stats: {
           ...profile.stats,
-          honor: currentHonor + honorReward, // Award honor for PvP win
+          aura: currentAura + auraReward, // Award aura for PvP win
         },
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
@@ -845,7 +845,7 @@ export const awardPvPCoins = mutation({
         // lastPvPAward already updated immediately after rate limit check (line 652)
       });
 
-      console.log(`💰 PvP reward: ${totalReward} TESTVBMS + ${honorReward} honor for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Honor: ${currentHonor} → ${currentHonor + honorReward}`);
+      console.log(`💰 PvP reward: ${totalReward} TESTVBMS + ${auraReward} aura for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Aura: ${currentAura} → ${currentAura + auraReward}`);
 
       // 🎯 Track weekly quest progress (async, non-blocking)
       // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
@@ -876,9 +876,9 @@ export const awardPvPCoins = mutation({
       const currentCoins = profile.coins || 0;
       const newCoins = Math.max(0, currentCoins + penalty); // Can't go below 0
 
-      const currentHonor = profile.stats?.honor ?? 500;
-      const honorPenalty = -5; // -5 honor for losing PvP
-      const newHonor = Math.max(0, currentHonor + honorPenalty); // Can't go below 0
+      const currentAura = profile.stats?.aura ?? 500;
+      const auraPenalty = -5; // -5 aura for losing PvP
+      const newAura = Math.max(0, currentAura + auraPenalty); // Can't go below 0
 
       // ✅ Add penalty reduction message
       if (rankingMultiplier < 1.0 && opponentAddress) {
@@ -891,7 +891,7 @@ export const awardPvPCoins = mutation({
         lifetimeSpent: (profile.lifetimeSpent || 0) + Math.abs(penalty),
         stats: {
           ...profile.stats,
-          honor: newHonor, // Lose honor for PvP loss
+          aura: newAura, // Lose aura for PvP loss
         },
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
@@ -1522,47 +1522,47 @@ export const recordAttackResult = mutation({
 
     // ===== STEP 5: Update profile stats (all at once) =====
     const newStats = { ...profile.stats };
-    const currentHonor = profile.stats?.honor ?? 500;
-    let honorChange = 0;
+    const currentAura = profile.stats?.aura ?? 500;
+    let auraChange = 0;
 
-    // Update attack win/loss stats and honor
+    // Update attack win/loss stats and aura
     if (args.result === "win") {
       newStats.attackWins = (newStats.attackWins || 0) + 1;
       newStats.pvpWins = (newStats.pvpWins || 0) + 1;
 
-      // ATTACKER WINS: Gains +20 honor
-      honorChange = 20;
-      newStats.honor = currentHonor + honorChange;
+      // ATTACKER WINS: Gains +20 aura
+      auraChange = 20;
+      newStats.aura = currentAura + auraChange;
 
-      // DEFENDER LOSES: Loses -20 honor
+      // DEFENDER LOSES: Loses -20 aura
       const defenderProfile = await ctx.db
         .query("profiles")
         .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
         .first();
 
       if (defenderProfile) {
-        const defenderHonor = defenderProfile.stats?.honor ?? 500;
-        const honorLoss = 20;
-        const newDefenderHonor = Math.max(0, defenderHonor - honorLoss); // Can't go below 0
+        const defenderAura = defenderProfile.stats?.aura ?? 500;
+        const auraLoss = 20;
+        const newDefenderAura = Math.max(0, defenderAura - auraLoss); // Can't go below 0
 
         await ctx.db.patch(defenderProfile._id, {
           stats: {
             ...defenderProfile.stats,
-            honor: newDefenderHonor,
+            aura: newDefenderAura,
             defenseWins: (defenderProfile.stats?.defenseWins || 0),
             defenseLosses: (defenderProfile.stats?.defenseLosses || 0) + 1, // Track defense loss
           },
         });
 
-        console.log(`⚔️ Honor transfer: Attacker ${normalizedPlayerAddress} +${honorChange} (${currentHonor} → ${currentHonor + honorChange}), Defender ${normalizedOpponentAddress} -${honorLoss} (${defenderHonor} → ${newDefenderHonor})`);
+        console.log(`⚔️ Aura transfer: Attacker ${normalizedPlayerAddress} +${auraChange} (${currentAura} → ${currentAura + auraChange}), Defender ${normalizedOpponentAddress} -${auraLoss} (${defenderAura} → ${newDefenderAura})`);
       }
     } else if (args.result === "loss") {
       newStats.attackLosses = (newStats.attackLosses || 0) + 1;
       newStats.pvpLosses = (newStats.pvpLosses || 0) + 1;
 
-      // ATTACKER LOSES: No honor change (already punishing with coin loss)
-      honorChange = 0;
-      newStats.honor = currentHonor;
+      // ATTACKER LOSES: No aura change (already punishing with coin loss)
+      auraChange = 0;
+      newStats.aura = currentAura;
 
       // DEFENDER WINS: Track defense win
       const defenderProfile = await ctx.db
@@ -1609,6 +1609,14 @@ export const recordAttackResult = mutation({
 
     // ===== STEP 6: Get and return updated profile =====
     const updatedProfile = await ctx.db.get(profile._id);
+
+    // 🛡️ FIX: Add hasDefenseDeck computed field to prevent defense modal from showing after attack
+    const profileWithDefenseDeck = updatedProfile
+      ? {
+          ...updatedProfile,
+          hasDefenseDeck: (updatedProfile.defenseDeck?.length || 0) === 5,
+        }
+      : updatedProfile;
 
     // ===== STEP 7: Track weekly quest progress (async, non-blocking) =====
     // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
@@ -1660,9 +1668,9 @@ export const recordAttackResult = mutation({
       winStreak: newStreak,
       opponentRank,
       rankingMultiplier,
-      profile: updatedProfile, // Return updated profile so no need for getProfile() call
-      dailyEarned: calculateDailyEarned(updatedProfile!),
-      remaining: DAILY_CAP - calculateDailyEarned(updatedProfile!),
+      profile: profileWithDefenseDeck, // Return updated profile with hasDefenseDeck computed
+      dailyEarned: calculateDailyEarned(profileWithDefenseDeck!),
+      remaining: DAILY_CAP - calculateDailyEarned(profileWithDefenseDeck!),
     };
   },
 });

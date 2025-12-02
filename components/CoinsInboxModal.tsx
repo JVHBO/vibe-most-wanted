@@ -222,6 +222,29 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           ✕
         </button>
 
+        {/* Transaction History Icon Button */}
+        <button
+          onClick={() => setShowHistory(true)}
+          className="absolute top-4 right-14 p-2 text-vintage-gold/60 hover:text-vintage-gold transition-colors group"
+          title="Transaction History"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="group-hover:scale-110 transition-transform"
+          >
+            <path d="M3 3v18h18" />
+            <path d="m19 9-5 5-4-4-3 3" />
+          </svg>
+        </button>
+
         {/* Header with gradient */}
         <div className="relative bg-gradient-to-br from-vintage-gold/10 via-transparent to-transparent p-6 pb-4">
           <div className="text-center">
@@ -308,15 +331,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             <span className="text-xl">💱</span>
             <span>Sell VBMS → ETH (DEX)</span>
           </Link>
-
-          {/* Transaction History Button */}
-          <button
-            onClick={() => setShowHistory(true)}
-            className="w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-[1.02] flex items-center justify-center gap-2"
-          >
-            <span className="text-xl">📊</span>
-            <span>Histórico de Transações</span>
-          </button>
           </div>
         </div>
       </div>
