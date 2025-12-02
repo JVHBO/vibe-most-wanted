@@ -815,7 +815,8 @@ export default function FidPage() {
                   <div className="text-5xl font-bold text-vintage-gold mb-2">
                     {neynarScoreData.score.toFixed(3)}
                   </div>
-                  <p className="text-vintage-ice text-sm">{t.currentScore}</p>
+                  <p className="text-vintage-ice text-sm font-bold">{t.currentScore} ⚡</p>
+                  <p className="text-vintage-ice/60 text-xs mt-1">(Real-time from Neynar API)</p>
                 </div>
 
                 <div className="border-t border-vintage-gold/20 pt-4">
