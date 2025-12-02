@@ -27,8 +27,9 @@ export default defineSchema({
       openedCards: v.number(),
       unopenedCards: v.number(),
 
-      // Honor System (unified leaderboard ranking)
-      honor: v.optional(v.number()), // Default: 500, primary ranking criteria
+      // Aura System (unified leaderboard ranking)
+      aura: v.optional(v.number()), // Default: 500, primary ranking criteria
+      honor: v.optional(v.number()), // DEPRECATED - kept for old data migration only
 
       // Collection-specific power (for leaderboard filtering)
       vibePower: v.optional(v.number()),
@@ -165,7 +166,7 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_username", ["username"])
     .index("by_total_power", ["stats.totalPower"]) // For leaderboard (legacy)
-    .index("by_honor", ["stats.honor"]), // For honor-based leaderboard
+    .index("by_aura", ["stats.aura"]), // For aura-based leaderboard
 
   // Player Matches (Match History)
   matches: defineTable({
