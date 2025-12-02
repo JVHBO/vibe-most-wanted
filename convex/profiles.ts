@@ -394,12 +394,19 @@ export const updateDefenseDeck = mutation({
 
       // devLog (server-side)('🧹 Cleaned defense deck:', cleanedDefenseDeck);
 
+      // 🔒 SECURITY FIX: Also update ownedTokenIds to include defense deck cards
+      // This prevents getValidatedDefenseDeck from incorrectly removing cards
+      const defenseTokenIds = cleanedDefenseDeck.map(card => card.tokenId);
+      const existingOwnedIds = profile.ownedTokenIds || [];
+      const mergedOwnedIds = [...new Set([...existingOwnedIds, ...defenseTokenIds])];
+
       await ctx.db.patch(profile._id, {
         defenseDeck: cleanedDefenseDeck,
+        ownedTokenIds: mergedOwnedIds,
         lastUpdated: Date.now(),
       });
 
-      // devLog (server-side)('✅ Defense deck updated successfully');
+      console.log(`✅ Defense deck updated for ${normalizeAddress(address)}: ${cleanedDefenseDeck.length} cards, ownedTokenIds: ${mergedOwnedIds.length} total`);
     } catch (error: any) {
       // devError (server-side)('❌ updateDefenseDeck handler error:', error);
       throw error;
@@ -467,12 +474,19 @@ export const getValidatedDefenseDeck = mutation({
 
     // If cards were removed, update profile
     if (removedCards.length > 0) {
+      // Log BEFORE patching to track what's being removed
+      console.log(`⚠️ DEFENSE DECK VALIDATION for ${address}:`);
+      console.log(`  - Original cards: ${profile.defenseDeck.length}`);
+      console.log(`  - Valid cards: ${validCards.length}`);
+      console.log(`  - Removed cards: ${removedCards.map((c: any) => c.tokenId).join(', ')}`);
+      console.log(`  - ownedTokenIds count: ${profile.ownedTokenIds?.length || 0}`);
+
       await ctx.db.patch(profile._id, {
         defenseDeck: validCards,
         lastUpdated: Date.now(),
       });
 
-      // devLog (server-side)(`✅ Defense deck validated for ${address}: ${validCards.length} valid, ${removedCards.length} removed`);
+      console.log(`✅ Defense deck updated for ${address}: ${validCards.length} valid, ${removedCards.length} removed`);
     }
 
     return {
