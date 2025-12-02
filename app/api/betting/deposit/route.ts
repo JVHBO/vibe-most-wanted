@@ -10,8 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
-import { createPublicClient, http, parseEther } from 'viem';
-import { base } from 'viem/chains';
+import { parseEther } from 'viem';
+import { waitForTxReceipt, getBasePublicClient } from '@/lib/blockchain/tx-utils';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const VBMS_TOKEN = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
@@ -32,21 +32,15 @@ export async function POST(request: NextRequest) {
     console.log(`💰 Verifying betting deposit: ${amount} VBMS from ${address}`);
     console.log(`📝 Transaction hash: ${txHash}`);
 
-    // Setup viem client
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
+    // Wait for tx with robust retry (handles RPC propagation delays)
+    const receipt = await waitForTxReceipt(txHash as `0x${string}`);
 
-    // Verify transaction
-    console.log(`🔍 Fetching transaction receipt...`);
-    const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
-
-    if (!receipt || receipt.status !== 'success') {
-      throw new Error('Transaction not found or failed');
+    if (receipt.status !== 'success') {
+      throw new Error('Transaction failed');
     }
 
     // Get transaction details
+    const publicClient = getBasePublicClient();
     const tx = await publicClient.getTransaction({ hash: txHash as `0x${string}` });
 
     // Verify transaction details
