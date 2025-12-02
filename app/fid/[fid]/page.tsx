@@ -239,6 +239,10 @@ export default function FidCardPage() {
                     <span className="text-vintage-burnt-gold font-semibold">Power:</span>{" "}
                     <span className="text-vintage-gold font-bold text-lg">{correctPower}</span>
                   </div>
+                  <div className="col-span-2 pt-2 border-t border-vintage-gold/20">
+                    <span className="text-vintage-burnt-gold font-semibold">Neynar Score:</span>{" "}
+                    <span className="text-vintage-ice font-bold">{card.neynarScore.toFixed(3)}</span>
+                  </div>
                 </div>
               </div>
 
