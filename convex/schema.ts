@@ -534,6 +534,7 @@ export default defineSchema({
       hostUsedCards: v.optional(v.array(v.number())), // Indices of cards used by host
       guestUsedCards: v.optional(v.array(v.number())), // Indices of cards used by guest
       bettingWindowEndsAt: v.optional(v.number()), // Timestamp when betting window closes (for CPU vs CPU)
+      revealScheduledFor: v.optional(v.number()), // Timestamp when reveal is scheduled (prevents duplicate scheduling)
     })),
 
     // Round History (for displaying all 7 rounds to all players/spectators)
