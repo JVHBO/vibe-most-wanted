@@ -43,15 +43,30 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   useBodyScrollLock(true);
   useEscapeKey(onClose);
 
-  // Check if we should use Farcaster SDK for transactions
+    // Check if we should use Farcaster SDK for transactions
   useEffect(() => {
     const checkFarcasterSDK = async () => {
-      if (sdk && typeof sdk.wallet !== 'undefined') {
-        const provider = await sdk.wallet.getEthereumProvider();
-        if (provider) {
-          setUseFarcasterSDK(true);
-          console.log('[CoinsInboxModal] Using Farcaster SDK for transactions');
+      try {
+        // Only use Farcaster SDK if we're actually inside the miniapp
+        // Check if we're in an iframe (miniapp runs in iframe)
+        const isInIframe = window !== window.parent;
+
+        if (!isInIframe) {
+          console.log('[CoinsInboxModal] Not in iframe, using wagmi');
+          setUseFarcasterSDK(false);
+          return;
         }
+
+        if (sdk && typeof sdk.wallet !== 'undefined') {
+          const provider = await sdk.wallet.getEthereumProvider();
+          if (provider) {
+            setUseFarcasterSDK(true);
+            console.log('[CoinsInboxModal] Using Farcaster SDK for transactions');
+          }
+        }
+      } catch (error) {
+        console.log('[CoinsInboxModal] Farcaster SDK not available, using wagmi:', error);
+        setUseFarcasterSDK(false);
       }
     };
     checkFarcasterSDK();
