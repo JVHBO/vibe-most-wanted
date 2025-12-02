@@ -204,16 +204,18 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   // SSR check
   if (typeof window === 'undefined') return null;
 
-  return createPortal(
-    <div
-      className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      style={{ zIndex: Z_INDEX.modal }}
-      onClick={onClose}
-    >
-      <div
-        className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+  return (
+    <>
+      {createPortal(
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          style={{ zIndex: Z_INDEX.modal }}
+          onClick={onClose}
+        >
+          <div
+            className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Close button */}
         <button
           onClick={onClose}
@@ -333,9 +335,12 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           </Link>
           </div>
         </div>
-      </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
-      {/* Transaction History Modal */}
+      {/* Transaction History Modal - Separate Portal */}
       {showHistory && address && (
         <CoinsHistoryModal
           isOpen={showHistory}
@@ -343,7 +348,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           address={address}
         />
       )}
-    </div>,
-    document.body
+    </>
   );
 }

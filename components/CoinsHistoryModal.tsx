@@ -3,6 +3,7 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { X } from 'lucide-react';
+import { Z_INDEX } from '@/lib/z-index';
 
 interface CoinsHistoryModalProps {
   isOpen: boolean;
@@ -71,7 +72,10 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/80 p-4"
+      style={{ zIndex: Z_INDEX.modalNested }}
+    >
       <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 max-w-2xl w-full max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-vintage-gold/30">
