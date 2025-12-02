@@ -242,6 +242,7 @@ export default function FidCardPage() {
                   <div className="col-span-2 pt-2 border-t border-vintage-gold/20">
                     <span className="text-vintage-burnt-gold font-semibold">Neynar Score:</span>{" "}
                     <span className="text-vintage-ice font-bold">{card.neynarScore.toFixed(3)}</span>
+                    <span className="text-vintage-ice/60 text-xs ml-2">(at mint time)</span>
                   </div>
                 </div>
               </div>
