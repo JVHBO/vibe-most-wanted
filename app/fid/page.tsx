@@ -705,6 +705,22 @@ export default function FidPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-2 sm:p-4 md:p-8 overflow-x-hidden">
+      {/* Language Selector - Fixed Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <select
+          value={lang}
+          onChange={(e) => setLang(e.target.value as any)}
+          className="px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm shadow-lg hover:border-vintage-gold transition-colors"
+        >
+          <option value="en">🇺🇸 English</option>
+          <option value="pt-BR">🇧🇷 Português</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+          <option value="ru">🇷🇺 Русский</option>
+          <option value="zh-CN">🇨🇳 中文</option>
+        </select>
+      </div>
+
       <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2 relative">
