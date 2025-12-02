@@ -165,21 +165,12 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
                 </thead>
                 <tbody className="text-vintage-ice/80">
                   <tr className="border-b border-vintage-ice/10 bg-gradient-to-r from-yellow-900/20 to-transparent">
-                    <td className="p-2 font-bold text-yellow-400">≤ 100 (OG)</td>
+                    <td className="p-2 font-bold text-yellow-400">≤ 5,000 (OG)</td>
                     <td className="p-2">
                       <div className="text-purple-400 font-bold">100% {t.prizeFoil}</div>
                     </td>
                     <td className="p-2">
                       <div className="text-green-400 font-bold">100% {t.pristine}</div>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-vintage-ice/10">
-                    <td className="p-2">101 - 5,000</td>
-                    <td className="p-2">
-                      <div className="text-purple-400">100% {t.prizeFoil}</div>
-                    </td>
-                    <td className="p-2">
-                      <div className="text-green-400">100% {t.pristine}</div>
                     </td>
                   </tr>
                   <tr className="border-b border-vintage-ice/10">
