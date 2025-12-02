@@ -226,14 +226,17 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
         {/* Transaction History Icon Button */}
         <button
-          onClick={() => setShowHistory(true)}
-          className="absolute top-4 right-14 p-2 text-vintage-gold/60 hover:text-vintage-gold transition-colors group"
-          title="Transaction History"
+          onClick={() => {
+            console.log('[CoinsInboxModal] History button clicked');
+            setShowHistory(true);
+          }}
+          className="absolute top-3 right-12 p-3 bg-vintage-gold/10 hover:bg-vintage-gold/20 rounded-lg text-vintage-gold/80 hover:text-vintage-gold transition-all group border border-vintage-gold/20"
+          title="Histórico de Transações"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="28"
+            height="28"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
