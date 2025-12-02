@@ -1094,4 +1094,18 @@ export default defineSchema({
   })
     .index("by_arena_round", ["arenaId", "roundNumber"])
     .index("by_address", ["address"]),
+
+  // Coin Transaction History
+  coinTransactions: defineTable({
+    address: v.string(), // Player address
+    type: v.string(), // 'earn' | 'claim' | 'convert' | 'spend'
+    amount: v.number(), // Amount of coins/VBMS
+    source: v.optional(v.string()), // 'pve', 'pvp', 'leaderboard', 'attack', 'boss', 'shop', etc
+    description: v.string(), // Human readable description
+    balanceBefore: v.number(), // Balance before transaction
+    balanceAfter: v.number(), // Balance after transaction
+    timestamp: v.number(), // When it happened
+  })
+    .index("by_address", ["address"])
+    .index("by_address_timestamp", ["address", "timestamp"]),
 });

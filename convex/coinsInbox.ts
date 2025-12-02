@@ -18,10 +18,11 @@ export const sendCoinsToInbox = mutation({
     amount: v.number(),
     source: v.string(), // "pve", "pvp", "attack", "leaderboard"
   },
-  handler: async (ctx, { address, amount }) => {
+  handler: async (ctx, { address, amount, source }) => {
+    const normalizedAddress = address.toLowerCase();
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     if (!profile) {
@@ -29,15 +30,28 @@ export const sendCoinsToInbox = mutation({
     }
 
     const currentInbox = profile.coinsInbox || 0;
+    const newInbox = currentInbox + amount;
 
     await ctx.db.patch(profile._id, {
-      coinsInbox: currentInbox + amount,
+      coinsInbox: newInbox,
       lastUpdated: Date.now(),
+    });
+
+    // Register transaction in history
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedAddress,
+      type: "earn",
+      amount,
+      source,
+      description: `Earned ${amount} coins from ${source}`,
+      balanceBefore: currentInbox,
+      balanceAfter: newInbox,
+      timestamp: Date.now(),
     });
 
     return {
       success: true,
-      newInboxBalance: currentInbox + amount,
+      newInboxBalance: newInbox,
       amountAdded: amount,
     };
   },
@@ -51,9 +65,10 @@ export const claimAllCoinsFromInbox = mutation({
     address: v.string(),
   },
   handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     if (!profile) {
@@ -74,6 +89,18 @@ export const claimAllCoinsFromInbox = mutation({
       coinsInbox: 0,
       lifetimeEarned: (profile.lifetimeEarned || 0) + inboxAmount,
       lastUpdated: Date.now(),
+    });
+
+    // Register claim transaction
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedAddress,
+      type: "claim",
+      amount: inboxAmount,
+      source: "inbox",
+      description: `Claimed ${inboxAmount} coins from inbox to balance`,
+      balanceBefore: currentCoins,
+      balanceAfter: newCoinsBalance,
+      timestamp: Date.now(),
     });
 
     return {
@@ -128,5 +155,26 @@ export const hasUnclaimedCoins = query({
     }
 
     return (profile.coinsInbox || 0) > 0;
+  },
+});
+
+/**
+ * Get transaction history for player
+ */
+export const getTransactionHistory = query({
+  args: {
+    address: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { address, limit = 50 }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    const transactions = await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .order("desc")
+      .take(limit);
+
+    return transactions;
   },
 });

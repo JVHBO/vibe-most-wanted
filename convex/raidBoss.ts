@@ -235,16 +235,25 @@ export const getBossLeaderboard = query({
  * Get raid boss leaderboard (ordered by totalDamageDealt)
  * Returns all players with raid decks, enriched with profile data
  */
+/**
+ * 🚀 OPTIMIZED: Get raid boss leaderboard with minimal fields
+ *
+ * OLD VERSION: Returns full profile data (~10KB per entry)
+ * NEW VERSION: Returns only display fields (~500 bytes per entry)
+ *
+ * Bandwidth savings: ~95% reduction
+ */
 export const getRaidBossLeaderboard = query({
-  handler: async (ctx) => {
-    // Get all raid attacks ordered by total damage dealt
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit = 100 }) => {
+    // Get raid attacks ordered by total damage dealt
     const raidAttacks = await ctx.db
       .query("raidAttacks")
       .withIndex("by_total_damage")
       .order("desc")
-      .collect();
+      .take(limit); // OPTIMIZATION: Only fetch what we need
 
-    // Enrich with profile data
+    // Enrich with MINIMAL profile data
     const leaderboard = await Promise.all(
       raidAttacks.map(async (raid) => {
         const profile = await ctx.db
@@ -258,34 +267,25 @@ export const getRaidBossLeaderboard = query({
             address: raid.address,
             username: raid.address.slice(0, 8),
             stats: {
-              totalPower: 0,
-              totalCards: 0,
-              openedCards: 0,
-              unopenedCards: 0,
-              honor: 500,
-              pveWins: 0,
-              pveLosses: 0,
-              pvpWins: 0,
-              pvpLosses: 0,
-              attackWins: 0,
-              attackLosses: 0,
-              defenseWins: 0,
-              defenseLosses: 0,
               raidBossDamage: raid.totalDamageDealt,
               bossesKilled: raid.bossesKilled,
+              aura: 500,
             },
-            createdAt: raid.createdAt,
-            lastUpdated: raid.lastUpdated,
+            userIndex: 0,
           };
         }
 
+        // OPTIMIZATION: Return ONLY fields needed for leaderboard display
         return {
-          ...profile,
+          address: profile.address,
+          username: profile.username || profile.address.slice(0, 8),
           stats: {
-            ...profile.stats,
             raidBossDamage: raid.totalDamageDealt,
             bossesKilled: raid.bossesKilled,
+            aura: profile.stats?.aura ?? 500,
+            totalPower: profile.stats?.totalPower || 0,
           },
+          userIndex: profile.userIndex || 0,
         };
       })
     );
