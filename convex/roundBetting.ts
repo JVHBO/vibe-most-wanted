@@ -20,14 +20,53 @@ const ODDS_CONFIG = {
   tie: 3.5, // Tie bet: 3.5x (higher since it's harder to predict)
 };
 
+// Daily Buff System - One collection gets buffed odds each day
+const ARENA_COLLECTIONS = [
+  "gmvbrs", "vibe", "coquettish", "viberuto", "meowverse",
+  "poorlydrawnpepes", "teampothead", "tarot", "americanfootball",
+  "vibefid", "baseballcabal", "vibefx", "historyofcomputer",
+] as const;
+
+const BUFF_BONUS = 0.5; // +0.5x to odds when buffed
+
+function getUTCDayNumber(): number {
+  const now = new Date();
+  const utcMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.floor(utcMidnight / (1000 * 60 * 60 * 24));
+}
+
+function getDailyBuffedCollection(): string {
+  const dayNumber = getUTCDayNumber();
+  const index = dayNumber % ARENA_COLLECTIONS.length;
+  return ARENA_COLLECTIONS[index];
+}
+
+function isCollectionBuffed(collectionSlug: string): boolean {
+  return collectionSlug.toLowerCase() === getDailyBuffedCollection().toLowerCase();
+}
+
 /**
  * Get odds for a specific round and bet type
+ * Applies buff bonus if collection is today's daily buff
  */
-function getOddsForRound(roundNumber: number, isTieBet: boolean = false): number {
-  if (isTieBet) return ODDS_CONFIG.tie;
-  if (roundNumber <= 3) return ODDS_CONFIG.rounds1to3;
-  if (roundNumber <= 5) return ODDS_CONFIG.rounds4to5;
-  return ODDS_CONFIG.rounds6to7;
+function getOddsForRound(roundNumber: number, isTieBet: boolean = false, collectionSlug?: string): number {
+  let baseOdds: number;
+  if (isTieBet) {
+    baseOdds = ODDS_CONFIG.tie;
+  } else if (roundNumber <= 3) {
+    baseOdds = ODDS_CONFIG.rounds1to3;
+  } else if (roundNumber <= 5) {
+    baseOdds = ODDS_CONFIG.rounds4to5;
+  } else {
+    baseOdds = ODDS_CONFIG.rounds6to7;
+  }
+
+  // Apply buff bonus if collection is today's buffed collection
+  if (collectionSlug && isCollectionBuffed(collectionSlug)) {
+    baseOdds += BUFF_BONUS;
+  }
+
+  return baseOdds;
 }
 
 /**
@@ -132,8 +171,17 @@ export const placeBetOnRound = mutation({
     // Check if this is a tie bet
     const isTieBet = normalizedBetOn === "tie";
 
-    // Get odds for this round
-    const odds = getOddsForRound(roundNumber, isTieBet);
+    // Get room info for collection (buff check)
+    const room = await ctx.db
+      .query("pokerRooms")
+      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .first();
+
+    const collectionSlug = room?.cpuCollection || undefined;
+
+    // Get odds for this round (with buff bonus if applicable)
+    const odds = getOddsForRound(roundNumber, isTieBet, collectionSlug);
+    const isBuffed = collectionSlug ? isCollectionBuffed(collectionSlug) : false;
 
     // Create bet
     await ctx.db.insert("roundBets", {
@@ -150,11 +198,6 @@ export const placeBetOnRound = mutation({
     console.log(`🎰 Round bet placed: ${normalizedAddress} bet ${amount} credits on round ${roundNumber} at ${odds}x odds [roomId: ${roomId}]`);
 
     // Check if this is a CPU vs CPU room - if so, shorten betting window
-    const room = await ctx.db
-      .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
-      .first();
-
     if (room?.isCpuVsCpu) {
       // Call shortenBettingWindow mutation
       await ctx.runMutation(api.pokerBattle.shortenBettingWindow, { roomId });
@@ -183,7 +226,7 @@ export const placeBetOnRound = mutation({
       roomId,
       sender: normalizedAddress,
       senderUsername: bettorProfile?.username || "Spectator",
-      message: `🎰 Bet ${amount} credits on ${betOnUsername} at ${odds}x odds for Round ${roundNumber}`,
+      message: `🎰 Bet ${amount} credits on ${betOnUsername} at ${odds}x odds${isBuffed ? " 🔥" : ""} for Round ${roundNumber}`,
       timestamp: Date.now(),
       type: "text" as const,
     });
