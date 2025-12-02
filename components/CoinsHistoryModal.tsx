@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { X } from 'lucide-react';
 import { Z_INDEX } from '@/lib/z-index';
+import { createPortal } from 'react-dom';
 
 interface CoinsHistoryModalProps {
   isOpen: boolean;
@@ -18,6 +19,9 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
   );
 
   if (!isOpen) return null;
+
+  // SSR check
+  if (typeof window === 'undefined') return null;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -71,12 +75,18 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
     });
   };
 
-  return (
+  console.log('[CoinsHistoryModal] Rendering modal, isOpen:', isOpen);
+
+  return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/80 p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/90 p-4"
       style={{ zIndex: Z_INDEX.modalNested }}
+      onClick={onClose}
     >
-      <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 max-w-2xl w-full max-h-[80vh] flex flex-col">
+      <div
+        className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 max-w-2xl w-full max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-vintage-gold/30">
           <h2 className="text-2xl font-bold text-vintage-gold">
@@ -180,6 +190,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
