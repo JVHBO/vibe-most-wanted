@@ -164,8 +164,17 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
                   </tr>
                 </thead>
                 <tbody className="text-vintage-ice/80">
+                  <tr className="border-b border-vintage-ice/10 bg-gradient-to-r from-yellow-900/20 to-transparent">
+                    <td className="p-2 font-bold text-yellow-400">≤ 100 (OG)</td>
+                    <td className="p-2">
+                      <div className="text-purple-400 font-bold">100% {t.prizeFoil}</div>
+                    </td>
+                    <td className="p-2">
+                      <div className="text-green-400 font-bold">100% {t.pristine}</div>
+                    </td>
+                  </tr>
                   <tr className="border-b border-vintage-ice/10">
-                    <td className="p-2">≤ 5,000</td>
+                    <td className="p-2">101 - 5,000</td>
                     <td className="p-2">
                       <div className="text-purple-400">100% {t.prizeFoil}</div>
                     </td>
@@ -176,75 +185,78 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
                   <tr className="border-b border-vintage-ice/10">
                     <td className="p-2">5,001 - 20,000</td>
                     <td className="p-2">
-                      <div>75% {t.prizeFoil}</div>
-                      <div>25% {t.standardFoil}</div>
+                      <div>80% {t.prizeFoil}</div>
+                      <div>20% {t.standardFoil}</div>
                     </td>
                     <td className="p-2">
-                      <div>85% {t.pristine}</div>
-                      <div>15% {t.mint}</div>
+                      <div>90% {t.pristine}</div>
+                      <div>10% {t.mint}</div>
                     </td>
                   </tr>
                   <tr className="border-b border-vintage-ice/10">
                     <td className="p-2">20,001 - 100,000</td>
                     <td className="p-2">
-                      <div>20% {t.prizeFoil}</div>
-                      <div>70% {t.standardFoil}</div>
+                      <div>30% {t.prizeFoil}</div>
+                      <div>60% {t.standardFoil}</div>
                       <div>10% {t.noFoil}</div>
                     </td>
                     <td className="p-2">
-                      <div>40% {t.pristine}</div>
+                      <div>50% {t.pristine}</div>
                       <div>40% {t.mint}</div>
-                      <div>20% {t.lightlyPlayed}</div>
+                      <div>10% {t.lightlyPlayed}</div>
                     </td>
                   </tr>
                   <tr className="border-b border-vintage-ice/10">
                     <td className="p-2">100,001 - 250,000</td>
                     <td className="p-2">
-                      <div>10% {t.prizeFoil}</div>
-                      <div>60% {t.standardFoil}</div>
-                      <div>30% {t.noFoil}</div>
+                      <div>5% {t.prizeFoil}</div>
+                      <div>35% {t.standardFoil}</div>
+                      <div>60% {t.noFoil}</div>
                     </td>
                     <td className="p-2">
-                      <div>5% {t.pristine}</div>
-                      <div>35% {t.mint}</div>
-                      <div>50% {t.lightlyPlayed}</div>
-                      <div>10% {t.moderatelyPlayed}</div>
+                      <div>2% {t.pristine}</div>
+                      <div>18% {t.mint}</div>
+                      <div>45% {t.lightlyPlayed}</div>
+                      <div>30% {t.moderatelyPlayed}</div>
+                      <div>5% {t.heavilyPlayed}</div>
                     </td>
                   </tr>
                   <tr className="border-b border-vintage-ice/10">
                     <td className="p-2">250,001 - 500,000</td>
                     <td className="p-2">
-                      <div>5% {t.prizeFoil}</div>
-                      <div>40% {t.standardFoil}</div>
-                      <div>55% {t.noFoil}</div>
+                      <div>3% {t.prizeFoil}</div>
+                      <div>25% {t.standardFoil}</div>
+                      <div>72% {t.noFoil}</div>
                     </td>
                     <td className="p-2">
-                      <div>10% {t.mint}</div>
-                      <div>40% {t.lightlyPlayed}</div>
-                      <div>50% {t.moderatelyPlayed}</div>
+                      <div>5% {t.mint}</div>
+                      <div>30% {t.lightlyPlayed}</div>
+                      <div>55% {t.moderatelyPlayed}</div>
+                      <div>10% {t.heavilyPlayed}</div>
                     </td>
                   </tr>
                   <tr className="border-b border-vintage-ice/10">
                     <td className="p-2">500,001 - 1,200,000</td>
                     <td className="p-2">
-                      <div>2% {t.prizeFoil}</div>
-                      <div>20% {t.standardFoil}</div>
-                      <div>78% {t.noFoil}</div>
+                      <div>1% {t.prizeFoil}</div>
+                      <div>10% {t.standardFoil}</div>
+                      <div>89% {t.noFoil}</div>
                     </td>
                     <td className="p-2">
                       <div>5% {t.lightlyPlayed}</div>
-                      <div>55% {t.moderatelyPlayed}</div>
-                      <div>40% {t.heavilyPlayed}</div>
+                      <div>45% {t.moderatelyPlayed}</div>
+                      <div>50% {t.heavilyPlayed}</div>
                     </td>
                   </tr>
                   <tr>
                     <td className="p-2">&gt; 1,200,000</td>
                     <td className="p-2">
-                      <div>10% {t.standardFoil}</div>
-                      <div>90% {t.noFoil}</div>
+                      <div>5% {t.standardFoil}</div>
+                      <div>95% {t.noFoil}</div>
                     </td>
                     <td className="p-2">
-                      <div className="text-gray-400">100% {t.heavilyPlayed}</div>
+                      <div>10% {t.moderatelyPlayed}</div>
+                      <div className="text-gray-400">90% {t.heavilyPlayed}</div>
                     </td>
                   </tr>
                 </tbody>
