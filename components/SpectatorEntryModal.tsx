@@ -114,7 +114,8 @@ export function SpectatorEntryModal({
 
         {/* Mode Selection - Only show if not in deposit flow */}
         {step === "input" && (
-          <div className={`grid ${hideFreePick ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-6`}>
+          <>
+            <div className={`grid ${hideFreePick ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-6`}>
             {/* Free Spectator - Hidden when hideFreePick is true */}
             {!hideFreePick && onJoinFree && (
               <button
@@ -157,7 +158,18 @@ export function SpectatorEntryModal({
                 </p>
               </div>
             </button>
-          </div>
+            </div>
+
+            {/* Back button when hideFreePick is true (Mecha Arena) */}
+            {hideFreePick && (
+              <button
+                onClick={onClose}
+                className="w-full bg-vintage-charcoal hover:bg-vintage-charcoal/80 text-vintage-ice border border-vintage-gold/30 py-3 rounded-lg font-display font-bold transition-all mt-4"
+              >
+                ← Back to Arena
+              </button>
+            )}
+          </>
         )}
 
         {/* Deposit Intro - Explain betting */}

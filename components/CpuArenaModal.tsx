@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { SpectatorEntryModal } from "./SpectatorEntryModal";
 import { PokerBattleTable } from "./PokerBattleTable";
+import {
+  getDailyBuffedCollection,
+  getTimeUntilNextBuff,
+  BUFF_CONFIG,
+} from "@/lib/dailyBuff";
 
 interface CpuArenaModalProps {
   isOpen: boolean;
@@ -29,6 +34,9 @@ const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: stri
   tarot: { name: "Tarot", emoji: "🔮", color: "from-indigo-600 to-purple-600" },
   americanfootball: { name: "American Football", emoji: "🏈", color: "from-amber-600 to-orange-600" },
   vibefid: { name: "VibeFID", emoji: "🆔", color: "from-cyan-500 to-blue-600" },
+  baseballcabal: { name: "Baseball Cabal", emoji: "⚾", color: "from-red-600 to-blue-700" },
+  vibefx: { name: "Vibe FX", emoji: "✨", color: "from-fuchsia-500 to-violet-600" },
+  historyofcomputer: { name: "History of Computer", emoji: "💻", color: "from-gray-600 to-slate-700" },
 };
 
 type ViewMode = "password" | "rooms" | "spectator-entry" | "battle";
@@ -57,6 +65,21 @@ export function CpuArenaModal({
   const [isJoining, setIsJoining] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState(false);
+  const [buffCountdown, setBuffCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
+
+  // Get today's buffed collection
+  const buffedCollection = useMemo(() => getDailyBuffedCollection(), []);
+  const buffedCollectionInfo = COLLECTION_INFO[buffedCollection];
+
+  // Update countdown timer
+  useEffect(() => {
+    const updateCountdown = () => {
+      setBuffCountdown(getTimeUntilNextBuff());
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Get available collections
   const availableCollections = useQuery(api.pokerBattle.getAvailableCollections);
@@ -246,6 +269,38 @@ export function CpuArenaModal({
               </div>
             </div>
 
+            {/* Daily Buff Banner */}
+            <div className="mx-4 sm:mx-6 mt-4 bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 border-2 border-orange-400/50 rounded-xl p-4 relative overflow-hidden">
+              {/* Animated fire glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-yellow-500/20 to-orange-500/10 animate-pulse"></div>
+
+              <div className="relative flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-4xl animate-bounce">🔥</div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-orange-400 font-bold text-lg">DAILY BOOST</span>
+                      <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                        +{BUFF_CONFIG.oddsBonus}x ODDS
+                      </span>
+                    </div>
+                    <p className="text-vintage-ice/80 text-sm">
+                      Today&apos;s boosted arena: <span className="text-orange-300 font-bold">{buffedCollectionInfo?.name || buffedCollection}</span> {buffedCollectionInfo?.emoji}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-center sm:text-right">
+                  <p className="text-vintage-ice/60 text-xs">Resets in</p>
+                  <p className="text-orange-400 font-mono font-bold">
+                    {String(buffCountdown.hours).padStart(2, '0')}:
+                    {String(buffCountdown.minutes).padStart(2, '0')}:
+                    {String(buffCountdown.seconds).padStart(2, '0')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Available Rooms */}
             <div className="p-4 sm:p-6">
               <h2 className="text-xl font-display font-bold text-vintage-gold mb-4 flex items-center gap-2">
@@ -264,14 +319,40 @@ export function CpuArenaModal({
                   const roomData = cpuRooms?.find((r: any) => r.collection === collection);
                   const spectatorCount = roomData?.spectatorCount || 0;
 
+                  // Check if this collection is buffed today
+                  const isBuffed = collection === buffedCollection;
+
                   return (
                     <button
                       key={collection}
                       onClick={() => handleSelectRoom(collection)}
-                      className={`relative group bg-gradient-to-br ${info.color} hover:scale-105 border-2 border-white/20 hover:border-white/40 rounded-xl p-5 transition-all shadow-lg hover:shadow-xl`}
+                      className={`relative group bg-gradient-to-br ${info.color} hover:scale-105 border-2 ${
+                        isBuffed
+                          ? "border-orange-400 ring-2 ring-orange-400/50 shadow-orange-500/30"
+                          : "border-white/20 hover:border-white/40"
+                      } rounded-xl p-5 transition-all shadow-lg hover:shadow-xl`}
                     >
+                      {/* Buff badge */}
+                      {isBuffed && (
+                        <>
+                          {/* Fire glow effect */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-orange-500/30 to-transparent rounded-xl animate-pulse"></div>
+
+                          {/* HOT badge */}
+                          <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-10 flex items-center gap-1">
+                            <span>🔥</span>
+                            <span>HOT</span>
+                          </div>
+
+                          {/* Odds bonus badge */}
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg z-10">
+                            +{BUFF_CONFIG.oddsBonus}x ODDS
+                          </div>
+                        </>
+                      )}
+
                       {/* Glow effect */}
-                      <div className="absolute inset-0 bg-white/10 blur-xl rounded-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
+                      <div className={`absolute inset-0 ${isBuffed ? "bg-orange-400/20" : "bg-white/10"} blur-xl rounded-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10`}></div>
 
                       <div className="text-center">
                         <div className="text-5xl mb-3">{info.emoji}</div>
@@ -289,8 +370,8 @@ export function CpuArenaModal({
                             <span className="text-white font-bold">{spectatorCount}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                            <span className="text-white/80 text-xs">Live</span>
+                            <div className={`w-2 h-2 ${isBuffed ? "bg-orange-400" : "bg-green-400"} rounded-full animate-pulse`}></div>
+                            <span className="text-white/80 text-xs">{isBuffed ? "Boosted" : "Live"}</span>
                           </div>
                         </div>
                       </div>
@@ -307,6 +388,7 @@ export function CpuArenaModal({
                   <li>• Two CPUs battle automatically on the poker table</li>
                   <li>• Same chat, sounds and experience as regular battles</li>
                   <li>• Bet on each round (1-7) with growing odds: 1.5x → 2.0x</li>
+                  <li>• <span className="text-orange-400 font-bold">🔥 Daily Boost:</span> One arena gets +{BUFF_CONFIG.oddsBonus}x bonus odds every day!</li>
                   <li>• Deposit VBMS to get betting credits</li>
                 </ul>
               </div>
