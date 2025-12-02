@@ -120,6 +120,9 @@ export default function DocsPage() {
     { id: "economy" as DocSection, label: t("economy") },
     { id: "battles" as DocSection, label: t("battles") },
     { id: "poker" as DocSection, label: "Poker Battle" },
+    { id: "mecha" as DocSection, label: "🤖 Mecha Arena" },
+    { id: "raidboss" as DocSection, label: "👹 Raid Boss" },
+    { id: "vibefid" as DocSection, label: "🆔 VibeFID" },
     { id: "achievements" as DocSection, label: t("achievements") },
     { id: "quests" as DocSection, label: t("quests") },
     { id: "cards" as DocSection, label: t("cards") },
@@ -259,6 +262,129 @@ export default function DocsPage() {
                   <li>Winner takes 95% of pot (5% house fee)</li>
                   <li>Blockchain secured (VBMS contract on Base)</li>
                   <li>PvP matches are live - both players play simultaneously</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+
+          {/* Mecha Arena */}
+          {activeSection === "mecha" && (
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">🤖 Mecha Arena</h2>
+              <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
+                <p>Watch CPU vs CPU battles and bet on the outcome! Spectate epic card battles between AI opponents.</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">How It Works</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Choose from 13 different arena collections</li>
+                  <li>Two CPUs battle automatically using cards from that collection</li>
+                  <li>Deposit VBMS to get betting credits</li>
+                  <li>Bet on each round (1-7) with growing odds</li>
+                  <li>Instant payouts when rounds resolve</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Betting Odds</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Rounds 1-3:</strong> 1.5x odds</li>
+                  <li><strong>Rounds 4-5:</strong> 1.8x odds</li>
+                  <li><strong>Rounds 6-7:</strong> 2.0x odds</li>
+                  <li><strong>Tie Bet:</strong> 3.5x odds</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">🔥 Daily Boost</h3>
+                <p>Every day, one arena collection gets <strong className="text-orange-400">+0.5x bonus odds</strong>! Look for the HOT badge.</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Collections</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🌅 GM VBRS</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎭 Vibe Most Wanted</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">💋 Coquettish</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🍥 Viberuto</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐱 Meowverse</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐸 Poorly Drawn Pepes</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🌿 Team Pothead</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🔮 Tarot</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🏈 American Football</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🆔 VibeFID</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">⚾ Baseball Cabal</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">✨ Vibe FX</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">💻 History of Computer</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Raid Boss */}
+          {activeSection === "raidboss" && (
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">👹 Raid Boss</h2>
+              <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
+                <p>Team up with other players to defeat powerful bosses and earn exclusive rewards!</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">How It Works</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Bosses appear on a rotating schedule</li>
+                  <li>Select cards from your collection to attack</li>
+                  <li>Deal damage based on your card power</li>
+                  <li>Contribute to the community effort</li>
+                  <li>Earn rewards based on damage contribution</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Rewards</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>TESTVBMS coins based on damage dealt</li>
+                  <li>Bonus rewards for top contributors</li>
+                  <li>Special achievements for boss defeats</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Tips</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Use high-power cards for maximum damage</li>
+                  <li>Cards from the boss collection deal extra damage</li>
+                  <li>Coordinate with other players for faster kills</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* VibeFID */}
+          {activeSection === "vibefid" && (
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">🆔 VibeFID</h2>
+              <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
+                <p>Generate unique trading cards based on your Farcaster ID! Your FID determines your card traits.</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">How It Works</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Connect with Farcaster to mint your VibeFID card</li>
+                  <li>Your Neynar score determines the card rarity</li>
+                  <li>Your FID number determines foil and wear traits</li>
+                  <li>Lower FID = Better chances for rare traits</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Neynar Score → Rarity</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong className="text-purple-400">Mythic</strong> (≥ 0.99): 800 base power</li>
+                  <li><strong className="text-orange-400">Legendary</strong> (≥ 0.90): 240 base power</li>
+                  <li><strong className="text-pink-400">Epic</strong> (≥ 0.79): 80 base power</li>
+                  <li><strong className="text-blue-400">Rare</strong> (≥ 0.70): 20 base power</li>
+                  <li><strong className="text-gray-400">Common</strong> (&lt; 0.70): 5 base power</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">FID → Traits</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong className="text-yellow-400">≤ 5,000 (OG)</strong>: 100% Prize Foil + 100% Pristine</li>
+                  <li><strong>5,001 - 20,000</strong>: 80% Prize Foil, 90% Pristine</li>
+                  <li><strong>20,001 - 100,000</strong>: Mixed chances</li>
+                  <li><strong>&gt; 100,000</strong>: Lower chances for rare traits</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">VibeFID Benefits</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>⚡ <strong>Power Boost:</strong> +10% power to all your cards</li>
+                  <li>♾️ <strong>Infinite Energy:</strong> No energy limit for battles</li>
+                  <li>🃏 <strong>No Deck Restriction:</strong> Use any cards in your deck</li>
                 </ul>
               </div>
             </div>
