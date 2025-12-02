@@ -61,12 +61,12 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Agora';
-    if (diffMins < 60) return `${diffMins}m atrás`;
-    if (diffHours < 24) return `${diffHours}h atrás`;
-    if (diffDays < 7) return `${diffDays}d atrás`;
+    if (diffMins < 1) return 'Now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
 
-    return date.toLocaleDateString('pt-BR', {
+    return date.toLocaleDateString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -90,7 +90,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-vintage-gold/30">
           <h2 className="text-2xl font-bold text-vintage-gold">
-            📊 Histórico de Transações
+            📊 Transaction History
           </h2>
           <button
             onClick={onClose}
@@ -104,14 +104,14 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
         <div className="flex-1 overflow-y-auto p-6">
           {!transactions ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-vintage-ice/50">Carregando histórico...</div>
+              <div className="text-vintage-ice/50">Loading history...</div>
             </div>
           ) : transactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="text-6xl mb-4">📭</div>
               <div className="text-vintage-ice/70 text-center">
-                <p className="font-bold mb-2">Nenhuma transação ainda</p>
-                <p className="text-sm">Comece jogando para ganhar coins!</p>
+                <p className="font-bold mb-2">No transactions yet</p>
+                <p className="text-sm">Start playing to earn coins!</p>
               </div>
             </div>
           ) : (
@@ -148,7 +148,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
                         {tx.amount.toLocaleString()}
                       </p>
                       <p className="text-xs text-vintage-ice/50 mt-1">
-                        Saldo: {tx.balanceAfter.toLocaleString()}
+                        Balance: {tx.balanceAfter.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -163,7 +163,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
           <div className="p-6 border-t border-vintage-gold/30 bg-vintage-black/30">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-sm text-vintage-ice/60 mb-1">Total Ganho</p>
+                <p className="text-sm text-vintage-ice/60 mb-1">Total Earned</p>
                 <p className="text-lg font-bold text-green-400">
                   +{transactions
                     .filter((t: any) => t.type === 'earn')
@@ -172,7 +172,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
                 </p>
               </div>
               <div>
-                <p className="text-sm text-vintage-ice/60 mb-1">Total Claimado</p>
+                <p className="text-sm text-vintage-ice/60 mb-1">Total Claimed</p>
                 <p className="text-lg font-bold text-blue-400">
                   {transactions
                     .filter((t: any) => t.type === 'claim')
@@ -181,7 +181,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
                 </p>
               </div>
               <div>
-                <p className="text-sm text-vintage-ice/60 mb-1">Transações</p>
+                <p className="text-sm text-vintage-ice/60 mb-1">Transactions</p>
                 <p className="text-lg font-bold text-vintage-gold">
                   {transactions.length}
                 </p>
