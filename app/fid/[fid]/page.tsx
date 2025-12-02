@@ -14,11 +14,17 @@ import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { getFidTraits } from '@/lib/fidTraits';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { getUserByFid, calculateRarityFromScore } from '@/lib/neynar';
+import { AudioManager } from '@/lib/audio-manager';
+import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
+import { fidTranslations } from '@/lib/fidTranslations';
 
 export default function FidCardPage() {
   const params = useParams();
   const fid = parseInt(params.fid as string);
   const { lang, setLang } = useLanguage();
+  const farcasterContext = useFarcasterContext();
+  const t = fidTranslations[lang];
 
   // Fetch all cards for this FID
   const fidCards = useQuery(api.farcasterCards.getFarcasterCardsByFid, { fid });
@@ -50,6 +56,53 @@ export default function FidCardPage() {
 
 
   const [backstory, setBackstory] = useState<any>(null);
+
+  // Neynar score state
+  const [neynarScoreData, setNeynarScoreData] = useState<{ score: number; rarity: string; fid: number; username: string } | null>(null);
+  const [showScoreModal, setShowScoreModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check Neynar Score
+  const handleCheckNeynarScore = async () => {
+    AudioManager.buttonClick();
+
+    if (!farcasterContext.user) {
+      setError("Please connect your Farcaster account first");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    const userFid = farcasterContext.user.fid;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const user = await getUserByFid(userFid);
+      if (!user) {
+        setError(`No user found for FID ${userFid}`);
+        setLoading(false);
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      const score = user.experimental.neynar_user_score;
+      const rarity = calculateRarityFromScore(score);
+
+      setNeynarScoreData({
+        score,
+        rarity,
+        fid: user.fid,
+        username: user.username,
+      });
+      setShowScoreModal(true);
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch Neynar score");
+      setLoading(false);
+      setTimeout(() => setError(null), 3000);
+    }
+  };
 
   // Notify Farcaster SDK that app is ready
   useEffect(() => {
@@ -248,48 +301,68 @@ export default function FidCardPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-6 w-full max-w-md flex gap-4">
-                {/* Share to Farcaster */}
-                <a
-                  href={(() => {
-                    const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
+              <div className="mt-6 w-full max-w-md space-y-3">
+                <div className="flex gap-4">
+                  {/* Share to Farcaster */}
+                  <a
+                    href={(() => {
+                      const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
 
-                    // Build dynamic share text with emojis
-                    const rarityEmojiMap: Record<string, string> = {
-                      'Mythic': '👑',
-                      'Legendary': '⚡',
-                      'Epic': '💎',
-                      'Rare': '🔥',
-                      'Common': '⭐'
-                    };
-                    const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
+                      // Build dynamic share text with emojis
+                      const rarityEmojiMap: Record<string, string> = {
+                        'Mythic': '👑',
+                        'Legendary': '⚡',
+                        'Epic': '💎',
+                        'Rare': '🔥',
+                        'Common': '⭐'
+                      };
+                      const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
 
-                    const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
-                    const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
+                      const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
+                      const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
 
-                    const castText = `🃏 Just minted my VibeFID & claimed 1000 $VBMS!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${correctPower} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn $VBMS\n\n🎮 Mint yours & claim 1000 $VBMS! @jvhbo`;
+                      const castText = `🃏 Just minted my VibeFID & claimed 1000 $VBMS!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${correctPower} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn $VBMS\n\n🎮 Mint yours & claim 1000 $VBMS! @jvhbo`;
 
-                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                  })()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <span className="text-xl">🔮</span>
-                  <span className="hidden sm:inline">Share to Farcaster</span>
-                  <span className="sm:hidden">Share</span>
-                </a>
+                      return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                    })()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="text-xl">🔮</span>
+                    <span className="hidden sm:inline">Share to Farcaster</span>
+                    <span className="sm:hidden">Share</span>
+                  </a>
 
-                {/* View on OpenSea */}
-                <a
-                  href={`https://opensea.io/assets/base/${card.contractAddress || '0x60274A138d026E3cB337B40567100FdEC3127565'}/${card.fid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 px-6 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <span className="hidden sm:inline">View on OpenSea</span>
-                  <span className="sm:hidden">OpenSea</span>
-                </a>
+                  {/* View on OpenSea */}
+                  <a
+                    href={`https://opensea.io/assets/base/${card.contractAddress || '0x60274A138d026E3cB337B40567100FdEC3127565'}/${card.fid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 px-6 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="hidden sm:inline">View on OpenSea</span>
+                    <span className="sm:hidden">OpenSea</span>
+                  </a>
+                </div>
+
+                {/* Check Your Neynar Score Button */}
+                {farcasterContext.user && (
+                  <button
+                    onClick={handleCheckNeynarScore}
+                    disabled={loading}
+                    className="w-full px-6 py-4 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/10 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                  >
+                    {loading ? t.generatingScore : t.checkNeynarScore}
+                  </button>
+                )}
+
+                {/* Error message */}
+                {error && (
+                  <div className="p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm text-center">
+                    {error}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -343,6 +416,58 @@ export default function FidCardPage() {
                   </div>
                 </Link>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Neynar Score Modal */}
+        {showScoreModal && neynarScoreData && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-6 max-w-md w-full">
+              <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
+                {t.neynarScoreTitle}
+              </h2>
+
+              <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-6 mb-6">
+                <div className="text-center mb-4">
+                  <p className="text-vintage-burnt-gold text-sm mb-2">@{neynarScoreData.username} (FID #{neynarScoreData.fid})</p>
+                  <div className="text-5xl font-bold text-vintage-gold mb-2">
+                    {neynarScoreData.score.toFixed(3)}
+                  </div>
+                  <p className="text-vintage-ice text-sm font-bold">{t.currentScore} ⚡</p>
+                  <p className="text-vintage-ice/60 text-xs mt-1">(Real-time from Neynar API)</p>
+                </div>
+
+                <div className="border-t border-vintage-gold/20 pt-4">
+                  <p className="text-vintage-burnt-gold text-sm mb-2 text-center">{t.rarity}</p>
+                  <p className="text-vintage-ice text-xl font-bold text-center">{neynarScoreData.rarity}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    AudioManager.buttonClick();
+                    setShowScoreModal(false);
+                  }}
+                  className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors"
+                >
+                  {t.back}
+                </button>
+                <a
+                  href={(() => {
+                    const shareUrl = 'https://www.vibemostwanted.xyz/fid';
+                    const castText = `📊 My Neynar Score: ${neynarScoreData.score.toFixed(3)}\n${neynarScoreData.rarity} Rarity\n\n🎴 Check your score and mint your VibeFID card! @jvhbo`;
+                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => AudioManager.buttonClick()}
+                  className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center"
+                >
+                  {t.shareToFarcaster}
+                </a>
+              </div>
             </div>
           </div>
         )}
