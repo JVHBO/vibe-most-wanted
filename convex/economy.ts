@@ -1476,6 +1476,22 @@ export const recordAttackResult = mutation({
             lifetimeEarned: (defenderProfile.lifetimeEarned || 0) + defenderReward,
           });
 
+          // 📊 Record defense reward in transaction history (non-blocking)
+          try {
+            await ctx.db.insert("coinTransactions", {
+              address: normalizedOpponentAddress,
+              type: "earn",
+              amount: defenderReward,
+              source: "defense_win",
+              description: `Defense Win vs ${args.playerUsername} (+${defenderReward} TESTVBMS to inbox)`,
+              balanceBefore: currentDefenderInbox,
+              balanceAfter: newDefenderInbox,
+              timestamp: Date.now(),
+            });
+          } catch (txError) {
+            console.error("⚠️ Failed to record defense transaction:", txError);
+          }
+
           console.log(`📬 Defense reward sent to inbox: ${defenderReward} TESTVBMS for ${normalizedOpponentAddress}. Inbox: ${currentDefenderInbox} → ${newDefenderInbox}`);
         }
       }
@@ -1581,6 +1597,12 @@ export const recordAttackResult = mutation({
       }
     }
 
+    // ===== ATTACK TRACKING: Update attacksToday and lastAttackDate =====
+    const todayUTC = new Date().toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+    const lastAttackDate = profile.lastAttackDate || '';
+    const isNewDay = lastAttackDate !== todayUTC;
+    const newAttacksToday = isNewDay ? 1 : (profile.attacksToday || 0) + 1;
+
     // Update profile atomically (all fields at once)
     const updateData: any = {
       coins: newCoins,
@@ -1596,6 +1618,9 @@ export const recordAttackResult = mutation({
       },
       rematchesToday: isRevenge ? (profile.rematchesToday || 0) + 1 : profile.rematchesToday,
       lastUpdated: Date.now(),
+      // Attack tracking
+      attacksToday: newAttacksToday,
+      lastAttackDate: todayUTC,
     };
 
     // Add coins update for wins (skip if skipCoins flag is set)
@@ -1603,6 +1628,23 @@ export const recordAttackResult = mutation({
       const currentBalance = profile.coins || 0;
       updateData.coins = currentBalance + totalReward;
       console.log(`💰 Attack reward added to balance: ${totalReward} TESTVBMS. Balance: ${currentBalance} → ${updateData.coins}`);
+
+      // 📊 Record transaction in history (non-blocking - don't fail attack if history fails)
+      try {
+        await ctx.db.insert("coinTransactions", {
+          address: normalizedPlayerAddress,
+          type: "earn",
+          amount: totalReward,
+          source: "attack_win",
+          description: `Attack Win vs ${args.opponentUsername} (+${totalReward} TESTVBMS)`,
+          balanceBefore: currentBalance,
+          balanceAfter: updateData.coins,
+          timestamp: Date.now(),
+        });
+      } catch (txError) {
+        console.error("⚠️ Failed to record attack transaction:", txError);
+        // Continue - don't let transaction history failure break the attack
+      }
     }
 
     await ctx.db.patch(profile._id, updateData);
