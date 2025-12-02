@@ -43,6 +43,10 @@ export const fidTranslations = {
     minting: 'Mintando...',
     connectToMint: 'Conectar Carteira para Mintar',
     mintPrice: 'Preço do Mint',
+    checkNeynarScore: '📊 Ver Minha Pontuação Neynar',
+    generatingScore: 'Gerando imagem de pontuação...',
+    neynarScoreTitle: 'Sua Pontuação Neynar',
+    currentScore: 'Pontuação Atual',
 
     // Pagination
     previous: '← Anterior',
@@ -264,6 +268,10 @@ export const fidTranslations = {
     minting: 'Minting...',
     connectToMint: 'Connect Wallet to Mint',
     mintPrice: 'Mint Price',
+    checkNeynarScore: '📊 Check Your Neynar Score',
+    generatingScore: 'Generating score image...',
+    neynarScoreTitle: 'Your Neynar Score',
+    currentScore: 'Current Score',
 
     // Pagination
     previous: '← Previous',
@@ -485,6 +493,10 @@ export const fidTranslations = {
     minting: 'Minteando...',
     connectToMint: 'Conectar Billetera para Mintear',
     mintPrice: 'Precio de Mint',
+    checkNeynarScore: '📊 Ver Tu Puntuación Neynar',
+    generatingScore: 'Generando imagen de puntuación...',
+    neynarScoreTitle: 'Tu Puntuación Neynar',
+    currentScore: 'Puntuación Actual',
 
     // Pagination
     previous: '← Anterior',
@@ -706,6 +718,10 @@ export const fidTranslations = {
     minting: 'मिंट हो रहा है...',
     connectToMint: 'मिंट करने के लिए वॉलेट कनेक्ट करें',
     mintPrice: 'मिंट मूल्य',
+    checkNeynarScore: '📊 अपना Neynar स्कोर देखें',
+    generatingScore: 'स्कोर छवि उत्पन्न हो रही है...',
+    neynarScoreTitle: 'आपका Neynar स्कोर',
+    currentScore: 'वर्तमान स्कोर',
 
     // Pagination
     previous: '← पिछला',
@@ -927,6 +943,10 @@ export const fidTranslations = {
     minting: 'Минтинг...',
     connectToMint: 'Подключить Кошелек для Минтинга',
     mintPrice: 'Цена Минтинга',
+    checkNeynarScore: '📊 Проверить Ваш Neynar Счёт',
+    generatingScore: 'Генерация изображения счёта...',
+    neynarScoreTitle: 'Ваш Neynar Счёт',
+    currentScore: 'Текущий Счёт',
 
     // Pagination
     previous: '← Предыдущая',
@@ -1148,6 +1168,10 @@ export const fidTranslations = {
     minting: '铸造中...',
     connectToMint: '连接钱包以铸造',
     mintPrice: '铸造价格',
+    checkNeynarScore: '📊 查看您的 Neynar 分数',
+    generatingScore: '生成分数图像...',
+    neynarScoreTitle: '您的 Neynar 分数',
+    currentScore: '当前分数',
 
     // Pagination
     previous: '← 上一页',
