@@ -3347,8 +3347,8 @@ export function PokerBattleTable({
             <button
               onClick={() => {
                 const text = spectatorNetGains >= 0
-                  ? `I won +${spectatorNetGains} $VBMS betting on Mecha Arena! 🎰\n\ncc @jvhbo`
-                  : `I lost ${spectatorNetGains} $VBMS betting on Mecha Arena 💔\n\ncc @jvhbo`;
+                  ? `I won +${spectatorNetGains} coins betting on Mecha Arena! 🎰\n\ncc @jvhbo`
+                  : `I lost ${spectatorNetGains} coins betting on Mecha Arena 💔\n\ncc @jvhbo`;
                 const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
                 window.open(url, '_blank');
               }}
