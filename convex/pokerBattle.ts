@@ -1530,6 +1530,9 @@ export const getAvailableCollections = query({
       "tarot",
       "americanfootball",
       "vibefid",
+      "baseballcabal",
+      "vibefx",
+      "historyofcomputer",
     ];
   },
 });
