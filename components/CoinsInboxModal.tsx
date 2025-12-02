@@ -234,7 +234,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-vintage-gold/60 hover:text-vintage-gold text-2xl"
+          className="absolute top-4 right-4 text-vintage-gold/60 hover:text-vintage-gold text-2xl z-20 p-2"
         >
           ✕
         </button>
@@ -245,7 +245,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             console.log('[CoinsInboxModal] History button clicked');
             setShowHistory(true);
           }}
-          className="absolute top-3 right-12 p-3 bg-vintage-gold/10 hover:bg-vintage-gold/20 rounded-lg text-vintage-gold/80 hover:text-vintage-gold transition-all group border border-vintage-gold/20"
+          className="absolute top-3 right-14 p-2 z-20 bg-vintage-gold/10 hover:bg-vintage-gold/20 rounded-lg text-vintage-gold/80 hover:text-vintage-gold transition-all group border border-vintage-gold/20"
           title="Histórico de Transações"
         >
           <svg
