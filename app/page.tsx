@@ -593,7 +593,7 @@ export default function TCGPage() {
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
   // Removed: leaderboardCollection (unified leaderboard now)
-  const [leaderboardTab, setLeaderboardTab] = useState<'honor' | 'raidboss'>('honor');
+  const [leaderboardTab, setLeaderboardTab] = useState<'aura' | 'raidboss'>('aura');
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -1122,8 +1122,8 @@ export default function TCGPage() {
         rank: index + 1,
         username: player.username,
         address: player.address,
-        // @ts-expect-error - honor field is added to schema but types not yet regenerated
-        honor: player.stats?.honor ?? 500,
+        // @ts-expect-error - aura field is added to schema but types not yet regenerated
+        aura: player.stats?.aura ?? 500,
         power: player.stats?.totalPower || 0,
         openedCards: player.stats?.openedCards || 0,
         wins: (player.stats?.pveWins || 0) + (player.stats?.pvpWins || 0),
@@ -1179,6 +1179,14 @@ export default function TCGPage() {
 
   // 🛡️ Show defense deck warning if player has no defense deck set up
   useEffect(() => {
+    console.log('[DEBUG] Defense deck check:', {
+      hasAddress: !!address,
+      hasProfile: !!userProfile,
+      hasDefenseDeck: userProfile?.hasDefenseDeck,
+      defenseDeckLength: userProfile?.defenseDeck?.length,
+      dismissed: defenseDeckWarningDismissed,
+      nftsCount: nfts.length
+    });
     // Only show if: has profile, no defense deck, hasn't been dismissed, and has cards to select
     if (
       address &&
@@ -1187,6 +1195,7 @@ export default function TCGPage() {
       !defenseDeckWarningDismissed &&
       nfts.length >= 5 // Only show if player has enough cards
     ) {
+      console.log('[DEBUG] Showing defense deck warning - hasDefenseDeck is FALSE');
       // Small delay to not overwhelm with popups
       const timer = setTimeout(() => {
         setShowDefenseDeckWarning(true);
@@ -2687,7 +2696,14 @@ export default function TCGPage() {
   useEffect(() => {
     if (address) {
       setIsLoadingProfile(true);
+      console.log('[DEBUG] Loading profile for address:', address);
       ConvexProfileService.getProfile(address).then((profile) => {
+        console.log('[DEBUG] Profile loaded:', {
+          username: profile?.username,
+          hasDefenseDeck: profile?.hasDefenseDeck,
+          defenseDeckLength: profile?.defenseDeck?.length,
+          address: profile?.address
+        });
         setUserProfile(profile);
         setIsLoadingProfile(false);
 
@@ -3165,7 +3181,7 @@ export default function TCGPage() {
     */
   }, [collectionPowerCache]);
 
-  // Unified leaderboard (already sorted by honor → power from backend)
+  // Unified leaderboard (already sorted by aura → power from backend)
   // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
   const filteredLeaderboard = useMemo(() => {
     // Return raid boss leaderboard when on raid boss tab
@@ -3174,9 +3190,9 @@ export default function TCGPage() {
       return raidBossLeaderboard;
     }
 
-    // Return collections leaderboard (honor-based)
+    // Return collections leaderboard (aura-based)
     if (!leaderboard || leaderboard.length === 0) return [];
-    // Return as-is, already sorted by honor (primary) and power (secondary) from backend
+    // Return as-is, already sorted by aura (primary) and power (secondary) from backend
     return leaderboard;
   }, [leaderboard, raidBossLeaderboard, leaderboardTab]);
 
@@ -5410,14 +5426,14 @@ export default function TCGPage() {
                     {/* Leaderboard Tabs */}
                     <div className="flex gap-2 mb-3">
                       <button
-                        onClick={() => setLeaderboardTab('honor')}
+                        onClick={() => setLeaderboardTab('aura')}
                         className={`px-4 py-2 rounded-lg font-modern font-bold transition ${
-                          leaderboardTab === 'honor'
+                          leaderboardTab === 'aura'
                             ? 'bg-vintage-gold text-vintage-black'
                             : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
                         }`}
                       >
-                        Honor
+                        Aura
                       </button>
                       <button
                         onClick={() => setLeaderboardTab('raidboss')}
@@ -5431,7 +5447,7 @@ export default function TCGPage() {
                       </button>
                     </div>
                     {/* Export Button */}
-                    {leaderboardTab === 'honor' && (
+                    {leaderboardTab === 'aura' && (
                       <div className="flex flex-wrap gap-2 items-center">
                       <button
                         onClick={handleExportLeaderboard}
@@ -5475,8 +5491,8 @@ export default function TCGPage() {
                   </div>
                 </div>
 
-                {/* Honor Leaderboard */}
-                {leaderboardTab === 'honor' && (
+                {/* Aura Leaderboard */}
+                {leaderboardTab === 'aura' && (
                   <>
                     {filteredLeaderboard.length === 0 ? (
                       <div className="text-center py-12">
@@ -5490,7 +5506,7 @@ export default function TCGPage() {
                         <tr className="border-b border-vintage-gold/20">
                           <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
                           <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Honor</th>
+                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Aura</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Opened</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
                           <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
@@ -5527,8 +5543,8 @@ export default function TCGPage() {
                                 </div>
                               </Link>
                             </td>
-                            {/* @ts-expect-error - honor field is added to schema but types not yet regenerated */}
-                            <td className="p-2 md:p-4 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.honor ?? 500).toLocaleString()} ⚔️</td>
+                            {/* @ts-expect-error - aura field is added to schema but types not yet regenerated */}
+                            <td className="p-2 md:p-4 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.aura ?? 500).toLocaleString()} ⚔️</td>
                             <td className="p-2 md:p-4 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
                             <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
                             <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
@@ -6227,8 +6243,8 @@ export default function TCGPage() {
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
-                            {/* @ts-expect-error - honor field is added to schema but types not yet regenerated */}
-                            <span className="text-xs text-purple-400 font-bold">{(profile.stats?.honor ?? 500).toLocaleString()} ⚔️</span>
+                            {/* @ts-expect-error - aura field is added to schema but types not yet regenerated */}
+                            <span className="text-xs text-purple-400 font-bold">{(profile.stats?.aura ?? 500).toLocaleString()} ⚔️</span>
                             <span className="text-xs text-yellow-400">{(profile.stats?.totalPower || 0).toLocaleString()} PWR</span>
                             <span className="text-xs text-green-400 font-bold min-w-[60px] text-right">+{rewardAmount}</span>
                           </div>
