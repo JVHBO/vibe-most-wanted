@@ -16,6 +16,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks";
 import { Z_INDEX } from "@/lib/z-index";
+import CoinsHistoryModal from "./CoinsHistoryModal";
 
 const NextImage = Image;
 
@@ -36,6 +37,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Modal accessibility hooks
   useBodyScrollLock(true);
@@ -306,9 +308,27 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             <span className="text-xl">💱</span>
             <span>Sell VBMS → ETH (DEX)</span>
           </Link>
+
+          {/* Transaction History Button */}
+          <button
+            onClick={() => setShowHistory(true)}
+            className="w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-[1.02] flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">📊</span>
+            <span>Histórico de Transações</span>
+          </button>
           </div>
         </div>
       </div>
+
+      {/* Transaction History Modal */}
+      {showHistory && address && (
+        <CoinsHistoryModal
+          isOpen={showHistory}
+          onClose={() => setShowHistory(false)}
+          address={address}
+        />
+      )}
     </div>,
     document.body
   );

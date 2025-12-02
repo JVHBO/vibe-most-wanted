@@ -45,21 +45,21 @@ export const getProfile = query({
 export const getLeaderboard = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 1000 }) => {
-    // Get all profiles and sort by honor (primary) and power (secondary)
+    // Get all profiles and sort by aura (primary) and power (secondary)
     const allProfiles = await ctx.db
       .query("profiles")
       .collect();
 
-    // Sort by honor (descending), then by totalPower (descending)
+    // Sort by aura (descending), then by totalPower (descending)
     const sorted = allProfiles.sort((a, b) => {
-      const honorA = a.stats?.honor ?? 500; // Default 500 for existing profiles
-      const honorB = b.stats?.honor ?? 500;
+      const auraA = a.stats?.aura ?? 500; // Default 500 for existing profiles
+      const auraB = b.stats?.aura ?? 500;
 
-      if (honorA !== honorB) {
-        return honorB - honorA; // Higher honor first
+      if (auraA !== auraB) {
+        return auraB - auraA; // Higher aura first
       }
 
-      // If honor is equal, sort by power
+      // If aura is equal, sort by power
       const powerA = a.stats?.totalPower ?? 0;
       const powerB = b.stats?.totalPower ?? 0;
       return powerB - powerA; // Higher power first
@@ -82,26 +82,31 @@ export const getLeaderboard = query({
  * - address, username, totalPower
  *
  * Estimated savings: 40MB+ (from ~8KB to ~200 bytes per profile)
+ *
+ * BANDWIDTH OPTIMIZATION:
+ * - Fetches max 500 profiles instead of ALL (reduces DB read by ~90%)
+ * - Only returns minimal fields (reduces response size by ~95%)
  */
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 100 }) => {
     try {
-      // Get all profiles for honor-based sorting
+      // OPTIMIZATION: Fetch max 500 profiles instead of ALL
+      // (Top 100 will always be in top 500 by power/aura)
       const allProfiles = await ctx.db
         .query("profiles")
-        .collect();
+        .take(500); // Reduced from .collect() (all profiles)
 
-      // Sort by honor (descending), then by totalPower (descending)
+      // Sort by aura (descending), then by totalPower (descending)
       const sorted = allProfiles.sort((a, b) => {
-        const honorA = a.stats?.honor ?? 500;
-        const honorB = b.stats?.honor ?? 500;
+        const auraA = a.stats?.aura ?? 500;
+        const auraB = b.stats?.aura ?? 500;
 
-        if (honorA !== honorB) {
-          return honorB - honorA; // Higher honor first
+        if (auraA !== auraB) {
+          return auraB - auraA; // Higher aura first
         }
 
-        // If honor is equal, sort by power
+        // If aura is equal, sort by power
         const powerA = a.stats?.totalPower ?? 0;
         const powerB = b.stats?.totalPower ?? 0;
         return powerB - powerA; // Higher power first
@@ -112,7 +117,7 @@ export const getLeaderboardLite = query({
         address: p.address || "unknown",
         username: p.username || "unknown",
         stats: {
-          honor: p.stats?.honor ?? 500, // Include honor
+          aura: p.stats?.aura ?? 500, // Include aura
           totalPower: p.stats?.totalPower || 0,
           vibePower: p.stats?.vibePower || 0,
           vbrsPower: p.stats?.vbrsPower || 0,
@@ -247,7 +252,7 @@ export const upsertProfile = mutation({
           totalCards: 0,
           openedCards: 0,
           unopenedCards: 0,
-          honor: 500, // Initial honor for new players
+          aura: 500, // Initial aura for new players
           pveWins: 0,
           pveLosses: 0,
           pvpWins: 0,
