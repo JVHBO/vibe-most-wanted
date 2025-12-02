@@ -46,14 +46,33 @@ export const mintFarcasterCard = mutation({
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
 
-    // Generate unique card ID with timestamp to allow multiple mints of same FID
+    // CRITICAL FIX: Check if FID already exists to prevent orphan duplicates
+    const existingCards = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .collect();
+
+    if (existingCards.length > 0) {
+      console.error(`❌ DUPLICATE PREVENTION: FID ${args.fid} already exists in database!`);
+      console.error(`   Existing cards: ${existingCards.length}`);
+      existingCards.forEach((card, idx) => {
+        console.error(`   ${idx + 1}. ${card.rank}${card.suitSymbol} (${card.rarity}) - ID: ${card._id}`);
+      });
+
+      throw new Error(
+        `FID ${args.fid} already minted! Each FID can only be minted once. ` +
+        `If you believe this is an error, please contact support.`
+      );
+    }
+
+    // Generate unique card ID with timestamp
     const timestamp = Date.now();
     const cardId = `farcaster_${args.fid}_${timestamp}`;
 
-    // NOTE: Multiple mints of same FID are allowed
-    // The smart contract handles uniqueness on-chain, Convex just stores metadata
+    // Smart contract ensures 1 mint per FID on-chain
+    // This check prevents orphan database entries from bugs/race conditions
 
-    // Insert card (no uniqueness check - multiple mints allowed)
+    // Insert card (now protected against duplicates)
     const cardDocId = await ctx.db.insert("farcasterCards", {
       // Farcaster Data
       fid: args.fid,
@@ -279,6 +298,39 @@ export const deleteAllOldVibeFIDCards = mutation({
     return {
       success: true,
       deletedCount,
+    };
+  },
+});
+
+/**
+ * Delete specific orphan cards by Doc ID (for cleanup)
+ * SAFE: Only deletes cards you explicitly specify
+ */
+export const deleteOrphanCardById = mutation({
+  args: {
+    docId: v.id("farcasterCards"),
+  },
+  handler: async (ctx, args) => {
+    // Get the card to verify it exists
+    const card = await ctx.db.get(args.docId);
+
+    if (!card) {
+      throw new Error(`Card with ID ${args.docId} not found`);
+    }
+
+    console.log(`🗑️  Deleting orphan card: FID ${card.fid} (@${card.username}) - ${card.rank}${card.suitSymbol}`);
+
+    // Delete the card
+    await ctx.db.delete(args.docId);
+
+    return {
+      success: true,
+      deleted: {
+        fid: card.fid,
+        username: card.username,
+        rank: card.rank,
+        suit: card.suitSymbol,
+      },
     };
   },
 });
