@@ -137,7 +137,7 @@ export default function FidPage() {
         setPreviewImage(saved.previewImage);
         setGeneratedTraits(saved.generatedTraits);
         setBackstoryData(saved.backstoryData);
-        setShowModal(true);
+        // Don't auto-open modal - let user click "Generate" button to see it
       }
     }
   }, [farcasterContext.isReady, farcasterContext.user]);
