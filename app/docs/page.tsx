@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { docsTranslations, type DocsSupportedLanguage, type DocsTranslationKey } from "@/lib/docs-translations";
 
-type DocSection = "economy" | "battles" | "poker" | "achievements" | "quests" | "cards" | "faq";
+type DocSection = "economy" | "battles" | "poker" | "mecha" | "raidboss" | "vibefid" | "achievements" | "quests" | "cards" | "faq";
 
 // Simple language selector
 function LanguageSelector() {
