@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { SpectatorEntryModal } from "./SpectatorEntryModal";
 import { PokerBattleTable } from "./PokerBattleTable";
+import { COLLECTIONS, type CollectionId } from "@/lib/collections";
 import {
   getDailyBuffedCollection,
   getTimeUntilNextBuff,
@@ -374,6 +375,25 @@ export function CpuArenaModal({
                             <span className="text-white/80 text-xs">{isBuffed ? "Boosted" : "Live"}</span>
                           </div>
                         </div>
+
+                        {/* Buy Collection Button */}
+                        {(() => {
+                          const collectionConfig = COLLECTIONS[collection as CollectionId];
+                          const marketUrl = collectionConfig?.marketplaceUrl;
+                          if (!marketUrl) return null;
+                          const isInternal = marketUrl.startsWith('/');
+                          return (
+                            <a
+                              href={marketUrl}
+                              target={isInternal ? undefined : "_blank"}
+                              rel={isInternal ? undefined : "noopener noreferrer"}
+                              onClick={(e) => e.stopPropagation()}
+                              className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-black/40 hover:bg-black/60 border border-white/30 hover:border-white/50 rounded-full text-white/90 text-xs font-medium transition-all"
+                            >
+                              🛒 {collectionConfig?.buttonText || 'BUY PACKS'}
+                            </a>
+                          );
+                        })()}
                       </div>
                     </button>
                   );
