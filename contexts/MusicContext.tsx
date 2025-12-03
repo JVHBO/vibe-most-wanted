@@ -222,7 +222,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           currentTrackRef.current = `youtube:${videoId}`;
 
           // Polling for background tab (onStateChange unreliable)
+          console.log('YT onReady - shouldLoop:', shouldLoop, 'hasOnTrackEnd:', !!onTrackEnd);
           if (!shouldLoop && onTrackEnd) {
+            console.log('Starting YT polling...');
             if (youtubePollingRef.current) clearInterval(youtubePollingRef.current);
             let triggered = false;
             youtubePollingRef.current = setInterval(() => {
@@ -232,14 +234,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 if (p && typeof p.getCurrentTime === 'function') {
                   const t = p.getCurrentTime();
                   const d = p.getDuration();
+                  console.log('YT poll:', t.toFixed(1), '/', d.toFixed(1));
                   if (d > 0 && t >= d - 1) {
                     triggered = true;
                     if (youtubePollingRef.current) { clearInterval(youtubePollingRef.current); youtubePollingRef.current = null; }
-                    console.log('YT polling: next track');
+                    console.log('YT polling: triggering next track!');
                     onTrackEnd();
                   }
+                } else {
+                  console.log('YT poll: player not ready');
                 }
-              } catch(e){}
+              } catch(e){ console.log('YT poll error:', e); }
             }, 1000);
           }
         },
