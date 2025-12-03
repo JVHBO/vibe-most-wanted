@@ -33,6 +33,9 @@ interface MusicContextType {
   // Track info
   currentTrackName: string | null;
   currentTrackThumbnail: string | null;
+  // Iframe/CSP detection
+  isInRestrictedIframe: boolean;
+  isMusicBlocked: boolean;
 }
 
 // Track metadata for display
@@ -93,6 +96,93 @@ function isYouTubeUrl(url: string): boolean {
   return url.includes('youtube.com') || url.includes('youtu.be');
 }
 
+// Detect if running inside a restricted iframe (e.g., Farcaster browser miniapp)
+function detectRestrictedIframe(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    // Check if we're in an iframe
+    if (window.self === window.top) return false;
+
+    // We're in an iframe - check context
+    const referrer = document.referrer || '';
+    const isFarcasterContext =
+      referrer.includes('warpcast') ||
+      referrer.includes('farcaster') ||
+      window.location.href.includes('/miniapp');
+
+    // Check user agent for native app (which doesn't have restrictions)
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isNativeApp = userAgent.includes('warpcast') || userAgent.includes('farcaster');
+
+    return isFarcasterContext && !isNativeApp;
+  } catch {
+    return true;
+  }
+}
+
+// Web Audio API fallback for playing audio in restricted iframes
+let webAudioContext: AudioContext | null = null;
+let webAudioSource: AudioBufferSourceNode | null = null;
+let webAudioGain: GainNode | null = null;
+
+async function tryWebAudioPlay(url: string, volume: number, loop: boolean = true): Promise<boolean> {
+  try {
+    // Initialize AudioContext on first use
+    if (!webAudioContext) {
+      webAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+
+    // Resume context if suspended (autoplay policy)
+    if (webAudioContext.state === 'suspended') {
+      await webAudioContext.resume();
+    }
+
+    // Stop previous source
+    if (webAudioSource) {
+      try { webAudioSource.stop(); } catch {}
+      webAudioSource = null;
+    }
+
+    // Fetch audio file
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch audio');
+
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await webAudioContext.decodeAudioData(arrayBuffer);
+
+    // Create source and gain nodes
+    webAudioSource = webAudioContext.createBufferSource();
+    webAudioSource.buffer = audioBuffer;
+    webAudioSource.loop = loop;
+
+    webAudioGain = webAudioContext.createGain();
+    webAudioGain.gain.value = volume;
+
+    webAudioSource.connect(webAudioGain);
+    webAudioGain.connect(webAudioContext.destination);
+
+    webAudioSource.start(0);
+    console.log('🎵 Web Audio API playback started successfully');
+    return true;
+  } catch (err) {
+    console.warn('⚠️ Web Audio API fallback failed:', err);
+    return false;
+  }
+}
+
+function setWebAudioVolume(volume: number) {
+  if (webAudioGain) {
+    webAudioGain.gain.value = volume;
+  }
+}
+
+function stopWebAudio() {
+  if (webAudioSource) {
+    try { webAudioSource.stop(); } catch {}
+    webAudioSource = null;
+  }
+}
+
 // Fetch YouTube video metadata (title, thumbnail)
 async function fetchYouTubeMetadata(videoId: string): Promise<{ title: string; thumbnail: string } | null> {
   try {
@@ -129,6 +219,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [currentTrackName, setCurrentTrackName] = useState<string | null>(null);
   const [currentTrackThumbnail, setCurrentTrackThumbnail] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [isMusicBlocked, setIsMusicBlocked] = useState(false);
+  const [usingWebAudioFallback, setUsingWebAudioFallback] = useState(false);
+  const isInRestrictedIframe = typeof window !== 'undefined' ? detectRestrictedIframe() : false;
 
   // Audio references
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -360,11 +453,26 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           newAudio.volume = Math.min(normalizedVolume, newAudio.volume + volumeIncrement);
         }
       }, fadeInInterval);
-    }).catch(err => {
-      console.warn('⚠️ Failed to play music:', err);
-      setCustomMusicError('Failed to play audio. Try a different URL.');
+    }).catch(async (err) => {
+      console.warn('⚠️ Failed to play music with Audio element:', err);
+
+      // Try Web Audio API fallback (may work in restricted iframes)
+      if (trackUrl.startsWith('/') || trackUrl.startsWith(window.location.origin)) {
+        console.log('🔄 Trying Web Audio API fallback...');
+        const success = await tryWebAudioPlay(trackUrl, normalizedVolume, !isPlaylist);
+        if (success) {
+          setUsingWebAudioFallback(true);
+          setIsCustomMusicLoading(false);
+          setCustomMusicError(null);
+          currentTrackRef.current = trackUrl;
+          return;
+        }
+      }
+
+      // All methods failed
+      setIsMusicBlocked(true);
+      setCustomMusicError('Music unavailable in browser iframe. Use Farcaster mobile app for music.');
       setIsCustomMusicLoading(false);
-      // Fallback to default if custom music fails
       if (musicMode === 'custom' || musicMode === 'playlist') {
         setMusicModeState('default');
       }
@@ -573,6 +681,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     if (youtubePlayerRef.current && typeof youtubePlayerRef.current.setVolume === 'function') {
       youtubePlayerRef.current.setVolume(volume * 100);
     }
+
+    // Update Web Audio API volume
+    setWebAudioVolume(volume);
   }, [volume, isMusicEnabled]);
 
   /**
@@ -731,10 +842,25 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       }, fadeInInterval);
       setIsCustomMusicLoading(false);
       setCustomMusicError(null);
-    }).catch(err => {
+    }).catch(async (err) => {
       console.warn('⚠️ Failed to play playlist track:', err);
-      setCustomMusicError(`Failed to play: ${trackUrl}`);
-      handleInvalidTrack(safeIndex);
+
+      // Try Web Audio API fallback for same-origin URLs
+      if (trackUrl.startsWith('/') || trackUrl.startsWith(window.location.origin)) {
+        console.log('🔄 Trying Web Audio API fallback for playlist...');
+        const success = await tryWebAudioPlay(trackUrl, volume, playlist.length === 1);
+        if (success) {
+          setUsingWebAudioFallback(true);
+          setIsCustomMusicLoading(false);
+          setCustomMusicError(null);
+          currentTrackRef.current = trackUrl;
+          return;
+        }
+      }
+
+      // All methods failed
+      setIsMusicBlocked(true);
+      setCustomMusicError('Music unavailable in browser iframe');
     });
 
     audioRef.current = newAudio;
@@ -884,6 +1010,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         audioRef.current = null;
       }
       stopYouTubePlayer();
+      stopWebAudio();
     };
   }, [stopYouTubePlayer]);
 
@@ -914,6 +1041,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       play,
       currentTrackName,
       currentTrackThumbnail,
+      // Iframe/CSP detection
+      isInRestrictedIframe,
+      isMusicBlocked,
     }}>
       {children}
     </MusicContext.Provider>
