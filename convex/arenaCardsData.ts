@@ -8,7 +8,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #17355",
           "rarity": "Legendary",
           "power": 180,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/17355",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmcwAbHooMSsC1EMb8u4EXaJTqNPRA4EJc7dLQAswoF2N6",
           "collection": "vibefid"
       },
       {
@@ -32,7 +32,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #421001",
           "rarity": "Legendary",
           "power": 100,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/421001",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmcaEzPvi1BdqyQ6ZPtRVZqUsrnzyuSmhdKqhTWaKSrcTm",
           "collection": "vibefid"
       },
       {
@@ -40,7 +40,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #14771",
           "rarity": "Epic",
           "power": 540,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/14771",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmdfHJqBQ572w1Xpeu8EnVyoCQ1mM47xKiWxqv7E1RY5wU",
           "collection": "vibefid"
       },
       {
@@ -64,7 +64,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #546879",
           "rarity": "Epic",
           "power": 50,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/546879",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmaWKKQXrVkPRNdPuUuiyYhNDYcmgqd4vyhrSeavqub8aS",
           "collection": "vibefid"
       },
       {
@@ -72,7 +72,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #932921",
           "rarity": "Epic",
           "power": 50,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/932921",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmPx1QDvMSz2dynitGoF9y3dwHf1r8fa16qWQB43QW9ara",
           "collection": "vibefid"
       },
       {
@@ -80,7 +80,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1009776",
           "rarity": "Epic",
           "power": 50,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1009776",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmWRQGriUYddX7aGYUFhAvasS11TYMwMVahXf2gRGjNLaQ",
           "collection": "vibefid"
       },
       {
@@ -88,7 +88,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1012281",
           "rarity": "Epic",
           "power": 50,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1012281",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/Qmaxu6YzN2VLekCvCfkCTJs8ienymswAm9T9HvLNHcdZ3e",
           "collection": "vibefid"
       },
       {
@@ -96,7 +96,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #199190",
           "rarity": "Rare",
           "power": 120,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/199190",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmesxiKYmeZGNnFT6V46N9vbZENq9mq7PZaaNbCgYR5Bb3",
           "collection": "vibefid"
       },
       {
@@ -112,7 +112,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #249478",
           "rarity": "Rare",
           "power": 20,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/249478",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmRwFD7M4d4bJGJ97GL37R81EpiFV4CNHrB4YAgQCUWzWs",
           "collection": "vibefid"
       },
       {
@@ -120,7 +120,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #249629",
           "rarity": "Rare",
           "power": 28,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/249629",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmTnvTnxPzozi4gcZJy2GNecT8Ngdbkz5v6x2h7QEXTcNH",
           "collection": "vibefid"
       },
       {
@@ -136,7 +136,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #903908",
           "rarity": "Rare",
           "power": 20,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/903908",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmdMRKMtLCTVWoX2EDNPJFS9JxUNv4rUWHmrs4MszvQa9H",
           "collection": "vibefid"
       },
       {
@@ -144,7 +144,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1078302",
           "rarity": "Rare",
           "power": 20,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1078302",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmakmDMgbBsEM2rEyvatNn76P7UePJgWUarR3WXRHHUmr1",
           "collection": "vibefid"
       },
       {
@@ -152,7 +152,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #22415",
           "rarity": "Common",
           "power": 36,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/22415",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmdeGgdhBeoumxcpDjJVC1uFU7WyFsg34bo6CmZ34nPq7p",
           "collection": "vibefid"
       },
       {
@@ -176,7 +176,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #301572",
           "rarity": "Common",
           "power": 14,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/301572",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/Qmao3mwyD6Y2vttk6e8k1D8Ae35m9DTNCJQXZgY2LUiUXE",
           "collection": "vibefid"
       },
       {
@@ -184,7 +184,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #439094",
           "rarity": "Common",
           "power": 14,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/439094",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmcBZJh28Aeb9DfyFLPHoq3eFMk9suDQe3G4Fvd79AWXYo",
           "collection": "vibefid"
       },
       {
@@ -192,7 +192,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #481376",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/481376",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmaVAnbPuJSjsmf81H9vttTc5d2zyy5GETHMgaGhXbYZg7",
           "collection": "vibefid"
       },
       {
@@ -200,7 +200,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #505211",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/505211",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmVE15A3bhEKXmFdLE7sH2xx5QhaNzrzcabSQdbFr22jmo",
           "collection": "vibefid"
       },
       {
@@ -208,7 +208,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #873944",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/873944",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmT8s8Csm5uVAWsEYwhRyrmxYPKmScFY3z1kxfM2Jybdtj",
           "collection": "vibefid"
       },
       {
@@ -216,7 +216,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #937300",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/937300",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmdsL3MpbrSMxfu5ddkJZSfgaWpyswCXiqrnqq31FafJxU",
           "collection": "vibefid"
       },
       {
@@ -224,7 +224,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1010556",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1010556",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmZ1njjDF1zpaDd1aqSSQtiWvMRbmBd3K27rDbtAjsNeXn",
           "collection": "vibefid"
       },
       {
@@ -232,7 +232,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1068973",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1068973",
+          "imageUrl": "https://ipfs.filebase.io/ipfs/QmfGfvfwznLpcmYdp2qWiatupUfSmsFwFyohkCPVk2TW4X",
           "collection": "vibefid"
       },
       {
