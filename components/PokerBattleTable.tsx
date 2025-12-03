@@ -2586,7 +2586,7 @@ export function PokerBattleTable({
                         {isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}
                       </div>
                       <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
-                        isInFarcaster ? 'w-20' : 'w-24 sm:w-28 md:w-32'
+                        isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-24 sm:w-28 md:w-32'
                       } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
                           ? 'border-red-500 shadow-lg shadow-red-500/50 animate-pulse'
@@ -2661,7 +2661,7 @@ export function PokerBattleTable({
                         {isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}
                       </div>
                       <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
-                        isInFarcaster ? 'w-20' : 'w-32 sm:w-40 md:w-48'
+                        isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-32 sm:w-40 md:w-48'
                       } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
                           ? 'border-green-500 shadow-lg shadow-green-500/50 animate-pulse'
@@ -3243,10 +3243,10 @@ export function PokerBattleTable({
         <SimpleBettingOverlay
           roomId={roomId}
           currentRound={currentRound}
-          player1Address={room.hostAddress || ''}
-          player1Username={room.hostUsername || 'Player 1'}
-          player2Address={room.guestAddress || ''}
-          player2Username={room.guestUsername || 'Player 2'}
+          player1Address={room.guestAddress || ''}
+          player1Username={room.guestUsername || 'Player 1'}
+          player2Address={room.hostAddress || ''}
+          player2Username={room.hostUsername || 'Player 2'}
           spectatorAddress={playerAddress || ''}
           onBetPlaced={() => {
             console.log('✅ Bet placed successfully!');
