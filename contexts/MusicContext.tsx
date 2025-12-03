@@ -144,7 +144,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    * Stop YouTube player if exists
    */
   const stopYouTubePlayer = useCallback(() => {
-    if (youtubePollingRef.current) { clearInterval(youtubePollingRef.current); youtubePollingRef.current = null; }
+    if (youtubePollingRef.current) { clearTimeout(youtubePollingRef.current); youtubePollingRef.current = null; }
     if (youtubePlayerRef.current) {
       try {
         youtubePlayerRef.current.stopVideo();
@@ -221,31 +221,33 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           setCustomMusicError(null);
           currentTrackRef.current = `youtube:${videoId}`;
 
-          // Polling for background tab (onStateChange unreliable)
-          console.log('YT onReady - shouldLoop:', shouldLoop, 'hasOnTrackEnd:', !!onTrackEnd);
+          // Schedule next track based on video duration (works in background tabs)
           if (!shouldLoop && onTrackEnd) {
-            console.log('Starting YT polling...');
-            if (youtubePollingRef.current) clearInterval(youtubePollingRef.current);
-            let triggered = false;
-            youtubePollingRef.current = setInterval(() => {
-              if (triggered) return;
+            // Clear any existing timeout
+            if (youtubePollingRef.current) {
+              clearTimeout(youtubePollingRef.current);
+              youtubePollingRef.current = null;
+            }
+
+            // Get duration and schedule next track
+            const checkAndSchedule = () => {
               try {
-                const p = youtubePlayerRef.current;
-                if (p && typeof p.getCurrentTime === 'function') {
-                  const t = p.getCurrentTime();
-                  const d = p.getDuration();
-                  console.log('YT poll:', t.toFixed(1), '/', d.toFixed(1));
-                  if (d > 0 && t >= d - 1) {
-                    triggered = true;
-                    if (youtubePollingRef.current) { clearInterval(youtubePollingRef.current); youtubePollingRef.current = null; }
-                    console.log('YT polling: triggering next track!');
+                const duration = event.target.getDuration();
+                if (duration > 0) {
+                  // Schedule next track 1 second before end
+                  const timeoutMs = Math.max(1000, (duration - 1) * 1000);
+                  console.log('YT: Scheduling next track in', (timeoutMs/1000).toFixed(0), 'seconds');
+                  youtubePollingRef.current = setTimeout(() => {
+                    console.log('YT timeout: triggering next track!');
                     onTrackEnd();
-                  }
+                  }, timeoutMs);
                 } else {
-                  console.log('YT poll: player not ready');
+                  // Duration not ready yet, retry in 1 second
+                  setTimeout(checkAndSchedule, 1000);
                 }
-              } catch(e){ console.log('YT poll error:', e); }
-            }, 1000);
+              } catch(e) { console.log('YT schedule error:', e); }
+            };
+            checkAndSchedule();
           }
         },
         onStateChange: (event: any) => {
