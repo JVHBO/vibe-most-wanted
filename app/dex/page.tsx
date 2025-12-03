@@ -267,12 +267,42 @@ export default function DexPage() {
   const t = dexTranslations[lang];
 
   // Swap state
-  const [mode, setMode] = useState<SwapMode>("buy");
+  const [mode, setMode] = useState<SwapMode>("sell");
   const [packCount, setPackCount] = useState(1);
   const [sellAmount, setSellAmount] = useState("");
 
   // Language dropdown state
   const [showLangDropdown, setShowLangDropdown] = useState(false);
+
+  // Password protection for BUY
+  const [buyUnlocked, setBuyUnlocked] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
+
+  const handleBuyClick = () => {
+    if (buyUnlocked) {
+      setMode("buy");
+      setPackCount(1);
+      resetBuy();
+    } else {
+      setShowPasswordModal(true);
+      setPasswordInput("");
+      setPasswordError(false);
+    }
+  };
+
+  const handlePasswordSubmit = () => {
+    if (passwordInput === "vibe2025") {
+      setBuyUnlocked(true);
+      setShowPasswordModal(false);
+      setMode("buy");
+      setPackCount(1);
+      resetBuy();
+    } else {
+      setPasswordError(true);
+    }
+  };
 
   // Price info for selected pack count
   const { priceWei, priceEth, isLoading: priceLoading, refetch: refetchPrice } = useMintPrice(packCount);
@@ -419,18 +449,14 @@ export default function DexPage() {
           {/* Mode Toggle */}
           <div className="flex border-b border-vintage-gold/30">
             <button
-              onClick={() => {
-                setMode("buy");
-                setPackCount(1);
-                resetBuy();
-              }}
+              onClick={handleBuyClick}
               className={`flex-1 py-4 font-modern font-bold transition-all ${
                 mode === "buy"
                   ? "bg-green-500/20 text-green-400 border-b-2 border-green-400"
                   : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold"
               }`}
             >
-              {t.buyVbms}
+              {t.buyVbms} {!buyUnlocked && "🔒"}
             </button>
             <button
               onClick={() => {
@@ -687,6 +713,46 @@ export default function DexPage() {
           </div>
         )}
       </div>
+
+      {/* Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-2xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-vintage-gold text-xl font-bold mb-4 text-center">
+              Enter Password
+            </h3>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => {
+                setPasswordInput(e.target.value);
+                setPasswordError(false);
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+              placeholder="Password"
+              className="w-full bg-vintage-deep-black border border-vintage-gold/30 rounded-lg px-4 py-3 text-vintage-ice outline-none focus:border-vintage-gold mb-4"
+              autoFocus
+            />
+            {passwordError && (
+              <p className="text-red-400 text-sm mb-4 text-center">Wrong password</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="flex-1 py-3 rounded-lg border border-vintage-gold/30 text-vintage-burnt-gold hover:bg-vintage-gold/10 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePasswordSubmit}
+                className="flex-1 py-3 rounded-lg bg-vintage-gold text-vintage-deep-black font-bold hover:bg-vintage-burnt-gold transition"
+              >
+                Unlock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
