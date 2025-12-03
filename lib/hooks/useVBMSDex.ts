@@ -19,7 +19,7 @@ import {
   useAccount,
   usePublicClient,
 } from 'wagmi';
-import { parseEther, formatEther, toHex, hexToBigInt } from 'viem';
+import { parseEther, formatEther } from 'viem';
 import { BOOSTER_DROP_V2_ABI, VBMS_CONTRACTS, VBMS_DEX_CONSTANTS, VBMS_ROUTER_ABI } from '../contracts/BoosterDropV2ABI';
 import { VBMS_DIRECT_SELL_ABI } from '../contracts/BoosterTokenV2ABI';
 import { ERC20_ABI } from '../contracts';
@@ -95,11 +95,12 @@ export function useVBMSAllowance(owner?: `0x${string}`) {
 // BUY HOOK (ETH → VBMS) - Uses VBMSRouter for single transaction!
 // ============================================================================
 
-export type BuyStep = 'idle' | 'fetching_token_id' | 'buying' | 'waiting' | 'complete' | 'error';
+export type BuyStep = 'idle' | 'buying' | 'waiting' | 'complete' | 'error';
 
 /**
- * Buy VBMS tokens with ETH via VBMSRouter
+ * Buy VBMS tokens with ETH via VBMSRouter V7
  * Single transaction: mint pack + sell for VBMS automatically!
+ * V7 discovers tokens by ownership - no tokenId needed from frontend!
  */
 export function useBuyVBMS() {
   const { address } = useAccount();
@@ -116,33 +117,23 @@ export function useBuyVBMS() {
         return;
       }
 
-      if (packCount < 1) {
-        setError('Must buy at least 1 pack');
+      if (packCount < 1 || packCount > 10) {
+        setError('Must buy 1-10 packs');
         return;
       }
 
-      setStep('fetching_token_id');
+      setStep('buying');
       setError(null);
 
       try {
-        // Get totalSupply as estimate for startingTokenId
-        const totalSupply = await publicClient.readContract({
-          address: VBMS_CONTRACTS.boosterDrop,
-          abi: BOOSTER_DROP_V2_ABI,
-          functionName: 'totalSupply',
-        });
-
-        const startingTokenId = (totalSupply as bigint) + BigInt(1);
-        console.log('Starting token ID:', startingTokenId.toString());
-
-        setStep('buying');
+        // V7 only needs quantity - it discovers tokens by ownership!
         const priceWithBuffer = priceWei + (priceWei * BigInt(3) / BigInt(100));
 
         const buyHash = await writeContractAsync({
           address: VBMS_CONTRACTS.vbmsRouter,
           abi: VBMS_ROUTER_ABI,
           functionName: 'buyVBMS',
-          args: [BigInt(packCount), startingTokenId],
+          args: [BigInt(packCount)],
           value: priceWithBuffer,
           chainId: VBMS_CONTRACTS.chainId,
         });
