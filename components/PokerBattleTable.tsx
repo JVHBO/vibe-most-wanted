@@ -3381,10 +3381,13 @@ export function PokerBattleTable({
             {/* Share Button */}
             <button
               onClick={() => {
+                const outcome = spectatorNetGains >= 0 ? 'win' : 'loss';
+                const amount = Math.abs(spectatorNetGains);
+                const shareUrl = `https://www.vibemostwanted.xyz/share/mecha/${outcome}|${amount}`;
                 const text = spectatorNetGains >= 0
                   ? `I won +${spectatorNetGains} coins betting on Mecha Arena! 🎰\n\ncc @jvhbo`
-                  : `I lost ${spectatorNetGains} coins betting on Mecha Arena 💔\n\ncc @jvhbo`;
-                const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+                  : `I lost ${Math.abs(spectatorNetGains)} coins betting on Mecha Arena 💔\n\ncc @jvhbo`;
+                const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                 window.open(url, '_blank');
               }}
               className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
