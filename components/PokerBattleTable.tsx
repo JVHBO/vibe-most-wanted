@@ -3277,6 +3277,7 @@ export function PokerBattleTable({
           player2Address={room.hostAddress || ''}
           player2Username={room.hostUsername || 'Player 2'}
           spectatorAddress={playerAddress || ''}
+          cpuCollection={room?.cpuCollection}
           onBetPlaced={() => {
             console.log('✅ Bet placed successfully!');
           }}
