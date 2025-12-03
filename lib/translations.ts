@@ -305,7 +305,7 @@ export const translations = {
     // Tutorial Modal
     tutorialWelcome: 'Bem-vindo ao Vibe Most Wanted!',
     tutorialWelcomeDesc: 'Um jogo de cartas NFT onde você coleciona, batalha e sobe no ranking. Vamos mostrar como funciona!',
-    tutorialCollectCards: 'Colecione cartas NFT poderosas',
+    tutorialCollectCards: 'Colecione cartas VIBE poderosas',
     tutorialBattlePlayers: 'Batalhe contra jogadores e IA',
     tutorialClimbRanking: 'Suba no ranking global',
     tutorialPvE: 'Modo PvE (vs IA)',
@@ -633,7 +633,7 @@ export const translations = {
     // Tutorial Modal
     tutorialWelcome: 'Welcome to Vibe Most Wanted!',
     tutorialWelcomeDesc: 'An NFT card game where you collect, battle, and climb the ranking. Let us show you how it works!',
-    tutorialCollectCards: 'Collect powerful NFT cards',
+    tutorialCollectCards: 'Collect powerful VIBE cards',
     tutorialBattlePlayers: 'Battle players and AI',
     tutorialClimbRanking: 'Climb the global ranking',
     tutorialPvE: 'PvE Mode (vs AI)',
@@ -964,7 +964,7 @@ export const translations = {
     // Tutorial Modal
     tutorialWelcome: '¡Bienvenido a Vibe Most Wanted!',
     tutorialWelcomeDesc: 'Un juego de cartas NFT donde coleccionas, batallas y subes en el ranking. ¡Te mostramos cómo funciona!',
-    tutorialCollectCards: 'Colecciona cartas NFT poderosas',
+    tutorialCollectCards: 'Colecciona cartas VIBE poderosas',
     tutorialBattlePlayers: 'Batalla contra jugadores e IA',
     tutorialClimbRanking: 'Sube en el ranking global',
     tutorialPvE: 'Modo PvE (vs IA)',
@@ -1296,7 +1296,7 @@ export const translations = {
     // Tutorial Modal
     tutorialWelcome: 'Vibe Most Wanted में आपका स्वागत है!',
     tutorialWelcomeDesc: 'एक NFT कार्ड गेम जहां आप कलेक्ट करते हैं, बैटल करते हैं और रैंकिंग में ऊपर जाते हैं। हम आपको दिखाते हैं कैसे!',
-    tutorialCollectCards: 'पावरफुल NFT कार्ड्स कलेक्ट करें',
+    tutorialCollectCards: 'पावरफुल VIBE कार्ड्स कलेक्ट करें',
     tutorialBattlePlayers: 'प्लेयर्स और AI से बैटल करें',
     tutorialClimbRanking: 'ग्लोबल रैंकिंग में ऊपर जाएं',
     tutorialPvE: 'PvE मोड (vs AI)',
@@ -1624,7 +1624,7 @@ export const translations = {
     // Tutorial Modal
     tutorialWelcome: 'Добро пожаловать в Vibe Most Wanted!',
     tutorialWelcomeDesc: 'NFT карточная игра, где вы собираете, сражаетесь и поднимаетесь в рейтинге. Покажем как это работает!',
-    tutorialCollectCards: 'Собирайте мощные NFT карты',
+    tutorialCollectCards: 'Собирайте мощные VIBE карты',
     tutorialBattlePlayers: 'Сражайтесь с игроками и ИИ',
     tutorialClimbRanking: 'Поднимайтесь в мировом рейтинге',
     tutorialPvE: 'Режим PvE (vs ИИ)',
@@ -1952,7 +1952,7 @@ export const translations = {
     // Tutorial Modal
     tutorialWelcome: '欢迎来到 Vibe Most Wanted！',
     tutorialWelcomeDesc: '一款NFT卡牌游戏，收集卡牌、战斗并提升排名。让我们告诉你怎么玩！',
-    tutorialCollectCards: '收集强力NFT卡牌',
+    tutorialCollectCards: '收集强力VIBE卡牌',
     tutorialBattlePlayers: '与玩家和AI战斗',
     tutorialClimbRanking: '攀登全球排行榜',
     tutorialPvE: 'PvE模式 (对战AI)',
