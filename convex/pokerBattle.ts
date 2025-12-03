@@ -1643,10 +1643,10 @@ export const cpuMakeMove = internalMutation({
       // Check if both CPUs have selected - if so, move to reveal
       const otherSelected = isHost ? updatedRoom.gameState.guestSelectedCard : updatedRoom.gameState.hostSelectedCard;
       if (otherSelected) {
-        // Both selected, wait 30 seconds (give spectators time to bet) then reveal
-        // If someone bets, the window will be shortened to 8 seconds via shortenBettingWindow
-        const bettingWindowEndsAt = Date.now() + 30000; // 30 seconds from now
-        console.log(`🤖 Both CPUs selected - waiting 30s for spectator bets before reveal (will shorten to 8s if bet placed)`);
+        // Both selected, wait 15 seconds (give spectators time to bet) then reveal
+        // If someone bets, the window will be shortened to 5 seconds via shortenBettingWindow
+        const bettingWindowEndsAt = Date.now() + 15000; // 15 seconds from now
+        console.log(`🤖 Both CPUs selected - waiting 15s for spectator bets before reveal (will shorten to 5s if bet placed)`);
 
         await ctx.db.patch(updatedRoom._id, {
           gameState: {
@@ -1656,7 +1656,7 @@ export const cpuMakeMove = internalMutation({
           },
         });
 
-        await ctx.scheduler.runAfter(30000, internal.pokerBattle.cpuRevealRound, {
+        await ctx.scheduler.runAfter(15000, internal.pokerBattle.cpuRevealRound, {
           roomId,
         });
       } else {
@@ -1692,11 +1692,11 @@ export const shortenBettingWindow = mutation({
     if (!gameState.bettingWindowEndsAt) return;
 
     const now = Date.now();
-    const newEndsAt = now + 8000; // 8 seconds from now
+    const newEndsAt = now + 5000; // 5 seconds from now
 
     // Only shorten if the new time is sooner than the current window
     if (newEndsAt < gameState.bettingWindowEndsAt) {
-      console.log(`⚡ Bet placed! Shortening betting window from 30s to 8s for round ${currentRound}`);
+      console.log(`⚡ Bet placed! Shortening betting window to 5s for round ${currentRound}`);
 
       await ctx.db.patch(room._id, {
         gameState: {
@@ -1706,12 +1706,12 @@ export const shortenBettingWindow = mutation({
         },
       });
 
-      // Schedule reveal for 8 seconds (the original 30s reveal will be ignored via revealScheduledFor check)
-      await ctx.scheduler.runAfter(8000, internal.pokerBattle.cpuRevealRound, {
+      // Schedule reveal for 5 seconds (the original 15s reveal will be ignored via revealScheduledFor check)
+      await ctx.scheduler.runAfter(5000, internal.pokerBattle.cpuRevealRound, {
         roomId,
       });
 
-      console.log(`⏰ Scheduled new reveal for 8s, original 30s reveal will be skipped`);
+      console.log(`⏰ Scheduled new reveal for 5s, original 15s reveal will be skipped`);
     }
   },
 });
