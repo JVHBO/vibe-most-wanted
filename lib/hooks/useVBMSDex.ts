@@ -98,64 +98,8 @@ export function useVBMSAllowance(owner?: `0x${string}`) {
 export type BuyStep = 'idle' | 'fetching_token_id' | 'buying' | 'waiting' | 'complete' | 'error';
 
 /**
- * Helper: Try multiple storage slots to find nextTokenId
- * ERC721A-based contracts may have _currentIndex in different slots
- */
-async function findNextTokenId(
-  publicClient: any,
-  boosterDropAddress: `0x${string}`
-): Promise<bigint> {
-  // Try common storage slots for ERC721A _currentIndex
-  const slotsToTry = [7, 8, 5, 6, 9, 10];
-
-  for (const slot of slotsToTry) {
-    try {
-      const slotValue = await publicClient.getStorageAt({
-        address: boosterDropAddress,
-        slot: toHex(slot),
-      });
-
-      if (slotValue) {
-        const value = hexToBigInt(slotValue);
-        // Valid tokenId should be > 0 and < 1 million (reasonable range)
-        if (value > BigInt(0) && value < BigInt(1000000)) {
-          console.log(`Found nextTokenId in slot ${slot}:`, value.toString());
-          return value;
-        }
-      }
-    } catch (e) {
-      console.log(`Slot ${slot} failed:`, e);
-    }
-  }
-
-  // Fallback: use totalSupply + 1 as estimate
-  console.log('Storage slots failed, trying totalSupply fallback...');
-  try {
-    const totalSupply = await publicClient.readContract({
-      address: boosterDropAddress,
-      abi: BOOSTER_DROP_V2_ABI,
-      functionName: 'totalSupply',
-    });
-
-    if (totalSupply) {
-      const estimate = (totalSupply as bigint) + BigInt(1);
-      console.log('Using totalSupply+1 as estimate:', estimate.toString());
-      return estimate;
-    }
-  } catch (e) {
-    console.log('totalSupply fallback failed:', e);
-  }
-
-  // Last resort: start from 1
-  console.warn('All methods failed, using tokenId 1 as last resort');
-  return BigInt(1);
-}
-
-/**
  * Buy VBMS tokens with ETH via VBMSRouter
  * Single transaction: mint pack + sell for VBMS automatically!
- * @param packCount - Number of packs to buy (1 pack = 100k VBMS)
- * @param priceWei - Total price in wei (get from useMintPrice)
  */
 export function useBuyVBMS() {
   const { address } = useAccount();
@@ -181,47 +125,36 @@ export function useBuyVBMS() {
       setError(null);
 
       try {
-        // Step 1: Find nextTokenId using multiple strategies
-        console.log('Finding next token ID...');
-        const startingTokenId = await findNextTokenId(
-          publicClient,
-          VBMS_CONTRACTS.boosterDrop
-        );
-        console.log('Using starting token ID:', startingTokenId.toString());
+        // Get totalSupply as estimate for startingTokenId
+        const totalSupply = await publicClient.readContract({
+          address: VBMS_CONTRACTS.boosterDrop,
+          abi: BOOSTER_DROP_V2_ABI,
+          functionName: 'totalSupply',
+        });
+
+        const startingTokenId = (totalSupply as bigint) + BigInt(1);
+        console.log('Starting token ID:', startingTokenId.toString());
 
         setStep('buying');
-        // Step 2: Call router with (quantity, startingTokenId)
-        // Add 3% buffer to handle price changes (bonding curve can move fast)
         const priceWithBuffer = priceWei + (priceWei * BigInt(3) / BigInt(100));
-        console.log('Buying', packCount, 'pack(s) worth of VBMS with', formatEther(priceWithBuffer), 'ETH (includes 3% buffer)...');
 
         const buyHash = await writeContractAsync({
           address: VBMS_CONTRACTS.vbmsRouter,
           abi: VBMS_ROUTER_ABI,
           functionName: 'buyVBMS',
-          args: [
-            BigInt(packCount),                        // quantity
-            startingTokenId,                          // expectedStartTokenId (V6: used for fallback only)
-          ],
-          value: priceWithBuffer,  // Use buffered price to handle slippage
+          args: [BigInt(packCount), startingTokenId],
+          value: priceWithBuffer,
           chainId: VBMS_CONTRACTS.chainId,
         });
 
         setStep('waiting');
-        console.log('Waiting for buy tx:', buyHash);
-
         await publicClient.waitForTransactionReceipt({ hash: buyHash });
 
         setStep('complete');
-        console.log('Buy complete!');
-
         return { buyHash };
       } catch (err: any) {
         console.error('Buy failed:', err);
-        // Extract revert reason if available
-        const reason = err.shortMessage || err.message;
-        const revertMatch = reason.match(/reverted with reason string '([^']+)'/);
-        setError(revertMatch ? revertMatch[1] : reason);
+        setError(err.shortMessage || err.message);
         setStep('error');
         throw err;
       }
