@@ -429,7 +429,10 @@ export function PokerBattleTable({
   }, [room, isCPUMode]);
 
   // Reset timer when phase changes (separate effect to ensure it runs)
+  // Skip in CPU mode - betting window timer handles it there
   useEffect(() => {
+    if (isCPUMode) return; // CPU mode uses bettingWindowEndsAt timer instead
+
     if (phase === 'card-selection') {
       console.log('[PokerBattle] Timer reset to 30s for card-selection phase');
       setTimeRemaining(30);
@@ -437,7 +440,7 @@ export function PokerBattleTable({
       console.log('[PokerBattle] Timer reset to 90s for reveal phase');
       setTimeRemaining(90); // More time for choosing boost action (increased to 90s for testing)
     }
-  }, [phase]); // Only depend on phase
+  }, [phase, isCPUMode]); // Only depend on phase and isCPUMode
 
   // CPU vs CPU betting window timer (for Mecha Arena spectators)
   useEffect(() => {
