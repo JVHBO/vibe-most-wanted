@@ -906,6 +906,35 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, [isMusicEnabled]);
 
   /**
+   * Resume YouTube playback when tab becomes visible again
+   * (browsers pause media in background tabs)
+   */
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isMusicEnabled && !isPaused) {
+        // Try to resume YouTube if it exists
+        if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
+          try {
+            const state = youtubePlayerRef.current.getPlayerState();
+            // If paused (2) or not started, try to play
+            if (state === 2 || state === -1 || state === 5) {
+              console.log('Tab visible: resuming YouTube playback');
+              youtubePlayerRef.current.playVideo();
+            }
+          } catch(e) {}
+        }
+        // Also try to resume HTML audio
+        if (audioRef.current && audioRef.current.paused) {
+          audioRef.current.play().catch(() => {});
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isMusicEnabled, isPaused]);
+
+  /**
    * Cleanup on unmount
    */
   useEffect(() => {
