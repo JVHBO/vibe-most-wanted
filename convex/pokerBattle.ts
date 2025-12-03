@@ -1766,11 +1766,12 @@ export const cpuRevealRound = internalMutation({
 
     if (!hostCard || !guestCard) return;
 
-    // Move to reveal phase
+    // Move to reveal phase and clear betting window timer
     await ctx.db.patch(room._id, {
       gameState: {
         ...gameState,
         phase: "reveal",
+        bettingWindowEndsAt: undefined, // Clear timer to stop countdown
       },
     });
 
@@ -1804,9 +1805,35 @@ export const cpuResolveRound = internalMutation({
 
     if (!hostCard || !guestCard) return;
 
-    // Determine winner
-    const hostPower = hostCard.power || 0;
-    const guestPower = guestCard.power || 0;
+    // Get actions
+    const hostAction = gameState.hostAction;
+    const guestAction = gameState.guestAction;
+
+    // Determine winner - APPLY ACTIONS (BOOST, SHIELD, DOUBLE)!
+    let hostPower = hostCard.power || 0;
+    let guestPower = guestCard.power || 0;
+
+    // Check for shields
+    const hostHasShield = hostAction === 'SHIELD';
+    const guestHasShield = guestAction === 'SHIELD';
+
+    // Apply BOOST (+30%) - blocked by opponent's shield
+    if (hostAction === 'BOOST' && !guestHasShield) {
+      hostPower *= 1.3;
+    }
+    if (guestAction === 'BOOST' && !hostHasShield) {
+      guestPower *= 1.3;
+    }
+
+    // Apply DOUBLE (x2) - blocked by opponent's shield
+    if (hostAction === 'DOUBLE' && !guestHasShield) {
+      hostPower *= 2;
+    }
+    if (guestAction === 'DOUBLE' && !hostHasShield) {
+      guestPower *= 2;
+    }
+
+    console.log(`🤖 CPU Arena power calculation: Host ${hostCard.power} → ${Math.round(hostPower)} (${hostAction || 'PASS'}), Guest ${guestCard.power} → ${Math.round(guestPower)} (${guestAction || 'PASS'})`);
 
     let newHostScore = gameState.hostScore;
     let newGuestScore = gameState.guestScore;
