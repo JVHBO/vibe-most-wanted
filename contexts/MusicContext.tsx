@@ -139,6 +139,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
   const isPlaylistModeRef = useRef(false); // Track if we're in playlist mode
   const youtubePollingRef = useRef<NodeJS.Timeout | null>(null); // YT polling
+  const pendingTrackChangeRef = useRef(false); // Track if we need to restart on visibility change
 
   /**
    * Stop YouTube player if exists
@@ -239,6 +240,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                   console.log('YT: Scheduling next track in', (timeoutMs/1000).toFixed(0), 'seconds');
                   youtubePollingRef.current = setTimeout(() => {
                     console.log('YT timeout: triggering next track!');
+                    // Mark that we're changing tracks (might be in background)
+                    if (document.visibilityState === 'hidden') {
+                      pendingTrackChangeRef.current = true;
+                    }
                     onTrackEnd();
                   }, timeoutMs);
                 } else {
@@ -912,6 +917,14 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isMusicEnabled && !isPaused) {
+        // If track changed while in background, force replay current track
+        if (pendingTrackChangeRef.current && musicMode === 'playlist' && playlist.length > 0) {
+          console.log('Tab visible: Track changed in background, forcing replay of track', currentPlaylistIndex);
+          pendingTrackChangeRef.current = false;
+          playPlaylistTrack(currentPlaylistIndex);
+          return;
+        }
+
         // Try to resume YouTube if it exists
         if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
           try {
@@ -932,7 +945,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isMusicEnabled, isPaused]);
+  }, [isMusicEnabled, isPaused, musicMode, playlist, currentPlaylistIndex, playPlaylistTrack]);
 
   /**
    * Cleanup on unmount
