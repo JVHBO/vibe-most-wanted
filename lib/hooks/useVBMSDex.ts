@@ -205,8 +205,8 @@ export function useBuyVBMS() {
           ],
           value: priceWithBuffer,  // Use buffered price to handle slippage
           chainId: VBMS_CONTRACTS.chainId,
-          // Increased gas limit for complex nested calls
-          gas: BigInt(900000),
+          // Gas limit for nested calls (Router -> BoosterDrop -> BoosterToken)
+          gas: BigInt(700000),
         });
 
         setStep('waiting');
