@@ -60,7 +60,7 @@ export function CpuArenaModal({
   t,
   isInFarcaster = false,
 }: CpuArenaModalProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("password");
+  const [viewMode, setViewMode] = useState<ViewMode>("rooms"); // Skip password
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
@@ -291,13 +291,31 @@ export function CpuArenaModal({
                   </div>
                 </div>
 
-                <div className="text-center sm:text-right">
-                  <p className="text-vintage-ice/60 text-xs">Resets in</p>
-                  <p className="text-orange-400 font-mono font-bold">
-                    {String(buffCountdown.hours).padStart(2, '0')}:
-                    {String(buffCountdown.minutes).padStart(2, '0')}:
-                    {String(buffCountdown.seconds).padStart(2, '0')}
-                  </p>
+                <div className="flex flex-col items-center sm:items-end gap-2">
+                  <div className="text-center sm:text-right">
+                    <p className="text-vintage-ice/60 text-xs">Resets in</p>
+                    <p className="text-orange-400 font-mono font-bold">
+                      {String(buffCountdown.hours).padStart(2, '0')}:
+                      {String(buffCountdown.minutes).padStart(2, '0')}:
+                      {String(buffCountdown.seconds).padStart(2, '0')}
+                    </p>
+                  </div>
+                  {/* Buy button for boosted collection */}
+                  {(() => {
+                    const collectionConfig = COLLECTIONS[buffedCollection as CollectionId];
+                    const marketUrl = collectionConfig?.marketplaceUrl;
+                    if (!marketUrl) return null;
+                    return (
+                      <a
+                        href={marketUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 rounded-full text-white text-xs font-bold transition-all shadow-lg hover:shadow-orange-500/30"
+                      >
+                        🛒 {collectionConfig?.buttonText || 'BUY PACKS'}
+                      </a>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
