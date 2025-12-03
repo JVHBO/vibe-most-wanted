@@ -711,9 +711,22 @@ export function RaidBossModal({
                   <h3 className="text-xl md:text-2xl font-display font-bold text-vintage-neon-blue mb-2">
                     {currentBoss.name}
                   </h3>
-                  <p className="text-vintage-burnt-gold text-sm mb-4">
-                    {currentBoss.collection?.toUpperCase() || 'UNKNOWN'} - {currentBoss.rarity}
-                  </p>
+                  <div className="flex items-center gap-3 mb-4">
+                    <p className="text-vintage-burnt-gold text-sm">
+                      {currentBoss.collection?.toUpperCase() || 'UNKNOWN'} - {currentBoss.rarity}
+                    </p>
+                    {/* Buy collection button */}
+                    {currentBoss.collection && COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS]?.marketplaceUrl && (
+                      <a
+                        href={COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS].marketplaceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 rounded-full text-white text-xs font-bold transition-all shadow-lg"
+                      >
+                        🛒 {COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS].buttonText || 'BUY PACKS'}
+                      </a>
+                    )}
+                  </div>
 
                   {/* HP Bar */}
                   <div className="mb-2">
