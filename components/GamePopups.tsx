@@ -11,6 +11,7 @@
  */
 
 import { AudioManager } from '@/lib/audio-manager';
+import { FarcasterIcon } from '@/components/PokerIcons';
 
 interface BattleResult {
   coinsEarned?: number;
@@ -305,7 +306,7 @@ export function GamePopups({
                 }}
                 className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
               >
-                <span>♦</span> Farcaster
+                <FarcasterIcon size={18} /> Cast
               </a>
             </div>
             <button
@@ -387,7 +388,7 @@ export function GamePopups({
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
                 className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
               >
-                <span>♦</span> Farcaster
+                <FarcasterIcon size={18} /> Cast
               </a>
             </div>
             <button
