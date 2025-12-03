@@ -317,6 +317,7 @@ export const replaceCard = mutation({
       isFreeCard: v.optional(v.boolean()),
     }),
     txHash: v.string(), // VBMS payment transaction hash
+    isVibeFID: v.optional(v.boolean()), // If true, replacing VibeFID card
   },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
@@ -330,6 +331,69 @@ export const replaceCard = mutation({
     if (!raidDeck) {
       throw new Error("Player has no raid deck");
     }
+
+    // Handle VibeFID replacement separately
+    if (args.isVibeFID) {
+      if (!raidDeck.vibefidCard) {
+        throw new Error("No VibeFID card in deck to replace");
+      }
+
+      // Check new card is actually a VibeFID
+      if (args.newCard.collection !== 'vibefid') {
+        throw new Error("Can only replace VibeFID with another VibeFID card");
+      }
+
+      // Check for duplicates in regular deck
+      const isDuplicateInDeck = raidDeck.deck.some(
+        (c) => c.tokenId === args.newCard.tokenId
+      );
+      if (isDuplicateInDeck) {
+        throw new Error("This VibeFID is already in your raid deck.");
+      }
+
+      const now = Date.now();
+      const oldVibefidTokenId = raidDeck.vibefidCard.tokenId;
+
+      // Update VibeFID card
+      const newVibefidCard = {
+        ...args.newCard,
+        collection: 'vibefid',
+      };
+
+      // Update VibeFID energy (infinite)
+      const updatedCardEnergy = raidDeck.cardEnergy.map(ce => {
+        if (ce.tokenId === oldVibefidTokenId) {
+          return {
+            tokenId: args.newCard.tokenId,
+            energyExpiresAt: 0, // Infinite energy
+            lastAttackAt: undefined,
+            nextAttackAt: now, // Can attack immediately
+          };
+        }
+        return ce;
+      });
+
+      // Recalculate deck power with new VibeFID (10x power)
+      const basePower = raidDeck.deck.reduce((sum, card) => sum + card.power, 0);
+      const newDeckPower = Math.floor((basePower + args.newCard.power * 10) * 1.10); // +10% bonus
+
+      await ctx.db.patch(raidDeck._id, {
+        vibefidCard: newVibefidCard,
+        cardEnergy: updatedCardEnergy,
+        deckPower: newDeckPower,
+        lastUpdated: now,
+      });
+
+      console.log(`🎴 VibeFID replaced: ${oldVibefidTokenId} → ${args.newCard.tokenId} (power: ${newDeckPower})`);
+
+      return {
+        success: true,
+        newDeckPower,
+        cost: 50,
+      };
+    }
+
+
 
     // Find the card to replace
     const cardIndex = raidDeck.deck.findIndex((c) => c.tokenId === args.oldCardTokenId);
@@ -460,7 +524,7 @@ export const setRaidDeck = mutation({
     // Calculate total deck power (including VibeFID if present)
     let deckPower = args.deck.reduce((sum, card) => sum + card.power, 0);
     if (args.vibefidCard) {
-      deckPower += args.vibefidCard.power;
+      deckPower += args.vibefidCard.power * 10;  // VibeFID gets 10x power
       // Apply +10% deck bonus for having VibeFID
       deckPower = Math.floor(deckPower * (1 + VIBEFID_DECK_BONUS));
     }

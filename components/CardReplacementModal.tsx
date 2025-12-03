@@ -26,6 +26,7 @@ interface CardReplacementModalProps {
   currentBoss: RaidBoss | null | undefined;
   soundEnabled: boolean;
   currentDeckTokenIds?: string[]; // TokenIds of cards currently in the deck
+  isVibeFIDMode?: boolean; // When true, only show VibeFID cards (skip filter)
 }
 
 // Replacement cost by rarity (in VBMS)
@@ -47,6 +48,7 @@ export function CardReplacementModal({
   currentBoss,
   soundEnabled,
   currentDeckTokenIds = [],
+  isVibeFIDMode = false,
 }: CardReplacementModalProps) {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [sortByPower, setSortByPower] = useState(true);
@@ -77,11 +79,13 @@ export function CardReplacementModal({
     return { power, buffPercent, buffType };
   };
 
-  // Filter out VibeFID cards (they are special 6th slot only) and sort
+  // Filter cards - in VibeFIDMode show only VibeFID, otherwise exclude VibeFID
   const sortedCards = useMemo(() => {
-    const filteredCards = availableCards.filter(card => card.collection !== 'vibefid');
-    return sortCardsByPower(filteredCards, !sortByPower); // ascending when sortByPower is false
-  }, [availableCards, sortByPower]);
+    const filteredCards = isVibeFIDMode
+      ? availableCards // In VibeFID mode, show all (already filtered by parent)
+      : availableCards.filter(card => card.collection !== 'vibefid'); // Normal mode excludes VibeFID
+    return sortCardsByPower(filteredCards, !sortByPower);
+  }, [availableCards, sortByPower, isVibeFIDMode]);
 
   // Calculate replacement cost for selected card
   const replacementCost = selectedCard
@@ -117,7 +121,7 @@ export function CardReplacementModal({
         {/* Header */}
         <div className="flex-shrink-0 mb-4">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-center text-vintage-gold">
-            Replace Card
+            {isVibeFIDMode ? '🎴 Replace VibeFID' : 'Replace Card'}
           </h2>
           <p className="text-center text-vintage-burnt-gold text-sm mt-2">
             Select a card to replace {oldCard?.name || ''}

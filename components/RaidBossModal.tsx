@@ -65,6 +65,7 @@ export function RaidBossModal({
   const [isRefueling, setIsRefueling] = useState(false);
   const [refuelError, setRefuelError] = useState<string | null>(null);
   const [replacingCardTokenId, setReplacingCardTokenId] = useState<string | null>(null);
+  const [replacingVibeFID, setReplacingVibeFID] = useState(false);
 
   // Boss carousel drag state
   const bossScrollRef = useRef<HTMLDivElement>(null);
@@ -404,6 +405,56 @@ export function RaidBossModal({
     }
   };
 
+  // Replace VibeFID card (always costs 50 VBMS)
+  const handleReplaceVibeFID = async (newCard: NFT) => {
+    if (!playerDeck || isRefueling || !playerDeck.vibefidCard) return;
+
+    setIsRefueling(true);
+    setRefuelError(null);
+
+    try {
+      console.log('🔄 Replacing VibeFID:', playerDeck.vibefidCard.tokenId, '→', newCard.tokenId);
+
+      const cost = 50; // VibeFID always costs 50 VBMS
+
+      // Transfer VBMS to pool
+      const txHash = await transferVBMS(
+        CONTRACTS.VBMSPoolTroll as `0x${string}`,
+        parseEther(cost.toString())
+      );
+
+      console.log('✅ Transfer successful, txHash:', txHash);
+
+      // Call Convex mutation to replace VibeFID
+      await replaceCardMutation({
+        address: userAddress.toLowerCase(),
+        oldCardTokenId: playerDeck.vibefidCard.tokenId,
+        newCard: {
+          tokenId: newCard.tokenId,
+          collection: 'vibefid',
+          power: newCard.power,
+          imageUrl: newCard.imageUrl,
+          name: newCard.name,
+          rarity: newCard.rarity,
+          foil: newCard.foil,
+        },
+        txHash,
+        isVibeFID: true, // Special flag for VibeFID replacement
+      });
+
+      console.log('✅ VibeFID replaced successfully!');
+      if (soundEnabled) AudioManager.buttonSuccess();
+      setReplacingVibeFID(false);
+
+    } catch (error: any) {
+      console.error('❌ Error replacing VibeFID:', error);
+      setRefuelError(error?.message || 'Failed to replace VibeFID');
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
+    } finally {
+      setIsRefueling(false);
+    }
+  };
+
   // Share raid deck on Farcaster
   const handleShare = () => {
     if (!playerDeck || !currentBoss) return;
@@ -557,6 +608,23 @@ export function RaidBossModal({
         currentBoss={currentBoss}
         soundEnabled={soundEnabled}
         currentDeckTokenIds={playerDeck?.deck?.map((card: NFT) => card.tokenId) || []}
+      />
+
+      {/* VibeFID Replacement Modal - Only shows VibeFID cards */}
+      <CardReplacementModal
+        isOpen={replacingVibeFID}
+        onClose={() => setReplacingVibeFID(false)}
+        onConfirm={(newCard) => {
+          if (playerDeck?.vibefidCard) {
+            handleReplaceVibeFID(newCard);
+          }
+        }}
+        availableCards={allNfts.filter(card => card.collection === 'vibefid')}
+        oldCard={(playerDeck?.vibefidCard as Card) || null}
+        currentBoss={currentBoss}
+        soundEnabled={soundEnabled}
+        currentDeckTokenIds={playerDeck?.vibefidCard ? [playerDeck.vibefidCard.tokenId] : []}
+        isVibeFIDMode={true}
       />
 
       {/* Main Raid Boss Modal */}
@@ -1039,12 +1107,8 @@ export function RaidBossModal({
                           </div>
                           {/* Replace Card Button - Always Visible */}
                           <button
-                            onClick={() => {
-                              setReplacingCardTokenId(card.tokenId);
-                              if (soundEnabled) AudioManager.buttonClick();
-                            }}
-                            disabled={isRefueling}
-                            className="absolute top-1 right-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-1.5 py-0.5 rounded font-bold transition disabled:opacity-50 shadow-lg"
+                            onClick={() => setReplacingVibeFID(true)}
+                            className="absolute bottom-1 right-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-1.5 py-0.5 rounded font-bold transition disabled:opacity-50 shadow-lg"
                             title={t('raidBossReplaceCard')}
                           >
                             🔄
