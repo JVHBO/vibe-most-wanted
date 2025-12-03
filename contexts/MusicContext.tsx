@@ -691,8 +691,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         const shouldLoop = playlist.length === 1;
         const onEnd = playlist.length > 1 ? () => {
           const nextIndex = (safeIndex + 1) % playlist.length;
+          console.log('onEnd called! Current:', safeIndex, 'Next:', nextIndex, 'Playlist length:', playlist.length);
           setCurrentPlaylistIndexState(nextIndex);
         } : undefined;
+        console.log('Playing YT track', safeIndex, 'shouldLoop:', shouldLoop, 'hasOnEnd:', !!onEnd);
         playYouTubeAudio(videoId, volume, shouldLoop, onEnd);
         setIsCustomMusicLoading(false);
         return;
@@ -793,6 +795,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     // If playlist mode with tracks
     if (musicMode === 'playlist' && playlist.length > 0) {
+      console.log('useEffect: Playing playlist track', currentPlaylistIndex);
       setIsCustomMusicLoading(true);
       setCustomMusicError(null);
       playPlaylistTrack(currentPlaylistIndex);
