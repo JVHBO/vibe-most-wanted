@@ -36,8 +36,9 @@ export function SpectatorEntryModal({
   const [step, setStep] = useState<"input" | "deposit-intro" | "deposit-amount" | "approving" | "transferring" | "done">("input");
   const [error, setError] = useState<string | null>(null);
 
-  // Preset amounts
-  const PRESETS = [50, 100, 250, 500, 1000];
+  // Preset amounts and max limit
+  const MAX_DEPOSIT = 10000;
+  const PRESETS = [100, 500, 1000, 5000, 10000];
 
   const handleDeposit = async () => {
     if (!effectiveAddress || !amount) return;
@@ -45,6 +46,11 @@ export function SpectatorEntryModal({
     const amountNum = parseFloat(amount);
     if (amountNum <= 0) {
       setError("Amount must be greater than 0");
+      return;
+    }
+
+    if (amountNum > MAX_DEPOSIT) {
+      setError(`Maximum entry is ${MAX_DEPOSIT.toLocaleString()} VBMS`);
       return;
     }
 
@@ -227,15 +233,23 @@ export function SpectatorEntryModal({
             {/* Amount Input */}
             <div className="mb-6">
               <label className="text-vintage-ice text-sm font-bold mb-2 block">
-                Amount to Deposit
+                Amount to Deposit <span className="text-vintage-gold/60">(max 10,000)</span>
               </label>
               <input
                 type="number"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (parseFloat(val) > MAX_DEPOSIT) {
+                    setAmount(MAX_DEPOSIT.toString());
+                  } else {
+                    setAmount(val);
+                  }
+                }}
                 className="w-full bg-vintage-black/60 border-2 border-vintage-gold/30 focus:border-vintage-gold rounded-lg px-4 py-3 text-vintage-ice text-xl font-display outline-none"
                 placeholder="100"
                 min="1"
+                max={MAX_DEPOSIT}
               />
             </div>
 

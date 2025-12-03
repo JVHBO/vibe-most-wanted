@@ -119,10 +119,10 @@ export default function DocsPage() {
   const sections = [
     { id: "economy" as DocSection, label: t("economy") },
     { id: "battles" as DocSection, label: t("battles") },
-    { id: "poker" as DocSection, label: "Poker Battle" },
-    { id: "mecha" as DocSection, label: "🤖 Mecha Arena" },
-    { id: "raidboss" as DocSection, label: "👹 Raid Boss" },
-    { id: "vibefid" as DocSection, label: "🆔 VibeFID" },
+    { id: "poker" as DocSection, label: t("pokerBattle") },
+    { id: "mecha" as DocSection, label: t("mechaArena") },
+    { id: "raidboss" as DocSection, label: t("raidBoss") },
+    { id: "vibefid" as DocSection, label: t("vibeFID") },
     { id: "achievements" as DocSection, label: t("achievements") },
     { id: "quests" as DocSection, label: t("quests") },
     { id: "cards" as DocSection, label: t("cards") },
@@ -244,11 +244,11 @@ export default function DocsPage() {
           {/* Poker */}
           {activeSection === "poker" && (
             <div>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">Poker Battle</h2>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("pokerBattle")}</h2>
               <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
-                <p>Play poker against CPU or other players using VBMS stakes.</p>
+                <p>{t("pokerIntro")}</p>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Stakes</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("pokerStakes")}</h3>
                 <ul className="list-disc list-inside space-y-2">
                   <li>10 VBMS</li>
                   <li>50 VBMS</li>
@@ -256,12 +256,12 @@ export default function DocsPage() {
                   <li>2000 VBMS</li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Rules</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("pokerRules")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>Best of 5 rounds - First to win 4 rounds wins the match</li>
-                  <li>Winner takes 95% of pot (5% house fee)</li>
-                  <li>Blockchain secured (VBMS contract on Base)</li>
-                  <li>PvP matches are live - both players play simultaneously</li>
+                  <li>{t("pokerRule1")}</li>
+                  <li>{t("pokerRule2")}</li>
+                  <li>{t("pokerRule3")}</li>
+                  <li>{t("pokerRule4")}</li>
                 </ul>
               </div>
             </div>
@@ -271,31 +271,31 @@ export default function DocsPage() {
           {/* Mecha Arena */}
           {activeSection === "mecha" && (
             <div>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">🤖 Mecha Arena</h2>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("mechaArena")}</h2>
               <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
-                <p>Watch CPU vs CPU battles and bet on the outcome! Spectate epic card battles between AI opponents.</p>
+                <p>{t("mechaIntro")}</p>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">How It Works</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaHowItWorks")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>Choose from 13 different arena collections</li>
-                  <li>Two CPUs battle automatically using cards from that collection</li>
-                  <li>Deposit VBMS to get betting credits</li>
-                  <li>Bet on each round (1-7) with growing odds</li>
-                  <li>Instant payouts when rounds resolve</li>
+                  <li>{t("mechaStep1")}</li>
+                  <li>{t("mechaStep2")}</li>
+                  <li>{t("mechaStep3")}</li>
+                  <li>{t("mechaStep4")}</li>
+                  <li>{t("mechaStep5")}</li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Betting Odds</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaBettingOdds")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li><strong>Rounds 1-3:</strong> 1.5x odds</li>
-                  <li><strong>Rounds 4-5:</strong> 1.8x odds</li>
-                  <li><strong>Rounds 6-7:</strong> 2.0x odds</li>
-                  <li><strong>Tie Bet:</strong> 3.5x odds</li>
+                  <li><strong>{t("mechaRounds13")}</strong></li>
+                  <li><strong>{t("mechaRounds45")}</strong></li>
+                  <li><strong>{t("mechaRounds67")}</strong></li>
+                  <li><strong>{t("mechaTieBet")}</strong></li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">🔥 Daily Boost</h3>
-                <p>Every day, one arena collection gets <strong className="text-orange-400">+0.5x bonus odds</strong>! Look for the HOT badge.</p>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaDailyBoost")}</h3>
+                <p>{t("mechaDailyBoostDesc")}</p>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Collections</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaCollections")}</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🌅 GM VBRS</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎭 Vibe Most Wanted</span>
@@ -318,31 +318,31 @@ export default function DocsPage() {
           {/* Raid Boss */}
           {activeSection === "raidboss" && (
             <div>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">👹 Raid Boss</h2>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("raidBoss")}</h2>
               <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
-                <p>Team up with other players to defeat powerful bosses and earn exclusive rewards!</p>
+                <p>{t("raidBossIntro")}</p>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">How It Works</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("raidHowItWorks")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>Bosses appear on a rotating schedule</li>
-                  <li>Select cards from your collection to attack</li>
-                  <li>Deal damage based on your card power</li>
-                  <li>Contribute to the community effort</li>
-                  <li>Earn rewards based on damage contribution</li>
+                  <li>{t("raidStep1")}</li>
+                  <li>{t("raidStep2")}</li>
+                  <li>{t("raidStep3")}</li>
+                  <li>{t("raidStep4")}</li>
+                  <li>{t("raidStep5")}</li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Rewards</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("raidRewards")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>TESTVBMS coins based on damage dealt</li>
-                  <li>Bonus rewards for top contributors</li>
-                  <li>Special achievements for boss defeats</li>
+                  <li>{t("raidReward1")}</li>
+                  <li>{t("raidReward2")}</li>
+                  <li>{t("raidReward3")}</li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Tips</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("raidTips")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>Use high-power cards for maximum damage</li>
-                  <li>Cards from the boss collection deal extra damage</li>
-                  <li>Coordinate with other players for faster kills</li>
+                  <li>{t("raidTip1")}</li>
+                  <li>{t("raidTip2")}</li>
+                  <li>{t("raidTip3")}</li>
                 </ul>
               </div>
             </div>
@@ -351,40 +351,40 @@ export default function DocsPage() {
           {/* VibeFID */}
           {activeSection === "vibefid" && (
             <div>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">🆔 VibeFID</h2>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("vibeFID")}</h2>
               <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
-                <p>Generate unique trading cards based on your Farcaster ID! Your FID determines your card traits.</p>
+                <p>{t("vibeFIDIntro")}</p>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">How It Works</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("vibeFIDHowItWorks")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>Connect with Farcaster to mint your VibeFID card</li>
-                  <li>Your Neynar score determines the card rarity</li>
-                  <li>Your FID number determines foil and wear traits</li>
-                  <li>Lower FID = Better chances for rare traits</li>
+                  <li>{t("vibeFIDStep1")}</li>
+                  <li>{t("vibeFIDStep2")}</li>
+                  <li>{t("vibeFIDStep3")}</li>
+                  <li>{t("vibeFIDStep4")}</li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Neynar Score → Rarity</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("vibeFIDNeynarScore")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li><strong className="text-purple-400">Mythic</strong> (≥ 0.99): 800 base power</li>
-                  <li><strong className="text-orange-400">Legendary</strong> (≥ 0.90): 240 base power</li>
-                  <li><strong className="text-pink-400">Epic</strong> (≥ 0.79): 80 base power</li>
-                  <li><strong className="text-blue-400">Rare</strong> (≥ 0.70): 20 base power</li>
-                  <li><strong className="text-gray-400">Common</strong> (&lt; 0.70): 5 base power</li>
+                  <li><strong className="text-purple-400">{t("vibeFIDMythic")}</strong></li>
+                  <li><strong className="text-orange-400">{t("vibeFIDLegendary")}</strong></li>
+                  <li><strong className="text-pink-400">{t("vibeFIDEpic")}</strong></li>
+                  <li><strong className="text-blue-400">{t("vibeFIDRare")}</strong></li>
+                  <li><strong className="text-gray-400">{t("vibeFIDCommon")}</strong></li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">FID → Traits</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("vibeFIDTraits")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li><strong className="text-yellow-400">≤ 5,000 (OG)</strong>: 100% Prize Foil + 100% Pristine</li>
-                  <li><strong>5,001 - 20,000</strong>: 80% Prize Foil, 90% Pristine</li>
-                  <li><strong>20,001 - 100,000</strong>: Mixed chances</li>
-                  <li><strong>&gt; 100,000</strong>: Lower chances for rare traits</li>
+                  <li><strong className="text-yellow-400">{t("vibeFIDOG")}</strong></li>
+                  <li><strong>{t("vibeFIDTier2")}</strong></li>
+                  <li><strong>{t("vibeFIDTier3")}</strong></li>
+                  <li><strong>{t("vibeFIDTier4")}</strong></li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">VibeFID Benefits</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("vibeFIDBenefits")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>⚡ <strong>Power Boost:</strong> +10% power to all your cards</li>
-                  <li>♾️ <strong>Infinite Energy:</strong> No energy limit for battles</li>
-                  <li>🃏 <strong>No Deck Restriction:</strong> Use any cards in your deck</li>
+                  <li>{t("vibeFIDBenefit1")}</li>
+                  <li>{t("vibeFIDBenefit2")}</li>
+                  <li>{t("vibeFIDBenefit3")}</li>
                 </ul>
               </div>
             </div>

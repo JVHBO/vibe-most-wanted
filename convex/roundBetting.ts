@@ -17,6 +17,7 @@ const ODDS_CONFIG = {
   rounds1to3: 1.5, // Early rounds: 1.5x
   rounds4to5: 1.8, // Mid rounds: 1.8x
   rounds6to7: 2.0, // Final rounds: 2.0x
+  allInRound7: 3.0, // ALL IN on final round: 3.0x (high risk, high reward!)
   tie: 3.5, // Tie bet: 3.5x (higher since it's harder to predict)
 };
 
@@ -48,10 +49,15 @@ function isCollectionBuffed(collectionSlug: string): boolean {
 /**
  * Get odds for a specific round and bet type
  * Applies buff bonus if collection is today's daily buff
+ * ALL IN on round 7 gets special 3x odds!
  */
-function getOddsForRound(roundNumber: number, isTieBet: boolean = false, collectionSlug?: string): number {
+function getOddsForRound(roundNumber: number, isTieBet: boolean = false, collectionSlug?: string, isAllIn: boolean = false): number {
   let baseOdds: number;
-  if (isTieBet) {
+
+  // ALL IN on final round gets special 3x odds!
+  if (roundNumber === 7 && isAllIn) {
+    baseOdds = ODDS_CONFIG.allInRound7;
+  } else if (isTieBet) {
     baseOdds = ODDS_CONFIG.tie;
   } else if (roundNumber <= 3) {
     baseOdds = ODDS_CONFIG.rounds1to3;
@@ -129,9 +135,10 @@ export const placeBetOnRound = mutation({
     roundNumber: v.number(),
     betOn: v.string(), // Address of player to bet on OR "tie" for draw bet
     amount: v.number(),
+    isAllIn: v.optional(v.boolean()), // ALL IN on final round for 3x odds!
   },
   handler: async (ctx, args) => {
-    const { address, roomId, roundNumber, betOn, amount } = args;
+    const { address, roomId, roundNumber, betOn, amount, isAllIn = false } = args;
     const normalizedAddress = address.toLowerCase();
     const normalizedBetOn = betOn.toLowerCase();
 
@@ -179,8 +186,8 @@ export const placeBetOnRound = mutation({
 
     const collectionSlug = room?.cpuCollection || undefined;
 
-    // Get odds for this round (with buff bonus if applicable)
-    const odds = getOddsForRound(roundNumber, isTieBet, collectionSlug);
+    // Get odds for this round (with buff bonus if applicable, and ALL IN bonus on round 7)
+    const odds = getOddsForRound(roundNumber, isTieBet, collectionSlug, isAllIn);
     const isBuffed = collectionSlug ? isCollectionBuffed(collectionSlug) : false;
 
     // Create bet

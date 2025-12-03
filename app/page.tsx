@@ -780,6 +780,18 @@ export default function TCGPage() {
     }
   }, []);
 
+  // Show tutorial for ALL players once (existing and new)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!address || !userProfile) return; // Wait until user is logged in
+
+    const tutorialSeen = localStorage.getItem('tutorialSeen');
+    if (!tutorialSeen) {
+      // Show tutorial for this user (first time)
+      setShowTutorial(true);
+    }
+  }, [address, userProfile]);
+
   // Sync music volume with MusicContext
   useEffect(() => {
     syncMusicVolume(musicVolume);
@@ -6406,10 +6418,16 @@ export default function TCGPage() {
             onProfileCreated={() => setShowTutorial(true)}
           />
 
-          {/* Tutorial Modal - Shows after profile creation */}
+          {/* Tutorial Modal - Shows for all players once */}
           <TutorialModal
             isOpen={showTutorial}
-            onClose={() => setShowTutorial(false)}
+            onClose={() => {
+              setShowTutorial(false);
+              // Mark tutorial as seen in localStorage
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('tutorialSeen', 'true');
+              }
+            }}
             soundEnabled={soundEnabled}
           />
 
