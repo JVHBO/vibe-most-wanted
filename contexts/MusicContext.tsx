@@ -32,6 +32,14 @@ interface MusicContextType {
   play: () => void;
   // Track info
   currentTrackName: string | null;
+  currentTrackThumbnail: string | null;
+}
+
+// Track metadata for display
+interface TrackMetadata {
+  title: string;
+  thumbnail?: string;
+  duration?: number;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -85,6 +93,27 @@ function isYouTubeUrl(url: string): boolean {
   return url.includes('youtube.com') || url.includes('youtu.be');
 }
 
+// Fetch YouTube video metadata (title, thumbnail)
+async function fetchYouTubeMetadata(videoId: string): Promise<{ title: string; thumbnail: string } | null> {
+  try {
+    // Use noembed.com as a free alternative to YouTube oEmbed (no API key needed)
+    const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return {
+      title: data.title || 'YouTube Music',
+      thumbnail: data.thumbnail_url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+    };
+  } catch (e) {
+    console.warn('Failed to fetch YouTube metadata:', e);
+    // Fallback to direct thumbnail URL
+    return {
+      title: 'YouTube Music',
+      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+    };
+  }
+}
+
 export function MusicProvider({ children }: { children: React.ReactNode }) {
   const { lang } = useLanguage();
   const [musicMode, setMusicModeState] = useState<MusicMode>('default');
@@ -98,6 +127,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [playlist, setPlaylistState] = useState<string[]>([]);
   const [currentPlaylistIndex, setCurrentPlaylistIndexState] = useState(0);
   const [currentTrackName, setCurrentTrackName] = useState<string | null>(null);
+  const [currentTrackThumbnail, setCurrentTrackThumbnail] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
 
   // Audio references
@@ -608,6 +638,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     console.log(`🎵 Playing playlist track ${safeIndex + 1}/${playlist.length}: ${trackUrl}`);
     setCurrentTrackName(getTrackNameFromUrl(trackUrl));
+    setCurrentTrackThumbnail(null); // Non-YouTube tracks don't have thumbnails
 
     // Check if it's a YouTube URL
     if (isYouTubeUrl(trackUrl)) {
@@ -617,6 +648,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           audioRef.current.pause();
           audioRef.current = null;
         }
+        
+        // Fetch YouTube metadata for title and thumbnail
+        fetchYouTubeMetadata(videoId).then(metadata => {
+          if (metadata) {
+            setCurrentTrackName(metadata.title);
+            setCurrentTrackThumbnail(metadata.thumbnail);
+          }
+        });
+        
         const shouldLoop = playlist.length === 1;
         const onEnd = playlist.length > 1 ? () => {
           const nextIndex = (safeIndex + 1) % playlist.length;
@@ -646,9 +686,24 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     newAudio.loop = playlist.length === 1;
     newAudio.volume = 0;
 
+    // Use timeupdate for more reliable next-track detection in background tabs
+    // (onended doesn't fire reliably when tab is inactive)
+    let hasTriggeredNext = false;
+    newAudio.ontimeupdate = () => {
+      if (hasTriggeredNext) return;
+      if (newAudio.duration && newAudio.currentTime >= newAudio.duration - 0.5) {
+        hasTriggeredNext = true;
+        console.log('🎵 Playlist track ending (timeupdate), playing next...');
+        const nextIndex = (safeIndex + 1) % playlist.length;
+        setCurrentPlaylistIndexState(nextIndex);
+      }
+    };
+    // Keep onended as fallback
     if (playlist.length > 1) {
       newAudio.onended = () => {
-        console.log('🎵 Playlist track ended, playing next...');
+        if (hasTriggeredNext) return;
+        hasTriggeredNext = true;
+        console.log('🎵 Playlist track ended (onended), playing next...');
         const nextIndex = (safeIndex + 1) % playlist.length;
         setCurrentPlaylistIndexState(nextIndex);
       };
@@ -858,6 +913,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       pause,
       play,
       currentTrackName,
+      currentTrackThumbnail,
     }}>
       {children}
     </MusicContext.Provider>

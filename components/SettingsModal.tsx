@@ -54,6 +54,7 @@ interface SettingsModalProps {
   skipToNext: () => void;
   skipToPrevious: () => void;
   currentTrackName: string | null;
+  currentTrackThumbnail: string | null;
   // Playback control
   isPaused: boolean;
   pause: () => void;
@@ -95,6 +96,7 @@ export function SettingsModal({
   skipToNext,
   skipToPrevious,
   currentTrackName,
+  currentTrackThumbnail,
   isPaused,
   pause,
   play,
@@ -580,6 +582,43 @@ export function SettingsModal({
                     Add
                   </button>
                 </div>
+
+                {/* Now Playing Card */}
+                {playlist.length > 0 && currentTrackName && (
+                  <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/50 rounded-xl p-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      {/* Thumbnail */}
+                      {currentTrackThumbnail ? (
+                        <img
+                          src={currentTrackThumbnail}
+                          alt="Now playing"
+                          className="w-16 h-12 object-cover rounded-lg shadow-lg"
+                        />
+                      ) : (
+                        <div className="w-16 h-12 bg-purple-800/50 rounded-lg flex items-center justify-center text-2xl">
+                          🎵
+                        </div>
+                      )}
+                      {/* Track Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-purple-300 text-xs uppercase tracking-wide">Now Playing</p>
+                        <p className="text-vintage-gold font-bold text-sm truncate">{currentTrackName}</p>
+                        <p className="text-vintage-ice/60 text-xs">Track {currentPlaylistIndex + 1} of {playlist.length}</p>
+                      </div>
+                      {/* Play/Pause */}
+                      <button
+                        onClick={() => {
+                          if (isPaused) play();
+                          else pause();
+                          if (soundEnabled) AudioManager.buttonNav();
+                        }}
+                        className="w-10 h-10 bg-purple-600 hover:bg-purple-500 rounded-full flex items-center justify-center text-white text-lg shadow-lg transition-all"
+                      >
+                        {isPaused ? '▶' : '⏸'}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Playlist tracks */}
                 {playlist.length > 0 && (
