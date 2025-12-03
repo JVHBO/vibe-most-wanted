@@ -1775,8 +1775,8 @@ export const cpuRevealRound = internalMutation({
       },
     });
 
-    // After 3 seconds, resolve the round
-    await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuResolveRound, {
+    // After 5 seconds, resolve the round (more time to see cards)
+    await ctx.scheduler.runAfter(5000, internal.pokerBattle.cpuResolveRound, {
       roomId,
     });
   },
@@ -1950,9 +1950,9 @@ export const cpuResolveRound = internalMutation({
 
       console.log(`🏆 CPU vs CPU game finished: ${room.hostUsername} ${newHostScore} - ${newGuestScore} ${room.guestUsername}`);
 
-      // Start a new game after 10 seconds if there are spectators
+      // Start a new game after 15 seconds if there are spectators (more time for victory screen)
       if (room.spectators && room.spectators.length > 0) {
-        await ctx.scheduler.runAfter(10000, internal.pokerBattle.cpuRestartGame, {
+        await ctx.scheduler.runAfter(15000, internal.pokerBattle.cpuRestartGame, {
           roomId,
         });
       }
@@ -1968,8 +1968,8 @@ export const cpuResolveRound = internalMutation({
         },
       });
 
-      // After 3 seconds, start next round
-      await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuStartNextRound, {
+      // After 5 seconds, start next round (more time to see result)
+      await ctx.scheduler.runAfter(5000, internal.pokerBattle.cpuStartNextRound, {
         roomId,
         nextRound,
       });
