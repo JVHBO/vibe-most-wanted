@@ -31,6 +31,7 @@ interface CreateProfileModalProps {
   setCurrentView: (view: any) => void;
   soundEnabled: boolean;
   t: (key: any) => string;
+  onProfileCreated?: () => void; // Callback to trigger tutorial after profile creation
 }
 
 export function CreateProfileModal({
@@ -45,6 +46,7 @@ export function CreateProfileModal({
   setCurrentView,
   soundEnabled,
   t,
+  onProfileCreated,
 }: CreateProfileModalProps) {
   const { lang, setLang } = useLanguage();
 
@@ -73,6 +75,11 @@ export function CreateProfileModal({
       setCurrentView('game');
 
       if (soundEnabled) AudioManager.buttonSuccess();
+
+      // Trigger tutorial for new users
+      if (onProfileCreated) {
+        onProfileCreated();
+      }
     } catch (error: any) {
       if (soundEnabled) AudioManager.buttonError();
       devError('✗ Error creating profile:', error.code, error.message);

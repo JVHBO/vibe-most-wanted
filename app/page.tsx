@@ -24,6 +24,7 @@ import { ProgressBar } from "@/components/ProgressBar";
 import AchievementsView from "@/components/AchievementsView";
 import { ShopView } from "@/components/ShopView";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
+import { TutorialModal } from "@/components/TutorialModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { CpuArenaModal } from "@/components/CpuArenaModal";
 import { InboxDisplay } from "@/components/InboxDisplay";
@@ -6402,6 +6403,14 @@ export default function TCGPage() {
             setCurrentView={setCurrentView}
             soundEnabled={soundEnabled}
             t={t}
+            onProfileCreated={() => setShowTutorial(true)}
+          />
+
+          {/* Tutorial Modal - Shows after profile creation */}
+          <TutorialModal
+            isOpen={showTutorial}
+            onClose={() => setShowTutorial(false)}
+            soundEnabled={soundEnabled}
           />
 
         </>
