@@ -8,7 +8,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #17355",
           "rarity": "Legendary",
           "power": 180,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/301c546f74be9cfc68b6aecae0d731da",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/17355",
           "collection": "vibefid"
       },
       {
@@ -32,7 +32,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #421001",
           "rarity": "Legendary",
           "power": 100,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3eb24c1ad5820ddf368d4e4ba17e20d4",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/421001",
           "collection": "vibefid"
       },
       {
@@ -40,7 +40,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #14771",
           "rarity": "Epic",
           "power": 540,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e30d25d30f07678834c6e4d5ccdacd79",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/14771",
           "collection": "vibefid"
       },
       {
@@ -64,7 +64,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #546879",
           "rarity": "Epic",
           "power": 50,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/519a6b18e3d80d1e42f9bd29af9d3c23",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/546879",
           "collection": "vibefid"
       },
       {
@@ -72,7 +72,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #932921",
           "rarity": "Epic",
           "power": 50,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a6d5a9fd3e005bec68354995c4c1e4f5",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/932921",
           "collection": "vibefid"
       },
       {
@@ -80,7 +80,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1009776",
           "rarity": "Epic",
           "power": 50,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5144d9653d7a31dfdd1b18be451c3e2a",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1009776",
           "collection": "vibefid"
       },
       {
@@ -88,7 +88,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1012281",
           "rarity": "Epic",
           "power": 50,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8da088dfda39649d66aecb4820bcedc9",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1012281",
           "collection": "vibefid"
       },
       {
@@ -96,7 +96,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #199190",
           "rarity": "Rare",
           "power": 120,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/66ad46ac8ae714ee07fd9cf628c51331",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/199190",
           "collection": "vibefid"
       },
       {
@@ -112,7 +112,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #249478",
           "rarity": "Rare",
           "power": 20,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e1ec2973be13656556de1d7fcd25116a",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/249478",
           "collection": "vibefid"
       },
       {
@@ -120,7 +120,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #249629",
           "rarity": "Rare",
           "power": 28,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ecd52198b5bc395aee6db6d47c87ffc3",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/249629",
           "collection": "vibefid"
       },
       {
@@ -136,7 +136,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #903908",
           "rarity": "Rare",
           "power": 20,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1586ca9c7467dfe9a07b240eef18f5f7",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/903908",
           "collection": "vibefid"
       },
       {
@@ -144,7 +144,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1078302",
           "rarity": "Rare",
           "power": 20,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8f68c0197ec7ec4ed9f2f33c4efd5290",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1078302",
           "collection": "vibefid"
       },
       {
@@ -152,7 +152,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #22415",
           "rarity": "Common",
           "power": 36,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0917db84d542a53237a976437db8ff51",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/22415",
           "collection": "vibefid"
       },
       {
@@ -176,7 +176,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #301572",
           "rarity": "Common",
           "power": 14,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/14473e4212bc2bcb18fff518c5fb4a2e",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/301572",
           "collection": "vibefid"
       },
       {
@@ -184,7 +184,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #439094",
           "rarity": "Common",
           "power": 14,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/11716b241d417030f4f01399c3779c0f",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/439094",
           "collection": "vibefid"
       },
       {
@@ -192,7 +192,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #481376",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/51710965e3c69db362b5b468deff573c",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/481376",
           "collection": "vibefid"
       },
       {
@@ -200,7 +200,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #505211",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bc8ebe3262f6d162cc3438505bb9481d",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/505211",
           "collection": "vibefid"
       },
       {
@@ -208,7 +208,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #873944",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d383b5f803e3b1bffe1d9e364400f42d",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/873944",
           "collection": "vibefid"
       },
       {
@@ -216,7 +216,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #937300",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/db93e974a6f725019715b3e8d4993edb",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/937300",
           "collection": "vibefid"
       },
       {
@@ -224,7 +224,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1010556",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6f3b55480e8799b7bcf5f03db6d8947b",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1010556",
           "collection": "vibefid"
       },
       {
@@ -232,7 +232,7 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
           "name": "VibeFID #1068973",
           "rarity": "Common",
           "power": 10,
-          "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ab7e69d6f1257c947428fd942476f7e8",
+          "imageUrl": "https://www.vibemostwanted.xyz/api/card-image/1068973",
           "collection": "vibefid"
       },
       {
