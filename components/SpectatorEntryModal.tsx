@@ -36,7 +36,8 @@ export function SpectatorEntryModal({
   const [step, setStep] = useState<"input" | "deposit-intro" | "deposit-amount" | "approving" | "transferring" | "done">("input");
   const [error, setError] = useState<string | null>(null);
 
-  // Preset amounts and max limit
+  // Preset amounts, min and max limits
+  const MIN_DEPOSIT = 100;
   const MAX_DEPOSIT = 10000;
   const PRESETS = [100, 500, 1000, 5000, 10000];
 
@@ -44,8 +45,8 @@ export function SpectatorEntryModal({
     if (!effectiveAddress || !amount) return;
 
     const amountNum = parseFloat(amount);
-    if (amountNum <= 0) {
-      setError("Amount must be greater than 0");
+    if (amountNum < MIN_DEPOSIT) {
+      setError(`Minimum entry is ${MIN_DEPOSIT} VBMS`);
       return;
     }
 
