@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { isCollectionBuffed, BUFF_CONFIG } from "@/lib/dailyBuff";
 
 interface SimpleBettingOverlayProps {
   roomId: string;
@@ -12,6 +13,7 @@ interface SimpleBettingOverlayProps {
   player2Address: string;
   player2Username: string;
   spectatorAddress: string;
+  cpuCollection?: string;
   onBetPlaced?: () => void;
 }
 
@@ -32,6 +34,7 @@ export function SimpleBettingOverlay({
   player2Address,
   player2Username,
   spectatorAddress,
+  cpuCollection,
   onBetPlaced,
 }: SimpleBettingOverlayProps) {
   const [isBetting, setIsBetting] = useState(false);
@@ -59,12 +62,24 @@ export function SimpleBettingOverlay({
   // Check if this is the final round (round 7)
   const isFinalRound = currentRound === 7;
 
+  // Check if collection is buffed today
+  const isBuffed = cpuCollection ? isCollectionBuffed(cpuCollection) : false;
+  const buffBonus = isBuffed ? BUFF_CONFIG.oddsBonus : 0;
+
   // Get odds for current round - HIGHER for final round!
   const getOdds = (round: number, allIn: boolean = false) => {
-    if (round === 7 && allIn) return 3.0; // 3x for ALL IN on final round!
-    if (round <= 3) return 1.5;
-    if (round <= 5) return 1.8;
-    return 2.0;
+    let baseOdds: number;
+    if (round === 7 && allIn) {
+      baseOdds = 3.0;
+    } else if (round <= 3) {
+      baseOdds = 1.5;
+    } else if (round <= 5) {
+      baseOdds = 1.8;
+    } else {
+      baseOdds = 2.0;
+    }
+    // Always add buff bonus at the end (sovereign)
+    return baseOdds + buffBonus;
   };
 
   const odds = getOdds(currentRound, isAllIn);
