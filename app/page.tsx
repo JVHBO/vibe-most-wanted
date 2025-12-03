@@ -319,7 +319,7 @@ const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }:
 
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
-  const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume, customMusicUrl, setCustomMusicUrl, isCustomMusicLoading, customMusicError, playlist, setPlaylist, addToPlaylist, removeFromPlaylist, currentPlaylistIndex, skipToNext, skipToPrevious, currentTrackName, isPaused, pause, play } = useMusic();
+  const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume, customMusicUrl, setCustomMusicUrl, isCustomMusicLoading, customMusicError, playlist, setPlaylist, addToPlaylist, removeFromPlaylist, currentPlaylistIndex, skipToNext, skipToPrevious, currentTrackName, currentTrackThumbnail, isPaused, pause, play } = useMusic();
   const router = useRouter();
   const playButtonsRef = useRef<HTMLDivElement>(null);
 
@@ -3439,6 +3439,7 @@ export default function TCGPage() {
         skipToNext={skipToNext}
         skipToPrevious={skipToPrevious}
         currentTrackName={currentTrackName}
+        currentTrackThumbnail={currentTrackThumbnail}
         isPaused={isPaused}
         pause={pause}
         play={play}
