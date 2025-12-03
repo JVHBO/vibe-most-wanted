@@ -1969,7 +1969,7 @@ export const cpuStartNextRound = internalMutation({
     const gameState = room.gameState;
     if (!gameState) return;
 
-    // Reset for next round
+    // Reset for next round (clear betting window to reset timer)
     await ctx.db.patch(room._id, {
       gameState: {
         ...gameState,
@@ -1980,6 +1980,8 @@ export const cpuStartNextRound = internalMutation({
         hostAction: undefined,
         guestAction: undefined,
         roundWinner: undefined,
+        bettingWindowEndsAt: undefined, // Clear to reset timer
+        revealScheduledFor: undefined,
       },
     });
 

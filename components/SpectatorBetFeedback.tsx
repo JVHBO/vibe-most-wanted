@@ -119,8 +119,8 @@ export function SpectatorBetFeedback({
         </div>
       )}
 
-      {/* Bet History Panel - Fixed at top right (below any header elements) */}
-      <div className="fixed top-20 right-4 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500/50 rounded-lg p-2 shadow-xl w-36 text-xs">
+      {/* Bet History Panel - Fixed at top right (just below yellow POT line) */}
+      <div className="fixed top-24 right-2 sm:right-4 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500/50 rounded-lg p-2 shadow-xl w-36 text-xs">
         {/* Compact Header */}
         <div className="flex items-center justify-between mb-1 pb-1 border-b border-purple-500/30">
           <span className="text-purple-400 font-bold">🎰 Bets</span>
