@@ -45,6 +45,28 @@ function getCardBack(collection?: string): string {
   return '/images/card-back.png';
 }
 
+// Format collection name for display (e.g., "baseballcabal" → "Baseball Cabal")
+const COLLECTION_DISPLAY_NAMES: Record<string, string> = {
+  gmvbrs: 'GMVBRS',
+  vibe: 'Vibe',
+  coquettish: 'Coquettish',
+  viberuto: 'Viberuto',
+  meowverse: 'Meowverse',
+  poorlydrawnpepes: 'Poorly Drawn Pepes',
+  teampothead: 'Team Pothead',
+  tarot: 'Tarot',
+  americanfootball: 'American Football',
+  vibefid: 'VibeFID',
+  baseballcabal: 'Baseball Cabal',
+  vibefx: 'VibeFX',
+  historyofcomputer: 'History of Computer',
+};
+
+function getCollectionDisplayName(collection?: string): string {
+  if (!collection) return 'Mecha Arena';
+  return COLLECTION_DISPLAY_NAMES[collection] || collection.charAt(0).toUpperCase() + collection.slice(1);
+}
+
 interface Card {
   tokenId: string;
   collection?: string; // NFT collection
@@ -2533,7 +2555,11 @@ export function PokerBattleTable({
                 )}
               </div>
               <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-sm' : 'text-2xl'}`}>
-                POT: {pot} {isCPUMode ? 'coins' : selectedToken}
+                {isCPUMode ? (
+                  `${getCollectionDisplayName(room?.cpuCollection)} Table`
+                ) : (
+                  `POT: ${pot} ${selectedToken}`
+                )}
               </div>
               <div className={`text-vintage-neon-blue font-modern font-bold ${isInFarcaster ? 'text-[10px]' : ''}`}>
                 🪙 Boost: {playerBoostCoins}
