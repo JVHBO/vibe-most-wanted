@@ -13,6 +13,9 @@ import { mutation, query } from "./_generated/server";
  * ADD BETTING CREDITS
  * Called after player deposits VBMS to betting contract
  */
+// Maximum entry limit for Mecha Arena
+const MAX_BETTING_CREDITS = 10000;
+
 export const addBettingCredits = mutation({
   args: {
     address: v.string(),
@@ -22,6 +25,11 @@ export const addBettingCredits = mutation({
   handler: async (ctx, args) => {
     const { address, amount, txHash } = args;
     const normalizedAddress = address.toLowerCase();
+
+    // Enforce maximum entry limit
+    if (amount > MAX_BETTING_CREDITS) {
+      throw new Error(`Maximum entry is ${MAX_BETTING_CREDITS} VBMS`);
+    }
 
     // Check if this txHash was already processed
     const existingCredit = await ctx.db
@@ -33,11 +41,16 @@ export const addBettingCredits = mutation({
       throw new Error("Transaction already processed");
     }
 
-    // Get or create betting credits balance
+    // Check total balance won't exceed maximum
     let credits = await ctx.db
       .query("bettingCredits")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
+
+    const currentBalance = credits?.balance || 0;
+    if (currentBalance + amount > MAX_BETTING_CREDITS) {
+      throw new Error(`Maximum balance is ${MAX_BETTING_CREDITS} credits. You have ${currentBalance} credits.`);
+    }
 
     if (credits) {
       // Add to existing balance

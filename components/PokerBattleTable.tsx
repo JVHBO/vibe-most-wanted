@@ -441,7 +441,13 @@ export function PokerBattleTable({
 
   // CPU vs CPU betting window timer (for Mecha Arena spectators)
   useEffect(() => {
-    if (!isCPUMode || !room?.gameState?.bettingWindowEndsAt) return;
+    if (!isCPUMode) return;
+
+    // If no betting window, reset timer to 0 (waiting for CPUs to select)
+    if (!room?.gameState?.bettingWindowEndsAt) {
+      setTimeRemaining(0);
+      return;
+    }
 
     const updateTimer = () => {
       const now = Date.now();
@@ -2443,8 +2449,8 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Meme Sound Panel - Floating on left side (moved down to not overlap with game) */}
-            <div className="absolute left-2 sm:left-4 top-32 sm:top-40 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
+            {/* Meme Sound Panel - Floating on left side (just below yellow POT line) */}
+            <div className="absolute left-2 sm:left-4 top-24 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
                 <div className="text-vintage-gold font-display font-bold text-[10px] mb-1.5 text-center border-b border-vintage-gold/30 pb-1">
                   🔊 MEME SOUNDS
                 </div>
