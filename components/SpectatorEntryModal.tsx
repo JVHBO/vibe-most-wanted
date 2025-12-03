@@ -38,8 +38,8 @@ export function SpectatorEntryModal({
 
   // Preset amounts, min and max limits
   const MIN_DEPOSIT = 100;
-  const MAX_DEPOSIT = 10000;
-  const PRESETS = [100, 500, 1000, 5000, 10000];
+  const MAX_DEPOSIT = 5000;
+  const PRESETS = [100, 500, 1000, 2500, 5000];
 
   const handleDeposit = async () => {
     if (!effectiveAddress || !amount) return;
