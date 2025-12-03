@@ -69,8 +69,8 @@ export function SimpleBettingOverlay({
 
   const odds = getOdds(currentRound, isAllIn);
 
-  // Calculate bet amount - ALL IN uses entire balance!
-  const normalBetAmount = Math.floor((credits?.totalDeposited || credits?.balance || 100) * 0.15);
+  // Calculate bet amount - 15% of current balance, ALL IN uses entire balance!
+  const normalBetAmount = Math.floor((credits?.balance || 100) * 0.15);
   const allInAmount = credits?.balance || 0;
   const betAmount = isAllIn ? allInAmount : normalBetAmount;
 
