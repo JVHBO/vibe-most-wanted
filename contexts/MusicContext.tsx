@@ -138,8 +138,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const youtubePlayerRef = useRef<any>(null);
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
   const isPlaylistModeRef = useRef(false); // Track if we're in playlist mode
-  const youtubePollingRef = useRef<NodeJS.Timeout | null>(null); // YT polling
-  const pendingTrackChangeRef = useRef(false); // Track if we need to restart on visibility change
+  const youtubePollingRef = useRef<NodeJS.Timeout | null>(null); // YT background advancement
 
   /**
    * Stop YouTube player if exists
@@ -240,10 +239,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                   console.log('YT: Scheduling next track in', (timeoutMs/1000).toFixed(0), 'seconds');
                   youtubePollingRef.current = setTimeout(() => {
                     console.log('YT timeout: triggering next track!');
-                    // Mark that we're changing tracks (might be in background)
-                    if (document.visibilityState === 'hidden') {
-                      pendingTrackChangeRef.current = true;
-                    }
                     onTrackEnd();
                   }, timeoutMs);
                 } else {
@@ -684,7 +679,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           audioRef.current.pause();
           audioRef.current = null;
         }
-        
+
         // Fetch YouTube metadata for title and thumbnail
         fetchYouTubeMetadata(videoId).then(metadata => {
           if (metadata) {
@@ -692,14 +687,51 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             setCurrentTrackThumbnail(metadata.thumbnail);
           }
         });
-        
+
         const shouldLoop = playlist.length === 1;
         const onEnd = playlist.length > 1 ? () => {
           const nextIndex = (safeIndex + 1) % playlist.length;
           console.log('onEnd called! Current:', safeIndex, 'Next:', nextIndex, 'Playlist length:', playlist.length);
           setCurrentPlaylistIndexState(nextIndex);
         } : undefined;
-        console.log('Playing YT track', safeIndex, 'shouldLoop:', shouldLoop, 'hasOnEnd:', !!onEnd);
+
+        // REUSE existing YouTube player if possible (allows background tab advancement)
+        if (youtubePlayerRef.current && typeof youtubePlayerRef.current.loadVideoById === 'function') {
+          console.log('Reusing existing YT player for video:', videoId);
+          // Clear old timeout
+          if (youtubePollingRef.current) {
+            clearTimeout(youtubePollingRef.current);
+            youtubePollingRef.current = null;
+          }
+          // Load new video in existing player
+          youtubePlayerRef.current.loadVideoById(videoId);
+          youtubePlayerRef.current.setVolume(volume * 100);
+          currentTrackRef.current = `youtube:${videoId}`;
+
+          // Schedule next track
+          if (!shouldLoop && onEnd) {
+            const scheduleNext = () => {
+              try {
+                const duration = youtubePlayerRef.current.getDuration();
+                if (duration > 0) {
+                  const timeoutMs = Math.max(1000, (duration - 1) * 1000);
+                  console.log('YT reuse: Scheduling next in', (timeoutMs/1000).toFixed(0), 's');
+                  youtubePollingRef.current = setTimeout(() => {
+                    console.log('YT reuse timeout: next track!');
+                    onEnd();
+                  }, timeoutMs);
+                } else {
+                  setTimeout(scheduleNext, 1000);
+                }
+              } catch(e) {}
+            };
+            setTimeout(scheduleNext, 500); // Wait for video to load
+          }
+          setIsCustomMusicLoading(false);
+          return;
+        }
+
+        console.log('Creating new YT player for video:', videoId);
         playYouTubeAudio(videoId, volume, shouldLoop, onEnd);
         setIsCustomMusicLoading(false);
         return;
@@ -912,26 +944,16 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Resume YouTube playback when tab becomes visible again
-   * (browsers pause media in background tabs)
    */
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isMusicEnabled && !isPaused) {
-        // If track changed while in background, force replay current track
-        if (pendingTrackChangeRef.current && musicMode === 'playlist' && playlist.length > 0) {
-          console.log('Tab visible: Track changed in background, forcing replay of track', currentPlaylistIndex);
-          pendingTrackChangeRef.current = false;
-          playPlaylistTrack(currentPlaylistIndex);
-          return;
-        }
-
         // Try to resume YouTube if it exists
         if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
           try {
             const state = youtubePlayerRef.current.getPlayerState();
             // If paused (2) or not started, try to play
             if (state === 2 || state === -1 || state === 5) {
-              console.log('Tab visible: resuming YouTube playback');
               youtubePlayerRef.current.playVideo();
             }
           } catch(e) {}
@@ -945,7 +967,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isMusicEnabled, isPaused, musicMode, playlist, currentPlaylistIndex, playPlaylistTrack]);
+  }, [isMusicEnabled, isPaused]);
 
   /**
    * Cleanup on unmount
