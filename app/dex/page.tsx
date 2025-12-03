@@ -266,8 +266,8 @@ export default function DexPage() {
   const lang = (globalLang in dexTranslations ? globalLang : "en") as DexLang;
   const t = dexTranslations[lang];
 
-  // Swap state - BUY disabled (router contract reverts)
-  const [mode, setMode] = useState<SwapMode>("sell");
+  // Swap state
+  const [mode, setMode] = useState<SwapMode>("buy");
   const [packCount, setPackCount] = useState(1);
   const [sellAmount, setSellAmount] = useState("");
 
@@ -416,12 +416,19 @@ export default function DexPage() {
 
         {/* Swap Card */}
         <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
-          {/* Mode Toggle - BUY DISABLED */}
+          {/* Mode Toggle */}
           <div className="flex border-b border-vintage-gold/30">
             <button
-              disabled
-              className="flex-1 py-4 font-modern font-bold transition-all text-vintage-burnt-gold/30 bg-vintage-charcoal/50 cursor-not-allowed line-through"
-              title="BUY temporarily disabled"
+              onClick={() => {
+                setMode("buy");
+                setPackCount(1);
+                resetBuy();
+              }}
+              className={`flex-1 py-4 font-modern font-bold transition-all ${
+                mode === "buy"
+                  ? "bg-green-500/20 text-green-400 border-b-2 border-green-400"
+                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold"
+              }`}
             >
               {t.buyVbms}
             </button>
@@ -431,7 +438,11 @@ export default function DexPage() {
                 setSellAmount("");
                 resetSell();
               }}
-              className="flex-1 py-4 font-modern font-bold transition-all bg-red-500/20 text-red-400 border-b-2 border-red-400"
+              className={`flex-1 py-4 font-modern font-bold transition-all ${
+                mode === "sell"
+                  ? "bg-red-500/20 text-red-400 border-b-2 border-red-400"
+                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold"
+              }`}
             >
               {t.sellVbms}
             </button>
