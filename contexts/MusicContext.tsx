@@ -138,11 +138,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const youtubePlayerRef = useRef<any>(null);
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
   const isPlaylistModeRef = useRef(false); // Track if we're in playlist mode
+  const youtubePollingRef = useRef<NodeJS.Timeout | null>(null); // YT polling
 
   /**
    * Stop YouTube player if exists
    */
   const stopYouTubePlayer = useCallback(() => {
+    if (youtubePollingRef.current) { clearInterval(youtubePollingRef.current); youtubePollingRef.current = null; }
     if (youtubePlayerRef.current) {
       try {
         youtubePlayerRef.current.stopVideo();
@@ -218,6 +220,28 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           setIsCustomMusicLoading(false);
           setCustomMusicError(null);
           currentTrackRef.current = `youtube:${videoId}`;
+
+          // Polling for background tab (onStateChange unreliable)
+          if (!shouldLoop && onTrackEnd) {
+            if (youtubePollingRef.current) clearInterval(youtubePollingRef.current);
+            let triggered = false;
+            youtubePollingRef.current = setInterval(() => {
+              if (triggered) return;
+              try {
+                const p = youtubePlayerRef.current;
+                if (p && typeof p.getCurrentTime === 'function') {
+                  const t = p.getCurrentTime();
+                  const d = p.getDuration();
+                  if (d > 0 && t >= d - 1) {
+                    triggered = true;
+                    if (youtubePollingRef.current) { clearInterval(youtubePollingRef.current); youtubePollingRef.current = null; }
+                    console.log('YT polling: next track');
+                    onTrackEnd();
+                  }
+                }
+              } catch(e){}
+            }, 1000);
+          }
         },
         onStateChange: (event: any) => {
           // YT.PlayerState.ENDED = 0
