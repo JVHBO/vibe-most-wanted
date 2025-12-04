@@ -77,11 +77,15 @@ export async function GET(
     const foilMult = foilMultiplier[traits.foil] || 1.0;
     const correctPower = Math.round(basePower * wearMult * foilMult);
 
+    // Check if we have video (imageUrl) and thumbnail (cardImageUrl)
+    const hasVideo = cardData.cardImageUrl && cardData.imageUrl;
+
     // Build OpenSea-compatible metadata
-    const metadata = {
+    const metadata: Record<string, any> = {
       name: `VibeFID #${cardData.fid}`,
       description: `${cardData.displayName} (@${cardData.username}) - ${cardData.bio || 'A unique VibeFID card from the Farcaster ecosystem'}`,
-      image: cardData.imageUrl, // IPFS URL of the card image
+      // Use cardImageUrl as thumbnail if video exists, otherwise use imageUrl
+      image: hasVideo ? cardData.cardImageUrl : cardData.imageUrl,
       external_url: `https://www.vibemostwanted.xyz/share/fid/${cardData.fid}`,
       attributes: [
         {
@@ -125,6 +129,11 @@ export async function GET(
         },
       ],
     };
+
+    // Add animation_url for video NFTs (OpenSea will display the video)
+    if (hasVideo) {
+      metadata.animation_url = cardData.imageUrl;
+    }
 
     return NextResponse.json(metadata, {
       headers: {
