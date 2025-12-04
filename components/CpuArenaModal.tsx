@@ -8,6 +8,8 @@ import { AudioManager } from "@/lib/audio-manager";
 import { SpectatorEntryModal } from "./SpectatorEntryModal";
 import { PokerBattleTable } from "./PokerBattleTable";
 import { COLLECTIONS, type CollectionId } from "@/lib/collections";
+import { sdk } from '@farcaster/miniapp-sdk';
+import { openMarketplace } from '@/lib/marketplace-utils';
 import {
   getDailyBuffedCollection,
   getTimeUntilNextBuff,
@@ -306,14 +308,15 @@ export function CpuArenaModal({
                     const marketUrl = collectionConfig?.marketplaceUrl;
                     if (!marketUrl) return null;
                     return (
-                      <a
-                        href={marketUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 rounded-full text-white text-xs font-bold transition-all shadow-lg hover:shadow-orange-500/30"
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await openMarketplace(marketUrl, sdk, isInFarcaster);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 rounded-full text-white text-xs font-bold transition-all shadow-lg hover:shadow-orange-500/30 cursor-pointer"
                       >
                         🛒 {collectionConfig?.buttonText || 'BUY PACKS'}
-                      </a>
+                      </button>
                     );
                   })()}
                 </div>
@@ -401,15 +404,15 @@ export function CpuArenaModal({
                           if (!marketUrl) return null;
                           const isInternal = marketUrl.startsWith('/');
                           return (
-                            <a
-                              href={marketUrl}
-                              target={isInternal ? undefined : "_blank"}
-                              rel={isInternal ? undefined : "noopener noreferrer"}
-                              onClick={(e) => e.stopPropagation()}
-                              className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-black/40 hover:bg-black/60 border border-white/30 hover:border-white/50 rounded-full text-white/90 text-xs font-medium transition-all"
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                await openMarketplace(marketUrl, sdk, isInFarcaster);
+                              }}
+                              className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-black/40 hover:bg-black/60 border border-white/30 hover:border-white/50 rounded-full text-white/90 text-xs font-medium transition-all cursor-pointer"
                             >
                               🛒 {collectionConfig?.buttonText || 'BUY PACKS'}
-                            </a>
+                            </button>
                           );
                         })()}
                       </div>

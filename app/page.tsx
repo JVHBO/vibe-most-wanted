@@ -48,6 +48,7 @@ import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 // 📝 Development logger (silent in production)
 import { devLog, devError, devWarn } from "@/lib/utils/logger";
+import { openMarketplace } from "@/lib/marketplace-utils";
 // 🔊 Audio Manager
 import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
@@ -662,7 +663,14 @@ export default function TCGPage() {
 
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
-  const attackSelectedCardsPower = useTotalPower(attackSelectedCards);
+  // VibeFID gets 10x power in leaderboard attacks
+  const calculateLeaderboardAttackPower = (cards: any[]) => {
+    return cards.reduce((sum, c) => {
+      const multiplier = c.collection === 'vibefid' ? 10 : 1;
+      return sum + ((c.power || 0) * multiplier);
+    }, 0);
+  };
+  const attackSelectedCardsPower = calculateLeaderboardAttackPower(attackSelectedCards);
   const dealerCardsPower = useTotalPower(dealerCards);
 
   // ✅ PvP Preview States
@@ -2376,8 +2384,12 @@ export default function TCGPage() {
     return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
   }, [nfts, sortAttackByPower]);
 
-  // Helper to check if card is locked
+  // Helper to check if card is locked - VibeFID cards are exempt (can be used anywhere)
   const isCardLocked = (tokenId: string, mode: 'attack' | 'pvp') => {
+    // VibeFID cards are never locked - they can be used in attack even if in defense deck
+    const card = nfts.find(n => n.tokenId === tokenId);
+    if (card?.collection === 'vibefid') return false;
+
     const lockedCards = mode === 'attack' ? attackLockedCards : pvpLockedCards;
     return (lockedCards?.lockedTokenIds as string[] | undefined)?.includes(tokenId) || false;
   };
@@ -3447,11 +3459,11 @@ export default function TCGPage() {
 
       {/* Mecha Arena Modal */}
       <CpuArenaModal
+        isInFarcaster={isInFarcaster}
         isOpen={showCpuArena}
         onClose={() => setShowCpuArena(false)}
         address={address || ''}
         soundEnabled={soundEnabled}
-        isInFarcaster={isInFarcaster}
         t={t}
       />
 
@@ -3974,7 +3986,7 @@ export default function TCGPage() {
                     if (soundEnabled) AudioManager.playHand();
 
                     // Calculate power totals (one-time calculation per attack, no need for memoization)
-                    const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                    const playerTotal = calculateLeaderboardAttackPower(attackSelectedCards);
                     const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
 
                     setTimeout(() => {
@@ -4193,6 +4205,7 @@ export default function TCGPage() {
           soundEnabled={soundEnabled}
           t={t as (key: string, params?: Record<string, any>) => string}
           allNfts={sortedNfts as Card[]}
+          isInFarcaster={isInFarcaster}
         />
       )}
 
@@ -4465,7 +4478,7 @@ export default function TCGPage() {
         </div>
       )}
 
-      <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-2 mb-0 p-2' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isInFarcaster ? 'mt-[70px]' : ''}`}>
+      <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-2 mb-0 p-2' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isInFarcaster ? 'mt-[40px]' : ''}`}>
         {!isInFarcaster && (
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
@@ -4478,9 +4491,13 @@ export default function TCGPage() {
 
         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto">
           <button
-            onClick={() => {
+            onClick={async () => {
               if (soundEnabled) AudioManager.buttonClick();
-              window.location.href = 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT';
+              if (isInFarcaster && sdk?.actions?.openMiniApp) {
+                await sdk.actions.openMiniApp({ url: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/vibe-most-wanted?ref=XCLR1DJ6LQTT' });
+              } else {
+                window.location.href = 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT';
+              }
             }}
             className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
@@ -5042,9 +5059,9 @@ export default function TCGPage() {
                       </Link>
                     ) : (
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (soundEnabled) AudioManager.buttonClick();
-                          window.location.href = COLLECTIONS[selectedCollections[0]].marketplaceUrl!;
+                          await openMarketplace(COLLECTIONS[selectedCollections[0]].marketplaceUrl!, sdk, isInFarcaster);
                         }}
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
@@ -5096,9 +5113,9 @@ export default function TCGPage() {
                       </Link>
                     ) : (
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (soundEnabled) AudioManager.buttonClick();
-                          window.location.href = COLLECTIONS[selectedCollections[0]].marketplaceUrl!;
+                          await openMarketplace(COLLECTIONS[selectedCollections[0]].marketplaceUrl!, sdk, isInFarcaster);
                         }}
                         className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}

@@ -12,8 +12,6 @@ import { useReadContract, useWriteContract } from 'wagmi';
  * Get VBMS balance - works in both miniapp and web via wagmi
  */
 export function useFarcasterVBMSBalance(address?: string) {
-  console.log('[useFarcasterVBMSBalance] Hook called with address:', address);
-
   const { data: balanceData, isLoading, error, refetch } = useReadContract({
     address: CONTRACTS.VBMSToken as `0x${string}`,
     abi: ERC20_ABI,
@@ -21,18 +19,12 @@ export function useFarcasterVBMSBalance(address?: string) {
     args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: !!address,
+      staleTime: 30_000, // Cache for 30 seconds to prevent excessive refetches
+      refetchInterval: 30_000, // Only refetch every 30 seconds
     },
   });
 
   const balance = balanceData ? formatEther(balanceData as bigint) : '0';
-
-  console.log('[useFarcasterVBMSBalance] Balance result:', {
-    address,
-    balanceData: balanceData?.toString(),
-    balance,
-    isLoading,
-    error: error?.message,
-  });
 
   return {
     balance,
@@ -54,6 +46,7 @@ export function useFarcasterVBMSAllowance(owner?: string, spender?: string) {
     args: owner && spender ? [owner as `0x${string}`, spender as `0x${string}`] : undefined,
     query: {
       enabled: !!owner && !!spender,
+      staleTime: 30_000,
     },
   });
 
@@ -74,7 +67,7 @@ export function useFarcasterApproveVBMS() {
   const { writeContractAsync, isPending, error } = useWriteContract();
 
   const approve = async (spender: `0x${string}`, amount: bigint): Promise<`0x${string}`> => {
-    console.log('[useFarcasterApproveVBMS] 📝 Approving VBMS:', {
+    console.log('[useFarcasterApproveVBMS] Approving VBMS:', {
       spender,
       amount: amount.toString(),
       contractAddress: CONTRACTS.VBMSToken,
@@ -89,10 +82,10 @@ export function useFarcasterApproveVBMS() {
         chainId: CONTRACTS.CHAIN_ID,
       });
 
-      console.log('[useFarcasterApproveVBMS] ✅ Approve hash:', hash);
+      console.log('[useFarcasterApproveVBMS] Approve hash:', hash);
       return hash;
     } catch (err) {
-      console.error('[useFarcasterApproveVBMS] ❌ Approve error:', err);
+      console.error('[useFarcasterApproveVBMS] Approve error:', err);
       throw err;
     }
   };
@@ -111,7 +104,7 @@ export function useFarcasterTransferVBMS() {
   const { writeContractAsync, isPending, error } = useWriteContract();
 
   const transfer = async (to: `0x${string}`, amount: bigint): Promise<`0x${string}`> => {
-    console.log('[useFarcasterTransferVBMS] 💸 Transferring VBMS:', {
+    console.log('[useFarcasterTransferVBMS] Transferring VBMS:', {
       to,
       amount: amount.toString(),
       contractAddress: CONTRACTS.VBMSToken,
@@ -126,10 +119,10 @@ export function useFarcasterTransferVBMS() {
         chainId: CONTRACTS.CHAIN_ID,
       });
 
-      console.log('[useFarcasterTransferVBMS] ✅ Transfer hash:', hash);
+      console.log('[useFarcasterTransferVBMS] Transfer hash:', hash);
       return hash;
     } catch (err) {
-      console.error('[useFarcasterTransferVBMS] ❌ Transfer error:', err);
+      console.error('[useFarcasterTransferVBMS] Transfer error:', err);
       throw err;
     }
   };
