@@ -4509,6 +4509,23 @@ export default function TCGPage() {
             <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('orOpenYourPacks') || 'or open your sealed packs'}</span>
           </button>
 
+          {/* VibeFID Button - Miniapp only, same row as Buy Cards */}
+          {isInFarcaster && (
+            <button
+              onClick={() => {
+                if (soundEnabled) AudioManager.buttonClick();
+                window.location.href = '/fid';
+              }}
+              className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-purple-400 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
+              style={{background: 'linear-gradient(145deg, #9333ea, #7c3aed)'}}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-base md:text-lg">♦</span> <span className="hidden md:inline">MINT YOUR VIBEFID</span><span className="md:hidden">Mint VibeFID</span>
+              </div>
+              <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">free card from your Farcaster</span>
+            </button>
+          )}
+
           {!isInFarcaster && (
             <a
               href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
@@ -4887,24 +4904,7 @@ export default function TCGPage() {
           <div className={isInFarcaster ? 'pt-4 pb-[75px]' : ''}>
 
           {/* Price Ticker - Miniapp only */}
-          {isInFarcaster && <PriceTicker className="mb-1 px-2" />}
-
-          {/* VibeFID Button - Mobile only, between header and content, only on home view */}
-          {isInFarcaster && currentView === 'game' && (
-            <div className="mb-2 px-2">
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                  window.location.href = '/fid';
-                }}
-                className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold transition-all shadow-gold hover:scale-105 flex items-center justify-center gap-2 uppercase tracking-wide animate-[pulse_3s_ease-in-out_infinite]"
-                style={{ animationDuration: '3s' }}
-              >
-                <span className="text-2xl">♦</span>
-                MINT your VIBEFID
-              </button>
-            </div>
-          )}
+          {isInFarcaster && <PriceTicker className="mb-1 px-2" />}
 
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
