@@ -1,18 +1,25 @@
 /**
  * Generate MP4 video of card with foil animation
  *
- * Uses Canvas + MediaRecorder API to capture 3 seconds of foil animation
+ * Uses Canvas + MediaRecorder API to capture video with foil animation
  * Supports animated PFPs (GIFs) that animate in sync with the video
+ *
+ * STANDARD: All VibeFID videos are 3 seconds, 30 FPS
  */
 
 import { extractGifFrames, imageDataToCanvas, type ExtractedGif } from './gifExtractor';
 
+// Standard video parameters for all VibeFID cards
+const STANDARD_DURATION = 3;      // 3 seconds for static PFP
+const ANIMATED_PFP_DURATION = 5;  // 5 seconds for animated PFP
+const STANDARD_FPS = 30;          // 30 FPS for smooth foil animation
+
 export interface VideoCardParams {
   cardImageDataUrl: string;
   foilType: 'None' | 'Standard' | 'Prize';
-  duration?: number; // seconds
-  fps?: number;
-  pfpUrl?: string; // Original PFP URL to check for animation
+  duration?: number; // seconds (default: 3)
+  fps?: number;      // frames per second (default: 30)
+  pfpUrl?: string;   // Original PFP URL to check for animation
 }
 
 // PFP area dimensions in the video (scaled from 500x700 card)
@@ -27,8 +34,8 @@ const PFP_AREA = {
 export async function generateCardVideo({
   cardImageDataUrl,
   foilType,
-  duration = 3,
-  fps = 30,
+  duration = STANDARD_DURATION,
+  fps = STANDARD_FPS,
   pfpUrl,
 }: VideoCardParams): Promise<Blob> {
   return new Promise(async (resolve, reject) => {
@@ -70,6 +77,10 @@ export async function generateCardVideo({
         }
       }
 
+      // Use extended duration for animated PFPs (5 seconds vs 3 seconds for static)
+      const actualDuration = animatedPfp ? ANIMATED_PFP_DURATION : duration;
+      console.log(`Video duration: ${actualDuration}s (animated PFP: ${!!animatedPfp})`);
+
       // Setup MediaRecorder
       const stream = canvas.captureStream(fps);
       const mediaRecorder = new MediaRecorder(stream, {
@@ -100,7 +111,7 @@ export async function generateCardVideo({
       mediaRecorder.start();
 
       // Render animation frames
-      const totalFrames = duration * fps;
+      const totalFrames = actualDuration * fps;
       let frame = 0;
 
       // Calculate GIF frame timing
@@ -173,16 +184,16 @@ export async function generateCardVideo({
 
         frame++;
 
-        if (frame < totalFrames) {
-          requestAnimationFrame(renderFrame);
-        } else {
-          // Stop recording after duration
+        if (frame >= totalFrames) {
+          // Stop the interval and recording
+          clearInterval(intervalId);
           mediaRecorder.stop();
         }
       };
 
-      // Start rendering
-      renderFrame();
+      // Use setInterval instead of requestAnimationFrame to ensure consistent timing
+      // even when the browser tab is not in focus (requestAnimationFrame is throttled)
+      const intervalId = setInterval(renderFrame, msPerVideoFrame);
 
     } catch (error) {
       reject(error);
