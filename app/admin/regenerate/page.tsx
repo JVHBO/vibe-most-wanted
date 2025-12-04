@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { generateFarcasterCardImage } from '@/lib/generateFarcasterCard';
 import { generateCardVideo } from '@/lib/generateCardVideo';
@@ -22,7 +22,7 @@ interface CardParams {
   power: number;
 }
 
-export default function RegeneratePage() {
+function RegenerateContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<string>('Waiting for parameters...');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -244,5 +244,13 @@ export default function RegeneratePage() {
         </code>
       </div>
     </div>
+  );
+}
+
+export default function RegeneratePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-900 text-white p-8">Loading...</div>}>
+      <RegenerateContent />
+    </Suspense>
   );
 }
