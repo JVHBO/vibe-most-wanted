@@ -705,19 +705,19 @@ export default function FidPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-2 sm:p-4 md:p-8 overflow-x-hidden">
-      {/* Language Selector - Fixed Top Right */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* Language Selector - Fixed Top Right (compact) */}
+      <div className="fixed top-2 right-2 z-50">
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value as any)}
-          className="px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm shadow-lg hover:border-vintage-gold transition-colors"
+          className="px-2 py-1 bg-vintage-charcoal/90 border border-vintage-gold/30 rounded text-vintage-ice focus:outline-none focus:border-vintage-gold text-xs shadow-md hover:border-vintage-gold transition-colors"
         >
-          <option value="en">🇺🇸 English</option>
-          <option value="pt-BR">🇧🇷 Português</option>
-          <option value="es">🇪🇸 Español</option>
-          <option value="hi">🇮🇳 हिन्दी</option>
-          <option value="ru">🇷🇺 Русский</option>
-          <option value="zh-CN">🇨🇳 中文</option>
+          <option value="en">🇺🇸</option>
+          <option value="pt-BR">🇧🇷</option>
+          <option value="es">🇪🇸</option>
+          <option value="hi">🇮🇳</option>
+          <option value="ru">🇷🇺</option>
+          <option value="zh-CN">🇨🇳</option>
         </select>
       </div>
 
@@ -900,14 +900,16 @@ export default function FidPage() {
                       </span>
                     </div>
 
-                    {/* Card Image (PNG only, no foil effects) */}
+                    {/* Card Image (use cardImageUrl if available, fallback to pfpUrl) */}
                     <img
-                      src={card.pfpUrl}
+                      src={card.cardImageUrl || card.pfpUrl}
                       alt={card.username}
-                      className="w-full aspect-square object-cover rounded-lg mb-2"
+                      className="w-full aspect-[3/4] object-contain rounded-lg mb-2 bg-vintage-black/50"
                       onError={(e) => {
-                        // Fallback to a default image if pfpUrl fails
-                        (e.target as HTMLImageElement).src = '/default-avatar.png';
+                        // Fallback to pfpUrl if cardImageUrl fails
+                        if (card.cardImageUrl && (e.target as HTMLImageElement).src !== card.pfpUrl) {
+                          (e.target as HTMLImageElement).src = card.pfpUrl;
+                        }
                       }}
                     />
                     <p className="text-vintage-gold font-bold truncate">{card.displayName}</p>
