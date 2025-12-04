@@ -43,16 +43,16 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-2 px-4 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 ${className}`}>
-        <span className="text-vintage-burnt-gold text-sm animate-pulse">Loading prices...</span>
+      <div className={`flex items-center justify-center gap-2 py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 ${className}`}>
+        <span className="text-vintage-burnt-gold text-xs animate-pulse">Loading prices...</span>
       </div>
     );
   }
 
   if (prices.length === 0) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-2 px-4 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 ${className}`}>
-        <span className="text-vintage-burnt-gold text-sm">Fetching prices...</span>
+      <div className={`flex items-center justify-center gap-2 py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 ${className}`}>
+        <span className="text-vintage-burnt-gold text-xs">Fetching prices...</span>
       </div>
     );
   }
@@ -61,9 +61,9 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
   const coverUrl = COLLECTION_COVERS[currentPrice?.id] || '';
 
   return (
-    <div className={`overflow-hidden py-2 px-4 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 shadow-[0_0_15px_rgba(255,215,0,0.15)] ${className}`}>
+    <div className={`overflow-hidden py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 shadow-[0_0_15px_rgba(255,215,0,0.15)] ${className}`}>
       <div
-        className={`flex items-center gap-2 text-sm transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`flex items-center gap-2 text-xs transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       >
         {coverUrl && (
           <img
