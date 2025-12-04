@@ -173,3 +173,4 @@ public/images/raid-bosses/*
 !public/images/raid-bosses/baseballcabal/
 !public/images/raid-bosses/vibefx/
 !public/images/raid-bosses/historyofcomputer/
+.env*.local
