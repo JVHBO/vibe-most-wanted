@@ -72,7 +72,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
             className="w-6 h-6 rounded object-cover"
           />
         )}
-        <span className="text-vintage-burnt-gold font-bold">{currentPrice?.displayName}:</span>
+        <span className="text-vintage-burnt-gold font-bold">{currentPrice?.displayName} Pack:</span>
         <span className="text-vintage-gold font-mono">{currentPrice?.priceUsd}</span>
         {prices.length > 1 && (
           <div className="flex gap-1 ml-2">
