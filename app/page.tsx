@@ -4884,7 +4884,7 @@ export default function TCGPage() {
           </div>
 
           {/* Content wrapper with padding for fixed bars in miniapp */}
-          <div className={isInFarcaster ? 'pt-2 pb-[75px]' : ''}>
+          <div className={isInFarcaster ? 'pt-4 pb-[75px]' : ''}>
 
           {/* Price Ticker - Miniapp only */}
           {isInFarcaster && <PriceTicker className="mb-1 px-2" />}
