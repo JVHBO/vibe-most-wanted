@@ -4589,9 +4589,6 @@ export default function TCGPage() {
         </div>
       </header>
 
-      {/* Price Ticker - Shows collection token prices (miniapp only here) */}
-      {isInFarcaster && <PriceTicker className="mb-1" />}
-
       {!address ? (
         <div className="flex flex-col items-center justify-center py-20">
           {/* Show loading ONLY while actively checking for Farcaster */}
@@ -4888,6 +4885,9 @@ export default function TCGPage() {
 
           {/* Content wrapper with padding for fixed bars in miniapp */}
           <div className={isInFarcaster ? 'pt-[50px] pb-[75px]' : ''}>
+
+          {/* Price Ticker - Miniapp only */}
+          {isInFarcaster && <PriceTicker className="mb-1 px-2" />}
 
           {/* VibeFID Button - Mobile only, between header and content, only on home view */}
           {isInFarcaster && currentView === 'game' && (
