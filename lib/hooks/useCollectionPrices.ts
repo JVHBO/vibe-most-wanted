@@ -6,7 +6,6 @@
 import { useReadContract } from 'wagmi';
 import { formatEther } from 'viem';
 import { BOOSTER_DROP_V2_ABI, VBMS_CONTRACTS } from '../contracts/BoosterDropV2ABI';
-import type { CollectionId } from '../collections';
 
 // Chainlink ETH/USD Price Feed on Base
 const ETH_USD_FEED = '0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70' as const;
@@ -26,7 +25,7 @@ const CHAINLINK_ABI = [
   },
 ] as const;
 
-// Hardcoded contract addresses (same format as VBMS_CONTRACTS.boosterDrop)
+// Hardcoded contract addresses (lowercase, same format as VBMS_CONTRACTS)
 const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   vibe: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
   gmvbrs: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
@@ -66,10 +65,10 @@ export interface CollectionPrice {
   priceWei: bigint | null;
 }
 
-// Test with just VBMS first (same exact pattern as useMintPrice)
-function useVBMSPrice() {
+// Individual price hook (same pattern as useMintPrice that works)
+function usePrice(address: `0x${string}`) {
   const { data: price, isLoading } = useReadContract({
-    address: VBMS_CONTRACTS.boosterDrop,
+    address,
     abi: BOOSTER_DROP_V2_ABI,
     functionName: 'getMintPrice',
     args: [BigInt(1)],
@@ -94,22 +93,42 @@ export function useCollectionPrices() {
 
   const ethUsdPrice = ethPriceData ? Number(ethPriceData[1]) / 1e8 : 3500;
 
-  // Just use VBMS price as test (exact same as useMintPrice that works)
-  const vbmsPrice = useVBMSPrice();
+  // Get prices for each collection
+  const vibe = usePrice(COLLECTION_CONTRACTS.vibe);
+  const gmvbrs = usePrice(COLLECTION_CONTRACTS.gmvbrs);
+  const viberuto = usePrice(COLLECTION_CONTRACTS.viberuto);
+  const coquettish = usePrice(COLLECTION_CONTRACTS.coquettish);
+  const meowverse = usePrice(COLLECTION_CONTRACTS.meowverse);
+  const poorlydrawnpepes = usePrice(COLLECTION_CONTRACTS.poorlydrawnpepes);
+  const teampothead = usePrice(COLLECTION_CONTRACTS.teampothead);
+  const tarot = usePrice(COLLECTION_CONTRACTS.tarot);
+  const americanfootball = usePrice(COLLECTION_CONTRACTS.americanfootball);
+  const baseballcabal = usePrice(COLLECTION_CONTRACTS.baseballcabal);
+  const vibefx = usePrice(COLLECTION_CONTRACTS.vibefx);
+  const historyofcomputer = usePrice(COLLECTION_CONTRACTS.historyofcomputer);
 
-  console.log('[PriceTicker] VBMS price test:', vbmsPrice.priceWei?.toString(), vbmsPrice.priceEth, vbmsPrice.isLoading);
+  const priceData: Record<string, { priceWei: bigint | undefined; priceEth: string; isLoading: boolean }> = {
+    vibe, gmvbrs, viberuto, coquettish, meowverse, poorlydrawnpepes,
+    teampothead, tarot, americanfootball, baseballcabal, vibefx, historyofcomputer,
+  };
 
-  const isLoading = vbmsPrice.isLoading;
+  const isLoading = Object.values(priceData).some(p => p.isLoading);
 
-  // For now, just show VBMS
-  const allPrices: CollectionPrice[] = [{
-    id: 'vibe',
-    displayName: 'VBMS',
-    emoji: '🎭',
-    priceEth: vbmsPrice.priceEth,
-    priceUsd: vbmsPrice.priceWei ? `$${(parseFloat(vbmsPrice.priceEth) * ethUsdPrice).toFixed(2)}` : '$0',
-    priceWei: vbmsPrice.priceWei ?? null,
-  }];
+  const allPrices: CollectionPrice[] = TICKER_COLLECTIONS.map((col) => {
+    const data = priceData[col.id];
+    const priceWei = data?.priceWei ?? null;
+    const priceEth = priceWei ? parseFloat(formatEther(priceWei)) : 0;
+    const priceUsd = priceEth * ethUsdPrice;
+
+    return {
+      id: col.id,
+      displayName: col.displayName,
+      emoji: col.emoji,
+      priceEth: priceEth.toFixed(6),
+      priceUsd: priceUsd > 0 ? `$${priceUsd.toFixed(2)}` : '$0',
+      priceWei,
+    };
+  });
 
   const prices = allPrices.filter((p) => p.priceWei !== null && p.priceWei > BigInt(0));
 
