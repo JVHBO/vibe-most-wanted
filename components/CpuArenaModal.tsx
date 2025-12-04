@@ -40,6 +40,7 @@ const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: stri
   baseballcabal: { name: "Baseball Cabal", emoji: "⚾", color: "from-red-600 to-blue-700" },
   vibefx: { name: "Vibe FX", emoji: "✨", color: "from-fuchsia-500 to-violet-600" },
   historyofcomputer: { name: "History of Computer", emoji: "💻", color: "from-gray-600 to-slate-700" },
+  cumioh: { name: "$CU-MI-OH!", emoji: "🎴", color: "from-yellow-500 to-amber-600" },
 };
 
 type ViewMode = "password" | "rooms" | "room-choice" | "spectator-entry" | "battle";
