@@ -288,7 +288,11 @@ export function AttackCardSelectionModal({
     if (soundEnabled) AudioManager.playHand();
 
     // Calculate power totals
-    const playerTotal = attackSelectedCards.reduce((sum: number, c: Card) => sum + (c.power || 0), 0);
+    // VibeFID gets 10x power in leaderboard attacks
+      const playerTotal = attackSelectedCards.reduce((sum: number, c: Card) => {
+        const multiplier = c.collection === 'vibefid' ? 10 : 1;
+        return sum + ((c.power || 0) * multiplier);
+      }, 0);
     const dealerTotal = defenderCards.reduce((sum: number, c: Card) => sum + (c.power || 0), 0);
 
     // Animate battle

@@ -10,16 +10,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { BOSS_ROTATION_ORDER, BOSS_RARITY_ORDER, getBossCard } from '@/lib/raid-boss';
 import { COLLECTIONS } from '@/lib/collections';
+import { sdk } from '@farcaster/miniapp-sdk';
+import { openMarketplace } from '@/lib/marketplace-utils';
 import { CardMedia } from '@/components/CardMedia';
 import type { BossCard } from '@/lib/raid-boss';
 
 interface BossRotationCarouselProps {
+  isInFarcaster?: boolean;
   currentBossIndex: number;
   onSelectBoss?: (index: number) => void;
   t: (key: string, params?: Record<string, any>) => string;
 }
 
 export function BossRotationCarousel({
+  isInFarcaster = false,
   currentBossIndex,
   onSelectBoss,
   t,
@@ -241,15 +245,15 @@ export function BossRotationCarousel({
 
                 {/* Marketplace Button */}
                 {marketplaceUrl && (
-                  <a
-                    href={marketplaceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-2 rounded transition-colors text-center"
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      await openMarketplace(marketplaceUrl, sdk, isInFarcaster);
+                    }}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-2 rounded transition-colors text-center cursor-pointer"
                   >
                     {buttonText || t('raid.buyPacks', { default: 'Buy Packs' })}
-                  </a>
+                  </button>
                 )}
               </div>
             </div>

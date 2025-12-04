@@ -34,6 +34,8 @@ import {
   getBossCard
 } from '@/lib/raid-boss';
 import { COLLECTIONS } from '@/lib/collections';
+import { sdk } from '@farcaster/miniapp-sdk';
+import { openMarketplace } from '@/lib/marketplace-utils';
 
 interface RaidBossModalProps {
   isOpen: boolean;
@@ -42,6 +44,7 @@ interface RaidBossModalProps {
   soundEnabled: boolean;
   t: (key: string, params?: Record<string, any>) => string;
   allNfts: Card[]; // All player's NFTs for deck selection
+  isInFarcaster?: boolean; // For miniapp marketplace navigation
 }
 
 type NFT = Card | any; // Allow Convex types that may not match exactly
@@ -53,6 +56,7 @@ export function RaidBossModal({
   soundEnabled,
   t,
   allNfts,
+  isInFarcaster = false,
 }: RaidBossModalProps) {
   const [showDeckSelector, setShowDeckSelector] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -717,14 +721,20 @@ export function RaidBossModal({
                     </p>
                     {/* Buy collection button */}
                     {currentBoss.collection && COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS]?.marketplaceUrl && (
-                      <a
-                        href={COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS].marketplaceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 rounded-full text-white text-xs font-bold transition-all shadow-lg"
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (soundEnabled) AudioManager.buttonClick();
+                          await openMarketplace(
+                            COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS].marketplaceUrl!,
+                            sdk,
+                            isInFarcaster
+                          );
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 rounded-full text-white text-xs font-bold transition-all shadow-lg cursor-pointer"
                       >
                         🛒 {COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS].buttonText || 'BUY PACKS'}
-                      </a>
+                      </button>
                     )}
                   </div>
 
@@ -903,18 +913,16 @@ export function RaidBossModal({
 
                           {/* Marketplace Button */}
                           {collection.marketplaceUrl && (
-                            <a
-                              href={collection.marketplaceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block w-full px-2 py-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/50 rounded text-[10px] font-bold transition text-center"
-                              onClick={(e) => {
+                            <button
+                              onClick={async (e) => {
                                 e.stopPropagation();
                                 if (soundEnabled) AudioManager.buttonClick();
+                                await openMarketplace(collection.marketplaceUrl!, sdk, isInFarcaster);
                               }}
+                              className="block w-full px-2 py-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/50 rounded text-[10px] font-bold transition text-center cursor-pointer"
                             >
                               {collection.buttonText || t('raidBuyPacks')}
-                            </a>
+                            </button>
                           )}
                         </div>
                       </div>
