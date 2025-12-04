@@ -3092,6 +3092,280 @@ export const COLLECTION_CARDS: Record<string, {tokenId: string; name: string; ra
                 "collection": "historyofcomputer"
           }
     ],
+  "cumioh": [
+          {
+                "tokenId": "100",
+                "name": "$cu-Mi-Oh! #100",
+                "rarity": "Rare",
+                "power": 20,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F638cab7c45bca11b62f3bc077e6f1a43",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "300",
+                "name": "$cu-Mi-Oh! #300",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F87bd30cc8e3cc9fcb0a288d7799a6abc",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2425",
+                "name": "$cu-Mi-Oh! #2425",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F358c439e8afddc6f650c56615d003539",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2591",
+                "name": "$cu-Mi-Oh! #2591",
+                "rarity": "Epic",
+                "power": 80,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F4721cecb3e79b4b41c64ae25e430657c",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2127",
+                "name": "$cu-Mi-Oh! #2127",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F652b0aeb9a16773aeba81162a1dcd389",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "1870",
+                "name": "$cu-Mi-Oh! #1870",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F41a59d4293355e8256f0496cb515221a",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "1876",
+                "name": "$cu-Mi-Oh! #1876",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F980f918d00473dfda351a811348d69f4",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2632",
+                "name": "$cu-Mi-Oh! #2632",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Fff47d66fd0cf61b183de3c6f8a7540e0",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2633",
+                "name": "$cu-Mi-Oh! #2633",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F7f648fb409b265f814d99c75b6edd307",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2181",
+                "name": "$cu-Mi-Oh! #2181",
+                "rarity": "Rare",
+                "power": 20,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Fa3d8a63590569bcb465a1d208c50f8bf",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2431",
+                "name": "$cu-Mi-Oh! #2431",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F848511c65b86d21f17b6b40885aee32c",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2562",
+                "name": "$cu-Mi-Oh! #2562",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F1dcac068124b945c6bbdf59e07ed3efc",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2435",
+                "name": "$cu-Mi-Oh! #2435",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F506f451b539f2e89b5d5ece8d60233ad",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2049",
+                "name": "$cu-Mi-Oh! #2049",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F02abf4787f671b609598f62101aa670a",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2096",
+                "name": "$cu-Mi-Oh! #2096",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F55f18fb3406b647cdfd0393929a4534b",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "1874",
+                "name": "$cu-Mi-Oh! #1874",
+                "rarity": "Rare",
+                "power": 20,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F5ac3b0d1208bcac6c398db1a61191149",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "1204",
+                "name": "$cu-Mi-Oh! #1204",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F14402bca127d4eaa71ca8879d0c7c41a",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2626",
+                "name": "$cu-Mi-Oh! #2626",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Ff3849b676bab1a54f81b97b55781f2e0",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "1233",
+                "name": "$cu-Mi-Oh! #1233",
+                "rarity": "Rare",
+                "power": 20,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F1b8b405edaa0e42633347a8f52fd3ab8",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2105",
+                "name": "$cu-Mi-Oh! #2105",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Fb0df8be5c824ea587cff759fe6b47c80",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "880",
+                "name": "$cu-Mi-Oh! #880",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Fee2e62381eedb42418073c283c89fc8f",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "411",
+                "name": "$cu-Mi-Oh! #411",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F41f45d25bad42e30e29c01676a8a6ec4",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "134",
+                "name": "$cu-Mi-Oh! #134",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Ff458f441dbbd89871891375b6f4ab544",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "1572",
+                "name": "$cu-Mi-Oh! #1572",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F44a1f7f2d725d32b4dfbcb972da931f2",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "534",
+                "name": "$cu-Mi-Oh! #534",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F14402bca127d4eaa71ca8879d0c7c41a",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "1828",
+                "name": "$cu-Mi-Oh! #1828",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Fe4f60ad390bf6c2d9843baf2259ff9ab",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "286",
+                "name": "$cu-Mi-Oh! #286",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F9d81798f8dc97cec3011ab90987e6209",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2336",
+                "name": "$cu-Mi-Oh! #2336",
+                "rarity": "Common",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Ff20bf9c22276044f89b73033a195f2f2",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "1061",
+                "name": "$cu-Mi-Oh! #1061",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F2ed4a49ab914a3070c5f68bb617247d4",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "624",
+                "name": "$cu-Mi-Oh! #624",
+                "rarity": "Epic",
+                "power": 80,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F95804249be958de412f1502491f90c47",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2132",
+                "name": "$cu-Mi-Oh! #2132",
+                "rarity": "Rare",
+                "power": 20,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Fe0aa75df8795ee59ded74cdc8bd661e8",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2174",
+                "name": "$cu-Mi-Oh! #2174",
+                "rarity": "Epic",
+                "power": 80,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F2b7324ec61de32f102e3ef29b5d374d4",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "397",
+                "name": "$cu-Mi-Oh! #397",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2Fcf51cb7f317c2996f5700fa1db3cc7e3",
+                "collection": "cumioh"
+          },
+          {
+                "tokenId": "2372",
+                "name": "$cu-Mi-Oh! #2372",
+                "rarity": "Unopened",
+                "power": 5,
+                "imageUrl": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F5c9f815bf8359089b78fcd23303e6754",
+                "collection": "cumioh"
+          }
+    ]
 };
 
 export const AVAILABLE_COLLECTIONS = Object.keys(COLLECTION_CARDS).filter(k => COLLECTION_CARDS[k].length >= 10);
