@@ -1,6 +1,8 @@
 'use client';
 
 import { useCollectionPrices } from '@/lib/hooks/useCollectionPrices';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { useEffect, useState } from 'react';
 
 // Collection cover images (from Mecha Arena)
@@ -25,6 +27,7 @@ interface PriceTickerProps {
 
 export function PriceTicker({ className = '' }: PriceTickerProps) {
   const { prices, isLoading } = useCollectionPrices();
+  const yesterdayPrices = useQuery(api.priceSnapshots.getYesterdayPrices);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 
@@ -60,6 +63,25 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
   const currentPrice = prices[currentIndex];
   const coverUrl = COLLECTION_COVERS[currentPrice?.id] || '';
 
+  // Calculate price change direction
+  let priceDirection: 'up' | 'down' | 'neutral' = 'neutral';
+  let percentChange = 0;
+
+  if (yesterdayPrices?.prices && currentPrice) {
+    const yesterdayPrice = yesterdayPrices.prices[currentPrice.id];
+    if (yesterdayPrice) {
+      const currentUsd = parseFloat(currentPrice.priceUsd.replace('$', '').replace(',', ''));
+      const yesterdayUsd = yesterdayPrice.priceUsd;
+      if (currentUsd > yesterdayUsd) {
+        priceDirection = 'up';
+        percentChange = ((currentUsd - yesterdayUsd) / yesterdayUsd) * 100;
+      } else if (currentUsd < yesterdayUsd) {
+        priceDirection = 'down';
+        percentChange = ((yesterdayUsd - currentUsd) / yesterdayUsd) * 100;
+      }
+    }
+  }
+
   return (
     <div className={`overflow-hidden py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 shadow-[0_0_15px_rgba(255,215,0,0.15)] ${className}`}>
       <div
@@ -74,12 +96,20 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
         )}
         <span className="text-vintage-burnt-gold font-bold">{currentPrice?.displayName} Pack:</span>
         <span className="text-vintage-gold font-mono">{currentPrice?.priceUsd}</span>
-        {prices.length > 1 && (
-          <div className="flex gap-1 ml-2">
-            {prices.map((_, i) => (
-              <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === currentIndex ? 'bg-vintage-gold' : 'bg-vintage-gold/30'}`} />
-            ))}
-          </div>
+        {/* Price direction indicator */}
+        {priceDirection !== 'neutral' && (
+          <span className={`flex items-center gap-0.5 ${priceDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+            {priceDirection === 'up' ? (
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+            <span className="text-[10px]">{percentChange.toFixed(1)}%</span>
+          </span>
         )}
       </div>
     </div>

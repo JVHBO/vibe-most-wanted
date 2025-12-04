@@ -37,6 +37,7 @@ import type * as notificationsHelpers from "../notificationsHelpers.js";
 import type * as pokerBattle from "../pokerBattle.js";
 import type * as pokerChat from "../pokerChat.js";
 import type * as pokerCpu from "../pokerCpu.js";
+import type * as priceSnapshots from "../priceSnapshots.js";
 import type * as profiles from "../profiles.js";
 import type * as pvp from "../pvp.js";
 import type * as quests from "../quests.js";
@@ -88,6 +89,7 @@ declare const fullApi: ApiFromModules<{
   pokerBattle: typeof pokerBattle;
   pokerChat: typeof pokerChat;
   pokerCpu: typeof pokerCpu;
+  priceSnapshots: typeof priceSnapshots;
   profiles: typeof profiles;
   pvp: typeof pvp;
   quests: typeof quests;
