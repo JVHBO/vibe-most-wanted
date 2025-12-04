@@ -42,7 +42,7 @@ const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: stri
   historyofcomputer: { name: "History of Computer", emoji: "💻", color: "from-gray-600 to-slate-700" },
 };
 
-type ViewMode = "password" | "rooms" | "spectator-entry" | "battle";
+type ViewMode = "password" | "rooms" | "room-choice" | "spectator-entry" | "battle";
 
 // Password for Mecha Arena access
 const CPU_ARENA_PASSWORD = "vibe2025";
@@ -67,6 +67,7 @@ export function CpuArenaModal({
   const [roomId, setRoomId] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
+  const [forceNewRoom, setForceNewRoom] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const [buffCountdown, setBuffCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
@@ -103,6 +104,30 @@ export function CpuArenaModal({
   // Handle room selection
   const handleSelectRoom = (collection: string) => {
     setSelectedCollection(collection);
+    setForceNewRoom(false);
+    
+    // Check if there's an active room for this collection
+    const activeRoom = cpuRooms?.find((r: any) => r.collection === collection);
+    if (activeRoom && activeRoom.status === "in-progress") {
+      // Show choice: join existing or create new
+      setViewMode("room-choice");
+    } else {
+      // No active room, go directly to deposit
+      setViewMode("spectator-entry");
+    }
+    if (soundEnabled) AudioManager.buttonClick();
+  };
+  
+  // Handle room choice - join existing
+  const handleJoinExisting = () => {
+    setForceNewRoom(false);
+    setViewMode("spectator-entry");
+    if (soundEnabled) AudioManager.buttonClick();
+  };
+  
+  // Handle room choice - create new
+  const handleCreateNew = () => {
+    setForceNewRoom(true);
     setViewMode("spectator-entry");
     if (soundEnabled) AudioManager.buttonClick();
   };
@@ -114,7 +139,7 @@ export function CpuArenaModal({
     setIsJoining(true);
     try {
       // 1. Create or get CPU vs CPU room for this collection
-      const result = await createCpuRoom({ collection: selectedCollection });
+      const result = await createCpuRoom({ collection: selectedCollection, forceNew: forceNewRoom });
       console.log("🤖 Mecha Arena room:", result.roomId, result.isNew ? "(new)" : "(existing)");
 
       // 2. Join as spectator
@@ -435,6 +460,91 @@ export function CpuArenaModal({
               </div>
             </div>
           </>
+        )}
+
+
+        {/* ============ ROOM CHOICE VIEW ============ */}
+        {viewMode === "room-choice" && selectedCollection && (
+          <div className="p-6 sm:p-8">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-3">
+                {COLLECTION_INFO[selectedCollection]?.emoji || "🎮"}
+              </div>
+              <h2 className="text-2xl font-display font-bold text-purple-400 mb-2">
+                {COLLECTION_INFO[selectedCollection]?.name || selectedCollection} Arena
+              </h2>
+              <p className="text-vintage-ice/70">
+                There&apos;s an active battle in progress!
+              </p>
+            </div>
+
+            {/* Active room info */}
+            {(() => {
+              const activeRoom = cpuRooms?.find((r: any) => r.collection === selectedCollection);
+              if (!activeRoom) return null;
+              return (
+                <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-purple-300 font-bold">Current Battle</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-sm">Live</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-vintage-ice/60 text-xs">Round</p>
+                      <p className="text-vintage-gold font-bold text-xl">{activeRoom.currentRound || 1}/7</p>
+                    </div>
+                    <div>
+                      <p className="text-vintage-ice/60 text-xs">Score</p>
+                      <p className="text-vintage-gold font-bold text-xl">{activeRoom.hostScore || 0} - {activeRoom.guestScore || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-vintage-ice/60 text-xs">Spectators</p>
+                      <p className="text-vintage-gold font-bold text-xl">{activeRoom.spectatorCount || 0}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Choice buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={handleJoinExisting}
+                className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+              >
+                <span className="text-2xl">👁️</span>
+                <div className="text-left">
+                  <p className="text-lg">Join Current Battle</p>
+                  <p className="text-xs text-white/70">Watch the ongoing match</p>
+                </div>
+              </button>
+
+              <button
+                onClick={handleCreateNew}
+                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+              >
+                <span className="text-2xl">🆕</span>
+                <div className="text-left">
+                  <p className="text-lg">Start New Battle</p>
+                  <p className="text-xs text-white/70">Create a fresh room</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setViewMode("rooms");
+                  setSelectedCollection(null);
+                }}
+                className="w-full py-3 text-vintage-ice/70 hover:text-vintage-ice transition-colors"
+              >
+                ← Back to Arenas
+              </button>
+            </div>
+          </div>
         )}
 
         {/* ============ SPECTATOR ENTRY VIEW ============ */}

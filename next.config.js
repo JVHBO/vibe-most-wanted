@@ -5,6 +5,16 @@ module.exports = {
   async headers() {
     return [
       {
+        // Global headers for all routes - enable microphone/camera permissions
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'microphone=*, camera=*, geolocation=()',
+          },
+        ],
+      },
+      {
         // Permitir acesso ao manifest do Farcaster
         source: '/.well-known/farcaster.json',
         headers: [
