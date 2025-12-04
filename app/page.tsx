@@ -4771,6 +4771,13 @@ export default function TCGPage() {
                   {/* Coins Inbox removed from header - use navigation tab "Claim" button instead */}
                   {/* {userProfile && !isInFarcaster && <CoinsInboxDisplay />} */}
                 </div>
+
+                {/* Price Ticker - Website only (right side of user bar) */}
+                {!isInFarcaster && (
+                  <div className="hidden md:block">
+                    <PriceTicker className="" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
