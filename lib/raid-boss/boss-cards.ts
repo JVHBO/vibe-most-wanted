@@ -35,7 +35,7 @@ export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
   mythic: 5_000_000,     // 5,000,000 $TESTVBMS (500x harder)
 };
 
-// Boss Rotation Order (65 bosses total)
+// Boss Rotation Order (70 bosses total)
 // Alternating collections with escalating rarities for variety
 // Pattern: GM VBRS → VBMS → VIBEFID → AFCL → COQUETTISH → VIBERUTO (rotating rarities)
 export const BOSS_ROTATION_ORDER: CollectionId[] = [
@@ -52,58 +52,63 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'baseballcabal',           // 11. BASEBALLCABAL Common
   'vibefx',           // 12. VIBEFX Rare
   'historyofcomputer',           // 13. HISTORYOFCOMPUTER Epic
-  'gmvbrs',           // 14. GMVBRS Rare
-  'vibe',           // 15. VIBE Epic
-  'vibefid',           // 16. VIBEFID Legendary
-  'americanfootball',           // 17. AMERICANFOOTBALL Mythic
-  'coquettish',           // 18. COQUETTISH Common
-  'viberuto',           // 19. VIBERUTO Rare
-  'meowverse',           // 20. MEOWVERSE Epic
-  'poorlydrawnpepes',           // 21. POORLYDRAWNPEPES Legendary
-  'teampothead',           // 22. TEAMPOTHEAD Mythic
-  'tarot',           // 23. TAROT Common
-  'baseballcabal',           // 24. BASEBALLCABAL Rare
-  'vibefx',           // 25. VIBEFX Epic
-  'historyofcomputer',           // 26. HISTORYOFCOMPUTER Legendary
-  'gmvbrs',           // 27. GMVBRS Epic
-  'vibe',           // 28. VIBE Legendary
-  'vibefid',           // 29. VIBEFID Mythic
-  'americanfootball',           // 30. AMERICANFOOTBALL Common
-  'coquettish',           // 31. COQUETTISH Rare
-  'viberuto',           // 32. VIBERUTO Epic
-  'meowverse',           // 33. MEOWVERSE Legendary
-  'poorlydrawnpepes',           // 34. POORLYDRAWNPEPES Mythic
-  'teampothead',           // 35. TEAMPOTHEAD Common
-  'tarot',           // 36. TAROT Rare
-  'baseballcabal',           // 37. BASEBALLCABAL Epic
-  'vibefx',           // 38. VIBEFX Legendary
-  'historyofcomputer',           // 39. HISTORYOFCOMPUTER Mythic
-  'gmvbrs',           // 40. GMVBRS Legendary
-  'vibe',           // 41. VIBE Mythic
-  'vibefid',           // 42. VIBEFID Common
-  'americanfootball',           // 43. AMERICANFOOTBALL Rare
-  'coquettish',           // 44. COQUETTISH Epic
-  'viberuto',           // 45. VIBERUTO Legendary
-  'meowverse',           // 46. MEOWVERSE Mythic
-  'poorlydrawnpepes',           // 47. POORLYDRAWNPEPES Common
-  'teampothead',           // 48. TEAMPOTHEAD Rare
-  'tarot',           // 49. TAROT Epic
-  'baseballcabal',           // 50. BASEBALLCABAL Legendary
-  'vibefx',           // 51. VIBEFX Mythic
-  'historyofcomputer',           // 52. HISTORYOFCOMPUTER Common
-  'gmvbrs',           // 53. GMVBRS Mythic
-  'vibe',           // 54. VIBE Common
-  'vibefid',           // 55. VIBEFID Rare
-  'americanfootball',           // 56. AMERICANFOOTBALL Epic
-  'coquettish',           // 57. COQUETTISH Legendary
-  'viberuto',           // 58. VIBERUTO Mythic
-  'meowverse',           // 59. MEOWVERSE Common
-  'poorlydrawnpepes',           // 60. POORLYDRAWNPEPES Rare
-  'teampothead',           // 61. TEAMPOTHEAD Epic
-  'tarot',           // 62. TAROT Legendary
-  'baseballcabal',           // 63. BASEBALLCABAL Mythic
-  'vibefx',           // 64. VIBEFX Common
-  'historyofcomputer',           // 65. HISTORYOFCOMPUTER Rare
+  'cumioh',           // 14. CUMIOH Legendary
+  'gmvbrs',           // 15. GMVBRS Rare
+  'vibe',           // 16. VIBE Epic
+  'vibefid',           // 17. VIBEFID Legendary
+  'americanfootball',           // 18. AMERICANFOOTBALL Mythic
+  'coquettish',           // 19. COQUETTISH Common
+  'viberuto',           // 20. VIBERUTO Rare
+  'meowverse',           // 21. MEOWVERSE Epic
+  'poorlydrawnpepes',           // 22. POORLYDRAWNPEPES Legendary
+  'teampothead',           // 23. TEAMPOTHEAD Mythic
+  'tarot',           // 24. TAROT Common
+  'baseballcabal',           // 25. BASEBALLCABAL Rare
+  'vibefx',           // 26. VIBEFX Epic
+  'historyofcomputer',           // 27. HISTORYOFCOMPUTER Legendary
+  'cumioh',           // 28. CUMIOH Mythic
+  'gmvbrs',           // 29. GMVBRS Epic
+  'vibe',           // 30. VIBE Legendary
+  'vibefid',           // 31. VIBEFID Mythic
+  'americanfootball',           // 32. AMERICANFOOTBALL Common
+  'coquettish',           // 33. COQUETTISH Rare
+  'viberuto',           // 34. VIBERUTO Epic
+  'meowverse',           // 35. MEOWVERSE Legendary
+  'poorlydrawnpepes',           // 36. POORLYDRAWNPEPES Mythic
+  'teampothead',           // 37. TEAMPOTHEAD Common
+  'tarot',           // 38. TAROT Rare
+  'baseballcabal',           // 39. BASEBALLCABAL Epic
+  'vibefx',           // 40. VIBEFX Legendary
+  'historyofcomputer',           // 41. HISTORYOFCOMPUTER Mythic
+  'cumioh',           // 42. CUMIOH Common
+  'gmvbrs',           // 43. GMVBRS Legendary
+  'vibe',           // 44. VIBE Mythic
+  'vibefid',           // 45. VIBEFID Common
+  'americanfootball',           // 46. AMERICANFOOTBALL Rare
+  'coquettish',           // 47. COQUETTISH Epic
+  'viberuto',           // 48. VIBERUTO Legendary
+  'meowverse',           // 49. MEOWVERSE Mythic
+  'poorlydrawnpepes',           // 50. POORLYDRAWNPEPES Common
+  'teampothead',           // 51. TEAMPOTHEAD Rare
+  'tarot',           // 52. TAROT Epic
+  'baseballcabal',           // 53. BASEBALLCABAL Legendary
+  'vibefx',           // 54. VIBEFX Mythic
+  'historyofcomputer',           // 55. HISTORYOFCOMPUTER Common
+  'cumioh',           // 56. CUMIOH Rare
+  'gmvbrs',           // 57. GMVBRS Mythic
+  'vibe',           // 58. VIBE Common
+  'vibefid',           // 59. VIBEFID Rare
+  'americanfootball',           // 60. AMERICANFOOTBALL Epic
+  'coquettish',           // 61. COQUETTISH Legendary
+  'viberuto',           // 62. VIBERUTO Mythic
+  'meowverse',           // 63. MEOWVERSE Common
+  'poorlydrawnpepes',           // 64. POORLYDRAWNPEPES Rare
+  'teampothead',           // 65. TEAMPOTHEAD Epic
+  'tarot',           // 66. TAROT Legendary
+  'baseballcabal',           // 67. BASEBALLCABAL Mythic
+  'vibefx',           // 68. VIBEFX Common
+  'historyofcomputer',           // 69. HISTORYOFCOMPUTER Rare
+  'cumioh',           // 70. CUMIOH Epic
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
@@ -120,58 +125,63 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Common',    // 11. BASEBALLCABAL
   'Rare',    // 12. VIBEFX
   'Epic',    // 13. HISTORYOFCOMPUTER
-  'Rare',    // 14. GMVBRS
-  'Epic',    // 15. VIBE
-  'Legendary',    // 16. VIBEFID
-  'Mythic',    // 17. AMERICANFOOTBALL
-  'Common',    // 18. COQUETTISH
-  'Rare',    // 19. VIBERUTO
-  'Epic',    // 20. MEOWVERSE
-  'Legendary',    // 21. POORLYDRAWNPEPES
-  'Mythic',    // 22. TEAMPOTHEAD
-  'Common',    // 23. TAROT
-  'Rare',    // 24. BASEBALLCABAL
-  'Epic',    // 25. VIBEFX
-  'Legendary',    // 26. HISTORYOFCOMPUTER
-  'Epic',    // 27. GMVBRS
-  'Legendary',    // 28. VIBE
-  'Mythic',    // 29. VIBEFID
-  'Common',    // 30. AMERICANFOOTBALL
-  'Rare',    // 31. COQUETTISH
-  'Epic',    // 32. VIBERUTO
-  'Legendary',    // 33. MEOWVERSE
-  'Mythic',    // 34. POORLYDRAWNPEPES
-  'Common',    // 35. TEAMPOTHEAD
-  'Rare',    // 36. TAROT
-  'Epic',    // 37. BASEBALLCABAL
-  'Legendary',    // 38. VIBEFX
-  'Mythic',    // 39. HISTORYOFCOMPUTER
-  'Legendary',    // 40. GMVBRS
-  'Mythic',    // 41. VIBE
-  'Common',    // 42. VIBEFID
-  'Rare',    // 43. AMERICANFOOTBALL
-  'Epic',    // 44. COQUETTISH
-  'Legendary',    // 45. VIBERUTO
-  'Mythic',    // 46. MEOWVERSE
-  'Common',    // 47. POORLYDRAWNPEPES
-  'Rare',    // 48. TEAMPOTHEAD
-  'Epic',    // 49. TAROT
-  'Legendary',    // 50. BASEBALLCABAL
-  'Mythic',    // 51. VIBEFX
-  'Common',    // 52. HISTORYOFCOMPUTER
-  'Mythic',    // 53. GMVBRS
-  'Common',    // 54. VIBE
-  'Rare',    // 55. VIBEFID
-  'Epic',    // 56. AMERICANFOOTBALL
-  'Legendary',    // 57. COQUETTISH
-  'Mythic',    // 58. VIBERUTO
-  'Common',    // 59. MEOWVERSE
-  'Rare',    // 60. POORLYDRAWNPEPES
-  'Epic',    // 61. TEAMPOTHEAD
-  'Legendary',    // 62. TAROT
-  'Mythic',    // 63. BASEBALLCABAL
-  'Common',    // 64. VIBEFX
-  'Rare',    // 65. HISTORYOFCOMPUTER
+  'Legendary',    // 14. CUMIOH
+  'Rare',    // 15. GMVBRS
+  'Epic',    // 16. VIBE
+  'Legendary',    // 17. VIBEFID
+  'Mythic',    // 18. AMERICANFOOTBALL
+  'Common',    // 19. COQUETTISH
+  'Rare',    // 20. VIBERUTO
+  'Epic',    // 21. MEOWVERSE
+  'Legendary',    // 22. POORLYDRAWNPEPES
+  'Mythic',    // 23. TEAMPOTHEAD
+  'Common',    // 24. TAROT
+  'Rare',    // 25. BASEBALLCABAL
+  'Epic',    // 26. VIBEFX
+  'Legendary',    // 27. HISTORYOFCOMPUTER
+  'Mythic',    // 28. CUMIOH
+  'Epic',    // 29. GMVBRS
+  'Legendary',    // 30. VIBE
+  'Mythic',    // 31. VIBEFID
+  'Common',    // 32. AMERICANFOOTBALL
+  'Rare',    // 33. COQUETTISH
+  'Epic',    // 34. VIBERUTO
+  'Legendary',    // 35. MEOWVERSE
+  'Mythic',    // 36. POORLYDRAWNPEPES
+  'Common',    // 37. TEAMPOTHEAD
+  'Rare',    // 38. TAROT
+  'Epic',    // 39. BASEBALLCABAL
+  'Legendary',    // 40. VIBEFX
+  'Mythic',    // 41. HISTORYOFCOMPUTER
+  'Common',    // 42. CUMIOH
+  'Legendary',    // 43. GMVBRS
+  'Mythic',    // 44. VIBE
+  'Common',    // 45. VIBEFID
+  'Rare',    // 46. AMERICANFOOTBALL
+  'Epic',    // 47. COQUETTISH
+  'Legendary',    // 48. VIBERUTO
+  'Mythic',    // 49. MEOWVERSE
+  'Common',    // 50. POORLYDRAWNPEPES
+  'Rare',    // 51. TEAMPOTHEAD
+  'Epic',    // 52. TAROT
+  'Legendary',    // 53. BASEBALLCABAL
+  'Mythic',    // 54. VIBEFX
+  'Common',    // 55. HISTORYOFCOMPUTER
+  'Rare',    // 56. CUMIOH
+  'Mythic',    // 57. GMVBRS
+  'Common',    // 58. VIBE
+  'Rare',    // 59. VIBEFID
+  'Epic',    // 60. AMERICANFOOTBALL
+  'Legendary',    // 61. COQUETTISH
+  'Mythic',    // 62. VIBERUTO
+  'Common',    // 63. MEOWVERSE
+  'Rare',    // 64. POORLYDRAWNPEPES
+  'Epic',    // 65. TEAMPOTHEAD
+  'Legendary',    // 66. TAROT
+  'Mythic',    // 67. BASEBALLCABAL
+  'Common',    // 68. VIBEFX
+  'Rare',    // 69. HISTORYOFCOMPUTER
+  'Epic',    // 70. CUMIOH
 ];
 
 /**
@@ -924,6 +934,63 @@ export const HISTORYOFCOMPUTER_BOSSES: Record<CardRarity, BossCard> = {
   },
 };
 
+
+/**
+ * $CU-MI-OH\! Boss Cards
+ */
+export const CUMIOH_BOSSES: Record<CardRarity, BossCard> = {
+  Common: {
+    tokenId: 'cumioh-common',
+    collection: 'cumioh',
+    name: 'THE.HOES.MÜR',
+    rarity: 'Common',
+    power: 15,
+    imageUrl: '/images/raid-bosses/cumioh/common.png',
+    hp: BOSS_HP_BY_RARITY.common,
+    description: 'Just a full time Lad on retake.tv/live/203751',
+  },
+  Rare: {
+    tokenId: 'cumioh-rare',
+    collection: 'cumioh',
+    name: '$.C.U.M.ilady',
+    rarity: 'Rare',
+    power: 20,
+    imageUrl: '/images/raid-bosses/cumioh/rare.png',
+    hp: BOSS_HP_BY_RARITY.rare,
+    description: 'Divinely loved, technically genius and spiritually transcendent. This card deals damage by casting loving commentary\!',
+  },
+  Epic: {
+    tokenId: 'cumioh-epic',
+    collection: 'cumioh',
+    name: 'DARK MAGICIAN MILADY',
+    rarity: 'Epic',
+    power: 80,
+    imageUrl: '/images/raid-bosses/cumioh/epic.png',
+    hp: BOSS_HP_BY_RARITY.epic,
+    description: 'This card gains 333 ATK for every $.C.U.M.ilady on the field when this card is casted',
+  },
+  Legendary: {
+    tokenId: 'cumioh-legendary',
+    collection: 'cumioh',
+    name: 'ily 3-Thousand Dragon',
+    rarity: 'Legendary',
+    power: 240,
+    imageUrl: '/images/raid-bosses/cumioh/legendary.png',
+    hp: BOSS_HP_BY_RARITY.legendary,
+    description: 'Lover of all the things, clicks every link and mints to HODL for a minimum of 1000 years in their treasure horde spread across hundreds of wallets',
+  },
+  Mythic: {
+    tokenId: 'cumioh-mythic',
+    collection: 'cumioh',
+    name: 'BIZORDIA THE BIZARRE ONE',
+    rarity: 'Mythic',
+    power: 800,
+    imageUrl: '/images/raid-bosses/cumioh/mythic.png',
+    hp: BOSS_HP_BY_RARITY.mythic,
+    description: 'If you have Right Leg of the Bizarre One, Left Leg of the Bizarre One, Right Arm of the Bizarre One and Left Arm of the Bizarre One in addition to this card on the field, you win the Duel',
+  },
+};
+
 /**
  * All Boss Cards organized by collection
  */
@@ -953,6 +1020,8 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
 
 
 
+  cumioh: CUMIOH_BOSSES,
+
   custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
 };
 
@@ -968,7 +1037,7 @@ export function getBossCard(collection: CollectionId, rarity: CardRarity): BossC
  * @param bossIndex - Current boss index (0-24)
  */
 export function getCurrentBoss(bossIndex: number): BossCard | undefined {
-  const normalizedIndex = bossIndex % 65; // Loop through 30 bosses
+  const normalizedIndex = bossIndex % 70; // Loop through 30 bosses
   const collection = BOSS_ROTATION_ORDER[normalizedIndex];
   const rarity = BOSS_RARITY_ORDER[normalizedIndex];
 
@@ -993,7 +1062,7 @@ export function getPreviousBoss(currentBossIndex: number): BossCard | undefined 
  * Get boss rotation info
  */
 export function getBossRotationInfo(bossIndex: number) {
-  const normalizedIndex = bossIndex % 65;
+  const normalizedIndex = bossIndex % 70;
   return {
     index: normalizedIndex,
     collection: BOSS_ROTATION_ORDER[normalizedIndex],
