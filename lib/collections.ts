@@ -304,7 +304,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     name: 'cumioh',
     displayName: '$CU-MI-OH!',
     description: 'Collection $CU-MI-OH! NFT',
-    contractAddress: '0xae53134e9a37286171fd79191ba6e9c6db76cf5a',
+    contractAddress: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
