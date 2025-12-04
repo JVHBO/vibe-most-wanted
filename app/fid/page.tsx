@@ -606,14 +606,13 @@ export default function FidPage() {
         throw new Error('Share image IPFS upload returned empty URL!');
       }
 
-      // Generate MP4 video with foil animation (8 seconds for better effect)
-      setError("Generating video with foil animation (8 seconds)...");
+      // Generate MP4 video with foil animation (3s static, 5s animated PFP)
+      setError("Generating video with foil animation...");
       console.log('🎬 VIDEO DEBUG - About to generate video with foil:', foil);
       const videoBlob = await generateCardVideo({
         cardImageDataUrl,
         foilType: foil as 'None' | 'Standard' | 'Prize',
-        duration: 8, // Increased from 3 to 8 seconds
-        fps: 30,
+        // Duration auto-determined: 3s for static PFP, 5s for animated PFP
         pfpUrl: userData.pfp_url, // Pass PFP URL for animated GIF support
       });
 
