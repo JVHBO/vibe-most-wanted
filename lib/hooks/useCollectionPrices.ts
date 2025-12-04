@@ -67,7 +67,7 @@ const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   baseballcabal: '0x3ff41af61d092657189b1d4f7d74d994514724bb',
   vibefx: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
   historyofcomputer: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
-  cumioh: '0xae53134e9a37286171fd79191ba6e9c6db76cf5a',
+  cumioh: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
 };
 
 const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] = [
