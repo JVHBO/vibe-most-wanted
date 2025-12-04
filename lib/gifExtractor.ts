@@ -62,8 +62,22 @@ export async function extractGifFrames(url: string): Promise<ExtractedGif | null
     // Previous frame for disposal method handling
     let previousImageData: ImageData | null = null;
 
+    // Calculate average delay to detect GIFs with broken timing
+    const avgDelay = frames.reduce((sum, f) => sum + (f.delay * 10), 0) / frames.length;
+    const hasSlowTiming = avgDelay > 200; // If avg > 200ms, GIF likely has broken/slow timing
+
     for (const frame of frames) {
-      const delay = frame.delay * 10; // gifuct-js returns delay in centiseconds
+      let delay = frame.delay * 10; // gifuct-js returns delay in centiseconds
+
+      // Cap delay to reasonable range for smooth animation
+      // Min 30ms (~33fps), Max 150ms (~7fps) for PFP animations
+      // If GIF has very slow timing (>200ms avg), assume it's broken and use 80ms
+      if (hasSlowTiming) {
+        delay = 80; // Force ~12fps for GIFs with slow/broken timing
+      } else {
+        delay = Math.max(30, Math.min(150, delay || 80));
+      }
+
       totalDuration += delay;
 
       // Handle disposal method
@@ -97,7 +111,7 @@ export async function extractGifFrames(url: string): Promise<ExtractedGif | null
       // Get the full frame
       extractedFrames.push({
         imageData: ctx.getImageData(0, 0, width, height),
-        delay: delay || 100 // Default 100ms if no delay specified
+        delay // Already capped to 30-150ms range
       });
     }
 
