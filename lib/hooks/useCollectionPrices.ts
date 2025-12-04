@@ -1,5 +1,6 @@
 /**
- * Hook to fetch prices for ALL collection tokens using getMintPrice
+ * Hook to fetch prices for ALL collection tokens
+ * Uses getMintPrice for active mints, Uniswap V3 pool prices for closed mints
  * Returns price per pack in USD
  */
 
@@ -24,6 +25,33 @@ const CHAINLINK_ABI = [
     type: 'function',
   },
 ] as const;
+
+// Uniswap V3 Pool ABI for slot0
+const UNISWAP_V3_POOL_ABI = [
+  {
+    inputs: [],
+    name: 'slot0',
+    outputs: [
+      { name: 'sqrtPriceX96', type: 'uint160' },
+      { name: 'tick', type: 'int24' },
+      { name: 'observationIndex', type: 'uint16' },
+      { name: 'observationCardinality', type: 'uint16' },
+      { name: 'observationCardinalityNext', type: 'uint16' },
+      { name: 'feeProtocol', type: 'uint8' },
+      { name: 'unlocked', type: 'bool' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+// Uniswap V3 pool addresses for collections with closed mint (token price * 100k = pack price)
+// isToken0Weth: true if WETH is token0 in the pool (lower address)
+const UNISWAP_V3_POOLS: Record<string, { pool: `0x${string}`; isToken0Weth: boolean }> = {
+  baseballcabal: { pool: '0x1a19B0A5F06D18359Bcaa65968e983c67de453ca', isToken0Weth: false },
+  historyofcomputer: { pool: '0x16DfA3C73674213A00F08EfEb2f8b29A13716Da5', isToken0Weth: true },
+  tarot: { pool: '0xa959386125F54DdC39bc9d9200de932EC023049D', isToken0Weth: true },
+};
 
 // Hardcoded contract addresses (lowercase, same format as VBMS_CONTRACTS)
 const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
@@ -65,7 +93,7 @@ export interface CollectionPrice {
   priceWei: bigint | null;
 }
 
-// Individual price hook (same pattern as useMintPrice that works)
+// Individual price hook for getMintPrice
 function usePrice(address: `0x${string}`) {
   const { data: price, isLoading } = useReadContract({
     address,
@@ -82,6 +110,30 @@ function usePrice(address: `0x${string}`) {
   };
 }
 
+// Hook to get price from Uniswap V3 pool
+function usePoolPrice(poolAddress: `0x${string}` | undefined, isToken0Weth: boolean) {
+  const { data: slot0, isLoading } = useReadContract({
+    address: poolAddress,
+    abi: UNISWAP_V3_POOL_ABI,
+    functionName: 'slot0',
+    chainId: 8453,
+  });
+
+  if (!slot0 || !poolAddress) {
+    return { priceInEth: 0, isLoading };
+  }
+
+  const sqrtPriceX96 = slot0[0] as bigint;
+  const sqrtPrice = Number(sqrtPriceX96) / (2 ** 96);
+  const priceRatio = sqrtPrice * sqrtPrice;
+
+  // If token0 is WETH: priceRatio = TOKEN/WETH, so invert to get WETH/TOKEN
+  // If token0 is TOKEN: priceRatio = WETH/TOKEN, already correct
+  const priceInEth = isToken0Weth ? (1 / priceRatio) : priceRatio;
+
+  return { priceInEth, isLoading };
+}
+
 export function useCollectionPrices() {
   // Get ETH/USD price
   const { data: ethPriceData } = useReadContract({
@@ -93,7 +145,7 @@ export function useCollectionPrices() {
 
   const ethUsdPrice = ethPriceData ? Number(ethPriceData[1]) / 1e8 : 3500;
 
-  // Get prices for each collection
+  // Get prices for each collection via getMintPrice
   const vibe = usePrice(COLLECTION_CONTRACTS.vibe);
   const gmvbrs = usePrice(COLLECTION_CONTRACTS.gmvbrs);
   const viberuto = usePrice(COLLECTION_CONTRACTS.viberuto);
@@ -101,23 +153,45 @@ export function useCollectionPrices() {
   const meowverse = usePrice(COLLECTION_CONTRACTS.meowverse);
   const poorlydrawnpepes = usePrice(COLLECTION_CONTRACTS.poorlydrawnpepes);
   const teampothead = usePrice(COLLECTION_CONTRACTS.teampothead);
-  const tarot = usePrice(COLLECTION_CONTRACTS.tarot);
   const americanfootball = usePrice(COLLECTION_CONTRACTS.americanfootball);
-  const baseballcabal = usePrice(COLLECTION_CONTRACTS.baseballcabal);
   const vibefx = usePrice(COLLECTION_CONTRACTS.vibefx);
+
+  // These use getMintPrice but will return 0/revert, we'll use pool prices instead
+  const tarot = usePrice(COLLECTION_CONTRACTS.tarot);
+  const baseballcabal = usePrice(COLLECTION_CONTRACTS.baseballcabal);
   const historyofcomputer = usePrice(COLLECTION_CONTRACTS.historyofcomputer);
+
+  // Get pool prices for closed mint collections
+  const bbclPool = usePoolPrice(UNISWAP_V3_POOLS.baseballcabal?.pool, UNISWAP_V3_POOLS.baseballcabal?.isToken0Weth);
+  const hstrPool = usePoolPrice(UNISWAP_V3_POOLS.historyofcomputer?.pool, UNISWAP_V3_POOLS.historyofcomputer?.isToken0Weth);
+  const trtPool = usePoolPrice(UNISWAP_V3_POOLS.tarot?.pool, UNISWAP_V3_POOLS.tarot?.isToken0Weth);
 
   const priceData: Record<string, { priceWei: bigint | undefined; priceEth: string; isLoading: boolean }> = {
     vibe, gmvbrs, viberuto, coquettish, meowverse, poorlydrawnpepes,
     teampothead, tarot, americanfootball, baseballcabal, vibefx, historyofcomputer,
   };
 
-  const isLoading = Object.values(priceData).some(p => p.isLoading);
+  const isLoading = Object.values(priceData).some(p => p.isLoading) ||
+    bbclPool.isLoading || hstrPool.isLoading || trtPool.isLoading;
 
   const allPrices: CollectionPrice[] = TICKER_COLLECTIONS.map((col) => {
     const data = priceData[col.id];
-    const priceWei = data?.priceWei ?? null;
-    const priceEth = priceWei ? parseFloat(formatEther(priceWei)) : 0;
+    let priceWei = data?.priceWei ?? null;
+    let priceEth = priceWei ? parseFloat(formatEther(priceWei)) : 0;
+
+    // For closed mint collections, use pool price instead
+    // Pack price = token price * 100,000
+    if (col.id === 'baseballcabal' && bbclPool.priceInEth > 0) {
+      priceEth = bbclPool.priceInEth * 100000;
+      priceWei = BigInt(Math.floor(priceEth * 1e18));
+    } else if (col.id === 'historyofcomputer' && hstrPool.priceInEth > 0) {
+      priceEth = hstrPool.priceInEth * 100000;
+      priceWei = BigInt(Math.floor(priceEth * 1e18));
+    } else if (col.id === 'tarot' && trtPool.priceInEth > 0) {
+      priceEth = trtPool.priceInEth * 100000;
+      priceWei = BigInt(Math.floor(priceEth * 1e18));
+    }
+
     const priceUsd = priceEth * ethUsdPrice;
 
     return {
