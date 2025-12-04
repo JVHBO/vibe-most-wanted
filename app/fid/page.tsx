@@ -614,6 +614,7 @@ export default function FidPage() {
         foilType: foil as 'None' | 'Standard' | 'Prize',
         duration: 8, // Increased from 3 to 8 seconds
         fps: 30,
+        pfpUrl: userData.pfp_url, // Pass PFP URL for animated GIF support
       });
 
       // Upload video to IPFS
