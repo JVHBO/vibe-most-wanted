@@ -45,7 +45,7 @@ const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] =
   { id: 'vibe', displayName: 'Vibe Most Wanted', emoji: '🎭' },
   { id: 'gmvbrs', displayName: 'GM Vibers', emoji: '🌅' },
   { id: 'viberuto', displayName: 'Viberuto', emoji: '🍥' },
-  { id: 'coquettish', displayName: 'Coquettish Cuties', emoji: '💋' },
+  { id: 'coquettish', displayName: 'Coquettish', emoji: '💋' },
   { id: 'meowverse', displayName: 'Meowverse', emoji: '🐱' },
   { id: 'poorlydrawnpepes', displayName: 'Poorly Drawn Pepes', emoji: '🐸' },
   { id: 'teampothead', displayName: 'Team Pothead', emoji: '🌿' },
