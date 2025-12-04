@@ -41,6 +41,7 @@ import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal"
 import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
 import { RaidBossModal } from "@/components/RaidBossModal";
+import { PriceTicker } from "@/components/PriceTicker";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
@@ -4587,6 +4588,9 @@ export default function TCGPage() {
           </Link>
         </div>
       </header>
+
+      {/* Price Ticker - Shows collection token prices */}
+      <PriceTicker className="mb-4" />
 
       {!address ? (
         <div className="flex flex-col items-center justify-center py-20">
