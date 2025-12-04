@@ -4590,7 +4590,7 @@ export default function TCGPage() {
       </header>
 
       {/* Price Ticker - Shows collection token prices (miniapp only here) */}
-      {isInFarcaster && <PriceTicker className="mb-4" />}
+      {isInFarcaster && <PriceTicker className="mb-1" />}
 
       {!address ? (
         <div className="flex flex-col items-center justify-center py-20">

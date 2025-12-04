@@ -42,18 +42,18 @@ const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
 };
 
 const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] = [
-  { id: 'vibe', displayName: 'VBMS', emoji: '🎭' },
-  { id: 'gmvbrs', displayName: 'VBRS', emoji: '🌅' },
-  { id: 'viberuto', displayName: 'VBRTO', emoji: '🍥' },
-  { id: 'coquettish', displayName: 'COQ', emoji: '💋' },
-  { id: 'meowverse', displayName: 'MEOW', emoji: '🐱' },
-  { id: 'poorlydrawnpepes', displayName: 'PDP', emoji: '🐸' },
-  { id: 'teampothead', displayName: 'TMPT', emoji: '🌿' },
-  { id: 'tarot', displayName: 'TRT', emoji: '🔮' },
-  { id: 'americanfootball', displayName: 'AFCL', emoji: '🏈' },
-  { id: 'baseballcabal', displayName: 'BBC', emoji: '⚾' },
-  { id: 'vibefx', displayName: 'VFX', emoji: '✨' },
-  { id: 'historyofcomputer', displayName: 'HOC', emoji: '💻' },
+  { id: 'vibe', displayName: 'Vibe Most Wanted', emoji: '🎭' },
+  { id: 'gmvbrs', displayName: 'GM Vibers', emoji: '🌅' },
+  { id: 'viberuto', displayName: 'Viberuto', emoji: '🍥' },
+  { id: 'coquettish', displayName: 'Coquettish Cuties', emoji: '💋' },
+  { id: 'meowverse', displayName: 'Meowverse', emoji: '🐱' },
+  { id: 'poorlydrawnpepes', displayName: 'Poorly Drawn Pepes', emoji: '🐸' },
+  { id: 'teampothead', displayName: 'Team Pothead', emoji: '🌿' },
+  { id: 'tarot', displayName: 'Tarot', emoji: '🔮' },
+  { id: 'americanfootball', displayName: 'American Football', emoji: '🏈' },
+  { id: 'baseballcabal', displayName: 'Baseball Cabal', emoji: '⚾' },
+  { id: 'vibefx', displayName: 'VibeFX', emoji: '✨' },
+  { id: 'historyofcomputer', displayName: 'History of Computer', emoji: '💻' },
 ];
 
 export interface CollectionPrice {
