@@ -35,6 +35,7 @@ const COLLECTION_COVERS: Record<string, string> = {
   baseballcabal: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F45e455d7-cd23-459b-7ea9-db14c6d36000%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
   vibefx: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F5e6058d2-4c64-4cd9-ab57-66a939fec900%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
   historyofcomputer: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fa1a0d189-44e1-43e3-60dc-e8b053ec0c00%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
+  cumioh: '/covers/cumioh-cover.png',
 };
 
 // Get card cover image for a collection (fallback to default card-back)
@@ -60,6 +61,7 @@ const COLLECTION_DISPLAY_NAMES: Record<string, string> = {
   baseballcabal: 'Baseball Cabal',
   vibefx: 'VibeFX',
   historyofcomputer: 'History of Computer',
+  cumioh: '$CU-MI-OH!',
 };
 
 function getCollectionDisplayName(collection?: string): string {

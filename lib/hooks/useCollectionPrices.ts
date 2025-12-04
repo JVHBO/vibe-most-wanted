@@ -67,6 +67,7 @@ const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   baseballcabal: '0x3ff41af61d092657189b1d4f7d74d994514724bb',
   vibefx: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
   historyofcomputer: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
+  cumioh: '0xae53134e9a37286171fd79191ba6e9c6db76cf5a',
 };
 
 const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] = [
@@ -82,6 +83,7 @@ const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] =
   { id: 'baseballcabal', displayName: 'Baseball Cabal', emoji: '⚾' },
   { id: 'vibefx', displayName: 'Vibe FX', emoji: '✨' },
   { id: 'historyofcomputer', displayName: 'History of Computer', emoji: '💻' },
+  { id: 'cumioh', displayName: '$CU-MI-OH!', emoji: '🎴' },
 ];
 
 export interface CollectionPrice {
@@ -160,6 +162,7 @@ export function useCollectionPrices() {
   const tarot = usePrice(COLLECTION_CONTRACTS.tarot);
   const baseballcabal = usePrice(COLLECTION_CONTRACTS.baseballcabal);
   const historyofcomputer = usePrice(COLLECTION_CONTRACTS.historyofcomputer);
+  const cumioh = usePrice(COLLECTION_CONTRACTS.cumioh);
 
   // Get pool prices for closed mint collections
   const bbclPool = usePoolPrice(UNISWAP_V3_POOLS.baseballcabal?.pool, UNISWAP_V3_POOLS.baseballcabal?.isToken0Weth);
@@ -168,7 +171,7 @@ export function useCollectionPrices() {
 
   const priceData: Record<string, { priceWei: bigint | undefined; priceEth: string; isLoading: boolean }> = {
     vibe, gmvbrs, viberuto, coquettish, meowverse, poorlydrawnpepes,
-    teampothead, tarot, americanfootball, baseballcabal, vibefx, historyofcomputer,
+    teampothead, tarot, americanfootball, baseballcabal, vibefx, historyofcomputer, cumioh,
   };
 
   const isLoading = Object.values(priceData).some(p => p.isLoading) ||

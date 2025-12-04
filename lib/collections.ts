@@ -307,6 +307,8 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     contractAddress: '0xae53134e9a37286171fd79191ba6e9c6db76cf5a',
     chain: 'base-mainnet',
     enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY CUMIO PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
