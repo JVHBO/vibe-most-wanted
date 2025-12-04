@@ -52,7 +52,7 @@ const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] =
   { id: 'tarot', displayName: 'Tarot', emoji: '🔮' },
   { id: 'americanfootball', displayName: 'American Football', emoji: '🏈' },
   { id: 'baseballcabal', displayName: 'Baseball Cabal', emoji: '⚾' },
-  { id: 'vibefx', displayName: 'VibeFX', emoji: '✨' },
+  { id: 'vibefx', displayName: 'Vibe FX', emoji: '✨' },
   { id: 'historyofcomputer', displayName: 'History of Computer', emoji: '💻' },
 ];
 
