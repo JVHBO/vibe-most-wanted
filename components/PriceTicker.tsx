@@ -8,7 +8,7 @@ interface PriceTickerProps {
 }
 
 export function PriceTicker({ className = '' }: PriceTickerProps) {
-  const { prices, isLoading } = useCollectionPrices();
+  const { prices, allPrices, isLoading, error } = useCollectionPrices();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -19,6 +19,11 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
     return () => clearInterval(interval);
   }, [prices.length]);
 
+  // Debug log
+  useEffect(() => {
+    console.log('[PriceTicker] prices:', prices.length, 'allPrices:', allPrices.length, 'error:', error);
+  }, [prices, allPrices, error]);
+
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center gap-2 py-2 px-4 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 ${className}`}>
@@ -27,7 +32,13 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
     );
   }
 
-  if (prices.length === 0) return null;
+  if (prices.length === 0) {
+    return (
+      <div className={`flex items-center justify-center gap-2 py-2 px-4 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 ${className}`}>
+        <span className="text-vintage-burnt-gold text-sm">Fetching prices...</span>
+      </div>
+    );
+  }
 
   return (
     <div className={`overflow-hidden py-2 px-4 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 shadow-[0_0_15px_rgba(255,215,0,0.15)] ${className}`}>
