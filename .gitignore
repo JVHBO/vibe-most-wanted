@@ -1,4 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+﻿# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
 /node_modules
@@ -173,4 +173,5 @@ public/images/raid-bosses/*
 !public/images/raid-bosses/baseballcabal/
 !public/images/raid-bosses/vibefx/
 !public/images/raid-bosses/historyofcomputer/
+!public/images/raid-bosses/cumioh/
 .env*.local
