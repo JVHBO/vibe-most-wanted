@@ -1109,4 +1109,17 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_address_timestamp", ["address", "timestamp"]),
+
+  // Price Ticker Snapshots (Daily price history for showing up/down trends)
+  priceSnapshots: defineTable({
+    date: v.string(), // "2025-12-03" format
+    prices: v.array(v.object({
+      collectionId: v.string(), // "vibe", "gmvbrs", etc.
+      priceEth: v.number(), // Price in ETH
+      priceUsd: v.number(), // Price in USD at snapshot time
+    })),
+    ethUsdPrice: v.number(), // ETH/USD rate at snapshot time
+    timestamp: v.number(), // Exact timestamp of snapshot
+  })
+    .index("by_date", ["date"]),
 });
