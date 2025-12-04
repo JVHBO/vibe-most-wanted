@@ -21,6 +21,7 @@
     "convex": "^1.30.0",
     "dotenv": "^17.2.3",
     "ethers": "^6.15.0",
+    "gifuct-js": "^2.1.2",
     "lucide-react": "^0.555.0",
     "nanoid": "^5.1.6",
     "next": "^15.5.7",
