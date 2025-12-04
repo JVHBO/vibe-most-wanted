@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'cumioh' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -295,6 +295,18 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY HSTR PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection $CU-MI-OH!
+  cumioh: {
+    id: 'cumioh',
+    name: 'cumioh',
+    displayName: '$CU-MI-OH!',
+    description: 'Collection $CU-MI-OH! NFT',
+    contractAddress: '0xae53134e9a37286171fd79191ba6e9c6db76cf5a',
+    chain: 'base-mainnet',
+    enabled: true,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 

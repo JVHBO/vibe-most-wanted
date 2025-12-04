@@ -1430,6 +1430,8 @@ export default function TCGPage() {
                 collection = 'gmvbrs';
               } else if (contractAddr === getCollectionContract('coquettish')?.toLowerCase()) {
                 collection = 'coquettish';
+              } else if (contractAddr === getCollectionContract('cumioh')?.toLowerCase()) {
+                collection = 'cumioh';
               } else if (contractAddr === getCollectionContract('historyofcomputer')?.toLowerCase()) {
                 collection = 'historyofcomputer';
               } else if (contractAddr === getCollectionContract('vibefx')?.toLowerCase()) {
@@ -4996,6 +4998,7 @@ export default function TCGPage() {
                       >
                         <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
                         <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
+                        <option value="cumioh" className="bg-vintage-charcoal text-vintage-gold">CUMIO</option>
                         <option value="historyofcomputer" className="bg-vintage-charcoal text-vintage-gold">HSTR</option>
                         <option value="vibefx" className="bg-vintage-charcoal text-vintage-gold">VBFX</option>
                         <option value="baseballcabal" className="bg-vintage-charcoal text-vintage-gold">BBCL</option>
