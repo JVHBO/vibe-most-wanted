@@ -1381,8 +1381,9 @@ function generateCpuPokerDeck(collection: string) {
 export const createCpuVsCpuRoom = mutation({
   args: {
     collection: v.string(), // Which NFT collection to use for CPU decks
+    forceNew: v.optional(v.boolean()), // Force create new room even if one exists
   },
-  handler: async (ctx, { collection }) => {
+  handler: async (ctx, { collection, forceNew }) => {
     const now = Date.now();
 
     // Check if there's already an active CPU vs CPU room for this collection
@@ -1399,7 +1400,7 @@ export const createCpuVsCpuRoom = mutation({
       )
       .first();
 
-    if (existingRoom) {
+    if (existingRoom && !forceNew) {
       return { roomId: existingRoom.roomId, isNew: false };
     }
 
