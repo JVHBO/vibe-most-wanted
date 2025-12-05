@@ -184,7 +184,7 @@ export const AudioManager = {
       await this.context.resume();
     }
     try {
-      const audio = new Audio('https://www.myinstants.com/media/sounds/anime-wow.mp3');
+      const audio = new Audio('/win-sound.mp3');
       audio.volume = 0.7;
       const playPromise = audio.play();
       if (playPromise !== undefined) {
@@ -200,7 +200,7 @@ export const AudioManager = {
       await this.context.resume();
     }
     try {
-      const audio = new Audio('https://www.myinstants.com/media/sounds/zoeira-efeito-loss.mp3');
+      const audio = new Audio('/lose-sound.mp3');
       audio.volume = 0.7;
       const playPromise = audio.play();
       if (playPromise !== undefined) {
