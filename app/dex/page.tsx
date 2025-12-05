@@ -14,7 +14,6 @@ import {
   BuyStep,
   SellStep,
 } from "@/lib/hooks/useVBMSDex";
-import { useVBMSMarket } from "@/lib/hooks/useVBMSMarket";
 
 type SwapMode = "buy" | "sell";
 
@@ -487,25 +486,6 @@ export default function DexPage() {
           <span>Buy VBMS Packs</span>
           <span className="text-xs opacity-75">or sell your $VBMS</span>
         </a>
-
-        {/* VBMS Market Info */}
-        <div className="flex items-center justify-center gap-4 mb-4 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-vintage-burnt-gold">Market Cap:</span>
-            <span className="text-vintage-gold font-mono font-bold">{vbmsMarket.isLoading ? '...' : vbmsMarket.marketCapFormatted}</span>
-          </div>
-          {!vbmsMarket.isLoading && (
-            <div className={`flex items-center gap-1 ${vbmsMarket.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {vbmsMarket.change24h >= 0 ? (
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
-              ) : (
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-              )}
-              <span className="text-xs font-mono">{vbmsMarket.change24hFormatted}</span>
-              <span className="text-vintage-gold/40 text-xs">24h</span>
-            </div>
-          )}
-        </div>
 
         {/* Swap Card */}
         <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
