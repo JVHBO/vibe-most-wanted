@@ -241,6 +241,11 @@ export const sendLowEnergyNotifications = internalAction({
   args: {},
   // @ts-ignore
   handler: async (ctx) => {
+    // DISABLED
+    console.log("Low energy notifications disabled");
+    return { sent: 0, failed: 0, total: 0 };
+
+
     // Import api here to avoid circular reference
     // @ts-ignore
     const { api } = await import("./_generated/api");
