@@ -35,17 +35,24 @@ export const VBMS_CONTRACTS = {
 export const VBMS_ROUTER_ABI = [
   {
     type: 'function',
+    name: 'buyVBMSAuto',
+    inputs: [{ name: 'quantity', type: 'uint256' }],
+    outputs: [],
+    stateMutability: 'payable'
+  },
+  {
+    type: 'function',
     name: 'buyVBMS',
     inputs: [
       { name: 'quantity', type: 'uint256' },
-      { name: 'expectedStartTokenId', type: 'uint256' }
+      { name: 'startingTokenId', type: 'uint256' }
     ],
     outputs: [],
     stateMutability: 'payable'
   },
   {
     type: 'function',
-    name: 'getMintPrice',
+    name: 'getVBMSMintPrice',
     inputs: [{ name: 'quantity', type: 'uint256' }],
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view'
