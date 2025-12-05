@@ -19,6 +19,7 @@ const COLLECTION_COVERS: Record<string, string> = {
   baseballcabal: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F45e455d7-cd23-459b-7ea9-db14c6d36000%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
   vibefx: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F5e6058d2-4c64-4cd9-ab57-66a939fec900%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
   historyofcomputer: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fa1a0d189-44e1-43e3-60dc-e8b053ec0c00%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
+  cumioh: 'https://nft-cdn.alchemy.com/base-mainnet/91c81987744291bea206aaf0d4feff40',
 };
 
 interface PriceTickerProps {
@@ -83,7 +84,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
   }
 
   return (
-    <div className={`overflow-hidden py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 shadow-[0_0_15px_rgba(255,215,0,0.15)] ${className}`}>
+    <div className={`overflow-hidden py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 min-w-[280px] shadow-[0_0_15px_rgba(255,215,0,0.15)] ${className}`}>
       <div
         className={`flex items-center gap-2 text-xs transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       >
