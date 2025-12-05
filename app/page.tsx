@@ -4497,18 +4497,18 @@ export default function TCGPage() {
             onClick={async () => {
               if (soundEnabled) AudioManager.buttonClick();
               if (isInFarcaster && sdk?.actions?.openMiniApp) {
-                await sdk.actions.openMiniApp({ url: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/vibe-most-wanted?ref=XCLR1DJ6LQTT' });
+                window.location.href = '/dex';
               } else {
-                window.location.href = 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT';
+                window.location.href = '/dex';
               }
             }}
             className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
           >
             <div className="flex items-center justify-center gap-2">
-              <span className="text-base md:text-lg">◆</span> <span className="hidden md:inline">{t('buyCardsExternal') || 'BUY CARDS ON VIBE MARKET'}</span><span className="md:hidden">Buy Cards</span>
+              <span className="text-base md:text-lg">💱</span> <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
             </div>
-            <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('orOpenYourPacks') || 'or open your sealed packs'}</span>
+            <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">"trade on the bonding curve"</span>
           </button>
 
           {/* VibeFID Button - Miniapp only, same row as Buy Cards */}
