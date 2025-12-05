@@ -123,20 +123,11 @@ export function useBuyVBMS() {
         return;
       }
 
-      setStep('fetching_token_id');
+      setStep('buying');
       setError(null);
 
       try {
-        // Step 1: Find nextTokenId using multiple strategies
-        console.log('Finding next token ID...');
-        const startingTokenId = await findNextTokenId(
-          publicClient,
-          VBMS_CONTRACTS.boosterDrop
-        );
-        console.log('Using starting token ID:', startingTokenId.toString());
-
-        setStep('buying');
-        // Step 2: Call router with (quantity, startingTokenId)
+                // V7: Use buyVBMSAuto - contract handles tokenId detection automatically!
         // Add 3% buffer to handle price changes (bonding curve can move fast)
         const priceWithBuffer = priceWei + (priceWei * BigInt(3) / BigInt(100));
         console.log('Buying', packCount, 'pack(s) worth of VBMS with', formatEther(priceWithBuffer), 'ETH (includes 3% buffer)...');
@@ -144,11 +135,8 @@ export function useBuyVBMS() {
         const buyHash = await writeContractAsync({
           address: VBMS_CONTRACTS.vbmsRouter,
           abi: VBMS_ROUTER_ABI,
-          functionName: 'buyVBMS',
-          args: [
-            BigInt(packCount),                        // quantity
-            startingTokenId,                          // expectedStartTokenId (V6: used for fallback only)
-          ],
+          functionName: 'buyVBMSAuto',
+          args: [BigInt(packCount)],
           value: priceWithBuffer,  // Use buffered price to handle slippage
           chainId: VBMS_CONTRACTS.chainId,
         });
