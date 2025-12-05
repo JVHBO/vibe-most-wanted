@@ -494,7 +494,7 @@ export default function DexPage() {
           )}
         </div>
 
-        {/* Swap Card */}}
+        {/* Swap Card */}
         <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
           {/* Mode Toggle */}
           <div className="flex border-b border-vintage-gold/30">
