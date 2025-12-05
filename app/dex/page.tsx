@@ -20,7 +20,7 @@ type SwapMode = "buy" | "sell";
 // DEX-specific translations (6 languages)
 const dexTranslations = {
   en: {
-    title: "VBMS DEX",
+    title: "DEX",
     infoBanner: "Buy and sell VBMS tokens directly via bonding curve.",
     packInfo: "1 pack = 100,000 VBMS | Current price:",
     ethPerPack: "ETH/pack",
@@ -62,7 +62,7 @@ const dexTranslations = {
     viewMiniapp: "Open Miniapp",
   },
   "pt-BR": {
-    title: "VBMS DEX",
+    title: "DEX",
     infoBanner: "Compre e venda VBMS tokens diretamente via bonding curve.",
     packInfo: "1 pack = 100,000 VBMS | Preço atual:",
     ethPerPack: "ETH/pack",
@@ -104,7 +104,7 @@ const dexTranslations = {
     viewMiniapp: "Abrir Miniapp",
   },
   es: {
-    title: "VBMS DEX",
+    title: "DEX",
     infoBanner: "Compra y vende tokens VBMS directamente via bonding curve.",
     packInfo: "1 pack = 100,000 VBMS | Precio actual:",
     ethPerPack: "ETH/pack",
@@ -146,7 +146,7 @@ const dexTranslations = {
     viewMiniapp: "Abrir Miniapp",
   },
   hi: {
-    title: "VBMS DEX",
+    title: "DEX",
     infoBanner: "बॉन्डिंग कर्व के माध्यम से सीधे VBMS टोकन खरीदें और बेचें।",
     packInfo: "1 पैक = 100,000 VBMS | वर्तमान मूल्य:",
     ethPerPack: "ETH/पैक",
@@ -188,7 +188,7 @@ const dexTranslations = {
     viewMiniapp: "मिनीऐप खोलें",
   },
   ru: {
-    title: "VBMS DEX",
+    title: "DEX",
     infoBanner: "Покупайте и продавайте токены VBMS напрямую через bonding curve.",
     packInfo: "1 пак = 100,000 VBMS | Текущая цена:",
     ethPerPack: "ETH/пак",
@@ -230,7 +230,7 @@ const dexTranslations = {
     viewMiniapp: "Открыть мини-приложение",
   },
   "zh-CN": {
-    title: "VBMS DEX",
+    title: "DEX",
     infoBanner: "通过联合曲线直接买卖 VBMS 代币。",
     packInfo: "1 包 = 100,000 VBMS | 当前价格:",
     ethPerPack: "ETH/包",
@@ -304,35 +304,13 @@ export default function DexPage() {
   // Language dropdown state
   const [showLangDropdown, setShowLangDropdown] = useState(false);
 
-  // Password protection for BUY
-  const [buyUnlocked, setBuyUnlocked] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [passwordError, setPasswordError] = useState(false);
 
   const handleBuyClick = () => {
-    if (buyUnlocked) {
-      setMode("buy");
-      setPackCount(1);
-      resetBuy();
-    } else {
-      setShowPasswordModal(true);
-      setPasswordInput("");
-      setPasswordError(false);
-    }
+    setMode("buy");
+    setPackCount(1);
+    resetBuy();
   };
 
-  const handlePasswordSubmit = () => {
-    if (passwordInput === "vibe2025") {
-      setBuyUnlocked(true);
-      setShowPasswordModal(false);
-      setMode("buy");
-      setPackCount(1);
-      resetBuy();
-    } else {
-      setPasswordError(true);
-    }
-  };
 
   // Price info for selected pack count
   const { priceWei, priceEth, isLoading: priceLoading, refetch: refetchPrice } = useMintPrice(packCount);
@@ -486,7 +464,7 @@ export default function DexPage() {
                   : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold"
               }`}
             >
-              {t.buyVbms} {!buyUnlocked && "🔒"}
+              {t.buyVbms}
             </button>
             <button
               onClick={() => {
@@ -775,45 +753,6 @@ export default function DexPage() {
         </div>
       </div>
 
-      {/* Password Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-2xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-vintage-gold text-xl font-bold mb-4 text-center">
-              Enter Password
-            </h3>
-            <input
-              type="password"
-              value={passwordInput}
-              onChange={(e) => {
-                setPasswordInput(e.target.value);
-                setPasswordError(false);
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
-              placeholder="Password"
-              className="w-full bg-vintage-deep-black border border-vintage-gold/30 rounded-lg px-4 py-3 text-vintage-ice outline-none focus:border-vintage-gold mb-4"
-              autoFocus
-            />
-            {passwordError && (
-              <p className="text-red-400 text-sm mb-4 text-center">Wrong password</p>
-            )}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowPasswordModal(false)}
-                className="flex-1 py-3 rounded-lg border border-vintage-gold/30 text-vintage-burnt-gold hover:bg-vintage-gold/10 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePasswordSubmit}
-                className="flex-1 py-3 rounded-lg bg-vintage-gold text-vintage-deep-black font-bold hover:bg-vintage-burnt-gold transition"
-              >
-                Unlock
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
