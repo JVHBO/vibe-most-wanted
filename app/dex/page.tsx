@@ -55,6 +55,11 @@ const dexTranslations = {
     balance: "Balance",
     connectWallet: "Connect your Wallet",
     back: "Back",
+    // Fees
+    feeBreakdown: "Fee Breakdown",
+    buyFee: "Buy: ~5% protocol fee",
+    sellFee: "Sell: ~5% protocol fee",
+    protocolNote: "Fees built into bonding curve spread",
     // Zazza credits
     zazzaCredit: "Built with help from",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -97,6 +102,11 @@ const dexTranslations = {
     balance: "Saldo",
     connectWallet: "Conecte sua Wallet",
     back: "Voltar",
+    // Fees
+    feeBreakdown: "Taxas",
+    buyFee: "Compra: ~5% taxa de protocolo",
+    sellFee: "Venda: ~5% taxa de protocolo",
+    protocolNote: "Taxas embutidas no spread da bonding curve",
     // Zazza credits
     zazzaCredit: "Construído com ajuda de",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -139,6 +149,11 @@ const dexTranslations = {
     balance: "Saldo",
     connectWallet: "Conecta tu Wallet",
     back: "Volver",
+    // Fees
+    feeBreakdown: "Desglose de tarifas",
+    buyFee: "Compra: ~5% tarifa de protocolo",
+    sellFee: "Venta: ~5% tarifa de protocolo",
+    protocolNote: "Tarifas incluidas en el spread de la bonding curve",
     // Zazza credits
     zazzaCredit: "Construido con ayuda de",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -181,6 +196,11 @@ const dexTranslations = {
     balance: "शेष",
     connectWallet: "अपना वॉलेट कनेक्ट करें",
     back: "वापस",
+    // Fees
+    feeBreakdown: "शुल्क विवरण",
+    buyFee: "खरीद: ~5% प्रोटोकॉल शुल्क",
+    sellFee: "बिक्री: ~5% प्रोटोकॉल शुल्क",
+    protocolNote: "बॉन्डिंग कर्व स्प्रेड में शुल्क शामिल",
     // Zazza credits
     zazzaCredit: "की मदद से बनाया गया",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -223,6 +243,11 @@ const dexTranslations = {
     balance: "Баланс",
     connectWallet: "Подключите кошелек",
     back: "Назад",
+    // Fees
+    feeBreakdown: "Комиссии",
+    buyFee: "Покупка: ~5% комиссия протокола",
+    sellFee: "Продажа: ~5% комиссия протокола",
+    protocolNote: "Комиссии включены в спред bonding curve",
     // Zazza credits
     zazzaCredit: "Создано при помощи",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -265,6 +290,11 @@ const dexTranslations = {
     balance: "余额",
     connectWallet: "连接您的钱包",
     back: "返回",
+    // Fees
+    feeBreakdown: "费用明细",
+    buyFee: "购买: ~5% 协议费",
+    sellFee: "出售: ~5% 协议费",
+    protocolNote: "费用已包含在联合曲线价差中",
     // Zazza credits
     zazzaCredit: "在以下帮助下构建",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -700,6 +730,21 @@ export default function DexPage() {
                 <p>{t.sellStep3}</p>
               </>
             )}
+          </div>
+        </div>
+
+        {/* Fee Breakdown */}
+        <div className="mt-4 bg-yellow-500/10 rounded-xl border border-yellow-500/30 p-4">
+          <h3 className="text-yellow-400 font-bold mb-2 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {t.feeBreakdown}
+          </h3>
+          <div className="space-y-1 text-sm">
+            <p className="text-green-400">{t.buyFee}</p>
+            <p className="text-red-400">{t.sellFee}</p>
+            <p className="text-yellow-300/60 text-xs mt-2">{t.protocolNote}</p>
           </div>
         </div>
 
