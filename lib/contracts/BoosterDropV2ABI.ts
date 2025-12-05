@@ -24,16 +24,14 @@ export const BOOSTER_DROP_V2_ABI = [
 export const VBMS_CONTRACTS = {
   boosterDrop: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728' as `0x${string}`,
   boosterToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827' as `0x${string}`,
-  // VBMSRouter V2 - SEU contrato deployado
-  vbmsRouter: '0xA684567a8AF2c911dac608F72f8293e4863E51AB' as `0x${string}`,
-  // Storage slot 7 of BoosterDrop contains the next token ID counter
-  nextTokenIdSlot: 7,
+  // VBMSRouter V7 Simple - Based on working MintAndSellWrapper pattern
+  vbmsRouter: '0x94eD87F1f286fC457Ba1d11110Db49804ec20b3A' as `0x${string}`,
   chainId: 8453,
 } as const;
 
-// VBMSRouter V6 ABI - Race-condition proof with callback + fallback
-// buyVBMS(uint256 quantity, uint256 expectedStartTokenId)
-// Referrer is hardcoded in contract constructor
+// VBMSRouter V7 ABI - Simple and reliable
+// buyVBMSAuto(uint256 quantity) - auto-detects tokenId
+// buyVBMS(uint256 quantity, uint256 startingTokenId) - manual tokenId
 export const VBMS_ROUTER_ABI = [
   {
     type: 'function',

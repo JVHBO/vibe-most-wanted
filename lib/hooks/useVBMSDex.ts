@@ -19,7 +19,7 @@ import {
   useAccount,
   usePublicClient,
 } from 'wagmi';
-import { parseEther, formatEther, toHex, hexToBigInt } from 'viem';
+import { parseEther, formatEther } from 'viem';
 import { BOOSTER_DROP_V2_ABI, VBMS_CONTRACTS, VBMS_DEX_CONSTANTS, VBMS_ROUTER_ABI } from '../contracts/BoosterDropV2ABI';
 import { VBMS_DIRECT_SELL_ABI } from '../contracts/BoosterTokenV2ABI';
 import { ERC20_ABI } from '../contracts';
@@ -95,61 +95,7 @@ export function useVBMSAllowance(owner?: `0x${string}`) {
 // BUY HOOK (ETH → VBMS) - Uses VBMSRouter for single transaction!
 // ============================================================================
 
-export type BuyStep = 'idle' | 'fetching_token_id' | 'buying' | 'waiting' | 'complete' | 'error';
-
-/**
- * Helper: Try multiple storage slots to find nextTokenId
- * ERC721A-based contracts may have _currentIndex in different slots
- */
-async function findNextTokenId(
-  publicClient: any,
-  boosterDropAddress: `0x${string}`
-): Promise<bigint> {
-  // Try common storage slots for ERC721A _currentIndex
-  const slotsToTry = [7, 8, 5, 6, 9, 10];
-
-  for (const slot of slotsToTry) {
-    try {
-      const slotValue = await publicClient.getStorageAt({
-        address: boosterDropAddress,
-        slot: toHex(slot),
-      });
-
-      if (slotValue) {
-        const value = hexToBigInt(slotValue);
-        // Valid tokenId should be > 0 and < 1 million (reasonable range)
-        if (value > BigInt(0) && value < BigInt(1000000)) {
-          console.log(`Found nextTokenId in slot ${slot}:`, value.toString());
-          return value;
-        }
-      }
-    } catch (e) {
-      console.log(`Slot ${slot} failed:`, e);
-    }
-  }
-
-  // Fallback: use totalSupply + 1 as estimate
-  console.log('Storage slots failed, trying totalSupply fallback...');
-  try {
-    const totalSupply = await publicClient.readContract({
-      address: boosterDropAddress,
-      abi: BOOSTER_DROP_V2_ABI,
-      functionName: 'totalSupply',
-    });
-
-    if (totalSupply) {
-      const estimate = (totalSupply as bigint) + BigInt(1);
-      console.log('Using totalSupply+1 as estimate:', estimate.toString());
-      return estimate;
-    }
-  } catch (e) {
-    console.log('totalSupply fallback failed:', e);
-  }
-
-  // Last resort: start from 1
-  console.warn('All methods failed, using tokenId 1 as last resort');
-  return BigInt(1);
-}
+export type BuyStep = 'idle' | 'buying' | 'waiting' | 'complete' | 'error';
 
 /**
  * Buy VBMS tokens with ETH via VBMSRouter
