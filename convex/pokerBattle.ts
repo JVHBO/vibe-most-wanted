@@ -1534,6 +1534,7 @@ export const getAvailableCollections = query({
       "baseballcabal",
       "vibefx",
       "historyofcomputer",
+      "cumioh",
     ];
   },
 });
