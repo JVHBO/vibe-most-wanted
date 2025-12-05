@@ -387,6 +387,18 @@ export default defineSchema({
     .index("by_player_week", ["playerAddress", "weekStart"])
     .index("by_week", ["weekStart", "claimedAt"]),
 
+  // Social Quest Progress (follow/channel quests)
+  socialQuestProgress: defineTable({
+    playerAddress: v.string(),
+    questId: v.string(), // "follow_jvhbo", "join_vibe_most_wanted", etc.
+    completed: v.boolean(),
+    completedAt: v.optional(v.number()),
+    claimed: v.boolean(),
+    claimedAt: v.optional(v.number()),
+  })
+    .index("by_player", ["playerAddress"])
+    .index("by_player_quest", ["playerAddress", "questId"]),
+
   // Personal Missions (daily bonuses that need to be claimed)
   personalMissions: defineTable({
     playerAddress: v.string(),

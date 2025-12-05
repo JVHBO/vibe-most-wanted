@@ -42,6 +42,7 @@ import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
 import { RaidBossModal } from "@/components/RaidBossModal";
 import { PriceTicker } from "@/components/PriceTicker";
+import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
@@ -608,7 +609,7 @@ export default function TCGPage() {
   const [isLoadingMissions, setIsLoadingMissions] = useState<boolean>(false);
   const [isClaimingMission, setIsClaimingMission] = useState<string | null>(null);
   const [isClaimingAll, setIsClaimingAll] = useState<boolean>(false);
-  const [missionsSubView, setMissionsSubView] = useState<'missions' | 'achievements'>('missions');
+  const [missionsSubView, setMissionsSubView] = useState<'missions' | 'achievements' | 'social'>('missions');
 
   // Check if any missions are claimable (for pulsing button)
   const hasClaimableMissions = useMemo(() => {
@@ -6418,6 +6419,19 @@ export default function TCGPage() {
                   nfts={nfts}
                   onSuccess={setSuccessMessage}
                   onError={setErrorMessage}
+                />
+              )}
+
+              {/* Social Quests Sub-View */}
+              {missionsSubView === 'social' && address && (
+                <SocialQuestsPanel
+                  address={address}
+                  userFid={userProfile?.farcasterFid}
+                  soundEnabled={soundEnabled}
+                  onRewardClaimed={(amount: number) => {
+                    setSuccessMessage(`Claimed ${amount} $TESTVBMS!`);
+                    if (soundEnabled) AudioManager.win();
+                  }}
                 />
               )}
             </div>
