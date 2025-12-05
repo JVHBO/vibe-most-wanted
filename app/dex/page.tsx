@@ -55,6 +55,11 @@ const dexTranslations = {
     balance: "Balance",
     connectWallet: "Connect your Wallet",
     back: "Back",
+    // Zazza credits
+    zazzaCredit: "Built with help from",
+    zazzaMiniapp: "Poorly Drawn Binders",
+    zazzaDescription: "Buy, list, and trade tokens from any Vibechain collection",
+    viewMiniapp: "Open Miniapp",
   },
   "pt-BR": {
     title: "VBMS DEX",
@@ -92,6 +97,11 @@ const dexTranslations = {
     balance: "Saldo",
     connectWallet: "Conecte sua Wallet",
     back: "Voltar",
+    // Zazza credits
+    zazzaCredit: "Construído com ajuda de",
+    zazzaMiniapp: "Poorly Drawn Binders",
+    zazzaDescription: "Compre, liste e negocie tokens de qualquer coleção da Vibechain",
+    viewMiniapp: "Abrir Miniapp",
   },
   es: {
     title: "VBMS DEX",
@@ -129,6 +139,11 @@ const dexTranslations = {
     balance: "Saldo",
     connectWallet: "Conecta tu Wallet",
     back: "Volver",
+    // Zazza credits
+    zazzaCredit: "Construido con ayuda de",
+    zazzaMiniapp: "Poorly Drawn Binders",
+    zazzaDescription: "Compra, lista e intercambia tokens de cualquier colección de Vibechain",
+    viewMiniapp: "Abrir Miniapp",
   },
   hi: {
     title: "VBMS DEX",
@@ -166,6 +181,11 @@ const dexTranslations = {
     balance: "शेष",
     connectWallet: "अपना वॉलेट कनेक्ट करें",
     back: "वापस",
+    // Zazza credits
+    zazzaCredit: "की मदद से बनाया गया",
+    zazzaMiniapp: "Poorly Drawn Binders",
+    zazzaDescription: "किसी भी Vibechain संग्रह से टोकन खरीदें, सूचीबद्ध करें और व्यापार करें",
+    viewMiniapp: "मिनीऐप खोलें",
   },
   ru: {
     title: "VBMS DEX",
@@ -203,6 +223,11 @@ const dexTranslations = {
     balance: "Баланс",
     connectWallet: "Подключите кошелек",
     back: "Назад",
+    // Zazza credits
+    zazzaCredit: "Создано при помощи",
+    zazzaMiniapp: "Poorly Drawn Binders",
+    zazzaDescription: "Покупайте, размещайте и торгуйте токенами из любой коллекции Vibechain",
+    viewMiniapp: "Открыть мини-приложение",
   },
   "zh-CN": {
     title: "VBMS DEX",
@@ -240,6 +265,11 @@ const dexTranslations = {
     balance: "余额",
     connectWallet: "连接您的钱包",
     back: "返回",
+    // Zazza credits
+    zazzaCredit: "在以下帮助下构建",
+    zazzaMiniapp: "Poorly Drawn Binders",
+    zazzaDescription: "购买、上架和交易任何 Vibechain 收藏的代币",
+    viewMiniapp: "打开迷你应用",
   },
 };
 
@@ -712,6 +742,37 @@ export default function DexPage() {
             </div>
           </div>
         )}
+
+        {/* Zazza Credits */}
+        <div className="mt-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/30 p-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <p className="text-purple-300 text-sm">
+                {t.zazzaCredit}{" "}
+                <a
+                  href="https://farcaster.xyz/zazza"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-400 hover:text-purple-300 font-bold underline"
+                >
+                  @zazza
+                </a>
+              </p>
+              <p className="text-purple-200/60 text-xs mt-1">{t.zazzaDescription}</p>
+            </div>
+            <a
+              href="https://farcaster.xyz/miniapps/Eq4-Pg-zw9fX/poorly-drawn-binders"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg px-3 py-2 text-purple-300 text-sm font-medium transition flex items-center gap-2"
+            >
+              <span>{t.viewMiniapp}</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Password Modal */}
