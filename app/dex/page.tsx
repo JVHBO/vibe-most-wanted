@@ -713,38 +713,13 @@ export default function DexPage() {
           </div>
         </div>
 
-        {/* How it works */}
-        <div className="mt-6 bg-vintage-charcoal/50 rounded-xl border border-vintage-gold/20 p-4">
-          <h3 className="text-vintage-gold font-bold mb-3">{t.howItWorks}</h3>
-          <div className="space-y-2 text-sm text-vintage-burnt-gold">
-            {mode === "buy" ? (
-              <>
-                <p>{t.buyStep1}</p>
-                <p>{t.buyStep2}</p>
-                <p>{t.buyStep3}</p>
-              </>
-            ) : (
-              <>
-                <p>{t.sellStep1}</p>
-                <p>{t.sellStep2}</p>
-                <p>{t.sellStep3}</p>
-              </>
-            )}
-          </div>
-        </div>
 
-        {/* Fee Breakdown */}
-        <div className="mt-4 bg-yellow-500/10 rounded-xl border border-yellow-500/30 p-4">
-          <h3 className="text-yellow-400 font-bold mb-2 flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {t.feeBreakdown}
-          </h3>
-          <div className="space-y-1 text-sm">
-            <p className="text-green-400">{t.buyFee}</p>
-            <p className="text-red-400">{t.sellFee}</p>
-            <p className="text-yellow-300/60 text-xs mt-2">{t.protocolNote}</p>
+        {/* Fee Breakdown - Compact */}
+        <div className="mt-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30 px-4 py-2">
+          <div className="flex items-center justify-center gap-4 text-xs">
+            <span className="text-green-400">{t.buyFee}</span>
+            <span className="text-vintage-gold/30">|</span>
+            <span className="text-red-400">{t.sellFee}</span>
           </div>
         </div>
 
@@ -766,35 +741,14 @@ export default function DexPage() {
           </div>
         )}
 
-        {/* Zazza Credits */}
-        <div className="mt-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/30 p-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <p className="text-purple-300 text-sm">
-                {t.zazzaCredit}{" "}
-                <a
-                  href="https://farcaster.xyz/zazza"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-purple-400 hover:text-purple-300 font-bold underline"
-                >
-                  @zazza
-                </a>
-              </p>
-              <p className="text-purple-200/60 text-xs mt-1">{t.zazzaDescription}</p>
-            </div>
-            <a
-              href="https://farcaster.xyz/miniapps/Eq4-Pg-zw9fX/poorly-drawn-binders"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg px-3 py-2 text-purple-300 text-sm font-medium transition flex items-center gap-2"
-            >
-              <span>{t.viewMiniapp}</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
-          </div>
+        {/* Zazza Credits - Compact */}
+        <div className="mt-4 text-center">
+          <p className="text-purple-300/60 text-xs">
+            {t.zazzaCredit}{" "}
+            <a href="https://farcaster.xyz/zazza" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 font-bold underline">@zazza</a>
+            {" "}-{" "}
+            <a href="https://farcaster.xyz/miniapps/Eq4-Pg-zw9fX/poorly-drawn-binders" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">{t.viewMiniapp}</a>
+          </p>
         </div>
       </div>
 
