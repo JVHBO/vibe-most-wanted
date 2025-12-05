@@ -281,15 +281,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         </div>
 
         <div className="px-6 pb-6 space-y-4">
-          {/* Warning - Claims only work on miniapp */}
-          <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-3">
-            <p className="text-xs text-blue-300 text-center leading-relaxed flex items-center justify-center gap-2">
-              <NextImage src="/images/icons/warning.svg" alt="Warning" width={16} height={16} className="w-4 h-4" />
-              <span className="font-semibold">Claims only work on Farcaster miniapp</span>
-            </p>
-          </div>
-
-          {/* TESTVBMS Balance (what you can convert) */}
+                    {/* TESTVBMS Balance (what you can convert) */}
           <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-6 mb-4">
             <div className="text-center">
               <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wide flex items-center justify-center gap-2">
@@ -349,7 +341,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             className="w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] flex items-center justify-center gap-2"
           >
             <span className="text-xl">💱</span>
-            <span>Sell VBMS → ETH (DEX)</span>
+            <span>DEX</span>
           </Link>
           </div>
         </div>
