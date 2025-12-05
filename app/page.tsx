@@ -4502,7 +4502,7 @@ export default function TCGPage() {
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
           >
             <div className="flex items-center justify-center gap-2">
-              <span className="text-base md:text-lg">💱</span> <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
+              <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
             </div>
             <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">"buy $vbms tokens"</span>
           </button>
