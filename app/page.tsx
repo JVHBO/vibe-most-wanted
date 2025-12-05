@@ -4564,23 +4564,6 @@ export default function TCGPage() {
             </button>
           )}
 
-          {/* Missions Button */}
-          <button
-            onClick={() => {
-              if (soundEnabled) AudioManager.buttonClick();
-              setCurrentView('missions');
-            }}
-            className={`bg-vintage-deep-black border-2 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base relative ${
-              hasClaimableMissions ? 'border-green-500 animate-notification-pulse' : currentView === 'missions' ? 'border-vintage-gold bg-vintage-gold/20' : 'border-vintage-gold'
-            }`}
-            title={hasClaimableMissions ? 'Missao pronta para claimar!' : t('missions')}
-          >
-            <span className="text-base md:text-lg">◈</span>
-            {hasClaimableMissions && (
-              <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-3 h-3 animate-pulse" />
-            )}
-          </button>
-
           <button
             onClick={() => {
               if (soundEnabled) AudioManager.buttonClick();
@@ -4895,6 +4878,32 @@ export default function TCGPage() {
                   </>
                 )}
               </button>
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setCurrentView('missions');
+                }}
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} relative ${
+                  hasClaimableMissions ? 'border-green-500 animate-notification-pulse' : currentView === 'missions'
+                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
+                }`}
+              >
+                {isInFarcaster ? (
+                  <>
+                    <span className="text-[10px] font-bold whitespace-nowrap">Quests</span>
+                    <span className="text-xl leading-none">◈</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-base md:text-lg">◈</span>
+                    <span className="hidden sm:inline">Quests</span>
+                  </>
+                )}
+                {hasClaimableMissions && (
+                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-3 h-3 animate-pulse" />
+                )}
+              </button>
             </div>
           </div>
 
@@ -4902,7 +4911,8 @@ export default function TCGPage() {
           <div className={isInFarcaster ? 'pt-4 pb-[75px]' : ''}>
 
           {/* Price Ticker - Miniapp only */}
-          {isInFarcaster && <PriceTicker className="mb-1 px-2" />}
+          {isInFarcaster && <PriceTicker className="mb-1 px-2" />}
+
 
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
