@@ -51,6 +51,7 @@ const UNISWAP_V3_POOLS: Record<string, { pool: `0x${string}`; isToken0Weth: bool
   baseballcabal: { pool: '0x1a19B0A5F06D18359Bcaa65968e983c67de453ca', isToken0Weth: false },
   historyofcomputer: { pool: '0x16DfA3C73674213A00F08EfEb2f8b29A13716Da5', isToken0Weth: true },
   tarot: { pool: '0xa959386125F54DdC39bc9d9200de932EC023049D', isToken0Weth: true },
+  cumioh: { pool: '0x7A6788b9B6E7a1Cb78f01BD18217f67CfaDDBaEE', isToken0Weth: true },
 };
 
 // Hardcoded contract addresses (lowercase, same format as VBMS_CONTRACTS)
@@ -168,6 +169,7 @@ export function useCollectionPrices() {
   const bbclPool = usePoolPrice(UNISWAP_V3_POOLS.baseballcabal?.pool, UNISWAP_V3_POOLS.baseballcabal?.isToken0Weth);
   const hstrPool = usePoolPrice(UNISWAP_V3_POOLS.historyofcomputer?.pool, UNISWAP_V3_POOLS.historyofcomputer?.isToken0Weth);
   const trtPool = usePoolPrice(UNISWAP_V3_POOLS.tarot?.pool, UNISWAP_V3_POOLS.tarot?.isToken0Weth);
+  const cumiohPool = usePoolPrice(UNISWAP_V3_POOLS.cumioh?.pool, UNISWAP_V3_POOLS.cumioh?.isToken0Weth);
 
   const priceData: Record<string, { priceWei: bigint | undefined; priceEth: string; isLoading: boolean }> = {
     vibe, gmvbrs, viberuto, coquettish, meowverse, poorlydrawnpepes,
@@ -175,7 +177,7 @@ export function useCollectionPrices() {
   };
 
   const isLoading = Object.values(priceData).some(p => p.isLoading) ||
-    bbclPool.isLoading || hstrPool.isLoading || trtPool.isLoading;
+    bbclPool.isLoading || hstrPool.isLoading || trtPool.isLoading || cumiohPool.isLoading;
 
   const allPrices: CollectionPrice[] = TICKER_COLLECTIONS.map((col) => {
     const data = priceData[col.id];
@@ -192,6 +194,9 @@ export function useCollectionPrices() {
       priceWei = BigInt(Math.floor(priceEth * 1e18));
     } else if (col.id === 'tarot' && trtPool.priceInEth > 0) {
       priceEth = trtPool.priceInEth * 100000;
+      priceWei = BigInt(Math.floor(priceEth * 1e18));
+    } else if (col.id === 'cumioh' && cumiohPool.priceInEth > 0) {
+      priceEth = cumiohPool.priceInEth * 100000;
       priceWei = BigInt(Math.floor(priceEth * 1e18));
     }
 
