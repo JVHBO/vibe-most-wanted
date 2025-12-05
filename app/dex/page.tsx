@@ -471,16 +471,6 @@ export default function DexPage() {
       </div>
 
       <div className="max-w-lg mx-auto p-6">
-        {/* Info Banner */}
-        <div className="bg-vintage-charcoal/80 rounded-xl border border-vintage-gold/30 p-4 mb-6">
-          <p className="text-vintage-burnt-gold text-sm text-center">
-            {t.infoBanner}
-            <br />
-            <span className="text-vintage-gold/60 text-xs">
-              {t.packInfo} ~{pricePerPack || "..."} {t.ethPerPack}
-            </span>
-          </p>
-        </div>
 
         {/* Swap Card */}
         <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
