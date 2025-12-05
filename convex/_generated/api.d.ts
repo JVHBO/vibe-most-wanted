@@ -47,6 +47,7 @@ import type * as rooms from "../rooms.js";
 import type * as roundBetting from "../roundBetting.js";
 import type * as scheduledTips from "../scheduledTips.js";
 import type * as shopAnnouncement from "../shopAnnouncement.js";
+import type * as socialQuests from "../socialQuests.js";
 import type * as stats from "../stats.js";
 import type * as utils from "../utils.js";
 import type * as vbmsClaim from "../vbmsClaim.js";
@@ -99,6 +100,7 @@ declare const fullApi: ApiFromModules<{
   roundBetting: typeof roundBetting;
   scheduledTips: typeof scheduledTips;
   shopAnnouncement: typeof shopAnnouncement;
+  socialQuests: typeof socialQuests;
   stats: typeof stats;
   utils: typeof utils;
   vbmsClaim: typeof vbmsClaim;
