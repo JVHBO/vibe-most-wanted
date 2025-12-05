@@ -14,6 +14,7 @@ import {
   BuyStep,
   SellStep,
 } from "@/lib/hooks/useVBMSDex";
+import { useVBMSMarketCap } from "@/lib/hooks/useVBMSMarketCap";
 
 type SwapMode = "buy" | "sell";
 
@@ -368,6 +369,9 @@ export default function DexPage() {
   // Sell quote
   const sellQuote = useQuoteSellVBMS(mode === "sell" ? sellAmount : "0");
 
+  // VBMS Market Cap
+  const marketCap = useVBMSMarketCap();
+
   // Refresh balances after swap
   const refreshBalances = useCallback(() => {
     refetchPrice();
@@ -471,6 +475,12 @@ export default function DexPage() {
       </div>
 
       <div className="max-w-lg mx-auto p-6">
+        {/* Market Cap */}
+        <div className="flex items-center justify-center gap-2 mb-4 text-sm">
+          <span className="text-vintage-burnt-gold">Market Cap:</span>
+          <span className="text-vintage-gold font-mono font-bold">{marketCap.isLoading ? "..." : marketCap.marketCapFormatted}</span>
+        </div>
+        
         {/* Buy VBMS Packs Link */}
         <a
           href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
