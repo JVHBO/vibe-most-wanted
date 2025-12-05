@@ -368,9 +368,6 @@ export default function DexPage() {
   // Sell quote
   const sellQuote = useQuoteSellVBMS(mode === "sell" ? sellAmount : "0");
 
-  // VBMS Market Data
-  const vbmsMarket = useVBMSMarket();
-
   // Refresh balances after swap
   const refreshBalances = useCallback(() => {
     refetchPrice();
