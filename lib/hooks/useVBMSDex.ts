@@ -95,7 +95,31 @@ export function useVBMSAllowance(owner?: `0x${string}`) {
 // BUY HOOK (ETH → VBMS) - Uses VBMSRouter for single transaction!
 // ============================================================================
 
-export type BuyStep = 'idle' | 'buying' | 'waiting' | 'complete' | 'error';
+export type BuyStep = 'idle' | 'finding_token' | 'buying' | 'waiting' | 'complete' | 'error';
+/**
+ * Find next available tokenId using binary search
+ */
+async function findNextTokenId(publicClient: ReturnType<typeof usePublicClient>): Promise<bigint> {
+  if (!publicClient) throw new Error('No public client');
+  const tokenExists = async (tokenId: bigint): Promise<boolean> => {
+    try {
+      await publicClient.readContract({
+        address: VBMS_CONTRACTS.boosterDrop,
+        abi: BOOSTER_DROP_V2_ABI,
+        functionName: 'ownerOf',
+        args: [tokenId],
+      });
+      return true;
+    } catch { return false; }
+  };
+  let low = BigInt(11000), high = BigInt(50000);
+  while (await tokenExists(high)) { high = high * BigInt(2); if (high > BigInt(1000000)) throw new Error('Could not find'); }
+  while (low < high) { const mid = (low + high) / BigInt(2); if (await tokenExists(mid)) { low = mid + BigInt(1); } else { high = mid; } }
+  console.log('Found next tokenId:', low.toString());
+  return low;
+}
+
+
 
 /**
  * Buy VBMS tokens with ETH via VBMSRouter
@@ -123,20 +147,22 @@ export function useBuyVBMS() {
         return;
       }
 
-      setStep('buying');
+      setStep('finding_token');
       setError(null);
 
       try {
-                // V7: Use buyVBMSAuto - contract handles tokenId detection automatically!
-        // Add 3% buffer to handle price changes (bonding curve can move fast)
+        console.log('Finding next available tokenId...');
+        const startingTokenId = await findNextTokenId(publicClient);
+        setStep('buying');
+                // Add 3% buffer to handle price changes (bonding curve can move fast)
         const priceWithBuffer = priceWei + (priceWei * BigInt(3) / BigInt(100));
         console.log('Buying', packCount, 'pack(s) worth of VBMS with', formatEther(priceWithBuffer), 'ETH (includes 3% buffer)...');
 
         const buyHash = await writeContractAsync({
           address: VBMS_CONTRACTS.vbmsRouter,
           abi: VBMS_ROUTER_ABI,
-          functionName: 'buyVBMSAuto',
-          args: [BigInt(packCount)],
+          functionName: 'buyVBMS',
+          args: [BigInt(packCount), startingTokenId],
           value: priceWithBuffer,  // Use buffered price to handle slippage
           chainId: VBMS_CONTRACTS.chainId,
         });
