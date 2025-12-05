@@ -4504,7 +4504,7 @@ export default function TCGPage() {
             <div className="flex items-center justify-center gap-2">
               <span className="text-base md:text-lg">💱</span> <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
             </div>
-            <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">"trade on the bonding curve"</span>
+            <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">"buy $vbms tokens"</span>
           </button>
 
           {/* VibeFID Button - Miniapp only, same row as Buy Cards */}

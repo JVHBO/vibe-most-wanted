@@ -475,6 +475,19 @@ export default function DexPage() {
       </div>
 
       <div className="max-w-lg mx-auto p-6">
+        {/* Buy VBMS Packs Link */}
+        <a
+          href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider"
+          style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
+        >
+          <span className="text-lg">◆</span>
+          <span>Buy VBMS Packs</span>
+          <span className="text-xs opacity-75">or sell your $VBMS</span>
+        </a>
+
         {/* VBMS Market Info */}
         <div className="flex items-center justify-center gap-4 mb-4 text-sm">
           <div className="flex items-center gap-2">
