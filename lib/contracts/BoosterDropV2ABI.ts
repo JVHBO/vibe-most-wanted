@@ -25,7 +25,7 @@ export const VBMS_CONTRACTS = {
   boosterDrop: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728' as `0x${string}`,
   boosterToken: '0xb03439567cd22f278b21e1ffcdfb8e1696763827' as `0x${string}`,
   // VBMSRouter V7 Simple - Based on working MintAndSellWrapper pattern
-  vbmsRouter: '0x94eD87F1f286fC457Ba1d11110Db49804ec20b3A' as `0x${string}`,
+  vbmsRouter: '0x0c403f77a2c5f5e86d5082c8B84db2e3D575D081' as `0x${string}`,
   chainId: 8453,
 } as const;
 
