@@ -67,9 +67,11 @@ export function SimpleBettingOverlay({
   const buffBonus = isBuffed ? BUFF_CONFIG.oddsBonus : 0;
 
   // Get odds for current round - HIGHER for final round!
-  const getOdds = (round: number, allIn: boolean = false) => {
+  const getOdds = (round: number, allIn: boolean = false, isTie: boolean = false) => {
     let baseOdds: number;
-    if (round === 7 && allIn) {
+    if (isTie) {
+      baseOdds = 3.5;
+    } else if (round === 7 && allIn) {
       baseOdds = 3.0;
     } else if (round <= 3) {
       baseOdds = 1.5;
@@ -83,11 +85,26 @@ export function SimpleBettingOverlay({
   };
 
   const odds = getOdds(currentRound, isAllIn);
+  const tieOdds = getOdds(currentRound, false, true);
 
   // Calculate bet amount - 15% of current balance, ALL IN uses entire balance!
   const normalBetAmount = Math.floor((credits?.balance || 100) * 0.15);
   const allInAmount = credits?.balance || 0;
   const betAmount = isAllIn ? allInAmount : normalBetAmount;
+
+  // Get display name for bet
+  const getBetDisplayName = (betOn: string) => {
+    if (betOn.toLowerCase() === "tie") return "TIE";
+    if (betOn === player1Address) return player1Username;
+    if (betOn === player2Address) return player2Username;
+    return "Unknown";
+  };
+
+  // Get odds for existing bet display
+  const getExistingBetOdds = () => {
+    if (existingBet?.betOn.toLowerCase() === "tie") return tieOdds;
+    return odds;
+  };
 
   // Handle bet
   const handleBet = async (playerAddress: string, playerName: string) => {
@@ -120,20 +137,21 @@ export function SimpleBettingOverlay({
 
   // Don't show if already bet on this round
   if (existingBet) {
+    const displayOdds = getExistingBetOdds();
     return (
       <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] bg-green-600/90 backdrop-blur-md border-2 border-green-400 rounded-lg px-4 py-2">
         <p className="text-white text-sm font-bold text-center">
-          ✅ Bet placed: {existingBet.amount} on {existingBet.betOn === player1Address ? player1Username : player2Username}
+          {existingBet.betOn.toLowerCase() === "tie" ? "🤝" : "✅"} Bet placed: {existingBet.amount} on {getBetDisplayName(existingBet.betOn)}
         </p>
         <p className="text-green-200 text-xs text-center">
-          Win: +{Math.floor(existingBet.amount * odds)} credits
+          Win: +{Math.floor(existingBet.amount * displayOdds)} credits
         </p>
       </div>
     );
   }
 
   return (
-    <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] backdrop-blur-md rounded-lg p-2 shadow-xl w-64 sm:w-80 transition-all ${
+    <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] backdrop-blur-md rounded-lg p-2 shadow-xl w-72 sm:w-96 transition-all ${
       isFinalRound && isAllIn
         ? 'bg-gradient-to-br from-yellow-900/95 to-orange-900/95 border-2 border-yellow-500 animate-pulse'
         : isFinalRound
@@ -176,7 +194,7 @@ export function SimpleBettingOverlay({
       )}
 
       {/* Compact Player Buttons */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <button
           onClick={() => handleBet(player1Address, player1Username)}
           disabled={isBetting || !credits || credits.balance < betAmount}
@@ -189,6 +207,18 @@ export function SimpleBettingOverlay({
           <p className="text-vintage-gold font-bold text-xs truncate">{player1Username}</p>
           <p className={`text-[10px] ${isAllIn ? 'text-yellow-300 font-bold' : 'text-purple-300'}`}>
             +{Math.floor(betAmount * odds)}c
+          </p>
+        </button>
+
+        {/* TIE BUTTON */}
+        <button
+          onClick={() => handleBet("tie", "TIE")}
+          disabled={isBetting || !credits || credits.balance < betAmount}
+          className="rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-b from-gray-600/60 to-gray-700/60 hover:from-gray-500/70 hover:to-gray-600/70 border border-gray-400/50"
+        >
+          <p className="text-gray-200 font-bold text-xs">🤝 TIE</p>
+          <p className="text-[10px] text-gray-300">
+            {tieOdds}x (+{Math.floor(betAmount * tieOdds)}c)
           </p>
         </button>
 
