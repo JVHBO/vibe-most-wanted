@@ -40,36 +40,6 @@ export const getProfile = query({
 });
 
 /**
- * Get leaderboard (top 1000 by total power)
- */
-export const getLeaderboard = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 1000 }) => {
-    // Get all profiles and sort by aura (primary) and power (secondary)
-    const allProfiles = await ctx.db
-      .query("profiles")
-      .collect();
-
-    // Sort by aura (descending), then by totalPower (descending)
-    const sorted = allProfiles.sort((a, b) => {
-      const auraA = a.stats?.aura ?? 500; // Default 500 for existing profiles
-      const auraB = b.stats?.aura ?? 500;
-
-      if (auraA !== auraB) {
-        return auraB - auraA; // Higher aura first
-      }
-
-      // If aura is equal, sort by power
-      const powerA = a.stats?.totalPower ?? 0;
-      const powerB = b.stats?.totalPower ?? 0;
-      return powerB - powerA; // Higher power first
-    });
-
-    return sorted.slice(0, limit);
-  },
-});
-
-/**
  * 🚀 OPTIMIZED: Get leaderboard LITE (minimal fields only)
  *
  * Saves ~97% bandwidth by excluding heavy fields:
@@ -91,29 +61,16 @@ export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 100 }) => {
     try {
-      // OPTIMIZATION: Fetch max 500 profiles instead of ALL
-      // (Top 100 will always be in top 500 by power/aura)
-      const allProfiles = await ctx.db
+      // 🚀 BANDWIDTH OPTIMIZATION V2: Use by_aura index directly
+      // Fetches only `limit` profiles instead of 500 (80% bandwidth reduction)
+      const topProfiles = await ctx.db
         .query("profiles")
-        .take(500); // Reduced from .collect() (all profiles)
-
-      // Sort by aura (descending), then by totalPower (descending)
-      const sorted = allProfiles.sort((a, b) => {
-        const auraA = a.stats?.aura ?? 500;
-        const auraB = b.stats?.aura ?? 500;
-
-        if (auraA !== auraB) {
-          return auraB - auraA; // Higher aura first
-        }
-
-        // If aura is equal, sort by power
-        const powerA = a.stats?.totalPower ?? 0;
-        const powerB = b.stats?.totalPower ?? 0;
-        return powerB - powerA; // Higher power first
-      });
+        .withIndex("by_aura")
+        .order("desc")
+        .take(limit);
 
       // Return minimal fields
-      return sorted.slice(0, limit).map(p => ({
+      return topProfiles.map(p => ({
         address: p.address || "unknown",
         username: p.username || "unknown",
         stats: {

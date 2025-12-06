@@ -1136,4 +1136,16 @@ export default defineSchema({
     timestamp: v.number(), // Exact timestamp of snapshot
   })
     .index("by_date", ["date"]),
+
+  // Featured Casts - Farcaster casts to display in Social Quests carousel
+  featuredCasts: defineTable({
+    castHash: v.string(), // Farcaster cast hash (0x...)
+    warpcastUrl: v.string(), // Full warpcast URL for opening
+    order: v.number(), // Display order (0, 1, 2)
+    active: v.boolean(), // Whether to show this cast
+    addedAt: v.number(), // Timestamp when added
+    addedBy: v.optional(v.string()), // Admin who added it
+  })
+    .index("by_order", ["order"])
+    .index("by_active", ["active"]),
 });
