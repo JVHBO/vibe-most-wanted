@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
+import type { NeynarCast } from "@/lib/neynar";
 
 interface SocialQuestsPanelProps {
   address: string;
@@ -23,6 +24,8 @@ export function SocialQuestsPanel({
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
   const [currentCastIndex, setCurrentCastIndex] = useState(0);
+  const [castData, setCastData] = useState<Record<string, NeynarCast>>({});
+  const [loadingCasts, setLoadingCasts] = useState(false);
 
   const featuredCasts = useQuery(api.featuredCasts.getActiveCasts);
 
@@ -34,11 +37,44 @@ export function SocialQuestsPanel({
   const markCompleted = useMutation(api.socialQuests.markQuestCompleted);
   const claimReward = useMutation(api.socialQuests.claimSocialQuestReward);
 
+  // Fetch cast data for all featured casts
+  useEffect(() => {
+    if (!featuredCasts || featuredCasts.length === 0) return;
+
+    const fetchCasts = async () => {
+      setLoadingCasts(true);
+      const newCastData: Record<string, NeynarCast> = {};
+
+      for (const fc of featuredCasts) {
+        if (castData[fc.castHash]) continue; // Already fetched
+        try {
+          const response = await fetch(`/api/cast/${fc.castHash}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.cast) {
+              newCastData[fc.castHash] = data.cast;
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching cast:", fc.castHash, error);
+        }
+      }
+
+      if (Object.keys(newCastData).length > 0) {
+        setCastData((prev) => ({ ...prev, ...newCastData }));
+      }
+      setLoadingCasts(false);
+    };
+
+    fetchCasts();
+  }, [featuredCasts]);
+
+  // Auto-rotate carousel
   useEffect(() => {
     if (!featuredCasts || featuredCasts.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentCastIndex((prev) => (prev + 1) % featuredCasts.length);
-    }, 5000);
+    }, 8000); // 8 seconds for embedded casts (more time to read)
     return () => clearInterval(interval);
   }, [featuredCasts]);
 
@@ -150,30 +186,134 @@ export function SocialQuestsPanel({
     );
   };
 
+  const currentCast = featuredCasts?.[currentCastIndex];
+  const currentCastData = currentCast ? castData[currentCast.castHash] : null;
+
+  // Get first image from cast embeds
+  const getCastImage = (cast: NeynarCast | null): string | null => {
+    if (!cast?.embeds) return null;
+    for (const embed of cast.embeds) {
+      if (embed.url && (embed.url.includes('.jpg') || embed.url.includes('.png') || embed.url.includes('.gif') || embed.url.includes('.webp'))) {
+        return embed.url;
+      }
+      if (embed.metadata?.image?.url) {
+        return embed.metadata.image.url;
+      }
+    }
+    return null;
+  };
+
+  const formatTimeAgo = (timestamp: string): string => {
+    const now = new Date();
+    const castDate = new Date(timestamp);
+    const diffMs = now.getTime() - castDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) return `${diffDays}d ago`;
+    if (diffHours > 0) return `${diffHours}h ago`;
+    if (diffMins > 0) return `${diffMins}m ago`;
+    return "now";
+  };
+
   return (
     <div className="space-y-4">
       {featuredCasts && featuredCasts.length > 0 && (
-        <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
+        <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-purple-500/30 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-vintage-gold font-bold text-sm flex items-center gap-2">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+            <h4 className="text-purple-300 font-bold text-sm flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.8 8.2H5.2L3 9.4v7.8l3.2 3.2h9.6l3-3V9.4l-1-1.2zm-1.6 8.4l-1.6 1.6H8.4L6.8 16.6V11l1-1.2h8.4l1 1.2v5.6z"/><path d="M5.2 5.6L8.4 3.6h7.2l3.2 2H5.2z"/></svg>
               Featured Cast
             </h4>
             {featuredCasts.length > 1 && (
               <div className="flex gap-1">
-                {featuredCasts.map((_, idx) => (
-                  <button key={idx} onClick={() => setCurrentCastIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentCastIndex ? "bg-vintage-gold" : "bg-vintage-gold/30 hover:bg-vintage-gold/50"}`} />
+                {featuredCasts.map((_: unknown, idx: number) => (
+                  <button key={idx} onClick={() => setCurrentCastIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentCastIndex ? "bg-purple-400" : "bg-purple-400/30 hover:bg-purple-400/50"}`} />
                 ))}
               </div>
             )}
           </div>
-          <a href={featuredCasts[currentCastIndex]?.warpcastUrl} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg bg-purple-900/20 border border-purple-500/30 hover:border-purple-500/50 transition-all">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-purple-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.8 8.2H5.2L3 9.4v7.8l3.2 3.2h9.6l3-3V9.4l-1-1.2zm-1.6 8.4l-1.6 1.6H8.4L6.8 16.6V11l1-1.2h8.4l1 1.2v5.6z"/><path d="M5.2 5.6L8.4 3.6h7.2l3.2 2H5.2z"/></svg>
-              <span className="text-purple-300 text-sm font-medium">View on Warpcast</span>
-              <svg className="w-4 h-4 text-purple-400 ml-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17" /></svg>
-            </div>
-            <p className="text-vintage-burnt-gold text-xs mt-2 truncate">{featuredCasts[currentCastIndex]?.castHash}</p>
+
+          <a
+            href={currentCast?.warpcastUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-lg bg-purple-900/20 border border-purple-500/30 hover:border-purple-500/50 transition-all overflow-hidden"
+          >
+            {loadingCasts && !currentCastData ? (
+              <div className="p-4 flex items-center justify-center">
+                <div className="animate-spin w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full" />
+              </div>
+            ) : currentCastData ? (
+              <div className="p-3">
+                {/* Author info */}
+                <div className="flex items-center gap-2 mb-2">
+                  {currentCastData.author.pfp_url ? (
+                    <img
+                      src={currentCastData.author.pfp_url}
+                      alt={currentCastData.author.username}
+                      className="w-8 h-8 rounded-full border border-purple-500/50"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-purple-600/50 flex items-center justify-center">
+                      <span className="text-purple-200 text-xs font-bold">
+                        {currentCastData.author.username?.charAt(0)?.toUpperCase() || "?"}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-purple-200 font-bold text-sm truncate">
+                      {currentCastData.author.display_name || currentCastData.author.username}
+                    </p>
+                    <p className="text-purple-400/70 text-xs">
+                      @{currentCastData.author.username} · {formatTimeAgo(currentCastData.timestamp)}
+                    </p>
+                  </div>
+                  <svg className="w-4 h-4 text-purple-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17" /></svg>
+                </div>
+
+                {/* Cast text */}
+                <p className="text-purple-100 text-sm mb-2 line-clamp-3 whitespace-pre-wrap">
+                  {currentCastData.text}
+                </p>
+
+                {/* Cast image if present */}
+                {getCastImage(currentCastData) && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-purple-500/30">
+                    <img
+                      src={getCastImage(currentCastData)!}
+                      alt="Cast embed"
+                      className="w-full h-32 object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Engagement stats */}
+                <div className="flex items-center gap-4 mt-2 text-purple-400/70 text-xs">
+                  <span className="flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    {currentCastData.reactions?.likes_count || 0}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+                    {currentCastData.reactions?.recasts_count || 0}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
+                    {currentCastData.replies?.count || 0}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-purple-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.8 8.2H5.2L3 9.4v7.8l3.2 3.2h9.6l3-3V9.4l-1-1.2zm-1.6 8.4l-1.6 1.6H8.4L6.8 16.6V11l1-1.2h8.4l1 1.2v5.6z"/><path d="M5.2 5.6L8.4 3.6h7.2l3.2 2H5.2z"/></svg>
+                  <span className="text-purple-300 text-sm font-medium">View on Warpcast</span>
+                </div>
+                <p className="text-vintage-burnt-gold text-xs mt-2 truncate">{currentCast?.castHash}</p>
+              </div>
+            )}
           </a>
         </div>
       )}
