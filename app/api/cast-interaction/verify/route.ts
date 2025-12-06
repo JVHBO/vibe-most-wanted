@@ -3,11 +3,14 @@ import { checkCastInteractions } from "@/lib/neynar";
 
 export async function POST(request: NextRequest) {
   try {
-    const { castHash, viewerFid, interactionType } = await request.json();
+    const { castHash, warpcastUrl, viewerFid, interactionType } = await request.json();
 
-    if (!castHash || !viewerFid || !interactionType) {
+    // Accept either warpcastUrl or castHash (prefer warpcastUrl for better lookup)
+    const castIdentifier = warpcastUrl || castHash;
+
+    if (!castIdentifier || !viewerFid || !interactionType) {
       return NextResponse.json(
-        { error: "castHash, viewerFid, and interactionType are required" },
+        { error: "castHash/warpcastUrl, viewerFid, and interactionType are required" },
         { status: 400 }
       );
     }
@@ -19,9 +22,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`Verifying cast interaction: castHash=${castHash}, viewerFid=${viewerFid}, type=${interactionType}`);
+    console.log(`Verifying cast interaction: identifier=${castIdentifier}, viewerFid=${viewerFid}, type=${interactionType}`);
 
-    const interactions = await checkCastInteractions(castHash, viewerFid);
+    const interactions = await checkCastInteractions(castIdentifier, viewerFid);
     console.log(`Neynar response:`, interactions);
 
     let verified = false;
