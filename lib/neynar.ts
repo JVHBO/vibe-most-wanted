@@ -362,14 +362,15 @@ export async function checkCastInteractions(
     const liked = cast.viewer_context?.liked === true;
     const recasted = cast.viewer_context?.recasted === true || cast.viewer_context?.recast === true;
 
-    // For replies, check conversation using the actual cast hash
+    // For replies, check user's recent casts to find replies to target cast
     let replied = false;
     const actualCastHash = cast.hash;
 
     if (actualCastHash) {
       try {
-        const convResponse = await fetch(
-          `${NEYNAR_API_BASE}/farcaster/cast/conversation?identifier=${actualCastHash}&type=hash&reply_depth=1&include_chronological_parent_casts=false`,
+        // Fetch user's recent casts (including replies)
+        const userCastsResponse = await fetch(
+          `${NEYNAR_API_BASE}/farcaster/feed/user/casts?fid=${viewerFid}&limit=50&include_replies=true`,
           {
             headers: {
               'accept': 'application/json',
@@ -378,17 +379,22 @@ export async function checkCastInteractions(
           }
         );
 
-        if (convResponse.ok) {
-          const convData = await convResponse.json();
-          const replies = convData.conversation?.cast?.direct_replies || [];
-          console.log(`[Neynar] Conversation replies count: ${replies.length}, looking for FID: ${viewerFid}`);
-          if (replies.length > 0) {
-            console.log(`[Neynar] Reply FIDs:`, replies.map((r: { author: { fid: number } }) => r.author.fid));
+        if (userCastsResponse.ok) {
+          const userCastsData = await userCastsResponse.json();
+          const userCasts = userCastsData.casts || [];
+          console.log(`[Neynar] User casts count: ${userCasts.length}, looking for parent_hash: ${actualCastHash}`);
+          
+          // Check if any of user's casts is a reply to the target cast
+          replied = userCasts.some((userCast: { parent_hash?: string }) => 
+            userCast.parent_hash === actualCastHash
+          );
+          
+          if (replied) {
+            console.log(`[Neynar] Found reply to target cast!`);
           }
-          replied = replies.some((reply: { author: { fid: number } }) => reply.author.fid === viewerFid);
         } else {
-          const errorText = await convResponse.text();
-          console.error(`[Neynar] Conversation API error: ${convResponse.status}`, errorText);
+          const errorText = await userCastsResponse.text();
+          console.error(`[Neynar] User casts API error: ${userCastsResponse.status}`, errorText);
         }
       } catch (e) {
         console.error('Error checking replies:', e);
