@@ -442,7 +442,7 @@ export function SocialQuestsPanel({
                             <path d={icon} />
                           </svg>
                           <span className={`text-[10px] font-bold ${claimed ? "text-green-400" : `text-${color}-300`}`}>
-                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : visitedCastInteractions.has(`${type}-${currentCast?.castHash}`) ? "Claim" : "Go"}
+                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : "+500"}
                           </span>
                         </button>
                       );

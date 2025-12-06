@@ -72,7 +72,7 @@ export const removeFeaturedCast = mutation({
 });
 
 // Cast interaction reward amount
-const CAST_INTERACTION_REWARD = 100; // 100 TESTVBMS per interaction
+const CAST_INTERACTION_REWARD = 500; // 500 TESTVBMS per interaction
 
 // Get cast interaction progress for a player
 export const getCastInteractionProgress = query({
