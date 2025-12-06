@@ -5999,6 +5999,19 @@ export default function TCGPage() {
                 <button
                   onClick={() => {
                     if (soundEnabled) AudioManager.buttonNav();
+                    setMissionsSubView('social');
+                  }}
+                  className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
+                    missionsSubView === 'social'
+                      ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                      : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
+                  }`}
+                >
+                  📢 Social
+                </button>
+                <button
+                  onClick={() => {
+                    if (soundEnabled) AudioManager.buttonNav();
                     setMissionsSubView('achievements');
                   }}
                   className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
@@ -6007,7 +6020,10 @@ export default function TCGPage() {
                       : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
                   }`}
                 >
-                  🏆 {t('achievements')}
+                  <svg className="inline-block w-4 h-4 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                  </svg>
+                  {t('achievements')}
                 </button>
               </div>
 
