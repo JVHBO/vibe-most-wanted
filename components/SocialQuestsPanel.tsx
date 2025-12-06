@@ -133,7 +133,15 @@ export function SocialQuestsPanel({
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <span className="text-2xl">{quest.icon}</span>
+            {quest.type === "channel" ? (
+              <svg className="w-5 h-5 text-vintage-gold flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5.41 21L6.12 17H2.12L2.47 15H6.47L7.53 9H3.53L3.88 7H7.88L8.59 3H10.59L9.88 7H15.88L16.59 3H18.59L17.88 7H21.88L21.53 9H17.53L16.47 15H20.47L20.12 17H16.12L15.41 21H13.41L14.12 17H8.12L7.41 21H5.41ZM9.47 9L8.47 15H14.47L15.47 9H9.47Z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-vintage-gold flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-vintage-gold font-bold text-sm truncate">
                 {quest.displayName}
