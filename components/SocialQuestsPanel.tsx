@@ -31,6 +31,7 @@ export function SocialQuestsPanel({
   const [castInteractionProgress, setCastInteractionProgress] = useState<Record<string, Record<string, boolean>>>({});
   const [verifyingInteraction, setVerifyingInteraction] = useState<string | null>(null);
   const [claimingInteraction, setClaimingInteraction] = useState<string | null>(null);
+  const [visitedCastInteractions, setVisitedCastInteractions] = useState<Set<string>>(new Set());
 
 
   const featuredCasts = useQuery(api.featuredCasts.getActiveCasts);
@@ -227,15 +228,23 @@ export function SocialQuestsPanel({
     fetchProgress();
   }, [currentCast, address]);
 
-  // Handle cast interaction claim
+  // Handle cast interaction - two step: first visit, then verify & claim
   const handleCastInteraction = async (interactionType: "like" | "recast" | "reply") => {
     if (!currentCast || !userFid || !address) return;
 
     const key = `${interactionType}-${currentCast.castHash}`;
+
+    // First click - open Warpcast to do the action
+    if (!visitedCastInteractions.has(key)) {
+      window.open(currentCast.warpcastUrl, "_blank");
+      setVisitedCastInteractions(prev => new Set([...prev, key]));
+      return;
+    }
+
+    // Second click - verify and claim
     setVerifyingInteraction(key);
 
     try {
-      // First verify the interaction
       const verifyResponse = await fetch("/api/cast-interaction/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -249,8 +258,7 @@ export function SocialQuestsPanel({
       const verifyData = await verifyResponse.json();
 
       if (!verifyData.verified) {
-        alert(`Please ${interactionType} the cast first!`);
-        window.open(currentCast.warpcastUrl, "_blank");
+        alert(`Please ${interactionType} the cast on Warpcast first!`);
         setVerifyingInteraction(null);
         return;
       }
@@ -258,7 +266,6 @@ export function SocialQuestsPanel({
       setVerifyingInteraction(null);
       setClaimingInteraction(key);
 
-      // Claim the reward
       const result = await claimCastReward({
         address,
         castHash: currentCast.castHash,
@@ -269,7 +276,6 @@ export function SocialQuestsPanel({
         if (soundEnabled) AudioManager.win();
         onRewardClaimed?.(result.reward);
 
-        // Update local progress
         setCastInteractionProgress(prev => ({
           ...prev,
           [currentCast.castHash]: {
@@ -435,7 +441,7 @@ export function SocialQuestsPanel({
                             <path d={icon} />
                           </svg>
                           <span className={`text-[10px] font-bold ${claimed ? "text-green-400" : `text-${color}-300`}`}>
-                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : "+100"}
+                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : visitedCastInteractions.has(`${type}-${currentCast?.castHash}`) ? "Claim" : "Go"}
                           </span>
                         </button>
                       );

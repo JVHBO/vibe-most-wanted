@@ -19,7 +19,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(`Verifying cast interaction: castHash=${castHash}, viewerFid=${viewerFid}, type=${interactionType}`);
+
     const interactions = await checkCastInteractions(castHash, viewerFid);
+    console.log(`Neynar response:`, interactions);
 
     let verified = false;
     switch (interactionType) {
