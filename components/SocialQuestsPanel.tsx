@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import type { CastInteractions } from "@/lib/neynar";
 import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
 import type { NeynarCast } from "@/lib/neynar";
@@ -27,8 +28,13 @@ export function SocialQuestsPanel({
   const [currentCastIndex, setCurrentCastIndex] = useState(0);
   const [castData, setCastData] = useState<Record<string, NeynarCast>>({});
   const [loadingCasts, setLoadingCasts] = useState(false);
+  const [castInteractionProgress, setCastInteractionProgress] = useState<Record<string, Record<string, boolean>>>({});
+  const [verifyingInteraction, setVerifyingInteraction] = useState<string | null>(null);
+  const [claimingInteraction, setClaimingInteraction] = useState<string | null>(null);
+
 
   const featuredCasts = useQuery(api.featuredCasts.getActiveCasts);
+  const claimCastReward = useMutation(api.featuredCasts.claimCastInteractionReward);
 
   const questProgress = useQuery(
     api.socialQuests.getSocialQuestProgress,
@@ -201,6 +207,92 @@ export function SocialQuestsPanel({
   const currentCast = featuredCasts?.[currentCastIndex];
   const currentCastData = currentCast ? castData[currentCast.warpcastUrl] : null;
 
+  // Fetch cast interaction progress
+  useEffect(() => {
+    if (!currentCast || !address) return;
+
+    const fetchProgress = async () => {
+      try {
+        const response = await fetch(`/api/cast-interaction/progress?address=${address}&castHash=${currentCast.castHash}`);
+        if (response.ok) {
+          const data = await response.json();
+          setCastInteractionProgress(prev => ({
+            ...prev,
+            [currentCast.castHash]: data
+          }));
+        }
+      } catch (e) {
+        console.error('Error fetching cast progress:', e);
+      }
+    };
+    fetchProgress();
+  }, [currentCast, address]);
+
+  // Handle cast interaction claim
+  const handleCastInteraction = async (interactionType: "like" | "recast" | "reply") => {
+    if (!currentCast || !userFid || !address) return;
+
+    const key = `${interactionType}-${currentCast.castHash}`;
+    setVerifyingInteraction(key);
+
+    try {
+      // First verify the interaction
+      const verifyResponse = await fetch("/api/cast-interaction/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          castHash: currentCast.castHash,
+          viewerFid: userFid,
+          interactionType,
+        }),
+      });
+
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyData.verified) {
+        alert(`Please ${interactionType} the cast first!`);
+        window.open(currentCast.warpcastUrl, "_blank");
+        setVerifyingInteraction(null);
+        return;
+      }
+
+      setVerifyingInteraction(null);
+      setClaimingInteraction(key);
+
+      // Claim the reward
+      const result = await claimCastReward({
+        address,
+        castHash: currentCast.castHash,
+        interactionType,
+      });
+
+      if (result.success) {
+        if (soundEnabled) AudioManager.win();
+        onRewardClaimed?.(result.reward);
+
+        // Update local progress
+        setCastInteractionProgress(prev => ({
+          ...prev,
+          [currentCast.castHash]: {
+            ...prev[currentCast.castHash],
+            [interactionType === "like" ? "liked" : interactionType === "recast" ? "recasted" : "replied"]: true,
+          }
+        }));
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      if (errorMsg.includes("Already claimed")) {
+        alert("You already claimed this reward!");
+      } else {
+        console.error("Error claiming cast reward:", error);
+      }
+    } finally {
+      setVerifyingInteraction(null);
+      setClaimingInteraction(null);
+    }
+  };
+
+
   // Get first image from cast embeds
   const getCastImage = (cast: NeynarCast | null): string | null => {
     if (!cast?.embeds) return null;
@@ -316,6 +408,41 @@ export function SocialQuestsPanel({
                     {currentCastData.replies?.count || 0}
                   </span>
                 </div>
+                {/* Cast Interaction Rewards */}
+                {userFid && (
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-purple-500/30">
+                    {[
+                      { type: "like" as const, icon: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z", label: "Like", color: "pink" },
+                      { type: "recast" as const, icon: "M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z", label: "Recast", color: "green" },
+                      { type: "reply" as const, icon: "M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z", label: "Reply", color: "blue" },
+                    ].map(({ type, icon, label, color }) => {
+                      const progress = castInteractionProgress[currentCast?.castHash || ""];
+                      const claimed = progress?.[type === "like" ? "liked" : type === "recast" ? "recasted" : "replied"];
+                      const isVerifying = verifyingInteraction === `${type}-${currentCast?.castHash}`;
+                      const isClaiming = claimingInteraction === `${type}-${currentCast?.castHash}`;
+
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => handleCastInteraction(type)}
+                          disabled={claimed || isVerifying || isClaiming}
+                          className={`flex-1 flex flex-col items-center gap-1 py-2 px-2 rounded-lg border transition-all ${
+                            claimed
+                              ? "bg-green-900/30 border-green-500/50 opacity-60"
+                              : `bg-${color}-900/20 border-${color}-500/30 hover:border-${color}-500/60 hover:bg-${color}-900/30`
+                          } disabled:cursor-not-allowed`}
+                        >
+                          <svg className={`w-4 h-4 ${claimed ? "text-green-400" : `text-${color}-400`}`} viewBox="0 0 24 24" fill="currentColor">
+                            <path d={icon} />
+                          </svg>
+                          <span className={`text-[10px] font-bold ${claimed ? "text-green-400" : `text-${color}-300`}`}>
+                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : "+100"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="p-3">
