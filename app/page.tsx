@@ -381,7 +381,8 @@ export default function TCGPage() {
           const profile = await ConvexProfileService.getProfile(wagmiAddress);
           if (profile && (!profile.fid || profile.fid !== fid.toString())) {
             await ConvexProfileService.updateProfile(wagmiAddress, {
-              fid: fid.toString()
+              fid: fid.toString(),
+              farcasterFid: fid  // numeric FID for Social Quests
             });
             devLog('✓ FID saved to profile');
           }
