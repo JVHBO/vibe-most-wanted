@@ -6411,7 +6411,7 @@ export default function TCGPage() {
               {missionsSubView === 'social' && address && (
                 <SocialQuestsPanel
                   address={address}
-                  userFid={userProfile?.farcasterFid}
+                  userFid={userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined)}
                   soundEnabled={soundEnabled}
                   onRewardClaimed={(amount: number) => {
                     setSuccessMessage(`Claimed ${amount} $TESTVBMS!`);
