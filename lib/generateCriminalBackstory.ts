@@ -62,6 +62,9 @@ export function generateCriminalBackstory(
   // Format date of crime (account creation date)
   let dateOfCrime = 'Unknown';
   if (data.createdAt) {
+    // Convert to Date object if it's a string (from localStorage/JSON)
+    const createdAtDate = data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt);
+
     const monthNames = {
       'en': ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
       'pt-BR': ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
@@ -72,9 +75,9 @@ export function generateCriminalBackstory(
     };
 
     const months = monthNames[lang] || monthNames['en'];
-    const month = months[data.createdAt.getMonth()];
-    const day = data.createdAt.getDate();
-    const year = data.createdAt.getFullYear();
+    const month = months[createdAtDate.getMonth()];
+    const day = createdAtDate.getDate();
+    const year = createdAtDate.getFullYear();
 
     if (lang === 'zh-CN') {
       dateOfCrime = `${year}年${month}${day}日`;
@@ -92,13 +95,21 @@ export function generateCriminalBackstory(
     else dateOfCrime = '2025';
   }
 
-  // Build story from templates
+  // Helper function to randomly select from array
+  const getRandomVariant = (variants: string | string[]): string => {
+    if (Array.isArray(variants)) {
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+    return variants;
+  };
+
+  // Build story from templates with random variants
   const storyParts = [
-    t.criminalStory1.replace('{date}', dateOfCrime).replace('{username}', `@${data.username}`),
-    t.criminalStory2.replace('{followers}', data.followerCount.toLocaleString()).replace('{username}', `@${data.username}`),
-    t.criminalStory3.replace('{bio}', data.bio || t.noBio),
-    t.criminalStory4.replace('{bounty}', data.bounty.toLocaleString()),
-    t.criminalStory5,
+    getRandomVariant(t.criminalStory1).replace('{date}', dateOfCrime).replace('{username}', `@${data.username}`),
+    getRandomVariant(t.criminalStory2).replace('{followers}', data.followerCount.toLocaleString()).replace('{username}', `@${data.username}`),
+    getRandomVariant(t.criminalStory3).replace('{bio}', data.bio || t.noBio),
+    getRandomVariant(t.criminalStory4).replace('{bounty}', data.bounty.toLocaleString()),
+    getRandomVariant(t.criminalStory5),
   ];
 
   const story = storyParts.join(' ');

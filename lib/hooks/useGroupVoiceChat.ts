@@ -12,6 +12,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { devLog, devError } from '@/lib/utils/logger';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 export interface VoiceUser {
   address: string;
@@ -57,13 +58,49 @@ export function useGroupVoiceChat(
     roomId ? { recipient: localAddress, roomId } : "skip"
   );
 
+  // Check if running in Farcaster miniapp context
+  const isInFarcasterMiniapp = useCallback((): boolean => {
+    try {
+      return typeof window !== 'undefined' &&
+             typeof sdk !== 'undefined' &&
+             typeof sdk.actions !== 'undefined';
+    } catch {
+      return false;
+    }
+  }, []);
+
   // Initialize local audio stream
   const initLocalAudio = useCallback(async () => {
     try {
-      // REMOVED: Old miniapp detection was blocking voice chat in Farcaster web
-      // Voice chat works fine in iframe, let browser handle mic permissions
       devLog('[GroupVoice] Requesting microphone access...');
 
+      // If in Farcaster miniapp, request permission via SDK first
+      // Note: This only works on native Warpcast app, not web miniapps
+      if (isInFarcasterMiniapp()) {
+        try {
+          devLog('[GroupVoice] Detected Farcaster miniapp, requesting SDK permission...');
+          await sdk.actions.requestCameraAndMicrophoneAccess();
+          devLog('[GroupVoice] Farcaster SDK permission granted');
+        } catch (sdkError) {
+          devError('[GroupVoice] Farcaster SDK permission denied:', sdkError);
+          // Check if this is a web miniapp (always rejects)
+          const errorMessage = sdkError instanceof Error ? sdkError.message : String(sdkError);
+          if (errorMessage.includes('not supported') || errorMessage.includes('web')) {
+            setState(prev => ({
+              ...prev,
+              error: 'Voice chat requires the Warpcast mobile app'
+            }));
+            return null;
+          }
+          setState(prev => ({
+            ...prev,
+            error: 'Microphone permission denied by Farcaster'
+          }));
+          return null;
+        }
+      }
+
+      // Now request browser microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -79,13 +116,23 @@ export function useGroupVoiceChat(
       return stream;
     } catch (error) {
       devError('[GroupVoice] Failed to get microphone:', error);
-      setState(prev => ({
-        ...prev,
-        error: 'Microphone access denied'
-      }));
+
+      // Provide more helpful error message for permission policy violations
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Permissions policy') || errorMessage.includes('not allowed')) {
+        setState(prev => ({
+          ...prev,
+          error: 'Voice chat requires the Warpcast mobile app'
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          error: 'Microphone access denied'
+        }));
+      }
       return null;
     }
-  }, []);
+  }, [isInFarcasterMiniapp]);
 
   // Create peer connection for a specific user
   const createPeerConnection = useCallback(async (

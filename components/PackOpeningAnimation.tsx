@@ -75,12 +75,12 @@ export function PackOpeningAnimation({ cards, onClose }: PackOpeningAnimationPro
 
       {/* Card Revealing Stage */}
       {stage === 'revealing' && (
-        <div className="w-full max-w-6xl">
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-center text-vintage-gold mb-8 animate-bounce-in">
+        <div className="w-full max-w-6xl max-h-[85vh] overflow-y-auto px-1">
+          <h2 className="text-xl md:text-4xl font-display font-bold text-center text-vintage-gold mb-3 md:mb-8 animate-bounce-in sticky top-0 bg-vintage-black/90 py-2 z-10">
             🎉 Pack Opened!
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4 mb-4 md:mb-6">
             {cards.map((card: any, i: number) => {
               const isRevealed = i <= revealedIndex;
               const rarityColors = {
@@ -102,25 +102,25 @@ export function PackOpeningAnimation({ cards, onClose }: PackOpeningAnimationPro
                 >
                   {/* Card Container */}
                   <div
-                    className={`bg-vintage-charcoal/80 border-4 rounded-xl p-3 text-center transform transition-all duration-500 hover:scale-105 ${
+                    className={`bg-vintage-charcoal/80 border-2 md:border-4 rounded-lg md:rounded-xl p-1.5 md:p-3 text-center transform transition-all duration-500 hover:scale-105 ${
                       rarityColors[card.rarity as keyof typeof rarityColors] || rarityColors.Common
                     } ${isRevealed ? 'card-flip-in' : ''}`}
                   >
                     {/* NEW Badge for first reveal */}
                     {isRevealed && !card.isDuplicate && (
-                      <div className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-bounce-in shadow-lg">
+                      <div className="absolute -top-2 -right-2 md:-top-3 md:-right-3 bg-green-500 text-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full animate-bounce-in shadow-lg">
                         NEW!
                       </div>
                     )}
 
                     {/* FREE CARD Badge */}
-                    <div className="absolute top-2 left-2 bg-green-600/90 text-white text-xs font-bold px-2 py-1 rounded">
+                    <div className="absolute top-1 left-1 md:top-2 md:left-2 bg-green-600/90 text-white text-[8px] md:text-xs font-bold px-1 py-0.5 md:px-2 md:py-1 rounded">
                       FREE
                     </div>
 
                     {/* Duplicate Badge */}
                     {card.isDuplicate && (
-                      <div className="absolute top-2 right-2 bg-vintage-burnt-gold/90 text-white text-xs font-bold px-2 py-1 rounded">
+                      <div className="absolute top-1 right-1 md:top-2 md:right-2 bg-vintage-burnt-gold/90 text-white text-[8px] md:text-xs font-bold px-1 py-0.5 md:px-2 md:py-1 rounded">
                         x{card.quantity}
                       </div>
                     )}
@@ -139,7 +139,7 @@ export function PackOpeningAnimation({ cards, onClose }: PackOpeningAnimationPro
 
                     {/* Power */}
                     <div className="mb-2">
-                      <p className={`text-2xl font-display font-bold ${
+                      <p className={`text-lg md:text-2xl font-display font-bold ${
                         card.rarity === 'Legendary' ? 'text-vintage-gold' :
                         card.rarity === 'Epic' ? 'text-purple-400' :
                         card.rarity === 'Rare' ? 'text-blue-400' :
@@ -176,7 +176,7 @@ export function PackOpeningAnimation({ cards, onClose }: PackOpeningAnimationPro
           {revealedIndex >= cards.length - 1 && (
             <button
               onClick={onClose}
-              className="w-full max-w-md mx-auto block bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-display font-bold py-4 px-8 rounded-xl shadow-gold hover:shadow-gold-lg transition-all animate-bounce-in"
+              className="w-full max-w-md mx-auto block bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-display font-bold py-3 px-6 md:py-4 md:px-8 rounded-xl shadow-gold hover:shadow-gold-lg transition-all animate-bounce-in"
             >
               Collect Cards
             </button>

@@ -1,29 +1,109 @@
-'use client';
+import { Metadata } from 'next';
+import SharePageClient from './SharePageClient';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+export async function generateMetadata({ params }: { params: Promise<{ fid: string }> }): Promise<Metadata> {
+  const { fid } = await params;
+  const baseUrl = 'https://www.vibemostwanted.xyz';
 
-export default function FidSharePage() {
-  const router = useRouter();
+  // Fetch card data from Convex to get IPFS URL directly
+  let imageUrl = `${baseUrl}/api/card-image/${fid}?v=7`; // Fallback
 
-  useEffect(() => {
-    // Redirect to /fid page in miniapp after 2 seconds
-    const timeout = setTimeout(() => {
-      router.push('/fid');
-    }, 2000);
+  try {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (convexUrl) {
+      const response = await fetch(`${convexUrl}/api/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: 'farcasterCards:getFarcasterCardByFid',
+          args: { fid: parseInt(fid) },
+          format: 'json',
+        }),
+        cache: 'no-store',
+      });
 
-    return () => clearTimeout(timeout);
-  }, [router]);
+      if (response.ok) {
+        const data = await response.json();
+        const card = data.value;
 
-  return (
-    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
-      <div className="text-center">
-        <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
-          VibeFID
-        </h1>
-        <p className="text-vintage-burnt-gold mb-4">Opening miniapp...</p>
-        <div className="animate-pulse text-6xl">🎴</div>
-      </div>
-    </div>
-  );
+        // Prefer shareImageUrl (card + criminal text), fallback to cardImageUrl (just card)
+        const sourceUrl = card?.shareImageUrl || card?.cardImageUrl;
+
+        // If card has share/card image, use IPFS directly (bypasses Vercel firewall)
+        if (sourceUrl) {
+          let ipfsUrl = sourceUrl;
+
+          // Convert to Filebase gateway if needed
+          if (ipfsUrl.startsWith('ipfs://')) {
+            const cid = ipfsUrl.replace('ipfs://', '');
+            imageUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
+          } else if (ipfsUrl.includes('/ipfs/')) {
+            const cid = ipfsUrl.split('/ipfs/')[1];
+            imageUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
+          } else {
+            imageUrl = ipfsUrl;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch card data for OG image:', error);
+  }
+
+  return {
+    title: `VibeFID Card #${fid} - VIBE Most Wanted`,
+    description: `Check out this VibeFID card on VIBE Most Wanted!`,
+    openGraph: {
+      title: `VibeFID Card #${fid}`,
+      description: `Check out this VibeFID card on VIBE Most Wanted!`,
+      type: 'website',
+      siteName: 'VIBE Most Wanted',
+      images: [
+        {
+          url: imageUrl,
+          width: 500,
+          height: 700,
+          alt: `VibeFID Card #${fid}`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `VibeFID Card #${fid}`,
+      description: `Check out this VibeFID card on VIBE Most Wanted!`,
+      images: [imageUrl],
+    },
+    other: {
+      // Farcaster miniapp format with embedded image
+      'fc:miniapp': JSON.stringify({
+        version: '1',
+        imageUrl: imageUrl,
+        button: {
+          title: 'Mint Your Card',
+          action: {
+            type: 'launch_miniapp',
+            name: 'VIBE MOST WANTED',
+            url: `${baseUrl}/fid/${fid}`,
+          },
+        },
+      }),
+      'fc:frame': JSON.stringify({
+        version: '1',
+        imageUrl: imageUrl,
+        button: {
+          title: 'Mint Your Card',
+          action: {
+            type: 'launch_miniapp',
+            name: 'VIBE MOST WANTED',
+            url: `${baseUrl}/fid/${fid}`,
+          },
+        },
+      }),
+    },
+  };
+}
+
+export default async function FidSharePage({ params }: { params: Promise<{ fid: string }> }) {
+  const { fid } = await params;
+  return <SharePageClient fid={fid} />;
 }

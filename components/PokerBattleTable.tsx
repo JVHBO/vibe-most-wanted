@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -15,8 +15,59 @@ import { useGroupVoiceChat } from '@/lib/hooks/useGroupVoiceChat';
 import { VoiceChannelPanel } from './VoiceChannelPanel';
 import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { SpectatorEntryModal } from './SpectatorEntryModal';
-import { BettingInterface } from './BettingInterface';
+import { SimpleBettingOverlay } from './SimpleBettingOverlay';
+import { SpectatorBetFeedback } from './SpectatorBetFeedback';
 import { GamePopups } from './GamePopups';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+
+// Collection cover images for Mecha Arena (sealed/unrevealed card backs)
+const COLLECTION_COVERS: Record<string, string> = {
+  vibefid: '/covers/vibefid-cover.png',
+  gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/d0de7e9fa12eadb1ea2204e67d43e166',
+  vibe: 'https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f',
+  americanfootball: 'https://nft-cdn.alchemy.com/base-mainnet/5c023b39577f02927478fbd60c26d75e',
+  coquettish: 'https://i2c.seadn.io/base/0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea/c428d7158e42cae9b29202d3f56d47/f1c428d7158e42cae9b29202d3f56d47.png?w=350',
+  viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/ec58759f6df558aa4193d58ae9b0e74f',
+  meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/16a8f93f75def1a771cca7e417b5d05e',
+  poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/96282462557a81c42fad965a48c34f4c',
+  teampothead: 'https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0',
+  tarot: 'https://nft-cdn.alchemy.com/base-mainnet/72ea458dbad1ce6a722306d811a42252',
+  baseballcabal: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F45e455d7-cd23-459b-7ea9-db14c6d36000%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
+  vibefx: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F5e6058d2-4c64-4cd9-ab57-66a939fec900%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
+  historyofcomputer: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fa1a0d189-44e1-43e3-60dc-e8b053ec0c00%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
+  cumioh: '/covers/cumioh-cover.png',
+};
+
+// Get card cover image for a collection (fallback to default card-back)
+function getCardBack(collection?: string): string {
+  if (collection && COLLECTION_COVERS[collection]) {
+    return COLLECTION_COVERS[collection];
+  }
+  return '/images/card-back.png';
+}
+
+// Format collection name for display (e.g., "baseballcabal" → "Baseball Cabal")
+const COLLECTION_DISPLAY_NAMES: Record<string, string> = {
+  gmvbrs: 'GMVBRS',
+  vibe: 'Vibe',
+  coquettish: 'Coquettish',
+  viberuto: 'Viberuto',
+  meowverse: 'Meowverse',
+  poorlydrawnpepes: 'Poorly Drawn Pepes',
+  teampothead: 'Team Pothead',
+  tarot: 'Tarot',
+  americanfootball: 'American Football',
+  vibefid: 'VibeFID',
+  baseballcabal: 'Baseball Cabal',
+  vibefx: 'VibeFX',
+  historyofcomputer: 'History of Computer',
+  cumioh: '$CU-MI-OH!',
+};
+
+function getCollectionDisplayName(collection?: string): string {
+  if (!collection) return 'Mecha Arena';
+  return COLLECTION_DISPLAY_NAMES[collection] || collection.charAt(0).toUpperCase() + collection.slice(1);
+}
 
 interface Card {
   tokenId: string;
@@ -41,6 +92,8 @@ interface PokerBattleTableProps {
   isSpectator?: boolean; // If true, view-only mode (no interactions)
   isInFarcaster?: boolean; // If true, optimize UI for Farcaster miniapp
   soundEnabled?: boolean; // Sound effects enabled
+  initialRoomId?: string; // For spectator mode - skip matchmaking and go directly to game
+  skipSpectatorModal?: boolean; // Skip spectator entry modal (e.g., when already deposited via CPU Arena)
 }
 
 type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'card-reveal-animation' | 'resolution' | 'game-over';
@@ -65,21 +118,30 @@ export function PokerBattleTable({
   isSpectator = false,
   isInFarcaster = false,
   soundEnabled = true,
+  initialRoomId = '',
+  skipSpectatorModal = false,
 }: PokerBattleTableProps) {
-  // View Mode state
-  const [currentView, setCurrentView] = useState<ViewMode>(isCPUMode ? 'game' : 'matchmaking');
-  const [roomId, setRoomId] = useState<string>('');
+  // Convex client for imperative queries
+  const convex = useConvex();
+
+  // View Mode state - go directly to game if initialRoomId provided (spectator mode)
+  const [currentView, setCurrentView] = useState<ViewMode>(
+    isCPUMode ? 'game' : (initialRoomId ? 'game' : 'matchmaking')
+  );
+  const [roomId, setRoomId] = useState<string>(initialRoomId);
   const [isHost, setIsHost] = useState(false);
-  const [selectedAnte, setSelectedAnte] = useState(25);
-  const [isSpectatorMode, setIsSpectatorMode] = useState(isSpectator);
+  const [selectedAnte, setSelectedAnte] = useState(initialRoomId ? 0 : 25); // No ante for spectators
+  const [isSpectatorMode, setIsSpectatorMode] = useState(isSpectator || !!initialRoomId);
   const [selectedToken, setSelectedToken] = useState<'VBMS' | 'TESTVBMS' | 'VIBE_NFT'>('VBMS');
 
   // Betting system state
   const [showSpectatorEntryModal, setShowSpectatorEntryModal] = useState(false);
-  const [hasBettingCredits, setHasBettingCredits] = useState(false);
-  const [showBettingInterface, setShowBettingInterface] = useState(false);
+  const [spectatorType, setSpectatorType] = useState<'free' | 'betting' | null>(
+    skipSpectatorModal ? 'betting' : null
+  ); // Set to betting if skipping modal
+  const [hasBettingCredits, setHasBettingCredits] = useState(skipSpectatorModal); // Already has credits if skipping modal
 
-  // Real-time room data for multiplayer
+  // Real-time room data for multiplayer (includes CPU vs CPU spectator mode)
   const room = useQuery(
     api.pokerBattle.getPokerRoom,
     currentView === 'game' && !isCPUMode && roomId ? { roomId } : "skip"
@@ -111,6 +173,17 @@ export function PokerBattleTable({
   // Round betting mutations (instant payouts on each round)
   const resolveRoundBetsMutation = useMutation(api.roundBetting.resolveRoundBets);
   const convertCreditsMutation = useMutation(api.roundBetting.convertCreditsToCoins);
+  const leaveSpectateMutation = useMutation(api.pokerBattle.leaveSpectate);
+
+  // Get betting credits balance for spectator exit confirmation
+  const bettingCreditsData = useQuery(
+    api.bettingCredits.getBettingCredits,
+    isSpectatorMode && playerAddress ? { address: playerAddress } : "skip"
+  );
+
+  // State for exit confirmation modal
+  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   // Chat system
   const messages = useQuery(
@@ -273,6 +346,10 @@ export function PokerBattleTable({
     opponentTwitter?: string;
   } | null>(null);
 
+  // Spectator betting results (Mecha Arena)
+  const [showSpectatorResult, setShowSpectatorResult] = useState(false);
+  const [spectatorNetGains, setSpectatorNetGains] = useState(0);
+
   // Deck & Hand
   const [selectedDeck, setSelectedDeck] = useState<Card[]>([]);
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
@@ -356,7 +433,13 @@ export function PokerBattleTable({
           if (phase !== 'card-reveal-animation' && phase !== 'resolution' && phase !== 'game-over') {
             console.log('[PokerBattle] Moving to card-reveal-animation phase');
             setPhase('card-reveal-animation');
-            AudioManager.buttonSuccess();
+
+            // Enhanced sound for spectators
+            if (isSpectator) {
+              AudioManager.cardBattle(); // Dramatic reveal sound
+            } else {
+              AudioManager.buttonSuccess();
+            }
 
             // Dramatic pause before resolving (2.5 seconds)
             setTimeout(() => {
@@ -370,7 +453,10 @@ export function PokerBattleTable({
   }, [room, isCPUMode]);
 
   // Reset timer when phase changes (separate effect to ensure it runs)
+  // Skip in CPU mode - betting window timer handles it there
   useEffect(() => {
+    if (isCPUMode) return; // CPU mode uses bettingWindowEndsAt timer instead
+
     if (phase === 'card-selection') {
       console.log('[PokerBattle] Timer reset to 30s for card-selection phase');
       setTimeRemaining(30);
@@ -378,10 +464,38 @@ export function PokerBattleTable({
       console.log('[PokerBattle] Timer reset to 90s for reveal phase');
       setTimeRemaining(90); // More time for choosing boost action (increased to 90s for testing)
     }
-  }, [phase]); // Only depend on phase
+  }, [phase, isCPUMode]); // Only depend on phase and isCPUMode
+
+  // CPU vs CPU betting window timer (for Mecha Arena spectators)
+  useEffect(() => {
+    if (!isCPUMode) return;
+
+    // If no betting window, reset timer to 0 (waiting for CPUs to select)
+    if (!room?.gameState?.bettingWindowEndsAt) {
+      setTimeRemaining(0);
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((room.gameState.bettingWindowEndsAt - now) / 1000));
+      setTimeRemaining(remaining);
+    };
+
+    // Update immediately
+    updateTimer();
+
+    // Update every second
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [isCPUMode, room?.gameState?.bettingWindowEndsAt]);
 
   // Timer countdown for actions
   useEffect(() => {
+    // Skip timer if in CPU vs CPU mode (betting window timer handles it)
+    if (isCPUMode) return;
+
     // Clear any existing timer when effect runs
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -465,6 +579,10 @@ export function PokerBattleTable({
   // Round winner display
   const [showRoundWinner, setShowRoundWinner] = useState(false);
   const [roundWinner, setRoundWinner] = useState<'player' | 'opponent' | null>(null);
+
+  // Spectator bet feedback state
+  const [lastRoundWinnerAddress, setLastRoundWinnerAddress] = useState<string | null>(null);
+  const [showBetResult, setShowBetResult] = useState(false);
 
   // Round history - for CPU mode (local state), for PvP mode (synced from room)
   const [cpuRoundHistory, setCpuRoundHistory] = useState<Array<{
@@ -1090,6 +1208,16 @@ export function PokerBattleTable({
           setRoundWinner(isTie ? null : (playerWins ? 'player' : 'opponent'));
           setShowRoundWinner(true);
 
+          // Enhanced sounds for spectators
+          if (isSpectator) {
+            if (isTie) {
+              AudioManager.tie(); // Neutral sound for tie
+            } else {
+              // Exciting sounds for round results
+              AudioManager.win(); // Victory fanfare for spectators
+            }
+          }
+
           console.log('[PokerBattle] PvP Mode - Showing round winner', {
             winner: isTie ? 'tie' : (playerWins ? 'player' : 'opponent')
           });
@@ -1100,6 +1228,10 @@ export function PokerBattleTable({
               ? (isHost ? room.hostAddress : room.guestAddress)
               : (isHost ? room.guestAddress : room.hostAddress);
 
+            // Set winner address for spectator bet feedback
+            setLastRoundWinnerAddress(winnerAddress);
+            setShowBetResult(true);
+
             resolveRoundBetsMutation({
               roomId,
               roundNumber: currentRound,
@@ -1107,6 +1239,11 @@ export function PokerBattleTable({
             }).catch((error) => {
               console.error('[PokerBattle] PvP Mode - Failed to resolve round bets:', error);
             });
+
+            // Hide bet result after 3 seconds
+            setTimeout(() => {
+              setShowBetResult(false);
+            }, 3000);
           }
 
           // Add to round history
@@ -1352,6 +1489,50 @@ export function PokerBattleTable({
     onClose();
   };
 
+  // Handler for spectator trying to exit
+  const handleSpectatorExitClick = () => {
+    // If spectator has betting credits, show confirmation modal
+    const creditsBalance = bettingCreditsData?.balance || 0;
+    if (isSpectatorMode && creditsBalance > 0) {
+      setShowExitConfirmation(true);
+    } else {
+      // No credits, just exit
+      handleConfirmExit();
+    }
+  };
+
+  // Confirm exit - convert credits and leave
+  const handleConfirmExit = async () => {
+    if (!roomId || !playerAddress) {
+      onClose();
+      return;
+    }
+
+    setIsLeaving(true);
+    try {
+      const result = await leaveSpectateMutation({
+        roomId,
+        address: playerAddress,
+      });
+
+      console.log("Left spectator mode:", result);
+
+      if (result.converted > 0) {
+        toast.success(`Converted ${result.converted} credits to TESTVBMS!`);
+      }
+
+      if (result.roomDeleted) {
+        toast.info("CPU Arena room closed (you were the last spectator)");
+      }
+    } catch (error) {
+      console.error("Error leaving spectate:", error);
+    } finally {
+      setIsLeaving(false);
+      setShowExitConfirmation(false);
+      onClose();
+    }
+  };
+
   // Load opponent deck when both players ready (multiplayer only)
   useEffect(() => {
     if (!isCPUMode && room && room.status === 'ready' && currentView === 'waiting') {
@@ -1481,6 +1662,37 @@ export function PokerBattleTable({
       setShowSpectatorEntryModal(true);
     }
   }, [isSpectatorMode, hasBettingCredits, showSpectatorEntryModal]);
+
+  // Spectator mode: Detect when a round ends via roundHistory changes
+  // This is important for CPU vs CPU mode where resolution happens in backend
+  const prevRoundHistoryLength = useRef(0);
+  useEffect(() => {
+    if (!isSpectatorMode || !room?.roundHistory) return;
+
+    const currentLength = room.roundHistory.length;
+    if (currentLength > prevRoundHistoryLength.current && prevRoundHistoryLength.current > 0) {
+      // A new round was resolved
+      const lastResult = room.roundHistory[currentLength - 1];
+      if (lastResult && lastResult.winner !== 'tie') {
+        // Determine winner address from last round
+        const winnerAddress = lastResult.winner === 'player'
+          ? room.hostAddress
+          : room.guestAddress;
+
+        if (winnerAddress) {
+          console.log('[Spectator] Round resolved, showing bet feedback for:', winnerAddress);
+          setLastRoundWinnerAddress(winnerAddress);
+          setShowBetResult(true);
+
+          // Hide after 3 seconds
+          setTimeout(() => {
+            setShowBetResult(false);
+          }, 3000);
+        }
+      }
+    }
+    prevRoundHistoryLength.current = currentLength;
+  }, [isSpectatorMode, room?.roundHistory, room?.hostAddress, room?.guestAddress]);
 
   // Resolve bets when game ends (PvP mode only)
   useEffect(() => {
@@ -1692,6 +1904,44 @@ export function PokerBattleTable({
       setGameOverShown(true);
       console.log('[PokerBattle] Game over - configuring popups');
 
+      // Custom result screen for spectator mode (Mecha Arena)
+      if (isSpectatorMode && spectatorType === 'betting' && playerAddress && roomId) {
+        console.log('[PokerBattle] Spectator mode - calculating betting results');
+
+        // Fetch all bets for this room by this spectator
+        convex.query(api.roundBetting.getSpectatorBetsForRoom, {
+          roomId,
+          spectatorAddress: playerAddress,
+        }).then((bets) => {
+          // Calculate net gains: (total winnings) - (total bet amount)
+          const totalBet = bets.reduce((sum: number, bet: any) => sum + bet.amount, 0);
+          const totalWinnings = bets.reduce((sum: number, bet: any) => {
+            if (bet.status === 'won' && bet.payout) {
+              return sum + bet.payout;
+            }
+            return sum;
+          }, 0);
+
+          const netGain = totalWinnings - totalBet;
+          console.log('[PokerBattle] Betting results:', { totalBet, totalWinnings, netGain });
+
+          setSpectatorNetGains(netGain);
+          setShowSpectatorResult(true);
+        }).catch((err) => {
+          console.error('[PokerBattle] Failed to fetch betting results:', err);
+          setSpectatorNetGains(0);
+          setShowSpectatorResult(true);
+        });
+
+        return;
+      }
+
+      // Don't show victory/defeat popups for other spectator modes
+      if (isSpectatorMode) {
+        console.log('[PokerBattle] Spectator mode - skipping victory/defeat popups');
+        return;
+      }
+
       // Configure victory/defeat/tie popups
       if (playerScore > opponentScore) {
         // Victory - select random victory image
@@ -1730,7 +1980,7 @@ export function PokerBattleTable({
         });
       }
     }
-  }, [phase, gameOverShown, playerScore, opponentScore, selectedAnte, isCPUMode, room]);
+  }, [phase, gameOverShown, playerScore, opponentScore, selectedAnte, isCPUMode, room, isSpectatorMode]);
 
   // REMOVED: Auto-close room (user wants to see victory screen without auto-closing)
   // Room is marked as 'finished' in database but UI stays open for user to close manually
@@ -1840,7 +2090,7 @@ export function PokerBattleTable({
 
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={isSpectatorMode ? handleSpectatorExitClick : onClose}
           className="absolute -top-2 -right-2 z-10 bg-vintage-gold text-vintage-black w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-vintage-burnt-gold transition"
         >
           ×
@@ -1915,7 +2165,7 @@ export function PokerBattleTable({
                       <>
                         {(selectedDeck[i].imageUrl || selectedDeck[i].image) ? (
                           <CardMedia
-                            src={(selectedDeck[i].imageUrl || selectedDeck[i].image || '')}
+                            src={convertIpfsUrl(selectedDeck[i].imageUrl || selectedDeck[i].image) || ''}
                             alt={selectedDeck[i].name}
                             className="w-full h-full object-cover rounded-lg"
                           />
@@ -1957,7 +2207,7 @@ export function PokerBattleTable({
                   >
                     {(card.imageUrl || card.image) ? (
                       <CardMedia
-                        src={(card.imageUrl || card.image || '')}
+                        src={convertIpfsUrl(card.imageUrl || card.image) || ''}
                         alt={card.name}
                         className="w-full h-full object-cover"
                       />
@@ -2100,7 +2350,7 @@ export function PokerBattleTable({
                       </div>
                     )}
                     <div>
-                      <div className={`text-blue-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>
+                      <div className={`text-blue-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'} max-w-[120px] truncate`}>
                         {room?.hostUsername || 'HOST'}
                         {isHost && <span className="text-yellow-400 ml-1">(YOU)</span>}
                       </div>
@@ -2117,7 +2367,7 @@ export function PokerBattleTable({
                     {playerSelectedCard && (phase === 'resolution' || phase === 'reveal') ? (
                       <div className="relative w-full h-full">
                         {playerSelectedCard?.imageUrl || playerSelectedCard?.image ? (
-                          <CardMedia src={playerSelectedCard?.imageUrl || playerSelectedCard?.image} alt={playerSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
+                          <CardMedia src={convertIpfsUrl(playerSelectedCard?.imageUrl || playerSelectedCard?.image) || ''} alt={playerSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(playerSelectedCard?.rarity) }}>
                             <div className="text-white text-xs font-bold text-center">{playerSelectedCard?.name}</div>
@@ -2132,7 +2382,7 @@ export function PokerBattleTable({
                         </div>
                       </div>
                     ) : playerSelectedCard ? (
-                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover rounded-lg" />
+                      <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover rounded-lg" />
                     ) : (
                       <span className="text-blue-400 text-2xl animate-pulse">?</span>
                     )}
@@ -2144,7 +2394,7 @@ export function PokerBattleTable({
                   {playerHand.map((card, i) => (
                     <div key={i} className={`aspect-[2/3] rounded border ${playerSelectedCard?.tokenId === card.tokenId ? 'border-2 border-yellow-400 ring-2 ring-yellow-400' : 'border border-blue-500/30'} overflow-hidden bg-black/50`}>
                       {/* Show card back for spectators, real cards for players */}
-                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
+                      <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
@@ -2167,7 +2417,7 @@ export function PokerBattleTable({
                       </div>
                     )}
                     <div>
-                      <div className={`text-red-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>
+                      <div className={`text-red-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'} max-w-[120px] truncate`}>
                         {room?.guestUsername || 'GUEST'}
                         {!isHost && <span className="text-yellow-400 ml-1">(YOU)</span>}
                       </div>
@@ -2184,7 +2434,7 @@ export function PokerBattleTable({
                     {opponentSelectedCard && (phase === 'resolution' || showRoundWinner) ? (
                       <div className="relative w-full h-full">
                         {opponentSelectedCard?.imageUrl || opponentSelectedCard?.image ? (
-                          <CardMedia src={opponentSelectedCard?.imageUrl || opponentSelectedCard?.image} alt={opponentSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
+                          <CardMedia src={convertIpfsUrl(opponentSelectedCard?.imageUrl || opponentSelectedCard?.image) || ''} alt={opponentSelectedCard?.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(opponentSelectedCard?.rarity) }}>
                             <div className="text-white text-xs font-bold text-center">{opponentSelectedCard?.name}</div>
@@ -2199,7 +2449,7 @@ export function PokerBattleTable({
                         </div>
                       </div>
                     ) : opponentSelectedCard ? (
-                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover rounded-lg" />
+                      <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover rounded-lg" />
                     ) : (
                       <span className="text-red-400 text-2xl animate-pulse">?</span>
                     )}
@@ -2211,7 +2461,7 @@ export function PokerBattleTable({
                   {opponentHand.map((card, i) => (
                     <div key={i} className={`aspect-[2/3] rounded border ${opponentSelectedCard?.tokenId === card.tokenId ? 'border-2 border-yellow-400 ring-2 ring-yellow-400' : 'border border-red-500/30'} overflow-hidden bg-black/50`}>
                       {/* Show card back for spectators, real cards for players */}
-                      <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
+                      <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
@@ -2224,78 +2474,10 @@ export function PokerBattleTable({
         {phase !== 'deck-building' && phase !== 'game-over' && (selectedAnte !== 0 || isSpectatorMode) && (
           <div className="h-full flex flex-col relative">
 
-            {/* Round History Panel - Inside green table */}
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-vintage-charcoal/90 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl w-[140px]">
-                <div className="text-vintage-gold font-display font-bold text-[10px] mb-1 text-center border-b border-vintage-gold/30 pb-1">
-                  ROUNDS
-                </div>
-                <div className="space-y-0.5">
-                  {[1, 2, 3, 4, 5, 6, 7].map((roundNum) => {
-                    const entry = roundHistory.find((h: any) => h.round === roundNum);
-                    const isPlayed = !!entry;
+            {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-                    // Get winner name for tooltip
-                    const getWinnerName = () => {
-                      if (!isPlayed || !entry) return '';
-                      if (entry.winner === 'tie') return 'Tie';
-
-                      // In PvP mode, use room names
-                      if (!isCPUMode && room) {
-                        // winner='player' means host won, winner='opponent' means guest won
-                        return entry.winner === 'player' ? room.hostUsername : room.guestUsername;
-                      }
-
-                      // In CPU mode
-                      return entry.winner === 'player' ? playerUsername : 'CPU';
-                    };
-
-                    return (
-                      <div
-                        key={roundNum}
-                        className={`flex items-center justify-between px-1.5 py-0.5 rounded text-[9px] font-modern ${
-                          !isPlayed
-                            ? 'bg-gray-800/30 border border-gray-600/30'
-                            : entry.winner === 'player'
-                            ? 'bg-green-500/20 border border-green-500/50'
-                            : entry.winner === 'opponent'
-                            ? 'bg-red-500/20 border border-red-500/50'
-                            : 'bg-yellow-500/20 border border-yellow-500/50'
-                        }`}
-                        title={isPlayed ? `Round ${roundNum}: ${getWinnerName()} won (${entry.playerScore}-${entry.opponentScore})` : `Round ${roundNum}: Not played yet`}
-                      >
-                        <span className={`font-bold ${isPlayed ? 'text-vintage-burnt-gold' : 'text-gray-600'}`}>
-                          R{roundNum}
-                        </span>
-                        {isPlayed ? (
-                          <>
-                            <span className={`font-bold text-[8px] ${
-                              // For host: winner=player is WIN, winner=opponent is LOSS
-                              // For guest: winner=player is LOSS, winner=opponent is WIN
-                              (isHost && entry.winner === 'player') || (!isHost && entry.winner === 'opponent') ? 'text-green-400' :
-                              (isHost && entry.winner === 'opponent') || (!isHost && entry.winner === 'player') ? 'text-red-400' :
-                              'text-yellow-400'
-                            }`}>
-                              {
-                                // For host: winner=player → WIN, winner=opponent → LOSS
-                                // For guest: winner=player → LOSS, winner=opponent → WIN
-                                (isHost && entry.winner === 'player') || (!isHost && entry.winner === 'opponent') ? 'WIN' :
-                                (isHost && entry.winner === 'opponent') || (!isHost && entry.winner === 'player') ? 'LOSS' :
-                                'TIE'
-                              }
-                            </span>
-                            <span className="text-vintage-ice text-[8px]">{entry.playerScore}-{entry.opponentScore}</span>
-                          </>
-                        ) : (
-                          <span className="text-gray-600 text-[8px]">-</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-            </div>
-
-            {/* Meme Sound Panel - Floating on left side */}
-            <div className="absolute left-2 sm:left-4 top-2 sm:top-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
+            {/* Meme Sound Panel - Floating on left side (just below yellow POT line) */}
+            <div className="absolute left-2 sm:left-4 top-24 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
                 <div className="text-vintage-gold font-display font-bold text-[10px] mb-1.5 text-center border-b border-vintage-gold/30 pb-1">
                   🔊 MEME SOUNDS
                 </div>
@@ -2375,7 +2557,11 @@ export function PokerBattleTable({
                 )}
               </div>
               <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-sm' : 'text-2xl'}`}>
-                POT: {pot} {isCPUMode ? 'coins' : selectedToken}
+                {isCPUMode ? (
+                  `${getCollectionDisplayName(room?.cpuCollection)} Table`
+                ) : (
+                  `POT: ${pot} ${selectedToken}`
+                )}
               </div>
               <div className={`text-vintage-neon-blue font-modern font-bold ${isInFarcaster ? 'text-[10px]' : ''}`}>
                 🪙 Boost: {playerBoostCoins}
@@ -2415,12 +2601,7 @@ export function PokerBattleTable({
                 isInFarcaster ? 'p-2' : 'p-4 md:p-6'
               }`}>
 
-                {/* OPPONENT SECTION - Bankroll only */}
-                <div className="text-center">
-                  <div className="text-vintage-gold font-display font-bold mb-4">
-                    OPPONENT • {opponentBankroll} {selectedToken}
-                  </div>
-                </div>
+                {/* OPPONENT SECTION - Removed for cleaner UI in Mecha Arena */}
 
                 {/* CENTER - CARD BATTLE AREA */}
                 <div className="text-center flex-1 flex flex-col items-center justify-center">
@@ -2433,21 +2614,21 @@ export function PokerBattleTable({
                       <div className={`text-vintage-gold font-bold mb-1 ${
                         isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm'
                       }`}>
-                        {isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}
+                        <span className="max-w-[100px] truncate inline-block">{isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}</span>
                       </div>
                       <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
-                        isInFarcaster ? 'w-20' : 'w-24 sm:w-28 md:w-32'
+                        isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-24 sm:w-28 md:w-32'
                       } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
-                          ? 'border-red-500 shadow-lg shadow-red-500/50'
+                          ? 'border-red-500 shadow-lg shadow-red-500/50 animate-pulse'
                           : 'border-vintage-gold/50'
                       }`}>
                         {opponentSelectedCard && (phase === 'card-reveal-animation' || phase === 'resolution' || showRoundWinner) ? (
-                          <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
+                          <div className={`relative w-full h-full ${isSpectator ? 'animate-[flip_0.6s_ease-out,glow_1.5s_ease-in-out_infinite]' : 'animate-in fade-in zoom-in duration-700'}`}>
                             <FoilCardEffect foilType={opponentSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(opponentSelectedCard.imageUrl || opponentSelectedCard.image) ? (
                                 <CardMedia
-                                  src={(opponentSelectedCard.imageUrl || opponentSelectedCard.image || '')}
+                                  src={convertIpfsUrl(opponentSelectedCard.imageUrl || opponentSelectedCard.image) || ''}
                                   alt={opponentSelectedCard.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -2475,7 +2656,7 @@ export function PokerBattleTable({
                           </div>
                         ) : opponentSelectedCard ? (
                           <img
-                            src="/images/card-back.png"
+                            src={getCardBack(room?.cpuCollection)}
                             alt="Hidden Card"
                             className="w-full h-full object-cover animate-pulse"
                           />
@@ -2486,7 +2667,7 @@ export function PokerBattleTable({
                         )}
                       </div>
                       {opponentAction && opponentAction !== 'PASS' && (phase === 'card-reveal-animation' || phase === 'resolution') && (
-                        <div className="mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500">
+                        <div className={`mt-2 bg-red-900/50 border border-red-700 px-3 py-1 rounded animate-in slide-in-from-top duration-500 ${isSpectator ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
                           <span className="text-red-300 text-xs font-bold flex items-center justify-center gap-1">
                             {opponentAction === 'BOOST' && <><SwordIcon className="inline-block text-yellow-400" size={12} /> BOOST</>}
                             {opponentAction === 'SHIELD' && <><ShieldIcon className="inline-block text-blue-400" size={12} /> SHIELD</>}
@@ -2508,21 +2689,21 @@ export function PokerBattleTable({
                       <div className={`text-vintage-gold font-bold mb-1 ${
                         isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm mb-2'
                       }`}>
-                        {isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}
+                        <span className="max-w-[100px] truncate inline-block">{isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}</span>
                       </div>
                       <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
-                        isInFarcaster ? 'w-20' : 'w-32 sm:w-40 md:w-48'
+                        isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-32 sm:w-40 md:w-48'
                       } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
-                          ? 'border-green-500 shadow-lg shadow-green-500/50'
+                          ? 'border-green-500 shadow-lg shadow-green-500/50 animate-pulse'
                           : 'border-vintage-gold/50'
                       }`}>
                         {playerSelectedCard && (phase === 'card-reveal-animation' || phase === 'resolution' || showRoundWinner) ? (
-                          <div className="relative w-full h-full animate-in fade-in zoom-in duration-700">
+                          <div className={`relative w-full h-full ${isSpectator ? 'animate-[flip_0.6s_ease-out,glow_1.5s_ease-in-out_infinite]' : 'animate-in fade-in zoom-in duration-700'}`}>
                             <FoilCardEffect foilType={playerSelectedCard.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                               {(playerSelectedCard.imageUrl || playerSelectedCard.image) ? (
                                 <CardMedia
-                                  src={(playerSelectedCard.imageUrl || playerSelectedCard.image || '')}
+                                  src={convertIpfsUrl(playerSelectedCard.imageUrl || playerSelectedCard.image) || ''}
                                   alt={playerSelectedCard.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -2550,7 +2731,7 @@ export function PokerBattleTable({
                           </div>
                         ) : playerSelectedCard ? (
                           <img
-                            src="/images/card-back.png"
+                            src={getCardBack(room?.cpuCollection)}
                             alt="Hidden Card"
                             className="w-full h-full object-cover animate-pulse"
                           />
@@ -2576,20 +2757,28 @@ export function PokerBattleTable({
                   {(phase === 'card-selection' || phase === 'reveal') && (
                     <div className="mt-2 sm:mt-3">
                       <div className={`inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
-                        timeRemaining <= 5
+                        timeRemaining === 0 && phase === 'card-selection'
+                          ? 'bg-purple-900/50 border-purple-500 animate-pulse'
+                          : timeRemaining <= 5
                           ? 'bg-red-900/50 border-red-500 animate-pulse'
                           : timeRemaining <= 10
                           ? 'bg-yellow-900/50 border-yellow-500'
                           : 'bg-vintage-deep-black/50 border-vintage-gold'
                       }`}>
                         <div className={`font-display font-bold text-lg sm:text-2xl ${
-                          timeRemaining <= 5
+                          timeRemaining === 0 && phase === 'card-selection'
+                            ? 'text-purple-300'
+                            : timeRemaining <= 5
                             ? 'text-red-300'
                             : timeRemaining <= 10
                             ? 'text-yellow-300'
                             : 'text-vintage-gold'
                         }`}>
-                          <ClockIcon className="inline-block" size={24} /> {timeRemaining}s
+                          {timeRemaining === 0 && phase === 'card-selection' ? (
+                            <>⚡ REVEALING...</>
+                          ) : (
+                            <><ClockIcon className="inline-block" size={24} /> {timeRemaining}s</>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2645,9 +2834,11 @@ export function PokerBattleTable({
 
                 {/* PLAYER SECTION - YOUR HAND */}
                 <div className="text-center">
-                  <div className="text-vintage-gold font-display font-bold mb-2 text-sm">
-                    YOUR HAND
-                  </div>
+                  {!isSpectatorMode && (
+                    <div className="text-vintage-gold font-display font-bold mb-2 text-sm">
+                      YOUR HAND
+                    </div>
+                  )}
 
                   {/* Hand cards - Hidden for spectators */}
                   <div className="flex justify-center gap-1 sm:gap-2 mb-2">
@@ -2664,13 +2855,13 @@ export function PokerBattleTable({
                         } ${phase !== 'card-selection' || selectedAnte === 0 || isSpectatorMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}`}
                       >
                         {isSpectatorMode ? (
-                          // Show card back for spectators
-                          <img src="/images/card-back.png" alt="Hidden" className="w-full h-full object-cover" />
+                          // Show card back for spectators (collection-specific)
+                          <img src={getCardBack(room?.cpuCollection)} alt="Hidden" className="w-full h-full object-cover" />
                         ) : (
                           <FoilCardEffect foilType={card.foil as 'Standard' | 'Prize' | null} className="w-full h-full">
                             {(card.imageUrl || card.image) ? (
                               <CardMedia
-                                src={(card.imageUrl || card.image || '')}
+                                src={convertIpfsUrl(card.imageUrl || card.image) || ''}
                                 alt={card.name}
                                 className="w-full h-full object-cover"
                               />
@@ -2806,14 +2997,14 @@ export function PokerBattleTable({
                 <p className="text-lg sm:text-xl text-vintage-burnt-gold mb-3">Final Score</p>
                 <div className="flex justify-center items-center gap-4 mb-4">
                   <div className="text-center">
-                    <p className="text-xs text-vintage-gold/60 mb-1">{room?.hostUsername || 'Player 1'}</p>
+                    <p className="text-xs text-vintage-gold/60 mb-1 max-w-[100px] truncate">{room?.hostUsername || 'Player 1'}</p>
                     <p className={`text-4xl sm:text-5xl font-bold ${playerScore > opponentScore ? 'text-green-400' : playerScore < opponentScore ? 'text-red-400' : 'text-vintage-gold'}`}>
                       {playerScore}
                     </p>
                   </div>
                   <span className="text-2xl text-vintage-gold">-</span>
                   <div className="text-center">
-                    <p className="text-xs text-vintage-gold/60 mb-1">{room?.guestUsername || 'Player 2'}</p>
+                    <p className="text-xs text-vintage-gold/60 mb-1 max-w-[100px] truncate">{room?.guestUsername || 'Player 2'}</p>
                     <p className={`text-4xl sm:text-5xl font-bold ${opponentScore > playerScore ? 'text-green-400' : opponentScore < playerScore ? 'text-red-400' : 'text-vintage-gold'}`}>
                       {opponentScore}
                     </p>
@@ -2835,8 +3026,9 @@ export function PokerBattleTable({
         )}
 
         {/* ROUND WINNER ANNOUNCEMENT - Semi-transparent overlay positioned at top */}
-        {showRoundWinner && roundWinner && (
-          <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] flex items-start justify-center pt-12 z-[240] animate-in fade-in duration-300 pointer-events-none">
+        {/* Hide for spectators - they have their own bet feedback */}
+        {showRoundWinner && roundWinner && !isSpectatorMode && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] flex items-start justify-center pt-12 z-[100] animate-in fade-in duration-300 pointer-events-none">
             <div className={`bg-gradient-to-b rounded-2xl border-4 p-6 text-center shadow-2xl animate-in slide-in-from-top duration-500 ${
               roundWinner === 'player'
                 ? 'from-green-900/95 to-green-950/95 border-green-500'
@@ -3060,26 +3252,160 @@ export function PokerBattleTable({
           onClose={() => setShowSpectatorEntryModal(false)}
           onSuccess={(credits) => {
             console.log(`🎰 Received ${credits} betting credits`);
+            setSpectatorType('betting');
             setHasBettingCredits(true);
             setShowSpectatorEntryModal(false);
-            setShowBettingInterface(true);
+          }}
+          onJoinFree={() => {
+            console.log('👁️ Joined as free spectator');
+            setSpectatorType('free');
+            setIsSpectatorMode(true);
+            setHasBettingCredits(true); // Set to true to prevent modal from reopening
+            setShowSpectatorEntryModal(false);
           }}
           battleId={roomId}
+          playerAddress={playerAddress}
         />
       )}
 
-      {/* Betting Interface - Show for spectators with credits (any phase except game-over) */}
-      {isSpectatorMode && hasBettingCredits && showBettingInterface && room && phase !== 'game-over' && (
-        <div className="fixed bottom-4 right-4 z-[250] max-w-md">
-          <BettingInterface
-            roomId={roomId}
-            player1Address={room.hostAddress || ''}
-            player1Username={room.hostUsername || 'Player 1'}
-            player2Address={room.guestAddress || ''}
-            player2Username={room.guestUsername || 'Player 2'}
-            isGameStarted={phase !== 'deck-building' && phase !== 'card-selection'}
-            isGameOver={false}
-          />
+      {/* Simple Betting Overlay - Restored without R{round}/7 display */}
+      {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room &&
+       (phase === 'card-selection' || phase === 'reveal') && (
+        <SimpleBettingOverlay
+          roomId={roomId}
+          currentRound={currentRound}
+          player1Address={room.guestAddress || ''}
+          player1Username={room.guestUsername || 'Player 1'}
+          player2Address={room.hostAddress || ''}
+          player2Username={room.hostUsername || 'Player 2'}
+          spectatorAddress={playerAddress || ''}
+          cpuCollection={room?.cpuCollection}
+          onBetPlaced={() => {
+            console.log('✅ Bet placed successfully!');
+          }}
+        />
+      )}
+
+      {/* Spectator Bet Feedback - History panel + win/loss animations */}
+      {isSpectatorMode && spectatorType === 'betting' && hasBettingCredits && room && (
+        <SpectatorBetFeedback
+          roomId={roomId}
+          spectatorAddress={playerAddress || ''}
+          currentRound={currentRound}
+          lastRoundWinner={lastRoundWinnerAddress}
+          showResultAnimation={showBetResult}
+        />
+      )}
+
+      {/* Exit Confirmation Modal for Spectators */}
+      {showExitConfirmation && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] animate-in fade-in duration-300">
+          <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-yellow-500 p-6 text-center shadow-2xl max-w-md mx-4 animate-in zoom-in duration-300">
+            <div className="text-5xl mb-4">💰</div>
+            <h3 className="text-2xl font-display font-bold text-vintage-gold mb-4">
+              Exit CPU Arena?
+            </h3>
+            <div className="mb-6 space-y-3">
+              <p className="text-vintage-ice text-lg">
+                You have <span className="text-yellow-400 font-bold">{bettingCreditsData?.balance || 0}</span> betting credits
+              </p>
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                <p className="text-yellow-300 text-sm">
+                  If you leave, your credits will be converted to <span className="font-bold">TESTVBMS</span> and added to your balance.
+                </p>
+              </div>
+              {room?.isCpuVsCpu && room?.spectators?.length === 1 && (
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                  <p className="text-orange-300 text-sm">
+                    ⚠️ You are the last spectator. The CPU Arena room will be closed.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowExitConfirmation(false)}
+                disabled={isLeaving}
+                className="px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmExit}
+                disabled={isLeaving}
+                className="px-6 py-3 bg-gradient-to-br from-yellow-500 to-orange-500 text-black font-bold rounded-lg hover:from-yellow-400 hover:to-orange-400 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLeaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    Leaving...
+                  </>
+                ) : (
+                  <>Exit & Convert</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Free Spectator Badge - Show if watching for free */}
+      {isSpectatorMode && spectatorType === 'free' && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-blue-600/90 backdrop-blur-md border-2 border-blue-400 rounded-lg px-4 py-2">
+          <p className="text-white text-sm font-bold text-center flex items-center gap-2">
+            <span>👁️</span>
+            <span>Free Viewer</span>
+          </p>
+        </div>
+      )}
+
+      {/* Spectator Betting Result (Mecha Arena) */}
+      {showSpectatorResult && spectatorType === 'betting' && (
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[400] p-4">
+          <div className="bg-vintage-charcoal border-4 border-vintage-gold rounded-xl p-6 max-w-md w-full text-center space-y-6 shadow-2xl">
+            {/* Title */}
+            <h2 className="text-vintage-gold font-display font-bold text-3xl">
+              🎰 MECHA ARENA
+            </h2>
+
+            {/* Result */}
+            <div className="space-y-2">
+              <p className="text-white text-xl font-semibold">
+                {spectatorNetGains >= 0 ? '🎉 YOU WON!' : '💔 YOU LOST'}
+              </p>
+              <div className={`text-5xl font-bold ${spectatorNetGains >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {spectatorNetGains >= 0 ? '+' : ''}{spectatorNetGains} $VBMS
+              </div>
+              <p className="text-gray-400 text-sm">
+                from betting on Mecha Arena
+              </p>
+            </div>
+
+            {/* Share Button */}
+            <button
+              onClick={() => {
+                const outcome = spectatorNetGains >= 0 ? 'win' : 'loss';
+                const amount = Math.abs(spectatorNetGains);
+                const shareUrl = `https://www.vibemostwanted.xyz/share/mecha/${outcome}|${amount}`;
+                const text = spectatorNetGains >= 0
+                  ? `I won +${spectatorNetGains} coins betting on Mecha Arena! 🎰\n\ncc @jvhbo`
+                  : `I lost ${Math.abs(spectatorNetGains)} coins betting on Mecha Arena 💔\n\ncc @jvhbo`;
+                const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                window.open(url, '_blank');
+              }}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+            >
+              📣 Share Result
+            </button>
+
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
 
@@ -3112,6 +3438,38 @@ export function PokerBattleTable({
         handleClaimWelcomePack={() => {}}
         t={(key: string) => key} // Simple mock translation
       />
+
+      {/* Custom animations for spectator mode */}
+      <style jsx>{`
+        @keyframes flip {
+          0% {
+            transform: rotateY(90deg) scale(0.8);
+            opacity: 0;
+          }
+          50% {
+            transform: rotateY(45deg) scale(1.05);
+          }
+          100% {
+            transform: rotateY(0deg) scale(1);
+            opacity: 1;
+          }
+        }
+
+        @keyframes glow {
+          0%, 100% {
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+          }
+          50% {
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.9));
+          }
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+          20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -27,11 +27,16 @@ export default defineSchema({
       openedCards: v.number(),
       unopenedCards: v.number(),
 
+      // Aura System (unified leaderboard ranking)
+      aura: v.optional(v.number()), // Default: 500, primary ranking criteria
+      honor: v.optional(v.number()), // DEPRECATED - kept for old data migration only
+
       // Collection-specific power (for leaderboard filtering)
       vibePower: v.optional(v.number()),
       vbrsPower: v.optional(v.number()),
       vibefidPower: v.optional(v.number()),
       afclPower: v.optional(v.number()),
+      coqPower: v.optional(v.number()),
 
       // PvE Stats
       pveWins: v.number(),
@@ -133,6 +138,7 @@ export default defineSchema({
     twitterProfileImageUrl: v.optional(v.string()), // Twitter profile picture URL
     fid: v.optional(v.string()), // Farcaster ID
     farcasterFid: v.optional(v.number()), // Farcaster numeric FID for notifications
+    farcasterPfpUrl: v.optional(v.string()), // Farcaster profile picture URL
 
     // Share Incentives
     dailyShares: v.optional(v.number()), // Shares today (resets daily)
@@ -146,6 +152,11 @@ export default defineSchema({
     lastActiveDate: v.optional(v.number()), // Last time player was active (for reminder eligibility)
     notificationsEnabled: v.optional(v.boolean()), // Opt-out flag (default true)
 
+    // Custom Music Settings
+    customMusicUrl: v.optional(v.string()), // YouTube URL or direct audio URL for background music (legacy)
+    musicPlaylist: v.optional(v.array(v.string())), // Array of URLs for playlist mode
+    lastPlayedIndex: v.optional(v.number()), // Track which song was last played
+
     // Metadata
     userIndex: v.optional(v.number()),
     createdAt: v.number(), // timestamp
@@ -154,7 +165,8 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_username", ["username"])
-    .index("by_total_power", ["stats.totalPower"]), // For leaderboard
+    .index("by_total_power", ["stats.totalPower"]) // For leaderboard (legacy)
+    .index("by_aura", ["stats.aura"]), // For aura-based leaderboard
 
   // Player Matches (Match History)
   matches: defineTable({
@@ -375,6 +387,18 @@ export default defineSchema({
     .index("by_player_week", ["playerAddress", "weekStart"])
     .index("by_week", ["weekStart", "claimedAt"]),
 
+  // Social Quest Progress (follow/channel quests)
+  socialQuestProgress: defineTable({
+    playerAddress: v.string(),
+    questId: v.string(), // "follow_jvhbo", "join_vibe_most_wanted", etc.
+    completed: v.boolean(),
+    completedAt: v.optional(v.number()),
+    claimed: v.boolean(),
+    claimedAt: v.optional(v.number()),
+  })
+    .index("by_player", ["playerAddress"])
+    .index("by_player_quest", ["playerAddress", "questId"]),
+
   // Personal Missions (daily bonuses that need to be claimed)
   personalMissions: defineTable({
     playerAddress: v.string(),
@@ -386,7 +410,8 @@ export default defineSchema({
       v.literal("welcome_gift"),
       v.literal("streak_3"),
       v.literal("streak_5"),
-      v.literal("streak_10")
+      v.literal("streak_10"),
+      v.literal("vibefid_minted")
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player
@@ -473,6 +498,10 @@ export default defineSchema({
     // Blockchain Integration
     blockchainBattleId: v.optional(v.number()), // ID from smart contract
 
+    // CPU vs CPU Mode
+    isCpuVsCpu: v.optional(v.boolean()), // If true, both players are CPUs
+    cpuCollection: v.optional(v.string()), // Collection for CPU decks (e.g., "gmvbrs")
+
     // Players
     hostAddress: v.string(),
     hostUsername: v.string(),
@@ -512,6 +541,13 @@ export default defineSchema({
       hostBet: v.optional(v.number()),
       guestBet: v.optional(v.number()),
       lastAction: v.optional(v.string()), // Last player action for turn order
+
+      // CPU vs CPU fields
+      roundWinner: v.optional(v.union(v.literal("host"), v.literal("guest"), v.literal("tie"))), // Winner of current round
+      hostUsedCards: v.optional(v.array(v.number())), // Indices of cards used by host
+      guestUsedCards: v.optional(v.array(v.number())), // Indices of cards used by guest
+      bettingWindowEndsAt: v.optional(v.number()), // Timestamp when betting window closes (for CPU vs CPU)
+      revealScheduledFor: v.optional(v.number()), // Timestamp when reveal is scheduled (prevents duplicate scheduling)
     })),
 
     // Round History (for displaying all 7 rounds to all players/spectators)
@@ -556,8 +592,8 @@ export default defineSchema({
     roomId: v.string(), // Which poker room this bet is for
     bettor: v.string(), // Spectator's wallet address (lowercase)
     bettorUsername: v.string(), // Display name
-    betOn: v.string(), // Address of player being bet on (hostAddress or guestAddress)
-    betOnUsername: v.string(), // Username of player being bet on
+    betOn: v.string(), // Address of player being bet on (hostAddress or guestAddress) or "tie" for draw bets
+    betOnUsername: v.string(), // Username of player being bet on or "Tie/Draw"
     amount: v.number(), // Bet amount in tokens
     token: v.union(
       v.literal("TESTVBMS"),
@@ -572,6 +608,7 @@ export default defineSchema({
       v.literal("refunded") // Game cancelled, bet refunded
     ),
     payout: v.optional(v.number()), // Amount paid out if won
+    odds: v.optional(v.number()), // Payout multiplier (3x for player win, higher for tie)
     timestamp: v.number(), // When bet was placed
     resolvedAt: v.optional(v.number()), // When bet was resolved
   })
@@ -599,7 +636,8 @@ export default defineSchema({
       v.literal("bet"), // Placed a bet
       v.literal("win"), // Won a bet
       v.literal("loss"), // Lost a bet
-      v.literal("withdraw") // Withdrew credits to VBMS
+      v.literal("withdraw"), // Withdrew credits to VBMS
+      v.literal("refund") // Refunded bet (tie round)
     ),
     amount: v.number(), // Transaction amount (negative for bets/losses)
     roomId: v.optional(v.string()), // Room ID if bet-related
@@ -614,9 +652,9 @@ export default defineSchema({
     roomId: v.string(), // Which poker room
     roundNumber: v.number(), // 1-7
     bettor: v.string(), // Spectator's address (lowercase)
-    betOn: v.string(), // Address of player bet on (hostAddress or guestAddress)
+    betOn: v.string(), // Address of player bet on (hostAddress or guestAddress) or "tie" for draw bets
     amount: v.number(), // Credits bet
-    odds: v.number(), // Multiplier (1.5, 1.8, 2.0)
+    odds: v.number(), // Multiplier (1.5, 1.8, 2.0 for players; higher for tie)
     status: v.union(
       v.literal("active"), // Round in progress
       v.literal("won"), // Won - credits paid
@@ -639,6 +677,7 @@ export default defineSchema({
     timestamp: v.number(), // When entry fee was paid
     used: v.boolean(), // Whether this entry fee was used for a battle
     usedAt: v.optional(v.number()), // When it was used
+    verified: v.optional(v.boolean()), // Whether TX was verified on blockchain
   })
     .index("by_address", ["address"])
     .index("by_txHash", ["txHash"])
@@ -740,6 +779,9 @@ export default defineSchema({
     // Owner
     address: v.string(), // Wallet address of card owner
 
+    // Contract Info
+    contractAddress: v.optional(v.string()), // NFT contract address (VibeFID V1 or V2)
+
     // Card Properties (same as other cards)
     cardId: v.string(), // Unique card ID (farcaster_{fid})
     rarity: v.string(), // "Common", "Rare", "Epic", "Legendary", "Mythic"
@@ -760,8 +802,10 @@ export default defineSchema({
     followingCount: v.number(),
     powerBadge: v.boolean(),
 
-    // Card Image (generated by Nanobanana IA)
-    imageUrl: v.string(), // Generated card image URL
+    // Card Images
+    imageUrl: v.string(), // Video with foil animation (MP4)
+    cardImageUrl: v.optional(v.string()), // Static card image (PNG) for sharing
+    shareImageUrl: v.optional(v.string()), // Share image with card + criminal text (PNG)
 
     // Game State
     equipped: v.boolean(), // If card is equipped in deck
@@ -774,7 +818,8 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_address_equipped", ["address", "equipped"])
     .index("by_rarity", ["rarity"])
-    .index("by_score", ["neynarScore"]),
+    .index("by_score", ["neynarScore"])
+    .index("by_contract", ["contractAddress"]),
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // WEBRTC VOICE CHAT SIGNALING
@@ -796,4 +841,322 @@ export default defineSchema({
   })
     .index("by_room", ["roomId", "timestamp"])
     .index("by_recipient", ["recipient", "processed", "timestamp"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // RAID BOSS MODE (Global Cooperative Boss Battles)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Global Raid Boss State (only 1 active boss at a time)
+  raidBoss: defineTable({
+    // Boss Info
+    bossIndex: v.number(), // 0-19 (loops through 20 bosses)
+    collection: v.string(), // 'gmvbrs', 'vibe', 'vibefid', 'americanfootball'
+    rarity: v.string(), // 'Common', 'Rare', 'Epic', 'Legendary', 'Mythic'
+
+    // Boss Card Data
+    tokenId: v.string(), // Boss card tokenId
+    name: v.string(), // Boss name
+    imageUrl: v.string(), // Boss image
+    power: v.number(), // Boss power
+
+    // Boss Stats
+    maxHp: v.number(), // Max HP based on rarity
+    currentHp: v.number(), // Current HP remaining
+
+    // Boss State
+    status: v.union(
+      v.literal("active"), // Currently active, taking damage
+      v.literal("defeated"), // Defeated, transitioning to next
+      v.literal("transitioning") // Brief period between bosses
+    ),
+
+    // Timestamps
+    spawnedAt: v.number(), // When this boss spawned
+    defeatedAt: v.optional(v.number()), // When defeated
+    lastAttackAt: v.optional(v.number()), // Last automatic attack cycle
+  })
+    .index("by_status", ["status"])
+    .index("by_boss_index", ["bossIndex"]),
+
+  // Player Raid Decks & Energy
+  raidAttacks: defineTable({
+    // Player Info
+    address: v.string(), // Player wallet address
+    username: v.optional(v.string()), // 🚀 Cached username to avoid N+1 profile lookups
+
+    // Raid Deck (5 regular cards)
+    deck: v.array(v.object({
+      tokenId: v.string(),
+      collection: v.optional(v.string()),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+      isFreeCard: v.optional(v.boolean()), // For buff system: free cards don't get buffs
+    })),
+
+    // VibeFID Special Slot (6th card - optional, infinite energy, +10% deck power)
+    vibefidCard: v.optional(v.object({
+      tokenId: v.string(),
+      collection: v.string(),
+      power: v.number(),
+      imageUrl: v.string(),
+      name: v.string(),
+      rarity: v.string(),
+      foil: v.optional(v.string()),
+    })),
+
+    // Deck Stats
+    deckPower: v.number(), // Total power of all cards (including VibeFID bonus)
+
+    // Energy System (duration-based: cards attack every 5 min until energy expires)
+    cardEnergy: v.array(v.object({
+      tokenId: v.string(),
+      energyExpiresAt: v.number(), // Timestamp when energy expires (0 = infinite for VibeFID)
+      lastAttackAt: v.optional(v.number()), // Last time this card attacked
+      nextAttackAt: v.optional(v.number()), // When card can attack again (every 5 minutes)
+    })),
+
+    // Entry Fee
+    entryFeePaid: v.boolean(), // Whether 5 VBMS entry fee was paid
+    entryTxHash: v.optional(v.string()), // Blockchain TX hash for entry
+    entryPaidAt: v.optional(v.number()), // When entry fee was paid
+
+    // Stats
+    totalDamageDealt: v.number(), // Total damage dealt to all bosses (lifetime)
+    bossesKilled: v.number(), // Number of bosses player helped kill
+
+    // Timestamps
+    createdAt: v.number(),
+    lastUpdated: v.number(),
+  })
+    .index("by_address", ["address"])
+    .index("by_total_damage", ["totalDamageDealt"])
+    .index("by_last_updated", ["lastUpdated"]), // 🚀 For filtering active decks
+
+  // Raid Contributions (per boss, per player)
+  raidContributions: defineTable({
+    // Boss Info
+    bossIndex: v.number(), // Which boss (0-19)
+
+    // Player Info
+    address: v.string(), // Player wallet address
+    username: v.string(), // Player username
+
+    // Contribution Stats
+    damageDealt: v.number(), // Total damage dealt to this boss
+    attackCount: v.number(), // Number of attacks on this boss
+
+    // Rewards
+    rewardEarned: v.number(), // $TESTVBMS earned (based on % contribution)
+    rewardClaimed: v.boolean(), // Whether reward was claimed
+    claimedAt: v.optional(v.number()),
+
+    // Timestamps
+    firstAttackAt: v.number(), // First attack on this boss
+    lastAttackAt: v.number(), // Last attack on this boss
+  })
+    .index("by_boss", ["bossIndex", "damageDealt"]) // For leaderboard
+    .index("by_player", ["address", "bossIndex"])
+    .index("by_boss_player", ["bossIndex", "address"]),
+
+  // Raid History (defeated bosses)
+  raidHistory: defineTable({
+    // Boss Info
+    bossIndex: v.number(), // Which boss was defeated
+    collection: v.string(),
+    rarity: v.string(),
+    name: v.string(),
+    imageUrl: v.string(),
+    maxHp: v.number(),
+
+    // Battle Stats
+    totalDamage: v.number(), // Total damage dealt by all players
+    totalPlayers: v.number(), // Number of players who participated
+    totalAttacks: v.number(), // Total number of attacks
+
+    // Top Contributors (top 10 players)
+    topContributors: v.array(v.object({
+      address: v.string(),
+      username: v.string(),
+      damage: v.number(),
+      reward: v.number(),
+    })),
+
+    // Timestamps
+    spawnedAt: v.number(), // When boss spawned
+    defeatedAt: v.number(), // When boss was defeated
+    duration: v.number(), // How long it took to defeat (seconds)
+  })
+    .index("by_boss_index", ["bossIndex"])
+    .index("by_defeated_at", ["defeatedAt"]),
+
+  // Raid Energy Refuel Transactions
+  raidRefuels: defineTable({
+    // Player Info
+    address: v.string(), // Player wallet address
+
+    // Refuel Info
+    cardsRefueled: v.array(v.string()), // Token IDs of cards refueled
+    amount: v.number(), // VBMS amount paid (1 per card, or 4 for 5 cards)
+    txHash: v.string(), // Blockchain transaction hash
+
+    // Timestamps
+    timestamp: v.number(),
+  })
+    .index("by_address", ["address", "timestamp"])
+    .index("by_txHash", ["txHash"]),
+
+  // =============================================
+  // CPU vs CPU ARENA (Spectator Betting)
+  // =============================================
+
+  // CPU Arena - Automated CPU vs CPU battles
+  cpuArena: defineTable({
+    status: v.string(), // 'waiting' | 'betting' | 'revealing' | 'finished'
+    currentRound: v.number(), // 1-7
+
+    // CPU Players (auto-generated)
+    cpu1Name: v.string(),
+    cpu1Deck: v.array(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      power: v.number(),
+      rarity: v.string(),
+      collection: v.optional(v.string()),
+    })),
+    cpu1Score: v.number(),
+    cpu1Card: v.optional(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      power: v.number(),
+      rarity: v.string(),
+    })),
+
+    cpu2Name: v.string(),
+    cpu2Deck: v.array(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      power: v.number(),
+      rarity: v.string(),
+      collection: v.optional(v.string()),
+    })),
+    cpu2Score: v.number(),
+    cpu2Card: v.optional(v.object({
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      power: v.number(),
+      rarity: v.string(),
+    })),
+
+    // Round winner
+    roundWinner: v.optional(v.string()), // 'cpu1' | 'cpu2' | 'tie'
+
+    // Timing
+    roundStartedAt: v.number(),
+    bettingEndsAt: v.number(), // +15 seconds from round start
+
+    // Spectators
+    spectators: v.array(v.object({
+      address: v.string(),
+      username: v.string(),
+      joinedAt: v.number(),
+    })),
+
+    // Round History
+    roundHistory: v.array(v.object({
+      round: v.number(),
+      cpu1Card: v.object({
+        name: v.string(),
+        power: v.number(),
+        imageUrl: v.string(),
+      }),
+      cpu2Card: v.object({
+        name: v.string(),
+        power: v.number(),
+        imageUrl: v.string(),
+      }),
+      winner: v.string(), // 'cpu1' | 'cpu2' | 'tie'
+    })),
+
+    // Final result
+    winner: v.optional(v.string()), // 'cpu1' | 'cpu2'
+
+    // Timestamps
+    createdAt: v.number(),
+    finishedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"]),
+
+  // Arena Bets - Per-round betting
+  arenaBets: defineTable({
+    arenaId: v.id("cpuArena"),
+    roundNumber: v.number(),
+    address: v.string(),
+    username: v.string(),
+    betOn: v.string(), // 'cpu1' | 'cpu2'
+    amount: v.number(), // Betting credits
+    odds: v.number(), // 1.5, 1.8, or 2.0
+    status: v.string(), // 'pending' | 'won' | 'lost'
+    payout: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_arena_round", ["arenaId", "roundNumber"])
+    .index("by_address", ["address"]),
+
+  // Coin Transaction History
+  coinTransactions: defineTable({
+    address: v.string(), // Player address
+    type: v.string(), // 'earn' | 'claim' | 'convert' | 'spend'
+    amount: v.number(), // Amount of coins/VBMS
+    source: v.optional(v.string()), // 'pve', 'pvp', 'leaderboard', 'attack', 'boss', 'shop', etc
+    description: v.string(), // Human readable description
+    balanceBefore: v.number(), // Balance before transaction
+    balanceAfter: v.number(), // Balance after transaction
+    timestamp: v.number(), // When it happened
+    txHash: v.optional(v.string()), // Blockchain tx hash (for conversions)
+  })
+    .index("by_address", ["address"])
+    .index("by_address_timestamp", ["address", "timestamp"]),
+
+  // Price Ticker Snapshots (Daily price history for showing up/down trends)
+  priceSnapshots: defineTable({
+    date: v.string(), // "2025-12-03" format
+    prices: v.array(v.object({
+      collectionId: v.string(), // "vibe", "gmvbrs", etc.
+      priceEth: v.number(), // Price in ETH
+      priceUsd: v.number(), // Price in USD at snapshot time
+    })),
+    ethUsdPrice: v.number(), // ETH/USD rate at snapshot time
+    timestamp: v.number(), // Exact timestamp of snapshot
+  })
+    .index("by_date", ["date"]),
+
+  // Featured Casts - Farcaster casts to display in Social Quests carousel
+  featuredCasts: defineTable({
+    castHash: v.string(), // Farcaster cast hash (0x...)
+    warpcastUrl: v.string(), // Full warpcast URL for opening
+    order: v.number(), // Display order (0, 1, 2)
+    active: v.boolean(), // Whether to show this cast
+    addedAt: v.number(), // Timestamp when added
+    addedBy: v.optional(v.string()), // Admin who added it
+  })
+    .index("by_order", ["order"])
+    .index("by_active", ["active"]),
+
+  // Cast Interactions - Track user interactions with featured casts for rewards
+  castInteractions: defineTable({
+    playerAddress: v.string(),
+    castHash: v.string(),
+    interactionType: v.union(v.literal("like"), v.literal("recast"), v.literal("reply")),
+    claimed: v.boolean(),
+    claimedAt: v.number(),
+  })
+    .index("by_player", ["playerAddress"])
+    .index("by_player_cast", ["playerAddress", "castHash"]),
 });

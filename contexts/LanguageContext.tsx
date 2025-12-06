@@ -16,21 +16,34 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   // Load language from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem('language') as SupportedLanguage;
-    if (stored && (stored === 'pt-BR' || stored === 'en' || stored === 'es' || stored === 'hi' || stored === 'ru' || stored === 'zh-CN')) {
-      setLangState(stored);
+    try {
+      const stored = localStorage.getItem('language') as SupportedLanguage;
+      if (stored && (stored === 'pt-BR' || stored === 'en' || stored === 'es' || stored === 'hi' || stored === 'ru' || stored === 'zh-CN')) {
+        setLangState(stored);
+      }
+    } catch (error) {
+      // localStorage might not be available in some contexts (e.g., Farcaster miniapp iframe)
+      console.warn('localStorage not available, using default language');
     }
   }, []);
 
   // Save language to localStorage when it changes
   const setLang = useCallback((newLang: SupportedLanguage) => {
     setLangState(newLang);
-    localStorage.setItem('language', newLang);
+    try {
+      localStorage.setItem('language', newLang);
+    } catch (error) {
+      // localStorage might not be available in some contexts (e.g., Farcaster miniapp iframe)
+      console.warn('localStorage not available, cannot persist language preference');
+    }
   }, []);
 
-  // Translation function
+  // Translation function with English fallback for missing keys
   const t = useCallback((key: TranslationKey, params: Record<string, any> = {}) => {
-    let text = (translations as any)[lang][key] || key;
+    // Try current language first, then fall back to English, then to key itself
+    let text = (translations as any)[lang][key]
+      || (translations as any)['en'][key]
+      || key;
 
     // Replace parameters in the text
     Object.entries(params).forEach(([k, v]) => {

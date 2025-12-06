@@ -97,7 +97,7 @@ export function PvPInRoomModal({
             {/* Host */}
             <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-neon-blue/50">
               <p className="text-vintage-neon-blue font-bold mb-2 font-modern">Host</p>
-              <p className="text-white text-sm font-mono">{currentRoom.hostUsername || `${currentRoom.hostAddress.slice(0, 10)}...`}</p>
+              <p className="text-white text-sm font-mono truncate max-w-[150px]">{currentRoom.hostUsername || `${currentRoom.hostAddress.slice(0, 10)}...`}</p>
               <p className="text-vintage-burnt-gold text-sm">
                 {(currentRoom.hostCards && currentRoom.hostCards.length > 0) ? '✓ Ready' : '... Selecting cards'}
               </p>
@@ -108,7 +108,7 @@ export function PvPInRoomModal({
               <p className="text-vintage-gold font-bold mb-2 font-modern">{t('opponent')}</p>
               {currentRoom.guestAddress ? (
                 <>
-                  <p className="text-white text-sm font-mono">{currentRoom.guestUsername || `${currentRoom.guestAddress.slice(0, 10)}...`}</p>
+                  <p className="text-white text-sm font-mono truncate max-w-[150px]">{currentRoom.guestUsername || `${currentRoom.guestAddress.slice(0, 10)}...`}</p>
                   <p className="text-vintage-burnt-gold text-sm">
                     {(currentRoom.guestCards && currentRoom.guestCards.length > 0) ? '✓ Ready' : '... Selecting cards'}
                   </p>

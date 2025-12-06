@@ -8,8 +8,9 @@
 export function isMiniappMode(): boolean {
   if (typeof window === 'undefined') return false;
 
-  // Check if running in iframe (Farcaster miniapp)
-  return window.parent !== window;
+  // Simple check: are we in an iframe?
+  // This is reliable for Farcaster miniapps
+  return window.self !== window.top;
 }
 
 export function shouldSkipHeavyQueries(): boolean {

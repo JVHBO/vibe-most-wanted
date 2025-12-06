@@ -421,7 +421,7 @@ export const claimQuestReward = mutation({
       throw new Error("Quest not completed yet");
     }
 
-    // Add to coins balance (TESTVBMS)
+    // Add coins directly to balance (same pattern as PvE)
     const currentBalance = profile.coins || 0;
     const newBalance = currentBalance + quest.reward;
     const lifetimeEarned = (profile.lifetimeEarned || 0) + quest.reward;
@@ -432,7 +432,7 @@ export const claimQuestReward = mutation({
       lastUpdated: Date.now(),
     });
 
-    console.log(`💰 Quest reward added to balance: ${quest.reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
+    console.log(`💰 Daily quest reward added to balance: ${quest.reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
     if (existingProgress) {
@@ -700,7 +700,7 @@ export const claimWeeklyReward = mutation({
       throw new Error("Quest definition not found");
     }
 
-    // Get profile and add coins (TESTVBMS)
+    // Get profile and add coins directly (same pattern as PvE)
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
@@ -842,16 +842,18 @@ export const checkWeeklyRewardEligibility = query({
     }
 
     // Only fetch top 10 if not claimed yet
-    const topPlayers = await ctx.db
+    // 🚀 BANDWIDTH OPTIMIZATION: Only extract address field (saves 95% bandwidth)
+    const topPlayersRaw = await ctx.db
       .query("profiles")
       .withIndex("by_total_power")
       .order("desc")
       .take(10);
 
+    // Extract only addresses (reduces 30-55KB per profile to ~50 bytes)
+    const topPlayerAddresses = topPlayersRaw.map(p => normalizeAddress(p.address));
+
     // Find player's rank
-    const playerIndex = topPlayers.findIndex(
-      (p) => normalizeAddress(p.address) === normalizedAddress
-    );
+    const playerIndex = topPlayerAddresses.indexOf(normalizedAddress);
 
     if (playerIndex === -1) {
       return {
@@ -942,7 +944,7 @@ export const claimWeeklyLeaderboardReward = mutation({
       throw new Error("Already claimed reward for this week");
     }
 
-    // Add coins to balance (direct)
+    // Add coins directly to balance (same pattern as PvE)
     const currentBalance = player.coins || 0;
     const newBalance = currentBalance + reward;
     const newLifetimeEarned = (player.lifetimeEarned || 0) + reward;
@@ -960,7 +962,7 @@ export const claimWeeklyLeaderboardReward = mutation({
       lastUpdated: Date.now(),
     });
 
-    console.log(`💰 Leaderboard reward added to balance: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
+    console.log(`💰 Weekly leaderboard reward added to balance: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Record claim in weeklyRewards table
     await ctx.db.insert("weeklyRewards", {

@@ -135,6 +135,7 @@ export class ConvexProfileService {
 
   /**
    * Get leaderboard (top players by power)
+   * Shows all players (increased limit to 1000)
    */
   static async getLeaderboard(limit: number = 1000): Promise<UserProfile[]> {
     try {

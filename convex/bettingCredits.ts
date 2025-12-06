@@ -13,6 +13,9 @@ import { mutation, query } from "./_generated/server";
  * ADD BETTING CREDITS
  * Called after player deposits VBMS to betting contract
  */
+// Maximum entry limit for Mecha Arena
+const MAX_BETTING_CREDITS = 10000;
+
 export const addBettingCredits = mutation({
   args: {
     address: v.string(),
@@ -22,6 +25,11 @@ export const addBettingCredits = mutation({
   handler: async (ctx, args) => {
     const { address, amount, txHash } = args;
     const normalizedAddress = address.toLowerCase();
+
+    // Enforce maximum entry limit
+    if (amount > MAX_BETTING_CREDITS) {
+      throw new Error(`Maximum entry is ${MAX_BETTING_CREDITS} VBMS`);
+    }
 
     // Check if this txHash was already processed
     const existingCredit = await ctx.db
@@ -33,11 +41,16 @@ export const addBettingCredits = mutation({
       throw new Error("Transaction already processed");
     }
 
-    // Get or create betting credits balance
+    // Check total balance won't exceed maximum
     let credits = await ctx.db
       .query("bettingCredits")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
+
+    const currentBalance = credits?.balance || 0;
+    if (currentBalance + amount > MAX_BETTING_CREDITS) {
+      throw new Error(`Maximum balance is ${MAX_BETTING_CREDITS} credits. You have ${currentBalance} credits.`);
+    }
 
     if (credits) {
       // Add to existing balance
@@ -399,6 +412,58 @@ export const getBettingStats = query({
       totalLosses,
       netProfit: totalWinnings - totalLosses - totalWagered,
       winRate: bets.length > 0 ? (wonBets.length / (wonBets.length + lostBets.length)) * 100 : 0,
+    };
+  },
+});
+
+/**
+ * CLAIM FREE STARTER CREDITS
+ * New users get 100 free betting credits to start
+ */
+export const claimStarterCredits = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const normalizedAddress = args.address.toLowerCase();
+
+    // Check if user already has betting credits
+    const existing = await ctx.db
+      .query("bettingCredits")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (existing) {
+      return {
+        success: false,
+        message: "You already have betting credits",
+        balance: existing.balance,
+      };
+    }
+
+    // Create new balance with 100 free credits
+    await ctx.db.insert("bettingCredits", {
+      address: normalizedAddress,
+      balance: 100,
+      totalDeposited: 0,
+      totalWithdrawn: 0,
+      lastDeposit: Date.now(),
+    });
+
+    // Log the free credits
+    await ctx.db.insert("bettingTransactions", {
+      address: normalizedAddress,
+      type: "deposit",
+      amount: 100,
+      timestamp: Date.now(),
+    });
+
+    console.log(`🎁 Free starter credits claimed: ${normalizedAddress}`);
+
+    return {
+      success: true,
+      message: "100 free betting credits claimed!",
+      balance: 100,
     };
   },
 });

@@ -11,6 +11,8 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import Image from "next/image";
+import { useBodyScrollLock, useEscapeKey } from "@/hooks";
+import { Z_INDEX } from "@/lib/z-index";
 
 const NextImage = Image;
 
@@ -28,6 +30,10 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   const { address } = useAccount();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+
+  // Modal accessibility hooks
+  useBodyScrollLock(true);
+  useEscapeKey(onClose);
 
   // Check if we should use Farcaster SDK for transactions
   useEffect(() => {
@@ -276,7 +282,8 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+      style={{ zIndex: Z_INDEX.modal }}
       onClick={onClose}
     >
       <div
@@ -289,7 +296,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-vintage-deep-black/50 hover:bg-vintage-gold/20 text-vintage-gold/60 hover:text-vintage-gold transition-all"
+          className="absolute top-2 right-2 z-10 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-vintage-deep-black/50 hover:bg-vintage-gold/20 text-vintage-gold/60 hover:text-vintage-gold transition-all"
         >
           ✕
         </button>
@@ -310,15 +317,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         </div>
 
         <div className="px-6 pb-6 space-y-4">
-          {/* Warning - Claims only work on miniapp */}
-          <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-3">
-            <p className="text-xs text-blue-300 text-center leading-relaxed flex items-center justify-center gap-2">
-              <NextImage src="/images/icons/warning.svg" alt="Warning" width={16} height={16} className="w-4 h-4" />
-              <span className="font-semibold">Claims only work on Farcaster miniapp</span>
-            </p>
-          </div>
-
-          {/* TESTVBMS Balance (what you can convert) */}
+                    {/* TESTVBMS Balance (what you can convert) */}
           <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-6 mb-4">
             <div className="text-center">
               <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wide flex items-center justify-center gap-2">

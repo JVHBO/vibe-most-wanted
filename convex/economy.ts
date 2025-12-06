@@ -229,26 +229,46 @@ export const resetDailyLimits = mutation({
 });
 
 /**
- * Get opponent's leaderboard ranking
+ * Get opponent's leaderboard ranking (OPTIMIZED V2)
  * Returns ranking position (1 = first place) or 999 if not ranked
+ *
+ * OPTIMIZATION V2: Use aura-based ranking with efficient counting
+ * - Gets opponent's aura from their profile (1 read)
+ * - Uses take() with limit to avoid reading all docs
+ * - Falls back to approximate ranking for very low ranks
  */
 async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<number> {
-  const leaderboard = await ctx.db
+  // Step 1: Get opponent's profile to know their aura
+  const opponent = await ctx.db
     .query("profiles")
-    .filter((q: any) => q.gte(q.field("stats.totalPower"), 0))
-    .collect();
+    .withIndex("by_address", (q: any) => q.eq("address", opponentAddress.toLowerCase()))
+    .first();
 
-  // Sort by total power (descending)
-  const sorted = leaderboard.sort((a: any, b: any) =>
-    (b.stats?.totalPower || 0) - (a.stats?.totalPower || 0)
-  );
+  if (!opponent) {
+    return 999; // Not found = unranked
+  }
 
-  // Find opponent's position
-  const position = sorted.findIndex((p: any) =>
-    p.address.toLowerCase() === opponentAddress.toLowerCase()
-  );
+  const opponentAura = opponent.stats?.aura ?? 500;
 
-  return position === -1 ? 999 : position + 1; // 1-indexed
+  // Step 2: Count profiles with higher aura (limited to top 200 for efficiency)
+  // For ranking bonuses, we only care about approximate position
+  const MAX_RANK_CHECK = 200;
+
+  const higherAuraProfiles = await ctx.db
+    .query("profiles")
+    .withIndex("by_aura")
+    .order("desc")
+    .filter((q: any) => q.gt(q.field("stats.aura"), opponentAura))
+    .take(MAX_RANK_CHECK);
+
+  // If we found MAX_RANK_CHECK profiles with higher aura, return MAX_RANK_CHECK+1 as approximate
+  // This is good enough for ranking bonus calculations
+  if (higherAuraProfiles.length >= MAX_RANK_CHECK) {
+    return MAX_RANK_CHECK + 1;
+  }
+
+  // Ranking = number of players with higher aura + 1
+  return higherAuraProfiles.length + 1;
 }
 
 /**
@@ -601,9 +621,16 @@ export const awardPvECoins = mutation({
     // Award coins to balance (direct)
     if (!skipCoins) {
       const currentBalance = profile.coins || 0;
+      const currentAura = profile.stats?.aura ?? 500;
+      const auraReward = won ? 5 : 0; // +5 aura for winning PvE
+
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
+        stats: {
+          ...profile.stats,
+          aura: currentAura + auraReward, // Award aura for PvE win
+        },
         dailyLimits: {
           ...dailyLimits,
           pveWins: dailyLimits.pveWins + 1,
@@ -611,7 +638,7 @@ export const awardPvECoins = mutation({
         // lastPvEAward already updated immediately after rate limit check (line 491)
       });
 
-      console.log(`💰 PvE reward added to balance: ${totalReward} TESTVBMS for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}`);
+      console.log(`💰 PvE reward: ${totalReward} TESTVBMS + ${auraReward} aura for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Aura: ${currentAura} → ${currentAura + auraReward}`);
     }
 
     // 🎯 Track weekly quest progress (async, non-blocking)
@@ -799,9 +826,16 @@ export const awardPvPCoins = mutation({
 
       // Award coins to balance (direct)
       const currentBalance = profile.coins || 0;
+      const currentAura = profile.stats?.aura ?? 500;
+      const auraReward = 10; // +10 aura for winning PvP
+
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,
         lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
+        stats: {
+          ...profile.stats,
+          aura: currentAura + auraReward, // Award aura for PvP win
+        },
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
         dailyLimits: {
@@ -811,7 +845,7 @@ export const awardPvPCoins = mutation({
         // lastPvPAward already updated immediately after rate limit check (line 652)
       });
 
-      console.log(`💰 PvP reward added to balance: ${totalReward} TESTVBMS for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}`);
+      console.log(`💰 PvP reward: ${totalReward} TESTVBMS + ${auraReward} aura for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Aura: ${currentAura} → ${currentAura + auraReward}`);
 
       // 🎯 Track weekly quest progress (async, non-blocking)
       // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
@@ -842,6 +876,10 @@ export const awardPvPCoins = mutation({
       const currentCoins = profile.coins || 0;
       const newCoins = Math.max(0, currentCoins + penalty); // Can't go below 0
 
+      const currentAura = profile.stats?.aura ?? 500;
+      const auraPenalty = -5; // -5 aura for losing PvP
+      const newAura = Math.max(0, currentAura + auraPenalty); // Can't go below 0
+
       // ✅ Add penalty reduction message
       if (rankingMultiplier < 1.0 && opponentAddress) {
         const reduction = Math.abs(penalty - basePenalty);
@@ -851,6 +889,10 @@ export const awardPvPCoins = mutation({
       await ctx.db.patch(profile!._id, {
         coins: newCoins,
         lifetimeSpent: (profile.lifetimeSpent || 0) + Math.abs(penalty),
+        stats: {
+          ...profile.stats,
+          aura: newAura, // Lose aura for PvP loss
+        },
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
         // lastPvPAward already updated immediately after rate limit check (line 652)
@@ -1434,21 +1476,45 @@ export const recordAttackResult = mutation({
             lifetimeEarned: (defenderProfile.lifetimeEarned || 0) + defenderReward,
           });
 
+          // 📊 Record defense reward in transaction history (non-blocking)
+          try {
+            await ctx.db.insert("coinTransactions", {
+              address: normalizedOpponentAddress,
+              type: "earn",
+              amount: defenderReward,
+              source: "defense_win",
+              description: `Defense Win vs ${args.playerUsername} (+${defenderReward} TESTVBMS to inbox)`,
+              balanceBefore: currentDefenderInbox,
+              balanceAfter: newDefenderInbox,
+              timestamp: Date.now(),
+            });
+          } catch (txError) {
+            console.error("⚠️ Failed to record defense transaction:", txError);
+          }
+
           console.log(`📬 Defense reward sent to inbox: ${defenderReward} TESTVBMS for ${normalizedOpponentAddress}. Inbox: ${currentDefenderInbox} → ${newDefenderInbox}`);
         }
       }
 
-      // Apply inbox debt to attacker (can go negative!)
+      // Apply inbox debt to attacker (NEVER allow negative inbox)
       if (inboxDebt > 0) {
         const currentInbox = profile.coinsInbox || 0;
-        const newInbox = currentInbox - inboxDebt;
+        const currentPoolDebt = profile.poolDebt || 0;
+
+        // 🔒 SECURITY FIX: Never allow negative inbox
+        // Deduct what we can from inbox, rest becomes pool debt
+        const inboxDeduction = Math.min(currentInbox, inboxDebt);
+        const newInbox = Math.max(0, currentInbox - inboxDebt);
+        const remainingDebt = inboxDebt - inboxDeduction;
+        const newPoolDebt = currentPoolDebt + remainingDebt;
 
         // Update attacker's inbox with debt
         await ctx.db.patch(profile._id, {
-          coinsInbox: newInbox, // Can be negative!
+          coinsInbox: newInbox,
+          poolDebt: newPoolDebt, // Track remaining debt separately
         });
 
-        console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (${coinsDeducted} from coins, ${inboxDebt} inbox debt). Inbox: ${currentInbox} → ${newInbox}`);
+        console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (${coinsDeducted} from coins, ${inboxDeduction} from inbox, ${remainingDebt} pool debt). Inbox: ${currentInbox} → ${newInbox}, Debt: ${currentPoolDebt} → ${newPoolDebt}`);
       } else {
         console.log(`💸 Attacker ${normalizedPlayerAddress} penalty: ${penaltyAmount} (all from coins)`);
       }
@@ -1472,15 +1538,70 @@ export const recordAttackResult = mutation({
 
     // ===== STEP 5: Update profile stats (all at once) =====
     const newStats = { ...profile.stats };
+    const currentAura = profile.stats?.aura ?? 500;
+    let auraChange = 0;
 
-    // Update attack win/loss stats
+    // Update attack win/loss stats and aura
     if (args.result === "win") {
       newStats.attackWins = (newStats.attackWins || 0) + 1;
       newStats.pvpWins = (newStats.pvpWins || 0) + 1;
+
+      // ATTACKER WINS: Gains +20 aura
+      auraChange = 20;
+      newStats.aura = currentAura + auraChange;
+
+      // DEFENDER LOSES: Loses -20 aura
+      const defenderProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
+        .first();
+
+      if (defenderProfile) {
+        const defenderAura = defenderProfile.stats?.aura ?? 500;
+        const auraLoss = 20;
+        const newDefenderAura = Math.max(0, defenderAura - auraLoss); // Can't go below 0
+
+        await ctx.db.patch(defenderProfile._id, {
+          stats: {
+            ...defenderProfile.stats,
+            aura: newDefenderAura,
+            defenseWins: (defenderProfile.stats?.defenseWins || 0),
+            defenseLosses: (defenderProfile.stats?.defenseLosses || 0) + 1, // Track defense loss
+          },
+        });
+
+        console.log(`⚔️ Aura transfer: Attacker ${normalizedPlayerAddress} +${auraChange} (${currentAura} → ${currentAura + auraChange}), Defender ${normalizedOpponentAddress} -${auraLoss} (${defenderAura} → ${newDefenderAura})`);
+      }
     } else if (args.result === "loss") {
       newStats.attackLosses = (newStats.attackLosses || 0) + 1;
       newStats.pvpLosses = (newStats.pvpLosses || 0) + 1;
+
+      // ATTACKER LOSES: No aura change (already punishing with coin loss)
+      auraChange = 0;
+      newStats.aura = currentAura;
+
+      // DEFENDER WINS: Track defense win
+      const defenderProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
+        .first();
+
+      if (defenderProfile) {
+        await ctx.db.patch(defenderProfile._id, {
+          stats: {
+            ...defenderProfile.stats,
+            defenseWins: (defenderProfile.stats?.defenseWins || 0) + 1, // Track defense win
+            defenseLosses: (defenderProfile.stats?.defenseLosses || 0),
+          },
+        });
+      }
     }
+
+    // ===== ATTACK TRACKING: Update attacksToday and lastAttackDate =====
+    const todayUTC = new Date().toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+    const lastAttackDate = profile.lastAttackDate || '';
+    const isNewDay = lastAttackDate !== todayUTC;
+    const newAttacksToday = isNewDay ? 1 : (profile.attacksToday || 0) + 1;
 
     // Update profile atomically (all fields at once)
     const updateData: any = {
@@ -1497,6 +1618,9 @@ export const recordAttackResult = mutation({
       },
       rematchesToday: isRevenge ? (profile.rematchesToday || 0) + 1 : profile.rematchesToday,
       lastUpdated: Date.now(),
+      // Attack tracking
+      attacksToday: newAttacksToday,
+      lastAttackDate: todayUTC,
     };
 
     // Add coins update for wins (skip if skipCoins flag is set)
@@ -1504,12 +1628,37 @@ export const recordAttackResult = mutation({
       const currentBalance = profile.coins || 0;
       updateData.coins = currentBalance + totalReward;
       console.log(`💰 Attack reward added to balance: ${totalReward} TESTVBMS. Balance: ${currentBalance} → ${updateData.coins}`);
+
+      // 📊 Record transaction in history (non-blocking - don't fail attack if history fails)
+      try {
+        await ctx.db.insert("coinTransactions", {
+          address: normalizedPlayerAddress,
+          type: "earn",
+          amount: totalReward,
+          source: "attack_win",
+          description: `Attack Win vs ${args.opponentUsername} (+${totalReward} TESTVBMS)`,
+          balanceBefore: currentBalance,
+          balanceAfter: updateData.coins,
+          timestamp: Date.now(),
+        });
+      } catch (txError) {
+        console.error("⚠️ Failed to record attack transaction:", txError);
+        // Continue - don't let transaction history failure break the attack
+      }
     }
 
     await ctx.db.patch(profile._id, updateData);
 
     // ===== STEP 6: Get and return updated profile =====
     const updatedProfile = await ctx.db.get(profile._id);
+
+    // 🛡️ FIX: Add hasDefenseDeck computed field to prevent defense modal from showing after attack
+    const profileWithDefenseDeck = updatedProfile
+      ? {
+          ...updatedProfile,
+          hasDefenseDeck: (updatedProfile.defenseDeck?.length || 0) === 5,
+        }
+      : updatedProfile;
 
     // ===== STEP 7: Track weekly quest progress (async, non-blocking) =====
     // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
@@ -1561,9 +1710,9 @@ export const recordAttackResult = mutation({
       winStreak: newStreak,
       opponentRank,
       rankingMultiplier,
-      profile: updatedProfile, // Return updated profile so no need for getProfile() call
-      dailyEarned: calculateDailyEarned(updatedProfile!),
-      remaining: DAILY_CAP - calculateDailyEarned(updatedProfile!),
+      profile: profileWithDefenseDeck, // Return updated profile with hasDefenseDeck computed
+      dailyEarned: calculateDailyEarned(profileWithDefenseDeck!),
+      remaining: DAILY_CAP - calculateDailyEarned(profileWithDefenseDeck!),
     };
   },
 });

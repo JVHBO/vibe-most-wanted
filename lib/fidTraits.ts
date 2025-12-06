@@ -38,9 +38,28 @@ function weightedRoll<T>(seed: number, choices: Array<{ value: T; weight: number
 
 /**
  * Get foil probabilities based on FID
+ * Updated probability table:
+ * FID Range          Prize   Standard  None
+ * <= 100              100%    0%        0%    (OG Legends)
+ * 101 - 5,000         100%    0%        0%
+ * 5,001 - 20,000      80%    20%        0%
+ * 20,001 - 100,000    30%    60%       10%
+ * 100,001 - 250,000    5%    35%       60%   (nerfed)
+ * 250,001 - 500,000    3%    25%       72%
+ * 500,001 - 1,200,000  1%    10%       89%
+ * > 1,200,000          0%     5%       95%
  */
 function getFoilProbabilities(fid: number): Array<{ value: FoilType; weight: number }> {
-  // FID ≤ 5,000: 100% Prize (guaranteed!)
+  // FID <= 100: OG Legends - 100% Prize (guaranteed!)
+  if (fid <= 100) {
+    return [
+      { value: 'Prize', weight: 100 },
+      { value: 'Standard', weight: 0 },
+      { value: 'None', weight: 0 },
+    ];
+  }
+
+  // FID 101 - 5,000: 100% Prize (guaranteed!)
   if (fid <= 5000) {
     return [
       { value: 'Prize', weight: 100 },
@@ -52,61 +71,82 @@ function getFoilProbabilities(fid: number): Array<{ value: FoilType; weight: num
   // FID 5,001 - 20,000: Very high Prize chance
   if (fid <= 20000) {
     return [
-      { value: 'Prize', weight: 75 },
+      { value: 'Prize', weight: 80 },
       { value: 'Standard', weight: 20 },
-      { value: 'None', weight: 5 },
+      { value: 'None', weight: 0 },
     ];
   }
 
-  // FID 20,001 - 100,000: Good Standard chance, some Prize
+  // FID 20,001 - 100,000: Good Prize/Standard chance
   if (fid <= 100000) {
     return [
-      { value: 'Prize', weight: 15 },
-      { value: 'Standard', weight: 50 },
-      { value: 'None', weight: 35 },
+      { value: 'Prize', weight: 30 },
+      { value: 'Standard', weight: 60 },
+      { value: 'None', weight: 10 },
     ];
   }
 
-  // FID 100,001 - 250,000: Good Standard chance, low Prize
+  // FID 100,001 - 250,000: Lower chances (nerfed)
   if (fid <= 250000) {
     return [
-      { value: 'Prize', weight: 8 },
-      { value: 'Standard', weight: 45 },
-      { value: 'None', weight: 47 },
+      { value: 'Prize', weight: 5 },
+      { value: 'Standard', weight: 35 },
+      { value: 'None', weight: 60 },
     ];
   }
 
-  // FID 250,001 - 500,000: Mostly None, some Standard
+  // FID 250,001 - 500,000: Low chances
   if (fid <= 500000) {
     return [
-      { value: 'Prize', weight: 2 },
+      { value: 'Prize', weight: 3 },
       { value: 'Standard', weight: 25 },
-      { value: 'None', weight: 73 },
+      { value: 'None', weight: 72 },
     ];
   }
 
-  // FID 500,001 - 1,200,000: Almost all None
+  // FID 500,001 - 1,200,000: Very low chances
   if (fid <= 1200000) {
     return [
-      { value: 'Prize', weight: 0 },
-      { value: 'Standard', weight: 8 },
-      { value: 'None', weight: 92 },
+      { value: 'Prize', weight: 1 },
+      { value: 'Standard', weight: 10 },
+      { value: 'None', weight: 89 },
     ];
   }
 
-  // FID > 1,200,000: 100% None (guaranteed)
+  // FID > 1,200,000: Almost no foil
   return [
     { value: 'Prize', weight: 0 },
-    { value: 'Standard', weight: 0 },
-    { value: 'None', weight: 100 },
+    { value: 'Standard', weight: 5 },
+    { value: 'None', weight: 95 },
   ];
 }
 
 /**
  * Get wear probabilities based on FID
+ * Updated probability table:
+ * FID Range          Pristine  Mint  LP   MP   HP
+ * <= 100              100%      0%   0%   0%   0%  (OG Legends)
+ * 101 - 5,000         100%      0%   0%   0%   0%
+ * 5,001 - 20,000       90%     10%   0%   0%   0%
+ * 20,001 - 100,000     50%     40%  10%   0%   0%
+ * 100,001 - 250,000     2%     18%  45%  30%   5%  (nerfed)
+ * 250,001 - 500,000     0%      5%  30%  55%  10%
+ * 500,001 - 1,200,000   0%      0%   5%  45%  50%
+ * > 1,200,000           0%      0%   0%  10%  90%
  */
 function getWearProbabilities(fid: number): Array<{ value: WearType; weight: number }> {
-  // FID ≤ 5,000: 100% Pristine (guaranteed!)
+  // FID <= 100: OG Legends - 100% Pristine (guaranteed!)
+  if (fid <= 100) {
+    return [
+      { value: 'Pristine', weight: 100 },
+      { value: 'Mint', weight: 0 },
+      { value: 'Lightly Played', weight: 0 },
+      { value: 'Moderately Played', weight: 0 },
+      { value: 'Heavily Played', weight: 0 },
+    ];
+  }
+
+  // FID 101 - 5,000: 100% Pristine (guaranteed!)
   if (fid <= 5000) {
     return [
       { value: 'Pristine', weight: 100 },
@@ -120,8 +160,8 @@ function getWearProbabilities(fid: number): Array<{ value: WearType; weight: num
   // FID 5,001 - 20,000: Very high Pristine chance
   if (fid <= 20000) {
     return [
-      { value: 'Pristine', weight: 85 },
-      { value: 'Mint', weight: 15 },
+      { value: 'Pristine', weight: 90 },
+      { value: 'Mint', weight: 10 },
       { value: 'Lightly Played', weight: 0 },
       { value: 'Moderately Played', weight: 0 },
       { value: 'Heavily Played', weight: 0 },
@@ -131,33 +171,33 @@ function getWearProbabilities(fid: number): Array<{ value: WearType; weight: num
   // FID 20,001 - 100,000: Good Pristine/Mint
   if (fid <= 100000) {
     return [
-      { value: 'Pristine', weight: 40 },
+      { value: 'Pristine', weight: 50 },
       { value: 'Mint', weight: 40 },
-      { value: 'Lightly Played', weight: 20 },
+      { value: 'Lightly Played', weight: 10 },
       { value: 'Moderately Played', weight: 0 },
       { value: 'Heavily Played', weight: 0 },
     ];
   }
 
-  // FID 100,001 - 250,000: Good Mint/Lightly Played
+  // FID 100,001 - 250,000: Higher wear (nerfed)
   if (fid <= 250000) {
     return [
-      { value: 'Pristine', weight: 5 },
-      { value: 'Mint', weight: 35 },
-      { value: 'Lightly Played', weight: 50 },
-      { value: 'Moderately Played', weight: 10 },
-      { value: 'Heavily Played', weight: 0 },
+      { value: 'Pristine', weight: 2 },
+      { value: 'Mint', weight: 18 },
+      { value: 'Lightly Played', weight: 45 },
+      { value: 'Moderately Played', weight: 30 },
+      { value: 'Heavily Played', weight: 5 },
     ];
   }
 
-  // FID 250,001 - 500,000: Moderate wear
+  // FID 250,001 - 500,000: Higher wear
   if (fid <= 500000) {
     return [
       { value: 'Pristine', weight: 0 },
-      { value: 'Mint', weight: 10 },
-      { value: 'Lightly Played', weight: 40 },
-      { value: 'Moderately Played', weight: 50 },
-      { value: 'Heavily Played', weight: 0 },
+      { value: 'Mint', weight: 5 },
+      { value: 'Lightly Played', weight: 30 },
+      { value: 'Moderately Played', weight: 55 },
+      { value: 'Heavily Played', weight: 10 },
     ];
   }
 
@@ -167,18 +207,18 @@ function getWearProbabilities(fid: number): Array<{ value: WearType; weight: num
       { value: 'Pristine', weight: 0 },
       { value: 'Mint', weight: 0 },
       { value: 'Lightly Played', weight: 5 },
-      { value: 'Moderately Played', weight: 55 },
-      { value: 'Heavily Played', weight: 40 },
+      { value: 'Moderately Played', weight: 45 },
+      { value: 'Heavily Played', weight: 50 },
     ];
   }
 
-  // FID > 1,200,000: 100% Heavily Played (guaranteed)
+  // FID > 1,200,000: Mostly Heavily Played
   return [
     { value: 'Pristine', weight: 0 },
     { value: 'Mint', weight: 0 },
     { value: 'Lightly Played', weight: 0 },
-    { value: 'Moderately Played', weight: 0 },
-    { value: 'Heavily Played', weight: 100 },
+    { value: 'Moderately Played', weight: 10 },
+    { value: 'Heavily Played', weight: 90 },
   ];
 }
 
@@ -210,19 +250,19 @@ export function getFidTraitInfo(fid: number): string {
     return 'Super Early Adopter - 100% Prize Foil + Pristine';
   }
   if (fid <= 20000) {
-    return 'Early Adopter - 75% Prize, 85% Pristine';
+    return 'Early Adopter - 75% Prize, 25% Standard';
   }
   if (fid <= 100000) {
-    return 'Established User - 15% Prize, 50% Standard';
+    return 'Established User - 20% Prize, 70% Standard';
   }
   if (fid <= 250000) {
-    return 'Active User - 8% Prize, 45% Standard';
+    return 'Active User - 10% Prize, 60% Standard';
   }
   if (fid <= 500000) {
-    return 'Regular User - 2% Prize, 25% Standard';
+    return 'Regular User - 5% Prize, 40% Standard';
   }
   if (fid <= 1200000) {
-    return 'New User - 8% Standard only';
+    return 'New User - 2% Prize, 20% Standard';
   }
-  return 'Very New User - 100% None + Heavily Played';
+  return 'Very New User - 10% Standard, 90% None';
 }

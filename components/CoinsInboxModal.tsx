@@ -7,11 +7,16 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { useClaimVBMS, useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
+import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import Image from "next/image";
+import Link from "next/link";
+import { useBodyScrollLock, useEscapeKey } from "@/hooks";
+import { Z_INDEX } from "@/lib/z-index";
+import CoinsHistoryModal from "./CoinsHistoryModal";
 
 const NextImage = Image;
 
@@ -32,16 +37,36 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
-  // Check if we should use Farcaster SDK for transactions
+  // Modal accessibility hooks
+  useBodyScrollLock(true);
+  useEscapeKey(onClose);
+
+    // Check if we should use Farcaster SDK for transactions
   useEffect(() => {
     const checkFarcasterSDK = async () => {
-      if (sdk && typeof sdk.wallet !== 'undefined') {
-        const provider = await sdk.wallet.getEthereumProvider();
-        if (provider) {
-          setUseFarcasterSDK(true);
-          console.log('[CoinsInboxModal] Using Farcaster SDK for transactions');
+      try {
+        // Only use Farcaster SDK if we're actually inside the miniapp
+        // Check if we're in an iframe (miniapp runs in iframe)
+        const isInIframe = window !== window.parent;
+
+        if (!isInIframe) {
+          console.log('[CoinsInboxModal] Not in iframe, using wagmi');
+          setUseFarcasterSDK(false);
+          return;
         }
+
+        if (sdk && typeof sdk.wallet !== 'undefined') {
+          const provider = await sdk.wallet.getEthereumProvider();
+          if (provider) {
+            setUseFarcasterSDK(true);
+            console.log('[CoinsInboxModal] Using Farcaster SDK for transactions');
+          }
+        }
+      } catch (error) {
+        console.log('[CoinsInboxModal] Farcaster SDK not available, using wagmi:', error);
+        setUseFarcasterSDK(false);
       }
     };
     checkFarcasterSDK();
@@ -52,8 +77,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const { claimVBMS } = useClaimVBMS();
 
-  // Get VBMS wallet balance from blockchain
-  const { balance: vbmsWalletBalance } = useVBMSBalance(address as `0x${string}`);
+  // Get VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)
+  const { balance: vbmsWalletBalance } = useFarcasterVBMSBalance(address);
 
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
@@ -194,21 +219,50 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   // SSR check
   if (typeof window === 'undefined') return null;
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+  return (
+    <>
+      {createPortal(
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          style={{ zIndex: Z_INDEX.modal }}
+          onClick={onClose}
+        >
+          <div
+            className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-vintage-gold/60 hover:text-vintage-gold text-2xl"
+          className="absolute top-4 right-4 text-vintage-gold/60 hover:text-vintage-gold text-2xl z-20 p-2"
         >
           ✕
+        </button>
+
+        {/* Transaction History Icon Button */}
+        <button
+          onClick={() => {
+            console.log('[CoinsInboxModal] History button clicked');
+            setShowHistory(true);
+          }}
+          className="absolute top-3 right-14 p-2 z-20 bg-vintage-gold/10 hover:bg-vintage-gold/20 rounded-lg text-vintage-gold/80 hover:text-vintage-gold transition-all group border border-vintage-gold/20"
+          title="Histórico de Transações"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="group-hover:scale-110 transition-transform"
+          >
+            <path d="M3 3v18h18" />
+            <path d="m19 9-5 5-4-4-3 3" />
+          </svg>
         </button>
 
         {/* Header with gradient */}
@@ -227,15 +281,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         </div>
 
         <div className="px-6 pb-6 space-y-4">
-          {/* Warning - Claims only work on miniapp */}
-          <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-3">
-            <p className="text-xs text-blue-300 text-center leading-relaxed flex items-center justify-center gap-2">
-              <NextImage src="/images/icons/warning.svg" alt="Warning" width={16} height={16} className="w-4 h-4" />
-              <span className="font-semibold">Claims only work on Farcaster miniapp</span>
-            </p>
-          </div>
-
-          {/* TESTVBMS Balance (what you can convert) */}
+                    {/* TESTVBMS Balance (what you can convert) */}
           <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-6 mb-4">
             <div className="text-center">
               <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wide flex items-center justify-center gap-2">
@@ -288,10 +334,30 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               </p>
             </div>
           )}
+
+          {/* DEX Link - Sell VBMS for ETH */}
+          <Link
+            href="/dex"
+            className="w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">💱</span>
+            <span>DEX</span>
+          </Link>
           </div>
         </div>
-      </div>
-    </div>,
-    document.body
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Transaction History Modal - Separate Portal */}
+      {showHistory && address && (
+        <CoinsHistoryModal
+          isOpen={showHistory}
+          onClose={() => setShowHistory(false)}
+          address={address}
+        />
+      )}
+    </>
   );
 }

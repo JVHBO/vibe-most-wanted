@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { docsTranslations, type DocsSupportedLanguage, type DocsTranslationKey } from "@/lib/docs-translations";
 
-type DocSection = "economy" | "battles" | "poker" | "achievements" | "quests" | "cards" | "faq";
+type DocSection = "economy" | "battles" | "poker" | "mecha" | "raidboss" | "vibefid" | "achievements" | "quests" | "cards" | "faq";
 
 // Simple language selector
 function LanguageSelector() {
@@ -119,7 +119,10 @@ export default function DocsPage() {
   const sections = [
     { id: "economy" as DocSection, label: t("economy") },
     { id: "battles" as DocSection, label: t("battles") },
-    { id: "poker" as DocSection, label: "Poker Battle" },
+    { id: "poker" as DocSection, label: t("pokerBattle") },
+    { id: "mecha" as DocSection, label: t("mechaArena") },
+    { id: "raidboss" as DocSection, label: t("raidBoss") },
+    { id: "vibefid" as DocSection, label: t("vibeFID") },
     { id: "achievements" as DocSection, label: t("achievements") },
     { id: "quests" as DocSection, label: t("quests") },
     { id: "cards" as DocSection, label: t("cards") },
@@ -241,11 +244,11 @@ export default function DocsPage() {
           {/* Poker */}
           {activeSection === "poker" && (
             <div>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">Poker Battle</h2>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("pokerBattle")}</h2>
               <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
-                <p>Play poker against CPU or other players using VBMS stakes.</p>
+                <p>{t("pokerIntro")}</p>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Stakes</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("pokerStakes")}</h3>
                 <ul className="list-disc list-inside space-y-2">
                   <li>10 VBMS</li>
                   <li>50 VBMS</li>
@@ -253,12 +256,135 @@ export default function DocsPage() {
                   <li>2000 VBMS</li>
                 </ul>
 
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">Rules</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("pokerRules")}</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>Best of 5 rounds - First to win 4 rounds wins the match</li>
-                  <li>Winner takes 95% of pot (5% house fee)</li>
-                  <li>Blockchain secured (VBMS contract on Base)</li>
-                  <li>PvP matches are live - both players play simultaneously</li>
+                  <li>{t("pokerRule1")}</li>
+                  <li>{t("pokerRule2")}</li>
+                  <li>{t("pokerRule3")}</li>
+                  <li>{t("pokerRule4")}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+
+          {/* Mecha Arena */}
+          {activeSection === "mecha" && (
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("mechaArena")}</h2>
+              <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
+                <p>{t("mechaIntro")}</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaHowItWorks")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>{t("mechaStep1")}</li>
+                  <li>{t("mechaStep2")}</li>
+                  <li>{t("mechaStep3")}</li>
+                  <li>{t("mechaStep4")}</li>
+                  <li>{t("mechaStep5")}</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaBettingOdds")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>{t("mechaRounds13")}</strong></li>
+                  <li><strong>{t("mechaRounds45")}</strong></li>
+                  <li><strong>{t("mechaRounds67")}</strong></li>
+                  <li><strong>{t("mechaTieBet")}</strong></li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaDailyBoost")}</h3>
+                <p>{t("mechaDailyBoostDesc")}</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaCollections")}</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🌅 GM VBRS</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎭 Vibe Most Wanted</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">💋 Coquettish</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🍥 Viberuto</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐱 Meowverse</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐸 Poorly Drawn Pepes</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🌿 Team Pothead</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🔮 Tarot</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🏈 American Football</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🆔 VibeFID</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">⚾ Baseball Cabal</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">✨ Vibe FX</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">💻 History of Computer</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Raid Boss */}
+          {activeSection === "raidboss" && (
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("raidBoss")}</h2>
+              <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
+                <p>{t("raidBossIntro")}</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("raidHowItWorks")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>{t("raidStep1")}</li>
+                  <li>{t("raidStep2")}</li>
+                  <li>{t("raidStep3")}</li>
+                  <li>{t("raidStep4")}</li>
+                  <li>{t("raidStep5")}</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("raidRewards")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>{t("raidReward1")}</li>
+                  <li>{t("raidReward2")}</li>
+                  <li>{t("raidReward3")}</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("raidTips")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>{t("raidTip1")}</li>
+                  <li>{t("raidTip2")}</li>
+                  <li>{t("raidTip3")}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* VibeFID */}
+          {activeSection === "vibefid" && (
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("vibeFID")}</h2>
+              <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
+                <p>{t("vibeFIDIntro")}</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("vibeFIDHowItWorks")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>{t("vibeFIDStep1")}</li>
+                  <li>{t("vibeFIDStep2")}</li>
+                  <li>{t("vibeFIDStep3")}</li>
+                  <li>{t("vibeFIDStep4")}</li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("vibeFIDNeynarScore")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong className="text-purple-400">{t("vibeFIDMythic")}</strong></li>
+                  <li><strong className="text-orange-400">{t("vibeFIDLegendary")}</strong></li>
+                  <li><strong className="text-pink-400">{t("vibeFIDEpic")}</strong></li>
+                  <li><strong className="text-blue-400">{t("vibeFIDRare")}</strong></li>
+                  <li><strong className="text-gray-400">{t("vibeFIDCommon")}</strong></li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("vibeFIDTraits")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong className="text-yellow-400">{t("vibeFIDOG")}</strong></li>
+                  <li><strong>{t("vibeFIDTier2")}</strong></li>
+                  <li><strong>{t("vibeFIDTier3")}</strong></li>
+                  <li><strong>{t("vibeFIDTier4")}</strong></li>
+                </ul>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("vibeFIDBenefits")}</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>{t("vibeFIDBenefit1")}</li>
+                  <li>{t("vibeFIDBenefit2")}</li>
+                  <li>{t("vibeFIDBenefit3")}</li>
                 </ul>
               </div>
             </div>

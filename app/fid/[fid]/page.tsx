@@ -10,11 +10,21 @@ import { getFarcasterAccountCreationDate } from '@/lib/farcasterRegistry';
 import CriminalBackstoryCard from '@/components/CriminalBackstoryCard';
 import Link from 'next/link';
 import { CardMedia } from '@/components/CardMedia';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import FoilCardEffect from '@/components/FoilCardEffect';
+import { getFidTraits } from '@/lib/fidTraits';
+import { sdk } from '@farcaster/miniapp-sdk';
+import { getUserByFid, calculateRarityFromScore } from '@/lib/neynar';
+import { AudioManager } from '@/lib/audio-manager';
+import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
+import { fidTranslations } from '@/lib/fidTranslations';
 
 export default function FidCardPage() {
   const params = useParams();
   const fid = parseInt(params.fid as string);
   const { lang, setLang } = useLanguage();
+  const farcasterContext = useFarcasterContext();
+  const t = fidTranslations[lang];
 
   // Fetch all cards for this FID
   const fidCards = useQuery(api.farcasterCards.getFarcasterCardsByFid, { fid });
@@ -22,25 +32,132 @@ export default function FidCardPage() {
   // Get the most recent card (first one)
   const card = fidCards?.[0];
 
+  // Calculate CURRENT deterministic traits (matches OpenSea metadata)
+  // This ignores old random traits stored in Convex from before deterministic fix
+  const currentTraits = card ? getFidTraits(card.fid) : null;
+
+  // Calculate deterministic power based on current traits (matches metadata API)
+  const correctPower = card && currentTraits ? (() => {
+    const rarityBasePower = {
+      Common: 10, Rare: 20, Epic: 50, Legendary: 100, Mythic: 600,
+    };
+    const wearMultiplier = {
+      Pristine: 1.8, Mint: 1.4, 'Lightly Played': 1.0,
+      'Moderately Played': 1.0, 'Heavily Played': 1.0,
+    };
+    const foilMultiplier = {
+      Prize: 6.0, Standard: 2.0, None: 1.0,
+    };
+    const basePower = rarityBasePower[card.rarity as keyof typeof rarityBasePower] || 5;
+    const wearMult = wearMultiplier[currentTraits.wear as keyof typeof wearMultiplier] || 1.0;
+    const foilMult = foilMultiplier[currentTraits.foil as keyof typeof foilMultiplier] || 1.0;
+    return Math.round(basePower * wearMult * foilMult);
+  })() : 0;
+
+
   const [backstory, setBackstory] = useState<any>(null);
+
+  // Neynar score state
+  const [neynarScoreData, setNeynarScoreData] = useState<{ score: number; rarity: string; fid: number; username: string } | null>(null);
+  const [showScoreModal, setShowScoreModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check Neynar Score
+  const handleCheckNeynarScore = async () => {
+    AudioManager.buttonClick();
+
+    if (!farcasterContext.user) {
+      setError("Please connect your Farcaster account first");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    const userFid = farcasterContext.user.fid;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const user = await getUserByFid(userFid);
+      if (!user) {
+        setError(`No user found for FID ${userFid}`);
+        setLoading(false);
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      const score = user.experimental.neynar_user_score;
+      const rarity = calculateRarityFromScore(score);
+
+      setNeynarScoreData({
+        score,
+        rarity,
+        fid: user.fid,
+        username: user.username,
+      });
+      setShowScoreModal(true);
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch Neynar score");
+      setLoading(false);
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  // Notify Farcaster SDK that app is ready
+  useEffect(() => {
+    const initFarcasterSDK = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          await sdk.actions.ready();
+          console.log('✅ Farcaster SDK ready called');
+        }
+      } catch (error) {
+        console.error('Error calling Farcaster SDK ready:', error);
+      }
+    };
+    initFarcasterSDK();
+  }, []);
 
   // Generate backstory for the card
   useEffect(() => {
     if (card) {
       const generateBackstory = async () => {
-        const createdAt = await getFarcasterAccountCreationDate(card.fid);
-        const story = generateCriminalBackstory({
-          username: card.username,
-          displayName: card.displayName,
-          bio: card.bio || "",
-          fid: card.fid,
-          followerCount: card.followerCount,
-          createdAt,
-          power: card.power,
-          bounty: card.power * 10,
-          rarity: card.rarity,
-        }, lang);
-        setBackstory(story);
+        try {
+          // Fetch creation date with timeout
+          const createdAt = await Promise.race([
+            getFarcasterAccountCreationDate(card.fid),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)) // 3s timeout
+          ]);
+
+          const story = generateCriminalBackstory({
+            username: card.username,
+            displayName: card.displayName,
+            bio: card.bio || "",
+            fid: card.fid,
+            followerCount: card.followerCount,
+            createdAt,
+            power: card.power,
+            bounty: card.power * 10,
+            rarity: card.rarity,
+          }, lang);
+          setBackstory(story);
+        } catch (error) {
+          console.error('Error generating backstory:', error);
+          // Generate backstory without creation date if it fails
+          const story = generateCriminalBackstory({
+            username: card.username,
+            displayName: card.displayName,
+            bio: card.bio || "",
+            fid: card.fid,
+            followerCount: card.followerCount,
+            createdAt: null,
+            power: card.power,
+            bounty: card.power * 10,
+            rarity: card.rarity,
+          }, lang);
+          setBackstory(story);
+        }
       };
       generateBackstory();
     }
@@ -77,30 +194,49 @@ export default function FidCardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header with Language Selector */}
-        <div className="text-center mb-8 relative">
-          {/* Language Selector - Top Right */}
-          <div className="absolute top-0 right-0">
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value as any)}
-              className="px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm"
-            >
-              <option value="en">🇺🇸 English</option>
-              <option value="pt-BR">🇧🇷 Português</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="hi">🇮🇳 हिन्दी</option>
-              <option value="ru">🇷🇺 Русский</option>
-              <option value="zh-CN">🇨🇳 中文</option>
-            </select>
-          </div>
+      {/* Language Selector - Fixed Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <select
+          value={lang}
+          onChange={(e) => setLang(e.target.value as any)}
+          className="px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-lg text-vintage-ice focus:outline-none focus:border-vintage-gold text-sm shadow-lg hover:border-vintage-gold transition-colors"
+        >
+          <option value="en">🇺🇸 English</option>
+          <option value="pt-BR">🇧🇷 Português</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+          <option value="ru">🇷🇺 Русский</option>
+          <option value="zh-CN">🇨🇳 中文</option>
+        </select>
+      </div>
 
+      <div className="max-w-4xl mx-auto">
+        {/* Mint Your Card Button - Top */}
+        <div className="mb-6 text-center">
+          <Link
+            href="/fid"
+            className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors inline-block"
+          >
+            ← Mint Your Card
+          </Link>
+        </div>
+
+        {/* Header */}
+        <div className="text-center mb-8">
           <h1 className="text-4xl font-display font-bold text-vintage-gold mb-2">
             VibeFID #{fid}
           </h1>
           <p className="text-vintage-ice">
-            {card?.displayName} (@{card?.username})
+            {card?.displayName} (
+            <a
+              href={`https://farcaster.xyz/${card?.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-vintage-gold hover:text-vintage-burnt-gold transition-colors underline"
+            >
+              @{card?.username}
+            </a>
+            )
           </p>
         </div>
 
@@ -110,11 +246,16 @@ export default function FidCardPage() {
             <div className="flex flex-col items-center">
               {/* Card Image/Video */}
               <div className="w-full max-w-md mb-6">
-                <CardMedia
-                  src={card.imageUrl || card.pfpUrl}
-                  alt={card.username}
-                  className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold"
-                />
+                <FoilCardEffect
+                  foilType={currentTraits?.foil === 'None' ? null : (currentTraits?.foil as 'Standard' | 'Prize' | null)}
+                  className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
+                >
+                  <CardMedia
+                    src={convertIpfsUrl(card.imageUrl) || card.pfpUrl}
+                    alt={card.username}
+                    className="w-full"
+                  />
+                </FoilCardEffect>
               </div>
 
               {/* Card Stats */}
@@ -136,40 +277,93 @@ export default function FidCardPage() {
                   <div>
                     <span className="text-vintage-burnt-gold font-semibold">Foil:</span>{" "}
                     <span className={`font-bold ${
-                      card.foil === 'Prize' ? 'text-purple-400' :
-                      card.foil === 'Standard' ? 'text-blue-400' :
+                      currentTraits?.foil === 'Prize' ? 'text-purple-400' :
+                      currentTraits?.foil === 'Standard' ? 'text-blue-400' :
                       'text-vintage-ice'
                     }`}>
-                      {card.foil}
+                      {currentTraits?.foil || 'None'}
                     </span>
                   </div>
                   <div>
                     <span className="text-vintage-burnt-gold font-semibold">Wear:</span>{" "}
-                    <span className="text-vintage-ice">{card.wear}</span>
+                    <span className="text-vintage-ice">{currentTraits?.wear || 'Unknown'}</span>
                   </div>
                   <div className="col-span-2">
                     <span className="text-vintage-burnt-gold font-semibold">Power:</span>{" "}
-                    <span className="text-vintage-gold font-bold text-lg">{card.power}</span>
+                    <span className="text-vintage-gold font-bold text-lg">{correctPower}</span>
+                  </div>
+                  <div className="col-span-2 pt-2 border-t border-vintage-gold/20">
+                    <span className="text-vintage-burnt-gold font-semibold">Neynar Score:</span>{" "}
+                    <span className="text-vintage-ice font-bold">{card.neynarScore.toFixed(3)}</span>
+                    <span className="text-vintage-ice/60 text-xs ml-2">(at mint time)</span>
                   </div>
                 </div>
               </div>
 
-              {/* Share Button */}
-              <a
-                href={(() => {
-                  const shareUrl = `https://www.vibemostwanted.xyz/fid/${card.fid}`;
-                  const foilText = card.foil !== 'None' ? ` with ${card.foil} foil` : '';
-                  const castText = `Just minted my VibeFID!\n\n${card.rarity}${foilText} • ${card.power} power\n\n@jvhbo`;
+              {/* Action Buttons */}
+              <div className="mt-6 w-full max-w-md space-y-3">
+                <div className="flex gap-4">
+                  {/* Share to Farcaster */}
+                  <a
+                    href={(() => {
+                      const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                })()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 w-full max-w-md px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                <span className="text-xl">🔮</span>
-                Share to Farcaster
-              </a>
+                      // Build dynamic share text with emojis
+                      const rarityEmojiMap: Record<string, string> = {
+                        'Mythic': '👑',
+                        'Legendary': '⚡',
+                        'Epic': '💎',
+                        'Rare': '🔥',
+                        'Common': '⭐'
+                      };
+                      const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
+
+                      const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
+                      const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
+
+                      const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${correctPower} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn coins\n\n🎮 Mint yours! @jvhbo`;
+
+                      return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                    })()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="text-xl">🔮</span>
+                    <span className="hidden sm:inline">Share to Farcaster</span>
+                    <span className="sm:hidden">Share</span>
+                  </a>
+
+                  {/* View on OpenSea */}
+                  <a
+                    href={`https://opensea.io/assets/base/${card.contractAddress || '0x60274A138d026E3cB337B40567100FdEC3127565'}/${card.fid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 px-6 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="hidden sm:inline">View on OpenSea</span>
+                    <span className="sm:hidden">OpenSea</span>
+                  </a>
+                </div>
+
+                {/* Check Your Neynar Score Button */}
+                {farcasterContext.user && (
+                  <button
+                    onClick={handleCheckNeynarScore}
+                    disabled={loading}
+                    className="w-full px-6 py-4 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/10 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                  >
+                    {loading ? t.generatingScore : t.checkNeynarScore}
+                  </button>
+                )}
+
+                {/* Error message */}
+                {error && (
+                  <div className="p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm text-center">
+                    {error}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -187,9 +381,9 @@ export default function FidCardPage() {
 
         {/* Mint History for this FID */}
         {fidCards && fidCards.length > 1 && (
-          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6">
+          <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 p-6 mb-8">
             <h2 className="text-2xl font-bold text-vintage-gold mb-4">
-              Mint History ({fidCards.length} mints)
+              All Mints ({fidCards.length} total)
             </h2>
             <p className="text-vintage-ice/70 mb-4 text-sm">
               All mints of FID #{fid}
@@ -210,7 +404,7 @@ export default function FidCardPage() {
 
                   <div className="aspect-square mb-2 rounded-lg overflow-hidden">
                     <CardMedia
-                      src={mintedCard.imageUrl || mintedCard.pfpUrl}
+                      src={convertIpfsUrl(mintedCard.imageUrl) || mintedCard.pfpUrl}
                       alt={mintedCard.username}
                       className="w-full h-full object-cover"
                     />
@@ -226,15 +420,57 @@ export default function FidCardPage() {
           </div>
         )}
 
-        {/* Back Button */}
-        <div className="mt-8 text-center">
-          <Link
-            href="/fid"
-            className="px-6 py-3 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors inline-block"
-          >
-            ← Mint Another Card
-          </Link>
-        </div>
+        {/* Neynar Score Modal */}
+        {showScoreModal && neynarScoreData && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-6 max-w-md w-full">
+              <h2 className="text-2xl font-bold text-vintage-gold mb-4 text-center">
+                {t.neynarScoreTitle}
+              </h2>
+
+              <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-6 mb-6">
+                <div className="text-center mb-4">
+                  <p className="text-vintage-burnt-gold text-sm mb-2">@{neynarScoreData.username} (FID #{neynarScoreData.fid})</p>
+                  <div className="text-5xl font-bold text-vintage-gold mb-2">
+                    {neynarScoreData.score.toFixed(3)}
+                  </div>
+                  <p className="text-vintage-ice text-sm font-bold">{t.currentScore} ⚡</p>
+                  <p className="text-vintage-ice/60 text-xs mt-1">(Real-time from Neynar API)</p>
+                </div>
+
+                <div className="border-t border-vintage-gold/20 pt-4">
+                  <p className="text-vintage-burnt-gold text-sm mb-2 text-center">{t.rarity}</p>
+                  <p className="text-vintage-ice text-xl font-bold text-center">{neynarScoreData.rarity}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    AudioManager.buttonClick();
+                    setShowScoreModal(false);
+                  }}
+                  className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors"
+                >
+                  {t.back}
+                </button>
+                <a
+                  href={(() => {
+                    const shareUrl = 'https://www.vibemostwanted.xyz/fid';
+                    const castText = `📊 My Neynar Score: ${neynarScoreData.score.toFixed(3)}\n${neynarScoreData.rarity} Rarity\n\n🎴 Check your score and mint your VibeFID card! @jvhbo`;
+                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => AudioManager.buttonClick()}
+                  className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center"
+                >
+                  {t.shareToFarcaster}
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

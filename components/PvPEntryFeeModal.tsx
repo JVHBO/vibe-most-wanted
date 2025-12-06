@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTransferVBMS, useVBMSBalance } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance, useFarcasterTransferVBMS } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 import { parseEther } from "viem";
@@ -11,6 +11,7 @@ interface PvPEntryFeeModalProps {
   onClose: () => void;
   onSuccess: () => void;
   entryFeeAmount: number; // Fixed entry fee (e.g., 20 VBMS)
+  playerAddress?: string; // Optional: for Farcaster miniapp
 }
 
 export function PvPEntryFeeModal({
@@ -18,16 +19,19 @@ export function PvPEntryFeeModal({
   onClose,
   onSuccess,
   entryFeeAmount,
+  playerAddress,
 }: PvPEntryFeeModalProps) {
-  const { address } = useAccount();
-  const { balance: vbmsBalance } = useVBMSBalance(address);
-  const { transfer, isPending: isTransferring, error: transferError } = useTransferVBMS();
+  const { address: wagmiAddress } = useAccount();
+  // Use playerAddress (miniapp) OR wagmiAddress (web) - playerAddress takes priority
+  const effectiveAddress = playerAddress || wagmiAddress;
+  const { balance: vbmsBalance } = useFarcasterVBMSBalance(effectiveAddress); // Miniapp-compatible
+  const { transfer, isPending: isTransferring, error: transferError } = useFarcasterTransferVBMS();
 
   const [step, setStep] = useState<"confirm" | "transferring" | "done">("confirm");
   const [error, setError] = useState<string | null>(null);
 
   const handlePayEntryFee = async () => {
-    if (!address) return;
+    if (!effectiveAddress) return;
 
     if (parseFloat(vbmsBalance) < entryFeeAmount) {
       setError(`Insufficient VBMS. You need ${entryFeeAmount} VBMS`);
@@ -53,7 +57,7 @@ export function PvPEntryFeeModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          address,
+          address: effectiveAddress,
           amount: entryFeeAmount,
           txHash: transferHash,
         }),
