@@ -192,3 +192,71 @@ export function generateRankFromRarity(rarity: 'Common' | 'Rare' | 'Epic' | 'Leg
   const availableRanks = ranksByRarity[rarity];
   return availableRanks[Math.floor(Math.random() * availableRanks.length)];
 }
+
+/**
+ * Neynar Cast interface for embedded casts
+ */
+export interface NeynarCast {
+  hash: string;
+  author: {
+    fid: number;
+    username: string;
+    display_name: string;
+    pfp_url: string;
+  };
+  text: string;
+  timestamp: string;
+  embeds: Array<{
+    url?: string;
+    metadata?: {
+      image?: { url: string };
+    };
+  }>;
+  reactions: {
+    likes_count: number;
+    recasts_count: number;
+  };
+  replies: {
+    count: number;
+  };
+}
+
+/**
+ * Fetch cast data by hash from Neynar API
+ * Docs: https://docs.neynar.com/reference/lookup-cast-by-hash-or-warpcast-url
+ */
+export async function getCastByHash(castHash: string): Promise<NeynarCast | null> {
+  if (!NEYNAR_API_KEY) {
+    console.error('NEYNAR_API_KEY is not configured');
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${NEYNAR_API_BASE}/farcaster/cast?identifier=${castHash}&type=hash`,
+      {
+        headers: {
+          'accept': 'application/json',
+          'api_key': NEYNAR_API_KEY,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`Neynar Cast API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.cast) {
+      console.error(`No cast found for hash: ${castHash}`);
+      return null;
+    }
+
+    return data.cast as NeynarCast;
+  } catch (error) {
+    console.error('Error fetching Neynar cast:', error);
+    return null;
+  }
+}

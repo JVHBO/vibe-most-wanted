@@ -5515,8 +5515,6 @@ export default function TCGPage() {
                 </div>
 
                 {/* Aura Leaderboard */}
-                (
-                  <>
                     {filteredLeaderboard.length === 0 ? (
                       <div className="text-center py-12">
                         <p className="text-6xl mb-4">§</p>
@@ -5772,10 +5770,7 @@ export default function TCGPage() {
                       </div>
                     )}
                   </div>
-                    )}
-                  </>
                 )}
-
                 {/* Raid Boss Leaderboard */}
                 {false && (
                   <>
