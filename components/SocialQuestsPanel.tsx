@@ -23,6 +23,7 @@ export function SocialQuestsPanel({
   const [verifying, setVerifying] = useState<string | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
+  const [visitedQuests, setVisitedQuests] = useState<Set<string>>(new Set());
   const [currentCastIndex, setCurrentCastIndex] = useState(0);
   const [castData, setCastData] = useState<Record<string, NeynarCast>>({});
   const [loadingCasts, setLoadingCasts] = useState(false);
@@ -79,10 +80,20 @@ export function SocialQuestsPanel({
   }, [featuredCasts]);
 
   const verifyQuest = async (quest: SocialQuest) => {
+    // First click: Open the link and mark as visited
+    if (!visitedQuests.has(quest.id)) {
+      window.open(quest.url, "_blank");
+      setVisitedQuests((prev) => new Set([...prev, quest.id]));
+      if (soundEnabled) AudioManager.buttonClick();
+      return;
+    }
+
+    // Second click: Verify the quest
     if (!userFid) {
       window.open(quest.url, "_blank");
       return;
     }
+
     setVerifying(quest.id);
     try {
       const response = await fetch("/api/social-quest/verify", {
@@ -96,6 +107,7 @@ export function SocialQuestsPanel({
         setLocalCompleted((prev) => new Set([...prev, quest.id]));
         if (soundEnabled) AudioManager.buttonSuccess();
       } else {
+        // Not completed - open link again
         window.open(quest.url, "_blank");
         if (soundEnabled) AudioManager.buttonClick();
       }
@@ -177,7 +189,7 @@ export function SocialQuestsPanel({
               </button>
             ) : (
               <button onClick={() => verifyQuest(quest)} disabled={isVerifying} className="px-3 py-1.5 rounded-lg bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold font-bold text-xs hover:bg-vintage-gold/10 transition-all disabled:opacity-50">
-                {isVerifying ? "..." : userFid ? "Verify" : "Go"}
+                {isVerifying ? "..." : visitedQuests.has(quest.id) ? "Verify" : "Go"}
               </button>
             )}
           </div>
