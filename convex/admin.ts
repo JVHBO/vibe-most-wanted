@@ -456,3 +456,29 @@ export const moveInboxToCoinsForAll = mutation({
     };
   },
 });
+
+/**
+ * Reset social quest progress for a specific address
+ */
+export const resetSocialQuestProgress = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    const progress = await ctx.db
+      .query("socialQuestProgress")
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
+      .collect();
+
+    for (const p of progress) {
+      await ctx.db.delete(p._id);
+    }
+
+    console.log(`Reset ${progress.length} social quest progress entries for ${normalizedAddress}`);
+
+    return {
+      success: true,
+      resetCount: progress.length,
+    };
+  },
+});
