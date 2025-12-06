@@ -455,18 +455,7 @@ export function SocialQuestsPanel({
           </a>
         </div>
       )}
-      <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-vintage-gold font-display font-bold text-lg">Social Quests</h3>
-          <div className="text-right">
-            <p className="text-vintage-gold font-bold text-sm">{completedQuests}/{totalQuests} Complete</p>
-            {claimableReward > 0 && <p className="text-green-400 text-xs animate-pulse">+{claimableReward} claimable!</p>}
-          </div>
-        </div>
-        <div className="h-2 bg-vintage-black rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold transition-all" style={{ width: `${(completedQuests / totalQuests) * 100}%` }} />
-        </div>
-      </div>
+      
       <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
         <h4 className="text-vintage-gold font-bold text-sm mb-3 flex items-center gap-2">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>
