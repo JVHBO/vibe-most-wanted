@@ -22,45 +22,44 @@ export function SocialQuestsPanel({
   const [verifying, setVerifying] = useState<string | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
+  const [currentCastIndex, setCurrentCastIndex] = useState(0);
 
-  // Get quest progress from backend
+  const featuredCasts = useQuery(api.featuredCasts.getActiveCasts);
+
   const questProgress = useQuery(
     api.socialQuests.getSocialQuestProgress,
     address ? { address } : "skip"
   );
 
-  // Mutations
   const markCompleted = useMutation(api.socialQuests.markQuestCompleted);
   const claimReward = useMutation(api.socialQuests.claimSocialQuestReward);
 
-  // Verify quest completion via API
+  useEffect(() => {
+    if (!featuredCasts || featuredCasts.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentCastIndex((prev) => (prev + 1) % featuredCasts.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [featuredCasts]);
+
   const verifyQuest = async (quest: SocialQuest) => {
     if (!userFid) {
       window.open(quest.url, "_blank");
       return;
     }
-
     setVerifying(quest.id);
-
     try {
       const response = await fetch("/api/social-quest/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questId: quest.id,
-          userFid,
-        }),
+        body: JSON.stringify({ questId: quest.id, userFid }),
       });
-
       const data = await response.json();
-
       if (data.completed) {
-        // Mark as completed in backend
         await markCompleted({ address, questId: quest.id });
         setLocalCompleted((prev) => new Set([...prev, quest.id]));
         if (soundEnabled) AudioManager.buttonSuccess();
       } else {
-        // Open link to complete
         window.open(quest.url, "_blank");
         if (soundEnabled) AudioManager.buttonClick();
       }
@@ -72,10 +71,8 @@ export function SocialQuestsPanel({
     }
   };
 
-  // Claim reward
   const handleClaim = async (quest: SocialQuest) => {
     setClaiming(quest.id);
-
     try {
       const result = await claimReward({ address, questId: quest.id });
       if (result.success) {
@@ -90,7 +87,6 @@ export function SocialQuestsPanel({
     }
   };
 
-  // Get quest status
   const getQuestStatus = (quest: SocialQuest) => {
     const progress = questProgress?.[quest.id];
     if (progress?.claimed) return "claimed";
@@ -98,22 +94,10 @@ export function SocialQuestsPanel({
     return "pending";
   };
 
-  // Separate quests by type
-  const channelQuests = SOCIAL_QUESTS.filter((q) => q.type === "channel");
-  const followQuests = SOCIAL_QUESTS.filter((q) => q.type === "follow");
-
-  // Calculate stats
   const totalQuests = SOCIAL_QUESTS.length;
-  const completedQuests = SOCIAL_QUESTS.filter(
-    (q) => getQuestStatus(q) === "claimed"
-  ).length;
-  const claimableQuests = SOCIAL_QUESTS.filter(
-    (q) => getQuestStatus(q) === "completed"
-  ).length;
+  const completedQuests = SOCIAL_QUESTS.filter((q) => getQuestStatus(q) === "claimed").length;
   const totalPotentialReward = SOCIAL_QUESTS.reduce((sum, q) => sum + q.reward, 0);
-  const claimableReward = SOCIAL_QUESTS.filter(
-    (q) => getQuestStatus(q) === "completed"
-  ).reduce((sum, q) => sum + q.reward, 0);
+  const claimableReward = SOCIAL_QUESTS.filter((q) => getQuestStatus(q) === "completed").reduce((sum, q) => sum + q.reward, 0);
 
   const renderQuest = (quest: SocialQuest) => {
     const status = getQuestStatus(quest);
@@ -143,38 +127,20 @@ export function SocialQuestsPanel({
               </svg>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-vintage-gold font-bold text-sm truncate">
-                {quest.displayName}
-              </p>
-              <p className="text-vintage-burnt-gold text-xs truncate">
-                {quest.description}
-              </p>
+              <p className="text-vintage-gold font-bold text-sm truncate">{quest.displayName}</p>
+              <p className="text-vintage-burnt-gold text-xs truncate">{quest.description}</p>
             </div>
           </div>
-
           <div className="flex items-center gap-2">
-            <span className="text-vintage-gold font-bold text-sm whitespace-nowrap">
-              +{quest.reward}
-            </span>
-
+            <span className="text-vintage-gold font-bold text-sm whitespace-nowrap">+{quest.reward}</span>
             {status === "claimed" ? (
-              <span className="px-3 py-1.5 rounded-lg bg-green-600/20 text-green-400 text-xs font-bold">
-                Claimed
-              </span>
+              <span className="px-3 py-1.5 rounded-lg bg-green-600/20 text-green-400 text-xs font-bold">Claimed</span>
             ) : status === "completed" ? (
-              <button
-                onClick={() => handleClaim(quest)}
-                disabled={isClaiming}
-                className="px-3 py-1.5 rounded-lg bg-vintage-gold text-vintage-black font-bold text-xs hover:bg-vintage-gold/90 transition-all disabled:opacity-50"
-              >
+              <button onClick={() => handleClaim(quest)} disabled={isClaiming} className="px-3 py-1.5 rounded-lg bg-vintage-gold text-vintage-black font-bold text-xs hover:bg-vintage-gold/90 transition-all disabled:opacity-50">
                 {isClaiming ? "..." : "Claim"}
               </button>
             ) : (
-              <button
-                onClick={() => verifyQuest(quest)}
-                disabled={isVerifying}
-                className="px-3 py-1.5 rounded-lg bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold font-bold text-xs hover:bg-vintage-gold/10 transition-all disabled:opacity-50"
-              >
+              <button onClick={() => verifyQuest(quest)} disabled={isVerifying} className="px-3 py-1.5 rounded-lg bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold font-bold text-xs hover:bg-vintage-gold/10 transition-all disabled:opacity-50">
                 {isVerifying ? "..." : userFid ? "Verify" : "Go"}
               </button>
             )}
@@ -186,62 +152,54 @@ export function SocialQuestsPanel({
 
   return (
     <div className="space-y-4">
-      {/* Header Stats */}
-      <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-vintage-gold font-display font-bold text-lg">
-            Social Quests
-          </h3>
-          <div className="text-right">
-            <p className="text-vintage-gold font-bold text-sm">
-              {completedQuests}/{totalQuests} Complete
-            </p>
-            {claimableReward > 0 && (
-              <p className="text-green-400 text-xs animate-pulse">
-                +{claimableReward} claimable!
-              </p>
+      {featuredCasts && featuredCasts.length > 0 && (
+        <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-vintage-gold font-bold text-sm flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+              Featured Cast
+            </h4>
+            {featuredCasts.length > 1 && (
+              <div className="flex gap-1">
+                {featuredCasts.map((_, idx) => (
+                  <button key={idx} onClick={() => setCurrentCastIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentCastIndex ? "bg-vintage-gold" : "bg-vintage-gold/30 hover:bg-vintage-gold/50"}`} />
+                ))}
+              </div>
             )}
           </div>
+          <a href={featuredCasts[currentCastIndex]?.warpcastUrl} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg bg-purple-900/20 border border-purple-500/30 hover:border-purple-500/50 transition-all">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-purple-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.8 8.2H5.2L3 9.4v7.8l3.2 3.2h9.6l3-3V9.4l-1-1.2zm-1.6 8.4l-1.6 1.6H8.4L6.8 16.6V11l1-1.2h8.4l1 1.2v5.6z"/><path d="M5.2 5.6L8.4 3.6h7.2l3.2 2H5.2z"/></svg>
+              <span className="text-purple-300 text-sm font-medium">View on Warpcast</span>
+              <svg className="w-4 h-4 text-purple-400 ml-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17" /></svg>
+            </div>
+            <p className="text-vintage-burnt-gold text-xs mt-2 truncate">{featuredCasts[currentCastIndex]?.castHash}</p>
+          </a>
         </div>
-
-        {/* Progress Bar */}
+      )}
+      <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-vintage-gold font-display font-bold text-lg">Social Quests</h3>
+          <div className="text-right">
+            <p className="text-vintage-gold font-bold text-sm">{completedQuests}/{totalQuests} Complete</p>
+            {claimableReward > 0 && <p className="text-green-400 text-xs animate-pulse">+{claimableReward} claimable!</p>}
+          </div>
+        </div>
         <div className="h-2 bg-vintage-black rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold transition-all"
-            style={{ width: `${(completedQuests / totalQuests) * 100}%` }}
-          />
+          <div className="h-full bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold transition-all" style={{ width: `${(completedQuests / totalQuests) * 100}%` }} />
         </div>
-        <p className="text-vintage-burnt-gold text-xs mt-2 text-center">
-          Total Rewards: {totalPotentialReward} $TESTVBMS
-        </p>
+        <p className="text-vintage-burnt-gold text-xs mt-2 text-center">Total Rewards: {totalPotentialReward} $TESTVBMS</p>
       </div>
-
-      {/* Channel Quests */}
       <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
         <h4 className="text-vintage-gold font-bold text-sm mb-3 flex items-center gap-2">
-          <span>📢</span> Join Channels
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>
+          Follow & Join
         </h4>
-        <div className="space-y-2">
-          {channelQuests.map(renderQuest)}
-        </div>
+        <div className="space-y-2">{SOCIAL_QUESTS.map(renderQuest)}</div>
       </div>
-
-      {/* Follow Quests */}
-      <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
-        <h4 className="text-vintage-gold font-bold text-sm mb-3 flex items-center gap-2">
-          <span>👤</span> Follow Creators
-        </h4>
-        <div className="space-y-2">
-          {followQuests.map(renderQuest)}
-        </div>
-      </div>
-
-      {/* No FID Warning */}
       {!userFid && (
         <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3">
-          <p className="text-yellow-400 text-xs text-center">
-            Connect with Farcaster to auto-verify quests
-          </p>
+          <p className="text-yellow-400 text-xs text-center">Connect with Farcaster to auto-verify quests</p>
         </div>
       )}
     </div>
