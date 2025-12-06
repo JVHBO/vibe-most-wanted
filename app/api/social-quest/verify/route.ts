@@ -3,7 +3,7 @@
  *
  * Verifies if user has completed a social quest using Neynar API
  * - Follow: Check if user follows target FID
- * - Channel: Check if user is member of channel
+ * - Channel: Auto-verified (API requires paid plan)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -59,53 +59,13 @@ async function checkFollow(userFid: number, targetFid: number): Promise<boolean>
 
 /**
  * Check if user is member of channel
+ * NOTE: Neynar channel membership API requires paid plan
+ * Auto-verify channel quests (trust-based) until we upgrade
  */
-async function checkChannelMembership(userFid: number, channelId: string): Promise<boolean> {
-  if (!NEYNAR_API_KEY) {
-    throw new Error('NEYNAR_API_KEY not configured');
-  }
-
-  try {
-    // Use channel members endpoint to check membership
-    const response = await fetch(
-      `${NEYNAR_API_BASE}/farcaster/channel/member/list?channel_id=${channelId}&fid=${userFid}&limit=1`,
-      {
-        headers: {
-          'accept': 'application/json',
-          'api_key': NEYNAR_API_KEY,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      // Try alternative: check if user follows the channel
-      const followResponse = await fetch(
-        `${NEYNAR_API_BASE}/farcaster/user/channels?fid=${userFid}&limit=100`,
-        {
-          headers: {
-            'accept': 'application/json',
-            'api_key': NEYNAR_API_KEY,
-          },
-        }
-      );
-
-      if (!followResponse.ok) {
-        console.error(`Neynar API error: ${followResponse.status}`);
-        return false;
-      }
-
-      const followData = await followResponse.json();
-      const channels = followData.channels || [];
-
-      return channels.some((ch: any) => ch.id === channelId || ch.parent_url?.includes(channelId));
-    }
-
-    const data = await response.json();
-    return data.members && data.members.length > 0;
-  } catch (error) {
-    console.error('Error checking channel membership:', error);
-    return false;
-  }
+function checkChannelMembership(): boolean {
+  // Channel membership API is paid on Neynar
+  // Auto-complete channel quests for now (trust-based)
+  return true;
 }
 
 export async function POST(request: NextRequest) {
@@ -134,7 +94,8 @@ export async function POST(request: NextRequest) {
     if (quest.type === 'follow' && quest.targetFid) {
       completed = await checkFollow(userFid, quest.targetFid);
     } else if (quest.type === 'channel') {
-      completed = await checkChannelMembership(userFid, quest.target);
+      // Auto-verify channel quests (Neynar API is paid)
+      completed = checkChannelMembership();
     }
 
     return NextResponse.json({
