@@ -46,17 +46,17 @@ export function SocialQuestsPanel({
       const newCastData: Record<string, NeynarCast> = {};
 
       for (const fc of featuredCasts) {
-        if (castData[fc.castHash]) continue; // Already fetched
+        if (castData[fc.warpcastUrl]) continue; // Already fetched
         try {
-          const response = await fetch(`/api/cast/${fc.castHash}`);
+          const response = await fetch(`/api/cast-by-url?url=${encodeURIComponent(fc.warpcastUrl)}`);
           if (response.ok) {
             const data = await response.json();
             if (data.cast) {
-              newCastData[fc.castHash] = data.cast;
+              newCastData[fc.warpcastUrl] = data.cast;
             }
           }
         } catch (error) {
-          console.error("Error fetching cast:", fc.castHash, error);
+          console.error("Error fetching cast:", fc.warpcastUrl, error);
         }
       }
 
@@ -187,7 +187,7 @@ export function SocialQuestsPanel({
   };
 
   const currentCast = featuredCasts?.[currentCastIndex];
-  const currentCastData = currentCast ? castData[currentCast.castHash] : null;
+  const currentCastData = currentCast ? castData[currentCast.warpcastUrl] : null;
 
   // Get first image from cast embeds
   const getCastImage = (cast: NeynarCast | null): string | null => {

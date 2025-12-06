@@ -260,3 +260,44 @@ export async function getCastByHash(castHash: string): Promise<NeynarCast | null
     return null;
   }
 }
+
+
+/**
+ * Fetch cast data by Warpcast URL from Neynar API
+ * This is more reliable than using truncated hashes
+ */
+export async function getCastByUrl(warpcastUrl: string): Promise<NeynarCast | null> {
+  if (!NEYNAR_API_KEY) {
+    console.error('NEYNAR_API_KEY is not configured');
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${NEYNAR_API_BASE}/farcaster/cast?identifier=${encodeURIComponent(warpcastUrl)}&type=url`,
+      {
+        headers: {
+          'accept': 'application/json',
+          'api_key': NEYNAR_API_KEY,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`Neynar Cast API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.cast) {
+      console.error(`No cast found for URL: ${warpcastUrl}`);
+      return null;
+    }
+
+    return data.cast as NeynarCast;
+  } catch (error) {
+    console.error('Error fetching Neynar cast by URL:', error);
+    return null;
+  }
+}
