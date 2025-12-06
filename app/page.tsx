@@ -597,7 +597,7 @@ export default function TCGPage() {
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
   const LEADERBOARD_PER_PAGE = 10;
   // Removed: leaderboardCollection (unified leaderboard now)
-  const [leaderboardTab, setLeaderboardTab] = useState<'aura' | 'raidboss'>('aura');
+  // leaderboardTab removed - only using aura now
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -3213,17 +3213,10 @@ export default function TCGPage() {
   // Unified leaderboard (already sorted by aura → power from backend)
   // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
   const filteredLeaderboard = useMemo(() => {
-    // Return raid boss leaderboard when on raid boss tab
-    if (leaderboardTab === 'raidboss') {
-      if (!raidBossLeaderboard || raidBossLeaderboard.length === 0) return [];
-      return raidBossLeaderboard;
-    }
-
     // Return collections leaderboard (aura-based)
     if (!leaderboard || leaderboard.length === 0) return [];
-    // Return as-is, already sorted by aura (primary) and power (secondary) from backend
     return leaderboard;
-  }, [leaderboard, raidBossLeaderboard, leaderboardTab]);
+  }, [leaderboard]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
@@ -5475,31 +5468,9 @@ export default function TCGPage() {
                     <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3 mb-2">
                       <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
                     </h1>
-                    {/* Leaderboard Tabs */}
-                    <div className="flex gap-2 mb-3">
-                      <button
-                        onClick={() => setLeaderboardTab('aura')}
-                        className={`px-4 py-2 rounded-lg font-modern font-bold transition ${
-                          leaderboardTab === 'aura'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        Aura
-                      </button>
-                      <button
-                        onClick={() => setLeaderboardTab('raidboss')}
-                        className={`px-4 py-2 rounded-lg font-modern font-bold transition ${
-                          leaderboardTab === 'raidboss'
-                            ? 'bg-vintage-gold text-vintage-black'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        Raid Boss
-                      </button>
-                    </div>
+                    
                     {/* Export Button */}
-                    {leaderboardTab === 'aura' && (
+                    (
                       <div className="flex flex-wrap gap-2 items-center">
                       <button
                         onClick={handleExportLeaderboard}
@@ -5509,7 +5480,7 @@ export default function TCGPage() {
                         <span>↓</span> Export
                       </button>
                     </div>
-                    )}
+                    
                   </div>
                   <div className="text-left md:text-right">
                     {userProfile && (
@@ -5544,7 +5515,7 @@ export default function TCGPage() {
                 </div>
 
                 {/* Aura Leaderboard */}
-                {leaderboardTab === 'aura' && (
+                (
                   <>
                     {filteredLeaderboard.length === 0 ? (
                       <div className="text-center py-12">
@@ -5806,7 +5777,7 @@ export default function TCGPage() {
                 )}
 
                 {/* Raid Boss Leaderboard */}
-                {leaderboardTab === 'raidboss' && (
+                {false && (
                   <>
                     {filteredLeaderboard.length === 0 ? (
                       <div className="text-center py-12">
