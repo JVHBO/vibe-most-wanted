@@ -360,7 +360,7 @@ export async function checkCastInteractions(
 
     // Check viewer context for reactions
     const liked = cast.viewer_context?.liked === true;
-    const recasted = cast.viewer_context?.recasted === true;
+    const recasted = cast.viewer_context?.recasted === true || cast.viewer_context?.recast === true;
 
     // For replies, check conversation using the actual cast hash
     let replied = false;
@@ -381,7 +381,14 @@ export async function checkCastInteractions(
         if (convResponse.ok) {
           const convData = await convResponse.json();
           const replies = convData.conversation?.cast?.direct_replies || [];
+          console.log(`[Neynar] Conversation replies count: ${replies.length}, looking for FID: ${viewerFid}`);
+          if (replies.length > 0) {
+            console.log(`[Neynar] Reply FIDs:`, replies.map((r: { author: { fid: number } }) => r.author.fid));
+          }
           replied = replies.some((reply: { author: { fid: number } }) => reply.author.fid === viewerFid);
+        } else {
+          const errorText = await convResponse.text();
+          console.error(`[Neynar] Conversation API error: ${convResponse.status}`, errorText);
         }
       } catch (e) {
         console.error('Error checking replies:', e);
