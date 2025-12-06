@@ -301,3 +301,81 @@ export async function getCastByUrl(warpcastUrl: string): Promise<NeynarCast | nu
     return null;
   }
 }
+
+/**
+ * Check if a user has interacted with a cast (like, recast, or reply)
+ */
+export interface CastInteractions {
+  liked: boolean;
+  recasted: boolean;
+  replied: boolean;
+}
+
+export async function checkCastInteractions(
+  castHash: string,
+  viewerFid: number
+): Promise<CastInteractions> {
+  const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+  const NEYNAR_API_BASE = 'https://api.neynar.com/v2';
+
+  if (!NEYNAR_API_KEY) {
+    console.error('NEYNAR_API_KEY is not configured');
+    return { liked: false, recasted: false, replied: false };
+  }
+
+  try {
+    // Fetch cast with viewer context to check reactions
+    const response = await fetch(
+      `${NEYNAR_API_BASE}/farcaster/cast?identifier=${castHash}&type=hash&viewer_fid=${viewerFid}`,
+      {
+        headers: {
+          'accept': 'application/json',
+          'api_key': NEYNAR_API_KEY,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`Neynar API error: ${response.status}`);
+      return { liked: false, recasted: false, replied: false };
+    }
+
+    const data = await response.json();
+    const cast = data.cast;
+
+    if (!cast) {
+      return { liked: false, recasted: false, replied: false };
+    }
+
+    // Check viewer context for reactions
+    const liked = cast.viewer_context?.liked === true;
+    const recasted = cast.viewer_context?.recasted === true;
+
+    // For replies, check conversation
+    let replied = false;
+    try {
+      const convResponse = await fetch(
+        `${NEYNAR_API_BASE}/farcaster/cast/conversation?identifier=${castHash}&type=hash&reply_depth=1&include_chronological_parent_casts=false`,
+        {
+          headers: {
+            'accept': 'application/json',
+            'api_key': NEYNAR_API_KEY,
+          },
+        }
+      );
+
+      if (convResponse.ok) {
+        const convData = await convResponse.json();
+        const replies = convData.conversation?.cast?.direct_replies || [];
+        replied = replies.some((reply: { author: { fid: number } }) => reply.author.fid === viewerFid);
+      }
+    } catch (e) {
+      console.error('Error checking replies:', e);
+    }
+
+    return { liked, recasted, replied };
+  } catch (error) {
+    console.error('Error checking cast interactions:', error);
+    return { liked: false, recasted: false, replied: false };
+  }
+}

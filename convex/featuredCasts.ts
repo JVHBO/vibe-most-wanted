@@ -70,3 +70,91 @@ export const removeFeaturedCast = mutation({
     }
   },
 });
+
+// Cast interaction reward amount
+const CAST_INTERACTION_REWARD = 100; // 100 TESTVBMS per interaction
+
+// Get cast interaction progress for a player
+export const getCastInteractionProgress = query({
+  args: { address: v.string(), castHash: v.string() },
+  handler: async (ctx, { address, castHash }) => {
+    const normalizedAddress = address.toLowerCase();
+    
+    const progress = await ctx.db
+      .query("castInteractions")
+      .withIndex("by_player_cast", (q) => 
+        q.eq("playerAddress", normalizedAddress).eq("castHash", castHash)
+      )
+      .collect();
+
+    return {
+      liked: progress.some(p => p.interactionType === "like" && p.claimed),
+      recasted: progress.some(p => p.interactionType === "recast" && p.claimed),
+      replied: progress.some(p => p.interactionType === "reply" && p.claimed),
+    };
+  },
+});
+
+// Claim cast interaction reward
+export const claimCastInteractionReward = mutation({
+  args: {
+    address: v.string(),
+    castHash: v.string(),
+    interactionType: v.union(v.literal("like"), v.literal("recast"), v.literal("reply")),
+  },
+  handler: async (ctx, { address, castHash, interactionType }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    // Check if already claimed
+    const existing = await ctx.db
+      .query("castInteractions")
+      .withIndex("by_player_cast", (q) => 
+        q.eq("playerAddress", normalizedAddress).eq("castHash", castHash)
+      )
+      .filter((q) => q.eq(q.field("interactionType"), interactionType))
+      .first();
+
+    if (existing) {
+      throw new Error("Already claimed this reward");
+    }
+
+    // Get player profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Add reward to balance
+    const currentBalance = profile.coins || 0;
+    const newBalance = currentBalance + CAST_INTERACTION_REWARD;
+    const newLifetimeEarned = (profile.lifetimeEarned || 0) + CAST_INTERACTION_REWARD;
+
+    await ctx.db.patch(profile._id, {
+      coins: newBalance,
+      lifetimeEarned: newLifetimeEarned,
+      lastUpdated: Date.now(),
+    });
+
+    // Record the claim
+    await ctx.db.insert("castInteractions", {
+      playerAddress: normalizedAddress,
+      castHash,
+      interactionType,
+      claimed: true,
+      claimedAt: Date.now(),
+    });
+
+    console.log(`🎬 Cast ${interactionType} reward: ${CAST_INTERACTION_REWARD} TESTVBMS for ${normalizedAddress}`);
+
+    return {
+      success: true,
+      reward: CAST_INTERACTION_REWARD,
+      newBalance,
+      interactionType,
+    };
+  },
+});

@@ -1148,4 +1148,15 @@ export default defineSchema({
   })
     .index("by_order", ["order"])
     .index("by_active", ["active"]),
+
+  // Cast Interactions - Track user interactions with featured casts for rewards
+  castInteractions: defineTable({
+    playerAddress: v.string(),
+    castHash: v.string(),
+    interactionType: v.union(v.literal("like"), v.literal("recast"), v.literal("reply")),
+    claimed: v.boolean(),
+    claimedAt: v.number(),
+  })
+    .index("by_player", ["playerAddress"])
+    .index("by_player_cast", ["playerAddress", "castHash"]),
 });

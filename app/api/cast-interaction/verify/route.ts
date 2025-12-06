@@ -1,0 +1,50 @@
+import { NextRequest, NextResponse } from "next/server";
+import { checkCastInteractions } from "@/lib/neynar";
+
+export async function POST(request: NextRequest) {
+  try {
+    const { castHash, viewerFid, interactionType } = await request.json();
+
+    if (!castHash || !viewerFid || !interactionType) {
+      return NextResponse.json(
+        { error: "castHash, viewerFid, and interactionType are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!["like", "recast", "reply"].includes(interactionType)) {
+      return NextResponse.json(
+        { error: "interactionType must be 'like', 'recast', or 'reply'" },
+        { status: 400 }
+      );
+    }
+
+    const interactions = await checkCastInteractions(castHash, viewerFid);
+
+    let verified = false;
+    switch (interactionType) {
+      case "like":
+        verified = interactions.liked;
+        break;
+      case "recast":
+        verified = interactions.recasted;
+        break;
+      case "reply":
+        verified = interactions.replied;
+        break;
+    }
+
+    return NextResponse.json({
+      verified,
+      interactionType,
+      castHash,
+      viewerFid,
+    });
+  } catch (error) {
+    console.error("Error verifying cast interaction:", error);
+    return NextResponse.json(
+      { error: "Failed to verify interaction" },
+      { status: 500 }
+    );
+  }
+}

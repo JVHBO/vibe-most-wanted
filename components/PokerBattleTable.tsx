@@ -2350,7 +2350,7 @@ export function PokerBattleTable({
                       </div>
                     )}
                     <div>
-                      <div className={`text-blue-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>
+                      <div className={`text-blue-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'} max-w-[120px] truncate`}>
                         {room?.hostUsername || 'HOST'}
                         {isHost && <span className="text-yellow-400 ml-1">(YOU)</span>}
                       </div>
@@ -2417,7 +2417,7 @@ export function PokerBattleTable({
                       </div>
                     )}
                     <div>
-                      <div className={`text-red-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'}`}>
+                      <div className={`text-red-400 font-display font-bold ${isInFarcaster ? 'text-base' : 'text-sm'} max-w-[120px] truncate`}>
                         {room?.guestUsername || 'GUEST'}
                         {!isHost && <span className="text-yellow-400 ml-1">(YOU)</span>}
                       </div>
@@ -2614,7 +2614,7 @@ export function PokerBattleTable({
                       <div className={`text-vintage-gold font-bold mb-1 ${
                         isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm'
                       }`}>
-                        {isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}
+                        <span className="max-w-[100px] truncate inline-block">{isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}</span>
                       </div>
                       <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
                         isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-24 sm:w-28 md:w-32'
@@ -2689,7 +2689,7 @@ export function PokerBattleTable({
                       <div className={`text-vintage-gold font-bold mb-1 ${
                         isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm mb-2'
                       }`}>
-                        {isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}
+                        <span className="max-w-[100px] truncate inline-block">{isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}</span>
                       </div>
                       <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
                         isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-32 sm:w-40 md:w-48'
@@ -2997,14 +2997,14 @@ export function PokerBattleTable({
                 <p className="text-lg sm:text-xl text-vintage-burnt-gold mb-3">Final Score</p>
                 <div className="flex justify-center items-center gap-4 mb-4">
                   <div className="text-center">
-                    <p className="text-xs text-vintage-gold/60 mb-1">{room?.hostUsername || 'Player 1'}</p>
+                    <p className="text-xs text-vintage-gold/60 mb-1 max-w-[100px] truncate">{room?.hostUsername || 'Player 1'}</p>
                     <p className={`text-4xl sm:text-5xl font-bold ${playerScore > opponentScore ? 'text-green-400' : playerScore < opponentScore ? 'text-red-400' : 'text-vintage-gold'}`}>
                       {playerScore}
                     </p>
                   </div>
                   <span className="text-2xl text-vintage-gold">-</span>
                   <div className="text-center">
-                    <p className="text-xs text-vintage-gold/60 mb-1">{room?.guestUsername || 'Player 2'}</p>
+                    <p className="text-xs text-vintage-gold/60 mb-1 max-w-[100px] truncate">{room?.guestUsername || 'Player 2'}</p>
                     <p className={`text-4xl sm:text-5xl font-bold ${opponentScore > playerScore ? 'text-green-400' : opponentScore < playerScore ? 'text-red-400' : 'text-vintage-gold'}`}>
                       {opponentScore}
                     </p>
