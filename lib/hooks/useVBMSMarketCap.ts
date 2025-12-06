@@ -5,7 +5,9 @@
 
 import { useState, useEffect } from 'react';
 
-const WIELD_API = 'https://build.wield.xyz/vibe/boosterbox/collection/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728/stats';
+const WIELD_API_KEY = process.env.NEXT_PUBLIC_WIELD_API_KEY || '';
+const STATS_API = 'https://build.wield.xyz/vibe/boosterbox/collection/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728/stats';
+const PRICE_API = 'https://build.wield.xyz/vibe/boosterbox/price-chart/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728?timeframe=24h&chainId=8453&includeStats=true';
 const ETH_USD_API = 'https://build.wield.xyz/utils/eth-to-usd?eth=1';
 const CACHE_KEY = 'vbms_market_cap';
 
@@ -27,26 +29,36 @@ export function useVBMSMarketCap() {
 
     async function fetchMarketCap() {
       try {
-        const [statsRes, ethRes] = await Promise.all([
-          fetch(WIELD_API, {
-            headers: { 'Origin': 'https://vibechain.com', 'Referer': 'https://vibechain.com/' },
-          }),
+        const headers: Record<string, string> = {
+          'Origin': 'https://vibechain.com',
+          'Referer': 'https://vibechain.com/',
+        };
+        if (WIELD_API_KEY) {
+          headers['API-KEY'] = WIELD_API_KEY;
+        }
+
+        const [statsRes, priceRes, ethRes] = await Promise.all([
+          fetch(STATS_API, { headers }),
+          fetch(PRICE_API, { headers }),
           fetch(ETH_USD_API),
         ]);
 
-        if (!statsRes.ok || !ethRes.ok) throw new Error('API error');
+        if (!statsRes.ok || !priceRes.ok || !ethRes.ok) throw new Error('API error');
 
-        const stats = await statsRes.json();
+        const statsData = await statsRes.json();
+        const priceData = await priceRes.json();
         const ethData = await ethRes.json();
 
-        if (stats.success === false) throw new Error('Rate limited');
+        if (statsData.success === false || priceData.success === false) throw new Error('Rate limited');
 
-        const ethUsd = ethData?.usd || 3400;
-        const totalMinted = stats?.totalMinted || stats?.totalPacksSold || 0;
-        const avgPriceEth = stats?.avgPricePerPackInEth || stats?.pricePerPackInEth || 0;
+        const ethUsd = ethData?.usd || 3700;
+        // Get total packs from stats API
+        const totalPacks = statsData?.stats?.totals?.totalCount || 0;
+        // Get current price from price-chart API
+        const currentPriceEth = priceData?.statistics?.currentPriceEth || 0;
 
-        // Market Cap = Total Minted * Avg Price Per Pack * ETH/USD
-        const mcap = totalMinted * avgPriceEth * ethUsd;
+        // Market Cap = Total Packs * Current Price Per Pack * ETH/USD
+        const mcap = totalPacks * currentPriceEth * ethUsd;
 
         // Format
         let formatted: string;
