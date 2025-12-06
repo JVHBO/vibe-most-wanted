@@ -5949,13 +5949,13 @@ export default function TCGPage() {
           {currentView === 'missions' && (
             <div className="max-w-6xl mx-auto space-y-6">
               {/* Toggle Buttons: Missions / Achievements */}
-              <div className="flex justify-center gap-2 mb-4">
+              <div className="flex justify-center gap-1 md:gap-2 mb-4 px-2">
                 <button
                   onClick={() => {
                     if (soundEnabled) AudioManager.buttonNav();
                     setMissionsSubView('missions');
                   }}
-                  className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
+                  className={`px-3 md:px-6 py-2 rounded-lg font-display font-bold text-xs md:text-base transition-all flex-shrink-0 ${
                     missionsSubView === 'missions'
                       ? 'bg-vintage-gold text-vintage-black shadow-gold'
                       : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
@@ -5968,14 +5968,13 @@ export default function TCGPage() {
                     if (soundEnabled) AudioManager.buttonNav();
                     setMissionsSubView('social');
                   }}
-                  className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
+                  className={`px-3 md:px-6 py-2 rounded-lg font-display font-bold text-xs md:text-base transition-all flex-shrink-0 ${
                     missionsSubView === 'social'
                       ? 'bg-vintage-gold text-vintage-black shadow-gold'
                       : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
                   }`}
                 >
-                  <svg className="inline-block w-4 h-4 mr-1" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                  <svg className="inline-block w-3 h-3 md:w-4 md:h-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                   </svg>
                   Social
                 </button>
@@ -5984,14 +5983,13 @@ export default function TCGPage() {
                     if (soundEnabled) AudioManager.buttonNav();
                     setMissionsSubView('achievements');
                   }}
-                  className={`px-6 py-2 rounded-lg font-display font-bold text-sm md:text-base transition-all ${
+                  className={`px-3 md:px-6 py-2 rounded-lg font-display font-bold text-xs md:text-base transition-all flex-shrink-0 ${
                     missionsSubView === 'achievements'
                       ? 'bg-vintage-gold text-vintage-black shadow-gold'
                       : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
                   }`}
                 >
-                  <svg className="inline-block w-4 h-4 mr-1" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                  <svg className="inline-block w-3 h-3 md:w-4 md:h-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
                   </svg>
                   {t('achievements')}
                 </button>
