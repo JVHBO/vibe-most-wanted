@@ -4252,7 +4252,7 @@ export default function TCGPage() {
       />
 
       {showTutorial && (
-        <div className="fixed inset-x-0 top-0 bottom-20 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4" onClick={() => setShowTutorial(false)}>
+        <div className="fixed inset-x-0 top-0 bottom-20 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-1 md:p-3" onClick={() => setShowTutorial(false)}>
           <div className={`bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-3 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)] ${isInFarcaster ? 'max-h-[calc(100vh-240px)]' : 'max-h-[calc(100vh-100px)]'} flex flex-col`} onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-3 md:mb-6 flex-shrink-0">
               <div>
@@ -4692,7 +4692,7 @@ export default function TCGPage() {
       ) : (
         <>
           <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`}>
-            <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-2 md:p-4 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30 shadow-gold`}>
+            <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30 shadow-gold`}>
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
                 <div className="flex items-center gap-2">
                   {/* Profile Button */}
@@ -5471,7 +5471,6 @@ export default function TCGPage() {
                     </h1>
                     
                     {/* Export Button */}
-                    (
                       <div className="flex flex-wrap gap-2 items-center">
                       <button
                         onClick={handleExportLeaderboard}
@@ -5526,14 +5525,14 @@ export default function TCGPage() {
                     <table className="w-full text-sm md:text-base">
                       <thead>
                         <tr className="border-b border-vintage-gold/20">
-                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
-                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Aura</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Opened</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
-                          <th className="text-center p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
+                          <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
+                          <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
+                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">Aura</th>
+                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Opened</th>
+                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
+                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
+                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
+                          <th className="text-center p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
                           <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
                         </tr>
                       </thead>
@@ -5544,7 +5543,7 @@ export default function TCGPage() {
                             const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
                             return (
                           <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
-                            <td className="p-2 md:p-4">
+                            <td className="p-1 md:p-3">
                               <span className={`text-lg md:text-2xl font-bold ${
                                 index === 0 ? 'text-yellow-400' :
                                 index === 1 ? 'text-gray-300' :
@@ -5554,10 +5553,10 @@ export default function TCGPage() {
                                 #{index + 1}
                               </span>
                             </td>
-                            <td className="p-2 md:p-4">
+                            <td className="p-1 md:p-3">
                               <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
                                 <div>
-                                  <div className="flex items-center gap-1 md:gap-2 mb-1">
+                                  <div className="flex items-center gap-1 mb-1">
                                     <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base truncate max-w-[100px] md:max-w-[150px]">{profile.username}</p>
                                     <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
                                   </div>
@@ -5566,12 +5565,12 @@ export default function TCGPage() {
                               </Link>
                             </td>
                             {/* @ts-expect-error - aura field is added to schema but types not yet regenerated */}
-                            <td className="p-2 md:p-4 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.aura ?? 500).toLocaleString()} ⚔️</td>
-                            <td className="p-2 md:p-4 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
-                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
-                            <td className="p-2 md:p-4 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
-                            <td className="p-2 md:p-4 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveLosses || 0) + (profile.stats?.pvpLosses || 0)}</td>
-                            <td className="p-2 md:p-4 text-center">
+                            <td className="p-1 md:p-3 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.aura ?? 500).toLocaleString()} ⚔️</td>
+                            <td className="p-1 md:p-3 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
+                            <td className="p-1 md:p-3 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
+                            <td className="p-1 md:p-3 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
+                            <td className="p-1 md:p-3 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveLosses || 0) + (profile.stats?.pvpLosses || 0)}</td>
+                            <td className="p-1 md:p-3 text-center">
                                 {/* Weekly Reward Claim Button (TOP 10 only) */}
                                 {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
                                   const rank = index + 1;
@@ -5785,11 +5784,11 @@ export default function TCGPage() {
                     <table className="w-full text-sm md:text-base">
                       <thead>
                         <tr className="border-b border-vintage-gold/20">
-                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
-                          <th className="text-left p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Total Damage</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Bosses Killed</th>
-                          <th className="text-right p-2 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
+                          <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
+                          <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
+                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">Total Damage</th>
+                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Bosses Killed</th>
+                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
                           <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
                         </tr>
                       </thead>
@@ -5800,7 +5799,7 @@ export default function TCGPage() {
                             const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
                             return (
                           <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
-                            <td className="p-2 md:p-4">
+                            <td className="p-1 md:p-3">
                               <span className={`text-lg md:text-2xl font-bold ${
                                 index === 0 ? 'text-yellow-400' :
                                 index === 1 ? 'text-gray-300' :
@@ -5810,10 +5809,10 @@ export default function TCGPage() {
                                 #{index + 1}
                               </span>
                             </td>
-                            <td className="p-2 md:p-4">
+                            <td className="p-1 md:p-3">
                               <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
                                 <div>
-                                  <div className="flex items-center gap-1 md:gap-2 mb-1">
+                                  <div className="flex items-center gap-1 mb-1">
                                     <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base truncate max-w-[100px] md:max-w-[150px]">{profile.username}</p>
                                     <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
                                   </div>
@@ -5822,10 +5821,10 @@ export default function TCGPage() {
                               </Link>
                             </td>
                             {/* @ts-expect-error - raidBossDamage field is added dynamically */}
-                            <td className="p-2 md:p-4 text-right text-red-400 font-bold text-base md:text-xl">{(profile.stats?.raidBossDamage ?? 0).toLocaleString()} 💥</td>
+                            <td className="p-1 md:p-3 text-right text-red-400 font-bold text-base md:text-xl">{(profile.stats?.raidBossDamage ?? 0).toLocaleString()} 💥</td>
                             {/* @ts-expect-error - bossesKilled field is added dynamically */}
-                            <td className="p-2 md:p-4 text-right text-orange-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.bossesKilled || 0} 🐉</td>
-                            <td className="p-2 md:p-4 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
+                            <td className="p-1 md:p-3 text-right text-orange-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.bossesKilled || 0} 🐉</td>
+                            <td className="p-1 md:p-3 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
                             <td className="p-1 md:p-4 text-center">
                               {profile.address.toLowerCase() !== address?.toLowerCase() && (
                                 <Link
