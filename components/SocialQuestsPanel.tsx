@@ -250,6 +250,7 @@ export function SocialQuestsPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           castHash: currentCast.castHash,
+          warpcastUrl: currentCast.warpcastUrl,
           viewerFid: userFid,
           interactionType,
         }),

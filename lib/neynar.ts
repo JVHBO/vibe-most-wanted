@@ -312,7 +312,7 @@ export interface CastInteractions {
 }
 
 export async function checkCastInteractions(
-  castHash: string,
+  castIdentifier: string,
   viewerFid: number
 ): Promise<CastInteractions> {
   const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
@@ -323,10 +323,17 @@ export async function checkCastInteractions(
     return { liked: false, recasted: false, replied: false };
   }
 
+  // Determine if identifier is a URL or hash
+  const isUrl = castIdentifier.startsWith('http');
+  const identifierType = isUrl ? 'url' : 'hash';
+  const encodedIdentifier = isUrl ? encodeURIComponent(castIdentifier) : castIdentifier;
+
+  console.log(`[Neynar] Checking interactions: identifier=${castIdentifier}, type=${identifierType}, viewerFid=${viewerFid}`);
+
   try {
     // Fetch cast with viewer context to check reactions
     const response = await fetch(
-      `${NEYNAR_API_BASE}/farcaster/cast?identifier=${castHash}&type=hash&viewer_fid=${viewerFid}`,
+      `${NEYNAR_API_BASE}/farcaster/cast?identifier=${encodedIdentifier}&type=${identifierType}&viewer_fid=${viewerFid}`,
       {
         headers: {
           'accept': 'application/json',
@@ -336,14 +343,18 @@ export async function checkCastInteractions(
     );
 
     if (!response.ok) {
-      console.error(`Neynar API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Neynar API error: ${response.status}`, errorText);
       return { liked: false, recasted: false, replied: false };
     }
 
     const data = await response.json();
     const cast = data.cast;
 
+    console.log(`[Neynar] Cast found:`, cast?.hash, `viewer_context:`, cast?.viewer_context);
+
     if (!cast) {
+      console.log('[Neynar] No cast found in response');
       return { liked: false, recasted: false, replied: false };
     }
 
@@ -351,28 +362,33 @@ export async function checkCastInteractions(
     const liked = cast.viewer_context?.liked === true;
     const recasted = cast.viewer_context?.recasted === true;
 
-    // For replies, check conversation
+    // For replies, check conversation using the actual cast hash
     let replied = false;
-    try {
-      const convResponse = await fetch(
-        `${NEYNAR_API_BASE}/farcaster/cast/conversation?identifier=${castHash}&type=hash&reply_depth=1&include_chronological_parent_casts=false`,
-        {
-          headers: {
-            'accept': 'application/json',
-            'api_key': NEYNAR_API_KEY,
-          },
-        }
-      );
+    const actualCastHash = cast.hash;
 
-      if (convResponse.ok) {
-        const convData = await convResponse.json();
-        const replies = convData.conversation?.cast?.direct_replies || [];
-        replied = replies.some((reply: { author: { fid: number } }) => reply.author.fid === viewerFid);
+    if (actualCastHash) {
+      try {
+        const convResponse = await fetch(
+          `${NEYNAR_API_BASE}/farcaster/cast/conversation?identifier=${actualCastHash}&type=hash&reply_depth=1&include_chronological_parent_casts=false`,
+          {
+            headers: {
+              'accept': 'application/json',
+              'api_key': NEYNAR_API_KEY,
+            },
+          }
+        );
+
+        if (convResponse.ok) {
+          const convData = await convResponse.json();
+          const replies = convData.conversation?.cast?.direct_replies || [];
+          replied = replies.some((reply: { author: { fid: number } }) => reply.author.fid === viewerFid);
+        }
+      } catch (e) {
+        console.error('Error checking replies:', e);
       }
-    } catch (e) {
-      console.error('Error checking replies:', e);
     }
 
+    console.log(`[Neynar] Interactions: liked=${liked}, recasted=${recasted}, replied=${replied}`);
     return { liked, recasted, replied };
   } catch (error) {
     console.error('Error checking cast interactions:', error);
