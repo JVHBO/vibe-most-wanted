@@ -6416,7 +6416,6 @@ export default function TCGPage() {
                   soundEnabled={soundEnabled}
                   onRewardClaimed={(amount: number) => {
                     setSuccessMessage(`Claimed ${amount} $TESTVBMS!`);
-                    if (soundEnabled) AudioManager.win();
                   }}
                 />
               )}
