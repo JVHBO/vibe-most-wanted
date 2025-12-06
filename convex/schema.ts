@@ -882,6 +882,7 @@ export default defineSchema({
   raidAttacks: defineTable({
     // Player Info
     address: v.string(), // Player wallet address
+    username: v.optional(v.string()), // 🚀 Cached username to avoid N+1 profile lookups
 
     // Raid Deck (5 regular cards)
     deck: v.array(v.object({
@@ -931,7 +932,8 @@ export default defineSchema({
     lastUpdated: v.number(),
   })
     .index("by_address", ["address"])
-    .index("by_total_damage", ["totalDamageDealt"]),
+    .index("by_total_damage", ["totalDamageDealt"])
+    .index("by_last_updated", ["lastUpdated"]), // 🚀 For filtering active decks
 
   // Raid Contributions (per boss, per player)
   raidContributions: defineTable({
