@@ -150,7 +150,6 @@ export function SocialQuestsPanel({
 
   const totalQuests = SOCIAL_QUESTS.length;
   const completedQuests = SOCIAL_QUESTS.filter((q) => getQuestStatus(q) === "claimed").length;
-  const totalPotentialReward = SOCIAL_QUESTS.reduce((sum, q) => sum + q.reward, 0);
   const claimableReward = SOCIAL_QUESTS.filter((q) => getQuestStatus(q) === "completed").reduce((sum, q) => sum + q.reward, 0);
 
   const renderQuest = (quest: SocialQuest) => {
@@ -467,7 +466,6 @@ export function SocialQuestsPanel({
         <div className="h-2 bg-vintage-black rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold transition-all" style={{ width: `${(completedQuests / totalQuests) * 100}%` }} />
         </div>
-        <p className="text-vintage-burnt-gold text-xs mt-2 text-center">Total Rewards: {totalPotentialReward} $TESTVBMS</p>
       </div>
       <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
         <h4 className="text-vintage-gold font-bold text-sm mb-3 flex items-center gap-2">
