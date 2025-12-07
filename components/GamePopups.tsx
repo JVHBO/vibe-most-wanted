@@ -57,6 +57,7 @@ interface GamePopupsProps {
   // Loss popup
   showLossPopup: boolean;
   handleCloseDefeatScreen: () => void;
+  forcedLossMedia?: { media: string; isVideo: boolean }; // For testing specific loss screens
 
   // Tie popup
   showTiePopup: boolean;
@@ -101,6 +102,7 @@ export function GamePopups({
   onShareClick,
   showLossPopup,
   handleCloseDefeatScreen,
+  forcedLossMedia,
   showTiePopup,
   setShowTiePopup,
   tieGifLoaded,
@@ -127,13 +129,17 @@ export function GamePopups({
   // Track which loss media to show (randomly selected on popup open)
   const [currentLossMedia, setCurrentLossMedia] = useState(LOSS_CONFIGS[0]);
 
-  // Select random loss media when popup opens
+  // Select loss media when popup opens (forced or random)
   useEffect(() => {
     if (showLossPopup) {
-      const randomIndex = Math.floor(Math.random() * LOSS_CONFIGS.length);
-      setCurrentLossMedia(LOSS_CONFIGS[randomIndex]);
+      if (forcedLossMedia) {
+        setCurrentLossMedia(forcedLossMedia);
+      } else {
+        const randomIndex = Math.floor(Math.random() * LOSS_CONFIGS.length);
+        setCurrentLossMedia(LOSS_CONFIGS[randomIndex]);
+      }
     }
-  }, [showLossPopup]);
+  }, [showLossPopup, forcedLossMedia]);
 
   // Pause/Resume background music when result popups are shown
   useEffect(() => {
