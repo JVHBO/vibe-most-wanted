@@ -277,7 +277,7 @@ export function GamePopups({
             </>
           )}
 
-          <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {/* Victory 4 - Video (littlebird) */}
             {currentVictoryImage === '/littlebird.mp4' ? (
               <video
@@ -286,52 +286,52 @@ export function GamePopups({
                 loop
                 muted={!soundEnabled}
                 playsInline
-                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-blue-500/50 border-4 border-blue-400"
+                className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-blue-500/50 border-2 border-blue-400"
               />
             ) : (
               <img
                 src={currentVictoryImage}
                 alt="Victory!"
-                className={`rounded-2xl shadow-2xl border-4 ${
+                className={`rounded-xl shadow-2xl border-2 object-contain ${
                   currentVictoryImage === '/victory-2.jpg'
-                    ? 'max-w-[90vw] max-h-[80vh] shadow-pink-500/50 border-pink-400 animate-pulse-glow'
+                    ? 'max-w-[85vw] max-h-[50vh] shadow-pink-500/50 border-pink-400 animate-pulse-glow'
                     : currentVictoryImage === '/victory-3.jpg'
-                    ? 'max-w-[90vw] max-h-[55vh] object-contain shadow-gold-500/50 border-gold-400 animate-pulse-glow'
-                    : 'max-w-[90vw] max-h-[80vh] shadow-yellow-500/50 border-yellow-400'
+                    ? 'max-w-[85vw] max-h-[45vh] shadow-gold-500/50 border-gold-400 animate-pulse-glow'
+                    : 'max-w-[85vw] max-h-[50vh] shadow-yellow-500/50 border-yellow-400'
                 }`}
               />
             )}
-            <div className="text-center px-4">
-              <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse">
+            <div className="text-center px-2">
+              <p className="text-lg md:text-xl font-bold text-yellow-400 animate-pulse">
                 {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
                   ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
                   : t('victoryPrize')}
               </p>
               {/* PvP Inbox Reminder */}
               {lastBattleResult?.type === 'pvp' && lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0 && (
-                <p className="text-lg text-green-400 font-semibold mt-2 animate-bounce">
-                  📬 Check your inbox to claim TESTVBMS!
+                <p className="text-sm text-green-400 font-semibold mt-1 animate-bounce">
+                  📬 Check inbox to claim TESTVBMS!
                 </p>
               )}
             </div>
 
             {/* Share Incentive Banner */}
             {sharesRemaining !== undefined && sharesRemaining > 0 && (
-              <div className="bg-green-500/20 border border-green-400 rounded-lg px-4 py-2 text-center">
-                <p className="text-green-400 font-bold text-sm animate-pulse">
-                  💰 Share & earn +10 coins! ({sharesRemaining}/3 today)
+              <div className="bg-green-500/20 border border-green-400 rounded-lg px-2 py-1 text-center">
+                <p className="text-green-400 font-bold text-xs animate-pulse">
+                  💰 Share +10 coins! ({sharesRemaining}/3)
                 </p>
               </div>
             )}
             {sharesRemaining === 0 && (
-              <div className="bg-gray-500/20 border border-gray-400 rounded-lg px-4 py-2 text-center">
-                <p className="text-gray-400 font-semibold text-sm">
-                  Daily share limit reached (3/3)
+              <div className="bg-gray-500/20 border border-gray-400 rounded-lg px-2 py-1 text-center">
+                <p className="text-gray-400 font-semibold text-xs">
+                  Share limit reached (3/3)
                 </p>
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <a
                 href={(() => {
                   if (!lastBattleResult || !userProfile) return '#';
@@ -351,7 +351,7 @@ export function GamePopups({
                   if (soundEnabled) AudioManager.buttonSuccess();
                   if (onShareClick) onShareClick('twitter');
                 }}
-                className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm shadow-gold transition-all hover:scale-105 flex items-center gap-1"
               >
                 <span>𝕏</span> {t('shareVictory')}
               </a>
@@ -388,14 +388,14 @@ export function GamePopups({
                   if (soundEnabled) AudioManager.buttonSuccess();
                   if (onShareClick) onShareClick('farcaster');
                 }}
-                className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm shadow-gold transition-all hover:scale-105 flex items-center gap-1"
               >
-                <FarcasterIcon size={18} /> Cast
+                <FarcasterIcon size={16} /> Cast
               </a>
             </div>
             <button
               onClick={handleCloseVictoryScreen}
-              className="absolute top-4 right-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-gold"
+              className="absolute top-2 right-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold shadow-gold"
             >
               ×
             </button>
@@ -412,7 +412,7 @@ export function GamePopups({
               <source src="/lose-sound.mp3" type="audio/mpeg" />
             </audio>
           )}
-          <div className="relative flex flex-col items-center gap-4">
+          <div className="relative flex flex-col items-center gap-2">
             {/* Loss screen - Video or Image */}
             {currentLossMedia.isVideo ? (
               <video
@@ -421,23 +421,23 @@ export function GamePopups({
                 loop
                 muted={!soundEnabled}
                 playsInline
-                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
+                className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-red-500/50 border-2 border-red-500"
               />
             ) : (
               <img
                 src={currentLossMedia.media}
                 alt="You Lost"
-                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
+                className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-red-500/50 border-2 border-red-500"
               />
             )}
-            <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
+            <p className="text-lg md:text-xl font-bold text-red-400 animate-pulse px-2 text-center">
               {lastBattleResult?.type === 'pve' || lastBattleResult?.type === 'attack'
                 ? t('noCoinsEarned')
                 : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
                   ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
                   : t('defeatPrize')}
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <a
                 href={(() => {
                   if (!lastBattleResult || !userProfile) return '#';
@@ -454,7 +454,7 @@ export function GamePopups({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
-                className="px-6 py-3 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-display font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+                className="px-4 py-2 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-lg font-display font-bold text-sm shadow-lg transition-all hover:scale-105 flex items-center gap-1"
               >
                 <span>𝕏</span> {t('shareDefeat')}
               </a>
@@ -488,14 +488,14 @@ export function GamePopups({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
-                className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm shadow-gold transition-all hover:scale-105 flex items-center gap-1"
               >
-                <FarcasterIcon size={18} /> Cast
+                <FarcasterIcon size={16} /> Cast
               </a>
             </div>
             <button
               onClick={handleCloseDefeatScreen}
-              className="absolute top-4 right-4 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
+              className="absolute top-2 right-2 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold shadow-lg"
             >
               ×
             </button>
@@ -506,13 +506,13 @@ export function GamePopups({
       {/* Tie Popup */}
       {showTiePopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowTiePopup(false)}>
-          <div className="relative flex flex-col items-center gap-4">
+          <div className="relative flex flex-col items-center gap-2">
             <img
               src="/tie.gif"
               alt="Tie!"
-              className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-gray-500/50 border-4 border-gray-400"
+              className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-gray-500/50 border-2 border-gray-400"
             />
-            <p className="text-2xl md:text-3xl font-bold text-gray-400 animate-pulse px-4 text-center">
+            <p className="text-lg md:text-xl font-bold text-gray-400 animate-pulse px-2 text-center">
               {t('tieResult')}
             </p>
             {/* Only play audio after GIF is preloaded - respects soundEnabled */}
@@ -523,7 +523,7 @@ export function GamePopups({
             )}
             <button
               onClick={() => setShowTiePopup(false)}
-              className="absolute top-4 right-4 bg-gray-400 hover:bg-gray-500 text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
+              className="absolute top-2 right-2 bg-gray-400 hover:bg-gray-500 text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold shadow-lg"
             >
               ×
             </button>
