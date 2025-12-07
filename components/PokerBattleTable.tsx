@@ -100,11 +100,12 @@ type GamePhase = 'deck-building' | 'card-selection' | 'reveal' | 'card-reveal-an
 type CardAction = 'BOOST' | 'SHIELD' | 'DOUBLE' | 'SWAP' | 'PASS';
 type ViewMode = 'matchmaking' | 'waiting' | 'game';
 
-// Victory configurations - each victory has matched image + audio (3 tiers)
+// Victory configurations - each victory has matched image/video + audio (4 tiers)
 const VICTORY_CONFIGS = [
-  { image: '/victory-1.jpg', audio: '/victory-sound.mp3' }, // Normal victory (Gigachad)
-  { image: '/victory-2.jpg', audio: '/marvin-victory.mp3' }, // Overwhelming victory (Gay vibes)
-  { image: '/victory-3.jpg', audio: null }, // Epic victory (Golden coins + lightning - audio plays automatically via component)
+  { image: '/victory-1.jpg', audio: '/victory-sound.mp3', isVideo: false }, // Normal victory (Gigachad)
+  { image: '/victory-2.jpg', audio: '/marvin-victory.mp3', isVideo: false }, // Overwhelming victory (Gay vibes)
+  { image: '/victory-3.jpg', audio: null, isVideo: false }, // Epic victory (Golden coins + lightning - audio plays automatically via component)
+  { image: '/littlebird.mp4', audio: null, isVideo: true }, // Little bird victory (video with embedded audio)
 ];
 
 export function PokerBattleTable({
@@ -1633,8 +1634,8 @@ export function PokerBattleTable({
   useEffect(() => {
     // Only play victory music if: won, has ante, not spectator, and special victory
     if (phase === 'game-over' && gameOverShown && selectedAnte !== 0 && !isSpectatorMode && playerScore > opponentScore && soundEnabled) {
-      const victoryIndex = (playerScore + opponentScore) % VICTORY_CONFIGS.length;
-      const victoryConfig = VICTORY_CONFIGS[victoryIndex];
+      // Use the already selected victory image to determine audio
+      const victoryConfig = VICTORY_CONFIGS.find(v => v.image === currentVictoryImage) || VICTORY_CONFIGS[0];
 
       if (victoryConfig.audio && !victoryAudioRef.current) {
         console.log('[PokerBattle] 🎵 Playing victory music:', victoryConfig.audio);
@@ -1654,7 +1655,7 @@ export function PokerBattleTable({
         victoryAudioRef.current = null;
       }
     };
-  }, [phase, gameOverShown, selectedAnte, isSpectatorMode, playerScore, opponentScore, soundEnabled]);
+  }, [phase, gameOverShown, selectedAnte, isSpectatorMode, playerScore, opponentScore, soundEnabled, currentVictoryImage]);
 
   // Show spectator entry modal when entering spectator mode (regardless of game state)
   useEffect(() => {
@@ -1905,6 +1906,7 @@ export function PokerBattleTable({
       console.log('[PokerBattle] Game over - configuring popups');
 
       // Custom result screen for spectator mode (Mecha Arena)
+      // Uses GamePopups based on betting profit: win > 0, loss < 0, tie = 0
       if (isSpectatorMode && spectatorType === 'betting' && playerAddress && roomId) {
         console.log('[PokerBattle] Spectator mode - calculating betting results');
 
@@ -1926,11 +1928,54 @@ export function PokerBattleTable({
           console.log('[PokerBattle] Betting results:', { totalBet, totalWinnings, netGain });
 
           setSpectatorNetGains(netGain);
-          setShowSpectatorResult(true);
+
+          // Show appropriate popup based on profit/loss
+          if (netGain > 0) {
+            // Profit - Victory screen (fully random)
+            const victoryIndex = Math.floor(Math.random() * VICTORY_CONFIGS.length);
+            const victoryConfig = VICTORY_CONFIGS[victoryIndex];
+            setCurrentVictoryImage(victoryConfig.image);
+            setShowWinPopup(true);
+            setLastBattleResult({
+              coinsEarned: netGain,
+              type: 'mecha',
+              playerPower: totalWinnings,
+              opponentPower: totalBet,
+              opponentName: 'Mecha Arena',
+            });
+          } else if (netGain < 0) {
+            // Loss - Defeat screen
+            setShowLossPopup(true);
+            setLastBattleResult({
+              coinsEarned: netGain,
+              type: 'mecha',
+              playerPower: totalWinnings,
+              opponentPower: totalBet,
+              opponentName: 'Mecha Arena',
+            });
+          } else {
+            // Break-even - Tie screen
+            setShowTiePopup(true);
+            setLastBattleResult({
+              coinsEarned: 0,
+              type: 'mecha',
+              playerPower: totalWinnings,
+              opponentPower: totalBet,
+              opponentName: 'Mecha Arena',
+            });
+          }
         }).catch((err) => {
           console.error('[PokerBattle] Failed to fetch betting results:', err);
           setSpectatorNetGains(0);
-          setShowSpectatorResult(true);
+          // Show tie on error (neutral result)
+          setShowTiePopup(true);
+          setLastBattleResult({
+            coinsEarned: 0,
+            type: 'mecha',
+            playerPower: 0,
+            opponentPower: 0,
+            opponentName: 'Mecha Arena',
+          });
         });
 
         return;
@@ -1944,8 +1989,8 @@ export function PokerBattleTable({
 
       // Configure victory/defeat/tie popups
       if (playerScore > opponentScore) {
-        // Victory - select random victory image
-        const victoryIndex = (playerScore + opponentScore) % VICTORY_CONFIGS.length;
+        // Victory - select fully random victory image
+        const victoryIndex = Math.floor(Math.random() * VICTORY_CONFIGS.length);
         const victoryConfig = VICTORY_CONFIGS[victoryIndex];
         setCurrentVictoryImage(victoryConfig.image);
         setShowWinPopup(true);
@@ -3359,55 +3404,8 @@ export function PokerBattleTable({
         </div>
       )}
 
-      {/* Spectator Betting Result (Mecha Arena) */}
-      {showSpectatorResult && spectatorType === 'betting' && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[400] p-4">
-          <div className="bg-vintage-charcoal border-4 border-vintage-gold rounded-xl p-6 max-w-md w-full text-center space-y-6 shadow-2xl">
-            {/* Title */}
-            <h2 className="text-vintage-gold font-display font-bold text-3xl">
-              🎰 MECHA ARENA
-            </h2>
-
-            {/* Result */}
-            <div className="space-y-2">
-              <p className="text-white text-xl font-semibold">
-                {spectatorNetGains >= 0 ? '🎉 YOU WON!' : '💔 YOU LOST'}
-              </p>
-              <div className={`text-5xl font-bold ${spectatorNetGains >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {spectatorNetGains >= 0 ? '+' : ''}{spectatorNetGains} $VBMS
-              </div>
-              <p className="text-gray-400 text-sm">
-                from betting on Mecha Arena
-              </p>
-            </div>
-
-            {/* Share Button */}
-            <button
-              onClick={() => {
-                const outcome = spectatorNetGains >= 0 ? 'win' : 'loss';
-                const amount = Math.abs(spectatorNetGains);
-                const shareUrl = `https://www.vibemostwanted.xyz/share/mecha/${outcome}|${amount}`;
-                const text = spectatorNetGains >= 0
-                  ? `I won +${spectatorNetGains} coins betting on Mecha Arena! 🎰\n\ncc @jvhbo`
-                  : `I lost ${Math.abs(spectatorNetGains)} coins betting on Mecha Arena 💔\n\ncc @jvhbo`;
-                const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                window.open(url, '_blank');
-              }}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
-            >
-              📣 Share Result
-            </button>
-
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Spectator Betting Result (Mecha Arena) - Now uses GamePopups based on profit/loss */}
+      {/* Victory: netGain > 0, Loss: netGain < 0, Tie: netGain = 0 */}
 
       {/* Game result popups - Victory/Defeat/Tie */}
       <GamePopups
