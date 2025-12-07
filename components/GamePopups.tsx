@@ -21,6 +21,7 @@ import { useMusic } from '@/contexts/MusicContext';
 const LOSS_CONFIGS = [
   { media: 'https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26', isVideo: false },
   { media: '/davyjones.mp4', isVideo: true },
+  { media: '/derrotanumeronsei.mp4', isVideo: true },
 ];
 
 interface BattleResult {
@@ -167,6 +168,13 @@ export function GamePopups({
           {currentVictoryImage === '/victory-2.jpg' && !isInFarcaster && soundEnabled && (
             <audio autoPlay>
               <source src="/marvin-victory.mp3" type="audio/mpeg" />
+            </audio>
+          )}
+
+          {/* Victory audio for bom.jpg (victory-sound) */}
+          {currentVictoryImage === '/bom.jpg' && !isInFarcaster && soundEnabled && (
+            <audio autoPlay>
+              <source src="/victory-sound.mp3" type="audio/mpeg" />
             </audio>
           )}
 
