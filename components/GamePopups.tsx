@@ -111,9 +111,26 @@ export function GamePopups({
 }: GamePopupsProps) {
   return (
     <>
+      {/* Preload tie.gif for faster display */}
+      <img src="/tie.gif" alt="" className="hidden" aria-hidden="true" />
+
       {/* Victory Popup */}
       {showWinPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseVictoryScreen}>
+          {/* Victory audio for victory-1 (win-sound) */}
+          {currentVictoryImage === '/victory-1.jpg' && !isInFarcaster && soundEnabled && (
+            <audio autoPlay>
+              <source src="/win-sound.mp3" type="audio/mpeg" />
+            </audio>
+          )}
+
+          {/* Victory audio for victory-2 (marvin-victory) */}
+          {currentVictoryImage === '/victory-2.jpg' && !isInFarcaster && soundEnabled && (
+            <audio autoPlay>
+              <source src="/marvin-victory.mp3" type="audio/mpeg" />
+            </audio>
+          )}
+
           {/* 🌈 GAY VIBES - Floating hearts effect for victory-2 (reduced from 20 to 8 for performance) */}
           {currentVictoryImage === '/victory-2.jpg' && !isInFarcaster && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -146,10 +163,12 @@ export function GamePopups({
           {/* 👅 VICTORY 3 - Sensual tongues floating effect */}
           {currentVictoryImage === '/victory-3.jpg' && !isInFarcaster && (
             <>
-              {/* Audio for victory-3 (disabled in miniapp for performance) */}
-              <audio autoPlay loop>
-                <source src="/victory-3.mp3" type="audio/mpeg" />
-              </audio>
+              {/* Audio for victory-3 (disabled in miniapp for performance) - respects soundEnabled */}
+              {soundEnabled && (
+                <audio autoPlay loop>
+                  <source src="/victory-3.mp3" type="audio/mpeg" />
+                </audio>
+              )}
 
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 {/* Tongues floating and licking */}
@@ -206,17 +225,29 @@ export function GamePopups({
           )}
 
           <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={currentVictoryImage}
-              alt="Victory!"
-              className={`rounded-2xl shadow-2xl border-4 ${
-                currentVictoryImage === '/victory-2.jpg'
-                  ? 'max-w-[90vw] max-h-[80vh] shadow-pink-500/50 border-pink-400 animate-pulse-glow'
-                  : currentVictoryImage === '/victory-3.jpg'
-                  ? 'max-w-[90vw] max-h-[55vh] object-contain shadow-gold-500/50 border-gold-400 animate-pulse-glow'
-                  : 'max-w-[90vw] max-h-[80vh] shadow-yellow-500/50 border-yellow-400'
-              }`}
-            />
+            {/* Victory 4 - Video (littlebird) */}
+            {currentVictoryImage === '/littlebird.mp4' ? (
+              <video
+                src={currentVictoryImage}
+                autoPlay
+                loop
+                muted={!soundEnabled}
+                playsInline
+                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-blue-500/50 border-4 border-blue-400"
+              />
+            ) : (
+              <img
+                src={currentVictoryImage}
+                alt="Victory!"
+                className={`rounded-2xl shadow-2xl border-4 ${
+                  currentVictoryImage === '/victory-2.jpg'
+                    ? 'max-w-[90vw] max-h-[80vh] shadow-pink-500/50 border-pink-400 animate-pulse-glow'
+                    : currentVictoryImage === '/victory-3.jpg'
+                    ? 'max-w-[90vw] max-h-[55vh] object-contain shadow-gold-500/50 border-gold-400 animate-pulse-glow'
+                    : 'max-w-[90vw] max-h-[80vh] shadow-yellow-500/50 border-yellow-400'
+                }`}
+              />
+            )}
             <div className="text-center px-4">
               <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse">
                 {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
@@ -322,6 +353,12 @@ export function GamePopups({
       {/* Loss Popup */}
       {showLossPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseDefeatScreen}>
+          {/* Loss audio */}
+          {!isInFarcaster && soundEnabled && (
+            <audio autoPlay>
+              <source src="/lose-sound.mp3" type="audio/mpeg" />
+            </audio>
+          )}
           <div className="relative flex flex-col items-center gap-4">
             <img
               src="https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26"
@@ -413,8 +450,8 @@ export function GamePopups({
             <p className="text-2xl md:text-3xl font-bold text-gray-400 animate-pulse px-4 text-center">
               {t('tieResult')}
             </p>
-            {/* Only play audio after GIF is preloaded */}
-            {tieGifLoaded && (
+            {/* Only play audio after GIF is preloaded - respects soundEnabled */}
+            {tieGifLoaded && soundEnabled && (
               <audio autoPlay loop>
                 <source src="/tie-music.mp3" type="audio/mpeg" />
               </audio>
