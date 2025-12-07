@@ -8,10 +8,20 @@
  * - Error popup
  * - Success popup
  * - Daily claim popup
+ *
+ * Automatically pauses background music when showing result popups
  */
 
+import { useEffect, useRef, useState } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { FarcasterIcon } from '@/components/PokerIcons';
+import { useMusic } from '@/contexts/MusicContext';
+
+// Loss screen configurations - randomly selected
+const LOSS_CONFIGS = [
+  { media: 'https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26', isVideo: false },
+  { media: '/davyjones.mp4', isVideo: true },
+];
 
 interface BattleResult {
   coinsEarned?: number;
@@ -109,9 +119,38 @@ export function GamePopups({
   handleClaimWelcomePack,
   t,
 }: GamePopupsProps) {
+  // Music control - pause when showing result popups
+  const { pause, play, isPaused } = useMusic();
+  const wasPausedBeforePopup = useRef(false);
+
+  // Track which loss media to show (randomly selected on popup open)
+  const [currentLossMedia, setCurrentLossMedia] = useState(LOSS_CONFIGS[0]);
+
+  // Select random loss media when popup opens
+  useEffect(() => {
+    if (showLossPopup) {
+      const randomIndex = Math.floor(Math.random() * LOSS_CONFIGS.length);
+      setCurrentLossMedia(LOSS_CONFIGS[randomIndex]);
+    }
+  }, [showLossPopup]);
+
+  // Pause/Resume background music when result popups are shown
+  useEffect(() => {
+    const isAnyPopupOpen = showWinPopup || showLossPopup || showTiePopup;
+
+    if (isAnyPopupOpen && !isPaused) {
+      // Store previous state and pause
+      wasPausedBeforePopup.current = isPaused;
+      pause();
+    } else if (!isAnyPopupOpen && !wasPausedBeforePopup.current) {
+      // Resume only if music wasn't already paused before popup
+      play();
+    }
+  }, [showWinPopup, showLossPopup, showTiePopup, pause, play, isPaused]);
+
   return (
     <>
-      {/* Preload tie.gif for faster display */}
+      {/* Preload tie.gif and davyjones.mp4 for faster display */}
       <img src="/tie.gif" alt="" className="hidden" aria-hidden="true" />
 
       {/* Victory Popup */}
@@ -353,18 +392,30 @@ export function GamePopups({
       {/* Loss Popup */}
       {showLossPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseDefeatScreen}>
-          {/* Loss audio */}
-          {!isInFarcaster && soundEnabled && (
+          {/* Loss audio - only for image, video has embedded audio */}
+          {!currentLossMedia.isVideo && !isInFarcaster && soundEnabled && (
             <audio autoPlay>
               <source src="/lose-sound.mp3" type="audio/mpeg" />
             </audio>
           )}
           <div className="relative flex flex-col items-center gap-4">
-            <img
-              src="https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26"
-              alt="You Lost"
-              className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
-            />
+            {/* Loss screen - Video or Image */}
+            {currentLossMedia.isVideo ? (
+              <video
+                src={currentLossMedia.media}
+                autoPlay
+                loop
+                muted={!soundEnabled}
+                playsInline
+                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
+              />
+            ) : (
+              <img
+                src={currentLossMedia.media}
+                alt="You Lost"
+                className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
+              />
+            )}
             <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
               {lastBattleResult?.type === 'pve' || lastBattleResult?.type === 'attack'
                 ? t('noCoinsEarned')

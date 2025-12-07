@@ -153,11 +153,12 @@ export default function TestResultsPage() {
         {/* Loss Test */}
         <div className="bg-vintage-charcoal/50 rounded-xl p-6 border border-red-500/30">
           <h2 className="text-2xl font-display text-red-400 mb-4">Loss Screen</h2>
+          <p className="text-sm text-gray-400 mb-3">Randomly selects: Sad Pikachu or Davy Jones video</p>
           <button
             onClick={() => setShowLossPopup(true)}
             className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all hover:scale-105"
           >
-            Show Loss Screen
+            Show Loss Screen (Random)
           </button>
         </div>
 
