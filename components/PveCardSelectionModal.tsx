@@ -10,7 +10,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { filterCardsByCollections, COLLECTIONS, getEnabledCollections, type CollectionId, type Card } from '@/lib/collections/index';
+import { filterCardsByCollections, COLLECTIONS, getEnabledCollections, getCardUniqueId, isSameCard, type CollectionId, type Card } from '@/lib/collections/index';
 
 // Using Card type from lib/collections which has proper typing
 type NFT = Card;
@@ -74,10 +74,10 @@ export function PveCardSelectionModal({
   if (!isOpen || isDifficultyModalOpen) return null;
 
   const handleCardClick = (nft: NFT) => {
-    const isSelected = pveSelectedCards.find(c => c.tokenId === nft.tokenId);
+    const isSelected = pveSelectedCards.find(c => isSameCard(c, nft));
 
     if (isSelected) {
-      setPveSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
+      setPveSelectedCards(prev => prev.filter(c => !isSameCard(c, nft)));
       if (soundEnabled) {
         AudioManager.deselectCard();
         AudioManager.hapticFeedback('light');
@@ -203,10 +203,10 @@ export function PveCardSelectionModal({
           <div className="flex-1 overflow-y-auto mb-4">
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-4">
               {paginatedCards.map((nft) => {
-                const isSelected = pveSelectedCards.find(c => c.tokenId === nft.tokenId);
+                const isSelected = pveSelectedCards.find(c => isSameCard(c, nft));
                 return (
                   <button
-                    key={nft.tokenId}
+                    key={getCardUniqueId(nft)}
                     onClick={() => handleCardClick(nft)}
                     className={`aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition ${
                       isSelected

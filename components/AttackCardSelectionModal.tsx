@@ -12,7 +12,7 @@ import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { filterCardsByCollections, COLLECTIONS, getEnabledCollections, type CollectionId, type Card, type CardRarity, type CardFoil } from '@/lib/collections/index';
+import { filterCardsByCollections, COLLECTIONS, getEnabledCollections, getCardUniqueId, isSameCard, type CollectionId, type Card, type CardRarity, type CardFoil } from '@/lib/collections/index';
 import { useBodyScrollLock, useEscapeKey } from '@/hooks';
 import { Z_INDEX } from '@/lib/z-index';
 
@@ -512,18 +512,18 @@ export function AttackCardSelectionModal({
           <div className="flex-1 overflow-y-auto mb-4">
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-4">
               {paginatedCards.map((nft) => {
-                const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
+                const isSelected = attackSelectedCards.find(c => isSameCard(c, nft));
                 const isLocked = isCardLocked(nft.tokenId, 'attack');
                 return (
                   <button
-                    key={nft.tokenId}
+                    key={getCardUniqueId(nft)}
                     onClick={() => {
                       if (isLocked) {
                         if (soundEnabled) AudioManager.buttonError();
                         return;
                       }
                       if (isSelected) {
-                        setAttackSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
+                        setAttackSelectedCards(prev => prev.filter(c => !isSameCard(c, nft)));
                         if (soundEnabled) {
                           AudioManager.deselectCard();
                           AudioManager.hapticFeedback('light');
