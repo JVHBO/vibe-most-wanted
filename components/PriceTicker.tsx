@@ -1,8 +1,7 @@
 'use client';
 
 import { useCollectionPrices } from '@/lib/hooks/useCollectionPrices';
-import { useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
+import { useCachedYesterdayPrices } from '@/lib/convex-cache';
 import { useEffect, useState } from 'react';
 
 // Collection cover images (from Mecha Arena)
@@ -28,7 +27,8 @@ interface PriceTickerProps {
 
 export function PriceTicker({ className = '' }: PriceTickerProps) {
   const { prices, isLoading } = useCollectionPrices();
-  const yesterdayPrices = useQuery(api.priceSnapshots.getYesterdayPrices);
+  // 🚀 BANDWIDTH FIX: Use cached hook (prices change once per day, not real-time)
+  const { prices: yesterdayPrices } = useCachedYesterdayPrices();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 

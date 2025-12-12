@@ -5,7 +5,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
 import type { CardRarity } from "../lib/types/card";
@@ -660,8 +660,9 @@ export const refuelCards = mutation({
 /**
  * Process automatic attacks (called by cron job every 5 minutes)
  * All cards with energy attack the boss automatically
+ * 🚀 BANDWIDTH FIX: Changed to internalMutation (only called by cron)
  */
-export const processAutoAttacks = mutation({
+export const processAutoAttacks = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
 
@@ -834,8 +835,9 @@ export const processAutoAttacks = mutation({
 /**
  * Defeat current boss and spawn next one
  * Distributes rewards based on contribution
+ * 🚀 BANDWIDTH FIX: Changed to internalMutation (only called by cron)
  */
-export const defeatBossAndSpawnNext = mutation({
+export const defeatBossAndSpawnNext = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
 
@@ -1086,10 +1088,13 @@ export const claimRaidRewards = mutation({
 
 /**
  * Get ALL raid contributions (admin function)
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
+ * 🚀 BANDWIDTH FIX: Limited to 500 contributions max
  */
-export const getAllContributions = query({
+export const getAllContributions = internalQuery({
   handler: async (ctx) => {
-    const allContributions = await ctx.db.query("raidContributions").collect();
+    // 🚀 BANDWIDTH FIX: Limit to 500 contributions max
+    const allContributions = await ctx.db.query("raidContributions").take(500);
     return allContributions;
   },
 });

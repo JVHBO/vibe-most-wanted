@@ -116,7 +116,7 @@ export const getSpectatorBetsForRoom = query({
 
     const bets = await ctx.db
       .query("roundBets")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_round", (q) => q.eq("roomId", roomId))
       .filter((q) => q.eq(q.field("bettor"), normalizedAddress))
       .collect();
 
@@ -181,7 +181,7 @@ export const placeBetOnRound = mutation({
     // Get room info for collection (buff check)
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     const collectionSlug = room?.cpuCollection || undefined;
@@ -499,6 +499,7 @@ export const getMyRoomBets = query({
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
 
+    // 🚀 BANDWIDTH FIX: Use proper index + filter (double withIndex doesn't work)
     const bets = await ctx.db
       .query("roundBets")
       .withIndex("by_bettor", (q) => q.eq("bettor", normalizedAddress))

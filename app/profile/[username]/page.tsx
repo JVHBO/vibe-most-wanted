@@ -21,6 +21,7 @@ import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
 
 // Development logging helpers - only log in development mode
 const isDev = process.env.NODE_ENV === 'development';
@@ -266,6 +267,7 @@ export default function ProfilePage() {
   const [rematchesRemaining, setRematchesRemaining] = useState<number>(5);
   const MAX_REMATCHES = 5;
   const [farcasterUsername, setFarcasterUsername] = useState<string>('');
+  const [farcasterPfp, setFarcasterPfp] = useState<string>('');
 
   // 🚀 OPTIMIZED: Use summary query (95% bandwidth reduction)
   const matchHistory = useQuery(
@@ -400,13 +402,25 @@ export default function ProfilePage() {
 
         setProfile(profileData);
 
-        // Busca username do Farcaster se tiver FID
-        if (profileData.fid) {
+        // Busca username do Farcaster se tiver FID (usando Neynar API)
+        if (profileData.fid && NEYNAR_API_KEY) {
           try {
-            const fcResponse = await fetch(`https://client.warpcast.com/v2/user-by-fid?fid=${profileData.fid}`);
+            const fcResponse = await fetch(
+              `https://api.neynar.com/v2/farcaster/user/bulk?fids=${profileData.fid}`,
+              {
+                headers: {
+                  'accept': 'application/json',
+                  'api_key': NEYNAR_API_KEY,
+                },
+              }
+            );
             if (fcResponse.ok) {
               const fcData = await fcResponse.json();
-              setFarcasterUsername(fcData.result?.user?.username || '');
+              const fcUser = fcData.users?.[0];
+              if (fcUser) {
+                setFarcasterUsername(fcUser.username || '');
+                setFarcasterPfp(fcUser.pfp_url || '');
+              }
             }
           } catch (error) {
             console.error('Error fetching Farcaster username:', error);
@@ -726,35 +740,35 @@ export default function ProfilePage() {
                       alt={profile.username}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // Fallback to DiceBear if image fails to load
+                        // Fallback to Farcaster PFP if available, otherwise hide image
                         const img = e.target as HTMLImageElement;
-                        if (profile.twitter) {
-                          img.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`;
+                        if (farcasterPfp) {
+                          img.src = farcasterPfp;
+                        } else {
+                          img.style.display = 'none';
                         }
                       }}
                     />
                   );
                 }
 
-                // Priority 2: Use DiceBear with Twitter username if available
-                if (profile.twitter) {
+                // Priority 2: Use Farcaster PFP if available
+                if (farcasterPfp) {
                   return (
                     <img
-                      src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`}
+                      src={farcasterPfp}
                       alt={profile.username}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // Fallback to initials style
+                        // Hide image on error, show initials instead
                         const img = e.target as HTMLImageElement;
-                        if (!profile.twitter) return;
-                        const twitter = profile.twitter.replace('@', '');
-                        img.src = `https://api.dicebear.com/7.x/initials/svg?seed=${twitter}&backgroundColor=1a1414`;
+                        img.style.display = 'none';
                       }}
                     />
                   );
                 }
 
-                // Priority 3: Use initials as final fallback
+                // Priority 3: Use initials as fallback
                 return <span>{profile.username.substring(0, 2).toUpperCase()}</span>;
               })()}
             </div>
@@ -1275,8 +1289,8 @@ export default function ProfilePage() {
                         className={`relative overflow-hidden rounded-xl ring-2 ${getRarityRing(rarity)} hover:ring-vintage-gold/50 ${isLegendary ? 'legendary-card' : ''}`}
                         style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}}
                       >
-                        <img
-                          src={imageUrl}
+                        <CardMedia
+                          src={convertIpfsUrl(imageUrl) || imageUrl}
                           alt={`#${tokenId}`}
                           className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none"
                           loading="lazy"

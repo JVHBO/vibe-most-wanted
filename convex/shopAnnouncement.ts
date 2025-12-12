@@ -3,17 +3,18 @@
  * Send notifications to all users about the new shop
  */
 
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
  * Send shop announcement to all active users
+ * 🚀 BANDWIDTH FIX: Converted to internalMutation + limited to 100 per run
  */
-export const sendShopAnnouncement = mutation({
+export const sendShopAnnouncement = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Get all profiles
-    const allProfiles = await ctx.db.query("profiles").collect();
+    // 🚀 BANDWIDTH FIX: Process in batches of 100
+    const allProfiles = await ctx.db.query("profiles").take(100);
 
     let notificationsSent = 0;
     let coinsAdded = 0;
