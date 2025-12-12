@@ -19,7 +19,7 @@ export const resetProfiles = internalMutation({
   handler: async (ctx) => {
     console.log("🚨 STEP 1: Resetting profiles...");
 
-    const profiles = await ctx.db.query("profiles").collect();
+    const profiles = await ctx.db.query("profiles").take(100);
     console.log(`📊 Found ${profiles.length} profiles to reset`);
 
     let resetCount = 0;
@@ -105,7 +105,7 @@ export const deleteMatchesBatch = internalMutation({
 export const deleteQuestProgress = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const questProgress = await ctx.db.query("questProgress").collect();
+    const questProgress = await ctx.db.query("questProgress").take(100);
 
     for (const progress of questProgress) {
       await ctx.db.delete(progress._id);
@@ -126,7 +126,7 @@ export const normalizeUsernames = internalMutation({
   handler: async (ctx) => {
     console.log("🔄 Starting username normalization migration...");
 
-    const profiles = await ctx.db.query("profiles").collect();
+    const profiles = await ctx.db.query("profiles").take(100);
 
     let updated = 0;
     let skipped = 0;
@@ -187,7 +187,7 @@ export const resetFreeCards = internalMutation({
     console.log("🚨 Resetting all FREE cards...");
 
     // Get all cards
-    const allCards = await ctx.db.query("cardInventory").collect();
+    const allCards = await ctx.db.query("cardInventory").take(100);
     console.log(`📊 Found ${allCards.length} FREE cards`);
 
     // Get unique addresses
@@ -246,7 +246,7 @@ export const resetFreeCards = internalMutation({
 export const debugCountFreeCards = mutation({
   args: {},
   handler: async (ctx) => {
-    const allCards = await ctx.db.query("cardInventory").collect();
+    const allCards = await ctx.db.query("cardInventory").take(100);
     console.log("📊 Total cards in cardInventory:", allCards.length);
 
     if (allCards.length > 0) {
@@ -339,7 +339,7 @@ export const executeResetFreeCards = mutation({
   args: {},
   handler: async (ctx) => {
     // Call the internal mutation directly
-    const allCards = await ctx.db.query("cardInventory").collect();
+    const allCards = await ctx.db.query("cardInventory").take(100);
     console.log("🔍 Found cards to delete:", allCards.length);
 
     const uniqueAddresses = new Set(allCards.map(c => c.address));
@@ -394,7 +394,7 @@ export const executeResetFreeCards = mutation({
  */
 export const claimAllCoinsInboxForAll = mutation({
   handler: async (ctx) => {
-    const profiles = await ctx.db.query("profiles").collect();
+    const profiles = await ctx.db.query("profiles").take(100);
     
     let totalMoved = 0;
     const updates: { address: string; moved: number }[] = [];
@@ -428,7 +428,7 @@ export const claimAllCoinsInboxForAll = mutation({
  */
 export const moveInboxToCoinsForAll = mutation({
   handler: async (ctx) => {
-    const profiles = await ctx.db.query("profiles").collect();
+    const profiles = await ctx.db.query("profiles").take(100);
     
     let totalMoved = 0;
     const updates: { address: string; moved: number }[] = [];

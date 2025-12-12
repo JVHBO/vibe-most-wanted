@@ -92,3 +92,36 @@ export const getRecentSnapshots = query({
     return snapshots;
   },
 });
+
+// Admin: Insert snapshot with custom date (for backfilling historical data)
+export const insertHistoricalSnapshot = mutation({
+  args: {
+    date: v.string(),
+    prices: v.array(v.object({
+      collectionId: v.string(),
+      priceEth: v.number(),
+      priceUsd: v.number(),
+    })),
+    ethUsdPrice: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Check if snapshot already exists for this date
+    const existing = await ctx.db
+      .query("priceSnapshots")
+      .withIndex("by_date", (q) => q.eq("date", args.date))
+      .first();
+
+    if (existing) {
+      return { error: "Snapshot already exists for this date", date: args.date };
+    }
+
+    await ctx.db.insert("priceSnapshots", {
+      date: args.date,
+      prices: args.prices,
+      ethUsdPrice: args.ethUsdPrice,
+      timestamp: Date.now(),
+    });
+
+    return { created: true, date: args.date };
+  },
+});

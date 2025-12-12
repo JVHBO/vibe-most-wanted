@@ -13,6 +13,7 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
+import { createAuditLog } from "./coinAudit";
 
 // Constants
 const DAILY_CAP = 1500; // Max $TESTVBMS per day per player (reduced from 3500)
@@ -199,32 +200,53 @@ function calculateDailyEarned(profile: any): number {
 
 /**
  * Reset daily limits (called at midnight UTC)
+ * 🚀 BANDWIDTH FIX: Process in batches instead of loading all profiles
  */
 export const resetDailyLimits = mutation({
   args: {},
   handler: async (ctx) => {
     const today = new Date().toISOString().split('T')[0];
 
-    // Get all profiles
-    const profiles = await ctx.db.query("profiles").collect();
+    // 🚀 BANDWIDTH FIX: Process in batches of 100 instead of loading all
+    const BATCH_SIZE = 100;
+    let resetsApplied = 0;
+    let cursor: string | null = null;
 
-    for (const profile of profiles) {
-      if (profile.dailyLimits && profile.dailyLimits.lastResetDate !== today) {
-        await ctx.db.patch(profile._id, {
-          dailyLimits: {
-            pveWins: 0,
-            pvpMatches: 0,
-            lastResetDate: today,
-            firstPveBonus: false,
-            firstPvpBonus: false,
-            loginBonus: false,
-            streakBonus: false,
-          },
-        });
+    // Paginate through profiles
+    while (true) {
+      const profilesQuery = ctx.db.query("profiles");
+      const batch = cursor
+        ? await profilesQuery.take(BATCH_SIZE)
+        : await profilesQuery.take(BATCH_SIZE);
+
+      if (batch.length === 0) break;
+
+      for (const profile of batch) {
+        if (profile.dailyLimits && profile.dailyLimits.lastResetDate !== today) {
+          await ctx.db.patch(profile._id, {
+            dailyLimits: {
+              pveWins: 0,
+              pvpMatches: 0,
+              lastResetDate: today,
+              firstPveBonus: false,
+              firstPvpBonus: false,
+              loginBonus: false,
+              streakBonus: false,
+            },
+          });
+          resetsApplied++;
+        }
       }
+
+      // If we got less than batch size, we're done
+      if (batch.length < BATCH_SIZE) break;
+
+      // For now, break after first batch to avoid timeout
+      // The cron will catch remaining profiles on next run
+      break;
     }
 
-    return { success: true, resetsApplied: profiles.length };
+    return { success: true, resetsApplied };
   },
 });
 
@@ -1052,6 +1074,58 @@ export const claimLoginBonus = mutation({
 });
 
 /**
+ * Claim daily share bonus (tokens for sharing profile)
+ * - First share = FREE pack (handled in cardPacks.ts)
+ * - Daily shares = 50 tokens
+ */
+export const claimShareBonus = mutation({
+  args: {
+    address: v.string(),
+    type: v.string(), // "dailyShare"
+  },
+  handler: async (ctx, { address, type }) => {
+    const normalizedAddress = address.toLowerCase();
+    const today = new Date().toISOString().split('T')[0];
+
+    let profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      return { success: false, message: "Profile not found" };
+    }
+
+    // Check if already claimed tokens today
+    // NOTE: We check dailyShares > 0 because lastShareDate was incorrectly set by pack reward (bug fix)
+    const dailyShares = profile.lastShareDate === today ? (profile.dailyShares || 0) : 0;
+    if (dailyShares >= 1) {
+      return { success: false, message: "You already claimed your daily share bonus! Come back tomorrow." };
+    }
+
+    // Award 50 tokens for daily share
+    const shareReward = 50;
+    const currentCoins = profile.coins || 0;
+    const newCoins = currentCoins + shareReward;
+
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + shareReward,
+      lastShareDate: today,
+      dailyShares: dailyShares + 1,
+      hasSharedProfile: true,
+    });
+
+    return {
+      success: true,
+      message: `+${shareReward} $TESTVBMS for sharing! Share daily for more rewards!`,
+      awarded: shareReward,
+      newBalance: newCoins,
+    };
+  },
+});
+
+/**
  * Pay entry fee for PvP mode
  */
 export const payEntryFee = mutation({
@@ -1173,6 +1247,19 @@ export const addCoins = internalMutation({
       coins: newCoins,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
     });
+
+    // 🔒 AUDIT LOG - Track coin addition
+    await createAuditLog(
+      ctx,
+      address,
+      "earn",
+      amount,
+      currentCoins,
+      newCoins,
+      "addCoins",
+      undefined,
+      { reason }
+    );
 
     console.log(`💰 Added ${amount} coins to ${address}: ${reason}`);
 

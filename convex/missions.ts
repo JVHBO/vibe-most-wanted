@@ -12,6 +12,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { applyLanguageBoost } from "./languageBoost";
+import { createAuditLog } from "./coinAudit";
 
 // Mission rewards (all coins for simplicity)
 const MISSION_REWARDS = {
@@ -320,6 +321,19 @@ export const claimMission = mutation({
           honor: currentHonor + honorReward, // Award honor for mission completion
         },
       });
+
+      // 🔒 AUDIT LOG - Track mission claim
+      await createAuditLog(
+        ctx,
+        normalizedAddress,
+        "earn",
+        boostedReward,
+        currentBalance,
+        newBalance,
+        "claimMission",
+        missionId,
+        { missionType: mission.missionType }
+      );
 
       console.log(`💰 Mission reward: ${boostedReward} TESTVBMS + ${honorReward} honor for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}, Honor: ${currentHonor} → ${currentHonor + honorReward}`);
     }

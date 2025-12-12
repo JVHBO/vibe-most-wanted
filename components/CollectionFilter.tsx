@@ -1,9 +1,9 @@
 "use client";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useCachedCollections } from "@/lib/convex-cache";
 
 export function CollectionFilter({ selected, onChange }: { selected: string[]; onChange: (ids: string[]) => void }) {
-  const collections = useQuery(api.nftCollections.getActiveCollections);
+  // 🚀 BANDWIDTH FIX: Collections are static - use cached hook (1h refresh)
+  const { collections } = useCachedCollections();
   if (!collections || collections.length === 0) return null;
 
   return (

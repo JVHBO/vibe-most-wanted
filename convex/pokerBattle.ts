@@ -10,7 +10,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { internal, api } from "./_generated/api";
 import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
@@ -100,10 +100,10 @@ export const joinPokerRoom = mutation({
     username: v.string(),
   },
   handler: async (ctx, args) => {
-    // Find the room
+    // Find the room - 🚀 BANDWIDTH FIX: Use index instead of filter
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room) {
@@ -157,9 +157,10 @@ export const setPlayerReady = mutation({
     wagers: v.optional(v.array(v.any())), // Optional array of wagered NFT cards (1-5)
   },
   handler: async (ctx, args) => {
+    // 🚀 BANDWIDTH FIX: Use index instead of filter
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room) {
@@ -211,9 +212,10 @@ export const leavePokerRoom = mutation({
     address: v.string(),
   },
   handler: async (ctx, args) => {
+    // 🚀 BANDWIDTH FIX: Use index instead of filter
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room) {
@@ -251,7 +253,7 @@ export const spectateRoom = mutation({
   handler: async (ctx, args) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room) {
@@ -298,7 +300,7 @@ export const leaveSpectate = mutation({
     // Get room
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     if (!room) {
@@ -398,7 +400,7 @@ export const initializeGame = mutation({
   handler: async (ctx, args) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room) {
@@ -465,7 +467,7 @@ export const selectCard = mutation({
 
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room) {
@@ -561,7 +563,7 @@ export const useCardAction = mutation({
   handler: async (ctx, args) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room || !room.gameState) {
@@ -640,7 +642,7 @@ export const resolveRound = mutation({
   handler: async (ctx, args) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room || !room.gameState) {
@@ -846,7 +848,7 @@ export const finishGame = mutation({
   handler: async (ctx, args) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room) {
@@ -890,14 +892,16 @@ export const getPokerRooms = query({
 });
 
 // Get a specific poker room
+// 🚀 BANDWIDTH FIX: This is a HOT query (called every second per user)
 export const getPokerRoom = query({
   args: {
     roomId: v.string(),
   },
   handler: async (ctx, args) => {
+    // 🚀 BANDWIDTH FIX: Use index instead of filter (saves 99% reads)
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     return room;
@@ -937,15 +941,17 @@ export const getMyPokerRoom = query({
 });
 
 // Cleanup old poker rooms (called by cron)
+// 🚀 BANDWIDTH FIX: Process in batches of 50 instead of loading all rooms
 export const cleanupOldPokerRooms = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
 
-    // Find all expired rooms or rooms that have been finished for more than 5 minutes
+    // 🚀 BANDWIDTH FIX: Only get rooms that might need cleanup
+    // Use take(50) to limit reads per cron run
     const oldRooms = await ctx.db
       .query("pokerRooms")
-      .collect();
+      .take(50);
 
     let deleted = 0;
     for (const room of oldRooms) {
@@ -986,7 +992,7 @@ export const placeBet = mutation({
     // Find the room
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room) {
@@ -1085,7 +1091,7 @@ export const endSpectatorBetting = mutation({
   handler: async (ctx, args) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
       .first();
 
     if (!room || !room.gameState) {
@@ -1216,28 +1222,32 @@ export const getUserRoomBets = query({
 });
 
 // ============================================================================
-// PUBLIC QUERIES (for external scripts/monitoring)
+// INTERNAL QUERIES (for admin/cron only)
 // ============================================================================
 
 /**
  * Get all poker rooms (for monitoring/admin tools)
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery + limited to 100 rooms
  */
-export const listAllRooms = query({
+export const listAllRooms = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const rooms = await ctx.db.query("pokerRooms").collect();
+    // 🚀 BANDWIDTH FIX: Limit to 100 rooms max
+    const rooms = await ctx.db.query("pokerRooms").take(100);
     return rooms;
   },
 });
 
 /**
  * Clean up old/expired poker rooms (admin tool)
+ * 🚀 BANDWIDTH FIX: Converted to internalMutation + limited to 50 rooms
  */
-export const cleanupOldRooms = mutation({
+export const cleanupOldRooms = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
-    const rooms = await ctx.db.query("pokerRooms").collect();
+    // 🚀 BANDWIDTH FIX: Process in batches of 50
+    const rooms = await ctx.db.query("pokerRooms").take(50);
 
     let deletedCount = 0;
     for (const room of rooms) {
@@ -1299,7 +1309,7 @@ export const forceDeleteRoom = mutation({
 
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     if (!room) {
@@ -1550,7 +1560,7 @@ export const cpuMakeMove = internalMutation({
   handler: async (ctx, { roomId, isHost }) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     if (!room || !room.isCpuVsCpu) {
@@ -1637,7 +1647,7 @@ export const cpuMakeMove = internalMutation({
       // Re-fetch room to get the updated state after our patch
       const updatedRoom = await ctx.db
         .query("pokerRooms")
-        .filter((q) => q.eq(q.field("roomId"), roomId))
+        .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
         .first();
 
       if (!updatedRoom || !updatedRoom.gameState) return;
@@ -1682,7 +1692,7 @@ export const shortenBettingWindow = mutation({
   handler: async (ctx, { roomId }) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     if (!room || !room.isCpuVsCpu) return;
@@ -1728,7 +1738,7 @@ export const cpuRevealRound = internalMutation({
   handler: async (ctx, { roomId }) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     if (!room || !room.isCpuVsCpu || room.status === "finished") return;
@@ -1794,7 +1804,7 @@ export const cpuResolveRound = internalMutation({
   handler: async (ctx, { roomId }) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     if (!room || !room.isCpuVsCpu || room.status === "finished") return;
@@ -1990,7 +2000,7 @@ export const cpuStartNextRound = internalMutation({
   handler: async (ctx, { roomId, nextRound }) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     if (!room || !room.isCpuVsCpu || room.status === "finished") return;
@@ -2034,7 +2044,7 @@ export const cpuRestartGame = internalMutation({
   handler: async (ctx, { roomId }) => {
     const room = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("roomId"), roomId))
+      .withIndex("by_room_id", (q) => q.eq("roomId", roomId))
       .first();
 
     if (!room || !room.isCpuVsCpu) return;

@@ -704,7 +704,7 @@ export const TEAMPOTHEAD_BOSSES: Record<CardRarity, BossCard> = {
   },
 };
 
-
+
 
 
 /**
@@ -1022,6 +1022,7 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
 
   cumioh: CUMIOH_BOSSES,
 
+  nothing: {} as Record<CardRarity, BossCard>, // Free cards - no raid bosses
   custom: {} as Record<CardRarity, BossCard>, // Not used for raid bosses
 };
 

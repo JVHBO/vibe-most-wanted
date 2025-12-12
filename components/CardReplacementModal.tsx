@@ -8,6 +8,7 @@
 
 import { useState, useMemo } from 'react';
 import { CardMedia } from '@/components/CardMedia';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { AudioManager } from '@/lib/audio-manager';
 import { sortCardsByPower } from '@/lib/collections/index';
 import type { Card } from '@/lib/types/card';
@@ -171,7 +172,7 @@ export function CardReplacementModal({
                   }`}
                 >
                   <CardMedia
-                    src={card.imageUrl}
+                    src={convertIpfsUrl(card.imageUrl) || card.imageUrl}
                     alt={card.name}
                     className="rounded-lg aspect-[3/4] object-cover"
                   />

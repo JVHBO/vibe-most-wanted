@@ -58,12 +58,31 @@ export function useGroupVoiceChat(
     roomId ? { recipient: localAddress, roomId } : "skip"
   );
 
-  // Check if running in Farcaster miniapp context
-  const isInFarcasterMiniapp = useCallback((): boolean => {
+  // Check if running in Farcaster miniapp context (with proper validation)
+  const isInFarcasterMiniapp = useCallback(async (): Promise<boolean> => {
     try {
-      return typeof window !== 'undefined' &&
-             typeof sdk !== 'undefined' &&
-             typeof sdk.actions !== 'undefined';
+      if (typeof window === 'undefined') return false;
+      if (typeof sdk === 'undefined' || !sdk.actions) return false;
+
+      // Verify SDK context is actually valid (not just SDK exists)
+      try {
+        const context = await Promise.race([
+          sdk.context,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+        ]) as any;
+
+        // Must have valid user context
+        if (!context?.user?.fid) {
+          devLog('[GroupVoice] SDK exists but no valid user context');
+          return false;
+        }
+
+        devLog('[GroupVoice] Valid Farcaster context - FID:', context.user.fid);
+        return true;
+      } catch {
+        devLog('[GroupVoice] Failed to get Farcaster context');
+        return false;
+      }
     } catch {
       return false;
     }
@@ -74,9 +93,13 @@ export function useGroupVoiceChat(
     try {
       devLog('[GroupVoice] Requesting microphone access...');
 
+      // Check if in Farcaster miniapp with valid context
+      const inFarcaster = await isInFarcasterMiniapp();
+      devLog('[GroupVoice] Farcaster miniapp detected:', inFarcaster);
+
       // If in Farcaster miniapp, request permission via SDK first
       // Note: This only works on native Warpcast app, not web miniapps
-      if (isInFarcasterMiniapp()) {
+      if (inFarcaster) {
         try {
           devLog('[GroupVoice] Detected Farcaster miniapp, requesting SDK permission...');
           await sdk.actions.requestCameraAndMicrophoneAccess();

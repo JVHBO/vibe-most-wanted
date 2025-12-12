@@ -485,8 +485,8 @@ export function AttackCardSelectionModal({
                       alt={`#${attackSelectedCards[i].tokenId}`}
                       className="w-full h-full object-cover rounded-lg"
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-red-500 text-xs font-bold text-center">
-                      {attackSelectedCards[i].power?.toLocaleString()}
+                    <div className={`absolute bottom-0 left-0 right-0 py-0.5 text-xs font-bold text-center ${attackSelectedCards[i].collection === 'vibefid' ? 'bg-purple-900/90 text-purple-300' : 'bg-black/80 text-red-500'}`}>
+                      {attackSelectedCards[i].collection === 'vibefid' ? `${((attackSelectedCards[i].power || 0) * 10).toLocaleString()} (10x)` : attackSelectedCards[i].power?.toLocaleString()}
                     </div>
                   </>
                 ) : (
@@ -549,8 +549,8 @@ export function AttackCardSelectionModal({
                       alt={`#${nft.tokenId}`}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
-                      {nft.power?.toLocaleString()}
+                    <div className={`absolute top-0 left-0 text-xs px-1 rounded-br font-bold ${nft.collection === 'vibefid' ? 'bg-purple-600 text-white' : 'bg-vintage-gold text-vintage-black'}`}>
+                      {nft.collection === 'vibefid' ? `${((nft.power || 0) * 10).toLocaleString()} ★` : nft.power?.toLocaleString()}
                     </div>
 
                     {isLocked && (

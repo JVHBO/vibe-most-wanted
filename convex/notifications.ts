@@ -31,11 +31,14 @@ export const getTokenByFid = query({
 /**
  * Get all notification tokens (for migration/debugging and internal use)
  * Used by Actions and API routes
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
+ * 🚀 BANDWIDTH FIX: Limited to 500 tokens max
  */
-export const getAllTokens = query({
+export const getAllTokens = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").collect();
+    // 🚀 BANDWIDTH FIX: Limit to 500 tokens max
+    const tokens = await ctx.db.query("notificationTokens").take(500);
     return tokens;
   },
 });
@@ -231,6 +234,8 @@ const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
 
 // Low energy threshold (notify when less than 1 hour remaining)
 const LOW_ENERGY_THRESHOLD = 1 * 60 * 60 * 1000; // 1 hour
+// 👇 ADICIONE ESTA LINHA
+const NOTIFICATION_COOLDOWN = 6 * 60 * 60 * 1000; // 6 hours
 
 /**
  * Check all raid decks and send notifications to players with low energy cards
@@ -241,9 +246,6 @@ export const sendLowEnergyNotifications = internalAction({
   args: {},
   // @ts-ignore
   handler: async (ctx) => {
-    // DISABLED
-    console.log("Low energy notifications disabled");
-    return { sent: 0, failed: 0, total: 0 };
 
 
     // Import api here to avoid circular reference
@@ -258,7 +260,6 @@ export const sendLowEnergyNotifications = internalAction({
 
       if (!raidDecks || raidDecks.length === 0) {
         console.log("⚠️ No raid decks found");
-        return { sent: 0, failed: 0, total: 0 };
       }
 
       console.log(`📊 Found ${raidDecks.length} raid decks to check`);
@@ -266,6 +267,7 @@ export const sendLowEnergyNotifications = internalAction({
       const now = Date.now();
       let sent = 0;
       let failed = 0;
+      let skipped = 0; // 👈 FALTOU ESTA LINHA!
       const DELAY_MS = 100;
 
       for (let i = 0; i < raidDecks.length; i++) {
@@ -292,6 +294,20 @@ export const sendLowEnergyNotifications = internalAction({
         if (lowEnergyCards === 0 && expiredCards === 0) continue;
 
         try {
+          // 👇 ADICIONE ESTE BLOCO DE VERIFICAÇÃO DE COOLDOWN
+          const lastNotification = await ctx.runQuery(
+            api.notificationsHelpers.getLastLowEnergyNotification, 
+            { address: deck.address }
+          );
+
+          if (lastNotification && (now - lastNotification.lastNotifiedAt < NOTIFICATION_COOLDOWN)) {
+            const hoursLeft = Math.round((NOTIFICATION_COOLDOWN - (now - lastNotification.lastNotifiedAt)) / (60 * 60 * 1000));
+            console.log(`⏭️ Skipping ${deck.address} - notified ${hoursLeft}h ago (cooldown: 6h)`);
+            skipped++;
+            continue;
+          }
+          // 👆 FIM DO BLOCO
+
           // Get player profile to find FID
           const profile = await ctx.runQuery(api.notifications.getProfileByAddress, {
             address: deck.address,
@@ -347,11 +363,20 @@ export const sendLowEnergyNotifications = internalAction({
             body: JSON.stringify(payload),
           });
 
-          if (response.ok) {
+         if (response.ok) {
             const result = await response.json();
             if (!result.invalidTokens?.includes(tokenData.token) &&
                 !result.rateLimitedTokens?.includes(tokenData.token)) {
               sent++;
+              
+              // 👇 ADICIONE ESTAS LINHAS
+              await ctx.runMutation(api.notificationsHelpers.updateLowEnergyNotification, {
+                address: deck.address,
+                lowEnergyCount: lowEnergyCards,
+                expiredCount: expiredCards,
+              });
+              // 👆 FIM DAS LINHAS ADICIONADAS
+              
               console.log(`✅ Sent low energy notification to FID ${fid}`);
             } else {
               failed++;
@@ -372,8 +397,8 @@ export const sendLowEnergyNotifications = internalAction({
         }
       }
 
-      console.log(`📊 Low energy notifications: ${sent} sent, ${failed} failed`);
-      return { sent, failed, total: raidDecks.length };
+      console.log(`📊 Low energy notifications: ${sent} sent, ${failed} failed, ${skipped} skipped (cooldown), ${raidDecks.length} total`);
+      return { sent, failed, skipped, total: raidDecks.length };
 
     } catch (error: any) {
       console.error("❌ Error in sendLowEnergyNotifications:", error);
@@ -384,11 +409,14 @@ export const sendLowEnergyNotifications = internalAction({
 
 /**
  * Get all raid decks (internal query for low energy check)
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
+ * 🚀 BANDWIDTH FIX: Limited to 200 decks max
  */
-export const getAllRaidDecks = query({
+export const getAllRaidDecks = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const decks = await ctx.db.query("raidAttacks").collect();
+    // 🚀 BANDWIDTH FIX: Limit to 200 decks max
+    const decks = await ctx.db.query("raidAttacks").take(200);
     return decks;
   },
 });
@@ -431,13 +459,13 @@ export const sendDailyLoginReminder = internalAction({
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
-        return { sent: 0, failed: 0, total: 0 };
       }
 
       console.log(`📬 Sending daily login reminder to ${tokens.length} users...`);
 
       let sent = 0;
       let failed = 0;
+	  let skipped = 0; // 👈 ADICIONE ESTA LINHA
       const DELAY_MS = 100; // 100ms delay between each notification
 
       // Send notification to each user WITH DELAY
@@ -588,7 +616,6 @@ export const sendPeriodicTip = internalAction({
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
-        return { sent: 0, failed: 0, total: 0 };
       }
 
       // Get or create tip rotation state via query
@@ -694,12 +721,11 @@ export const triggerPeriodicTip = mutation({
     try {
       console.log("💡 Starting periodic tip notification (manual trigger)...");
 
-      // Get all notification tokens
-      const tokens = await ctx.db.query("notificationTokens").collect();
+      // 🚀 BANDWIDTH FIX: Limit to 200 tokens per run
+      const tokens = await ctx.db.query("notificationTokens").take(200);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
-        return { sent: 0, failed: 0, total: 0 };
       }
 
       // Get or create tip rotation state
@@ -793,12 +819,11 @@ export const triggerDailyLoginReminder = mutation({
     try {
       console.log("💰 Starting daily login reminder (manual trigger)...");
 
-      // Get all notification tokens
-      const tokens = await ctx.db.query("notificationTokens").collect();
+      // 🚀 BANDWIDTH FIX: Limit to 200 tokens per run
+      const tokens = await ctx.db.query("notificationTokens").take(200);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
-        return { sent: 0, failed: 0, total: 0 };
       }
 
       let sent = 0;
@@ -876,7 +901,6 @@ export const sendCustomNotification = action({
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
-        return { sent: 0, failed: 0, total: 0 };
       }
 
       console.log(`📊 Found ${tokens.length} notification tokens`);

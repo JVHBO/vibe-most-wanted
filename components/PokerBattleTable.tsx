@@ -105,7 +105,6 @@ const VICTORY_CONFIGS = [
   { image: '/victory-1.jpg', audio: '/victory-sound.mp3', isVideo: false }, // Normal victory (Gigachad)
   { image: '/victory-2.jpg', audio: '/marvin-victory.mp3', isVideo: false }, // Overwhelming victory (Gay vibes)
   { image: '/victory-3.jpg', audio: null, isVideo: false }, // Epic victory (Golden coins + lightning - audio plays automatically via component)
-  { image: '/littlebird.mp4', audio: null, isVideo: true }, // Little bird victory (video with embedded audio)
   { image: '/bom.jpg', audio: '/victory-sound.mp3', isVideo: false }, // Bom victory
 ];
 

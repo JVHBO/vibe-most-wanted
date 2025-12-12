@@ -1,12 +1,14 @@
-import { query } from "./_generated/server";
+import { internalQuery } from "./_generated/server";
 
 /**
  * Get all profiles with economy data
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery + limited to 200
  */
-export const getAllProfiles = query({
+export const getAllProfiles = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const profiles = await ctx.db.query("profiles").collect();
+    // 🚀 BANDWIDTH FIX: Limit to 200 profiles max
+    const profiles = await ctx.db.query("profiles").take(200);
 
     return profiles.map(profile => ({
       username: profile.username,

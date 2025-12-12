@@ -104,6 +104,8 @@ export default defineSchema({
     poolDebt: v.optional(v.number()), // VBMS owed back to pool (circular economy)
     lastClaimTimestamp: v.optional(v.number()), // Last time player claimed VBMS
     lastDebtSettlement: v.optional(v.number()), // Last time debt was settled
+    pendingConversion: v.optional(v.number()), // TESTVBMS being converted to VBMS (for recovery)
+    pendingConversionTimestamp: v.optional(v.number()), // When conversion was initiated
 
     // Daily Limits for Economy
     dailyLimits: v.optional(v.object({
@@ -266,7 +268,8 @@ export default defineSchema({
   })
     .index("by_status", ["status", "createdAt"])
     .index("by_host", ["hostAddress"])
-    .index("by_guest", ["guestAddress"]),
+    .index("by_guest", ["guestAddress"])
+    .index("by_room_id", ["roomId"]), // 🚀 BANDWIDTH FIX: Index for room lookups
 
   // Matchmaking Queue
   matchmaking: defineTable({
@@ -294,6 +297,14 @@ export default defineSchema({
     currentTipIndex: v.number(), // Index of the next tip to send
     lastSentAt: v.number(), // Timestamp of last tip sent
   }),
+
+  // 🔥 NEW: Low Energy Notification Cooldown
+  lowEnergyNotifications: defineTable({
+    address: v.string(),           // Endereço do jogador
+    lastNotifiedAt: v.number(),    // Timestamp da última notificação
+    lowEnergyCount: v.number(),    // Quantas cartas estavam com energia baixa
+    expiredCount: v.number(),      // Quantas cartas estavam expiradas
+  }).index("by_address", ["address"]),
 
   // Future: Betting System (for Web3 integration)
   bets: defineTable({
@@ -572,7 +583,8 @@ export default defineSchema({
     .index("by_status", ["status", "createdAt"])
     .index("by_host", ["hostAddress"])
     .index("by_guest", ["guestAddress"])
-    .index("by_token_ante", ["token", "ante", "status"]), // For auto-match filtering
+    .index("by_token_ante", ["token", "ante", "status"]) // For auto-match filtering
+    .index("by_room_id", ["roomId"]), // 🚀 BANDWIDTH FIX: Index for room lookups
 
   // Poker Chat Messages (for in-match communication)
   pokerChatMessages: defineTable({
@@ -1159,4 +1171,43 @@ export default defineSchema({
   })
     .index("by_player", ["playerAddress"])
     .index("by_player_cast", ["playerAddress", "castHash"]),
+
+  // 🔒 COIN AUDIT LOG - Track ALL TESTVBMS transactions for security auditing
+  // Added after exploit investigation on 2025-12-12
+  coinAuditLog: defineTable({
+    playerAddress: v.string(),
+
+    // Transaction details
+    type: v.union(
+      v.literal("earn"),      // Coins added (rewards, missions, bonuses)
+      v.literal("spend"),     // Coins spent (entry fees, purchases)
+      v.literal("convert"),   // TESTVBMS → VBMS conversion initiated
+      v.literal("claim")      // VBMS claimed on blockchain
+    ),
+
+    amount: v.number(),       // Amount of coins (positive for earn, negative for spend)
+
+    // Balance tracking
+    balanceBefore: v.number(),
+    balanceAfter: v.number(),
+
+    // Source identification
+    source: v.string(),       // Function/feature that triggered this (e.g., "claimMission", "pveReward", "welcomeBonus")
+    sourceId: v.optional(v.string()), // Related ID (missionId, matchId, etc.)
+
+    // Additional context
+    metadata: v.optional(v.object({
+      missionType: v.optional(v.string()),
+      difficulty: v.optional(v.string()),
+      txHash: v.optional(v.string()),
+      nonce: v.optional(v.string()),
+      reason: v.optional(v.string()),
+    })),
+
+    timestamp: v.number(),
+  })
+    .index("by_player", ["playerAddress", "timestamp"])
+    .index("by_player_type", ["playerAddress", "type"])
+    .index("by_timestamp", ["timestamp"])
+    .index("by_source", ["source", "timestamp"]),
 });
