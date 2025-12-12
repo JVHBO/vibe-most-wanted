@@ -2569,6 +2569,13 @@ export function PokerBattleTable({
                     <div className="font-bold text-green-400 text-[11px]">💨</div>
                     <div className="text-green-300 text-[7px] leading-tight">FART</div>
                   </button>
+                  <button
+                    onClick={() => playMemeSound('/sounds/corteze.MP3', 'CORTEZE 🎤', '🎤')}
+                    className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 hover:from-blue-500/40 hover:to-blue-600/40 border border-blue-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                  >
+                    <div className="font-bold text-blue-400 text-[11px]">🎤</div>
+                    <div className="text-blue-300 text-[7px] leading-tight">CORTEZE</div>
+                  </button>
                 </div>
                 {/* Voice Chat - Only in PvP mode */}
                 {!isCPUMode && (
