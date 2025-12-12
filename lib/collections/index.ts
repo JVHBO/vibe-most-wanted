@@ -41,6 +41,8 @@ export {
   isCard,
   isLegacyCard,
   convertLegacyCard,
+  getCardUniqueId,
+  isSameCard,
 } from '../types/card';
 
 // Re-export card power utilities

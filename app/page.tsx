@@ -63,7 +63,7 @@ import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, us
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
 import { CONTRACTS } from "@/lib/contracts";
 
-import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, type CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, isSameCard, type CollectionId } from "@/lib/collections/index";
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
 import { getImage, fetchNFTs } from "@/lib/nft/fetcher";
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
@@ -3446,6 +3446,23 @@ export default function TCGPage() {
               </p>
             </div>
 
+            {/* Controls Row: Sort Button */}
+            <div className="flex-shrink-0 px-4 pt-3 flex items-center justify-center gap-2">
+              <button
+                onClick={() => {
+                  setSortByPower(!sortByPower);
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                  sortByPower
+                    ? 'bg-vintage-gold text-vintage-black'
+                    : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
+                }`}
+              >
+                {sortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+              </button>
+            </div>
+
             {/* Selected Cards Preview */}
             <div className="flex-shrink-0 p-4 bg-vintage-felt-green/30 border-b border-vintage-gold/20">
               <div className="grid grid-cols-5 gap-2">
@@ -3514,13 +3531,13 @@ export default function TCGPage() {
               ) : (
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
                   {(sortByPower ? [...nfts].sort((a, b) => b.power - a.power) : nfts).map((nft) => {
-                    const isSelected = selectedCards.some(c => c.tokenId === nft.tokenId);
+                    const isSelected = selectedCards.some(c => isSameCard(c, nft));
                     return (
                       <div
-                        key={nft.tokenId}
+                        key={getCardUniqueId(nft)}
                         onClick={() => {
                           if (isSelected) {
-                            setSelectedCards(selectedCards.filter(c => c.tokenId !== nft.tokenId));
+                            setSelectedCards(selectedCards.filter(c => !isSameCard(c, nft)));
                           } else if (selectedCards.length < HAND_SIZE) {
                             setSelectedCards([...selectedCards, nft]);
                           }
