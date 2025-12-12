@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useCachedAvailableCollections } from "@/lib/convex-cache";
 import { AudioManager } from "@/lib/audio-manager";
 import { SpectatorEntryModal } from "./SpectatorEntryModal";
 import { PokerBattleTable } from "./PokerBattleTable";
@@ -86,8 +87,8 @@ export function CpuArenaModal({
     return () => clearInterval(interval);
   }, []);
 
-  // Get available collections
-  const availableCollections = useQuery(api.pokerBattle.getAvailableCollections);
+  // 🚀 BANDWIDTH FIX: Collections are static - use cached hook (1h refresh)
+  const { collections: availableCollections } = useCachedAvailableCollections();
 
   // Get active CPU rooms with spectator counts
   const cpuRooms = useQuery(api.pokerBattle.getCpuVsCpuRooms);

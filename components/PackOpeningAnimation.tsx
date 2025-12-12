@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CardMedia } from '@/components/CardMedia';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
 interface PackOpeningAnimationProps {
   cards: any[];
@@ -127,8 +129,8 @@ export function PackOpeningAnimation({ cards, onClose }: PackOpeningAnimationPro
 
                     {/* Card Image with Glow */}
                     <div className="relative mb-2">
-                      <img
-                        src={card.imageUrl}
+                      <CardMedia
+                        src={convertIpfsUrl(card.imageUrl) || card.imageUrl}
                         alt={`${card.rarity} card`}
                         className="w-full h-auto rounded-lg"
                       />

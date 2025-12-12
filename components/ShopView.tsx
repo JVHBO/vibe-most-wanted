@@ -19,7 +19,7 @@ export function ShopView({ address }: ShopViewProps) {
   // Fetch data
   const shopPacks = useQuery(api.cardPacks.getShopPacks);
   const playerPacks = useQuery(api.cardPacks.getPlayerPacks, address ? { address } : "skip");
-  const profile = useQuery(api.profiles.getProfile, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Removed unused profile query (was fetching but never used)
 
   // Mutations
   const openPack = useMutation(api.cardPacks.openPack);
@@ -180,10 +180,10 @@ export function ShopView({ address }: ShopViewProps) {
         <h1 className="text-4xl md:text-5xl font-display font-bold text-vintage-gold mb-2"><svg className="inline-block w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>FREE Card Shop</h1>
-        <p className="text-vintage-ice/70">Buy FREE packs (non-NFT cards) to play the game!</p>
+          </svg>Nothing Card Shop</h1>
+        <p className="text-vintage-ice/70">Buy Nothing packs (non-NFT cards) to play the game!</p>
         <div className="mt-2 inline-block bg-green-500/20 border border-green-500/30 rounded-lg px-4 py-2">
-          <p className="text-green-400 text-sm font-bold">⚠️ These are FREE cards (not NFTs) - Use them to play and earn rewards!</p>
+          <p className="text-green-400 text-sm font-bold">⚠️ These are Nothing cards (not NFTs) - Use them to play and earn rewards!</p>
         </div>
 
       {/* Custom Notification */}
@@ -230,14 +230,14 @@ export function ShopView({ address }: ShopViewProps) {
               <div className="flex justify-center mb-4 relative">
                 <img src="/pack-cover.png" alt="Card Pack" className="w-32 h-32 object-contain" />
                 <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                  FREE
+                  Nothing
                 </div>
               </div>
 
               <div className="text-center mb-4">
                 <h3 className="text-2xl font-display font-bold text-vintage-gold mb-1">{pack.name}</h3>
                 <p className="text-vintage-ice/70 text-sm mb-2">{pack.description}</p>
-                <p className="text-lg text-vintage-burnt-gold">{pack.cards} FREE cards per pack (non-NFT)</p>
+                <p className="text-lg text-vintage-burnt-gold">{pack.cards} Nothing cards per pack (non-NFT)</p>
               </div>
 
               {/* Rarity Odds */}

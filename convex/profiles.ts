@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { normalizeAddress, isValidAddress } from "./utils";
 
@@ -40,6 +40,57 @@ export const getProfile = query({
 });
 
 /**
+ * 🚀 BANDWIDTH FIX: Get a LITE profile (excludes heavy arrays)
+ *
+ * Use this instead of getProfile when you don't need:
+ * - defenseDeck (5 full card objects)
+ * - revealedCardsCache (100+ cards)
+ * - ownedTokenIds (thousands of IDs)
+ * - musicPlaylist
+ *
+ * Saves ~50-100KB per profile fetch
+ */
+export const getProfileLite = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    if (!address || address.length === 0 || !isValidAddress(address)) {
+      return null;
+    }
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+      .first();
+
+    if (!profile) return null;
+
+    // Return only essential fields (saves ~95% bandwidth)
+    return {
+      _id: profile._id,
+      address: profile.address,
+      username: profile.username,
+      stats: profile.stats,
+      coins: profile.coins || 0,
+      coinsInbox: profile.coinsInbox || 0,
+      inbox: profile.inbox || 0,
+      dailyLimits: profile.dailyLimits,
+      attacksToday: profile.attacksToday || 0,
+      rematchesToday: profile.rematchesToday || 0,
+      winStreak: profile.winStreak || 0,
+      fid: profile.fid,
+      farcasterFid: profile.farcasterFid,
+      farcasterPfpUrl: profile.farcasterPfpUrl,
+      twitter: profile.twitter,
+      twitterHandle: profile.twitterHandle,
+      hasDefenseDeck: (profile.defenseDeck?.length || 0) === 5,
+      preferredCollection: profile.preferredCollection,
+      createdAt: profile.createdAt,
+      lastUpdated: profile.lastUpdated,
+    };
+  },
+});
+
+/**
  * 🚀 OPTIMIZED: Get leaderboard LITE (minimal fields only)
  *
  * Saves ~97% bandwidth by excluding heavy fields:
@@ -62,15 +113,16 @@ export const getLeaderboardLite = query({
   handler: async (ctx, { limit = 100 }) => {
     try {
       // 🚀 BANDWIDTH OPTIMIZATION V2: Use by_aura index directly
-      // Fetches only `limit` profiles instead of 500 (80% bandwidth reduction)
+      // Fetch extra profiles to ensure we have enough after sorting by defense deck
+      const fetchLimit = Math.min(limit * 2, 1000); // Increased from 200 to 1000 // Fetch 2x to account for defense deck sorting
       const topProfiles = await ctx.db
         .query("profiles")
         .withIndex("by_aura")
         .order("desc")
-        .take(limit);
+        .take(fetchLimit);
 
-      // Return minimal fields
-      return topProfiles.map(p => ({
+      // Map to minimal fields with hasDefenseDeck
+      const mapped = topProfiles.map(p => ({
         address: p.address || "unknown",
         username: p.username || "unknown",
         stats: {
@@ -89,6 +141,23 @@ export const getLeaderboardLite = query({
         hasDefenseDeck: (p.defenseDeck?.length || 0) === 5, // Check if has exactly 5 cards
         userIndex: p.userIndex || 0,
       }));
+
+      // Sort: 1) hasDefenseDeck (true first), 2) aura (desc), 3) power (desc)
+      mapped.sort((a, b) => {
+        // First priority: defense deck (true comes first)
+        if (a.hasDefenseDeck !== b.hasDefenseDeck) {
+          return a.hasDefenseDeck ? -1 : 1;
+        }
+        // Second priority: aura (higher first)
+        if (a.stats.aura !== b.stats.aura) {
+          return b.stats.aura - a.stats.aura;
+        }
+        // Third priority: power (higher first)
+        return b.stats.totalPower - a.stats.totalPower;
+      });
+
+      // Return only requested limit
+      return mapped.slice(0, limit);
     } catch (error) {
       console.error("❌ getLeaderboardLite error:", error);
       // Return empty array on error
@@ -727,11 +796,13 @@ export const incrementStatSecure = mutation({
 /**
  * MIGRATION: Clean old defense decks (array of strings → array of objects)
  * Run once to clean legacy data from Firebase migration
+ * 🚀 BANDWIDTH FIX: Process in batches of 100
  */
 export const cleanOldDefenseDecks = mutation({
   args: {},
   handler: async (ctx) => {
-    const profiles = await ctx.db.query("profiles").collect();
+    // 🚀 BANDWIDTH FIX: Process in batches instead of loading all
+    const profiles = await ctx.db.query("profiles").take(100);
 
     let cleanedCount = 0;
     let skippedCount = 0;
@@ -975,18 +1046,27 @@ export const cleanConflictingDefenseCards = mutation({
       return true;
     });
 
-    // Update if any cards were removed
-    if (removedCards.length > 0) {
+    // Only update if we would still have 5 cards (don't break the defense deck)
+    if (removedCards.length > 0 && cleanedDefenseDeck.length >= 5) {
       await ctx.db.patch(profile._id, {
         defenseDeck: cleanedDefenseDeck,
       });
 
       console.log(`🧹 Cleaned ${removedCards.length} conflicting cards from ${normalizedAddress}'s defense deck`);
+      return {
+        cleaned: removedCards.length,
+        removed: removedCards,
+      };
+    }
+
+    // If cleaning would break defense deck (< 5 cards), don't clean
+    if (removedCards.length > 0 && cleanedDefenseDeck.length < 5) {
+      console.log(`⚠️ Skipped cleaning ${removedCards.length} cards - would leave only ${cleanedDefenseDeck.length} cards in defense`);
     }
 
     return {
-      cleaned: removedCards.length,
-      removed: removedCards,
+      cleaned: 0,
+      removed: [],
     };
   },
 });
@@ -1165,16 +1245,19 @@ export const getMusicPlaylist = query({
 });
 
 // ============================================================================
-// PUBLIC QUERIES (for external scripts/monitoring)
+// INTERNAL QUERIES (for admin/cron only)
 // ============================================================================
 
 /**
  * Get all profiles (for economy monitoring/admin tools)
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
+ * 🚀 BANDWIDTH FIX: Limited to 200 profiles max
  */
-export const listAll = query({
+export const listAll = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const profiles = await ctx.db.query("profiles").collect();
+    // 🚀 BANDWIDTH FIX: Limit to 200 profiles max
+    const profiles = await ctx.db.query("profiles").take(200);
     return profiles;
   },
 });

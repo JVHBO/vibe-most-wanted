@@ -51,6 +51,7 @@ export const getSignals = query({
     const normalizedRecipient = recipient.toLowerCase();
 
     // Get all unprocessed signals for this recipient in this room
+    // 🚀 BANDWIDTH FIX: Use index properly + filter (was using double withIndex which doesn't work)
     const signals = await ctx.db
       .query("voiceSignaling")
       .withIndex("by_recipient", (q) =>

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useCachedDailyQuest } from "@/lib/convex-cache";
 
 interface QuestPanelProps {
   playerAddress: string;
@@ -13,8 +14,8 @@ interface QuestPanelProps {
 export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelProps) {
   const [isClaiming, setIsClaiming] = useState(false);
 
-  // Fetch daily quest and progress
-  const dailyQuest = useQuery(api.quests.getDailyQuest);
+  // 🚀 BANDWIDTH FIX: Daily quest changes once per day - use cached hook
+  const { quest: dailyQuest } = useCachedDailyQuest();
   const questProgress = useQuery(api.quests.getQuestProgress, {
     address: playerAddress.toLowerCase(),
   });

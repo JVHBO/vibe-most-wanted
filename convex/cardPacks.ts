@@ -683,10 +683,11 @@ export const rewardProfileShare = mutation({
     }
 
     // Update profile - mark pack as claimed
+    // NOTE: Don't set lastShareDate here! That's for daily token rewards only.
+    // This allows user to get pack + daily tokens on the same day.
     await ctx.db.patch(profile._id, {
       hasClaimedSharePack: true,
       hasSharedProfile: true,
-      lastShareDate: today,
     });
 
     return {

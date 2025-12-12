@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'cumioh' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'cumioh' | 'nothing' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -309,6 +309,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY CUMIO PACKS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+  // Collection Nothing (Free non-NFT cards)
+  nothing: {
+    id: 'nothing',
+    name: 'nothing',
+    displayName: 'Nothing',
+    description: 'Free non-NFT cards for playing the game',
+    contractAddress: '', // No contract - these are free cards
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: '/shop',
+    buttonText: 'GET NOTHING CARDS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 

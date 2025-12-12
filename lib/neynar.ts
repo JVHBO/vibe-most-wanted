@@ -302,6 +302,136 @@ export async function getCastByUrl(warpcastUrl: string): Promise<NeynarCast | nu
   }
 }
 
+
+// ============================================================================
+// NEYNAR NOTIFICATIONS API
+// ============================================================================
+
+/**
+ * Notification delivery status from Neynar API
+ */
+export interface NotificationDelivery {
+  fid: number;
+  status: 'success' | 'failed' | 'invalid_token' | 'rate_limited' | 'token_not_found' | 'token_disabled' | 'http_error' | 'invalid_target_url';
+}
+
+/**
+ * Send notification to users via Neynar API
+ * Docs: https://docs.neynar.com/reference/publish-frame-notifications
+ *
+ * @param title - Notification title (max 32 chars)
+ * @param body - Notification body (max 128 chars)
+ * @param targetFids - Array of FIDs to send to (empty = all users with notifications enabled, max 100)
+ * @param targetUrl - URL to open when notification is clicked (max 256 chars)
+ * @returns Delivery results for each FID
+ */
+export async function sendNeynarNotification(
+  title: string,
+  body: string,
+  targetFids: number[] = [],
+  targetUrl: string = 'https://www.vibemostwanted.xyz'
+): Promise<{
+  success: boolean;
+  deliveries: NotificationDelivery[];
+  error?: string;
+}> {
+  if (!NEYNAR_API_KEY) {
+    console.error('[Neynar] NEYNAR_API_KEY is not configured');
+    return { success: false, deliveries: [], error: 'API key not configured' };
+  }
+
+  try {
+    // Validate and truncate to API limits
+    const validatedTitle = title.slice(0, 32);
+    const validatedBody = body.slice(0, 128);
+    const validatedUrl = targetUrl.slice(0, 256);
+
+    // Generate valid UUID v4 format for idempotency
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+
+    const payload = {
+      notification: {
+        title: validatedTitle,
+        body: validatedBody,
+        target_url: validatedUrl,
+        uuid,
+      },
+      target_fids: targetFids, // Empty array = all users with notifications enabled
+    };
+
+    console.log(`[Neynar] Sending notification: "${validatedTitle}" to ${targetFids.length || 'all'} users`);
+
+    const response = await fetch(
+      'https://api.neynar.com/v2/farcaster/frame/notifications/',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': NEYNAR_API_KEY,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Neynar] Notification API error: ${response.status}`, errorText);
+      return { success: false, deliveries: [], error: `API error: ${response.status} - ${errorText}` };
+    }
+
+    const data = await response.json();
+    const deliveries: NotificationDelivery[] = (data.notification_deliveries || []).map((d: { fid: number; status: string }) => ({
+      fid: d.fid,
+      status: d.status as NotificationDelivery['status'],
+    }));
+
+    const successCount = deliveries.filter(d => d.status === 'success').length;
+    const failedCount = deliveries.length - successCount;
+
+    console.log(`[Neynar] Notification sent: ${successCount} success, ${failedCount} failed`);
+
+    return { success: true, deliveries };
+  } catch (error) {
+    console.error('[Neynar] Error sending notification:', error);
+    return { success: false, deliveries: [], error: String(error) };
+  }
+}
+
+/**
+ * Send notification to ALL users with notifications enabled via Neynar
+ * This is a convenience wrapper that sends to empty target_fids array
+ */
+export async function broadcastNeynarNotification(
+  title: string,
+  body: string,
+  targetUrl: string = 'https://www.vibemostwanted.xyz'
+): Promise<{
+  success: boolean;
+  successCount: number;
+  failedCount: number;
+  error?: string;
+}> {
+  const result = await sendNeynarNotification(title, body, [], targetUrl);
+
+  const successCount = result.deliveries.filter(d => d.status === 'success').length;
+  const failedCount = result.deliveries.filter(d => d.status !== 'success').length;
+
+  return {
+    success: result.success,
+    successCount,
+    failedCount,
+    error: result.error,
+  };
+}
+
+// ============================================================================
+// CAST INTERACTIONS
+// ============================================================================
+
 /**
  * Check if a user has interacted with a cast (like, recast, or reply)
  */
