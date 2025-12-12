@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface CardMediaProps {
   src: string | undefined;
@@ -19,6 +19,12 @@ interface CardMediaProps {
 export function CardMedia({ src, alt, className, loading = "lazy", onClick }: CardMediaProps) {
   const [useImage, setUseImage] = useState(false);
   const [error, setError] = useState(false);
+
+  // Reset state when src changes - fixes issue where error state persists across different cards
+  useEffect(() => {
+    setUseImage(false);
+    setError(false);
+  }, [src]);
 
   if (!src) {
     return null;
