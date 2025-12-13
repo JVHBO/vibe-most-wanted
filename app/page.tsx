@@ -43,6 +43,7 @@ import { PokerMatchmaking } from "@/components/PokerMatchmaking";
 import { RaidBossModal } from "@/components/RaidBossModal";
 import { PriceTicker } from "@/components/PriceTicker";
 import ShameList from "@/components/ShameList";
+import BannedScreen from "@/components/BannedScreen";
 import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
@@ -354,6 +355,9 @@ export default function TCGPage() {
 
   // 🎴 Personal missions (VibeFID, welcome gift, etc.)
   const playerMissions = useQuery(api.missions.getPlayerMissions, address ? { playerAddress: address } : "skip");
+
+  // 🚫 Ban check for exploiters
+  const banCheck = useQuery(api.blacklist.checkBan, address ? { address } : "skip");
 
   // Debug logging for address changes
   useEffect(() => {
@@ -1161,7 +1165,6 @@ export default function TCGPage() {
         rank: index + 1,
         username: player.username,
         address: player.address,
-        // @ts-expect-error - aura field is added to schema but types not yet regenerated
         aura: player.stats?.aura ?? 500,
         power: player.stats?.totalPower || 0,
         openedCards: player.stats?.openedCards || 0,
@@ -1506,6 +1509,7 @@ export default function TCGPage() {
             power: card.power,
             badgeType: card.badgeType, // 'FREE_CARD'
             isFreeCard: true,
+            collection: 'nothing', // Collection for filtering
           }));
           processed.push(...freeCardsFormatted);
         }
@@ -3326,6 +3330,17 @@ export default function TCGPage() {
     setShowSettings(false);
   }, [currentView]);
 
+  // 🚫 Block banned exploiters from accessing the game
+  if (banCheck?.isBanned) {
+    return (
+      <BannedScreen
+        username={banCheck.username || "Unknown"}
+        amountStolen={banCheck.amountStolen || 0}
+        reason={banCheck.reason || "You have been permanently banned."}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
       {/* Ambient floating particles */}
@@ -5127,7 +5142,7 @@ export default function TCGPage() {
                 </div>
                 {questProgress.claimed ? (
                   <div className="px-3 md:px-4 py-1.5 md:py-2 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg font-modern font-semibold text-xs md:text-sm">
-                    ✓ {t('questClaimed')}
+                    ✓ {t('claimed')}
                   </div>
                 ) : questProgress.completed ? (
                   <button
@@ -5135,7 +5150,7 @@ export default function TCGPage() {
                     disabled={isClaimingQuest}
                     className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border-2 border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg font-modern font-semibold text-xs md:text-sm transition-all shadow-gold hover:scale-105"
                   >
-                    {isClaimingQuest ? '...' : `✦ ${t('claimReward')}`}
+                    {isClaimingQuest ? '...' : `✦ ${t('questClaimReward', { reward: questProgress?.quest?.reward || 0 })}`}
                   </button>
                 ) : null}
               </div>
@@ -5674,7 +5689,6 @@ export default function TCGPage() {
                                 </div>
                               </Link>
                             </td>
-                            {/* @ts-expect-error - aura field is added to schema but types not yet regenerated */}
                             <td className="p-1 md:p-3 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.aura ?? 500).toLocaleString()}</td>
                             <td className="p-1 md:p-3 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
                             <td className="p-1 md:p-3 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
@@ -6053,7 +6067,7 @@ export default function TCGPage() {
 
                 {/* 🚨 SHAME LIST - Exploit Offenders */}
                 <div className="mt-8">
-                  <ShameList />
+                  <ShameList playerAddress={address} soundEnabled={soundEnabled} />
                 </div>
               </div>
             </div>
@@ -6393,7 +6407,6 @@ export default function TCGPage() {
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
-                            {/* @ts-expect-error - aura field is added to schema but types not yet regenerated */}
                             <span className="text-xs text-purple-400 font-bold">{(profile.stats?.aura ?? 500).toLocaleString()}</span>
                             <span className="text-xs text-yellow-400">{(profile.stats?.totalPower || 0).toLocaleString()} PWR</span>
                             <span className="text-xs text-green-400 font-bold min-w-[60px] text-right">+{rewardAmount}</span>
