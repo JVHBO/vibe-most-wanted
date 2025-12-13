@@ -44,25 +44,39 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   useEscapeKey(onClose);
 
     // Check if we should use Farcaster SDK for transactions
+  // Uses sdk.context like useFarcasterContext for reliable mobile detection
   useEffect(() => {
     const checkFarcasterSDK = async () => {
       try {
-        // Only use Farcaster SDK if we're actually inside the miniapp
-        // Check if we're in an iframe (miniapp runs in iframe)
-        const isInIframe = window !== window.parent;
-
-        if (!isInIframe) {
-          console.log('[CoinsInboxModal] Not in iframe, using wagmi');
+        // Check if SDK is available first
+        if (!sdk || typeof sdk.wallet === 'undefined') {
+          console.log('[CoinsInboxModal] SDK not available, using wagmi');
           setUseFarcasterSDK(false);
           return;
         }
 
-        if (sdk && typeof sdk.wallet !== 'undefined') {
-          const provider = await sdk.wallet.getEthereumProvider();
-          if (provider) {
-            setUseFarcasterSDK(true);
-            console.log('[CoinsInboxModal] Using Farcaster SDK for transactions');
-          }
+        // Try to get SDK context with timeout (reliable miniapp detection)
+        let sdkContext;
+        try {
+          const contextPromise = sdk.context;
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('SDK context timeout')), 3000)
+          );
+          sdkContext = await Promise.race([contextPromise, timeoutPromise]);
+          console.log('[CoinsInboxModal] SDK context received:', sdkContext ? 'valid' : 'null');
+        } catch (contextError) {
+          console.log('[CoinsInboxModal] SDK context timeout, trying provider directly');
+        }
+
+        // Even if context times out, try to get the provider
+        // This handles cases where context is slow but wallet is available
+        const provider = await sdk.wallet.getEthereumProvider();
+        if (provider) {
+          setUseFarcasterSDK(true);
+          console.log('[CoinsInboxModal] Using Farcaster SDK for transactions');
+        } else {
+          console.log('[CoinsInboxModal] No provider available, using wagmi');
+          setUseFarcasterSDK(false);
         }
       } catch (error) {
         console.log('[CoinsInboxModal] Farcaster SDK not available, using wagmi:', error);
@@ -301,37 +315,63 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
           {/* Action Buttons */}
           <div className="space-y-3">
-          {/* Convert TESTVBMS → VBMS (only button) */}
-          {testvbmsBalance >= 100 ? (
-            <button
-              onClick={handleConvertTESTVBMS}
-              disabled={!canConvertTESTVBMS || isProcessing}
-              className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
-                canConvertTESTVBMS
-                  ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.02]"
-                  : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
-              }`}
-            >
-              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
-              <div className="relative flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <NextImage src="/images/icons/convert.svg" alt="Convert" width={20} height={20} className="w-5 h-5" />
-                  <span>Convert {testvbmsBalance.toLocaleString()} → VBMS</span>
-                </span>
-                <span className="text-xs opacity-80 bg-black/20 px-2 py-1 rounded">Pay Gas</span>
+          {/* Convert button - ONLY in miniapp (iframe), disabled in browser */}
+          {useFarcasterSDK ? (
+            // MINIAPP: Show convert button
+            testvbmsBalance >= 100 ? (
+              <button
+                onClick={handleConvertTESTVBMS}
+                disabled={!canConvertTESTVBMS || isProcessing}
+                className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
+                  canConvertTESTVBMS
+                    ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.02]"
+                    : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
+                }`}
+              >
+                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
+                <div className="relative flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <NextImage src="/images/icons/convert.svg" alt="Convert" width={20} height={20} className="w-5 h-5" />
+                    <span>Convert {testvbmsBalance.toLocaleString()} → VBMS</span>
+                  </span>
+                  <span className="text-xs opacity-80 bg-black/20 px-2 py-1 rounded">Pay Gas</span>
+                </div>
+              </button>
+            ) : (
+              <div className="text-center py-6">
+                <div className="flex justify-center mb-3 opacity-20">
+                  <NextImage src="/images/icons/coins.svg" alt="Coins" width={48} height={48} className="w-12 h-12" />
+                </div>
+                <p className="text-vintage-gold/60 text-sm">
+                  Minimum 100 TESTVBMS required
+                </p>
+                <p className="text-vintage-gold/40 text-xs mt-1">
+                  Complete battles to earn more!
+                </p>
               </div>
-            </button>
+            )
           ) : (
-            <div className="text-center py-6">
-              <div className="flex justify-center mb-3 opacity-20">
-                <NextImage src="/images/icons/coins.svg" alt="Coins" width={48} height={48} className="w-12 h-12" />
-              </div>
-              <p className="text-vintage-gold/60 text-sm">
-                Minimum 100 TESTVBMS required
+            // BROWSER: Show disabled message with miniapp redirect
+            <div className="bg-purple-950/30 border-2 border-purple-800/50 rounded-xl p-6 text-center">
+              <div className="text-4xl mb-3">📱</div>
+              <h3 className="text-purple-400 font-bold text-lg mb-2">USE MINIAPP TO CLAIM</h3>
+              <p className="text-purple-400/70 text-sm mb-3">
+                TESTVBMS → VBMS conversion is only available in the Farcaster miniapp for security.
               </p>
-              <p className="text-vintage-gold/40 text-xs mt-1">
-                Complete battles to earn more!
-              </p>
+              <a
+                href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-lg transition-all"
+              >
+                Open Miniapp →
+              </a>
+              {testvbmsBalance > 0 && (
+                <div className="mt-4 bg-vintage-black/50 rounded-lg p-3">
+                  <p className="text-vintage-gold/60 text-xs">Your TESTVBMS Balance:</p>
+                  <p className="text-vintage-gold font-bold text-xl">{testvbmsBalance.toLocaleString()}</p>
+                </div>
+              )}
             </div>
           )}
 
