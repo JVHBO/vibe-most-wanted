@@ -1,7 +1,4 @@
 module.exports = {
-  turbopack: {
-    root: '/',
-  },
   async headers() {
     return [
       {
