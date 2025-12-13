@@ -229,10 +229,10 @@ export function CpuArenaModal({
             <div className="text-center mb-8">
               <div className="text-6xl mb-4">🔐</div>
               <h1 className="text-2xl sm:text-3xl font-display font-bold text-purple-400 mb-2">
-                CPU ARENA
+                {t('mechaPasswordTitle')}
               </h1>
               <p className="text-vintage-ice/70">
-                Enter password to access the arena
+                {t('mechaPasswordSubtitle')}
               </p>
             </div>
 
@@ -246,7 +246,7 @@ export function CpuArenaModal({
                   setPasswordError(false);
                 }}
                 onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
-                placeholder="Enter password..."
+                placeholder={t('mechaPasswordPlaceholder')}
                 className={`w-full px-4 py-3 bg-vintage-black/50 border-2 ${
                   passwordError ? "border-red-500" : "border-purple-500/50"
                 } rounded-xl text-vintage-ice placeholder-vintage-ice/50 focus:outline-none focus:border-purple-400 text-center text-lg`}
@@ -254,7 +254,7 @@ export function CpuArenaModal({
               />
               {passwordError && (
                 <p className="text-red-400 text-sm mt-2 text-center">
-                  Incorrect password. Try again.
+                  {t('mechaPasswordError')}
                 </p>
               )}
 
@@ -262,14 +262,14 @@ export function CpuArenaModal({
                 onClick={handlePasswordSubmit}
                 className="w-full mt-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl transition-all transform hover:scale-105"
               >
-                Enter Arena
+                {t('mechaEnterArena')}
               </button>
 
               <button
                 onClick={onClose}
                 className="w-full mt-3 py-2 text-vintage-ice/70 hover:text-vintage-ice transition-colors"
               >
-                Cancel
+                {t('mechaCancel')}
               </button>
             </div>
           </div>
@@ -284,10 +284,10 @@ export function CpuArenaModal({
                 <div>
                   <h1 className="text-2xl sm:text-4xl font-display font-bold text-purple-400 flex items-center gap-3">
                     <span className="text-3xl sm:text-5xl">🤖</span>
-                    MECHA ARENA
+                    {t('mechaTitle')}
                   </h1>
                   <p className="text-sm sm:text-base text-purple-300/70 mt-1">
-                    Watch Mecha battles and bet on rounds!
+                    {t('mechaSubtitle')}
                   </p>
                 </div>
                 <button
@@ -309,20 +309,20 @@ export function CpuArenaModal({
                   <div className="text-4xl animate-bounce">🔥</div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-orange-400 font-bold text-lg">DAILY BOOST</span>
+                      <span className="text-orange-400 font-bold text-lg">{t('mechaDailyBoost')}</span>
                       <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
-                        +{BUFF_CONFIG.oddsBonus}x ODDS
+                        {t('mechaOddsBonus').replace('{bonus}', String(BUFF_CONFIG.oddsBonus))}
                       </span>
                     </div>
                     <p className="text-vintage-ice/80 text-sm">
-                      Today&apos;s boosted arena: <span className="text-orange-300 font-bold">{buffedCollectionInfo?.name || buffedCollection}</span> {buffedCollectionInfo?.emoji}
+                      {t('mechaTodayBoosted')} <span className="text-orange-300 font-bold">{buffedCollectionInfo?.name || buffedCollection}</span> {buffedCollectionInfo?.emoji}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-center sm:items-end gap-2">
                   <div className="text-center sm:text-right">
-                    <p className="text-vintage-ice/60 text-xs">Resets in</p>
+                    <p className="text-vintage-ice/60 text-xs">{t('mechaResetsIn')}</p>
                     <p className="text-orange-400 font-mono font-bold">
                       {String(buffCountdown.hours).padStart(2, '0')}:
                       {String(buffCountdown.minutes).padStart(2, '0')}:
@@ -353,7 +353,7 @@ export function CpuArenaModal({
             {/* Available Rooms */}
             <div className="p-4 sm:p-6">
               <h2 className="text-xl font-display font-bold text-vintage-gold mb-4 flex items-center gap-2">
-                <span>🎮</span> Available Arenas
+                <span>🎮</span> {t('mechaAvailableArenas')}
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -390,7 +390,7 @@ export function CpuArenaModal({
                           {/* HOT badge */}
                           <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-10 flex items-center gap-1">
                             <span>🔥</span>
-                            <span>HOT</span>
+                            <span>{t('mechaHot')}</span>
                           </div>
 
                           {/* Odds bonus badge */}
@@ -409,7 +409,7 @@ export function CpuArenaModal({
                           {info.name}
                         </p>
                         <p className="text-white/70 text-sm">
-                          Arena
+                          {t('mechaArena')}
                         </p>
 
                         {/* Spectator count and status */}
@@ -420,7 +420,7 @@ export function CpuArenaModal({
                           </div>
                           <div className="flex items-center gap-1">
                             <div className={`w-2 h-2 ${isBuffed ? "bg-orange-400" : "bg-green-400"} rounded-full animate-pulse`}></div>
-                            <span className="text-white/80 text-xs">{isBuffed ? "Boosted" : "Live"}</span>
+                            <span className="text-white/80 text-xs">{isBuffed ? t('mechaBoosted') : t('mechaLive')}</span>
                           </div>
                         </div>
 
@@ -450,14 +450,14 @@ export function CpuArenaModal({
 
               {/* Info box */}
               <div className="mt-6 bg-purple-500/10 border border-purple-500/30 rounded-xl p-4">
-                <h3 className="text-purple-400 font-bold mb-2">💡 How it works</h3>
+                <h3 className="text-purple-400 font-bold mb-2">💡 {t('mechaHowItWorks')}</h3>
                 <ul className="text-vintage-ice/70 text-sm space-y-1">
-                  <li>• Each arena features cards from that collection</li>
-                  <li>• Two CPUs battle automatically on the poker table</li>
-                  <li>• Same chat, sounds and experience as regular battles</li>
-                  <li>• Bet on each round (1-7) with growing odds: 1.5x → 2.0x</li>
-                  <li>• <span className="text-orange-400 font-bold">🔥 Daily Boost:</span> One arena gets +{BUFF_CONFIG.oddsBonus}x bonus odds every day!</li>
-                  <li>• Deposit VBMS to get betting credits</li>
+                  <li>• {t('mechaHowItWorks1')}</li>
+                  <li>• {t('mechaHowItWorks2')}</li>
+                  <li>• {t('mechaHowItWorks3')}</li>
+                  <li>• {t('mechaHowItWorks4')}</li>
+                  <li>• <span className="text-orange-400 font-bold">🔥 {t('mechaDailyBoost')}:</span> {t('mechaHowItWorks5').replace('{bonus}', String(BUFF_CONFIG.oddsBonus))}</li>
+                  <li>• {t('mechaHowItWorks6')}</li>
                 </ul>
               </div>
             </div>
@@ -477,7 +477,7 @@ export function CpuArenaModal({
                 {COLLECTION_INFO[selectedCollection]?.name || selectedCollection} Arena
               </h2>
               <p className="text-vintage-ice/70">
-                There&apos;s an active battle in progress!
+                {t('mechaActiveBattle')}
               </p>
             </div>
 
@@ -488,23 +488,23 @@ export function CpuArenaModal({
               return (
                 <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 mb-6">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-purple-300 font-bold">Current Battle</span>
+                    <span className="text-purple-300 font-bold">{t('mechaCurrentBattle')}</span>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-400 text-sm">Live</span>
+                      <span className="text-green-400 text-sm">{t('mechaLive')}</span>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
-                      <p className="text-vintage-ice/60 text-xs">Round</p>
+                      <p className="text-vintage-ice/60 text-xs">{t('mechaRound')}</p>
                       <p className="text-vintage-gold font-bold text-xl">{activeRoom.currentRound || 1}/7</p>
                     </div>
                     <div>
-                      <p className="text-vintage-ice/60 text-xs">Score</p>
+                      <p className="text-vintage-ice/60 text-xs">{t('mechaScore')}</p>
                       <p className="text-vintage-gold font-bold text-xl">{activeRoom.hostScore || 0} - {activeRoom.guestScore || 0}</p>
                     </div>
                     <div>
-                      <p className="text-vintage-ice/60 text-xs">Spectators</p>
+                      <p className="text-vintage-ice/60 text-xs">{t('mechaSpectators')}</p>
                       <p className="text-vintage-gold font-bold text-xl">{activeRoom.spectatorCount || 0}</p>
                     </div>
                   </div>
@@ -520,8 +520,8 @@ export function CpuArenaModal({
               >
                 <span className="text-2xl">👁️</span>
                 <div className="text-left">
-                  <p className="text-lg">Join Current Battle</p>
-                  <p className="text-xs text-white/70">Watch the ongoing match</p>
+                  <p className="text-lg">{t('mechaJoinCurrent')}</p>
+                  <p className="text-xs text-white/70">{t('mechaWatchOngoing')}</p>
                 </div>
               </button>
 
@@ -531,8 +531,8 @@ export function CpuArenaModal({
               >
                 <span className="text-2xl">🆕</span>
                 <div className="text-left">
-                  <p className="text-lg">Start New Battle</p>
-                  <p className="text-xs text-white/70">Create a fresh room</p>
+                  <p className="text-lg">{t('mechaStartNew')}</p>
+                  <p className="text-xs text-white/70">{t('mechaCreateFresh')}</p>
                 </div>
               </button>
 
@@ -543,7 +543,7 @@ export function CpuArenaModal({
                 }}
                 className="w-full py-3 text-vintage-ice/70 hover:text-vintage-ice transition-colors"
               >
-                ← Back to Arenas
+                ← {t('mechaBackToArenas')}
               </button>
             </div>
           </div>
@@ -569,7 +569,7 @@ export function CpuArenaModal({
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-              <p className="text-vintage-gold font-bold">Joining Mecha Arena...</p>
+              <p className="text-vintage-gold font-bold">{t('mechaJoining')}</p>
             </div>
           </div>
         )}
