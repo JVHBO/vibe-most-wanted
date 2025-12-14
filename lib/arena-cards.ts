@@ -2445,6 +2445,38 @@ export const TAROT_CARDS: ArenaCard[] = [
   }
 ];
 
+export const VIBEROTBANGERS_CARDS: ArenaCard[] = [
+  { "tokenId": "1", "name": "Vibe Rot Bangers #1", "rarity": "Mythic", "power": 800, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/1", "collection": "viberotbangers" },
+  { "tokenId": "2", "name": "Vibe Rot Bangers #2", "rarity": "Mythic", "power": 800, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/2", "collection": "viberotbangers" },
+  { "tokenId": "3", "name": "Vibe Rot Bangers #3", "rarity": "Mythic", "power": 800, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/3", "collection": "viberotbangers" },
+  { "tokenId": "4", "name": "Vibe Rot Bangers #4", "rarity": "Mythic", "power": 800, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/4", "collection": "viberotbangers" },
+  { "tokenId": "5", "name": "Vibe Rot Bangers #5", "rarity": "Mythic", "power": 800, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/5", "collection": "viberotbangers" },
+  { "tokenId": "6", "name": "Vibe Rot Bangers #6", "rarity": "Legendary", "power": 240, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/6", "collection": "viberotbangers" },
+  { "tokenId": "7", "name": "Vibe Rot Bangers #7", "rarity": "Legendary", "power": 240, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/7", "collection": "viberotbangers" },
+  { "tokenId": "8", "name": "Vibe Rot Bangers #8", "rarity": "Legendary", "power": 240, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/8", "collection": "viberotbangers" },
+  { "tokenId": "9", "name": "Vibe Rot Bangers #9", "rarity": "Legendary", "power": 240, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/9", "collection": "viberotbangers" },
+  { "tokenId": "10", "name": "Vibe Rot Bangers #10", "rarity": "Legendary", "power": 240, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/10", "collection": "viberotbangers" },
+  { "tokenId": "11", "name": "Vibe Rot Bangers #11", "rarity": "Epic", "power": 80, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/11", "collection": "viberotbangers" },
+  { "tokenId": "12", "name": "Vibe Rot Bangers #12", "rarity": "Epic", "power": 80, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/12", "collection": "viberotbangers" },
+  { "tokenId": "13", "name": "Vibe Rot Bangers #13", "rarity": "Epic", "power": 80, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/13", "collection": "viberotbangers" },
+  { "tokenId": "14", "name": "Vibe Rot Bangers #14", "rarity": "Epic", "power": 80, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/14", "collection": "viberotbangers" },
+  { "tokenId": "15", "name": "Vibe Rot Bangers #15", "rarity": "Epic", "power": 80, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/15", "collection": "viberotbangers" },
+  { "tokenId": "16", "name": "Vibe Rot Bangers #16", "rarity": "Rare", "power": 20, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/16", "collection": "viberotbangers" },
+  { "tokenId": "17", "name": "Vibe Rot Bangers #17", "rarity": "Rare", "power": 20, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/17", "collection": "viberotbangers" },
+  { "tokenId": "18", "name": "Vibe Rot Bangers #18", "rarity": "Rare", "power": 20, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/18", "collection": "viberotbangers" },
+  { "tokenId": "19", "name": "Vibe Rot Bangers #19", "rarity": "Rare", "power": 20, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/19", "collection": "viberotbangers" },
+  { "tokenId": "20", "name": "Vibe Rot Bangers #20", "rarity": "Rare", "power": 20, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/20", "collection": "viberotbangers" },
+  { "tokenId": "21", "name": "Vibe Rot Bangers #21", "rarity": "Rare", "power": 20, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/21", "collection": "viberotbangers" },
+  { "tokenId": "22", "name": "Vibe Rot Bangers #22", "rarity": "Rare", "power": 20, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/22", "collection": "viberotbangers" },
+  { "tokenId": "23", "name": "Vibe Rot Bangers #23", "rarity": "Common", "power": 5, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/23", "collection": "viberotbangers" },
+  { "tokenId": "24", "name": "Vibe Rot Bangers #24", "rarity": "Common", "power": 5, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/24", "collection": "viberotbangers" },
+  { "tokenId": "25", "name": "Vibe Rot Bangers #25", "rarity": "Common", "power": 5, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/25", "collection": "viberotbangers" },
+  { "tokenId": "26", "name": "Vibe Rot Bangers #26", "rarity": "Common", "power": 5, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/26", "collection": "viberotbangers" },
+  { "tokenId": "27", "name": "Vibe Rot Bangers #27", "rarity": "Common", "power": 5, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/27", "collection": "viberotbangers" },
+  { "tokenId": "28", "name": "Vibe Rot Bangers #28", "rarity": "Common", "power": 5, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/28", "collection": "viberotbangers" },
+  { "tokenId": "29", "name": "Vibe Rot Bangers #29", "rarity": "Common", "power": 5, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/29", "collection": "viberotbangers" },
+  { "tokenId": "30", "name": "Vibe Rot Bangers #30", "rarity": "Common", "power": 5, "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0x120c612d79a3187a3b8b4f4bb924cebe41eb407a/30", "collection": "viberotbangers" },
+];
 
 export const ARENA_CARDS: Record<string, ArenaCard[]> = {
   vibefid: VIBEFID_CARDS,
@@ -2457,6 +2489,7 @@ export const ARENA_CARDS: Record<string, ArenaCard[]> = {
   poorlydrawnpepes: POORLYDRAWNPEPES_CARDS,
   teampothead: TEAMPOTHEAD_CARDS,
   tarot: TAROT_CARDS,
+  viberotbangers: VIBEROTBANGERS_CARDS,
 };
 
 export function getRandomDeck(collectionId: string, count: number = 5): ArenaCard[] {
