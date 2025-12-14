@@ -16,6 +16,7 @@ const COLLECTION_COVERS: Record<string, string> = {
   teampothead: 'https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0',
   tarot: 'https://nft-cdn.alchemy.com/base-mainnet/72ea458dbad1ce6a722306d811a42252',
   cumioh: '/covers/cumioh-cover.png',
+  viberotbangers: 'https://nft-cdn.alchemy.com/base-mainnet/1269ebe2e27ff8a041cb7253fb5687b6',
 };
 
 // Collection display names
@@ -31,6 +32,7 @@ const COLLECTION_NAMES: Record<string, string> = {
   teampothead: "Team Pothead",
   tarot: "Tarot",
   cumioh: "$CU-MI-OH!",
+  viberotbangers: "Vibe Rot Bangers",
 };
 
 export default function TestCoversPage() {
