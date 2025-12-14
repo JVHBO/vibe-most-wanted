@@ -2,11 +2,14 @@
  * Farcaster-compatible VBMS hooks
  * Works in both miniapp (Farcaster SDK) and web (wagmi)
  * Uses wagmi hooks with @farcaster/miniapp-wagmi-connector for universal support
+ *
+ * Updated to use useWriteContractWithAttribution for Base builder code attribution
  */
 
 import { formatEther } from 'viem';
 import { CONTRACTS, ERC20_ABI } from '../contracts';
-import { useReadContract, useWriteContract } from 'wagmi';
+import { useReadContract } from 'wagmi';
+import { useWriteContractWithAttribution } from './useWriteContractWithAttribution';
 
 /**
  * Get VBMS balance - works in both miniapp and web via wagmi
@@ -62,15 +65,17 @@ export function useFarcasterVBMSAllowance(owner?: string, spender?: string) {
 
 /**
  * Approve VBMS spending - works in both miniapp and web via wagmi
+ * Uses builder code attribution on Base
  */
 export function useFarcasterApproveVBMS() {
-  const { writeContractAsync, isPending, error } = useWriteContract();
+  const { writeContractAsync, isPending, error, builderCode } = useWriteContractWithAttribution();
 
   const approve = async (spender: `0x${string}`, amount: bigint): Promise<`0x${string}`> => {
-    console.log('[useFarcasterApproveVBMS] Approving VBMS:', {
+    console.log('[useFarcasterApproveVBMS] Approving VBMS with builder code:', {
       spender,
       amount: amount.toString(),
       contractAddress: CONTRACTS.VBMSToken,
+      builderCode,
     });
 
     try {
@@ -99,15 +104,17 @@ export function useFarcasterApproveVBMS() {
 
 /**
  * Transfer VBMS - works in both miniapp and web via wagmi
+ * Uses builder code attribution on Base
  */
 export function useFarcasterTransferVBMS() {
-  const { writeContractAsync, isPending, error } = useWriteContract();
+  const { writeContractAsync, isPending, error, builderCode } = useWriteContractWithAttribution();
 
   const transfer = async (to: `0x${string}`, amount: bigint): Promise<`0x${string}`> => {
-    console.log('[useFarcasterTransferVBMS] Transferring VBMS:', {
+    console.log('[useFarcasterTransferVBMS] Transferring VBMS with builder code:', {
       to,
       amount: amount.toString(),
       contractAddress: CONTRACTS.VBMSToken,
+      builderCode,
     });
 
     try {

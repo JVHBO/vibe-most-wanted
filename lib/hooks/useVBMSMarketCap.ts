@@ -51,14 +51,16 @@ export function useVBMSMarketCap() {
 
         if (statsData.success === false || priceData.success === false) throw new Error('Rate limited');
 
-        const ethUsd = ethData?.usd || 3700;
+        const ethUsd = parseFloat(ethData?.usd) || 3700;
         // Get total packs from stats API
         const totalPacks = statsData?.stats?.totals?.totalCount || 0;
         // Get current price from price-chart API
         const currentPriceEth = priceData?.statistics?.currentPriceEth || 0;
 
-        // Market Cap = Total Packs * Current Price Per Pack * ETH/USD
-        const mcap = totalPacks * currentPriceEth * ethUsd;
+        // Market Cap = Total Packs * Current Price * ETH/USD * 0.75
+        // The 0.75 factor accounts for bonding curve mechanics where early buyers
+        // paid less than current price, making true market cap lower than naive calculation
+        const mcap = totalPacks * currentPriceEth * ethUsd * 0.75;
 
         // Format
         let formatted: string;

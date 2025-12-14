@@ -35,6 +35,30 @@ export const POOL_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'getDailyClaimInfo',
+    outputs: [
+      { name: 'remaining', type: 'uint256' },
+      { name: 'resetTime', type: 'uint256' }
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'dailyClaimLimit',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'maxClaimAmount',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ] as const;
 
 // VBMSPokerBattle ABI (key functions)

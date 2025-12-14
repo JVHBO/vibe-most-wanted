@@ -14,10 +14,10 @@
     "buttonTitle": "Play Now",
     "splashImageUrl": "https://www.vibemostwanted.xyz/splash-200.png",
     "splashBackgroundColor": "#FFD700",
-    "webhookUrl": "https://api.neynar.com/f/app/01KBS1YX7TEA0FT2GEP99XT39V/event",
+    "webhookUrl": "https://api.neynar.com/f/app/e4b053fc-a6bd-4975-a6bc-a3174e617d19/event",
     "castShareUrl": "https://www.vibemostwanted.xyz",
-    "subtitle": "NFT Card Battle Game",
-    "description": "Battle with your VIBE NFT cards in PvE and PvP modes. Join the most wanted card game on Base!",
+    "subtitle": "Meme Card Game",
+    "description": "Battle with meme cards in PvE and PvP modes. The most wanted meme card game on Base!",
     "screenshotUrls": [
       "https://www.vibemostwanted.xyz/screenshot-1.png",
       "https://www.vibemostwanted.xyz/screenshot-2.png",
@@ -25,16 +25,16 @@
     ],
     "primaryCategory": "games",
     "tags": [
-      "nft",
+      "meme",
       "card-game",
       "battle",
       "pvp",
       "base"
     ],
     "heroImageUrl": "https://www.vibemostwanted.xyz/hero.jpg",
-    "tagline": "Battle with your NFT cards",
+    "tagline": "Battle with meme cards",
     "ogTitle": "VIBE MOST WANTED",
-    "ogDescription": "Battle with VIBE NFT cards in PvE and PvP modes on Base!",
+    "ogDescription": "Battle with meme cards in PvE and PvP modes on Base!",
     "ogImageUrl": "https://www.vibemostwanted.xyz/og-image.png",
     "requiredCapabilities": [
       "wallet.getEthereumProvider"

@@ -11,6 +11,7 @@
 
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
+import { logTransaction } from "./coinsInbox";
 
 // ========== HARDCODED BLACKLIST ==========
 // These addresses are PERMANENTLY banned from VBMS claims
@@ -50,6 +51,30 @@ export function isBlacklisted(address: string): boolean {
 export function getBlacklistInfo(address: string) {
   return EXPLOITER_BLACKLIST[address.toLowerCase()] || null;
 }
+
+// ========== QUERY: Check if Player is Banned ==========
+
+export const checkBan = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    if (!address) return { isBanned: false };
+
+    const normalizedAddress = address.toLowerCase();
+    const info = EXPLOITER_BLACKLIST[normalizedAddress];
+
+    if (info) {
+      return {
+        isBanned: true,
+        username: info.username,
+        amountStolen: info.amountStolen,
+        reason: `Your account was permanently banned for exploiting ${info.amountStolen.toLocaleString()} VBMS in December 2025.`,
+        exploitDate: "December 10-12, 2025",
+      };
+    }
+
+    return { isBanned: false };
+  },
+});
 
 // ========== QUERY: Get Shame List (for UI) ==========
 
@@ -123,5 +148,212 @@ export const resetExploiterBalances = internalMutation({
     }
 
     return { resetCount };
+  },
+});
+
+// ========== INTERNAL: Remove Defense Decks from Blacklisted Players ==========
+
+export const removeBlacklistedDefenseDecks = internalMutation({
+  handler: async (ctx) => {
+    let removedCount = 0;
+    const removed: { address: string; username: string; deckSize: number }[] = [];
+
+    for (const address of Object.keys(EXPLOITER_BLACKLIST)) {
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", address))
+        .first();
+
+      if (profile && profile.defenseDeck && profile.defenseDeck.length > 0) {
+        const deckSize = profile.defenseDeck.length;
+        await ctx.db.patch(profile._id, {
+          defenseDeck: [], // Clear defense deck
+        });
+        removedCount++;
+        removed.push({
+          address,
+          username: EXPLOITER_BLACKLIST[address].username,
+          deckSize,
+        });
+        console.log(`🚫 Removed defense deck from exploiter: ${address} (${EXPLOITER_BLACKLIST[address].username}) - had ${deckSize} cards`);
+      }
+    }
+
+    return { removedCount, removed };
+  },
+});
+
+// ========== ADMIN: Remove Defense Decks from Blacklisted Players (PUBLIC for admin use) ==========
+
+export const adminRemoveBlacklistedDefenseDecks = mutation({
+  args: {},
+  handler: async (ctx) => {
+    let removedCount = 0;
+    const removed: { address: string; username: string; deckSize: number }[] = [];
+
+    for (const address of Object.keys(EXPLOITER_BLACKLIST)) {
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", address))
+        .first();
+
+      if (profile && profile.defenseDeck && profile.defenseDeck.length > 0) {
+        const deckSize = profile.defenseDeck.length;
+        await ctx.db.patch(profile._id, {
+          defenseDeck: [], // Clear defense deck
+        });
+        removedCount++;
+        removed.push({
+          address,
+          username: EXPLOITER_BLACKLIST[address].username,
+          deckSize,
+        });
+        console.log(`🚫 Removed defense deck from exploiter: ${address} (${EXPLOITER_BLACKLIST[address].username}) - had ${deckSize} cards`);
+      }
+    }
+
+    return { removedCount, removed };
+  },
+});
+
+// ========== SHAME BUTTON SYSTEM ==========
+
+const SHAME_REWARD = 100; // VBMS per shame click
+const MAX_SHAMES_PER_PLAYER = 10; // Max shames a player can give total
+
+/**
+ * Get player's remaining shames and shame counts per exploiter
+ */
+export const getShameStatus = query({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    // Get all shame records for this player
+    const shameRecords = await ctx.db
+      .query("shameClicks")
+      .withIndex("by_shamer", (q: any) => q.eq("shamerAddress", normalizedAddress))
+      .collect();
+
+    const totalShamesGiven = shameRecords.length;
+    const remainingShames = Math.max(0, MAX_SHAMES_PER_PLAYER - totalShamesGiven);
+
+    // Get which exploiters they've shamed
+    const shamedExploiters = shameRecords.map(r => r.exploiterAddress);
+
+    return {
+      totalShamesGiven,
+      remainingShames,
+      shamedExploiters,
+      maxShames: MAX_SHAMES_PER_PLAYER,
+      rewardPerShame: SHAME_REWARD,
+    };
+  },
+});
+
+/**
+ * Get total shame counts for all exploiters
+ */
+export const getExploiterShameCounts = query({
+  handler: async (ctx) => {
+    const allShames = await ctx.db.query("shameClicks").collect();
+
+    // Count shames per exploiter
+    const shameCounts: Record<string, number> = {};
+    for (const shame of allShames) {
+      const addr = shame.exploiterAddress;
+      shameCounts[addr] = (shameCounts[addr] || 0) + 1;
+    }
+
+    return shameCounts;
+  },
+});
+
+/**
+ * Shame an exploiter and receive 100 VBMS
+ */
+export const shameExploiter = mutation({
+  args: {
+    playerAddress: v.string(),
+    exploiterAddress: v.string(),
+  },
+  handler: async (ctx, { playerAddress, exploiterAddress }) => {
+    const normalizedPlayer = playerAddress.toLowerCase();
+    const normalizedExploiter = exploiterAddress.toLowerCase();
+
+    // Verify exploiter is in blacklist
+    if (!isBlacklisted(normalizedExploiter)) {
+      throw new Error("This address is not on the shame list");
+    }
+
+    // Check if player exists
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedPlayer))
+      .first();
+
+    if (!profile) {
+      throw new Error("Player profile not found");
+    }
+
+    // Check if player is blacklisted (exploiters can't shame)
+    if (isBlacklisted(normalizedPlayer)) {
+      throw new Error("Exploiters cannot participate in shaming");
+    }
+
+    // Count total shames by this player
+    const playerShames = await ctx.db
+      .query("shameClicks")
+      .withIndex("by_shamer", (q: any) => q.eq("shamerAddress", normalizedPlayer))
+      .collect();
+
+    if (playerShames.length >= MAX_SHAMES_PER_PLAYER) {
+      throw new Error(`You've reached the maximum of ${MAX_SHAMES_PER_PLAYER} shames`);
+    }
+
+    // Check if player already shamed this specific exploiter
+    const existingShame = playerShames.find(s => s.exploiterAddress === normalizedExploiter);
+    if (existingShame) {
+      throw new Error("You've already shamed this exploiter");
+    }
+
+    // Record the shame
+    await ctx.db.insert("shameClicks", {
+      shamerAddress: normalizedPlayer,
+      exploiterAddress: normalizedExploiter,
+      timestamp: Date.now(),
+    });
+
+    // Give reward
+    const currentCoins = profile.coins || 0;
+    const newCoins = currentCoins + SHAME_REWARD;
+
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + SHAME_REWARD,
+    });
+
+    const exploiterInfo = getBlacklistInfo(normalizedExploiter);
+
+    // 📊 LOG TRANSACTION
+    await logTransaction(ctx, {
+      address: normalizedPlayer,
+      type: 'bonus',
+      amount: SHAME_REWARD,
+      source: 'shame',
+      description: `Shamed exploiter @${exploiterInfo?.username || 'unknown'}`,
+      balanceBefore: currentCoins,
+      balanceAfter: newCoins,
+    });
+
+    console.log(`🔔 ${normalizedPlayer} shamed @${exploiterInfo?.username}! +${SHAME_REWARD} VBMS. New balance: ${newCoins}`);
+
+    return {
+      success: true,
+      reward: SHAME_REWARD,
+      newBalance: newCoins,
+      remainingShames: MAX_SHAMES_PER_PLAYER - playerShames.length - 1,
+      exploiterUsername: exploiterInfo?.username,
+    };
   },
 });

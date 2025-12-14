@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import { parseEther } from 'viem';
-import { waitForTxReceipt, getBasePublicClient } from '@/lib/blockchain/tx-utils';
+import { verifyERC20TransferByLogs } from '@/lib/blockchain/tx-utils';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const VBMS_TOKEN = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
@@ -29,11 +29,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Pack prices (same as coins)
+    // Pack prices - must match frontend ShopView.tsx prices!
+    // NORMAL_PRICE = 1000, BOOSTED_PRICE = 5000
     const PACK_PRICES: Record<string, number> = {
-      basic: 100,
-      premium: 500,
-      elite: 1500,
+      basic: 1000,      // Normal pack
+      boosted: 5000,    // Luck boost pack (5x price for better odds)
+      premium: 500,     // Legacy - kept for backwards compatibility
+      elite: 1500,      // Legacy - kept for backwards compatibility
     };
 
     const vbmsAmount = PACK_PRICES[packType] * quantity;
@@ -47,45 +49,23 @@ export async function POST(request: NextRequest) {
     console.log(`💎 Verifying VBMS purchase: ${quantity}x ${packType} for ${vbmsAmount} VBMS from ${address}`);
     console.log(`📝 Transaction hash: ${txHash}`);
 
-    // Wait for tx with robust retry (handles RPC propagation delays)
-    const receipt = await waitForTxReceipt(txHash as `0x${string}`);
-
-    if (receipt.status !== 'success') {
-      throw new Error('Transaction failed');
-    }
-
-    // Get transaction details
-    const publicClient = getBasePublicClient();
-    const tx = await publicClient.getTransaction({ hash: txHash as `0x${string}` });
-
-    // Verify transaction details
-    if (tx.from.toLowerCase() !== address.toLowerCase()) {
-      throw new Error('Transaction sender does not match');
-    }
-
-    if (tx.to?.toLowerCase() !== VBMS_TOKEN.toLowerCase()) {
-      throw new Error('Transaction is not to VBMS token contract');
-    }
-
-    // Decode transaction input to verify it's a transfer to the pool
-    // Transfer function signature: transfer(address,uint256)
-    // We check if the "to" address in the call is the pool
-    const poolAddressInCalldata = tx.input.slice(10, 74); // Extract address from calldata
-    const expectedPool = VBMS_POOL.slice(2).toLowerCase().padStart(64, '0');
-
-    if (poolAddressInCalldata.toLowerCase() !== expectedPool) {
-      throw new Error('Transaction is not a transfer to the pool');
-    }
-
-    // Decode amount from calldata
-    const amountInCalldata = BigInt('0x' + tx.input.slice(74));
+    // Verify ERC20 transfer using Transfer event logs
+    // This method works with Smart Contract Wallets (Coinbase Smart Wallet, etc.)
+    // because it checks the Transfer event `from` field, not tx.from
     const expectedAmount = parseEther(vbmsAmount.toString());
+    const verification = await verifyERC20TransferByLogs(
+      txHash as `0x${string}`,
+      address,          // expected from (token holder)
+      VBMS_POOL,        // expected to (pool)
+      expectedAmount,   // minimum amount
+      VBMS_TOKEN        // token contract
+    );
 
-    if (amountInCalldata < expectedAmount) {
-      throw new Error(`Insufficient transfer amount. Expected ${vbmsAmount} VBMS`);
+    if (!verification.verified) {
+      throw new Error(verification.error || 'Transfer verification failed');
     }
 
-    console.log(`✅ Transaction verified: ${vbmsAmount} VBMS from ${address} to pool`);
+    console.log(`✅ Transaction verified: ${vbmsAmount} VBMS from ${verification.actualFrom} to pool`);
 
     // Mint packs in Convex
     const convex = new ConvexHttpClient(CONVEX_URL);

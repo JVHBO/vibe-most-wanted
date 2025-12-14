@@ -304,9 +304,11 @@ export function GamePopups({
             )}
             <div className="text-center px-2">
               <p className="text-lg md:text-xl font-bold text-yellow-400 animate-pulse">
-                {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
-                  ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
-                  : t('victoryPrize')}
+                {lastBattleResult?.type === 'mecha' && lastBattleResult?.coinsEarned !== undefined
+                  ? `Won ${lastBattleResult.coinsEarned.toLocaleString()} VBMS!`
+                  : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
+                    ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
+                    : t('victoryPrize')}
               </p>
               {/* PvP Inbox Reminder */}
               {lastBattleResult?.type === 'pvp' && lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0 && (
@@ -434,9 +436,11 @@ export function GamePopups({
             <p className="text-lg md:text-xl font-bold text-red-400 animate-pulse px-2 text-center">
               {lastBattleResult?.type === 'pve' || lastBattleResult?.type === 'attack'
                 ? t('noCoinsEarned')
-                : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
-                  ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
-                  : t('defeatPrize')}
+                : lastBattleResult?.type === 'mecha' && lastBattleResult?.coinsEarned !== undefined
+                  ? `Lost ${Math.abs(lastBattleResult.coinsEarned).toLocaleString()} VBMS`
+                  : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
+                    ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
+                    : t('defeatPrize')}
             </p>
             <div className="flex gap-2">
               <a

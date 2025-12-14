@@ -271,7 +271,7 @@ export const getAllAuditLogs = query({
 export async function createAuditLog(
   ctx: any,
   playerAddress: string,
-  type: "earn" | "spend" | "convert" | "claim",
+  type: "earn" | "spend" | "convert" | "claim" | "recover",
   amount: number,
   balanceBefore: number,
   balanceAfter: number,

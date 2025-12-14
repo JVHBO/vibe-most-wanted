@@ -7,13 +7,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useClaimVBMS, useDailyClaimInfo } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
+import { BUILDER_CODE, dataSuffix } from "@/lib/hooks/useWriteContractWithAttribution";
 import Image from "next/image";
-import Link from "next/link";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks";
 import { Z_INDEX } from "@/lib/z-index";
 import CoinsHistoryModal from "./CoinsHistoryModal";
@@ -44,7 +44,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   useEscapeKey(onClose);
 
     // Check if we should use Farcaster SDK for transactions
-  // Uses sdk.context like useFarcasterContext for reliable mobile detection
+  // ONLY enable if we have a valid SDK context with user - this is the ONLY reliable miniapp detection
   useEffect(() => {
     const checkFarcasterSDK = async () => {
       try {
@@ -55,7 +55,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           return;
         }
 
-        // Try to get SDK context with timeout (reliable miniapp detection)
+        // REQUIRE valid SDK context with user - this ONLY works inside Farcaster miniapp
         let sdkContext;
         try {
           const contextPromise = sdk.context;
@@ -65,15 +65,23 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           sdkContext = await Promise.race([contextPromise, timeoutPromise]);
           console.log('[CoinsInboxModal] SDK context received:', sdkContext ? 'valid' : 'null');
         } catch (contextError) {
-          console.log('[CoinsInboxModal] SDK context timeout, trying provider directly');
+          console.log('[CoinsInboxModal] SDK context timeout - NOT in miniapp');
+          setUseFarcasterSDK(false);
+          return;
         }
 
-        // Even if context times out, try to get the provider
-        // This handles cases where context is slow but wallet is available
+        // Must have valid context with user to be in miniapp
+        if (!sdkContext || !(sdkContext as { user?: unknown }).user) {
+          console.log('[CoinsInboxModal] No valid SDK context/user - NOT in miniapp');
+          setUseFarcasterSDK(false);
+          return;
+        }
+
+        // Only now check for provider
         const provider = await sdk.wallet.getEthereumProvider();
         if (provider) {
           setUseFarcasterSDK(true);
-          console.log('[CoinsInboxModal] Using Farcaster SDK for transactions');
+          console.log('[CoinsInboxModal] Valid miniapp context + provider - using Farcaster SDK');
         } else {
           console.log('[CoinsInboxModal] No provider available, using wagmi');
           setUseFarcasterSDK(false);
@@ -89,13 +97,45 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const claimInboxAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
+  const recoverFailedConversion = useMutation(api.vbmsClaim.recoverFailedConversion);
   const { claimVBMS } = useClaimVBMS();
 
   // Get VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)
   const { balance: vbmsWalletBalance } = useFarcasterVBMSBalance(address);
 
+  // Get daily claim limits from contract
+  const { remaining: dailyRemaining, resetTime, isLoading: isLoadingLimits } = useDailyClaimInfo(address as `0x${string}` | undefined);
+  const dailyRemainingNum = parseFloat(dailyRemaining);
+
+  // Calculate time until reset
+  const getResetTimeString = () => {
+    const now = Math.floor(Date.now() / 1000);
+    const diff = resetTime - now;
+    if (diff <= 0) return "Available now";
+    const hours = Math.floor(diff / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    return `${hours}h ${mins}m`;
+  };
+
+  // Helper function to get actual wallet address from Farcaster SDK
+  const getFarcasterWalletAddress = async (): Promise<string> => {
+    const provider = await sdk.wallet.getEthereumProvider();
+    if (!provider) {
+      throw new Error("Farcaster wallet not available");
+    }
+
+    // Get the actual address from the provider
+    const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No accounts found in Farcaster wallet");
+    }
+
+    console.log('[CoinsInboxModal] Farcaster wallet address:', accounts[0]);
+    return accounts[0];
+  };
+
   // Helper function to claim via Farcaster SDK
-  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
+  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string, walletAddress: string) => {
     const provider = await sdk.wallet.getEthereumProvider();
     if (!provider) {
       const error = "Farcaster wallet not available";
@@ -107,7 +147,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     console.log('[CoinsInboxModal] Claiming via Farcaster SDK:', {
       amount,
       nonce,
-      from: address,
+      from: walletAddress, // Use actual wallet address
       to: CONTRACTS.VBMSPoolTroll,
       chainId: CONTRACTS.CHAIN_ID
     });
@@ -119,16 +159,19 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       args: [parseEther(amount), nonce as `0x${string}`, signature as `0x${string}`],
     });
 
-    console.log('[CoinsInboxModal] Encoded data:', data);
+    // Append builder code suffix for Base attribution
+    const dataWithBuilderCode = (data + dataSuffix.slice(2)) as `0x${string}`;
+
+    console.log('[CoinsInboxModal] Encoded data with builder code:', dataWithBuilderCode, 'Builder:', BUILDER_CODE);
 
     try {
-      // Send transaction via Farcaster SDK
+      // Send transaction via Farcaster SDK with builder code
       const txHash = await provider.request({
         method: 'eth_sendTransaction',
         params: [{
-          from: address as `0x${string}`,
+          from: walletAddress as `0x${string}`, // Use actual wallet address
           to: CONTRACTS.VBMSPoolTroll,
-          data: data,
+          data: dataWithBuilderCode,
         }],
       });
 
@@ -145,7 +188,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const inboxAmount = inboxStatus.inbox || 0; // TESTVBMS no inbox
   const testvbmsBalance = inboxStatus.coins || 0; // TESTVBMS no saldo
   const canClaimInbox = inboxAmount >= 1 && !isProcessing;
-  const canConvertTESTVBMS = testvbmsBalance >= 100 && !isProcessing;
+
+  // Check if conversion would exceed daily limit
+  const exceedsDailyLimit = testvbmsBalance > dailyRemainingNum;
+  const canConvertTESTVBMS = testvbmsBalance >= 100 && !isProcessing && !exceedsDailyLimit;
 
   // Claim inbox → adiciona ao saldo TESTVBMS (instant, no gas)
   const handleClaimInbox = async () => {
@@ -185,8 +231,29 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     setIsProcessing(true);
 
     try {
+      // 🔑 CRITICAL: For Farcaster SDK, get the ACTUAL wallet address from provider
+      // This is the address that will be msg.sender in the contract
+      // It may differ from the address prop (which comes from userProfile)
+      let signingAddress = address;
+      if (useFarcasterSDK) {
+        try {
+          signingAddress = await getFarcasterWalletAddress();
+          console.log('[CoinsInboxModal] Using Farcaster wallet address for signature:', signingAddress);
+          console.log('[CoinsInboxModal] Original address from prop:', address);
+          if (signingAddress.toLowerCase() !== address?.toLowerCase()) {
+            console.log('[CoinsInboxModal] ⚠️ Address mismatch! Using provider address for signature.');
+          }
+        } catch (error) {
+          console.error('[CoinsInboxModal] Failed to get Farcaster wallet address:', error);
+          toast.error('Erro ao obter endereço da carteira');
+          setIsProcessing(false);
+          return;
+        }
+      }
+
       console.log('[CoinsInboxModal] Converting TESTVBMS to VBMS...');
-      const result = await convertTESTVBMS({ address });
+      // Use the actual wallet address for signature generation
+      const result = await convertTESTVBMS({ address: signingAddress });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
@@ -195,7 +262,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         ? await claimViaFarcasterSDK(
             result.amount.toString(),
             result.nonce,
-            result.signature
+            result.signature,
+            signingAddress // Pass the correct address
           )
         : await claimVBMS(
             result.amount.toString(),
@@ -210,7 +278,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       await recordTESTVBMSConversion({
-        address,
+        address: signingAddress, // Use the actual signing address
         amount: result.amount,
         txHash: txHash as unknown as string,
       });
@@ -226,6 +294,35 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       console.error('[CoinsInboxModal] Error converting TESTVBMS:', error);
       toast.dismiss("conversion-wait");
       toast.error(error.message || "Erro ao converter TESTVBMS");
+
+      // Show recovery option after 5 minutes
+      toast.info("Se a TX falhou, você pode recuperar seus TESTVBMS em 5 minutos clicando no botão 'Recuperar'", {
+        duration: 10000,
+      });
+
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle recovery of failed conversion
+  const handleRecoverConversion = async () => {
+    if (!address) {
+      toast.error("Conecte sua carteira");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const result = await recoverFailedConversion({ address });
+      toast.success(`✅ Recuperados ${result.recoveredAmount.toLocaleString()} TESTVBMS!`);
+
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (error: any) {
+      console.error('[CoinsInboxModal] Error recovering TESTVBMS:', error);
+      toast.error(error.message || "Erro ao recuperar TESTVBMS");
       setIsProcessing(false);
     }
   };
@@ -294,27 +391,46 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           </div>
         </div>
 
-        <div className="px-6 pb-6 space-y-4">
-                    {/* TESTVBMS Balance (what you can convert) */}
-          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-6 mb-4">
-            <div className="text-center">
-              <div className="text-sm font-bold text-green-300 mb-3 uppercase tracking-wide flex items-center justify-center gap-2">
-                <NextImage src="/images/icons/coins.svg" alt="TESTVBMS" width={20} height={20} className="w-5 h-5" />
-                TESTVBMS BALANCE
+        <div className="px-6 pb-6 space-y-3">
+          {/* TESTVBMS Balance (what you can convert) - Compact */}
+          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-400/40 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <NextImage src="/images/icons/coins.svg" alt="TESTVBMS" width={24} height={24} className="w-6 h-6" />
+                <span className="text-xs font-bold text-green-300 uppercase">TESTVBMS</span>
               </div>
-              <div className="text-6xl font-bold text-green-100 mb-2">
-                {testvbmsBalance.toLocaleString()}
-              </div>
-              <div className="text-xs text-green-300/60 mt-2">
-                Available to convert
+              <div className="text-right">
+                <div className="text-3xl font-bold text-green-100">
+                  {testvbmsBalance.toLocaleString()}
+                </div>
+                <div className="text-xs text-green-300/50">to convert</div>
               </div>
             </div>
           </div>
 
           {/* VBMS Balance (blockchain) - REMOVED, not showing wallet balance anymore */}
 
+          {/* Daily Claim Limits - Compact Display */}
+          <div className="bg-vintage-deep-black/60 border border-vintage-gold/20 rounded-lg p-3 mb-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-vintage-gold/60">Daily Limit Remaining:</span>
+              <span className={`font-bold ${exceedsDailyLimit ? 'text-red-400' : 'text-green-400'}`}>
+                {isLoadingLimits ? '...' : `${Number(dailyRemaining).toLocaleString()} VBMS`}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-1">
+              <span className="text-vintage-gold/40">Resets in:</span>
+              <span className="text-vintage-gold/60">{getResetTimeString()}</span>
+            </div>
+            {exceedsDailyLimit && testvbmsBalance >= 100 && (
+              <div className="mt-2 p-2 bg-red-500/20 border border-red-500/40 rounded text-xs text-red-300 text-center">
+                ⚠️ Your balance ({testvbmsBalance.toLocaleString()}) exceeds daily limit ({Number(dailyRemaining).toLocaleString()})
+              </div>
+            )}
+          </div>
+
           {/* Action Buttons */}
-          <div className="space-y-3">
+          <div className="space-y-2">
           {/* Convert button - ONLY in miniapp (iframe), disabled in browser */}
           {useFarcasterSDK ? (
             // MINIAPP: Show convert button
@@ -322,31 +438,24 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               <button
                 onClick={handleConvertTESTVBMS}
                 disabled={!canConvertTESTVBMS || isProcessing}
-                className={`w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all ${
+                className={`w-full group relative overflow-hidden rounded-lg p-3 font-bold transition-all text-sm ${
                   canConvertTESTVBMS
-                    ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.02]"
+                    ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.01]"
                     : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
                 }`}
               >
-                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform" />
                 <div className="relative flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <NextImage src="/images/icons/convert.svg" alt="Convert" width={20} height={20} className="w-5 h-5" />
+                    <NextImage src="/images/icons/convert.svg" alt="Convert" width={16} height={16} className="w-4 h-4" />
                     <span>Convert {testvbmsBalance.toLocaleString()} → VBMS</span>
                   </span>
-                  <span className="text-xs opacity-80 bg-black/20 px-2 py-1 rounded">Pay Gas</span>
+                  <span className="text-xs opacity-80 bg-black/20 px-2 py-0.5 rounded">Gas</span>
                 </div>
               </button>
             ) : (
-              <div className="text-center py-6">
-                <div className="flex justify-center mb-3 opacity-20">
-                  <NextImage src="/images/icons/coins.svg" alt="Coins" width={48} height={48} className="w-12 h-12" />
-                </div>
-                <p className="text-vintage-gold/60 text-sm">
-                  Minimum 100 TESTVBMS required
-                </p>
-                <p className="text-vintage-gold/40 text-xs mt-1">
-                  Complete battles to earn more!
+              <div className="text-center py-3">
+                <p className="text-vintage-gold/60 text-xs">
+                  Minimum 100 TESTVBMS required to convert
                 </p>
               </div>
             )
@@ -375,14 +484,17 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             </div>
           )}
 
-          {/* DEX Link - Sell VBMS for ETH */}
-          <Link
-            href="/dex"
-            className="w-full group relative overflow-hidden rounded-xl p-4 font-bold transition-all bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] flex items-center justify-center gap-2"
-          >
-            <span className="text-xl">💱</span>
-            <span>DEX</span>
-          </Link>
+          {/* Recovery button for failed conversions - only in miniapp */}
+          {useFarcasterSDK && (
+            <button
+              onClick={handleRecoverConversion}
+              disabled={isProcessing}
+              className="w-full text-xs py-2 px-3 rounded-lg bg-orange-900/30 hover:bg-orange-900/50 border border-orange-500/30 text-orange-300/80 hover:text-orange-200 transition-all disabled:opacity-50"
+            >
+              🔄 Recover Failed TX (after 5 min)
+            </button>
+          )}
+
           </div>
         </div>
           </div>
