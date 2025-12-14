@@ -1450,8 +1450,8 @@ export default function TCGPage() {
                 collection = 'gmvbrs';
               } else if (contractAddr === getCollectionContract('coquettish')?.toLowerCase()) {
                 collection = 'coquettish';
-              } else if (contractAddr === getCollectionContract('vibe rot bangers')?.toLowerCase()) {
-                collection = 'vibe rot bangers';
+              } else if (contractAddr === getCollectionContract('viberotbangers')?.toLowerCase()) {
+                collection = 'viberotbangers';
               } else if (contractAddr === getCollectionContract('cumioh')?.toLowerCase()) {
                 collection = 'cumioh';
               } else if (contractAddr === getCollectionContract('historyofcomputer')?.toLowerCase()) {
