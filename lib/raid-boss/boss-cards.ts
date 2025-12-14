@@ -109,6 +109,11 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'vibefx',           // 68. VIBEFX Common
   'historyofcomputer',           // 69. HISTORYOFCOMPUTER Rare
   'cumioh',           // 70. CUMIOH Epic
+  'viberotbangers',           // 71. VIBEROTBANGERS Legendary
+  'viberotbangers',           // 72. VIBEROTBANGERS Mythic
+  'viberotbangers',           // 73. VIBEROTBANGERS Common
+  'viberotbangers',           // 74. VIBEROTBANGERS Rare
+  'viberotbangers',           // 75. VIBEROTBANGERS Epic
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
