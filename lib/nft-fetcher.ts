@@ -315,6 +315,46 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
       return 'meowverse';
     }
 
+    // Poorly Drawn Pepes collection
+    if (contractAddr === '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8') {
+      return 'poorlydrawnpepes';
+    }
+
+    // Team Pothead collection
+    if (contractAddr === '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea') {
+      return 'teampothead';
+    }
+
+    // Tarot collection
+    if (contractAddr === '0x34d639c63384a00a2d25a58f73bea73856aa0550') {
+      return 'tarot';
+    }
+
+    // Baseball Cabal collection
+    if (contractAddr === '0x3ff41af61d092657189b1d4f7d74d994514724bb') {
+      return 'baseballcabal';
+    }
+
+    // Vibe FX collection
+    if (contractAddr === '0xc7f2d8c035b2505f30a5417c0374ac0299d88553') {
+      return 'vibefx';
+    }
+
+    // History of Computer collection
+    if (contractAddr === '0x319b12e8eba0be2eae1112b357ba75c2c178b567') {
+      return 'historyofcomputer';
+    }
+
+    // $CU-MI-OH! collection
+    if (contractAddr === '0xfeabae8bdb41b2ae507972180df02e70148b38e1') {
+      return 'cumioh';
+    }
+
+    // Vibe Rot Bangers collection
+    if (contractAddr === '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a') {
+      return 'viberotbangers';
+    }
+
     // Default to VBMS collection
     return 'vibe';
   };
