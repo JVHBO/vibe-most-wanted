@@ -13,6 +13,7 @@ import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { api } from "./_generated/api";
 import { normalizeAddress } from "./utils";
+import { logTransaction } from "./coinsInbox";
 
 // Quest pool with 10 different quest types
 const QUEST_POOL = [
@@ -432,6 +433,17 @@ export const claimQuestReward = mutation({
       lastUpdated: Date.now(),
     });
 
+    // 📊 LOG TRANSACTION
+    await logTransaction(ctx, {
+      address: normalizedAddress,
+      type: 'earn',
+      amount: quest.reward,
+      source: 'daily_quest',
+      description: `Completed daily quest: ${quest.type}`,
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+    });
+
     console.log(`💰 Daily quest reward added to balance: ${quest.reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
@@ -719,6 +731,17 @@ export const claimWeeklyReward = mutation({
       coins: newBalance,
       lifetimeEarned: newLifetimeEarned,
       lastUpdated: Date.now(),
+    });
+
+    // 📊 LOG TRANSACTION
+    await logTransaction(ctx, {
+      address: normalizedAddress,
+      type: 'earn',
+      amount: reward,
+      source: 'weekly_quest',
+      description: `Completed weekly quest: ${questDef.name}`,
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
     });
 
     console.log(`💰 Weekly quest reward added to balance: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);

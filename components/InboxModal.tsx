@@ -10,6 +10,7 @@ import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
+import { BUILDER_CODE, dataSuffix } from "@/lib/hooks/useWriteContractWithAttribution";
 import Image from "next/image";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks";
 import { Z_INDEX } from "@/lib/z-index";
@@ -81,16 +82,19 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       args: [parseEther(amount), nonce as `0x${string}`, signature as `0x${string}`],
     });
 
-    console.log('[InboxModal] Encoded data:', data);
+    // Append builder code suffix for Base attribution
+    const dataWithBuilderCode = (data + dataSuffix.slice(2)) as `0x${string}`;
+
+    console.log('[InboxModal] Encoded data with builder code:', dataWithBuilderCode, 'Builder:', BUILDER_CODE);
 
     try {
-      // Send transaction via Farcaster SDK
+      // Send transaction via Farcaster SDK with builder code
       const txHash = await provider.request({
         method: 'eth_sendTransaction',
         params: [{
           from: address as `0x${string}`,
           to: CONTRACTS.VBMSPoolTroll,
-          data: data,
+          data: dataWithBuilderCode,
         }],
       });
 

@@ -94,7 +94,8 @@ export async function waitForTxReceipt(
 }
 
 /**
- * Verify a VBMS token transfer
+ * Verify a VBMS token transfer (legacy - uses tx.from)
+ * @deprecated Use verifyERC20TransferByLogs for Smart Contract Wallet compatibility
  */
 export async function verifyVBMSTransfer(
   txHash: `0x${string}`,
@@ -142,6 +143,96 @@ export async function verifyVBMSTransfer(
     return { verified: true };
 
   } catch (err: any) {
+    return { verified: false, error: err.message };
+  }
+}
+
+// ERC20 Transfer event topic: keccak256("Transfer(address,address,uint256)")
+const TRANSFER_EVENT_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
+/**
+ * Verify an ERC20 token transfer using Transfer event logs
+ *
+ * This method is REQUIRED for Smart Contract Wallets (like Coinbase Smart Wallet)
+ * because tx.from may be a relayer/bundler address, not the user's address.
+ *
+ * The Transfer event's `from` field always shows the actual token holder,
+ * regardless of who submitted the transaction.
+ */
+export async function verifyERC20TransferByLogs(
+  txHash: `0x${string}`,
+  expectedFrom: string,
+  expectedTo: string,
+  expectedAmount: bigint,
+  tokenAddress: string
+): Promise<{ verified: boolean; error?: string; actualFrom?: string; actualTo?: string; actualAmount?: string }> {
+  const client = getBasePublicClient();
+
+  try {
+    // Wait for transaction to be confirmed
+    const receipt = await waitForTxReceipt(txHash);
+
+    if (receipt.status !== 'success') {
+      return { verified: false, error: 'Transaction failed' };
+    }
+
+    // Parse Transfer event logs
+    for (const log of receipt.logs) {
+      // Check if this is from the correct token contract
+      if (log.address.toLowerCase() !== tokenAddress.toLowerCase()) {
+        continue;
+      }
+
+      // Check if this is a Transfer event
+      if (log.topics[0] !== TRANSFER_EVENT_TOPIC) {
+        continue;
+      }
+
+      // Decode Transfer event: Transfer(from, to, amount)
+      // topics[1] = from (padded to 32 bytes)
+      // topics[2] = to (padded to 32 bytes)
+      // data = amount (uint256)
+      const fromTopic = log.topics[1];
+      const toTopic = log.topics[2];
+
+      if (!fromTopic || !toTopic) continue;
+
+      // Extract addresses from topics (remove 0x and padding, take last 40 chars)
+      const actualFrom = ('0x' + fromTopic.slice(26)).toLowerCase();
+      const actualTo = ('0x' + toTopic.slice(26)).toLowerCase();
+      const actualAmount = BigInt(log.data);
+
+      // Check if this Transfer matches our expected values
+      if (actualFrom !== expectedFrom.toLowerCase()) {
+        continue; // Keep looking for matching log
+      }
+
+      if (actualTo !== expectedTo.toLowerCase()) {
+        continue;
+      }
+
+      if (actualAmount < expectedAmount) {
+        continue;
+      }
+
+      // Found matching transfer!
+      console.log(`✅ ERC20 Transfer verified via logs: ${actualFrom} → ${actualTo}, amount: ${actualAmount}`);
+      return {
+        verified: true,
+        actualFrom,
+        actualTo,
+        actualAmount: actualAmount.toString(),
+      };
+    }
+
+    // No matching Transfer event found
+    return {
+      verified: false,
+      error: `No matching Transfer event found in logs (expected: ${expectedFrom} → ${expectedTo}, amount >= ${expectedAmount})`,
+    };
+
+  } catch (err: any) {
+    console.error('❌ ERC20 Transfer verification error:', err);
     return { verified: false, error: err.message };
   }
 }

@@ -26,9 +26,9 @@ const PACK_TYPES = {
   },
   basic: {
     name: "Basic Pack",
-    description: "Quick pack with 3 cards",
-    cards: 3,
-    price: 1000, // 1k coins - muito acessível
+    description: "1 card per pack",
+    cards: 1,
+    price: 1000, // 1k coins = 1 card
     rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 }, // NERFED
   },
   premium: {
@@ -44,6 +44,13 @@ const PACK_TYPES = {
     cards: 5,
     price: 100000, // 100k coins - EQUIVALENTE A 1 PACK NFT REAL!
     rarityOdds: { Common: 30, Rare: 55, Epic: 12, Legendary: 3 }, // NERFED (was 0/70/25/5)
+  },
+  boosted: {
+    name: "Luck Boost Pack",
+    description: "1 card with elite odds",
+    cards: 1,
+    price: 5000, // 5x basic price for elite odds on 1 card
+    rarityOdds: { Common: 30, Rare: 55, Epic: 12, Legendary: 3 }, // Same as elite
   },
   mission: {
     name: "Mission Reward",
@@ -220,14 +227,13 @@ export const getPlayerPacks = query({
 
 /**
  * Get shop packs available for purchase
+ * SIMPLIFIED: Only basic pack available now
  */
 export const getShopPacks = query({
   args: {},
   handler: async () => {
     return [
       { type: "basic", ...PACK_TYPES.basic },
-      { type: "premium", ...PACK_TYPES.premium },
-      { type: "elite", ...PACK_TYPES.elite },
     ];
   },
 });
@@ -418,15 +424,18 @@ export const buyPack = mutation({
 export const buyPackWithVBMS = mutation({
   args: {
     address: v.string(),
-    packType: v.union(v.literal("basic"), v.literal("premium"), v.literal("elite")),
+    packType: v.union(v.literal("basic"), v.literal("premium"), v.literal("elite"), v.literal("boosted")),
     quantity: v.number(),
     txHash: v.string(), // Transaction hash for verification
   },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
+    // Use pack type directly - "boosted" now has its own definition with 1 card + elite odds
+    const actualPackType = args.packType;
+
     // Get pack info
-    const packInfo = PACK_TYPES[args.packType];
+    const packInfo = PACK_TYPES[actualPackType];
     if (!packInfo || packInfo.price === 0) {
       throw new Error("This pack type cannot be purchased");
     }
@@ -441,11 +450,11 @@ export const buyPackWithVBMS = mutation({
       throw new Error("Profile not found");
     }
 
-    // Give packs to player
+    // Give packs to player (stored as actualPackType for correct odds)
     const existingPack = await ctx.db
       .query("cardPacks")
       .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), args.packType))
+      .filter((q) => q.eq(q.field("packType"), actualPackType))
       .first();
 
     if (existingPack) {
@@ -457,13 +466,13 @@ export const buyPackWithVBMS = mutation({
       // Create new pack entry
       await ctx.db.insert("cardPacks", {
         address,
-        packType: args.packType,
+        packType: actualPackType,
         unopened: args.quantity,
         earnedAt: Date.now(),
       });
     }
 
-    console.log(`💎 VBMS Purchase: ${address} bought ${args.quantity}x ${args.packType} packs (tx: ${args.txHash.slice(0, 10)}...)`);
+    console.log(`💎 VBMS Purchase: ${address} bought ${args.quantity}x ${args.packType} (stored as ${actualPackType}) packs (tx: ${args.txHash.slice(0, 10)}...)`);
 
     return {
       success: true,
@@ -820,6 +829,280 @@ export const resetUserFreeCards = mutation({
       address,
       cardsDeleted: deletedCount,
       packGiven: true,
+    };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BURN SYSTEM - Convert cards back to TESTVBMS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Burn values based on rarity (percentage/multiplier of basic pack price 1000 VBMS)
+ * Common: 20% = 200 VBMS
+ * Rare: 110% = 1100 VBMS
+ * Epic: 4x = 4000 VBMS
+ * Legendary: 40x = 40000 VBMS
+ */
+const BURN_VALUES: Record<string, number> = {
+  Common: 200,      // 20% of pack price
+  Rare: 1100,       // 110% of pack price
+  Epic: 4000,       // 4x pack price
+  Legendary: 40000, // 40x pack price
+};
+
+// Foil burn multipliers - foil cards are worth more when burned!
+const BURN_FOIL_MULTIPLIER: Record<string, number> = {
+  Prize: 10.0,    // 10x burn value for Prize foil
+  Standard: 2.0,  // 2x burn value for Standard foil
+  None: 1.0,      // Normal burn value
+};
+
+// Helper function to calculate burn value with foil bonus
+function calculateBurnValue(rarity: string, foil?: string): number {
+  const baseValue = BURN_VALUES[rarity] || 200;
+  const foilMult = foil && foil !== "None" ? (BURN_FOIL_MULTIPLIER[foil] || 1.0) : 1.0;
+  return Math.round(baseValue * foilMult);
+}
+
+/**
+ * BURN card to get TESTVBMS back
+ * Destroys the card and adds VBMS to player's coin balance
+ */
+export const burnCard = mutation({
+  args: {
+    address: v.string(),
+    cardId: v.id("cardInventory"),
+  },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    // Get the card
+    const card = await ctx.db.get(args.cardId);
+    if (!card) {
+      throw new Error("Card not found");
+    }
+
+    // Verify ownership
+    if (card.address !== address) {
+      throw new Error("Not your card");
+    }
+
+    // Get burn value based on rarity and foil
+    const burnValue = calculateBurnValue(card.rarity, card.foil);
+
+    // Get player profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // If card has quantity > 1, decrement instead of delete
+    if (card.quantity > 1) {
+      await ctx.db.patch(args.cardId, {
+        quantity: card.quantity - 1,
+      });
+    } else {
+      // Delete the card completely
+      await ctx.db.delete(args.cardId);
+    }
+
+    // Add VBMS to player's coins
+    const currentCoins = profile.coins || 0;
+    await ctx.db.patch(profile._id, {
+      coins: currentCoins + burnValue,
+    });
+
+    console.log(`🔥 BURN: ${address} burned ${card.rarity} card for ${burnValue} VBMS`);
+
+    return {
+      success: true,
+      burnedRarity: card.rarity,
+      vbmsReceived: burnValue,
+      newBalance: currentCoins + burnValue,
+    };
+  },
+});
+
+/**
+ * Burn multiple cards at once
+ */
+export const burnMultipleCards = mutation({
+  args: {
+    address: v.string(),
+    cardIds: v.array(v.id("cardInventory")),
+  },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    if (args.cardIds.length === 0) {
+      throw new Error("No cards selected");
+    }
+
+    if (args.cardIds.length > 50) {
+      throw new Error("Maximum 50 cards per burn");
+    }
+
+    // Get player profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    let totalVBMS = 0;
+    const burnedCards: { rarity: string; count: number; vbms: number }[] = [];
+    const rarityCount: Record<string, number> = {};
+
+    // Process each card
+    for (const cardId of args.cardIds) {
+      const card = await ctx.db.get(cardId);
+      if (!card) continue;
+
+      // Verify ownership
+      if (card.address !== address) continue;
+
+      const burnValue = calculateBurnValue(card.rarity, card.foil);
+      totalVBMS += burnValue;
+
+      // Track by rarity (with foil info for logging)
+      const trackKey = card.foil && card.foil !== "None" ? `${card.rarity}_${card.foil}` : card.rarity;
+      rarityCount[trackKey] = (rarityCount[trackKey] || 0) + 1;
+
+      // If card has quantity > 1, decrement instead of delete
+      if (card.quantity > 1) {
+        await ctx.db.patch(cardId, {
+          quantity: card.quantity - 1,
+        });
+      } else {
+        await ctx.db.delete(cardId);
+      }
+    }
+
+    // Build summary (trackKey can be "Rarity" or "Rarity_Foil")
+    for (const [trackKey, count] of Object.entries(rarityCount)) {
+      const [rarity, foil] = trackKey.includes("_") ? trackKey.split("_") : [trackKey, undefined];
+      const unitValue = calculateBurnValue(rarity, foil);
+      burnedCards.push({
+        rarity: trackKey, // Show full key including foil
+        count,
+        vbms: unitValue * count,
+      });
+    }
+
+    // Add VBMS to player's coins
+    const currentCoins = profile.coins || 0;
+    await ctx.db.patch(profile._id, {
+      coins: currentCoins + totalVBMS,
+    });
+
+    console.log(`🔥 MASS BURN: ${address} burned ${args.cardIds.length} cards for ${totalVBMS} VBMS`);
+
+    return {
+      success: true,
+      cardsBurned: args.cardIds.length,
+      totalVBMS,
+      burnedCards,
+      newBalance: currentCoins + totalVBMS,
+    };
+  },
+});
+
+/**
+ * Get burn values for UI display
+ */
+export const getBurnValues = query({
+  args: {},
+  handler: async () => {
+    return BURN_VALUES;
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LUCK BOOST - Elite odds for higher price
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * BUY pack with LUCK BOOST (pays more for elite odds)
+ * Normal pack: 1000 VBMS, odds 93/6/0.8/0.2
+ * Boosted pack: 5000 VBMS, odds 30/55/12/3 (elite odds!)
+ */
+export const buyPackWithLuckBoost = mutation({
+  args: {
+    address: v.string(),
+    quantity: v.number(),
+    boosted: v.boolean(), // true = elite odds for 5x price
+  },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    // Prices and odds
+    const normalPrice = 1000;
+    const boostedPrice = 5000; // 5x price for elite odds
+
+    const price = args.boosted ? boostedPrice : normalPrice;
+    const totalCost = price * args.quantity;
+
+    // Get player profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Check coins
+    const coins = profile.coins || 0;
+    if (coins < totalCost) {
+      throw new Error(`Not enough coins. Need ${totalCost}, have ${coins}`);
+    }
+
+    // Deduct coins
+    await ctx.db.patch(profile._id, {
+      coins: coins - totalCost,
+      lifetimeSpent: (profile.lifetimeSpent || 0) + totalCost,
+    });
+
+    // Create packs with special type for boosted
+    const packType = args.boosted ? "elite" : "basic";
+
+    const existingPack = await ctx.db
+      .query("cardPacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .filter((q) => q.eq(q.field("packType"), packType))
+      .first();
+
+    if (existingPack) {
+      await ctx.db.patch(existingPack._id, {
+        unopened: existingPack.unopened + args.quantity,
+      });
+    } else {
+      await ctx.db.insert("cardPacks", {
+        address,
+        packType,
+        unopened: args.quantity,
+        earnedAt: Date.now(),
+      });
+    }
+
+    console.log(`💰 Pack Purchase: ${address} bought ${args.quantity}x ${packType} pack(s) for ${totalCost} VBMS`);
+
+    return {
+      success: true,
+      packsReceived: args.quantity,
+      packType,
+      coinsSpent: totalCost,
+      remainingCoins: coins - totalCost,
+      boosted: args.boosted,
     };
   },
 });

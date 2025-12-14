@@ -355,6 +355,7 @@ export default function DexPage() {
     error: buyError,
     isLoading: buyLoading,
     reset: resetBuy,
+    txHash: buyTxHash,
   } = useBuyVBMS();
 
   // Sell hook
@@ -364,6 +365,7 @@ export default function DexPage() {
     error: sellError,
     isLoading: sellLoading,
     reset: resetSell,
+    txHash: sellTxHash,
   } = useSellVBMS();
 
   // Sell quote
@@ -421,6 +423,7 @@ export default function DexPage() {
   const currentStep = mode === "buy" ? buyStep : sellStep;
   const currentError = mode === "buy" ? buyError : sellError;
   const isLoading = mode === "buy" ? buyLoading : sellLoading;
+  const currentTxHash = mode === "buy" ? buyTxHash : sellTxHash;
 
   // Estimated VBMS for packs (100k per pack)
   const estimatedVBMS = packCount * 100000;
@@ -680,8 +683,18 @@ export default function DexPage() {
             )}
 
             {currentStep === "complete" && (
-              <div className="bg-green-500/20 rounded-lg p-3 text-center">
+              <div className="bg-green-500/20 rounded-lg p-3 text-center space-y-2">
                 <span className="text-green-400">{t.swapSuccess}</span>
+                {currentTxHash && (
+                  <a
+                    href={`https://basescan.org/tx/${currentTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-blue-400 hover:text-blue-300 underline"
+                  >
+                    View on Basescan →
+                  </a>
+                )}
               </div>
             )}
 

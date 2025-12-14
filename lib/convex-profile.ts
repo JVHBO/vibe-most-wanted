@@ -29,10 +29,14 @@ export interface UserProfile {
     totalCards: number;
     openedCards: number;
     unopenedCards: number;
+    // Aura system (unified ranking)
+    aura?: number;
+    // Collection-specific power
     vibePower?: number;
     vbrsPower?: number;
     vibefidPower?: number;
     afclPower?: number;
+    coqPower?: number;
     pveWins: number;
     pveLosses: number;
     pvpWins: number;

@@ -7,7 +7,37 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation, MutationCtx } from "./_generated/server";
+
+/**
+ * Internal helper to log coin transactions - can be called from any mutation
+ * Use this to track ALL coin movements in the system
+ */
+export async function logTransaction(
+  ctx: MutationCtx,
+  args: {
+    address: string;
+    type: 'earn' | 'claim' | 'convert' | 'spend' | 'bonus' | 'refund';
+    amount: number;
+    source: string;
+    description: string;
+    balanceBefore: number;
+    balanceAfter: number;
+    txHash?: string;
+  }
+) {
+  await ctx.db.insert("coinTransactions", {
+    address: args.address.toLowerCase(),
+    type: args.type,
+    amount: args.amount,
+    source: args.source,
+    description: args.description,
+    balanceBefore: args.balanceBefore,
+    balanceAfter: args.balanceAfter,
+    timestamp: Date.now(),
+    txHash: args.txHash,
+  });
+}
 
 /**
  * Send battle rewards to inbox instead of claiming immediately
@@ -176,5 +206,39 @@ export const getTransactionHistory = query({
       .take(limit);
 
     return transactions;
+  },
+});
+
+/**
+ * Internal helper to log any coin transaction
+ * Can be imported and used by other modules
+ */
+export const logCoinTransaction = mutation({
+  args: {
+    address: v.string(),
+    type: v.string(), // 'earn' | 'claim' | 'convert' | 'spend' | 'bonus' | 'refund'
+    amount: v.number(),
+    source: v.string(), // 'pve', 'pvp', 'attack', 'boss', 'mission', 'quest', 'shame', 'leaderboard', 'convert', etc
+    description: v.string(),
+    balanceBefore: v.number(),
+    balanceAfter: v.number(),
+    txHash: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const normalizedAddress = args.address.toLowerCase();
+
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedAddress,
+      type: args.type,
+      amount: args.amount,
+      source: args.source,
+      description: args.description,
+      balanceBefore: args.balanceBefore,
+      balanceAfter: args.balanceAfter,
+      timestamp: Date.now(),
+      txHash: args.txHash,
+    });
+
+    return { success: true };
   },
 });

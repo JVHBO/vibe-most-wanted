@@ -1182,7 +1182,8 @@ export default defineSchema({
       v.literal("earn"),      // Coins added (rewards, missions, bonuses)
       v.literal("spend"),     // Coins spent (entry fees, purchases)
       v.literal("convert"),   // TESTVBMS → VBMS conversion initiated
-      v.literal("claim")      // VBMS claimed on blockchain
+      v.literal("claim"),     // VBMS claimed on blockchain
+      v.literal("recover")    // Failed conversion recovered
     ),
 
     amount: v.number(),       // Amount of coins (positive for earn, negative for spend)
@@ -1210,4 +1211,15 @@ export default defineSchema({
     .index("by_player_type", ["playerAddress", "type"])
     .index("by_timestamp", ["timestamp"])
     .index("by_source", ["source", "timestamp"]),
+
+  // Shame clicks for the exploiter shame list
+  // Players can shame exploiters and earn 10 VBMS per shame (max 10 total)
+  shameClicks: defineTable({
+    shamerAddress: v.string(),     // Address of player doing the shaming
+    exploiterAddress: v.string(),  // Address of exploiter being shamed
+    timestamp: v.number(),
+  })
+    .index("by_shamer", ["shamerAddress"])
+    .index("by_exploiter", ["exploiterAddress"])
+    .index("by_timestamp", ["timestamp"]),
 });

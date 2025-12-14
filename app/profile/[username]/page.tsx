@@ -1175,6 +1175,7 @@ export default function ProfilePage() {
               >
                 <option value="all" className="bg-vintage-black text-vintage-gold">All</option>
                 <option value="vibe" className="bg-vintage-black text-vintage-gold">VBMS</option>
+                <option value="vibe rot bangers" className="bg-vintage-black text-vintage-gold">BANGER</option>
                 <option value="cumioh" className="bg-vintage-black text-vintage-gold">CUMIO</option>
                 <option value="historyofcomputer" className="bg-vintage-black text-vintage-gold">HSTR</option>
                 <option value="vibefx" className="bg-vintage-black text-vintage-gold">VBFX</option>

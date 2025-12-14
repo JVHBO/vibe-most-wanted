@@ -14,6 +14,7 @@ import { mutation, query, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
 import { createAuditLog } from "./coinAudit";
+import { logTransaction } from "./coinsInbox";
 
 // Constants
 const DAILY_CAP = 1500; // Max $TESTVBMS per day per player (reduced from 3500)
@@ -251,30 +252,61 @@ export const resetDailyLimits = mutation({
 });
 
 /**
- * Get opponent's leaderboard ranking (OPTIMIZED V2)
- * Returns ranking position (1 = first place) or 999 if not ranked
+ * 🚀 BANDWIDTH OPTIMIZATION V3: Calculate multiplier based on AURA DIFFERENCE
+ * This completely removes the need for expensive rank calculations!
  *
- * OPTIMIZATION V2: Use aura-based ranking with efficient counting
- * - Gets opponent's aura from their profile (1 read)
- * - Uses take() with limit to avoid reading all docs
- * - Falls back to approximate ranking for very low ranks
+ * Instead of: fetch 200 profiles x 3 = 600 reads per call
+ * Now: 0 extra reads (just use aura values we already have)
+ *
+ * Aura difference thresholds (approximates rank difference):
+ * - 500+ aura higher = very strong opponent (2x bonus)
+ * - 200-499 aura higher = strong opponent (1.5x bonus)
+ * - 100-199 aura higher = moderate opponent (1.3x bonus)
+ * - 50-99 aura higher = slightly stronger (1.15x bonus)
+ * - Less than 50 = similar level (no bonus)
  */
+function calculateAuraMultiplier(playerAura: number, opponentAura: number, isWin: boolean): number {
+  // Calculate aura difference (positive = opponent has higher aura)
+  const auraDiff = opponentAura - playerAura;
+
+  if (isWin) {
+    // Win bonuses - ONLY if opponent has higher aura
+    if (auraDiff <= 0) {
+      return RANKING_BONUS_BY_DIFF.default; // 1.0x - no bonus for beating weaker opponents
+    }
+
+    // Opponent has higher aura - calculate bonus
+    if (auraDiff >= 500) return RANKING_BONUS_BY_DIFF.diff50Plus;   // 2.0x
+    if (auraDiff >= 200) return RANKING_BONUS_BY_DIFF.diff20to49;   // 1.5x
+    if (auraDiff >= 100) return RANKING_BONUS_BY_DIFF.diff10to19;   // 1.3x
+    if (auraDiff >= 50) return RANKING_BONUS_BY_DIFF.diff5to9;      // 1.15x
+    return RANKING_BONUS_BY_DIFF.default; // < 50 aura diff = 1.0x
+  } else {
+    // Loss penalty reduction - ONLY if opponent has higher aura
+    if (auraDiff <= 0) {
+      return PENALTY_REDUCTION_BY_DIFF.default; // Full penalty for losing to weaker
+    }
+
+    // Opponent has higher aura - reduce penalty
+    if (auraDiff >= 500) return PENALTY_REDUCTION_BY_DIFF.diff50Plus;   // 40% penalty
+    if (auraDiff >= 200) return PENALTY_REDUCTION_BY_DIFF.diff20to49;   // 50% penalty
+    if (auraDiff >= 100) return PENALTY_REDUCTION_BY_DIFF.diff10to19;   // 65% penalty
+    if (auraDiff >= 50) return PENALTY_REDUCTION_BY_DIFF.diff5to9;      // 80% penalty
+    return PENALTY_REDUCTION_BY_DIFF.default; // < 50 aura diff = 100% penalty
+  }
+}
+
+// Legacy function kept for awardPvPCoins (used in actual battles, less frequent)
 async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<number> {
-  // Step 1: Get opponent's profile to know their aura
   const opponent = await ctx.db
     .query("profiles")
     .withIndex("by_address", (q: any) => q.eq("address", opponentAddress.toLowerCase()))
     .first();
 
-  if (!opponent) {
-    return 999; // Not found = unranked
-  }
+  if (!opponent) return 999;
 
   const opponentAura = opponent.stats?.aura ?? 500;
-
-  // Step 2: Count profiles with higher aura (limited to top 200 for efficiency)
-  // For ranking bonuses, we only care about approximate position
-  const MAX_RANK_CHECK = 200;
+  const MAX_RANK_CHECK = 100; // Reduced from 200
 
   const higherAuraProfiles = await ctx.db
     .query("profiles")
@@ -283,53 +315,28 @@ async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<nu
     .filter((q: any) => q.gt(q.field("stats.aura"), opponentAura))
     .take(MAX_RANK_CHECK);
 
-  // If we found MAX_RANK_CHECK profiles with higher aura, return MAX_RANK_CHECK+1 as approximate
-  // This is good enough for ranking bonus calculations
-  if (higherAuraProfiles.length >= MAX_RANK_CHECK) {
-    return MAX_RANK_CHECK + 1;
-  }
-
-  // Ranking = number of players with higher aura + 1
+  if (higherAuraProfiles.length >= MAX_RANK_CHECK) return MAX_RANK_CHECK + 1;
   return higherAuraProfiles.length + 1;
 }
 
-/**
- * Calculate reward multiplier based on RANK DIFFERENCE
- * @param playerRank - Your ranking position (1 = first place)
- * @param opponentRank - Opponent's ranking position
- * @param isWin - true if player won, false if lost
- * @returns multiplier for coins (e.g., 1.5x, 2.0x)
- */
+// Legacy function for backwards compatibility
 function calculateRankingMultiplier(playerRank: number, opponentRank: number, isWin: boolean): number {
-  // Calculate rank difference (positive = opponent is higher ranked, negative = opponent is lower ranked)
-  const rankDiff = playerRank - opponentRank; // If you're rank 50 and opponent is rank 3, diff = 47 (good!)
+  const rankDiff = playerRank - opponentRank;
 
   if (isWin) {
-    // Win bonuses - ONLY if opponent is higher ranked (opponentRank < playerRank)
-    if (rankDiff <= 0) {
-      // Attacking lower-ranked or equal players = no bonus
-      return RANKING_BONUS_BY_DIFF.default;
-    }
-
-    // Opponent is higher ranked - calculate bonus based on how much higher
-    if (rankDiff >= 50) return RANKING_BONUS_BY_DIFF.diff50Plus;   // 2.0x
-    if (rankDiff >= 20) return RANKING_BONUS_BY_DIFF.diff20to49;   // 1.5x
-    if (rankDiff >= 10) return RANKING_BONUS_BY_DIFF.diff10to19;   // 1.3x
-    if (rankDiff >= 5) return RANKING_BONUS_BY_DIFF.diff5to9;      // 1.15x
-    return RANKING_BONUS_BY_DIFF.default; // < 5 ranks = 1.0x
+    if (rankDiff <= 0) return RANKING_BONUS_BY_DIFF.default;
+    if (rankDiff >= 50) return RANKING_BONUS_BY_DIFF.diff50Plus;
+    if (rankDiff >= 20) return RANKING_BONUS_BY_DIFF.diff20to49;
+    if (rankDiff >= 10) return RANKING_BONUS_BY_DIFF.diff10to19;
+    if (rankDiff >= 5) return RANKING_BONUS_BY_DIFF.diff5to9;
+    return RANKING_BONUS_BY_DIFF.default;
   } else {
-    // Loss penalty reduction - ONLY if opponent is higher ranked
-    if (rankDiff <= 0) {
-      // Losing to lower-ranked or equal players = full penalty (no mercy!)
-      return PENALTY_REDUCTION_BY_DIFF.default;
-    }
-
-    // Opponent is higher ranked - reduce penalty based on how much higher
-    if (rankDiff >= 50) return PENALTY_REDUCTION_BY_DIFF.diff50Plus;   // 40% penalty (60% reduced)
-    if (rankDiff >= 20) return PENALTY_REDUCTION_BY_DIFF.diff20to49;   // 50% penalty
-    if (rankDiff >= 10) return PENALTY_REDUCTION_BY_DIFF.diff10to19;   // 65% penalty
-    if (rankDiff >= 5) return PENALTY_REDUCTION_BY_DIFF.diff5to9;      // 80% penalty
-    return PENALTY_REDUCTION_BY_DIFF.default; // < 5 ranks = 100% penalty
+    if (rankDiff <= 0) return PENALTY_REDUCTION_BY_DIFF.default;
+    if (rankDiff >= 50) return PENALTY_REDUCTION_BY_DIFF.diff50Plus;
+    if (rankDiff >= 20) return PENALTY_REDUCTION_BY_DIFF.diff20to49;
+    if (rankDiff >= 10) return PENALTY_REDUCTION_BY_DIFF.diff10to19;
+    if (rankDiff >= 5) return PENALTY_REDUCTION_BY_DIFF.diff5to9;
+    return PENALTY_REDUCTION_BY_DIFF.default;
   }
 }
 
@@ -371,7 +378,12 @@ async function checkAndResetDailyLimits(ctx: any, profile: any) {
 
 /**
  * Preview PvP rewards/penalties before battle
- * Shows how much player will gain (win) or lose (loss) based on opponent's ranking
+ * Shows how much player will gain (win) or lose (loss) based on opponent's aura
+ *
+ * 🚀 BANDWIDTH OPTIMIZATION V3:
+ * - BEFORE: 3x getOpponentRanking = 600+ profile reads per call
+ * - AFTER: 2 profile reads (player + opponent) + aura calculation
+ * - SAVINGS: ~99% bandwidth reduction!
  */
 export const previewPvPRewards = query({
   args: {
@@ -379,6 +391,7 @@ export const previewPvPRewards = query({
     opponentAddress: v.string(),
   },
   handler: async (ctx, { playerAddress, opponentAddress }) => {
+    // 🚀 OPTIMIZED: Fetch both profiles in parallel-ish (2 reads total)
     const player = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", playerAddress.toLowerCase()))
@@ -388,13 +401,22 @@ export const previewPvPRewards = query({
       throw new Error("Player profile not found");
     }
 
-    // Get both player and opponent rankings
-    const playerRank = await getOpponentRanking(ctx, playerAddress);
-    const opponentRank = await getOpponentRanking(ctx, opponentAddress);
+    const opponent = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", opponentAddress.toLowerCase()))
+      .first();
 
-    // Calculate multipliers based on rank difference
-    const winMultiplier = calculateRankingMultiplier(playerRank, opponentRank, true);
-    const lossMultiplier = calculateRankingMultiplier(playerRank, opponentRank, false);
+    if (!opponent) {
+      throw new Error("Opponent profile not found");
+    }
+
+    // 🚀 OPTIMIZED: Use aura directly instead of expensive rank calculations
+    const playerAura = player.stats?.aura ?? 500;
+    const opponentAura = opponent.stats?.aura ?? 500;
+
+    // Calculate multipliers based on AURA difference (no extra DB reads!)
+    const winMultiplier = calculateAuraMultiplier(playerAura, opponentAura, true);
+    const lossMultiplier = calculateAuraMultiplier(playerAura, opponentAura, false);
 
     // Calculate potential rewards/penalties
     const baseWinReward = PVP_WIN_REWARD;
@@ -462,7 +484,10 @@ export const previewPvPRewards = query({
     const totalWinReward = rewardWithRevenge + streakBonus + firstPvpBonus;
 
     return {
-      opponentRank,
+      // 🚀 OPTIMIZED: Return aura values instead of expensive rank calculations
+      opponentAura,
+      playerAura,
+      auraDiff: opponentAura - playerAura, // Positive = opponent stronger
       currentStreak,
       isRevenge, // Flag if this is a revenge match
 
@@ -488,7 +513,6 @@ export const previewPvPRewards = query({
 
       // Current player state
       playerCoins: player.coins || 0,
-      playerRank: await getOpponentRanking(ctx, playerAddress),
     };
   },
 });
@@ -658,6 +682,17 @@ export const awardPvECoins = mutation({
           pveWins: dailyLimits.pveWins + 1,
         },
         // lastPvEAward already updated immediately after rate limit check (line 491)
+      });
+
+      // 📊 LOG TRANSACTION
+      await logTransaction(ctx, {
+        address,
+        type: 'earn',
+        amount: totalReward,
+        source: 'pve',
+        description: `Won PvE battle (${difficulty})`,
+        balanceBefore: currentBalance,
+        balanceAfter: currentBalance + totalReward,
       });
 
       console.log(`💰 PvE reward: ${totalReward} TESTVBMS + ${auraReward} aura for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Aura: ${currentAura} → ${currentAura + auraReward}`);
@@ -865,6 +900,17 @@ export const awardPvPCoins = mutation({
           pvpMatches: dailyLimits.pvpMatches + 1,
         },
         // lastPvPAward already updated immediately after rate limit check (line 652)
+      });
+
+      // 📊 LOG TRANSACTION
+      await logTransaction(ctx, {
+        address,
+        type: 'earn',
+        amount: totalReward,
+        source: 'pvp',
+        description: `Won PvP battle`,
+        balanceBefore: currentBalance,
+        balanceAfter: currentBalance + totalReward,
       });
 
       console.log(`💰 PvP reward: ${totalReward} TESTVBMS + ${auraReward} aura for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Aura: ${currentAura} → ${currentAura + auraReward}`);

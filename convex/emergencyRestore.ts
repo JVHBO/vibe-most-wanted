@@ -1,12 +1,16 @@
 /**
  * EMERGENCY: Restore TESTVBMS balance
  * This is a one-time fix for the bug where convertTESTVBMSInternal zeros balance before signature succeeds
+ *
+ * 🔒 SECURITY: Changed from public mutation to internalMutation
+ * This function can only be called from Convex dashboard or other internal functions
+ * Cannot be called from client code - prevents unauthorized balance manipulation
  */
 
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-export const restoreTESTVBMS = mutation({
+export const restoreTESTVBMS = internalMutation({
   args: {
     address: v.string(),
     amount: v.number(),

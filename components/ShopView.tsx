@@ -396,7 +396,7 @@ export function ShopView({ address }: ShopViewProps) {
 
             {/* Buy Button */}
             <button
-              onClick={() => handleBuyWithVBMS('basic', currentPrice)}
+              onClick={() => handleBuyWithVBMS(luckBoost ? 'boosted' : 'basic', currentPrice)}
               disabled={loading || parseFloat(vbmsBalance) < currentPrice * quantity}
               className={`w-full ${luckBoost ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'} disabled:bg-vintage-charcoal/50 text-white disabled:text-vintage-ice/30 font-display font-bold py-3 px-6 rounded-xl transition-all disabled:cursor-not-allowed disabled:shadow-none`}
             >

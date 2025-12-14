@@ -196,6 +196,7 @@ export function PokerBattleTable({
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [floatingMessages, setFloatingMessages] = useState<Array<{id: number, sender: string, message: string, isOwnMessage: boolean}>>([]);
   const [floatingEmojis, setFloatingEmojis] = useState<Array<{id: number, emoji: string, x: number, y: number}>>([]);
+  const currentMemeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Meme sound sync function
   const playMemeSound = async (soundUrl: string, soundName: string, emoji: string) => {
@@ -231,8 +232,16 @@ export function PokerBattleTable({
     // If it's a sound message, play it for EVERYONE (both sender and receiver)
     if (lastMessage.type === 'sound' && lastMessage.soundUrl) {
       console.log('[PokerBattle] Playing synced meme sound:', lastMessage.message, lastMessage.soundUrl);
+
+      // Stop any currently playing meme sound (prevents overlapping)
+      if (currentMemeAudioRef.current) {
+        currentMemeAudioRef.current.pause();
+        currentMemeAudioRef.current.currentTime = 0;
+      }
+
       const audio = new Audio(lastMessage.soundUrl);
       audio.volume = 0.7;
+      currentMemeAudioRef.current = audio; // Store reference
       audio.play().catch((err) => {
         console.error('[PokerBattle] Failed to play audio:', err);
       });
@@ -2570,11 +2579,11 @@ export function PokerBattleTable({
                     <div className="text-green-300 text-[7px] leading-tight">FART</div>
                   </button>
                   <button
-                    onClick={() => playMemeSound('/sounds/corteze.MP3', 'CORTEZE 🎤', '🎤')}
-                    className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 hover:from-blue-500/40 hover:to-blue-600/40 border border-blue-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                    onClick={() => playMemeSound('/sounds/corteze.MP3', 'CORTEZE 🏳️‍🌈', '🏳️‍🌈')}
+                    className="bg-gradient-to-br from-pink-500/20 to-purple-600/20 hover:from-pink-500/40 hover:to-purple-600/40 border border-pink-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
                   >
-                    <div className="font-bold text-blue-400 text-[11px]">🎤</div>
-                    <div className="text-blue-300 text-[7px] leading-tight">CORTEZE</div>
+                    <div className="font-bold text-pink-400 text-[11px]">🏳️‍🌈</div>
+                    <div className="text-pink-300 text-[7px] leading-tight">CORTEZE</div>
                   </button>
                 </div>
                 {/* Voice Chat - Only in PvP mode */}

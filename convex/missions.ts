@@ -13,6 +13,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { applyLanguageBoost } from "./languageBoost";
 import { createAuditLog } from "./coinAudit";
+import { logTransaction } from "./coinsInbox";
 
 // Mission rewards (all coins for simplicity)
 const MISSION_REWARDS = {
@@ -310,15 +311,15 @@ export const claimMission = mutation({
       newBalance = currentBalance + boostedReward;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
-      const currentHonor = profile.stats?.honor ?? 500;
-      const honorReward = 3; // +3 honor for completing missions
+      const currentAura = profile.stats?.aura ?? 500;
+      const auraReward = 3; // +3 aura for completing missions
 
       await ctx.db.patch(profile._id, {
         coins: newBalance,
         lifetimeEarned: newLifetimeEarned,
         stats: {
           ...profile.stats,
-          honor: currentHonor + honorReward, // Award honor for mission completion
+          aura: currentAura + auraReward, // Award aura for mission completion
         },
       });
 
@@ -335,7 +336,18 @@ export const claimMission = mutation({
         { missionType: mission.missionType }
       );
 
-      console.log(`💰 Mission reward: ${boostedReward} TESTVBMS + ${honorReward} honor for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}, Honor: ${currentHonor} → ${currentHonor + honorReward}`);
+      // 📊 LOG TRANSACTION
+      await logTransaction(ctx, {
+        address: normalizedAddress,
+        type: 'earn',
+        amount: boostedReward,
+        source: 'mission',
+        description: `Claimed mission: ${mission.missionType}`,
+        balanceBefore: currentBalance,
+        balanceAfter: newBalance,
+      });
+
+      console.log(`💰 Mission reward: ${boostedReward} TESTVBMS + ${auraReward} aura for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}, Aura: ${currentAura} → ${currentAura + auraReward}`);
     }
 
     // Mark mission as claimed

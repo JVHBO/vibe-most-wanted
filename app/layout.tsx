@@ -8,6 +8,7 @@ import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
 import { FarcasterNotificationRegistration } from "@/components/FarcasterNotificationRegistration";
 import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { NeynarMiniAppProvider } from "@/contexts/NeynarMiniAppProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,8 +39,8 @@ const rajdhani = Rajdhani({
 });
 
 export const metadata: Metadata = {
-  title: "VIBE MOST WANTED - NFT Card Game",
-  description: "Battle with your VIBE NFT cards in PvE and PvP modes. Join the most wanted card game on Base!",
+  title: "VIBE MOST WANTED - Meme Card Game",
+  description: "Battle with meme cards in PvE and PvP modes. The most wanted meme card game on Base!",
   manifest: "/.well-known/farcaster.json",
   icons: {
     icon: [
@@ -54,8 +55,8 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "VIBE MOST WANTED - NFT Card Game",
-    description: "Battle with your VIBE NFT cards in PvE and PvP modes",
+    title: "VIBE MOST WANTED - Meme Card Game",
+    description: "Battle with meme cards in PvE and PvP modes",
     url: "https://www.vibemostwanted.xyz",
     images: [
       {
@@ -70,20 +71,22 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VIBE MOST WANTED - NFT Card Game",
-    description: "Battle with your VIBE NFT cards in PvE and PvP modes",
+    title: "VIBE MOST WANTED - Meme Card Game",
+    description: "Battle with meme cards in PvE and PvP modes",
     images: ["https://www.vibemostwanted.xyz/screenshot.jpg"],
   },
   other: {
+    // Base.dev App ID (REQUIRED FOR ANALYTICS)
+    "base:app_id": "6912770b47fdf84bd17202bc",
     // Farcaster Mini App Meta Tag (REQUIRED FOR DISCOVERY)
     "fc:miniapp": JSON.stringify({
-      "version": "1",
+      "version": "next",
       "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
       "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
         "action": {
-          "type": "launch_frame",
+          "type": "launch_miniapp",
           "name": "VIBE MOST WANTED",
           "url": "https://www.vibemostwanted.xyz",
           "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
@@ -93,13 +96,13 @@ export const metadata: Metadata = {
     }),
     // Backward compatibility with old frame spec
     "fc:frame": JSON.stringify({
-      "version": "1",
+      "version": "next",
       "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
       "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
         "action": {
-          "type": "launch_frame",
+          "type": "launch_miniapp",
           "name": "VIBE MOST WANTED",
           "url": "https://www.vibemostwanted.xyz",
           "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
@@ -121,16 +124,18 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased overflow-x-hidden`}
       >
         <ErrorBoundary>
-          <ConvexClientProvider>
-            <Web3Provider>
-              <LanguageProvider>
-                <MusicProvider>
-                  <FarcasterNotificationRegistration />
-                  {children}
-                </MusicProvider>
-              </LanguageProvider>
-            </Web3Provider>
-          </ConvexClientProvider>
+          <NeynarMiniAppProvider>
+            <ConvexClientProvider>
+              <Web3Provider>
+                <LanguageProvider>
+                  <MusicProvider>
+                    <FarcasterNotificationRegistration />
+                    {children}
+                  </MusicProvider>
+                </LanguageProvider>
+              </Web3Provider>
+            </ConvexClientProvider>
+          </NeynarMiniAppProvider>
         </ErrorBoundary>
         <Analytics />
       </body>

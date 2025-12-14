@@ -1,11 +1,14 @@
 /**
  * React hooks for VBMS Contract interactions
  * Uses wagmi v2 for Web3 interactions
+ *
+ * Updated to use useWriteContractWithAttribution for Base builder code attribution
  */
 
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useBalance } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
 import { CONTRACTS, POOL_ABI, POKER_BATTLE_ABI, BETTING_ABI, ERC20_ABI } from '../contracts';
+import { useWriteContractWithAttribution } from './useWriteContractWithAttribution';
 
 // ============================================================================
 // VBMS TOKEN HOOKS
@@ -60,16 +63,18 @@ export function useVBMSAllowance(owner?: `0x${string}`, spender?: `0x${string}`)
 
 /**
  * Approve VBMS spending for a contract
+ * Uses builder code attribution on Base
  */
 export function useApproveVBMS() {
-  const { writeContractAsync, isPending, error } = useWriteContract();
+  const { writeContractAsync, isPending, error, builderCode } = useWriteContractWithAttribution();
 
   const approve = async (spender: `0x${string}`, amount: string): Promise<`0x${string}`> => {
-    console.log("📝 Calling approve with:", {
+    console.log("📝 Calling approve with builder code:", {
       tokenAddress: CONTRACTS.VBMSToken,
       spender,
       amount,
       amountParsed: parseEther(amount).toString(),
+      builderCode,
     });
 
     const hash = await writeContractAsync({
@@ -117,35 +122,50 @@ export function usePoolBalance() {
 }
 
 /**
- * Get daily claim info for a user
- * Returns mock data since getDailyClaimInfo() might not exist in deployed contract
+ * Get daily claim info for a user from the VBMSPoolTroll contract
+ * Returns remaining daily limit and reset time
  */
 export function useDailyClaimInfo(address?: `0x${string}`) {
-  // Mock data - in production, this would come from the contract
-  // For now, return the daily limit from config (100k VBMS)
-  const dailyLimit = BigInt('100000000000000000000000'); // 100k VBMS with 18 decimals
+  const { data, isLoading, refetch, error } = useReadContract({
+    address: CONTRACTS.VBMSPoolTroll as `0x${string}`,
+    abi: POOL_ABI,
+    functionName: 'getDailyClaimInfo',
+    args: address ? [address] : undefined,
+    chainId: CONTRACTS.CHAIN_ID,
+    query: {
+      enabled: !!address,
+    },
+  });
+
+  // getDailyClaimInfo returns (uint256 remaining, uint256 resetTime)
+  const result = data as [bigint, bigint] | undefined;
 
   return {
-    remaining: '100000', // 100k VBMS daily limit
-    remainingRaw: dailyLimit,
-    resetTime: Math.floor(Date.now() / 1000) + 86400, // Tomorrow
-    isLoading: false,
-    refetch: () => {},
+    remaining: result ? formatEther(result[0]) : '100000',
+    remainingRaw: result ? result[0] : BigInt('100000000000000000000000'),
+    resetTime: result ? Number(result[1]) : Math.floor(Date.now() / 1000) + 86400,
+    dailyLimit: '100000', // 100k VBMS daily limit (constant from contract)
+    isLoading,
+    refetch,
+    error,
   };
 }
 
 /**
  * Claim VBMS from pool
+ * Uses builder code attribution on Base for transaction attribution
+ * The builder code suffix is appended to calldata - Solidity ignores extra bytes
  */
 export function useClaimVBMS() {
-  const { writeContractAsync, data: hash, isPending, error } = useWriteContract();
+  const { writeContractAsync, data: hash, isPending, error, builderCode } = useWriteContractWithAttribution();
 
   const claimVBMS = async (amount: string, nonce: string, signature: `0x${string}`) => {
-    console.log("📝 Claiming VBMS with:", {
+    console.log("📝 Claiming VBMS with builder code:", {
       poolAddress: CONTRACTS.VBMSPoolTroll,
       amount,
       nonce,
       signature: signature.slice(0, 10) + '...',
+      builderCode,
     });
 
     const txHash = await writeContractAsync({
@@ -234,7 +254,7 @@ export function useActiveBattle(address?: `0x${string}`) {
  * Create a new battle
  */
 export function useCreateBattle() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContractWithAttribution();
   const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash });
 
   const createBattle = async (stake: string) => {
@@ -245,7 +265,7 @@ export function useCreateBattle() {
       chainId: CONTRACTS.CHAIN_ID,
     });
 
-    writeContract({
+    await writeContractAsync({
       address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
       abi: POKER_BATTLE_ABI,
       functionName: 'createBattle',
@@ -269,11 +289,11 @@ export function useCreateBattle() {
  * Join an existing battle
  */
 export function useJoinBattle() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContractWithAttribution();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const joinBattle = async (battleId: number) => {
-    writeContract({
+    await writeContractAsync({
       address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
       abi: POKER_BATTLE_ABI,
       functionName: 'joinBattle',
@@ -296,7 +316,7 @@ export function useJoinBattle() {
  * Cancel a battle and get your stake back
  */
 export function useCancelBattle() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContractWithAttribution();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const cancelBattle = async (battleId: number) => {
@@ -306,7 +326,7 @@ export function useCancelBattle() {
       chainId: CONTRACTS.CHAIN_ID,
     });
 
-    writeContract({
+    await writeContractAsync({
       address: CONTRACTS.VBMSPokerBattle as `0x${string}`,
       abi: POKER_BATTLE_ABI,
       functionName: 'cancelBattle',
@@ -384,11 +404,11 @@ export function useUserBet(battleId?: number, address?: `0x${string}`) {
  * Place a bet on a battle
  */
 export function usePlaceBet() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContractWithAttribution();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const placeBet = async (battleId: number, predictedWinner: `0x${string}`, amount: string) => {
-    writeContract({
+    await writeContractAsync({
       address: CONTRACTS.VBMSBetting as `0x${string}`,
       abi: BETTING_ABI,
       functionName: 'placeBet',
@@ -410,11 +430,11 @@ export function usePlaceBet() {
  * Claim winnings from a bet
  */
 export function useClaimBetWinnings() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContractWithAttribution();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const claimWinnings = async (battleId: number) => {
-    writeContract({
+    await writeContractAsync({
       address: CONTRACTS.VBMSBetting as `0x${string}`,
       abi: BETTING_ABI,
       functionName: 'claimWinnings',
@@ -535,15 +555,17 @@ export function useFinishVBMSBattle() {
 
 /**
  * Transfer VBMS tokens
+ * Uses builder code attribution on Base
  */
 export function useTransferVBMS() {
-  const { writeContractAsync, isPending, error } = useWriteContract();
+  const { writeContractAsync, isPending, error, builderCode } = useWriteContractWithAttribution();
 
   const transfer = async (to: `0x${string}`, amount: bigint): Promise<`0x${string}`> => {
-    console.log("💸 Transferring VBMS:", {
+    console.log("💸 Transferring VBMS with builder code:", {
       to,
       amount: amount.toString(),
       contractAddress: CONTRACTS.VBMSToken,
+      builderCode,
     });
 
     const hash = await writeContractAsync({
