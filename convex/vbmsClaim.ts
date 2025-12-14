@@ -14,6 +14,7 @@ import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { createAuditLog } from "./coinAudit";
 import { isBlacklisted, getBlacklistInfo } from "./blacklist";
+import { logTransaction } from "./coinsInbox";
 
 // ========== HELPER: Get Profile ==========
 
@@ -105,7 +106,7 @@ export const signClaimMessage = internalAction({
   },
   handler: async (ctx, args): Promise<string> => {
     const { address, amount, nonce } = args;
-    const apiUrl = 'https://vibe-most-wanted.vercel.app';
+    const apiUrl = 'https://www.vibemostwanted.xyz';
 
     console.log(`[VBMS Sign Claim] Calling API at: ${apiUrl}/api/vbms/sign-claim`);
     console.log(`[VBMS Sign Claim] Request: address=${address}, amount=${amount}, nonce=${nonce}`);
@@ -1145,12 +1146,79 @@ export const recordTESTVBMSConversion = mutation({
       { txHash, reason: "VBMS claimed on blockchain" }
     );
 
+    // 📊 LOG TRANSACTION - Track in transaction history
+    await logTransaction(ctx, {
+      address,
+      type: 'convert',
+      amount,
+      source: 'blockchain',
+      description: `Converted ${amount.toLocaleString()} TESTVBMS → VBMS`,
+      balanceBefore: profile.coins || 0,
+      balanceAfter: 0,
+      txHash,
+    });
+
     console.log(`✅ ${address} converted ${amount} TESTVBMS → VBMS (tx: ${txHash})`);
 
     return {
       success: true,
       newCoinsBalance: 0,
       newClaimedTotal: (profile.claimedTokens || 0) + amount,
+    };
+  },
+});
+
+/**
+ * Recover failed TESTVBMS conversion
+ * If the blockchain TX failed, restore pendingConversion back to coins
+ */
+export const recoverFailedConversion = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const profile = await getProfile(ctx, address);
+
+    const pendingAmount = profile.pendingConversion || 0;
+    const pendingTimestamp = profile.pendingConversionTimestamp || 0;
+
+    if (pendingAmount === 0) {
+      throw new Error("No pending conversion to recover");
+    }
+
+    // Only allow recovery after 5 minutes (to prevent abuse)
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    if (pendingTimestamp > fiveMinutesAgo) {
+      const waitSeconds = Math.ceil((pendingTimestamp - fiveMinutesAgo) / 1000);
+      throw new Error(`Please wait ${waitSeconds} seconds before recovering. This prevents abuse.`);
+    }
+
+    // Restore coins
+    await ctx.db.patch(profile._id, {
+      coins: (profile.coins || 0) + pendingAmount,
+      pendingConversion: 0,
+      pendingConversionTimestamp: undefined,
+    });
+
+    // Audit log
+    await createAuditLog(
+      ctx,
+      address,
+      "recover",
+      pendingAmount,
+      0,
+      (profile.coins || 0) + pendingAmount,
+      "recoverFailedConversion",
+      undefined,
+      { reason: "Recovered failed TESTVBMS conversion" }
+    );
+
+    console.log(`🔄 ${address} recovered ${pendingAmount} TESTVBMS from failed conversion`);
+
+    return {
+      success: true,
+      recoveredAmount: pendingAmount,
+      newCoinsBalance: (profile.coins || 0) + pendingAmount,
     };
   },
 });

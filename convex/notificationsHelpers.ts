@@ -6,13 +6,25 @@ import { v } from "convex/values";
 import { query, mutation, internalQuery } from "./_generated/server";
 
 /**
- * Get all notification tokens
+ * Get all notification tokens (internal)
  * 🚀 BANDWIDTH FIX: Converted to internalQuery + limited to 500
  */
 export const getAllTokens = internalQuery({
   args: {},
   handler: async (ctx) => {
     // 🚀 BANDWIDTH FIX: Limit to 500 tokens max
+    const tokens = await ctx.db.query("notificationTokens").take(500);
+    return tokens;
+  },
+});
+
+/**
+ * Get all notification tokens (public - for external scripts)
+ * Limited to 500 tokens max
+ */
+export const getAllTokensPublic = query({
+  args: {},
+  handler: async (ctx) => {
     const tokens = await ctx.db.query("notificationTokens").take(500);
     return tokens;
   },

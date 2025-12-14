@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { normalizeAddress, isValidAddress } from "./utils";
+import { isBlacklisted, getBlacklistInfo } from "./blacklist";
 
 /**
  * PROFILE QUERIES & MUTATIONS
@@ -112,35 +113,45 @@ export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 100 }) => {
     try {
-      // 🚀 BANDWIDTH OPTIMIZATION V2: Use by_aura index directly
-      // Fetch extra profiles to ensure we have enough after sorting by defense deck
-      const fetchLimit = Math.min(limit * 2, 1000); // Increased from 200 to 1000 // Fetch 2x to account for defense deck sorting
+      // Fetch ALL profiles for full leaderboard
+      // Note: If you have thousands of players, consider pagination
       const topProfiles = await ctx.db
         .query("profiles")
         .withIndex("by_aura")
         .order("desc")
-        .take(fetchLimit);
+        .collect();
 
       // Map to minimal fields with hasDefenseDeck
-      const mapped = topProfiles.map(p => ({
-        address: p.address || "unknown",
-        username: p.username || "unknown",
-        stats: {
-          aura: p.stats?.aura ?? 500, // Include aura
-          totalPower: p.stats?.totalPower || 0,
-          vibePower: p.stats?.vibePower || 0,
-          vbrsPower: p.stats?.vbrsPower || 0,
-          vibefidPower: p.stats?.vibefidPower || 0,
-          afclPower: p.stats?.afclPower || 0,
-          pveWins: p.stats?.pveWins || 0,
-          pveLosses: p.stats?.pveLosses || 0,
-          pvpWins: p.stats?.pvpWins || 0,
-          pvpLosses: p.stats?.pvpLosses || 0,
-          openedCards: p.stats?.openedCards || 0,
-        },
-        hasDefenseDeck: (p.defenseDeck?.length || 0) === 5, // Check if has exactly 5 cards
-        userIndex: p.userIndex || 0,
-      }));
+      // 🚨 PUNISHMENT: Blacklisted exploiters get NEGATIVE stats
+      const mapped = topProfiles.map(p => {
+        const address = p.address || "unknown";
+        const blacklisted = isBlacklisted(address);
+        const blacklistInfo = blacklisted ? getBlacklistInfo(address) : null;
+
+        // If blacklisted, show negative power/aura based on amount stolen
+        const punishment = blacklistInfo ? Math.floor(blacklistInfo.amountStolen / 100) : 0;
+
+        return {
+          address,
+          username: p.username || "unknown",
+          stats: {
+            aura: blacklisted ? -punishment : (p.stats?.aura ?? 500),
+            totalPower: blacklisted ? -punishment : (p.stats?.totalPower || 0),
+            vibePower: blacklisted ? 0 : (p.stats?.vibePower || 0),
+            vbrsPower: blacklisted ? 0 : (p.stats?.vbrsPower || 0),
+            vibefidPower: blacklisted ? 0 : (p.stats?.vibefidPower || 0),
+            afclPower: blacklisted ? 0 : (p.stats?.afclPower || 0),
+            pveWins: p.stats?.pveWins || 0,
+            pveLosses: p.stats?.pveLosses || 0,
+            pvpWins: p.stats?.pvpWins || 0,
+            pvpLosses: p.stats?.pvpLosses || 0,
+            openedCards: p.stats?.openedCards || 0,
+          },
+          hasDefenseDeck: (p.defenseDeck?.length || 0) === 5,
+          userIndex: p.userIndex || 0,
+          isBlacklisted: blacklisted, // Flag for UI to show warning
+        };
+      });
 
       // Sort: 1) hasDefenseDeck (true first), 2) aura (desc), 3) power (desc)
       mapped.sort((a, b) => {
@@ -156,8 +167,8 @@ export const getLeaderboardLite = query({
         return b.stats.totalPower - a.stats.totalPower;
       });
 
-      // Return only requested limit
-      return mapped.slice(0, limit);
+      // Return ALL players (no limit)
+      return mapped;
     } catch (error) {
       console.error("❌ getLeaderboardLite error:", error);
       // Return empty array on error
@@ -392,10 +403,16 @@ export const updateDefenseDeck = mutation({
   },
   handler: async (ctx, { address, defenseDeck }) => {
     try {
+      const normalizedAddress = normalizeAddress(address);
+
+      // 🚫 BLACKLIST CHECK: Exploiters cannot set defense decks
+      if (isBlacklisted(normalizedAddress)) {
+        throw new Error("Account banned: Defense deck feature disabled for exploiters");
+      }
 
       const profile = await ctx.db
         .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
         .first();
 
       if (!profile) {
@@ -694,6 +711,13 @@ export const updateDefenseDeckSecure = mutation({
     ),
   },
   handler: async (ctx, { address, signature, message, defenseDeck }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    // 🚫 BLACKLIST CHECK: Exploiters cannot set defense decks
+    if (isBlacklisted(normalizedAddress)) {
+      throw new Error("Account banned: Defense deck feature disabled for exploiters");
+    }
+
     // 1. Authenticate with full backend ECDSA verification
     const auth = await authenticateActionWithBackend(ctx, address, signature, message);
     if (!auth.success) {

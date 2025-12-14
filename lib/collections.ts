@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'cumioh' | 'nothing' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'gmvbrs' | 'americanfootball' | 'vibefid' | 'coquettish' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'cumioh' | 'nothing' | 'vibe rot bangers' | 'custom'; // Adicione novos IDs aqui
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -323,6 +323,20 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     enabled: true,
     marketplaceUrl: '/shop',
     buttonText: 'GET NOTHING CARDS',
+    powerCalculation: DEFAULT_POWER_CONFIG,
+  },
+
+    // Collection Vibe Rot Bangers
+  vibe rot bangers: {
+    id: 'vibe rot bangers',
+    name: 'vibe rot bangers',
+    displayName: 'Vibe Rot Bangers',
+    description: 'Collection Vibe Rot Bangers NFT',
+    contractAddress: '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a',
+    chain: 'base-mainnet',
+    enabled: true,
+    marketplaceUrl: 'https://vibechain.com/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
+    buttonText: 'BUY BANGER PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 

@@ -14,7 +14,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import {
   useReadContract,
-  useWriteContract,
   useWaitForTransactionReceipt,
   useAccount,
   usePublicClient,
@@ -23,6 +22,7 @@ import { parseEther, formatEther } from 'viem';
 import { BOOSTER_DROP_V2_ABI, VBMS_CONTRACTS, VBMS_DEX_CONSTANTS, VBMS_ROUTER_ABI } from '../contracts/BoosterDropV2ABI';
 import { VBMS_DIRECT_SELL_ABI } from '../contracts/BoosterTokenV2ABI';
 import { ERC20_ABI } from '../contracts';
+import { useWriteContractWithAttribution } from './useWriteContractWithAttribution';
 
 // ============================================================================
 // PRICE HOOKS
@@ -132,8 +132,9 @@ export function useBuyVBMS() {
   const publicClient = usePublicClient();
   const [step, setStep] = useState<BuyStep>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
 
-  const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync, builderCode } = useWriteContractWithAttribution();
 
   const buyVBMS = useCallback(
     async (packCount: number, priceWei: bigint) => {
@@ -167,6 +168,7 @@ export function useBuyVBMS() {
           chainId: VBMS_CONTRACTS.chainId,
         });
 
+        setTxHash(buyHash);
         setStep('waiting');
         console.log('Waiting for buy tx:', buyHash);
 
@@ -192,6 +194,7 @@ export function useBuyVBMS() {
   const reset = useCallback(() => {
     setStep('idle');
     setError(null);
+    setTxHash(null);
   }, []);
 
   return {
@@ -199,6 +202,7 @@ export function useBuyVBMS() {
     step,
     error,
     reset,
+    txHash,
     isLoading: step !== 'idle' && step !== 'complete' && step !== 'error',
   };
 }
@@ -220,8 +224,9 @@ export function useSellVBMS() {
   const publicClient = usePublicClient();
   const [step, setStep] = useState<SellStep>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
 
-  const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync, builderCode } = useWriteContractWithAttribution();
 
   const sellVBMS = useCallback(
     async (tokenAmount: string, referrer?: `0x${string}`) => {
@@ -255,6 +260,7 @@ export function useSellVBMS() {
           chainId: VBMS_CONTRACTS.chainId,
         });
 
+        setTxHash(sellHash);
         setStep('waiting_sell');
         console.log('⏳ Waiting for sell tx:', sellHash);
 
@@ -277,6 +283,7 @@ export function useSellVBMS() {
   const reset = useCallback(() => {
     setStep('idle');
     setError(null);
+    setTxHash(null);
   }, []);
 
   return {
@@ -284,6 +291,7 @@ export function useSellVBMS() {
     step,
     error,
     reset,
+    txHash,
     isLoading: step !== 'idle' && step !== 'complete' && step !== 'error',
   };
 }
