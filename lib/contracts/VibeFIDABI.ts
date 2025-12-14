@@ -1,6 +1,7 @@
 /**
- * VibeFID Smart Contract ABI
- * Deployed on Base Mainnet at: 0x3e1E69e444261A5bc65B83c41036b5284c1E69aE
+ * VibeFID V2 Smart Contract ABI
+ * Deployed on Base Mainnet at: 0x60274A138d026E3cB337B40567100FdEC3127565
+ * Mint Price: 0.0003 ETH
  */
 
 export const VIBEFID_ABI = [
@@ -166,13 +167,6 @@ export const VIBEFID_ABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "closeMinting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -187,6 +181,6 @@ export const VIBEFID_ABI = [
   }
 ] as const;
 
-export const VIBEFID_CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_VIBEFID_CONTRACT_ADDRESS || '0x3e1E69e444261A5bc65B83c41036b5284c1E69aE') as `0x${string}`;
+export const VIBEFID_CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_VIBEFID_CONTRACT_ADDRESS || '0x60274A138d026E3cB337B40567100FdEC3127565') as `0x${string}`;
 
-export const MINT_PRICE = "0.0005"; // ETH
+export const MINT_PRICE = "0.0003"; // ETH

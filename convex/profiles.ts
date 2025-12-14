@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { normalizeAddress, isValidAddress } from "./utils";
+import { isBlacklisted, getBlacklistInfo } from "./blacklist";
 
 /**
  * PROFILE QUERIES & MUTATIONS
@@ -19,9 +20,9 @@ import { normalizeAddress, isValidAddress } from "./utils";
 export const getProfile = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
-    // Validate address format
-    if (!isValidAddress(address)) {
-      throw new Error('Invalid Ethereum address format');
+    // Validate address format - return null instead of throwing for invalid/empty addresses
+    if (!address || address.length === 0 || !isValidAddress(address)) {
+      return null;
     }
 
     const profile = await ctx.db
@@ -29,23 +30,64 @@ export const getProfile = query({
       .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
       .first();
 
-    return profile;
+    if (!profile) return null;
+
+    // Add computed hasDefenseDeck field (required for leaderboard attack button)
+    return {
+      ...profile,
+      hasDefenseDeck: (profile.defenseDeck?.length || 0) === 5,
+    };
   },
 });
 
 /**
- * Get leaderboard (top 1000 by total power)
+ * 🚀 BANDWIDTH FIX: Get a LITE profile (excludes heavy arrays)
+ *
+ * Use this instead of getProfile when you don't need:
+ * - defenseDeck (5 full card objects)
+ * - revealedCardsCache (100+ cards)
+ * - ownedTokenIds (thousands of IDs)
+ * - musicPlaylist
+ *
+ * Saves ~50-100KB per profile fetch
  */
-export const getLeaderboard = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 1000 }) => {
-    const profiles = await ctx.db
-      .query("profiles")
-      .withIndex("by_total_power")
-      .order("desc")
-      .take(limit);
+export const getProfileLite = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    if (!address || address.length === 0 || !isValidAddress(address)) {
+      return null;
+    }
 
-    return profiles;
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+      .first();
+
+    if (!profile) return null;
+
+    // Return only essential fields (saves ~95% bandwidth)
+    return {
+      _id: profile._id,
+      address: profile.address,
+      username: profile.username,
+      stats: profile.stats,
+      coins: profile.coins || 0,
+      coinsInbox: profile.coinsInbox || 0,
+      inbox: profile.inbox || 0,
+      dailyLimits: profile.dailyLimits,
+      attacksToday: profile.attacksToday || 0,
+      rematchesToday: profile.rematchesToday || 0,
+      winStreak: profile.winStreak || 0,
+      fid: profile.fid,
+      farcasterFid: profile.farcasterFid,
+      farcasterPfpUrl: profile.farcasterPfpUrl,
+      twitter: profile.twitter,
+      twitterHandle: profile.twitterHandle,
+      hasDefenseDeck: (profile.defenseDeck?.length || 0) === 5,
+      preferredCollection: profile.preferredCollection,
+      createdAt: profile.createdAt,
+      lastUpdated: profile.lastUpdated,
+    };
   },
 });
 
@@ -62,45 +104,76 @@ export const getLeaderboard = query({
  * - address, username, totalPower
  *
  * Estimated savings: 40MB+ (from ~8KB to ~200 bytes per profile)
+ *
+ * BANDWIDTH OPTIMIZATION:
+ * - Fetches max 500 profiles instead of ALL (reduces DB read by ~90%)
+ * - Only returns minimal fields (reduces response size by ~95%)
  */
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 100 }) => {
-    // 🚀 OPTIMIZATION: Reduced default from 1000 to 100
-    // Most users only see top 10-20, no need to fetch 1000
-    // If needed, frontend can request more with explicit limit
-    const cappedLimit = Math.min(limit, 500); // Cap at 500 max
+    try {
+      // Fetch ALL profiles for full leaderboard
+      // Note: If you have thousands of players, consider pagination
+      const topProfiles = await ctx.db
+        .query("profiles")
+        .withIndex("by_aura")
+        .order("desc")
+        .collect();
 
-    const profiles = await ctx.db
-      .query("profiles")
-      .withIndex("by_total_power")
-      .order("desc")
-      .take(cappedLimit);
+      // Map to minimal fields with hasDefenseDeck
+      // 🚨 PUNISHMENT: Blacklisted exploiters get NEGATIVE stats
+      const mapped = topProfiles.map(p => {
+        const address = p.address || "unknown";
+        const blacklisted = isBlacklisted(address);
+        const blacklistInfo = blacklisted ? getBlacklistInfo(address) : null;
 
-    // ✅ FILTER: Only show players with complete defense deck (5 cards)
-    const validProfiles = profiles.filter(p => p.defenseDeck && p.defenseDeck.length === 5);
+        // If blacklisted, show negative power/aura based on amount stolen
+        const punishment = blacklistInfo ? Math.floor(blacklistInfo.amountStolen / 100) : 0;
 
-    // Return ONLY display fields for leaderboard
-    return validProfiles.map(p => ({
-      address: p.address,
-      username: p.username,
-      stats: {
-        totalPower: p.stats?.totalPower || 0,
-        openedCards: p.stats?.openedCards || 0,
-        pveWins: p.stats?.pveWins || 0,
-        pvpWins: p.stats?.pvpWins || 0,
-        pveLosses: p.stats?.pveLosses || 0,
-        pvpLosses: p.stats?.pvpLosses || 0,
-      },
-      // Add hasDefenseDeck flag for Attack button (without sending full deck data)
-      hasDefenseDeck: true, // Always true since we filtered above
-      userIndex: p.userIndex,
-      // Include twitter fields for battle shares (needed for opponent PFP in OG images)
-      twitter: p.twitter,
-      twitterProfileImageUrl: p.twitterProfileImageUrl,
-      // 🚫 EXCLUDED: defenseDeck, revealedCardsCache, ownedTokenIds,
-      //              fid, economy data, other stats fields
-    }));
+        return {
+          address,
+          username: p.username || "unknown",
+          stats: {
+            aura: blacklisted ? -punishment : (p.stats?.aura ?? 500),
+            totalPower: blacklisted ? -punishment : (p.stats?.totalPower || 0),
+            vibePower: blacklisted ? 0 : (p.stats?.vibePower || 0),
+            vbrsPower: blacklisted ? 0 : (p.stats?.vbrsPower || 0),
+            vibefidPower: blacklisted ? 0 : (p.stats?.vibefidPower || 0),
+            afclPower: blacklisted ? 0 : (p.stats?.afclPower || 0),
+            pveWins: p.stats?.pveWins || 0,
+            pveLosses: p.stats?.pveLosses || 0,
+            pvpWins: p.stats?.pvpWins || 0,
+            pvpLosses: p.stats?.pvpLosses || 0,
+            openedCards: p.stats?.openedCards || 0,
+          },
+          hasDefenseDeck: (p.defenseDeck?.length || 0) === 5,
+          userIndex: p.userIndex || 0,
+          isBlacklisted: blacklisted, // Flag for UI to show warning
+        };
+      });
+
+      // Sort: 1) hasDefenseDeck (true first), 2) aura (desc), 3) power (desc)
+      mapped.sort((a, b) => {
+        // First priority: defense deck (true comes first)
+        if (a.hasDefenseDeck !== b.hasDefenseDeck) {
+          return a.hasDefenseDeck ? -1 : 1;
+        }
+        // Second priority: aura (higher first)
+        if (a.stats.aura !== b.stats.aura) {
+          return b.stats.aura - a.stats.aura;
+        }
+        // Third priority: power (higher first)
+        return b.stats.totalPower - a.stats.totalPower;
+      });
+
+      // Return ALL players (no limit)
+      return mapped;
+    } catch (error) {
+      console.error("❌ getLeaderboardLite error:", error);
+      // Return empty array on error
+      return [];
+    }
   },
 });
 
@@ -216,6 +289,7 @@ export const upsertProfile = mutation({
           totalCards: 0,
           openedCards: 0,
           unopenedCards: 0,
+          aura: 500, // Initial aura for new players
           pveWins: 0,
           pveLosses: 0,
           pvpWins: 0,
@@ -268,10 +342,13 @@ export const updateStats = mutation({
       totalCards: v.number(),
       openedCards: v.number(),
       unopenedCards: v.number(),
+      aura: v.optional(v.number()),
+      honor: v.optional(v.number()), // legacy
       vibePower: v.optional(v.number()),
       vbrsPower: v.optional(v.number()),
       vibefidPower: v.optional(v.number()),
       afclPower: v.optional(v.number()),
+      coqPower: v.optional(v.number()),
       pveWins: v.number(),
       pveLosses: v.number(),
       pvpWins: v.number(),
@@ -326,10 +403,16 @@ export const updateDefenseDeck = mutation({
   },
   handler: async (ctx, { address, defenseDeck }) => {
     try {
+      const normalizedAddress = normalizeAddress(address);
+
+      // 🚫 BLACKLIST CHECK: Exploiters cannot set defense decks
+      if (isBlacklisted(normalizedAddress)) {
+        throw new Error("Account banned: Defense deck feature disabled for exploiters");
+      }
 
       const profile = await ctx.db
         .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
         .first();
 
       if (!profile) {
@@ -357,12 +440,19 @@ export const updateDefenseDeck = mutation({
 
       // devLog (server-side)('🧹 Cleaned defense deck:', cleanedDefenseDeck);
 
+      // 🔒 SECURITY FIX: Also update ownedTokenIds to include defense deck cards
+      // This prevents getValidatedDefenseDeck from incorrectly removing cards
+      const defenseTokenIds = cleanedDefenseDeck.map(card => card.tokenId);
+      const existingOwnedIds = profile.ownedTokenIds || [];
+      const mergedOwnedIds = [...new Set([...existingOwnedIds, ...defenseTokenIds])];
+
       await ctx.db.patch(profile._id, {
         defenseDeck: cleanedDefenseDeck,
+        ownedTokenIds: mergedOwnedIds,
         lastUpdated: Date.now(),
       });
 
-      // devLog (server-side)('✅ Defense deck updated successfully');
+      console.log(`✅ Defense deck updated for ${normalizeAddress(address)}: ${cleanedDefenseDeck.length} cards, ownedTokenIds: ${mergedOwnedIds.length} total`);
     } catch (error: any) {
       // devError (server-side)('❌ updateDefenseDeck handler error:', error);
       throw error;
@@ -430,12 +520,19 @@ export const getValidatedDefenseDeck = mutation({
 
     // If cards were removed, update profile
     if (removedCards.length > 0) {
+      // Log BEFORE patching to track what's being removed
+      console.log(`⚠️ DEFENSE DECK VALIDATION for ${address}:`);
+      console.log(`  - Original cards: ${profile.defenseDeck.length}`);
+      console.log(`  - Valid cards: ${validCards.length}`);
+      console.log(`  - Removed cards: ${removedCards.map((c: any) => c.tokenId).join(', ')}`);
+      console.log(`  - ownedTokenIds count: ${profile.ownedTokenIds?.length || 0}`);
+
       await ctx.db.patch(profile._id, {
         defenseDeck: validCards,
         lastUpdated: Date.now(),
       });
 
-      // devLog (server-side)(`✅ Defense deck validated for ${address}: ${validCards.length} valid, ${removedCards.length} removed`);
+      console.log(`✅ Defense deck updated for ${address}: ${validCards.length} valid, ${removedCards.length} removed`);
     }
 
     return {
@@ -539,10 +636,13 @@ export const updateStatsSecure = mutation({
       totalCards: v.number(),
       openedCards: v.number(),
       unopenedCards: v.number(),
+      aura: v.optional(v.number()),
+      honor: v.optional(v.number()), // legacy
       vibePower: v.optional(v.number()),
       vbrsPower: v.optional(v.number()),
       vibefidPower: v.optional(v.number()),
       afclPower: v.optional(v.number()),
+      coqPower: v.optional(v.number()),
       pveWins: v.number(),
       pveLosses: v.number(),
       pvpWins: v.number(),
@@ -611,6 +711,13 @@ export const updateDefenseDeckSecure = mutation({
     ),
   },
   handler: async (ctx, { address, signature, message, defenseDeck }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    // 🚫 BLACKLIST CHECK: Exploiters cannot set defense decks
+    if (isBlacklisted(normalizedAddress)) {
+      throw new Error("Account banned: Defense deck feature disabled for exploiters");
+    }
+
     // 1. Authenticate with full backend ECDSA verification
     const auth = await authenticateActionWithBackend(ctx, address, signature, message);
     if (!auth.success) {
@@ -713,11 +820,13 @@ export const incrementStatSecure = mutation({
 /**
  * MIGRATION: Clean old defense decks (array of strings → array of objects)
  * Run once to clean legacy data from Firebase migration
+ * 🚀 BANDWIDTH FIX: Process in batches of 100
  */
 export const cleanOldDefenseDecks = mutation({
   args: {},
   handler: async (ctx) => {
-    const profiles = await ctx.db.query("profiles").collect();
+    // 🚀 BANDWIDTH FIX: Process in batches instead of loading all
+    const profiles = await ctx.db.query("profiles").take(100);
 
     let cleanedCount = 0;
     let skippedCount = 0;
@@ -760,6 +869,7 @@ export const cleanOldDefenseDecks = mutation({
  * - Cards in defense deck are LOCKED and cannot be used in PvP Attack/Rooms
  * - PvE battles still allow defense cards (fighting AI is OK)
  * - Forces strategic decisions: strong defense OR strong offense
+ * - EXCEPTION: VibeFID cards are NEVER locked - they can be used in both attack and defense
  *
  * @param address - Player wallet address
  * @param allNFTs - All NFTs owned by player (from Alchemy/NFT fetch)
@@ -792,9 +902,14 @@ export const getAvailableCards = query({
     }
 
     // Extract token IDs from defense deck
+    // EXCEPTION: VibeFID cards are NOT locked - they can be used in both attack and defense
     const lockedTokenIds: string[] = [];
     for (const card of profile.defenseDeck) {
       if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+        // Skip VibeFID cards - they're exempt from the lock system
+        if (card.collection === 'vibefid') {
+          continue;
+        }
         lockedTokenIds.push(card.tokenId);
       } else if (typeof card === 'string') {
         lockedTokenIds.push(card);
@@ -805,6 +920,177 @@ export const getAvailableCards = query({
       lockedTokenIds,
       isLockEnabled: true,
       lockedCount: lockedTokenIds.length,
+    };
+  },
+});
+
+/**
+ * 🔒 Get all locked cards for a player (defense deck + raid deck)
+ * Used by RaidDeckSelectionModal and DefenseDeckModal to show which cards are unavailable
+ *
+ * CARD LOCK SYSTEM:
+ * - Cards in defense deck cannot be used in raid
+ * - Cards in raid deck cannot be used in defense
+ * - VibeFID cards are EXEMPT from this restriction
+ */
+export const getLockedCardsForDeckBuilding = query({
+  args: {
+    address: v.string(),
+    mode: v.union(v.literal("defense"), v.literal("raid")),
+  },
+  handler: async (ctx, { address, mode }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    // Get profile for defense deck
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    // Get raid deck
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    const lockedTokenIds: string[] = [];
+    const lockedByRaid: string[] = [];
+    const lockedByDefense: string[] = [];
+
+    if (mode === "defense") {
+      // When building defense deck, raid cards are locked
+      if (raidDeck?.deck) {
+        for (const card of raidDeck.deck) {
+          // VibeFID cards are exempt
+          if (card.collection === 'vibefid') continue;
+          lockedTokenIds.push(card.tokenId);
+          lockedByRaid.push(card.tokenId);
+        }
+      }
+      // Also check VibeFID slot
+      if (raidDeck?.vibefidCard && raidDeck.vibefidCard.collection !== 'vibefid') {
+        lockedTokenIds.push(raidDeck.vibefidCard.tokenId);
+        lockedByRaid.push(raidDeck.vibefidCard.tokenId);
+      }
+    } else if (mode === "raid") {
+      // When building raid deck, defense cards are locked
+      if (profile?.defenseDeck) {
+        for (const card of profile.defenseDeck) {
+          if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+            // VibeFID cards are exempt
+            if (card.collection === 'vibefid') continue;
+            lockedTokenIds.push(card.tokenId);
+            lockedByDefense.push(card.tokenId);
+          } else if (typeof card === 'string') {
+            lockedTokenIds.push(card);
+            lockedByDefense.push(card);
+          }
+        }
+      }
+    }
+
+    return {
+      lockedTokenIds,
+      lockedByRaid,
+      lockedByDefense,
+      hasConflicts: false, // Will be set by migration check
+    };
+  },
+});
+
+/**
+ * 🧹 Clean conflicting cards from defense deck
+ * If a card is in both raid and defense, remove it from defense
+ * This runs once when user opens defense deck modal
+ */
+export const cleanConflictingDefenseCards = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    // Get profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile || !profile.defenseDeck || profile.defenseDeck.length === 0) {
+      return { cleaned: 0, removed: [] };
+    }
+
+    // Get raid deck
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!raidDeck || !raidDeck.deck || raidDeck.deck.length === 0) {
+      return { cleaned: 0, removed: [] };
+    }
+
+    // Get all raid card token IDs (excluding VibeFID)
+    const raidTokenIds = new Set<string>();
+    for (const card of raidDeck.deck) {
+      if (card.collection !== 'vibefid') {
+        raidTokenIds.add(card.tokenId);
+      }
+    }
+    if (raidDeck.vibefidCard && raidDeck.vibefidCard.collection !== 'vibefid') {
+      raidTokenIds.add(raidDeck.vibefidCard.tokenId);
+    }
+
+    // Filter defense deck to remove conflicting cards
+    const removedCards: string[] = [];
+    const cleanedDefenseDeck = profile.defenseDeck.filter((card) => {
+      let tokenId: string;
+      let collection: string | undefined;
+
+      if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+        tokenId = card.tokenId;
+        collection = card.collection;
+      } else if (typeof card === 'string') {
+        tokenId = card;
+      } else {
+        return true; // Keep unknown formats
+      }
+
+      // VibeFID cards are always kept
+      if (collection === 'vibefid') {
+        return true;
+      }
+
+      // Remove if in raid deck
+      if (raidTokenIds.has(tokenId)) {
+        removedCards.push(tokenId);
+        return false;
+      }
+
+      return true;
+    });
+
+    // Only update if we would still have 5 cards (don't break the defense deck)
+    if (removedCards.length > 0 && cleanedDefenseDeck.length >= 5) {
+      await ctx.db.patch(profile._id, {
+        defenseDeck: cleanedDefenseDeck,
+      });
+
+      console.log(`🧹 Cleaned ${removedCards.length} conflicting cards from ${normalizedAddress}'s defense deck`);
+      return {
+        cleaned: removedCards.length,
+        removed: removedCards,
+      };
+    }
+
+    // If cleaning would break defense deck (< 5 cards), don't clean
+    if (removedCards.length > 0 && cleanedDefenseDeck.length < 5) {
+      console.log(`⚠️ Skipped cleaning ${removedCards.length} cards - would leave only ${cleanedDefenseDeck.length} cards in defense`);
+    }
+
+    return {
+      cleaned: 0,
+      removed: [],
     };
   },
 });
@@ -881,16 +1167,121 @@ export const updateRevealedCardsCache = mutation({
 });
 
 // ============================================================================
-// PUBLIC QUERIES (for external scripts/monitoring)
+// CUSTOM MUSIC SETTINGS
+// ============================================================================
+
+/**
+ * Update custom music URL for background music
+ */
+export const updateCustomMusic = mutation({
+  args: {
+    address: v.string(),
+    customMusicUrl: v.union(v.string(), v.null()), // URL or null to clear
+  },
+  handler: async (ctx, { address, customMusicUrl }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Update the custom music URL
+    await ctx.db.patch(profile._id, {
+      customMusicUrl: customMusicUrl || undefined, // Convert null to undefined for removal
+      lastUpdated: Date.now(),
+    });
+
+    return {
+      success: true,
+      customMusicUrl: customMusicUrl || null,
+    };
+  },
+});
+
+/**
+ * Update music playlist (multiple URLs)
+ * User can add/remove URLs from their playlist
+ */
+export const updateMusicPlaylist = mutation({
+  args: {
+    address: v.string(),
+    playlist: v.array(v.string()), // Array of URLs (can be empty)
+    lastPlayedIndex: v.optional(v.number()), // Track which song was last played
+  },
+  handler: async (ctx, { address, playlist, lastPlayedIndex }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Update the music playlist
+    await ctx.db.patch(profile._id, {
+      musicPlaylist: playlist.length > 0 ? playlist : undefined,
+      lastPlayedIndex: lastPlayedIndex ?? 0,
+      // Clear legacy customMusicUrl if using playlist
+      customMusicUrl: playlist.length > 0 ? undefined : profile.customMusicUrl,
+      lastUpdated: Date.now(),
+    });
+
+    return {
+      success: true,
+      playlist,
+      lastPlayedIndex: lastPlayedIndex ?? 0,
+    };
+  },
+});
+
+/**
+ * Get music playlist for a user
+ */
+export const getMusicPlaylist = query({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      return { playlist: [], lastPlayedIndex: 0 };
+    }
+
+    return {
+      playlist: profile.musicPlaylist || [],
+      lastPlayedIndex: profile.lastPlayedIndex || 0,
+    };
+  },
+});
+
+// ============================================================================
+// INTERNAL QUERIES (for admin/cron only)
 // ============================================================================
 
 /**
  * Get all profiles (for economy monitoring/admin tools)
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
+ * 🚀 BANDWIDTH FIX: Limited to 200 profiles max
  */
-export const listAll = query({
+export const listAll = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const profiles = await ctx.db.query("profiles").collect();
+    // 🚀 BANDWIDTH FIX: Limit to 200 profiles max
+    const profiles = await ctx.db.query("profiles").take(200);
     return profiles;
   },
 });

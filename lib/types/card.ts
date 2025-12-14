@@ -46,6 +46,22 @@ export interface Card {
 }
 
 /**
+ * Generates a unique identifier for a card combining collection and tokenId
+ * This is necessary because tokenId alone is not globally unique across collections
+ * (e.g., tokenId "1" from "vibemostwanted" is different from tokenId "1" from "vibefid")
+ */
+export function getCardUniqueId(card: { tokenId: string; collection?: string }): string {
+  return card.collection ? `${card.collection}_${card.tokenId}` : card.tokenId;
+}
+
+/**
+ * Checks if two cards are the same based on their unique identifiers
+ */
+export function isSameCard(cardA: { tokenId: string; collection?: string }, cardB: { tokenId: string; collection?: string }): boolean {
+  return getCardUniqueId(cardA) === getCardUniqueId(cardB);
+}
+
+/**
  * Carta com metadados completos (da blockchain)
  */
 export interface CardWithMetadata extends Card {

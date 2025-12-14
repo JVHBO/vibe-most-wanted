@@ -32,13 +32,18 @@ const setCache = (key: string, value: string): void => {
 function normalizeUrl(url: string): string {
   if (!url) return '';
   let u = url.trim();
-  if (u.startsWith('ipfs://')) u = 'https://ipfs.io/ipfs/' + u.slice(7);
-  else if (u.startsWith('ipfs/')) u = 'https://ipfs.io/ipfs/' + u.slice(5);
+  // Use Cloudflare IPFS gateway (faster and more reliable)
+  const IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs/';
+  if (u.startsWith('ipfs://')) u = IPFS_GATEWAY + u.slice(7);
+  else if (u.startsWith('ipfs/')) u = IPFS_GATEWAY + u.slice(5);
+  // Convert existing ipfs.io URLs to Cloudflare
+  else if (u.includes('ipfs.io/ipfs/')) u = u.replace('https://ipfs.io/ipfs/', IPFS_GATEWAY);
   u = u.replace(/^http:\/\//i, 'https://');
   return u;
 }
 
 // Get image URL with caching
+// Priority: 1. Alchemy cache (avoids CORS), 2. raw metadata, 3. tokenUri fetch, 4. placeholder
 async function getImage(nft: any): Promise<string> {
   const tid = nft.tokenId;
   const cached = getFromCache(tid);
@@ -51,6 +56,45 @@ async function getImage(nft: any): Promise<string> {
     return null;
   };
 
+  // 1. Try Alchemy cached URLs FIRST (avoids CORS issues with VibeFID tokenUri)
+  const alchemyUrls = [
+    extractUrl(nft?.image?.cachedUrl),
+    extractUrl(nft?.image?.thumbnailUrl),
+    extractUrl(nft?.image?.pngUrl),
+    extractUrl(nft?.image?.originalUrl),
+  ];
+
+  for (const url of alchemyUrls) {
+    if (url) {
+      if (url.includes('wieldcd.net')) {
+        const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(url)}`;
+        setCache(tid, proxyUrl);
+        return proxyUrl;
+      }
+      const norm = normalizeUrl(String(url));
+      if (norm && !norm.includes("undefined")) {
+        setCache(tid, norm);
+        return norm;
+      }
+    }
+  }
+
+  // 2. Try raw metadata image
+  let rawImage = extractUrl(nft?.raw?.metadata?.image);
+  if (rawImage) {
+    if (rawImage.includes('wieldcd.net')) {
+      const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(rawImage)}`;
+      setCache(tid, proxyUrl);
+      return proxyUrl;
+    }
+    rawImage = normalizeUrl(rawImage);
+    if (rawImage && !rawImage.includes('undefined')) {
+      setCache(tid, rawImage);
+      return rawImage;
+    }
+  }
+
+  // 3. Try fetching from tokenUri (may fail with CORS for VibeFID)
   try {
     const uri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
     if (uri) {
@@ -77,45 +121,10 @@ async function getImage(nft: any): Promise<string> {
       }
     }
   } catch (error) {
-    console.warn(`⚠️ Failed to fetch image from tokenUri for NFT #${tid}:`, error);
+    console.warn(`Failed to fetch image from tokenUri for NFT #${tid}:`, error);
   }
 
-  let rawImage = extractUrl(nft?.raw?.metadata?.image);
-  if (rawImage) {
-    if (rawImage.includes('wieldcd.net')) {
-      const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(rawImage)}`;
-      setCache(tid, proxyUrl);
-      return proxyUrl;
-    }
-    rawImage = normalizeUrl(rawImage);
-    if (rawImage && !rawImage.includes('undefined')) {
-      setCache(tid, rawImage);
-      return rawImage;
-    }
-  }
-
-  const alchemyUrls = [
-    extractUrl(nft?.image?.cachedUrl),
-    extractUrl(nft?.image?.thumbnailUrl),
-    extractUrl(nft?.image?.pngUrl),
-    extractUrl(nft?.image?.originalUrl),
-  ];
-
-  for (const url of alchemyUrls) {
-    if (url) {
-      if (url.includes('wieldcd.net')) {
-        const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(url)}`;
-        setCache(tid, proxyUrl);
-        return proxyUrl;
-      }
-      const norm = normalizeUrl(String(url));
-      if (norm && !norm.includes("undefined")) {
-        setCache(tid, norm);
-        return norm;
-      }
-    }
-  }
-
+  // 4. Fallback to placeholder
   const placeholder = `https://via.placeholder.com/300x420/6366f1/ffffff?text=NFT+%23${tid}`;
   setCache(tid, placeholder);
   return placeholder;
@@ -270,6 +279,11 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
   const getCollectionFromContract = (nft: any): string => {
     const contractAddr = nft?.contract?.address?.toLowerCase();
 
+    // PRESERVE existing collection tag if already set (from fetchAndProcessNFTs)
+    if (nft.collection) {
+      return nft.collection;
+    }
+
     // GM VBRS collection
     if (contractAddr === '0xefe512e73ca7356c20a21aa9433bad5fc9342d46') {
       return 'gmvbrs';
@@ -278,6 +292,67 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
     // American Football collection (AFCL)
     if (contractAddr === '0xe3910325daaef5d969e6db5eca1ff0117bb160ae') {
       return 'americanfootball';
+    }
+
+    // VibeFID collection
+    if (contractAddr === '0x60274a138d026e3cb337b40567100fdec3127565') {
+      return 'vibefid';
+    }
+
+    // Coquettish collection
+    if (contractAddr === '0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea') {
+      return 'coquettish';
+    }
+
+    // Viberuto collection
+    if (contractAddr === '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f') {
+      return 'viberuto';
+    }
+
+
+    // Meowverse collection
+    if (contractAddr === '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150') {
+      return 'meowverse';
+    }
+
+    // Poorly Drawn Pepes collection
+    if (contractAddr === '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8') {
+      return 'poorlydrawnpepes';
+    }
+
+    // Team Pothead collection
+    if (contractAddr === '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea') {
+      return 'teampothead';
+    }
+
+    // Tarot collection
+    if (contractAddr === '0x34d639c63384a00a2d25a58f73bea73856aa0550') {
+      return 'tarot';
+    }
+
+    // Baseball Cabal collection
+    if (contractAddr === '0x3ff41af61d092657189b1d4f7d74d994514724bb') {
+      return 'baseballcabal';
+    }
+
+    // Vibe FX collection
+    if (contractAddr === '0xc7f2d8c035b2505f30a5417c0374ac0299d88553') {
+      return 'vibefx';
+    }
+
+    // History of Computer collection
+    if (contractAddr === '0x319b12e8eba0be2eae1112b357ba75c2c178b567') {
+      return 'historyofcomputer';
+    }
+
+    // $CU-MI-OH! collection
+    if (contractAddr === '0xfeabae8bdb41b2ae507972180df02e70148b38e1') {
+      return 'cumioh';
+    }
+
+    // Vibe Rot Bangers collection
+    if (contractAddr === '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a') {
+      return 'viberotbangers';
     }
 
     // Default to VBMS collection

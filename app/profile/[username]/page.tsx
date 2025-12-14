@@ -16,10 +16,12 @@ import { CardLoadingSpinner } from '@/components/LoadingSpinner';
 import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
 import { filterCardsByCollections, COLLECTIONS, type CollectionId } from "@/lib/collections/index";
 import { CardMedia } from '@/components/CardMedia';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
 
 // Development logging helpers - only log in development mode
 const isDev = process.env.NODE_ENV === 'development';
@@ -56,8 +58,12 @@ const setCache = (key: string, value: string): void => {
 function normalizeUrl(url: string): string {
   if (!url) return '';
   let u = url.trim();
-  if (u.startsWith('ipfs://')) u = 'https://ipfs.io/ipfs/' + u.slice(7);
-  else if (u.startsWith('ipfs/')) u = 'https://ipfs.io/ipfs/' + u.slice(5);
+  // Use Cloudflare IPFS gateway
+  const IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs/';
+  if (u.startsWith('ipfs://')) u = IPFS_GATEWAY + u.slice(7);
+  else if (u.startsWith('ipfs/')) u = IPFS_GATEWAY + u.slice(5);
+  // Convert existing ipfs.io URLs to Cloudflare gateway
+  else if (u.includes('ipfs.io/ipfs/')) u = u.replace('https://ipfs.io/ipfs/', IPFS_GATEWAY);
   u = u.replace(/^http:\/\//i, 'https://');
   return u;
 }
@@ -261,6 +267,7 @@ export default function ProfilePage() {
   const [rematchesRemaining, setRematchesRemaining] = useState<number>(5);
   const MAX_REMATCHES = 5;
   const [farcasterUsername, setFarcasterUsername] = useState<string>('');
+  const [farcasterPfp, setFarcasterPfp] = useState<string>('');
 
   // 🚀 OPTIMIZED: Use summary query (95% bandwidth reduction)
   const matchHistory = useQuery(
@@ -395,13 +402,25 @@ export default function ProfilePage() {
 
         setProfile(profileData);
 
-        // Busca username do Farcaster se tiver FID
-        if (profileData.fid) {
+        // Busca username do Farcaster se tiver FID (usando Neynar API)
+        if (profileData.fid && NEYNAR_API_KEY) {
           try {
-            const fcResponse = await fetch(`https://client.warpcast.com/v2/user-by-fid?fid=${profileData.fid}`);
+            const fcResponse = await fetch(
+              `https://api.neynar.com/v2/farcaster/user/bulk?fids=${profileData.fid}`,
+              {
+                headers: {
+                  'accept': 'application/json',
+                  'api_key': NEYNAR_API_KEY,
+                },
+              }
+            );
             if (fcResponse.ok) {
               const fcData = await fcResponse.json();
-              setFarcasterUsername(fcData.result?.user?.username || '');
+              const fcUser = fcData.users?.[0];
+              if (fcUser) {
+                setFarcasterUsername(fcUser.username || '');
+                setFarcasterPfp(fcUser.pfp_url || '');
+              }
             }
           } catch (error) {
             console.error('Error fetching Farcaster username:', error);
@@ -721,35 +740,35 @@ export default function ProfilePage() {
                       alt={profile.username}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // Fallback to DiceBear if image fails to load
+                        // Fallback to Farcaster PFP if available, otherwise hide image
                         const img = e.target as HTMLImageElement;
-                        if (profile.twitter) {
-                          img.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`;
+                        if (farcasterPfp) {
+                          img.src = farcasterPfp;
+                        } else {
+                          img.style.display = 'none';
                         }
                       }}
                     />
                   );
                 }
 
-                // Priority 2: Use DiceBear with Twitter username if available
-                if (profile.twitter) {
+                // Priority 2: Use Farcaster PFP if available
+                if (farcasterPfp) {
                   return (
                     <img
-                      src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.twitter.replace('@', '')}&backgroundColor=1a1414`}
+                      src={farcasterPfp}
                       alt={profile.username}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // Fallback to initials style
+                        // Hide image on error, show initials instead
                         const img = e.target as HTMLImageElement;
-                        if (!profile.twitter) return;
-                        const twitter = profile.twitter.replace('@', '');
-                        img.src = `https://api.dicebear.com/7.x/initials/svg?seed=${twitter}&backgroundColor=1a1414`;
+                        img.style.display = 'none';
                       }}
                     />
                   );
                 }
 
-                // Priority 3: Use initials as final fallback
+                // Priority 3: Use initials as fallback
                 return <span>{profile.username.substring(0, 2).toUpperCase()}</span>;
               })()}
             </div>
@@ -794,20 +813,28 @@ export default function ProfilePage() {
                     𝕏 @{profile.twitter.replace('@', '')}
                   </a>
                 )}
-                {profile.fid && (
+                {profile.fid && farcasterUsername && (
                   <a
-                    href={`https://warpcast.com/${farcasterUsername || profile.fid}`}
+                    href={`https://warpcast.com/${farcasterUsername}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-purple-400 hover:text-vintage-gold inline-flex items-center gap-1 font-modern"
                   >
-                    <svg width="16" height="16" viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline">
-                      <path d="M257.778 155.556H742.222V844.444H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.444H257.778V155.556Z" fill="currentColor"/>
-                      <path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.444H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z" fill="currentColor"/>
-                      <path d="M675.556 746.667V351.111H700L728.889 253.333H551.111V746.667H524.444C512.171 746.667 502.222 756.616 502.222 768.889V795.556H497.778C485.505 795.556 475.556 805.505 475.556 817.778V844.444H724.444V817.778C724.444 805.505 714.495 795.556 702.222 795.556H697.778V768.889C697.778 756.616 687.828 746.667 675.556 746.667Z" fill="currentColor"/>
+                    <svg width="16" height="16" viewBox="128.889 155.556 751.111 688.889" fill="currentColor" className="inline">
+                      <path d="M257.778 155.556h484.444v688.889h-71.111V528.889h-.697c-7.86-87.212-81.156-155.556-170.414-155.556s-162.554 68.344-170.414 155.556h-.697v315.556h-71.111z"/>
+                      <path d="M128.889 253.333l28.889 97.778h24.444v395.556c-12.273 0-22.222 9.949-22.222 22.222v26.667h-4.444c-12.273 0-22.223 9.949-22.223 22.222v26.667h248.889v-26.667c0-12.273-9.949-22.222-22.222-22.222h-4.444v-26.667c0-12.273-9.95-22.222-22.223-22.222h-26.666V253.333zM675.556 746.667c-12.273 0-22.223 9.949-22.223 22.222v26.667h-4.444c-12.273 0-22.222 9.949-22.222 22.222v26.667h248.889v-26.667c0-12.273-9.95-22.222-22.223-22.222h-4.444v-26.667c0-12.273-9.949-22.222-22.222-22.222V351.111h24.444L880 253.333H702.222v493.334z"/>
                     </svg>
-                    @{farcasterUsername || `fid:${profile.fid}`}
+                    @{farcasterUsername}
                   </a>
+                )}
+                {profile.fid && !farcasterUsername && (
+                  <span className="text-purple-400 inline-flex items-center gap-1 font-modern">
+                    <svg width="16" height="16" viewBox="128.889 155.556 751.111 688.889" fill="currentColor" className="inline">
+                      <path d="M257.778 155.556h484.444v688.889h-71.111V528.889h-.697c-7.86-87.212-81.156-155.556-170.414-155.556s-162.554 68.344-170.414 155.556h-.697v315.556h-71.111z"/>
+                      <path d="M128.889 253.333l28.889 97.778h24.444v395.556c-12.273 0-22.222 9.949-22.222 22.222v26.667h-4.444c-12.273 0-22.223 9.949-22.223 22.222v26.667h248.889v-26.667c0-12.273-9.949-22.222-22.222-22.222h-4.444v-26.667c0-12.273-9.95-22.222-22.223-22.222h-26.666V253.333zM675.556 746.667c-12.273 0-22.223 9.949-22.223 22.222v26.667h-4.444c-12.273 0-22.222 9.949-22.222 22.222v26.667h248.889v-26.667c0-12.273-9.95-22.222-22.223-22.222h-4.444v-26.667c0-12.273-9.949-22.222-22.222-22.222V351.111h24.444L880 253.333H702.222v493.334z"/>
+                    </svg>
+                    FID: {profile.fid}
+                  </span>
                 )}
               </div>
 
@@ -832,7 +859,8 @@ export default function ProfilePage() {
                       const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
 
                       // Farcaster cast text
-                      const castText = `Check out my Vibe Most Wanted profile!\n\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
+                      // @ts-expect-error - honor field is added to schema but types not yet regenerated
+                      const castText = `Check out my Vibe Most Wanted profile!\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
 
                       const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
@@ -872,7 +900,8 @@ export default function ProfilePage() {
                   <button
                     onClick={async () => {
                       const profileUrl = `${window.location.origin}/profile/${profile.username}`;
-                      const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
+                      // @ts-expect-error - honor field is added to schema but types not yet regenerated
+                      const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
 
                       const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
 
@@ -932,7 +961,7 @@ export default function ProfilePage() {
         <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
           <span className="text-3xl">♦</span> Statistics
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♠ TOTAL CARDS</p>
             <p className="text-3xl font-bold text-vintage-gold">{nfts.length || profile.stats.totalCards}</p>
@@ -940,6 +969,11 @@ export default function ProfilePage() {
           <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">◆ TOTAL POWER</p>
             <p className="text-3xl font-bold text-vintage-gold">{(profile.stats.totalPower || 0).toLocaleString()}</p>
+          </div>
+          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-purple-400/50">
+            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">⚔️ HONOR</p>
+            {/* @ts-expect-error - honor field is added to schema but types not yet regenerated */}
+            <p className="text-3xl font-bold text-purple-400">{(profile.stats.honor ?? 500).toLocaleString()}</p>
           </div>
           <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-6 rounded-xl border-2 border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
             <p className="text-xs text-vintage-burnt-gold mb-1 font-modern flex items-center gap-1">💰 COINS</p>
@@ -1012,14 +1046,10 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-5 gap-4">
                     {validCards.map((card, i) => (
                       <FoilCardEffect key={i} foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
-                        <img
-                          src={card.imageUrl}
+                        <CardMedia
+                          src={convertIpfsUrl(card.imageUrl) || card.imageUrl}
                           alt={`#${card.tokenId}`}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            // Fallback for broken images
-                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300"%3E%3Crect width="200" height="300" fill="%23222"%2F%3E%3Ctext x="50%25" y="50%25" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle" font-family="monospace"%3E%23' + card.tokenId + '%3C/text%3E%3C/svg%3E';
-                          }}
                         />
                         <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
                           {card.power}
@@ -1145,9 +1175,20 @@ export default function ProfilePage() {
               >
                 <option value="all" className="bg-vintage-black text-vintage-gold">All</option>
                 <option value="vibe" className="bg-vintage-black text-vintage-gold">VBMS</option>
+                <option value="vibe rot bangers" className="bg-vintage-black text-vintage-gold">BANGER</option>
+                <option value="cumioh" className="bg-vintage-black text-vintage-gold">CUMIO</option>
+                <option value="historyofcomputer" className="bg-vintage-black text-vintage-gold">HSTR</option>
+                <option value="vibefx" className="bg-vintage-black text-vintage-gold">VBFX</option>
+                <option value="baseballcabal" className="bg-vintage-black text-vintage-gold">BBCL</option>
+                <option value="tarot" className="bg-vintage-black text-vintage-gold">TRT</option>
+                <option value="teampothead" className="bg-vintage-black text-vintage-gold">TMPT</option>
+                <option value="poorlydrawnpepes" className="bg-vintage-black text-vintage-gold">PDP</option>
+                <option value="meowverse" className="bg-vintage-black text-vintage-gold">MEOVV</option>
+                <option value="viberuto" className="bg-vintage-black text-vintage-gold">VBRTO</option>
                 <option value="vibefid" className="bg-vintage-black text-vintage-gold">VIBEFID</option>
                 <option value="americanfootball" className="bg-vintage-black text-vintage-gold">AFCL</option>
                 <option value="gmvbrs" className="bg-vintage-black text-vintage-gold">VBRS</option>
+                <option value="coquettish" className="bg-vintage-black text-vintage-gold">COQ</option>
               </select>
             </div>
           </div>
@@ -1249,8 +1290,8 @@ export default function ProfilePage() {
                         className={`relative overflow-hidden rounded-xl ring-2 ${getRarityRing(rarity)} hover:ring-vintage-gold/50 ${isLegendary ? 'legendary-card' : ''}`}
                         style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}}
                       >
-                        <img
-                          src={imageUrl}
+                        <CardMedia
+                          src={convertIpfsUrl(imageUrl) || imageUrl}
                           alt={`#${tokenId}`}
                           className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none"
                           loading="lazy"
@@ -1589,6 +1630,11 @@ export default function ProfilePage() {
                               devError('Failed to update rematch count:', err);
                             }
 
+                            // Check if ATTACKER has defense deck (required to attack)
+                            if (!profile?.hasDefenseDeck) {
+                              alert('You need to set up your defense deck before attacking other players! Go to your profile to set it up.');
+                              return;
+                            }
                             // ✅ Open attack modal directly in profile (no redirect!)
                             setTargetOpponent(opponentProfile);
                             setAttackSelectedCards([]);

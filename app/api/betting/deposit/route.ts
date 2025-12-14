@@ -10,8 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
-import { createPublicClient, http, parseEther } from 'viem';
-import { base } from 'viem/chains';
+import { parseEther } from 'viem';
+import { verifyERC20TransferByLogs } from '@/lib/blockchain/tx-utils';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const VBMS_TOKEN = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
@@ -32,50 +32,23 @@ export async function POST(request: NextRequest) {
     console.log(`💰 Verifying betting deposit: ${amount} VBMS from ${address}`);
     console.log(`📝 Transaction hash: ${txHash}`);
 
-    // Setup viem client
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
-
-    // Verify transaction
-    console.log(`🔍 Fetching transaction receipt...`);
-    const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
-
-    if (!receipt || receipt.status !== 'success') {
-      throw new Error('Transaction not found or failed');
-    }
-
-    // Get transaction details
-    const tx = await publicClient.getTransaction({ hash: txHash as `0x${string}` });
-
-    // Verify transaction details
-    if (tx.from.toLowerCase() !== address.toLowerCase()) {
-      throw new Error('Transaction sender does not match');
-    }
-
-    if (tx.to?.toLowerCase() !== VBMS_TOKEN.toLowerCase()) {
-      throw new Error('Transaction is not to VBMS token contract');
-    }
-
-    // Decode transaction input to verify it's a transfer to the betting contract
-    // Transfer function signature: transfer(address,uint256)
-    const bettingAddressInCalldata = tx.input.slice(10, 74); // Extract address from calldata
-    const expectedBetting = VBMS_BETTING.slice(2).toLowerCase().padStart(64, '0');
-
-    if (bettingAddressInCalldata.toLowerCase() !== expectedBetting) {
-      throw new Error('Transaction is not a transfer to the betting contract');
-    }
-
-    // Decode amount from calldata
-    const amountInCalldata = BigInt('0x' + tx.input.slice(74));
+    // Verify ERC20 transfer using Transfer event logs
+    // This method works with Smart Contract Wallets (Coinbase Smart Wallet, etc.)
+    // because it checks the Transfer event `from` field, not tx.from
     const expectedAmount = parseEther(amount.toString());
+    const verification = await verifyERC20TransferByLogs(
+      txHash as `0x${string}`,
+      address,          // expected from (token holder)
+      VBMS_BETTING,     // expected to (betting contract)
+      expectedAmount,   // minimum amount
+      VBMS_TOKEN        // token contract
+    );
 
-    if (amountInCalldata < expectedAmount) {
-      throw new Error(`Insufficient transfer amount. Expected ${amount} VBMS`);
+    if (!verification.verified) {
+      throw new Error(verification.error || 'Transfer verification failed');
     }
 
-    console.log(`✅ Transaction verified: ${amount} VBMS from ${address} to betting contract`);
+    console.log(`✅ Transaction verified: ${amount} VBMS from ${verification.actualFrom} to betting contract`);
 
     // Add betting credits in Convex
     const convex = new ConvexHttpClient(CONVEX_URL);

@@ -1,9 +1,16 @@
 module.exports = {
-  turbopack: {
-    root: '/',
-  },
   async headers() {
     return [
+      {
+        // Global headers for all routes - enable microphone/camera permissions
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'microphone=*, camera=*, geolocation=()',
+          },
+        ],
+      },
       {
         // Permitir acesso ao manifest do Farcaster
         source: '/.well-known/farcaster.json',
@@ -47,6 +54,24 @@ module.exports = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // Allow public access to opengraph images for Farcaster/social media
+        source: '/share/:path*/opengraph-image',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, OPTIONS',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate',
           },
         ],
       },

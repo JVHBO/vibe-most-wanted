@@ -2,28 +2,19 @@
  * Attack Card Selection Modal Component
  *
  * Modal for selecting cards to attack another player's defense deck
- * Includes:
- * - Card selection grid with locked card detection
- * - Sort by power functionality
- * - Attack preview and execution logic
- * - Battle animation triggers
+ * Updated to match Poker Battle deck-building format with pagination
  */
 
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useState, useMemo } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
-
-interface Card {
-  tokenId: string;
-  power: number;
-  imageUrl: string;
-  name: string;
-  rarity?: string;
-  foil?: string;
-}
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { filterCardsByCollections, COLLECTIONS, getEnabledCollections, getCardUniqueId, isSameCard, type CollectionId, type Card, type CardRarity, type CardFoil } from '@/lib/collections/index';
+import { useBodyScrollLock, useEscapeKey } from '@/hooks';
+import { Z_INDEX } from '@/lib/z-index';
 
 interface PvPPreviewData {
   // Define based on your API response
@@ -40,6 +31,7 @@ interface AttackCardSelectionModalProps {
   sortedAttackNfts: Card[];
   isAttacking: boolean;
   isLoadingPreview: boolean;
+  isLoadingCards?: boolean; // Optional loading state for when cards are being fetched
   HAND_SIZE: number;
 
   // User data
@@ -98,6 +90,7 @@ export function AttackCardSelectionModal({
   sortedAttackNfts,
   isAttacking,
   isLoadingPreview,
+  isLoadingCards = false,
   HAND_SIZE,
   address,
   userProfile,
@@ -138,33 +131,114 @@ export function AttackCardSelectionModal({
   api,
   maxAttacks,
 }: AttackCardSelectionModalProps) {
+  const [currentPage, setCurrentPage] = useState(0);
+  const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
+  const CARDS_PER_PAGE = 50;
+
+  // Modal close handler (defined early for ESC key hook)
+  const closeModal = () => {
+    if (soundEnabled) AudioManager.buttonNav();
+    setShowAttackCardSelection(false);
+    setAttackSelectedCards([]);
+    setTargetPlayer(null);
+  };
+
+  // Modal accessibility hooks
+  useBodyScrollLock(showAttackCardSelection && !!targetPlayer);
+  useEscapeKey(closeModal, showAttackCardSelection && !!targetPlayer);
+
+  // Apply collection filter
+  const filteredCards = useMemo(() => {
+    if (selectedCollections.length === 0) {
+      return sortedAttackNfts;
+    }
+    return filterCardsByCollections(sortedAttackNfts, selectedCollections);
+  }, [sortedAttackNfts, selectedCollections]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredCards.length / CARDS_PER_PAGE);
+  const paginatedCards = filteredCards.slice(
+    currentPage * CARDS_PER_PAGE,
+    (currentPage + 1) * CARDS_PER_PAGE
+  );
+
+  // Early return AFTER all hooks
   if (!showAttackCardSelection || !targetPlayer) return null;
 
+  // Loading state
+  const isLoading = isLoadingCards || sortedAttackNfts.length === 0;
+
   const handleAttack = async () => {
-    if (attackSelectedCards.length !== HAND_SIZE || !targetPlayer || isAttacking) return;
+    devLog('🔴 handleAttack called!', {
+      cardsLength: attackSelectedCards.length,
+      HAND_SIZE,
+      hasTarget: !!targetPlayer,
+      isAttacking,
+      address,
+      targetAddress: targetPlayer?.address
+    });
+
+    if (attackSelectedCards.length !== HAND_SIZE || !targetPlayer || isAttacking) {
+      devLog('❌ Early return - conditions not met');
+      return;
+    }
 
     // Show preview of gains/losses before attacking
     if (address && targetPlayer.address) {
+      devLog('📊 Fetching PvP preview...');
       try {
         setIsLoadingPreview(true);
         const preview = await convex.query(api.economy.previewPvPRewards, {
           playerAddress: address,
           opponentAddress: targetPlayer.address
         });
+        devLog('✅ Preview fetched:', preview);
         setPvpPreviewData(preview);
         setShowPvPPreview(true);
         setIsLoadingPreview(false);
         if (soundEnabled) AudioManager.buttonClick();
+        devLog('✅ Preview modal should be visible now');
         return; // Stop here - battle only starts after confirming in modal
       } catch (error) {
-        devError('Error fetching PvP preview:', error);
+        devError('❌ Error fetching PvP preview:', error);
         setIsLoadingPreview(false);
         // If preview fails, continue normally
       }
+    } else {
+      devLog('⚠️ Skipping preview - missing address or targetPlayer.address');
     }
 
     // Prevent multiple clicks
     setIsAttacking(true);
+
+    // Fetch complete profile to get defense deck (leaderboard doesn't include it for performance)
+    let completeProfile;
+    try {
+      completeProfile = await convex.query(api.profiles.getProfile, {
+        address: targetPlayer.address
+      });
+
+      if (!completeProfile) {
+        setErrorMessage(`Could not load ${targetPlayer.username}'s profile. Please try again.`);
+        setIsAttacking(false);
+        if (soundEnabled) AudioManager.buttonError();
+        return;
+      }
+    } catch (error) {
+      devError('Error fetching target player profile:', error);
+      setErrorMessage(`Error loading ${targetPlayer.username}'s profile. Please try again.`);
+      setIsAttacking(false);
+      if (soundEnabled) AudioManager.buttonError();
+      return;
+    }
+
+    // Validate opponent has a complete defense deck
+    if (!completeProfile.defenseDeck || completeProfile.defenseDeck.length !== HAND_SIZE) {
+      setErrorMessage(`${targetPlayer.username} doesn't have a defense deck set up. You can only attack players with a complete defense deck (${HAND_SIZE} cards).`);
+      setIsAttacking(false);
+      if (soundEnabled) AudioManager.buttonError();
+      return;
+    }
 
     try {
       // Pay entry fee BEFORE attacking
@@ -182,17 +256,19 @@ export function AttackCardSelectionModal({
     devLog(`✦ ATTACKING: ${targetPlayer.username}`);
     devLog(`◆ Using saved defense deck data (no NFT fetch needed)`);
 
-    const defenderCards = (targetPlayer.defenseDeck || [])
-      .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } => typeof card === 'object')
-      .map((card, i) => {
+    const defenderCards = (completeProfile.defenseDeck || [])
+      .filter((card: string | { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string }): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string } => typeof card === 'object')
+      .map((card: { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string }, i: number) => {
         devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);
         return {
           tokenId: card.tokenId,
           power: card.power,
           imageUrl: card.imageUrl,
           name: card.name,
-          rarity: card.rarity,
-        };
+          rarity: card.rarity as CardRarity,
+          collection: card.collection as CollectionId | undefined,
+          foil: card.foil as CardFoil | undefined,
+        } as Card;
       });
     devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
@@ -212,8 +288,12 @@ export function AttackCardSelectionModal({
     if (soundEnabled) AudioManager.playHand();
 
     // Calculate power totals
-    const playerTotal = attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0);
-    const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+    // VibeFID gets 10x power in leaderboard attacks
+      const playerTotal = attackSelectedCards.reduce((sum: number, c: Card) => {
+        const multiplier = c.collection === 'vibefid' ? 10 : 1;
+        return sum + ((c.power || 0) * multiplier);
+      }, 0);
+    const dealerTotal = defenderCards.reduce((sum: number, c: Card) => sum + (c.power || 0), 0);
 
     // Animate battle
     setTimeout(() => {
@@ -329,122 +409,204 @@ export function AttackCardSelectionModal({
     }, 4500);
   };
 
+  const handleCancel = closeModal;
+
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto" onClick={() => setShowAttackCardSelection(false)}>
-      <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-4 shadow-lg shadow-red-600/50 my-4 max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-3xl font-display font-bold text-center mb-2 text-red-500">
+    <div
+      className="fixed inset-0 bg-black/90 flex items-center justify-center p-4"
+      style={{ zIndex: Z_INDEX.modal }}
+      onClick={handleCancel}
+    >
+      <div
+        className="bg-vintage-charcoal rounded-2xl border-4 border-red-600 max-w-6xl w-full p-4 md:p-6 lg:p-8 shadow-lg shadow-red-600/50 h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <h2 className="text-2xl md:text-3xl font-display font-bold text-center mb-2 text-red-500 flex-shrink-0">
           † ATTACK {targetPlayer.username.toUpperCase()}
         </h2>
-        <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
-          Choose {HAND_SIZE} cards to attack with ({attackSelectedCards.length}/{HAND_SIZE} selected)
-        </p>
 
-        {/* Selected Cards Display */}
-        <div className="mb-3 p-2 bg-vintage-black/50 rounded-xl border border-red-600/50">
-          <div className="grid grid-cols-5 gap-1.5">
-            {attackSelectedCards.map((card, i) => (
-              <div key={i} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-600 shadow-lg">
-                <FoilCardEffect
-                  foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null}
-                  className="w-full h-full"
-                >
-                  <CardMedia src={card.imageUrl} alt={`#${card.tokenId}`} className="w-full h-full object-cover" />
-                </FoilCardEffect>
-                <div className="absolute top-0 left-0 bg-red-600 text-white text-xs px-1 rounded-br font-bold">{card.power}</div>
-              </div>
-            ))}
-            {Array(HAND_SIZE - attackSelectedCards.length).fill(0).map((_, i) => (
-              <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-red-600/40 flex items-center justify-center text-red-600/50 bg-vintage-felt-green/30">
-                <span className="text-xl font-bold">+</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 text-center">
-            <p className="text-xs text-vintage-burnt-gold">Your Attack Power</p>
-            <p className="text-xl font-bold text-red-500">{attackSelectedCardsPower}</p>
-          </div>
+        {/* Counter */}
+        <div className="text-center mb-2 flex-shrink-0">
+          <p className="text-vintage-burnt-gold text-sm sm:text-base font-modern">
+            Select {HAND_SIZE} cards ({attackSelectedCards.length}/{HAND_SIZE})
+          </p>
         </div>
 
-        {/* Sort Button */}
-        <div className="mb-2 flex justify-end">
+        {/* Controls Row: Collection Filter + Sort Button */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-4 flex-shrink-0">
+          <select
+            value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
+            onChange={(e) => {
+              if (e.target.value === 'all') {
+                setSelectedCollections([]);
+              } else {
+                setSelectedCollections([e.target.value as CollectionId]);
+              }
+              setCurrentPage(0);
+              if (soundEnabled) AudioManager.buttonClick();
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
+          >
+            <option value="all">All Collections</option>
+            {getEnabledCollections().map(col => (
+              <option key={col.id} value={col.id}>{col.displayName}</option>
+            ))}
+          </select>
+
           <button
             onClick={() => {
               setSortAttackByPower(!sortAttackByPower);
+              setCurrentPage(0);
               if (soundEnabled) AudioManager.buttonClick();
             }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all ${
+            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
               sortAttackByPower
-                ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
+                ? 'bg-vintage-gold text-vintage-black'
+                : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
             }`}
           >
-            {sortAttackByPower ? '↓ Sort by Power' : '⇄ Default Order'}
+            {sortAttackByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
           </button>
         </div>
 
-        {/* Available Cards Grid */}
-        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5 mb-4 max-h-[45vh] overflow-y-auto p-1">
-          {sortedAttackNfts.map((nft) => {
-            const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
-            const isLocked = isCardLocked(nft.tokenId, 'attack');
-            return (
+        {/* Selected Attack Deck Display */}
+        <div className="mb-4 bg-red-900/40 border-2 border-red-600/50 rounded-xl p-3 flex-shrink-0">
+          <div className={`grid gap-2 ${HAND_SIZE === 10 ? 'grid-cols-5 md:grid-cols-10' : 'grid-cols-5'}`}>
+            {Array.from({ length: HAND_SIZE }).map((_, i) => (
               <div
-                key={nft.tokenId}
-                onClick={() => {
-                  if (isLocked) {
-                    if (soundEnabled) AudioManager.buttonError();
-                    return;
-                  }
-                  if (isSelected) {
-                    setAttackSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
-                    if (soundEnabled) {
-                      AudioManager.deselectCard();
-                      AudioManager.hapticFeedback('light');
-                    }
-                  } else if (attackSelectedCards.length < HAND_SIZE) {
-                    setAttackSelectedCards(prev => [...prev, nft]);
-                    if (soundEnabled) {
-                      AudioManager.selectCardByRarity(nft.rarity);
-                    }
-                  }
-                }}
-                className={`relative aspect-[2/3] rounded-lg overflow-hidden transition-all ${
-                  isLocked
-                    ? 'opacity-50 cursor-not-allowed'
-                    : isSelected
-                    ? 'ring-4 ring-red-600 scale-95 cursor-pointer'
-                    : 'hover:scale-105 hover:ring-2 hover:ring-vintage-gold/50 cursor-pointer'
-                }`}
-                title={isLocked ? "🔒 This card is locked in your defense deck" : undefined}
+                key={i}
+                className="aspect-[2/3] border-2 border-dashed border-red-600/50 rounded-lg flex flex-col items-center justify-center overflow-hidden relative"
               >
-                <CardMedia src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
-                <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
-                  {nft.power}
-                </div>
-
-                {isLocked && (
-                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
-                    <div className="text-3xl mb-1">🔒</div>
-                    <div className="text-[10px] text-white font-bold bg-black/50 px-1 rounded">
-                      IN DEFENSE
+                {attackSelectedCards[i] ? (
+                  <>
+                    <CardMedia
+                      src={attackSelectedCards[i].imageUrl}
+                      alt={`#${attackSelectedCards[i].tokenId}`}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <div className={`absolute bottom-0 left-0 right-0 py-0.5 text-xs font-bold text-center ${attackSelectedCards[i].collection === 'vibefid' ? 'bg-purple-900/90 text-purple-300' : 'bg-black/80 text-red-500'}`}>
+                      {attackSelectedCards[i].collection === 'vibefid' ? `${((attackSelectedCards[i].power || 0) * 10).toLocaleString()} (10x)` : attackSelectedCards[i].power?.toLocaleString()}
                     </div>
-                  </div>
-                )}
-
-                {isSelected && !isLocked && (
-                  <div className="absolute inset-0 bg-red-600/20 flex items-center justify-center">
-                    <div className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                      ✓
-                    </div>
-                  </div>
+                  </>
+                ) : (
+                  <span className="text-red-500 text-3xl">+</span>
                 )}
               </div>
-            );
-          })}
+            ))}
+          </div>
+          <div className="mt-3 text-center">
+            <p className="text-xs text-vintage-burnt-gold">Attack Power</p>
+            <p className="text-2xl font-bold text-red-500">
+              {attackSelectedCardsPower.toLocaleString()}
+            </p>
+          </div>
         </div>
 
+        {/* Available Cards Grid */}
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto mb-4">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-4">
+              {paginatedCards.map((nft) => {
+                const isSelected = attackSelectedCards.find(c => isSameCard(c, nft));
+                const isLocked = isCardLocked(nft.tokenId, 'attack');
+                return (
+                  <button
+                    key={getCardUniqueId(nft)}
+                    onClick={() => {
+                      if (isLocked) {
+                        if (soundEnabled) AudioManager.buttonError();
+                        return;
+                      }
+                      if (isSelected) {
+                        setAttackSelectedCards(prev => prev.filter(c => !isSameCard(c, nft)));
+                        if (soundEnabled) {
+                          AudioManager.deselectCard();
+                          AudioManager.hapticFeedback('light');
+                        }
+                      } else if (attackSelectedCards.length < HAND_SIZE) {
+                        setAttackSelectedCards(prev => [...prev, nft]);
+                        if (soundEnabled) {
+                          AudioManager.selectCardByRarity(nft.rarity);
+                        }
+                      }
+                    }}
+                    className={`aspect-[2/3] relative rounded-lg overflow-hidden border-2 transition ${
+                      isLocked
+                        ? 'opacity-50 cursor-not-allowed border-vintage-gold/30'
+                        : isSelected
+                        ? 'border-red-600 shadow-lg shadow-red-600/50 scale-95'
+                        : 'border-vintage-gold/30 hover:border-vintage-gold/60 hover:scale-105'
+                    }`}
+                    title={isLocked ? "🔒 This card is locked in your defense deck" : undefined}
+                  >
+                    <CardMedia
+                      src={nft.imageUrl}
+                      alt={`#${nft.tokenId}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className={`absolute top-0 left-0 text-xs px-1 rounded-br font-bold ${nft.collection === 'vibefid' ? 'bg-purple-600 text-white' : 'bg-vintage-gold text-vintage-black'}`}>
+                      {nft.collection === 'vibefid' ? `${((nft.power || 0) * 10).toLocaleString()} ★` : nft.power?.toLocaleString()}
+                    </div>
+
+                    {isLocked && (
+                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                        <div className="text-3xl mb-1">🔒</div>
+                        <div className="text-[10px] text-white font-bold bg-black/50 px-1 rounded">
+                          IN DEFENSE
+                        </div>
+                      </div>
+                    )}
+
+                    {isSelected && !isLocked && (
+                      <div className="absolute inset-0 bg-red-600/20 flex items-center justify-center">
+                        <span className="text-4xl text-red-600">✓</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mb-4 flex-shrink-0">
+            <button
+              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+              disabled={currentPage === 0}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
+                currentPage === 0
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
+              }`}
+            >
+              ← Prev
+            </button>
+            <span className="text-vintage-gold font-bold">
+              {currentPage + 1}/{totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+              disabled={currentPage === totalPages - 1}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
+                currentPage === totalPages - 1
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
+              }`}
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
         {/* Action Buttons */}
-        <div className="space-y-3">
+        <div className="space-y-2 flex-shrink-0">
           <button
             onClick={handleAttack}
             disabled={attackSelectedCards.length !== HAND_SIZE || isAttacking}
@@ -454,23 +616,15 @@ export function AttackCardSelectionModal({
                 : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
             }`}
           >
-            {isAttacking ? (
-              '... Attacking'
-            ) : (
-              <div className="flex items-center justify-between">
-                <span>† Attack! ({attackSelectedCards.length}/{HAND_SIZE})</span>
-                <span className="text-sm font-modern bg-green-500/30 px-2 py-1 rounded ml-2">FREE</span>
-              </div>
-            )}
+            {isAttacking
+              ? '... ATTACKING'
+              : attackSelectedCards.length === HAND_SIZE
+              ? '† ATTACK!'
+              : `SELECT ${HAND_SIZE - attackSelectedCards.length} MORE`}
           </button>
 
           <button
-            onClick={() => {
-              if (soundEnabled) AudioManager.buttonNav();
-              setShowAttackCardSelection(false);
-              setAttackSelectedCards([]);
-              setTargetPlayer(null);
-            }}
+            onClick={handleCancel}
             className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
           >
             Cancel

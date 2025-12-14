@@ -5,10 +5,12 @@
  * and selecting their cards for battle
  */
 
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useState, useMemo } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexPvPService, type GameRoom } from '@/lib/convex-pvp';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { CardMedia } from '@/components/CardMedia';
+import { getCardUniqueId, isSameCard } from '@/lib/collections/index';
 
 interface Card {
   tokenId: string;
@@ -16,6 +18,7 @@ interface Card {
   imageUrl: string;
   name: string;
   rarity?: string;
+  collection?: string;
 }
 
 interface PvPInRoomModalProps {
@@ -58,6 +61,14 @@ export function PvPInRoomModal({
   isCardLocked,
   t,
 }: PvPInRoomModalProps) {
+  const [sortByPower, setSortByPower] = useState<boolean>(false);
+
+  // Sort cards by power if enabled
+  const sortedNfts = useMemo(() => {
+    if (!sortByPower) return nfts;
+    return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+  }, [nfts, sortByPower]);
+
   if (pvpMode !== 'inRoom' || !roomCode) return null;
 
   return (
@@ -97,7 +108,7 @@ export function PvPInRoomModal({
             {/* Host */}
             <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-neon-blue/50">
               <p className="text-vintage-neon-blue font-bold mb-2 font-modern">Host</p>
-              <p className="text-white text-sm font-mono">{currentRoom.hostUsername || `${currentRoom.hostAddress.slice(0, 10)}...`}</p>
+              <p className="text-white text-sm font-mono truncate max-w-[150px]">{currentRoom.hostUsername || `${currentRoom.hostAddress.slice(0, 10)}...`}</p>
               <p className="text-vintage-burnt-gold text-sm">
                 {(currentRoom.hostCards && currentRoom.hostCards.length > 0) ? '✓ Ready' : '... Selecting cards'}
               </p>
@@ -108,7 +119,7 @@ export function PvPInRoomModal({
               <p className="text-vintage-gold font-bold mb-2 font-modern">{t('opponent')}</p>
               {currentRoom.guestAddress ? (
                 <>
-                  <p className="text-white text-sm font-mono">{currentRoom.guestUsername || `${currentRoom.guestAddress.slice(0, 10)}...`}</p>
+                  <p className="text-white text-sm font-mono truncate max-w-[150px]">{currentRoom.guestUsername || `${currentRoom.guestAddress.slice(0, 10)}...`}</p>
                   <p className="text-vintage-burnt-gold text-sm">
                     {(currentRoom.guestCards && currentRoom.guestCards.length > 0) ? '✓ Ready' : '... Selecting cards'}
                   </p>
@@ -137,23 +148,38 @@ export function PvPInRoomModal({
 
               return (
                 <div className="mt-6">
-                  <h3 className="text-lg font-bold text-center text-white mb-4">
-                    {t('selectYourCards') || 'Select Your Cards'} ({selectedCards.length}/5)
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-white">
+                      {t('selectYourCards') || 'Select Your Cards'} ({selectedCards.length}/5)
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setSortByPower(!sortByPower);
+                        if (soundEnabled) AudioManager.buttonClick();
+                      }}
+                      className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
+                        sortByPower
+                          ? 'bg-vintage-gold text-vintage-black'
+                          : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
+                      }`}
+                    >
+                      {sortByPower ? '⚡ Sorted' : '⚡ Sort'}
+                    </button>
+                  </div>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto p-2">
-                    {nfts.map((nft, index) => {
-                      const isSelected = selectedCards.some((c: any) => c.tokenId === nft.tokenId);
+                    {sortedNfts.map((nft) => {
+                      const isSelected = selectedCards.some((c: any) => isSameCard(c, nft));
                       const isLocked = isCardLocked(nft.tokenId, 'pvp');
                       return (
                         <div
-                          key={index}
+                          key={getCardUniqueId(nft)}
                           onClick={() => {
                             if (isLocked) {
                               if (soundEnabled) AudioManager.buttonError();
                               return;
                             }
                             if (isSelected) {
-                              setSelectedCards(selectedCards.filter((c: any) => c.tokenId !== nft.tokenId));
+                              setSelectedCards(selectedCards.filter((c: any) => !isSameCard(c, nft)));
                               if (soundEnabled) {
                                 AudioManager.deselectCard();
                                 AudioManager.hapticFeedback('light');
@@ -165,7 +191,7 @@ export function PvPInRoomModal({
                               }
                             }
                           }}
-                          className={`relative rounded-lg overflow-hidden transition-all ${
+                          className={`relative aspect-[2/3] rounded-lg overflow-hidden transition-all ${
                             isLocked
                               ? 'opacity-50 cursor-not-allowed'
                               : isSelected
@@ -174,14 +200,13 @@ export function PvPInRoomModal({
                           }`}
                           title={isLocked ? "🔒 This card is locked in your defense deck" : undefined}
                         >
-                          <img
+                          <CardMedia
                             src={nft.imageUrl}
                             alt={nft.name}
-                            className="w-full h-auto"
-                            loading="lazy"
+                            className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-1 right-1 bg-black/70 rounded-full px-2 py-0.5 text-xs font-bold text-white">
-                            {nft.power}
+                          <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
+                            {nft.power?.toLocaleString()}
                           </div>
 
                           {/* Locked Overlay */}

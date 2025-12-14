@@ -19,7 +19,7 @@ export const getRoom = query({
   handler: async (ctx, { code }) => {
     const room = await ctx.db
       .query("rooms")
-      .filter((q) => q.eq(q.field("roomId"), code))
+      .withIndex("by_room_id", (q) => q.eq("roomId", code))
       .first();
 
     return room;
@@ -115,7 +115,7 @@ export const createRoom = mutation({
       // Check if code already exists
       const existing = await ctx.db
         .query("rooms")
-        .filter((q) => q.eq(q.field("roomId"), code))
+        .withIndex("by_room_id", (q) => q.eq("roomId", code))
         .first();
 
       if (!existing) {
@@ -156,7 +156,7 @@ export const joinRoom = mutation({
   handler: async (ctx, { code, guestAddress, guestUsername }) => {
     const room = await ctx.db
       .query("rooms")
-      .filter((q) => q.eq(q.field("roomId"), code))
+      .withIndex("by_room_id", (q) => q.eq("roomId", code))
       .first();
 
     if (!room) {
@@ -196,7 +196,7 @@ export const updateCards = mutation({
   handler: async (ctx, { code, playerAddress, cards, power }) => {
     const room = await ctx.db
       .query("rooms")
-      .filter((q) => q.eq(q.field("roomId"), code))
+      .withIndex("by_room_id", (q) => q.eq("roomId", code))
       .first();
 
     if (!room) {
@@ -247,7 +247,7 @@ export const finishRoom = mutation({
   handler: async (ctx, { code, winnerId }) => {
     const room = await ctx.db
       .query("rooms")
-      .filter((q) => q.eq(q.field("roomId"), code))
+      .withIndex("by_room_id", (q) => q.eq("roomId", code))
       .first();
 
     if (!room) {
@@ -275,7 +275,7 @@ export const leaveRoom = mutation({
   handler: async (ctx, { code, playerAddress }) => {
     const room = await ctx.db
       .query("rooms")
-      .filter((q) => q.eq(q.field("roomId"), code))
+      .withIndex("by_room_id", (q) => q.eq("roomId", code))
       .first();
 
     if (!room) {
@@ -411,7 +411,7 @@ export const findMatch = mutation({
         // Check if code already exists
         const existing = await ctx.db
           .query("rooms")
-          .filter((q) => q.eq(q.field("roomId"), code))
+          .withIndex("by_room_id", (q) => q.eq("roomId", code))
           .first();
 
         if (!existing) {

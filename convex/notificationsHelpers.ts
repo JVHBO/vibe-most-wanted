@@ -3,15 +3,29 @@
  * Separated to avoid circular dependencies
  */
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 
 /**
- * Get all notification tokens
+ * Get all notification tokens (internal)
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery + limited to 500
  */
-export const getAllTokens = query({
+export const getAllTokens = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").collect();
+    // 🚀 BANDWIDTH FIX: Limit to 500 tokens max
+    const tokens = await ctx.db.query("notificationTokens").take(500);
+    return tokens;
+  },
+});
+
+/**
+ * Get all notification tokens (public - for external scripts)
+ * Limited to 500 tokens max
+ */
+export const getAllTokensPublic = query({
+  args: {},
+  handler: async (ctx) => {
+    const tokens = await ctx.db.query("notificationTokens").take(500);
     return tokens;
   },
 });
@@ -23,11 +37,9 @@ export const getTipState = query({
   args: {},
   handler: async (ctx) => {
     let tipState = await ctx.db.query("tipRotationState").first();
-
     if (!tipState) {
       return { currentTipIndex: 0, lastSentAt: Date.now(), _id: null };
     }
-
     return tipState;
   },
 });
@@ -40,7 +52,6 @@ export const initTipState = mutation({
   handler: async (ctx) => {
     const existing = await ctx.db.query("tipRotationState").first();
     if (existing) return existing._id;
-
     const newId = await ctx.db.insert("tipRotationState", {
       currentTipIndex: 0,
       lastSentAt: Date.now(),
@@ -62,5 +73,62 @@ export const updateTipState = mutation({
       currentTipIndex,
       lastSentAt: Date.now(),
     });
+  },
+});
+
+// ============================================================================
+// LOW ENERGY NOTIFICATION COOLDOWN
+// ============================================================================
+
+/**
+ * COOLDOWN para notificações de energia baixa
+ */
+const NOTIFICATION_COOLDOWN = 6 * 60 * 60 * 1000; // 6 horas
+
+/**
+ * Get last notification time for a user
+ */
+export const getLastLowEnergyNotification = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const notification = await ctx.db
+      .query("lowEnergyNotifications")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+    return notification;
+  },
+});
+
+/**
+ * Update last notification time
+ */
+export const updateLowEnergyNotification = mutation({
+  args: { 
+    address: v.string(),
+    lowEnergyCount: v.number(),
+    expiredCount: v.number(),
+  },
+  handler: async (ctx, { address, lowEnergyCount, expiredCount }) => {
+    const existing = await ctx.db
+      .query("lowEnergyNotifications")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    const now = Date.now();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        lastNotifiedAt: now,
+        lowEnergyCount,
+        expiredCount,
+      });
+    } else {
+      await ctx.db.insert("lowEnergyNotifications", {
+        address: address.toLowerCase(),
+        lastNotifiedAt: now,
+        lowEnergyCount,
+        expiredCount,
+      });
+    }
   },
 });

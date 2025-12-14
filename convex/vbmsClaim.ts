@@ -12,6 +12,9 @@ import { v } from "convex/values";
 import { mutation, query, action, internalMutation, internalAction } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
+import { createAuditLog } from "./coinAudit";
+import { isBlacklisted, getBlacklistInfo } from "./blacklist";
+import { logTransaction } from "./coinsInbox";
 
 // ========== HELPER: Get Profile ==========
 
@@ -103,7 +106,7 @@ export const signClaimMessage = internalAction({
   },
   handler: async (ctx, args): Promise<string> => {
     const { address, amount, nonce } = args;
-    const apiUrl = 'https://vibe-most-wanted.vercel.app';
+    const apiUrl = 'https://www.vibemostwanted.xyz';
 
     console.log(`[VBMS Sign Claim] Calling API at: ${apiUrl}/api/vbms/sign-claim`);
     console.log(`[VBMS Sign Claim] Request: address=${address}, amount=${amount}, nonce=${nonce}`);
@@ -550,7 +553,7 @@ export const getClaimHistory = query({
     address: v.string(),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { address, limit = 20 }) => {
+  handler: async (ctx, { address, limit = 500 }) => {
     const history = await ctx.db
       .query("claimHistory")
       .withIndex("by_player", (q: any) =>
@@ -560,6 +563,75 @@ export const getClaimHistory = query({
       .take(limit);
 
     return history;
+  },
+});
+
+// ========== QUERY: Get FULL Transaction History (Audit + Claims) ==========
+
+export const getFullTransactionHistory = query({
+  args: {
+    address: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { address, limit = 500 }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    // Get claim history (blockchain claims)
+    const claimHistory = await ctx.db
+      .query("claimHistory")
+      .withIndex("by_player", (q: any) => q.eq("playerAddress", normalizedAddress))
+      .collect();
+
+    // Get audit log (all TESTVBMS transactions)
+    const auditLog = await ctx.db
+      .query("coinAuditLog")
+      .withIndex("by_player", (q: any) => q.eq("playerAddress", normalizedAddress))
+      .collect();
+
+    // Get claim analytics
+    const analytics = await ctx.db
+      .query("claimAnalytics")
+      .withIndex("by_player", (q: any) => q.eq("playerAddress", normalizedAddress))
+      .collect();
+
+    // Combine and sort by timestamp
+    const allTransactions = [
+      ...claimHistory.map(c => ({
+        source: "claimHistory",
+        type: c.type,
+        amount: c.amount,
+        timestamp: c.timestamp,
+        txHash: c.txHash,
+        bonus: c.bonus,
+      })),
+      ...auditLog.map(a => ({
+        source: "auditLog",
+        type: a.type,
+        amount: a.amount,
+        timestamp: a.timestamp,
+        balanceBefore: a.balanceBefore,
+        balanceAfter: a.balanceAfter,
+        sourceFunction: a.source,
+        metadata: a.metadata,
+      })),
+      ...analytics.map(a => ({
+        source: "analytics",
+        type: a.choice,
+        amount: a.amount,
+        timestamp: a.timestamp,
+        inboxTotal: a.inboxTotal,
+      })),
+    ].sort((a, b) => b.timestamp - a.timestamp);
+
+    return {
+      total: allTransactions.length,
+      transactions: allTransactions.slice(0, limit),
+      summary: {
+        claimHistoryCount: claimHistory.length,
+        auditLogCount: auditLog.length,
+        analyticsCount: analytics.length,
+      },
+    };
   },
 });
 
@@ -966,6 +1038,13 @@ export const convertTESTVBMSInternal = internalMutation({
     address: v.string(),
   },
   handler: async (ctx, { address }): Promise<{ testVBMSBalance: number }> => {
+    // 🚫 BLACKLIST CHECK - Block exploiters from claiming
+    if (isBlacklisted(address)) {
+      const info = getBlacklistInfo(address);
+      console.log(`🚫 [BLACKLIST] Blocked claim attempt from exploiter: ${address} (${info?.username})`);
+      throw new Error(`🚫 Address blacklisted: You exploited ${info?.amountStolen?.toLocaleString()} VBMS in December 2025. Claims permanently disabled.`);
+    }
+
     const profile = await getProfile(ctx, address);
 
     const testVBMSBalance = profile.coins || 0;
@@ -974,8 +1053,27 @@ export const convertTESTVBMSInternal = internalMutation({
       throw new Error(`Minimum 100 TESTVBMS required to convert. You have: ${testVBMSBalance}`);
     }
 
-    // NOTE: Balance will be zeroed by recordTESTVBMSConversion AFTER blockchain TX succeeds
-    // DO NOT zero here - if signature fails, user loses their TESTVBMS!
+    // 🔒 SECURITY FIX: Zero balance IMMEDIATELY to prevent multiple signature generation exploit
+    // Previously balance was only zeroed AFTER blockchain TX, allowing attackers to call
+    // convertTESTVBMStoVBMS multiple times and get multiple signatures for the same balance
+    await ctx.db.patch(profile._id, {
+      coins: 0,
+      pendingConversion: testVBMSBalance, // Track pending conversion for recovery if needed
+      pendingConversionTimestamp: Date.now(),
+    });
+
+    // 🔒 AUDIT LOG - Track TESTVBMS → VBMS conversion initiation
+    await createAuditLog(
+      ctx,
+      address,
+      "convert",
+      testVBMSBalance,
+      testVBMSBalance,
+      0,
+      "convertTESTVBMStoVBMS",
+      undefined,
+      { reason: "TESTVBMS to VBMS conversion initiated" }
+    );
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
@@ -987,13 +1085,15 @@ export const convertTESTVBMSInternal = internalMutation({
       timestamp: Date.now(),
     });
 
+    console.log(`🔒 [SECURITY] ${address} zeroed ${testVBMSBalance} TESTVBMS BEFORE signature generation`);
+
     return { testVBMSBalance };
   },
 });
 
 /**
  * Record TESTVBMS → VBMS conversion (after blockchain confirmation)
- * Zeros the TESTVBMS balance
+ * Clears pendingConversion and updates claimedTokens
  */
 export const recordTESTVBMSConversion = mutation({
   args: {
@@ -1002,16 +1102,29 @@ export const recordTESTVBMSConversion = mutation({
     txHash: v.string(),
   },
   handler: async (ctx, { address, amount, txHash }) => {
+    // 🔒 SECURITY: Check if this txHash was already recorded (prevent double recording)
+    const existingClaim = await ctx.db
+      .query("claimHistory")
+      .filter((q) => q.eq(q.field("txHash"), txHash))
+      .first();
+
+    if (existingClaim) {
+      console.log(`⚠️ [SECURITY] Duplicate txHash rejected: ${txHash} for ${address}`);
+      throw new Error("Transaction already recorded");
+    }
+
     const profile = await getProfile(ctx, address);
 
-    // Zero TESTVBMS coins
+    // Update profile - clear pending conversion, update claimed tokens
     await ctx.db.patch(profile._id, {
-      coins: 0,
+      coins: 0, // Ensure coins stay at 0
+      pendingConversion: 0, // Clear pending
+      pendingConversionTimestamp: undefined,
       claimedTokens: (profile.claimedTokens || 0) + amount,
       lastClaimTimestamp: Date.now(),
     });
 
-    // Save to claim history
+    // Save to claim history with txHash as unique identifier
     await ctx.db.insert("claimHistory", {
       playerAddress: address.toLowerCase(),
       amount,
@@ -1020,12 +1133,92 @@ export const recordTESTVBMSConversion = mutation({
       type: "testvbms_conversion" as any,
     });
 
-    console.log(`✅ ${address} converted ${amount} TESTVBMS → VBMS, zeroed coins`);
+    // 🔒 AUDIT LOG - Track blockchain claim confirmation
+    await createAuditLog(
+      ctx,
+      address,
+      "claim",
+      amount,
+      profile.pendingConversion || amount,
+      0,
+      "recordTESTVBMSConversion",
+      txHash,
+      { txHash, reason: "VBMS claimed on blockchain" }
+    );
+
+    // 📊 LOG TRANSACTION - Track in transaction history
+    await logTransaction(ctx, {
+      address,
+      type: 'convert',
+      amount,
+      source: 'blockchain',
+      description: `Converted ${amount.toLocaleString()} TESTVBMS → VBMS`,
+      balanceBefore: profile.coins || 0,
+      balanceAfter: 0,
+      txHash,
+    });
+
+    console.log(`✅ ${address} converted ${amount} TESTVBMS → VBMS (tx: ${txHash})`);
 
     return {
       success: true,
       newCoinsBalance: 0,
       newClaimedTotal: (profile.claimedTokens || 0) + amount,
+    };
+  },
+});
+
+/**
+ * Recover failed TESTVBMS conversion
+ * If the blockchain TX failed, restore pendingConversion back to coins
+ */
+export const recoverFailedConversion = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, { address }) => {
+    const profile = await getProfile(ctx, address);
+
+    const pendingAmount = profile.pendingConversion || 0;
+    const pendingTimestamp = profile.pendingConversionTimestamp || 0;
+
+    if (pendingAmount === 0) {
+      throw new Error("No pending conversion to recover");
+    }
+
+    // Only allow recovery after 5 minutes (to prevent abuse)
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    if (pendingTimestamp > fiveMinutesAgo) {
+      const waitSeconds = Math.ceil((pendingTimestamp - fiveMinutesAgo) / 1000);
+      throw new Error(`Please wait ${waitSeconds} seconds before recovering. This prevents abuse.`);
+    }
+
+    // Restore coins
+    await ctx.db.patch(profile._id, {
+      coins: (profile.coins || 0) + pendingAmount,
+      pendingConversion: 0,
+      pendingConversionTimestamp: undefined,
+    });
+
+    // Audit log
+    await createAuditLog(
+      ctx,
+      address,
+      "recover",
+      pendingAmount,
+      0,
+      (profile.coins || 0) + pendingAmount,
+      "recoverFailedConversion",
+      undefined,
+      { reason: "Recovered failed TESTVBMS conversion" }
+    );
+
+    console.log(`🔄 ${address} recovered ${pendingAmount} TESTVBMS from failed conversion`);
+
+    return {
+      success: true,
+      recoveredAmount: pendingAmount,
+      newCoinsBalance: (profile.coins || 0) + pendingAmount,
     };
   },
 });

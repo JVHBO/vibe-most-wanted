@@ -29,10 +29,14 @@ export interface UserProfile {
     totalCards: number;
     openedCards: number;
     unopenedCards: number;
+    // Aura system (unified ranking)
+    aura?: number;
+    // Collection-specific power
     vibePower?: number;
     vbrsPower?: number;
     vibefidPower?: number;
     afclPower?: number;
+    coqPower?: number;
     pveWins: number;
     pveLosses: number;
     pvpWins: number;
@@ -135,6 +139,7 @@ export class ConvexProfileService {
 
   /**
    * Get leaderboard (top players by power)
+   * Shows all players (increased limit to 1000)
    */
   static async getLeaderboard(limit: number = 1000): Promise<UserProfile[]> {
     try {

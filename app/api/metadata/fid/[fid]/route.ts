@@ -43,17 +43,18 @@ export async function GET(
       );
     }
 
-    // Generate FID-based foil and wear traits
+    // Generate FID-based foil and wear traits (deterministic)
     const fidNumber = parseInt(fid);
     const traits = getFidTraits(fidNumber);
 
-    // Recalculate power with correct foil/wear multipliers
+    // ALWAYS recalculate power with deterministic traits
+    // This ensures bounty trait matches the card, even for old mints
     const rarityBasePower: Record<string, number> = {
-      Common: 5,
+      Common: 10,
       Rare: 20,
-      Epic: 80,
-      Legendary: 240,
-      Mythic: 800,
+      Epic: 50,
+      Legendary: 100,
+      Mythic: 600,
     };
 
     const wearMultiplier: Record<string, number> = {
@@ -65,21 +66,26 @@ export async function GET(
     };
 
     const foilMultiplier: Record<string, number> = {
-      Prize: 15.0,
-      Standard: 2.5,
+      Prize: 6.0,
+      Standard: 2.0,
       None: 1.0,
     };
 
+    // Always recalculate power based on deterministic traits
     const basePower = rarityBasePower[cardData.rarity] || 5;
     const wearMult = wearMultiplier[traits.wear] || 1.0;
     const foilMult = foilMultiplier[traits.foil] || 1.0;
     const correctPower = Math.round(basePower * wearMult * foilMult);
 
+    // Check if we have video (imageUrl) and thumbnail (cardImageUrl)
+    const hasVideo = cardData.cardImageUrl && cardData.imageUrl;
+
     // Build OpenSea-compatible metadata
-    const metadata = {
+    const metadata: Record<string, any> = {
       name: `VibeFID #${cardData.fid}`,
       description: `${cardData.displayName} (@${cardData.username}) - ${cardData.bio || 'A unique VibeFID card from the Farcaster ecosystem'}`,
-      image: cardData.imageUrl, // IPFS URL of the card image
+      // Use cardImageUrl as thumbnail if video exists, otherwise use imageUrl
+      image: hasVideo ? cardData.cardImageUrl : cardData.imageUrl,
       external_url: `https://www.vibemostwanted.xyz/share/fid/${cardData.fid}`,
       attributes: [
         {
@@ -95,8 +101,13 @@ export async function GET(
           value: traits.wear,
         },
         {
+          trait_type: 'Power',
+          value: correctPower,
+          display_type: 'number',
+        },
+        {
           trait_type: 'Bounty',
-          value: correctPower * 10, // Bounty = Power × 10 (using recalculated power)
+          value: correctPower * 10, // Bounty = Power × 10
           display_type: 'number',
         },
         {
@@ -118,6 +129,11 @@ export async function GET(
         },
       ],
     };
+
+    // Add animation_url for video NFTs (OpenSea will display the video)
+    if (hasVideo) {
+      metadata.animation_url = cardData.imageUrl;
+    }
 
     return NextResponse.json(metadata, {
       headers: {

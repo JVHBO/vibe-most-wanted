@@ -8,9 +8,22 @@
  * - Error popup
  * - Success popup
  * - Daily claim popup
+ *
+ * Automatically pauses background music when showing result popups
  */
 
+import { useEffect, useRef, useState } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
+import { FarcasterIcon } from '@/components/PokerIcons';
+import { useMusic } from '@/contexts/MusicContext';
+
+// Loss screen configurations - randomly selected
+const LOSS_CONFIGS = [
+  { media: 'https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26', isVideo: false },
+  { media: '/davyjones.mp4', isVideo: true },
+  { media: '/derrotanumeronsei.mp4', isVideo: true },
+  { media: '/littlebird.mp4', isVideo: true }, // Little bird defeat
+];
 
 interface BattleResult {
   coinsEarned?: number;
@@ -45,6 +58,7 @@ interface GamePopupsProps {
   // Loss popup
   showLossPopup: boolean;
   handleCloseDefeatScreen: () => void;
+  forcedLossMedia?: { media: string; isVideo: boolean }; // For testing specific loss screens
 
   // Tie popup
   showTiePopup: boolean;
@@ -89,6 +103,7 @@ export function GamePopups({
   onShareClick,
   showLossPopup,
   handleCloseDefeatScreen,
+  forcedLossMedia,
   showTiePopup,
   setShowTiePopup,
   tieGifLoaded,
@@ -108,45 +123,92 @@ export function GamePopups({
   handleClaimWelcomePack,
   t,
 }: GamePopupsProps) {
+  // Music control - pause when showing result popups
+  const { pause, play, isPaused } = useMusic();
+  const wasPausedBeforePopup = useRef(false);
+
+  // Track which loss media to show (randomly selected on popup open)
+  const [currentLossMedia, setCurrentLossMedia] = useState(LOSS_CONFIGS[0]);
+
+  // Select loss media when popup opens (forced or random)
+  useEffect(() => {
+    if (showLossPopup) {
+      if (forcedLossMedia) {
+        setCurrentLossMedia(forcedLossMedia);
+      } else {
+        const randomIndex = Math.floor(Math.random() * LOSS_CONFIGS.length);
+        setCurrentLossMedia(LOSS_CONFIGS[randomIndex]);
+      }
+    }
+  }, [showLossPopup, forcedLossMedia]);
+
+  // Pause/Resume background music when result popups are shown
+  useEffect(() => {
+    const isAnyPopupOpen = showWinPopup || showLossPopup || showTiePopup;
+
+    if (isAnyPopupOpen && !isPaused) {
+      // Store previous state and pause
+      wasPausedBeforePopup.current = isPaused;
+      pause();
+    } else if (!isAnyPopupOpen && !wasPausedBeforePopup.current) {
+      // Resume only if music wasn't already paused before popup
+      play();
+    }
+  }, [showWinPopup, showLossPopup, showTiePopup, pause, play, isPaused]);
+
   return (
     <>
+      {/* Preload tie.gif and davyjones.mp4 for faster display */}
+      <img src="/tie.gif" alt="" className="hidden" aria-hidden="true" />
+
       {/* Victory Popup */}
       {showWinPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseVictoryScreen}>
-          {/* 🌈 GAY VIBES - Floating hearts effect for victory-2 */}
+          {/* Victory audio for victory-1 (win-sound) */}
+          {currentVictoryImage === '/victory-1.jpg' && !isInFarcaster && soundEnabled && (
+            <audio autoPlay>
+              <source src="/win-sound.mp3" type="audio/mpeg" />
+            </audio>
+          )}
+
+          {/* Victory audio for victory-2 (marvin-victory) */}
+          {currentVictoryImage === '/victory-2.jpg' && !isInFarcaster && soundEnabled && (
+            <audio autoPlay>
+              <source src="/marvin-victory.mp3" type="audio/mpeg" />
+            </audio>
+          )}
+
+          {/* Victory audio for bom.jpg (victory-sound) */}
+          {currentVictoryImage === '/bom.jpg' && !isInFarcaster && soundEnabled && (
+            <audio autoPlay>
+              <source src="/victory-sound.mp3" type="audio/mpeg" />
+            </audio>
+          )}
+
+          {/* 🌈 GAY VIBES - Floating hearts effect for victory-2 (reduced from 20 to 8 for performance) */}
           {currentVictoryImage === '/victory-2.jpg' && !isInFarcaster && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {[...Array(20)].map((_, i) => (
+              {/* Shared SVG definitions for better performance */}
+              <svg width="0" height="0" className="absolute">
+                <defs>
+                  <linearGradient id="heart-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{ stopColor: '#ff6ec7', stopOpacity: 0.9 }} />
+                    <stop offset="50%" style={{ stopColor: '#ff1493', stopOpacity: 0.9 }} />
+                    <stop offset="100%" style={{ stopColor: '#ff69b4', stopOpacity: 0.9 }} />
+                  </linearGradient>
+                </defs>
+              </svg>
+              {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
-                  className="absolute animate-float-heart"
+                  className="absolute animate-float-heart text-3xl"
                   style={{
-                    left: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 3}s`,
-                    animationDuration: `${3 + Math.random() * 2}s`,
+                    left: `${12.5 * i}%`,
+                    animationDelay: `${i * 0.4}s`,
+                    animationDuration: `${3 + (i % 3)}s`,
                   }}
                 >
-                  <svg width="40" height="40" viewBox="0 0 24 24" className="drop-shadow-lg">
-                    <defs>
-                      <linearGradient id={`rainbow-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{ stopColor: '#ff6ec7', stopOpacity: 0.9 }} />
-                        <stop offset="50%" style={{ stopColor: '#ff1493', stopOpacity: 0.9 }} />
-                        <stop offset="100%" style={{ stopColor: '#ff69b4', stopOpacity: 0.9 }} />
-                      </linearGradient>
-                      <filter id={`glow-${i}`}>
-                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                        <feMerge>
-                          <feMergeNode in="coloredBlur"/>
-                          <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                      </filter>
-                    </defs>
-                    <path
-                      d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                      fill={`url(#rainbow-${i})`}
-                      filter={`url(#glow-${i})`}
-                    />
-                  </svg>
+                  💖
                 </div>
               ))}
             </div>
@@ -155,10 +217,12 @@ export function GamePopups({
           {/* 👅 VICTORY 3 - Sensual tongues floating effect */}
           {currentVictoryImage === '/victory-3.jpg' && !isInFarcaster && (
             <>
-              {/* Audio for victory-3 (disabled in miniapp for performance) */}
-              <audio autoPlay loop>
-                <source src="/victory-3.mp3" type="audio/mpeg" />
-              </audio>
+              {/* Audio for victory-3 (disabled in miniapp for performance) - respects soundEnabled */}
+              {soundEnabled && (
+                <audio autoPlay loop>
+                  <source src="/victory-3.mp3" type="audio/mpeg" />
+                </audio>
+              )}
 
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 {/* Tongues floating and licking */}
@@ -214,49 +278,63 @@ export function GamePopups({
             </>
           )}
 
-          <div className="relative flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={currentVictoryImage}
-              alt="Victory!"
-              className={`rounded-2xl shadow-2xl border-4 ${
-                currentVictoryImage === '/victory-2.jpg'
-                  ? 'max-w-[90vw] max-h-[80vh] shadow-pink-500/50 border-pink-400 animate-pulse-glow'
-                  : currentVictoryImage === '/victory-3.jpg'
-                  ? 'max-w-[90vw] max-h-[55vh] object-contain shadow-gold-500/50 border-gold-400 animate-pulse-glow'
-                  : 'max-w-[90vw] max-h-[80vh] shadow-yellow-500/50 border-yellow-400'
-              }`}
-            />
-            <div className="text-center px-4">
-              <p className="text-2xl md:text-3xl font-bold text-yellow-400 animate-pulse">
-                {lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
-                  ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
-                  : t('victoryPrize')}
+          <div className="relative flex flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {/* Victory 4 - Video (littlebird) */}
+            {currentVictoryImage === '/littlebird.mp4' ? (
+              <video
+                src={currentVictoryImage}
+                autoPlay
+                loop
+                muted={!soundEnabled}
+                playsInline
+                className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-blue-500/50 border-2 border-blue-400"
+              />
+            ) : (
+              <img
+                src={currentVictoryImage}
+                alt="Victory!"
+                className={`rounded-xl shadow-2xl border-2 object-contain ${
+                  currentVictoryImage === '/victory-2.jpg'
+                    ? 'max-w-[85vw] max-h-[50vh] shadow-pink-500/50 border-pink-400 animate-pulse-glow'
+                    : currentVictoryImage === '/victory-3.jpg'
+                    ? 'max-w-[85vw] max-h-[45vh] shadow-gold-500/50 border-gold-400 animate-pulse-glow'
+                    : 'max-w-[85vw] max-h-[50vh] shadow-yellow-500/50 border-yellow-400'
+                }`}
+              />
+            )}
+            <div className="text-center px-2">
+              <p className="text-lg md:text-xl font-bold text-yellow-400 animate-pulse">
+                {lastBattleResult?.type === 'mecha' && lastBattleResult?.coinsEarned !== undefined
+                  ? `Won ${lastBattleResult.coinsEarned.toLocaleString()} VBMS!`
+                  : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
+                    ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
+                    : t('victoryPrize')}
               </p>
               {/* PvP Inbox Reminder */}
               {lastBattleResult?.type === 'pvp' && lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0 && (
-                <p className="text-lg text-green-400 font-semibold mt-2 animate-bounce">
-                  📬 Check your inbox to claim TESTVBMS!
+                <p className="text-sm text-green-400 font-semibold mt-1 animate-bounce">
+                  📬 Check inbox to claim TESTVBMS!
                 </p>
               )}
             </div>
 
             {/* Share Incentive Banner */}
             {sharesRemaining !== undefined && sharesRemaining > 0 && (
-              <div className="bg-green-500/20 border border-green-400 rounded-lg px-4 py-2 text-center">
-                <p className="text-green-400 font-bold text-sm animate-pulse">
-                  💰 Share & earn +10 coins! ({sharesRemaining}/3 today)
+              <div className="bg-green-500/20 border border-green-400 rounded-lg px-2 py-1 text-center">
+                <p className="text-green-400 font-bold text-xs animate-pulse">
+                  💰 Share +10 coins! ({sharesRemaining}/3)
                 </p>
               </div>
             )}
             {sharesRemaining === 0 && (
-              <div className="bg-gray-500/20 border border-gray-400 rounded-lg px-4 py-2 text-center">
-                <p className="text-gray-400 font-semibold text-sm">
-                  Daily share limit reached (3/3)
+              <div className="bg-gray-500/20 border border-gray-400 rounded-lg px-2 py-1 text-center">
+                <p className="text-gray-400 font-semibold text-xs">
+                  Share limit reached (3/3)
                 </p>
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <a
                 href={(() => {
                   if (!lastBattleResult || !userProfile) return '#';
@@ -276,7 +354,7 @@ export function GamePopups({
                   if (soundEnabled) AudioManager.buttonSuccess();
                   if (onShareClick) onShareClick('twitter');
                 }}
-                className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm shadow-gold transition-all hover:scale-105 flex items-center gap-1"
               >
                 <span>𝕏</span> {t('shareVictory')}
               </a>
@@ -313,14 +391,14 @@ export function GamePopups({
                   if (soundEnabled) AudioManager.buttonSuccess();
                   if (onShareClick) onShareClick('farcaster');
                 }}
-                className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm shadow-gold transition-all hover:scale-105 flex items-center gap-1"
               >
-                <span>♦</span> Farcaster
+                <FarcasterIcon size={16} /> Cast
               </a>
             </div>
             <button
               onClick={handleCloseVictoryScreen}
-              className="absolute top-4 right-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-gold"
+              className="absolute top-2 right-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold shadow-gold"
             >
               ×
             </button>
@@ -331,20 +409,40 @@ export function GamePopups({
       {/* Loss Popup */}
       {showLossPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseDefeatScreen}>
-          <div className="relative flex flex-col items-center gap-4">
-            <img
-              src="https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26"
-              alt="You Lost"
-              className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-red-500/50 border-4 border-red-500"
-            />
-            <p className="text-2xl md:text-3xl font-bold text-red-400 animate-pulse px-4 text-center">
+          {/* Loss audio - only for image, video has embedded audio */}
+          {!currentLossMedia.isVideo && !isInFarcaster && soundEnabled && (
+            <audio autoPlay>
+              <source src="/lose-sound.mp3" type="audio/mpeg" />
+            </audio>
+          )}
+          <div className="relative flex flex-col items-center gap-2">
+            {/* Loss screen - Video or Image */}
+            {currentLossMedia.isVideo ? (
+              <video
+                src={currentLossMedia.media}
+                autoPlay
+                loop
+                muted={!soundEnabled}
+                playsInline
+                className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-red-500/50 border-2 border-red-500"
+              />
+            ) : (
+              <img
+                src={currentLossMedia.media}
+                alt="You Lost"
+                className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-red-500/50 border-2 border-red-500"
+              />
+            )}
+            <p className="text-lg md:text-xl font-bold text-red-400 animate-pulse px-2 text-center">
               {lastBattleResult?.type === 'pve' || lastBattleResult?.type === 'attack'
                 ? t('noCoinsEarned')
-                : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
-                  ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
-                  : t('defeatPrize')}
+                : lastBattleResult?.type === 'mecha' && lastBattleResult?.coinsEarned !== undefined
+                  ? `Lost ${Math.abs(lastBattleResult.coinsEarned).toLocaleString()} VBMS`
+                  : lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0
+                    ? t('earnedCoins').replace('{amount}', lastBattleResult.coinsEarned.toString())
+                    : t('defeatPrize')}
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <a
                 href={(() => {
                   if (!lastBattleResult || !userProfile) return '#';
@@ -361,7 +459,7 @@ export function GamePopups({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
-                className="px-6 py-3 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-display font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+                className="px-4 py-2 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-lg font-display font-bold text-sm shadow-lg transition-all hover:scale-105 flex items-center gap-1"
               >
                 <span>𝕏</span> {t('shareDefeat')}
               </a>
@@ -395,14 +493,14 @@ export function GamePopups({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
-                className="px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold shadow-gold transition-all hover:scale-105 flex items-center gap-2"
+                className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm shadow-gold transition-all hover:scale-105 flex items-center gap-1"
               >
-                <span>♦</span> Farcaster
+                <FarcasterIcon size={16} /> Cast
               </a>
             </div>
             <button
               onClick={handleCloseDefeatScreen}
-              className="absolute top-4 right-4 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
+              className="absolute top-2 right-2 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold shadow-lg"
             >
               ×
             </button>
@@ -413,24 +511,24 @@ export function GamePopups({
       {/* Tie Popup */}
       {showTiePopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowTiePopup(false)}>
-          <div className="relative flex flex-col items-center gap-4">
+          <div className="relative flex flex-col items-center gap-2">
             <img
               src="/tie.gif"
               alt="Tie!"
-              className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl shadow-gray-500/50 border-4 border-gray-400"
+              className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-gray-500/50 border-2 border-gray-400"
             />
-            <p className="text-2xl md:text-3xl font-bold text-gray-400 animate-pulse px-4 text-center">
+            <p className="text-lg md:text-xl font-bold text-gray-400 animate-pulse px-2 text-center">
               {t('tieResult')}
             </p>
-            {/* Only play audio after GIF is preloaded */}
-            {tieGifLoaded && (
+            {/* Only play audio after GIF is preloaded - respects soundEnabled */}
+            {tieGifLoaded && soundEnabled && (
               <audio autoPlay loop>
                 <source src="/tie-music.mp3" type="audio/mpeg" />
               </audio>
             )}
             <button
               onClick={() => setShowTiePopup(false)}
-              className="absolute top-4 right-4 bg-gray-400 hover:bg-gray-500 text-vintage-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow-lg"
+              className="absolute top-2 right-2 bg-gray-400 hover:bg-gray-500 text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold shadow-lg"
             >
               ×
             </button>

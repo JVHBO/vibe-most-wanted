@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
@@ -49,14 +49,23 @@ export function BettingInterface({
   // Place bet mutation
   const placeBet = useMutation(api.bettingCredits.placeBetWithCredits);
 
-  // Calculate betting stats
-  const betsOnPlayer1 = roomBets?.filter((b: any) => b.betOn.toLowerCase() === player1Address.toLowerCase()) || [];
-  const betsOnPlayer2 = roomBets?.filter((b: any) => b.betOn.toLowerCase() === player2Address.toLowerCase()) || [];
-  const totalOnPlayer1 = betsOnPlayer1.reduce((sum: number, b: any) => sum + b.amount, 0);
-  const totalOnPlayer2 = betsOnPlayer2.reduce((sum: number, b: any) => sum + b.amount, 0);
+  // Calculate betting stats - memoized to prevent recalculation on every render
+  const { betsOnPlayer1, betsOnPlayer2, totalOnPlayer1, totalOnPlayer2 } = useMemo(() => {
+    const p1Bets = roomBets?.filter((b: any) => b.betOn.toLowerCase() === player1Address.toLowerCase()) || [];
+    const p2Bets = roomBets?.filter((b: any) => b.betOn.toLowerCase() === player2Address.toLowerCase()) || [];
+    return {
+      betsOnPlayer1: p1Bets,
+      betsOnPlayer2: p2Bets,
+      totalOnPlayer1: p1Bets.reduce((sum: number, b: any) => sum + b.amount, 0),
+      totalOnPlayer2: p2Bets.reduce((sum: number, b: any) => sum + b.amount, 0),
+    };
+  }, [roomBets, player1Address, player2Address]);
 
-  // Check if user already bet
-  const userBet = roomBets?.find((b: any) => b.bettor.toLowerCase() === address?.toLowerCase());
+  // Check if user already bet - memoized
+  const userBet = useMemo(() =>
+    roomBets?.find((b: any) => b.bettor.toLowerCase() === address?.toLowerCase()),
+    [roomBets, address]
+  );
 
   // Handle place bet
   const handlePlaceBet = async () => {
