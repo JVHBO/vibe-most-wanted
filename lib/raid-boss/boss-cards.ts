@@ -992,9 +992,66 @@ export const CUMIOH_BOSSES: Record<CardRarity, BossCard> = {
 };
 
 /**
+ * Vibe Rot Bangers Boss Cards
+ */
+export const VIBEROTBANGERS_BOSSES: Record<CardRarity, BossCard> = {
+  Common: {
+    tokenId: 'viberotbangers-common',
+    collection: 'viberotbangers',
+    name: 'The Slippage Saint',
+    rarity: 'Common',
+    power: 15,
+    imageUrl: '/images/raid-bosses/viberotbangers/common.png',
+    hp: BOSS_HP_BY_RARITY.common,
+    description: 'Every trade against him costs more than expected',
+  },
+  Rare: {
+    tokenId: 'viberotbangers-rare',
+    collection: 'viberotbangers',
+    name: 'Booty Liquidity Beast',
+    rarity: 'Rare',
+    power: 20,
+    imageUrl: '/images/raid-bosses/viberotbangers/rare.png',
+    hp: BOSS_HP_BY_RARITY.rare,
+    description: 'An unholy fusion of greed, memes, and bad decisions',
+  },
+  Epic: {
+    tokenId: 'viberotbangers-epic',
+    collection: 'viberotbangers',
+    name: 'Leverage Temptress',
+    rarity: 'Epic',
+    power: 80,
+    imageUrl: '/images/raid-bosses/viberotbangers/epic.png',
+    hp: BOSS_HP_BY_RARITY.epic,
+    description: 'Lures traders in with beauty and liquidates them silently',
+  },
+  Legendary: {
+    tokenId: 'viberotbangers-legendary',
+    collection: 'viberotbangers',
+    name: 'Bagholder King',
+    rarity: 'Legendary',
+    power: 240,
+    imageUrl: '/images/raid-bosses/viberotbangers/legendary.png',
+    hp: BOSS_HP_BY_RARITY.legendary,
+    description: 'The bag that bites back when you try to exit',
+  },
+  Mythic: {
+    tokenId: 'viberotbangers-mythic',
+    collection: 'viberotbangers',
+    name: 'Hydra of Degens',
+    rarity: 'Mythic',
+    power: 800,
+    imageUrl: '/images/raid-bosses/viberotbangers/mythic.png',
+    hp: BOSS_HP_BY_RARITY.mythic,
+    description: 'Many minds, one wallet, infinite bad ideas',
+  },
+};
+
+/**
  * All Boss Cards organized by collection
  */
 export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> = {
+  viberotbangers: VIBEROTBANGERS_BOSSES,
   gmvbrs: GMVBRS_BOSSES,
   vibe: VBMS_BOSSES,
   vibefid: VIBEFID_BOSSES,
