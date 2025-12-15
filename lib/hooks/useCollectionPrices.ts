@@ -160,6 +160,7 @@ export function useCollectionPrices() {
   const teampothead = usePrice(COLLECTION_CONTRACTS.teampothead);
   const americanfootball = usePrice(COLLECTION_CONTRACTS.americanfootball);
   const vibefx = usePrice(COLLECTION_CONTRACTS.vibefx);
+  const viberotbangers = usePrice(COLLECTION_CONTRACTS.viberotbangers);
 
   // These use getMintPrice but will return 0/revert, we'll use pool prices instead
   const tarot = usePrice(COLLECTION_CONTRACTS.tarot);
@@ -175,7 +176,7 @@ export function useCollectionPrices() {
 
   const priceData: Record<string, { priceWei: bigint | undefined; priceEth: string; isLoading: boolean }> = {
     vibe, gmvbrs, viberuto, coquettish, meowverse, poorlydrawnpepes,
-    teampothead, tarot, americanfootball, baseballcabal, vibefx, historyofcomputer, cumioh,
+    teampothead, tarot, americanfootball, baseballcabal, vibefx, historyofcomputer, cumioh, viberotbangers,
   };
 
   const isLoading = Object.values(priceData).some(p => p.isLoading) ||

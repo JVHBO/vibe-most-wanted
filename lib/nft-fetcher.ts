@@ -363,7 +363,27 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
     const batch = nfts.slice(i, i + batchSize);
     const batchEnriched = await Promise.all(
       batch.map(async (nft) => {
-        const imageUrl = await getImage(nft);
+        const collection = getCollectionFromContract(nft);
+
+        // 🎬 VIBEFID FIX: VibeFID cards are ALWAYS videos stored in "image" field
+        // Use filebase.io gateway directly (don't convert to Cloudflare which doesn't work for videos)
+        let imageUrl: string;
+        if (collection === 'vibefid') {
+          // VibeFID stores video URL in raw.metadata.image (filebase.io gateway)
+          const metadataImage = nft?.raw?.metadata?.image || nft?.metadata?.image;
+          if (metadataImage && metadataImage.includes('filebase.io')) {
+            // Use filebase.io URL directly - it serves video/webm correctly
+            imageUrl = String(metadataImage);
+            console.log(`🎬 VibeFID #${nft.tokenId} using filebase video:`, imageUrl);
+          } else {
+            // Fallback to getImage if filebase URL not found
+            imageUrl = await getImage(nft);
+            console.warn(`⚠️ VibeFID #${nft.tokenId} no filebase URL, using:`, imageUrl);
+          }
+        } else {
+          imageUrl = await getImage(nft);
+        }
+
         return {
           ...nft,
           imageUrl,
@@ -372,7 +392,7 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
           wear: findAttr(nft, 'wear'),
           foil: findAttr(nft, 'foil'),
           power: calcPower(nft),
-          collection: getCollectionFromContract(nft),
+          collection,
         };
       })
     );

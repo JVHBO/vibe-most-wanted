@@ -246,6 +246,7 @@ export const upsertProfile = mutation({
         name: v.string(),
         rarity: v.string(),
         foil: v.optional(v.string()),
+        collection: v.optional(v.string()), // FIX: Add collection to type
       })
     )),
     twitter: v.optional(v.string()),
@@ -398,6 +399,7 @@ export const updateDefenseDeck = mutation({
         name: v.string(),
         rarity: v.string(),
         foil: v.optional(v.string()),
+        collection: v.optional(v.string()), // FIX: Add collection to type
       })
     ),
   },
@@ -428,6 +430,7 @@ export const updateDefenseDeck = mutation({
           imageUrl: card.imageUrl,
           name: card.name,
           rarity: card.rarity,
+          collection: card.collection || 'vibe', // FIX: Always include collection
         };
 
         // Only add foil if it's a non-empty string
@@ -707,6 +710,7 @@ export const updateDefenseDeckSecure = mutation({
         name: v.string(),
         rarity: v.string(),
         foil: v.optional(v.string()),
+        collection: v.optional(v.string()), // FIX: Add collection to type
       })
     ),
   },
@@ -1110,6 +1114,7 @@ export const updateRevealedCardsCache = mutation({
       rarity: v.string(),
       wear: v.optional(v.string()),
       foil: v.optional(v.string()),
+        collection: v.optional(v.string()), // FIX: Add collection to type
       character: v.optional(v.string()),
       power: v.optional(v.number()),
       attributes: v.optional(v.any()),

@@ -11,9 +11,12 @@ export const BADGES_CONFIG = {
 
   // Big Dog badge wallet
   BIGDOG_WALLET: '0xba918b37cd34cb8f123081a01c8f5733996a3682',
+
+  // Trash badge wallet
+  TRASH_WALLET: '0xb620e9f63188245fcc3e737f77f811e8aa5338fe',
 };
 
-export type BadgeType = 'dev' | 'gey' | 'ai' | 'bigdog' | 'exploiter';
+export type BadgeType = 'dev' | 'gey' | 'ai' | 'bigdog' | 'exploiter' | 'trash';
 
 export interface Badge {
   type: BadgeType;
@@ -71,6 +74,15 @@ export const BADGES: Record<BadgeType, Badge> = {
     borderColor: 'bg-gradient-to-r from-red-600 via-red-500 to-red-400',
     textColor: 'text-red-400',
   },
+  trash: {
+    type: 'trash',
+    label: 'TRASH',
+    description: 'Trash player',
+    icon: '🗑️',
+    color: 'bg-gradient-to-r from-stone-700/50 via-stone-600/50 to-stone-500/50',
+    borderColor: 'bg-gradient-to-r from-stone-600 via-stone-500 to-stone-400',
+    textColor: 'text-stone-400',
+  },
 };
 
 // Hardcoded exploiter blacklist (same as convex/blacklist.ts)
@@ -125,6 +137,11 @@ export function isBigDog(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.BIGDOG_WALLET.toLowerCase();
 }
 
+// Check if address is Trash
+export function isTrash(address: string): boolean {
+  return address.toLowerCase() === BADGES_CONFIG.TRASH_WALLET.toLowerCase();
+}
+
 // Get badges for a user
 export function getUserBadges(address: string, userIndex: number): Badge[] {
   const badges: Badge[] = [];
@@ -149,6 +166,10 @@ export function getUserBadges(address: string, userIndex: number): Badge[] {
 
   if (isBigDog(address)) {
     badges.push(BADGES.bigdog);
+  }
+
+  if (isTrash(address)) {
+    badges.push(BADGES.trash);
   }
 
   return badges;

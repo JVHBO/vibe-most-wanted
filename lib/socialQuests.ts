@@ -224,8 +224,20 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     url: 'https://warpcast.com/bradenwolf',
     collection: 'vibe-fx',
   },
+  // Vibe Rot Bangers
+  {
+    id: 'follow_viberotbangers_creator',
+    type: 'follow',
+    target: 'zk420',
+    targetFid: 11124,
+    displayName: 'Follow @zk420',
+    description: 'Follow Vibe Rot Bangers creator',
+    reward: 500,
+    icon: '',
+    url: 'https://warpcast.com/zk420',
+    collection: 'viberotbangers',
+  },
 ];
-
 // Get quests by type
 export function getFollowQuests(): SocialQuest[] {
   return SOCIAL_QUESTS.filter(q => q.type === 'follow');

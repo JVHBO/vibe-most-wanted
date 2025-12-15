@@ -1545,6 +1545,7 @@ export const getAvailableCollections = query({
       "vibefx",
       "historyofcomputer",
       "cumioh",
+      "viberotbangers",
     ];
   },
 });

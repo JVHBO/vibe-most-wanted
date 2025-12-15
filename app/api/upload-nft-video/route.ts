@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       Bucket: bucketName,
       Key: filename,
       Body: buffer,
-      ContentType: 'video/mp4',
+      ContentType: 'video/webm',
     });
 
     await s3Client.send(uploadCommand);

@@ -18,7 +18,7 @@ import {
  * Obtém todas as cartas de uma coleção específica
  */
 export function filterCardsByCollection(cards: Card[], collectionId: CollectionId): Card[] {
-  return cards.filter(card => (card.collection || 'vibe') === collectionId);
+  return cards.filter(card => card.collection === collectionId);
 }
 
 /**
@@ -27,7 +27,8 @@ export function filterCardsByCollection(cards: Card[], collectionId: CollectionI
 export function filterCardsByCollections(cards: Card[], collectionIds: CollectionId[]): Card[] {
   return cards.filter(card => {
     // Filter NFT cards by their collection (default to 'vibe' if not set)
-    const cardCollection = card.collection || 'vibe';
+    if (!card.collection) return false;
+    const cardCollection = card.collection;
     return collectionIds.includes(cardCollection as CollectionId);
   });
 }

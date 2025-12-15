@@ -1436,13 +1436,28 @@ export default function TCGPage() {
         const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
         const enriched = await Promise.all(
           batch.map(async (nft) => {
-            const imageUrl = await getImage(nft);
-
-            // 🎯 CRITICAL: Detect collection from contract address
+            // 🎯 CRITICAL: Detect collection from contract address FIRST
             let collection: CollectionId = 'vibe'; // default
             const contractAddr = nft?.contract?.address?.toLowerCase();
+            const isVibeFID = contractAddr === getCollectionContract('vibefid')?.toLowerCase();
+
+            // 🎬 VIBEFID FIX: VibeFID has video in animation_url, image is just thumbnail
+            let imageUrl: string;
+            if (isVibeFID) {
+              const animationUrl = nft?.raw?.metadata?.animation_url || nft?.metadata?.animation_url;
+              if (animationUrl) {
+                imageUrl = String(animationUrl);
+                console.log('🎬 VibeFID using animation_url video:', imageUrl);
+              } else {
+                imageUrl = await getImage(nft);
+                console.warn('⚠️ VibeFID no animation_url, fallback:', imageUrl);
+              }
+            } else {
+              imageUrl = await getImage(nft);
+            }
+
             if (contractAddr) {
-              if (contractAddr === getCollectionContract('vibefid')?.toLowerCase()) {
+              if (isVibeFID) {
                 collection = 'vibefid';
               } else if (contractAddr === getCollectionContract('americanfootball')?.toLowerCase()) {
                 collection = 'americanfootball';
@@ -1519,9 +1534,25 @@ export default function TCGPage() {
         devWarn('⚠️ Failed to load FREE cards:', error);
       }
 
-      setNfts([...processed]);
+      // 🔒 DEDUPLICATION: Remove duplicate cards (same collection + tokenId)
+      const seenCards = new Set<string>();
+      const deduplicated = processed.filter((card: any) => {
+        const uniqueId = `${card.collection || 'vibe'}_${card.tokenId}`;
+        if (seenCards.has(uniqueId)) {
+          devLog(`⚠️ Removing duplicate card: ${uniqueId}`);
+          return false;
+        }
+        seenCards.add(uniqueId);
+        return true;
+      });
+
+      if (processed.length !== deduplicated.length) {
+        devLog(`📊 Deduplication: ${processed.length} -> ${deduplicated.length} cards`);
+      }
+
+      setNfts([...deduplicated]);
       setStatus("loaded");
-      devLog('🎉 Cards loaded successfully (NFTs + FREE):', processed.length);
+      devLog('🎉 Cards loaded successfully (NFTs + FREE):', deduplicated.length);
 
       // Check if player has VibeFID and mark achievement
       const hasVibeFID = processed.some((card: any) => card.collection === 'vibefid');
@@ -5208,7 +5239,7 @@ export default function TCGPage() {
                       >
                         <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
                         <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
-                        <option value="vibe rot bangers" className="bg-vintage-charcoal text-vintage-gold">BANGER</option>
+                        <option value="viberotbangers" className="bg-vintage-charcoal text-vintage-gold">BANGER</option>
                         <option value="cumioh" className="bg-vintage-charcoal text-vintage-gold">CUMIO</option>
                         <option value="historyofcomputer" className="bg-vintage-charcoal text-vintage-gold">HSTR</option>
                         <option value="vibefx" className="bg-vintage-charcoal text-vintage-gold">VBFX</option>
@@ -5222,6 +5253,7 @@ export default function TCGPage() {
                         <option value="americanfootball" className="bg-vintage-charcoal text-vintage-gold">AFCL</option>
                         <option value="gmvbrs" className="bg-vintage-charcoal text-vintage-gold">VBRS</option>
                         <option value="coquettish" className="bg-vintage-charcoal text-vintage-gold">COQ</option>
+                        <option value="nothing" className="bg-vintage-charcoal text-vintage-gold">NOTHING</option>
                       </select>
                       <button
                         onClick={() => setSortByPower(!sortByPower)}
