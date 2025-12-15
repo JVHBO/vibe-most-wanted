@@ -1222,4 +1222,13 @@ export default defineSchema({
     .index("by_shamer", ["shamerAddress"])
     .index("by_exploiter", ["exploiterAddress"])
     .index("by_timestamp", ["timestamp"]),
+
+  // 🚀 Leaderboard Cache (reduces bandwidth by ~95% for checkWeeklyRewardEligibility)
+  // Updated every 5 minutes by cron job instead of querying 10 full profiles
+  leaderboardCache: defineTable({
+    type: v.literal("top10_power"), // Cache type identifier
+    addresses: v.array(v.string()), // Top 10 addresses in order (lowercase)
+    updatedAt: v.number(), // Last cache update timestamp
+  })
+    .index("by_type", ["type"]),
 });

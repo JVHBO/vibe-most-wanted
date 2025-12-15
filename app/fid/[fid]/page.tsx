@@ -251,7 +251,7 @@ export default function FidCardPage() {
                   className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
                 >
                   <CardMedia
-                    src={convertIpfsUrl(card.imageUrl) || card.pfpUrl}
+                    src={card.imageUrl || card.pfpUrl}
                     alt={card.username}
                     className="w-full"
                   />
@@ -404,7 +404,7 @@ export default function FidCardPage() {
 
                   <div className="aspect-square mb-2 rounded-lg overflow-hidden">
                     <CardMedia
-                      src={convertIpfsUrl(mintedCard.imageUrl) || mintedCard.pfpUrl}
+                      src={mintedCard.imageUrl || mintedCard.pfpUrl}
                       alt={mintedCard.username}
                       className="w-full h-full object-cover"
                     />

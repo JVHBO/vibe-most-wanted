@@ -453,7 +453,8 @@ export const translations = {
     mechaStartNew: 'Iniciar Nova Batalha',
     mechaCreateFresh: 'Criar uma nova sala',
     mechaBackToArenas: 'Voltar para Arenas',
-    mechaJoining: 'Entrando na Mecha Arena...'
+    mechaJoining: 'Entrando na Mecha Arena...',
+    badgeTrash: 'LIXO'
   },
   en: {
     title: 'Home',
@@ -900,7 +901,8 @@ export const translations = {
     mechaStartNew: 'Start New Battle',
     mechaCreateFresh: 'Create a fresh room',
     mechaBackToArenas: 'Back to Arenas',
-    mechaJoining: 'Joining Mecha Arena...'
+    mechaJoining: 'Joining Mecha Arena...',
+    badgeTrash: 'TRASH'
   },
   es: {
     title: 'Home',
@@ -1350,7 +1352,8 @@ export const translations = {
     mechaStartNew: 'Iniciar Nueva Batalla',
     mechaCreateFresh: 'Crear una sala nueva',
     mechaBackToArenas: 'Volver a las Arenas',
-    mechaJoining: 'Uniéndose a Mecha Arena...'
+    mechaJoining: 'Uniéndose a Mecha Arena...',
+    badgeTrash: 'BASURA'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -1801,7 +1804,8 @@ export const translations = {
     mechaStartNew: 'Naya Battle Shuru Karo',
     mechaCreateFresh: 'Naya room banao',
     mechaBackToArenas: 'Arenas Par Waapas',
-    mechaJoining: 'Mecha Arena mein ja rahe hain...'
+    mechaJoining: 'Mecha Arena mein ja rahe hain...',
+    badgeTrash: 'कचरा'
   },
   ru: {
     title: 'Главная',
@@ -2248,7 +2252,8 @@ export const translations = {
     mechaStartNew: 'Начать Новую Битву',
     mechaCreateFresh: 'Создать новую комнату',
     mechaBackToArenas: 'Назад к Аренам',
-    mechaJoining: 'Присоединение к Mecha Arena...'
+    mechaJoining: 'Присоединение к Mecha Arena...',
+    badgeTrash: 'МУСОР'
   },
   "zh-CN": {
     title: '首页',
@@ -2695,6 +2700,7 @@ export const translations = {
     mechaStartNew: '开始新战斗',
     mechaCreateFresh: '创建新房间',
     mechaBackToArenas: '返回竞技场',
-    mechaJoining: '正在加入Mecha Arena...'
+    mechaJoining: '正在加入Mecha Arena...',
+    badgeTrash: '垃圾'
   }
 } as const;
