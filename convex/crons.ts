@@ -46,4 +46,12 @@ crons.hourly(
   internal.notifications.sendLowEnergyNotifications
 );
 
+// 🚀 Leaderboard cache update (every 5 minutes)
+// Reduces bandwidth by ~95% for checkWeeklyRewardEligibility
+crons.interval(
+  "update leaderboard cache",
+  { minutes: 5 },
+  internal.quests.updateLeaderboardCache
+);
+
 export default crons;

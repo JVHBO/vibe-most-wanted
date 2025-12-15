@@ -864,16 +864,27 @@ export const checkWeeklyRewardEligibility = query({
       };
     }
 
-    // Only fetch top 10 if not claimed yet
-    // 🚀 BANDWIDTH OPTIMIZATION: Only extract address field (saves 95% bandwidth)
-    const topPlayersRaw = await ctx.db
-      .query("profiles")
-      .withIndex("by_total_power")
-      .order("desc")
-      .take(10);
+    // 🚀 BANDWIDTH OPTIMIZATION: Use cached top 10 addresses (saves ~95% bandwidth)
+    // Cache is updated every 5 minutes by cron job
+    const cache = await ctx.db
+      .query("leaderboardCache")
+      .withIndex("by_type", (q) => q.eq("type", "top10_power"))
+      .first();
 
-    // Extract only addresses (reduces 30-55KB per profile to ~50 bytes)
-    const topPlayerAddresses = topPlayersRaw.map(p => normalizeAddress(p.address));
+    let topPlayerAddresses: string[];
+
+    if (cache && cache.addresses.length > 0) {
+      // Use cached addresses (only ~500 bytes instead of 300-550KB)
+      topPlayerAddresses = cache.addresses;
+    } else {
+      // Fallback: Query profiles if cache is empty (first run or cache miss)
+      const topPlayersRaw = await ctx.db
+        .query("profiles")
+        .withIndex("by_total_power")
+        .order("desc")
+        .take(10);
+      topPlayerAddresses = topPlayersRaw.map(p => normalizeAddress(p.address));
+    }
 
     // Find player's rank
     const playerIndex = topPlayerAddresses.indexOf(normalizedAddress);
@@ -1045,3 +1056,49 @@ function getNextSunday(): string {
   nextSunday.setUTCHours(0, 0, 0, 0);
   return nextSunday.toISOString().split('T')[0];
 }
+
+// ============================================================================
+// 🚀 LEADERBOARD CACHE (Bandwidth Optimization)
+// ============================================================================
+
+/**
+ * 🚀 Update leaderboard cache with top 10 addresses
+ * Called by cron job every 5 minutes
+ * Reduces bandwidth by ~95% for checkWeeklyRewardEligibility queries
+ */
+export const updateLeaderboardCache = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Fetch top 10 players (only need addresses)
+    const topPlayers = await ctx.db
+      .query("profiles")
+      .withIndex("by_total_power")
+      .order("desc")
+      .take(10);
+
+    const addresses = topPlayers.map(p => normalizeAddress(p.address));
+
+    // Check if cache exists
+    const existingCache = await ctx.db
+      .query("leaderboardCache")
+      .withIndex("by_type", (q) => q.eq("type", "top10_power"))
+      .first();
+
+    if (existingCache) {
+      // Update existing cache
+      await ctx.db.patch(existingCache._id, {
+        addresses,
+        updatedAt: Date.now(),
+      });
+    } else {
+      // Create new cache
+      await ctx.db.insert("leaderboardCache", {
+        type: "top10_power",
+        addresses,
+        updatedAt: Date.now(),
+      });
+    }
+
+    return { updated: true, count: addresses.length };
+  },
+});
