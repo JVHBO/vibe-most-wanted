@@ -4731,13 +4731,9 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               window.location.href = '/dex';
             }}
-            className="relative px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
+            className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
           >
-            {/* Red dot if TESTVBMS available to convert */}
-            {inboxStatus && inboxStatus.inbox > 0 && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-white" />
-            )}
             <div className="flex items-center justify-center gap-2">
               <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
             </div>
@@ -5045,12 +5041,16 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('inbox');
                 }}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
+                className={`relative flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'inbox'
                     ? 'bg-vintage-gold text-vintage-black shadow-gold'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
+                {/* Red dot if TESTVBMS available to convert */}
+                {inboxStatus && inboxStatus.inbox > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
+                )}
                 {isInFarcaster ? (
                   <>
                     <span className="text-[10px] font-bold whitespace-nowrap">Claim/DEX</span>
