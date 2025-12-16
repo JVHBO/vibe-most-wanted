@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 /**
  * ADMIN: Manually add metadata for an already-minted NFT
@@ -125,5 +125,26 @@ export const updateCardTraits = mutation({
     console.log(`Updated FID ${args.fid}:`, updates);
 
     return { success: true, fid: args.fid, updates };
+  },
+});
+
+/**
+ * ADMIN: List ALL minted cards (no limit)
+ * Used for cleanup scripts to compare against IPFS bucket
+ */
+export const listAllMintedCards = query({
+  args: {},
+  handler: async (ctx) => {
+    const cards = await ctx.db
+      .query("farcasterCards")
+      .collect();
+
+    // Return only the fields needed for IPFS comparison
+    return cards.map(card => ({
+      fid: card.fid,
+      imageUrl: card.imageUrl,
+      cardImageUrl: card.cardImageUrl,
+      shareImageUrl: card.shareImageUrl,
+    }));
   },
 });
