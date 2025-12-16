@@ -531,7 +531,7 @@ export function FeaturedCastAuctions({
                 <span>⚠️</span> This cast is already in the auction!
               </p>
               <p className="text-amber-200/80 text-xs mt-1">
-                Your bid will be <span className="font-bold text-amber-300">JOINED with the existing bid
+                Your bid will be <span className="font-bold text-amber-300">JOINED with the existing bid</span>
               </p>
               <div className="flex items-center justify-between mt-2 text-xs">
                 <span className="text-vintage-burnt-gold">Total Pool: <span className="text-amber-300 font-bold">{existingCastInfo.totalPool?.toLocaleString()} VBMS</span></span>
