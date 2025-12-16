@@ -25,6 +25,7 @@ interface CoinsInboxModalProps {
     inbox: number; // TESTVBMS inbox (rewards accumulate here)
     coins: number; // TESTVBMS balance (after claiming from inbox)
     lifetimeEarned: number;
+    cooldownRemaining?: number; // Seconds until next conversion allowed
   };
   onClose: () => void;
   userAddress?: string; // Pass address from parent (for Farcaster mobile)
@@ -38,6 +39,20 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [cooldown, setCooldown] = useState(inboxStatus.cooldownRemaining || 0);
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    setCooldown(inboxStatus.cooldownRemaining || 0);
+  }, [inboxStatus.cooldownRemaining]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown > 0]);
 
   // Modal accessibility hooks
   useBodyScrollLock(true);
@@ -191,7 +206,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
   // Check if conversion would exceed daily limit
   const exceedsDailyLimit = testvbmsBalance > dailyRemainingNum;
-  const canConvertTESTVBMS = testvbmsBalance >= 100 && !isProcessing && !exceedsDailyLimit;
+  const isOnCooldown = cooldown > 0;
+  const canConvertTESTVBMS = testvbmsBalance >= 100 && !isProcessing && !exceedsDailyLimit && !isOnCooldown;
 
   // Claim inbox → adiciona ao saldo TESTVBMS (instant, no gas)
   const handleClaimInbox = async () => {
@@ -425,6 +441,11 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             {exceedsDailyLimit && testvbmsBalance >= 100 && (
               <div className="mt-2 p-2 bg-red-500/20 border border-red-500/40 rounded text-xs text-red-300 text-center">
                 ⚠️ Your balance ({testvbmsBalance.toLocaleString()}) exceeds daily limit ({Number(dailyRemaining).toLocaleString()})
+              </div>
+            )}
+            {isOnCooldown && (
+              <div className="mt-2 p-2 bg-orange-500/20 border border-orange-500/40 rounded text-xs text-orange-300 text-center">
+                ⏳ Cooldown: {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, '0')} until next conversion
               </div>
             )}
           </div>
