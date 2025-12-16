@@ -12,14 +12,13 @@ const REFERRAL_CODE = 'XCLR1DJ6LQTT';
  */
 export function extractCollectionSlug(marketplaceUrl: string): string | null {
   if (!marketplaceUrl || marketplaceUrl.startsWith('/')) {
-    return null; // Internal route, not a vibechain URL
+    return null;
   }
 
   try {
     const url = new URL(marketplaceUrl);
     const pathParts = url.pathname.split('/').filter(Boolean);
 
-    // Expected format: /market/{collection}
     if (pathParts.length >= 2 && pathParts[0] === 'market') {
       return pathParts[1];
     }
@@ -31,9 +30,7 @@ export function extractCollectionSlug(marketplaceUrl: string): string | null {
 }
 
 /**
- * Converts a vibechain marketplace URL to a Farcaster miniapp URL
- * e.g., "https://vibechain.com/market/vibe-most-wanted?ref=..."
- *    => "https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/vibe-most-wanted?ref=XCLR1DJ6LQTT"
+ * Converts a vibechain marketplace URL to a Farcaster miniapp launch URL
  */
 export function convertToMiniAppUrl(marketplaceUrl: string): string | null {
   const collectionSlug = extractCollectionSlug(marketplaceUrl);
@@ -54,10 +51,6 @@ export function isInternalRoute(url: string): boolean {
 
 /**
  * Opens a marketplace URL - uses openMiniApp in Farcaster, window.location otherwise
- * @param marketplaceUrl - The vibechain marketplace URL
- * @param sdk - The Farcaster SDK instance
- * @param isInFarcaster - Whether we're running inside Farcaster
- * @param router - Next.js router for internal routes (optional)
  */
 export async function openMarketplace(
   marketplaceUrl: string,
@@ -76,24 +69,38 @@ export async function openMarketplace(
   }
 
   // In Farcaster, use openMiniApp to navigate to Vibemarket miniapp
-  // Use the launch URL format: https://farcaster.xyz/miniapps/<app-id>/<app-slug>/<path>
-  if (isInFarcaster && sdk?.actions?.openMiniApp) {
+  if (isInFarcaster && sdk?.actions) {
     const launchUrl = convertToMiniAppUrl(marketplaceUrl);
-    console.log('[openMarketplace] Converting URL:', { original: marketplaceUrl, launchUrl });
+    console.log('[openMarketplace] URLs:', { embed: marketplaceUrl, launch: launchUrl });
 
-    if (launchUrl) {
+    // Try openMiniApp with launch URL
+    if (launchUrl && sdk.actions.openMiniApp) {
       try {
-        console.log('[openMarketplace] Calling sdk.actions.openMiniApp with:', launchUrl);
+        console.log('[openMarketplace] Calling openMiniApp with launch URL:', launchUrl);
         await sdk.actions.openMiniApp({ url: launchUrl });
-        console.log('[openMarketplace] openMiniApp called successfully');
+        // openMiniApp should auto-close, but call close() to ensure
+        if (sdk.actions.close) {
+          await sdk.actions.close();
+        }
         return;
       } catch (error) {
         console.error('[openMarketplace] openMiniApp failed:', error);
-        // Fall through to fallback
+      }
+    }
+
+    // Fallback: use openUrl which triggers external navigation
+    if (sdk.actions.openUrl && launchUrl) {
+      try {
+        console.log('[openMarketplace] Trying openUrl:', launchUrl);
+        await sdk.actions.openUrl(launchUrl);
+        return;
+      } catch (error) {
+        console.error('[openMarketplace] openUrl failed:', error);
       }
     }
   }
 
-  // Fallback to direct navigation
+  // Final fallback to direct navigation
+  console.log('[openMarketplace] Fallback - direct navigation:', marketplaceUrl);
   window.location.href = marketplaceUrl;
 }
