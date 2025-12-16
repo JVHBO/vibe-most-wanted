@@ -77,7 +77,7 @@ export function FeaturedCastAuctions({
   // Validate cast URL
   const handleValidateCast = async () => {
     if (!castUrl.trim()) {
-      setError("Enter a Warpcast URL");
+      setError("Enter a cast URL");
       return;
     }
 
@@ -328,14 +328,14 @@ export function FeaturedCastAuctions({
           {/* Cast URL Input */}
           <div>
             <label className="text-xs text-vintage-burnt-gold mb-1 block">
-              Warpcast URL
+              Cast URL
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={castUrl}
                 onChange={(e) => setCastUrl(e.target.value)}
-                placeholder="https://warpcast.com/user/0x..."
+                placeholder="https://farcaster.xyz/user/0x..."
                 className="flex-1 px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-cream text-sm focus:border-vintage-gold focus:outline-none"
               />
               <button

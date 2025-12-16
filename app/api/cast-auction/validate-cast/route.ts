@@ -10,17 +10,17 @@ export async function POST(request: NextRequest) {
 
     if (!warpcastUrl) {
       return NextResponse.json(
-        { valid: false, error: "Warpcast URL is required" },
+        { valid: false, error: "Cast URL is required" },
         { status: 400 }
       );
     }
 
-    // Extract cast hash from Warpcast URL
-    // URLs look like: https://warpcast.com/username/0x123abc
-    const urlMatch = warpcastUrl.match(/warpcast\.com\/[^/]+\/(0x[a-f0-9]+)/i);
+    // Extract cast hash from Warpcast/Farcaster URL
+    // URLs look like: https://warpcast.com/username/0x123abc or https://farcaster.xyz/username/0x123abc
+    const urlMatch = warpcastUrl.match(/(?:warpcast\.com|farcaster\.xyz)\/[^/]+\/(0x[a-f0-9]+)/i);
     if (!urlMatch) {
       return NextResponse.json(
-        { valid: false, error: "Invalid Warpcast URL format" },
+        { valid: false, error: "Invalid cast URL format. Use warpcast.com or farcaster.xyz" },
         { status: 400 }
       );
     }
