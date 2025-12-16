@@ -210,7 +210,7 @@ export function FeaturedCastAuctions({
 
           if (result.success) {
             const successMsg = pendingBidData.isPoolContribution
-              ? `Added ${pendingBidData.amount.toLocaleString()} VBMS to pool!`
+              ? `Joined bid!`
               : `Bid placed! ${pendingBidData.amount.toLocaleString()} VBMS`;
             setSuccess(successMsg);
             setBidAmount("");
@@ -441,7 +441,7 @@ export function FeaturedCastAuctions({
                     }}
                     className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded text-[10px] font-bold hover:bg-amber-500/30 transition-all"
                   >
-                    + Add to Pool
+                    + Join Bid
                   </button>
                 </>
               ) : (
@@ -544,7 +544,7 @@ export function FeaturedCastAuctions({
                 <span>⚠️</span> This cast is already in the auction!
               </p>
               <p className="text-amber-200/80 text-xs mt-1">
-                Your bid will be <span className="font-bold text-amber-300">ADDED</span> to the existing pool
+                Your bid will be <span className="font-bold text-amber-300">JOINED with the existing bid
               </p>
               <div className="flex items-center justify-between mt-2 text-xs">
                 <span className="text-vintage-burnt-gold">Total Pool: <span className="text-amber-300 font-bold">{existingCastInfo.totalPool?.toLocaleString()} VBMS</span></span>
@@ -557,7 +557,7 @@ export function FeaturedCastAuctions({
           {castPreview && (
             <div>
               <label className="text-xs text-vintage-burnt-gold mb-1 block">
-                {existingCastInfo ? 'Add to Pool' : 'Bid Amount'} (min: {existingCastInfo ? '1,000' : getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()} VBMS)
+                {existingCastInfo ? 'Join Bid' : 'Bid Amount'} (min: {existingCastInfo ? '1,000' : getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()} VBMS)
               </label>
               <div className="flex gap-2">
                 <input
@@ -572,7 +572,7 @@ export function FeaturedCastAuctions({
                   disabled={isBidding || !bidAmount}
                   className="px-6 py-2 bg-amber-500 text-black rounded-lg text-sm font-bold hover:bg-amber-400 disabled:opacity-50 transition-all"
                 >
-                  {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : existingCastInfo ? "Add to Pool" : "Bid"}
+                  {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : existingCastInfo ? "Join Bid" : "Bid"}
                 </button>
               </div>
               <p className="text-xs text-vintage-burnt-gold mt-1">
