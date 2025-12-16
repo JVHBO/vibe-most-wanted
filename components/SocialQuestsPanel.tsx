@@ -7,6 +7,7 @@ import type { CastInteractions } from "@/lib/neynar";
 import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
 import type { NeynarCast } from "@/lib/neynar";
+import { FeaturedCastAuctions } from "./FeaturedCastAuctions";
 
 interface SocialQuestsPanelProps {
   address: string;
@@ -475,6 +476,14 @@ export function SocialQuestsPanel({
           <p className="text-yellow-400 text-xs text-center">Connect with Farcaster to auto-verify quests</p>
         </div>
       )}
+
+      {/* Featured Cast Auctions */}
+      <FeaturedCastAuctions
+        address={address}
+        userFid={userFid}
+        soundEnabled={soundEnabled}
+        onBidPlaced={onRewardClaimed}
+      />
     </div>
   );
 }
