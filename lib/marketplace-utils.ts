@@ -28,13 +28,18 @@ export async function openMarketplace(
     return;
   }
 
-  // In Farcaster, use openUrl to open external link with full path
+  // Debug - show what's available
+  const hasOpenUrl = !!sdk?.actions?.openUrl;
+  const hasOpenMiniApp = !!sdk?.actions?.openMiniApp;
+  alert(`isInFarcaster=${isInFarcaster} openUrl=${hasOpenUrl} openMiniApp=${hasOpenMiniApp}`);
+
+  // In Farcaster, use openUrl
   if (isInFarcaster && sdk?.actions?.openUrl) {
     try {
       await sdk.actions.openUrl(marketplaceUrl);
       return;
     } catch (error) {
-      console.error('[openMarketplace] openUrl failed:', error);
+      alert('openUrl error: ' + (error as Error).message);
     }
   }
 
