@@ -406,77 +406,64 @@ export function FeaturedCastAuctions({
             </div>
           )}
 
-          {/* Current bid info */}
-          <div className="flex items-center justify-between text-xs bg-vintage-charcoal/50 rounded-lg p-2">
-            <div className="flex items-center gap-2">
-              {hasBid ? (
-                <>
-                  <span className="text-vintage-gold">
-                    🏆 @{currentAuction.bidderUsername}: {currentAuction.currentBid.toLocaleString()} VBMS
-                  </span>
-                  <button
-                    onClick={() => {
-                      setExistingCastInfo({
-                        exists: true,
-                        auctionId: currentAuction._id,
-                        slotNumber: currentAuction.slotNumber,
-                        totalPool: currentAuction.currentBid,
-                        contributorCount: 1,
-                        topBidder: currentAuction.bidderUsername || '',
-                      });
-                      setCastPreview({
-                        hash: currentAuction.castHash || '',
-                        text: currentAuction.castText || '',
-                        author: {
-                          fid: currentAuction.castAuthorFid || 0,
-                          username: currentAuction.castAuthorUsername || '',
-                          displayName: currentAuction.castAuthorUsername || '',
-                          pfpUrl: currentAuction.castAuthorPfp || '',
-                        },
-                        timestamp: '',
-                        reactions: { likes: 0, recasts: 0 },
-                        replies: 0,
-                      });
-                      if (soundEnabled) AudioManager.buttonClick();
-                    }}
-                    className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded text-[10px] font-bold hover:bg-amber-500/30 transition-all"
-                  >
-                    + Join Bid
-                  </button>
-                </>
-              ) : (
-                <span className="text-vintage-burnt-gold">No bids yet - Min: 10,000 VBMS</span>
-              )}
+          {/* Current bid info with cast link */}
+          <div className="text-xs bg-vintage-charcoal/50 rounded-lg p-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {hasBid ? (
+                  <>
+                    <span className="text-vintage-gold">
+                      🏆 @{currentAuction.bidderUsername}: {currentAuction.currentBid.toLocaleString()} VBMS
+                    </span>
+                    <button
+                      onClick={() => {
+                        setExistingCastInfo({
+                          exists: true,
+                          auctionId: currentAuction._id,
+                          slotNumber: currentAuction.slotNumber,
+                          totalPool: currentAuction.currentBid,
+                          contributorCount: 1,
+                          topBidder: currentAuction.bidderUsername || '',
+                        });
+                        setCastPreview({
+                          hash: currentAuction.castHash || '',
+                          text: currentAuction.castText || '',
+                          author: {
+                            fid: currentAuction.castAuthorFid || 0,
+                            username: currentAuction.castAuthorUsername || '',
+                            displayName: currentAuction.castAuthorUsername || '',
+                            pfpUrl: currentAuction.castAuthorPfp || '',
+                          },
+                          timestamp: '',
+                          reactions: { likes: 0, recasts: 0 },
+                          replies: 0,
+                        });
+                        if (soundEnabled) AudioManager.buttonClick();
+                      }}
+                      className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded text-[10px] font-bold hover:bg-amber-500/30 transition-all"
+                    >
+                      + Join Bid
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-vintage-burnt-gold">No bids yet - Min: 10,000 VBMS</span>
+                )}
+              </div>
+              <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
             </div>
-            <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
+            {hasBid && currentAuction.warpcastUrl && (
+              <a
+                href={currentAuction.warpcastUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-purple-300 text-[10px] truncate block mt-1"
+              >
+                🔗 {currentAuction.warpcastUrl}
+              </a>
+            )}
           </div>
 
-          {/* Bidders list */}
-          {currentBidders && currentBidders.length > 0 && (
-            <div className="text-xs">
-              <p className="text-vintage-burnt-gold mb-1">Recent bids:</p>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {currentBidders.slice(0, 5).map((bid: any, i: number) => (
-                  <div key={bid._id} className={`${bid.isWinning ? 'text-green-400' : bid.status === 'refunded' ? 'text-vintage-burnt-gold/50 line-through' : 'text-vintage-burnt-gold'}`}>
-                    <div className="flex justify-between">
-                      <span>@{bid.bidderUsername}</span>
-                      <span>{bid.bidAmount.toLocaleString()} VBMS {bid.isWinning && '👑'}</span>
-                    </div>
-                    {bid.warpcastUrl && (
-                      <a
-                        href={bid.warpcastUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-purple-400 hover:text-purple-300 text-[10px] truncate block"
-                      >
-                        🔗 {bid.warpcastUrl}
-                      </a>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           {/* Success/Error Messages */}
           {success && (
