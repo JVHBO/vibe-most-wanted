@@ -138,7 +138,8 @@ export async function GET(
     return NextResponse.json(metadata, {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+        // Cache for 1 hour client-side, revalidate every 5 min on edge
+        'Cache-Control': 'public, max-age=3600, s-maxage=300, stale-while-revalidate=60',
       },
     });
 
