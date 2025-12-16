@@ -4515,15 +4515,13 @@ export default function TCGPage() {
                           <span className="text-xl md:text-2xl">$</span> {t('needCards')}
                         </h3>
                         <p className="mb-3 md:mb-4 text-sm md:text-base text-vintage-burnt-gold">{t('needCardsDesc')}</p>
-                        <a
-                          href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-modern font-bold text-sm md:text-base transition-all hover:scale-105"
+                        <button
+                          onClick={() => openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster)}
+                          className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-modern font-bold text-sm md:text-base transition-all hover:scale-105 cursor-pointer"
                           style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}
                         >
                           {t('buyCards')} $
-                        </a>
+                        </button>
                       </div>
                     </div>
 
@@ -5146,7 +5144,11 @@ export default function TCGPage() {
           <div className={isInFarcaster ? 'pt-4 pb-[75px]' : ''}>
 
           {/* Price Ticker - Miniapp only */}
-          {isInFarcaster && <PriceTicker className="mb-1 px-2" />}
+          {isInFarcaster && (
+            <div className="flex justify-center mb-1 px-2">
+              <PriceTicker />
+            </div>
+          )}
 
 
           {errorMsg && (
@@ -5287,9 +5289,69 @@ export default function TCGPage() {
                 )}
 
                 {nfts.length === 0 && status !== 'fetching' && (
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">∅</div>
-                    <p className="text-vintage-burnt-gold mb-6">{t('noNfts')}</p>
+                  <div className="text-center py-12 px-4">
+                    <div className="text-6xl mb-4">🃏</div>
+                    <h3 className="text-xl font-bold text-vintage-gold mb-2">{t('noCardsTitle')}</h3>
+                    <p className="text-vintage-burnt-gold mb-6 max-w-md mx-auto">{t('noCardsExplain')}</p>
+
+                    <div className="bg-vintage-charcoal/50 rounded-xl p-4 mb-6 max-w-sm mx-auto text-left">
+                      <p className="text-vintage-gold font-bold mb-3">{t('howToGetPacks')}</p>
+                      <ul className="space-y-2 text-sm text-vintage-burnt-gold">
+                        <li>{t('howToGetPacksStep1')}</li>
+                        <li>{t('howToGetPacksStep2')}</li>
+                        <li>{t('howToGetPacksStep3')}</li>
+                      </ul>
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        if (soundEnabled) AudioManager.buttonClick();
+                        await openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
+                      }}
+                      className="inline-block px-6 py-3 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer text-lg"
+                      style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-xl">◆</span>
+                        <span>{t('buyPacksOnVibeMarket')}</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                {/* Warning when player has 1-4 cards (not enough to play) */}
+                {nfts.length > 0 && nfts.length < HAND_SIZE && status !== 'fetching' && (
+                  <div className="mb-6 p-4 bg-amber-900/30 border border-amber-500/50 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <span className="text-3xl">⚠️</span>
+                      <div className="flex-1">
+                        <h4 className="text-amber-300 font-bold mb-1">{t('notEnoughCardsTitle')}</h4>
+                        <p className="text-amber-200/80 text-sm mb-3">
+                          {t('notEnoughCardsExplain').replace('{count}', String(nfts.length))}
+                        </p>
+                        <div className="bg-vintage-charcoal/50 rounded-lg p-3 mb-3">
+                          <p className="text-vintage-gold font-bold text-sm mb-2">{t('howToGetPacks')}</p>
+                          <ul className="space-y-1 text-xs text-vintage-burnt-gold">
+                            <li>{t('howToGetPacksStep1')}</li>
+                            <li>{t('howToGetPacksStep2')}</li>
+                            <li>{t('howToGetPacksStep3')}</li>
+                          </ul>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (soundEnabled) AudioManager.buttonClick();
+                            await openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
+                          }}
+                          className="px-4 py-2 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 cursor-pointer text-sm"
+                          style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span>◆</span>
+                            <span>{t('buyPacksOnVibeMarket')}</span>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
