@@ -4516,7 +4516,7 @@ export default function TCGPage() {
                         </h3>
                         <p className="mb-3 md:mb-4 text-sm md:text-base text-vintage-burnt-gold">{t('needCardsDesc')}</p>
                         <button
-                          onClick={() => openMarketplace('https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT', sdk, isInFarcaster)}
+                          onClick={() => openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster)}
                           className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-modern font-bold text-sm md:text-base transition-all hover:scale-105 cursor-pointer"
                           style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}
                         >
@@ -5310,7 +5310,7 @@ export default function TCGPage() {
                     <button
                       onClick={async () => {
                         if (soundEnabled) AudioManager.buttonClick();
-                        await openMarketplace('https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
+                        await openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
                       }}
                       className="inline-block px-6 py-3 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer text-lg"
                       style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
@@ -5344,7 +5344,7 @@ export default function TCGPage() {
                         <button
                           onClick={async () => {
                             if (soundEnabled) AudioManager.buttonClick();
-                            await openMarketplace('https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
+                            await openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
                           }}
                           className="px-4 py-2 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 cursor-pointer text-sm"
                           style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
