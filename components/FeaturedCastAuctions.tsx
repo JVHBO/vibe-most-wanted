@@ -125,6 +125,26 @@ export function FeaturedCastAuctions({
       }
 
       setCastPreview(data.cast);
+
+      // Check if cast already exists in auction (pool feature)
+      try {
+        const existingCheck = await fetch("/api/cast-auction/check-existing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ castHash: data.cast.hash }),
+        });
+        const existingData = await existingCheck.json();
+        
+        if (existingData.exists) {
+          setExistingCastInfo(existingData);
+        } else {
+          setExistingCastInfo(null);
+        }
+      } catch (checkError) {
+        console.error("Failed to check existing cast:", checkError);
+        setExistingCastInfo(null);
+      }
+
       if (soundEnabled) AudioManager.buttonClick();
     } catch (e) {
       setError("Failed to validate cast");
@@ -388,11 +408,42 @@ export function FeaturedCastAuctions({
 
           {/* Current bid info */}
           <div className="flex items-center justify-between text-xs bg-vintage-charcoal/50 rounded-lg p-2">
-            <div>
+            <div className="flex items-center gap-2">
               {hasBid ? (
-                <span className="text-vintage-gold">
-                  🏆 @{currentAuction.bidderUsername}: {currentAuction.currentBid.toLocaleString()} VBMS
-                </span>
+                <>
+                  <span className="text-vintage-gold">
+                    🏆 @{currentAuction.bidderUsername}: {currentAuction.currentBid.toLocaleString()} VBMS
+                  </span>
+                  <button
+                    onClick={() => {
+                      setExistingCastInfo({
+                        exists: true,
+                        auctionId: currentAuction._id,
+                        slotNumber: currentAuction.slotNumber,
+                        totalPool: currentAuction.currentBid,
+                        contributorCount: 1,
+                        topBidder: currentAuction.bidderUsername || '',
+                      });
+                      setCastPreview({
+                        hash: currentAuction.castHash || '',
+                        text: currentAuction.castText || '',
+                        author: {
+                          fid: currentAuction.castAuthorFid || 0,
+                          username: currentAuction.castAuthorUsername || '',
+                          displayName: currentAuction.castAuthorUsername || '',
+                          pfpUrl: currentAuction.castAuthorPfp || '',
+                        },
+                        timestamp: '',
+                        reactions: { likes: 0, recasts: 0 },
+                        replies: 0,
+                      });
+                      if (soundEnabled) AudioManager.buttonClick();
+                    }}
+                    className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded text-[10px] font-bold hover:bg-amber-500/30 transition-all"
+                  >
+                    + Add to Pool
+                  </button>
+                </>
               ) : (
                 <span className="text-vintage-burnt-gold">No bids yet - Min: 10,000 VBMS</span>
               )}
@@ -486,11 +537,27 @@ export function FeaturedCastAuctions({
             </div>
           )}
 
+          {/* Pool Warning Banner */}
+          {existingCastInfo && (
+            <div className="p-3 bg-amber-900/40 border-2 border-amber-500/70 rounded-lg mb-3">
+              <p className="text-amber-300 font-bold text-sm flex items-center gap-2">
+                <span>⚠️</span> This cast is already in the auction!
+              </p>
+              <p className="text-amber-200/80 text-xs mt-1">
+                Your bid will be <span className="font-bold text-amber-300">ADDED</span> to the existing pool
+              </p>
+              <div className="flex items-center justify-between mt-2 text-xs">
+                <span className="text-vintage-burnt-gold">Total Pool: <span className="text-amber-300 font-bold">{existingCastInfo.totalPool?.toLocaleString()} VBMS</span></span>
+                <span className="text-vintage-burnt-gold">{existingCastInfo.contributorCount} contributor(s)</span>
+              </div>
+            </div>
+          )}
+
           {/* Bid Amount */}
           {castPreview && (
             <div>
               <label className="text-xs text-vintage-burnt-gold mb-1 block">
-                Bid Amount (min: {getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()} VBMS)
+                {existingCastInfo ? 'Add to Pool' : 'Bid Amount'} (min: {existingCastInfo ? '1,000' : getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()} VBMS)
               </label>
               <div className="flex gap-2">
                 <input
