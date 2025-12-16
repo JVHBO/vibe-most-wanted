@@ -10,6 +10,8 @@ import { Doc } from "@/convex/_generated/dataModel";
 type AuctionDoc = Doc<"castAuctions">;
 type BidDoc = Doc<"castAuctionBids">;
 
+const MAX_BID = 120000;
+
 interface FeaturedCastAuctionsProps {
   address: string;
   userFid?: number;
@@ -39,6 +41,7 @@ export function FeaturedCastAuctions({
   onBidPlaced,
 }: FeaturedCastAuctionsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [castUrl, setCastUrl] = useState("");
   const [bidAmount, setBidAmount] = useState("");
   const [castPreview, setCastPreview] = useState<CastPreview | null>(null);
@@ -49,6 +52,7 @@ export function FeaturedCastAuctions({
 
   // Queries
   const auctionStates = useQuery(api.castAuctions.getAllAuctionStates);
+  const currentBidders = useQuery(api.castAuctions.getCurrentBidders, {});
 
   // Get player balance from profile
   const profile = useQuery(api.profiles.getProfile, address ? { address } : "skip");
@@ -114,6 +118,11 @@ export function FeaturedCastAuctions({
 
     if (isNaN(amount) || amount < minimum) {
       setError(`Minimum bid is ${minimum.toLocaleString()} VBMS`);
+      return;
+    }
+
+    if (amount > MAX_BID) {
+      setError(`Maximum bid is ${MAX_BID.toLocaleString()} VBMS`);
       return;
     }
 
@@ -235,6 +244,12 @@ export function FeaturedCastAuctions({
           <div className="flex items-center justify-between">
             <h5 className="text-amber-300 font-bold text-sm flex items-center gap-2">
               <span>🔥</span> Sponsor a Cast
+              <button
+                onClick={() => setShowHelp(!showHelp)}
+                className="text-vintage-burnt-gold hover:text-vintage-gold text-xs ml-1"
+              >
+                ?
+              </button>
             </h5>
             <button
               onClick={() => setIsExpanded(false)}
@@ -244,12 +259,26 @@ export function FeaturedCastAuctions({
             </button>
           </div>
 
+          {/* Help tooltip */}
+          {showHelp && (
+            <div className="p-2 bg-purple-900/30 border border-purple-500/50 rounded-lg text-xs text-vintage-cream">
+              <p className="font-bold text-purple-300 mb-1">How it works:</p>
+              <ul className="list-disc list-inside space-y-1 text-vintage-burnt-gold">
+                <li>Bid VBMS to have your cast featured for 24h</li>
+                <li>Min: 10k VBMS | Max: 120k VBMS</li>
+                <li>Outbid by +10% or +1k (whichever is higher)</li>
+                <li>Winner pays, losers get refund in testVBMS</li>
+                <li>Anti-snipe: bids in last 5min extend auction by 3min</li>
+              </ul>
+            </div>
+          )}
+
           {/* Current bid info */}
           <div className="flex items-center justify-between text-xs bg-vintage-charcoal/50 rounded-lg p-2">
             <div>
               {hasBid ? (
                 <span className="text-vintage-gold">
-                  Current: {currentAuction.currentBid.toLocaleString()} VBMS by @{currentAuction.bidderUsername}
+                  🏆 @{currentAuction.bidderUsername}: {currentAuction.currentBid.toLocaleString()} VBMS
                 </span>
               ) : (
                 <span className="text-vintage-burnt-gold">No bids yet - Min: 10,000 VBMS</span>
@@ -257,6 +286,21 @@ export function FeaturedCastAuctions({
             </div>
             <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
           </div>
+
+          {/* Bidders list */}
+          {currentBidders && currentBidders.length > 0 && (
+            <div className="text-xs">
+              <p className="text-vintage-burnt-gold mb-1">Recent bids:</p>
+              <div className="space-y-1 max-h-20 overflow-y-auto">
+                {currentBidders.slice(0, 5).map((bid: any, i: number) => (
+                  <div key={bid._id} className={`flex justify-between ${bid.isWinning ? 'text-green-400' : bid.status === 'refunded' ? 'text-vintage-burnt-gold/50 line-through' : 'text-vintage-burnt-gold'}`}>
+                    <span>@{bid.bidderUsername}</span>
+                    <span>{bid.bidAmount.toLocaleString()} VBMS {bid.isWinning && '👑'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Success/Error Messages */}
           {success && (
@@ -321,7 +365,7 @@ export function FeaturedCastAuctions({
           {castPreview && (
             <div>
               <label className="text-xs text-vintage-burnt-gold mb-1 block">
-                Bid Amount (min: {getMinimumBid().toLocaleString()} VBMS)
+                Bid Amount (min: {getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()} VBMS)
               </label>
               <div className="flex gap-2">
                 <input
