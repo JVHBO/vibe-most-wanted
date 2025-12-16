@@ -29,6 +29,7 @@ const PAYMASTER_URL = process.env.NEXT_PUBLIC_CDP_PAYMASTER_URL || '';
 export let dataSuffix: `0x${string}`;
 try {
   dataSuffix = Attribution.toDataSuffix({ codes: [BUILDER_CODE] });
+  console.log('Builder code suffix generated:', { code: BUILDER_CODE, suffix: dataSuffix, length: dataSuffix.length });
 } catch (e) {
   console.warn('Failed to generate dataSuffix:', e);
   dataSuffix = '0x';
