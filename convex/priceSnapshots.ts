@@ -49,18 +49,30 @@ export const savePriceSnapshot = mutation({
   },
 });
 
-// Get yesterday's prices for comparison
+// Get yesterday's prices for comparison (falls back to most recent if no yesterday)
 export const getYesterdayPrices = query({
   args: {},
   handler: async (ctx) => {
+    const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    const snapshot = await ctx.db
+    // Try yesterday first
+    let snapshot = await ctx.db
       .query("priceSnapshots")
       .withIndex("by_date", (q) => q.eq("date", yesterdayStr))
       .first();
+
+    // Fallback: get most recent snapshot (not today)
+    if (!snapshot) {
+      const allSnapshots = await ctx.db
+        .query("priceSnapshots")
+        .order("desc")
+        .take(5);
+
+      snapshot = allSnapshots.find(s => s.date !== today) || null;
+    }
 
     if (!snapshot) {
       return null;
