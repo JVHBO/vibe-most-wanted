@@ -3,6 +3,9 @@
 import { useCollectionPrices } from '@/lib/hooks/useCollectionPrices';
 import { useCachedYesterdayPrices } from '@/lib/convex-cache';
 import { useEffect, useState } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
+import { openMarketplace } from '@/lib/marketplace-utils';
+import { isMiniappMode } from '@/lib/utils/miniapp';
 
 // Collection cover images (from Mecha Arena)
 const COLLECTION_COVERS: Record<string, string> = {
@@ -22,6 +25,24 @@ const COLLECTION_COVERS: Record<string, string> = {
   viberotbangers: 'https://nft-cdn.alchemy.com/base-mainnet/1269ebe2e27ff8a041cb7253fb5687b6',
 };
 
+// Marketplace URLs for each collection
+const COLLECTION_MARKETPLACE: Record<string, string> = {
+  vibe: 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
+  gmvbrs: 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
+  viberuto: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
+  coquettish: 'https://vibechain.com/market/coquettish-1?ref=XCLR1DJ6LQTT',
+  meowverse: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
+  poorlydrawnpepes: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
+  teampothead: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
+  tarot: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
+  americanfootball: 'https://vibechain.com/market/american-football?ref=XCLR1DJ6LQTT',
+  baseballcabal: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
+  vibefx: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
+  historyofcomputer: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
+  cumioh: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
+  viberotbangers: 'https://vibechain.com/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
+};
+
 interface PriceTickerProps {
   className?: string;
 }
@@ -32,6 +53,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
   const { prices: yesterdayPrices } = useCachedYesterdayPrices();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const isInFarcaster = isMiniappMode();
 
   // Rotate through collections with fade effect
   useEffect(() => {
@@ -64,6 +86,14 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
 
   const currentPrice = prices[currentIndex];
   const coverUrl = COLLECTION_COVERS[currentPrice?.id] || '';
+  const marketplaceUrl = COLLECTION_MARKETPLACE[currentPrice?.id] || '';
+
+  // Handle click - open marketplace
+  const handleClick = async () => {
+    if (marketplaceUrl) {
+      await openMarketplace(marketplaceUrl, sdk, isInFarcaster);
+    }
+  };
 
   // Calculate price change direction
   let priceDirection: 'up' | 'down' | 'neutral' = 'neutral';
@@ -85,7 +115,11 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
   }
 
   return (
-    <div className={`overflow-hidden py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 min-w-[280px] shadow-[0_0_15px_rgba(255,215,0,0.15)] ${className}`}>
+    <button
+      onClick={handleClick}
+      className={`overflow-hidden py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 min-w-[280px] shadow-[0_0_15px_rgba(255,215,0,0.15)] hover:border-vintage-gold hover:shadow-[0_0_20px_rgba(255,215,0,0.3)] transition-all cursor-pointer ${className}`}
+      title={`Buy ${currentPrice?.displayName} Packs`}
+    >
       <div
         className={`flex items-center gap-2 text-xs transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       >
@@ -114,6 +148,6 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
           </span>
         )}
       </div>
-    </div>
+    </button>
   );
 }
