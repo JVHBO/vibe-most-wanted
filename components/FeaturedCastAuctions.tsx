@@ -90,13 +90,9 @@ export function FeaturedCastAuctions({
     (a: AuctionDoc, b: AuctionDoc) => a.auctionEndsAt - b.auctionEndsAt
   )[0];
 
-  // Calculate minimum bid
+  // Minimum bid - sem outbid, qualquer valor (min 1000 VBMS)
   const getMinimumBid = () => {
-    if (!currentAuction || currentAuction.currentBid === 0) return 10000;
-    return Math.max(
-      currentAuction.currentBid + 1000,
-      Math.ceil(currentAuction.currentBid * 1.1)
-    );
+    return 1000;
   };
 
   // Validate cast URL
