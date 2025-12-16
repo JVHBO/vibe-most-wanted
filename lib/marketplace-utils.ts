@@ -33,8 +33,18 @@ export async function openMarketplace(
   isInFarcaster: boolean,
   router?: { push: (url: string) => void }
 ): Promise<void> {
+  console.log('[openMarketplace] Called with:', {
+    marketplaceUrl,
+    isInFarcaster,
+    hasSDK: !!sdk,
+    hasActions: !!sdk?.actions,
+    hasOpenMiniApp: !!sdk?.actions?.openMiniApp,
+    isVibechain: isVibechainUrl(marketplaceUrl)
+  });
+
   // Handle internal routes
   if (isInternalRoute(marketplaceUrl)) {
+    console.log('[openMarketplace] Internal route, using router');
     if (router) {
       router.push(marketplaceUrl);
     } else {
@@ -46,16 +56,23 @@ export async function openMarketplace(
   // In Farcaster, use openMiniApp for vibechain URLs
   if (isInFarcaster && sdk?.actions?.openMiniApp && isVibechainUrl(marketplaceUrl)) {
     try {
-      // Use just the miniapp launch URL - Vibemarket will handle the embed URL
-      console.log('[openMarketplace] Calling openMiniApp with launch URL');
-      console.log('[openMarketplace] Target:', VIBEMARKET_LAUNCH_URL);
-      await sdk.actions.openMiniApp({ url: VIBEMARKET_LAUNCH_URL });
+      console.log('[openMarketplace] Calling openMiniApp with:', VIBEMARKET_LAUNCH_URL);
+      const result = await sdk.actions.openMiniApp({ url: VIBEMARKET_LAUNCH_URL });
+      console.log('[openMarketplace] openMiniApp result:', result);
       return;
     } catch (error) {
-      console.error('[openMarketplace] openMiniApp failed:', error);
+      console.error('[openMarketplace] openMiniApp FAILED:', error);
+      // Don't fallback - show the error
+      alert('openMiniApp failed: ' + (error as Error).message);
+      return;
     }
   }
 
-  // Fallback 
+  // Fallback - log why we're here
+  console.log('[openMarketplace] Using fallback window.open because:', {
+    notInFarcaster: !isInFarcaster,
+    noOpenMiniApp: !sdk?.actions?.openMiniApp,
+    notVibechain: !isVibechainUrl(marketplaceUrl)
+  });
   window.open(marketplaceUrl, '_blank');
 }
