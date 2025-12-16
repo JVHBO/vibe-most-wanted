@@ -10,7 +10,7 @@ export function isInternalRoute(url: string): boolean {
 }
 
 /**
- * Opens a marketplace URL
+ * Opens a marketplace URL - uses openMiniApp in Farcaster for confirmation dialog
  */
 export async function openMarketplace(
   marketplaceUrl: string,
@@ -28,11 +28,16 @@ export async function openMarketplace(
     return;
   }
 
-  // Use window.open to open in new context (triggers miniapp detection)
-  if (isInFarcaster) {
-    console.log('[openMarketplace] Opening in Farcaster:', marketplaceUrl);
-    window.open(marketplaceUrl, '_blank');
-    return;
+  // In Farcaster, use openMiniApp to show confirmation dialog
+  if (isInFarcaster && sdk?.actions?.openMiniApp) {
+    try {
+      console.log('[openMarketplace] Calling openMiniApp:', marketplaceUrl);
+      await sdk.actions.openMiniApp({ url: marketplaceUrl });
+      // Don't call close() - openMiniApp handles the transition
+      return;
+    } catch (error) {
+      console.error('[openMarketplace] openMiniApp failed:', error);
+    }
   }
 
   // Fallback to direct navigation
