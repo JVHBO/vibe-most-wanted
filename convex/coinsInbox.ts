@@ -158,11 +158,20 @@ export const getInboxStatus = query({
       return null;
     }
 
+    // Calculate cooldown remaining (3 minutes = 180000ms)
+    const COOLDOWN_MS = 3 * 60 * 1000;
+    const lastConversion = profile.pendingConversionTimestamp || 0;
+    const timeSinceLastConversion = Date.now() - lastConversion;
+    const cooldownRemaining = lastConversion > 0 && timeSinceLastConversion < COOLDOWN_MS
+      ? Math.ceil((COOLDOWN_MS - timeSinceLastConversion) / 1000)
+      : 0;
+
     return {
       coinsInbox: profile.coinsInbox || 0, // For backward compatibility
       coins: profile.coins || 0,
       inbox: profile.coinsInbox || 0, // TESTVBMS inbox (rewards accumulate here)
       lifetimeEarned: profile.lifetimeEarned || 0,
+      cooldownRemaining, // Seconds until next conversion allowed (0 = ready)
     };
   },
 });
