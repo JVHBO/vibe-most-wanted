@@ -1320,6 +1320,9 @@ export default defineSchema({
 
     // Timestamps
     timestamp: v.number(),
+
+    // Pool Feature
+    isPoolContribution: v.optional(v.boolean()),
   })
     .index("by_auction", ["auctionId", "timestamp"])
     .index("by_bidder", ["bidderAddress", "timestamp"])

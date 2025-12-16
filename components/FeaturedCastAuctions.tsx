@@ -51,6 +51,14 @@ export function FeaturedCastAuctions({
   const [castUrl, setCastUrl] = useState("");
   const [bidAmount, setBidAmount] = useState("");
   const [castPreview, setCastPreview] = useState<CastPreview | null>(null);
+  const [existingCastInfo, setExistingCastInfo] = useState<{
+    exists: boolean;
+    auctionId: string;
+    slotNumber?: number;
+    totalPool: number;
+    contributorCount: number;
+    topBidder: string;
+  } | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [isBidding, setIsBidding] = useState(false);
   const [bidStep, setBidStep] = useState<"idle" | "transferring" | "verifying">("idle");
@@ -135,6 +143,8 @@ export function FeaturedCastAuctions({
     castAuthorUsername: string;
     castAuthorPfp: string;
     castText: string;
+    isPoolContribution?: boolean;
+    auctionId?: string;
   } | null>(null);
 
   // Handle TX confirmation - verify and record bid via API
@@ -142,33 +152,51 @@ export function FeaturedCastAuctions({
     if (txConfirmed && pendingTxHash && pendingBidData && bidStep === "transferring") {
       setBidStep("verifying");
 
-      // Call API to verify TX and record bid
+      // Call API to verify TX and record bid (or add to pool)
       const verifyAndRecordBid = async () => {
         try {
-          const response = await fetch("/api/cast-auction/place-bid", {
+          // Choose endpoint based on whether this is a pool contribution
+          const endpoint = pendingBidData.isPoolContribution
+            ? "/api/cast-auction/add-to-pool"
+            : "/api/cast-auction/place-bid";
+
+          const bodyData = pendingBidData.isPoolContribution
+            ? {
+                txHash: pendingTxHash,
+                address,
+                auctionId: pendingBidData.auctionId,
+                bidAmount: pendingBidData.amount,
+              }
+            : {
+                txHash: pendingTxHash,
+                address,
+                slotNumber: pendingBidData.slotNumber,
+                bidAmount: pendingBidData.amount,
+                castHash: pendingBidData.castHash,
+                warpcastUrl: pendingBidData.warpcastUrl,
+                castAuthorFid: pendingBidData.castAuthorFid,
+                castAuthorUsername: pendingBidData.castAuthorUsername,
+                castAuthorPfp: pendingBidData.castAuthorPfp,
+                castText: pendingBidData.castText,
+              };
+
+          const response = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              txHash: pendingTxHash,
-              address,
-              slotNumber: pendingBidData.slotNumber,
-              bidAmount: pendingBidData.amount,
-              castHash: pendingBidData.castHash,
-              warpcastUrl: pendingBidData.warpcastUrl,
-              castAuthorFid: pendingBidData.castAuthorFid,
-              castAuthorUsername: pendingBidData.castAuthorUsername,
-              castAuthorPfp: pendingBidData.castAuthorPfp,
-              castText: pendingBidData.castText,
-            }),
+            body: JSON.stringify(bodyData),
           });
 
           const result = await response.json();
 
           if (result.success) {
-            setSuccess(`Bid placed! ${pendingBidData.amount.toLocaleString()} VBMS`);
+            const successMsg = pendingBidData.isPoolContribution
+              ? `Added ${pendingBidData.amount.toLocaleString()} VBMS to pool!`
+              : `Bid placed! ${pendingBidData.amount.toLocaleString()} VBMS`;
+            setSuccess(successMsg);
             setBidAmount("");
             setCastUrl("");
             setCastPreview(null);
+            setExistingCastInfo(null);
             setIsExpanded(false);
             if (soundEnabled) AudioManager.win();
             onBidPlaced?.(pendingBidData.amount);
@@ -197,10 +225,11 @@ export function FeaturedCastAuctions({
     if (!currentAuction || !castPreview || !bidAmount) return;
 
     const amount = parseInt(bidAmount);
-    const minimum = getMinimumBid();
+    // Pool contributions have lower minimum (1000 VBMS)
+    const minimum = existingCastInfo ? 1000 : getMinimumBid();
 
     if (isNaN(amount) || amount < minimum) {
-      setError(`Minimum bid is ${minimum.toLocaleString()} VBMS`);
+      setError(`Minimum ${existingCastInfo ? 'contribution' : 'bid'} is ${minimum.toLocaleString()} VBMS`);
       return;
     }
 
@@ -222,13 +251,15 @@ export function FeaturedCastAuctions({
       // Store bid data for when TX confirms
       setPendingBidData({
         amount,
-        slotNumber: currentAuction.slotNumber,
+        slotNumber: existingCastInfo?.slotNumber || currentAuction.slotNumber,
         castHash: castPreview.hash,
         warpcastUrl: castUrl,
         castAuthorFid: castPreview.author.fid,
         castAuthorUsername: castPreview.author.username,
         castAuthorPfp: castPreview.author.pfpUrl,
         castText: castPreview.text,
+        isPoolContribution: !!existingCastInfo,
+        auctionId: existingCastInfo?.auctionId,
       });
 
       // Transfer VBMS to pool on-chain
@@ -474,7 +505,7 @@ export function FeaturedCastAuctions({
                   disabled={isBidding || !bidAmount}
                   className="px-6 py-2 bg-amber-500 text-black rounded-lg text-sm font-bold hover:bg-amber-400 disabled:opacity-50 transition-all"
                 >
-                  {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : "Bid"}
+                  {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : existingCastInfo ? "Add to Pool" : "Bid"}
                 </button>
               </div>
               <p className="text-xs text-vintage-burnt-gold mt-1">

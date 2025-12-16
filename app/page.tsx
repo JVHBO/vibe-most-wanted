@@ -620,7 +620,7 @@ export default function TCGPage() {
   const [isLoadingMissions, setIsLoadingMissions] = useState<boolean>(false);
   const [isClaimingMission, setIsClaimingMission] = useState<string | null>(null);
   const [isClaimingAll, setIsClaimingAll] = useState<boolean>(false);
-  const [missionsSubView, setMissionsSubView] = useState<'missions' | 'achievements' | 'social'>('missions');
+  const [missionsSubView, setMissionsSubView] = useState<'missions' | 'social'>('social');
 
   // Check if any missions are claimable (for pulsing button)
   const hasClaimableMissions = useMemo(() => {
@@ -644,8 +644,8 @@ export default function TCGPage() {
       (m: { completed: boolean; claimed: boolean }) => m.completed && !m.claimed
     );
 
-    return dailyLoginClaimable || dailyQuestClaimable || weeklyClaimable || personalMissionsClaimable;
-  }, [questProgress, weeklyProgress, loginBonusClaimed, address, userProfile, playerMissions]);
+    return dailyLoginClaimable || dailyQuestClaimable || personalMissionsClaimable;
+  }, [questProgress, loginBonusClaimed, address, userProfile, playerMissions]);
 
   // Defense Deck States
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
@@ -6207,318 +6207,11 @@ export default function TCGPage() {
                   </svg>
                   Social
                 </button>
-                <button
-                  onClick={() => {
-                    if (soundEnabled) AudioManager.buttonNav();
-                    setMissionsSubView('achievements');
-                  }}
-                  className={`px-3 md:px-6 py-2 rounded-lg font-display font-bold text-xs md:text-base transition-all flex-shrink-0 ${
-                    missionsSubView === 'achievements'
-                      ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                      : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
-                  }`}
-                >
-                  <svg className="inline-block w-3 h-3 md:w-4 md:h-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                  </svg>
-                  {t('achievements')}
-                </button>
               </div>
 
               {/* Missions Sub-View */}
               {missionsSubView === 'missions' && (
               <>
-              {/* Weekly Quests Section */}
-              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6 shadow-gold">
-                <div className="flex items-center gap-3 mb-6">
-                  <NextImage src="/images/icons/mission.svg" alt="Missions" width={48} height={48} />
-                  <div>
-                    <h2 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold">WEEKLY MISSIONS</h2>
-                    <p className="text-sm text-vintage-burnt-gold font-modern">Reset every Sunday 00:00 UTC</p>
-                  </div>
-                </div>
-
-                {!address || !userProfile ? (
-                  <div className="text-center py-8">
-                    <p className="text-vintage-burnt-gold">Create a profile to track weekly missions</p>
-                  </div>
-                ) : weeklyProgress ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Attack Master Quest */}
-                    {weeklyProgress.quests.weekly_attack_wins && (
-                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <NextImage src="/images/icons/victory.svg" alt="Victory" width={32} height={32} />
-                            <div>
-                              <h3 className="text-lg font-bold text-vintage-gold">Attack Master</h3>
-                              <p className="text-xs text-vintage-burnt-gold">Win 20 attacks</p>
-                            </div>
-                          </div>
-                          {weeklyProgress.quests.weekly_attack_wins.claimed ? (
-                            <div className="px-3 py-1.5 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg text-xs font-semibold">
-                              ✓ Claimed
-                            </div>
-                          ) : weeklyProgress.quests.weekly_attack_wins.completed ? (
-                            <button
-                              onClick={() => handleClaimWeeklyQuestReward('weekly_attack_wins')}
-                              className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
-                            >
-                              ✦ Claim 300 $TESTVBMS
-                            </button>
-                          ) : null}
-                        </div>
-                        <ProgressBar
-                          current={weeklyProgress.quests.weekly_attack_wins.current}
-                          target={weeklyProgress.quests.weekly_attack_wins.target}
-                          showPercentage={true}
-                          showNumbers={true}
-                          size="sm"
-                          variant="gold"
-                          animate={true}
-                        />
-                      </div>
-                    )}
-
-                    {/* Active Player Quest */}
-                    {weeklyProgress.quests.weekly_total_matches && (
-                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <NextImage src="/images/icons/battle.svg" alt="Battle" width={32} height={32} />
-                            <div>
-                              <h3 className="text-lg font-bold text-vintage-gold">Active Player</h3>
-                              <p className="text-xs text-vintage-burnt-gold">Play 30 matches (any mode)</p>
-                            </div>
-                          </div>
-                          {weeklyProgress.quests.weekly_total_matches.claimed ? (
-                            <div className="px-3 py-1.5 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg text-xs font-semibold">
-                              ✓ Claimed
-                            </div>
-                          ) : weeklyProgress.quests.weekly_total_matches.completed ? (
-                            <button
-                              onClick={() => handleClaimWeeklyQuestReward('weekly_total_matches')}
-                              className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
-                            >
-                              ✦ Claim 200 $TESTVBMS
-                            </button>
-                          ) : null}
-                        </div>
-                        <ProgressBar
-                          current={weeklyProgress.quests.weekly_total_matches.current}
-                          target={weeklyProgress.quests.weekly_total_matches.target}
-                          showPercentage={true}
-                          showNumbers={true}
-                          size="sm"
-                          variant="gold"
-                          animate={true}
-                        />
-                      </div>
-                    )}
-
-                    {/* Fortress Quest */}
-                    {weeklyProgress.quests.weekly_defense_wins && (
-                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <NextImage src="/images/icons/cards.svg" alt="Defense" width={32} height={32} />
-                            <div>
-                              <h3 className="text-lg font-bold text-vintage-gold">Fortress</h3>
-                              <p className="text-xs text-vintage-burnt-gold">Defend successfully 10 times</p>
-                            </div>
-                          </div>
-                          {weeklyProgress.quests.weekly_defense_wins.claimed ? (
-                            <div className="px-3 py-1.5 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg text-xs font-semibold">
-                              ✓ Claimed
-                            </div>
-                          ) : weeklyProgress.quests.weekly_defense_wins.completed ? (
-                            <button
-                              onClick={() => handleClaimWeeklyQuestReward('weekly_defense_wins')}
-                              className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
-                            >
-                              ✦ Claim 400 $TESTVBMS
-                            </button>
-                          ) : null}
-                        </div>
-                        <ProgressBar
-                          current={weeklyProgress.quests.weekly_defense_wins.current}
-                          target={weeklyProgress.quests.weekly_defense_wins.target}
-                          showPercentage={true}
-                          showNumbers={true}
-                          size="sm"
-                          variant="gold"
-                          animate={true}
-                        />
-                      </div>
-                    )}
-
-                    {/* Unbeatable Quest */}
-                    {weeklyProgress.quests.weekly_pve_streak && (
-                      <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl">🔥</span>
-                            <div>
-                              <h3 className="text-lg font-bold text-vintage-gold">Unbeatable</h3>
-                              <p className="text-xs text-vintage-burnt-gold">Win 10 PvE battles in a row</p>
-                            </div>
-                          </div>
-                          {weeklyProgress.quests.weekly_pve_streak.claimed ? (
-                            <div className="px-3 py-1.5 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg text-xs font-semibold">
-                              ✓ Claimed
-                            </div>
-                          ) : weeklyProgress.quests.weekly_pve_streak.completed ? (
-                            <button
-                              onClick={() => handleClaimWeeklyQuestReward('weekly_pve_streak')}
-                              className="px-3 py-1.5 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-gold"
-                            >
-                              ✦ Claim 500 $TESTVBMS
-                            </button>
-                          ) : null}
-                        </div>
-                        <ProgressBar
-                          current={weeklyProgress.quests.weekly_pve_streak.current}
-                          target={weeklyProgress.quests.weekly_pve_streak.target}
-                          showPercentage={true}
-                          showNumbers={true}
-                          size="sm"
-                          variant="gold"
-                          animate={true}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <LoadingSpinner size="lg" variant="gold" text="Loading missions..." />
-                  </div>
-                )}
-              </div>
-
-              {/* Weekly Rewards Status - Player's Current Standing */}
-              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-6 shadow-gold mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">⏰</span>
-                    <div>
-                      <h3 className="text-xl font-display font-bold text-vintage-gold">NEXT DISTRIBUTION</h3>
-                      <p className="text-sm text-vintage-burnt-gold font-modern">Sunday 00:00 UTC</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-display font-bold text-vintage-gold" id="weekly-countdown">
-                      {(() => {
-                        const now = new Date();
-                        const dayOfWeek = now.getUTCDay();
-                        const daysUntilSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
-                        const nextSunday = new Date(now);
-                        nextSunday.setUTCDate(now.getUTCDate() + daysUntilSunday);
-                        nextSunday.setUTCHours(0, 0, 0, 0);
-
-                        const diff = nextSunday.getTime() - now.getTime();
-                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-                        return `${days}d ${hours}h`;
-                      })()}
-                    </p>
-                    <p className="text-xs text-vintage-burnt-gold">remaining</p>
-                  </div>
-                </div>
-
-                {/* Current Rank & Reward */}
-                {userProfile && filteredLeaderboard.length > 0 && (() => {
-                  const playerRank = filteredLeaderboard.findIndex(p => p.address === userProfile.address) + 1;
-                  let nextReward = 0;
-                  let rewardTier = '';
-
-                  if (playerRank === 1) {
-                    nextReward = 1000;
-                    rewardTier = '🥇 1st Place';
-                  } else if (playerRank === 2) {
-                    nextReward = 750;
-                    rewardTier = '🥈 2nd Place';
-                  } else if (playerRank === 3) {
-                    nextReward = 500;
-                    rewardTier = '🥉 3rd Place';
-                  } else if (playerRank >= 4 && playerRank <= 10) {
-                    nextReward = 300;
-                    rewardTier = `⭐ ${playerRank}th Place`;
-                  } else if (playerRank > 10) {
-                    rewardTier = `📊 Rank #${playerRank}`;
-                  }
-
-                  return (
-                    <div className="bg-vintage-black/50 rounded-xl p-4 border border-vintage-gold/20">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-vintage-burnt-gold mb-1">Your Current Rank</p>
-                          <p className="text-2xl font-display font-bold text-vintage-gold">{rewardTier}</p>
-                          {playerRank > 10 && (
-                            <p className="text-xs text-orange-400 mt-1">Climb to TOP 10 to earn rewards!</p>
-                          )}
-                        </div>
-                        {nextReward > 0 && (
-                          <div className="text-right">
-                            <p className="text-sm text-green-400 mb-1">Next Reward</p>
-                            <p className="text-3xl font-display font-bold text-green-300">+{nextReward.toLocaleString()}</p>
-                            <p className="text-xs text-green-400">$TESTVBMS</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* TOP 10 Preview */}
-                <div className="mt-4">
-                  <h4 className="text-sm font-bold text-vintage-gold mb-2 flex items-center gap-2">
-                    <span>🏆</span>
-                    CURRENT TOP 10
-                  </h4>
-                  <div className="space-y-1 max-h-64 overflow-y-auto">
-                    {filteredLeaderboard.slice(0, 10).map((profile, index) => {
-                      const rank = index + 1;
-                      let rankIcon = '';
-                      let rewardAmount = 0;
-
-                      if (rank === 1) { rankIcon = '🥇'; rewardAmount = 1000; }
-                      else if (rank === 2) { rankIcon = '🥈'; rewardAmount = 750; }
-                      else if (rank === 3) { rankIcon = '🥉'; rewardAmount = 500; }
-                      else { rankIcon = '⭐'; rewardAmount = 300; }
-
-                      const isCurrentUser = profile.address === userProfile?.address;
-
-                      return (
-                        <div
-                          key={profile.address}
-                          className={`flex items-center justify-between p-2 rounded ${
-                            isCurrentUser
-                              ? 'bg-vintage-gold/20 border border-vintage-gold'
-                              : 'bg-vintage-black/30'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 flex-1">
-                            <span className="text-lg w-8">{rankIcon}</span>
-                            <span className="text-xs text-vintage-burnt-gold w-6">#{rank}</span>
-                            <span className={`text-sm font-semibold truncate ${
-                              isCurrentUser ? 'text-vintage-gold' : 'text-vintage-ice'
-                            }`}>
-                              {profile.username}
-                              {isCurrentUser && <span className="text-xs text-vintage-burnt-gold ml-1">(you)</span>}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs text-purple-400 font-bold">{(profile.stats?.aura ?? 500).toLocaleString()}</span>
-                            <span className="text-xs text-yellow-400">{(profile.stats?.totalPower || 0).toLocaleString()} PWR</span>
-                            <span className="text-xs text-green-400 font-bold min-w-[60px] text-right">+{rewardAmount}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
               {/* Daily Missions Section */}
               <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-4 md:p-8">
                 <div className="text-center mb-6">
@@ -6624,15 +6317,7 @@ export default function TCGPage() {
               </>
               )}
 
-              {/* Achievements Sub-View */}
-              {missionsSubView === 'achievements' && (
-                <AchievementsView
-                  playerAddress={address}
-                  nfts={nfts}
-                  onSuccess={setSuccessMessage}
-                  onError={setErrorMessage}
-                />
-              )}
+              
 
               {/* Social Quests Sub-View */}
               {missionsSubView === 'social' && address && (

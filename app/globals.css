@@ -441,6 +441,15 @@ body > * {
 }
 
 .animate-boss-hit {
+n/* Price Ticker Glow Pulse Animation */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.15), 0 0 16px rgba(255, 215, 0, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.4), 0 0 35px rgba(255, 215, 0, 0.2);
+  }
+}
   animation: bossHit 0.4s ease-out;
 }
 

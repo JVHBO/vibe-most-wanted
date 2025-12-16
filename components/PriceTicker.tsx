@@ -70,7 +70,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 ${className}`}>
+      <div className={`flex items-center justify-center gap-2 py-2 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
         <span className="text-vintage-burnt-gold text-xs animate-pulse">Loading prices...</span>
       </div>
     );
@@ -78,7 +78,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
 
   if (prices.length === 0) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 ${className}`}>
+      <div className={`flex items-center justify-center gap-2 py-2 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
         <span className="text-vintage-burnt-gold text-xs">Fetching prices...</span>
       </div>
     );
@@ -117,17 +117,17 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
   return (
     <button
       onClick={handleClick}
-      className={`overflow-hidden py-1 px-3 bg-vintage-deep-black rounded-lg border-2 border-vintage-gold/50 min-w-[280px] shadow-[0_0_15px_rgba(255,215,0,0.15)] hover:border-vintage-gold hover:shadow-[0_0_20px_rgba(255,215,0,0.3)] transition-all cursor-pointer ${className}`}
+      className={`overflow-hidden py-2 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold animate-[glow-pulse_2.5s_ease-in-out_infinite] transition-all cursor-pointer ${className}`}
       title={`Buy ${currentPrice?.displayName} Packs`}
     >
       <div
-        className={`flex items-center gap-2 text-xs transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`flex items-center justify-center gap-3 text-sm transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       >
         {coverUrl && (
           <img
             src={coverUrl}
             alt={currentPrice?.displayName}
-            className="w-6 h-6 rounded object-cover"
+            className="w-7 h-7 rounded-lg object-cover"
           />
         )}
         <span className="text-vintage-burnt-gold font-bold">{currentPrice?.displayName} Pack:</span>
@@ -136,15 +136,15 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
         {priceDirection !== 'neutral' && (
           <span className={`flex items-center gap-0.5 ${priceDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
             {priceDirection === 'up' ? (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             ) : (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             )}
-            <span className="text-[10px]">{percentChange.toFixed(1)}%</span>
+            <span className="text-xs font-semibold">{percentChange.toFixed(1)}%</span>
           </span>
         )}
       </div>
