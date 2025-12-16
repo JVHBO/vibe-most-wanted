@@ -27,20 +27,20 @@ const COLLECTION_COVERS: Record<string, string> = {
 
 // Marketplace URLs for each collection
 const COLLECTION_MARKETPLACE: Record<string, string> = {
-  vibe: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
-  gmvbrs: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/gm-vbrs?ref=XCLR1DJ6LQTT',
-  viberuto: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/viberuto-packs?ref=XCLR1DJ6LQTT',
-  coquettish: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/coquettish-1?ref=XCLR1DJ6LQTT',
-  meowverse: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/meowverse?ref=XCLR1DJ6LQTT',
-  poorlydrawnpepes: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
-  teampothead: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/team-pothead?ref=XCLR1DJ6LQTT',
-  tarot: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/tarot?ref=XCLR1DJ6LQTT',
-  americanfootball: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/american-football?ref=XCLR1DJ6LQTT',
-  baseballcabal: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
-  vibefx: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/vibe-fx?ref=XCLR1DJ6LQTT',
-  historyofcomputer: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/historyofcomputer?ref=XCLR1DJ6LQTT',
-  cumioh: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
-  viberotbangers: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
+  vibe: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  gmvbrs: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  viberuto: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  coquettish: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  meowverse: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  poorlydrawnpepes: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  teampothead: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  tarot: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  americanfootball: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  baseballcabal: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  vibefx: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  historyofcomputer: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  cumioh: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
+  viberotbangers: 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT',
 };
 
 interface PriceTickerProps {

@@ -489,7 +489,7 @@ export default function DexPage() {
         
         {/* Buy VBMS Packs Link */}
         <button
-          onClick={() => openMarketplace('https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isMiniappMode())}
+          onClick={() => openMarketplace('https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket?ref=XCLR1DJ6LQTT', sdk, isMiniappMode())}
           className="mb-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider cursor-pointer"
           style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
         >
