@@ -46,7 +46,7 @@ export function FeaturedCastAuctions({
   soundEnabled = true,
   onBidPlaced,
 }: FeaturedCastAuctionsProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
   const [castUrl, setCastUrl] = useState("");
   const [bidAmount, setBidAmount] = useState("");
@@ -373,11 +373,23 @@ export function FeaturedCastAuctions({
           {currentBidders && currentBidders.length > 0 && (
             <div className="text-xs">
               <p className="text-vintage-burnt-gold mb-1">Recent bids:</p>
-              <div className="space-y-1 max-h-20 overflow-y-auto">
+              <div className="space-y-2 max-h-32 overflow-y-auto">
                 {currentBidders.slice(0, 5).map((bid: any, i: number) => (
-                  <div key={bid._id} className={`flex justify-between ${bid.isWinning ? 'text-green-400' : bid.status === 'refunded' ? 'text-vintage-burnt-gold/50 line-through' : 'text-vintage-burnt-gold'}`}>
-                    <span>@{bid.bidderUsername}</span>
-                    <span>{bid.bidAmount.toLocaleString()} VBMS {bid.isWinning && '👑'}</span>
+                  <div key={bid._id} className={`${bid.isWinning ? 'text-green-400' : bid.status === 'refunded' ? 'text-vintage-burnt-gold/50 line-through' : 'text-vintage-burnt-gold'}`}>
+                    <div className="flex justify-between">
+                      <span>@{bid.bidderUsername}</span>
+                      <span>{bid.bidAmount.toLocaleString()} VBMS {bid.isWinning && '👑'}</span>
+                    </div>
+                    {bid.warpcastUrl && (
+                      <a
+                        href={bid.warpcastUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-400 hover:text-purple-300 text-[10px] truncate block"
+                      >
+                        🔗 {bid.warpcastUrl}
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
