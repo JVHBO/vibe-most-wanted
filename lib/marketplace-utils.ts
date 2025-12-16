@@ -10,7 +10,7 @@ export function isInternalRoute(url: string): boolean {
 }
 
 /**
- * Opens a marketplace URL
+ * Opens a marketplace URL - uses openMiniApp in Farcaster
  */
 export async function openMarketplace(
   marketplaceUrl: string,
@@ -28,18 +28,13 @@ export async function openMarketplace(
     return;
   }
 
-  // Debug - show what's available
-  const hasOpenUrl = !!sdk?.actions?.openUrl;
-  const hasOpenMiniApp = !!sdk?.actions?.openMiniApp;
-  alert(`isInFarcaster=${isInFarcaster} openUrl=${hasOpenUrl} openMiniApp=${hasOpenMiniApp}`);
-
-  // In Farcaster, use openUrl
-  if (isInFarcaster && sdk?.actions?.openUrl) {
+  // In Farcaster, use openMiniApp
+  if (isInFarcaster && sdk?.actions?.openMiniApp) {
     try {
-      await sdk.actions.openUrl(marketplaceUrl);
+      await sdk.actions.openMiniApp({ url: marketplaceUrl });
       return;
     } catch (error) {
-      alert('openUrl error: ' + (error as Error).message);
+      console.error('[openMarketplace] openMiniApp failed:', error);
     }
   }
 
