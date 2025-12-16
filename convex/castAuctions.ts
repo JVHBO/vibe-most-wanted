@@ -337,7 +337,7 @@ export const placeBid = mutation({
         .first();
 
       if (previousBid) {
-        // Refund to previous bidder's testVbmsBalance (not real VBMS)
+        // Refund to previous bidder's coins (TESTVBMS)
         const prevBidderProfile = await ctx.db
           .query("profiles")
           .withIndex("by_address")
@@ -346,7 +346,7 @@ export const placeBid = mutation({
 
         if (prevBidderProfile) {
           await ctx.db.patch(prevBidderProfile._id, {
-            testVbmsBalance: (prevBidderProfile.testVbmsBalance || 0) + previousBid.bidAmount,
+            coins: (prevBidderProfile.coins || 0) + previousBid.bidAmount,
             lastUpdated: now,
           });
         }
