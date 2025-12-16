@@ -6,11 +6,17 @@ import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import Link from "next/link";
 import { Doc } from "@/convex/_generated/dataModel";
+import { useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS";
+import { useWaitForTransactionReceipt } from "wagmi";
+import { parseEther } from "viem";
+import { CONTRACTS } from "@/lib/contracts";
 
 type AuctionDoc = Doc<"castAuctions">;
 type BidDoc = Doc<"castAuctionBids">;
 
 const MAX_BID = 120000;
+const POOL_ADDRESS = CONTRACTS.VBMSPoolTroll as `0x${string}`;
 
 interface FeaturedCastAuctionsProps {
   address: string;
@@ -47,6 +53,8 @@ export function FeaturedCastAuctions({
   const [castPreview, setCastPreview] = useState<CastPreview | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [isBidding, setIsBidding] = useState(false);
+  const [bidStep, setBidStep] = useState<"idle" | "transferring" | "verifying">("idle");
+  const [pendingTxHash, setPendingTxHash] = useState<`0x${string}` | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -54,12 +62,20 @@ export function FeaturedCastAuctions({
   const auctionStates = useQuery(api.castAuctions.getAllAuctionStates);
   const currentBidders = useQuery(api.castAuctions.getCurrentBidders, {});
 
-  // Get player balance from profile
+  // Get profile for username
   const profile = useQuery(api.profiles.getProfile, address ? { address } : "skip");
-  const userBalance = profile?.coins || 0;
 
-  // Mutation
-  const placeBid = useMutation(api.castAuctions.placeBid);
+  // Get real VBMS balance from wallet
+  const { balance: vbmsBalance, refetch: refetchBalance } = useFarcasterVBMSBalance(address);
+  const userBalance = Math.floor(parseFloat(vbmsBalance || "0"));
+
+  // VBMS transfer hook
+  const { transfer: transferVBMS, isPending: isTransferPending } = useTransferVBMS();
+
+  // Wait for TX confirmation
+  const { isLoading: isWaitingForTx, isSuccess: txConfirmed } = useWaitForTransactionReceipt({
+    hash: pendingTxHash,
+  });
 
   // Get current auction (the one ending soonest)
   const currentAuction = auctionStates?.bidding?.sort(
@@ -109,7 +125,74 @@ export function FeaturedCastAuctions({
     }
   };
 
-  // Place bid
+  // Store bid data for when TX confirms
+  const [pendingBidData, setPendingBidData] = useState<{
+    amount: number;
+    slotNumber: number;
+    castHash: string;
+    warpcastUrl: string;
+    castAuthorFid: number;
+    castAuthorUsername: string;
+    castAuthorPfp: string;
+    castText: string;
+  } | null>(null);
+
+  // Handle TX confirmation - verify and record bid via API
+  useEffect(() => {
+    if (txConfirmed && pendingTxHash && pendingBidData && bidStep === "transferring") {
+      setBidStep("verifying");
+
+      // Call API to verify TX and record bid
+      const verifyAndRecordBid = async () => {
+        try {
+          const response = await fetch("/api/cast-auction/place-bid", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              txHash: pendingTxHash,
+              address,
+              slotNumber: pendingBidData.slotNumber,
+              bidAmount: pendingBidData.amount,
+              castHash: pendingBidData.castHash,
+              warpcastUrl: pendingBidData.warpcastUrl,
+              castAuthorFid: pendingBidData.castAuthorFid,
+              castAuthorUsername: pendingBidData.castAuthorUsername,
+              castAuthorPfp: pendingBidData.castAuthorPfp,
+              castText: pendingBidData.castText,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            setSuccess(`Bid placed! ${pendingBidData.amount.toLocaleString()} VBMS`);
+            setBidAmount("");
+            setCastUrl("");
+            setCastPreview(null);
+            setIsExpanded(false);
+            if (soundEnabled) AudioManager.win();
+            onBidPlaced?.(pendingBidData.amount);
+            refetchBalance();
+          } else {
+            setError(result.error || "Failed to verify bid");
+            if (soundEnabled) AudioManager.buttonError();
+          }
+        } catch (e: any) {
+          setError(e.message || "Failed to verify bid");
+          if (soundEnabled) AudioManager.buttonError();
+        } finally {
+          setIsBidding(false);
+          setBidStep("idle");
+          setPendingTxHash(undefined);
+          setPendingBidData(null);
+        }
+      };
+
+      verifyAndRecordBid();
+    }
+  }, [txConfirmed, pendingTxHash, pendingBidData, bidStep, address, soundEnabled, onBidPlaced, refetchBalance]);
+
+  // Place bid - transfer VBMS on-chain
   const handlePlaceBid = async () => {
     if (!currentAuction || !castPreview || !bidAmount) return;
 
@@ -127,18 +210,19 @@ export function FeaturedCastAuctions({
     }
 
     if (amount > userBalance) {
-      setError(`Insufficient balance. You have ${userBalance.toLocaleString()} VBMS`);
+      setError(`Insufficient VBMS. You have ${userBalance.toLocaleString()} VBMS in wallet`);
       return;
     }
 
     setIsBidding(true);
+    setBidStep("transferring");
     setError(null);
 
     try {
-      const result = await placeBid({
-        address,
+      // Store bid data for when TX confirms
+      setPendingBidData({
+        amount,
         slotNumber: currentAuction.slotNumber,
-        bidAmount: amount,
         castHash: castPreview.hash,
         warpcastUrl: castUrl,
         castAuthorFid: castPreview.author.fid,
@@ -147,20 +231,18 @@ export function FeaturedCastAuctions({
         castText: castPreview.text,
       });
 
-      if (result.success) {
-        setSuccess(`Bid placed! ${amount.toLocaleString()} VBMS`);
-        setBidAmount("");
-        setCastUrl("");
-        setCastPreview(null);
-        setIsExpanded(false);
-        if (soundEnabled) AudioManager.win();
-        onBidPlaced?.(amount);
-      }
+      // Transfer VBMS to pool on-chain
+      const txHash = await transferVBMS(POOL_ADDRESS, parseEther(amount.toString()));
+      setPendingTxHash(txHash);
+      // TX confirmation will be handled by useEffect above
+
     } catch (e: any) {
-      setError(e.message || "Failed to place bid");
+      console.error("[CastAuction] Transfer error:", e);
+      setError(e.message || "Failed to transfer VBMS");
       if (soundEnabled) AudioManager.buttonError();
-    } finally {
       setIsBidding(false);
+      setBidStep("idle");
+      setPendingBidData(null);
     }
   };
 
@@ -264,10 +346,10 @@ export function FeaturedCastAuctions({
             <div className="p-2 bg-purple-900/30 border border-purple-500/50 rounded-lg text-xs text-vintage-cream">
               <p className="font-bold text-purple-300 mb-1">How it works:</p>
               <ul className="list-disc list-inside space-y-1 text-vintage-burnt-gold">
-                <li>Bid VBMS to have your cast featured for 24h</li>
+                <li>Bid real VBMS from your wallet</li>
                 <li>Min: 10k VBMS | Max: 120k VBMS</li>
                 <li>Outbid by +10% or +1k (whichever is higher)</li>
-                <li>Winner pays, losers get refund in testVBMS</li>
+                <li>Winner pays, losers can claim VBMS refund</li>
                 <li>Anti-snipe: bids in last 5min extend auction by 3min</li>
               </ul>
             </div>
@@ -380,11 +462,11 @@ export function FeaturedCastAuctions({
                   disabled={isBidding || !bidAmount}
                   className="px-6 py-2 bg-amber-500 text-black rounded-lg text-sm font-bold hover:bg-amber-400 disabled:opacity-50 transition-all"
                 >
-                  {isBidding ? "..." : "Bid"}
+                  {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : "Bid"}
                 </button>
               </div>
               <p className="text-xs text-vintage-burnt-gold mt-1">
-                Your balance: {userBalance.toLocaleString()} VBMS
+                Wallet: {userBalance.toLocaleString()} VBMS
               </p>
             </div>
           )}

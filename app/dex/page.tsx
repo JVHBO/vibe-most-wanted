@@ -15,6 +15,9 @@ import {
   SellStep,
 } from "@/lib/hooks/useVBMSDex";
 import { useVBMSMarketCap } from "@/lib/hooks/useVBMSMarketCap";
+import { sdk } from "@farcaster/miniapp-sdk";
+import { isMiniappMode } from "@/lib/utils/miniapp";
+import { openMarketplace } from "@/lib/marketplace-utils";
 
 type SwapMode = "buy" | "sell";
 
@@ -58,9 +61,9 @@ const dexTranslations = {
     back: "Back",
     // Fees
     feeBreakdown: "Fee Breakdown",
-    buyFee: "Buy: ~5% protocol fee",
+    buyFee: "Buy: ~10% bonding curve spread",
     sellFee: "Sell: ~5% protocol fee",
-    protocolNote: "Fees built into bonding curve spread",
+    protocolNote: "Fees built into bonding curve pricing",
     // Zazza credits
     zazzaCredit: "Built with help from",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -105,9 +108,9 @@ const dexTranslations = {
     back: "Voltar",
     // Fees
     feeBreakdown: "Taxas",
-    buyFee: "Compra: ~5% taxa de protocolo",
+    buyFee: "Compra: ~10% spread bonding curve",
     sellFee: "Venda: ~5% taxa de protocolo",
-    protocolNote: "Taxas embutidas no spread da bonding curve",
+    protocolNote: "Taxas embutidas no preço da bonding curve",
     // Zazza credits
     zazzaCredit: "Construído com ajuda de",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -152,9 +155,9 @@ const dexTranslations = {
     back: "Volver",
     // Fees
     feeBreakdown: "Desglose de tarifas",
-    buyFee: "Compra: ~5% tarifa de protocolo",
+    buyFee: "Compra: ~10% spread bonding curve",
     sellFee: "Venta: ~5% tarifa de protocolo",
-    protocolNote: "Tarifas incluidas en el spread de la bonding curve",
+    protocolNote: "Tarifas incluidas en el precio de la bonding curve",
     // Zazza credits
     zazzaCredit: "Construido con ayuda de",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -199,9 +202,9 @@ const dexTranslations = {
     back: "वापस",
     // Fees
     feeBreakdown: "शुल्क विवरण",
-    buyFee: "खरीद: ~5% प्रोटोकॉल शुल्क",
+    buyFee: "खरीद: ~10% बॉन्डिंग कर्व स्प्रेड",
     sellFee: "बिक्री: ~5% प्रोटोकॉल शुल्क",
-    protocolNote: "बॉन्डिंग कर्व स्प्रेड में शुल्क शामिल",
+    protocolNote: "बॉन्डिंग कर्व मूल्य में शुल्क शामिल",
     // Zazza credits
     zazzaCredit: "की मदद से बनाया गया",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -246,9 +249,9 @@ const dexTranslations = {
     back: "Назад",
     // Fees
     feeBreakdown: "Комиссии",
-    buyFee: "Покупка: ~5% комиссия протокола",
+    buyFee: "Покупка: ~10% спред bonding curve",
     sellFee: "Продажа: ~5% комиссия протокола",
-    protocolNote: "Комиссии включены в спред bonding curve",
+    protocolNote: "Комиссии включены в цену bonding curve",
     // Zazza credits
     zazzaCredit: "Создано при помощи",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -293,9 +296,9 @@ const dexTranslations = {
     back: "返回",
     // Fees
     feeBreakdown: "费用明细",
-    buyFee: "购买: ~5% 协议费",
+    buyFee: "购买: ~10% 联合曲线价差",
     sellFee: "出售: ~5% 协议费",
-    protocolNote: "费用已包含在联合曲线价差中",
+    protocolNote: "费用已包含在联合曲线定价中",
     // Zazza credits
     zazzaCredit: "在以下帮助下构建",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -485,17 +488,15 @@ export default function DexPage() {
         </div>
         
         {/* Buy VBMS Packs Link */}
-        <a
-          href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider"
+        <button
+          onClick={() => openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isMiniappMode())}
+          className="mb-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider cursor-pointer"
           style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
         >
           <span className="text-lg">◆</span>
           <span>Buy VBMS Packs</span>
           <span className="text-xs opacity-75">or open your packs</span>
-        </a>
+        </button>
 
         {/* Swap Card */}
         <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
