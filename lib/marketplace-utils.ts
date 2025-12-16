@@ -75,12 +75,16 @@ export async function openMarketplace(
     return;
   }
 
-  // In Farcaster, use openMiniApp to stay in-app
+  // In Farcaster, use openMiniApp to navigate to Vibemarket miniapp
+  // Use the embed URL directly (vibechain.com) - Farcaster will resolve it to the miniapp
   if (isInFarcaster && sdk?.actions?.openMiniApp) {
-    const miniAppUrl = convertToMiniAppUrl(marketplaceUrl);
-    if (miniAppUrl) {
-      await sdk.actions.openMiniApp({ url: miniAppUrl });
+    try {
+      console.log('[openMarketplace] Opening via openMiniApp:', marketplaceUrl);
+      await sdk.actions.openMiniApp({ url: marketplaceUrl });
       return;
+    } catch (error) {
+      console.error('[openMarketplace] openMiniApp failed:', error);
+      // Fall through to fallback
     }
   }
 
