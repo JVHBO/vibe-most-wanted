@@ -2,28 +2,11 @@
  * Utility functions for marketplace navigation
  */
 
-// Vibemarket miniapp base URL
-const VIBEMARKET_LAUNCH_BASE = 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket';
-
 /**
  * Checks if a URL is an internal route (starts with /)
  */
 export function isInternalRoute(url: string): boolean {
   return url.startsWith('/');
-}
-
-/**
- * Converts vibechain.com URL to miniapp launch URL with path
- */
-function toMiniappUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname === 'vibechain.com') {
-      // Convert: vibechain.com/market/X?ref=Y -> farcaster.xyz/miniapps/.../vibemarket/market/X?ref=Y
-      return VIBEMARKET_LAUNCH_BASE + parsed.pathname + parsed.search;
-    }
-  } catch {}
-  return url;
 }
 
 /**
@@ -45,12 +28,10 @@ export async function openMarketplace(
     return;
   }
 
-  // In Farcaster, use openMiniApp with launch URL format
+  // In Farcaster, use openMiniApp
   if (isInFarcaster && sdk?.actions?.openMiniApp) {
     try {
-      const launchUrl = toMiniappUrl(marketplaceUrl);
-      console.log('[openMarketplace] Opening:', launchUrl);
-      await sdk.actions.openMiniApp({ url: launchUrl });
+      await sdk.actions.openMiniApp({ url: marketplaceUrl });
       return;
     } catch (error) {
       console.error('[openMarketplace] openMiniApp failed:', error);
