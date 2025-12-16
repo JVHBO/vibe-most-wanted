@@ -28,20 +28,14 @@ export async function openMarketplace(
     return;
   }
 
-  // Debug
-  const hasOpenMiniApp = !!sdk?.actions?.openMiniApp;
-  console.log('[openMarketplace]', { isInFarcaster, hasOpenMiniApp, url: marketplaceUrl });
-
   // In Farcaster, use openMiniApp
-  if (isInFarcaster && hasOpenMiniApp) {
+  if (isInFarcaster && sdk?.actions?.openMiniApp) {
     try {
       await sdk.actions.openMiniApp({ url: marketplaceUrl });
       return;
     } catch (error) {
-      alert('openMiniApp error: ' + (error as Error).message);
+      console.error('[openMarketplace] openMiniApp failed:', error);
     }
-  } else {
-    alert('Fallback! isInFarcaster=' + isInFarcaster + ' hasOpenMiniApp=' + hasOpenMiniApp);
   }
 
   // Fallback
