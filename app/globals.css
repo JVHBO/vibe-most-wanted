@@ -441,7 +441,8 @@ body > * {
 }
 
 .animate-boss-hit {
-n/* Price Ticker Glow Pulse Animation */
+
+/* Price Ticker Glow Pulse Animation */
 @keyframes glow-pulse {
   0%, 100% {
     box-shadow: 0 0 8px rgba(255, 215, 0, 0.15), 0 0 16px rgba(255, 215, 0, 0.08);
