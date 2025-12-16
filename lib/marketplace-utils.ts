@@ -2,8 +2,8 @@
  * Utility functions for marketplace navigation
  */
 
-// Vibemarket miniapp ID on Farcaster
-const VIBEMARKET_MINIAPP_ID = 'xsWpLUXoxVN8';
+// Vibemarket miniapp launch URL on Farcaster
+const VIBEMARKET_LAUNCH_URL = 'https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket';
 
 /**
  * Checks if a URL is an internal route (starts with /)
@@ -13,26 +13,19 @@ export function isInternalRoute(url: string): boolean {
 }
 
 /**
- * Converts a vibechain.com URL to Farcaster miniapp launch URL
- * e.g. https://vibechain.com/market/vibe-most-wanted?ref=X
- * becomes https://farcaster.xyz/miniapps/xsWpLUXoxVN8/vibemarket/market/vibe-most-wanted?ref=X
+ * Checks if URL is a vibechain marketplace URL
  */
-function toMiniappLaunchUrl(url: string): string | null {
+function isVibechainUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    if (parsed.hostname === 'vibechain.com') {
-      // Extract path and query from vibechain URL
-      const pathAndQuery = parsed.pathname + parsed.search;
-      return `https://farcaster.xyz/miniapps/${VIBEMARKET_MINIAPP_ID}/vibemarket${pathAndQuery}`;
-    }
-  } catch (e) {
-    // Invalid URL
+    return parsed.hostname === 'vibechain.com';
+  } catch {
+    return false;
   }
-  return null;
 }
 
 /**
- * Opens a marketplace URL - uses openMiniApp with launch URL format in Farcaster
+ * Opens a marketplace URL - uses openMiniApp for Vibemarket in Farcaster
  */
 export async function openMarketplace(
   marketplaceUrl: string,
@@ -50,15 +43,13 @@ export async function openMarketplace(
     return;
   }
 
-  // In Farcaster, use openMiniApp with launch URL format
-  if (isInFarcaster && sdk?.actions?.openMiniApp) {
-    // Convert vibechain.com URL to miniapp launch URL
-    const launchUrl = toMiniappLaunchUrl(marketplaceUrl);
-    const urlToOpen = launchUrl || marketplaceUrl;
-    
+  // In Farcaster, use openMiniApp for vibechain URLs
+  if (isInFarcaster && sdk?.actions?.openMiniApp && isVibechainUrl(marketplaceUrl)) {
     try {
-      console.log('[openMarketplace] Calling openMiniApp with:', urlToOpen);
-      await sdk.actions.openMiniApp({ url: urlToOpen });
+      // Use just the miniapp launch URL - Vibemarket will handle the embed URL
+      console.log('[openMarketplace] Calling openMiniApp with launch URL');
+      console.log('[openMarketplace] Target:', VIBEMARKET_LAUNCH_URL);
+      await sdk.actions.openMiniApp({ url: VIBEMARKET_LAUNCH_URL });
       return;
     } catch (error) {
       console.error('[openMarketplace] openMiniApp failed:', error);
