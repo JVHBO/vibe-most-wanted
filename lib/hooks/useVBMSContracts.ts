@@ -144,7 +144,7 @@ export function useDailyClaimInfo(address?: `0x${string}`) {
     remaining: result ? formatEther(result[0]) : '100000',
     remainingRaw: result ? result[0] : BigInt('100000000000000000000000'),
     resetTime: result ? Number(result[1]) : Math.floor(Date.now() / 1000) + 86400,
-    dailyLimit: '100000', // 100k VBMS daily limit (constant from contract)
+    dailyLimit: '500000', // 500k VBMS daily limit (constant from contract)
     isLoading,
     refetch,
     error,

@@ -1034,8 +1034,8 @@ export const convertTESTVBMStoVBMS = action({
 
 // Conversion cooldown (3 minutes)
 const CONVERSION_COOLDOWN_MS = 3 * 60 * 1000;
-// Claim limits (match contract: 100k max per claim, 100k daily)
-const MAX_CLAIM_AMOUNT = 100_000;
+// Claim limits (500k max per claim)
+const MAX_CLAIM_AMOUNT = 500_000;
 const MIN_CLAIM_AMOUNT = 100;
 
 // Internal mutation to handle database operations
