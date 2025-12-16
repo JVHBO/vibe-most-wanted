@@ -4731,9 +4731,13 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               window.location.href = '/dex';
             }}
-            className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
+            className="relative px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
             style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
           >
+            {/* Red dot if TESTVBMS available to convert */}
+            {inboxStatus && inboxStatus.inbox > 0 && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-white" />
+            )}
             <div className="flex items-center justify-center gap-2">
               <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
             </div>
