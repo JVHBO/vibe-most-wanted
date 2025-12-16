@@ -23,6 +23,52 @@ const ANTI_SNIPE_EXTENSION_MS = 3 * 60 * 1000; // Add 3 minutes on late bids
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Check if a cast URL is already being bid on (for pool feature)
+ */
+export const checkExistingCast = query({
+  args: { castHash: v.string() },
+  handler: async (ctx, { castHash }) => {
+    const auctions = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) => q.eq(q.field("status"), "bidding"))
+      .collect();
+
+    const auction = auctions.find((a) => a.castHash === castHash);
+    if (!auction) return null;
+
+    const contributions = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_auction")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("auctionId"), auction._id),
+          q.eq(q.field("status"), "active")
+        )
+      )
+      .collect();
+
+    return {
+      exists: true,
+      auctionId: auction._id,
+      slotNumber: auction.slotNumber,
+      currentBid: auction.currentBid,
+      totalPool: auction.currentBid,
+      contributorCount: contributions.length,
+      contributors: contributions.map((c) => ({
+        address: c.bidderAddress,
+        username: c.bidderUsername,
+        amount: c.bidAmount,
+      })),
+      topBidder: auction.bidderUsername,
+      auctionEndsAt: auction.auctionEndsAt,
+      castAuthorUsername: auction.castAuthorUsername,
+    };
+  },
+});
+
+
+/**
  * Get all auctions currently accepting bids
  */
 export const getActiveAuctions = query({
@@ -621,6 +667,88 @@ export const placeBidWithVBMS = mutation({
   },
 });
 
+
+
+/**
+ * Add VBMS to an existing cast's pool (when same cast URL is submitted)
+ */
+export const addToPool = mutation({
+  args: {
+    address: v.string(),
+    auctionId: v.id("castAuctions"),
+    bidAmount: v.number(),
+    txHash: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const normalizedAddress = args.address.toLowerCase();
+    const now = Date.now();
+
+    // 1. Get the auction
+    const auction = await ctx.db.get(args.auctionId);
+    if (!auction) throw new Error("Auction not found");
+    if (auction.status !== "bidding") throw new Error("Auction is not active");
+    if (auction.auctionEndsAt <= now) throw new Error("Auction has ended");
+
+    // 2. Validate bid amount (minimum 1000 VBMS for pool contributions)
+    const POOL_MINIMUM = 1000;
+    if (args.bidAmount < POOL_MINIMUM) {
+      throw new Error(`Minimum pool contribution is ${POOL_MINIMUM.toLocaleString()} VBMS`);
+    }
+
+    // 3. Get bidder profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address")
+      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .first();
+
+    if (!profile) throw new Error("Profile not found");
+
+    // 4. Check if TX hash already used (if provided)
+    if (args.txHash) {
+      const existingTx = await ctx.db
+        .query("castAuctionBids")
+        .withIndex("by_txHash", (q) => q.eq("txHash", args.txHash))
+        .first();
+      if (existingTx) throw new Error("Transaction already used");
+    }
+
+    // 5. Create contribution record
+    await ctx.db.insert("castAuctionBids", {
+      auctionId: args.auctionId,
+      slotNumber: auction.slotNumber,
+      bidderAddress: normalizedAddress,
+      bidderUsername: profile.username || normalizedAddress.slice(0, 8),
+      bidderFid: profile.farcasterFid,
+      castHash: auction.castHash || "",
+      warpcastUrl: auction.warpcastUrl || "",
+      castAuthorFid: auction.castAuthorFid,
+      castAuthorUsername: auction.castAuthorUsername,
+      bidAmount: args.bidAmount,
+      previousHighBid: auction.currentBid,
+      status: "active",
+      timestamp: now,
+      txHash: args.txHash,
+      isPoolContribution: true,
+    });
+
+    // 6. Update auction total
+    const newTotal = (auction.currentBid || 0) + args.bidAmount;
+    await ctx.db.patch(args.auctionId, {
+      currentBid: newTotal,
+      lastBidAt: now,
+    });
+
+    console.log(`[CastAuction] Pool contribution: +${args.bidAmount} VBMS to slot ${auction.slotNumber} by ${profile.username} (total: ${newTotal})`);
+
+    return {
+      success: true,
+      contribution: args.bidAmount,
+      newTotal,
+      slotNumber: auction.slotNumber,
+    };
+  },
+});
 /**
  * Initialize auctions for all 3 slots (run once on deployment)
  */
