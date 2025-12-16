@@ -38,7 +38,7 @@ export function FeaturedCastAuctions({
   soundEnabled = true,
   onBidPlaced,
 }: FeaturedCastAuctionsProps) {
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [castUrl, setCastUrl] = useState("");
   const [bidAmount, setBidAmount] = useState("");
   const [castPreview, setCastPreview] = useState<CastPreview | null>(null);
@@ -49,10 +49,6 @@ export function FeaturedCastAuctions({
 
   // Queries
   const auctionStates = useQuery(api.castAuctions.getAllAuctionStates);
-  const myBids = useQuery(
-    api.castAuctions.getMyBids,
-    address ? { address } : "skip"
-  );
 
   // Get player balance from profile
   const profile = useQuery(api.profiles.getProfile, address ? { address } : "skip");
@@ -61,16 +57,17 @@ export function FeaturedCastAuctions({
   // Mutation
   const placeBid = useMutation(api.castAuctions.placeBid);
 
-  // Calculate minimum bid for selected slot
-  const getMinimumBid = (slotNumber: number) => {
-    const auction = auctionStates?.bidding.find(
-      (a: AuctionDoc) => a.slotNumber === slotNumber
-    );
-    if (!auction || auction.currentBid === 0) return 10000; // 10k minimum
-    // 10% increment or 1k minimum
+  // Get current auction (the one ending soonest)
+  const currentAuction = auctionStates?.bidding?.sort(
+    (a: AuctionDoc, b: AuctionDoc) => a.auctionEndsAt - b.auctionEndsAt
+  )[0];
+
+  // Calculate minimum bid
+  const getMinimumBid = () => {
+    if (!currentAuction || currentAuction.currentBid === 0) return 10000;
     return Math.max(
-      auction.currentBid + 1000,
-      Math.ceil(auction.currentBid * 1.1)
+      currentAuction.currentBid + 1000,
+      Math.ceil(currentAuction.currentBid * 1.1)
     );
   };
 
@@ -110,10 +107,10 @@ export function FeaturedCastAuctions({
 
   // Place bid
   const handlePlaceBid = async () => {
-    if (selectedSlot === null || !castPreview || !bidAmount) return;
+    if (!currentAuction || !castPreview || !bidAmount) return;
 
     const amount = parseInt(bidAmount);
-    const minimum = getMinimumBid(selectedSlot);
+    const minimum = getMinimumBid();
 
     if (isNaN(amount) || amount < minimum) {
       setError(`Minimum bid is ${minimum.toLocaleString()} VBMS`);
@@ -131,7 +128,7 @@ export function FeaturedCastAuctions({
     try {
       const result = await placeBid({
         address,
-        slotNumber: selectedSlot,
+        slotNumber: currentAuction.slotNumber,
         bidAmount: amount,
         castHash: castPreview.hash,
         warpcastUrl: castUrl,
@@ -146,7 +143,7 @@ export function FeaturedCastAuctions({
         setBidAmount("");
         setCastUrl("");
         setCastPreview(null);
-        setSelectedSlot(null);
+        setIsExpanded(false);
         if (soundEnabled) AudioManager.win();
         onBidPlaced?.(amount);
       }
@@ -166,7 +163,7 @@ export function FeaturedCastAuctions({
     }
   }, [success]);
 
-  // Countdown timer component
+  // Countdown timer
   const CountdownTimer = ({ endsAt }: { endsAt: number }) => {
     const [timeLeft, setTimeLeft] = useState("");
 
@@ -199,137 +196,83 @@ export function FeaturedCastAuctions({
     }, [endsAt]);
 
     return (
-      <span
-        className={`font-mono ${
-          timeLeft.includes("s") && !timeLeft.includes("m")
-            ? "text-red-400 animate-pulse"
-            : "text-vintage-gold"
-        }`}
-      >
+      <span className={`font-mono ${timeLeft.includes("s") && !timeLeft.includes("m") ? "text-red-400 animate-pulse" : "text-amber-400"}`}>
         {timeLeft}
       </span>
     );
   };
 
+  if (!currentAuction) return null;
+
+  const hasBid = currentAuction.currentBid > 0;
+
   return (
-    <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-amber-500/30 p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="text-amber-300 font-bold text-sm flex items-center gap-2">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
-          </svg>
-          Featured Cast Auctions
-        </h4>
-        <Link
-          href="/featured-history"
-          className="text-xs text-vintage-gold/70 hover:text-vintage-gold transition-colors"
-        >
-          View History &rarr;
-        </Link>
-      </div>
-
-      {/* Success/Error Messages */}
-      {success && (
-        <div className="mb-3 p-2 bg-green-900/30 border border-green-500/50 rounded-lg text-green-400 text-xs">
-          {success}
+    <div className="mt-3 border-t border-purple-500/20 pt-3">
+      {/* Collapsed View - Just a button */}
+      {!isExpanded ? (
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-amber-300 text-xs font-bold transition-all"
+          >
+            <span>🔥</span>
+            <span>Sponsor a Cast</span>
+          </button>
+          <div className="flex items-center gap-2 text-xs">
+            {hasBid ? (
+              <span className="text-vintage-burnt-gold">
+                Top: {currentAuction.currentBid.toLocaleString()} VBMS
+              </span>
+            ) : (
+              <span className="text-vintage-burnt-gold">Min: 10k VBMS</span>
+            )}
+            <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
+          </div>
         </div>
-      )}
-      {error && (
-        <div className="mb-3 p-2 bg-red-900/30 border border-red-500/50 rounded-lg text-red-400 text-xs">
-          {error}
-        </div>
-      )}
-
-      {/* Auction Slots */}
-      <div className="space-y-2 mb-4">
-        {[0, 1, 2].map((slot) => {
-          const auction = auctionStates?.bidding.find(
-            (a: AuctionDoc) => a.slotNumber === slot
-          );
-          const activeAuction = auctionStates?.active.find(
-            (a: AuctionDoc) => a.slotNumber === slot
-          );
-          const isSelected = selectedSlot === slot;
-          const hasBid = auction && auction.currentBid > 0;
-
-          return (
-            <div
-              key={slot}
-              onClick={() => !activeAuction && setSelectedSlot(isSelected ? null : slot)}
-              className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                activeAuction
-                  ? "bg-green-900/20 border-green-500/30 cursor-default"
-                  : isSelected
-                  ? "bg-vintage-gold/10 border-vintage-gold/50"
-                  : "bg-vintage-charcoal/50 border-vintage-gold/20 hover:border-vintage-gold/40"
-              }`}
+      ) : (
+        /* Expanded View - Bid Form */
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h5 className="text-amber-300 font-bold text-sm flex items-center gap-2">
+              <span>🔥</span> Sponsor a Cast
+            </h5>
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-vintage-burnt-gold hover:text-vintage-gold text-xs"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-vintage-gold font-bold text-sm">
-                    Slot {slot + 1}
-                  </span>
-                  {activeAuction ? (
-                    <span className="px-2 py-0.5 bg-green-600/30 text-green-400 text-xs rounded">
-                      LIVE
-                    </span>
-                  ) : (
-                    <span className="text-vintage-burnt-gold text-xs">
-                      <CountdownTimer endsAt={auction?.auctionEndsAt || 0} />
-                    </span>
-                  )}
-                </div>
-                <div className="text-right">
-                  {activeAuction ? (
-                    <div>
-                      <p className="text-xs text-green-400">
-                        @{activeAuction.castAuthorUsername || "unknown"}
-                      </p>
-                      <p className="text-xs text-vintage-burnt-gold">
-                        {activeAuction.winningBid?.toLocaleString()} VBMS
-                      </p>
-                    </div>
-                  ) : hasBid ? (
-                    <div>
-                      <p className="text-vintage-gold font-bold text-sm">
-                        {auction.currentBid.toLocaleString()} VBMS
-                      </p>
-                      <p className="text-xs text-vintage-burnt-gold">
-                        by @{auction.bidderUsername || "unknown"}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-vintage-burnt-gold text-xs">
-                      Min: 10,000 VBMS
-                    </p>
-                  )}
-                </div>
-              </div>
+              ✕ Close
+            </button>
+          </div>
 
-              {/* Current winning cast preview */}
-              {hasBid && auction.castText && !activeAuction && (
-                <p className="mt-2 text-xs text-vintage-cream/70 truncate">
-                  "{auction.castText}"
-                </p>
+          {/* Current bid info */}
+          <div className="flex items-center justify-between text-xs bg-vintage-charcoal/50 rounded-lg p-2">
+            <div>
+              {hasBid ? (
+                <span className="text-vintage-gold">
+                  Current: {currentAuction.currentBid.toLocaleString()} VBMS by @{currentAuction.bidderUsername}
+                </span>
+              ) : (
+                <span className="text-vintage-burnt-gold">No bids yet - Min: 10,000 VBMS</span>
               )}
             </div>
-          );
-        })}
-      </div>
+            <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
+          </div>
 
-      {/* Bid Form (when slot selected) */}
-      {selectedSlot !== null && (
-        <div className="border-t border-vintage-gold/20 pt-4 space-y-3">
-          <h5 className="text-vintage-gold font-bold text-sm">
-            Bid on Slot {selectedSlot + 1}
-          </h5>
+          {/* Success/Error Messages */}
+          {success && (
+            <div className="p-2 bg-green-900/30 border border-green-500/50 rounded-lg text-green-400 text-xs">
+              {success}
+            </div>
+          )}
+          {error && (
+            <div className="p-2 bg-red-900/30 border border-red-500/50 rounded-lg text-red-400 text-xs">
+              {error}
+            </div>
+          )}
 
           {/* Cast URL Input */}
           <div>
-            <label className="text-xs text-vintage-burnt-gold mb-1 block">
-              Cast URL
-            </label>
+            <label className="text-xs text-vintage-burnt-gold mb-1 block">Cast URL</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -356,7 +299,7 @@ export function FeaturedCastAuctions({
                   <img
                     src={castPreview.author.pfpUrl}
                     alt={castPreview.author.username}
-                    className="w-10 h-10 rounded-full"
+                    className="w-8 h-8 rounded-full"
                   />
                 )}
                 <div className="flex-1 min-w-0">
@@ -369,11 +312,6 @@ export function FeaturedCastAuctions({
                   <p className="text-vintage-cream text-sm mt-1 line-clamp-2">
                     {castPreview.text}
                   </p>
-                  <div className="flex gap-3 mt-2 text-xs text-vintage-burnt-gold">
-                    <span>{castPreview.reactions.likes} likes</span>
-                    <span>{castPreview.reactions.recasts} recasts</span>
-                    <span>{castPreview.replies} replies</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -383,23 +321,22 @@ export function FeaturedCastAuctions({
           {castPreview && (
             <div>
               <label className="text-xs text-vintage-burnt-gold mb-1 block">
-                Bid Amount (min: {getMinimumBid(selectedSlot).toLocaleString()}{" "}
-                VBMS)
+                Bid Amount (min: {getMinimumBid().toLocaleString()} VBMS)
               </label>
               <div className="flex gap-2">
                 <input
                   type="number"
                   value={bidAmount}
                   onChange={(e) => setBidAmount(e.target.value)}
-                  placeholder={getMinimumBid(selectedSlot).toLocaleString()}
+                  placeholder={getMinimumBid().toLocaleString()}
                   className="flex-1 px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-cream text-sm focus:border-vintage-gold focus:outline-none"
                 />
                 <button
                   onClick={handlePlaceBid}
                   disabled={isBidding || !bidAmount}
-                  className="px-6 py-2 bg-vintage-gold text-vintage-black rounded-lg text-sm font-bold hover:bg-vintage-gold/90 disabled:opacity-50 transition-all"
+                  className="px-6 py-2 bg-amber-500 text-black rounded-lg text-sm font-bold hover:bg-amber-400 disabled:opacity-50 transition-all"
                 >
-                  {isBidding ? "Bidding..." : "Place Bid"}
+                  {isBidding ? "..." : "Bid"}
                 </button>
               </div>
               <p className="text-xs text-vintage-burnt-gold mt-1">
@@ -407,42 +344,15 @@ export function FeaturedCastAuctions({
               </p>
             </div>
           )}
-        </div>
-      )}
 
-      {/* User's Active Bids */}
-      {myBids && myBids.length > 0 && (
-        <div className="border-t border-vintage-gold/20 pt-4 mt-4">
-          <h5 className="text-vintage-gold font-bold text-xs mb-2">
-            Your Recent Bids
-          </h5>
-          <div className="space-y-1 max-h-24 overflow-y-auto">
-            {myBids.slice(0, 5).map((bid: BidDoc) => (
-              <div
-                key={bid._id}
-                className="flex items-center justify-between text-xs"
-              >
-                <span className="text-vintage-cream">
-                  Slot {bid.slotNumber + 1}
-                </span>
-                <span
-                  className={`font-bold ${
-                    bid.status === "active"
-                      ? "text-green-400"
-                      : bid.status === "won"
-                      ? "text-vintage-gold"
-                      : "text-red-400"
-                  }`}
-                >
-                  {bid.bidAmount.toLocaleString()} -{" "}
-                  {bid.status === "active"
-                    ? "Winning"
-                    : bid.status === "won"
-                    ? "Won!"
-                    : "Outbid"}
-                </span>
-              </div>
-            ))}
+          {/* Link to history */}
+          <div className="text-center">
+            <Link
+              href="/featured-history"
+              className="text-xs text-vintage-gold/60 hover:text-vintage-gold"
+            >
+              View past winners →
+            </Link>
           </div>
         </div>
       )}
