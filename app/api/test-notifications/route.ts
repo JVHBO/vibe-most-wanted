@@ -4,10 +4,11 @@ import { api } from '@/convex/_generated/api';
 import { devLog, devError } from '@/lib/utils/logger';
 
 /**
- * API endpoint to send test notification to all users
+ * API endpoint to send test notification
  *
  * Call with: POST /api/test-notifications
- * Optional body: { title: "...", body: "..." }
+ * Optional body: { title: "...", body: "...", fid: "123456" }
+ * If fid is provided, sends only to that user. Otherwise sends to all.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -15,14 +16,21 @@ export async function POST(request: NextRequest) {
 
     const title = body.title || '🎮 Vibe Most Wanted';
     const message = body.body || 'Notifications are working! Ready to play?';
+    const targetFid = body.fid; // Optional: send only to this FID
 
-    devLog('📢 Sending test notifications...');
+    devLog('📢 Sending test notifications...', targetFid ? `to FID ${targetFid}` : 'to all');
 
     // Initialize Convex
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-    // Get all tokens from Convex
-    const tokens = await convex.query(api.notifications.getAllTokens);
+    // Get tokens - either single user or all
+    let tokens;
+    if (targetFid) {
+      const singleToken = await convex.query(api.notifications.getTokenByFid, { fid: String(targetFid) });
+      tokens = singleToken ? [singleToken] : [];
+    } else {
+      tokens = await convex.query(api.notifications.getAllTokens);
+    }
 
     if (!tokens || tokens.length === 0) {
       return NextResponse.json({
