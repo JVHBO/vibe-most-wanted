@@ -5048,7 +5048,7 @@ export default function TCGPage() {
                 }`}
               >
                 {/* Red dot if TESTVBMS available to convert */}
-                {inboxStatus && inboxStatus.inbox > 0 && (
+                {inboxStatus && inboxStatus.inbox >= 100 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
                 )}
                 {isInFarcaster ? (
