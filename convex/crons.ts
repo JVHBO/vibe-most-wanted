@@ -54,4 +54,12 @@ crons.interval(
   internal.quests.updateLeaderboardCache
 );
 
+// 🎯 Cast Auction lifecycle (every 1 minute)
+// Processes: bidding -> pending_feature -> active -> completed
+crons.interval(
+  "process cast auctions",
+  { minutes: 1 },
+  internal.castAuctions.processAuctionLifecycle
+);
+
 export default crons;

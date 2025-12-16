@@ -1231,4 +1231,96 @@ export default defineSchema({
     updatedAt: v.number(), // Last cache update timestamp
   })
     .index("by_type", ["type"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // FEATURED CAST AUCTIONS (Bid to feature casts)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Cast Auctions - 24-hour auctions for featured cast slots
+  castAuctions: defineTable({
+    // Slot Info
+    slotNumber: v.number(), // 0, 1, or 2 (3 slots total)
+
+    // Auction Timing
+    auctionStartedAt: v.number(), // When this auction period started
+    auctionEndsAt: v.number(), // When bidding closes (startedAt + 24h)
+    featureStartsAt: v.optional(v.number()), // When the winning cast starts being featured
+    featureEndsAt: v.optional(v.number()), // When the featured period ends (featureStartsAt + 24h)
+
+    // Current Winning Bid
+    currentBid: v.number(), // Current highest bid amount in VBMS
+    bidderAddress: v.optional(v.string()), // Wallet address of highest bidder
+    bidderUsername: v.optional(v.string()), // Username for display
+    bidderFid: v.optional(v.number()), // Farcaster FID of bidder
+
+    // Cast to be Featured
+    castHash: v.optional(v.string()), // Farcaster cast hash (0x...)
+    warpcastUrl: v.optional(v.string()), // Full warpcast URL
+    castAuthorFid: v.optional(v.number()), // FID of the cast author
+    castAuthorUsername: v.optional(v.string()), // Username of cast author
+    castAuthorPfp: v.optional(v.string()), // Profile pic of cast author
+    castText: v.optional(v.string()), // Cast text (saved for history)
+
+    // Status
+    status: v.union(
+      v.literal("bidding"), // Auction in progress
+      v.literal("pending_feature"), // Auction ended, waiting to be featured
+      v.literal("active"), // Currently being featured
+      v.literal("completed") // Feature period ended
+    ),
+
+    // Winner Info (finalized when auction ends)
+    winnerAddress: v.optional(v.string()),
+    winnerUsername: v.optional(v.string()),
+    winningBid: v.optional(v.number()),
+
+    // Timestamps
+    createdAt: v.number(),
+    lastBidAt: v.optional(v.number()),
+  })
+    .index("by_slot", ["slotNumber"])
+    .index("by_status", ["status"])
+    .index("by_slot_status", ["slotNumber", "status"])
+    .index("by_completed", ["status", "featureEndsAt"]),
+
+  // Cast Auction Bids - History of all bids placed
+  castAuctionBids: defineTable({
+    // Auction Reference
+    auctionId: v.id("castAuctions"),
+    slotNumber: v.number(),
+
+    // Bidder Info
+    bidderAddress: v.string(),
+    bidderUsername: v.string(),
+    bidderFid: v.optional(v.number()),
+
+    // Cast Info
+    castHash: v.string(),
+    warpcastUrl: v.string(),
+    castAuthorFid: v.optional(v.number()),
+    castAuthorUsername: v.optional(v.string()),
+
+    // Bid Details
+    bidAmount: v.number(), // VBMS amount
+    previousHighBid: v.number(), // What the bid beat
+
+    // Status
+    status: v.union(
+      v.literal("active"), // Currently winning
+      v.literal("outbid"), // Was outbid by someone else
+      v.literal("won"), // Won the auction
+      v.literal("refunded") // Outbid and refund processed
+    ),
+
+    // Refund Tracking
+    refundedAt: v.optional(v.number()),
+    refundAmount: v.optional(v.number()),
+
+    // Timestamps
+    timestamp: v.number(),
+  })
+    .index("by_auction", ["auctionId", "timestamp"])
+    .index("by_bidder", ["bidderAddress", "timestamp"])
+    .index("by_status", ["status"])
+    .index("by_auction_status", ["auctionId", "status"]),
 });
