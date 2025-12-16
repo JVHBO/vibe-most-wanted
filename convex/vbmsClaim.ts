@@ -1032,6 +1032,12 @@ export const convertTESTVBMStoVBMS = action({
   },
 });
 
+// Conversion cooldown (3 minutes)
+const CONVERSION_COOLDOWN_MS = 3 * 60 * 1000;
+// Claim limits (match contract: 100k max per claim, 100k daily)
+const MAX_CLAIM_AMOUNT = 100_000;
+const MIN_CLAIM_AMOUNT = 100;
+
 // Internal mutation to handle database operations
 export const convertTESTVBMSInternal = internalMutation({
   args: {
@@ -1047,18 +1053,33 @@ export const convertTESTVBMSInternal = internalMutation({
 
     const profile = await getProfile(ctx, address);
 
-    const testVBMSBalance = profile.coins || 0;
-
-    if (testVBMSBalance < 100) {
-      throw new Error(`Minimum 100 TESTVBMS required to convert. You have: ${testVBMSBalance}`);
+    // ⏰ COOLDOWN CHECK - 3 minutes between conversions
+    const lastConversion = profile.pendingConversionTimestamp || 0;
+    const timeSinceLastConversion = Date.now() - lastConversion;
+    if (lastConversion > 0 && timeSinceLastConversion < CONVERSION_COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((CONVERSION_COOLDOWN_MS - timeSinceLastConversion) / 1000);
+      throw new Error(`⏰ Cooldown active. Wait ${remainingSeconds} seconds before converting again.`);
     }
 
-    // 🔒 SECURITY FIX: Zero balance IMMEDIATELY to prevent multiple signature generation exploit
-    // Previously balance was only zeroed AFTER blockchain TX, allowing attackers to call
-    // convertTESTVBMStoVBMS multiple times and get multiple signatures for the same balance
+    const testVBMSBalance = profile.coins || 0;
+
+    if (testVBMSBalance < MIN_CLAIM_AMOUNT) {
+      throw new Error(`Minimum ${MIN_CLAIM_AMOUNT} TESTVBMS required to convert. You have: ${testVBMSBalance}`);
+    }
+
+    // Cap at max claim amount
+    const claimAmount = Math.min(testVBMSBalance, MAX_CLAIM_AMOUNT);
+    const remainingBalance = testVBMSBalance - claimAmount;
+
+    if (claimAmount < MIN_CLAIM_AMOUNT) {
+      throw new Error(`Minimum ${MIN_CLAIM_AMOUNT} TESTVBMS required to convert. You have: ${testVBMSBalance}`);
+    }
+
+    // 🔒 SECURITY FIX: Deduct claim amount IMMEDIATELY to prevent multiple signature generation exploit
+    // Keep remaining balance if user has more than max claim amount
     await ctx.db.patch(profile._id, {
-      coins: 0,
-      pendingConversion: testVBMSBalance, // Track pending conversion for recovery if needed
+      coins: remainingBalance, // Keep any amount over 100k
+      pendingConversion: claimAmount, // Track pending conversion for recovery if needed
       pendingConversionTimestamp: Date.now(),
     });
 
@@ -1067,27 +1088,27 @@ export const convertTESTVBMSInternal = internalMutation({
       ctx,
       address,
       "convert",
+      claimAmount,
       testVBMSBalance,
-      testVBMSBalance,
-      0,
+      remainingBalance,
       "convertTESTVBMStoVBMS",
       undefined,
-      { reason: "TESTVBMS to VBMS conversion initiated" }
+      { reason: `TESTVBMS to VBMS conversion initiated (max: ${MAX_CLAIM_AMOUNT})` }
     );
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
       choice: "immediate",
-      amount: testVBMSBalance,
+      amount: claimAmount,
       inboxTotal: profile.coinsInbox || 0,
       bonusAvailable: false,
       timestamp: Date.now(),
     });
 
-    console.log(`🔒 [SECURITY] ${address} zeroed ${testVBMSBalance} TESTVBMS BEFORE signature generation`);
+    console.log(`🔒 [SECURITY] ${address} converting ${claimAmount} TESTVBMS (remaining: ${remainingBalance}, cooldown: 3min)`);
 
-    return { testVBMSBalance };
+    return { testVBMSBalance: claimAmount };
   },
 });
 
