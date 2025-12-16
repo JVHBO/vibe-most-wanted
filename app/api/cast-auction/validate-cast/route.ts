@@ -15,8 +15,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract cast hash from Warpcast/Farcaster URL
-    // URLs look like: https://warpcast.com/username/0x123abc or https://farcaster.xyz/username/0x123abc
+    // Validate URL format
     const urlMatch = warpcastUrl.match(/(?:warpcast\.com|farcaster\.xyz)\/[^/]+\/(0x[a-f0-9]+)/i);
     if (!urlMatch) {
       return NextResponse.json(
@@ -25,9 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const castHash = urlMatch[1];
-
-    // Fetch cast from Neynar API
+    // Fetch cast from Neynar API using URL type (handles short hashes correctly)
     const neynarApiKey = process.env.NEYNAR_API_KEY;
     if (!neynarApiKey) {
       console.error("[ValidateCast] NEYNAR_API_KEY not configured");
@@ -37,8 +34,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use URL type instead of hash - handles short hashes in URLs
     const neynarResponse = await fetch(
-      `https://api.neynar.com/v2/farcaster/cast?identifier=${castHash}&type=hash`,
+      `https://api.neynar.com/v2/farcaster/cast?identifier=${encodeURIComponent(warpcastUrl)}&type=url`,
       {
         headers: {
           api_key: neynarApiKey,
