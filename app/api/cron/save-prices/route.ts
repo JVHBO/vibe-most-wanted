@@ -66,6 +66,7 @@ const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   vibefx: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
   historyofcomputer: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
   cumioh: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
+  viberotbangers: '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a',
 };
 
 // Uniswap V3 pools for closed mint collections
