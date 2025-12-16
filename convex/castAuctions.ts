@@ -11,6 +11,7 @@ import { Id } from "./_generated/dataModel";
 const AUCTION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const FEATURE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MINIMUM_BID = 10000; // Minimum first bid: 10,000 VBMS
+const MAXIMUM_BID = 120000; // Maximum bid: 120,000 VBMS
 const BID_INCREMENT_PERCENT = 10; // Must bid at least 10% more than current
 const MINIMUM_INCREMENT = 1000; // Minimum increment: 1,000 VBMS
 const TOTAL_SLOTS = 3; // 3 featured cast positions
@@ -149,6 +150,54 @@ export const getAllAuctionStates = query({
   },
 });
 
+/**
+ * Get all bidders for current auctions (for display)
+ */
+export const getCurrentBidders = query({
+  args: { slotNumber: v.optional(v.number()) },
+  handler: async (ctx, { slotNumber }) => {
+    // Get bidding auction(s)
+    let auctions;
+    if (slotNumber !== undefined) {
+      const auction = await ctx.db
+        .query("castAuctions")
+        .withIndex("by_slot_status")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("slotNumber"), slotNumber),
+            q.eq(q.field("status"), "bidding")
+          )
+        )
+        .first();
+      auctions = auction ? [auction] : [];
+    } else {
+      auctions = await ctx.db
+        .query("castAuctions")
+        .withIndex("by_status")
+        .filter((q) => q.eq(q.field("status"), "bidding"))
+        .collect();
+    }
+
+    // Get all bids for these auctions
+    const allBids = [];
+    for (const auction of auctions) {
+      const bids = await ctx.db
+        .query("castAuctionBids")
+        .withIndex("by_auction")
+        .filter((q) => q.eq(q.field("auctionId"), auction._id))
+        .order("desc")
+        .take(10);
+
+      allBids.push(...bids.map(bid => ({
+        ...bid,
+        isWinning: bid.status === "active" && bid.bidAmount === auction.currentBid,
+      })));
+    }
+
+    return allBids.sort((a, b) => b.bidAmount - a.bidAmount);
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MUTATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -225,6 +274,13 @@ export const placeBid = mutation({
       );
     }
 
+    // Check maximum bid
+    if (args.bidAmount > MAXIMUM_BID) {
+      throw new Error(
+        `Maximum bid is ${MAXIMUM_BID.toLocaleString()} VBMS`
+      );
+    }
+
     // 5. Get bidder profile and check balance
     const profile = await ctx.db
       .query("profiles")
@@ -281,7 +337,7 @@ export const placeBid = mutation({
         .first();
 
       if (previousBid) {
-        // Refund to previous bidder's coins
+        // Refund to previous bidder's testVbmsBalance (not real VBMS)
         const prevBidderProfile = await ctx.db
           .query("profiles")
           .withIndex("by_address")
@@ -290,7 +346,7 @@ export const placeBid = mutation({
 
         if (prevBidderProfile) {
           await ctx.db.patch(prevBidderProfile._id, {
-            coins: (prevBidderProfile.coins || 0) + previousBid.bidAmount,
+            testVbmsBalance: (prevBidderProfile.testVbmsBalance || 0) + previousBid.bidAmount,
             lastUpdated: now,
           });
         }
