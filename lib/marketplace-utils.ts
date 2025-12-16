@@ -10,7 +10,7 @@ export function isInternalRoute(url: string): boolean {
 }
 
 /**
- * Opens a marketplace URL - uses openMiniApp in Farcaster
+ * Opens a marketplace URL - uses openMiniApp if SDK available
  */
 export async function openMarketplace(
   marketplaceUrl: string,
@@ -28,8 +28,8 @@ export async function openMarketplace(
     return;
   }
 
-  // In Farcaster, use openMiniApp
-  if (isInFarcaster && sdk?.actions?.openMiniApp) {
+  // Use openMiniApp if SDK has it (don't rely on isInFarcaster)
+  if (sdk?.actions?.openMiniApp) {
     try {
       await sdk.actions.openMiniApp({ url: marketplaceUrl });
       return;
