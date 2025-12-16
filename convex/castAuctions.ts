@@ -151,6 +151,35 @@ export const getAllAuctionStates = query({
 });
 
 /**
+ * Get pending refunds for a user (outbid bids that need claiming)
+ */
+export const getPendingRefunds = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    const pendingRefunds = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_bidder")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("bidderAddress"), normalizedAddress),
+          q.eq(q.field("status"), "pending_refund")
+        )
+      )
+      .collect();
+
+    const totalRefund = pendingRefunds.reduce((sum, bid) => sum + (bid.refundAmount || bid.bidAmount), 0);
+
+    return {
+      pendingRefunds,
+      totalRefund,
+      count: pendingRefunds.length,
+    };
+  },
+});
+
+/**
  * Get all bidders for current auctions (for display)
  */
 export const getCurrentBidders = query({
@@ -415,6 +444,177 @@ export const placeBid = mutation({
       success: true,
       bidAmount: args.bidAmount,
       newBalance: currentCoins - netDeduction,
+      auctionEndsAt: newEndTime,
+      slotNumber: args.slotNumber,
+    };
+  },
+});
+
+/**
+ * Place a bid using real VBMS tokens (verified on-chain transfer)
+ * Called by /api/cast-auction/place-bid after verifying TX
+ */
+export const placeBidWithVBMS = mutation({
+  args: {
+    address: v.string(),
+    slotNumber: v.number(),
+    bidAmount: v.number(),
+    txHash: v.string(),
+    castHash: v.string(),
+    warpcastUrl: v.string(),
+    castAuthorFid: v.optional(v.number()),
+    castAuthorUsername: v.optional(v.string()),
+    castAuthorPfp: v.optional(v.string()),
+    castText: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const normalizedAddress = args.address.toLowerCase();
+
+    // 1. Validate slot number
+    if (args.slotNumber < 0 || args.slotNumber >= TOTAL_SLOTS) {
+      throw new Error("Invalid slot number");
+    }
+
+    // 2. Check TX hash not already used (using index)
+    const existingTx = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_txHash", (q) => q.eq("txHash", args.txHash))
+      .first();
+    if (existingTx) {
+      throw new Error("Transaction already used for a bid");
+    }
+
+    // 3. Get or create auction for this slot
+    let auction = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_slot_status")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("slotNumber"), args.slotNumber),
+          q.eq(q.field("status"), "bidding")
+        )
+      )
+      .first();
+
+    const now = Date.now();
+
+    if (!auction) {
+      const auctionId = await ctx.db.insert("castAuctions", {
+        slotNumber: args.slotNumber,
+        auctionStartedAt: now,
+        auctionEndsAt: now + AUCTION_DURATION_MS,
+        currentBid: 0,
+        status: "bidding",
+        createdAt: now,
+      });
+      auction = await ctx.db.get(auctionId);
+      if (!auction) throw new Error("Failed to create auction");
+    }
+
+    // 4. Check auction hasn't ended
+    if (auction.auctionEndsAt <= now) {
+      throw new Error("Auction has ended");
+    }
+
+    // 5. Validate bid amount
+    const currentBid = auction.currentBid || 0;
+    const minimumRequired =
+      currentBid === 0
+        ? MINIMUM_BID
+        : Math.max(
+            currentBid + MINIMUM_INCREMENT,
+            Math.ceil(currentBid * (1 + BID_INCREMENT_PERCENT / 100))
+          );
+
+    if (args.bidAmount < minimumRequired) {
+      throw new Error(`Minimum bid is ${minimumRequired.toLocaleString()} VBMS`);
+    }
+
+    if (args.bidAmount > MAXIMUM_BID) {
+      throw new Error(`Maximum bid is ${MAXIMUM_BID.toLocaleString()} VBMS`);
+    }
+
+    // 6. Get bidder profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address")
+      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // 7. Mark previous highest bidder for refund (if different from current bidder)
+    if (auction.bidderAddress && auction.bidderAddress !== normalizedAddress) {
+      const previousBid = await ctx.db
+        .query("castAuctionBids")
+        .withIndex("by_auction_status")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("auctionId"), auction!._id),
+            q.eq(q.field("status"), "active")
+          )
+        )
+        .first();
+
+      if (previousBid) {
+        // Mark for refund - will be processed by claim endpoint
+        await ctx.db.patch(previousBid._id, {
+          status: "pending_refund",
+          refundAmount: previousBid.bidAmount,
+        });
+        console.log(`[CastAuction] Marked ${previousBid.bidderAddress} for refund of ${previousBid.bidAmount} VBMS`);
+      }
+    }
+
+    // 8. Create bid record with txHash
+    await ctx.db.insert("castAuctionBids", {
+      auctionId: auction._id,
+      slotNumber: args.slotNumber,
+      bidderAddress: normalizedAddress,
+      bidderUsername: profile.username || normalizedAddress.slice(0, 8),
+      bidderFid: profile.farcasterFid,
+      castHash: args.castHash,
+      warpcastUrl: args.warpcastUrl,
+      castAuthorFid: args.castAuthorFid,
+      castAuthorUsername: args.castAuthorUsername,
+      bidAmount: args.bidAmount,
+      previousHighBid: currentBid,
+      status: "active",
+      timestamp: now,
+      txHash: args.txHash,
+    });
+
+    // 9. Anti-snipe: Extend auction if bid is in last 5 minutes
+    let newEndTime = auction.auctionEndsAt;
+    if (auction.auctionEndsAt - now <= ANTI_SNIPE_WINDOW_MS) {
+      newEndTime = now + ANTI_SNIPE_EXTENSION_MS;
+    }
+
+    // 10. Update auction with new high bid
+    await ctx.db.patch(auction._id, {
+      currentBid: args.bidAmount,
+      bidderAddress: normalizedAddress,
+      bidderUsername: profile.username,
+      bidderFid: profile.farcasterFid,
+      castHash: args.castHash,
+      warpcastUrl: args.warpcastUrl,
+      castAuthorFid: args.castAuthorFid,
+      castAuthorUsername: args.castAuthorUsername,
+      castAuthorPfp: args.castAuthorPfp,
+      castText: args.castText,
+      auctionEndsAt: newEndTime,
+      lastBidAt: now,
+    });
+
+    console.log(
+      `[CastAuction] VBMS Bid placed: ${args.bidAmount} VBMS on slot ${args.slotNumber} by ${profile.username} (tx: ${args.txHash})`
+    );
+
+    return {
+      success: true,
+      bidAmount: args.bidAmount,
       auctionEndsAt: newEndTime,
       slotNumber: args.slotNumber,
     };

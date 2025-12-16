@@ -1303,11 +1303,13 @@ export default defineSchema({
     // Bid Details
     bidAmount: v.number(), // VBMS amount
     previousHighBid: v.number(), // What the bid beat
+    txHash: v.optional(v.string()), // Blockchain TX hash for the VBMS transfer (optional for legacy bids)
 
     // Status
     status: v.union(
       v.literal("active"), // Currently winning
       v.literal("outbid"), // Was outbid by someone else
+      v.literal("pending_refund"), // Outbid, waiting for user to claim refund
       v.literal("won"), // Won the auction
       v.literal("refunded") // Outbid and refund processed
     ),
@@ -1322,5 +1324,6 @@ export default defineSchema({
     .index("by_auction", ["auctionId", "timestamp"])
     .index("by_bidder", ["bidderAddress", "timestamp"])
     .index("by_status", ["status"])
-    .index("by_auction_status", ["auctionId", "status"]),
+    .index("by_auction_status", ["auctionId", "status"])
+    .index("by_txHash", ["txHash"]),
 });
