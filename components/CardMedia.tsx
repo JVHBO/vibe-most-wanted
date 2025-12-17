@@ -37,6 +37,10 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
   const srcLower = src.toLowerCase();
   const hasVideoExtension = srcLower.includes('.mp4') || srcLower.includes('.webm') || srcLower.includes('.mov');
   const isIpfs = srcLower.includes('ipfs');
+  
+  // VibeFID specific: filebase.io URLs should NEVER fallback to image
+  const isVibeFID = srcLower.includes('filebase.io');
+  
   const shouldTryVideo = !isDataUrl && (hasVideoExtension || (isIpfs && !useImage));
 
   if (shouldTryVideo && !error) {
@@ -48,34 +52,39 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         loop
         muted
         playsInline
-        autoPlay // Always autoplay (muted videos are safe)
-        preload="auto" // Always preload to ensure IPFS videos load
+        autoPlay
+        preload="auto"
         onClick={onClick}
         style={{ objectFit: 'cover' }}
         onError={(e) => {
-          console.error('❌ Video failed to load:', src);
-          setUseImage(true);
-          setError(true);
+          console.error('Video failed to load:', src);
+          if (isVibeFID) {
+            // VibeFID: show error, NEVER fallback to image
+            setError(true);
+          } else {
+            // Other collections: fallback to image
+            setUseImage(true);
+          }
         }}
         onLoadedData={() => {
-          console.log('✅ Video loaded:', src);
+          console.log('Video loaded:', src);
         }}
       />
     );
   }
 
-  // If error, show placeholder with IPFS link (but NOT for data URLs)
-  if (error && isIpfs && !isDataUrl) {
+  // VibeFID error state - show link instead of image fallback
+  if (error && isVibeFID) {
     return (
-      <div className={className} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff', fontSize: '12px', padding: '20px', textAlign: 'center', flexDirection: 'column' }}>
-        <div>⚠️ IPFS Loading Failed</div>
-        <a href={src} target="_blank" rel="noopener noreferrer" style={{ color: '#ffd700', marginTop: '10px', textDecoration: 'underline' }}>
-          Open in IPFS
+      <div className={className} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff', fontSize: '10px', padding: '10px', textAlign: 'center', flexDirection: 'column' }}>
+        <a href={src} target="_blank" rel="noopener noreferrer" style={{ color: '#ffd700' }}>
+          Open
         </a>
       </div>
     );
   }
 
+  // Regular image rendering (or fallback for non-VibeFID IPFS)
   return (
     <img
       src={src}
@@ -84,7 +93,7 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
       loading={loading}
       onClick={onClick}
       onError={(e) => {
-        console.error('❌ Image failed to load:', src);
+        console.error('Image failed to load:', src);
         setError(true);
       }}
     />

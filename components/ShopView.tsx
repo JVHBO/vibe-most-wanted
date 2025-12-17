@@ -28,6 +28,7 @@ export function ShopView({ address }: ShopViewProps) {
 
   // Mutations
   const openPack = useMutation(api.cardPacks.openPack);
+  const openAllPacks = useMutation(api.cardPacks.openAllPacks);
   const buyPackWithLuckBoost = useMutation(api.cardPacks.buyPackWithLuckBoost);
 
   // VBMS Blockchain hooks (using Farcaster-compatible hook for miniapp)
@@ -167,11 +168,36 @@ export function ShopView({ address }: ShopViewProps) {
       });
 
       setRevealedCards(result.cards);
-      setTimeout(() => setRevealedCards([]), 5000);
     } catch (error: any) {
       setNotification({
         type: 'error',
         message: error.message || "Failed to open pack"
+      });
+    } finally {
+      setOpeningPack(false);
+    }
+  };
+
+  // Handle opening ALL packs at once
+  const handleOpenAllPacks = async (packId: Id<"cardPacks">) => {
+    if (!address) return;
+
+    setOpeningPack(true);
+    try {
+      const result = await openAllPacks({
+        address,
+        packId,
+      });
+
+      setRevealedCards(result.cards);
+      setNotification({
+        type: 'success',
+        message: `Opened ${result.packsOpened} packs! Got ${result.cards.length} cards!`
+      });
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.message || "Failed to open packs"
       });
     } finally {
       setOpeningPack(false);
@@ -385,9 +411,19 @@ export function ShopView({ address }: ShopViewProps) {
               >
                 -
               </button>
-              <span className="text-vintage-ice font-display font-bold text-xl">{quantity}</span>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  setQuantity(Math.max(1, Math.min(100, val)));
+                }}
+                className="w-20 text-center bg-vintage-black border border-purple-400/30 rounded-lg text-vintage-ice font-display font-bold text-xl py-2"
+              />
               <button
-                onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                onClick={() => setQuantity(Math.min(100, quantity + 1))}
                 className="bg-vintage-charcoal hover:bg-purple-600/20 text-purple-400 px-4 py-2 rounded-lg font-bold border border-purple-400/30"
               >
                 +
@@ -449,13 +485,24 @@ export function ShopView({ address }: ShopViewProps) {
               >
                 <h3 className="text-xl font-display font-bold text-vintage-gold mb-2">{pack.packInfo.name}</h3>
                 <p className="text-vintage-ice mb-4">{pack.unopened} unopened</p>
-                <button
-                  onClick={() => handleOpenPack(pack._id)}
-                  disabled={openingPack || pack.unopened === 0}
-                  className="w-full bg-vintage-burnt-gold hover:bg-vintage-gold disabled:bg-vintage-charcoal/50 text-vintage-black disabled:text-vintage-ice/30 font-display font-bold py-3 px-6 rounded-xl transition-all"
-                >
-                  {openingPack ? "Opening..." : "Open Pack"}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleOpenPack(pack._id)}
+                    disabled={openingPack || pack.unopened === 0}
+                    className="flex-1 bg-vintage-burnt-gold hover:bg-vintage-gold disabled:bg-vintage-charcoal/50 text-vintage-black disabled:text-vintage-ice/30 font-display font-bold py-3 px-4 rounded-xl transition-all"
+                  >
+                    {openingPack ? "..." : "Open 1"}
+                  </button>
+                  {pack.unopened > 1 && (
+                    <button
+                      onClick={() => handleOpenAllPacks(pack._id)}
+                      disabled={openingPack}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:bg-vintage-charcoal/50 text-white disabled:text-vintage-ice/30 font-display font-bold py-3 px-4 rounded-xl transition-all"
+                    >
+                      {openingPack ? "..." : `Open All (${pack.unopened})`}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -466,6 +513,7 @@ export function ShopView({ address }: ShopViewProps) {
       {revealedCards.length > 0 && (
         <PackOpeningAnimation
           cards={revealedCards}
+          packType={luckBoost ? 'Lucky Pack' : 'Basic Pack'}
           onClose={() => setRevealedCards([])}
         />
       )}

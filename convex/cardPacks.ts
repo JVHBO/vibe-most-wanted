@@ -29,7 +29,7 @@ const PACK_TYPES = {
     description: "1 card per pack",
     cards: 1,
     price: 1000, // 1k coins = 1 card
-    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 }, // NERFED
+    rarityOdds: { Common: 55, Rare: 42, Epic: 2.9, Legendary: 0.1 }, // Balanced for profit
   },
   premium: {
     name: "Premium Pack",
@@ -50,7 +50,7 @@ const PACK_TYPES = {
     description: "1 card with elite odds",
     cards: 1,
     price: 5000, // 5x basic price for elite odds on 1 card
-    rarityOdds: { Common: 30, Rare: 55, Epic: 12, Legendary: 3 }, // Same as elite
+    rarityOdds: { Common: 12, Rare: 47, Epic: 36, Legendary: 5 }, // Nerfed from elite
   },
   mission: {
     name: "Mission Reward",
@@ -560,6 +560,89 @@ export const openPack = mutation({
 });
 
 /**
+ * Open ALL packs at once (for batch opening)
+ */
+export const openAllPacks = mutation({
+  args: {
+    address: v.string(),
+    packId: v.id("cardPacks"),
+  },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    // Get pack
+    const pack = await ctx.db.get(args.packId);
+    if (!pack) {
+      throw new Error("Pack not found");
+    }
+
+    if (pack.address !== address) {
+      throw new Error("Not your pack");
+    }
+
+    if (pack.unopened <= 0) {
+      throw new Error("No unopened packs");
+    }
+
+    // Get pack type info
+    const packInfo = PACK_TYPES[pack.packType as keyof typeof PACK_TYPES];
+    if (!packInfo) {
+      throw new Error("Invalid pack type");
+    }
+
+    // Open ALL packs at once
+    const allRevealedCards = [];
+    const totalPacks = pack.unopened;
+    
+    for (let p = 0; p < totalPacks; p++) {
+      // Generate cards for this pack
+      for (let i = 0; i < packInfo.cards; i++) {
+        const rarity = rollRarity(packInfo.rarityOdds);
+        const card = generateRandomCard(rarity);
+
+        // Check if player already has this card
+        const existingCard = await ctx.db
+          .query("cardInventory")
+          .withIndex("by_address", (q) => q.eq("address", address))
+          .filter((q) => q.eq(q.field("cardId"), card.cardId))
+          .first();
+
+        if (existingCard) {
+          // Increment quantity (duplicate)
+          await ctx.db.patch(existingCard._id, {
+            quantity: existingCard.quantity + 1,
+          });
+          allRevealedCards.push({ ...card, isDuplicate: true, quantity: existingCard.quantity + 1 });
+        } else {
+          // Add new card to inventory
+          await ctx.db.insert("cardInventory", {
+            address,
+            ...card,
+            quantity: 1,
+            equipped: false,
+            obtainedAt: Date.now(),
+          });
+          allRevealedCards.push({ ...card, isDuplicate: false, quantity: 1 });
+        }
+      }
+    }
+
+    // Set unopened to 0
+    await ctx.db.patch(args.packId, {
+      unopened: 0,
+    });
+
+    return {
+      success: true,
+      cards: allRevealedCards,
+      packType: pack.packType,
+      packsOpened: totalPacks,
+      packsRemaining: 0,
+    };
+  },
+});
+
+/**
  * AWARD pack to player (for missions/achievements)
  */
 export const awardPack = mutation({
@@ -853,8 +936,8 @@ const BURN_VALUES: Record<string, number> = {
 
 // Foil burn multipliers - foil cards are worth more when burned!
 const BURN_FOIL_MULTIPLIER: Record<string, number> = {
-  Prize: 10.0,    // 10x burn value for Prize foil
-  Standard: 2.0,  // 2x burn value for Standard foil
+  Prize: 5.0,     // 5x burn value for Prize foil (nerfed from 10x)
+  Standard: 1.5,  // 1.5x burn value for Standard foil (nerfed from 2x)
   None: 1.0,      // Normal burn value
 };
 

@@ -370,15 +370,31 @@ async function enrichWithImages(nfts: any[], batchSize: number = 50): Promise<an
         let imageUrl: string;
         if (collection === 'vibefid') {
           // VibeFID stores video URL in raw.metadata.image (filebase.io gateway)
+          // PRIORITY: 1) raw.metadata.image 2) originalUrl (NOT pngUrl/thumbnailUrl which are PNGs!)
           const metadataImage = nft?.raw?.metadata?.image || nft?.metadata?.image;
+          const originalUrl = nft?.image?.originalUrl;
+          
           if (metadataImage && metadataImage.includes('filebase.io')) {
             // Use filebase.io URL directly - it serves video/webm correctly
             imageUrl = String(metadataImage);
             console.log(`🎬 VibeFID #${nft.tokenId} using filebase video:`, imageUrl);
+          } else if (originalUrl && originalUrl.includes('ipfs')) {
+            // Fallback to originalUrl if it's an IPFS link
+            imageUrl = String(originalUrl);
+            console.log(`🎬 VibeFID #${nft.tokenId} using originalUrl:`, imageUrl);
+          } else if (metadataImage) {
+            // Use any metadata image as last resort
+            imageUrl = String(metadataImage);
+            console.warn(`⚠️ VibeFID #${nft.tokenId} using non-filebase metadata:`, imageUrl);
           } else {
-            // Fallback to getImage if filebase URL not found
-            imageUrl = await getImage(nft);
-            console.warn(`⚠️ VibeFID #${nft.tokenId} no filebase URL, using:`, imageUrl);
+            // Final fallback - but avoid PNG/thumbnail URLs
+            const cachedUrl = nft?.image?.cachedUrl;
+            if (cachedUrl && !cachedUrl.includes('.png')) {
+              imageUrl = String(cachedUrl);
+            } else {
+              imageUrl = await getImage(nft);
+            }
+            console.warn(`⚠️ VibeFID #${nft.tokenId} using fallback:`, imageUrl);
           }
         } else {
           imageUrl = await getImage(nft);
