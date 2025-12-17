@@ -40,6 +40,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [cooldown, setCooldown] = useState(inboxStatus.cooldownRemaining || 0);
+  const [convertAmount, setConvertAmount] = useState("");
 
   // Cooldown countdown timer
   useEffect(() => {
@@ -204,10 +205,14 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const testvbmsBalance = inboxStatus.coins || 0; // TESTVBMS no saldo
   const canClaimInbox = inboxAmount >= 1 && !isProcessing;
 
-  // Check if conversion would exceed daily limit
-  const exceedsDailyLimit = testvbmsBalance > dailyRemainingNum;
+  // Parse conversion amount
+  const selectedAmount = parseInt(convertAmount) || 0;
+
+  // Check if conversion would exceed daily limit or balance
+  const exceedsDailyLimit = selectedAmount > dailyRemainingNum;
+  const exceedsBalance = selectedAmount > testvbmsBalance;
   const isOnCooldown = cooldown > 0;
-  const canConvertTESTVBMS = testvbmsBalance >= 100 && !isProcessing && !exceedsDailyLimit && !isOnCooldown;
+  const canConvertTESTVBMS = selectedAmount >= 100 && !isProcessing && !exceedsDailyLimit && !exceedsBalance && !isOnCooldown;
 
   // Claim inbox → adiciona ao saldo TESTVBMS (instant, no gas)
   const handleClaimInbox = async () => {
@@ -240,7 +245,13 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     }
 
     if (!canConvertTESTVBMS) {
-      toast.error("Mínimo de 100 TESTVBMS para converter");
+      if (selectedAmount < 100) {
+        toast.error("Mínimo de 100 TESTVBMS para converter");
+      } else if (exceedsBalance) {
+        toast.error("Valor maior que seu saldo");
+      } else if (exceedsDailyLimit) {
+        toast.error("Valor excede o limite diário");
+      }
       return;
     }
 
@@ -267,9 +278,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         }
       }
 
-      console.log('[CoinsInboxModal] Converting TESTVBMS to VBMS...');
+      console.log('[CoinsInboxModal] Converting TESTVBMS to VBMS...', { amount: selectedAmount });
       // Use the actual wallet address for signature generation
-      const result = await convertTESTVBMS({ address: signingAddress });
+      const result = await convertTESTVBMS({ address: signingAddress, amount: selectedAmount });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
@@ -454,25 +465,54 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           <div className="space-y-2">
           {/* Convert button - ONLY in miniapp (iframe), disabled in browser */}
           {useFarcasterSDK ? (
-            // MINIAPP: Show convert button
+            // MINIAPP: Show amount input + convert button
             testvbmsBalance >= 100 ? (
-              <button
-                onClick={handleConvertTESTVBMS}
-                disabled={!canConvertTESTVBMS || isProcessing}
-                className={`w-full group relative overflow-hidden rounded-lg p-3 font-bold transition-all text-sm ${
-                  canConvertTESTVBMS
-                    ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.01]"
-                    : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
-                }`}
-              >
-                <div className="relative flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <NextImage src="/images/icons/convert.svg" alt="Convert" width={16} height={16} className="w-4 h-4" />
-                    <span>Convert {testvbmsBalance.toLocaleString()} → VBMS</span>
-                  </span>
-                  <span className="text-xs opacity-80 bg-black/20 px-2 py-0.5 rounded">Gas</span>
+              <>
+                {/* Amount Input */}
+                <div className="space-y-2">
+                  <label className="text-xs text-vintage-gold/70">Amount to convert:</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={convertAmount}
+                      onChange={(e) => setConvertAmount(e.target.value)}
+                      placeholder="Enter amount..."
+                      min="100"
+                      max={Math.min(testvbmsBalance, dailyRemainingNum)}
+                      className="flex-1 px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-cream text-sm focus:border-vintage-gold focus:outline-none"
+                    />
+                    <button
+                      onClick={() => setConvertAmount(Math.min(testvbmsBalance, dailyRemainingNum).toString())}
+                      className="px-3 py-2 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold rounded-lg text-xs font-bold hover:bg-vintage-gold/30 transition-all"
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  {exceedsBalance && (
+                    <p className="text-red-400 text-xs">Exceeds your balance ({testvbmsBalance.toLocaleString()})</p>
+                  )}
+                  {exceedsDailyLimit && !exceedsBalance && (
+                    <p className="text-red-400 text-xs">Exceeds daily limit ({Math.floor(dailyRemainingNum).toLocaleString()})</p>
+                  )}
                 </div>
-              </button>
+                <button
+                  onClick={handleConvertTESTVBMS}
+                  disabled={!canConvertTESTVBMS || isProcessing}
+                  className={`w-full group relative overflow-hidden rounded-lg p-3 font-bold transition-all text-sm ${
+                    canConvertTESTVBMS
+                      ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.01]"
+                      : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
+                  }`}
+                >
+                  <div className="relative flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <NextImage src="/images/icons/convert.svg" alt="Convert" width={16} height={16} className="w-4 h-4" />
+                      <span>Convert {selectedAmount > 0 ? selectedAmount.toLocaleString() : '0'} → VBMS</span>
+                    </span>
+                    <span className="text-xs opacity-80 bg-black/20 px-2 py-0.5 rounded">Gas</span>
+                  </div>
+                </button>
+              </>
             ) : (
               <div className="text-center py-3">
                 <p className="text-vintage-gold/60 text-xs">

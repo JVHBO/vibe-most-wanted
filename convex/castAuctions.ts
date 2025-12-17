@@ -333,19 +333,12 @@ export const placeBid = mutation({
       throw new Error("Auction has ended");
     }
 
-    // 4. Validate bid amount
+    // 4. Validate bid amount (min 1000 VBMS, no outbid required - pool system)
     const currentBid = auction.currentBid || 0;
-    const minimumRequired =
-      currentBid === 0
-        ? MINIMUM_BID
-        : Math.max(
-            currentBid + MINIMUM_INCREMENT,
-            Math.ceil(currentBid * (1 + BID_INCREMENT_PERCENT / 100))
-          );
-
-    if (args.bidAmount < minimumRequired) {
+    const POOL_MINIMUM = 1000;
+    if (args.bidAmount < POOL_MINIMUM) {
       throw new Error(
-        `Minimum bid is ${minimumRequired.toLocaleString()} VBMS`
+        `Minimum bid is ${POOL_MINIMUM.toLocaleString()} VBMS`
       );
     }
 
@@ -363,8 +356,10 @@ export const placeBid = mutation({
       .filter((q) => q.eq(q.field("address"), normalizedAddress))
       .first();
 
+    console.log(`[PlaceBid DEBUG] Address: ${normalizedAddress}, Profile found: ${!!profile}, Username: ${profile?.username}`);
+
     if (!profile) {
-      throw new Error("Profile not found");
+      throw new Error(`Profile not found for address: ${normalizedAddress}`);
     }
 
     const currentCoins = profile.coins || 0;
@@ -562,18 +557,11 @@ export const placeBidWithVBMS = mutation({
       throw new Error("Auction has ended");
     }
 
-    // 5. Validate bid amount
+    // 5. Validate bid amount (min 1000 VBMS, no outbid required - pool system)
     const currentBid = auction.currentBid || 0;
-    const minimumRequired =
-      currentBid === 0
-        ? MINIMUM_BID
-        : Math.max(
-            currentBid + MINIMUM_INCREMENT,
-            Math.ceil(currentBid * (1 + BID_INCREMENT_PERCENT / 100))
-          );
-
-    if (args.bidAmount < minimumRequired) {
-      throw new Error(`Minimum bid is ${minimumRequired.toLocaleString()} VBMS`);
+    const POOL_MINIMUM = 1000;
+    if (args.bidAmount < POOL_MINIMUM) {
+      throw new Error(`Minimum bid is ${POOL_MINIMUM.toLocaleString()} VBMS`);
     }
 
     if (args.bidAmount > MAXIMUM_BID) {
@@ -702,7 +690,9 @@ export const addToPool = mutation({
       .filter((q) => q.eq(q.field("address"), normalizedAddress))
       .first();
 
-    if (!profile) throw new Error("Profile not found");
+    console.log(`[AddToPool DEBUG] Address: ${normalizedAddress}, Profile found: ${!!profile}, Username: ${profile?.username}`);
+
+    if (!profile) throw new Error(`Profile not found for address: ${normalizedAddress}`);
 
     // 4. Check if TX hash already used (if provided)
     if (args.txHash) {
@@ -856,6 +846,7 @@ export const finalizeAuction = internalMutation({
 
 /**
  * Activate a featured cast (pending_feature -> active)
+ * Also adds the cast to featuredCasts table so users can earn rewards for interactions
  */
 export const activateFeaturedCast = internalMutation({
   args: { auctionId: v.id("castAuctions") },
@@ -871,8 +862,40 @@ export const activateFeaturedCast = internalMutation({
       featureEndsAt: now + FEATURE_DURATION_MS,
     });
 
+    // Add to featuredCasts table for interaction rewards
+    // Use slot number + 100 as order to avoid conflicts with manual featured casts
+    const featuredOrder = 100 + auction.slotNumber;
+
+    // Check if already exists at this order
+    const existingFeatured = await ctx.db
+      .query("featuredCasts")
+      .withIndex("by_order")
+      .filter((q) => q.eq(q.field("order"), featuredOrder))
+      .first();
+
+    if (existingFeatured) {
+      // Update existing slot
+      await ctx.db.patch(existingFeatured._id, {
+        castHash: auction.castHash || "",
+        warpcastUrl: auction.warpcastUrl || "",
+        active: true,
+        addedAt: now,
+        auctionId: auctionId, // Link to auction
+      });
+    } else {
+      // Create new featured cast entry
+      await ctx.db.insert("featuredCasts", {
+        castHash: auction.castHash || "",
+        warpcastUrl: auction.warpcastUrl || "",
+        order: featuredOrder,
+        active: true,
+        addedAt: now,
+        auctionId: auctionId, // Link to auction
+      });
+    }
+
     console.log(
-      `[CastAuction] Cast now featured: Slot ${auction.slotNumber} - ${auction.castHash}`
+      `[CastAuction] Cast now featured: Slot ${auction.slotNumber} - ${auction.castHash} (added to featuredCasts)`
     );
   },
 });
@@ -889,6 +912,18 @@ export const completeFeaturedCast = internalMutation({
     await ctx.db.patch(auctionId, {
       status: "completed",
     });
+
+    // Deactivate the featured cast from featuredCasts table
+    const featuredOrder = 100 + auction.slotNumber;
+    const featuredCast = await ctx.db
+      .query("featuredCasts")
+      .withIndex("by_order")
+      .filter((q) => q.eq(q.field("order"), featuredOrder))
+      .first();
+
+    if (featuredCast) {
+      await ctx.db.patch(featuredCast._id, { active: false });
+    }
 
     // Start new auction for this slot
     const now = Date.now();
