@@ -213,7 +213,7 @@ export function FeaturedCastAuctions({
             setCastUrl("");
             setCastPreview(null);
             setExistingCastInfo(null);
-            setIsExpanded(false);
+            // Form stays visible
             if (soundEnabled) AudioManager.win();
             onBidPlaced?.(pendingBidData.amount);
             refetchBalance();
@@ -346,33 +346,11 @@ export function FeaturedCastAuctions({
 
   return (
     <div className="mt-3 border-t border-purple-500/20 pt-3">
-      {/* Collapsed View - Just a button */}
-      {!isExpanded ? (
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setIsExpanded(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-amber-300 text-xs font-bold transition-all"
-          >
-            <span>🔥</span>
-            <span>Sponsor a Cast</span>
-          </button>
-          <div className="flex items-center gap-2 text-xs">
-            {hasBid ? (
-              <span className="text-vintage-burnt-gold">
-                Top: {currentAuction.currentBid.toLocaleString()} VBMS
-              </span>
-            ) : (
-              <span className="text-vintage-burnt-gold">Min: 10k VBMS</span>
-            )}
-            <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
-          </div>
-        </div>
-      ) : (
-        /* Expanded View - Bid Form */
+        /* Cast Auction Form */
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h5 className="text-amber-300 font-bold text-sm flex items-center gap-2">
-              <span>🔥</span> Sponsor a Cast
+              <span>🔥</span> Featured Cast Auction
               <button
                 onClick={() => setShowHelp(!showHelp)}
                 className="text-vintage-burnt-gold hover:text-vintage-gold text-xs ml-1"
@@ -380,12 +358,6 @@ export function FeaturedCastAuctions({
                 ?
               </button>
             </h5>
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="text-vintage-burnt-gold hover:text-vintage-gold text-xs"
-            >
-              ✕ Close
-            </button>
           </div>
 
           {/* Help tooltip */}
