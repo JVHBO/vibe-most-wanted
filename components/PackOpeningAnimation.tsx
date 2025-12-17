@@ -60,7 +60,24 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     if (foilParts.length > 0) castText += "\n\n" + foilParts.join("\n");
     castText += "\n\n⚡ Total Power: " + totalPower;
     castText += "\n\n@jvhbo";
-    const shareUrl = "https://www.vibemostwanted.xyz/";
+    // Build share URL with query params for OG image
+    const params = new URLSearchParams();
+    params.set('packType', packType);
+    if (counts.Legendary > 0) params.set('legendary', counts.Legendary.toString());
+    if (counts.Epic > 0) params.set('epic', counts.Epic.toString());
+    if (counts.Rare > 0) params.set('rare', counts.Rare.toString());
+    if (counts.Common > 0) params.set('common', counts.Common.toString());
+    params.set('totalPower', totalPower.toString());
+    if (foilCounts.Prize > 0) params.set('foilPrize', foilCounts.Prize.toString());
+    if (foilCounts.Standard > 0) params.set('foilStandard', foilCounts.Standard.toString());
+
+    // Include up to 5 card images
+    const cardImages = cards.slice(0, 5).map(card => convertIpfsUrl(card.imageUrl) || card.imageUrl);
+    if (cardImages.length > 0) {
+      params.set('cards', encodeURIComponent(JSON.stringify(cardImages)));
+    }
+
+    const shareUrl = "https://www.vibemostwanted.xyz/share/pack?" + params.toString();
     const farcasterUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(castText) + "&embeds[]=" + encodeURIComponent(shareUrl);
     window.open(farcasterUrl, "_blank");
   };
