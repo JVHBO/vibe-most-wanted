@@ -90,6 +90,11 @@ export function FeaturedCastAuctions({
     (a: AuctionDoc, b: AuctionDoc) => a.auctionEndsAt - b.auctionEndsAt
   )[0];
 
+  // Filter bidders for current auction only
+  const auctionBidders = currentBidders?.filter(
+    (bid: BidDoc) => bid.auctionId === currentAuction?._id
+  );
+
   // Minimum bid - sem outbid, qualquer valor (min 1000 VBMS)
   const getMinimumBid = () => {
     return 1000;
@@ -344,6 +349,11 @@ export function FeaturedCastAuctions({
 
   const hasBid = currentAuction.currentBid > 0;
 
+  // Get all active auctions with bids, sorted by pool size
+  const activeAuctionsWithBids = auctionStates?.bidding
+    ?.filter((a: AuctionDoc) => a.currentBid > 0)
+    ?.sort((a: AuctionDoc, b: AuctionDoc) => b.currentBid - a.currentBid) || [];
+
   return (
     <div className="mt-3 border-t border-purple-500/20 pt-3">
         {/* Cast Auction Form */}
@@ -366,86 +376,89 @@ export function FeaturedCastAuctions({
               <p className="font-bold text-purple-300 mb-1">How it works:</p>
               <ul className="list-disc list-inside space-y-1 text-vintage-burnt-gold">
                 <li>Bid real VBMS from your wallet</li>
-                <li>Min: 10k VBMS | Max: 120k VBMS</li>
-                <li>Outbid by +10% or +1k (whichever is higher)</li>
-                <li>Winner pays, losers can claim VBMS refund</li>
-                <li>Anti-snipe: bids in last 5min extend auction by 3min</li>
+                <li>Min: 1,000 VBMS | Max: 120k VBMS</li>
+                <li>Multiple bids on same cast join the pool</li>
+                <li>Highest pool wins the featured slot</li>
               </ul>
             </div>
           )}
 
-          {/* Current bid info with cast link */}
-          <div className="text-xs bg-vintage-charcoal/50 rounded-lg p-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {hasBid ? (
-                  <>
-                    <span className="text-vintage-gold">
-                      🏆 @{currentAuction.bidderUsername}: {currentAuction.currentBid.toLocaleString()} VBMS
-                    </span>
-                    <button
-                      onClick={() => {
-                        setExistingCastInfo({
-                          exists: true,
-                          auctionId: currentAuction._id,
-                          slotNumber: currentAuction.slotNumber,
-                          totalPool: currentAuction.currentBid,
-                          contributorCount: 1,
-                          topBidder: currentAuction.bidderUsername || '',
-                        });
-                        setCastPreview({
-                          hash: currentAuction.castHash || '',
-                          text: currentAuction.castText || '',
-                          author: {
-                            fid: currentAuction.castAuthorFid || 0,
-                            username: currentAuction.castAuthorUsername || '',
-                            displayName: currentAuction.castAuthorUsername || '',
-                            pfpUrl: currentAuction.castAuthorPfp || '',
-                          },
-                          timestamp: '',
-                          reactions: { likes: 0, recasts: 0 },
-                          replies: 0,
-                        });
-                        if (soundEnabled) AudioManager.buttonClick();
-                      }}
-                      className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded text-[10px] font-bold hover:bg-amber-500/30 transition-all"
-                    >
-                      + Join Bid
-                    </button>
-                  </>
-                ) : (
-                  <span className="text-vintage-burnt-gold">No bids yet - Min: 10,000 VBMS</span>
-                )}
-              </div>
-              <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
+          {/* RANKING: All active auctions with bids */}
+          {activeAuctionsWithBids.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-vintage-burnt-gold text-[10px] font-bold">🏆 Active Bids Ranking:</p>
+              {activeAuctionsWithBids.map((auction: AuctionDoc, index: number) => {
+                const biddersForAuction = currentBidders?.filter((b: BidDoc) => b.auctionId === auction._id) || [];
+                return (
+                  <div key={auction._id} className="text-xs bg-vintage-charcoal/50 rounded-lg p-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold ${index === 0 ? 'text-amber-400' : 'text-vintage-gold'}`}>
+                          #{index + 1}
+                        </span>
+                        <span className="text-vintage-gold">
+                          {auction.currentBid.toLocaleString()} VBMS
+                        </span>
+                        <button
+                          onClick={() => {
+                            setExistingCastInfo({
+                              exists: true,
+                              auctionId: auction._id,
+                              slotNumber: auction.slotNumber,
+                              totalPool: auction.currentBid,
+                              contributorCount: biddersForAuction.length,
+                              topBidder: auction.bidderUsername || '',
+                            });
+                            setCastPreview({
+                              hash: auction.castHash || '',
+                              text: auction.castText || '',
+                              author: {
+                                fid: auction.castAuthorFid || 0,
+                                username: auction.castAuthorUsername || '',
+                                displayName: auction.castAuthorUsername || '',
+                                pfpUrl: auction.castAuthorPfp || '',
+                              },
+                              timestamp: '',
+                              reactions: { likes: 0, recasts: 0 },
+                              replies: 0,
+                            });
+                            if (soundEnabled) AudioManager.buttonClick();
+                          }}
+                          className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded text-[10px] font-bold hover:bg-amber-500/30 transition-all"
+                        >
+                          + Join
+                        </button>
+                      </div>
+                      <CountdownTimer endsAt={auction.auctionEndsAt} />
+                    </div>
+                    {auction.warpcastUrl && (
+                      <a
+                        href={auction.warpcastUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-400 hover:text-purple-300 text-[10px] truncate block mt-1"
+                      >
+                        🔗 {auction.warpcastUrl}
+                      </a>
+                    )}
+                    {/* Bidders for this auction */}
+                    {biddersForAuction.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {biddersForAuction.map((bid: any) => (
+                          <span
+                            key={bid._id}
+                            className="px-1.5 py-0.5 bg-vintage-charcoal border border-vintage-gold/30 rounded text-[10px] text-vintage-gold"
+                          >
+                            @{bid.bidderUsername}: {bid.bidAmount.toLocaleString()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            {hasBid && currentAuction.warpcastUrl && (
-              <a
-                href={currentAuction.warpcastUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-400 hover:text-purple-300 text-[10px] truncate block mt-1"
-              >
-                🔗 {currentAuction.warpcastUrl}
-              </a>
-            )}
-            {/* Bidders list */}
-            {currentBidders && currentBidders.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-vintage-gold/20">
-                <p className="text-vintage-burnt-gold text-[10px] mb-1">Bidders:</p>
-                <div className="flex flex-wrap gap-1">
-                  {currentBidders.map((bid: any) => (
-                    <span
-                      key={bid._id}
-                      className="px-1.5 py-0.5 bg-vintage-charcoal border border-vintage-gold/30 rounded text-[10px] text-vintage-gold"
-                    >
-                      @{bid.bidderUsername}: {bid.bidAmount.toLocaleString()}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Success/Error Messages */}
           {success && (
