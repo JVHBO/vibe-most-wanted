@@ -1157,6 +1157,7 @@ export default defineSchema({
     active: v.boolean(), // Whether to show this cast
     addedAt: v.number(), // Timestamp when added
     addedBy: v.optional(v.string()), // Admin who added it
+    auctionId: v.optional(v.id("castAuctions")), // Link to auction if from auction system
   })
     .index("by_order", ["order"])
     .index("by_active", ["active"]),

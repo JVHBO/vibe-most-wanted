@@ -997,37 +997,39 @@ export const claimPveRewardNowInternal = internalMutation({
 // ========== MUTATION: Convert TESTVBMS to VBMS ==========
 
 /**
- * Convert all TESTVBMS coins to VBMS blockchain tokens
+ * Convert TESTVBMS coins to VBMS blockchain tokens
  * Prepares the signature for blockchain claim
+ * @param amount - Optional: specific amount to convert (default: all balance up to max)
  */
 export const convertTESTVBMStoVBMS = action({
   args: {
     address: v.string(),
+    amount: v.optional(v.number()),
   },
-  handler: async (ctx, { address }): Promise<{
+  handler: async (ctx, { address, amount }): Promise<{
     amount: number;
     nonce: string;
     signature: string;
     message: string;
   }> => {
     // Get profile and validate via internal mutation
-    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address });
+    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address, amount });
 
     // Generate signature for blockchain claim
     const nonce = generateNonce();
     const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
       address,
-      amount: result.testVBMSBalance,
+      amount: result.claimAmount,
       nonce
     });
 
-    console.log(`💱 ${address} converting ${result.testVBMSBalance} TESTVBMS → VBMS (nonce: ${nonce})`);
+    console.log(`💱 ${address} converting ${result.claimAmount} TESTVBMS → VBMS (nonce: ${nonce})`);
 
     return {
-      amount: result.testVBMSBalance,
+      amount: result.claimAmount,
       nonce: nonce,
       signature: signature,
-      message: `Converting ${result.testVBMSBalance} TESTVBMS to VBMS`,
+      message: `Converting ${result.claimAmount} TESTVBMS to VBMS`,
     };
   },
 });
@@ -1042,8 +1044,9 @@ const MIN_CLAIM_AMOUNT = 100;
 export const convertTESTVBMSInternal = internalMutation({
   args: {
     address: v.string(),
+    amount: v.optional(v.number()),
   },
-  handler: async (ctx, { address }): Promise<{ testVBMSBalance: number }> => {
+  handler: async (ctx, { address, amount }): Promise<{ claimAmount: number }> => {
     // 🚫 BLACKLIST CHECK - Block exploiters from claiming
     if (isBlacklisted(address)) {
       const info = getBlacklistInfo(address);
@@ -1067,8 +1070,22 @@ export const convertTESTVBMSInternal = internalMutation({
       throw new Error(`Minimum ${MIN_CLAIM_AMOUNT} TESTVBMS required to convert. You have: ${testVBMSBalance}`);
     }
 
-    // Cap at max claim amount
-    const claimAmount = Math.min(testVBMSBalance, MAX_CLAIM_AMOUNT);
+    // Use provided amount or default to max balance
+    let claimAmount: number;
+    if (amount !== undefined) {
+      // Validate user-provided amount
+      if (amount < MIN_CLAIM_AMOUNT) {
+        throw new Error(`Minimum ${MIN_CLAIM_AMOUNT} TESTVBMS required to convert.`);
+      }
+      if (amount > testVBMSBalance) {
+        throw new Error(`Insufficient balance. You have ${testVBMSBalance} TESTVBMS but tried to convert ${amount}.`);
+      }
+      claimAmount = Math.min(amount, MAX_CLAIM_AMOUNT);
+    } else {
+      // Default: convert all up to max
+      claimAmount = Math.min(testVBMSBalance, MAX_CLAIM_AMOUNT);
+    }
+
     const remainingBalance = testVBMSBalance - claimAmount;
 
     if (claimAmount < MIN_CLAIM_AMOUNT) {
@@ -1108,7 +1125,7 @@ export const convertTESTVBMSInternal = internalMutation({
 
     console.log(`🔒 [SECURITY] ${address} converting ${claimAmount} TESTVBMS (remaining: ${remainingBalance}, cooldown: 3min)`);
 
-    return { testVBMSBalance: claimAmount };
+    return { claimAmount };
   },
 });
 

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Record entry fee in Convex
     const convex = new ConvexHttpClient(CONVEX_URL);
-    const result = await convex.mutation(api.pvp.recordEntryFee, {
+    const result = await convex.action(api.pvp.recordEntryFee, {
       address,
       amount: parseFloat(amount),
       txHash,
