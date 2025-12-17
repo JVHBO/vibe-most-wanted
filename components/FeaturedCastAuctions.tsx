@@ -70,6 +70,11 @@ export function FeaturedCastAuctions({
   const auctionStates = useQuery(api.castAuctions.getAllAuctionStates);
   const currentBidders = useQuery(api.castAuctions.getCurrentBidders, {});
 
+  // Pending refunds
+  const pendingRefunds = useQuery(api.castAuctions.getPendingRefunds, address ? { address } : "skip");
+  const requestRefundMutation = useMutation(api.castAuctions.requestRefund);
+  const [isClaimingRefund, setIsClaimingRefund] = useState(false);
+
   // Get profile for username
   const profile = useQuery(api.profiles.getProfile, address ? { address } : "skip");
 
@@ -272,7 +277,7 @@ export function FeaturedCastAuctions({
       // Store bid data for when TX confirms
       setPendingBidData({
         amount,
-        slotNumber: existingCastInfo?.slotNumber || currentAuction.slotNumber,
+        slotNumber: existingCastInfo?.slotNumber || currentAuction?.slotNumber || 0,
         castHash: castPreview.hash,
         warpcastUrl: castUrl,
         castAuthorFid: castPreview.author.fid,
@@ -295,6 +300,25 @@ export function FeaturedCastAuctions({
       setIsBidding(false);
       setBidStep("idle");
       setPendingBidData(null);
+    }
+  };
+
+  // Handle refund claim
+  const handleClaimRefund = async () => {
+    if (!address || !pendingRefunds?.totalRefund) return;
+    
+    setIsClaimingRefund(true);
+    setError(null);
+    
+    try {
+      await requestRefundMutation({ address });
+      setSuccess(`Refund requested! ${pendingRefunds.totalRefund.toLocaleString()} VBMS will be sent to your wallet.`);
+      if (soundEnabled) AudioManager.win();
+    } catch (e: any) {
+      setError(e.message || "Failed to request refund");
+      if (soundEnabled) AudioManager.buttonError();
+    } finally {
+      setIsClaimingRefund(false);
     }
   };
 
@@ -345,9 +369,8 @@ export function FeaturedCastAuctions({
     );
   };
 
-  if (!currentAuction) return null;
 
-  const hasBid = currentAuction.currentBid > 0;
+  const hasBid = (currentAuction?.currentBid || 0) > 0;
 
   // Get all active auctions with bids, sorted by pool size
   const activeAuctionsWithBids = auctionStates?.bidding
@@ -469,6 +492,30 @@ export function FeaturedCastAuctions({
           {error && (
             <div className="p-2 bg-red-900/30 border border-red-500/50 rounded-lg text-red-400 text-xs">
               {error}
+            </div>
+          )}
+
+          {/* Pending Refunds */}
+          {pendingRefunds && pendingRefunds.totalRefund > 0 && (
+            <div className="p-3 bg-amber-900/40 border-2 border-amber-500/70 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-amber-300 font-bold text-sm flex items-center gap-2">
+                    <span>💰</span> Pending Refund
+                  </p>
+                  <p className="text-amber-200/80 text-xs mt-1">
+                    You have <span className="font-bold text-amber-300">{pendingRefunds.totalRefund.toLocaleString()} VBMS</span> to claim
+                    <span className="text-vintage-burnt-gold ml-1">({pendingRefunds.count} bid{pendingRefunds.count > 1 ? 's' : ''})</span>
+                  </p>
+                </div>
+                <button
+                  onClick={handleClaimRefund}
+                  disabled={isClaimingRefund}
+                  className="px-4 py-2 bg-amber-500 text-black rounded-lg text-sm font-bold hover:bg-amber-400 disabled:opacity-50 transition-all"
+                >
+                  {isClaimingRefund ? "Claiming..." : "Claim"}
+                </button>
+              </div>
             </div>
           )}
 

@@ -1057,7 +1057,7 @@ export const convertTESTVBMSInternal = internalMutation({
     const profile = await getProfile(ctx, address);
 
     // ⏰ COOLDOWN CHECK - 3 minutes between conversions
-    const lastConversion = profile.pendingConversionTimestamp || 0;
+    const lastConversion = profile.lastClaimTimestamp || 0;
     const timeSinceLastConversion = Date.now() - lastConversion;
     if (lastConversion > 0 && timeSinceLastConversion < CONVERSION_COOLDOWN_MS) {
       const remainingSeconds = Math.ceil((CONVERSION_COOLDOWN_MS - timeSinceLastConversion) / 1000);
@@ -1218,7 +1218,7 @@ export const recoverFailedConversion = mutation({
     const profile = await getProfile(ctx, address);
 
     const pendingAmount = profile.pendingConversion || 0;
-    const pendingTimestamp = profile.pendingConversionTimestamp || 0;
+    const pendingTimestamp = profile.lastClaimTimestamp || 0;
 
     if (pendingAmount === 0) {
       throw new Error("No pending conversion to recover");
