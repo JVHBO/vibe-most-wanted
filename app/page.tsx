@@ -5003,7 +5003,7 @@ export default function TCGPage() {
                 {/* Price Ticker - Website only (right side of user bar) */}
                 {!isInFarcaster && (
                   <div className="hidden md:block">
-                    <PriceTicker className="" />
+                    <PriceTicker className="-mt-2" />
                   </div>
                 )}
               </div>

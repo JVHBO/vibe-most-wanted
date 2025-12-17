@@ -70,7 +70,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-2 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
+      <div className={`flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
         <span className="text-vintage-burnt-gold text-xs animate-pulse">Loading prices...</span>
       </div>
     );
@@ -78,7 +78,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
 
   if (prices.length === 0) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-2 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
+      <div className={`flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
         <span className="text-vintage-burnt-gold text-xs">Fetching prices...</span>
       </div>
     );
@@ -117,7 +117,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
   return (
     <button
       onClick={handleClick}
-      className={`overflow-hidden py-2 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold animate-[glow-pulse_2.5s_ease-in-out_infinite] transition-all cursor-pointer ${className}`}
+      className={`overflow-hidden py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold animate-[glow-pulse_2.5s_ease-in-out_infinite] transition-all cursor-pointer ${className}`}
       title={`Buy ${currentPrice?.displayName} Packs`}
     >
       <div
