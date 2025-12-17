@@ -248,7 +248,7 @@ export function FeaturedCastAuctions({
 
   // Place bid - transfer VBMS on-chain
   const handlePlaceBid = async () => {
-    if (!currentAuction || !castPreview || !bidAmount) return;
+    if (!castPreview || !bidAmount) return;
 
     const amount = parseInt(bidAmount);
     // Pool contributions have lower minimum (1000 VBMS)
