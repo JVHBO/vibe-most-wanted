@@ -9,7 +9,7 @@ import { Id } from "./_generated/dataModel";
 
 // Configuration
 const AUCTION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
-const FEATURE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+const FEATURE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours per position
 const MINIMUM_BID = 10000; // Minimum first bid: 10,000 VBMS
 const MAXIMUM_BID = 120000; // Maximum bid: 120,000 VBMS
 const BID_INCREMENT_PERCENT = 10; // Must bid at least 10% more than current
@@ -766,6 +766,155 @@ export const initializeAuctions = mutation({
   },
 });
 
+/**
+ * Request refund for pending_refund bids
+ * Marks bids as refund_requested so admin can process
+ */
+export const requestRefund = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    const pendingRefunds = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_bidder")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("bidderAddress"), normalizedAddress),
+          q.eq(q.field("status"), "pending_refund")
+        )
+      )
+      .collect();
+
+    if (pendingRefunds.length === 0) {
+      throw new Error("No pending refunds to claim");
+    }
+
+    const totalRefund = pendingRefunds.reduce((sum, bid) => sum + (bid.refundAmount || bid.bidAmount), 0);
+    const now = Date.now();
+
+    // Mark all as refund_requested
+    for (const bid of pendingRefunds) {
+      await ctx.db.patch(bid._id, {
+        status: "refund_requested",
+        refundRequestedAt: now,
+      });
+    }
+
+    console.log(`[CastAuction] Refund requested: ${normalizedAddress} - ${totalRefund} VBMS (${pendingRefunds.length} bids)`);
+
+    return {
+      success: true,
+      totalRefund,
+      bidsCount: pendingRefunds.length,
+    };
+  },
+});
+
+/**
+ * Get all pending refund requests (Admin)
+ */
+export const getAllRefundRequests = query({
+  args: {},
+  handler: async (ctx) => {
+    const requests = await ctx.db
+      .query("castAuctionBids")
+      .filter((q) => q.eq(q.field("status"), "refund_requested"))
+      .collect();
+
+    // Group by address
+    const byAddress: Record<string, { total: number; bids: typeof requests }> = {};
+    for (const req of requests) {
+      const addr = req.bidderAddress;
+      if (!byAddress[addr]) {
+        byAddress[addr] = { total: 0, bids: [] };
+      }
+      byAddress[addr].total += req.refundAmount || req.bidAmount;
+      byAddress[addr].bids.push(req);
+    }
+
+    return {
+      requests,
+      byAddress,
+      totalPending: requests.reduce((sum, r) => sum + (r.refundAmount || r.bidAmount), 0),
+    };
+  },
+});
+
+/**
+ * Process refund (Admin) - Mark as completed after manual transfer
+ */
+export const processRefund = mutation({
+  args: { 
+    bidId: v.id("castAuctionBids"),
+    txHash: v.string(),
+  },
+  handler: async (ctx, { bidId, txHash }) => {
+    const bid = await ctx.db.get(bidId);
+    if (!bid) throw new Error("Bid not found");
+    if (bid.status !== "refund_requested") {
+      throw new Error("Bid is not in refund_requested status");
+    }
+
+    await ctx.db.patch(bidId, {
+      status: "refunded",
+      refundTxHash: txHash,
+      refundedAt: Date.now(),
+    });
+
+    console.log(`[CastAuction] Refund processed: ${bid.bidderAddress} - ${bid.refundAmount || bid.bidAmount} VBMS (tx: ${txHash})`);
+
+    return { success: true };
+  },
+});
+
+/**
+ * Process all refunds for an address (Admin)
+ */
+export const processRefundBatch = mutation({
+  args: { 
+    address: v.string(),
+    txHash: v.string(),
+  },
+  handler: async (ctx, { address, txHash }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    const requests = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_bidder")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("bidderAddress"), normalizedAddress),
+          q.eq(q.field("status"), "refund_requested")
+        )
+      )
+      .collect();
+
+    if (requests.length === 0) {
+      throw new Error("No refund requests for this address");
+    }
+
+    const total = requests.reduce((sum, r) => sum + (r.refundAmount || r.bidAmount), 0);
+    const now = Date.now();
+
+    for (const req of requests) {
+      await ctx.db.patch(req._id, {
+        status: "refunded",
+        refundTxHash: txHash,
+        refundedAt: now,
+      });
+    }
+
+    console.log(`[CastAuction] Batch refund processed: ${normalizedAddress} - ${total} VBMS (${requests.length} bids, tx: ${txHash})`);
+
+    return { 
+      success: true,
+      totalRefunded: total,
+      bidsCount: requests.length,
+    };
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // INTERNAL MUTATIONS (Called by cron)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -933,14 +1082,53 @@ export const completeFeaturedCast = internalMutation({
 });
 
 /**
+ * Mark an auction as lost and refund all bids
+ */
+export const markAuctionLost = internalMutation({
+  args: { auctionId: v.id("castAuctions") },
+  handler: async (ctx, { auctionId }) => {
+    const auction = await ctx.db.get(auctionId);
+    if (!auction || auction.status !== "bidding") return;
+
+    const now = Date.now();
+
+    // Mark auction as lost
+    await ctx.db.patch(auctionId, {
+      status: "completed",
+    });
+
+    // Mark all bids as pending_refund
+    const bids = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_auction")
+      .filter((q) => q.eq(q.field("auctionId"), auctionId))
+      .collect();
+
+    for (const bid of bids) {
+      if (bid.status === "active") {
+        await ctx.db.patch(bid._id, {
+          status: "pending_refund",
+          refundAmount: bid.bidAmount,
+        });
+      }
+    }
+
+    console.log(
+      `[CastAuction] Auction LOST: ${auction.castHash} with ${auction.currentBid} VBMS - ${bids.length} bids marked for refund`
+    );
+  },
+});
+
+/**
  * Process all auction lifecycle transitions (called by cron every minute)
+ * IMPORTANT: Only TOP 1 cast (highest pool) wins, others get refunded
  */
 export const processAuctionLifecycle = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
 
-    // 1. Finalize ended auctions (bidding -> pending_feature)
+    // 1. Get all ended auctions
     const endedAuctions = await ctx.db
       .query("castAuctions")
       .withIndex("by_status")
@@ -952,13 +1140,44 @@ export const processAuctionLifecycle = internalMutation({
       )
       .collect();
 
-    for (const auction of endedAuctions) {
+    // 2. Separate auctions with bids from those without
+    const auctionsWithBids = endedAuctions.filter(a => a.currentBid > 0);
+    const auctionsWithoutBids = endedAuctions.filter(a => !a.currentBid || a.currentBid === 0);
+
+    // 3. Sort by pool size (highest first) - TOP 1 WINS
+    auctionsWithBids.sort((a, b) => (b.currentBid || 0) - (a.currentBid || 0));
+
+    let winnerId: string | null = null;
+    let losersRefunded = 0;
+
+    // 4. Process auctions - only TOP 1 wins
+    for (let i = 0; i < auctionsWithBids.length; i++) {
+      const auction = auctionsWithBids[i];
+
+      if (i === 0) {
+        // TOP 1 - WINNER
+        await ctx.runMutation(internal.castAuctions.finalizeAuction, {
+          auctionId: auction._id,
+        });
+        winnerId = auction._id;
+        console.log(`[CastAuction] 🏆 TOP 1 WINNER: ${auction.castHash} with ${auction.currentBid} VBMS`);
+      } else {
+        // LOSERS - Mark as lost and refund
+        await ctx.runMutation(internal.castAuctions.markAuctionLost, {
+          auctionId: auction._id,
+        });
+        losersRefunded++;
+      }
+    }
+
+    // 5. Handle auctions without bids (just complete them)
+    for (const auction of auctionsWithoutBids) {
       await ctx.runMutation(internal.castAuctions.finalizeAuction, {
         auctionId: auction._id,
       });
     }
 
-    // 2. Activate pending features (pending_feature -> active)
+    // 6. Activate pending features (pending_feature -> active)
     const pendingFeatures = await ctx.db
       .query("castAuctions")
       .withIndex("by_status")
@@ -971,7 +1190,7 @@ export const processAuctionLifecycle = internalMutation({
       });
     }
 
-    // 3. Complete expired features (active -> completed, start new auction)
+    // 7. Complete expired features (active -> completed, start new auction)
     const expiredFeatures = await ctx.db
       .query("castAuctions")
       .withIndex("by_status")
@@ -990,7 +1209,9 @@ export const processAuctionLifecycle = internalMutation({
     }
 
     return {
-      finalized: endedAuctions.length,
+      finalized: auctionsWithBids.length + auctionsWithoutBids.length,
+      winner: winnerId,
+      losersRefunded,
       activated: pendingFeatures.length,
       completed: expiredFeatures.length,
     };
