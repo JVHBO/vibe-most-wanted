@@ -6,10 +6,11 @@ import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 
 interface PackOpeningAnimationProps {
   cards: any[];
+  packType?: string;
   onClose: () => void;
 }
 
-export function PackOpeningAnimation({ cards, onClose }: PackOpeningAnimationProps) {
+export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }: PackOpeningAnimationProps) {
   const [stage, setStage] = useState<'opening' | 'revealing'>('opening');
   const [revealedIndex, setRevealedIndex] = useState(-1);
 
@@ -32,6 +33,37 @@ export function PackOpeningAnimation({ cards, onClose }: PackOpeningAnimationPro
       return () => clearTimeout(revealTimer);
     }
   }, [stage, revealedIndex, cards.length]);
+
+  const getRarityCounts = () => {
+    const counts: Record<string, number> = { Legendary: 0, Epic: 0, Rare: 0, Common: 0 };
+    const foilCounts: Record<string, number> = { Prize: 0, Standard: 0 };
+    cards.forEach((card) => {
+      if (counts[card.rarity] !== undefined) counts[card.rarity]++;
+      if (card.foil && card.foil !== 'None' && foilCounts[card.foil] !== undefined) foilCounts[card.foil]++;
+    });
+    return { counts, foilCounts };
+  };
+
+  const handleShare = () => {
+    const { counts, foilCounts } = getRarityCounts();
+    const rarityParts: string[] = [];
+    if (counts.Legendary > 0) rarityParts.push("🌟 " + counts.Legendary + " Legendary");
+    if (counts.Epic > 0) rarityParts.push("💜 " + counts.Epic + " Epic");
+    if (counts.Rare > 0) rarityParts.push("💙 " + counts.Rare + " Rare");
+    if (counts.Common > 0) rarityParts.push("⚪ " + counts.Common + " Common");
+    const foilParts: string[] = [];
+    if (foilCounts.Prize > 0) foilParts.push("✨ " + foilCounts.Prize + " Prize Foil");
+    if (foilCounts.Standard > 0) foilParts.push("⭐ " + foilCounts.Standard + " Standard Foil");
+    const totalPower = cards.reduce((sum, card) => sum + (card.power || 0), 0);
+    let castText = "🎴 Pack Opening - " + packType + "!\n\n";
+    castText += rarityParts.join("\n");
+    if (foilParts.length > 0) castText += "\n\n" + foilParts.join("\n");
+    castText += "\n\n⚡ Total Power: " + totalPower;
+    castText += "\n\n@jvhbo";
+    const shareUrl = "https://www.vibemostwanted.xyz/";
+    const farcasterUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(castText) + "&embeds[]=" + encodeURIComponent(shareUrl);
+    window.open(farcasterUrl, "_blank");
+  };
 
   return (
     <div className="fixed inset-0 bg-vintage-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -174,14 +206,23 @@ export function PackOpeningAnimation({ cards, onClose }: PackOpeningAnimationPro
             })}
           </div>
 
-          {/* Close Button - Show after all cards revealed */}
+          {/* Buttons - Show after all cards revealed */}
           {revealedIndex >= cards.length - 1 && (
-            <button
-              onClick={onClose}
-              className="w-full max-w-md mx-auto block bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-display font-bold py-3 px-6 md:py-4 md:px-8 rounded-xl shadow-gold hover:shadow-gold-lg transition-all animate-bounce-in"
-            >
-              Collect Cards
-            </button>
+            <div className="flex flex-col md:flex-row gap-3 max-w-md mx-auto">
+              <button
+                onClick={handleShare}
+                className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-display font-bold py-3 px-6 md:py-4 md:px-8 rounded-xl shadow-lg transition-all animate-bounce-in flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                Share
+              </button>
+              <button
+                onClick={onClose}
+                className="flex-1 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-display font-bold py-3 px-6 md:py-4 md:px-8 rounded-xl shadow-gold hover:shadow-gold-lg transition-all animate-bounce-in"
+              >
+                Collect Cards
+              </button>
+            </div>
           )}
         </div>
       )}
