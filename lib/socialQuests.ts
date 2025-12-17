@@ -229,7 +229,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     id: 'follow_viberotbangers_creator',
     type: 'follow',
     target: 'zk420',
-    targetFid: 11124,
+    targetFid: 1101604,
     displayName: 'Follow @zk420',
     description: 'Follow Vibe Rot Bangers creator',
     reward: 500,
