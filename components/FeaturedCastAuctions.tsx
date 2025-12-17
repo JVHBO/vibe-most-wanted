@@ -346,7 +346,7 @@ export function FeaturedCastAuctions({
 
   return (
     <div className="mt-3 border-t border-purple-500/20 pt-3">
-        /* Cast Auction Form */
+        {/* Cast Auction Form */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h5 className="text-amber-300 font-bold text-sm flex items-center gap-2">
@@ -560,7 +560,6 @@ export function FeaturedCastAuctions({
             </Link>
           </div>
         </div>
-      )}
     </div>
   );
 }
