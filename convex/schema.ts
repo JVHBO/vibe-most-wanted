@@ -1312,12 +1312,15 @@ export default defineSchema({
       v.literal("outbid"), // Was outbid by someone else
       v.literal("pending_refund"), // Outbid, waiting for user to claim refund
       v.literal("won"), // Won the auction
-      v.literal("refunded") // Outbid and refund processed
+      v.literal("refunded"), // Outbid and refund processed
+      v.literal("refund_requested") // User requested refund, waiting for admin
     ),
 
     // Refund Tracking
     refundedAt: v.optional(v.number()),
     refundAmount: v.optional(v.number()),
+    refundRequestedAt: v.optional(v.number()),
+    refundTxHash: v.optional(v.string()),
 
     // Timestamps
     timestamp: v.number(),
