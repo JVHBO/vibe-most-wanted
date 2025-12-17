@@ -28,6 +28,7 @@ const QUEST_REWARDS: Record<string, number> = {
   follow_loground: 500,
   follow_sartocrates: 500,
   follow_bradenwolf: 500,
+  follow_viberotbangers_creator: 500,
 };
 
 /**
