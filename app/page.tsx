@@ -5048,18 +5048,18 @@ export default function TCGPage() {
                 }`}
               >
                 {/* Red dot if TESTVBMS available to convert */}
-                {inboxStatus && inboxStatus.inbox >= 100 && (
+                {inboxStatus && inboxStatus.coins >= 100 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
                 )}
                 {isInFarcaster ? (
                   <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">Claim/DEX</span>
-                    <NextImage src="/images/icons/inbox.svg" alt="Claim/DEX" width={20} height={20} className="w-5 h-5" />
+                    <span className="text-[10px] font-bold whitespace-nowrap">Claim</span>
+                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5" />
                   </>
                 ) : (
                   <>
-                    <NextImage src="/images/icons/inbox.svg" alt="Claim/DEX" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
-                    <span className="hidden sm:inline">Claim/DEX</span>
+                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
+                    <span className="hidden sm:inline">Claim</span>
                   </>
                 )}
               </button>
