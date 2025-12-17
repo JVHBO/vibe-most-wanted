@@ -651,11 +651,15 @@ export const sendPeriodicTip = internalAction({
             targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
           };
 
+          // Add Neynar API key if it's a Neynar URL
+          const customHeaders = {
+            "Content-Type": "application/json",
+            ...(tokenData.url.includes("neynar") ? { "api_key": process.env.NEYNAR_API_KEY || "" } : {})
+          };
+
           const response = await fetch(tokenData.url, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: customHeaders,
             body: JSON.stringify(payload),
           });
 

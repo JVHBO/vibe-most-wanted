@@ -443,7 +443,7 @@ export function SocialQuestsPanel({
                             <path d={icon} />
                           </svg>
                           <span className={`text-[10px] font-bold ${claimed ? "text-green-400" : `text-${color}-300`}`}>
-                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : "+500"}
+                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : "+500 $VBMS"}
                           </span>
                         </button>
                       );
@@ -467,7 +467,7 @@ export function SocialQuestsPanel({
             address={address}
             userFid={userFid}
             soundEnabled={soundEnabled}
-            onBidPlaced={onRewardClaimed}
+            
           />
         </div>
       )}
