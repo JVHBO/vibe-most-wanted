@@ -434,7 +434,7 @@ export function FeaturedCastAuctions({
               <div className="mt-2 pt-2 border-t border-vintage-gold/20">
                 <p className="text-vintage-burnt-gold text-[10px] mb-1">Bidders:</p>
                 <div className="flex flex-wrap gap-1">
-                  {currentBidders.map((bid) => (
+                  {currentBidders.map((bid: any) => (
                     <span
                       key={bid._id}
                       className="px-1.5 py-0.5 bg-vintage-charcoal border border-vintage-gold/30 rounded text-[10px] text-vintage-gold"
