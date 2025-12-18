@@ -532,7 +532,46 @@ export const sendDailyLoginReminder = internalAction({
       }
 
       console.log(`📊 Daily login reminder: ${sent} sent, ${failed} failed, ${tokens.length} total`);
-      return { sent, failed, total: tokens.length };
+
+      // 📱 ALSO SEND VIA NEYNAR API (for Base App users)
+      let neynarSent = 0;
+      try {
+        const allFids = tokens.map(t => parseInt(t.fid)).filter(fid => !isNaN(fid));
+        if (allFids.length > 0 && process.env.NEYNAR_API_KEY) {
+          console.log(`📱 Sending to Base App via Neynar API for ${allFids.length} FIDs...`);
+
+          const neynarPayload = {
+            target_fids: allFids,
+            notification: {
+              title: "💰 Daily Login Bonus!",
+              body: "Claim your free coins! Don't miss today's reward 🎁",
+              target_url: "https://www.vibemostwanted.xyz"
+            }
+          };
+
+          const neynarResponse = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "api_key": process.env.NEYNAR_API_KEY,
+              "x-neynar-api-key": process.env.NEYNAR_API_KEY
+            },
+            body: JSON.stringify(neynarPayload)
+          });
+
+          if (neynarResponse.ok) {
+            const neynarResult = await neynarResponse.json();
+            neynarSent = neynarResult.notification_deliveries?.filter((d: any) => d.status === "success").length || 0;
+            console.log(`📱 Neynar: ${neynarSent} Base App notifications sent`);
+          } else {
+            console.log(`📱 Neynar failed: ${neynarResponse.status}`);
+          }
+        }
+      } catch (neynarError) {
+        console.log(`📱 Neynar error:`, neynarError);
+      }
+
+      return { sent, failed, total: tokens.length, neynarSent };
 
     } catch (error: any) {
       console.error("❌ Error in sendDailyLoginReminder:", error);
@@ -687,7 +726,45 @@ export const sendPeriodicTip = internalAction({
       console.log(`📊 Periodic tip sent: ${sent} successful, ${failed} failed out of ${tokens.length} total`);
       console.log(`📝 Sent tip ${tipState.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
 
-      return { sent, failed, total: tokens.length, tipIndex: tipState.currentTipIndex };
+      // 📱 ALSO SEND VIA NEYNAR API (for Base App users)
+      let neynarSent = 0;
+      try {
+        const allFids = tokens.map(t => parseInt(t.fid)).filter(fid => !isNaN(fid));
+        if (allFids.length > 0 && process.env.NEYNAR_API_KEY) {
+          console.log(`📱 Sending to Base App via Neynar API for ${allFids.length} FIDs...`);
+
+          const neynarPayload = {
+            target_fids: allFids,
+            notification: {
+              title: currentTip.title.slice(0, 32),
+              body: currentTip.body.slice(0, 128),
+              target_url: "https://www.vibemostwanted.xyz"
+            }
+          };
+
+          const neynarResponse = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "api_key": process.env.NEYNAR_API_KEY,
+              "x-neynar-api-key": process.env.NEYNAR_API_KEY
+            },
+            body: JSON.stringify(neynarPayload)
+          });
+
+          if (neynarResponse.ok) {
+            const neynarResult = await neynarResponse.json();
+            neynarSent = neynarResult.notification_deliveries?.filter((d: any) => d.status === "success").length || 0;
+            console.log(`📱 Neynar: ${neynarSent} Base App notifications sent`);
+          } else {
+            console.log(`📱 Neynar failed: ${neynarResponse.status}`);
+          }
+        }
+      } catch (neynarError) {
+        console.log(`📱 Neynar error:`, neynarError);
+      }
+
+      return { sent, failed, total: tokens.length, tipIndex: tipState.currentTipIndex, neynarSent };
 
     } catch (error: any) {
       console.error("❌ Error in sendPeriodicTip:", error);
