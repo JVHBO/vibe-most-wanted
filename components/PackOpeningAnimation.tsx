@@ -93,7 +93,9 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     if (foilCounts.Prize > 0) foilParts.push("\u2728 " + foilCounts.Prize + " Prize Foil");
     if (foilCounts.Standard > 0) foilParts.push("\u2B50 " + foilCounts.Standard + " Standard Foil");
     const totalPower = displayCards.reduce((sum, card) => sum + (card.power || 0), 0);
-    let castText = "\u{1F3B4} Pack Opening - " + packType + "!\n\n";
+    const totalCards = displayCards.length;
+    let castText = "\u{1F3B4} Pack Opening - " + packType + "!\n";
+    castText += "\u{1F3AF} " + totalCards + " pulls\n\n";
     castText += rarityParts.join("\n");
     if (foilParts.length > 0) castText += "\n\n" + foilParts.join("\n");
     castText += "\n\n\u26A1 Total Power: " + totalPower;
