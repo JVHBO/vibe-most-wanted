@@ -23,6 +23,22 @@ export default async function Image() {
           background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)',
         }}
       >
+        {/* Background pack cover image - full cover */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://www.vibemostwanted.xyz/pack-cover.png"
+          alt=""
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: 0.2,
+          }}
+        />
+
         {/* Glow overlay */}
         <div
           style={{
