@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 interface PackOpeningAnimationProps {
   cards: any[];
@@ -81,7 +82,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     return { counts, foilCounts };
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const { counts, foilCounts } = getRarityCounts();
     const rarityParts: string[] = [];
     if (counts.Legendary > 0) rarityParts.push("\u{1F31F} " + counts.Legendary + " Legendary");
@@ -98,22 +99,22 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     castText += "\n\n\u26A1 Total Power: " + totalPower;
     castText += "\n\n@jvhbo";
 
-    const params = new URLSearchParams();
-    params.set('packType', packType);
-    if (counts.Legendary > 0) params.set('legendary', counts.Legendary.toString());
-    if (counts.Epic > 0) params.set('epic', counts.Epic.toString());
-    if (counts.Rare > 0) params.set('rare', counts.Rare.toString());
-    if (counts.Common > 0) params.set('common', counts.Common.toString());
-    params.set('totalPower', totalPower.toString());
-    if (foilCounts.Prize > 0) params.set('foilPrize', foilCounts.Prize.toString());
-    if (foilCounts.Standard > 0) params.set('foilStandard', foilCounts.Standard.toString());
+    const shareUrl = "https://www.vibemostwanted.xyz/share/pack";
 
-    const cardImages = displayCards.slice(0, 5).map(card => convertIpfsUrl(card.imageUrl) || card.imageUrl);
-    if (cardImages.length > 0) {
-      params.set('cards', encodeURIComponent(JSON.stringify(cardImages)));
+    // Try Farcaster SDK first (miniapp), fallback to warpcast.com (web)
+    try {
+      if (sdk && sdk.actions && typeof sdk.actions.composeCast === 'function') {
+        await sdk.actions.composeCast({
+          text: castText,
+          embeds: [shareUrl],
+        });
+        return;
+      }
+    } catch (e) {
+      console.log('[PackShare] SDK not available, using fallback');
     }
 
-    const shareUrl = "https://www.vibemostwanted.xyz/share/pack?" + params.toString();
+    // Fallback for web
     const farcasterUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(castText) + "&embeds[]=" + encodeURIComponent(shareUrl);
     window.open(farcasterUrl, "_blank");
   };
