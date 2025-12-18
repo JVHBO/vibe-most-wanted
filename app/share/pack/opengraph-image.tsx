@@ -8,39 +8,7 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-export default async function Image(props: { searchParams: Promise<{
-  packType?: string;
-  legendary?: string;
-  epic?: string;
-  rare?: string;
-  common?: string;
-  totalPower?: string;
-  foilPrize?: string;
-  foilStandard?: string;
-  cards?: string;
-}> }) {
-  const searchParams = await props.searchParams;
-  const packType = searchParams.packType || 'Pack';
-  const legendary = parseInt(searchParams.legendary || '0');
-  const epic = parseInt(searchParams.epic || '0');
-  const rare = parseInt(searchParams.rare || '0');
-  const common = parseInt(searchParams.common || '0');
-  const totalPower = parseInt(searchParams.totalPower || '0');
-  const foilPrize = parseInt(searchParams.foilPrize || '0');
-  const foilStandard = parseInt(searchParams.foilStandard || '0');
-
-  // Parse card images (up to 5)
-  let cardImages: string[] = [];
-  try {
-    if (searchParams.cards) {
-      cardImages = JSON.parse(decodeURIComponent(searchParams.cards)).slice(0, 5);
-    }
-  } catch (e) {
-    console.error('Failed to parse cards:', e);
-  }
-
-  const isLucky = packType.toLowerCase().includes('lucky');
-
+export default async function Image() {
   return new ImageResponse(
     (
       <div
@@ -49,10 +17,10 @@ export default async function Image(props: { searchParams: Promise<{
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           position: 'relative',
-          background: isLucky
-            ? 'linear-gradient(135deg, #1a1a0a 0%, #2d2d00 50%, #1a1a0a 100%)'
-            : 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)',
+          background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)',
         }}
       >
         {/* Glow overlay */}
@@ -63,9 +31,7 @@ export default async function Image(props: { searchParams: Promise<{
             left: 0,
             width: '100%',
             height: '100%',
-            background: isLucky
-              ? 'radial-gradient(circle at 50% 30%, rgba(255, 215, 0, 0.3) 0%, transparent 60%)'
-              : 'radial-gradient(circle at 50% 30%, rgba(147, 51, 234, 0.3) 0%, transparent 60%)',
+            background: 'radial-gradient(circle at 50% 30%, rgba(147, 51, 234, 0.3) 0%, transparent 60%)',
             display: 'flex',
           }}
         />
@@ -77,156 +43,65 @@ export default async function Image(props: { searchParams: Promise<{
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '100%',
-            height: '100%',
-            padding: '40px',
-            gap: '24px',
+            gap: '32px',
+            zIndex: 1,
           }}
         >
+          {/* Pack Icon */}
+          <div
+            style={{
+              fontSize: '120px',
+              display: 'flex',
+            }}
+          >
+            🎴
+          </div>
+
           {/* Title */}
           <div
             style={{
+              fontSize: '72px',
+              fontWeight: 900,
+              color: '#FFD700',
+              textShadow: '0 4px 20px rgba(255, 215, 0, 0.6)',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '8px',
             }}
           >
-            <div
-              style={{
-                fontSize: '56px',
-                fontWeight: 900,
-                color: '#FFD700',
-                textShadow: '0 4px 20px rgba(255, 215, 0, 0.6)',
-                display: 'flex',
-              }}
-            >
-              🎴 {packType} Opened!
-            </div>
+            Pack Opening!
           </div>
 
-          {/* Card Images Row */}
-          {cardImages.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                gap: '16px',
-                justifyContent: 'center',
-              }}
-            >
-              {cardImages.map((url, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    border: '4px solid #FFD700',
-                    boxShadow: '0 0 30px rgba(255, 215, 0, 0.4)',
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={url}
-                    alt={`Card ${i + 1}`}
-                    width={140}
-                    height={200}
-                    style={{
-                      objectFit: 'cover',
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Subtitle */}
+          <div
+            style={{
+              fontSize: '36px',
+              fontWeight: 700,
+              color: 'rgba(255, 255, 255, 0.8)',
+              display: 'flex',
+            }}
+          >
+            Check out my pulls!
+          </div>
 
-          {/* Stats Grid */}
+          {/* Rarity hints */}
           <div
             style={{
               display: 'flex',
-              gap: '32px',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
+              gap: '24px',
+              marginTop: '20px',
             }}
           >
-            {legendary > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '36px' }}>🌟</span>
-                <span style={{ fontSize: '32px', fontWeight: 700, color: '#FFD700' }}>
-                  {legendary} Legendary
-                </span>
-              </div>
-            )}
-            {epic > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '36px' }}>💜</span>
-                <span style={{ fontSize: '32px', fontWeight: 700, color: '#a855f7' }}>
-                  {epic} Epic
-                </span>
-              </div>
-            )}
-            {rare > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '36px' }}>💙</span>
-                <span style={{ fontSize: '32px', fontWeight: 700, color: '#3b82f6' }}>
-                  {rare} Rare
-                </span>
-              </div>
-            )}
-            {common > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '36px' }}>⚪</span>
-                <span style={{ fontSize: '32px', fontWeight: 700, color: '#9ca3af' }}>
-                  {common} Common
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Foils */}
-          {(foilPrize > 0 || foilStandard > 0) && (
-            <div
-              style={{
-                display: 'flex',
-                gap: '24px',
-                justifyContent: 'center',
-              }}
-            >
-              {foilPrize > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '28px' }}>✨</span>
-                  <span style={{ fontSize: '24px', fontWeight: 700, color: '#fcd34d' }}>
-                    {foilPrize} Prize Foil
-                  </span>
-                </div>
-              )}
-              {foilStandard > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '28px' }}>⭐</span>
-                  <span style={{ fontSize: '24px', fontWeight: 700, color: '#67e8f9' }}>
-                    {foilStandard} Standard Foil
-                  </span>
-                </div>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '32px' }}>🌟</span>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: '#FFD700' }}>Legendary</span>
             </div>
-          )}
-
-          {/* Total Power */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              background: 'rgba(0, 0, 0, 0.5)',
-              padding: '16px 32px',
-              borderRadius: '16px',
-              border: '2px solid rgba(255, 215, 0, 0.5)',
-            }}
-          >
-            <span style={{ fontSize: '40px' }}>⚡</span>
-            <span style={{ fontSize: '40px', fontWeight: 900, color: '#FFD700' }}>
-              Total Power: {totalPower.toLocaleString()}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '32px' }}>💜</span>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: '#a855f7' }}>Epic</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '32px' }}>💙</span>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: '#3b82f6' }}>Rare</span>
+            </div>
           </div>
 
           {/* Branding */}
@@ -235,13 +110,13 @@ export default async function Image(props: { searchParams: Promise<{
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              marginTop: '16px',
+              marginTop: '40px',
             }}
           >
-            <span style={{ fontSize: '24px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.5)' }}>
+            <span style={{ fontSize: '28px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.5)' }}>
               VIBE MOST WANTED
             </span>
-            <span style={{ fontSize: '24px', color: 'rgba(255, 255, 255, 0.3)' }}>
+            <span style={{ fontSize: '28px', color: 'rgba(255, 255, 255, 0.3)' }}>
               @jvhbo
             </span>
           </div>
