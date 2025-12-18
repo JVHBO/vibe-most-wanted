@@ -416,11 +416,8 @@ export function ShopView({ address }: ShopViewProps) {
             </button>
             
             {/* Balance Info - Subtle */}
-            <div className="flex items-center justify-between text-xs text-vintage-ice/60 mt-2 px-1">
-              <span>Balance: <span className="text-purple-400 font-medium">{parseFloat(vbmsBalance).toLocaleString()} VBMS</span></span>
-              {(playerPacks?.reduce((sum: number, p: any) => sum + p.unopened, 0) || 0) > 0 && (
-                <span>Unopened: <span className="text-vintage-burnt-gold font-medium">{playerPacks?.reduce((sum: number, p: any) => sum + p.unopened, 0)}</span></span>
-              )}
+            <div className="text-xs text-vintage-ice/60 mt-2 text-center">
+              Balance: <span className="text-purple-400 font-medium">{parseFloat(vbmsBalance).toLocaleString()} VBMS</span>
             </div>
           </div>
         </div>
