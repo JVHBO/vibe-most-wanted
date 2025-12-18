@@ -75,18 +75,30 @@ export default async function Image() {
             Pack Opening!
           </div>
 
-          {/* Subtitle */}
+          {/* Rarities */}
           <div
             style={{
-              fontSize: '36px',
-              fontWeight: 700,
-              color: 'rgba(255, 255, 255, 0.9)',
-              marginTop: '16px',
-              textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)',
               display: 'flex',
+              gap: '32px',
+              marginTop: '24px',
             }}
           >
-            Check out my pulls!
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '28px' }}>🌟</span>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: '#FFD700', textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)' }}>Legendary</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '28px' }}>💜</span>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: '#a855f7', textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)' }}>Epic</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '28px' }}>💙</span>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: '#3b82f6', textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)' }}>Rare</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '28px' }}>⚪</span>
+              <span style={{ fontSize: '24px', fontWeight: 700, color: '#9ca3af', textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)' }}>Common</span>
+            </div>
           </div>
 
           {/* Branding */}
