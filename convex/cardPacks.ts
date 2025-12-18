@@ -22,49 +22,49 @@ const PACK_TYPES = {
     description: "Welcome pack for new players",
     cards: 3,
     price: 0, // Free
-    rarityOdds: { Common: 95, Rare: 4.5, Epic: 0.5, Legendary: 0 }, // NERFED
+    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 },
   },
   basic: {
     name: "Basic Pack",
     description: "1 card per pack",
     cards: 1,
     price: 1000, // 1k coins = 1 card
-    rarityOdds: { Common: 55, Rare: 42, Epic: 2.9, Legendary: 0.1 }, // Balanced for profit
+    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 },
   },
   premium: {
     name: "Premium Pack",
     description: "Better odds for rare and epic",
     cards: 5,
     price: 10000, // 10k coins - 5x mais caro
-    rarityOdds: { Common: 82, Rare: 15, Epic: 2.5, Legendary: 0.5 }, // NERFED
+    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 },
   },
   elite: {
     name: "Elite Pack",
     description: "Best odds - Guaranteed rare or better",
     cards: 5,
     price: 100000, // 100k coins - EQUIVALENTE A 1 PACK NFT REAL!
-    rarityOdds: { Common: 55, Rare: 35, Epic: 8, Legendary: 2 }, // NERFED - mais common, menos rare
+    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 },
   },
   boosted: {
     name: "Luck Boost Pack",
     description: "1 card with elite odds",
     cards: 1,
     price: 5000, // 5x basic price for elite odds on 1 card
-    rarityOdds: { Common: 45, Rare: 38, Epic: 14, Legendary: 3 }, // NERFED - mais common
+    rarityOdds: { Common: 30, Rare: 55, Epic: 12, Legendary: 3 }, // BOOST ODDS
   },
   mission: {
     name: "Mission Reward",
     description: "Earned from completing missions",
-    cards: 2, // Reduced from 3 (-40%)
+    cards: 2,
     price: 0, // Earned, not bought
-    rarityOdds: { Common: 80, Rare: 17, Epic: 2.5, Legendary: 0.5 }, // NERFED (was 65/27/6/2)
+    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 },
   },
   achievement: {
     name: "Achievement Pack",
     description: "Special achievement reward",
-    cards: 3, // Reduced from 5 (-40%)
+    cards: 3,
     price: 0, // Earned, not bought
-    rarityOdds: { Common: 70, Rare: 24, Epic: 5, Legendary: 1 }, // NERFED (was 50/35/12/3)
+    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 },
   },
 };
 
