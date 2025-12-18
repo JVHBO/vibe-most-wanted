@@ -10,13 +10,6 @@ crons.interval(
   internal.pokerBattle.cleanupOldPokerRooms
 );
 
-// Daily login reminder (13:00 UTC)
-crons.daily(
-  "send daily login reminder",
-  { hourUTC: 13, minuteUTC: 0 },
-  internal.notifications.sendDailyLoginReminder
-);
-
 // Daily gaming tips (21:00 UTC)
 crons.daily(
   "send periodic gaming tips",

@@ -34,6 +34,7 @@ import type * as languageBoost from "../languageBoost.js";
 import type * as matches from "../matches.js";
 import type * as migrations_backfillHasFullDefenseDeck from "../migrations/backfillHasFullDefenseDeck.js";
 import type * as migrations_cleanDefenseDecks from "../migrations/cleanDefenseDecks.js";
+import type * as migrations_fixVibeFIDCollections from "../migrations/fixVibeFIDCollections.js";
 import type * as migrations_normalizeUsernames from "../migrations/normalizeUsernames.js";
 import type * as missions from "../missions.js";
 import type * as nftCollections from "../nftCollections.js";
@@ -92,6 +93,7 @@ declare const fullApi: ApiFromModules<{
   matches: typeof matches;
   "migrations/backfillHasFullDefenseDeck": typeof migrations_backfillHasFullDefenseDeck;
   "migrations/cleanDefenseDecks": typeof migrations_cleanDefenseDecks;
+  "migrations/fixVibeFIDCollections": typeof migrations_fixVibeFIDCollections;
   "migrations/normalizeUsernames": typeof migrations_normalizeUsernames;
   missions: typeof missions;
   nftCollections: typeof nftCollections;
