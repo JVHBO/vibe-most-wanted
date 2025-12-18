@@ -2,10 +2,11 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 type Props = {
-  searchParams: { ogImage?: string }
+  searchParams: Promise<{ ogImage?: string }>
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const resolvedParams = await searchParams;
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
   // Use Next.js opengraph-image route (same as profile shares)
