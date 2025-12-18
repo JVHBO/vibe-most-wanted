@@ -72,7 +72,7 @@ export default async function Image() {
               display: 'flex',
             }}
           >
-            🎴 Pack Opening!
+            Pack Opening!
           </div>
 
           {/* Subtitle */}
