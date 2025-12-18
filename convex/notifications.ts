@@ -463,82 +463,13 @@ export const sendDailyLoginReminder = internalAction({
 
       console.log(`📬 Sending daily login reminder to ${tokens.length} users...`);
 
+      // 📱 SEND VIA NEYNAR API ONLY (broadcasts to ALL apps: Warpcast, Base App, etc)
       let sent = 0;
       let failed = 0;
-	  let skipped = 0; // 👈 ADICIONE ESTA LINHA
-      const DELAY_MS = 100; // 100ms delay between each notification
-
-      // Send notification to each user WITH DELAY
-      for (let i = 0; i < tokens.length; i++) {
-        const tokenData = tokens[i];
-
-        try {
-          const { token, url, fid } = tokenData;
-
-          // Notification content with size validation
-          const payload = {
-            notificationId: `daily_login_${new Date().toISOString().split('T')[0]}_${fid}`.slice(0, 128),
-            title: "💰 Daily Login Bonus!".slice(0, 32),
-            body: "Claim your free coins! Don't miss today's reward 🎁".slice(0, 128),
-            tokens: [token],
-            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
-          };
-
-          // Send notification via Farcaster API
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          });
-
-          if (!response.ok) {
-            console.error(`❌ Failed to send to FID ${fid}:`, response.statusText);
-            failed++;
-            continue;
-          }
-
-          const result = await response.json();
-
-          // Handle invalid tokens (note: can't delete from Action, just mark as failed)
-          if (result.invalidTokens?.includes(token)) {
-            console.log(`❌ Invalid token for FID ${fid}`);
-            failed++;
-            continue;
-          }
-
-          // Handle rate limits
-          if (result.rateLimitedTokens?.includes(token)) {
-            console.log(`⏱️ Rate limited for FID ${fid}`);
-            failed++;
-            continue;
-          }
-
-          sent++;
-          if (i % 10 === 0) {
-            console.log(`✅ Progress: ${sent}/${tokens.length} sent`);
-          }
-
-        } catch (error: any) {
-          console.error(`❌ Error sending to FID ${tokenData.fid}:`, error.message);
-          failed++;
-        }
-
-        // Add delay between notifications to avoid rate limiting
-        if (i < tokens.length - 1) {
-          await sleep(DELAY_MS);
-        }
-      }
-
-      console.log(`📊 Daily login reminder: ${sent} sent, ${failed} failed, ${tokens.length} total`);
-
-      // 📱 ALSO SEND VIA NEYNAR API (for Base App users)
-      let neynarSent = 0;
       try {
         const allFids = tokens.map(t => parseInt(t.fid)).filter(fid => !isNaN(fid));
         if (allFids.length > 0 && process.env.NEYNAR_API_KEY) {
-          console.log(`📱 Sending to Base App via Neynar API for ${allFids.length} FIDs...`);
+          console.log(`📱 Sending via Neynar API to ${allFids.length} FIDs (all apps)...`);
 
           const neynarPayload = {
             target_fids: allFids,
@@ -561,17 +492,24 @@ export const sendDailyLoginReminder = internalAction({
 
           if (neynarResponse.ok) {
             const neynarResult = await neynarResponse.json();
-            neynarSent = neynarResult.notification_deliveries?.filter((d: any) => d.status === "success").length || 0;
-            console.log(`📱 Neynar: ${neynarSent} Base App notifications sent`);
+            sent = neynarResult.notification_deliveries?.filter((d: any) => d.status === "success").length || 0;
+            failed = neynarResult.notification_deliveries?.filter((d: any) => d.status !== "success").length || 0;
+            console.log(`📱 Neynar: ${sent} notifications sent successfully`);
           } else {
-            console.log(`📱 Neynar failed: ${neynarResponse.status}`);
+            const errorText = await neynarResponse.text();
+            console.log(`📱 Neynar failed: ${neynarResponse.status} - ${errorText}`);
+            failed = allFids.length;
           }
+        } else {
+          console.log(`⚠️ No NEYNAR_API_KEY or no FIDs to send to`);
         }
       } catch (neynarError) {
         console.log(`📱 Neynar error:`, neynarError);
+        failed = tokens.length;
       }
 
-      return { sent, failed, total: tokens.length, neynarSent };
+      console.log(`📊 Daily login reminder: ${sent} sent, ${failed} failed, ${tokens.length} total`);
+      return { sent, failed, total: tokens.length };
 
     } catch (error: any) {
       console.error("❌ Error in sendDailyLoginReminder:", error);
@@ -653,69 +591,6 @@ export const sendPeriodicTip = internalAction({
       // Get current tip
       const currentTip = GAMING_TIPS[tipState.currentTipIndex % GAMING_TIPS.length];
 
-      // Send to all users WITH DELAYS
-      let sent = 0;
-      let failed = 0;
-      const DELAY_MS = 100; // 100ms delay between notifications
-
-      for (let i = 0; i < tokens.length; i++) {
-        const tokenData = tokens[i];
-        try {
-          // Validar tamanhos conforme limites do Farcaster (title: 32, body: 128, notificationId: 128)
-          const notificationId = `tip_${tipState.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128);
-          const validatedTitle = currentTip.title.slice(0, 32);
-          const validatedBody = currentTip.body.slice(0, 128);
-
-          const payload = {
-            notificationId,
-            title: validatedTitle,
-            body: validatedBody,
-            tokens: [tokenData.token],
-            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
-          };
-
-          // Add Neynar API key if it's a Neynar URL
-          const customHeaders = {
-            "Content-Type": "application/json",
-            ...(tokenData.url.includes("neynar") ? { "api_key": process.env.NEYNAR_API_KEY || "" } : {})
-          };
-
-          const response = await fetch(tokenData.url, {
-            method: "POST",
-            headers: customHeaders,
-            body: JSON.stringify(payload),
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            if (!result.invalidTokens?.includes(tokenData.token) &&
-                !result.rateLimitedTokens?.includes(tokenData.token)) {
-              sent++;
-            } else {
-              failed++;
-              console.log(`❌ Invalid/rate-limited token for FID ${tokenData.fid}`);
-            }
-          } else {
-            const errorText = await response.text();
-            console.error(`❌ Failed for FID ${tokenData.fid}: ${response.status} - ${errorText}`);
-            failed++;
-          }
-        } catch (error) {
-          console.error(`❌ Exception for FID ${tokenData.fid}:`, error);
-          failed++;
-        }
-
-        // Progress logging
-        if (i % 10 === 0) {
-          console.log(`✅ Progress: ${sent}/${tokens.length} sent`);
-        }
-
-        // Add delay between notifications to avoid rate limiting
-        if (i < tokens.length - 1) {
-          await sleep(DELAY_MS);
-        }
-      }
-
       // Update tip rotation state via mutation
       const nextTipIndex = (tipState.currentTipIndex + 1) % GAMING_TIPS.length;
       await ctx.runMutation(api.notificationsHelpers.updateTipState, {
@@ -723,15 +598,13 @@ export const sendPeriodicTip = internalAction({
         currentTipIndex: nextTipIndex,
       });
 
-      console.log(`📊 Periodic tip sent: ${sent} successful, ${failed} failed out of ${tokens.length} total`);
-      console.log(`📝 Sent tip ${tipState.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
-
-      // 📱 ALSO SEND VIA NEYNAR API (for Base App users)
-      let neynarSent = 0;
+      // 📱 SEND VIA NEYNAR API ONLY (broadcasts to ALL apps: Warpcast, Base App, etc)
+      let sent = 0;
+      let failed = 0;
       try {
         const allFids = tokens.map(t => parseInt(t.fid)).filter(fid => !isNaN(fid));
         if (allFids.length > 0 && process.env.NEYNAR_API_KEY) {
-          console.log(`📱 Sending to Base App via Neynar API for ${allFids.length} FIDs...`);
+          console.log(`📱 Sending tip via Neynar API to ${allFids.length} FIDs (all apps)...`);
 
           const neynarPayload = {
             target_fids: allFids,
@@ -754,17 +627,26 @@ export const sendPeriodicTip = internalAction({
 
           if (neynarResponse.ok) {
             const neynarResult = await neynarResponse.json();
-            neynarSent = neynarResult.notification_deliveries?.filter((d: any) => d.status === "success").length || 0;
-            console.log(`📱 Neynar: ${neynarSent} Base App notifications sent`);
+            sent = neynarResult.notification_deliveries?.filter((d: any) => d.status === "success").length || 0;
+            failed = neynarResult.notification_deliveries?.filter((d: any) => d.status !== "success").length || 0;
+            console.log(`📱 Neynar: ${sent} notifications sent successfully`);
           } else {
-            console.log(`📱 Neynar failed: ${neynarResponse.status}`);
+            const errorText = await neynarResponse.text();
+            console.log(`📱 Neynar failed: ${neynarResponse.status} - ${errorText}`);
+            failed = allFids.length;
           }
+        } else {
+          console.log(`⚠️ No NEYNAR_API_KEY or no FIDs to send to`);
         }
       } catch (neynarError) {
         console.log(`📱 Neynar error:`, neynarError);
+        failed = tokens.length;
       }
 
-      return { sent, failed, total: tokens.length, tipIndex: tipState.currentTipIndex, neynarSent };
+      console.log(`📊 Periodic tip sent: ${sent} successful, ${failed} failed`);
+      console.log(`📝 Sent tip ${tipState.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
+
+      return { sent, failed, total: tokens.length, tipIndex: tipState.currentTipIndex };
 
     } catch (error: any) {
       console.error("❌ Error in sendPeriodicTip:", error);
