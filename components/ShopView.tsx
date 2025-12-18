@@ -225,10 +225,6 @@ export function ShopView({ address }: ShopViewProps) {
       <div className="text-center">
         <h1 className="text-4xl md:text-5xl font-display font-bold text-vintage-gold mb-2">{t('shopSubtitle')}</h1>
         <p className="text-vintage-ice/70">{t('shopDescription')}</p>
-        <div className="mt-2 inline-block bg-green-500/20 border border-green-500/30 rounded-lg px-4 py-2">
-          <p className="text-green-400 text-sm font-bold">⚠️ These are Nothing cards (not NFTs) - Use them to play and earn rewards!</p>
-        </div>
-
       {/* Custom Notification */}
       {notification && (
         <ShopNotification
