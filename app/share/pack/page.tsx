@@ -1,35 +1,37 @@
 import { Metadata } from 'next';
 
+type SearchParams = {
+  packType?: string;
+  legendary?: string;
+  epic?: string;
+  rare?: string;
+  common?: string;
+  totalPower?: string;
+  foilPrize?: string;
+  foilStandard?: string;
+  cards?: string;
+}
+
 type Props = {
-  searchParams: {
-    packType?: string;
-    legendary?: string;
-    epic?: string;
-    rare?: string;
-    common?: string;
-    totalPower?: string;
-    foilPrize?: string;
-    foilStandard?: string;
-    cards?: string; // JSON array of card image URLs
-  }
+  searchParams: Promise<SearchParams>;
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const resolvedParams = await searchParams;
   const baseUrl = 'https://www.vibemostwanted.xyz';
-  const packType = searchParams.packType || 'Pack';
+  const packType = resolvedParams.packType || 'Pack';
 
-  // Build query string for OG image
   const params = new URLSearchParams();
-  if (searchParams.packType) params.set('packType', searchParams.packType);
-  if (searchParams.legendary) params.set('legendary', searchParams.legendary);
-  if (searchParams.epic) params.set('epic', searchParams.epic);
-  if (searchParams.rare) params.set('rare', searchParams.rare);
-  if (searchParams.common) params.set('common', searchParams.common);
-  if (searchParams.totalPower) params.set('totalPower', searchParams.totalPower);
-  if (searchParams.foilPrize) params.set('foilPrize', searchParams.foilPrize);
-  if (searchParams.foilStandard) params.set('foilStandard', searchParams.foilStandard);
-  if (searchParams.cards) params.set('cards', searchParams.cards);
-  params.set('v', Date.now().toString()); // Cache bust
+  if (resolvedParams.packType) params.set('packType', resolvedParams.packType);
+  if (resolvedParams.legendary) params.set('legendary', resolvedParams.legendary);
+  if (resolvedParams.epic) params.set('epic', resolvedParams.epic);
+  if (resolvedParams.rare) params.set('rare', resolvedParams.rare);
+  if (resolvedParams.common) params.set('common', resolvedParams.common);
+  if (resolvedParams.totalPower) params.set('totalPower', resolvedParams.totalPower);
+  if (resolvedParams.foilPrize) params.set('foilPrize', resolvedParams.foilPrize);
+  if (resolvedParams.foilStandard) params.set('foilStandard', resolvedParams.foilStandard);
+  if (resolvedParams.cards) params.set('cards', resolvedParams.cards);
+  params.set('v', Date.now().toString());
 
   const imageUrl = `${baseUrl}/share/pack/opengraph-image?${params.toString()}`;
 
@@ -40,7 +42,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     title,
     description,
     openGraph: {
-      title: `🎴 ${title}`,
+      title: `\u{1F3B4} ${title}`,
       description,
       url: `${baseUrl}/share/pack`,
       type: "website",
@@ -56,7 +58,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     },
     twitter: {
       card: "summary_large_image",
-      title: `🎴 ${title}`,
+      title: `\u{1F3B4} ${title}`,
       description,
       images: [imageUrl],
     },
@@ -84,8 +86,8 @@ export default function SharePackPage() {
         <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
           VIBE MOST WANTED
         </h1>
-        <p className="text-vintage-burnt-gold mb-4">🎴 Pack Opening!</p>
-        <div className="animate-pulse text-6xl">🎴</div>
+        <p className="text-vintage-burnt-gold mb-4">{"\u{1F3B4}"} Pack Opening!</p>
+        <div className="animate-pulse text-6xl">{"\u{1F3B4}"}</div>
         <script dangerouslySetInnerHTML={{
           __html: `setTimeout(() => { window.location.href = '/'; }, 2000);`
         }} />
