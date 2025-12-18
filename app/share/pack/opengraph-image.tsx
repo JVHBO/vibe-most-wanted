@@ -109,15 +109,11 @@ export default async function Image() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
               marginTop: '40px',
             }}
           >
             <span style={{ fontSize: '28px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.5)' }}>
               VIBE MOST WANTED
-            </span>
-            <span style={{ fontSize: '28px', color: 'rgba(255, 255, 255, 0.3)' }}>
-              @jvhbo
             </span>
           </div>
         </div>
