@@ -20,11 +20,10 @@ export default async function Image() {
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
-          background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)',
+          background: '#0a0a0a',
         }}
       >
         {/* Background pack cover image - full cover */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="https://www.vibemostwanted.xyz/pack-cover.png"
           alt=""
@@ -35,11 +34,10 @@ export default async function Image() {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            opacity: 0.2,
           }}
         />
 
-        {/* Glow overlay */}
+        {/* Dark overlay for text readability */}
         <div
           style={{
             position: 'absolute',
@@ -47,7 +45,7 @@ export default async function Image() {
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'radial-gradient(circle at 50% 30%, rgba(147, 51, 234, 0.3) 0%, transparent 60%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)',
             display: 'flex',
           }}
         />
@@ -58,32 +56,23 @@ export default async function Image() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '32px',
+            justifyContent: 'flex-end',
+            height: '100%',
+            paddingBottom: '80px',
             zIndex: 1,
           }}
         >
-          {/* Pack Icon */}
-          <div
-            style={{
-              fontSize: '120px',
-              display: 'flex',
-            }}
-          >
-            🎴
-          </div>
-
           {/* Title */}
           <div
             style={{
               fontSize: '72px',
               fontWeight: 900,
               color: '#FFD700',
-              textShadow: '0 4px 20px rgba(255, 215, 0, 0.6)',
+              textShadow: '0 4px 30px rgba(0, 0, 0, 0.8)',
               display: 'flex',
             }}
           >
-            Pack Opening!
+            🎴 Pack Opening!
           </div>
 
           {/* Subtitle */}
@@ -91,33 +80,13 @@ export default async function Image() {
             style={{
               fontSize: '36px',
               fontWeight: 700,
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'rgba(255, 255, 255, 0.9)',
+              marginTop: '16px',
+              textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)',
               display: 'flex',
             }}
           >
             Check out my pulls!
-          </div>
-
-          {/* Rarity hints */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '24px',
-              marginTop: '20px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '32px' }}>🌟</span>
-              <span style={{ fontSize: '24px', fontWeight: 700, color: '#FFD700' }}>Legendary</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '32px' }}>💜</span>
-              <span style={{ fontSize: '24px', fontWeight: 700, color: '#a855f7' }}>Epic</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '32px' }}>💙</span>
-              <span style={{ fontSize: '24px', fontWeight: 700, color: '#3b82f6' }}>Rare</span>
-            </div>
           </div>
 
           {/* Branding */}
@@ -125,10 +94,10 @@ export default async function Image() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              marginTop: '40px',
+              marginTop: '32px',
             }}
           >
-            <span style={{ fontSize: '28px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.5)' }}>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.6)', textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)' }}>
               VIBE MOST WANTED
             </span>
           </div>
