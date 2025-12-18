@@ -565,8 +565,8 @@ const GAMING_TIPS = [
     body: "Open more packs to get stronger cards! Higher power = more wins = more coins! 💰"
   },
   {
-    title: "🎮 Poker Battle Tip",
-    body: "Challenge players in Poker Battles! Bet your $VBMS and prove you are the best card shark! 🃏"
+    title: "🤖 Mecha Arena Tip",
+    body: "Build your Mecha and battle in the Arena! Bet $VBMS and crush your opponents with powerful combos! ⚔️"
   },
   {
     title: "💎 Daily Rewards",
