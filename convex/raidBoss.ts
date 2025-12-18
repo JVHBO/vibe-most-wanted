@@ -548,7 +548,7 @@ export const setRaidDeck = mutation({
         deck: args.deck,
         vibefidCard: args.vibefidCard ? {
           ...args.vibefidCard,
-          collection: args.vibefidCard.collection!,
+          collection: 'vibefid', // 🔧 FIX: Always force 'vibefid' collection
         } : undefined,
         deckPower,
         cardEnergy,
@@ -566,7 +566,7 @@ export const setRaidDeck = mutation({
         deck: args.deck,
         vibefidCard: args.vibefidCard ? {
           ...args.vibefidCard,
-          collection: args.vibefidCard.collection!,
+          collection: 'vibefid', // 🔧 FIX: Always force 'vibefid' collection
         } : undefined,
         deckPower,
         cardEnergy,
@@ -710,7 +710,8 @@ export const processAutoAttacks = internalMutation({
           let cardPower = deckCard?.power || 0;
 
           // Apply buff system (only for NFTs, not free cards)
-          const isVibeFID = deckCard?.collection === 'vibefid';
+          // 🔧 FIX: Check BOTH collection AND vibefidCard slot (fallback for legacy data)
+          const isVibeFID = deckCard?.collection === 'vibefid' || deck.vibefidCard?.tokenId === cardEnergy.tokenId;
           // VibeFID cards don't have isFreeCard property, so use optional chaining
           if (deckCard && !('isFreeCard' in deckCard && deckCard.isFreeCard)) {
             // VibeFID cards get 10x power against all bosses (SUPER ROUBADO!)

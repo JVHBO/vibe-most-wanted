@@ -1036,6 +1036,12 @@ export const activateFeaturedCast = internalMutation({
     console.log(
       `[CastAuction] Cast now featured: Slot ${auction.slotNumber} - ${auction.castHash} (added to featuredCasts)`
     );
+
+    // 🔔 Send notification to all users about the new featured cast
+    await ctx.scheduler.runAfter(0, internal.notifications.sendFeaturedCastNotification, {
+      castAuthor: auction.castAuthorUsername || "unknown",
+      warpcastUrl: auction.warpcastUrl || "https://www.vibemostwanted.xyz",
+    });
   },
 });
 

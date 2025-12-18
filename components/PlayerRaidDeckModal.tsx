@@ -136,7 +136,7 @@ export function PlayerRaidDeckModal({
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
                       <p className="text-cyan-400 text-xs text-center font-bold">
-                        ⚔️ {playerDeck.vibefidCard.power}
+                        ⚔️ {((playerDeck.vibefidCard.power || 0) * 10).toLocaleString()} <span className="text-purple-400">(10x)</span>
                       </p>
                     </div>
                   </div>
