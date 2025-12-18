@@ -8,7 +8,7 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-export default async function Image({ searchParams }: { searchParams: {
+export default async function Image({ searchParams }: { searchParams: Promise<{
   packType?: string;
   legendary?: string;
   epic?: string;
@@ -18,21 +18,22 @@ export default async function Image({ searchParams }: { searchParams: {
   foilPrize?: string;
   foilStandard?: string;
   cards?: string;
-}}) {
-  const packType = searchParams.packType || 'Pack';
-  const legendary = parseInt(searchParams.legendary || '0');
-  const epic = parseInt(searchParams.epic || '0');
-  const rare = parseInt(searchParams.rare || '0');
-  const common = parseInt(searchParams.common || '0');
-  const totalPower = parseInt(searchParams.totalPower || '0');
-  const foilPrize = parseInt(searchParams.foilPrize || '0');
-  const foilStandard = parseInt(searchParams.foilStandard || '0');
+}> }) {
+  const params = await searchParams;
+  const packType = params.packType || 'Pack';
+  const legendary = parseInt(params.legendary || '0');
+  const epic = parseInt(params.epic || '0');
+  const rare = parseInt(params.rare || '0');
+  const common = parseInt(params.common || '0');
+  const totalPower = parseInt(params.totalPower || '0');
+  const foilPrize = parseInt(params.foilPrize || '0');
+  const foilStandard = parseInt(params.foilStandard || '0');
 
   // Parse card images (up to 5)
   let cardImages: string[] = [];
   try {
-    if (searchParams.cards) {
-      cardImages = JSON.parse(decodeURIComponent(searchParams.cards)).slice(0, 5);
+    if (params.cards) {
+      cardImages = JSON.parse(decodeURIComponent(params.cards)).slice(0, 5);
     }
   } catch (e) {
     console.error('Failed to parse cards:', e);
