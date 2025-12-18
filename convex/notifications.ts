@@ -581,14 +581,6 @@ const GAMING_TIPS = [
     body: "Log in every day to claim your daily coins! The more you play, the more you earn! 🎁"
   },
   {
-    title: "🃏 Card Collection Tip",
-    body: "Collect all rare cards to dominate battles! Each card has unique power - find your favorites! ✨"
-  },
-  {
-    title: "🎵 Music Easter Egg",
-    body: "Switch languages to discover different music tracks! Each language has its own vibe! 🌍"
-  },
-  {
     title: "🆔 Mint Your VibeFID!",
     body: "Get a unique card linked to your Farcaster with special buffs! Mint your VibeFID now! ⚡"
   },
