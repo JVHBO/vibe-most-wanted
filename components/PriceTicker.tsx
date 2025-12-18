@@ -2,7 +2,7 @@
 
 import { useCollectionPrices } from '@/lib/hooks/useCollectionPrices';
 import { useCachedYesterdayPrices } from '@/lib/convex-cache';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { openMarketplace } from '@/lib/marketplace-utils';
 import { isMiniappMode } from '@/lib/utils/miniapp';
@@ -47,7 +47,8 @@ interface PriceTickerProps {
   className?: string;
 }
 
-export function PriceTicker({ className = '' }: PriceTickerProps) {
+// Memoize to prevent re-renders affecting siblings
+export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTickerProps) {
   const { prices, isLoading } = useCollectionPrices();
   // 🚀 BANDWIDTH FIX: Use cached hook (prices change once per day, not real-time)
   const { prices: yesterdayPrices } = useCachedYesterdayPrices();
@@ -70,7 +71,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
+      <div className={`h-[52px] flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
         <span className="text-vintage-burnt-gold text-xs animate-pulse">Loading prices...</span>
       </div>
     );
@@ -78,7 +79,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
 
   if (prices.length === 0) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
+      <div className={`h-[52px] flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
         <span className="text-vintage-burnt-gold text-xs">Fetching prices...</span>
       </div>
     );
@@ -117,7 +118,7 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
   return (
     <button
       onClick={handleClick}
-      className={`overflow-hidden py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold animate-[glow-pulse_2.5s_ease-in-out_infinite] transition-all cursor-pointer ${className}`}
+      className={`overflow-hidden h-[52px] py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold animate-[glow-pulse_2.5s_ease-in-out_infinite] transition-colors cursor-pointer ${className}`}
       title={`Buy ${currentPrice?.displayName} Packs`}
     >
       <div
@@ -150,4 +151,6 @@ export function PriceTicker({ className = '' }: PriceTickerProps) {
       </div>
     </button>
   );
-}
+});
+
+PriceTicker.displayName = "PriceTicker";
