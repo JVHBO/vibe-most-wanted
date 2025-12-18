@@ -563,6 +563,136 @@ export const sendDailyLoginReminder = internalAction({
 });
 
 // ============================================================================
+// FEATURED CAST NOTIFICATION
+// ============================================================================
+
+/**
+ * Send notification when a featured cast becomes active
+ * Notifies all users to interact with the cast and earn tokens
+ */
+export const sendFeaturedCastNotification = internalAction({
+  args: {
+    castAuthor: v.string(),
+    warpcastUrl: v.string(),
+  },
+  // @ts-ignore
+  handler: async (ctx, { castAuthor, warpcastUrl }) => {
+    // @ts-ignore
+    const { api } = await import("./_generated/api");
+
+    try {
+      const tokens = await ctx.runQuery(api.notificationsHelpers.getAllTokens);
+
+      if (tokens.length === 0) {
+        console.log("⚠️ No notification tokens found for featured cast notification");
+        return { sent: 0, failed: 0, total: 0 };
+      }
+
+      console.log(`🎬 Sending featured cast notification to ${tokens.length} users...`);
+
+      const neynarTokens = tokens.filter(t => t.url.includes("neynar"));
+      const otherTokens = tokens.filter(t => !t.url.includes("neynar"));
+
+      let sent = 0;
+      let failed = 0;
+
+      const title = "🎬 New Featured Cast!";
+      const body = `Interact with @${castAuthor}'s cast to earn VBMS tokens! Like, recast or reply now 💰`;
+      const targetUrl = warpcastUrl || "https://www.vibemostwanted.xyz";
+
+      // 1️⃣ NEYNAR TOKENS → Send via Neynar API (Base App)
+      if (neynarTokens.length > 0 && process.env.NEYNAR_API_KEY) {
+        const neynarFids = neynarTokens.map(t => parseInt(t.fid)).filter(fid => !isNaN(fid));
+        console.log(`📱 Sending to ${neynarFids.length} Base App users via Neynar API...`);
+
+        try {
+          const neynarPayload = {
+            target_fids: neynarFids,
+            notification: {
+              title,
+              body,
+              target_url: targetUrl
+            }
+          };
+
+          const neynarResponse = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "api_key": process.env.NEYNAR_API_KEY,
+              "x-neynar-api-key": process.env.NEYNAR_API_KEY
+            },
+            body: JSON.stringify(neynarPayload)
+          });
+
+          if (neynarResponse.ok) {
+            const neynarResult = await neynarResponse.json();
+            const neynarSent = neynarResult.notification_deliveries?.filter((d: any) => d.status === "success").length || 0;
+            sent += neynarSent;
+            console.log(`📱 Neynar: ${neynarSent} sent`);
+          } else {
+            console.log(`📱 Neynar failed: ${neynarResponse.status}`);
+            failed += neynarFids.length;
+          }
+        } catch (neynarError) {
+          console.log(`📱 Neynar error:`, neynarError);
+          failed += neynarTokens.length;
+        }
+      }
+
+      // 2️⃣ OTHER TOKENS → Send via old method (Warpcast)
+      if (otherTokens.length > 0) {
+        console.log(`📬 Sending to ${otherTokens.length} Warpcast users via token API...`);
+        const DELAY_MS = 100;
+
+        for (let i = 0; i < otherTokens.length; i++) {
+          const tokenData = otherTokens[i];
+          try {
+            const payload = {
+              notificationId: `featured_cast_${Date.now()}_${tokenData.fid}`.slice(0, 128),
+              title,
+              body,
+              tokens: [tokenData.token],
+              targetUrl,
+            };
+
+            const response = await fetch(tokenData.url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              if (!result.invalidTokens?.includes(tokenData.token) && !result.rateLimitedTokens?.includes(tokenData.token)) {
+                sent++;
+              } else {
+                failed++;
+              }
+            } else {
+              failed++;
+            }
+          } catch (error) {
+            failed++;
+          }
+
+          if (i < otherTokens.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+          }
+        }
+      }
+
+      console.log(`📊 Featured cast notification: ${sent} sent, ${failed} failed`);
+      return { sent, failed, total: tokens.length };
+
+    } catch (error: any) {
+      console.error("❌ Error in sendFeaturedCastNotification:", error);
+      throw error;
+    }
+  },
+});
+
+// ============================================================================
 // PERIODIC GAMING TIPS
 // ============================================================================
 
