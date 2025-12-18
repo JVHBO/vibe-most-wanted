@@ -24,18 +24,18 @@ crons.daily(
   internal.notifications.sendPeriodicTip
 );
 
-// Raid boss auto attacks (every 5 minutes)
+// Raid boss auto attacks (every 7 minutes) - optimized from 5 min
 crons.interval(
   "raid boss auto attacks",
-  { minutes: 5 },
+  { minutes: 7 },
   internal.raidBoss.processAutoAttacks
 );
 
-// Raid boss defeat transition (every 1 minute)
+// Raid boss defeat transition (every 2 minutes) - optimized from 1 min
 // When boss HP=0, distribute rewards to COINS and spawn next boss
 crons.interval(
   "raid boss defeat transition",
-  { minutes: 1 },
+  { minutes: 2 },
   internal.raidBoss.defeatBossAndSpawnNext
 );
 
@@ -46,19 +46,27 @@ crons.hourly(
   internal.notifications.sendLowEnergyNotifications
 );
 
-// 🚀 Leaderboard cache update (every 5 minutes)
+// 🚀 Top 10 Leaderboard cache update (every 10 minutes) - was 5 minutes
 // Reduces bandwidth by ~95% for checkWeeklyRewardEligibility
 crons.interval(
   "update leaderboard cache",
-  { minutes: 5 },
+  { minutes: 10 },
   internal.quests.updateLeaderboardCache
 );
 
-// 🎯 Cast Auction lifecycle (every 1 minute)
+// 🚀 FULL Leaderboard cache update (every 10 minutes)
+// Reduces bandwidth by ~99% for getLeaderboardLite (saves ~1.4GB/month)
+crons.interval(
+  "update full leaderboard cache",
+  { minutes: 10 },
+  internal.profiles.updateLeaderboardFullCache
+);
+
+// 🎯 Cast Auction lifecycle (every 2 minutes) - optimized from 1 min
 // Processes: bidding -> pending_feature -> active -> completed
 crons.interval(
   "process cast auctions",
-  { minutes: 1 },
+  { minutes: 2 },
   internal.castAuctions.processAuctionLifecycle
 );
 
