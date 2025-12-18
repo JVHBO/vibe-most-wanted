@@ -531,6 +531,7 @@ export const removeBlacklistedDefenseDecks = mutation({
         const deckSize = profile.defenseDeck.length;
         await ctx.db.patch(profile._id, {
           defenseDeck: [],
+          hasFullDefenseDeck: false, // 🚀 BANDWIDTH FIX
         });
         removedCount++;
         removed.push({
@@ -543,5 +544,56 @@ export const removeBlacklistedDefenseDecks = mutation({
     }
 
     return { removedCount, removed };
+  },
+});
+
+/**
+ * 🚀 BANDWIDTH FIX: Backfill hasFullDefenseDeck field for all profiles
+ * This enables efficient leaderboard queries using compound index
+ */
+export const backfillHasFullDefenseDeck = mutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("🚀 Starting hasFullDefenseDeck backfill migration...");
+
+    const profiles = await ctx.db.query("profiles").collect();
+
+    let updatedWithDeck = 0;
+    let updatedWithoutDeck = 0;
+    let skipped = 0;
+
+    for (const profile of profiles) {
+      // Check if has full defense deck (5 cards)
+      const hasFullDeck = (profile.defenseDeck?.length || 0) === 5;
+
+      // Skip if already has the field set correctly
+      if (profile.hasFullDefenseDeck === hasFullDeck) {
+        skipped++;
+        continue;
+      }
+
+      await ctx.db.patch(profile._id, {
+        hasFullDefenseDeck: hasFullDeck,
+      });
+
+      if (hasFullDeck) {
+        updatedWithDeck++;
+      } else {
+        updatedWithoutDeck++;
+      }
+    }
+
+    console.log(`✅ Migration complete!`);
+    console.log(`   📊 Total profiles: ${profiles.length}`);
+    console.log(`   ✅ Updated WITH full deck: ${updatedWithDeck}`);
+    console.log(`   ❌ Updated WITHOUT full deck: ${updatedWithoutDeck}`);
+    console.log(`   ⏭️ Skipped (already correct): ${skipped}`);
+
+    return {
+      total: profiles.length,
+      updatedWithDeck,
+      updatedWithoutDeck,
+      skipped,
+    };
   },
 });

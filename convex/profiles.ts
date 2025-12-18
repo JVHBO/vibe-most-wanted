@@ -111,15 +111,15 @@ export const getProfileLite = query({
  */
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 100 }) => {
+  handler: async (ctx, { limit = 200 }) => {
     try {
-      // Fetch ALL profiles for full leaderboard
-      // Note: If you have thousands of players, consider pagination
+      // 🚀 Only show players WITH defense deck in leaderboard
+      // Players must set a defense deck to appear and be attackable in PvP
       const topProfiles = await ctx.db
         .query("profiles")
-        .withIndex("by_aura")
+        .withIndex("by_defense_aura", (q) => q.eq("hasFullDefenseDeck", true))
         .order("desc")
-        .collect();
+        .take(limit);
 
       // Map to minimal fields with hasDefenseDeck
       // 🚨 PUNISHMENT: Blacklisted exploiters get NEGATIVE stats
@@ -147,27 +147,12 @@ export const getLeaderboardLite = query({
             pvpLosses: p.stats?.pvpLosses || 0,
             openedCards: p.stats?.openedCards || 0,
           },
-          hasDefenseDeck: (p.defenseDeck?.length || 0) === 5,
+          hasDefenseDeck: p.hasFullDefenseDeck === true || (p.defenseDeck?.length || 0) === 5,
           userIndex: p.userIndex || 0,
           isBlacklisted: blacklisted, // Flag for UI to show warning
         };
       });
 
-      // Sort: 1) hasDefenseDeck (true first), 2) aura (desc), 3) power (desc)
-      mapped.sort((a, b) => {
-        // First priority: defense deck (true comes first)
-        if (a.hasDefenseDeck !== b.hasDefenseDeck) {
-          return a.hasDefenseDeck ? -1 : 1;
-        }
-        // Second priority: aura (higher first)
-        if (a.stats.aura !== b.stats.aura) {
-          return b.stats.aura - a.stats.aura;
-        }
-        // Third priority: power (higher first)
-        return b.stats.totalPower - a.stats.totalPower;
-      });
-
-      // Return ALL players (no limit)
       return mapped;
     } catch (error) {
       console.error("❌ getLeaderboardLite error:", error);
@@ -451,11 +436,12 @@ export const updateDefenseDeck = mutation({
 
       await ctx.db.patch(profile._id, {
         defenseDeck: cleanedDefenseDeck,
+        hasFullDefenseDeck: cleanedDefenseDeck.length === 5, // 🚀 BANDWIDTH FIX: For efficient leaderboard queries
         ownedTokenIds: mergedOwnedIds,
         lastUpdated: Date.now(),
       });
 
-      console.log(`✅ Defense deck updated for ${normalizeAddress(address)}: ${cleanedDefenseDeck.length} cards, ownedTokenIds: ${mergedOwnedIds.length} total`);
+      console.log(`✅ Defense deck updated for ${normalizeAddress(address)}: ${cleanedDefenseDeck.length} cards, hasFullDefenseDeck: ${cleanedDefenseDeck.length === 5}, ownedTokenIds: ${mergedOwnedIds.length} total`);
     } catch (error: any) {
       // devError (server-side)('❌ updateDefenseDeck handler error:', error);
       throw error;
