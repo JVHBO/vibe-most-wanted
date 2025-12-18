@@ -97,7 +97,6 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     castText += rarityParts.join("\n");
     if (foilParts.length > 0) castText += "\n\n" + foilParts.join("\n");
     castText += "\n\n\u26A1 Total Power: " + totalPower;
-    castText += "\n\n@jvhbo";
 
     const shareUrl = "https://www.vibemostwanted.xyz/share/pack";
 
