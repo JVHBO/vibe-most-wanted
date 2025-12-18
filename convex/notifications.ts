@@ -334,18 +334,16 @@ export const sendLowEnergyNotifications = internalAction({
             continue;
           }
 
-          // Build notification message
-          let title = "";
-          let body = "";
-
+          // 🔴 Skip "Raid Cards Exhausted" notification - use red dot indicator on button instead
           if (expiredCards > 0) {
-            title = "⚡ Raid Cards Exhausted!";
-            body = `${expiredCards} card${expiredCards > 1 ? 's' : ''} ran out of energy! Refuel now to keep attacking the boss!`;
-          } else {
-            title = "⚡ Low Energy Warning!";
-            const minutes = Math.round(LOW_ENERGY_THRESHOLD / 60000);
-            body = `${lowEnergyCards} card${lowEnergyCards > 1 ? 's' : ''} will run out of energy in less than ${minutes} minutes!`;
+            console.log(`⏭️ Skipping expired cards notification for ${deck.address} - using UI indicator instead`);
+            continue;
           }
+
+          // Build notification message (only for low energy warning now)
+          const title = "⚡ Low Energy Warning!";
+          const minutes = Math.round(LOW_ENERGY_THRESHOLD / 60000);
+          const body = `${lowEnergyCards} card${lowEnergyCards > 1 ? 's' : ''} will run out of energy in less than ${minutes} minutes!`;
 
           const payload = {
             notificationId: `raid_energy_${deck.address}_${now}`.slice(0, 128),
