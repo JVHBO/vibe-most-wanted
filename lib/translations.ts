@@ -343,7 +343,7 @@ export const translations = {
     tutorialStart: 'Começar a Jogar!',
     // Shop translations
     shopTitle: 'Loja de Cartas',
-    shopSubtitle: 'Loja de Cartas Nothing',
+    shopSubtitle: 'NOTHING SHOP',
     shopDescription: 'Compre packs Nothing (cartas não-NFT) para jogar!',
     shopNotice: 'Estas são cartas Nothing (não NFTs) - Use para jogar e ganhar recompensas!',
     shopVbmsBalance: 'Seu Saldo VBMS',
@@ -831,7 +831,7 @@ export const translations = {
     tutorialStart: 'Start Playing!',
   
     shopTitle: 'Card Shop',
-    shopSubtitle: 'Nothing Card Shop',
+    shopSubtitle: 'NOTHING SHOP',
     shopDescription: 'Buy Nothing packs (non-NFT cards) to play the game!',
     shopNotice: 'These are Nothing cards (not NFTs) - Use them to play and earn rewards!',
     shopVbmsBalance: 'Your VBMS Balance',
@@ -1319,7 +1319,7 @@ export const translations = {
     tutorialStart: '¡Empezar a Jugar!',
   
     shopTitle: 'Tienda de Cartas',
-    shopSubtitle: 'Tienda de Cartas Nothing',
+    shopSubtitle: 'NOTHING SHOP',
     shopDescription: '¡Compra packs Nothing (cartas no-NFT) para jugar!',
     shopNotice: 'Estas son cartas Nothing (no NFTs) - ¡Úsalas para jugar y ganar recompensas!',
     shopVbmsBalance: 'Tu Saldo VBMS',
@@ -1808,7 +1808,7 @@ export const translations = {
     tutorialStart: 'खेलना शुरू करें!',
   
     shopTitle: 'कार्ड शॉप',
-    shopSubtitle: 'नथिंग कार्ड शॉप',
+    shopSubtitle: 'NOTHING SHOP',
     shopDescription: 'गेम खेलने के लिए नथिंग पैक (नॉन-NFT कार्ड) खरीदें!',
     shopNotice: 'ये नथिंग कार्ड हैं (NFT नहीं) - खेलने और इनाम जीतने के लिए उपयोग करें!',
     shopVbmsBalance: 'आपका VBMS बैलेंस',
@@ -2293,7 +2293,7 @@ export const translations = {
     tutorialStart: 'Начать играть!',
   
     shopTitle: 'Магазин Карт',
-    shopSubtitle: 'Магазин Nothing Карт',
+    shopSubtitle: 'NOTHING SHOP',
     shopDescription: 'Покупайте Nothing паки (не-NFT карты) для игры!',
     shopNotice: 'Это Nothing карты (не NFT) - Используйте для игры и получения наград!',
     shopVbmsBalance: 'Ваш Баланс VBMS',
@@ -2778,7 +2778,7 @@ export const translations = {
     tutorialStart: '开始游戏！',
   
     shopTitle: '卡牌商店',
-    shopSubtitle: 'Nothing卡牌商店',
+    shopSubtitle: 'NOTHING SHOP',
     shopDescription: '购买Nothing卡包（非NFT卡牌）来玩游戏！',
     shopNotice: '这些是Nothing卡牌（非NFT）- 用它们来玩游戏和获得奖励！',
     shopVbmsBalance: '您的VBMS余额',
