@@ -280,9 +280,9 @@ const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }:
             <div style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}} className="rounded-lg overflow-hidden">
             <CardMedia src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" />
 
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 to-transparent p-1.5 pointer-events-none z-20">
               <div className="flex items-center justify-between">
-                <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{nft.power || 0} PWR</span>
+                <span className={`font-bold text-xs drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{nft.power || 0}</span>
                 {selected && (
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="drop-shadow-lg">
                     <path d="M20 6L9 17L4 12" stroke="#D4AF37" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -290,15 +290,10 @@ const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }:
                 )}
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-3 pointer-events-none z-20">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 pointer-events-none z-20">
               {nft.rarity && (
-                <div className="text-xs font-bold uppercase tracking-wider text-white drop-shadow-lg">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-white drop-shadow-lg">
                   {nft.rarity}
-                </div>
-              )}
-              {nft.wear && (
-                <div className="text-xs text-yellow-300 font-semibold drop-shadow-lg">
-                  {nft.wear}
                 </div>
               )}
             </div>
