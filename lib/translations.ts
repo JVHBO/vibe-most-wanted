@@ -308,6 +308,9 @@ export const translations = {
     defenseDeckWarningMessage: 'Você ainda não configurou seu deck de defesa. Sem ele, você não pode atacar outros jogadores e fica vulnerável a ataques!',
     defenseDeckWarningButton: 'Configurar Agora',
     defenseDeckWarningDismiss: 'Depois',
+    // Leaderboard Defense Deck Warning Banner
+    leaderboardDefenseWarning: '🛡️ Configure seu Deck de Defesa para aparecer no Ranking e poder atacar outros jogadores!',
+    leaderboardDefenseSetup: 'Configurar Deck',
     // Tutorial Modal
     tutorialWelcome: 'Bem-vindo ao Vibe Most Wanted!',
     tutorialWelcomeDesc: 'Um jogo de cartas NFT onde você coleciona, batalha e sobe no ranking. Vamos mostrar como funciona!',
@@ -793,6 +796,9 @@ export const translations = {
     defenseDeckWarningMessage: 'You haven\'t set up your defense deck yet. Without it, you can\'t attack other players and you\'re vulnerable to attacks!',
     defenseDeckWarningButton: 'Set Up Now',
     defenseDeckWarningDismiss: 'Later',
+    // Leaderboard Defense Deck Warning Banner
+    leaderboardDefenseWarning: '🛡️ Set up your Defense Deck to appear in the Leaderboard and attack other players!',
+    leaderboardDefenseSetup: 'Set Up Deck',
     // Tutorial Modal
     tutorialWelcome: 'Welcome to Vibe Most Wanted!',
     tutorialWelcomeDesc: 'An NFT card game where you collect, battle, and climb the ranking. Let us show you how it works!',
@@ -1278,6 +1284,9 @@ export const translations = {
     defenseDeckWarningMessage: 'Aún no has configurado tu deck de defensa. Sin él, ¡no puedes atacar a otros jugadores y eres vulnerable a ataques!',
     defenseDeckWarningButton: 'Configurar Ahora',
     defenseDeckWarningDismiss: 'Después',
+    // Leaderboard Defense Deck Warning Banner
+    leaderboardDefenseWarning: '🛡️ ¡Configura tu Deck de Defensa para aparecer en el Ranking y atacar a otros jugadores!',
+    leaderboardDefenseSetup: 'Configurar Deck',
     // Tutorial Modal
     tutorialWelcome: '¡Bienvenido a Vibe Most Wanted!',
     tutorialWelcomeDesc: 'Un juego de cartas NFT donde coleccionas, batallas y subes en el ranking. ¡Te mostramos cómo funciona!',
@@ -1764,6 +1773,9 @@ export const translations = {
     defenseDeckWarningMessage: 'आपने अभी तक अपना डिफेंस डेक सेट नहीं किया है। इसके बिना आप अन्य खिलाड़ियों पर हमला नहीं कर सकते और आप हमलों के लिए असुरक्षित हैं!',
     defenseDeckWarningButton: 'अभी सेट करें',
     defenseDeckWarningDismiss: 'बाद में',
+    // Leaderboard Defense Deck Warning Banner
+    leaderboardDefenseWarning: '🛡️ रैंकिंग में दिखने और अन्य खिलाड़ियों पर हमला करने के लिए अपना डिफेंस डेक सेट करें!',
+    leaderboardDefenseSetup: 'डेक सेट करें',
     // Tutorial Modal
     tutorialWelcome: 'Vibe Most Wanted में आपका स्वागत है!',
     tutorialWelcomeDesc: 'एक NFT कार्ड गेम जहां आप कलेक्ट करते हैं, बैटल करते हैं और रैंकिंग में ऊपर जाते हैं। हम आपको दिखाते हैं कैसे!',
@@ -2246,6 +2258,9 @@ export const translations = {
     defenseDeckWarningMessage: 'Вы еще не настроили защитную колоду. Без нее вы не сможете атаковать других игроков и будете уязвимы для атак!',
     defenseDeckWarningButton: 'Настроить сейчас',
     defenseDeckWarningDismiss: 'Позже',
+    // Leaderboard Defense Deck Warning Banner
+    leaderboardDefenseWarning: '🛡️ Настройте защитную колоду, чтобы появиться в рейтинге и атаковать других игроков!',
+    leaderboardDefenseSetup: 'Настроить колоду',
     // Tutorial Modal
     tutorialWelcome: 'Добро пожаловать в Vibe Most Wanted!',
     tutorialWelcomeDesc: 'NFT карточная игра, где вы собираете, сражаетесь и поднимаетесь в рейтинге. Покажем как это работает!',
@@ -2728,6 +2743,9 @@ export const translations = {
     defenseDeckWarningMessage: '你还没有设置防御卡组。没有它，你无法攻击其他玩家，而且容易受到攻击！',
     defenseDeckWarningButton: '立即设置',
     defenseDeckWarningDismiss: '稍后',
+    // Leaderboard Defense Deck Warning Banner
+    leaderboardDefenseWarning: '🛡️ 设置你的防御卡组以出现在排行榜并攻击其他玩家！',
+    leaderboardDefenseSetup: '设置卡组',
     // Tutorial Modal
     tutorialWelcome: '欢迎来到 Vibe Most Wanted！',
     tutorialWelcomeDesc: '一款NFT卡牌游戏，收集卡牌、战斗并提升排名。让我们告诉你怎么玩！',
