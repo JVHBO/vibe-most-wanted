@@ -235,24 +235,6 @@ export function ShopView({ address }: ShopViewProps) {
       )}
       </div>
 
-      {/* Balance */}
-      <div className="bg-vintage-black/40 backdrop-blur-sm border border-vintage-gold/30 rounded-xl p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-vintage-ice/70 text-sm mb-2">{t('shopVbmsBalance')}</p>
-            <p className="text-4xl font-display font-bold text-purple-400">
-              {parseFloat(vbmsBalance).toFixed(2)} <span className="text-xl">VBMS</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-vintage-ice/70 text-sm">Unopened Packs</p>
-            <p className="text-3xl font-display font-bold text-vintage-burnt-gold">
-              {playerPacks?.reduce((sum: number, p: any) => sum + p.unopened, 0) || 0}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Help Modal */}
       {showHelpModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setShowHelpModal(false)}>
@@ -432,6 +414,14 @@ export function ShopView({ address }: ShopViewProps) {
             >
               {loading ? "Processing..." : `Buy ${quantity}x for ${currentPrice * quantity} VBMS`}
             </button>
+            
+            {/* Balance Info - Subtle */}
+            <div className="flex items-center justify-between text-xs text-vintage-ice/60 mt-2 px-1">
+              <span>Balance: <span className="text-purple-400 font-medium">{parseFloat(vbmsBalance).toLocaleString()} VBMS</span></span>
+              {(playerPacks?.reduce((sum: number, p: any) => sum + p.unopened, 0) || 0) > 0 && (
+                <span>Unopened: <span className="text-vintage-burnt-gold font-medium">{playerPacks?.reduce((sum: number, p: any) => sum + p.unopened, 0)}</span></span>
+              )}
+            </div>
           </div>
         </div>
 
