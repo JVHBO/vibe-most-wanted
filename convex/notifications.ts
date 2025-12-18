@@ -553,14 +553,6 @@ function sleep(ms: number) {
 
 const GAMING_TIPS = [
   {
-    title: "💰 Real $VBMS is LIVE!",
-    body: "Earn real $VBMS tokens playing Vibe Most Wanted! Win battles, defeat bosses, and stack your rewards! 🚀"
-  },
-  {
-    title: "💡 VIBE Most Wanted Tip",
-    body: "Did you know? Playing in Chinese (中文) gives you more coins AND changes the music! Try it now! 🎵"
-  },
-  {
     title: "🎯 Pro Tip",
     body: "Attack players from the leaderboard to steal their coins! The higher their rank, the bigger the reward! 👑"
   },
