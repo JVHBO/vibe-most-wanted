@@ -43,14 +43,14 @@ const PACK_TYPES = {
     description: "Best odds - Guaranteed rare or better",
     cards: 5,
     price: 100000, // 100k coins - EQUIVALENTE A 1 PACK NFT REAL!
-    rarityOdds: { Common: 30, Rare: 55, Epic: 12, Legendary: 3 }, // NERFED (was 0/70/25/5)
+    rarityOdds: { Common: 55, Rare: 35, Epic: 8, Legendary: 2 }, // NERFED - mais common, menos rare
   },
   boosted: {
     name: "Luck Boost Pack",
     description: "1 card with elite odds",
     cards: 1,
     price: 5000, // 5x basic price for elite odds on 1 card
-    rarityOdds: { Common: 12, Rare: 47, Epic: 36, Legendary: 5 }, // Nerfed from elite
+    rarityOdds: { Common: 45, Rare: 38, Epic: 14, Legendary: 3 }, // NERFED - mais common
   },
   mission: {
     name: "Mission Reward",
