@@ -564,6 +564,19 @@ export default function TCGPage() {
     [defenseLockedCards]
   );
 
+  // 🔋 Raid Deck Energy - Check for expired cards to show red dot on button
+  const raidDeckEnergy = useQuery(
+    api.raidBoss.getPlayerRaidDeck,
+    address ? { address } : "skip"
+  );
+  const hasExpiredRaidCards = useMemo(() => {
+    if (!raidDeckEnergy?.cardEnergy) return false;
+    const now = Date.now();
+    return raidDeckEnergy.cardEnergy.some(
+      (ce: { energyExpiresAt: number }) => ce.energyExpiresAt !== 0 && now > ce.energyExpiresAt
+    );
+  }, [raidDeckEnergy?.cardEnergy]);
+
   // Clean conflicting cards from defense deck on load
   const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
 
@@ -5404,7 +5417,21 @@ export default function TCGPage() {
                  })() && (
                   <div className="text-center py-8 mb-6">
                     <p className="text-vintage-burnt-gold mb-4">You don't have any NFTs from this collection yet</p>
-                    {COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
+                    {selectedCollections[0] === 'nothing' ? (
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setCurrentView('shop');
+                        }}
+                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-base md:text-lg">◆</span>
+                          <span>{COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}</span>
+                        </div>
+                      </button>
+                    ) : COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
                       <Link
                         href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
@@ -5456,7 +5483,23 @@ export default function TCGPage() {
                      const collection = COLLECTIONS[selectedCollections[0]];
                      return collection?.marketplaceUrl;
                    })() && (
-                    COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
+                    selectedCollections[0] === 'nothing' ? (
+                      <button
+                        onClick={() => {
+                          if (soundEnabled) AudioManager.buttonClick();
+                          setCurrentView('shop');
+                        }}
+                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
+                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      >
+                        <div className="flex flex-col items-center justify-center gap-2 text-center">
+                          <span className="text-2xl md:text-3xl">◆</span>
+                          <span className="text-xs md:text-sm leading-tight">
+                            {COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}
+                          </span>
+                        </div>
+                      </button>
+                    ) : COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
                       <Link
                         href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
                         className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
@@ -5651,7 +5694,11 @@ export default function TCGPage() {
                     }`}
                   >
                     <span className="flex items-center gap-2">
+                      <span>💀</span>
                       Boss Raid
+                      {hasExpiredRaidCards && (
+                        <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" title="Cards need refuel!" />
+                      )}
                     </span>
                     <span className="text-xl">▶</span>
                   </button>
