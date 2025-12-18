@@ -22,6 +22,7 @@ interface BurnCardsModalProps {
   onClose: () => void;
   cards: Card[];
   address: string;
+  lockedCardIds?: string[];
   onSuccess?: (result: { totalVBMS: number; cardsBurned: number }) => void;
 }
 
@@ -60,7 +61,7 @@ const RARITY_TEXT: Record<string, string> = {
   Legendary: "text-yellow-400",
 };
 
-export function BurnCardsModal({ isOpen, onClose, cards, address, onSuccess }: BurnCardsModalProps) {
+export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds = [], onSuccess }: BurnCardsModalProps) {
   const { t } = useLanguage();
   const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
   const [isBurning, setIsBurning] = useState(false);
@@ -98,7 +99,13 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, onSuccess }: B
     return counts;
   }, [selectedCards, cards]);
 
+  // Helper to check if card is locked (in use)
+  const isCardLocked = (cardId: string) => lockedCardIds.includes(cardId);
+
   const toggleCard = (cardId: string) => {
+    // Prevent selecting locked cards
+    if (isCardLocked(cardId)) return;
+
     const newSelected = new Set(selectedCards);
     if (newSelected.has(cardId)) {
       newSelected.delete(cardId);
@@ -112,9 +119,12 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, onSuccess }: B
 
   const selectAll = () => {
     const newSelected = new Set<string>();
-    filteredCards.slice(0, 50).forEach(card => {
-      newSelected.add(card._id);
-    });
+    filteredCards
+      .filter(card => !isCardLocked(card._id))
+      .slice(0, 50)
+      .forEach(card => {
+        newSelected.add(card._id);
+      });
     setSelectedCards(newSelected);
   };
 
@@ -124,26 +134,30 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, onSuccess }: B
 
   const selectByRarity = (rarity: string) => {
     const newSelected = new Set<string>();
-    cards.filter(c => c.rarity === rarity).slice(0, 50).forEach(card => {
-      newSelected.add(card._id);
-    });
+    cards
+      .filter(c => c.rarity === rarity && !isCardLocked(c._id))
+      .slice(0, 50)
+      .forEach(card => {
+        newSelected.add(card._id);
+      });
     setSelectedCards(newSelected);
   };
 
-  // Smart select: Cards without foil (safe to burn)
+  // Smart select: Cards without foil (safe to burn) - skip locked
   const selectNoFoil = () => {
     const newSelected = new Set<string>();
     cards
-      .filter(c => !c.foil || c.foil === "None")
+      .filter(c => (!c.foil || c.foil === "None") && !isCardLocked(c._id))
       .slice(0, 50)
       .forEach(card => newSelected.add(card._id));
     setSelectedCards(newSelected);
   };
 
-  // Smart select: Lowest power cards first
+  // Smart select: Lowest power cards first - skip locked
   const selectLowestPower = () => {
     const newSelected = new Set<string>();
     [...cards]
+      .filter(c => !isCardLocked(c._id))
       .sort((a, b) => a.power - b.power)
       .slice(0, 50)
       .forEach(card => newSelected.add(card._id));
@@ -280,24 +294,41 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, onSuccess }: B
                 const isSelected = selectedCards.has(card._id);
                 const burnValue = calculateBurnValue(card.rarity, card.foil);
                 const hasFoil = card.foil && card.foil !== "None";
+                const isLocked = isCardLocked(card._id);
 
                 return (
                   <div
                     key={card._id}
                     onClick={() => toggleCard(card._id)}
-                    className={`relative cursor-pointer rounded-lg overflow-hidden transition-all transform hover:scale-105 ${
+                    className={`relative rounded-lg overflow-hidden transition-all transform ${
+                      isLocked
+                        ? "cursor-not-allowed opacity-50 grayscale"
+                        : "cursor-pointer hover:scale-105"
+                    } ${
                       RARITY_COLORS[card.rarity] || RARITY_COLORS.Common
-                    } ${isSelected ? "ring-4 ring-red-500 scale-105" : "opacity-70 hover:opacity-100"} ${
-                      hasFoil ? "ring-2 ring-cyan-400/50" : ""
+                    } ${isSelected ? "ring-4 ring-red-500 scale-105" : !isLocked ? "opacity-70 hover:opacity-100" : ""} ${
+                      hasFoil && !isLocked ? "ring-2 ring-cyan-400/50" : ""
                     }`}
                   >
+                    {/* Lock Icon for cards in use */}
+                    {isLocked && (
+                      <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
+                        <div className="text-center">
+                          <span className="text-3xl">🔒</span>
+                          <p className="text-xs text-white/80 mt-1">Em uso</p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Selection Checkbox */}
                     <div className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                      isSelected
-                        ? "bg-red-600 border-red-400"
-                        : "bg-black/50 border-white/30"
+                      isLocked
+                        ? "bg-gray-600 border-gray-500"
+                        : isSelected
+                          ? "bg-red-600 border-red-400"
+                          : "bg-black/50 border-white/30"
                     }`}>
-                      {isSelected && <span className="text-white text-xs">✓</span>}
+                      {isLocked ? <span className="text-white text-xs">🔒</span> : isSelected && <span className="text-white text-xs">✓</span>}
                     </div>
 
                     {/* Card Image */}
