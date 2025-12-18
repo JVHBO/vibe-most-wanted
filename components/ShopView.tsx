@@ -24,6 +24,7 @@ export function ShopView({ address }: ShopViewProps) {
   const shopPacks = useQuery(api.cardPacks.getShopPacks);
   const playerPacks = useQuery(api.cardPacks.getPlayerPacks, address ? { address } : "skip");
   const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
+  const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip");
   // 🚀 BANDWIDTH FIX: Removed unused profile query (was fetching but never used)
 
   // Mutations
@@ -525,6 +526,7 @@ export function ShopView({ address }: ShopViewProps) {
           onClose={() => setShowBurnModal(false)}
           cards={playerCards}
           address={address}
+          lockedCardIds={lockedCardIds || []}
           onSuccess={(result) => {
             setNotification({
               type: 'success',

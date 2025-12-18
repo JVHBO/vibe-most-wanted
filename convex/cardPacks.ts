@@ -254,6 +254,55 @@ export const getPlayerCards = query({
 });
 
 /**
+ * Get locked FREE card IDs (cards in defense deck or active raid)
+ * These cards cannot be burned
+ */
+export const getLockedFreeCardIds = query({
+  args: { address: v.string() },
+  handler: async (ctx, args) => {
+    const normalizedAddress = args.address.toLowerCase();
+    const lockedIds: string[] = [];
+
+    // Check defense deck for FREE cards
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (profile?.defenseDeck) {
+      for (const card of profile.defenseDeck) {
+        if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+          // FREE cards have collection='free' or isFreeCard flag
+          // Their tokenId is the cardInventory _id
+          if (card.collection === 'free') {
+            lockedIds.push(card.tokenId);
+          }
+        }
+      }
+    }
+
+    // Check raid deck for FREE cards
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (raidDeck?.deck) {
+      for (const card of raidDeck.deck) {
+        if (card.isFreeCard && card.tokenId) {
+          // Don't add duplicates
+          if (!lockedIds.includes(card.tokenId)) {
+            lockedIds.push(card.tokenId);
+          }
+        }
+      }
+    }
+
+    return lockedIds;
+  },
+});
+
+/**
  * Get total FREE cards statistics
  */
 export const getFreeCardsStats = query({
