@@ -302,7 +302,7 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
                     onClick={() => toggleCard(card._id)}
                     className={`relative rounded-lg overflow-hidden transition-all transform ${
                       isLocked
-                        ? "cursor-not-allowed opacity-50 grayscale"
+                        ? "cursor-not-allowed opacity-60 ring-2 ring-amber-500/50"
                         : "cursor-pointer hover:scale-105"
                     } ${
                       RARITY_COLORS[card.rarity] || RARITY_COLORS.Common
@@ -310,25 +310,15 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
                       hasFoil && !isLocked ? "ring-2 ring-cyan-400/50" : ""
                     }`}
                   >
-                    {/* Lock Icon for cards in use */}
-                    {isLocked && (
-                      <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
-                        <div className="text-center">
-                          <span className="text-3xl">🔒</span>
-                          <p className="text-xs text-white/80 mt-1">Em uso</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Selection Checkbox */}
-                    <div className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    {/* Selection Checkbox / Lock Badge */}
+                    <div className={`absolute top-1.5 left-1.5 z-10 px-1.5 py-0.5 rounded text-[10px] font-bold ${
                       isLocked
-                        ? "bg-gray-600 border-gray-500"
+                        ? "bg-amber-600/90 text-white"
                         : isSelected
-                          ? "bg-red-600 border-red-400"
-                          : "bg-black/50 border-white/30"
+                          ? "bg-red-600 text-white"
+                          : "bg-black/60 text-white/70"
                     }`}>
-                      {isLocked ? <span className="text-white text-xs">🔒</span> : isSelected && <span className="text-white text-xs">✓</span>}
+                      {isLocked ? "🔒 IN USE" : isSelected ? "✓" : ""}
                     </div>
 
                     {/* Card Image */}
