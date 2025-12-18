@@ -168,6 +168,7 @@ export const removeBlacklistedDefenseDecks = internalMutation({
         const deckSize = profile.defenseDeck.length;
         await ctx.db.patch(profile._id, {
           defenseDeck: [], // Clear defense deck
+          hasFullDefenseDeck: false, // 🚀 BANDWIDTH FIX
         });
         removedCount++;
         removed.push({
@@ -201,6 +202,7 @@ export const adminRemoveBlacklistedDefenseDecks = mutation({
         const deckSize = profile.defenseDeck.length;
         await ctx.db.patch(profile._id, {
           defenseDeck: [], // Clear defense deck
+          hasFullDefenseDeck: false, // 🚀 BANDWIDTH FIX
         });
         removedCount++;
         removed.push({

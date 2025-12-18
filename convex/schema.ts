@@ -69,6 +69,9 @@ export default defineSchema({
       )
     )),
 
+    // 🚀 BANDWIDTH FIX: Boolean for efficient leaderboard queries
+    hasFullDefenseDeck: v.optional(v.boolean()), // true when defenseDeck.length === 5
+
     // Owned Token IDs (for defense deck validation)
     ownedTokenIds: v.optional(v.array(v.string())),
 
@@ -168,7 +171,8 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_username", ["username"])
     .index("by_total_power", ["stats.totalPower"]) // For leaderboard (legacy)
-    .index("by_aura", ["stats.aura"]), // For aura-based leaderboard
+    .index("by_aura", ["stats.aura"]) // For aura-based leaderboard
+    .index("by_defense_aura", ["hasFullDefenseDeck", "stats.aura"]), // 🚀 BANDWIDTH FIX: Efficient leaderboard query
 
   // Player Matches (Match History)
   matches: defineTable({

@@ -32,6 +32,7 @@ import type * as featuredCasts from "../featuredCasts.js";
 import type * as importData from "../importData.js";
 import type * as languageBoost from "../languageBoost.js";
 import type * as matches from "../matches.js";
+import type * as migrations_backfillHasFullDefenseDeck from "../migrations/backfillHasFullDefenseDeck.js";
 import type * as migrations_cleanDefenseDecks from "../migrations/cleanDefenseDecks.js";
 import type * as migrations_normalizeUsernames from "../migrations/normalizeUsernames.js";
 import type * as missions from "../missions.js";
@@ -89,6 +90,7 @@ declare const fullApi: ApiFromModules<{
   importData: typeof importData;
   languageBoost: typeof languageBoost;
   matches: typeof matches;
+  "migrations/backfillHasFullDefenseDeck": typeof migrations_backfillHasFullDefenseDeck;
   "migrations/cleanDefenseDecks": typeof migrations_cleanDefenseDecks;
   "migrations/normalizeUsernames": typeof migrations_normalizeUsernames;
   missions: typeof missions;

@@ -651,6 +651,8 @@ export default function TCGPage() {
   const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
   const [defenseDeckSaveStatus, setDefenseDeckSaveStatus] = useState<string>(''); // For retry feedback
   const [showDefenseDeckModal, setShowDefenseDeckModal] = useState<boolean>(false);
+  const [defenseDeckSortByPower, setDefenseDeckSortByPower] = useState<boolean>(true); // Default to sorted by power
+  const [defenseDeckCollection, setDefenseDeckCollection] = useState<CollectionId | 'all'>('all');
   const [showPveCardSelection, setShowPveCardSelection] = useState<boolean>(false);
   const [pveSelectedCards, setPveSelectedCards] = useState<any[]>([]);
   const [pveSortByPower, setPveSortByPower] = useState<boolean>(false);
@@ -3494,20 +3496,43 @@ export default function TCGPage() {
               </p>
             </div>
 
-            {/* Controls Row: Sort Button */}
-            <div className="flex-shrink-0 px-4 pt-3 flex items-center justify-center gap-2">
+            {/* Controls Row: Collection Filter + Sort */}
+            <div className="flex-shrink-0 px-4 pt-3 flex flex-wrap items-center justify-center gap-2">
+              <select
+                value={defenseDeckCollection}
+                onChange={(e) => setDefenseDeckCollection(e.target.value as CollectionId | 'all')}
+                className="px-3 py-2 rounded-lg text-sm font-modern font-medium bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
+              >
+                <option value="all">All Collections</option>
+                <option value="vibe">VBMS</option>
+                <option value="viberotbangers">BANGER</option>
+                <option value="cumioh">CUMIO</option>
+                <option value="historyofcomputer">HSTR</option>
+                <option value="vibefx">VBFX</option>
+                <option value="baseballcabal">BBCL</option>
+                <option value="tarot">TRT</option>
+                <option value="teampothead">TMPT</option>
+                <option value="poorlydrawnpepes">PDP</option>
+                <option value="meowverse">MEOVV</option>
+                <option value="viberuto">VBRTO</option>
+                <option value="vibefid">VIBEFID</option>
+                <option value="americanfootball">AFCL</option>
+                <option value="gmvbrs">VBRS</option>
+                <option value="coquettish">COQ</option>
+                <option value="nothing">NOTHING</option>
+              </select>
               <button
                 onClick={() => {
-                  setSortByPower(!sortByPower);
+                  setDefenseDeckSortByPower(!defenseDeckSortByPower);
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-                  sortByPower
+                  defenseDeckSortByPower
                     ? 'bg-vintage-gold text-vintage-black'
                     : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
                 }`}
               >
-                {sortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+                {defenseDeckSortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
               </button>
             </div>
 
@@ -3578,7 +3603,17 @@ export default function TCGPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-                  {(sortByPower ? [...nfts].sort((a, b) => b.power - a.power) : nfts).map((nft) => {
+                  {(() => {
+                    // Apply collection filter
+                    let filteredCards = defenseDeckCollection === 'all' 
+                      ? nfts 
+                      : filterCardsByCollections(nfts, [defenseDeckCollection as CollectionId]);
+                    // Apply power sort
+                    if (defenseDeckSortByPower) {
+                      filteredCards = [...filteredCards].sort((a, b) => (b.power || 0) - (a.power || 0));
+                    }
+                    return filteredCards;
+                  })().map((nft) => {
                     const isSelected = selectedCards.some(c => isSameCard(c, nft));
                     return (
                       <div
@@ -5622,31 +5657,7 @@ export default function TCGPage() {
                   </button>
                 </div>
 
-                {/* Defense Deck Button - Opens Modal */}
-                <div ref={playButtonsRef} className="mb-4">
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setShowDefenseDeckModal(true);
-                    }}
-                    disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between ${
-                      userProfile
-                        ? 'bg-gradient-to-r from-vintage-gold via-yellow-500 to-vintage-gold text-vintage-black hover:scale-105 shadow-lg shadow-vintage-gold/50 border-2 border-yellow-400/50'
-                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      Defense Deck
-                      {userProfile?.hasDefenseDeck && (
-                        <span className="ml-1 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">✓</span>
-                      )}
-                    </span>
-                    <span className="text-xl">▶</span>
-                  </button>
-                </div>
-
-                <div className="mt-6 space-y-4">
+                <div ref={playButtonsRef} className="mt-6 space-y-4">
                   {dealerCards.length > 0 && !showBattleScreen && (
                     <div className="bg-gradient-to-br from-vintage-wine to-vintage-black backdrop-blur p-4 rounded-xl border-2 border-vintage-gold/50">
                       <p className="text-xs font-modern font-semibold text-vintage-gold mb-3"><span className="text-lg">♦</span> {t('dealerCards').toUpperCase()}</p>
@@ -5705,8 +5716,29 @@ export default function TCGPage() {
                       <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
                     </h1>
                     
-                    {/* Export Button */}
+                    {/* Action Buttons */}
                       <div className="flex flex-wrap gap-2 items-center">
+                      {/* Defense Deck Button */}
+                      {userProfile && (
+                        <button
+                          onClick={() => {
+                            if (soundEnabled) AudioManager.buttonClick();
+                            setShowDefenseDeckModal(true);
+                          }}
+                          className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition flex items-center gap-1 ${
+                            userProfile.hasDefenseDeck
+                              ? 'bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/10 hover:border-vintage-gold'
+                              : 'bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500 animate-pulse'
+                          }`}
+                          title="Configure Defense Deck"
+                        >
+                          <span>🛡️</span> Defense Deck
+                          {userProfile.hasDefenseDeck && (
+                            <span className="ml-1 text-[10px] bg-green-600 text-white px-1 rounded-full">✓</span>
+                          )}
+                        </button>
+                      )}
+                      {/* Export Button */}
                       <button
                         onClick={handleExportLeaderboard}
                         className="px-3 py-1 rounded-lg text-xs font-modern font-semibold transition bg-vintage-charcoal border border-green-500/50 text-green-400 hover:bg-green-500/10 hover:border-green-500 flex items-center gap-1"
@@ -5739,6 +5771,21 @@ export default function TCGPage() {
                     )}
                     </div>
                 </div>
+
+                {/* Defense Deck Warning Banner */}
+                {userProfile && !userProfile.hasDefenseDeck && (
+                  <div className="mb-4 p-3 md:p-4 bg-amber-500/20 border-2 border-amber-500/50 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3">
+                    <p className="text-amber-200 text-sm md:text-base text-center md:text-left">
+                      {t('leaderboardDefenseWarning')}
+                    </p>
+                    <button
+                      onClick={() => setShowDefenseDeckModal(true)}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg transition whitespace-nowrap text-sm"
+                    >
+                      {t('leaderboardDefenseSetup')}
+                    </button>
+                  </div>
+                )}
 
                 {/* Aura Leaderboard */}
                     {filteredLeaderboard.length === 0 ? (
