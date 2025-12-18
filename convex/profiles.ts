@@ -124,12 +124,12 @@ export const getLeaderboardLite = query({
         .withIndex("by_type", (q) => q.eq("type", "full_leaderboard"))
         .first();
 
-      // If cache exists and is fresh (less than 15 minutes old), use it
+      // If cache exists and is fresh (less than 5 minutes old), use it
       if (cache && cache.data && cache.data.length > 0) {
         const cacheAge = Date.now() - cache.updatedAt;
-        const fifteenMinutes = 15 * 60 * 1000;
+        const fiveMinutes = 5 * 60 * 1000;
 
-        if (cacheAge < fifteenMinutes) {
+        if (cacheAge < fiveMinutes) {
           // Return cached data (already formatted correctly)
           return cache.data.slice(0, limit).map(p => ({
             address: p.address,

@@ -54,11 +54,11 @@ crons.interval(
   internal.quests.updateLeaderboardCache
 );
 
-// 🚀 FULL Leaderboard cache update (every 10 minutes)
+// 🚀 FULL Leaderboard cache update (every 3 minutes)
 // Reduces bandwidth by ~99% for getLeaderboardLite (saves ~1.4GB/month)
 crons.interval(
   "update full leaderboard cache",
-  { minutes: 10 },
+  { minutes: 3 },
   internal.profiles.updateLeaderboardFullCache
 );
 
