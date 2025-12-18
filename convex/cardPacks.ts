@@ -50,7 +50,7 @@ const PACK_TYPES = {
     description: "1 card with elite odds",
     cards: 1,
     price: 5000, // 5x basic price for elite odds on 1 card
-    rarityOdds: { Common: 30, Rare: 55, Epic: 12, Legendary: 3 }, // BOOST ODDS
+    rarityOdds: { Common: 60, Rare: 30, Epic: 8, Legendary: 2 }, // BOOST ODDS
   },
   mission: {
     name: "Mission Reward",
