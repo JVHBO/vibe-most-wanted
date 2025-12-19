@@ -118,11 +118,11 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
   return (
     <button
       onClick={handleClick}
-      className={`overflow-hidden h-[52px] py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold animate-[glow-pulse_2.5s_ease-in-out_infinite] transition-colors cursor-pointer ${className}`}
+      className={`overflow-hidden h-[52px] py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold transition-colors cursor-pointer transform-gpu isolate ${className}`}
       title={`Buy ${currentPrice?.displayName} Packs`}
     >
       <div
-        className={`flex items-center justify-center gap-3 text-sm transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`flex items-center justify-center gap-3 text-sm ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       >
         {coverUrl && (
           <img
