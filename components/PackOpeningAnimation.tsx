@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
-import { sdk } from '@farcaster/miniapp-sdk';
 
 interface PackOpeningAnimationProps {
   cards: any[];
@@ -82,7 +81,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     return { counts, foilCounts };
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
     const { counts, foilCounts } = getRarityCounts();
     const rarityParts: string[] = [];
     if (counts.Legendary > 0) rarityParts.push("\u{1F31F} " + counts.Legendary + " Legendary");
@@ -102,20 +101,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
 
     const shareUrl = "https://www.vibemostwanted.xyz/share/pack?v=" + Date.now();
 
-    // Try Farcaster SDK first (miniapp), fallback to warpcast.com (web)
-    try {
-      if (sdk && sdk.actions && typeof sdk.actions.composeCast === 'function') {
-        await sdk.actions.composeCast({
-          text: castText,
-          embeds: [shareUrl],
-        });
-        return;
-      }
-    } catch (e) {
-      console.log('[PackShare] SDK not available, using fallback');
-    }
-
-    // Fallback for web
+    // Use warpcast.com compose URL (works in both browser and miniapp)
     const farcasterUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(castText) + "&embeds[]=" + encodeURIComponent(shareUrl);
     window.open(farcasterUrl, "_blank");
   };
