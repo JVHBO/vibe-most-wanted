@@ -602,6 +602,20 @@ export default function TCGPage() {
 
   // Profile States
   const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'shop' | 'inbox'>('game');
+
+  // Check URL for view parameter (e.g., ?view=shop)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get('view');
+      if (viewParam === 'shop') {
+        setCurrentView('shop');
+        // Clean URL after setting view
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, []);
+
 // Scroll to top when view changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
