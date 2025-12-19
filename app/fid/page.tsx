@@ -358,10 +358,19 @@ export default function FidPage() {
   };
 
   // Contract interaction
-  const { writeContract, data: hash, isPending: isContractPending } = useWriteContract();
+  const { writeContract, data: hash, isPending: isContractPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
+
+  // Handle writeContract errors
+  useEffect(() => {
+    if (writeError) {
+      console.error('❌ Contract write error:', writeError);
+      setError(writeError.message || "Transaction failed. Please try again.");
+      setLoading(false);
+    }
+  }, [writeError]);
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
@@ -686,6 +695,15 @@ export default function FidPage() {
 
       // Mint NFT on smart contract
       setError("Minting NFT on-chain (confirm transaction in wallet)...");
+      console.log('🚀 Calling writeContract with:', {
+        address: VIBEFID_CONTRACT_ADDRESS,
+        functionName: 'presignedMint',
+        fid: userData.fid,
+        metadataUrl,
+        mintPrice: MINT_PRICE,
+        userAddress: address,
+      });
+
       writeContract({
         address: VIBEFID_CONTRACT_ADDRESS,
         abi: VIBEFID_ABI,
