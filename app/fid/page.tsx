@@ -868,6 +868,21 @@ export default function FidPage() {
           fid={userData?.fid}
           onShare={handleShare}
           username={userData?.username}
+          walletAddress={address}
+          onConnectWallet={async () => {
+            const farcasterConnector = connectors.find((c) =>
+              c.id === 'farcasterMiniApp' ||
+              c.id === 'farcaster' ||
+              c.name?.toLowerCase().includes('farcaster')
+            );
+            if (farcasterConnector) {
+              try {
+                await connect({ connector: farcasterConnector });
+              } catch (err) {
+                console.error('Failed to connect wallet:', err);
+              }
+            }
+          }}
         />
 
         {/* Neynar Score Modal */}
