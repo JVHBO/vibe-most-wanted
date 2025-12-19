@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract, useConnect } from "wagmi";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, getSuitFromFid, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
@@ -38,10 +38,40 @@ interface GeneratedTraits {
 
 export default function FidPage() {
   const { address } = useAccount();
+  const { connect, connectors } = useConnect();
   const farcasterContext = useFarcasterContext();
   const { lang, setLang } = useLanguage();
   const t = fidTranslations[lang];
   const router = useRouter();
+
+  // Auto-connect wallet in Farcaster miniapp
+  useEffect(() => {
+    const autoConnectWallet = async () => {
+      // Only auto-connect if in Farcaster miniapp and wallet not connected
+      if (farcasterContext.isReady && farcasterContext.isInMiniapp && !address) {
+        console.log('[FID] 🔗 Auto-connecting wallet in Farcaster miniapp...');
+
+        const farcasterConnector = connectors.find((c) =>
+          c.id === 'farcasterMiniApp' ||
+          c.id === 'farcaster' ||
+          c.name?.toLowerCase().includes('farcaster')
+        );
+
+        if (farcasterConnector) {
+          try {
+            await connect({ connector: farcasterConnector });
+            console.log('[FID] ✅ Wallet auto-connected!');
+          } catch (err) {
+            console.error('[FID] ❌ Failed to auto-connect wallet:', err);
+          }
+        } else {
+          console.error('[FID] ❌ Farcaster connector not found. Available:', connectors.map(c => c.id));
+        }
+      }
+    };
+
+    autoConnectWallet();
+  }, [farcasterContext.isReady, farcasterContext.isInMiniapp, address, connect, connectors]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
