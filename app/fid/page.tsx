@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract, useConnect } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract, useConnect, useSendTransaction } from "wagmi";
+import { encodeFunctionData } from "viem";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, getSuitFromFid, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/neynar";
@@ -387,20 +388,26 @@ export default function FidPage() {
     }
   };
 
-  // Contract interaction
-  const { writeContract, data: hash, isPending: isContractPending, error: writeError } = useWriteContract();
+  // Contract interaction - use both methods for iOS compatibility
+  const { writeContract, data: writeHash, isPending: isContractPending, error: writeError } = useWriteContract();
+  const { sendTransaction, data: sendHash, isPending: isSendPending, error: sendError } = useSendTransaction();
+
+  // Use whichever hash is available
+  const hash = writeHash || sendHash;
+
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
 
-  // Handle writeContract errors
+  // Handle contract errors
   useEffect(() => {
-    if (writeError) {
-      console.error('❌ Contract write error:', writeError);
-      setError(writeError.message || "Transaction failed. Please try again.");
+    const error = writeError || sendError;
+    if (error) {
+      console.error('❌ Contract error:', error);
+      setError(error.message || "Transaction failed. Please try again.");
       setLoading(false);
     }
-  }, [writeError]);
+  }, [writeError, sendError]);
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
@@ -730,7 +737,7 @@ export default function FidPage() {
 
       // Mint NFT on smart contract
       setError("Minting NFT on-chain (confirm transaction in wallet)...");
-      console.log('🚀 Calling writeContract with:', {
+      console.log('🚀 Preparing mint transaction:', {
         address: VIBEFID_CONTRACT_ADDRESS,
         functionName: 'presignedMint',
         fid: userData.fid,
@@ -739,13 +746,35 @@ export default function FidPage() {
         userAddress: address,
       });
 
-      writeContract({
-        address: VIBEFID_CONTRACT_ADDRESS,
-        abi: VIBEFID_ABI,
-        functionName: 'presignedMint',
-        args: [BigInt(userData.fid), metadataUrl, signature as `0x${string}`],
-        value: parseEther(MINT_PRICE),
-      });
+      // Detect iOS for alternative transaction method
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      console.log('📱 Device detection - iOS:', isIOS);
+
+      if (isIOS) {
+        // iOS: Use sendTransaction with encoded data (more compatible with Farcaster miniapp)
+        console.log('📱 Using sendTransaction for iOS compatibility');
+        const data = encodeFunctionData({
+          abi: VIBEFID_ABI,
+          functionName: 'presignedMint',
+          args: [BigInt(userData.fid), metadataUrl, signature as `0x${string}`],
+        });
+
+        sendTransaction({
+          to: VIBEFID_CONTRACT_ADDRESS,
+          data,
+          value: parseEther(MINT_PRICE),
+        });
+      } else {
+        // Non-iOS: Use standard writeContract
+        console.log('💻 Using writeContract for desktop/Android');
+        writeContract({
+          address: VIBEFID_CONTRACT_ADDRESS,
+          abi: VIBEFID_ABI,
+          functionName: 'presignedMint',
+          args: [BigInt(userData.fid), metadataUrl, signature as `0x${string}`],
+          value: parseEther(MINT_PRICE),
+        });
+      }
 
       // Note: Transaction confirmation is handled by useWaitForTransactionReceipt hook
       // After confirmation, data is saved to Convex in useEffect above
@@ -863,7 +892,7 @@ export default function FidPage() {
           previewImage={previewImage}
           generatedTraits={generatedTraits}
           onMint={handleMintCard}
-          isMinting={loading || isContractPending || isConfirming}
+          isMinting={loading || isContractPending || isSendPending || isConfirming}
           isMintedSuccessfully={mintedSuccessfully}
           fid={userData?.fid}
           onShare={handleShare}
