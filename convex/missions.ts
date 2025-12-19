@@ -332,7 +332,7 @@ export const claimMission = mutation({
         currentBalance,
         newBalance,
         "claimMission",
-        missionId,
+        String(missionId), // Convert Convex ID to string
         { missionType: mission.missionType }
       );
 
