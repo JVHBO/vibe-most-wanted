@@ -484,16 +484,21 @@ export default function FidPage() {
   };
 
   const handleMintCard = async () => {
+    console.log('🎯 handleMintCard called!', { address, userData: !!userData, farcasterUser: farcasterContext.user });
+
     if (!address) {
+      console.error('❌ No wallet address connected');
       setError("Please connect your wallet");
       return;
     }
 
     if (!userData) {
+      console.error('❌ No userData available');
       setError("No user data loaded");
       return;
     }
 
+    console.log('✅ Starting mint process for FID:', userData.fid);
     setLoading(true);
     setError(null);
 
