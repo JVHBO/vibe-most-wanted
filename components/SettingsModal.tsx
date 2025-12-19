@@ -14,6 +14,8 @@ import { useAccount } from 'wagmi';
 import { writeContract } from 'wagmi/actions';
 import { config } from '@/lib/wagmi';
 import { CONTRACTS, ERC20_ABI } from '@/lib/contracts';
+import { encodeFunctionData } from 'viem';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
@@ -177,12 +179,36 @@ export function SettingsModal({
 
     setIsRevoking(true);
     try {
-      await writeContract(config, {
-        address: CONTRACTS.VBMSToken as `0x${string}`,
-        abi: ERC20_ABI,
-        functionName: 'approve',
-        args: [CONTRACTS.VBMSPokerBattle as `0x${string}`, BigInt(0)],
-      });
+      // Detect iOS for alternative transaction method
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isIOS) {
+        // iOS: Use Farcaster SDK eth_sendTransaction
+        console.log('[SettingsModal] Using Farcaster SDK for iOS');
+        const provider = await sdk.wallet.getEthereumProvider();
+        const data = encodeFunctionData({
+          abi: ERC20_ABI,
+          functionName: 'approve',
+          args: [CONTRACTS.VBMSPokerBattle as `0x${string}`, BigInt(0)],
+        });
+
+        await provider.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: walletAddress as `0x${string}`,
+            to: CONTRACTS.VBMSToken as `0x${string}`,
+            data,
+          }],
+        });
+      } else {
+        // Non-iOS: Use standard writeContract
+        await writeContract(config, {
+          address: CONTRACTS.VBMSToken as `0x${string}`,
+          abi: ERC20_ABI,
+          functionName: 'approve',
+          args: [CONTRACTS.VBMSPokerBattle as `0x${string}`, BigInt(0)],
+        });
+      }
 
       if (soundEnabled) AudioManager.buttonSuccess();
       alert('VBMS approval revoked successfully!');
