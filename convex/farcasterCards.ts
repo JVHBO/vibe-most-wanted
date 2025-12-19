@@ -243,10 +243,8 @@ export const getAllFarcasterCards = query({
       .query("farcasterCards")
       .collect();
 
-    // Sort by creation time (most recent first) and limit to 100
-    return allCards
-      .sort((a, b) => b._creationTime - a._creationTime)
-      .slice(0, 100);
+    // Sort by creation time (most recent first) - show all cards
+    return allCards.sort((a, b) => b._creationTime - a._creationTime);
   },
 });
 
