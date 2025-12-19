@@ -99,7 +99,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     if (foilParts.length > 0) castText += "\n\n" + foilParts.join("\n");
     castText += "\n\n\u26A1 Total Power: " + totalPower;
 
-    const shareUrl = "https://www.vibemostwanted.xyz/share/pack?v=" + Date.now();
+    const shareUrl = "https://www.vibemostwanted.xyz/shop";
 
     // Use warpcast.com compose URL (works in both browser and miniapp)
     const farcasterUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(castText) + "&embeds[]=" + encodeURIComponent(shareUrl);
