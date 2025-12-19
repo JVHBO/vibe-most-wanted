@@ -23,6 +23,8 @@ interface FidGenerationModalProps {
   fid?: number;
   onShare?: (lang: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN') => void;
   username?: string;
+  walletAddress?: string;
+  onConnectWallet?: () => void;
 }
 
 export default function FidGenerationModal({
@@ -38,6 +40,8 @@ export default function FidGenerationModal({
   fid,
   onShare,
   username,
+  walletAddress,
+  onConnectWallet,
 }: FidGenerationModalProps) {
   const { lang, setLang } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0); // 0 = backstory, 1 = card
@@ -275,26 +279,53 @@ ${emoji} ${generatedTraits.rarity}
 
               {/* Action Buttons - Sticky on mobile */}
               {!isMintedSuccessfully ? (
-                <div className="fixed sm:relative bottom-0 left-0 right-0 sm:bottom-auto sm:left-auto sm:right-auto flex gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden box-border p-2 sm:p-0 bg-vintage-charcoal sm:bg-transparent border-t-2 sm:border-t-0 border-vintage-gold/30">
-                  <button
-                    onClick={() => {
-                      AudioManager.buttonClick();
-                      setCurrentSlide(0);
-                    }}
-                    className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors text-xs sm:text-sm md:text-base"
-                  >
-                    {t.back}
-                  </button>
-                  <button
-                    onClick={() => {
-                      AudioManager.buttonClick();
-                      onMint();
-                    }}
-                    disabled={isMinting}
-                    className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-xs sm:text-sm md:text-base"
-                  >
-                    {isMinting ? t.minting : t.mintCard}
-                  </button>
+                <div className="fixed sm:relative bottom-0 left-0 right-0 sm:bottom-auto sm:left-auto sm:right-auto flex flex-col gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden box-border p-2 sm:p-0 bg-vintage-charcoal sm:bg-transparent border-t-2 sm:border-t-0 border-vintage-gold/30">
+                  {/* Show wallet status */}
+                  {walletAddress ? (
+                    <p className="text-center text-xs text-green-400">
+                      ✅ Wallet: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    </p>
+                  ) : (
+                    <p className="text-center text-xs text-yellow-400">
+                      ⚠️ Wallet not connected
+                    </p>
+                  )}
+
+                  <div className="flex gap-2 sm:gap-4">
+                    <button
+                      onClick={() => {
+                        AudioManager.buttonClick();
+                        setCurrentSlide(0);
+                      }}
+                      className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold text-vintage-gold font-bold rounded-lg hover:bg-vintage-gold/20 transition-colors text-xs sm:text-sm md:text-base"
+                    >
+                      {t.back}
+                    </button>
+
+                    {/* Show Connect Wallet button if not connected, otherwise show Mint */}
+                    {!walletAddress && onConnectWallet ? (
+                      <button
+                        onClick={() => {
+                          AudioManager.buttonClick();
+                          onConnectWallet();
+                        }}
+                        className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm md:text-base"
+                      >
+                        🔗 Connect Wallet
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          AudioManager.buttonClick();
+                          onMint();
+                        }}
+                        disabled={isMinting || !walletAddress}
+                        className="flex-1 px-3 sm:px-6 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-xs sm:text-sm md:text-base"
+                      >
+                        {isMinting ? t.minting : t.mintCard}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3 w-full">
