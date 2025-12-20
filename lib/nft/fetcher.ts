@@ -40,11 +40,98 @@ function setCache(tokenId: string, url: string): void {
 /**
  * Get NFT image URL with fallback logic
  * Priority: tokenUri → raw metadata → Alchemy URLs → placeholder
+ *
+ * VibeFID FIX: VibeFID cards use VIDEO (webm) stored in metadata.image
+ * MUST use filebase.io gateway directly (NOT Alchemy cached URLs which are PNG!)
  */
-export async function getImage(nft: any): Promise<string> {
+export async function getImage(nft: any, collection?: string): Promise<string> {
   const tid = nft.tokenId;
   const cached = getFromCache(tid);
   if (cached) return cached;
+
+  // 🎬 VIBEFID SPECIAL HANDLING: VibeFID stores VIDEO URL in metadata.image
+  // Alchemy caches these as PNG thumbnails - we need the ORIGINAL video URL
+  const contractAddr = nft?.contract?.address?.toLowerCase();
+  const isVibeFID = collection === 'vibefid' || contractAddr === '0x60274a138d026e3cb337b40567100fdec3127565';
+
+  if (isVibeFID) {
+    // 🎬 VibeFID MUST use VIDEO URL, never PNG!
+    // Priority 1: animation_url (video)
+    const animationUrl = nft?.raw?.metadata?.animation_url || nft?.metadata?.animation_url;
+    if (animationUrl) {
+      console.log(`🎬 VibeFID #${tid} using animation_url:`, animationUrl);
+      setCache(tid, animationUrl);
+      return animationUrl;
+    }
+
+    // Priority 2: raw.metadata.image with filebase.io (video URL)
+    const metadataImage = nft?.raw?.metadata?.image || nft?.metadata?.image;
+    if (metadataImage && metadataImage.includes('filebase.io')) {
+      console.log(`🎬 VibeFID #${tid} using filebase video:`, metadataImage);
+      setCache(tid, metadataImage);
+      return metadataImage;
+    }
+
+    // Priority 3: metadata.image with ipfs (likely video)
+    if (metadataImage && (metadataImage.includes('ipfs') || metadataImage.includes('Qm'))) {
+      console.log(`🎬 VibeFID #${tid} using IPFS metadata.image:`, metadataImage);
+      const normalized = normalizeUrl(metadataImage);
+      setCache(tid, normalized);
+      return normalized;
+    }
+
+    // Priority 4: originalUrl if it's IPFS (likely video)
+    const originalUrl = nft?.image?.originalUrl;
+    if (originalUrl && (originalUrl.includes('ipfs') || originalUrl.includes('Qm'))) {
+      console.log(`🎬 VibeFID #${tid} using originalUrl:`, originalUrl);
+      setCache(tid, originalUrl);
+      return originalUrl;
+    }
+
+    // Priority 5: Try fetching directly from tokenUri to get fresh video URL
+    const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
+    if (tokenUri) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(tokenUri, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const json = await res.json();
+          // Check animation_url first
+          if (json.animation_url) {
+            console.log(`🎬 VibeFID #${tid} using tokenUri animation_url:`, json.animation_url);
+            setCache(tid, json.animation_url);
+            return json.animation_url;
+          }
+          // Then check image
+          if (json.image && (json.image.includes('filebase.io') || json.image.includes('ipfs') || json.image.includes('Qm'))) {
+            console.log(`🎬 VibeFID #${tid} using tokenUri image:`, json.image);
+            const normalized = normalizeUrl(json.image);
+            setCache(tid, normalized);
+            return normalized;
+          }
+        }
+      } catch (e) {
+        console.warn(`⚠️ VibeFID #${tid} tokenUri fetch failed:`, e);
+      }
+    }
+
+    // Priority 6: cachedUrl but ONLY if it's NOT a PNG (PNG = thumbnail, not video!)
+    const cachedUrl = nft?.image?.cachedUrl;
+    if (cachedUrl && !cachedUrl.includes('.png') && !cachedUrl.includes('nft-cdn.alchemy')) {
+      console.warn(`⚠️ VibeFID #${tid} using cachedUrl fallback:`, cachedUrl);
+      setCache(tid, cachedUrl);
+      return cachedUrl;
+    }
+
+    // ❌ NEVER use PNG for VibeFID! Log error and continue to standard flow
+    console.error(`❌ VibeFID #${tid} could not find video URL! All sources returned PNG or undefined. Will use placeholder.`);
+    // Return placeholder instead of PNG
+    const placeholder = `https://via.placeholder.com/300x420/8b5cf6/ffffff?text=VibeFID+%23${tid}`;
+    setCache(tid, placeholder);
+    return placeholder;
+  }
 
   // Try tokenUri first
   const tokenUri = extractUrl(nft.tokenUri);
@@ -184,4 +271,93 @@ export async function fetchNFTs(
   } while (pageKey && pageCount < maxPages);
 
   return allNfts;
+}
+
+/**
+ * Fetch and process NFTs with full metadata enrichment
+ * Replaces the old lib/nft-fetcher.ts fetchAndProcessNFTs function
+ *
+ * @param owner Wallet address
+ * @param options Processing options
+ * @returns Array of enriched NFT objects
+ */
+export async function fetchAndProcessNFTs(
+  owner: string,
+  options: {
+    maxPages?: number;
+    refreshMetadata?: boolean;
+  } = {}
+): Promise<any[]> {
+  const { maxPages = 20, refreshMetadata = false } = options;
+
+  if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
+  if (!CHAIN) throw new Error("Chain não configurada");
+
+  // Fetch from all enabled collections
+  const { getEnabledCollections, getCollectionContract } = await import('@/lib/collections/index');
+  const enabledCollections = getEnabledCollections();
+
+  const allNfts: any[] = [];
+
+  for (const collection of enabledCollections) {
+    try {
+      const nfts = await fetchNFTs(owner, collection.contractAddress);
+      // Tag each NFT with its collection
+      const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+      allNfts.push(...tagged);
+    } catch (error) {
+      console.warn(`⚠️ Failed to fetch from ${collection.displayName}:`, error);
+    }
+  }
+
+  // Enrich with metadata if requested
+  const enriched = await Promise.all(
+    allNfts.map(async (nft) => {
+      const contractAddr = nft?.contract?.address?.toLowerCase();
+      const isVibeFID = contractAddr === getCollectionContract('vibefid')?.toLowerCase();
+
+      // Get image URL (handles VibeFID video detection)
+      const imageUrl = await getImage(nft, isVibeFID ? 'vibefid' : undefined);
+
+      // Extract attributes
+      const { findAttr, isUnrevealed, calcPower } = await import('./attributes');
+
+      const rarity = findAttr(nft, 'rarity');
+      const wear = findAttr(nft, 'wear');
+      const foil = findAttr(nft, 'foil');
+      const power = calcPower(nft);
+
+      // Skip unopened cards
+      if (isUnrevealed(nft)) {
+        return null;
+      }
+
+      return {
+        ...nft,
+        imageUrl,
+        rarity,
+        wear,
+        foil,
+        power,
+        name: nft?.raw?.metadata?.name || nft?.name || `#${nft.tokenId}`,
+      };
+    })
+  );
+
+  // Filter out null values (unopened cards) and deduplicate by unique ID
+  const validCards = enriched.filter(Boolean);
+
+  // Deduplicate using collection + tokenId as unique key
+  const seen = new Set<string>();
+  const deduped = validCards.filter((card: any) => {
+    const uniqueId = card.collection ? `${card.collection}_${card.tokenId}` : card.tokenId;
+    if (seen.has(uniqueId)) {
+      console.warn(`⚠️ Duplicate card filtered: ${uniqueId}`);
+      return false;
+    }
+    seen.add(uniqueId);
+    return true;
+  });
+
+  return deduped;
 }
