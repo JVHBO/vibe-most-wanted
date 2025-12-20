@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -25,6 +25,8 @@ import { useTransferVBMS } from '@/lib/hooks/useVBMSContracts';
 import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
 import { CONTRACTS } from '@/lib/contracts';
 import { parseEther } from 'viem';
+import { NotEnoughCardsGuide } from './NotEnoughCardsGuide';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type NFT = Card;
 
@@ -73,7 +75,23 @@ export function RaidDeckSelectionModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showVibeFIDStep, setShowVibeFIDStep] = useState(false); // Step 2: VibeFID optional selection
   const [selectedVibeFID, setSelectedVibeFID] = useState<NFT | null>(null); // Optional 6th card
+  const [cardsLoaded, setCardsLoaded] = useState(false); // Track if cards finished loading
   const CARDS_PER_PAGE = 50;
+
+  // Translations
+  const { t: translate } = useLanguage();
+
+  // Track when cards have finished loading
+  useEffect(() => {
+    // Consider cards loaded if availableCards array has been populated (even if 0 cards)
+    // We use a small delay to avoid flash of content
+    if (availableCards !== undefined) {
+      const timer = setTimeout(() => {
+        setCardsLoaded(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [availableCards]);
 
   // Calculate dynamic cost based on selected cards (including optional VibeFID)
   const totalCost = useMemo(() => {
@@ -574,10 +592,18 @@ export function RaidDeckSelectionModal({
         </div>
 
         {/* Available Cards Grid */}
-        {availableCards.length === 0 ? (
+        {!cardsLoaded ? (
           <div className="flex-1 flex items-center justify-center">
             <LoadingSpinner />
           </div>
+        ) : availableCards.length < DECK_SIZE ? (
+          <NotEnoughCardsGuide
+            currentCards={availableCards.length}
+            requiredCards={DECK_SIZE}
+            gameMode="raid"
+            onClose={onClose}
+            t={translate}
+          />
         ) : (
           <div className="flex-1 overflow-y-auto mb-2">
             <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-1.5 pb-2">
