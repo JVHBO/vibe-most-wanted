@@ -6,6 +6,7 @@
  * Customized per game mode with specific card requirements
  */
 
+import { useState } from 'react';
 import { getEnabledCollections } from '@/lib/collections';
 import { useCollectionPrices } from '@/lib/hooks/useCollectionPrices';
 import { TranslationKey } from '@/lib/translations';
@@ -25,6 +26,7 @@ export function NotEnoughCardsGuide({
   onClose,
   t,
 }: NotEnoughCardsGuideProps) {
+  const [showCollectionsModal, setShowCollectionsModal] = useState(false);
   const collections = getEnabledCollections().filter(c => c.id !== 'nothing' && c.id !== 'custom');
   const { prices, isLoading: pricesLoading } = useCollectionPrices();
 
@@ -115,7 +117,7 @@ export function NotEnoughCardsGuide({
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Action Buttons */}
       <div className="flex flex-wrap justify-center gap-2 mb-4">
         <button
           onClick={() => {
@@ -125,6 +127,12 @@ export function NotEnoughCardsGuide({
           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-display font-bold rounded-xl transition-all hover:scale-105 shadow-lg text-sm"
         >
           🛒 {t('guideShopPacks') || 'Buy Card Packs'}
+        </button>
+        <button
+          onClick={() => setShowCollectionsModal(true)}
+          className="px-4 py-2 bg-gradient-to-r from-vintage-gold to-yellow-600 hover:from-yellow-500 hover:to-yellow-400 text-vintage-black font-display font-bold rounded-xl transition-all hover:scale-105 shadow-lg text-sm"
+        >
+          📊 {t('guideLTCCollections') || 'LTC Collections'}
         </button>
       </div>
 
@@ -149,46 +157,68 @@ export function NotEnoughCardsGuide({
         </div>
       </div>
 
-      {/* Collections with Prices */}
-      <div className="w-full max-w-md bg-vintage-black/50 rounded-xl border border-vintage-gold/30 p-3">
-        <h4 className="text-vintage-gold font-display font-bold text-sm mb-2">
-          📊 {t('guideLTCCollections') || 'LTC Collections'}
-        </h4>
-        <div className="space-y-1.5 max-h-[180px] overflow-y-auto">
-          {prices.map((priceData) => (
-            <button
-              key={priceData.id}
-              onClick={() => {
-                onClose();
-                window.location.href = '/shop';
-              }}
-              className="w-full flex items-center justify-between p-2 bg-vintage-charcoal/50 hover:bg-vintage-gold/10 rounded-lg transition-all group text-left"
-            >
-              <span className="text-vintage-ice text-xs font-medium group-hover:text-vintage-gold truncate flex-1">
-                {priceData.emoji} {priceData.displayName}
-              </span>
-              <div className="flex items-center gap-2 ml-2">
-                {pricesLoading ? (
-                  <span className="text-vintage-burnt-gold text-xs">...</span>
-                ) : priceData.priceUsd ? (
-                  <span className="text-green-400 text-xs font-bold">
-                    {priceData.priceUsd}
-                  </span>
-                ) : (
-                  <span className="text-vintage-burnt-gold text-xs">-</span>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
       <button
         onClick={onClose}
         className="mt-4 text-vintage-burnt-gold hover:text-vintage-gold transition-all underline text-sm"
       >
         ← {t('back')}
       </button>
+
+      {/* Collections Modal */}
+      {showCollectionsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-md max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-vintage-gold font-display font-bold text-lg">
+                📊 {t('guideLTCCollections') || 'LTC Collections'}
+              </h3>
+              <button
+                onClick={() => setShowCollectionsModal(false)}
+                className="text-vintage-burnt-gold hover:text-vintage-gold text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-2">
+              {prices.map((priceData) => {
+                const collection = collections.find(c => c.id === priceData.id);
+                return (
+                  <button
+                    key={priceData.id}
+                    onClick={() => {
+                      setShowCollectionsModal(false);
+                      onClose();
+                      window.location.href = '/shop';
+                    }}
+                    className="w-full flex items-center justify-between p-3 bg-vintage-black/50 hover:bg-vintage-gold/20 rounded-xl transition-all group text-left border border-vintage-gold/30"
+                  >
+                    <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
+                      {priceData.emoji} {priceData.displayName}
+                    </span>
+                    <div className="flex items-center gap-2 ml-2">
+                      {pricesLoading ? (
+                        <span className="text-vintage-burnt-gold text-sm">...</span>
+                      ) : priceData.priceUsd ? (
+                        <span className="text-green-400 text-sm font-bold">
+                          {priceData.priceUsd}
+                        </span>
+                      ) : (
+                        <span className="text-vintage-burnt-gold text-sm">-</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setShowCollectionsModal(false)}
+              className="mt-4 w-full py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold font-display font-bold rounded-xl transition-all"
+            >
+              {t('back') || 'Back'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
