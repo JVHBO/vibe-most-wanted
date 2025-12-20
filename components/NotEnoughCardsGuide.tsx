@@ -10,6 +10,27 @@ import { useState } from 'react';
 import { getEnabledCollections } from '@/lib/collections';
 import { useCollectionPrices } from '@/lib/hooks/useCollectionPrices';
 import { TranslationKey } from '@/lib/translations';
+import { sdk } from '@farcaster/miniapp-sdk';
+import { openMarketplace } from '@/lib/marketplace-utils';
+import { isMiniappMode } from '@/lib/utils/miniapp';
+
+// Marketplace URLs for each collection (same as PriceTicker)
+const COLLECTION_MARKETPLACE: Record<string, string> = {
+  vibe: 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
+  gmvbrs: 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
+  viberuto: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
+  coquettish: 'https://vibechain.com/market/coquettish-1?ref=XCLR1DJ6LQTT',
+  meowverse: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
+  poorlydrawnpepes: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
+  teampothead: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
+  tarot: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
+  americanfootball: 'https://vibechain.com/market/american-football?ref=XCLR1DJ6LQTT',
+  baseballcabal: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
+  vibefx: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
+  historyofcomputer: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
+  cumioh: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
+  viberotbangers: 'https://vibechain.com/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
+};
 
 interface NotEnoughCardsGuideProps {
   currentCards: number;
@@ -29,6 +50,16 @@ export function NotEnoughCardsGuide({
   const [showCollectionsModal, setShowCollectionsModal] = useState(false);
   const collections = getEnabledCollections().filter(c => c.id !== 'nothing' && c.id !== 'custom');
   const { prices, isLoading: pricesLoading } = useCollectionPrices();
+  const isInFarcaster = isMiniappMode();
+
+  // Handle collection click - open marketplace
+  const handleCollectionClick = async (collectionId: string) => {
+    const marketplaceUrl = COLLECTION_MARKETPLACE[collectionId];
+    if (marketplaceUrl) {
+      setShowCollectionsModal(false);
+      await openMarketplace(marketplaceUrl, sdk, isInFarcaster);
+    }
+  };
 
   // Game mode specific content
   const gameModeConfig: Record<string, { name: string; icon: string; description: string }> = {
@@ -180,29 +211,22 @@ export function NotEnoughCardsGuide({
               </button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-2">
-              {prices.map((priceData) => {
-                const collection = collections.find(c => c.id === priceData.id);
-                return (
-                  <button
-                    key={priceData.id}
-                    onClick={() => {
-                      setShowCollectionsModal(false);
-                      onClose();
-                      window.location.href = '/shop';
-                    }}
-                    className="w-full flex items-center justify-between p-3 bg-vintage-black/50 hover:bg-vintage-gold/20 rounded-xl transition-all group text-left border border-vintage-gold/30"
-                  >
-                    <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
-                      {priceData.emoji} {priceData.displayName}
+              {prices.map((priceData) => (
+                <button
+                  key={priceData.id}
+                  onClick={() => handleCollectionClick(priceData.id)}
+                  className="w-full flex items-center justify-between p-3 bg-vintage-black/50 hover:bg-vintage-gold/20 rounded-xl transition-all group text-left border border-vintage-gold/30"
+                >
+                  <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
+                    {priceData.emoji} {priceData.displayName}
+                  </span>
+                  <div className="flex items-center gap-2 ml-2">
+                    <span className="text-green-400 text-sm font-bold">
+                      {priceData.priceUsd}
                     </span>
-                    <div className="flex items-center gap-2 ml-2">
-                      <span className="text-green-400 text-sm font-bold">
-                        {priceData.priceUsd && priceData.priceUsd !== '$0' ? priceData.priceUsd : priceData.priceEth ? `${parseFloat(priceData.priceEth).toFixed(4)} ETH` : '...'}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
+                  </div>
+                </button>
+              ))}
             </div>
             <button
               onClick={() => setShowCollectionsModal(false)}
