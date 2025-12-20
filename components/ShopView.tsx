@@ -25,12 +25,14 @@ export function ShopView({ address }: ShopViewProps) {
   const playerPacks = useQuery(api.cardPacks.getPlayerPacks, address ? { address } : "skip");
   const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
   const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip");
+  const dailyFreeStatus = useQuery(api.cardPacks.canClaimDailyFree, address ? { address } : "skip");
   // 🚀 BANDWIDTH FIX: Removed unused profile query (was fetching but never used)
 
   // Mutations
   const openPack = useMutation(api.cardPacks.openPack);
   const openAllPacks = useMutation(api.cardPacks.openAllPacks);
   const buyPackWithLuckBoost = useMutation(api.cardPacks.buyPackWithLuckBoost);
+  const claimDailyFree = useMutation(api.cardPacks.claimDailyFreePack);
 
   // VBMS Blockchain hooks (using Farcaster-compatible hook for miniapp)
   const { address: walletAddress } = useAccount();
@@ -59,6 +61,8 @@ export function ShopView({ address }: ShopViewProps) {
   const [luckBoost, setLuckBoost] = useState(false); // Elite odds for 5x price
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showBurnModal, setShowBurnModal] = useState(false);
+  const [claimingDaily, setClaimingDaily] = useState(false);
+  const [dailyClaimedCard, setDailyClaimedCard] = useState<any>(null);
 
   // Prices
   const NORMAL_PRICE = 1000;
@@ -203,6 +207,35 @@ export function ShopView({ address }: ShopViewProps) {
     } finally {
       setOpeningPack(false);
     }
+  };
+
+  // Handle daily free claim
+  const handleClaimDailyFree = async () => {
+    if (!address || claimingDaily) return;
+
+    setClaimingDaily(true);
+    try {
+      const result = await claimDailyFree({ address });
+      setDailyClaimedCard(result.card);
+      setNotification({
+        type: 'success',
+        message: `🎁 Daily free! Got a ${result.card.rarity}${result.card.foil ? ` ${result.card.foil} Foil` : ''} card!`
+      });
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.message || "Failed to claim daily free"
+      });
+    } finally {
+      setClaimingDaily(false);
+    }
+  };
+
+  // Format time remaining
+  const formatTimeRemaining = (ms: number) => {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
   };
 
   if (!address) {
@@ -406,18 +439,33 @@ export function ShopView({ address }: ShopViewProps) {
               </button>
             </div>
 
-            {/* Buy Button */}
-            <button
-              onClick={() => handleBuyWithVBMS(luckBoost ? 'boosted' : 'basic', currentPrice)}
-              disabled={loading || parseFloat(vbmsBalance) < currentPrice * quantity}
-              className={`w-full ${luckBoost ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'} disabled:bg-vintage-charcoal/50 text-white disabled:text-vintage-ice/30 font-display font-bold py-3 px-6 rounded-xl transition-all disabled:cursor-not-allowed disabled:shadow-none`}
-            >
-              {loading ? "Processing..." : `Buy ${quantity}x for ${currentPrice * quantity} VBMS`}
-            </button>
+            {/* Buy Button - Shows FREE when daily free available */}
+            {dailyFreeStatus?.canClaim && !luckBoost && quantity === 1 ? (
+              <button
+                onClick={handleClaimDailyFree}
+                disabled={claimingDaily}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-display font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-green-500/30 disabled:opacity-50"
+              >
+                {claimingDaily ? "Claiming..." : "FREE (1x Daily)"}
+              </button>
+            ) : (
+              <button
+                onClick={() => handleBuyWithVBMS(luckBoost ? 'boosted' : 'basic', currentPrice)}
+                disabled={loading || parseFloat(vbmsBalance) < currentPrice * quantity}
+                className={`w-full ${luckBoost ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'} disabled:bg-vintage-charcoal/50 text-white disabled:text-vintage-ice/30 font-display font-bold py-3 px-6 rounded-xl transition-all disabled:cursor-not-allowed disabled:shadow-none`}
+              >
+                {loading ? "Processing..." : `Buy ${quantity}x for ${currentPrice * quantity} VBMS`}
+              </button>
+            )}
             
             {/* Balance Info - Subtle */}
             <div className="text-xs text-vintage-ice/60 mt-2 text-center">
               Balance: <span className="text-purple-400 font-medium">{parseFloat(vbmsBalance).toLocaleString()} VBMS</span>
+              {dailyFreeStatus && !dailyFreeStatus.canClaim && dailyFreeStatus.timeRemaining && (
+                <span className="ml-2 text-green-400/70">
+                  • Free in {formatTimeRemaining(dailyFreeStatus.timeRemaining)}
+                </span>
+              )}
             </div>
           </div>
         </div>
