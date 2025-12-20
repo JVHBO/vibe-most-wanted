@@ -20,6 +20,7 @@ import { SpectatorBetFeedback } from './SpectatorBetFeedback';
 import { GamePopups } from './GamePopups';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { NotEnoughCardsGuide } from './NotEnoughCardsGuide';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Collection cover images for Mecha Arena (sealed/unrevealed card backs)
 const COLLECTION_COVERS: Record<string, string> = {
@@ -126,6 +127,9 @@ export function PokerBattleTable({
 }: PokerBattleTableProps) {
   // Convex client for imperative queries
   const convex = useConvex();
+
+  // Translations
+  const { t } = useLanguage();
 
   // View Mode state - go directly to game if initialRoomId provided (spectator mode)
   const [currentView, setCurrentView] = useState<ViewMode>(
@@ -2250,7 +2254,7 @@ export function PokerBattleTable({
                 requiredCards={10}
                 gameMode="poker"
                 onClose={onClose}
-                t={(key: string) => key}
+                t={t}
               />
             )}
 

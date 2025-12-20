@@ -115,25 +115,17 @@ export function NotEnoughCardsGuide({
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Button */}
       <div className="flex flex-wrap justify-center gap-2 mb-4">
-        <a
-          href="/shop"
+        <button
+          onClick={() => {
+            onClose();
+            window.location.href = '/shop';
+          }}
           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-display font-bold rounded-xl transition-all hover:scale-105 shadow-lg text-sm"
         >
           🛒 {t('guideShopPacks') || 'Buy Card Packs'}
-        </a>
-        {gameMode !== 'raid' && (
-          <button
-            onClick={() => {
-              onClose();
-              window.location.href = '/#raid';
-            }}
-            className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-display font-bold rounded-xl transition-all hover:scale-105 shadow-lg text-sm"
-          >
-            💀 {t('guidePlayRaid') || 'Play Raid Boss'}
-          </button>
-        )}
+        </button>
       </div>
 
       {/* How to Get Cards */}
@@ -162,44 +154,33 @@ export function NotEnoughCardsGuide({
         <h4 className="text-vintage-gold font-display font-bold text-sm mb-2">
           📊 {t('guideLTCCollections') || 'LTC Collections'}
         </h4>
-        <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
-          {prices.slice(0, 6).map((priceData) => {
-            const collection = collections.find(c => c.id === priceData.id);
-            return (
-              <a
-                key={priceData.id}
-                href={collection?.marketplaceUrl || `https://vibe.market`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-2 bg-vintage-charcoal/50 hover:bg-vintage-gold/10 rounded-lg transition-all group"
-              >
-                <span className="text-vintage-ice text-xs font-medium group-hover:text-vintage-gold truncate flex-1">
-                  {priceData.emoji} {priceData.displayName}
-                </span>
-                <div className="flex items-center gap-2 ml-2">
-                  {pricesLoading ? (
-                    <span className="text-vintage-burnt-gold text-xs">...</span>
-                  ) : priceData.priceEth ? (
-                    <span className="text-green-400 text-xs font-bold">
-                      {parseFloat(priceData.priceEth).toFixed(4)} ETH
-                    </span>
-                  ) : (
-                    <span className="text-vintage-burnt-gold text-xs">-</span>
-                  )}
-                  <span className="text-vintage-gold text-xs">→</span>
-                </div>
-              </a>
-            );
-          })}
+        <div className="space-y-1.5 max-h-[180px] overflow-y-auto">
+          {prices.map((priceData) => (
+            <button
+              key={priceData.id}
+              onClick={() => {
+                onClose();
+                window.location.href = '/shop';
+              }}
+              className="w-full flex items-center justify-between p-2 bg-vintage-charcoal/50 hover:bg-vintage-gold/10 rounded-lg transition-all group text-left"
+            >
+              <span className="text-vintage-ice text-xs font-medium group-hover:text-vintage-gold truncate flex-1">
+                {priceData.emoji} {priceData.displayName}
+              </span>
+              <div className="flex items-center gap-2 ml-2">
+                {pricesLoading ? (
+                  <span className="text-vintage-burnt-gold text-xs">...</span>
+                ) : priceData.priceUsd ? (
+                  <span className="text-green-400 text-xs font-bold">
+                    {priceData.priceUsd}
+                  </span>
+                ) : (
+                  <span className="text-vintage-burnt-gold text-xs">-</span>
+                )}
+              </div>
+            </button>
+          ))}
         </div>
-        <a
-          href="https://vibe.market"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block mt-2 text-center text-vintage-gold hover:text-vintage-burnt-gold text-xs underline"
-        >
-          {t('guideViewMarket') || 'View all on Vibe Market →'}
-        </a>
       </div>
 
       <button
