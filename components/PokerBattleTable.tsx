@@ -19,6 +19,7 @@ import { SimpleBettingOverlay } from './SimpleBettingOverlay';
 import { SpectatorBetFeedback } from './SpectatorBetFeedback';
 import { GamePopups } from './GamePopups';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import { NotEnoughCardsGuide } from './NotEnoughCardsGuide';
 
 // Collection cover images for Mecha Arena (sealed/unrevealed card backs)
 const COLLECTION_COVERS: Record<string, string> = {
@@ -201,25 +202,53 @@ export function PokerBattleTable({
 
   // Meme sound sync function
   const playMemeSound = async (soundUrl: string, soundName: string, emoji: string) => {
-    // DON'T play locally or show emoji here - let the useEffect handle it for both players
-    // Just broadcast to Convex so the useEffect picks it up for everyone
+    // In CPU mode, play locally immediately
+    if (isCPUMode || !roomId) {
+      console.log('[PokerBattle] Playing meme sound locally (CPU mode):', soundName, soundUrl);
 
-    // Broadcast to other players via Convex (only in PvP mode)
-    if (!isCPUMode && roomId) {
-      try {
-        await sendMessageMutation({
-          roomId,
-          sender: playerAddress,
-          senderUsername: playerUsername,
-          message: soundName,
-          type: "sound",
-          soundUrl: soundUrl,
-          emoji: emoji,
-        });
-        console.log('[PokerBattle] Sound meme broadcasted:', soundName, soundUrl);
-      } catch (error) {
-        console.error('[PokerBattle] Failed to broadcast sound:', error);
+      // Stop any currently playing meme sound
+      if (currentMemeAudioRef.current) {
+        currentMemeAudioRef.current.pause();
+        currentMemeAudioRef.current.currentTime = 0;
       }
+
+      const audio = new Audio(soundUrl);
+      audio.volume = 0.7;
+      currentMemeAudioRef.current = audio;
+      audio.play().catch((err) => {
+        console.error('[PokerBattle] Failed to play audio:', err);
+      });
+
+      // Show floating emoji
+      if (emoji) {
+        const newEmoji = {
+          id: Date.now(),
+          emoji: emoji,
+          x: Math.random() * 60 + 20,
+          y: Math.random() * 40 + 30,
+        };
+        setFloatingEmojis(prev => [...prev, newEmoji]);
+        setTimeout(() => {
+          setFloatingEmojis(prev => prev.filter(e => e.id !== newEmoji.id));
+        }, 2000);
+      }
+      return;
+    }
+
+    // In PvP mode, broadcast to Convex so the useEffect picks it up for everyone
+    try {
+      await sendMessageMutation({
+        roomId,
+        sender: playerAddress,
+        senderUsername: playerUsername,
+        message: soundName,
+        type: "sound",
+        soundUrl: soundUrl,
+        emoji: emoji,
+      });
+      console.log('[PokerBattle] Sound meme broadcasted:', soundName, soundUrl);
+    } catch (error) {
+      console.error('[PokerBattle] Failed to broadcast sound:', error);
     }
   };
 
@@ -1489,6 +1518,11 @@ export function PokerBattleTable({
 
   // Handler for closing victory screen
   const handleCloseVictoryScreen = () => {
+    // Stop victory music
+    if (victoryAudioRef.current) {
+      victoryAudioRef.current.pause();
+      victoryAudioRef.current = null;
+    }
     setShowWinPopup(false);
     // All rewards go to inbox automatically, close the game
     onClose();
@@ -1496,6 +1530,11 @@ export function PokerBattleTable({
 
   // Handler for closing defeat screen
   const handleCloseDefeatScreen = () => {
+    // Stop any audio just in case
+    if (victoryAudioRef.current) {
+      victoryAudioRef.current.pause();
+      victoryAudioRef.current = null;
+    }
     setShowLossPopup(false);
     onClose();
   };
@@ -1650,7 +1689,7 @@ export function PokerBattleTable({
       if (victoryConfig.audio && !victoryAudioRef.current) {
         console.log('[PokerBattle] 🎵 Playing victory music:', victoryConfig.audio);
         const audio = new Audio(victoryConfig.audio);
-        audio.loop = true;
+        audio.loop = false; // Play once, don't loop
         audio.volume = 0.5; // Set volume to 50% to avoid being too loud
         audio.play().catch(err => console.error('[PokerBattle] Failed to play victory music:', err));
         victoryAudioRef.current = audio;
@@ -2043,9 +2082,14 @@ export function PokerBattleTable({
   // Note: VBMS battles are finalized via blockchain contract (finishVBMSBattle) in the useEffect above
   // No inbox system for VBMS battles - rewards are transferred directly via smart contract
 
-  // Auto-close game after it ends
+  // Auto-close game after it ends (with ref to prevent dependency issues)
+  const gameOverHandled = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose; // Keep ref updated
+
   useEffect(() => {
-    if (phase === 'game-over' && !isSpectatorMode) {
+    if (phase === 'game-over' && !isSpectatorMode && !gameOverHandled.current) {
+      gameOverHandled.current = true; // Prevent running multiple times
       console.log('[PokerBattle] Game over - will auto-close in 15 seconds', {
         selectedToken,
         roomFinished,
@@ -2054,12 +2098,21 @@ export function PokerBattleTable({
 
       const timer = setTimeout(() => {
         console.log('[PokerBattle] Auto-closing game...');
-        onClose();
+        // Stop victory music before closing
+        if (victoryAudioRef.current) {
+          victoryAudioRef.current.pause();
+          victoryAudioRef.current = null;
+        }
+        onCloseRef.current();
       }, 15000); // 15 seconds to see victory screen
 
       return () => clearTimeout(timer);
     }
-  }, [phase, isSpectatorMode, onClose]);
+    // Reset flag when phase changes away from game-over
+    if (phase !== 'game-over') {
+      gameOverHandled.current = false;
+    }
+  }, [phase, isSpectatorMode, selectedToken, roomFinished, isCPUMode]);
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
@@ -2189,6 +2242,21 @@ export function PokerBattleTable({
             <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-2 sm:mb-3 text-center flex-shrink-0">
               BUILD YOUR DECK
             </h2>
+
+            {/* Not enough cards warning */}
+            {playerCards.length < 10 && (
+              <NotEnoughCardsGuide
+                currentCards={playerCards.length}
+                requiredCards={10}
+                gameMode="poker"
+                onClose={onClose}
+                t={(key: string) => key}
+              />
+            )}
+
+            {/* Normal deck building UI - only show if enough cards */}
+            {playerCards.length >= 10 && (
+            <>
             <div className="flex flex-col sm:flex-row items-center justify-between mb-2 sm:mb-4 gap-2 flex-shrink-0">
               <p className="text-vintage-burnt-gold text-center text-sm sm:text-base">
                 Select 10 cards ({selectedDeck.length}/10)
@@ -2332,6 +2400,8 @@ export function PokerBattleTable({
             >
               {selectedDeck.length === 10 ? 'START GAME' : `SELECT ${10 - selectedDeck.length} MORE`}
             </button>
+            </>
+            )}
           </div>
         )}
 
@@ -2531,8 +2601,8 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Meme Sound Panel - Floating on left side (just below yellow POT line) */}
-            <div className="absolute left-2 sm:left-4 top-24 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
+            {/* Meme Sound Panel - Floating on bottom left */}
+            <div className="absolute left-2 sm:left-4 bottom-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
                 <div className="text-vintage-gold font-display font-bold text-[10px] mb-1.5 text-center border-b border-vintage-gold/30 pb-1">
                   🔊 MEME SOUNDS
                 </div>
