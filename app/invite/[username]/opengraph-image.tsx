@@ -45,7 +45,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
   };
 
   const finalPfpUrl = proxyUrl(pfpUrl);
-  const backgroundUrl = 'https://www.vibemostwanted.xyz/profile-bg.jpg';
+  const backgroundUrl = 'https://www.vibemostwanted.xyz/referral-bg.jpg';
 
   return new ImageResponse(
     (

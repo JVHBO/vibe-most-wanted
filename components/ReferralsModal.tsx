@@ -112,13 +112,20 @@ export default function ReferralsModal({
 
     if (isInFarcaster) {
       try {
-        // Open the referral link in a new window for sharing
-        await sdk.actions.openUrl({
-          url: `https://warpcast.com/~/compose?text=${encodeURIComponent(`Join me in VIBE Most Wanted! Battle with NFT cards, play poker, and defeat raid bosses together! 🎴⚔️\n\n${referralLink}`)}`,
+        // Use native Farcaster compose action
+        await sdk.actions.composeCast({
+          text: `Join me in VIBE Most Wanted! Battle with NFT cards, play poker, and defeat raid bosses together! 🎴⚔️`,
+          embeds: [referralLink],
         });
       } catch (err) {
-        // Fallback to copy
-        handleCopyLink();
+        // Fallback to openUrl with Warpcast compose
+        try {
+          await sdk.actions.openUrl({
+            url: `https://warpcast.com/~/compose?text=${encodeURIComponent(`Join me in VIBE Most Wanted! Battle with NFT cards, play poker, and defeat raid bosses together! 🎴⚔️\n\n${referralLink}`)}`,
+          });
+        } catch {
+          handleCopyLink();
+        }
       }
     } else {
       // Open share dialog or copy
