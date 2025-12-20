@@ -66,6 +66,13 @@ const PACK_TYPES = {
     price: 0, // Earned, not bought
     rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 },
   },
+  dailyFree: {
+    name: "Daily Free Pack",
+    description: "Free daily shot - claim once per day!",
+    cards: 1,
+    price: 0, // FREE!
+    rarityOdds: { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 },
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1235,6 +1242,165 @@ export const buyPackWithLuckBoost = mutation({
       coinsSpent: totalCost,
       remainingCoins: coins - totalCost,
       boosted: args.boosted,
+    };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DAILY FREE PACK SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Check if player can claim daily free pack
+ */
+export const canClaimDailyFree = query({
+  args: { address: v.string() },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    // Get last claim record
+    const lastClaim = await ctx.db
+      .query("dailyFreeClaims")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!lastClaim) {
+      return { canClaim: true, nextClaimAt: null };
+    }
+
+    // Check if 24 hours have passed
+    const now = Date.now();
+    const lastClaimTime = lastClaim.claimedAt;
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    const nextClaimAt = lastClaimTime + twentyFourHours;
+
+    if (now >= nextClaimAt) {
+      return { canClaim: true, nextClaimAt: null };
+    }
+
+    return {
+      canClaim: false,
+      nextClaimAt,
+      timeRemaining: nextClaimAt - now,
+    };
+  },
+});
+
+/**
+ * Claim daily free pack - opens immediately and returns the card
+ */
+export const claimDailyFreePack = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    // Check if can claim
+    const lastClaim = await ctx.db
+      .query("dailyFreeClaims")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    const now = Date.now();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+
+    if (lastClaim && now < lastClaim.claimedAt + twentyFourHours) {
+      throw new Error("Already claimed today! Come back tomorrow.");
+    }
+
+    // Get pack type config
+    const packConfig = PACK_TYPES.dailyFree;
+
+    // Roll rarity
+    const rarity = rollRarity(packConfig.rarityOdds);
+
+    // Roll foil (same odds as other packs)
+    const foilRoll = Math.random() * 100;
+    let foil = "";
+    if (foilRoll < 1) foil = "Prize";
+    else if (foilRoll < 8) foil = "Standard";
+
+    // Roll wear
+    const wearRoll = Math.random() * 100;
+    let wear = "Lightly Played";
+    if (wearRoll < 2) wear = "Pristine";
+    else if (wearRoll < 12) wear = "Mint";
+    else if (wearRoll < 45) wear = "Lightly Played";
+    else if (wearRoll < 80) wear = "Moderately Played";
+    else wear = "Heavily Played";
+
+    // Generate card
+    const suit = SUITS[Math.floor(Math.random() * SUITS.length)];
+    const rank = RANKS[Math.floor(Math.random() * RANKS.length)];
+    const cardId = `free_daily_${suit}_${rank}_${rarity.toLowerCase()}_${Date.now()}`;
+
+    // Calculate power
+    let basePower = 5;
+    if (rarity === "Rare") basePower = 20;
+    else if (rarity === "Epic") basePower = 80;
+    else if (rarity === "Legendary") basePower = 240;
+
+    let wearMult = 1.0;
+    if (wear === "Pristine") wearMult = 1.8;
+    else if (wear === "Mint") wearMult = 1.4;
+
+    let foilMult = 1.0;
+    if (foil === "Prize") foilMult = 15.0;
+    else if (foil === "Standard") foilMult = 2.5;
+
+    const power = Math.round(basePower * wearMult * foilMult);
+
+    // Card image URL
+    const variant = rarity.toLowerCase() === "common" ? "default" :
+                   rarity.toLowerCase() === "rare" ? "gold" :
+                   rarity.toLowerCase() === "epic" ? "neon" : "cosmic";
+    const imageUrl = `/cards/${suit}_${rank}${variant !== "default" ? `_${variant}` : ""}.png`;
+
+    // Insert card directly to inventory
+    await ctx.db.insert("cardInventory", {
+      address,
+      cardId,
+      suit,
+      rank,
+      variant,
+      rarity,
+      imageUrl,
+      badgeType: "FREE_CARD",
+      foil: foil || undefined,
+      wear,
+      power,
+      quantity: 1,
+      equipped: false,
+      obtainedAt: now,
+    });
+
+    // Update or create claim record
+    if (lastClaim) {
+      await ctx.db.patch(lastClaim._id, {
+        claimedAt: now,
+        totalClaims: (lastClaim.totalClaims || 0) + 1,
+      });
+    } else {
+      await ctx.db.insert("dailyFreeClaims", {
+        address,
+        claimedAt: now,
+        totalClaims: 1,
+      });
+    }
+
+    console.log(`🎁 Daily Free: ${address} claimed a ${rarity} ${foil ? foil + " Foil " : ""}${suit} ${rank}!`);
+
+    return {
+      success: true,
+      card: {
+        cardId,
+        suit,
+        rank,
+        rarity,
+        foil: foil || null,
+        wear,
+        power,
+        imageUrl,
+      },
     };
   },
 });
