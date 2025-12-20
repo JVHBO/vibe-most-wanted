@@ -85,6 +85,32 @@ scripts/admin/
 # Windows junk
 nul
 
+# Root level cleanup - scripts, logs, screenshots
+*.py
+*.sh
+*.log
+*.txt
+!README.md
+*.csv
+*.sol
+*.png
+*.webm
+*.html
+
+# Firebase (not used)
+.firebaserc
+firebase.json
+database.rules.json
+
+# Vercel temp files
+.vercel-force-deploy
+
+# Claude Code config (private)
+.claude/
+
+# Old configs backup
+configs/
+
 # Convex config (contains deployment names)
 .convex/
 
