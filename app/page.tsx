@@ -26,6 +26,7 @@ import { ShopView } from "@/components/ShopView";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { TutorialModal } from "@/components/TutorialModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import ReferralsModal from "@/components/ReferralsModal";
 import { CpuArenaModal } from "@/components/CpuArenaModal";
 import { InboxDisplay } from "@/components/InboxDisplay";
 import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
@@ -626,6 +627,30 @@ export default function TCGPage() {
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
+  const [referrerUsername, setReferrerUsername] = useState<string | null>(null);
+
+  // Track referral mutation
+  const trackReferral = useMutation(api.referrals.trackReferral);
+
+  // Parse referral parameter from URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        setReferrerUsername(ref);
+        devLog('[Referral] Detected referrer:', ref);
+        // Store in localStorage in case page reloads
+        localStorage.setItem('referrer', ref);
+      } else {
+        // Check localStorage for stored referrer
+        const storedRef = localStorage.getItem('referrer');
+        if (storedRef) {
+          setReferrerUsername(storedRef);
+        }
+      }
+    }
+  }, []);
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [raidBossLeaderboard, setRaidBossLeaderboard] = useState<UserProfile[]>([]);
   const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
@@ -636,6 +661,7 @@ export default function TCGPage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
+  const [showReferrals, setShowReferrals] = useState<boolean>(false);
   const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
 
   // Missions States
@@ -3850,6 +3876,15 @@ export default function TCGPage() {
         t={t}
       />
 
+      {/* Referrals Modal */}
+      <ReferralsModal
+        isOpen={showReferrals}
+        onClose={() => setShowReferrals(false)}
+        address={address || ''}
+        username={userProfile?.username || ''}
+        soundEnabled={soundEnabled}
+      />
+
       {/* Elimination Mode - Card Ordering Screen */}
       <EliminationOrderingModal
         isOpen={eliminationPhase === 'ordering'}
@@ -4941,6 +4976,20 @@ export default function TCGPage() {
                   {unreadDefenses}
                 </span>
               )}
+            </button>
+          )}
+
+          {/* Referrals Button */}
+          {userProfile && (
+            <button
+              onClick={() => {
+                if (soundEnabled) AudioManager.buttonClick();
+                setShowReferrals(true);
+              }}
+              className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
+              title="Invite Friends"
+            >
+              <span className="text-lg">👥</span>
             </button>
           )}
 
@@ -6585,7 +6634,28 @@ export default function TCGPage() {
             setCurrentView={setCurrentView}
             soundEnabled={soundEnabled}
             t={t}
-            onProfileCreated={() => setShowTutorial(true)}
+            onProfileCreated={async () => {
+              setShowTutorial(true);
+              // Track referral if there was a referrer
+              if (referrerUsername && address && profileUsername) {
+                try {
+                  const context = await sdk.context;
+                  const fid = context?.user?.fid;
+                  await trackReferral({
+                    referrerUsername,
+                    referredAddress: address,
+                    referredUsername: profileUsername,
+                    referredFid: fid,
+                  });
+                  devLog('[Referral] Tracked successfully:', referrerUsername, '->', profileUsername);
+                  // Clear stored referrer after successful tracking
+                  localStorage.removeItem('referrer');
+                  setReferrerUsername(null);
+                } catch (err) {
+                  devError('[Referral] Failed to track:', err);
+                }
+              }
+            }}
           />
 
           {/* Tutorial Modal - Shows for all players once */}
