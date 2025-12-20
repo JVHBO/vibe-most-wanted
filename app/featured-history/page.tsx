@@ -19,7 +19,7 @@ export default function FeaturedHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-vintage-black">
+    <div className="min-h-screen bg-vintage-deep-black">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-vintage-charcoal/95 backdrop-blur-sm border-b border-vintage-gold/30">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -43,25 +43,25 @@ export default function FeaturedHistoryPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-vintage-charcoal/50 rounded-xl border border-vintage-gold/20 p-4 text-center">
+          <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/30 p-4 text-center">
             <p className="text-3xl font-bold text-vintage-gold">
               {history?.length || 0}
             </p>
-            <p className="text-vintage-burnt-gold text-sm">Total Winners</p>
+            <p className="text-vintage-ice/70 text-sm">Total Winners</p>
           </div>
-          <div className="bg-vintage-charcoal/50 rounded-xl border border-vintage-gold/20 p-4 text-center">
+          <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/30 p-4 text-center">
             <p className="text-3xl font-bold text-vintage-gold">
               {history
                 ?.reduce((sum: number, a: AuctionDoc) => sum + (a.winningBid || 0), 0)
                 .toLocaleString() || 0}
             </p>
-            <p className="text-vintage-burnt-gold text-sm">VBMS Spent</p>
+            <p className="text-vintage-ice/70 text-sm">VBMS Spent</p>
           </div>
-          <div className="bg-vintage-charcoal/50 rounded-xl border border-vintage-gold/20 p-4 text-center">
+          <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/30 p-4 text-center">
             <p className="text-3xl font-bold text-vintage-gold">
               {new Set(history?.map((a: AuctionDoc) => a.winnerAddress)).size || 0}
             </p>
-            <p className="text-vintage-burnt-gold text-sm">Unique Winners</p>
+            <p className="text-vintage-ice/70 text-sm">Unique Winners</p>
           </div>
         </div>
 
@@ -73,16 +73,16 @@ export default function FeaturedHistoryPage() {
         ) : history.length === 0 ? (
           <div className="text-center py-20">
             <svg
-              className="w-16 h-16 mx-auto text-vintage-gold/30 mb-4"
+              className="w-16 h-16 mx-auto text-vintage-gold/50 mb-4"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
-            <p className="text-vintage-burnt-gold text-lg">
+            <p className="text-vintage-ice text-lg">
               No featured casts yet
             </p>
-            <p className="text-vintage-burnt-gold/60 text-sm mt-2">
+            <p className="text-vintage-ice/60 text-sm mt-2">
               Be the first to bid on a featured cast!
             </p>
           </div>
@@ -91,7 +91,7 @@ export default function FeaturedHistoryPage() {
             {history.map((auction: AuctionDoc, index: number) => (
               <div
                 key={auction._id}
-                className="bg-vintage-charcoal/50 rounded-xl border border-vintage-gold/20 overflow-hidden hover:border-vintage-gold/40 transition-all"
+                className="bg-vintage-charcoal rounded-xl border border-vintage-gold/30 overflow-hidden hover:border-vintage-gold/50 transition-all"
               >
                 <div className="p-4">
                   {/* Header */}
@@ -125,7 +125,7 @@ export default function FeaturedHistoryPage() {
                           <p className="text-vintage-gold font-bold text-sm">
                             @{auction.castAuthorUsername || "unknown"}
                           </p>
-                          <p className="text-vintage-burnt-gold text-xs">
+                          <p className="text-vintage-ice/60 text-xs">
                             Cast author
                           </p>
                         </div>
@@ -137,7 +137,7 @@ export default function FeaturedHistoryPage() {
                       <p className="text-vintage-gold font-bold text-lg">
                         {auction.winningBid?.toLocaleString()} VBMS
                       </p>
-                      <p className="text-vintage-burnt-gold text-xs">
+                      <p className="text-vintage-ice/60 text-xs">
                         Slot {auction.slotNumber + 1}
                       </p>
                     </div>
@@ -145,8 +145,8 @@ export default function FeaturedHistoryPage() {
 
                   {/* Cast Text */}
                   {auction.castText && (
-                    <div className="bg-vintage-charcoal/50 rounded-lg p-3 mb-3">
-                      <p className="text-vintage-cream text-sm line-clamp-2">
+                    <div className="bg-vintage-black/80 rounded-lg p-3 mb-3 border border-vintage-gold/20">
+                      <p className="text-vintage-ice text-sm line-clamp-2">
                         "{auction.castText}"
                       </p>
                     </div>
@@ -155,7 +155,7 @@ export default function FeaturedHistoryPage() {
                   {/* Footer */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-vintage-burnt-gold text-xs">
+                      <span className="text-vintage-ice/60 text-xs">
                         Winner:
                       </span>
                       <span className="text-vintage-gold text-sm font-medium">
@@ -164,7 +164,7 @@ export default function FeaturedHistoryPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       {auction.featureEndsAt && (
-                        <span className="text-vintage-burnt-gold text-xs">
+                        <span className="text-vintage-ice/60 text-xs">
                           Featured: {formatDate(auction.featureEndsAt)}
                         </span>
                       )}
