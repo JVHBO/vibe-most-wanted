@@ -196,15 +196,9 @@ export function NotEnoughCardsGuide({
                       {priceData.emoji} {priceData.displayName}
                     </span>
                     <div className="flex items-center gap-2 ml-2">
-                      {pricesLoading ? (
-                        <span className="text-vintage-burnt-gold text-sm">...</span>
-                      ) : priceData.priceUsd ? (
-                        <span className="text-green-400 text-sm font-bold">
-                          {priceData.priceUsd}
-                        </span>
-                      ) : (
-                        <span className="text-vintage-burnt-gold text-sm">-</span>
-                      )}
+                      <span className="text-green-400 text-sm font-bold">
+                        {priceData.priceUsd && priceData.priceUsd !== '$0' ? priceData.priceUsd : priceData.priceEth ? `${parseFloat(priceData.priceEth).toFixed(4)} ETH` : '...'}
+                      </span>
                     </div>
                   </button>
                 );
