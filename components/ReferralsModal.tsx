@@ -110,38 +110,36 @@ export default function ReferralsModal({
   const handleShare = async () => {
     if (soundEnabled) AudioManager.buttonClick();
 
+    const shareText = `Join me in VIBE Most Wanted! Battle with NFT cards, play poker, and defeat raid bosses together! 🎴⚔️`;
+    const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(referralLink)}`;
+
     if (isInFarcaster) {
-      try {
-        // Use native Farcaster compose action
-        await sdk.actions.composeCast({
-          text: `Join me in VIBE Most Wanted! Battle with NFT cards, play poker, and defeat raid bosses together! 🎴⚔️`,
-          embeds: [referralLink],
-        });
-      } catch (err) {
-        // Fallback to openUrl with Warpcast compose
+      // Check if composeCast is available
+      if (typeof sdk.actions.composeCast === 'function') {
         try {
-          await sdk.actions.openUrl({
-            url: `https://warpcast.com/~/compose?text=${encodeURIComponent(`Join me in VIBE Most Wanted! Battle with NFT cards, play poker, and defeat raid bosses together! 🎴⚔️\n\n${referralLink}`)}`,
+          await sdk.actions.composeCast({
+            text: shareText,
+            embeds: [referralLink],
           });
-        } catch {
-          handleCopyLink();
-        }
-      }
-    } else {
-      // Open share dialog or copy
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'Join VIBE Most Wanted',
-            text: `${username} invited you to VIBE Most Wanted!`,
-            url: referralLink,
-          });
+          return;
         } catch (err) {
-          handleCopyLink();
+          console.log('[Share] composeCast failed, trying openUrl:', err);
         }
-      } else {
-        handleCopyLink();
       }
+
+      // Fallback to openUrl with Warpcast compose
+      try {
+        await sdk.actions.openUrl({ url: warpcastUrl });
+        return;
+      } catch (err) {
+        console.log('[Share] openUrl failed:', err);
+      }
+
+      // Final fallback - open in new window
+      window.open(warpcastUrl, '_blank');
+    } else {
+      // Not in Farcaster - open Warpcast directly
+      window.open(warpcastUrl, '_blank');
     }
   };
 
