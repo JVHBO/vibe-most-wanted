@@ -96,6 +96,18 @@ nul
 *.png
 *.webm
 *.html
+*.mp4
+
+# Debug/temp JS scripts at root level
+check-*.js
+debug-*.js
+temp-*.js
+FETCH_HEAD
+
+# Internal documentation (exploit reports, deployment guides, etc.)
+*-REPORT-*.md
+CONVEX_OPTIMIZATION_PLAN.md
+DEPLOYMENT_GUIDE.md
 
 # Firebase (not used)
 .firebaserc
