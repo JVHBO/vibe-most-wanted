@@ -89,108 +89,107 @@ export function NotEnoughCardsGuide({
   const cardsNeeded = requiredCards - currentCards;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center p-4 overflow-y-auto">
-      {/* Icon and Title */}
-      <div className="text-5xl mb-3">{config.icon}</div>
-      <h3 className="text-xl sm:text-2xl font-display font-bold text-red-400 mb-2">
-        {t('guideNotEnoughTitle') || 'You Need More Cards!'}
+    <div className="flex-1 flex flex-col items-center text-center p-3 overflow-y-auto">
+      {/* Title */}
+      <h3 className="text-lg font-display font-bold text-red-400 mb-2 flex items-center gap-2">
+        {config.icon} {t('guideNotEnoughTitle') || 'You Need More Cards!'}
       </h3>
 
-      {/* Game Mode Explanation */}
-      <div className="bg-vintage-black/50 border border-vintage-gold/30 rounded-xl p-3 mb-4 max-w-md">
-        <h4 className="text-vintage-gold font-bold text-sm mb-1">{config.name}</h4>
-        <p className="text-vintage-ice/80 text-xs leading-relaxed">{config.description}</p>
+      {/* Game Mode Info */}
+      <div className="bg-vintage-black/50 border border-vintage-gold/30 rounded-lg p-2 mb-3 w-full max-w-sm">
+        <h4 className="text-vintage-gold font-bold text-xs mb-1">{config.name}</h4>
+        <p className="text-vintage-ice/80 text-[11px] leading-snug">{config.description}</p>
       </div>
 
       {/* Card Status */}
-      <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-3 mb-4 max-w-md w-full">
-        <div className="flex items-center justify-center gap-4 mb-2">
+      <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-2 mb-3 w-full max-w-sm">
+        <div className="flex items-center justify-center gap-3 mb-1">
           <div className="text-center">
-            <div className="text-red-400 text-2xl font-bold">{currentCards}</div>
-            <div className="text-vintage-burnt-gold text-xs">{t('guideYourCards') || 'Your Cards'}</div>
+            <div className="text-red-400 text-xl font-bold">{currentCards}</div>
+            <div className="text-vintage-burnt-gold text-[10px]">{t('guideYourCards') || 'Your Cards'}</div>
           </div>
-          <div className="text-vintage-burnt-gold text-xl">/</div>
+          <div className="text-vintage-burnt-gold text-lg">/</div>
           <div className="text-center">
-            <div className="text-vintage-gold text-2xl font-bold">{requiredCards}</div>
-            <div className="text-vintage-burnt-gold text-xs">{t('guideRequired') || 'Required'}</div>
+            <div className="text-vintage-gold text-xl font-bold">{requiredCards}</div>
+            <div className="text-vintage-burnt-gold text-[10px]">{t('guideRequired') || 'Required'}</div>
           </div>
         </div>
-        <p className="text-red-300 text-sm font-medium">
+        <p className="text-red-300 text-xs font-medium">
           {t('guideNeedMore')?.replace('{count}', cardsNeeded.toString()) || `You need ${cardsNeeded} more card${cardsNeeded !== 1 ? 's' : ''} to play!`}
         </p>
       </div>
 
       {/* What are LTCs? */}
-      <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3 mb-4 max-w-md w-full">
-        <h4 className="text-vintage-gold font-display font-bold text-sm mb-2">
+      <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-lg p-2 mb-3 w-full max-w-sm">
+        <h4 className="text-vintage-gold font-bold text-xs mb-1">
           {t('guideWhatAreLTCs') || 'What are LTCs?'}
         </h4>
-        <p className="text-vintage-ice/70 text-xs mb-2">
+        <p className="text-vintage-ice/70 text-[10px] mb-1.5 leading-snug">
           {t('guideLTCExplanation') || 'LTCs (Liquid Trading Cards) are digital collectible cards on Base blockchain. Each card has a unique power level determined by its rarity and attributes.'}
         </p>
-        <div className="grid grid-cols-2 gap-1 text-[10px]">
+        <div className="grid grid-cols-2 gap-0.5 text-[9px]">
           <div className="flex items-center gap-1">
             <span className="text-green-400">●</span>
-            <span className="text-vintage-burnt-gold">{t('guideCommon') || 'Common'}: 5-15 {t('guidePower') || 'power'}</span>
+            <span className="text-vintage-burnt-gold">{t('guideCommon') || 'Common'}: 5-15</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="text-blue-400">●</span>
-            <span className="text-vintage-burnt-gold">{t('guideRare') || 'Rare'}: 20-50 {t('guidePower') || 'power'}</span>
+            <span className="text-vintage-burnt-gold">{t('guideRare') || 'Rare'}: 20-50</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="text-purple-400">●</span>
-            <span className="text-vintage-burnt-gold">{t('guideEpic') || 'Epic'}: 80-200 {t('guidePower') || 'power'}</span>
+            <span className="text-vintage-burnt-gold">{t('guideEpic') || 'Epic'}: 80-200</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="text-yellow-400">●</span>
-            <span className="text-vintage-burnt-gold">{t('guideLegendary') || 'Legendary'}: 240-600 {t('guidePower') || 'power'}</span>
+            <span className="text-vintage-burnt-gold">{t('guideLegendary') || 'Legendary'}: 240-600</span>
           </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap justify-center gap-2 mb-4">
+      <div className="flex flex-col w-full max-w-sm gap-2 mb-3">
         <button
           onClick={() => {
             onClose();
             window.location.href = '/shop';
           }}
-          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-display font-bold rounded-xl transition-all hover:scale-105 shadow-lg text-sm"
+          className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-display font-bold rounded-xl transition-all shadow-lg text-sm"
         >
           🛒 {t('guideShopPacks') || 'Buy Card Packs'}
         </button>
         <button
           onClick={() => setShowCollectionsModal(true)}
-          className="px-4 py-2 bg-gradient-to-r from-vintage-gold to-yellow-600 hover:from-yellow-500 hover:to-yellow-400 text-vintage-black font-display font-bold rounded-xl transition-all hover:scale-105 shadow-lg text-sm"
+          className="w-full py-2.5 bg-gradient-to-r from-vintage-gold to-yellow-600 hover:from-yellow-500 hover:to-yellow-400 text-vintage-black font-display font-bold rounded-xl transition-all shadow-lg text-sm"
         >
           📊 {t('guideLTCCollections') || 'LTC Collections'}
         </button>
       </div>
 
       {/* How to Get Cards */}
-      <div className="w-full max-w-md bg-vintage-black/50 rounded-xl border border-vintage-gold/30 p-3 mb-4">
-        <h4 className="text-vintage-gold font-display font-bold text-sm mb-2">
+      <div className="w-full max-w-sm bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-2 mb-3">
+        <h4 className="text-vintage-gold font-bold text-xs mb-1.5">
           {t('guideHowToGet') || 'How to Get Cards'}
         </h4>
-        <div className="space-y-2 text-left">
-          <div className="flex items-start gap-2">
-            <span className="text-vintage-gold text-sm">1.</span>
-            <p className="text-vintage-ice/80 text-xs">{t('guideStep1') || 'Buy card packs in the Shop with VBMS tokens'}</p>
+        <div className="space-y-1 text-left">
+          <div className="flex items-start gap-1.5">
+            <span className="text-vintage-gold text-[10px]">1.</span>
+            <p className="text-vintage-ice/80 text-[10px]">{t('guideStep1') || 'Buy card packs in the Shop with VBMS tokens'}</p>
           </div>
-          <div className="flex items-start gap-2">
-            <span className="text-vintage-gold text-sm">2.</span>
-            <p className="text-vintage-ice/80 text-xs">{t('guideStep2') || 'Claim your daily FREE card in the Shop'}</p>
+          <div className="flex items-start gap-1.5">
+            <span className="text-vintage-gold text-[10px]">2.</span>
+            <p className="text-vintage-ice/80 text-[10px]">{t('guideStep2') || 'Claim your daily FREE card in the Shop'}</p>
           </div>
-          <div className="flex items-start gap-2">
-            <span className="text-vintage-gold text-sm">3.</span>
-            <p className="text-vintage-ice/80 text-xs">{t('guideStep3') || 'Trade on Vibe Market with ETH'}</p>
+          <div className="flex items-start gap-1.5">
+            <span className="text-vintage-gold text-[10px]">3.</span>
+            <p className="text-vintage-ice/80 text-[10px]">{t('guideStep3') || 'Trade on Vibe Market with ETH'}</p>
           </div>
         </div>
       </div>
 
       <button
         onClick={onClose}
-        className="mt-4 text-vintage-burnt-gold hover:text-vintage-gold transition-all underline text-sm"
+        className="text-vintage-burnt-gold hover:text-vintage-gold transition-all underline text-xs"
       >
         ← {t('back')}
       </button>
