@@ -2120,6 +2120,25 @@ export function PokerBattleTable({
 
   // Early returns for matchmaking flow
   if (currentView === 'matchmaking') {
+    // Check if player has enough cards before showing matchmaking
+    if (playerCards.length < 10) {
+      return (
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[200] p-4">
+          <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-lg w-full p-4 shadow-neon">
+            <h2 className="text-xl font-display font-bold text-center mb-2 text-vintage-gold">
+              🃏 POKER BATTLE 🃏
+            </h2>
+            <NotEnoughCardsGuide
+              currentCards={playerCards.length}
+              requiredCards={10}
+              gameMode="poker"
+              onClose={onClose}
+              t={t}
+            />
+          </div>
+        </div>
+      );
+    }
     return (
       <PokerMatchmaking
         onClose={onClose}
