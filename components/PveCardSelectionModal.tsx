@@ -11,6 +11,7 @@ import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { filterCardsByCollections, COLLECTIONS, getEnabledCollections, getCardUniqueId, isSameCard, type CollectionId, type Card } from '@/lib/collections/index';
+import { NotEnoughCardsGuide } from './NotEnoughCardsGuide';
 
 // Using Card type from lib/collections which has proper typing
 type NFT = Card;
@@ -117,6 +118,47 @@ export function PveCardSelectionModal({
           BUILD YOUR DECK
         </h2>
 
+        {/* Not enough cards warning */}
+        {sortedPveNfts.length < handSize && !isLoading && (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+            <div className="text-6xl mb-4">🃏</div>
+            <h3 className="text-2xl font-display font-bold text-red-400 mb-2">
+              {t('notEnoughCardsTitle')}
+            </h3>
+            <p className="text-vintage-burnt-gold mb-2">
+              {t('notEnoughCardsExplain').replace('{count}', sortedPveNfts.length.toString())}
+            </p>
+            <p className="text-vintage-ice/70 mb-6">
+              Battle Auto needs <span className="text-vintage-neon-blue font-bold">{handSize}</span> cards.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a
+                href="/shop"
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-display font-bold rounded-xl transition-all hover:scale-105 shadow-lg"
+              >
+                🛒 {t('shopBuyPacks')}
+              </a>
+              <a
+                href="https://vibe.market"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-gold-dark hover:to-vintage-gold text-vintage-black font-display font-bold rounded-xl transition-all hover:scale-105 shadow-lg"
+              >
+                🎴 {t('buyCardsExternal')}
+              </a>
+            </div>
+            <button
+              onClick={handleCancel}
+              className="mt-6 text-vintage-burnt-gold hover:text-vintage-gold transition-all underline"
+            >
+              ← {t('goBack') || 'Go Back'}
+            </button>
+          </div>
+        )}
+
+        {/* Normal UI - only show if enough cards */}
+        {(sortedPveNfts.length >= handSize || isLoading) && (
+        <>
         {/* Counter */}
         <div className="text-center mb-2 flex-shrink-0">
           <p className="text-vintage-burnt-gold text-sm sm:text-base font-modern">
@@ -290,6 +332,8 @@ export function PveCardSelectionModal({
             Cancel
           </button>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
