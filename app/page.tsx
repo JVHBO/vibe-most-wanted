@@ -32,6 +32,7 @@ import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
 import { CoinsInboxModal } from "@/components/CoinsInboxModal";
 import { CardMedia } from "@/components/CardMedia";
 import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
+import { NotEnoughCardsGuide } from "@/components/NotEnoughCardsGuide";
 import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
 import { PvPMenuModals } from "@/components/PvPMenuModals";
 import { PvPEntryFeeModal } from "@/components/PvPEntryFeeModal";
@@ -684,6 +685,9 @@ export default function TCGPage() {
   // PvP Entry Fee Modal
   const [showPvPEntryFeeModal, setShowPvPEntryFeeModal] = useState<boolean>(false);
 
+  // Leaderboard Rewards Info Modal
+  const [showLeaderboardRewardsModal, setShowLeaderboardRewardsModal] = useState<boolean>(false);
+
   // Attack States
   const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
   const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
@@ -709,7 +713,7 @@ export default function TCGPage() {
     }, 0);
   };
   const attackSelectedCardsPower = calculateLeaderboardAttackPower(attackSelectedCards);
-  const dealerCardsPower = useTotalPower(dealerCards);
+  const dealerCardsPower = calculateLeaderboardAttackPower(dealerCards); // VibeFID 10x applies to defender too
 
   // ✅ PvP Preview States
   const [showPvPPreview, setShowPvPPreview] = useState<boolean>(false);
@@ -786,11 +790,12 @@ export default function TCGPage() {
     }
   };
 
-  // Preload tie.gif to prevent loading delay
+  // Preload tie.mp4 to prevent loading delay
   useEffect(() => {
-    const img = new Image();
-    img.src = '/tie.gif';
-    img.onload = () => setTieGifLoaded(true);
+    const video = document.createElement('video');
+    video.src = '/tie.mp4';
+    video.oncanplaythrough = () => setTieGifLoaded(true);
+    video.load();
   }, []);
 
   // Set mounted state to prevent hydration errors
@@ -1465,17 +1470,11 @@ export default function TCGPage() {
             const contractAddr = nft?.contract?.address?.toLowerCase();
             const isVibeFID = contractAddr === getCollectionContract('vibefid')?.toLowerCase();
 
-            // 🎬 VIBEFID FIX: VibeFID has video in animation_url, image is just thumbnail
+            // 🎬 Get image URL - getImage handles VibeFID video detection automatically
             let imageUrl: string;
             if (isVibeFID) {
-              const animationUrl = nft?.raw?.metadata?.animation_url || nft?.metadata?.animation_url;
-              if (animationUrl) {
-                imageUrl = String(animationUrl);
-                console.log('🎬 VibeFID using animation_url video:', imageUrl);
-              } else {
-                imageUrl = await getImage(nft);
-                console.warn('⚠️ VibeFID no animation_url, fallback:', imageUrl);
-              }
+              // VibeFID: Use getImage with 'vibefid' hint for video URL detection
+              imageUrl = await getImage(nft, 'vibefid');
             } else {
               imageUrl = await getImage(nft);
             }
@@ -3518,6 +3517,20 @@ export default function TCGPage() {
               </p>
             </div>
 
+            {/* Not enough cards warning */}
+            {nfts.length < HAND_SIZE && status !== "fetching" && (
+              <NotEnoughCardsGuide
+                currentCards={nfts.length}
+                requiredCards={HAND_SIZE}
+                gameMode="defense"
+                onClose={() => setShowDefenseDeckModal(false)}
+                t={t}
+              />
+            )}
+
+            {/* Normal UI - only show if enough cards or still loading */}
+            {(nfts.length >= HAND_SIZE || status === "fetching") && (
+            <>
             {/* Controls Row: Collection Filter + Sort */}
             <div className="flex-shrink-0 px-4 pt-3 flex flex-wrap items-center justify-center gap-2">
               <select
@@ -3693,6 +3706,81 @@ export default function TCGPage() {
               >
                 {selectedCards.length === HAND_SIZE ? 'Save Defense Deck' : `Select ${HAND_SIZE - selectedCards.length} more`}
               </button>
+            </div>
+            </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard Rewards Modal */}
+      {showLeaderboardRewardsModal && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
+          onClick={() => setShowLeaderboardRewardsModal(false)}
+        >
+          <div
+            className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-4 border-b border-vintage-gold/30">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-display font-bold text-vintage-gold">
+                  🏆 Weekly Ranking Rewards
+                </h2>
+                <button
+                  onClick={() => setShowLeaderboardRewardsModal(false)}
+                  className="text-vintage-gold hover:text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-xs text-vintage-burnt-gold mt-1">
+                Top 10 players receive rewards every Sunday at 00:00 UTC
+              </p>
+            </div>
+
+            {/* Rewards List */}
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 rounded-lg border border-yellow-500/30">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🥇</span>
+                  <span className="font-bold text-yellow-400">1st Place</span>
+                </div>
+                <span className="font-mono font-bold text-yellow-300">1,000 coins</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-400/20 to-gray-500/10 rounded-lg border border-gray-400/30">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🥈</span>
+                  <span className="font-bold text-gray-300">2nd Place</span>
+                </div>
+                <span className="font-mono font-bold text-gray-200">750 coins</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-amber-600/20 to-amber-700/10 rounded-lg border border-amber-600/30">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🥉</span>
+                  <span className="font-bold text-amber-400">3rd Place</span>
+                </div>
+                <span className="font-mono font-bold text-amber-300">500 coins</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-vintage-gold/10 to-vintage-gold/5 rounded-lg border border-vintage-gold/20">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🎖️</span>
+                  <span className="font-bold text-vintage-gold">4th - 10th Place</span>
+                </div>
+                <span className="font-mono font-bold text-vintage-burnt-gold">300 coins</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-vintage-gold/30 text-center">
+              <p className="text-xs text-vintage-burnt-gold">
+                Ranking based on Aura score. Rewards are claimable after each Sunday reset.
+              </p>
             </div>
           </div>
         </div>
@@ -3984,7 +4072,9 @@ export default function TCGPage() {
                             : undefined
                         }}
                       >
-                        {dealerCards[currentRound - 1]?.power}
+                        {dealerCards[currentRound - 1]?.collection === 'vibefid'
+                          ? `${((dealerCards[currentRound - 1]?.power || 0) * 10).toLocaleString()}`
+                          : dealerCards[currentRound - 1]?.power?.toLocaleString()}
                       </div>
                       {battlePhase === 'result' && (
                         <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
@@ -5038,16 +5128,16 @@ export default function TCGPage() {
                     </svg>
                   </button>
 
-                  {/* Coin Balance Display */}
-                  {address && userProfile && playerEconomy && (
+                  {/* VBMS Balance Display - Shows real on-chain balance */}
+                  {address && userProfile && (
                     <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
                       <span className="text-vintage-gold text-xl md:text-2xl font-bold">$</span>
                       <div className="flex flex-col">
                         <span className="text-vintage-gold font-display font-bold text-xs md:text-sm leading-none">
-                          {(playerEconomy.coins || 0).toLocaleString()}
+                          {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </span>
                         <span className="text-vintage-burnt-gold font-modern text-[8px] md:text-[10px] leading-none mt-0.5">
-                          $TESTVBMS
+                          $VBMS
                         </span>
                       </div>
                     </div>
@@ -5475,9 +5565,9 @@ export default function TCGPage() {
                     const isLockedInRaid = nft.collection !== 'vibefid' && defenseLockedTokenIds.has(nft.tokenId);
                     return (
                     <NFTCard
-                      key={nft.tokenId}
+                      key={getCardUniqueId(nft)}
                       nft={nft}
-                      selected={selectedCards.some(c => c.tokenId === nft.tokenId)}
+                      selected={selectedCards.some(c => isSameCard(c, nft))}
                       onSelect={handleSelectCard}
                       locked={isLockedInRaid}
                       lockedReason="This card is in your Raid Deck"
@@ -5617,20 +5707,36 @@ export default function TCGPage() {
                       >
                         ♥ vs Player
                       </button>
-
-                      {/* Mecha Arena */}
-                      <button
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          setShowCpuArena(true);
-                          setModeMenuOpen(null);
-                        }}
-                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-pink-600/20 hover:bg-pink-600/40 text-pink-300 border border-pink-500/30 hover:border-pink-500/60"
-                      >
-                        🤖 Mecha Arena
-                      </button>
                     </div>
                   )}
+                </div>
+
+                {/* 🤖 MECHA ARENA Button */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      setShowCpuArena(true);
+                    }}
+                    disabled={!userProfile}
+                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between ${
+                      userProfile
+                        ? 'bg-gradient-to-r from-pink-600 via-purple-600 to-pink-600 text-white hover:scale-105 shadow-lg shadow-pink-500/50 border-2 border-purple-400/50'
+                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="11" width="18" height="10" rx="2" />
+                        <circle cx="8.5" cy="16" r="1.5" />
+                        <circle cx="15.5" cy="16" r="1.5" />
+                        <path d="M12 11V7" />
+                        <circle cx="12" cy="5" r="2" />
+                      </svg>
+                      Mecha Arena
+                    </span>
+                    <span className="text-xl">▶</span>
+                  </button>
                 </div>
 
                 {/* ⚔️ BATTLE AUTO MODE Button */}
@@ -5703,7 +5809,13 @@ export default function TCGPage() {
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <span>💀</span>
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="8" r="5" />
+                        <path d="M9 8h.01M15 8h.01" strokeLinecap="round" />
+                        <path d="M9 11c1 1 5 1 6 0" />
+                        <path d="M12 13v4" />
+                        <path d="M8 21l4-4 4 4" />
+                      </svg>
                       Boss Raid
                       {hasExpiredRaidCards && (
                         <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" title="Cards need refuel!" />
@@ -5721,7 +5833,7 @@ export default function TCGPage() {
                         {dealerCards.map((c, i) => (
                           <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/30">
                             <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                            <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br">{c.power}</div>
+                            <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br">{c.collection === 'vibefid' ? ((c.power || 0) * 10).toLocaleString() : c.power}</div>
                             <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">#{c.tokenId}</div>
                           </FoilCardEffect>
                         ))}
@@ -5770,6 +5882,13 @@ export default function TCGPage() {
                   <div>
                     <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3 mb-2">
                       <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
+                      <button
+                        onClick={() => setShowLeaderboardRewardsModal(true)}
+                        className="ml-2 w-6 h-6 md:w-8 md:h-8 rounded-full bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/30 hover:border-vintage-gold transition text-sm md:text-base font-bold flex items-center justify-center"
+                        title="View Weekly Rewards"
+                      >
+                        ?
+                      </button>
                     </h1>
                     
                     {/* Action Buttons */}
