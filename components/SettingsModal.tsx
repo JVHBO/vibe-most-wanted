@@ -186,6 +186,9 @@ export function SettingsModal({
         // iOS: Use Farcaster SDK eth_sendTransaction
         console.log('[SettingsModal] Using Farcaster SDK for iOS');
         const provider = await sdk.wallet.getEthereumProvider();
+        if (!provider) {
+          throw new Error('No provider available');
+        }
         const data = encodeFunctionData({
           abi: ERC20_ABI,
           functionName: 'approve',
