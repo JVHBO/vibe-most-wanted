@@ -312,7 +312,7 @@ export function FeaturedCastAuctions({
     
     try {
       await requestRefundMutation({ address });
-      setSuccess(`Refund requested! ${pendingRefunds.totalRefund.toLocaleString()} VBMS will be sent to your wallet.`);
+      setSuccess(`Claimed ${pendingRefunds.totalRefund.toLocaleString()} coins!`);
       if (soundEnabled) AudioManager.win();
     } catch (e: any) {
       setError(e.message || "Failed to request refund");

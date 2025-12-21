@@ -11,12 +11,14 @@ import { BadgeList } from '@/components/Badge';
 import { getUserBadges } from '@/lib/badges';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAccount } from 'wagmi';
+import { useFarcasterVBMSBalance } from '@/lib/hooks/useFarcasterVBMS';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardLoadingSpinner } from '@/components/LoadingSpinner';
 import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
-import { filterCardsByCollections, COLLECTIONS, type CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, COLLECTIONS, type CollectionId, getCardUniqueId } from "@/lib/collections/index";
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/nft/attributes';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -35,209 +37,11 @@ const devError = (...args: any[]) => {
   if (isDev) console.error(...args);
 };
 
-// Image cache (same as main page)
-const imageUrlCache = new Map();
-const IMAGE_CACHE_TIME = 1000 * 60 * 60;
+// NOTE: getImage, findAttr, calcPower, isUnrevealed functions are now imported from shared modules
+// This prevents code duplication and ensures consistent behavior across the app
 
-const getFromCache = (key: string): string | null => {
-  const item = imageUrlCache.get(key);
-  if (!item) return null;
-  const timeDiff = Date.now() - item.time;
-  if (timeDiff > IMAGE_CACHE_TIME) {
-    imageUrlCache.delete(key);
-    return null;
-  }
-  return item.url;
-};
-
-const setCache = (key: string, value: string): void => {
-  imageUrlCache.set(key, { url: value, time: Date.now() });
-};
-
-// URL normalization (same as main page)
-function normalizeUrl(url: string): string {
-  if (!url) return '';
-  let u = url.trim();
-  // Use Cloudflare IPFS gateway
-  const IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs/';
-  if (u.startsWith('ipfs://')) u = IPFS_GATEWAY + u.slice(7);
-  else if (u.startsWith('ipfs/')) u = IPFS_GATEWAY + u.slice(5);
-  // Convert existing ipfs.io URLs to Cloudflare gateway
-  else if (u.includes('ipfs.io/ipfs/')) u = u.replace('https://ipfs.io/ipfs/', IPFS_GATEWAY);
-  u = u.replace(/^http:\/\//i, 'https://');
-  return u;
-}
-
-// Get image URL with caching and proxy handling (same as main page)
-async function getImage(nft: any): Promise<string> {
-  const tid = nft.tokenId;
-  const cached = getFromCache(tid);
-  if (cached) return cached;
-
-  const extractUrl = (value: any): string | null => {
-    if (!value) return null;
-    if (typeof value === 'string') return value;
-    if (typeof value === 'object') return value.url || value.cachedUrl || value.originalUrl || value.gateway || null;
-    return null;
-  };
-
-  try {
-    const uri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
-    if (uri) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(uri, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const json = await res.json();
-        const imageFromUri = json?.image || json?.image_url || json?.imageUrl;
-        if (imageFromUri) {
-          let imageUrl = String(imageFromUri);
-          if (imageUrl.includes('wieldcd.net')) {
-            const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(imageUrl)}`;
-            setCache(tid, proxyUrl);
-            return proxyUrl;
-          }
-          imageUrl = normalizeUrl(imageUrl);
-          if (imageUrl && !imageUrl.includes('undefined')) {
-            setCache(tid, imageUrl);
-            return imageUrl;
-          }
-        }
-      }
-    }
-  } catch (error) {
-    devWarn(`⚠️ Failed to fetch image from tokenUri for NFT #${tid}:`, error);
-  }
-
-  let rawImage = extractUrl(nft?.raw?.metadata?.image);
-  if (rawImage) {
-    if (rawImage.includes('wieldcd.net')) {
-      const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(rawImage)}`;
-      setCache(tid, proxyUrl);
-      return proxyUrl;
-    }
-    rawImage = normalizeUrl(rawImage);
-    if (rawImage && !rawImage.includes('undefined')) {
-      setCache(tid, rawImage);
-      return rawImage;
-    }
-  }
-
-  const alchemyUrls = [
-    extractUrl(nft?.image?.cachedUrl),
-    extractUrl(nft?.image?.thumbnailUrl),
-    extractUrl(nft?.image?.pngUrl),
-    extractUrl(nft?.image?.originalUrl),
-  ].filter(Boolean);
-
-  for (const url of alchemyUrls) {
-    if (url) {
-      if (url.includes('wieldcd.net')) {
-        const proxyUrl = `https://vibechain.com/api/proxy?url=${encodeURIComponent(url)}`;
-        setCache(tid, proxyUrl);
-        return proxyUrl;
-      }
-      const norm = normalizeUrl(String(url));
-      if (norm && !norm.includes("undefined")) {
-        setCache(tid, norm);
-        return norm;
-      }
-    }
-  }
-
-  const placeholder = `https://via.placeholder.com/300x420/6366f1/ffffff?text=NFT+%23${tid}`;
-  setCache(tid, placeholder);
-  return placeholder;
-}
-
-// Helper to find attribute
-function findAttr(nft: any, trait: string): string {
-  const locs = [nft?.raw?.metadata?.attributes, nft?.metadata?.attributes, nft?.metadata?.traits, nft?.raw?.metadata?.traits];
-  for (const attrs of locs) {
-    if (!Array.isArray(attrs)) continue;
-    const found = attrs.find((a: any) => {
-      const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
-      const searchTrait = trait.toLowerCase().trim();
-      return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
-    });
-    if (found) {
-      return String(found?.value || found?.trait_value || found?.displayType || '').trim();
-    }
-  }
-  return '';
-}
-
-// Check if card is unrevealed
-function isUnrevealed(nft: any): boolean {
-  const hasAttrs = !!(nft?.raw?.metadata?.attributes?.length || nft?.metadata?.attributes?.length || nft?.raw?.metadata?.traits?.length || nft?.metadata?.traits?.length);
-
-  if (!hasAttrs) return true;
-
-  const n = String(nft?.name || '').toLowerCase();
-
-  // ✅ IMPROVED: Check if card has revealed attributes (Wear, Character, Power) BEFORE checking Rarity
-  // Some NFTs have Rarity="Unopened" even after being revealed (contract bug)
-  const wear = findAttr(nft, 'wear');
-  const character = findAttr(nft, 'character');
-  const power = findAttr(nft, 'power');
-  const actualRarity = findAttr(nft, 'rarity');
-
-  // If card has Wear/Character/Power attributes, it's definitely revealed
-  if (wear || character || power) {
-    return false;
-  }
-
-  // Check if it has a real rarity (Common, Rare, Epic, Legendary)
-  const r = (actualRarity || '').toLowerCase();
-  if (r && r !== 'unopened' && (r.includes('common') || r.includes('rare') || r.includes('epic') || r.includes('legendary'))) {
-    return false;
-  }
-
-  const s = (findAttr(nft, 'status') || '').toLowerCase();
-
-  // Only mark as unopened if explicitly stated
-  if (r === 'unopened' || s === 'unopened' || n === 'unopened' || n.includes('sealed pack')) {
-    return true;
-  }
-
-  const hasImage = !!(nft?.image?.cachedUrl || nft?.image?.originalUrl || nft?.metadata?.image || nft?.raw?.metadata?.image);
-  const hasRarity = r !== '';
-
-  return !(hasImage || hasRarity);
-}
-
-// Calculate card power (matching tutorial system)
-function calcPower(nft: any): number {
-  const foil = findAttr(nft, 'foil') || 'None';
-  const rarity = findAttr(nft, 'rarity') || 'Common';
-  const wear = findAttr(nft, 'wear') || 'Lightly Played';
-
-  // Base power by rarity (from tutorial)
-  let base = 5;
-  const r = rarity.toLowerCase();
-  if (r.includes('mythic')) base = 800;
-  else if (r.includes('legend')) base = 240;
-  else if (r.includes('epic')) base = 80;
-  else if (r.includes('rare')) base = 20;
-  else if (r.includes('common')) base = 5;
-  else base = 5;
-
-  // Wear multiplier (from tutorial: Pristine=×1.8, Mint=×1.4, Others=×1.0)
-  let wearMult = 1.0;
-  const w = wear.toLowerCase();
-  if (w.includes('pristine')) wearMult = 1.8;
-  else if (w.includes('mint')) wearMult = 1.4;
-
-  // Foil multiplier (from tutorial: Prize=×15, Standard=×2.5)
-  let foilMult = 1.0;
-  const f = foil.toLowerCase();
-  if (f.includes('prize')) foilMult = 15.0;
-  else if (f.includes('standard')) foilMult = 2.5;
-
-  const power = base * wearMult * foilMult;
-  return Math.max(1, Math.round(power));
-}
+// Use the shared isUnrevealed function (aliased as isUnrevealedShared in imports)
+const isUnrevealed = isUnrevealedShared;
 
 export default function ProfilePage() {
   const params = useParams();
@@ -274,6 +78,9 @@ export default function ProfilePage() {
     api.matches.getMatchHistorySummary,
     profile?.address ? { address: profile.address, limit: 20 } : "skip"
   );
+
+  // 💰 Real on-chain VBMS balance for profile being viewed
+  const { balance: vbmsBalance } = useFarcasterVBMSBalance(profile?.address);
 
   // Share Reward System
   const rewardProfileShare = useMutation(api.cardPacks.rewardProfileShare);
@@ -437,7 +244,7 @@ export default function ProfilePage() {
           devLog('📊 Expected cards from profile:', profileData.stats?.totalCards || 0);
 
           // ✅ Use the unified, optimized fetcher
-          const { fetchAndProcessNFTs } = await import('@/lib/nft-fetcher');
+          const { fetchAndProcessNFTs } = await import('@/lib/nft/fetcher');
 
           // ✅ Load NFTs for collection display (defense deck data is already in profile)
           // ⚠️ IMPORTANT: Increased maxPages from 8 to 20 to ensure all cards are loaded
@@ -613,8 +420,22 @@ export default function ProfilePage() {
 
   // 🔧 FIX: Filtrar NFTs ANTES dos early returns para seguir as regras dos hooks
   // Filtrar NFTs com useMemo para evitar recalcular em todo render
+  // Also includes deduplication to prevent duplicate cards
   const filteredNfts = useMemo(() => {
-    let filtered = nfts.filter(nft => {
+    // STEP 1: Deduplicate using unique ID (collection + tokenId)
+    const seen = new Set<string>();
+    const dedupedNfts = nfts.filter(nft => {
+      const uniqueId = getCardUniqueId(nft);
+      if (seen.has(uniqueId)) {
+        devWarn(`⚠️ Duplicate card filtered in profile: ${uniqueId}`);
+        return false;
+      }
+      seen.add(uniqueId);
+      return true;
+    });
+
+    // STEP 2: Apply filters
+    let filtered = dedupedNfts.filter(nft => {
       // Use enriched data directly
       const rarity = nft.rarity || '';
       const foilTrait = nft.foil || '';
@@ -836,17 +657,19 @@ export default function ProfilePage() {
                     FID: {profile.fid}
                   </span>
                 )}
+                {/* VibeFID Card Link */}
+                {profile.fid && (
+                  <Link
+                    href={`/fid/${profile.fid}`}
+                    className="text-vintage-gold hover:text-vintage-burnt-gold inline-flex items-center gap-1 font-modern transition-colors"
+                  >
+                    ♦ VibeFID Card
+                  </Link>
+                )}
               </div>
 
               {/* Share Profile Buttons */}
               <div className="flex flex-col gap-2 mt-3">
-                {/* Share Reward Notice */}
-                {currentUserAddress?.toLowerCase() === profile.address.toLowerCase() && (
-                  <p className="text-xs text-vintage-gold font-modern text-center bg-vintage-gold/10 border border-vintage-gold/30 rounded px-2 py-1">
-                    🎁 Share once = FREE pack! Daily shares = tokens!
-                  </p>
-                )}
-
                 <div className="flex gap-2">
                   <button
                     onClick={async () => {
@@ -976,21 +799,16 @@ export default function ProfilePage() {
             <p className="text-3xl font-bold text-purple-400">{(profile.stats.honor ?? 500).toLocaleString()}</p>
           </div>
           <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-6 rounded-xl border-2 border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
-            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern flex items-center gap-1">💰 COINS</p>
-            <p className="text-3xl font-bold text-vintage-gold">{(profile.coins || 0).toLocaleString()}</p>
-            <p className="text-[10px] text-vintage-burnt-gold font-modern mt-1">$TESTVBMS</p>
-          </div>
-          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-neon-blue/50">
-            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♣ PvE RECORD</p>
-            <p className="text-2xl font-bold text-vintage-neon-blue">
-              {profile.stats.pveWins || 0}W / {profile.stats.pveLosses || 0}L
+            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern flex items-center gap-1">💰 BALANCE</p>
+            <p className="text-3xl font-bold text-vintage-gold">
+              {(() => {
+                const balance = Number(vbmsBalance || 0);
+                if (balance >= 1_000_000) return `${(balance / 1_000_000).toFixed(1)}M`;
+                if (balance >= 1_000) return `${(balance / 1_000).toFixed(1)}K`;
+                return balance.toLocaleString(undefined, { maximumFractionDigits: 0 });
+              })()}
             </p>
-          </div>
-          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-silver/50">
-            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♥ PvP RECORD</p>
-            <p className="text-2xl font-bold text-vintage-silver">
-              {profile.stats.pvpWins || 0}W / {profile.stats.pvpLosses || 0}L
-            </p>
+            <p className="text-[10px] text-vintage-burnt-gold font-modern mt-1">$VBMS</p>
           </div>
         </div>
 
@@ -1282,7 +1100,7 @@ export default function ProfilePage() {
 
                   return (
                     <div
-                      key={tokenId}
+                      key={getCardUniqueId(nft)}
                       className="relative group transition-all duration-300 hover:scale-105 cursor-pointer"
                       style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}
                     >

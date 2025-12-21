@@ -295,6 +295,10 @@ export function useGroupVoiceChat(
     }
   }, [roomId, localAddress, sendSignal]);
 
+  // Mutations for tracking voice participants
+  const joinVoiceChannelMutation = useMutation(api.voiceChat.joinVoiceChannel);
+  const leaveVoiceChannelMutation = useMutation(api.voiceChat.leaveVoiceChannel);
+
   // Join voice channel
   const joinChannel = useCallback(async (participants: Array<{ address: string; username: string }>) => {
     devLog('[GroupVoice] Joining channel with participants:', participants);
@@ -317,6 +321,15 @@ export function useGroupVoiceChat(
         }))
     }));
 
+    // Track voice participation in Convex (for incoming call notifications)
+    if (roomId) {
+      joinVoiceChannelMutation({
+        roomId,
+        address: localAddress,
+        username: localUsername,
+      }).catch(err => devError('[GroupVoice] Failed to track voice join:', err));
+    }
+
     // Create peer connections with all participants
     // We initiate connections with users who have "higher" addresses (alphabetically)
     // This prevents duplicate connections
@@ -326,7 +339,7 @@ export function useGroupVoiceChat(
         await createPeerConnection(participant.address, shouldInitiate);
       }
     }
-  }, [localAddress, initLocalAudio, createPeerConnection]);
+  }, [localAddress, localUsername, roomId, initLocalAudio, createPeerConnection, joinVoiceChannelMutation]);
 
   // Leave voice channel
   const leaveChannel = useCallback(() => {
@@ -348,6 +361,14 @@ export function useGroupVoiceChat(
     });
     remoteAudios.current.clear();
 
+    // Track leaving voice in Convex
+    if (roomId) {
+      leaveVoiceChannelMutation({
+        roomId,
+        address: localAddress,
+      }).catch(err => devError('[GroupVoice] Failed to track voice leave:', err));
+    }
+
     setState({
       isConnected: false,
       isMuted: false,
@@ -355,7 +376,7 @@ export function useGroupVoiceChat(
       users: [],
       error: null
     });
-  }, []);
+  }, [roomId, localAddress, leaveVoiceChannelMutation]);
 
   // Toggle self mute
   const toggleMute = useCallback(() => {

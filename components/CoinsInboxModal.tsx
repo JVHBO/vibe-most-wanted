@@ -413,18 +413,18 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               CONVERT
             </h2>
             <p className="text-sm text-vintage-gold/70">
-              TESTVBMS → VBMS
+              COINS → VBMS
             </p>
           </div>
         </div>
 
         <div className="px-6 pb-6 space-y-3">
-          {/* TESTVBMS Balance (what you can convert) - Compact */}
+          {/* COINS Balance (what you can convert) - Compact */}
           <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-400/40 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <NextImage src="/images/icons/coins.svg" alt="TESTVBMS" width={24} height={24} className="w-6 h-6" />
-                <span className="text-xs font-bold text-green-300 uppercase">TESTVBMS</span>
+                <NextImage src="/images/icons/coins.svg" alt="Coins" width={24} height={24} className="w-6 h-6" />
+                <span className="text-xs font-bold text-green-300 uppercase">COINS</span>
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-green-100">
@@ -516,7 +516,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             ) : (
               <div className="text-center py-3">
                 <p className="text-vintage-gold/60 text-xs">
-                  Minimum 100 TESTVBMS required to convert
+                  Minimum 100 COINS required to convert
                 </p>
               </div>
             )
@@ -526,7 +526,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               <div className="text-4xl mb-3">📱</div>
               <h3 className="text-purple-400 font-bold text-lg mb-2">USE MINIAPP TO CLAIM</h3>
               <p className="text-purple-400/70 text-sm mb-3">
-                TESTVBMS → VBMS conversion is only available in the Farcaster miniapp for security.
+                COINS → VBMS conversion is only available in the Farcaster miniapp for security.
               </p>
               <a
                 href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
@@ -538,7 +538,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               </a>
               {testvbmsBalance > 0 && (
                 <div className="mt-4 bg-vintage-black/50 rounded-lg p-3">
-                  <p className="text-vintage-gold/60 text-xs">Your TESTVBMS Balance:</p>
+                  <p className="text-vintage-gold/60 text-xs">Your COINS Balance:</p>
                   <p className="text-vintage-gold font-bold text-xl">{testvbmsBalance.toLocaleString()}</p>
                 </div>
               )}

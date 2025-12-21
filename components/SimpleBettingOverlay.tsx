@@ -92,6 +92,18 @@ export function SimpleBettingOverlay({
   const allInAmount = credits?.balance || 0;
   const betAmount = isAllIn ? allInAmount : normalBetAmount;
 
+  // Get short display name for buttons (removes common prefixes like "MECHA ")
+  const getShortName = (fullName: string) => {
+    // Remove common CPU prefixes to show distinguishing part
+    const prefixes = ["MECHA ", "CPU ", "BOT "];
+    for (const prefix of prefixes) {
+      if (fullName.toUpperCase().startsWith(prefix)) {
+        return fullName.substring(prefix.length);
+      }
+    }
+    return fullName;
+  };
+
   // Get display name for bet
   const getBetDisplayName = (betOn: string) => {
     if (betOn.toLowerCase() === "tie") return "TIE";
@@ -204,7 +216,7 @@ export function SimpleBettingOverlay({
               : 'bg-purple-600/40 hover:bg-purple-500/60 border border-purple-500/50'
           }`}
         >
-          <p className="text-vintage-gold font-bold text-xs truncate">{player1Username}</p>
+          <p className="text-vintage-gold font-bold text-xs truncate">⚔️ {getShortName(player1Username)}</p>
           <p className={`text-[10px] ${isAllIn ? 'text-yellow-300 font-bold' : 'text-purple-300'}`}>
             +{Math.floor(betAmount * odds)}c
           </p>
@@ -231,7 +243,7 @@ export function SimpleBettingOverlay({
               : 'bg-pink-600/40 hover:bg-pink-500/60 border border-pink-500/50'
           }`}
         >
-          <p className="text-vintage-gold font-bold text-xs truncate">{player2Username}</p>
+          <p className="text-vintage-gold font-bold text-xs truncate">🛡️ {getShortName(player2Username)}</p>
           <p className={`text-[10px] ${isAllIn ? 'text-orange-300 font-bold' : 'text-pink-300'}`}>
             +{Math.floor(betAmount * odds)}c
           </p>

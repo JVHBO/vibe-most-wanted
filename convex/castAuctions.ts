@@ -594,7 +594,63 @@ export const placeBidWithVBMS = mutation({
       throw new Error("Auction has ended");
     }
 
-    // 7. Create bid record (pool contribution)
+    // 6.5. Check if user already has an active bid on this auction - UPDATE instead of creating new
+    const existingBid = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_auction_status")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("auctionId"), auction!._id),
+          q.eq(q.field("status"), "active"),
+          q.eq(q.field("bidderAddress"), normalizedAddress)
+        )
+      )
+      .first();
+
+    if (existingBid) {
+      // User already has a bid - UPDATE the existing bid by adding to it
+      const newBidAmount = existingBid.bidAmount + args.bidAmount;
+
+      await ctx.db.patch(existingBid._id, {
+        bidAmount: newBidAmount,
+        timestamp: now,
+        txHash: args.txHash, // Update to latest tx
+      });
+
+      // Update auction pool total
+      const newPoolTotal = (auction.currentBid || 0) + args.bidAmount;
+
+      // Anti-snipe: Extend auction if bid is in last 5 minutes
+      let newEndTime = auction.auctionEndsAt;
+      if (auction.auctionEndsAt - now <= ANTI_SNIPE_WINDOW_MS) {
+        newEndTime = now + ANTI_SNIPE_EXTENSION_MS;
+      }
+
+      await ctx.db.patch(auction._id, {
+        currentBid: newPoolTotal,
+        bidderAddress: normalizedAddress,
+        bidderUsername: profile.username,
+        bidderFid: profile.farcasterFid,
+        auctionEndsAt: newEndTime,
+        lastBidAt: now,
+      });
+
+      console.log(
+        `[CastAuction] Pool contribution UPDATED: ${existingBid.bidAmount} + ${args.bidAmount} = ${newBidAmount} VBMS for cast ${args.castHash} by ${profile.username}`
+      );
+
+      return {
+        success: true,
+        bidAmount: args.bidAmount,
+        totalUserBid: newBidAmount,
+        poolTotal: newPoolTotal,
+        auctionEndsAt: newEndTime,
+        castHash: args.castHash,
+        updated: true,
+      };
+    }
+
+    // 7. Create NEW bid record (first contribution from this user)
     await ctx.db.insert("castAuctionBids", {
       auctionId: auction._id,
       slotNumber: 0,
@@ -693,7 +749,49 @@ export const addToPool = mutation({
       if (existingTx) throw new Error("Transaction already used");
     }
 
-    // 5. Create contribution record
+    // 4.5. Check if user already has an active bid on this auction - UPDATE instead of creating new
+    const existingBid = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_auction_status")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("auctionId"), args.auctionId),
+          q.eq(q.field("status"), "active"),
+          q.eq(q.field("bidderAddress"), normalizedAddress)
+        )
+      )
+      .first();
+
+    if (existingBid) {
+      // User already has a bid - UPDATE the existing bid
+      const newBidAmount = existingBid.bidAmount + args.bidAmount;
+
+      await ctx.db.patch(existingBid._id, {
+        bidAmount: newBidAmount,
+        timestamp: now,
+        txHash: args.txHash || existingBid.txHash,
+      });
+
+      // Update auction total
+      const newTotal = (auction.currentBid || 0) + args.bidAmount;
+      await ctx.db.patch(args.auctionId, {
+        currentBid: newTotal,
+        lastBidAt: now,
+      });
+
+      console.log(`[CastAuction] Pool contribution UPDATED: ${existingBid.bidAmount} + ${args.bidAmount} = ${newBidAmount} VBMS by ${profile.username}`);
+
+      return {
+        success: true,
+        contribution: args.bidAmount,
+        totalUserBid: newBidAmount,
+        newTotal,
+        slotNumber: auction.slotNumber,
+        updated: true,
+      };
+    }
+
+    // 5. Create NEW contribution record (first from this user)
     await ctx.db.insert("castAuctionBids", {
       auctionId: args.auctionId,
       slotNumber: auction.slotNumber,
@@ -767,8 +865,8 @@ export const initializeAuctions = mutation({
 });
 
 /**
- * Request refund for pending_refund bids
- * Marks bids as refund_requested so admin can process
+ * Claim refund for pending_refund bids
+ * Credits coins directly to user profile
  */
 export const requestRefund = mutation({
   args: { address: v.string() },
@@ -793,15 +891,33 @@ export const requestRefund = mutation({
     const totalRefund = pendingRefunds.reduce((sum, bid) => sum + (bid.refundAmount || bid.bidAmount), 0);
     const now = Date.now();
 
-    // Mark all as refund_requested
+    // Get user profile and credit coins directly
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address")
+      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Credit coins to user
+    await ctx.db.patch(profile._id, {
+      coins: (profile.coins || 0) + totalRefund,
+      lastUpdated: now,
+    });
+
+    // Mark all as refunded
     for (const bid of pendingRefunds) {
       await ctx.db.patch(bid._id, {
-        status: "refund_requested",
-        refundRequestedAt: now,
+        status: "refunded",
+        refundedAt: now,
+        refundAmount: bid.refundAmount || bid.bidAmount,
       });
     }
 
-    console.log(`[CastAuction] Refund requested: ${normalizedAddress} - ${totalRefund} VBMS (${pendingRefunds.length} bids)`);
+    console.log(`[CastAuction] Refund claimed: ${normalizedAddress} - ${totalRefund} coins (${pendingRefunds.length} bids)`);
 
     return {
       success: true,
@@ -810,6 +926,68 @@ export const requestRefund = mutation({
     };
   },
 });
+
+/**
+ * Merge duplicate bids from same user on same auction (Admin)
+ * Consolidates two bids into one by summing amounts
+ */
+export const consolidateDuplicateBids = mutation({
+  args: {
+    auctionId: v.string(),
+    bidderAddress: v.string(),
+  },
+  handler: async (ctx, { auctionId, bidderAddress }) => {
+    const normalizedAddress = bidderAddress.toLowerCase();
+
+    // Find all active bids from this user on this auction
+    const userBids = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_auction_status")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("auctionId"), auctionId as Id<"castAuctions">),
+          q.eq(q.field("status"), "active"),
+          q.eq(q.field("bidderAddress"), normalizedAddress)
+        )
+      )
+      .collect();
+
+    if (userBids.length < 2) {
+      throw new Error(`No duplicates found. User has ${userBids.length} bid(s) on this auction.`);
+    }
+
+    // Sort by timestamp (oldest first)
+    userBids.sort((a, b) => a.timestamp - b.timestamp);
+
+    // Keep the first bid, merge others into it
+    const keepBid = userBids[0];
+    const bidsToMerge = userBids.slice(1);
+
+    // Calculate total amount
+    const totalAmount = userBids.reduce((sum, bid) => sum + bid.bidAmount, 0);
+
+    // Update the kept bid with total amount
+    await ctx.db.patch(keepBid._id, {
+      bidAmount: totalAmount,
+      timestamp: Date.now(),
+    });
+
+    // Delete the other bids
+    for (const bid of bidsToMerge) {
+      await ctx.db.delete(bid._id);
+    }
+
+    console.log(`[CastAuction] Merged ${userBids.length} bids into 1: ${totalAmount} VBMS for ${keepBid.bidderUsername}`);
+
+    return {
+      success: true,
+      mergedCount: userBids.length,
+      totalAmount,
+      deletedBids: bidsToMerge.length,
+    };
+  },
+});
+
 
 /**
  * Get all pending refund requests (Admin)
@@ -986,6 +1164,9 @@ export const finalizeAuction = internalMutation({
 /**
  * Activate a featured cast (pending_feature -> active)
  * Also adds the cast to featuredCasts table so users can earn rewards for interactions
+ *
+ * ROTATING SLOTS: Uses slots 100, 101, 102 in rotation. When a new cast wins,
+ * it takes the oldest slot (by addedAt timestamp).
  */
 export const activateFeaturedCast = internalMutation({
   args: { auctionId: v.id("castAuctions") },
@@ -1001,40 +1182,58 @@ export const activateFeaturedCast = internalMutation({
       featureEndsAt: now + FEATURE_DURATION_MS,
     });
 
-    // Add to featuredCasts table for interaction rewards
-    // Use slot number + 100 as order to avoid conflicts with manual featured casts
-    const featuredOrder = 100 + auction.slotNumber;
-
-    // Check if already exists at this order
-    const existingFeatured = await ctx.db
+    // 🔄 ROTATING SLOTS FIX: Get all 3 featured cast slots (100, 101, 102)
+    // and replace the OLDEST one (by addedAt timestamp)
+    const allFeaturedSlots = await ctx.db
       .query("featuredCasts")
       .withIndex("by_order")
-      .filter((q) => q.eq(q.field("order"), featuredOrder))
-      .first();
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("order"), 100),
+          q.lte(q.field("order"), 102)
+        )
+      )
+      .collect();
+
+    let targetOrder: number;
+    let existingFeatured: typeof allFeaturedSlots[0] | null = null;
+
+    if (allFeaturedSlots.length < 3) {
+      // Not all 3 slots exist yet - use next available
+      const usedOrders = allFeaturedSlots.map(s => s.order);
+      targetOrder = [100, 101, 102].find(o => !usedOrders.includes(o)) || 100;
+    } else {
+      // All 3 slots exist - replace the OLDEST one
+      allFeaturedSlots.sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
+      existingFeatured = allFeaturedSlots[0]; // Oldest
+      targetOrder = existingFeatured.order;
+    }
 
     if (existingFeatured) {
-      // Update existing slot
+      // Update existing slot (oldest one)
       await ctx.db.patch(existingFeatured._id, {
         castHash: auction.castHash || "",
         warpcastUrl: auction.warpcastUrl || "",
         active: true,
         addedAt: now,
-        auctionId: auctionId, // Link to auction
+        auctionId: auctionId,
       });
+      console.log(`[CastAuction] 🔄 Replaced slot ${targetOrder} (oldest) with new winner: ${auction.castHash}`);
     } else {
       // Create new featured cast entry
       await ctx.db.insert("featuredCasts", {
         castHash: auction.castHash || "",
         warpcastUrl: auction.warpcastUrl || "",
-        order: featuredOrder,
+        order: targetOrder,
         active: true,
         addedAt: now,
-        auctionId: auctionId, // Link to auction
+        auctionId: auctionId,
       });
+      console.log(`[CastAuction] ✨ Created new slot ${targetOrder} with winner: ${auction.castHash}`);
     }
 
     console.log(
-      `[CastAuction] Cast now featured: Slot ${auction.slotNumber} - ${auction.castHash} (added to featuredCasts)`
+      `[CastAuction] Cast now featured: Slot ${targetOrder} - ${auction.castHash} (added to featuredCasts)`
     );
 
     // 🔔 Send notification to all users about the new featured cast
@@ -1103,24 +1302,40 @@ export const markAuctionLost = internalMutation({
       status: "completed",
     });
 
-    // Mark all bids as pending_refund
+    // Refund all bids immediately (credit coins back to users)
     const bids = await ctx.db
       .query("castAuctionBids")
       .withIndex("by_auction")
       .filter((q) => q.eq(q.field("auctionId"), auctionId))
       .collect();
 
+    let refundedCount = 0;
     for (const bid of bids) {
       if (bid.status === "active") {
+        // Credit coins back to user immediately
+        const bidderProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address")
+          .filter((q) => q.eq(q.field("address"), bid.bidderAddress.toLowerCase()))
+          .first();
+
+        if (bidderProfile) {
+          await ctx.db.patch(bidderProfile._id, {
+            coins: (bidderProfile.coins || 0) + bid.bidAmount,
+          });
+          refundedCount++;
+        }
+
         await ctx.db.patch(bid._id, {
-          status: "pending_refund",
+          status: "refunded",
           refundAmount: bid.bidAmount,
+          refundedAt: now,
         });
       }
     }
 
     console.log(
-      `[CastAuction] Auction LOST: ${auction.castHash} with ${auction.currentBid} VBMS - ${bids.length} bids marked for refund`
+      `[CastAuction] Auction LOST: ${auction.castHash} with ${auction.currentBid} VBMS - ${refundedCount} bids refunded automatically`
     );
   },
 });
@@ -1221,6 +1436,65 @@ export const processAuctionLifecycle = internalMutation({
       activated: pendingFeatures.length,
       completed: expiredFeatures.length,
     };
+  },
+});
+
+/**
+ * TEST: Create a pending_refund bid for testing claim button
+ */
+export const testCreatePendingRefund = mutation({
+  args: { address: v.string(), amount: v.number() },
+  handler: async (ctx, { address, amount }) => {
+    const normalizedAddress = address.toLowerCase();
+    const now = Date.now();
+
+    // Get or create a test auction
+    let testAuction = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) => q.eq(q.field("status"), "bidding"))
+      .first();
+
+    if (!testAuction) {
+      const auctionId = await ctx.db.insert("castAuctions", {
+        slotNumber: 99,
+        auctionStartedAt: now,
+        auctionEndsAt: now + 86400000,
+        currentBid: 0,
+        status: "bidding",
+        createdAt: now,
+      });
+      testAuction = await ctx.db.get(auctionId);
+    }
+
+    if (!testAuction) throw new Error("Failed to create test auction");
+
+    // Get profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address")
+      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .first();
+
+    // Create a pending_refund bid
+    const bidId = await ctx.db.insert("castAuctionBids", {
+      auctionId: testAuction._id,
+      slotNumber: 99,
+      bidderAddress: normalizedAddress,
+      bidderUsername: profile?.username || "test",
+      bidderFid: profile?.farcasterFid,
+      castHash: "test-hash",
+      warpcastUrl: "https://warpcast.com/test",
+      bidAmount: amount,
+      previousHighBid: 0,
+      status: "pending_refund",
+      timestamp: now,
+      refundAmount: amount,
+    });
+
+    console.log(`[TEST] Created pending_refund bid for ${normalizedAddress}: ${amount} coins`);
+
+    return { success: true, bidId };
   },
 });
 

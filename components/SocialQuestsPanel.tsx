@@ -83,7 +83,7 @@ export function SocialQuestsPanel({
     if (!featuredCasts || featuredCasts.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentCastIndex((prev) => (prev + 1) % featuredCasts.length);
-    }, 8000); // 8 seconds for embedded casts (more time to read)
+    }, 20000); // 20 seconds for embedded casts (more time to read and interact)
     return () => clearInterval(interval);
   }, [featuredCasts]);
 
