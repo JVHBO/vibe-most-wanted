@@ -261,8 +261,48 @@ All transactions are logged with:
 1. **Deduct before signing**: Never generate blockchain signatures before modifying database state
 2. **Implement cooldowns**: All value-transfer endpoints need rate limiting
 3. **Verify server-side**: Never trust client-provided identity claims
-4. **Monitor patterns**: Set up alerts for unusual activity (rapid claims, high volumes)
+4. **Monitor patterns**: Set up alerts for unusual activity (rapid claims, high volumes) - **IMPLEMENTED**
 5. **Require authentication**: Social features should require verified accounts
+
+---
+
+## Real-Time Security Monitoring (Implemented)
+
+The following monitoring system is now active:
+
+### Alert Thresholds
+
+| Metric | Threshold | Severity |
+|--------|-----------|----------|
+| Claims per minute | 3+ | Critical |
+| Claims per hour | 10+ | Warning |
+| Single claim amount | 100,000+ VBMS | Warning |
+| Claims per hour (volume) | 500,000+ VBMS | Critical |
+| Transactions per minute | 15+ | Critical |
+| Earning rate (5 min) | 10,000+ TESTVBMS | Warning |
+
+### Risk Scoring
+
+Accounts are automatically flagged based on:
+- High claim count (50+): +30 risk score
+- High total claimed (1M+): +40 risk score
+- High transaction count (200+): +20 risk score
+- Burst patterns detected: +50 risk score
+
+Accounts with risk score >= 30 are flagged for review.
+
+### Queries Available
+
+```typescript
+// Get real-time security alerts
+coinAudit:getSecurityAlerts
+
+// Get flagged accounts with risk scores
+coinAudit:getFlaggedAccounts
+
+// Get suspicious activity in last N hours
+coinAudit:getRecentSuspiciousActivity
+```
 
 ---
 
