@@ -498,6 +498,55 @@ export const resetDailyFreeClaims = mutation({
   },
 });
 
+/**
+ * Set test referrals for an address (for testing referral rewards)
+ */
+export const setTestReferrals = mutation({
+  args: {
+    address: v.string(),
+    count: v.number(),
+  },
+  handler: async (ctx, { address, count }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    // Check if referralStats exists
+    const existingStats = await ctx.db
+      .query("referralStats")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    const now = Date.now();
+
+    if (existingStats) {
+      // Update existing stats
+      await ctx.db.patch(existingStats._id, {
+        totalReferrals: count,
+        claimedTiers: [], // Reset claimed tiers for testing
+        updatedAt: now,
+      });
+      console.log(`Updated referral stats for ${normalizedAddress}: ${count} referrals`);
+      return { success: true, updated: true, totalReferrals: count };
+    } else {
+      // Create new stats with all required fields
+      await ctx.db.insert("referralStats", {
+        address: normalizedAddress,
+        username: "test_user",
+        totalReferrals: count,
+        qualifiedReferrals: count,
+        pendingReferrals: 0,
+        claimedTiers: [],
+        totalVbmsEarned: 0,
+        totalPacksEarned: 0,
+        hasBadge: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      console.log(`Created referral stats for ${normalizedAddress}: ${count} referrals`);
+      return { success: true, created: true, totalReferrals: count };
+    }
+  },
+});
+
 // ========== BLACKLIST: Exploiter addresses ==========
 
 const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number; amountStolen: number }> = {
