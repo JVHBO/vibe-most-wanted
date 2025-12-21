@@ -71,6 +71,25 @@ export function getAlchemyStatus(): { blocked: boolean; error: string | null } {
   return { blocked: alchemyBlocked, error: lastAlchemyError };
 }
 
+/**
+ * Fallback to fetch VibeFID cards from Convex when Alchemy fails
+ * Uses the /api/vibefid-fallback endpoint
+ */
+async function fetchVibeFIDFromConvex(owner: string): Promise<any[]> {
+  try {
+    const res = await fetch(`/api/vibefid-fallback?address=${encodeURIComponent(owner)}`);
+    if (!res.ok) {
+      throw new Error(`Fallback API failed: ${res.status}`);
+    }
+    const data = await res.json();
+    console.log(`📦 VibeFID fallback: ${data.ownedNfts?.length || 0} cards from Convex`);
+    return data.ownedNfts || [];
+  } catch (error) {
+    console.error('❌ VibeFID fallback failed:', error);
+    return [];
+  }
+}
+
 function extractUrl(val: any): string | null {
   if (!val) return null;
   if (typeof val === 'string') return val;
@@ -364,8 +383,21 @@ export async function fetchNFTs(
       return cached;
     }
 
-    // No cache available - rethrow error
-    console.error(`❌ Alchemy API error and no cache available:`, error.message);
+    // For VibeFID contract, try Convex fallback
+    const vibefidContract = '0x60274a138d026e3cb337b40567100fdec3127565';
+    if (contract.toLowerCase() === vibefidContract.toLowerCase()) {
+      console.log('🔄 Trying VibeFID Convex fallback...');
+      const convexCards = await fetchVibeFIDFromConvex(owner);
+      if (convexCards.length > 0) {
+        // Cache the result
+        setNftCache(owner, contract, convexCards);
+        if (onProgress) onProgress(1, convexCards.length);
+        return convexCards;
+      }
+    }
+
+    // No cache or fallback available - rethrow error
+    console.error(`❌ Alchemy API error and no fallback available:`, error.message);
     throw error;
   }
 }
