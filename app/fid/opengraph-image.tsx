@@ -8,6 +8,9 @@ export const size = {
 };
 export const contentType = 'image/png';
 
+// Cache for 1 week - this is a static image
+export const revalidate = 604800;
+
 export default async function Image() {
   // Fetch VibeFID card images from public URLs
   const baseUrl = 'https://www.vibemostwanted.xyz';
@@ -17,7 +20,7 @@ export default async function Image() {
 
   const [card1, card2, card3] = await Promise.all([cardImage1, cardImage2, cardImage3]);
 
-  return new ImageResponse(
+  const imageResponse = new ImageResponse(
     (
       <div
         style={{
@@ -298,6 +301,11 @@ export default async function Image() {
     ),
     {
       ...size,
+      headers: {
+        'Cache-Control': 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400',
+      },
     }
   );
+
+  return imageResponse;
 }

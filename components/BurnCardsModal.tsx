@@ -9,7 +9,9 @@ import { Id } from "@/convex/_generated/dataModel";
 
 interface Card {
   _id: Id<"cardInventory">;
-  name: string;
+  name?: string;
+  suit?: string;
+  rank?: string;
   imageUrl: string;
   rarity: string;
   power: number;
@@ -325,7 +327,7 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
                     <div className="aspect-[3/4] relative">
                       <img
                         src={card.imageUrl}
-                        alt={card.name}
+                        alt={card.name || `${card.suit} ${card.rank}`}
                         className="w-full h-full object-cover"
                       />
 

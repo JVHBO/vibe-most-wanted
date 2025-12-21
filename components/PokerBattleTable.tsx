@@ -356,6 +356,78 @@ export function PokerBattleTable({
     groupVoice.joinChannel(participants);
   };
 
+  // Incoming voice call notification ("John Pork is calling")
+  const [showIncomingCall, setShowIncomingCall] = useState(false);
+  const [incomingCallDismissed, setIncomingCallDismissed] = useState(false);
+  const incomingCallAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Subscribe to voice participants for incoming call notifications
+  const voiceParticipants = useQuery(
+    api.voiceChat.getVoiceParticipants,
+    roomId ? { roomId } : "skip"
+  );
+
+  // Track previous voice participants count for detecting new joins
+  const prevVoiceParticipantsRef = useRef<number>(0);
+
+  // Detect when someone joins voice (show "John Pork is calling")
+  useEffect(() => {
+    if (!voiceParticipants || groupVoice.isInChannel || incomingCallDismissed) return;
+
+    const currentCount = voiceParticipants.length;
+    const prevCount = prevVoiceParticipantsRef.current;
+
+    // If new participant joined and we're not in voice
+    if (currentCount > prevCount && currentCount > 0) {
+      // Find the caller (most recent joiner who isn't us)
+      const caller = voiceParticipants
+        .filter((p: { address: string; username: string; joinedAt: number }) => p.address.toLowerCase() !== playerAddress.toLowerCase())
+        .sort((a: { joinedAt: number }, b: { joinedAt: number }) => b.joinedAt - a.joinedAt)[0];
+
+      if (caller) {
+        console.log('[PokerBattle] 📞 Incoming voice call from:', caller.username);
+        setShowIncomingCall(true);
+
+        // Play ringtone
+        if (!incomingCallAudioRef.current) {
+          const audio = new Audio('/john-pork-is-calling_JdVKLhF (1).mp3');
+          audio.loop = true;
+          audio.volume = 0.7;
+          audio.play().catch(err => console.error('[PokerBattle] Failed to play ringtone:', err));
+          incomingCallAudioRef.current = audio;
+        }
+      }
+    }
+
+    prevVoiceParticipantsRef.current = currentCount;
+  }, [voiceParticipants, groupVoice.isInChannel, incomingCallDismissed, playerAddress]);
+
+  // Stop ringtone when user joins voice or dismisses call
+  useEffect(() => {
+    if (groupVoice.isInChannel || !showIncomingCall) {
+      if (incomingCallAudioRef.current) {
+        incomingCallAudioRef.current.pause();
+        incomingCallAudioRef.current = null;
+      }
+    }
+  }, [groupVoice.isInChannel, showIncomingCall]);
+
+  // Handle accepting incoming call
+  const handleAcceptCall = () => {
+    setShowIncomingCall(false);
+    handleJoinVoice();
+  };
+
+  // Handle rejecting incoming call
+  const handleRejectCall = () => {
+    setShowIncomingCall(false);
+    setIncomingCallDismissed(true); // Don't show again for this session
+    if (incomingCallAudioRef.current) {
+      incomingCallAudioRef.current.pause();
+      incomingCallAudioRef.current = null;
+    }
+  };
+
   // Game state
   const [phase, setPhase] = useState<GamePhase>('deck-building');
   const [currentRound, setCurrentRound] = useState(1);
@@ -618,6 +690,7 @@ export function PokerBattleTable({
   const timerRef = useRef<NodeJS.Timeout | null>(null); // Ref to control timer interval
 
   const victoryAudioRef = useRef<HTMLAudioElement | null>(null); // Ref to control victory music
+  const gameOverPopupsConfiguredRef = useRef(false); // Prevent multiple popup configuration
 
   // Confirmation dialog for actions
   const [showActionConfirm, setShowActionConfirm] = useState(false);
@@ -764,6 +837,7 @@ export function PokerBattleTable({
     setPlayerBoostCoins(initialBoostCoins);
     setOpponentBoostCoins(initialBoostCoins);
     setCpuRoundHistory([]); // Reset CPU round history
+    gameOverPopupsConfiguredRef.current = false; // Reset for next game
     setPhase('card-selection');
   };
 
@@ -1475,6 +1549,7 @@ export function PokerBattleTable({
 
     setSelectedDeck(deck);
     setCurrentView('game');
+    gameOverPopupsConfiguredRef.current = false; // Reset for new game
     setPhase('card-selection');
 
     // Shuffle player deck and deal
@@ -1956,132 +2031,120 @@ export function PokerBattleTable({
   }, [room, isCPUMode, roomFinished, finishGameMutation, phase, playerScore, opponentScore, playerAddress, playerUsername]);
 
   // Set gameOverShown flag when phase becomes game-over and configure GamePopups
+  // Uses ref to prevent multiple executions (performance optimization)
   useEffect(() => {
-    if (phase === 'game-over' && !gameOverShown) {
-      setGameOverShown(true);
-      console.log('[PokerBattle] Game over - configuring popups');
+    // Skip if already configured or not in game-over phase
+    if (phase !== 'game-over' || gameOverPopupsConfiguredRef.current) return;
 
-      // Custom result screen for spectator mode (Mecha Arena)
-      // Uses GamePopups based on betting profit: win > 0, loss < 0, tie = 0
-      if (isSpectatorMode && spectatorType === 'betting' && playerAddress && roomId) {
-        console.log('[PokerBattle] Spectator mode - calculating betting results');
+    // Mark as configured immediately to prevent re-runs
+    gameOverPopupsConfiguredRef.current = true;
+    setGameOverShown(true);
+    console.log('[PokerBattle] Game over - configuring popups (once)');
 
-        // Fetch all bets for this room by this spectator
-        convex.query(api.roundBetting.getSpectatorBetsForRoom, {
-          roomId,
-          spectatorAddress: playerAddress,
-        }).then((bets) => {
-          // Calculate net gains: (total winnings) - (total bet amount)
-          const totalBet = bets.reduce((sum: number, bet: any) => sum + bet.amount, 0);
-          const totalWinnings = bets.reduce((sum: number, bet: any) => {
-            if (bet.status === 'won' && bet.payout) {
-              return sum + bet.payout;
-            }
-            return sum;
-          }, 0);
+    // Custom result screen for spectator mode (Mecha Arena)
+    // Uses GamePopups based on betting profit: win > 0, loss < 0, tie = 0
+    if (isSpectatorMode && spectatorType === 'betting' && playerAddress && roomId) {
+      console.log('[PokerBattle] Spectator mode - calculating betting results');
 
-          const netGain = totalWinnings - totalBet;
-          console.log('[PokerBattle] Betting results:', { totalBet, totalWinnings, netGain });
-
-          setSpectatorNetGains(netGain);
-
-          // Show appropriate popup based on profit/loss
-          if (netGain > 0) {
-            // Profit - Victory screen (fully random)
-            const victoryIndex = Math.floor(Math.random() * VICTORY_CONFIGS.length);
-            const victoryConfig = VICTORY_CONFIGS[victoryIndex];
-            setCurrentVictoryImage(victoryConfig.image);
-            setShowWinPopup(true);
-            setLastBattleResult({
-              coinsEarned: netGain,
-              type: 'mecha',
-              playerPower: totalWinnings,
-              opponentPower: totalBet,
-              opponentName: 'Mecha Arena',
-            });
-          } else if (netGain < 0) {
-            // Loss - Defeat screen
-            setShowLossPopup(true);
-            setLastBattleResult({
-              coinsEarned: netGain,
-              type: 'mecha',
-              playerPower: totalWinnings,
-              opponentPower: totalBet,
-              opponentName: 'Mecha Arena',
-            });
-          } else {
-            // Break-even - Tie screen
-            setShowTiePopup(true);
-            setLastBattleResult({
-              coinsEarned: 0,
-              type: 'mecha',
-              playerPower: totalWinnings,
-              opponentPower: totalBet,
-              opponentName: 'Mecha Arena',
-            });
+      // Fetch all bets for this room by this spectator
+      convex.query(api.roundBetting.getSpectatorBetsForRoom, {
+        roomId,
+        spectatorAddress: playerAddress,
+      }).then((bets) => {
+        // Calculate net gains: (total winnings) - (total bet amount)
+        const totalBet = bets.reduce((sum: number, bet: any) => sum + bet.amount, 0);
+        const totalWinnings = bets.reduce((sum: number, bet: any) => {
+          if (bet.status === 'won' && bet.payout) {
+            return sum + bet.payout;
           }
-        }).catch((err) => {
-          console.error('[PokerBattle] Failed to fetch betting results:', err);
-          setSpectatorNetGains(0);
-          // Show tie on error (neutral result)
-          setShowTiePopup(true);
-          setLastBattleResult({
-            coinsEarned: 0,
-            type: 'mecha',
-            playerPower: 0,
-            opponentPower: 0,
-            opponentName: 'Mecha Arena',
-          });
-        });
+          return sum;
+        }, 0);
 
-        return;
-      }
+        const netGain = totalWinnings - totalBet;
+        console.log('[PokerBattle] Betting results:', { totalBet, totalWinnings, netGain });
 
-      // Don't show victory/defeat popups for other spectator modes
-      if (isSpectatorMode) {
-        console.log('[PokerBattle] Spectator mode - skipping victory/defeat popups');
-        return;
-      }
-
-      // Configure victory/defeat/tie popups
-      if (playerScore > opponentScore) {
-        // Victory - select fully random victory image
+        // Determine popup type and victory image before setting state
         const victoryIndex = Math.floor(Math.random() * VICTORY_CONFIGS.length);
         const victoryConfig = VICTORY_CONFIGS[victoryIndex];
-        setCurrentVictoryImage(victoryConfig.image);
-        setShowWinPopup(true);
 
-        // Set battle result data
+        // Batch all state updates together
+        setSpectatorNetGains(netGain);
         setLastBattleResult({
-          coinsEarned: selectedAnte > 0 ? Math.round((selectedAnte * 2) * 0.95) : 0,
-          type: isCPUMode ? 'pve' : 'pvp',
-          playerPower: playerScore,
-          opponentPower: opponentScore,
-          opponentName: room?.guestUsername || room?.hostUsername || 'Opponent',
+          coinsEarned: netGain,
+          type: 'mecha',
+          playerPower: totalWinnings,
+          opponentPower: totalBet,
+          opponentName: 'Mecha Arena',
         });
-      } else if (playerScore < opponentScore) {
-        // Defeat
-        setShowLossPopup(true);
+
+        // Show appropriate popup based on profit/loss
+        if (netGain > 0) {
+          setCurrentVictoryImage(victoryConfig.image);
+          setShowWinPopup(true);
+        } else if (netGain < 0) {
+          setShowLossPopup(true);
+        } else {
+          setShowTiePopup(true);
+        }
+      }).catch((err) => {
+        console.error('[PokerBattle] Failed to fetch betting results:', err);
+        // Batch error state updates
+        setSpectatorNetGains(0);
         setLastBattleResult({
           coinsEarned: 0,
-          type: isCPUMode ? 'pve' : 'pvp',
-          playerPower: playerScore,
-          opponentPower: opponentScore,
-          opponentName: room?.guestUsername || room?.hostUsername || 'Opponent',
+          type: 'mecha',
+          playerPower: 0,
+          opponentPower: 0,
+          opponentName: 'Mecha Arena',
         });
-      } else {
-        // Tie
         setShowTiePopup(true);
-        setLastBattleResult({
-          coinsEarned: selectedAnte, // Return stake on tie
-          type: isCPUMode ? 'pve' : 'pvp',
-          playerPower: playerScore,
-          opponentPower: opponentScore,
-          opponentName: room?.guestUsername || room?.hostUsername || 'Opponent',
-        });
-      }
+      });
+
+      return;
     }
-  }, [phase, gameOverShown, playerScore, opponentScore, selectedAnte, isCPUMode, room, isSpectatorMode]);
+
+    // Don't show victory/defeat popups for other spectator modes
+    if (isSpectatorMode) {
+      console.log('[PokerBattle] Spectator mode - skipping victory/defeat popups');
+      return;
+    }
+
+    // Determine victory image before setting state (non-spectator mode)
+    const victoryIndex = Math.floor(Math.random() * VICTORY_CONFIGS.length);
+    const victoryConfig = VICTORY_CONFIGS[victoryIndex];
+    const opponentName = room?.guestUsername || room?.hostUsername || 'Opponent';
+
+    // Configure victory/defeat/tie popups - batch state updates
+    if (playerScore > opponentScore) {
+      setCurrentVictoryImage(victoryConfig.image);
+      setLastBattleResult({
+        coinsEarned: selectedAnte > 0 ? Math.round((selectedAnte * 2) * 0.95) : 0,
+        type: isCPUMode ? 'pve' : 'pvp',
+        playerPower: playerScore,
+        opponentPower: opponentScore,
+        opponentName,
+      });
+      setShowWinPopup(true);
+    } else if (playerScore < opponentScore) {
+      setLastBattleResult({
+        coinsEarned: 0,
+        type: isCPUMode ? 'pve' : 'pvp',
+        playerPower: playerScore,
+        opponentPower: opponentScore,
+        opponentName,
+      });
+      setShowLossPopup(true);
+    } else {
+      setLastBattleResult({
+        coinsEarned: selectedAnte,
+        type: isCPUMode ? 'pve' : 'pvp',
+        playerPower: playerScore,
+        opponentPower: opponentScore,
+        opponentName,
+      });
+      setShowTiePopup(true);
+    }
+  }, [phase, playerScore, opponentScore, selectedAnte, isCPUMode, room, isSpectatorMode, spectatorType, playerAddress, roomId]);
 
   // REMOVED: Auto-close room (user wants to see victory screen without auto-closing)
   // Room is marked as 'finished' in database but UI stays open for user to close manually
@@ -2627,8 +2690,8 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Meme Sound Panel - Compact floating on right side, below header */}
-            <div className="absolute right-2 top-12 sm:top-14 z-20 bg-vintage-charcoal/95 border border-vintage-gold/50 rounded-lg p-1 shadow-lg">
+            {/* Meme Sound Panel - Compact floating on LEFT side, below header */}
+            <div className="absolute left-2 top-12 sm:top-14 z-20 bg-vintage-charcoal/95 border border-vintage-gold/50 rounded-lg p-1 shadow-lg">
                 <div className="text-vintage-gold font-display font-bold text-[8px] mb-1 text-center">
                   🔊 SOUNDS
                 </div>
@@ -3422,6 +3485,48 @@ export function PokerBattleTable({
           battleId={roomId}
           playerAddress={playerAddress}
         />
+      )}
+
+      {/* Incoming Voice Call Modal - "John Pork is calling" */}
+      {showIncomingCall && !groupVoice.isInChannel && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[500] p-4">
+          <div className="bg-gradient-to-b from-green-900/95 to-green-950/95 rounded-3xl border-4 border-green-400/50 max-w-sm w-full p-8 shadow-2xl shadow-green-500/30 animate-pulse-glow">
+            {/* Phone Icon Animation */}
+            <div className="flex justify-center mb-6">
+              <div className="w-24 h-24 bg-green-500/30 rounded-full flex items-center justify-center animate-bounce">
+                <span className="text-6xl">📞</span>
+              </div>
+            </div>
+
+            {/* Caller Info */}
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-display font-bold text-green-400 mb-2 animate-pulse">
+                John Pork is calling
+              </h2>
+              <p className="text-vintage-ice text-lg">
+                Someone wants to voice chat!
+              </p>
+            </div>
+
+            {/* Accept/Reject Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={handleRejectCall}
+                className="flex-1 px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-red-500/30"
+              >
+                <span className="text-2xl">📵</span>
+                Decline
+              </button>
+              <button
+                onClick={handleAcceptCall}
+                className="flex-1 px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 animate-pulse"
+              >
+                <span className="text-2xl">📞</span>
+                Accept
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Simple Betting Overlay - Restored without R{round}/7 display */}

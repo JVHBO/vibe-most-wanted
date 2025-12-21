@@ -20,7 +20,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economia",
-    economyIntro: "O Vibe Most Wanted possui duas moedas: TESTVBMS (moeda do jogo que você ganha jogando) e $VBMS (token blockchain). TESTVBMS é usado para partidas ranqueadas e recompensas.",
+    economyIntro: "Vibe Most Wanted é uma coleção de Liquid Trading Cards (LTC) no Vibe Market, inspirada nas cartas de baralho Most Wanted do Iraque. O jogo tem duas moedas: TESTVBMS (moeda in-game ganha jogando) e $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Atualmente em presale - compre/venda $VBMS pelo DEX no app.",
 
     howToEarnCoins: "Como Ganhar Moedas",
     earnPve: "PvE (Jogador vs IA)",
@@ -114,7 +114,7 @@ export const docsTranslations = {
 
     // Cards section
     cardsTitle: "Sistema de Cartas",
-    cardsIntro: "Cada carta NFT possui atributos únicos que determinam seu poder em batalha.",
+    cardsIntro: "Vibe Most Wanted usa Liquid Trading Cards (LTC) - um novo paradigma em colecionáveis digitais. Diferente de NFTs tradicionais, LTCs podem ser negociadas instantaneamente com liquidez garantida. Cada carta tem atributos únicos que determinam seu poder em batalha.",
 
     cardAttributes: "Atributos das Cartas",
     cardRarity: "Raridade",
@@ -130,6 +130,12 @@ export const docsTranslations = {
 
     defenseDeck: "Deck de Defesa",
     defenseDeckDesc: "Configure suas 5 melhores cartas para defender quando outros jogadores atacarem você. Atualize sempre que conseguir cartas mais fortes!",
+
+    featuredCollections: "Coleções em Destaque",
+    featuredCollectionsDesc: "Colaborações com criadores do Vibe Market. Essas cartas podem ser usadas como as cartas Vibe Most Wanted, seguindo o mesmo sistema de cálculo de poder.",
+
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "Cartas não-NFT que podem ser compradas com $VBMS e também queimadas (burn) para recuperar parte do valor.",
 
     // FAQ section
     faqTitle: "Perguntas Frequentes",
@@ -206,27 +212,27 @@ export const docsTranslations = {
 
     // VibeFID section
     vibeFID: "🆔 VibeFID",
-    vibeFIDIntro: "Gere cartas de troca únicas baseadas no seu Farcaster ID! Seu FID determina os traits da carta.",
+    vibeFIDIntro: "VibeFID é uma carta NFT única baseada na sua identidade Farcaster. Seu Neynar Score (engajamento e reputação no Farcaster) determina a raridade da carta, enquanto seu número FID determina os traits visuais.",
     vibeFIDHowItWorks: "Como Funciona",
-    vibeFIDStep1: "Conecte com Farcaster para mintar sua carta VibeFID",
-    vibeFIDStep2: "Seu Neynar score determina a raridade da carta",
-    vibeFIDStep3: "Seu número FID determina traits de foil e desgaste",
-    vibeFIDStep4: "FID menor = Melhores chances para traits raros",
+    vibeFIDStep1: "Conecte sua conta Farcaster",
+    vibeFIDStep2: "Seu Neynar Score determina a raridade (baseado em seguidores, casts, reações)",
+    vibeFIDStep3: "Seu número FID determina naipe, foil e condição",
+    vibeFIDStep4: "Pague 0.0004 ETH para mintar sua carta VibeFID única na Base",
     vibeFIDNeynarScore: "Neynar Score → Raridade",
-    vibeFIDMythic: "Mythic (≥ 0.99): 800 poder base",
-    vibeFIDLegendary: "Legendary (≥ 0.90): 240 poder base",
-    vibeFIDEpic: "Epic (≥ 0.79): 80 poder base",
-    vibeFIDRare: "Rare (≥ 0.70): 20 poder base",
+    vibeFIDMythic: "Mythic (≥ 0.99): 800 poder base - Top 1% usuários Farcaster",
+    vibeFIDLegendary: "Legendary (≥ 0.90): 240 poder base - Top 10%",
+    vibeFIDEpic: "Epic (≥ 0.79): 80 poder base - Top 21%",
+    vibeFIDRare: "Rare (≥ 0.70): 20 poder base - Top 30%",
     vibeFIDCommon: "Common (< 0.70): 5 poder base",
     vibeFIDTraits: "FID → Traits",
-    vibeFIDOG: "≤ 5,000 (OG): 100% Prize Foil + 100% Pristine",
-    vibeFIDTier2: "5,001 - 20,000: 80% Prize Foil, 90% Pristine",
-    vibeFIDTier3: "20,001 - 100,000: Chances mistas",
-    vibeFIDTier4: "> 100,000: Menores chances para traits raros",
-    vibeFIDBenefits: "Benefícios VibeFID",
-    vibeFIDBenefit1: "⚡ Boost de Poder: +10% poder em todas as suas cartas",
-    vibeFIDBenefit2: "♾️ Energia Infinita: Sem limite de energia para batalhas",
-    vibeFIDBenefit3: "🃏 Sem Restrição de Deck: Use quaisquer cartas no seu deck",
+    vibeFIDOG: "≤ 5,000 (OG): Prize Foil garantido + condição Pristine",
+    vibeFIDTier2: "5,001 - 20,000: Alta chance de Prize Foil",
+    vibeFIDTier3: "20,001 - 100,000: Chances mistas para traits raros",
+    vibeFIDTier4: "> 100,000: Distribuição padrão de traits",
+    vibeFIDBenefits: "Benefícios para Holders VibeFID",
+    vibeFIDBenefit1: "⚡ Boost de Poder: Cartas VibeFID recebem multiplicadores de poder bônus em batalhas",
+    vibeFIDBenefit2: "♾️ Energia Infinita: Sua carta VibeFID nunca fica sem energia - sempre pronta para batalhar",
+    vibeFIDBenefit3: "🃏 Sem Restrição de Deck: Pode ser usada em qualquer deck independente de restrições de coleção",
   },
   "en": {
     // Navigation
@@ -245,7 +251,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Economy System",
-    economyIntro: "Vibe Most Wanted has two currencies: TESTVBMS (in-game currency you earn by playing) and $VBMS (blockchain token). TESTVBMS is used for ranked matches and rewards.",
+    economyIntro: "Vibe Most Wanted is a Liquid Trading Cards (LTC) collection on Vibe Market, inspired by the Most Wanted Iraqi playing cards. The game has two currencies: TESTVBMS (in-game currency earned by playing) and $VBMS (blockchain token). 100,000 $VBMS = 1 pack. Currently in presale - buy/sell $VBMS through the in-app DEX.",
 
     howToEarnCoins: "How to Earn Coins",
     earnPve: "PvE (Player vs AI)",
@@ -339,7 +345,7 @@ export const docsTranslations = {
 
     // Cards section
     cardsTitle: "Card System",
-    cardsIntro: "Each NFT card has unique attributes that determine its battle power.",
+    cardsIntro: "Vibe Most Wanted uses Liquid Trading Cards (LTC) - a new paradigm in digital collectibles. Unlike traditional NFTs, LTCs can be traded instantly with guaranteed liquidity. Each card has unique attributes that determine its battle power.",
 
     cardAttributes: "Card Attributes",
     cardRarity: "Rarity",
@@ -355,6 +361,12 @@ export const docsTranslations = {
 
     defenseDeck: "Defense Deck",
     defenseDeckDesc: "Set up your 5 best cards to defend when other players attack you. Update whenever you get stronger cards!",
+
+    featuredCollections: "Featured Collections",
+    featuredCollectionsDesc: "Collaborations with Vibe Market creators. These cards can be used just like Vibe Most Wanted cards, following the same power calculation system.",
+
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "Non-NFT cards that can be purchased with $VBMS and also burned to recover part of the value.",
 
     // FAQ section
     faqTitle: "Frequently Asked Questions",
@@ -431,27 +443,27 @@ export const docsTranslations = {
 
     // VibeFID section
     vibeFID: "🆔 VibeFID",
-    vibeFIDIntro: "Generate unique trading cards based on your Farcaster ID! Your FID determines your card traits.",
+    vibeFIDIntro: "VibeFID is a unique NFT card based on your Farcaster identity. Your Neynar Score (Farcaster engagement and reputation) determines your card's rarity, while your FID number determines the visual traits.",
     vibeFIDHowItWorks: "How It Works",
-    vibeFIDStep1: "Connect with Farcaster to mint your VibeFID card",
-    vibeFIDStep2: "Your Neynar score determines the card rarity",
-    vibeFIDStep3: "Your FID number determines foil and wear traits",
-    vibeFIDStep4: "Lower FID = Better chances for rare traits",
+    vibeFIDStep1: "Connect your Farcaster account",
+    vibeFIDStep2: "Your Neynar Score determines card rarity (based on followers, casts, reactions)",
+    vibeFIDStep3: "Your FID number determines suit, foil, and wear traits",
+    vibeFIDStep4: "Pay 0.0004 ETH to mint your unique VibeFID card on Base",
     vibeFIDNeynarScore: "Neynar Score → Rarity",
-    vibeFIDMythic: "Mythic (≥ 0.99): 800 base power",
-    vibeFIDLegendary: "Legendary (≥ 0.90): 240 base power",
-    vibeFIDEpic: "Epic (≥ 0.79): 80 base power",
-    vibeFIDRare: "Rare (≥ 0.70): 20 base power",
+    vibeFIDMythic: "Mythic (≥ 0.99): 800 base power - Top 1% Farcaster users",
+    vibeFIDLegendary: "Legendary (≥ 0.90): 240 base power - Top 10%",
+    vibeFIDEpic: "Epic (≥ 0.79): 80 base power - Top 21%",
+    vibeFIDRare: "Rare (≥ 0.70): 20 base power - Top 30%",
     vibeFIDCommon: "Common (< 0.70): 5 base power",
     vibeFIDTraits: "FID → Traits",
-    vibeFIDOG: "≤ 5,000 (OG): 100% Prize Foil + 100% Pristine",
-    vibeFIDTier2: "5,001 - 20,000: 80% Prize Foil, 90% Pristine",
-    vibeFIDTier3: "20,001 - 100,000: Mixed chances",
-    vibeFIDTier4: "> 100,000: Lower chances for rare traits",
-    vibeFIDBenefits: "VibeFID Benefits",
-    vibeFIDBenefit1: "⚡ Power Boost: +10% power to all your cards",
-    vibeFIDBenefit2: "♾️ Infinite Energy: No energy limit for battles",
-    vibeFIDBenefit3: "🃏 No Deck Restriction: Use any cards in your deck",
+    vibeFIDOG: "≤ 5,000 (OG): Guaranteed Prize Foil + Pristine condition",
+    vibeFIDTier2: "5,001 - 20,000: High chance for Prize Foil",
+    vibeFIDTier3: "20,001 - 100,000: Mixed chances for rare traits",
+    vibeFIDTier4: "> 100,000: Standard trait distribution",
+    vibeFIDBenefits: "VibeFID Holder Benefits",
+    vibeFIDBenefit1: "⚡ Power Boost: VibeFID cards receive bonus power multipliers in battles",
+    vibeFIDBenefit2: "♾️ Infinite Energy: Your VibeFID card never runs out of energy - always ready to battle",
+    vibeFIDBenefit3: "🃏 No Deck Restriction: Can be used in any deck regardless of collection restrictions",
   },
   "es": {
     // Navigation
@@ -470,7 +482,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economía",
-    economyIntro: "Vibe Most Wanted tiene dos monedas: TESTVBMS (moneda del juego que ganas jugando) y $VBMS (token blockchain). TESTVBMS se usa para partidas clasificatorias y recompensas.",
+    economyIntro: "Vibe Most Wanted es una colección de Liquid Trading Cards (LTC) en Vibe Market, inspirada en las cartas Most Wanted de Irak. El juego tiene dos monedas: TESTVBMS (moneda in-game) y $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Actualmente en preventa - compra/vende $VBMS en el DEX de la app.",
 
     howToEarnCoins: "Cómo Ganar Monedas",
     earnPve: "PvE (Jugador vs IA)",
@@ -564,7 +576,7 @@ export const docsTranslations = {
 
     // Cards section
     cardsTitle: "Sistema de Cartas",
-    cardsIntro: "Cada carta NFT tiene atributos únicos que determinan su poder en batalla.",
+    cardsIntro: "Vibe Most Wanted usa Liquid Trading Cards (LTC) - un nuevo paradigma en coleccionables digitales. A diferencia de los NFTs tradicionales, las LTCs pueden intercambiarse instantáneamente con liquidez garantizada. Cada carta tiene atributos únicos que determinan su poder en batalla.",
 
     cardAttributes: "Atributos de Cartas",
     cardRarity: "Rareza",
@@ -580,6 +592,12 @@ export const docsTranslations = {
 
     defenseDeck: "Mazo de Defensa",
     defenseDeckDesc: "Configura tus 5 mejores cartas para defender cuando otros jugadores te ataquen. ¡Actualiza cuando consigas cartas más fuertes!",
+
+    featuredCollections: "Colecciones Destacadas",
+    featuredCollectionsDesc: "Colaboraciones con creadores de Vibe Market. Estas cartas pueden usarse como las de Vibe Most Wanted, siguiendo el mismo sistema de cálculo de poder.",
+
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "Cartas no-NFT que pueden comprarse con $VBMS y también quemarse para recuperar parte del valor.",
 
     // FAQ section
     faqTitle: "Preguntas Frecuentes",
@@ -656,27 +674,27 @@ export const docsTranslations = {
 
     // VibeFID section
     vibeFID: "🆔 VibeFID",
-    vibeFIDIntro: "¡Genera cartas de intercambio únicas basadas en tu Farcaster ID! Tu FID determina los rasgos de tu carta.",
+    vibeFIDIntro: "VibeFID es una carta NFT única basada en tu identidad Farcaster. Tu Neynar Score (engagement y reputación en Farcaster) determina la rareza de la carta, mientras que tu número FID determina los rasgos visuales.",
     vibeFIDHowItWorks: "Cómo Funciona",
-    vibeFIDStep1: "Conecta con Farcaster para mintear tu carta VibeFID",
-    vibeFIDStep2: "Tu puntuación Neynar determina la rareza de la carta",
-    vibeFIDStep3: "Tu número FID determina los rasgos de foil y desgaste",
-    vibeFIDStep4: "FID menor = Mejores probabilidades para rasgos raros",
+    vibeFIDStep1: "Conecta tu cuenta de Farcaster",
+    vibeFIDStep2: "Tu Neynar Score determina la rareza (basado en seguidores, casts, reacciones)",
+    vibeFIDStep3: "Tu número FID determina el palo, foil y condición",
+    vibeFIDStep4: "Paga 0.0004 ETH para mintear tu carta VibeFID única en Base",
     vibeFIDNeynarScore: "Neynar Score → Rareza",
-    vibeFIDMythic: "Mítico (≥ 0.99): 800 poder base",
-    vibeFIDLegendary: "Legendario (≥ 0.90): 240 poder base",
-    vibeFIDEpic: "Épico (≥ 0.79): 80 poder base",
-    vibeFIDRare: "Raro (≥ 0.70): 20 poder base",
+    vibeFIDMythic: "Mítico (≥ 0.99): 800 poder base - Top 1% usuarios Farcaster",
+    vibeFIDLegendary: "Legendario (≥ 0.90): 240 poder base - Top 10%",
+    vibeFIDEpic: "Épico (≥ 0.79): 80 poder base - Top 21%",
+    vibeFIDRare: "Raro (≥ 0.70): 20 poder base - Top 30%",
     vibeFIDCommon: "Común (< 0.70): 5 poder base",
     vibeFIDTraits: "FID → Rasgos",
-    vibeFIDOG: "≤ 5,000 (OG): 100% Prize Foil + 100% Pristine",
-    vibeFIDTier2: "5,001 - 20,000: 80% Prize Foil, 90% Pristine",
-    vibeFIDTier3: "20,001 - 100,000: Probabilidades mixtas",
-    vibeFIDTier4: "> 100,000: Menores probabilidades para rasgos raros",
-    vibeFIDBenefits: "Beneficios VibeFID",
-    vibeFIDBenefit1: "⚡ Boost de Poder: +10% poder en todas tus cartas",
-    vibeFIDBenefit2: "♾️ Energía Infinita: Sin límite de energía para batallas",
-    vibeFIDBenefit3: "🃏 Sin Restricción de Mazo: Usa cualquier carta en tu mazo",
+    vibeFIDOG: "≤ 5,000 (OG): Prize Foil garantizado + condición Pristine",
+    vibeFIDTier2: "5,001 - 20,000: Alta probabilidad de Prize Foil",
+    vibeFIDTier3: "20,001 - 100,000: Probabilidades mixtas para rasgos raros",
+    vibeFIDTier4: "> 100,000: Distribución estándar de rasgos",
+    vibeFIDBenefits: "Beneficios para Holders de VibeFID",
+    vibeFIDBenefit1: "⚡ Boost de Poder: Las cartas VibeFID reciben multiplicadores de poder bonus en batallas",
+    vibeFIDBenefit2: "♾️ Energía Infinita: Tu carta VibeFID nunca se queda sin energía - siempre lista para batallar",
+    vibeFIDBenefit3: "🃏 Sin Restricción de Mazo: Puede usarse en cualquier mazo sin importar restricciones de colección",
   },
   "hi": {
     // Navigation
@@ -695,7 +713,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated for brevity - full translation recommended)
     economyTitle: "अर्थव्यवस्था प्रणाली",
-    economyIntro: "Vibe Most Wanted में दो करेंसी हैं: TESTVBMS (इन-गेम करेंसी जो आप खेलकर कमाते हैं) और $VBMS (ब्लॉकचेन टोकन)। TESTVBMS रैंक मैचों और पुरस्कारों के लिए उपयोग की जाती है।",
+    economyIntro: "Vibe Most Wanted एक Liquid Trading Cards (LTC) संग्रह है Vibe Market पर, इराक के Most Wanted कार्ड से प्रेरित। गेम में दो मुद्राएं हैं: TESTVBMS (इन-गेम) और $VBMS (ब्लॉकचेन टोकन)। 100,000 $VBMS = 1 पैक। वर्तमान में प्रीसेल में - ऐप के DEX पर $VBMS खरीदें/बेचें।",
 
     howToEarnCoins: "सिक्के कैसे कमाएं",
     earnPve: "PvE (खिलाड़ी बनाम AI)",
@@ -728,7 +746,7 @@ export const docsTranslations = {
     questsIntro: "अतिरिक्त सिक्के कमाने के लिए दैनिक और साप्ताहिक मिशन पूरे करें।",
 
     cardsTitle: "कार्ड प्रणाली",
-    cardsIntro: "प्रत्येक NFT कार्ड में अद्वितीय विशेषताएं हैं जो उसकी लड़ाई शक्ति निर्धारित करती हैं।",
+    cardsIntro: "Vibe Most Wanted Liquid Trading Cards (LTC) का उपयोग करता है - डिजिटल संग्रहणीय में एक नया प्रतिमान। पारंपरिक NFTs के विपरीत, LTCs को गारंटीड लिक्विडिटी के साथ तुरंत ट्रेड किया जा सकता है। प्रत्येक कार्ड में अद्वितीय विशेषताएं हैं।",
 
     faqTitle: "अक्सर पूछे जाने वाले प्रश्न",
 
@@ -797,6 +815,10 @@ export const docsTranslations = {
     powerExample: "उदाहरण: मिथकीय (800) × Prize Foil (15.0) × बेदाग (1.8) = 21,600 शक्ति",
     defenseDeck: "रक्षा डेक",
     defenseDeckDesc: "जब अन्य खिलाड़ी आप पर हमला करें तो रक्षा के लिए अपने 5 सर्वश्रेष्ठ कार्ड सेट करें। जब भी आपको मजबूत कार्ड मिलें तो अपडेट करें!",
+    featuredCollections: "फीचर्ड कलेक्शंस",
+    featuredCollectionsDesc: "Vibe Market क्रिएटर्स के साथ सहयोग। ये कार्ड VMW कार्ड की तरह उपयोग किए जा सकते हैं।",
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "गैर-NFT कार्ड जो $VBMS से खरीदे और बर्न किए जा सकते हैं।",
     faq2Q: "मुझे और कार्ड कैसे मिलें?",
     faq2A: "Vibe Market पर पैक खरीदें या अपने बिना खोले पैक खोलें। आप अन्य खिलाड़ियों के साथ कार्ड का व्यापार भी कर सकते हैं।",
     faq3Q: "क्या मैं सिक्के खो सकता हूं?",
@@ -860,27 +882,27 @@ export const docsTranslations = {
 
     // VibeFID section
     vibeFID: "🆔 VibeFID",
-    vibeFIDIntro: "अपने Farcaster ID के आधार पर अद्वितीय ट्रेडिंग कार्ड बनाएं! आपका FID आपके कार्ड के गुण निर्धारित करता है।",
+    vibeFIDIntro: "अपने Farcaster ID के आधार पर अद्वितीय ट्रेडिंग कार्ड बनाएं! आपका Neynar Score आपके कार्ड की दुर्लभता निर्धारित करता है।",
     vibeFIDHowItWorks: "यह कैसे काम करता है",
-    vibeFIDStep1: "अपना VibeFID कार्ड मिंट करने के लिए Farcaster से कनेक्ट करें",
-    vibeFIDStep2: "आपका Neynar स्कोर कार्ड की दुर्लभता निर्धारित करता है",
-    vibeFIDStep3: "आपका FID नंबर फ़ॉयल और घिसावट के गुण निर्धारित करता है",
-    vibeFIDStep4: "कम FID = दुर्लभ गुणों के लिए बेहतर संभावनाएं",
+    vibeFIDStep1: "अपना VibeFID कार्ड मिंट करने के लिए Farcaster से कनेक्ट करें (0.0004 ETH)",
+    vibeFIDStep2: "आपका Neynar Score कार्ड की दुर्लभता निर्धारित करता है",
+    vibeFIDStep3: "उच्च स्कोर = उच्च दुर्लभता और अधिक शक्ति",
+    vibeFIDStep4: "तुरंत बैटल में उपयोग करें और विशेष लाभ प्राप्त करें",
     vibeFIDNeynarScore: "Neynar Score → दुर्लभता",
     vibeFIDMythic: "मिथकीय (≥ 0.99): 800 आधार शक्ति",
     vibeFIDLegendary: "पौराणिक (≥ 0.90): 240 आधार शक्ति",
     vibeFIDEpic: "महाकाव्य (≥ 0.79): 80 आधार शक्ति",
     vibeFIDRare: "दुर्लभ (≥ 0.70): 20 आधार शक्ति",
     vibeFIDCommon: "सामान्य (< 0.70): 5 आधार शक्ति",
-    vibeFIDTraits: "FID → गुण",
-    vibeFIDOG: "≤ 5,000 (OG): 100% Prize Foil + 100% Pristine",
-    vibeFIDTier2: "5,001 - 20,000: 80% Prize Foil, 90% Pristine",
-    vibeFIDTier3: "20,001 - 100,000: मिश्रित संभावनाएं",
-    vibeFIDTier4: "> 100,000: दुर्लभ गुणों के लिए कम संभावनाएं",
-    vibeFIDBenefits: "VibeFID लाभ",
-    vibeFIDBenefit1: "⚡ पावर बूस्ट: आपके सभी कार्ड को +10% पावर",
-    vibeFIDBenefit2: "♾️ अनंत ऊर्जा: लड़ाई के लिए कोई ऊर्जा सीमा नहीं",
-    vibeFIDBenefit3: "🃏 कोई डेक प्रतिबंध नहीं: अपने डेक में कोई भी कार्ड उपयोग करें",
+    vibeFIDTraits: "Neynar Score → गुण",
+    vibeFIDOG: "≥ 0.99 (मिथकीय): गारंटीड Prize Foil + Pristine स्थिति",
+    vibeFIDTier2: "≥ 0.90 (पौराणिक): Prize Foil के लिए उच्च संभावना",
+    vibeFIDTier3: "≥ 0.79 (महाकाव्य): दुर्लभ गुणों के लिए मिश्रित संभावनाएं",
+    vibeFIDTier4: "< 0.79: मानक गुण वितरण",
+    vibeFIDBenefits: "VibeFID धारकों के लाभ",
+    vibeFIDBenefit1: "⚡ पावर बूस्ट: VibeFID कार्ड बैटल में बोनस पावर गुणक प्राप्त करते हैं",
+    vibeFIDBenefit2: "♾️ अनंत ऊर्जा: आपका VibeFID कार्ड कभी भी ऊर्जा से बाहर नहीं होता - हमेशा बैटल के लिए तैयार",
+    vibeFIDBenefit3: "🃏 कोई डेक प्रतिबंध नहीं: संग्रह प्रतिबंधों की परवाह किए बिना किसी भी डेक में उपयोग किया जा सकता है",
   },
   "ru": {
     // Navigation
@@ -899,7 +921,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated - full translation recommended)
     economyTitle: "Экономическая система",
-    economyIntro: "Vibe Most Wanted имеет две валюты: TESTVBMS (игровая валюта, которую вы зарабатываете) и $VBMS (блокчейн токен). TESTVBMS используется для рейтинговых матчей и наград.",
+    economyIntro: "Vibe Most Wanted - коллекция Liquid Trading Cards (LTC) на Vibe Market, вдохновлённая картами Most Wanted Ирака. В игре две валюты: TESTVBMS (внутриигровая) и $VBMS (блокчейн-токен). 100,000 $VBMS = 1 пак. Сейчас в пресейле - покупайте/продавайте $VBMS через DEX в приложении.",
 
     howToEarnCoins: "Как заработать монеты",
     earnPve: "PvE (Игрок против ИИ)",
@@ -993,7 +1015,7 @@ export const docsTranslations = {
 
     // Cards section (abbreviated)
     cardsTitle: "Система карт",
-    cardsIntro: "Каждая NFT-карта имеет уникальные атрибуты, которые определяют ее боевую мощность.",
+    cardsIntro: "Vibe Most Wanted использует Liquid Trading Cards (LTC) - новую парадигму цифровых коллекционных предметов. В отличие от традиционных NFT, LTC можно мгновенно обменивать с гарантированной ликвидностью. Каждая карта имеет уникальные атрибуты.",
 
     cardAttributes: "Атрибуты карт",
     cardRarity: "Редкость",
@@ -1009,6 +1031,12 @@ export const docsTranslations = {
 
     defenseDeck: "Защитная колода",
     defenseDeckDesc: "Установите свои 5 лучших карт для защиты, когда другие игроки атакуют вас. Обновляйте, когда получаете более сильные карты!",
+
+    featuredCollections: "Избранные Коллекции",
+    featuredCollectionsDesc: "Коллаборации с создателями Vibe Market. Эти карты можно использовать как карты VMW.",
+
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "Не-NFT карты, которые можно купить за $VBMS и сжечь для возврата части стоимости.",
 
     // FAQ section (abbreviated)
     faqTitle: "Часто задаваемые вопросы",
@@ -1085,27 +1113,27 @@ export const docsTranslations = {
 
     // VibeFID section
     vibeFID: "🆔 VibeFID",
-    vibeFIDIntro: "Создавайте уникальные торговые карты на основе вашего Farcaster ID! Ваш FID определяет характеристики карты.",
+    vibeFIDIntro: "VibeFID - это уникальная NFT-карта на основе вашей Farcaster личности. Ваш Neynar Score (вовлечённость и репутация в Farcaster) определяет редкость карты, а номер FID определяет визуальные характеристики.",
     vibeFIDHowItWorks: "Как это работает",
-    vibeFIDStep1: "Подключитесь через Farcaster, чтобы создать свою карту VibeFID",
-    vibeFIDStep2: "Ваш Neynar score определяет редкость карты",
-    vibeFIDStep3: "Ваш номер FID определяет фольгу и износ",
-    vibeFIDStep4: "Меньший FID = Лучшие шансы на редкие характеристики",
+    vibeFIDStep1: "Подключите свой аккаунт Farcaster",
+    vibeFIDStep2: "Ваш Neynar Score определяет редкость карты (на основе подписчиков, постов, реакций)",
+    vibeFIDStep3: "Ваш номер FID определяет масть, фольгу и состояние",
+    vibeFIDStep4: "Заплатите 0.0004 ETH для чеканки уникальной карты VibeFID на Base",
     vibeFIDNeynarScore: "Neynar Score → Редкость",
-    vibeFIDMythic: "Мифический (≥ 0.99): 800 базовой силы",
-    vibeFIDLegendary: "Легендарный (≥ 0.90): 240 базовой силы",
-    vibeFIDEpic: "Эпический (≥ 0.79): 80 базовой силы",
-    vibeFIDRare: "Редкий (≥ 0.70): 20 базовой силы",
+    vibeFIDMythic: "Мифический (≥ 0.99): 800 базовой силы - Топ 1% пользователей Farcaster",
+    vibeFIDLegendary: "Легендарный (≥ 0.90): 240 базовой силы - Топ 10%",
+    vibeFIDEpic: "Эпический (≥ 0.79): 80 базовой силы - Топ 21%",
+    vibeFIDRare: "Редкий (≥ 0.70): 20 базовой силы - Топ 30%",
     vibeFIDCommon: "Обычный (< 0.70): 5 базовой силы",
     vibeFIDTraits: "FID → Характеристики",
-    vibeFIDOG: "≤ 5,000 (OG): 100% Prize Foil + 100% Pristine",
-    vibeFIDTier2: "5,001 - 20,000: 80% Prize Foil, 90% Pristine",
-    vibeFIDTier3: "20,001 - 100,000: Смешанные шансы",
-    vibeFIDTier4: "> 100,000: Меньшие шансы на редкие характеристики",
-    vibeFIDBenefits: "Преимущества VibeFID",
-    vibeFIDBenefit1: "⚡ Бонус силы: +10% силы всем вашим картам",
-    vibeFIDBenefit2: "♾️ Бесконечная энергия: Без лимита энергии для битв",
-    vibeFIDBenefit3: "🃏 Без ограничений колоды: Используйте любые карты в колоде",
+    vibeFIDOG: "≤ 5,000 (OG): Гарантированный Prize Foil + Pristine состояние",
+    vibeFIDTier2: "5,001 - 20,000: Высокий шанс на Prize Foil",
+    vibeFIDTier3: "20,001 - 100,000: Смешанные шансы на редкие характеристики",
+    vibeFIDTier4: "> 100,000: Стандартное распределение характеристик",
+    vibeFIDBenefits: "Преимущества владельца VibeFID",
+    vibeFIDBenefit1: "⚡ Бонус силы: Карты VibeFID получают бонусные множители силы в битвах",
+    vibeFIDBenefit2: "♾️ Бесконечная энергия: Ваша карта VibeFID никогда не теряет энергию - всегда готова к битве",
+    vibeFIDBenefit3: "🃏 Без ограничений колоды: Может использоваться в любой колоде независимо от ограничений коллекции",
   },
   "zh-CN": {
     // Navigation
@@ -1124,7 +1152,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated)
     economyTitle: "经济系统",
-    economyIntro: "Vibe Most Wanted 有两种货币：TESTVBMS（游戏内货币，通过游戏赚取）和 $VBMS（区块链代币）。TESTVBMS 用于排名赛和奖励。",
+    economyIntro: "Vibe Most Wanted是Vibe Market上的Liquid Trading Cards (LTC)收藏，灵感来自伊拉克通缉令扑克牌。游戏有两种货币：TESTVBMS（游戏内）和$VBMS（区块链代币）。100,000 $VBMS = 1个卡包。目前处于预售阶段 - 通过应用内DEX买卖$VBMS。",
 
     howToEarnCoins: "如何赚取金币",
     earnPve: "PvE (玩家对AI)",
@@ -1218,7 +1246,7 @@ export const docsTranslations = {
 
     // Cards section (abbreviated)
     cardsTitle: "卡牌系统",
-    cardsIntro: "每张NFT卡牌都有独特的属性，决定其战斗力。",
+    cardsIntro: "Vibe Most Wanted使用Liquid Trading Cards (LTC) - 数字收藏品的新范式。与传统NFT不同，LTC可以即时交易并保证流动性。每张卡牌都有独特的属性决定其战斗力。",
 
     cardAttributes: "卡牌属性",
     cardRarity: "稀有度",
@@ -1234,6 +1262,11 @@ export const docsTranslations = {
 
     defenseDeck: "防守卡组",
     defenseDeckDesc: "设置您最好的5张卡牌，当其他玩家攻击您时进行防守。获得更强卡牌时立即更新！",
+
+    featuredCollections: "精选系列",
+    featuredCollectionsDesc: "与Vibe Market创作者的合作。这些卡牌可以像VMW卡牌一样使用。",
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "非NFT卡牌，可用$VBMS购买并燃烧以回收部分价值。",
 
     // FAQ section (abbreviated)
     faqTitle: "常见问题",
@@ -1310,7 +1343,7 @@ export const docsTranslations = {
 
     // VibeFID section
     vibeFID: "🆔 VibeFID",
-    vibeFIDIntro: "基于您的Farcaster ID生成独特的交易卡！您的FID决定卡牌特性。",
+    vibeFIDIntro: "铸造您独特的Farcaster身份卡！您的Neynar分数决定稀有度，铸造价格0.0004 ETH。",
     vibeFIDHowItWorks: "如何运作",
     vibeFIDStep1: "通过Farcaster连接以铸造您的VibeFID卡",
     vibeFIDStep2: "您的Neynar分数决定卡牌稀有度",

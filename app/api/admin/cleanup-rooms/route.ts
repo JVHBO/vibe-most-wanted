@@ -1,11 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    // Verify admin authorization
+    const authHeader = request.headers.get('authorization');
+    const adminSecret = process.env.CRON_SECRET;
+
+    if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const client = new ConvexHttpClient(CONVEX_URL);
 
     // Delete all old/expired rooms

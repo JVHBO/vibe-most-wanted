@@ -718,12 +718,8 @@ const GAMING_TIPS = [
     body: "Build your Mecha and battle in the Arena! Bet $VBMS and crush your opponents with powerful combos! ⚔️"
   },
   {
-    title: "💎 Daily Rewards",
-    body: "Log in every day to claim your daily coins! The more you play, the more you earn! 🎁"
-  },
-  {
-    title: "🆔 Mint Your VibeFID!",
-    body: "Get a unique card linked to your Farcaster with special buffs! Mint your VibeFID now! ⚡"
+    title: "🎁 Daily Free Card!",
+    body: "Visit the Shop to claim your FREE card every day! No VBMS needed - just tap and collect! 🃏"
   },
 ];
 

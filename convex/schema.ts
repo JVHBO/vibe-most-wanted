@@ -877,6 +877,15 @@ export default defineSchema({
     .index("by_room", ["roomId", "timestamp"])
     .index("by_recipient", ["recipient", "processed", "timestamp"]),
 
+  // Voice Channel Participants (tracks who is in voice for incoming call notifications)
+  voiceParticipants: defineTable({
+    roomId: v.string(), // Poker room ID
+    address: v.string(), // Participant's wallet address (lowercase)
+    username: v.string(), // Participant's username
+    joinedAt: v.number(), // Timestamp when joined voice
+  })
+    .index("by_room", ["roomId"]),
+
   // ═══════════════════════════════════════════════════════════════════════════════
   // RAID BOSS MODE (Global Cooperative Boss Battles)
   // ═══════════════════════════════════════════════════════════════════════════════
