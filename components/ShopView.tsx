@@ -208,15 +208,17 @@ export function ShopView({ address }: ShopViewProps) {
     }
   };
 
-  // Handle daily free claim
+  // Handle daily free claim - gives a pack to open
   const handleClaimDailyFree = async () => {
     if (!address || claimingDaily) return;
 
     setClaimingDaily(true);
     try {
-      const result = await claimDailyFree({ address });
-      // Show the card in pack opening animation
-      setRevealedCards([result.card]);
+      await claimDailyFree({ address });
+      setNotification({
+        type: 'success',
+        message: `🎁 Free pack claimed! Open it below.`
+      });
     } catch (error: any) {
       setNotification({
         type: 'error',
