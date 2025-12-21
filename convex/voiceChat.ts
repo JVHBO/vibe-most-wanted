@@ -224,3 +224,47 @@ export const cleanupRoomVoice = mutation({
     return { deleted: participants.length };
   },
 });
+
+/**
+ * Clean up stale voice participants (older than 30 minutes)
+ * Call this periodically to avoid showing ghost participants
+ */
+export const cleanupStaleVoiceParticipants = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
+
+    // Find all participants older than 30 minutes
+    const staleParticipants = await ctx.db
+      .query("voiceParticipants")
+      .filter((q) => q.lt(q.field("joinedAt"), thirtyMinutesAgo))
+      .collect();
+
+    // Delete them
+    for (const p of staleParticipants) {
+      await ctx.db.delete(p._id);
+    }
+
+    console.log(`[VoiceChat] Cleaned up ${staleParticipants.length} stale voice participants`);
+    return { deleted: staleParticipants.length };
+  },
+});
+
+/**
+ * Clean ALL voice participants - emergency cleanup
+ */
+export const cleanupAllVoiceParticipants = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allParticipants = await ctx.db
+      .query("voiceParticipants")
+      .collect();
+
+    for (const p of allParticipants) {
+      await ctx.db.delete(p._id);
+    }
+
+    console.log(`[VoiceChat] Emergency cleanup: removed ${allParticipants.length} voice participants`);
+    return { deleted: allParticipants.length };
+  },
+});
