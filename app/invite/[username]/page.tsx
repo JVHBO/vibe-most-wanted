@@ -32,13 +32,31 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
       images: [imageUrl],
     },
     other: {
-      // Farcaster Frame v2 format (required meta tags)
-      'fc:frame': 'vNext',
-      'fc:frame:image': imageUrl,
-      'fc:frame:image:aspect_ratio': '1.91:1',
-      'fc:frame:button:1': 'JOIN US',
-      'fc:frame:button:1:action': 'link',
-      'fc:frame:button:1:target': launchUrl,
+      // Farcaster miniapp format with embedded image
+      'fc:miniapp': JSON.stringify({
+        version: '1',
+        imageUrl: imageUrl,
+        button: {
+          title: 'JOIN US',
+          action: {
+            type: 'launch_miniapp',
+            name: 'VIBE MOST WANTED',
+            url: `${baseUrl}?ref=${encodeURIComponent(username)}`,
+          },
+        },
+      }),
+      'fc:frame': JSON.stringify({
+        version: '1',
+        imageUrl: imageUrl,
+        button: {
+          title: 'JOIN US',
+          action: {
+            type: 'launch_miniapp',
+            name: 'VIBE MOST WANTED',
+            url: `${baseUrl}?ref=${encodeURIComponent(username)}`,
+          },
+        },
+      }),
     },
   };
 }
