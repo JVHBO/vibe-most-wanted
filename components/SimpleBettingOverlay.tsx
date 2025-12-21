@@ -147,16 +147,13 @@ export function SimpleBettingOverlay({
     }
   };
 
-  // Don't show if already bet on this round
+  // Don't show if already bet on this round - show compact confirmation
   if (existingBet) {
     const displayOdds = getExistingBetOdds();
     return (
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] bg-green-600/90 backdrop-blur-md border-2 border-green-400 rounded-lg px-4 py-2">
-        <p className="text-white text-sm font-bold text-center">
-          {existingBet.betOn.toLowerCase() === "tie" ? "🤝" : "✅"} Bet placed: {existingBet.amount} on {getBetDisplayName(existingBet.betOn)}
-        </p>
-        <p className="text-green-200 text-xs text-center">
-          Win: +{Math.floor(existingBet.amount * displayOdds)} credits
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-green-600/80 backdrop-blur-sm border border-green-400 rounded-lg px-2 py-1">
+        <p className="text-white text-[10px] font-bold text-center">
+          ✅ {existingBet.amount}c → {getBetDisplayName(existingBet.betOn)} (+{Math.floor(existingBet.amount * displayOdds)}c)
         </p>
       </div>
     );

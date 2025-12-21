@@ -361,6 +361,9 @@ export function PokerBattleTable({
   const [incomingCallDismissed, setIncomingCallDismissed] = useState(false);
   const incomingCallAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Sounds panel visibility
+  const [showSoundsPanel, setShowSoundsPanel] = useState(true);
+
   // Subscribe to voice participants for incoming call notifications
   const voiceParticipants = useQuery(
     api.voiceChat.getVoiceParticipants,
@@ -2690,71 +2693,86 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Meme Sound Panel - Compact floating on LEFT side, below header */}
-            <div className="absolute left-2 top-12 sm:top-14 z-20 bg-vintage-charcoal/95 border border-vintage-gold/50 rounded-lg p-1 shadow-lg">
-                <div className="text-vintage-gold font-display font-bold text-[8px] mb-1 text-center">
-                  🔊 SOUNDS
+            {/* Meme Sound Panel - Collapsible on LEFT side */}
+            <div className="absolute left-2 top-12 sm:top-14 z-20">
+              {showSoundsPanel ? (
+                <div className="bg-vintage-charcoal/95 border border-vintage-gold/50 rounded-lg p-1 shadow-lg">
+                  <button
+                    onClick={() => setShowSoundsPanel(false)}
+                    className="w-full text-vintage-gold font-display font-bold text-[8px] mb-1 text-center hover:text-vintage-burnt-gold"
+                  >
+                    🔊 SOUNDS ✕
+                  </button>
+                  <div className="grid grid-cols-4 gap-0.5">
+                    <button
+                      onClick={() => playMemeSound('/let-him-cook-now.mp3', 'LET HIM COOK 👨‍🍳', '👨‍🍳')}
+                      className="bg-orange-500/20 hover:bg-orange-500/40 border border-orange-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      title="Let Him Cook"
+                    >
+                      <div className="text-[10px]">👨‍🍳</div>
+                    </button>
+                    <button
+                      onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA~ 😺', '😺')}
+                      className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      title="Nya~"
+                    >
+                      <div className="text-[10px]">😺</div>
+                    </button>
+                    <button
+                      onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QUANDALE 🤪', '🤪')}
+                      className="bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      title="Quandale"
+                    >
+                      <div className="text-[10px]">🤪</div>
+                    </button>
+                    <button
+                      onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NOT POKER 🃏', '🃏')}
+                      className="bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      title="Not Poker"
+                    >
+                      <div className="text-[10px]">🃏</div>
+                    </button>
+                    <button
+                      onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'RECEBA! 🧤', '🧤')}
+                      className="bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      title="Receba"
+                    >
+                      <div className="text-[10px]">🧤</div>
+                    </button>
+                    <button
+                      onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FART 💨', '💨')}
+                      className="bg-green-500/20 hover:bg-green-500/40 border border-green-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      title="Fart"
+                    >
+                      <div className="text-[10px]">💨</div>
+                    </button>
+                    <button
+                      onClick={() => playMemeSound('/sounds/corteze.MP3', 'CORTEZE 🏳️‍🌈', '🏳️‍🌈')}
+                      className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      title="Corteze"
+                    >
+                      <div className="text-[10px]">🏳️‍🌈</div>
+                    </button>
+                  </div>
+                  {/* Voice Chat - PvP and Mecha Arena spectators */}
+                  <VoiceChannelPanel
+                    voiceState={groupVoice}
+                    onJoinChannel={handleJoinVoice}
+                    onLeaveChannel={groupVoice.leaveChannel}
+                    onToggleMute={groupVoice.toggleMute}
+                    onToggleUserMute={groupVoice.toggleUserMute}
+                    onSetUserVolume={groupVoice.setUserVolume}
+                  />
                 </div>
-                <div className="grid grid-cols-4 gap-0.5">
-                  <button
-                    onClick={() => playMemeSound('/let-him-cook-now.mp3', 'LET HIM COOK 👨‍🍳', '👨‍🍳')}
-                    className="bg-orange-500/20 hover:bg-orange-500/40 border border-orange-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
-                    title="Let Him Cook"
-                  >
-                    <div className="text-[10px]">👨‍🍳</div>
-                  </button>
-                  <button
-                    onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA~ 😺', '😺')}
-                    className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
-                    title="Nya~"
-                  >
-                    <div className="text-[10px]">😺</div>
-                  </button>
-                  <button
-                    onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QUANDALE 🤪', '🤪')}
-                    className="bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
-                    title="Quandale"
-                  >
-                    <div className="text-[10px]">🤪</div>
-                  </button>
-                  <button
-                    onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NOT POKER 🃏', '🃏')}
-                    className="bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
-                    title="Not Poker"
-                  >
-                    <div className="text-[10px]">🃏</div>
-                  </button>
-                  <button
-                    onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'RECEBA! 🧤', '🧤')}
-                    className="bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
-                    title="Receba"
-                  >
-                    <div className="text-[10px]">🧤</div>
-                  </button>
-                  <button
-                    onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FART 💨', '💨')}
-                    className="bg-green-500/20 hover:bg-green-500/40 border border-green-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
-                    title="Fart"
-                  >
-                    <div className="text-[10px]">💨</div>
-                  </button>
-                  <button
-                    onClick={() => playMemeSound('/sounds/corteze.MP3', 'CORTEZE 🏳️‍🌈', '🏳️‍🌈')}
-                    className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
-                    title="Corteze"
-                  >
-                    <div className="text-[10px]">🏳️‍🌈</div>
-                  </button>
-                </div>
-                {/* Voice Chat - PvP and Mecha Arena spectators */}
-                <VoiceChannelPanel
-                  voiceState={groupVoice}
-                  onJoinChannel={handleJoinVoice}
-                  onLeaveChannel={groupVoice.leaveChannel}
-                  onToggleMute={groupVoice.toggleMute}
-                  onToggleUserMute={groupVoice.toggleUserMute}
-                  onSetUserVolume={groupVoice.setUserVolume}
-                />
+              ) : (
+                <button
+                  onClick={() => setShowSoundsPanel(true)}
+                  className="bg-vintage-charcoal/95 border border-vintage-gold/50 rounded-lg p-1.5 shadow-lg hover:bg-vintage-gold/20 transition-all"
+                  title="Open Sounds"
+                >
+                  <span className="text-[12px]">🔊</span>
+                </button>
+              )}
             </div>
 
             {/* Game info header */}
