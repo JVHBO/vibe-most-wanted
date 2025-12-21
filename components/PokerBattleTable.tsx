@@ -2624,60 +2624,60 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Meme Sound Panel - Floating on bottom left */}
-            <div className="absolute left-2 sm:left-4 bottom-4 z-10 bg-vintage-charcoal/95 border-2 border-vintage-gold/50 rounded-lg p-2 shadow-xl max-w-[200px] sm:max-w-none">
-                <div className="text-vintage-gold font-display font-bold text-[10px] mb-1.5 text-center border-b border-vintage-gold/30 pb-1">
-                  🔊 MEME SOUNDS
+            {/* Meme Sound Panel - Compact floating on right side */}
+            <div className="absolute right-2 top-14 z-10 bg-vintage-charcoal/90 border border-vintage-gold/40 rounded-lg p-1.5 shadow-lg">
+                <div className="text-vintage-gold font-display font-bold text-[8px] mb-1 text-center">
+                  🔊 SOUNDS
                 </div>
-                <div className="grid grid-cols-3 gap-1">
+                <div className="grid grid-cols-4 gap-0.5">
                   <button
                     onClick={() => playMemeSound('/let-him-cook-now.mp3', 'LET HIM COOK 👨‍🍳', '👨‍🍳')}
-                    className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 hover:from-orange-500/40 hover:to-orange-600/40 border border-orange-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                    className="bg-orange-500/20 hover:bg-orange-500/40 border border-orange-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                    title="Let Him Cook"
                   >
-                    <div className="font-bold text-orange-400 text-[11px]">👨‍🍳</div>
-                    <div className="text-orange-300 text-[7px] leading-tight">COOK</div>
+                    <div className="text-[10px]">👨‍🍳</div>
                   </button>
                   <button
                     onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA~ 😺', '😺')}
-                    className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 hover:from-pink-500/40 hover:to-pink-600/40 border border-pink-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                    className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                    title="Nya~"
                   >
-                    <div className="font-bold text-pink-400 text-[11px]">😺</div>
-                    <div className="text-pink-300 text-[7px] leading-tight">NYA~</div>
+                    <div className="text-[10px]">😺</div>
                   </button>
                   <button
                     onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QUANDALE 🤪', '🤪')}
-                    className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 hover:from-purple-500/40 hover:to-purple-600/40 border border-purple-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                    className="bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                    title="Quandale"
                   >
-                    <div className="font-bold text-purple-400 text-[11px]">🤪</div>
-                    <div className="text-purple-300 text-[7px] leading-tight">QUAN</div>
+                    <div className="text-[10px]">🤪</div>
                   </button>
                   <button
                     onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NOT POKER 🃏', '🃏')}
-                    className="bg-gradient-to-br from-red-500/20 to-red-600/20 hover:from-red-500/40 hover:to-red-600/40 border border-red-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                    className="bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                    title="Not Poker"
                   >
-                    <div className="font-bold text-red-400 text-[11px]">🃏</div>
-                    <div className="text-red-300 text-[7px] leading-tight">POKER</div>
+                    <div className="text-[10px]">🃏</div>
                   </button>
                   <button
                     onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'RECEBA! 🧤', '🧤')}
-                    className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 hover:from-yellow-500/40 hover:to-yellow-600/40 border border-yellow-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                    className="bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                    title="Receba"
                   >
-                    <div className="font-bold text-yellow-400 text-[11px]">🧤</div>
-                    <div className="text-yellow-300 text-[7px] leading-tight">RECEBA</div>
+                    <div className="text-[10px]">🧤</div>
                   </button>
                   <button
                     onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FART 💨', '💨')}
-                    className="bg-gradient-to-br from-green-500/20 to-green-600/20 hover:from-green-500/40 hover:to-green-600/40 border border-green-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                    className="bg-green-500/20 hover:bg-green-500/40 border border-green-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                    title="Fart"
                   >
-                    <div className="font-bold text-green-400 text-[11px]">💨</div>
-                    <div className="text-green-300 text-[7px] leading-tight">FART</div>
+                    <div className="text-[10px]">💨</div>
                   </button>
                   <button
                     onClick={() => playMemeSound('/sounds/corteze.MP3', 'CORTEZE 🏳️‍🌈', '🏳️‍🌈')}
-                    className="bg-gradient-to-br from-pink-500/20 to-purple-600/20 hover:from-pink-500/40 hover:to-purple-600/40 border border-pink-500/50 rounded transition-all hover:scale-105 active:scale-95 px-1.5 py-1.5"
+                    className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                    title="Corteze"
                   >
-                    <div className="font-bold text-pink-400 text-[11px]">🏳️‍🌈</div>
-                    <div className="text-pink-300 text-[7px] leading-tight">CORTEZE</div>
+                    <div className="text-[10px]">🏳️‍🌈</div>
                   </button>
                 </div>
                 {/* Voice Chat - Only in PvP mode */}
