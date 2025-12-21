@@ -6,8 +6,7 @@
  *
  * Rewards are x10 (multiplied by 10):
  * - Tiers 1-100: Granular rewards (VBMS and packs)
- * - Tier 100: Special REFERRER BADGE
- * - Tiers 250, 500, 1000: Mega milestones
+ * - Tier 100: Special REFERRER BADGE + 100,000 VBMS
  */
 
 import { v } from "convex/values";
@@ -147,9 +146,6 @@ export const REFERRAL_TIERS: ReferralTier[] = [
   { tier: 98, type: "vbms", amount: 18500, description: "98 friends" },
   { tier: 99, type: "pack", amount: 1, packType: "elite", description: "99 friends - 1 Elite Pack" },
   { tier: 100, type: "badge", amount: 100000, description: "REFERRER BADGE + 100,000 VBMS", isMilestone: true },
-
-  // === MEGA MILESTONE (250) ===
-  { tier: 250, type: "vbms", amount: 500000, description: "250 friends - MEGA REWARD!", isMilestone: true },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
