@@ -1,13 +1,17 @@
 /**
  * Create Profile Modal Component
  *
- * Modal for creating a new user profile with username input
+ * 🔒 SECURITY UPDATE: Profile creation now requires Farcaster authentication
+ * - Username is automatically pulled from Farcaster
+ * - Users cannot create accounts without valid FID
+ * - Prevents fake account farming
  */
 
 import { ConvexProfileService } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
 import type { SupportedLanguage } from '@/lib/translations';
 
 const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string }[] = [
@@ -50,11 +54,30 @@ export function CreateProfileModal({
 }: CreateProfileModalProps) {
   const { lang, setLang } = useLanguage();
 
+  // 🔒 Get Farcaster context for automatic profile data
+  const farcasterContext = useFarcasterContext();
+  const farcasterUser = farcasterContext.user;
+  const hasFarcaster = !!farcasterUser?.fid;
+
   if (!isOpen) return null;
 
+  // 🔒 Use Farcaster username if available
+  const displayUsername = hasFarcaster
+    ? farcasterUser.username
+    : profileUsername;
+
   const handleCreateProfile = async () => {
-    if (isCreatingProfile || !profileUsername.trim()) {
-      if (!profileUsername.trim() && soundEnabled) AudioManager.buttonError();
+    if (isCreatingProfile) return;
+
+    // 🔒 SECURITY: Require Farcaster for new accounts
+    if (!hasFarcaster) {
+      if (soundEnabled) AudioManager.buttonError();
+      devError('❌ Cannot create profile: No Farcaster context');
+      return;
+    }
+
+    if (!address) {
+      if (soundEnabled) AudioManager.buttonError();
       return;
     }
 
@@ -63,10 +86,18 @@ export function CreateProfileModal({
     if (soundEnabled) AudioManager.buttonClick();
 
     try {
-      await ConvexProfileService.createProfile(address!, profileUsername.trim());
-      devLog('✓ Profile created successfully!');
+      // 🔒 SECURITY: Create profile using Farcaster data
+      await ConvexProfileService.createProfileFromFarcaster(
+        address,
+        farcasterUser.fid,
+        farcasterUser.username || `fid${farcasterUser.fid}`,
+        farcasterUser.displayName,
+        farcasterUser.pfpUrl
+      );
 
-      const profile = await ConvexProfileService.getProfile(address!);
+      devLog('✓ Profile created from Farcaster! FID:', farcasterUser.fid);
+
+      const profile = await ConvexProfileService.getProfile(address);
       devLog('📊 Profile retrieved:', profile);
 
       setUserProfile(profile);
@@ -106,30 +137,55 @@ export function CreateProfileModal({
         <h2 className="text-3xl font-bold text-center mb-2 text-vintage-gold font-display">
           {t('createProfile')}
         </h2>
-        <p className="text-center text-vintage-burnt-gold mb-6 text-sm">
-          {t('noProfile')}
-        </p>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">
-              {t('username')}
-            </label>
-            <input
-              type="text"
-              value={profileUsername}
-              onChange={(e) => setProfileUsername(e.target.value)}
-              placeholder={t('usernamePlaceholder')}
-              maxLength={20}
-              className="w-full px-4 py-3 bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
-            />
-            <p className="text-xs text-yellow-400 mt-2">
-              ! Don't include @ symbol - just enter your username
+        {/* 🔒 Show Farcaster requirement message */}
+        {!hasFarcaster ? (
+          <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-6">
+            <p className="text-center text-red-400 text-sm font-semibold">
+              🔒 Farcaster Required
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              ※ {t('twitterHint')}
+            <p className="text-center text-red-300 text-xs mt-2">
+              Account creation requires Farcaster authentication.
+              Please open this app in the Farcaster miniapp to create an account.
             </p>
           </div>
+        ) : (
+          <p className="text-center text-vintage-burnt-gold mb-6 text-sm">
+            Welcome, @{farcasterUser.username}!
+          </p>
+        )}
+
+        <div className="space-y-4">
+          {/* 🔒 Show Farcaster profile instead of input */}
+          {hasFarcaster ? (
+            <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-xl p-4">
+              <div className="flex items-center gap-4">
+                {farcasterUser.pfpUrl && (
+                  <img
+                    src={farcasterUser.pfpUrl}
+                    alt="Profile"
+                    className="w-16 h-16 rounded-full border-2 border-vintage-gold"
+                  />
+                )}
+                <div>
+                  <p className="text-vintage-gold font-bold text-lg">
+                    {farcasterUser.displayName || farcasterUser.username}
+                  </p>
+                  <p className="text-gray-400 text-sm">@{farcasterUser.username}</p>
+                  <p className="text-gray-500 text-xs">FID: {farcasterUser.fid}</p>
+                </div>
+              </div>
+              <p className="text-xs text-green-400 mt-3 text-center">
+                ✓ Your profile will be created with this Farcaster account
+              </p>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-400 text-sm">
+                Open this app in Farcaster to continue
+              </p>
+            </div>
+          )}
 
           {/* Language Selector */}
           <div>
@@ -162,10 +218,10 @@ export function CreateProfileModal({
 
           <button
             onClick={handleCreateProfile}
-            disabled={isCreatingProfile || !profileUsername.trim()}
+            disabled={isCreatingProfile || !hasFarcaster}
             className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark shadow-gold text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isCreatingProfile ? '... Creating' : t('save')}
+            {isCreatingProfile ? '... Creating' : hasFarcaster ? t('save') : '🔒 Farcaster Required'}
           </button>
 
           <button

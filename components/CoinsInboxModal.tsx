@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { useClaimVBMS, useDailyClaimInfo } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
+import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext"; // 🔒 For FID verification
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
@@ -41,6 +42,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const [showHistory, setShowHistory] = useState(false);
   const [cooldown, setCooldown] = useState(inboxStatus.cooldownRemaining || 0);
   const [convertAmount, setConvertAmount] = useState("");
+
+  // 🔒 Get Farcaster context for FID verification
+  const farcasterContext = useFarcasterContext();
+  const userFid = farcasterContext.user?.fid;
 
   // Cooldown countdown timer
   useEffect(() => {
@@ -244,6 +249,13 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       return;
     }
 
+    // 🔒 SECURITY: Require FID for conversion
+    if (!userFid) {
+      toast.error("🔒 Farcaster authentication required. Please use the miniapp.");
+      console.error('[CoinsInboxModal] No FID available for conversion');
+      return;
+    }
+
     if (!canConvertTESTVBMS) {
       if (selectedAmount < 100) {
         toast.error("Mínimo de 100 TESTVBMS para converter");
@@ -278,9 +290,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         }
       }
 
-      console.log('[CoinsInboxModal] Converting TESTVBMS to VBMS...', { amount: selectedAmount });
-      // Use the actual wallet address for signature generation
-      const result = await convertTESTVBMS({ address: signingAddress, amount: selectedAmount });
+      console.log('[CoinsInboxModal] Converting TESTVBMS to VBMS...', { amount: selectedAmount, fid: userFid });
+      // 🔒 SECURITY: Pass FID for server-side verification
+      const result = await convertTESTVBMS({ address: signingAddress, fid: userFid, amount: selectedAmount });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 

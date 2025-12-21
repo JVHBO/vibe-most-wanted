@@ -1,4 +1,14 @@
 module.exports = {
+  async redirects() {
+    return [
+      {
+        // Redirect /invite/[username] to miniapp
+        source: '/invite/:username',
+        destination: 'https://warpcast.com/~/frames/launch?url=https://www.vibemostwanted.xyz',
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {

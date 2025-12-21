@@ -188,7 +188,43 @@ export class ConvexProfileService {
   }
 
   /**
-   * Create a new profile
+   * 🔒 SECURE: Create a new profile from Farcaster data
+   * This is the ONLY way to create accounts - requires valid FID
+   */
+  static async createProfileFromFarcaster(
+    address: string,
+    fid: number,
+    username: string,
+    displayName?: string,
+    pfpUrl?: string
+  ): Promise<void> {
+    try {
+      const normalizedAddress = address.toLowerCase();
+
+      // 🔒 SECURITY: FID is required
+      if (!fid || fid <= 0) {
+        throw new Error("🔒 Farcaster authentication required to create account");
+      }
+
+      // Create profile with Farcaster data
+      await getConvex().mutation(api.profiles.upsertProfileFromFarcaster, {
+        address: normalizedAddress,
+        fid,
+        username,
+        displayName,
+        pfpUrl,
+      });
+
+      devLog("✅ Profile created from Farcaster:", username, "FID:", fid);
+    } catch (error: any) {
+      devError("❌ createProfileFromFarcaster error:", error);
+      throw new Error(`Erro ao criar perfil: ${error.message}`);
+    }
+  }
+
+  /**
+   * @deprecated Use createProfileFromFarcaster instead
+   * Legacy profile creation - will fail for new accounts
    */
   static async createProfile(
     address: string,
@@ -212,7 +248,7 @@ export class ConvexProfileService {
         throw new Error("Username já está em uso");
       }
 
-      // Create profile
+      // Create profile (will fail for new accounts - use createProfileFromFarcaster)
       await getConvex().mutation(api.profiles.upsertProfile, {
         address: normalizedAddress,
         username,

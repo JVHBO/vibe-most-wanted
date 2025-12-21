@@ -91,7 +91,23 @@ export default function FidPage() {
   const [showScoreModal, setShowScoreModal] = useState(false);
 
   // Temporary storage for mint data
-  const [pendingMintData, setPendingMintData] = useState<any>(null);
+  // 🔒 FIX: Also persist to localStorage to handle page refresh/close
+  const [pendingMintData, setPendingMintData] = useState<any>(() => {
+    // Restore from localStorage on mount
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vibefid_pending_mint');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          console.log('📦 Restored pending mint data from localStorage:', data.fid);
+          return data;
+        } catch (e) {
+          console.error('Failed to parse pending mint data:', e);
+        }
+      }
+    }
+    return null;
+  });
 
   /**
    * CARD GENERATION & PERSISTENCE FLOW:
@@ -412,6 +428,78 @@ export default function FidPage() {
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
 
+  // 🔒 FIX: Check for pending mint data on page load and try to save
+  // This handles cases where user refreshed page or transaction was pending
+  useEffect(() => {
+    const checkPendingMint = async () => {
+      const saved = localStorage.getItem('vibefid_pending_mint');
+      if (!saved) return;
+
+      try {
+        const data = JSON.parse(saved);
+        // Only try to save if data is recent (less than 1 hour old)
+        const age = Date.now() - (data.timestamp || 0);
+        if (age > 60 * 60 * 1000) {
+          console.log('⏰ Pending mint data expired, clearing...');
+          localStorage.removeItem('vibefid_pending_mint');
+          return;
+        }
+
+        console.log('🔄 Found pending mint data, attempting to save to Convex...');
+        setError("Recovering unsaved mint data...");
+
+        const validatedData: any = {
+          fid: Number(data.fid),
+          username: String(data.username),
+          displayName: String(data.displayName),
+          pfpUrl: String(data.pfpUrl),
+          bio: String(data.bio || ""),
+          neynarScore: Number(data.neynarScore),
+          followerCount: Number(data.followerCount),
+          followingCount: Number(data.followingCount),
+          powerBadge: Boolean(data.powerBadge),
+          address: String(data.address),
+          rarity: String(data.rarity),
+          foil: String(data.foil),
+          wear: String(data.wear),
+          power: Number(data.power),
+          suit: String(data.suit),
+          rank: String(data.rank),
+          suitSymbol: String(data.suitSymbol),
+          color: String(data.color),
+          imageUrl: String(data.imageUrl),
+          contractAddress: VIBEFID_CONTRACT_ADDRESS.toLowerCase(),
+        };
+
+        if (data.cardImageUrl) validatedData.cardImageUrl = String(data.cardImageUrl);
+        if (data.shareImageUrl) validatedData.shareImageUrl = String(data.shareImageUrl);
+
+        await mintCard(validatedData);
+
+        // Success! Clear localStorage
+        localStorage.removeItem('vibefid_pending_mint');
+        setPendingMintData(null);
+        setError(null);
+        setMintedSuccessfully(true);
+        console.log('✅ Successfully recovered and saved mint data!');
+      } catch (err: any) {
+        // If it's a duplicate error, card was already saved - clear localStorage
+        if (err.message?.includes('already exists') || err.message?.includes('already minted')) {
+          console.log('ℹ️ Card already exists in Convex, clearing pending data');
+          localStorage.removeItem('vibefid_pending_mint');
+          setPendingMintData(null);
+          setError(null);
+        } else {
+          console.error('❌ Failed to recover mint data:', err);
+          setError(`Failed to save mint data. Please contact support. (FID: ${JSON.parse(saved).fid})`);
+        }
+      }
+    };
+
+    // Run on mount
+    checkPendingMint();
+  }, [mintCard]);
+
   // Save to Convex after successful on-chain mint
   useEffect(() => {
     if (isConfirmed && pendingMintData) {
@@ -465,6 +553,11 @@ export default function FidPage() {
 
           // Mark as successfully minted (show share buttons in modal)
           setMintedSuccessfully(true);
+
+          // 🔒 FIX: Clear pending mint data from localStorage (successfully saved to Convex)
+          localStorage.removeItem('vibefid_pending_mint');
+          setPendingMintData(null);
+          console.log('✅ Cleared pending mint data - successfully saved to Convex');
 
           // Clear localStorage (card has been minted)
           clearGeneratedCard();
@@ -711,7 +804,8 @@ export default function FidPage() {
       const { signature } = await signatureResponse.json();
 
       // Store mint data for later (after on-chain confirmation)
-      setPendingMintData({
+      // 🔒 FIX: Also save to localStorage to survive page refresh
+      const mintData = {
         fid: userData.fid,
         username: userData.username,
         displayName: userData.display_name,
@@ -733,7 +827,11 @@ export default function FidPage() {
         imageUrl: ipfsUrl, // Video (MP4)
         cardImageUrl: cardImageIpfsUrl, // Static PNG for sharing
         shareImageUrl: shareImageIpfsUrl, // Share image with card + criminal text
-      });
+        timestamp: Date.now(), // Track when mint was initiated
+      };
+      setPendingMintData(mintData);
+      localStorage.setItem('vibefid_pending_mint', JSON.stringify(mintData));
+      console.log('💾 Saved pending mint data to localStorage:', userData.fid);
 
       // Mint NFT on smart contract
       setError("Minting NFT on-chain (confirm transaction in wallet)...");

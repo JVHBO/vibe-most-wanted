@@ -309,7 +309,130 @@ export const getProfileByUsername = query({
 // ============================================================================
 
 /**
- * Create or update a profile
+ * 🔒 SECURE: Create or update profile with Farcaster verification
+ *
+ * This is the ONLY way to create a new account:
+ * - Requires FID from Farcaster SDK (cannot be faked from browser)
+ * - Username comes from Farcaster, not user input
+ * - Prevents fake account creation
+ *
+ * For existing profiles: updates Farcaster data if changed
+ */
+export const upsertProfileFromFarcaster = mutation({
+  args: {
+    address: v.string(),
+    fid: v.number(), // 🔒 REQUIRED - Must be valid Farcaster FID
+    username: v.string(), // From Farcaster SDK, not user input
+    displayName: v.optional(v.string()),
+    pfpUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // 🔒 SECURITY: Validate FID
+    if (!args.fid || args.fid <= 0) {
+      throw new Error("🔒 Valid Farcaster FID required to create account");
+    }
+
+    // Validate address format
+    if (!isValidAddress(args.address)) {
+      throw new Error('Invalid Ethereum address format');
+    }
+
+    const address = normalizeAddress(args.address);
+    const username = args.username.toLowerCase();
+    const now = Date.now();
+
+    // Check if this FID already has a profile with different address
+    const existingByFid = await ctx.db
+      .query("profiles")
+      .withIndex("by_fid", (q) => q.eq("farcasterFid", args.fid))
+      .first();
+
+    if (existingByFid && existingByFid.address !== address) {
+      // FID already linked to different address - update the address
+      console.log(`⚠️ FID ${args.fid} changing address from ${existingByFid.address} to ${address}`);
+      await ctx.db.patch(existingByFid._id, {
+        address,
+        username,
+        farcasterDisplayName: args.displayName,
+        farcasterPfpUrl: args.pfpUrl,
+        lastUpdated: now,
+      });
+      return existingByFid._id;
+    }
+
+    // Check if profile exists by address
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (existing) {
+      // Update existing profile with Farcaster data
+      await ctx.db.patch(existing._id, {
+        farcasterFid: args.fid, // Use farcasterFid (number)
+        username,
+        farcasterDisplayName: args.displayName,
+        farcasterPfpUrl: args.pfpUrl,
+        lastUpdated: now,
+      });
+      console.log(`✅ Profile updated for FID ${args.fid} (@${username})`);
+      return existing._id;
+    }
+
+    // 🆕 Create new profile with Farcaster data
+    const newId = await ctx.db.insert("profiles", {
+      address,
+      farcasterFid: args.fid, // Use farcasterFid (number)
+      username,
+      farcasterDisplayName: args.displayName,
+      farcasterPfpUrl: args.pfpUrl,
+      stats: {
+        totalPower: 0,
+        totalCards: 0,
+        openedCards: 0,
+        unopenedCards: 0,
+        aura: 500, // Initial aura for new players
+        pveWins: 0,
+        pveLosses: 0,
+        pvpWins: 0,
+        pvpLosses: 0,
+        attackWins: 0,
+        attackLosses: 0,
+        defenseWins: 0,
+        defenseLosses: 0,
+      },
+      attacksToday: 0,
+      rematchesToday: 0,
+      createdAt: now,
+      lastUpdated: now,
+    });
+
+    // Give 100 welcome coins to new users
+    await ctx.scheduler.runAfter(0, internal.economy.addCoins, {
+      address,
+      amount: 100,
+      reason: "Welcome bonus"
+    });
+
+    // Create welcome_gift mission (500 coins claimable)
+    await ctx.db.insert("personalMissions", {
+      playerAddress: address,
+      date: "once", // One-time mission
+      missionType: "welcome_gift",
+      completed: true, // Auto-completed for new users
+      claimed: false, // Not claimed yet - player needs to claim
+      reward: 500,
+      completedAt: now,
+    });
+
+    console.log(`🆕 New profile created for FID ${args.fid} (@${username}) at ${address}`);
+    return newId;
+  },
+});
+
+/**
+ * @deprecated Use upsertProfileFromFarcaster instead
+ * Legacy profile creation - kept for backwards compatibility but will reject new accounts
  */
 export const upsertProfile = mutation({
   args: {
@@ -365,7 +488,7 @@ export const upsertProfile = mutation({
     const now = Date.now();
 
     if (existing) {
-      // Update existing profile
+      // Update existing profile (allowed for legacy accounts)
       await ctx.db.patch(existing._id, {
         ...args,
         address,
@@ -374,53 +497,9 @@ export const upsertProfile = mutation({
       });
       return existing._id;
     } else {
-      // Create new profile
-      const newId = await ctx.db.insert("profiles", {
-        address,
-        username,
-        stats: args.stats || {
-          totalPower: 0,
-          totalCards: 0,
-          openedCards: 0,
-          unopenedCards: 0,
-          aura: 500, // Initial aura for new players
-          pveWins: 0,
-          pveLosses: 0,
-          pvpWins: 0,
-          pvpLosses: 0,
-          attackWins: 0,
-          attackLosses: 0,
-          defenseWins: 0,
-          defenseLosses: 0,
-        },
-        defenseDeck: args.defenseDeck,
-        attacksToday: 0,
-        rematchesToday: 0,
-        twitter: args.twitter,
-        twitterHandle: args.twitterHandle,
-        createdAt: now,
-        lastUpdated: now,
-      });
-
-      // Give 100 welcome coins to new users
-      await ctx.scheduler.runAfter(0, internal.economy.addCoins, {
-        address,
-        amount: 100,
-        reason: "Welcome bonus"
-      });
-
-      // Create welcome_gift mission (500 coins claimable)
-      await ctx.db.insert("personalMissions", {
-        playerAddress: address,
-        date: "once", // One-time mission
-        missionType: "welcome_gift",
-        completed: true, // Auto-completed for new users
-        claimed: false, // Not claimed yet - player needs to claim
-        reward: 500,
-        completedAt: now,
-      });
-
-      return newId;
+      // 🔒 SECURITY: Block new account creation without Farcaster
+      console.log(`🚫 [SECURITY] Blocked legacy account creation for ${address} - must use Farcaster`);
+      throw new Error("🔒 Account creation requires Farcaster authentication. Please use the miniapp.");
     }
   },
 });

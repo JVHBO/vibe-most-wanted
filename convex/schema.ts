@@ -141,8 +141,9 @@ export default defineSchema({
     twitter: v.optional(v.string()),
     twitterHandle: v.optional(v.string()),
     twitterProfileImageUrl: v.optional(v.string()), // Twitter profile picture URL
-    fid: v.optional(v.string()), // Farcaster ID
+    fid: v.optional(v.string()), // Farcaster ID (legacy string)
     farcasterFid: v.optional(v.number()), // Farcaster numeric FID for notifications
+    farcasterDisplayName: v.optional(v.string()), // Farcaster display name
     farcasterPfpUrl: v.optional(v.string()), // Farcaster profile picture URL
 
     // Share Incentives
@@ -170,6 +171,7 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_username", ["username"])
+    .index("by_fid", ["farcasterFid"]) // 🔒 SECURITY: For FID-based lookups
     .index("by_total_power", ["stats.totalPower"]) // For leaderboard (legacy)
     .index("by_aura", ["stats.aura"]) // For aura-based leaderboard
     .index("by_defense_aura", ["hasFullDefenseDeck", "stats.aura"]), // 🚀 BANDWIDTH FIX: Efficient leaderboard query
