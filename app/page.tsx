@@ -2483,9 +2483,13 @@ export default function TCGPage() {
   };
 
   // Sorted NFTs for PvE modal (PvE allows defense cards - NO lock)
+  // Always create a new array to trigger proper React updates
   const sortedPveNfts = useMemo(() => {
-    if (!pveSortByPower) return nfts;
-    return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+    const cardsCopy = [...nfts];
+    if (pveSortByPower) {
+      cardsCopy.sort((a, b) => (b.power || 0) - (a.power || 0));
+    }
+    return cardsCopy;
   }, [nfts, pveSortByPower]);
 
   // Convex Room Listener - Escuta mudanças na sala em tempo real
