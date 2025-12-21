@@ -62,7 +62,6 @@ export function ShopView({ address }: ShopViewProps) {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showBurnModal, setShowBurnModal] = useState(false);
   const [claimingDaily, setClaimingDaily] = useState(false);
-  const [dailyClaimedCard, setDailyClaimedCard] = useState<any>(null);
 
   // Prices
   const NORMAL_PRICE = 1000;
@@ -216,11 +215,8 @@ export function ShopView({ address }: ShopViewProps) {
     setClaimingDaily(true);
     try {
       const result = await claimDailyFree({ address });
-      setDailyClaimedCard(result.card);
-      setNotification({
-        type: 'success',
-        message: `🎁 Daily free! Got a ${result.card.rarity}${result.card.foil ? ` ${result.card.foil} Foil` : ''} card!`
-      });
+      // Show the card in pack opening animation
+      setRevealedCards([result.card]);
     } catch (error: any) {
       setNotification({
         type: 'error',
