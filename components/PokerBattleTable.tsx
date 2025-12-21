@@ -353,7 +353,15 @@ export function PokerBattleTable({
       });
     }
 
-    groupVoice.joinChannel(participants);
+    // Filter out CPUs/Mechas - they should never be in voice
+    const realParticipants = participants.filter(p => {
+      const addr = p.address.toLowerCase();
+      const name = p.username.toLowerCase();
+      return !addr.startsWith('cpu_') && !addr.startsWith('mecha_') &&
+             !name.startsWith('mecha ') && !name.startsWith('cpu ');
+    });
+
+    groupVoice.joinChannel(realParticipants);
   };
 
   // Incoming voice call notification ("John Pork is calling")
@@ -384,13 +392,21 @@ export function PokerBattleTable({
   useEffect(() => {
     if (!voiceParticipants || groupVoice.isInChannel || incomingCallDismissed) return;
 
-    const currentCount = voiceParticipants.length;
+    // Filter out CPUs/Mechas from voice participants
+    const realParticipants = voiceParticipants.filter((p: { address: string; username: string }) => {
+      const addr = p.address.toLowerCase();
+      const name = p.username.toLowerCase();
+      return !addr.startsWith('cpu_') && !addr.startsWith('mecha_') &&
+             !name.startsWith('mecha ') && !name.startsWith('cpu ');
+    });
+
+    const currentCount = realParticipants.length;
     const prevCount = prevVoiceParticipantsRef.current;
 
     // If new participant joined and we're not in voice
     if (currentCount > prevCount && currentCount > 0) {
       // Find the caller (most recent joiner who isn't us)
-      const caller = voiceParticipants
+      const caller = realParticipants
         .filter((p: { address: string; username: string; joinedAt: number }) => p.address.toLowerCase() !== playerAddress.toLowerCase())
         .sort((a: { joinedAt: number }, b: { joinedAt: number }) => b.joinedAt - a.joinedAt)[0];
 
