@@ -3,6 +3,11 @@
  *
  * Extracted from app/page.tsx for reusability
  * Handles Alchemy API interactions and image caching
+ *
+ * FALLBACK SYSTEM:
+ * - Caches NFT data in sessionStorage
+ * - Falls back to cached data when Alchemy fails (403/429)
+ * - Reports API status for debugging
  */
 
 import { normalizeUrl } from "./attributes";
@@ -15,6 +20,56 @@ const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 // Image URL cache
 const imageUrlCache = new Map<string, { url: string; timestamp: number }>();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60; // 1 hour
+
+// NFT response cache (persisted in sessionStorage)
+const NFT_CACHE_KEY = 'vbms_nft_cache';
+const NFT_CACHE_TIME = 1000 * 60 * 30; // 30 minutes
+
+// Track if Alchemy API is blocked
+let alchemyBlocked = false;
+let lastAlchemyError: string | null = null;
+
+interface NftCacheEntry {
+  owner: string;
+  contract: string;
+  nfts: any[];
+  timestamp: number;
+}
+
+function getNftCache(owner: string, contract: string): any[] | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = sessionStorage.getItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+    if (!cached) return null;
+    const entry: NftCacheEntry = JSON.parse(cached);
+    if (Date.now() - entry.timestamp > NFT_CACHE_TIME) {
+      sessionStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+      return null;
+    }
+    return entry.nfts;
+  } catch {
+    return null;
+  }
+}
+
+function setNftCache(owner: string, contract: string, nfts: any[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const entry: NftCacheEntry = {
+      owner,
+      contract,
+      nfts,
+      timestamp: Date.now(),
+    };
+    sessionStorage.setItem(`${NFT_CACHE_KEY}_${owner}_${contract}`, JSON.stringify(entry));
+  } catch (e) {
+    console.warn('⚠️ Failed to cache NFTs:', e);
+  }
+}
+
+export function getAlchemyStatus(): { blocked: boolean; error: string | null } {
+  return { blocked: alchemyBlocked, error: lastAlchemyError };
+}
 
 function extractUrl(val: any): string | null {
   if (!val) return null;
@@ -209,6 +264,7 @@ export async function getImage(nft: any, collection?: string): Promise<string> {
 
 /**
  * Fetch all NFTs for an owner from Alchemy API
+ * With caching and fallback for when API is blocked/rate-limited
  *
  * @param owner Wallet address
  * @param contractAddress Optional contract filter (defaults to env var)
@@ -225,52 +281,93 @@ export async function fetchNFTs(
   const contract = contractAddress || CONTRACT_ADDRESS;
   if (!contract) throw new Error("Contract address não configurado");
 
+  // Check cache first
+  const cached = getNftCache(owner, contract);
+
+  // If Alchemy is known to be blocked and we have cache, use cache immediately
+  if (alchemyBlocked && cached && cached.length > 0) {
+    console.log(`📦 Using cached NFTs (Alchemy blocked): ${cached.length} cards`);
+    if (onProgress) onProgress(1, cached.length);
+    return cached;
+  }
+
   let allNfts: any[] = [];
   let pageKey: string | undefined = undefined;
   let pageCount = 0;
-  const maxPages = 20; // Reduced from 70 - most users have < 2000 NFTs
+  const maxPages = 20;
 
-  do {
-    pageCount++;
-    const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
+  try {
+    do {
+      pageCount++;
+      const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
 
-    // Retry logic for rate limiting (429)
-    let res: Response;
-    let retries = 0;
-    const maxRetries = 3;
+      // Retry logic for rate limiting (429) and temporary blocks
+      let res: Response;
+      let retries = 0;
+      const maxRetries = 3;
 
-    while (retries <= maxRetries) {
-      res = await fetch(url);
+      while (retries <= maxRetries) {
+        res = await fetch(url);
 
-      if (res.status === 429 && retries < maxRetries) {
-        // Exponential backoff: 1s, 2s, 4s
-        const delay = Math.pow(2, retries) * 1000;
-        console.log(`⏳ Rate limited, retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        retries++;
-        continue;
+        // Handle rate limiting (429) with exponential backoff
+        if (res.status === 429 && retries < maxRetries) {
+          const delay = Math.pow(2, retries) * 1000;
+          console.log(`⏳ Rate limited (429), retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retries++;
+          continue;
+        }
+
+        // Handle forbidden (403) - API key blocked
+        if (res.status === 403) {
+          alchemyBlocked = true;
+          lastAlchemyError = `API Key bloqueada (403 Forbidden)`;
+          console.error(`❌ Alchemy API blocked (403). Using fallback...`);
+          throw new Error('ALCHEMY_BLOCKED');
+        }
+
+        break;
       }
 
-      break;
+      if (!res!.ok) {
+        lastAlchemyError = `API falhou: ${res!.status}`;
+        throw new Error(lastAlchemyError);
+      }
+
+      // Success - reset blocked status
+      alchemyBlocked = false;
+      lastAlchemyError = null;
+
+      const json = await res!.json();
+      const pageNfts = json.ownedNfts || [];
+      allNfts = allNfts.concat(pageNfts);
+
+      if (onProgress) {
+        onProgress(pageCount, allNfts.length);
+      }
+
+      pageKey = json.pageKey;
+    } while (pageKey && pageCount < maxPages);
+
+    // Cache successful results
+    if (allNfts.length > 0) {
+      setNftCache(owner, contract, allNfts);
     }
 
-    if (!res!.ok) throw new Error(`API falhou: ${res!.status}`);
-    const json = await res!.json();
+    return allNfts;
 
-    // Don't filter here - some NFTs don't have attributes cached in Alchemy
-    // Filter after metadata refresh instead (like profile page does)
-    const pageNfts = json.ownedNfts || [];
-    allNfts = allNfts.concat(pageNfts);
-
-    // Report progress
-    if (onProgress) {
-      onProgress(pageCount, allNfts.length);
+  } catch (error: any) {
+    // If we have cached data, use it as fallback
+    if (cached && cached.length > 0) {
+      console.warn(`⚠️ Alchemy failed, using cached data: ${cached.length} cards`);
+      if (onProgress) onProgress(1, cached.length);
+      return cached;
     }
 
-    pageKey = json.pageKey;
-  } while (pageKey && pageCount < maxPages);
-
-  return allNfts;
+    // No cache available - rethrow error
+    console.error(`❌ Alchemy API error and no cache available:`, error.message);
+    throw error;
+  }
 }
 
 /**
