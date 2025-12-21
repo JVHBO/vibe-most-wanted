@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
@@ -44,6 +44,7 @@ export function SpectatorBetFeedback({
   const [showAnimation, setShowAnimation] = useState(false);
   const [animationResult, setAnimationResult] = useState<'won' | 'lost' | null>(null);
   const [animationAmount, setAnimationAmount] = useState(0);
+  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
 
   // Get all my bets for this room
   const myBets = useQuery(
@@ -127,51 +128,68 @@ export function SpectatorBetFeedback({
         </div>
       )}
 
-      {/* Bet History Panel - Fixed at top right (just below yellow POT line) */}
-      <div className="fixed top-24 right-2 sm:right-4 z-[200] bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500/50 rounded-lg p-2 shadow-xl w-36 text-xs">
-        {/* Compact Header */}
-        <div className="flex items-center justify-between mb-1 pb-1 border-b border-purple-500/30">
-          <span className="text-purple-400 font-bold">🎰 Bets</span>
-          <span className="text-vintage-gold font-bold">💰{credits?.balance || 0}</span>
-        </div>
+      {/* Bet History Panel - Collapsible at top right */}
+      <div className="fixed top-20 right-2 z-[200]">
+        {isPanelExpanded ? (
+          <div className="bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500/50 rounded-lg p-1.5 shadow-xl w-32 text-[10px]">
+            {/* Header with close button */}
+            <button
+              onClick={() => setIsPanelExpanded(false)}
+              className="w-full flex items-center justify-between mb-1 pb-1 border-b border-purple-500/30 hover:opacity-80"
+            >
+              <span className="text-purple-400 font-bold">🎰 Bets</span>
+              <span className="text-vintage-gold font-bold">💰{credits?.balance || 0} ✕</span>
+            </button>
 
-        {/* Compact Stats Row */}
-        <div className="flex justify-between mb-1 text-center">
-          <span className="text-green-400">{wins}W</span>
-          <span className="text-red-400">{losses}L</span>
-          <span className={netProfit >= 0 ? 'text-green-400' : 'text-red-400'}>
-            {netProfit >= 0 ? '+' : ''}{netProfit}
-          </span>
-        </div>
+            {/* Compact Stats Row */}
+            <div className="flex justify-between mb-1 text-center text-[9px]">
+              <span className="text-green-400">{wins}W</span>
+              <span className="text-red-400">{losses}L</span>
+              <span className={netProfit >= 0 ? 'text-green-400' : 'text-red-400'}>
+                {netProfit >= 0 ? '+' : ''}{netProfit}
+              </span>
+            </div>
 
-        {/* Bet History List */}
-        {totalBets > 0 ? (
-          <div className="max-h-32 overflow-y-auto space-y-1">
-            {myBets?.sort((a: RoundBet, b: RoundBet) => b.roundNumber - a.roundNumber).map((bet: RoundBet, idx: number) => (
-              <div
-                key={idx}
-                className={`flex items-center justify-between text-xs px-2 py-1 rounded ${
-                  bet.status === 'won'
-                    ? 'bg-green-500/20 text-green-300'
-                    : bet.status === 'lost'
-                    ? 'bg-red-500/20 text-red-300'
-                    : bet.status === 'refunded'
-                    ? 'bg-yellow-500/20 text-yellow-300'
-                    : 'bg-purple-500/20 text-purple-300'
-                }`}
-              >
-                <span>R{bet.roundNumber}</span>
-                <span className="font-mono">{bet.amount}c @ {bet.odds}x</span>
-                <span className="font-bold">
-                  {bet.status === 'won' ? `+${bet.payout}` : bet.status === 'lost' ? `-${bet.amount}` : bet.status === 'refunded' ? '🔄' : '⏳'}
-                </span>
+            {/* Bet History List */}
+            {totalBets > 0 ? (
+              <div className="max-h-24 overflow-y-auto space-y-0.5">
+                {myBets?.sort((a: RoundBet, b: RoundBet) => b.roundNumber - a.roundNumber).map((bet: RoundBet, idx: number) => (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-between px-1 py-0.5 rounded ${
+                      bet.status === 'won'
+                        ? 'bg-green-500/20 text-green-300'
+                        : bet.status === 'lost'
+                        ? 'bg-red-500/20 text-red-300'
+                        : bet.status === 'refunded'
+                        ? 'bg-yellow-500/20 text-yellow-300'
+                        : 'bg-purple-500/20 text-purple-300'
+                    }`}
+                  >
+                    <span>R{bet.roundNumber}</span>
+                    <span className="font-mono">{bet.amount}c</span>
+                    <span className="font-bold">
+                      {bet.status === 'won' ? `+${bet.payout}` : bet.status === 'lost' ? `-${bet.amount}` : '⏳'}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <p className="text-vintage-ice/50 text-[9px] text-center py-1">
+                No bets yet
+              </p>
+            )}
           </div>
         ) : (
-          <p className="text-vintage-ice/50 text-xs text-center py-2">
-            No bets placed yet
-          </p>
+          <button
+            onClick={() => setIsPanelExpanded(true)}
+            className="bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500/50 rounded-lg px-2 py-1 shadow-xl hover:bg-purple-500/20 transition-all"
+          >
+            <span className="text-purple-400 font-bold text-[10px]">🎰 {wins}W {losses}L</span>
+            <span className={`ml-1 font-bold text-[10px] ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {netProfit >= 0 ? '+' : ''}{netProfit}
+            </span>
+          </button>
         )}
       </div>
     </>
