@@ -999,21 +999,35 @@ export const claimPveRewardNowInternal = internalMutation({
 /**
  * Convert TESTVBMS coins to VBMS blockchain tokens
  * Prepares the signature for blockchain claim
+ *
+ * 🔒 SECURITY: Requires FID verification
+ * - Only works if caller provides valid FID that matches the address in database
+ * - Prevents direct API calls without proper Farcaster authentication
+ *
+ * @param address - Wallet address
+ * @param fid - Farcaster FID (REQUIRED for security)
  * @param amount - Optional: specific amount to convert (default: all balance up to max)
  */
 export const convertTESTVBMStoVBMS = action({
   args: {
     address: v.string(),
+    fid: v.number(), // 🔒 REQUIRED - Must provide valid FID
     amount: v.optional(v.number()),
   },
-  handler: async (ctx, { address, amount }): Promise<{
+  handler: async (ctx, { address, fid, amount }): Promise<{
     amount: number;
     nonce: string;
     signature: string;
     message: string;
   }> => {
-    // Get profile and validate via internal mutation
-    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address, amount });
+    // 🔒 SECURITY: FID is required
+    if (!fid || fid <= 0) {
+      console.log(`[VBMS] ⛔ BLOCKED - No valid FID provided for ${address}`);
+      throw new Error("🔒 Farcaster authentication required. Please use the miniapp to claim.");
+    }
+
+    // Get profile and validate via internal mutation (includes FID verification)
+    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address, fid, amount });
 
     // Generate signature for blockchain claim
     const nonce = generateNonce();
@@ -1023,7 +1037,7 @@ export const convertTESTVBMStoVBMS = action({
       nonce
     });
 
-    console.log(`💱 ${address} converting ${result.claimAmount} TESTVBMS → VBMS (nonce: ${nonce})`);
+    console.log(`💱 ${address} (FID: ${fid}) converting ${result.claimAmount} TESTVBMS → VBMS (nonce: ${nonce})`);
 
     return {
       amount: result.claimAmount,
@@ -1044,9 +1058,10 @@ const MIN_CLAIM_AMOUNT = 100;
 export const convertTESTVBMSInternal = internalMutation({
   args: {
     address: v.string(),
+    fid: v.number(), // 🔒 Required for FID verification
     amount: v.optional(v.number()),
   },
-  handler: async (ctx, { address, amount }): Promise<{ claimAmount: number }> => {
+  handler: async (ctx, { address, fid, amount }): Promise<{ claimAmount: number }> => {
     // 🚫 BLACKLIST CHECK - Block exploiters from claiming
     if (isBlacklisted(address)) {
       const info = getBlacklistInfo(address);
@@ -1055,6 +1070,15 @@ export const convertTESTVBMSInternal = internalMutation({
     }
 
     const profile = await getProfile(ctx, address);
+
+    // 🔒 SECURITY: Verify FID matches the profile
+    // This prevents direct API calls with fake/stolen FIDs
+    if (!profile.farcasterFid || profile.farcasterFid !== fid) {
+      console.log(`🚫 [SECURITY] FID mismatch! Provided: ${fid}, Profile: ${profile.farcasterFid}, Address: ${address}`);
+      throw new Error("🔒 FID verification failed. Your Farcaster account does not match this wallet.");
+    }
+
+    console.log(`✅ [SECURITY] FID verified: ${fid} for address ${address}`);
 
     // ⏰ COOLDOWN CHECK - 3 minutes between conversions
     const lastConversion = profile.lastClaimTimestamp || 0;
