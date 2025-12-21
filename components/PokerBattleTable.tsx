@@ -3533,21 +3533,15 @@ export function PokerBattleTable({
       {showIncomingCall && !groupVoice.isInChannel && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[500] p-4">
           <div className="bg-gradient-to-b from-gray-900/98 to-black/98 rounded-3xl border border-gray-700 max-w-sm w-full p-6 shadow-2xl">
-            {/* Caller Profile Picture */}
+            {/* John Pork Profile Picture */}
             <div className="flex justify-center mb-4">
               <div className="relative">
                 <div className="w-28 h-28 rounded-full border-4 border-green-500 overflow-hidden animate-pulse shadow-lg shadow-green-500/50">
-                  {callerProfile?.farcasterPfpUrl || callerProfile?.twitterProfileImageUrl ? (
-                    <img
-                      src={callerProfile.farcasterPfpUrl || callerProfile.twitterProfileImageUrl}
-                      alt={incomingCaller?.username || 'Caller'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
-                      <span className="text-4xl">🎮</span>
-                    </div>
-                  )}
+                  <img
+                    src="/john-pork.jpg"
+                    alt="John Pork"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 {/* Ringing indicator */}
                 <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
