@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useQuery } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { generateCriminalBackstory } from '@/lib/generateCriminalBackstory';
@@ -28,6 +28,10 @@ export default function FidCardPage() {
 
   // Fetch all cards for this FID
   const fidCards = useQuery(api.farcasterCards.getFarcasterCardsByFid, { fid });
+
+  // Neynar score history
+  const scoreHistory = useQuery(api.neynarScore.getScoreHistory, { fid });
+  const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);
 
   // Get the most recent card (first one)
   const card = fidCards?.[0];
@@ -88,6 +92,14 @@ export default function FidCardPage() {
 
       const score = user.experimental.neynar_user_score;
       const rarity = calculateRarityFromScore(score);
+
+      // Save score to history
+      await saveScoreCheck({
+        fid: user.fid,
+        username: user.username,
+        score,
+        rarity,
+      });
 
       setNeynarScoreData({
         score,
@@ -361,6 +373,73 @@ export default function FidCardPage() {
                 {error && (
                   <div className="p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm text-center">
                     {error}
+                  </div>
+                )}
+
+                {/* Score History Chart */}
+                {scoreHistory && scoreHistory.totalChecks > 0 && (
+                  <div className="mt-4 bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-4">
+                    <h4 className="text-vintage-gold font-bold mb-3 text-center">
+                      📊 Neynar Score Progress
+                    </h4>
+
+                    {/* Progress Summary */}
+                    <div className="grid grid-cols-3 gap-2 mb-4 text-center text-sm">
+                      <div className="bg-vintage-black/50 rounded p-2">
+                        <p className="text-vintage-burnt-gold text-xs">First Check</p>
+                        <p className="text-vintage-ice font-bold">{scoreHistory.firstCheck.score.toFixed(3)}</p>
+                      </div>
+                      <div className="bg-vintage-black/50 rounded p-2">
+                        <p className="text-vintage-burnt-gold text-xs">Current</p>
+                        <p className="text-vintage-gold font-bold">{scoreHistory.latestCheck.score.toFixed(3)}</p>
+                      </div>
+                      <div className="bg-vintage-black/50 rounded p-2">
+                        <p className="text-vintage-burnt-gold text-xs">Change</p>
+                        <p className={`font-bold ${scoreHistory.scoreDiff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {scoreHistory.scoreDiff >= 0 ? '+' : ''}{scoreHistory.scoreDiff.toFixed(3)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Visual Chart - Simple bar representation */}
+                    {scoreHistory.history && scoreHistory.history.length > 1 && (
+                      <div className="mb-3">
+                        <p className="text-vintage-burnt-gold text-xs mb-2 text-center">Score History (Last {scoreHistory.history.length} checks)</p>
+                        <div className="flex items-end justify-center gap-1 h-16 px-2">
+                          {[...scoreHistory.history].reverse().map((check: any, index: number) => {
+                            // Normalize score to height (0.0-1.0 range, most scores are 0.5-1.0)
+                            const minScore = Math.min(...scoreHistory.history.map((h: any) => h.score));
+                            const maxScore = Math.max(...scoreHistory.history.map((h: any) => h.score));
+                            const range = maxScore - minScore || 0.1;
+                            const normalizedHeight = ((check.score - minScore) / range) * 100;
+                            const heightPercent = Math.max(20, Math.min(100, normalizedHeight));
+
+                            return (
+                              <div
+                                key={check._id || index}
+                                className="flex-1 max-w-4 bg-gradient-to-t from-vintage-gold to-vintage-burnt-gold rounded-t transition-all hover:opacity-80"
+                                style={{ height: `${heightPercent}%` }}
+                                title={`${check.score.toFixed(3)} - ${new Date(check.checkedAt).toLocaleDateString()}`}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-vintage-ice/50 text-xs mt-1 px-2">
+                          <span>Oldest</span>
+                          <span>Recent</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stats Footer */}
+                    <div className="flex justify-between items-center text-xs border-t border-vintage-gold/20 pt-2">
+                      <span className="text-vintage-ice/60">
+                        {scoreHistory.totalChecks} total checks
+                      </span>
+                      <span className={`font-bold ${parseFloat(scoreHistory.percentChange) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {parseFloat(scoreHistory.percentChange) >= 0 ? '↑' : '↓'} {Math.abs(parseFloat(scoreHistory.percentChange))}%
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

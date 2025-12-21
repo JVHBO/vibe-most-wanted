@@ -37,6 +37,7 @@ import type * as migrations_cleanDefenseDecks from "../migrations/cleanDefenseDe
 import type * as migrations_fixVibeFIDCollections from "../migrations/fixVibeFIDCollections.js";
 import type * as migrations_normalizeUsernames from "../migrations/normalizeUsernames.js";
 import type * as missions from "../missions.js";
+import type * as neynarScore from "../neynarScore.js";
 import type * as nftCollections from "../nftCollections.js";
 import type * as notifications from "../notifications.js";
 import type * as notificationsHelpers from "../notificationsHelpers.js";
@@ -97,6 +98,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/fixVibeFIDCollections": typeof migrations_fixVibeFIDCollections;
   "migrations/normalizeUsernames": typeof migrations_normalizeUsernames;
   missions: typeof missions;
+  neynarScore: typeof neynarScore;
   nftCollections: typeof nftCollections;
   notifications: typeof notifications;
   notificationsHelpers: typeof notificationsHelpers;
