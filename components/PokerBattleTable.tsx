@@ -324,9 +324,9 @@ export function PokerBattleTable({
     room?.guestAddress ? { address: room.guestAddress } : "skip"
   );
 
-  // Group voice chat for PvP mode
+  // Group voice chat (PvP and Mecha Arena spectators)
   const groupVoice = useGroupVoiceChat(
-    roomId && !isCPUMode ? roomId : null,
+    roomId || null,
     playerAddress,
     playerUsername
   );
@@ -335,15 +335,18 @@ export function PokerBattleTable({
   const handleJoinVoice = () => {
     if (!room) return;
 
-    const participants: Array<{ address: string; username: string }> = [
-      { address: room.hostAddress, username: room.hostUsername }
-    ];
+    const participants: Array<{ address: string; username: string }> = [];
 
-    if (room.guestAddress && room.guestUsername) {
-      participants.push({ address: room.guestAddress, username: room.guestUsername });
+    // In CPU mode, only add spectators (not CPU players)
+    if (!isCPUMode) {
+      // Add host and guest in PvP mode
+      participants.push({ address: room.hostAddress, username: room.hostUsername });
+      if (room.guestAddress && room.guestUsername) {
+        participants.push({ address: room.guestAddress, username: room.guestUsername });
+      }
     }
 
-    // Add spectators if any
+    // Add spectators (both PvP and Mecha Arena)
     if (room.spectators) {
       room.spectators.forEach((spec: any) => {
         participants.push({ address: spec.address, username: spec.username });
@@ -2680,17 +2683,15 @@ export function PokerBattleTable({
                     <div className="text-[10px]">🏳️‍🌈</div>
                   </button>
                 </div>
-                {/* Voice Chat - Only in PvP mode */}
-                {!isCPUMode && (
-                  <VoiceChannelPanel
-                    voiceState={groupVoice}
-                    onJoinChannel={handleJoinVoice}
-                    onLeaveChannel={groupVoice.leaveChannel}
-                    onToggleMute={groupVoice.toggleMute}
-                    onToggleUserMute={groupVoice.toggleUserMute}
-                    onSetUserVolume={groupVoice.setUserVolume}
-                  />
-                )}
+                {/* Voice Chat - PvP and Mecha Arena spectators */}
+                <VoiceChannelPanel
+                  voiceState={groupVoice}
+                  onJoinChannel={handleJoinVoice}
+                  onLeaveChannel={groupVoice.leaveChannel}
+                  onToggleMute={groupVoice.toggleMute}
+                  onToggleUserMute={groupVoice.toggleUserMute}
+                  onSetUserVolume={groupVoice.setUserVolume}
+                />
             </div>
 
             {/* Game info header */}
