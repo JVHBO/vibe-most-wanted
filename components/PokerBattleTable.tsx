@@ -2624,8 +2624,8 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Meme Sound Panel - Compact floating on right side */}
-            <div className="absolute right-2 top-14 z-10 bg-vintage-charcoal/90 border border-vintage-gold/40 rounded-lg p-1.5 shadow-lg">
+            {/* Meme Sound Panel - Compact floating on right side, below header */}
+            <div className="absolute right-2 top-12 sm:top-14 z-20 bg-vintage-charcoal/95 border border-vintage-gold/50 rounded-lg p-1 shadow-lg">
                 <div className="text-vintage-gold font-display font-bold text-[8px] mb-1 text-center">
                   🔊 SOUNDS
                 </div>
