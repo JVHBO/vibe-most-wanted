@@ -18,7 +18,8 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
     let cardData: any = null;
 
     try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+      // Hardcode Convex URL for edge runtime reliability
+      const convexUrl = "https://agile-orca-761.convex.cloud";
       console.log(`[OG Image] Fetching from Convex: ${convexUrl}`);
 
       const response = await fetch(`${convexUrl}/api/query`, {
