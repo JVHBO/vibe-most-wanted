@@ -857,6 +857,20 @@ export const finishGame = mutation({
       return { success: true, alreadyDeleted: true };
     }
 
+    // Clean up voice participants for this room
+    const voiceParticipants = await ctx.db
+      .query("voiceParticipants")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+
+    for (const p of voiceParticipants) {
+      await ctx.db.delete(p._id);
+    }
+
+    if (voiceParticipants.length > 0) {
+      console.log(`🎙️ Cleaned ${voiceParticipants.length} voice participants from room ${args.roomId}`);
+    }
+
     // DELETE the room immediately (no need to mark as finished since we're deleting)
     await ctx.db.delete(room._id);
 
@@ -1250,16 +1264,32 @@ export const cleanupOldRooms = internalMutation({
     const rooms = await ctx.db.query("pokerRooms").take(50);
 
     let deletedCount = 0;
+    let voiceCleanedCount = 0;
     for (const room of rooms) {
       // Delete if expired or older than 1 hour
       if (room.expiresAt < now || (now - room.createdAt > 3600000)) {
+        // Clean up voice participants for this room first
+        const voiceParticipants = await ctx.db
+          .query("voiceParticipants")
+          .withIndex("by_room", (q) => q.eq("roomId", room.roomId))
+          .collect();
+
+        for (const p of voiceParticipants) {
+          await ctx.db.delete(p._id);
+          voiceCleanedCount++;
+        }
+
         await ctx.db.delete(room._id);
         deletedCount++;
         console.log(`[cleanupOldRooms] Deleted expired/old room ${room.roomId}`);
       }
     }
 
-    return { deletedCount };
+    if (voiceCleanedCount > 0) {
+      console.log(`[cleanupOldRooms] Cleaned ${voiceCleanedCount} voice participants`);
+    }
+
+    return { deletedCount, voiceCleanedCount };
   },
 });
 
@@ -1288,12 +1318,24 @@ export const forceDeleteRoomByAddress = mutation({
       return { deletedCount: 0, message: "No rooms found for this address" };
     }
 
+    let voiceCleanedCount = 0;
     for (const room of rooms) {
+      // Clean up voice participants for this room
+      const voiceParticipants = await ctx.db
+        .query("voiceParticipants")
+        .withIndex("by_room", (q) => q.eq("roomId", room.roomId))
+        .collect();
+
+      for (const p of voiceParticipants) {
+        await ctx.db.delete(p._id);
+        voiceCleanedCount++;
+      }
+
       await ctx.db.delete(room._id);
       console.log(`[forceDeleteRoomByAddress] Deleted room ${room.roomId}`);
     }
 
-    return { deletedCount: rooms.length, message: `Deleted ${rooms.length} room(s)` };
+    return { deletedCount: rooms.length, voiceCleanedCount, message: `Deleted ${rooms.length} room(s)` };
   },
 });
 
@@ -1318,6 +1360,20 @@ export const forceDeleteRoom = mutation({
 
     console.log(`[forceDeleteRoom] Found room:`, room);
 
+    // Clean up voice participants for this room
+    const voiceParticipants = await ctx.db
+      .query("voiceParticipants")
+      .withIndex("by_room", (q) => q.eq("roomId", roomId))
+      .collect();
+
+    for (const p of voiceParticipants) {
+      await ctx.db.delete(p._id);
+    }
+
+    if (voiceParticipants.length > 0) {
+      console.log(`[forceDeleteRoom] Cleaned ${voiceParticipants.length} voice participants`);
+    }
+
     // Just delete it directly - no status update needed
     await ctx.db.delete(room._id);
 
@@ -1330,6 +1386,7 @@ export const forceDeleteRoom = mutation({
         status: room.status,
         players: [room.hostAddress, room.guestAddress],
       },
+      voiceCleanedCount: voiceParticipants.length,
     };
   },
 });
