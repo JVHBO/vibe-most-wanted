@@ -845,6 +845,17 @@ export default defineSchema({
     .index("by_score", ["neynarScore"])
     .index("by_contract", ["contractAddress"]),
 
+  // Neynar Score History (track score changes over time)
+  neynarScoreHistory: defineTable({
+    fid: v.number(),
+    username: v.string(),
+    score: v.number(),
+    rarity: v.string(),
+    checkedAt: v.number(),
+  })
+    .index("by_fid", ["fid"])
+    .index("by_fid_time", ["fid", "checkedAt"]),
+
   // ═══════════════════════════════════════════════════════════════════════════════
   // WEBRTC VOICE CHAT SIGNALING
   // ═══════════════════════════════════════════════════════════════════════════════
