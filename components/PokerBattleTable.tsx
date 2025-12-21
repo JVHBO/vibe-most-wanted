@@ -1747,9 +1747,9 @@ export function PokerBattleTable({
     }
   }, [room, isCPUMode, isHost, currentView]);
 
-  // Play audio when game ends
+  // Play audio when game ends (for players, not spectators)
   useEffect(() => {
-    if (phase === 'game-over' && selectedAnte !== 0 && !isSpectatorMode && soundEnabled && !gameOverShown) {
+    if (phase === 'game-over' && !isSpectatorMode && soundEnabled && !gameOverShown) {
       // Play appropriate sound based on result
       if (playerScore > opponentScore) {
         AudioManager.win(); // Victory sound
@@ -1759,7 +1759,7 @@ export function PokerBattleTable({
         AudioManager.tie(); // Tie sound
       }
     }
-  }, [phase, playerScore, opponentScore, selectedAnte, isSpectatorMode, soundEnabled, gameOverShown]);
+  }, [phase, playerScore, opponentScore, isSpectatorMode, soundEnabled, gameOverShown]);
 
   // Play victory music for special victories (with cleanup to prevent duplicates)
   useEffect(() => {
