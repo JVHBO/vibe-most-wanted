@@ -110,7 +110,7 @@ export default function ReferralsModal({
   const handleShare = async () => {
     if (soundEnabled) AudioManager.buttonClick();
 
-    const shareText = `Join me in VIBE Most Wanted! Battle with NFT cards, play poker, and defeat raid bosses together! 🎴⚔️`;
+    const shareText = `Join me in VIBE Most Wanted! Battle with cards, play poker, and defeat raid bosses together! 🎴⚔️`;
     const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(referralLink)}`;
 
     if (isInFarcaster) {
