@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
       forcePathStyle: true, // Required for Filebase
     });
 
-    // Generate unique filename
+    // Generate unique filename (WebM format)
     const timestamp = Date.now();
-    const filename = `card-${timestamp}.mp4`;
+    const filename = `card-${timestamp}.webm`;
 
     // Upload to Filebase S3 bucket (automatically pins to IPFS)
     const uploadCommand = new PutObjectCommand({
