@@ -10,11 +10,12 @@ export const getActiveCasts = query({
       .withIndex("by_active")
       .filter((q) => q.eq(q.field("active"), true))
       .collect();
-    
+
     // Sort by order
     return casts.sort((a, b) => a.order - b.order);
   },
 });
+
 
 // Set a featured cast (admin only - add check later)
 export const setFeaturedCast = mutation({

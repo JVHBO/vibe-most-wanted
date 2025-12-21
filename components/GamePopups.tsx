@@ -12,10 +12,32 @@
  * Automatically pauses background music when showing result popups
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { FarcasterIcon } from '@/components/PokerIcons';
 import { useMusic } from '@/contexts/MusicContext';
+
+// Pre-generated random positions for victory-3 animation (avoid recalculating on each render)
+const VICTORY3_TONGUE_POSITIONS = Array.from({ length: 25 }, (_, i) => ({
+  left: `${(i * 4) % 100}%`,
+  animationDelay: `${(i * 0.12) % 3}s`,
+  animationDuration: `${2 + (i % 3)}s`,
+  rotation: `${(i * 14.4) % 360}deg`,
+}));
+
+const VICTORY3_PEACH_POSITIONS = Array.from({ length: 12 }, (_, i) => ({
+  left: `${(i * 8.33) % 100}%`,
+  top: `${(i * 8.33) % 100}%`,
+  animationDelay: `${(i * 0.17) % 2}s`,
+  animationDuration: `${1.5 + (i % 2) * 0.75}s`,
+}));
+
+const VICTORY3_DROP_POSITIONS = Array.from({ length: 15 }, (_, i) => ({
+  left: `${(i * 6.67) % 100}%`,
+  top: `${(i * 6.67) % 100}%`,
+  animationDelay: `${(i * 0.2) % 3}s`,
+  animationDuration: `${2 + (i % 3)}s`,
+}));
 
 // Loss screen configurations - randomly selected
 const LOSS_CONFIGS = [
@@ -143,23 +165,33 @@ export function GamePopups({
   }, [showLossPopup, forcedLossMedia]);
 
   // Pause/Resume background music when result popups are shown
+  // Track if popup was already open to prevent multiple pause/play calls
+  const popupWasOpenRef = useRef(false);
+
   useEffect(() => {
     const isAnyPopupOpen = showWinPopup || showLossPopup || showTiePopup;
 
-    if (isAnyPopupOpen && !isPaused) {
-      // Store previous state and pause
+    // Only pause when popup first opens (transition from closed to open)
+    if (isAnyPopupOpen && !popupWasOpenRef.current) {
+      popupWasOpenRef.current = true;
       wasPausedBeforePopup.current = isPaused;
-      pause();
-    } else if (!isAnyPopupOpen && !wasPausedBeforePopup.current) {
-      // Resume only if music wasn't already paused before popup
-      play();
+      if (!isPaused) {
+        pause();
+      }
+    }
+    // Only resume when popup closes (transition from open to closed)
+    else if (!isAnyPopupOpen && popupWasOpenRef.current) {
+      popupWasOpenRef.current = false;
+      if (!wasPausedBeforePopup.current) {
+        play();
+      }
     }
   }, [showWinPopup, showLossPopup, showTiePopup, pause, play, isPaused]);
 
   return (
     <>
-      {/* Preload tie.gif and davyjones.mp4 for faster display */}
-      <img src="/tie.gif" alt="" className="hidden" aria-hidden="true" />
+      {/* Preload tie.mp4 and davyjones.mp4 for faster display */}
+      <link rel="preload" href="/tie.mp4" as="video" type="video/mp4" />
 
       {/* Victory Popup */}
       {showWinPopup && (
@@ -214,7 +246,7 @@ export function GamePopups({
             </div>
           )}
 
-          {/* 👅 VICTORY 3 - Sensual tongues floating effect */}
+          {/* 👅 VICTORY 3 - Sensual tongues floating effect (optimized with pre-generated positions) */}
           {currentVictoryImage === '/victory-3.jpg' && !isInFarcaster && (
             <>
               {/* Audio for victory-3 (disabled in miniapp for performance) - respects soundEnabled */}
@@ -225,33 +257,33 @@ export function GamePopups({
               )}
 
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {/* Tongues floating and licking */}
-                {[...Array(25)].map((_, i) => (
+                {/* Tongues floating and licking - using pre-generated positions */}
+                {VICTORY3_TONGUE_POSITIONS.map((pos, i) => (
                   <div
                     key={`tongue-${i}`}
                     className="absolute animate-float-heart text-5xl"
                     style={{
-                      left: `${Math.random() * 100}%`,
-                      animationDelay: `${Math.random() * 3}s`,
-                      animationDuration: `${2 + Math.random() * 2}s`,
+                      left: pos.left,
+                      animationDelay: pos.animationDelay,
+                      animationDuration: pos.animationDuration,
                       filter: 'drop-shadow(0 0 8px rgba(255, 20, 147, 0.6))',
-                      transform: `rotate(${Math.random() * 360}deg)`,
+                      transform: `rotate(${pos.rotation})`,
                     }}
                   >
                     👅
                   </div>
                 ))}
 
-                {/* Peaches and eggplants for extra sensuality */}
-                {[...Array(12)].map((_, i) => (
+                {/* Peaches and eggplants - using pre-generated positions */}
+                {VICTORY3_PEACH_POSITIONS.map((pos, i) => (
                   <div
                     key={`peach-${i}`}
                     className="absolute animate-pulse text-4xl"
                     style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                      animationDelay: `${Math.random() * 2}s`,
-                      animationDuration: `${1.5 + Math.random() * 1.5}s`,
+                      left: pos.left,
+                      top: pos.top,
+                      animationDelay: pos.animationDelay,
+                      animationDuration: pos.animationDuration,
                       filter: 'drop-shadow(0 0 6px rgba(255, 105, 180, 0.5))',
                     }}
                   >
@@ -259,16 +291,16 @@ export function GamePopups({
                   </div>
                 ))}
 
-                {/* Water drops/sweat */}
-                {[...Array(15)].map((_, i) => (
+                {/* Water drops/sweat - using pre-generated positions */}
+                {VICTORY3_DROP_POSITIONS.map((pos, i) => (
                   <div
                     key={`drop-${i}`}
                     className="absolute animate-ping text-3xl"
                     style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                      animationDelay: `${Math.random() * 3}s`,
-                      animationDuration: `${2 + Math.random() * 2}s`,
+                      left: pos.left,
+                      top: pos.top,
+                      animationDelay: pos.animationDelay,
+                      animationDuration: pos.animationDuration,
                     }}
                   >
                     💦
@@ -512,9 +544,12 @@ export function GamePopups({
       {showTiePopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowTiePopup(false)}>
           <div className="relative flex flex-col items-center gap-2">
-            <img
-              src="/tie.gif"
-              alt="Tie!"
+            <video
+              src="/tie.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
               className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-gray-500/50 border-2 border-gray-400"
             />
             <p className="text-lg md:text-xl font-bold text-gray-400 animate-pulse px-2 text-center">

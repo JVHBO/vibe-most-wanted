@@ -210,7 +210,13 @@ export const AudioManager = {
       devLog('Erro ao tocar som de derrota:', e);
     }
   },
-  async tie() { await this.playTone(500, 0.3, 0.25); },
+  async tie() {
+    // Tie sound - neutral draw effect
+    await this.playTone(500, 0.15, 0.35);
+    setTimeout(() => this.playTone(500, 0.15, 0.35), 150);
+    setTimeout(() => this.playTone(400, 0.2, 0.3), 300);
+    this.hapticFeedback('medium');
+  },
   // Sons para botões
   async buttonClick() { await this.playTone(600, 0.08, 0.12); },
   async buttonHover() { await this.playTone(500, 0.04, 0.08); },

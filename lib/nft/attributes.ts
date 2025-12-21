@@ -37,6 +37,10 @@ export function findAttr(nft: any, trait: string): string {
 
 /**
  * Check if an NFT card is unrevealed/unopened
+ *
+ * IMPROVED: First checks for revealed attributes (Wear, Character, Power)
+ * before checking Rarity, because some NFTs have Rarity="Unopened" even
+ * after being revealed (contract bug).
  */
 export function isUnrevealed(nft: any): boolean {
   const hasAttrs = !!(
@@ -46,19 +50,44 @@ export function isUnrevealed(nft: any): boolean {
     nft?.metadata?.traits?.length
   );
 
-  // Se não tem atributos, é não revelada
+  // No attributes = unrevealed
   if (!hasAttrs) return true;
 
-  const r = (findAttr(nft, 'rarity') || '').toLowerCase();
-  const s = (findAttr(nft, 'status') || '').toLowerCase();
   const n = String(nft?.name || '').toLowerCase();
 
-  // Verifica se tem indicadores explícitos de não revelada
+  // PRIORITY 1: Check if card has revealed attributes (Wear, Character, Power)
+  // If it has these, it's DEFINITELY revealed regardless of rarity value
+  const wear = findAttr(nft, 'wear');
+  const character = findAttr(nft, 'character');
+  const power = findAttr(nft, 'power');
+  const foil = findAttr(nft, 'foil');
+
+  // If card has Wear/Character/Power/Foil attributes, it's definitely revealed
+  if (wear || character || power || foil) {
+    return false;
+  }
+
+  // PRIORITY 2: Check if it has a REAL rarity (Common, Rare, Epic, Legendary, Mythic)
+  const actualRarity = findAttr(nft, 'rarity');
+  const r = (actualRarity || '').toLowerCase();
+
+  if (r && r !== 'unopened' && (
+    r.includes('common') ||
+    r.includes('rare') ||
+    r.includes('epic') ||
+    r.includes('legendary') ||
+    r.includes('mythic')
+  )) {
+    return false;
+  }
+
+  // PRIORITY 3: Check for explicit unopened indicators
+  const s = (findAttr(nft, 'status') || '').toLowerCase();
   if (r === 'unopened' || s === 'unopened' || n === 'unopened' || n.includes('sealed pack')) {
     return true;
   }
 
-  // Se tem imagem OU tem rarity, considera revelada
+  // PRIORITY 4: Fallback - check if has image OR rarity
   const hasImage = !!(
     nft?.image?.cachedUrl ||
     nft?.image?.originalUrl ||

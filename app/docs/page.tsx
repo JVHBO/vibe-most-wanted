@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { docsTranslations, type DocsSupportedLanguage, type DocsTranslationKey } from "@/lib/docs-translations";
 
-type DocSection = "economy" | "battles" | "poker" | "mecha" | "raidboss" | "vibefid" | "achievements" | "quests" | "cards" | "faq";
+type DocSection = "economy" | "battles" | "poker" | "mecha" | "raidboss" | "vibefid" | "quests" | "cards" | "faq";
 
 // Simple language selector
 function LanguageSelector() {
@@ -123,7 +123,6 @@ export default function DocsPage() {
     { id: "mecha" as DocSection, label: t("mechaArena") },
     { id: "raidboss" as DocSection, label: t("raidBoss") },
     { id: "vibefid" as DocSection, label: t("vibeFID") },
-    { id: "achievements" as DocSection, label: t("achievements") },
     { id: "quests" as DocSection, label: t("quests") },
     { id: "cards" as DocSection, label: t("cards") },
     { id: "faq" as DocSection, label: t("faq") },
@@ -185,9 +184,6 @@ export default function DocsPage() {
                   <li><strong>{t("earnAchievements")}:</strong> {t("earnAchievementsDesc")}</li>
                   <li><strong>{t("earnQuests")}:</strong> {t("earnQuestsDesc")}</li>
                 </ul>
-
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("dailyLimit")}</h3>
-                <p>{t("dailyLimitDesc")}</p>
 
                 <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("entryFees")}</h3>
                 <ul className="list-disc list-inside space-y-2">
@@ -390,32 +386,6 @@ export default function DocsPage() {
             </div>
           )}
 
-          {/* Achievements */}
-          {activeSection === "achievements" && (
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold mb-3 sm:mb-4">{t("achievementsTitle")}</h2>
-              <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-vintage-ice">
-                <p>{t("achievementsIntro")}</p>
-                <p className="text-vintage-burnt-gold"><strong>{t("totalRewards")}</strong></p>
-                <p className="text-vintage-burnt-gold"><strong>{t("achievementCount")}</strong></p>
-
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("rarityAchievements")}</h3>
-                <p>{t("rarityDesc")}</p>
-                <p className="text-vintage-burnt-gold">{t("rarityCount")}</p>
-
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("wearAchievements")}</h3>
-                <p>{t("wearDesc")}</p>
-                <p className="text-vintage-burnt-gold">{t("wearCount")}</p>
-
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("foilAchievements")}</h3>
-                <p>{t("foilDesc")}</p>
-                <p className="text-vintage-burnt-gold">{t("foilCount")}</p>
-
-                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("progressiveAchievements")}</h3>
-                <p>{t("progressiveDesc")}</p>
-              </div>
-            </div>
-          )}
 
           {/* Quests */}
           {activeSection === "quests" && (
@@ -481,6 +451,12 @@ export default function DocsPage() {
 
                 <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("defenseDeck")}</h3>
                 <p>{t("defenseDeckDesc")}</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("featuredCollections")}</h3>
+                <p>{t("featuredCollectionsDesc")}</p>
+
+                <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("nothingPacks")}</h3>
+                <p>{t("nothingPacksDesc")}</p>
               </div>
             </div>
           )}
