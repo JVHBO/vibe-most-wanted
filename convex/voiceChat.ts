@@ -129,16 +129,30 @@ export const joinVoiceChannel = mutation({
   },
   handler: async (ctx, { roomId, address, username }) => {
     const normalizedAddress = address.toLowerCase();
+    const normalizedUsername = username.toLowerCase();
 
-    // Check if already in voice
-    const existing = await ctx.db
+    // BLOCK: Never allow CPUs/Mechas to join voice
+    // CPUs have fake addresses starting with "cpu_" or usernames starting with "MECHA "
+    if (
+      normalizedAddress.startsWith("cpu_") ||
+      normalizedAddress.startsWith("mecha_") ||
+      normalizedUsername.startsWith("mecha ") ||
+      normalizedUsername.startsWith("cpu ")
+    ) {
+      console.log(`[VoiceChat] BLOCKED: CPU/Mecha ${username} cannot join voice`);
+      return { success: false, blocked: true, reason: "CPUs cannot join voice" };
+    }
+
+    // FIRST: Clean up any stale entries for this user in ANY room
+    // This prevents ghost entries if user didn't leave properly before
+    const staleEntries = await ctx.db
       .query("voiceParticipants")
-      .withIndex("by_room", (q) => q.eq("roomId", roomId))
       .filter((q) => q.eq(q.field("address"), normalizedAddress))
-      .first();
+      .collect();
 
-    if (existing) {
-      return { success: true, alreadyJoined: true };
+    for (const entry of staleEntries) {
+      await ctx.db.delete(entry._id);
+      console.log(`[VoiceChat] Cleaned stale entry for ${normalizedAddress} in room ${entry.roomId}`);
     }
 
     // Add to voice channel
@@ -156,6 +170,7 @@ export const joinVoiceChannel = mutation({
 
 /**
  * Leave voice channel - remove user from voice tracking
+ * Also cleans up any stale entries in other rooms for safety
  */
 export const leaveVoiceChannel = mutation({
   args: {
@@ -165,19 +180,24 @@ export const leaveVoiceChannel = mutation({
   handler: async (ctx, { roomId, address }) => {
     const normalizedAddress = address.toLowerCase();
 
-    // Find and delete participant
-    const participant = await ctx.db
+    // Clean up ALL entries for this user (not just the current room)
+    // This ensures no ghost entries remain
+    const allEntries = await ctx.db
       .query("voiceParticipants")
-      .withIndex("by_room", (q) => q.eq("roomId", roomId))
       .filter((q) => q.eq(q.field("address"), normalizedAddress))
-      .first();
+      .collect();
 
-    if (participant) {
-      await ctx.db.delete(participant._id);
-      console.log(`[VoiceChat] ${normalizedAddress} left voice in room ${roomId}`);
+    let deleted = 0;
+    for (const entry of allEntries) {
+      await ctx.db.delete(entry._id);
+      deleted++;
     }
 
-    return { success: true };
+    if (deleted > 0) {
+      console.log(`[VoiceChat] ${normalizedAddress} left voice (cleaned ${deleted} entries)`);
+    }
+
+    return { success: true, deleted };
   },
 });
 
