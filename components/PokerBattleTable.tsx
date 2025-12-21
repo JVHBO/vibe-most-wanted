@@ -359,6 +359,7 @@ export function PokerBattleTable({
   // Incoming voice call notification ("John Pork is calling")
   const [showIncomingCall, setShowIncomingCall] = useState(false);
   const [incomingCallDismissed, setIncomingCallDismissed] = useState(false);
+  const [incomingCaller, setIncomingCaller] = useState<{ username: string; address: string } | null>(null);
   const incomingCallAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Sounds panel visibility
@@ -368,6 +369,12 @@ export function PokerBattleTable({
   const voiceParticipants = useQuery(
     api.voiceChat.getVoiceParticipants,
     roomId ? { roomId } : "skip"
+  );
+
+  // Get caller's profile for their pfp
+  const callerProfile = useQuery(
+    api.notifications.getProfileByAddress,
+    incomingCaller?.address ? { address: incomingCaller.address } : "skip"
   );
 
   // Track previous voice participants count for detecting new joins
@@ -389,6 +396,7 @@ export function PokerBattleTable({
 
       if (caller) {
         console.log('[PokerBattle] 📞 Incoming voice call from:', caller.username);
+        setIncomingCaller({ username: caller.username, address: caller.address });
         setShowIncomingCall(true);
 
         // Play ringtone
@@ -3507,40 +3515,61 @@ export function PokerBattleTable({
 
       {/* Incoming Voice Call Modal - "John Pork is calling" */}
       {showIncomingCall && !groupVoice.isInChannel && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[500] p-4">
-          <div className="bg-gradient-to-b from-green-900/95 to-green-950/95 rounded-3xl border-4 border-green-400/50 max-w-sm w-full p-8 shadow-2xl shadow-green-500/30 animate-pulse-glow">
-            {/* Phone Icon Animation */}
-            <div className="flex justify-center mb-6">
-              <div className="w-24 h-24 bg-green-500/30 rounded-full flex items-center justify-center animate-bounce">
-                <span className="text-6xl">📞</span>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[500] p-4">
+          <div className="bg-gradient-to-b from-gray-900/98 to-black/98 rounded-3xl border border-gray-700 max-w-sm w-full p-6 shadow-2xl">
+            {/* Caller Profile Picture */}
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <div className="w-28 h-28 rounded-full border-4 border-green-500 overflow-hidden animate-pulse shadow-lg shadow-green-500/50">
+                  {callerProfile?.farcasterPfpUrl || callerProfile?.twitterProfileImageUrl ? (
+                    <img
+                      src={callerProfile.farcasterPfpUrl || callerProfile.twitterProfileImageUrl}
+                      alt={incomingCaller?.username || 'Caller'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+                      <span className="text-4xl">🎮</span>
+                    </div>
+                  )}
+                </div>
+                {/* Ringing indicator */}
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
+                  <span className="text-lg">📞</span>
+                </div>
               </div>
             </div>
 
             {/* Caller Info */}
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-display font-bold text-green-400 mb-2 animate-pulse">
-                John Pork is calling
+            <div className="text-center mb-6">
+              <p className="text-gray-400 text-sm mb-1">incoming call...</p>
+              <h2 className="text-2xl font-bold text-white mb-1">
+                {incomingCaller?.username || 'Someone'}
               </h2>
-              <p className="text-vintage-ice text-lg">
-                Someone wants to voice chat!
+              <p className="text-green-400 text-sm font-medium">
+                wants to voice chat
               </p>
             </div>
 
-            {/* Accept/Reject Buttons */}
-            <div className="flex gap-4">
+            {/* Accept/Reject Buttons - iPhone style */}
+            <div className="flex justify-center gap-16">
               <button
                 onClick={handleRejectCall}
-                className="flex-1 px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-red-500/30"
+                className="flex flex-col items-center gap-2"
               >
-                <span className="text-2xl">📵</span>
-                Decline
+                <div className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg shadow-red-500/30">
+                  <span className="text-2xl">📵</span>
+                </div>
+                <span className="text-red-400 text-xs font-medium">Decline</span>
               </button>
               <button
                 onClick={handleAcceptCall}
-                className="flex-1 px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 animate-pulse"
+                className="flex flex-col items-center gap-2"
               >
-                <span className="text-2xl">📞</span>
-                Accept
+                <div className="w-16 h-16 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center transition-all hover:scale-110 animate-pulse shadow-lg shadow-green-500/30">
+                  <span className="text-2xl">📞</span>
+                </div>
+                <span className="text-green-400 text-xs font-medium">Accept</span>
               </button>
             </div>
           </div>
