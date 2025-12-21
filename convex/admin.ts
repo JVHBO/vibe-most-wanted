@@ -612,6 +612,26 @@ export const removeBlacklistedDefenseDecks = mutation({
 });
 
 /**
+ * Clean ALL voice participants - emergency cleanup
+ * Use when there are stale/ghost voice entries
+ */
+export const cleanupAllVoice = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allParticipants = await ctx.db
+      .query("voiceParticipants")
+      .collect();
+
+    for (const p of allParticipants) {
+      await ctx.db.delete(p._id);
+    }
+
+    console.log(`[Admin] Voice cleanup: removed ${allParticipants.length} voice participants`);
+    return { deleted: allParticipants.length };
+  },
+});
+
+/**
  * 🚀 BANDWIDTH FIX: Backfill hasFullDefenseDeck field for all profiles
  * This enables efficient leaderboard queries using compound index
  */
