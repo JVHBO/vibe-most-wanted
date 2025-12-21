@@ -483,6 +483,21 @@ export const resetSocialQuestProgress = mutation({
   },
 });
 
+/**
+ * Reset all daily free claims so everyone can claim again
+ */
+export const resetDailyFreeClaims = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const claims = await ctx.db.query("dailyFreeClaims").collect();
+    for (const claim of claims) {
+      await ctx.db.delete(claim._id);
+    }
+    console.log(`Deleted ${claims.length} daily free claims`);
+    return { deleted: claims.length };
+  },
+});
+
 // ========== BLACKLIST: Exploiter addresses ==========
 
 const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number; amountStolen: number }> = {

@@ -1352,6 +1352,20 @@ export const claimDailyFreePack = mutation({
 });
 
 /**
+ * ADMIN: Reset all daily free claims so everyone can claim again
+ */
+export const adminResetDailyFreeClaims = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const claims = await ctx.db.query("dailyFreeClaims").collect();
+    for (const claim of claims) {
+      await ctx.db.delete(claim._id);
+    }
+    return { deleted: claims.length };
+  },
+});
+
+/**
  * ADMIN: Restore cards from backup data
  * Used to restore cards with normalized addresses and proper URLs
  */
