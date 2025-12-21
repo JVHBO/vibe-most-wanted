@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { AudioManager } from "@/lib/audio-manager";
 
 // Bet type from roundBetting
 interface RoundBet {
@@ -65,11 +66,18 @@ export function SpectatorBetFeedback({
     const betForRound = myBets.find((b: RoundBet) => b.roundNumber === resolvedRound);
 
     if (betForRound && betForRound.status !== 'active') {
-      // Bet was resolved - show animation
+      // Bet was resolved - show animation and play sound
       const won = betForRound.status === 'won';
       setAnimationResult(won ? 'won' : 'lost');
       setAnimationAmount(won ? (betForRound.payout || 0) : betForRound.amount);
       setShowAnimation(true);
+
+      // Play sound based on result
+      if (won) {
+        AudioManager.win();
+      } else {
+        AudioManager.lose();
+      }
 
       // Hide animation after 3 seconds
       setTimeout(() => {
