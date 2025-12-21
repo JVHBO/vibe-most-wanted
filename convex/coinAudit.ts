@@ -265,6 +265,243 @@ export const getAllAuditLogs = query({
   },
 });
 
+// ========== SECURITY ALERT THRESHOLDS ==========
+
+const ALERT_THRESHOLDS = {
+  // Rapid claims detection
+  MAX_CLAIMS_PER_MINUTE: 3,
+  MAX_CLAIMS_PER_HOUR: 10,
+
+  // High volume detection
+  HIGH_AMOUNT_SINGLE_CLAIM: 100000, // 100k VBMS in one claim
+  HIGH_AMOUNT_PER_HOUR: 500000, // 500k VBMS per hour
+
+  // Rapid transactions detection
+  MAX_TRANSACTIONS_PER_MINUTE: 15,
+  SUSPICIOUS_EARN_RATE: 10000, // 10k+ in 5 minutes
+};
+
+// ========== QUERY: Real-Time Security Monitor ==========
+
+export const getSecurityAlerts = query({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const oneHourAgo = now - (60 * 60 * 1000);
+    const fiveMinAgo = now - (5 * 60 * 1000);
+    const oneMinAgo = now - (60 * 1000);
+
+    // Get recent logs
+    const recentLogs = await ctx.db
+      .query("coinAuditLog")
+      .withIndex("by_timestamp")
+      .filter((q) => q.gte(q.field("timestamp"), oneHourAgo))
+      .collect();
+
+    const alerts: Array<{
+      severity: "critical" | "warning" | "info";
+      type: string;
+      address: string;
+      details: string;
+      timestamp: number;
+    }> = [];
+
+    // Group by player
+    const byPlayer: Record<string, typeof recentLogs> = {};
+    recentLogs.forEach(log => {
+      if (!byPlayer[log.playerAddress]) {
+        byPlayer[log.playerAddress] = [];
+      }
+      byPlayer[log.playerAddress].push(log);
+    });
+
+    // Analyze each player
+    Object.entries(byPlayer).forEach(([address, logs]) => {
+      // 1. Check for rapid claims (conversion attempts)
+      const claims = logs.filter(l => l.type === "convert" || l.type === "claim");
+      const claimsLastMinute = claims.filter(l => l.timestamp > oneMinAgo);
+      const claimsLastHour = claims.filter(l => l.timestamp > oneHourAgo);
+
+      if (claimsLastMinute.length >= ALERT_THRESHOLDS.MAX_CLAIMS_PER_MINUTE) {
+        alerts.push({
+          severity: "critical",
+          type: "RAPID_CLAIMS",
+          address,
+          details: `${claimsLastMinute.length} claims in last minute (threshold: ${ALERT_THRESHOLDS.MAX_CLAIMS_PER_MINUTE})`,
+          timestamp: now,
+        });
+      }
+
+      if (claimsLastHour.length >= ALERT_THRESHOLDS.MAX_CLAIMS_PER_HOUR) {
+        alerts.push({
+          severity: "warning",
+          type: "HIGH_CLAIM_VOLUME",
+          address,
+          details: `${claimsLastHour.length} claims in last hour (threshold: ${ALERT_THRESHOLDS.MAX_CLAIMS_PER_HOUR})`,
+          timestamp: now,
+        });
+      }
+
+      // 2. Check for high amounts
+      const totalClaimedHour = claims
+        .filter(l => l.timestamp > oneHourAgo)
+        .reduce((sum, l) => sum + l.amount, 0);
+
+      if (totalClaimedHour >= ALERT_THRESHOLDS.HIGH_AMOUNT_PER_HOUR) {
+        alerts.push({
+          severity: "critical",
+          type: "HIGH_VOLUME_CLAIMS",
+          address,
+          details: `${totalClaimedHour.toLocaleString()} VBMS claimed in last hour (threshold: ${ALERT_THRESHOLDS.HIGH_AMOUNT_PER_HOUR.toLocaleString()})`,
+          timestamp: now,
+        });
+      }
+
+      const largeClaims = claims.filter(l => l.amount >= ALERT_THRESHOLDS.HIGH_AMOUNT_SINGLE_CLAIM);
+      largeClaims.forEach(claim => {
+        alerts.push({
+          severity: "warning",
+          type: "LARGE_SINGLE_CLAIM",
+          address,
+          details: `Single claim of ${claim.amount.toLocaleString()} VBMS (threshold: ${ALERT_THRESHOLDS.HIGH_AMOUNT_SINGLE_CLAIM.toLocaleString()})`,
+          timestamp: claim.timestamp,
+        });
+      });
+
+      // 3. Check for rapid earning
+      const earns = logs.filter(l => l.type === "earn" && l.timestamp > fiveMinAgo);
+      const totalEarned5Min = earns.reduce((sum, l) => sum + l.amount, 0);
+
+      if (totalEarned5Min >= ALERT_THRESHOLDS.SUSPICIOUS_EARN_RATE) {
+        alerts.push({
+          severity: "warning",
+          type: "RAPID_EARNING",
+          address,
+          details: `${totalEarned5Min.toLocaleString()} TESTVBMS earned in 5 minutes (threshold: ${ALERT_THRESHOLDS.SUSPICIOUS_EARN_RATE.toLocaleString()})`,
+          timestamp: now,
+        });
+      }
+
+      // 4. Check for rapid transactions overall
+      const txLastMinute = logs.filter(l => l.timestamp > oneMinAgo);
+      if (txLastMinute.length >= ALERT_THRESHOLDS.MAX_TRANSACTIONS_PER_MINUTE) {
+        alerts.push({
+          severity: "critical",
+          type: "RAPID_TRANSACTIONS",
+          address,
+          details: `${txLastMinute.length} transactions in last minute (threshold: ${ALERT_THRESHOLDS.MAX_TRANSACTIONS_PER_MINUTE})`,
+          timestamp: now,
+        });
+      }
+    });
+
+    // Sort by severity and timestamp
+    const severityOrder = { critical: 0, warning: 1, info: 2 };
+    alerts.sort((a, b) => {
+      if (severityOrder[a.severity] !== severityOrder[b.severity]) {
+        return severityOrder[a.severity] - severityOrder[b.severity];
+      }
+      return b.timestamp - a.timestamp;
+    });
+
+    return {
+      totalAlerts: alerts.length,
+      critical: alerts.filter(a => a.severity === "critical").length,
+      warning: alerts.filter(a => a.severity === "warning").length,
+      alerts: alerts.slice(0, 50), // Top 50 alerts
+      thresholds: ALERT_THRESHOLDS,
+      analyzedPlayers: Object.keys(byPlayer).length,
+      analyzedTransactions: recentLogs.length,
+    };
+  },
+});
+
+// ========== QUERY: Get Flagged Accounts ==========
+
+export const getFlaggedAccounts = query({
+  args: {},
+  handler: async (ctx) => {
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+    const recentLogs = await ctx.db
+      .query("coinAuditLog")
+      .withIndex("by_timestamp")
+      .filter((q) => q.gte(q.field("timestamp"), oneWeekAgo))
+      .collect();
+
+    // Group by player
+    const byPlayer: Record<string, typeof recentLogs> = {};
+    recentLogs.forEach(log => {
+      if (!byPlayer[log.playerAddress]) {
+        byPlayer[log.playerAddress] = [];
+      }
+      byPlayer[log.playerAddress].push(log);
+    });
+
+    // Calculate risk scores
+    const flagged: Array<{
+      address: string;
+      riskScore: number;
+      totalClaimed: number;
+      totalEarned: number;
+      claimCount: number;
+      transactionCount: number;
+      flags: string[];
+    }> = [];
+
+    Object.entries(byPlayer).forEach(([address, logs]) => {
+      let riskScore = 0;
+      const flags: string[] = [];
+
+      const claims = logs.filter(l => l.type === "convert" || l.type === "claim");
+      const earns = logs.filter(l => l.type === "earn");
+      const totalClaimed = claims.reduce((sum, l) => sum + l.amount, 0);
+      const totalEarned = earns.reduce((sum, l) => sum + l.amount, 0);
+
+      // Risk factors
+      if (claims.length > 50) {
+        riskScore += 30;
+        flags.push(`High claim count: ${claims.length}`);
+      }
+
+      if (totalClaimed > 1000000) {
+        riskScore += 40;
+        flags.push(`High total claimed: ${totalClaimed.toLocaleString()}`);
+      }
+
+      if (logs.length > 200) {
+        riskScore += 20;
+        flags.push(`High transaction count: ${logs.length}`);
+      }
+
+      // Check for burst patterns
+      const sortedLogs = [...logs].sort((a, b) => a.timestamp - b.timestamp);
+      for (let i = 0; i < sortedLogs.length - 10; i++) {
+        const timeWindow = sortedLogs[i + 10].timestamp - sortedLogs[i].timestamp;
+        if (timeWindow < 60000) {
+          riskScore += 50;
+          flags.push("Burst pattern detected");
+          break;
+        }
+      }
+
+      if (riskScore >= 30) {
+        flagged.push({
+          address,
+          riskScore,
+          totalClaimed,
+          totalEarned,
+          claimCount: claims.length,
+          transactionCount: logs.length,
+          flags,
+        });
+      }
+    });
+
+    return flagged.sort((a, b) => b.riskScore - a.riskScore);
+  },
+});
+
 // ========== HELPER: Create audit log entry (for use in other modules) ==========
 // This is exported so other modules can call it directly within their mutations
 
