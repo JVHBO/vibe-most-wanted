@@ -822,7 +822,10 @@ export default function TCGPage() {
       const savedMusicVolume = localStorage.getItem('musicVolume');
 
       if (savedMusicEnabled !== null) {
-        setMusicEnabled(savedMusicEnabled === 'true');
+        const isEnabled = savedMusicEnabled === 'true';
+        setMusicEnabled(isEnabled);
+        // 🔧 FIX: Also update the MusicContext state to prevent audio playing when muted
+        setIsMusicEnabled(isEnabled);
       }
       if (savedMusicVolume !== null) {
         const volume = parseFloat(savedMusicVolume);
@@ -832,7 +835,7 @@ export default function TCGPage() {
         devLog(`📦 Volume carregado do localStorage: ${volume} (${Math.round(volume * 100)}%)`);
       }
     }
-  }, []);
+  }, [setIsMusicEnabled]);
 
   // Show tutorial for ALL players once (existing and new)
   useEffect(() => {
@@ -3525,7 +3528,7 @@ export default function TCGPage() {
             </div>
 
             {/* Not enough cards warning */}
-            {nfts.length < HAND_SIZE && status !== "fetching" && (
+            {nfts.length < HAND_SIZE && (status === "loaded" || status === "failed") && (
               <NotEnoughCardsGuide
                 currentCards={nfts.length}
                 requiredCards={HAND_SIZE}
@@ -3536,7 +3539,7 @@ export default function TCGPage() {
             )}
 
             {/* Normal UI - only show if enough cards or still loading */}
-            {(nfts.length >= HAND_SIZE || status === "fetching") && (
+            {(nfts.length >= HAND_SIZE || status === "fetching" || status === "idle") && (
             <>
             {/* Controls Row: Collection Filter + Sort */}
             <div className="flex-shrink-0 px-4 pt-3 flex flex-wrap items-center justify-center gap-2">
@@ -5423,7 +5426,7 @@ export default function TCGPage() {
                   </div>
                 )}
 
-                {nfts.length === 0 && status !== 'fetching' && (
+                {nfts.length === 0 && (status === 'loaded' || status === 'failed') && (
                   <div className="text-center py-12 px-4">
                     <div className="text-6xl mb-4">🃏</div>
                     <h3 className="text-xl font-bold text-vintage-gold mb-2">{t('noCardsTitle')}</h3>
@@ -5455,7 +5458,7 @@ export default function TCGPage() {
                 )}
 
                 {/* Warning when player has 1-4 cards (not enough to play) */}
-                {nfts.length > 0 && nfts.length < HAND_SIZE && status !== 'fetching' && (
+                {nfts.length > 0 && nfts.length < HAND_SIZE && (status === 'loaded' || status === 'failed') && (
                   <div className="mb-6 p-4 bg-amber-900/30 border border-amber-500/50 rounded-xl">
                     <div className="flex items-start gap-3">
                       <span className="text-3xl">⚠️</span>

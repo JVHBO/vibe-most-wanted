@@ -297,7 +297,7 @@ export const trackReferral = mutation({
     await ctx.db.insert("referrals", {
       referrerAddress: referrer.address.toLowerCase(),
       referrerUsername: referrer.username,
-      referrerFid: referrer.farcasterFid,
+      referrerFid: referrer.farcasterFid || (referrer.fid ? Number(referrer.fid) : undefined),
       referredAddress: referredAddress.toLowerCase(),
       referredUsername,
       referredFid,
