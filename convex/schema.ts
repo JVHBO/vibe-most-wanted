@@ -839,6 +839,11 @@ export default defineSchema({
     // Metadata
     mintedAt: v.number(),
     lastUsed: v.optional(v.number()),
+
+    // Upgrade tracking (when rarity is upgraded due to score improvement)
+    upgradedAt: v.optional(v.number()),
+    previousRarity: v.optional(v.string()),
+    previousNeynarScore: v.optional(v.number()),
   })
     .index("by_fid", ["fid"])
     .index("by_address", ["address"])
@@ -1301,7 +1306,7 @@ export default defineSchema({
   // Cast Auctions - 24-hour auctions for featured cast slots
   castAuctions: defineTable({
     // Slot Info
-    slotNumber: v.number(), // 0, 1, or 2 (3 slots total)
+    slotNumber: v.number(), // 0 or 1 (2 slots total - always last 2 winners)
 
     // Auction Timing
     auctionStartedAt: v.number(), // When this auction period started
