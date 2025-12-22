@@ -31,6 +31,31 @@ export const getAllTokensPublic = query({
 });
 
 /**
+ * Get ALL notification tokens with pagination (for broadcasts)
+ * Use offset to get tokens beyond the first 500
+ */
+export const getAllTokensPaginated = query({
+  args: {
+    offset: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 500;
+    const offset = args.offset || 0;
+
+    // Get all tokens and apply offset/limit manually
+    // This is a one-time broadcast operation, not for regular use
+    const allTokens = await ctx.db.query("notificationTokens").collect();
+
+    return {
+      tokens: allTokens.slice(offset, offset + limit),
+      total: allTokens.length,
+      hasMore: offset + limit < allTokens.length,
+    };
+  },
+});
+
+/**
  * Get tip rotation state
  */
 export const getTipState = query({

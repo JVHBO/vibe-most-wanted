@@ -9,7 +9,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -343,15 +343,19 @@ export const getFreeCardsStats = query({
 });
 
 /**
- * DEBUG: Get ALL cards with full details
+ * DEBUG: Get sample cards with full details
+ * 🚀 BANDWIDTH FIX: Changed to internalQuery and use .take() not .collect()
+ * Use via: npx convex run cardPacks:debugAllCards --env-file .env.prod
  */
-export const debugAllCards = query({
+export const debugAllCards = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const allCards = await ctx.db.query("cardInventory").collect();
+    // 🚀 BANDWIDTH FIX: Only fetch 20 cards directly, not ALL then slice
+    const sampleCards = await ctx.db.query("cardInventory").take(20);
     return {
-      totalRecords: allCards.length,
-      cards: allCards.slice(0, 20).map(card => ({
+      sampleSize: sampleCards.length,
+      note: "This is a sample. Use admin tools for full counts.",
+      cards: sampleCards.map(card => ({
         id: card._id,
         address: card.address,
         cardId: card.cardId,
