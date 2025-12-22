@@ -43,12 +43,16 @@ export async function GET(
       );
     }
 
-    // Generate FID-based foil and wear traits (deterministic)
+    // Use traits from database (set at mint time)
+    // Fallback to deterministic traits only if not in database
     const fidNumber = parseInt(fid);
-    const traits = getFidTraits(fidNumber);
+    const deterministicTraits = getFidTraits(fidNumber);
+    const traits = {
+      foil: cardData.foil || deterministicTraits.foil,
+      wear: cardData.wear || deterministicTraits.wear,
+    };
 
-    // ALWAYS recalculate power with deterministic traits
-    // This ensures bounty trait matches the card, even for old mints
+    // Recalculate power based on current rarity + stored traits
     const rarityBasePower: Record<string, number> = {
       Common: 10,
       Rare: 20,
@@ -71,7 +75,6 @@ export async function GET(
       None: 1.0,
     };
 
-    // Always recalculate power based on deterministic traits
     const basePower = rarityBasePower[cardData.rarity] || 5;
     const wearMult = wearMultiplier[traits.wear] || 1.0;
     const foilMult = foilMultiplier[traits.foil] || 1.0;

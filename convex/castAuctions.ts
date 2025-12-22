@@ -14,7 +14,7 @@ const MINIMUM_BID = 10000; // Minimum first bid: 10,000 VBMS
 const MAXIMUM_BID = 120000; // Maximum bid: 120,000 VBMS
 const BID_INCREMENT_PERCENT = 10; // Must bid at least 10% more than current
 const MINIMUM_INCREMENT = 1000; // Minimum increment: 1,000 VBMS
-const TOTAL_SLOTS = 3; // 3 featured cast positions
+const TOTAL_SLOTS = 2; // 2 featured cast positions (always last 2 winners)
 const ANTI_SNIPE_WINDOW_MS = 5 * 60 * 1000; // Last 5 minutes
 const ANTI_SNIPE_EXTENSION_MS = 3 * 60 * 1000; // Add 3 minutes on late bids
 
@@ -828,7 +828,7 @@ export const addToPool = mutation({
   },
 });
 /**
- * Initialize auctions for all 3 slots (run once on deployment)
+ * Initialize auctions for all 2 slots (run once on deployment)
  */
 export const initializeAuctions = mutation({
   args: {},
@@ -1165,8 +1165,8 @@ export const finalizeAuction = internalMutation({
  * Activate a featured cast (pending_feature -> active)
  * Also adds the cast to featuredCasts table so users can earn rewards for interactions
  *
- * ROTATING SLOTS: Uses slots 100, 101, 102 in rotation. When a new cast wins,
- * it takes the oldest slot (by addedAt timestamp).
+ * ROTATING SLOTS: Uses slots 100, 101 in rotation. When a new cast wins,
+ * it takes the oldest slot (by addedAt timestamp). Always 2 featured casts.
  */
 export const activateFeaturedCast = internalMutation({
   args: { auctionId: v.id("castAuctions") },
@@ -1176,71 +1176,99 @@ export const activateFeaturedCast = internalMutation({
 
     const now = Date.now();
 
+    // Validate cast data before processing
+    if (!auction.castHash || !auction.warpcastUrl) {
+      console.error(`[CastAuction] ❌ Auction ${auctionId} has no cast data! Skipping featuredCasts addition.`);
+      // Still mark as active but log the error
+      await ctx.db.patch(auctionId, {
+        status: "active",
+        featureStartsAt: now,
+        featureEndsAt: now + FEATURE_DURATION_MS,
+      });
+      return;
+    }
+
+    // 🔄 ROTATING SLOTS FIX: Get all active featured cast slots (100, 101)
+    // Only consider active=true slots for rotation - always 2 slots max
+    const allFeaturedSlots = await ctx.db
+      .query("featuredCasts")
+      .withIndex("by_active")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("active"), true),
+          q.gte(q.field("order"), 100),
+          q.lte(q.field("order"), 101)
+        )
+      )
+      .collect();
+
+    console.log(`[CastAuction] 📊 Found ${allFeaturedSlots.length} active featured slots`);
+
+    let targetOrder: number;
+    let existingFeatured: typeof allFeaturedSlots[0] | null = null;
+
+    // Use only 2 slots (100, 101) since user wants max 2 featured casts
+    const MAX_SLOTS = 2;
+    const SLOT_RANGE = [100, 101];
+
+    if (allFeaturedSlots.length < MAX_SLOTS) {
+      // Not all slots exist yet - use next available
+      const usedOrders = allFeaturedSlots.map(s => s.order);
+      targetOrder = SLOT_RANGE.find(o => !usedOrders.includes(o)) || 100;
+      console.log(`[CastAuction] 📍 Using new slot ${targetOrder} (${allFeaturedSlots.length}/${MAX_SLOTS} slots used)`);
+    } else {
+      // All slots exist - replace the OLDEST one (by addedAt timestamp)
+      allFeaturedSlots.sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
+      existingFeatured = allFeaturedSlots[0]; // Oldest
+      targetOrder = existingFeatured.order;
+      console.log(`[CastAuction] 🔄 Replacing oldest slot ${targetOrder} (addedAt: ${existingFeatured.addedAt})`);
+    }
+
+    // FIRST: Add/update in featuredCasts table (before changing status)
+    if (existingFeatured) {
+      // Update existing slot (oldest one)
+      await ctx.db.patch(existingFeatured._id, {
+        castHash: auction.castHash,
+        warpcastUrl: auction.warpcastUrl,
+        active: true,
+        addedAt: now,
+        auctionId: auctionId,
+      });
+      console.log(`[CastAuction] ✅ Replaced slot ${targetOrder} (oldest) with new winner: ${auction.castHash}`);
+    } else {
+      // Create new featured cast entry
+      await ctx.db.insert("featuredCasts", {
+        castHash: auction.castHash,
+        warpcastUrl: auction.warpcastUrl,
+        order: targetOrder,
+        active: true,
+        addedAt: now,
+        auctionId: auctionId,
+      });
+      console.log(`[CastAuction] ✅ Created new slot ${targetOrder} with winner: ${auction.castHash}`);
+    }
+
+    // THEN: Update auction status to active (after featuredCasts is updated)
     await ctx.db.patch(auctionId, {
       status: "active",
       featureStartsAt: now,
       featureEndsAt: now + FEATURE_DURATION_MS,
     });
 
-    // 🔄 ROTATING SLOTS FIX: Get all 3 featured cast slots (100, 101, 102)
-    // and replace the OLDEST one (by addedAt timestamp)
-    const allFeaturedSlots = await ctx.db
-      .query("featuredCasts")
-      .withIndex("by_order")
-      .filter((q) =>
-        q.and(
-          q.gte(q.field("order"), 100),
-          q.lte(q.field("order"), 102)
-        )
-      )
-      .collect();
-
-    let targetOrder: number;
-    let existingFeatured: typeof allFeaturedSlots[0] | null = null;
-
-    if (allFeaturedSlots.length < 3) {
-      // Not all 3 slots exist yet - use next available
-      const usedOrders = allFeaturedSlots.map(s => s.order);
-      targetOrder = [100, 101, 102].find(o => !usedOrders.includes(o)) || 100;
-    } else {
-      // All 3 slots exist - replace the OLDEST one
-      allFeaturedSlots.sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
-      existingFeatured = allFeaturedSlots[0]; // Oldest
-      targetOrder = existingFeatured.order;
-    }
-
-    if (existingFeatured) {
-      // Update existing slot (oldest one)
-      await ctx.db.patch(existingFeatured._id, {
-        castHash: auction.castHash || "",
-        warpcastUrl: auction.warpcastUrl || "",
-        active: true,
-        addedAt: now,
-        auctionId: auctionId,
-      });
-      console.log(`[CastAuction] 🔄 Replaced slot ${targetOrder} (oldest) with new winner: ${auction.castHash}`);
-    } else {
-      // Create new featured cast entry
-      await ctx.db.insert("featuredCasts", {
-        castHash: auction.castHash || "",
-        warpcastUrl: auction.warpcastUrl || "",
-        order: targetOrder,
-        active: true,
-        addedAt: now,
-        auctionId: auctionId,
-      });
-      console.log(`[CastAuction] ✨ Created new slot ${targetOrder} with winner: ${auction.castHash}`);
-    }
-
     console.log(
-      `[CastAuction] Cast now featured: Slot ${targetOrder} - ${auction.castHash} (added to featuredCasts)`
+      `[CastAuction] 🎉 Cast now featured: Slot ${targetOrder} - ${auction.castHash} by @${auction.castAuthorUsername}`
     );
 
-    // 🔔 Send notification to all users about the new featured cast
-    await ctx.scheduler.runAfter(0, internal.notifications.sendFeaturedCastNotification, {
-      castAuthor: auction.castAuthorUsername || "unknown",
-      warpcastUrl: auction.warpcastUrl || "https://www.vibemostwanted.xyz",
-    });
+    // 🔔 Send notification to all users about the new featured cast (non-blocking)
+    try {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendFeaturedCastNotification, {
+        castAuthor: auction.castAuthorUsername || "unknown",
+        warpcastUrl: auction.warpcastUrl || "https://www.vibemostwanted.xyz",
+      });
+    } catch (notifError) {
+      console.error(`[CastAuction] ⚠️ Failed to schedule notification:`, notifError);
+      // Don't fail the whole operation for notification errors
+    }
   },
 });
 

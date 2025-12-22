@@ -89,6 +89,34 @@ export default function FidCardPage() {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [evolutionPhase, setEvolutionPhase] = useState<'idle' | 'shaking' | 'glowing' | 'transforming' | 'regenerating' | 'complete'>('idle');
   const [regenerationStatus, setRegenerationStatus] = useState<string>('');
+  const [isRefreshingMetadata, setIsRefreshingMetadata] = useState(false);
+  const [metadataRefreshed, setMetadataRefreshed] = useState(false);
+
+  // Refresh OpenSea metadata
+  const handleRefreshMetadata = async () => {
+    if (!card) return;
+
+    AudioManager.buttonClick();
+    setIsRefreshingMetadata(true);
+    setMetadataRefreshed(false);
+
+    try {
+      const response = await fetch('/api/opensea/refresh-metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fid: card.fid }),
+      });
+
+      if (response.ok) {
+        setMetadataRefreshed(true);
+        setTimeout(() => setMetadataRefreshed(false), 5000);
+      }
+    } catch (e) {
+      console.error('Refresh metadata failed:', e);
+    }
+
+    setIsRefreshingMetadata(false);
+  };
 
   // Check Neynar Score
   const handleCheckNeynarScore = async () => {
@@ -247,6 +275,18 @@ export default function FidCardPage() {
         fid: card.fid,
         imageUrl: newVideoUrl,
       });
+
+      // Step 4: Refresh OpenSea metadata
+      setRegenerationStatus('Refreshing OpenSea metadata...');
+      try {
+        await fetch('/api/opensea/refresh-metadata', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fid: card.fid }),
+        });
+      } catch (e) {
+        console.log('OpenSea refresh failed (non-critical):', e);
+      }
 
       setEvolutionData({
         oldRarity: result.oldRarity,
@@ -514,6 +554,19 @@ export default function FidCardPage() {
                   </a>
                 </div>
 
+                {/* Refresh OpenSea Metadata Button */}
+                <button
+                  onClick={handleRefreshMetadata}
+                  disabled={isRefreshingMetadata}
+                  className={`w-full px-4 py-3 rounded-lg font-bold transition-all text-sm ${
+                    metadataRefreshed
+                      ? 'bg-green-600 text-white'
+                      : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-ice hover:bg-vintage-gold/10'
+                  } disabled:opacity-50`}
+                >
+                  {isRefreshingMetadata ? '🔄 Refreshing...' : metadataRefreshed ? '✅ Metadata Updated!' : '🔄 Refresh OpenSea Metadata'}
+                </button>
+
                 {/* Check Your Neynar Score Button */}
                 {farcasterContext.user && (
                   <button
@@ -735,13 +788,13 @@ export default function FidCardPage() {
 
         {/* Evolution Animation Modal */}
         {showEvolutionModal && card && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-            <div className="max-w-md w-full text-center">
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+            <div className="max-w-sm w-full text-center my-auto">
               {/* Card with Animation */}
-              <div className={`relative mb-8 transition-all duration-500 ${
+              <div className={`relative mb-4 sm:mb-8 transition-all duration-500 ${
                 evolutionPhase === 'shaking' ? 'animate-shake' : ''
               } ${evolutionPhase === 'glowing' ? 'animate-glow' : ''} ${
-                evolutionPhase === 'transforming' ? 'animate-transform-card scale-110' : ''
+                evolutionPhase === 'transforming' ? 'animate-transform-card scale-105 sm:scale-110' : ''
               }`}>
                 {/* Glow Effect */}
                 {(evolutionPhase === 'glowing' || evolutionPhase === 'transforming') && (
@@ -749,10 +802,10 @@ export default function FidCardPage() {
                 )}
 
                 {/* Card */}
-                <div className="relative w-64 mx-auto">
+                <div className="relative w-40 sm:w-56 mx-auto">
                   <FoilCardEffect
                     foilType={currentTraits?.foil === 'None' ? null : (currentTraits?.foil as 'Standard' | 'Prize' | null)}
-                    className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
+                    className="w-full rounded-lg shadow-2xl border-2 sm:border-4 border-vintage-gold overflow-hidden"
                   >
                     <CardMedia
                       src={card.imageUrl || card.pfpUrl}
@@ -765,10 +818,10 @@ export default function FidCardPage() {
                 {/* Particles */}
                 {evolutionPhase === 'transforming' && (
                   <div className="absolute inset-0 pointer-events-none">
-                    {[...Array(20)].map((_, i) => (
+                    {[...Array(12)].map((_, i) => (
                       <div
                         key={i}
-                        className="absolute w-2 h-2 bg-yellow-400 rounded-full animate-particle"
+                        className="absolute w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-400 rounded-full animate-particle"
                         style={{
                           left: `${Math.random() * 100}%`,
                           top: `${Math.random() * 100}%`,
@@ -781,53 +834,53 @@ export default function FidCardPage() {
               </div>
 
               {/* Phase Text */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 {evolutionPhase === 'shaking' && (
-                  <p className="text-2xl font-bold text-vintage-gold animate-pulse">🔮 Channeling power...</p>
+                  <p className="text-lg sm:text-2xl font-bold text-vintage-gold animate-pulse">🔮 Channeling power...</p>
                 )}
                 {evolutionPhase === 'glowing' && (
-                  <p className="text-2xl font-bold text-yellow-400 animate-pulse">✨ Energy building...</p>
+                  <p className="text-lg sm:text-2xl font-bold text-yellow-400 animate-pulse">✨ Energy building...</p>
                 )}
                 {evolutionPhase === 'transforming' && (
-                  <p className="text-2xl font-bold text-orange-400 animate-pulse">⚡ EVOLVING!</p>
+                  <p className="text-lg sm:text-2xl font-bold text-orange-400 animate-pulse">⚡ EVOLVING!</p>
                 )}
                 {evolutionPhase === 'regenerating' && (
-                  <div className="space-y-3">
-                    <p className="text-2xl font-bold text-cyan-400 animate-pulse">🎬 Regenerating Card...</p>
+                  <div className="space-y-2">
+                    <p className="text-lg sm:text-2xl font-bold text-cyan-400 animate-pulse">🎬 Regenerating...</p>
                     {regenerationStatus && (
-                      <p className="text-vintage-ice text-sm">{regenerationStatus}</p>
+                      <p className="text-vintage-ice text-xs sm:text-sm">{regenerationStatus}</p>
                     )}
                   </div>
                 )}
                 {evolutionPhase === 'complete' && evolutionData && (
-                  <div className="space-y-4">
-                    <p className="text-3xl font-bold text-green-400">🎉 EVOLUTION COMPLETE!</p>
+                  <div className="space-y-3 sm:space-y-4">
+                    <p className="text-xl sm:text-3xl font-bold text-green-400">🎉 EVOLVED!</p>
 
-                    <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-6">
-                      <div className="flex items-center justify-center gap-4 mb-4">
+                    <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-3 sm:p-6">
+                      <div className="flex items-center justify-center gap-3 sm:gap-4 mb-3 sm:mb-4">
                         <div className="text-center">
-                          <p className="text-vintage-burnt-gold text-xs">Before</p>
-                          <p className="text-vintage-ice text-lg font-bold">{evolutionData.oldRarity}</p>
-                          <p className="text-vintage-ice/60 text-sm">⚡ {evolutionData.oldPower}</p>
+                          <p className="text-vintage-burnt-gold text-[10px] sm:text-xs">Before</p>
+                          <p className="text-vintage-ice text-sm sm:text-lg font-bold">{evolutionData.oldRarity}</p>
+                          <p className="text-vintage-ice/60 text-xs sm:text-sm">⚡ {evolutionData.oldPower}</p>
                         </div>
-                        <div className="text-3xl">→</div>
+                        <div className="text-xl sm:text-3xl">→</div>
                         <div className="text-center">
-                          <p className="text-yellow-400 text-xs">After</p>
-                          <p className="text-yellow-400 text-xl font-bold">{evolutionData.newRarity}</p>
-                          <p className="text-yellow-400 text-sm">⚡ {evolutionData.newPower}</p>
-                          <p className="text-green-400 text-xs mt-1">💰 ${evolutionData.newBounty.toLocaleString()}</p>
+                          <p className="text-yellow-400 text-[10px] sm:text-xs">After</p>
+                          <p className="text-yellow-400 text-base sm:text-xl font-bold">{evolutionData.newRarity}</p>
+                          <p className="text-yellow-400 text-xs sm:text-sm">⚡ {evolutionData.newPower}</p>
+                          <p className="text-green-400 text-[10px] sm:text-xs mt-1">💰 ${evolutionData.newBounty.toLocaleString()}</p>
                         </div>
                       </div>
 
-                      <div className="text-center border-t border-vintage-gold/20 pt-4">
-                        <p className="text-vintage-burnt-gold text-xs">Neynar Score</p>
-                        <p className="text-vintage-gold font-bold">
+                      <div className="text-center border-t border-vintage-gold/20 pt-2 sm:pt-4">
+                        <p className="text-vintage-burnt-gold text-[10px] sm:text-xs">Neynar Score</p>
+                        <p className="text-vintage-gold font-bold text-sm sm:text-base">
                           {evolutionData.oldScore.toFixed(3)} → {evolutionData.newScore.toFixed(3)}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 sm:gap-3">
                       <a
                         href={(() => {
                           const shareUrl = `https://www.vibemostwanted.xyz/fid/${fid}`;
@@ -837,9 +890,9 @@ export default function FidCardPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => AudioManager.buttonClick()}
-                        className="flex-1 px-4 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center"
+                        className="flex-1 px-3 py-3 sm:px-4 sm:py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center text-sm sm:text-base"
                       >
-                        📢 Share Evolution
+                        📢 Share
                       </a>
                       <button
                         onClick={() => {
@@ -849,7 +902,7 @@ export default function FidCardPage() {
                           setEvolutionData(null);
                           setNeynarScoreData(null);
                         }}
-                        className="flex-1 px-4 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors"
+                        className="flex-1 px-3 py-3 sm:px-4 sm:py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors text-sm sm:text-base"
                       >
                         ✓ Close
                       </button>

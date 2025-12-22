@@ -1,0 +1,199 @@
+import { mutation, internalMutation } from "./_generated/server";
+import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
+
+/**
+ * Force end an auction by setting its end time to now
+ * This will make the cron pick it up on next run
+ */
+export const forceEndAuction = mutation({
+  args: { auctionId: v.string() },
+  handler: async (ctx, { auctionId }) => {
+    const auction = await ctx.db.get(auctionId as Id<"castAuctions">);
+    if (!auction) throw new Error("Auction not found");
+    if (auction.status !== "bidding") throw new Error("Auction is not in bidding status");
+
+    const now = Date.now();
+    await ctx.db.patch(auction._id, {
+      auctionEndsAt: now - 1000, // Set to 1 second ago
+    });
+
+    console.log(`[ADMIN] Forced end auction ${auctionId} - will be processed by next cron`);
+    return { success: true, auctionId, newEndTime: now - 1000 };
+  },
+});
+
+/**
+ * Manually add a cast to featuredCasts from an active auction
+ */
+export const addMissingFeaturedCast = mutation({
+  args: { auctionId: v.string() },
+  handler: async (ctx, { auctionId }) => {
+    const auction = await ctx.db.get(auctionId as Id<"castAuctions">);
+    if (!auction) throw new Error("Auction not found");
+    if (auction.status !== "active") throw new Error("Auction is not active");
+    if (!auction.castHash || !auction.warpcastUrl) throw new Error("Auction has no cast data");
+
+    const now = Date.now();
+
+    // Check if already in featuredCasts
+    const existing = await ctx.db
+      .query("featuredCasts")
+      .filter((q) => q.eq(q.field("castHash"), auction.castHash))
+      .first();
+
+    if (existing) {
+      // Update it
+      await ctx.db.patch(existing._id, {
+        active: true,
+        addedAt: now,
+        auctionId: auction._id,
+        warpcastUrl: auction.warpcastUrl,
+      });
+      console.log(`[ADMIN] Updated existing featuredCast for ${auction.castHash}`);
+      return { success: true, action: "updated", castHash: auction.castHash };
+    }
+
+    // Find available slot (100, 101) - always 2 slots max
+    const allSlots = await ctx.db
+      .query("featuredCasts")
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("order"), 100),
+          q.lte(q.field("order"), 101)
+        )
+      )
+      .collect();
+
+    const usedOrders = allSlots.map(s => s.order);
+    const targetOrder = [100, 101].find(o => !usedOrders.includes(o));
+
+    if (targetOrder !== undefined) {
+      // Create new slot
+      await ctx.db.insert("featuredCasts", {
+        castHash: auction.castHash,
+        warpcastUrl: auction.warpcastUrl,
+        order: targetOrder,
+        active: true,
+        addedAt: now,
+        auctionId: auction._id,
+      });
+      console.log(`[ADMIN] Created new featuredCast at slot ${targetOrder} for ${auction.castHash}`);
+      return { success: true, action: "created", slot: targetOrder, castHash: auction.castHash };
+    }
+
+    // All 2 slots exist - replace oldest
+    allSlots.sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
+    const oldest = allSlots[0];
+
+    await ctx.db.patch(oldest._id, {
+      castHash: auction.castHash,
+      warpcastUrl: auction.warpcastUrl,
+      active: true,
+      addedAt: now,
+      auctionId: auction._id,
+    });
+
+    console.log(`[ADMIN] Replaced oldest slot ${oldest.order} with ${auction.castHash}`);
+    return { success: true, action: "replaced", slot: oldest.order, castHash: auction.castHash };
+  },
+});
+
+/**
+ * Force process auction lifecycle NOW (for testing)
+ */
+export const forceProcessLifecycle = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.scheduler.runAfter(0, internal.castAuctions.processAuctionLifecycle, {});
+    return { success: true, message: "Scheduled processAuctionLifecycle to run immediately" };
+  },
+});
+
+/**
+ * Clean up empty bidding auctions and complete old active auctions
+ */
+export const cleanupAuctions = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    let deletedEmpty = 0;
+    let completedActive = 0;
+
+    // 1. Delete empty bidding auctions (no bids, no cast data)
+    const emptyAuctions = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "bidding"),
+          q.eq(q.field("currentBid"), 0)
+        )
+      )
+      .collect();
+
+    for (const auction of emptyAuctions) {
+      if (!auction.castHash && !auction.warpcastUrl) {
+        await ctx.db.delete(auction._id);
+        deletedEmpty++;
+      }
+    }
+
+    // 2. Complete active auctions that have expired
+    const expiredActive = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "active"),
+          q.lte(q.field("featureEndsAt"), now)
+        )
+      )
+      .collect();
+
+    for (const auction of expiredActive) {
+      await ctx.db.patch(auction._id, { status: "completed" });
+      completedActive++;
+    }
+
+    console.log(`[CLEANUP] Deleted ${deletedEmpty} empty auctions, completed ${completedActive} expired active auctions`);
+
+    return {
+      success: true,
+      deletedEmpty,
+      completedActive,
+    };
+  },
+});
+
+/**
+ * Keep only the most recent N active auctions, complete the rest
+ */
+export const keepOnlyRecentActive = mutation({
+  args: { keepCount: v.number() },
+  handler: async (ctx, { keepCount }) => {
+    const activeAuctions = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    // Sort by featureStartsAt descending (most recent first)
+    activeAuctions.sort((a, b) => (b.featureStartsAt || 0) - (a.featureStartsAt || 0));
+
+    let completed = 0;
+    for (let i = keepCount; i < activeAuctions.length; i++) {
+      await ctx.db.patch(activeAuctions[i]._id, { status: "completed" });
+      completed++;
+    }
+
+    console.log(`[CLEANUP] Kept ${keepCount} active auctions, completed ${completed} older ones`);
+
+    return {
+      success: true,
+      kept: Math.min(keepCount, activeAuctions.length),
+      completed,
+    };
+  },
+});
