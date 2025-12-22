@@ -334,6 +334,110 @@ export const deleteOrphanCardById = mutation({
 });
 
 /**
+ * DEV ONLY: Reset card rarity for testing
+ */
+export const resetCardRarity = mutation({
+  args: {
+    fid: v.number(),
+    rarity: v.string(),
+    neynarScore: v.number(),
+    power: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`No card found for FID ${args.fid}`);
+    }
+
+    await ctx.db.patch(card._id, {
+      rarity: args.rarity,
+      neynarScore: args.neynarScore,
+      power: args.power,
+      upgradedAt: undefined,
+      previousRarity: undefined,
+      previousNeynarScore: undefined,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Upgrade card rarity based on new Neynar score
+ * Keeps all traits (foil, wear, suit, rank) but updates rarity and power
+ */
+export const upgradeCardRarity = mutation({
+  args: {
+    fid: v.number(),
+    newNeynarScore: v.number(),
+    newRarity: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find the card
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`No card found for FID ${args.fid}`);
+    }
+
+    // Check if rarity actually changed (improved)
+    const rarityOrder = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+    const oldRarityIndex = rarityOrder.indexOf(card.rarity);
+    const newRarityIndex = rarityOrder.indexOf(args.newRarity);
+
+    if (newRarityIndex <= oldRarityIndex) {
+      throw new Error(
+        `Cannot upgrade: New rarity (${args.newRarity}) is not higher than current (${card.rarity})`
+      );
+    }
+
+    // Calculate new power based on new rarity but keeping same foil/wear
+    const rarityBasePower: Record<string, number> = {
+      Common: 10, Rare: 20, Epic: 50, Legendary: 100, Mythic: 600,
+    };
+    const wearMultiplier: Record<string, number> = {
+      Pristine: 1.8, Mint: 1.4, 'Lightly Played': 1.0,
+      'Moderately Played': 1.0, 'Heavily Played': 1.0,
+    };
+    const foilMultiplier: Record<string, number> = {
+      Prize: 6.0, Standard: 2.0, None: 1.0,
+    };
+
+    const basePower = rarityBasePower[args.newRarity] || 10;
+    const wearMult = wearMultiplier[card.wear] || 1.0;
+    const foilMult = foilMultiplier[card.foil] || 1.0;
+    const newPower = Math.round(basePower * wearMult * foilMult);
+
+    // Update rarity and power (power recalculated based on new rarity)
+    await ctx.db.patch(card._id, {
+      rarity: args.newRarity,
+      power: newPower,
+      // Mark when upgraded
+      upgradedAt: Date.now(),
+      previousRarity: card.rarity,
+    });
+
+    console.log(`✅ Card upgraded: FID ${args.fid} from ${card.rarity} to ${args.newRarity} (Power: ${card.power} → ${newPower})`);
+
+    return {
+      success: true,
+      fid: args.fid,
+      oldRarity: card.rarity,
+      newRarity: args.newRarity,
+      oldPower: card.power,
+      newPower: newPower,
+    };
+  },
+});
+
+/**
  * Get recent Farcaster cards (latest 20)
  * Shows all cards until old cards from previous contracts are manually deleted
  */
@@ -356,5 +460,50 @@ export const getRecentFarcasterCards = query({
       .slice(0, limit);
 
     return sortedCards;
+  },
+});
+
+/**
+ * Update card images after upgrade
+ * Used when regenerating video/image with new rarity/power/bounty values
+ */
+export const updateCardImages = mutation({
+  args: {
+    fid: v.number(),
+    imageUrl: v.string(), // Video URL (MP4/WebM)
+    cardImageUrl: v.optional(v.string()), // Static PNG
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`No card found for FID ${args.fid}`);
+    }
+
+    const updates: Record<string, any> = {
+      imageUrl: args.imageUrl,
+    };
+
+    if (args.cardImageUrl) {
+      updates.cardImageUrl = args.cardImageUrl;
+    }
+
+    await ctx.db.patch(card._id, updates);
+
+    console.log(`✅ Card images updated for FID ${args.fid}`);
+    console.log(`   Video: ${args.imageUrl}`);
+    if (args.cardImageUrl) {
+      console.log(`   Static: ${args.cardImageUrl}`);
+    }
+
+    return {
+      success: true,
+      fid: args.fid,
+      imageUrl: args.imageUrl,
+      cardImageUrl: args.cardImageUrl,
+    };
   },
 });
