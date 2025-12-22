@@ -18,6 +18,8 @@ import { getUserByFid, calculateRarityFromScore } from '@/lib/neynar';
 import { AudioManager } from '@/lib/audio-manager';
 import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
 import { fidTranslations } from '@/lib/fidTranslations';
+import { generateFarcasterCardImage } from '@/lib/generateFarcasterCard';
+import { generateCardVideo } from '@/lib/generateCardVideo';
 
 export default function FidCardPage() {
   const params = useParams();
@@ -26,21 +28,27 @@ export default function FidCardPage() {
   const farcasterContext = useFarcasterContext();
   const t = fidTranslations[lang];
 
+  // DEV MODE: Simulate Farcaster context for localhost testing
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const devUser = isLocalhost ? { fid: fid, username: 'test' } : null;
+  const effectiveUser = farcasterContext.user || devUser;
+
   // Fetch all cards for this FID
   const fidCards = useQuery(api.farcasterCards.getFarcasterCardsByFid, { fid });
 
   // Neynar score history
   const scoreHistory = useQuery(api.neynarScore.getScoreHistory, { fid });
   const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);
+  const upgradeCardRarity = useMutation(api.farcasterCards.upgradeCardRarity);
+  const updateCardImages = useMutation(api.farcasterCards.updateCardImages);
 
   // Get the most recent card (first one)
   const card = fidCards?.[0];
 
-  // Calculate CURRENT deterministic traits (matches OpenSea metadata)
-  // This ignores old random traits stored in Convex from before deterministic fix
-  const currentTraits = card ? getFidTraits(card.fid) : null;
+  // Use traits from database (set at mint time)
+  const currentTraits = card ? { foil: card.foil, wear: card.wear } : null;
 
-  // Calculate deterministic power based on current traits (matches metadata API)
+  // Calculate power based on rarity + stored traits from database
   const correctPower = card && currentTraits ? (() => {
     const rarityBasePower = {
       Common: 10, Rare: 20, Epic: 50, Legendary: 100, Mythic: 600,
@@ -66,6 +74,21 @@ export default function FidCardPage() {
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Upgrade state
+  const [showEvolutionModal, setShowEvolutionModal] = useState(false);
+  const [evolutionData, setEvolutionData] = useState<{
+    oldRarity: string;
+    newRarity: string;
+    oldPower: number;
+    newPower: number;
+    oldScore: number;
+    newScore: number;
+    newBounty: number;
+  } | null>(null);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [evolutionPhase, setEvolutionPhase] = useState<'idle' | 'shaking' | 'glowing' | 'transforming' | 'regenerating' | 'complete'>('idle');
+  const [regenerationStatus, setRegenerationStatus] = useState<string>('');
 
   // Check Neynar Score
   const handleCheckNeynarScore = async () => {
@@ -114,6 +137,139 @@ export default function FidCardPage() {
       setLoading(false);
       setTimeout(() => setError(null), 3000);
     }
+  };
+
+  // Check if upgrade is available
+  const canUpgrade = () => {
+    if (!card || !neynarScoreData) return false;
+    const rarityOrder = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+    const currentRarityIndex = rarityOrder.indexOf(card.rarity);
+    const newRarityIndex = rarityOrder.indexOf(neynarScoreData.rarity);
+    return newRarityIndex > currentRarityIndex;
+  };
+
+  // Play evolution sound
+  const playEvolutionSound = () => {
+    try {
+      const audio = new Audio('/sounds/evolution.mp3');
+      audio.volume = 0.7;
+      audio.play().catch(e => console.log('Audio play failed:', e));
+    } catch (e) {
+      console.log('Audio error:', e);
+    }
+  };
+
+  // Handle upgrade with animation and video regeneration
+  const handleUpgrade = async () => {
+    if (!card || !neynarScoreData || !canUpgrade()) return;
+
+    AudioManager.buttonClick();
+    setIsUpgrading(true);
+    setShowScoreModal(false);
+    setShowEvolutionModal(true);
+    setEvolutionPhase('shaking');
+    setRegenerationStatus('');
+
+    // Animation sequence
+    await new Promise(resolve => setTimeout(resolve, 800)); // Shake
+    setEvolutionPhase('glowing');
+    await new Promise(resolve => setTimeout(resolve, 1200)); // Glow
+
+    // Play evolution sound when transforming starts
+    playEvolutionSound();
+    setEvolutionPhase('transforming');
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Transform (longer to match sound)
+
+    try {
+      // Step 1: Upgrade rarity/power in database
+      const result = await upgradeCardRarity({
+        fid: card.fid,
+        newNeynarScore: neynarScoreData.score,
+        newRarity: neynarScoreData.rarity,
+      });
+
+      const newBounty = result.newPower * 10;
+
+      // Step 2: Regenerate video with new values
+      setEvolutionPhase('regenerating');
+      setRegenerationStatus('Generating new card image...');
+
+      // Generate new card image with updated bounty/rarity
+      const cardImageDataUrl = await generateFarcasterCardImage({
+        pfpUrl: card.pfpUrl,
+        displayName: card.displayName,
+        username: card.username,
+        fid: card.fid,
+        neynarScore: card.neynarScore, // Keep original neynar score on card
+        rarity: result.newRarity,
+        suit: card.suit as any,
+        rank: card.rank as any,
+        suitSymbol: card.suitSymbol,
+        color: card.color as 'red' | 'black',
+        bio: card.bio || '',
+        bounty: newBounty,
+      });
+
+      setRegenerationStatus('Generating video with foil effect...');
+
+      // Generate video with foil animation
+      const videoBlob = await generateCardVideo({
+        cardImageDataUrl,
+        foilType: card.foil as 'None' | 'Standard' | 'Prize',
+        duration: 3,
+        fps: 30,
+        pfpUrl: card.pfpUrl,
+      });
+
+      setRegenerationStatus('Uploading to IPFS...');
+
+      // Upload to IPFS
+      const formData = new FormData();
+      formData.append('video', videoBlob, 'card.webm');
+
+      const uploadResponse = await fetch('/api/upload-nft-video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const uploadError = await uploadResponse.json();
+        throw new Error(uploadError.error || 'Failed to upload video');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      const newVideoUrl = uploadResult.ipfsUrl;
+
+      setRegenerationStatus('Updating card data...');
+
+      // Step 3: Update card images in database
+      await updateCardImages({
+        fid: card.fid,
+        imageUrl: newVideoUrl,
+      });
+
+      setEvolutionData({
+        oldRarity: result.oldRarity,
+        newRarity: result.newRarity,
+        oldPower: result.oldPower,
+        newPower: result.newPower,
+        oldScore: result.oldScore || card.neynarScore,
+        newScore: result.newScore || neynarScoreData.score,
+        newBounty,
+      });
+
+      setEvolutionPhase('complete');
+      setRegenerationStatus('');
+      AudioManager.buttonClick(); // Victory sound
+    } catch (err: any) {
+      console.error('Upgrade error:', err);
+      setError(err.message || "Failed to upgrade card");
+      setShowEvolutionModal(false);
+      setEvolutionPhase('idle');
+      setRegenerationStatus('');
+    }
+
+    setIsUpgrading(false);
   };
 
   // Notify Farcaster SDK that app is ready
@@ -521,31 +677,185 @@ export default function FidCardPage() {
                   <p className="text-vintage-burnt-gold text-sm mb-2 text-center">{t.rarity}</p>
                   <p className="text-vintage-ice text-xl font-bold text-center">{neynarScoreData.rarity}</p>
                 </div>
+
+                {/* Upgrade Available Banner */}
+                {canUpgrade() && card && (
+                  <div className="border-t border-vintage-gold/20 pt-4 mt-4">
+                    <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-lg p-4 text-center">
+                      <p className="text-yellow-400 font-bold text-lg mb-1">⬆️ UPGRADE AVAILABLE!</p>
+                      <p className="text-vintage-ice text-sm">
+                        Your score improved! Upgrade from <span className="text-vintage-burnt-gold font-bold">{card.rarity}</span> to{' '}
+                        <span className="text-yellow-400 font-bold">{neynarScoreData.rarity}</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    AudioManager.buttonClick();
-                    setShowScoreModal(false);
-                  }}
-                  className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors"
-                >
-                  {t.back}
-                </button>
-                <a
-                  href={(() => {
-                    const shareUrl = 'https://www.vibemostwanted.xyz/fid';
-                    const castText = `📊 My Neynar Score: ${neynarScoreData.score.toFixed(3)}\n${neynarScoreData.rarity} Rarity\n\n🎴 Check your score and mint your VibeFID card! @jvhbo`;
-                    return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                  })()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => AudioManager.buttonClick()}
-                  className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center"
-                >
-                  {t.shareToFarcaster}
-                </a>
+              <div className="flex flex-col gap-3">
+                {/* Upgrade Button - Only show if upgrade is available */}
+                {canUpgrade() && (
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={isUpgrading}
+                    className="w-full px-4 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 animate-pulse"
+                  >
+                    {isUpgrading ? '⏳ Upgrading...' : '⬆️ UPGRADE CARD RARITY'}
+                  </button>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      setShowScoreModal(false);
+                    }}
+                    className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors"
+                  >
+                    {t.back}
+                  </button>
+                  <a
+                    href={(() => {
+                      const shareUrl = 'https://www.vibemostwanted.xyz/fid';
+                      const castText = `📊 My Neynar Score: ${neynarScoreData.score.toFixed(3)}\n${neynarScoreData.rarity} Rarity\n\n🎴 Check your score and mint your VibeFID card! @jvhbo`;
+                      return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                    })()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => AudioManager.buttonClick()}
+                    className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center"
+                  >
+                    {t.shareToFarcaster}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Evolution Animation Modal */}
+        {showEvolutionModal && card && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+            <div className="max-w-md w-full text-center">
+              {/* Card with Animation */}
+              <div className={`relative mb-8 transition-all duration-500 ${
+                evolutionPhase === 'shaking' ? 'animate-shake' : ''
+              } ${evolutionPhase === 'glowing' ? 'animate-glow' : ''} ${
+                evolutionPhase === 'transforming' ? 'animate-transform-card scale-110' : ''
+              }`}>
+                {/* Glow Effect */}
+                {(evolutionPhase === 'glowing' || evolutionPhase === 'transforming') && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-xl blur-xl opacity-75 animate-pulse" />
+                )}
+
+                {/* Card */}
+                <div className="relative w-64 mx-auto">
+                  <FoilCardEffect
+                    foilType={currentTraits?.foil === 'None' ? null : (currentTraits?.foil as 'Standard' | 'Prize' | null)}
+                    className="w-full rounded-lg shadow-2xl border-4 border-vintage-gold overflow-hidden"
+                  >
+                    <CardMedia
+                      src={card.imageUrl || card.pfpUrl}
+                      alt={card.username}
+                      className="w-full"
+                    />
+                  </FoilCardEffect>
+                </div>
+
+                {/* Particles */}
+                {evolutionPhase === 'transforming' && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    {[...Array(20)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute w-2 h-2 bg-yellow-400 rounded-full animate-particle"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          top: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 0.5}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Phase Text */}
+              <div className="mb-6">
+                {evolutionPhase === 'shaking' && (
+                  <p className="text-2xl font-bold text-vintage-gold animate-pulse">🔮 Channeling power...</p>
+                )}
+                {evolutionPhase === 'glowing' && (
+                  <p className="text-2xl font-bold text-yellow-400 animate-pulse">✨ Energy building...</p>
+                )}
+                {evolutionPhase === 'transforming' && (
+                  <p className="text-2xl font-bold text-orange-400 animate-pulse">⚡ EVOLVING!</p>
+                )}
+                {evolutionPhase === 'regenerating' && (
+                  <div className="space-y-3">
+                    <p className="text-2xl font-bold text-cyan-400 animate-pulse">🎬 Regenerating Card...</p>
+                    {regenerationStatus && (
+                      <p className="text-vintage-ice text-sm">{regenerationStatus}</p>
+                    )}
+                  </div>
+                )}
+                {evolutionPhase === 'complete' && evolutionData && (
+                  <div className="space-y-4">
+                    <p className="text-3xl font-bold text-green-400">🎉 EVOLUTION COMPLETE!</p>
+
+                    <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-6">
+                      <div className="flex items-center justify-center gap-4 mb-4">
+                        <div className="text-center">
+                          <p className="text-vintage-burnt-gold text-xs">Before</p>
+                          <p className="text-vintage-ice text-lg font-bold">{evolutionData.oldRarity}</p>
+                          <p className="text-vintage-ice/60 text-sm">⚡ {evolutionData.oldPower}</p>
+                        </div>
+                        <div className="text-3xl">→</div>
+                        <div className="text-center">
+                          <p className="text-yellow-400 text-xs">After</p>
+                          <p className="text-yellow-400 text-xl font-bold">{evolutionData.newRarity}</p>
+                          <p className="text-yellow-400 text-sm">⚡ {evolutionData.newPower}</p>
+                          <p className="text-green-400 text-xs mt-1">💰 ${evolutionData.newBounty.toLocaleString()}</p>
+                        </div>
+                      </div>
+
+                      <div className="text-center border-t border-vintage-gold/20 pt-4">
+                        <p className="text-vintage-burnt-gold text-xs">Neynar Score</p>
+                        <p className="text-vintage-gold font-bold">
+                          {evolutionData.oldScore.toFixed(3)} → {evolutionData.newScore.toFixed(3)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <a
+                        href={(() => {
+                          const shareUrl = `https://www.vibemostwanted.xyz/fid/${fid}`;
+                          const castText = `⚡ My VibeFID just EVOLVED!\n\n🃏 ${evolutionData.oldRarity} → ${evolutionData.newRarity}\n💪 Power: ${evolutionData.oldPower} → ${evolutionData.newPower}\n💰 Bounty: $${evolutionData.newBounty.toLocaleString()}\n\n🎴 @jvhbo`;
+                          return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+                        })()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => AudioManager.buttonClick()}
+                        className="flex-1 px-4 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center"
+                      >
+                        📢 Share Evolution
+                      </a>
+                      <button
+                        onClick={() => {
+                          AudioManager.buttonClick();
+                          setShowEvolutionModal(false);
+                          setEvolutionPhase('idle');
+                          setEvolutionData(null);
+                          setNeynarScoreData(null);
+                        }}
+                        className="flex-1 px-4 py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors"
+                      >
+                        ✓ Close
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
