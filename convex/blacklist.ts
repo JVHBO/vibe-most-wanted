@@ -8,6 +8,8 @@
  * Total stolen: 38,480,000 VBMS (~38.5M)
  *
  * GRAND TOTAL: ~51M VBMS stolen
+ *
+ * Last updated: 2025-12-21T23:00:00Z - 106 exploiters
  */
 
 import { v } from "convex/values";
