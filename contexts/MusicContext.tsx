@@ -117,7 +117,14 @@ async function fetchYouTubeMetadata(videoId: string): Promise<{ title: string; t
 export function MusicProvider({ children }: { children: React.ReactNode }) {
   const { lang } = useLanguage();
   const [musicMode, setMusicModeState] = useState<MusicMode>('default');
-  const [isMusicEnabled, setIsMusicEnabled] = useState(true);
+  // FIX: Load initial music enabled state from localStorage to prevent playing when muted
+  const [isMusicEnabled, setIsMusicEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('musicEnabled');
+      return saved === null ? true : saved === 'true';
+    }
+    return true;
+  });
   const [volume, setVolume] = useState(0.1); // 0.0 to 1.0 (starts at 10%)
   const [customMusicUrl, setCustomMusicUrlState] = useState<string | null>(null);
   const [isCustomMusicLoading, setIsCustomMusicLoading] = useState(false);
