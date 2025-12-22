@@ -705,9 +705,12 @@ export default function ProfilePage() {
                               address: profile.address,
                               type: "dailyShare"
                             });
-                            setShareRewardMessage(tokenResult.message);
-                            setShowShareReward(true);
-                            setTimeout(() => setShowShareReward(false), 5000);
+                            // Only show modal if actually got reward (prevents loop on repeated clicks)
+                            if (tokenResult.success) {
+                              setShareRewardMessage(tokenResult.message);
+                              setShowShareReward(true);
+                              setTimeout(() => setShowShareReward(false), 5000);
+                            }
                           }
                         } catch (error: any) {
                           console.error('Share reward error:', error);
@@ -746,9 +749,12 @@ export default function ProfilePage() {
                               address: profile.address,
                               type: "dailyShare"
                             });
-                            setShareRewardMessage(tokenResult.message);
-                            setShowShareReward(true);
-                            setTimeout(() => setShowShareReward(false), 5000);
+                            // Only show modal if actually got reward (prevents loop on repeated clicks)
+                            if (tokenResult.success) {
+                              setShareRewardMessage(tokenResult.message);
+                              setShowShareReward(true);
+                              setTimeout(() => setShowShareReward(false), 5000);
+                            }
                           }
                         } catch (error: any) {
                           console.error('Share reward error:', error);
