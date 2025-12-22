@@ -342,10 +342,24 @@ export const upsertProfileFromFarcaster = mutation({
     const now = Date.now();
 
     // Check if this FID already has a profile with different address
-    const existingByFid = await ctx.db
+    // First check by farcasterFid (new indexed field)
+    let existingByFid = await ctx.db
       .query("profiles")
       .withIndex("by_fid", (q) => q.eq("farcasterFid", args.fid))
       .first();
+
+    // Fallback: Check for legacy profiles with fid as string (for migration)
+    if (!existingByFid) {
+      existingByFid = await ctx.db
+        .query("profiles")
+        .filter((q) => q.eq(q.field("fid"), String(args.fid)))
+        .first();
+      if (existingByFid) {
+        console.log(`🔄 Found legacy profile by fid (string): ${args.fid}, migrating...`);
+        // Migrate legacy profile to use farcasterFid (indexed field)
+        await ctx.db.patch(existingByFid._id, { farcasterFid: args.fid });
+      }
+    }
 
     if (existingByFid && existingByFid.address !== address) {
       // FID already linked to different address - update the address

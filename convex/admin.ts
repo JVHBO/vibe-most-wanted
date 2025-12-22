@@ -681,3 +681,154 @@ export const backfillHasFullDefenseDeck = mutation({
     };
   },
 });
+
+// ========== CLEANUP FUNCTIONS (Safe Data Maintenance) ==========
+
+/**
+ * DRY RUN: Count old records that would be deleted
+ * Use this FIRST to see what would be affected before running actual cleanup
+ */
+export const countOldRecordsForCleanup = mutation({
+  args: {
+    daysOld: v.optional(v.number()),
+  },
+  handler: async (ctx, { daysOld = 30 }) => {
+    const cutoffTime = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
+    const results: Record<string, string> = {}; const LIMIT = 100;
+
+    const oldMatches = await ctx.db
+      .query("matches")
+      .filter((q) => q.lt(q.field("timestamp"), cutoffTime))
+      .take(100);
+    results.matches = oldMatches.length >= LIMIT ? LIMIT + "+" : String(oldMatches.length);
+
+    const oldRaidAttacks = await ctx.db
+      .query("raidAttacks")
+      .filter((q) => q.lt(q.field("createdAt"), cutoffTime))
+      .take(100);
+    results.raidAttacks = oldRaidAttacks.length >= LIMIT ? LIMIT + "+" : String(oldRaidAttacks.length);
+
+    const oldCoinTx = await ctx.db
+      .query("coinTransactions")
+      .filter((q) => q.lt(q.field("timestamp"), cutoffTime))
+      .take(100);
+    results.coinTransactions = oldCoinTx.length >= LIMIT ? LIMIT + "+" : String(oldCoinTx.length);
+
+    const referrals = await ctx.db.query("referrals").take(100);
+    const referralStats = await ctx.db.query("referralStats").take(100);
+    const referralClaims = await ctx.db.query("referralClaims").take(100);
+    results.referrals = referrals.length >= LIMIT ? LIMIT + "+" : String(referrals.length);
+    results.referralStats = referralStats.length >= LIMIT ? LIMIT + "+" : String(referralStats.length);
+    results.referralClaims = referralClaims.length >= LIMIT ? LIMIT + "+" : String(referralClaims.length);
+
+    console.log("Records older than " + daysOld + " days:", results);
+
+    return {
+      daysOld,
+      cutoffDate: new Date(cutoffTime).toISOString(),
+      counts: results,
+    };
+  },
+});
+
+/**
+ * Delete old matches (batch of 100)
+ * INTERNAL ONLY - Run multiple times until hasMore = false
+ */
+export const cleanupOldMatches = internalMutation({
+  args: { daysOld: v.optional(v.number()) },
+  handler: async (ctx, { daysOld = 30 }) => {
+    const cutoffTime = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
+    const oldMatches = await ctx.db
+      .query("matches")
+      .filter((q) => q.lt(q.field("timestamp"), cutoffTime))
+      .take(100);
+
+    if (oldMatches.length === 0) {
+      return { deleted: 0, hasMore: false };
+    }
+
+    for (const match of oldMatches) {
+      await ctx.db.delete(match._id);
+    }
+
+    console.log("Deleted " + oldMatches.length + " old matches");
+    return { deleted: oldMatches.length, hasMore: oldMatches.length === 100 };
+  },
+});
+
+/**
+ * Delete old raid attacks (batch of 100)
+ * INTERNAL ONLY
+ */
+export const cleanupOldRaidAttacks = internalMutation({
+  args: { daysOld: v.optional(v.number()) },
+  handler: async (ctx, { daysOld = 30 }) => {
+    const cutoffTime = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
+    const oldAttacks = await ctx.db
+      .query("raidAttacks")
+      .filter((q) => q.lt(q.field("createdAt"), cutoffTime))
+      .take(100);
+
+    if (oldAttacks.length === 0) {
+      return { deleted: 0, hasMore: false };
+    }
+
+    for (const attack of oldAttacks) {
+      await ctx.db.delete(attack._id);
+    }
+
+    console.log("Deleted " + oldAttacks.length + " old raid attacks");
+    return { deleted: oldAttacks.length, hasMore: oldAttacks.length === 100 };
+  },
+});
+
+/**
+ * Delete old coin transactions (batch of 100)
+ * INTERNAL ONLY - Keep 60 days by default
+ */
+export const cleanupOldCoinTransactions = internalMutation({
+  args: { daysOld: v.optional(v.number()) },
+  handler: async (ctx, { daysOld = 60 }) => {
+    const cutoffTime = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
+    const oldTx = await ctx.db
+      .query("coinTransactions")
+      .filter((q) => q.lt(q.field("timestamp"), cutoffTime))
+      .take(100);
+
+    if (oldTx.length === 0) {
+      return { deleted: 0, hasMore: false };
+    }
+
+    for (const tx of oldTx) {
+      await ctx.db.delete(tx._id);
+    }
+
+    console.log("Deleted " + oldTx.length + " old coin transactions");
+    return { deleted: oldTx.length, hasMore: oldTx.length === 100 };
+  },
+});
+
+/**
+ * Clear all referral data (system disabled)
+ * INTERNAL ONLY - Only use if referral system is permanently disabled
+ */
+export const cleanupReferralData = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let deletedReferrals = 0, deletedStats = 0, deletedClaims = 0;
+
+    const referrals = await ctx.db.query("referrals").take(100);
+    for (const r of referrals) { await ctx.db.delete(r._id); deletedReferrals++; }
+
+    const stats = await ctx.db.query("referralStats").take(100);
+    for (const s of stats) { await ctx.db.delete(s._id); deletedStats++; }
+
+    const claims = await ctx.db.query("referralClaims").take(100);
+    for (const c of claims) { await ctx.db.delete(c._id); deletedClaims++; }
+
+    const hasMore = referrals.length === 100 || stats.length === 100 || claims.length === 100;
+    console.log("Referral cleanup: referrals=" + deletedReferrals + " stats=" + deletedStats + " claims=" + deletedClaims);
+    return { deletedReferrals, deletedStats, deletedClaims, hasMore };
+  },
+});

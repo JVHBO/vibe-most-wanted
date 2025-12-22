@@ -51,7 +51,7 @@ crons.interval(
 // Reduces bandwidth by ~99% for getLeaderboardLite (saves ~1.4GB/month)
 crons.interval(
   "update full leaderboard cache",
-  { minutes: 3 },
+  { minutes: 10 }, // optimized from 3 min
   internal.profiles.updateLeaderboardFullCache
 );
 

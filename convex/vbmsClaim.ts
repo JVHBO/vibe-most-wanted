@@ -1073,8 +1073,10 @@ export const convertTESTVBMSInternal = internalMutation({
 
     // 🔒 SECURITY: Verify FID matches the profile
     // This prevents direct API calls with fake/stolen FIDs
-    if (!profile.farcasterFid || profile.farcasterFid !== fid) {
-      console.log(`🚫 [SECURITY] FID mismatch! Provided: ${fid}, Profile: ${profile.farcasterFid}, Address: ${address}`);
+    // Support both old `fid` (string) and new `farcasterFid` (number) fields
+    const profileFid = profile.farcasterFid || (profile.fid ? Number(profile.fid) : null);
+    if (!profileFid || profileFid !== fid) {
+      console.log(`🚫 [SECURITY] FID mismatch! Provided: ${fid}, Profile FID: ${profileFid}, Address: ${address}`);
       throw new Error("🔒 FID verification failed. Your Farcaster account does not match this wallet.");
     }
 
@@ -1242,7 +1244,8 @@ export const recoverFailedConversion = mutation({
     const profile = await getProfile(ctx, address);
 
     const pendingAmount = profile.pendingConversion || 0;
-    const pendingTimestamp = profile.lastClaimTimestamp || 0;
+    // FIX: Use pendingConversionTimestamp, NOT lastClaimTimestamp!
+    const pendingTimestamp = profile.pendingConversionTimestamp || 0;
 
     if (pendingAmount === 0) {
       throw new Error("No pending conversion to recover");
