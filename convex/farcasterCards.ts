@@ -234,17 +234,55 @@ export const toggleEquipFarcasterCard = mutation({
 
 /**
  * Get all Farcaster cards (leaderboard)
+ * 🚀 BANDWIDTH FIX: Added limit parameter (default 100, max 500)
  */
 export const getAllFarcasterCards = query({
-  args: {},
-  handler: async (ctx) => {
-    // Get all cards and sort manually by creation time
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // 🚀 BANDWIDTH FIX: Limit results to prevent abuse
+    const limit = Math.min(args.limit || 100, 500);
+
+    // Get cards with limit (uses index for ordering)
     const allCards = await ctx.db
       .query("farcasterCards")
-      .collect();
+      .order("desc")
+      .take(limit);
 
-    // Sort by creation time (most recent first) - show all cards
-    return allCards.sort((a, b) => b._creationTime - a._creationTime);
+    return allCards;
+  },
+});
+
+/**
+ * Get Farcaster cards with pagination (cursor-based)
+ * 🚀 BANDWIDTH FIX: New paginated endpoint for large datasets
+ */
+export const getFarcasterCardsPaginated = query({
+  args: {
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.number()), // _creationTime of last item
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 50, 100);
+
+    let query = ctx.db.query("farcasterCards").order("desc");
+
+    // If cursor provided, filter to items before that timestamp
+    if (args.cursor) {
+      const cursor = args.cursor;
+      query = query.filter(q => q.lt(q.field("_creationTime"), cursor));
+    }
+
+    const cards = await query.take(limit + 1);
+    const hasMore = cards.length > limit;
+    const items = hasMore ? cards.slice(0, limit) : cards;
+
+    return {
+      cards: items,
+      nextCursor: hasMore && items.length > 0 ? items[items.length - 1]._creationTime : null,
+      hasMore,
+    };
   },
 });
 

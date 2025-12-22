@@ -685,6 +685,18 @@ export const processAutoAttacks = internalMutation({
       .withIndex("by_last_updated", (q) => q.gt("lastUpdated", twoHoursAgo))
       .collect();
 
+    // 🚀 BANDWIDTH FIX: Batch-load all profiles BEFORE the loop
+    // This reduces N queries (one per deck) to just one batch query
+    const uniqueAddresses = [...new Set(allDecks.map(d => d.address))];
+    const profilePromises = uniqueAddresses.map(addr =>
+      ctx.db.query("profiles").withIndex("by_address", q => q.eq("address", addr)).first()
+    );
+    const profiles = await Promise.all(profilePromises);
+    const profileMap = new Map(
+      profiles.filter(Boolean).map(p => [p!.address, p])
+    );
+    console.log(`🚀 Batch-loaded ${profileMap.size} profiles for ${allDecks.length} decks`);
+
     let totalDamage = 0;
     let attackingPlayers = 0;
 
@@ -767,12 +779,8 @@ export const processAutoAttacks = internalMutation({
           )
           .first();
 
-        // Get player username
-        const profile = await ctx.db
-          .query("profiles")
-          .withIndex("by_address", (q) => q.eq("address", deck.address))
-          .first();
-
+        // 🚀 BANDWIDTH FIX: Use pre-loaded profile from Map (no query!)
+        const profile = profileMap.get(deck.address);
         const username = profile?.username || deck.address.slice(0, 8);
 
         if (contribution) {
