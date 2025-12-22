@@ -189,6 +189,72 @@ The referral system awarded 25,000 TESTVBMS per successful referral without adeq
 
 ---
 
+## Forensic Analysis - Incident #2
+
+### Pattern Analysis (December 21, 2025)
+
+Investigation of the referral farming accounts revealed a coordinated attack using fake accounts created without Farcaster authentication.
+
+### Top Exploiter Analysis
+
+| Exploiter | FID | Referrals | VBMS Earned | Pattern |
+|-----------|-----|-----------|-------------|---------|
+| dobronx | 338015 | 100 | 4,115,000 | Fake accounts |
+| pakhaji | (unknown) | 100 | 4,115,000 | Fake accounts |
+| mexxeth | 444473 | 42 | 390,000 | Mixed (some real FIDs) |
+
+### Fake Account Characteristics
+
+Accounts referred by top exploiters share these characteristics:
+
+| Account | FID | Coins | Activity |
+|---------|-----|-------|----------|
+| iyumzz | **NONE** | 100 | 0 wins |
+| novaclark | **NONE** | 100 | 0 wins |
+| vangall | **NONE** | 100 | 0 wins |
+| Reiner | **NONE** | 100 | 0 wins |
+| karep | **NONE** | 100 | 0 wins |
+| icecubee | **NONE** | 100 | 0 wins |
+
+**Pattern detected:**
+- All referred accounts have **NO Farcaster FID**
+- All have exactly **100 coins** (welcome bonus only)
+- All have **0 wins** (never played the game)
+- Created in **bulk within hours** of each other
+
+### mexxeth Case Study
+
+The account `mexxeth` (0x34d1163f8f3d44c38bacbb6a8c86acb62cd7e4fb) showed a mixed pattern:
+
+- **42 referrals** completed in one day
+- Some referrals had real FIDs (Farcaster accounts)
+- Some referrals had no FID (fake accounts)
+- None of the referred accounts played the game
+- One referred account (`hanzwwe`) is also on the blacklist
+
+**Sample of mexxeth's referrals:**
+
+| Referred User | FID | Coins | Played? |
+|---------------|-----|-------|---------|
+| mezzolitikum | 585787 | 0 | No |
+| allinbtc | 377789 | 0 | No |
+| hanzwwe | 447459 | 95,600 | No (EXPLOITER) |
+| Vitalk | **NONE** | 0 | No |
+| cz | **NONE** | 0 | No |
+| Ufi | 290163 | 0 | No |
+
+### Conclusion
+
+The referral farming attack was coordinated, using:
+1. **Bulk account creation** without Farcaster authentication
+2. **Immediate referral bonus claiming**
+3. **No actual game engagement** by referred accounts
+4. **Cross-referencing between exploiter accounts**
+
+The vulnerability allowed accounts to be created and complete referrals without verified Farcaster identity, enabling mass farming of referral bonuses.
+
+---
+
 ## Security Measures Implemented
 
 ### 1. Authentication Requirements
