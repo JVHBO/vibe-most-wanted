@@ -30,6 +30,20 @@ export const saveScoreCheck = mutation({
 });
 
 /**
+ * Get all score history entries (for debugging)
+ */
+export const getAllScoreHistory = query({
+  args: {},
+  handler: async (ctx) => {
+    const history = await ctx.db
+      .query("neynarScoreHistory")
+      .order("desc")
+      .take(20);
+    return history;
+  },
+});
+
+/**
  * Get score history for a FID
  */
 export const getScoreHistory = query({
