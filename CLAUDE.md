@@ -35,12 +35,60 @@ The `.env.local` file points to DEV (`dazzling-hedgehog-496`). If you run `npx c
 - The `.env.local` file always takes precedence
 - Solution: Use `--env-file .env.prod` flag
 
-### Bug #2: Vercel env vars with `\n`
-- Fixed on Dec 21, 2025
-- If vars get corrupted again, fix with:
+### Bug #2: Vercel env vars with `\n` (RECURRING)
+- **Status**: Keeps recurring - happened again on Dec 22, 2025
+- **Cause**: Unknown - Vercel sometimes appends `\n` to ALL env vars
+- **Symptoms**: Build fails with cryptic errors, works locally but fails on Vercel
+- **Detection**: Pull env vars and check for `\n`:
 ```bash
+npx vercel env pull .env.vercel-check --environment production
+# Check file for \n characters at end of values
+```
+- **Fix**: Use `printf` (not `<<<`) to avoid adding newlines:
+```bash
+# For each corrupted var:
+npx vercel env rm VAR_NAME production -y
+printf "value_without_newline" | npx vercel env add VAR_NAME production
+
+# Example:
 npx vercel env rm CONVEX_DEPLOYMENT production -y
-npx vercel env add CONVEX_DEPLOYMENT production <<< "prod:agile-orca-761"
+printf "prod:agile-orca-761" | npx vercel env add CONVEX_DEPLOYMENT production
+
+npx vercel env rm NEXT_PUBLIC_CONVEX_URL production -y
+printf "https://agile-orca-761.convex.cloud" | npx vercel env add NEXT_PUBLIC_CONVEX_URL production
+```
+
+### Bug #3: TypeScript type narrowing in Convex filters
+- **Issue**: `args.cursor` inside `.filter()` callback doesn't narrow type even after `if (args.cursor)` check
+- **Error**: `Type 'undefined' is not assignable to parameter of type 'ExpressionOrValue<Value>'`
+- **Fix**: Capture value in local variable before callback:
+```typescript
+// BAD - TypeScript doesn't narrow inside callback
+if (args.cursor) {
+  query = query.filter(q => q.lt(q.field("_creationTime"), args.cursor)); // ERROR!
+}
+
+// GOOD - Local variable preserves narrowed type
+if (args.cursor) {
+  const cursor = args.cursor;
+  query = query.filter(q => q.lt(q.field("_creationTime"), cursor)); // Works!
+}
+```
+
+### Bug #4: Vercel cache not uploading changes
+- **Symptoms**: Local build works, Vercel build fails with old errors
+- **Fix**: Use `--force` flag to bypass cache:
+```bash
+npx vercel --prod --force
+```
+
+### Bug #5: Deploying to wrong environment
+- **Symptoms**: Changes deployed but not visible in production
+- **Cause**: Forgot `--env-file .env.prod` when deploying Convex
+- **Fix**: Always deploy Convex before Vercel:
+```bash
+npx convex deploy --env-file .env.prod
+npx vercel --prod
 ```
 
 ## Security

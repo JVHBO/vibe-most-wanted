@@ -124,12 +124,13 @@ export const getLeaderboardLite = query({
         .withIndex("by_type", (q) => q.eq("type", "full_leaderboard"))
         .first();
 
-      // If cache exists and is fresh (less than 5 minutes old), use it
+      // 🚀 BANDWIDTH FIX: Increased cache TTL from 5 to 12 minutes
+      // Cron updates every 10 min, so 12 min ensures overlap
       if (cache && cache.data && cache.data.length > 0) {
         const cacheAge = Date.now() - cache.updatedAt;
-        const fiveMinutes = 5 * 60 * 1000;
+        const cacheMaxAge = 12 * 60 * 1000; // 12 minutes (was 5)
 
-        if (cacheAge < fiveMinutes) {
+        if (cacheAge < cacheMaxAge) {
           // Return cached data (already formatted correctly)
           return cache.data.slice(0, limit).map(p => ({
             address: p.address,
@@ -342,24 +343,14 @@ export const upsertProfileFromFarcaster = mutation({
     const now = Date.now();
 
     // Check if this FID already has a profile with different address
-    // First check by farcasterFid (new indexed field)
-    let existingByFid = await ctx.db
+    // Uses farcasterFid indexed field for fast lookup
+    const existingByFid = await ctx.db
       .query("profiles")
       .withIndex("by_fid", (q) => q.eq("farcasterFid", args.fid))
       .first();
 
-    // Fallback: Check for legacy profiles with fid as string (for migration)
-    if (!existingByFid) {
-      existingByFid = await ctx.db
-        .query("profiles")
-        .filter((q) => q.eq(q.field("fid"), String(args.fid)))
-        .first();
-      if (existingByFid) {
-        console.log(`🔄 Found legacy profile by fid (string): ${args.fid}, migrating...`);
-        // Migrate legacy profile to use farcasterFid (indexed field)
-        await ctx.db.patch(existingByFid._id, { farcasterFid: args.fid });
-      }
-    }
+    // NOTE: Legacy fid (string) fallback removed - was causing full table scans
+    // All profiles should have farcasterFid by now. If not, run migration script.
 
     if (existingByFid && existingByFid.address !== address) {
       // FID already linked to different address - update the address
@@ -381,15 +372,19 @@ export const upsertProfileFromFarcaster = mutation({
       .first();
 
     if (existing) {
-      // Update existing profile with Farcaster data
-      await ctx.db.patch(existing._id, {
-        farcasterFid: args.fid, // Use farcasterFid (number)
-        username,
-        farcasterDisplayName: args.displayName,
-        farcasterPfpUrl: args.pfpUrl,
-        lastUpdated: now,
-      });
-      console.log(`✅ Profile updated for FID ${args.fid} (@${username})`);
+      // Only update if something actually changed (reduces writes)
+      const updates: Record<string, any> = {};
+
+      if (existing.farcasterFid !== args.fid) updates.farcasterFid = args.fid;
+      if (existing.username !== username) updates.username = username;
+      if (existing.farcasterDisplayName !== args.displayName) updates.farcasterDisplayName = args.displayName;
+      if (existing.farcasterPfpUrl !== args.pfpUrl) updates.farcasterPfpUrl = args.pfpUrl;
+
+      if (Object.keys(updates).length > 0) {
+        updates.lastUpdated = now;
+        await ctx.db.patch(existing._id, updates);
+        console.log(`✅ Profile updated for FID ${args.fid} (@${username}):`, Object.keys(updates));
+      }
       return existing._id;
     }
 
@@ -1475,5 +1470,82 @@ export const listAll = internalQuery({
     // 🚀 BANDWIDTH FIX: Limit to 200 profiles max
     const profiles = await ctx.db.query("profiles").take(200);
     return profiles;
+  },
+});
+
+/**
+ * Count profiles with legacy fid (string) that need migration to farcasterFid (number)
+ * Run this to check if migration is needed
+ */
+export const countLegacyFidProfiles = query({
+  args: {},
+  handler: async (ctx) => {
+    // This still needs full scan but only runs manually for diagnostics
+    const profiles = await ctx.db.query("profiles").collect();
+
+    let legacyCount = 0;
+    let migratedCount = 0;
+    let noFidCount = 0;
+
+    for (const profile of profiles) {
+      if (profile.farcasterFid) {
+        migratedCount++;
+      } else if ((profile as any).fid) {
+        legacyCount++;
+      } else {
+        noFidCount++;
+      }
+    }
+
+    return {
+      total: profiles.length,
+      migrated: migratedCount,
+      legacy: legacyCount,
+      noFid: noFidCount,
+      needsMigration: legacyCount > 0,
+    };
+  },
+});
+
+/**
+ * Migrate legacy profiles from fid (string) to farcasterFid (number)
+ * Run this once to fix all legacy profiles
+ */
+export const migrateLegacyFidProfiles = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("profiles").collect();
+
+    let migratedCount = 0;
+    const errors: string[] = [];
+
+    for (const profile of profiles) {
+      // Skip if already has farcasterFid
+      if (profile.farcasterFid) continue;
+
+      // Check for legacy fid field
+      const legacyFid = (profile as any).fid;
+      if (legacyFid) {
+        try {
+          const fidNumber = parseInt(legacyFid, 10);
+          if (!isNaN(fidNumber) && fidNumber > 0) {
+            await ctx.db.patch(profile._id, { farcasterFid: fidNumber });
+            migratedCount++;
+            console.log(`✅ Migrated profile ${profile.username} (FID: ${fidNumber})`);
+          } else {
+            errors.push(`Invalid FID for ${profile.username}: ${legacyFid}`);
+          }
+        } catch (e: any) {
+          errors.push(`Error migrating ${profile.username}: ${e.message}`);
+        }
+      }
+    }
+
+    console.log(`🔄 Migration complete: ${migratedCount} profiles migrated`);
+
+    return {
+      migratedCount,
+      errors,
+    };
   },
 });
