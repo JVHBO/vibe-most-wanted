@@ -390,6 +390,14 @@ export default function FidPage() {
       const score = user.experimental.neynar_user_score;
       const rarity = calculateRarityFromScore(score);
 
+      // Save score to history (same as /fid/[fid] page)
+      await saveScoreCheck({
+        fid: user.fid,
+        username: user.username,
+        score,
+        rarity,
+      });
+
       // Set score data and show modal
       setNeynarScoreData({
         score,
@@ -429,6 +437,7 @@ export default function FidPage() {
 
   // Mutations
   const mintCard = useMutation(api.farcasterCards.mintFarcasterCard);
+  const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);
 
   // 🔒 FIX: Check for pending mint data on page load and try to save
   // This handles cases where user refreshed page or transaction was pending
