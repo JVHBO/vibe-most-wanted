@@ -16,6 +16,7 @@ import { parseEther } from "viem";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useMusic } from "@/contexts/MusicContext";
 import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import { fidTranslations } from "@/lib/fidTranslations";
@@ -42,6 +43,7 @@ export default function FidPage() {
   const { connect, connectors } = useConnect();
   const farcasterContext = useFarcasterContext();
   const { lang, setLang } = useLanguage();
+  const { isMusicEnabled, setIsMusicEnabled } = useMusic();
   const t = fidTranslations[lang];
   const router = useRouter();
 
@@ -885,8 +887,15 @@ export default function FidPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-2 sm:p-4 md:p-8 overflow-x-hidden">
-      {/* Language Selector - Fixed Top Right (compact) */}
-      <div className="fixed top-2 right-2 z-50">
+      {/* Language Selector & Mute Button - Fixed Top Right */}
+      <div className="fixed top-2 right-2 z-50 flex items-center gap-2">
+        <button
+          onClick={() => setIsMusicEnabled(!isMusicEnabled)}
+          className="p-1.5 bg-vintage-charcoal/90 border border-vintage-gold/30 rounded text-vintage-ice hover:border-vintage-gold transition-colors shadow-md"
+          title={isMusicEnabled ? "Mute" : "Unmute"}
+        >
+          {isMusicEnabled ? "🔊" : "🔇"}
+        </button>
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value as any)}
