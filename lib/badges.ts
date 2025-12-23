@@ -16,7 +16,7 @@ export const BADGES_CONFIG = {
   TRASH_WALLET: '0xb620e9f63188245fcc3e737f77f811e8aa5338fe',
 };
 
-export type BadgeType = 'dev' | 'gey' | 'ai' | 'bigdog' | 'exploiter' | 'trash';
+export type BadgeType = 'dev' | 'gey' | 'ai' | 'bigdog' | 'exploiter' | 'trash' | 'vibe';
 
 export interface Badge {
   type: BadgeType;
@@ -83,6 +83,15 @@ export const BADGES: Record<BadgeType, Badge> = {
     borderColor: 'bg-gradient-to-r from-stone-600 via-stone-500 to-stone-400',
     textColor: 'text-stone-400',
   },
+  vibe: {
+    type: 'vibe',
+    label: 'VIBE',
+    description: 'VibeFID Holder - +20% bonus coins in Wanted Cast',
+    icon: '✨',
+    color: 'bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-orange-500/30',
+    borderColor: 'bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500',
+    textColor: 'text-yellow-400',
+  },
 };
 
 // Hardcoded exploiter blacklist (same as convex/blacklist.ts)
@@ -143,7 +152,7 @@ export function isTrash(address: string): boolean {
 }
 
 // Get badges for a user
-export function getUserBadges(address: string, userIndex: number): Badge[] {
+export function getUserBadges(address: string, userIndex: number, hasVibeBadge?: boolean): Badge[] {
   const badges: Badge[] = [];
 
   // Exploiter badge takes priority and is shown first
@@ -170,6 +179,11 @@ export function getUserBadges(address: string, userIndex: number): Badge[] {
 
   if (isTrash(address)) {
     badges.push(BADGES.trash);
+  }
+
+  // VIBE badge for VibeFID holders (claimed via missions)
+  if (hasVibeBadge) {
+    badges.push(BADGES.vibe);
   }
 
   return badges;

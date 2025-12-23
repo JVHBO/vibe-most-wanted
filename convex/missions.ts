@@ -27,6 +27,7 @@ const MISSION_REWARDS = {
   streak_10: { type: "coins", amount: 750 },
   vibefid_minted: { type: "coins", amount: 5000 },
   welcome_gift: { type: "coins", amount: 500 },
+  claim_vibe_badge: { type: "badge", amount: 0 }, // VIBE badge - +20% bonus coins in Wanted Cast
 };
 
 /**
@@ -494,5 +495,109 @@ export const ensureWelcomeGift = mutation({
     }
 
     return { created: false };
+  },
+});
+
+/**
+ * Check if player is eligible for VIBE badge (has VibeFID cards)
+ */
+export const checkVibeBadgeEligibility = query({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    // Check if player has any VibeFID cards
+    const vibeFIDCards = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .collect();
+
+    // Check if player already has the badge
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    const hasBadge = profile?.hasVibeBadge === true;
+    const hasVibeFIDCards = vibeFIDCards.length > 0;
+
+    return {
+      eligible: hasVibeFIDCards && !hasBadge,
+      hasVibeFIDCards,
+      hasBadge,
+      vibeFIDCount: vibeFIDCards.length,
+    };
+  },
+});
+
+/**
+ * Claim VIBE badge (one-time reward for VibeFID holders)
+ * Gives +20% bonus coins in Wanted Cast
+ */
+export const claimVibeBadge = mutation({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    // Check if player already has the badge
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    if (profile.hasVibeBadge === true) {
+      throw new Error("VIBE badge already claimed");
+    }
+
+    // Check if player has any VibeFID cards
+    const vibeFIDCards = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .collect();
+
+    if (vibeFIDCards.length === 0) {
+      throw new Error("No VibeFID cards found. Mint a VibeFID first to claim the VIBE badge!");
+    }
+
+    // Grant the VIBE badge
+    await ctx.db.patch(profile._id, {
+      hasVibeBadge: true,
+    });
+
+    // Record the mission as claimed
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("date"), "once"),
+          q.eq(q.field("missionType"), "claim_vibe_badge")
+        )
+      )
+      .first();
+
+    if (!existing) {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: "once",
+        missionType: "claim_vibe_badge",
+        completed: true,
+        claimed: true,
+        reward: 0, // Badge reward, not coins
+        completedAt: Date.now(),
+        claimedAt: Date.now(),
+      });
+    }
+
+    console.log(`✨ VIBE badge claimed by ${normalizedAddress} (+20% Wanted Cast bonus)`);
+
+    return {
+      success: true,
+      message: "VIBE badge claimed! You now receive +20% bonus coins in Wanted Cast.",
+    };
   },
 });

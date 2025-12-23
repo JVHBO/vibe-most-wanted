@@ -74,6 +74,7 @@ export const removeFeaturedCast = mutation({
 
 // Cast interaction reward amount
 const CAST_INTERACTION_REWARD = 500; // 500 TESTVBMS per interaction
+const VIBE_BADGE_BONUS_PERCENT = 20; // +20% bonus for VIBE badge holders
 
 // Get cast interaction progress for a player
 export const getCastInteractionProgress = query({
@@ -129,10 +130,17 @@ export const claimCastInteractionReward = mutation({
       throw new Error("Profile not found");
     }
 
+    // Calculate reward with VIBE badge bonus (+20%)
+    let reward = CAST_INTERACTION_REWARD;
+    const hasVibeBadge = profile.hasVibeBadge === true;
+    if (hasVibeBadge) {
+      reward = Math.floor(reward * (1 + VIBE_BADGE_BONUS_PERCENT / 100));
+    }
+
     // Add reward to balance
     const currentBalance = profile.coins || 0;
-    const newBalance = currentBalance + CAST_INTERACTION_REWARD;
-    const newLifetimeEarned = (profile.lifetimeEarned || 0) + CAST_INTERACTION_REWARD;
+    const newBalance = currentBalance + reward;
+    const newLifetimeEarned = (profile.lifetimeEarned || 0) + reward;
 
     await ctx.db.patch(profile._id, {
       coins: newBalance,
@@ -149,13 +157,15 @@ export const claimCastInteractionReward = mutation({
       claimedAt: Date.now(),
     });
 
-    console.log(`🎬 Cast ${interactionType} reward: ${CAST_INTERACTION_REWARD} TESTVBMS for ${normalizedAddress}`);
+    console.log(`🎬 Cast ${interactionType} reward: ${reward} TESTVBMS for ${normalizedAddress}${hasVibeBadge ? ' (+20% VIBE bonus)' : ''}`);
 
     return {
       success: true,
-      reward: CAST_INTERACTION_REWARD,
+      reward,
       newBalance,
       interactionType,
+      hasVibeBadge,
+      bonusApplied: hasVibeBadge ? VIBE_BADGE_BONUS_PERCENT : 0,
     };
   },
 });

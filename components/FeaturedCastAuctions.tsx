@@ -70,10 +70,14 @@ export function FeaturedCastAuctions({
   const auctionStates = useQuery(api.castAuctions.getAllAuctionStates);
   const currentBidders = useQuery(api.castAuctions.getCurrentBidders, {});
 
-  // Pending refunds
+  // Pending refunds (manual claim required)
   const pendingRefunds = useQuery(api.castAuctions.getPendingRefunds, address ? { address } : "skip");
   const requestRefundMutation = useMutation(api.castAuctions.requestRefund);
   const [isClaimingRefund, setIsClaimingRefund] = useState(false);
+
+  // Recent automatic refunds (for display only - already credited)
+  const recentRefunds = useQuery(api.castAuctions.getRecentRefunds, address ? { address } : "skip");
+  const [dismissedRefunds, setDismissedRefunds] = useState(false);
 
   // Get profile for username
   const profile = useQuery(api.profiles.getProfile, address ? { address } : "skip");
@@ -495,7 +499,7 @@ export function FeaturedCastAuctions({
             </div>
           )}
 
-          {/* Pending Refunds */}
+          {/* Pending Refunds (manual claim required) */}
           {pendingRefunds && pendingRefunds.totalRefund > 0 && (
             <div className="p-3 bg-amber-900/40 border-2 border-amber-500/70 rounded-lg">
               <div className="flex items-center justify-between">
@@ -515,6 +519,28 @@ export function FeaturedCastAuctions({
                 >
                   {isClaimingRefund ? "Claiming..." : "Claim"}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Recent Automatic Refunds (already credited) */}
+          {recentRefunds && recentRefunds.count > 0 && !dismissedRefunds && (
+            <div className="p-3 bg-green-900/40 border-2 border-green-500/50 rounded-lg relative">
+              <button
+                onClick={() => setDismissedRefunds(true)}
+                className="absolute top-2 right-2 text-green-400 hover:text-green-200 text-lg"
+                title="Dismiss"
+              >
+                ×
+              </button>
+              <div className="pr-6">
+                <p className="text-green-300 font-bold text-sm flex items-center gap-2">
+                  <span>✅</span> Refunded (Last 24h)
+                </p>
+                <p className="text-green-200/80 text-xs mt-1">
+                  You were outbid and received <span className="font-bold text-green-300">{recentRefunds.totalRefunded.toLocaleString()} VBMS</span> back
+                  <span className="text-vintage-burnt-gold ml-1">({recentRefunds.count} bid{recentRefunds.count > 1 ? 's' : ''} refunded automatically)</span>
+                </p>
               </div>
             </div>
           )}

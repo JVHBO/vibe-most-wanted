@@ -163,6 +163,9 @@ export default defineSchema({
     musicPlaylist: v.optional(v.array(v.string())), // Array of URLs for playlist mode
     lastPlayedIndex: v.optional(v.number()), // Track which song was last played
 
+    // Badges
+    hasVibeBadge: v.optional(v.boolean()), // VIBE badge - claimed by VibeFID holders (bonus coins in Wanted Cast)
+
     // Metadata
     userIndex: v.optional(v.number()),
     createdAt: v.number(), // timestamp
@@ -428,7 +431,8 @@ export default defineSchema({
       v.literal("streak_3"),
       v.literal("streak_5"),
       v.literal("streak_10"),
-      v.literal("vibefid_minted")
+      v.literal("vibefid_minted"),
+      v.literal("claim_vibe_badge") // VIBE badge for VibeFID holders (+20% Wanted Cast bonus)
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player

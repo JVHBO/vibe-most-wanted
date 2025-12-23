@@ -29,16 +29,13 @@ export const getTokenByFid = query({
 });
 
 /**
- * Get all notification tokens (for migration/debugging and internal use)
- * Used by Actions and API routes
+ * Get all notification tokens (for internal use only)
  * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
- * 🚀 BANDWIDTH FIX: Limited to 500 tokens max
  */
 export const getAllTokens = internalQuery({
   args: {},
   handler: async (ctx) => {
-    // 🚀 BANDWIDTH FIX: Limit to 500 tokens max
-    const tokens = await ctx.db.query("notificationTokens").take(500);
+    const tokens = await ctx.db.query("notificationTokens").collect();
     return tokens;
   },
 });
@@ -447,13 +444,9 @@ export const sendDailyLoginReminder = internalAction({
   args: {},
   // @ts-ignore
   handler: async (ctx) => {
-    // Import api here to avoid circular reference
-    // @ts-ignore
-    const { api } = await import("./_generated/api");
-
     try {
-      // Get all notification tokens
-      const tokens = await ctx.runQuery(api.notificationsHelpers.getAllTokens);
+      // Get all notification tokens (use internal since getAllTokens is internalQuery)
+      const tokens = await ctx.runQuery(internal.notificationsHelpers.getAllTokens);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
@@ -575,11 +568,9 @@ export const sendFeaturedCastNotification = internalAction({
   },
   // @ts-ignore
   handler: async (ctx, { castAuthor, warpcastUrl }) => {
-    // @ts-ignore
-    const { api } = await import("./_generated/api");
-
     try {
-      const tokens = await ctx.runQuery(api.notificationsHelpers.getAllTokens);
+      // Use internal query (not api) since getAllTokens is internalQuery
+      const tokens = await ctx.runQuery(internal.notificationsHelpers.getAllTokens);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found for featured cast notification");
@@ -604,36 +595,47 @@ export const sendFeaturedCastNotification = internalAction({
         console.log(`📱 Sending to ${neynarFids.length} Base App users via Neynar API...`);
 
         try {
+          // Generate proper UUID v4 format for notification (required by Neynar API)
+          const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+
           const neynarPayload = {
             target_fids: neynarFids,
             notification: {
               title,
               body,
-              target_url: targetUrl
+              target_url: targetUrl,
+              uuid: uuid
             }
           };
 
-          const neynarResponse = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications", {
+          console.log(`📱 Neynar payload:`, JSON.stringify(neynarPayload));
+
+          const neynarResponse = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "api_key": process.env.NEYNAR_API_KEY,
-              "x-neynar-api-key": process.env.NEYNAR_API_KEY
+              "x-api-key": process.env.NEYNAR_API_KEY || ""
             },
             body: JSON.stringify(neynarPayload)
           });
 
+          const neynarResult = await neynarResponse.json();
+          console.log(`📱 Neynar response (${neynarResponse.status}):`, JSON.stringify(neynarResult));
+
           if (neynarResponse.ok) {
-            const neynarResult = await neynarResponse.json();
             const neynarSent = neynarResult.notification_deliveries?.filter((d: any) => d.status === "success").length || 0;
             sent += neynarSent;
-            console.log(`📱 Neynar: ${neynarSent} sent`);
+            console.log(`📱 Neynar: ${neynarSent} sent successfully`);
           } else {
-            console.log(`📱 Neynar failed: ${neynarResponse.status}`);
+            console.log(`📱 Neynar failed: ${neynarResponse.status} - ${JSON.stringify(neynarResult)}`);
             failed += neynarFids.length;
           }
-        } catch (neynarError) {
-          console.log(`📱 Neynar error:`, neynarError);
+        } catch (neynarError: any) {
+          console.log(`📱 Neynar error:`, neynarError?.message || neynarError);
           failed += neynarTokens.length;
         }
       }
@@ -690,6 +692,61 @@ export const sendFeaturedCastNotification = internalAction({
   },
 });
 
+/**
+ * TEST: Send notification to a SINGLE FID via Neynar only (for debugging Base App)
+ */
+export const testNeynarNotification = internalAction({
+  args: {
+    fid: v.number(),
+    title: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, { fid, title, body }) => {
+    if (!process.env.NEYNAR_API_KEY) {
+      return { error: "NEYNAR_API_KEY not set" };
+    }
+
+    // Generate proper UUID v4 format
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+
+    const payload = {
+      target_fids: [fid],
+      notification: {
+        title,
+        body,
+        target_url: "https://www.vibemostwanted.xyz",
+        uuid
+      }
+    };
+
+    console.log(`🧪 TEST: Sending to FID ${fid} via Neynar...`);
+    console.log(`🧪 Payload:`, JSON.stringify(payload));
+
+    try {
+      const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      console.log(`🧪 Response (${response.status}):`, JSON.stringify(result));
+
+      return { status: response.status, result };
+    } catch (error: any) {
+      console.log(`🧪 Error:`, error?.message || error);
+      return { error: error?.message || "Unknown error" };
+    }
+  },
+});
+
 // ============================================================================
 // PERIODIC GAMING TIPS
 // ============================================================================
@@ -733,15 +790,15 @@ export const sendPeriodicTip = internalAction({
   args: {},
   // @ts-ignore
   handler: async (ctx) => {
-    // Import api here to avoid circular reference
+    // Import api here for public queries/mutations (not for internalQuery)
     // @ts-ignore
     const { api } = await import("./_generated/api");
 
     try {
       console.log("💡 Starting periodic tip notification...");
 
-      // Get all notification tokens via query
-      const tokens = await ctx.runQuery(api.notificationsHelpers.getAllTokens);
+      // Get all notification tokens (use internal since getAllTokens is internalQuery)
+      const tokens = await ctx.runQuery(internal.notificationsHelpers.getAllTokens);
 
       if (tokens.length === 0) {
         console.log("⚠️ No notification tokens found");
