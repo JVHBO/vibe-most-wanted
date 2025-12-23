@@ -56,6 +56,11 @@ export const fidTranslations = {
     showing: 'Mostrando',
     cards: 'cartas',
 
+    // Search
+    searchPlaceholder: 'Buscar por nome ou FID...',
+    noCardsFound: 'Nenhuma carta encontrada',
+    clearSearch: 'Limpar busca',
+
     // Card preview
     cardPreview: 'Preview da Carta',
     generatedTraits: 'Traits Geradas',
@@ -68,6 +73,12 @@ export const fidTranslations = {
     myCards: 'Minhas Cartas Farcaster',
     cardsCount: '{count} cartas',
     share: 'Compartilhar',
+
+    // Your card section
+    yourCard: 'Sua Carta VibeFID',
+    alreadyMinted: 'Você já possui uma carta mintada!',
+    viewMyCard: 'Ver Minha Carta',
+    checkEvolution: 'Verificar Evolução',
 
     // Success modal
     vibeFidMinted: 'VibeFID Mintado!',
@@ -281,6 +292,11 @@ export const fidTranslations = {
     showing: 'Showing',
     cards: 'cards',
 
+    // Search
+    searchPlaceholder: 'Search by name or FID...',
+    noCardsFound: 'No cards found',
+    clearSearch: 'Clear search',
+
     // Card preview
     cardPreview: 'Card Preview',
     generatedTraits: 'Generated Traits',
@@ -293,6 +309,12 @@ export const fidTranslations = {
     myCards: 'My Farcaster Cards',
     cardsCount: '{count} cards',
     share: 'Share',
+
+    // Your card section
+    yourCard: 'Your VibeFID Card',
+    alreadyMinted: 'You already have a minted card!',
+    viewMyCard: 'View My Card',
+    checkEvolution: 'Check Evolution',
 
     // Success modal
     vibeFidMinted: 'VibeFID Minted!',
@@ -506,6 +528,11 @@ export const fidTranslations = {
     showing: 'Mostrando',
     cards: 'cartas',
 
+    // Search
+    searchPlaceholder: 'Buscar por nombre o FID...',
+    noCardsFound: 'No se encontraron cartas',
+    clearSearch: 'Limpiar búsqueda',
+
     // Card preview
     cardPreview: 'Vista Previa de la Carta',
     generatedTraits: 'Rasgos Generados',
@@ -518,6 +545,12 @@ export const fidTranslations = {
     myCards: 'Mis Cartas Farcaster',
     cardsCount: '{count} cartas',
     share: 'Compartir',
+
+    // Your card section
+    yourCard: 'Tu Carta VibeFID',
+    alreadyMinted: '¡Ya tienes una carta minteada!',
+    viewMyCard: 'Ver Mi Carta',
+    checkEvolution: 'Verificar Evolución',
 
     // Success modal
     vibeFidMinted: '¡VibeFID Minteado!',
@@ -731,6 +764,11 @@ export const fidTranslations = {
     showing: 'दिखा रहा है',
     cards: 'कार्ड',
 
+    // Search
+    searchPlaceholder: 'नाम या FID से खोजें...',
+    noCardsFound: 'कोई कार्ड नहीं मिला',
+    clearSearch: 'खोज साफ़ करें',
+
     // Card preview
     cardPreview: 'कार्ड पूर्वावलोकन',
     generatedTraits: 'उत्पन्न विशेषताएं',
@@ -743,6 +781,12 @@ export const fidTranslations = {
     myCards: 'मेरे Farcaster कार्ड',
     cardsCount: '{count} कार्ड',
     share: 'साझा करें',
+
+    // Your card section
+    yourCard: 'आपका VibeFID कार्ड',
+    alreadyMinted: 'आपके पास पहले से एक मिंट किया हुआ कार्ड है!',
+    viewMyCard: 'मेरा कार्ड देखें',
+    checkEvolution: 'विकास जांचें',
 
     // Success modal
     vibeFidMinted: 'VibeFID मिंट हो गया!',
@@ -956,6 +1000,11 @@ export const fidTranslations = {
     showing: 'Показано',
     cards: 'карты',
 
+    // Search
+    searchPlaceholder: 'Поиск по имени или FID...',
+    noCardsFound: 'Карты не найдены',
+    clearSearch: 'Очистить поиск',
+
     // Card preview
     cardPreview: 'Предпросмотр Карты',
     generatedTraits: 'Сгенерированные Характеристики',
@@ -968,6 +1017,12 @@ export const fidTranslations = {
     myCards: 'Мои Карты Farcaster',
     cardsCount: '{count} карт',
     share: 'Поделиться',
+
+    // Your card section
+    yourCard: 'Ваша Карта VibeFID',
+    alreadyMinted: 'У вас уже есть сминченная карта!',
+    viewMyCard: 'Посмотреть мою карту',
+    checkEvolution: 'Проверить эволюцию',
 
     // Success modal
     vibeFidMinted: 'VibeFID Сминчен!',
@@ -1181,6 +1236,11 @@ export const fidTranslations = {
     showing: '显示',
     cards: '张卡片',
 
+    // Search
+    searchPlaceholder: '按名称或FID搜索...',
+    noCardsFound: '未找到卡片',
+    clearSearch: '清除搜索',
+
     // Card preview
     cardPreview: '卡片预览',
     generatedTraits: '生成的特征',
@@ -1193,6 +1253,12 @@ export const fidTranslations = {
     myCards: '我的 Farcaster 卡片',
     cardsCount: '{count} 张卡片',
     share: '分享',
+
+    // Your card section
+    yourCard: '你的 VibeFID 卡片',
+    alreadyMinted: '你已经拥有一张铸造的卡片！',
+    viewMyCard: '查看我的卡片',
+    checkEvolution: '检查进化',
 
     // Success modal
     vibeFidMinted: 'VibeFID 已铸造！',

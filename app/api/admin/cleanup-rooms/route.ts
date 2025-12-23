@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const client = new ConvexHttpClient(CONVEX_URL);
 
     // Delete all old/expired rooms
-    const result = await client.mutation(api.pokerBattle.cleanupOldRooms, {});
+    const result = await client.mutation(api.pokerBattle.cleanupOldRoomsPublic, {});
 
     // List remaining rooms
     const rooms = await client.query(api.pokerBattle.listAllRooms, {});

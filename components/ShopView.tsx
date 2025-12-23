@@ -70,7 +70,7 @@ export function ShopView({ address }: ShopViewProps) {
 
   // Odds for display
   const NORMAL_ODDS = { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 };
-  const ELITE_ODDS = { Common: 60, Rare: 30, Epic: 8, Legendary: 2 };
+  const ELITE_ODDS = { Common: 74, Rare: 19, Epic: 6, Legendary: 1 };
   const currentOdds = luckBoost ? ELITE_ODDS : NORMAL_ODDS;
 
   // Handle purchase with VBMS (blockchain)
@@ -301,10 +301,10 @@ export function ShopView({ address }: ShopViewProps) {
             {/* Luck Boost Info */}
             <div className="mb-4">
               <h4 className="text-lg font-bold text-yellow-400 mb-2">⭐ Luck Boost</h4>
-              <p className="text-vintage-ice/70 text-sm mb-2">Pay <span className="text-yellow-400 font-bold">5x more (5,000 VBMS)</span> for ELITE odds!</p>
+              <p className="text-vintage-ice/70 text-sm mb-2">Pay <span className="text-yellow-400 font-bold">5x more (5,000 VBMS)</span> for better odds!</p>
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded p-2 text-xs">
                 <p className="text-yellow-400/80">Boosted Rates:</p>
-                <p>Common: <span className="text-green-400">60%</span> | Rare: <span className="text-green-400">30%</span> | Epic: <span className="text-green-400">8%</span> | Legendary: <span className="text-green-400">2%</span></p>
+                <p>Common: <span className="text-green-400">74%</span> | Rare: <span className="text-green-400">19%</span> | Epic: <span className="text-green-400">6%</span> | Legendary: <span className="text-green-400">1%</span></p>
               </div>
             </div>
 

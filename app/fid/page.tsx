@@ -494,15 +494,18 @@ export default function FidPage() {
         setMintedSuccessfully(true);
         console.log('✅ Successfully recovered and saved mint data!');
       } catch (err: any) {
+        const errorMsg = err?.message || err?.data?.message || String(err);
+        console.error('❌ Failed to recover mint data:', errorMsg, err);
+
         // If it's a duplicate error, card was already saved - clear localStorage
-        if (err.message?.includes('already exists') || err.message?.includes('already minted')) {
+        if (errorMsg.includes('already') || errorMsg.includes('duplicate') || errorMsg.includes('FID')) {
           console.log('ℹ️ Card already exists in Convex, clearing pending data');
           localStorage.removeItem('vibefid_pending_mint');
           setPendingMintData(null);
           setError(null);
+          setMintedSuccessfully(true); // Show success since card exists
         } else {
-          console.error('❌ Failed to recover mint data:', err);
-          setError(`Failed to save mint data. Please contact support. (FID: ${JSON.parse(saved).fid})`);
+          setError(`Failed to save mint data: ${errorMsg.slice(0, 100)}`);
         }
       }
     };
@@ -583,12 +586,34 @@ export default function FidPage() {
     }
   }, [isConfirmed, pendingMintData, hash]);
 
-  // Pagination state
+  // Pagination and search state
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const cardsPerPage = 12;
 
-  // Queries - Get all cards instead of just recent
-  const allCards = useQuery(api.farcasterCards.getAllFarcasterCards);
+  // Debounce search to avoid too many queries
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1); // Reset to first page on search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Queries - Use search query with pagination
+  const searchResult = useQuery(api.farcasterCards.searchFarcasterCards, {
+    searchTerm: debouncedSearch || undefined,
+    limit: cardsPerPage,
+    offset: (currentPage - 1) * cardsPerPage,
+  });
+
+  // Query to get current user's minted card (if exists)
+  const userFid = farcasterContext.user?.fid;
+  const myCard = useQuery(
+    api.farcasterCards.getFarcasterCardByFid,
+    userFid ? { fid: userFid } : "skip"
+  );
 
   const handleShare = async (currentLang: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN') => {
     if (!previewImage || !userData || !generatedTraits) return;
@@ -961,43 +986,79 @@ export default function FidPage() {
           </div>
         )}
 
-        {/* Mint Section */}
-        <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
-          <div className="text-center">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-4">
-              {t.mintYourCard}
-            </h2>
-            <p className="text-sm sm:text-base text-vintage-ice/70 mb-6">
-              {t.transformProfile}
-            </p>
+        {/* My Card Section (if user has minted card) */}
+        {myCard && (
+          <div className="bg-gradient-to-br from-vintage-gold/20 to-vintage-burnt-gold/10 rounded-lg sm:rounded-xl border-2 border-vintage-gold p-4 sm:p-6 mb-4 sm:mb-6 md:mb-8 shadow-[0_0_30px_rgba(255,215,0,0.3)]">
+            <div className="text-center mb-4">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-vintage-gold mb-2">
+                🎴 {t.yourCard || "Your VibeFID Card"}
+              </h2>
+              <p className="text-sm sm:text-base text-vintage-ice/70">
+                {t.alreadyMinted || "You already have a minted card!"}
+              </p>
+            </div>
 
-            {/* Mint Button */}
-            <button
-              onClick={handleGenerateCard}
-              disabled={loading}
-              className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-base sm:text-lg rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
-            >
-              {loading ? t.generating : farcasterContext.user ? t.mintMyCard : t.connectFarcasterToMint}
-            </button>
+            <div className="flex flex-col items-center gap-4">
+              {/* View Full Card Button */}
+              <Link
+                href={`/fid/${myCard.fid}`}
+                onClick={() => AudioManager.buttonClick()}
+                className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-base sm:text-lg rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
+              >
+                {t.viewMyCard || "View My Card"} →
+              </Link>
 
-            {/* Check Neynar Score Button */}
-            {farcasterContext.user && (
+              {/* Check Neynar Score */}
               <button
                 onClick={handleCheckNeynarScore}
                 disabled={loading}
-                className="mt-3 px-6 sm:px-8 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold font-bold text-sm sm:text-base rounded-lg hover:bg-vintage-gold/10 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold font-bold text-sm sm:text-base rounded-lg hover:bg-vintage-gold/10 transition-all hover:scale-105 disabled:opacity-50"
               >
-                {t.checkNeynarScore}
+                📊 {t.checkNeynarScore}
               </button>
-            )}
-
-            {error && (
-              <div className="mt-4 p-3 sm:p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm sm:text-base break-words">
-                {error}
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Mint Section (only show if user doesn't have a card) */}
+        {!myCard && (
+          <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
+            <div className="text-center">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-4">
+                {t.mintYourCard}
+              </h2>
+              <p className="text-sm sm:text-base text-vintage-ice/70 mb-6">
+                {t.transformProfile}
+              </p>
+
+              {/* Mint Button */}
+              <button
+                onClick={handleGenerateCard}
+                disabled={loading}
+                className="px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-base sm:text-lg rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
+              >
+                {loading ? t.generating : farcasterContext.user ? t.mintMyCard : t.connectFarcasterToMint}
+              </button>
+
+              {/* Check Neynar Score Button */}
+              {farcasterContext.user && (
+                <button
+                  onClick={handleCheckNeynarScore}
+                  disabled={loading}
+                  className="mt-3 px-6 sm:px-8 py-3 sm:py-4 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold font-bold text-sm sm:text-base rounded-lg hover:bg-vintage-gold/10 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                >
+                  {t.checkNeynarScore}
+                </button>
+              )}
+
+              {error && (
+                <div className="mt-4 p-3 sm:p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm sm:text-base break-words">
+                  {error}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Generation Modal */}
         <FidGenerationModal
@@ -1082,22 +1143,43 @@ export default function FidPage() {
           </div>
         )}
 
-        {/* All Minted Cards with Pagination */}
-        {allCards && allCards.length > 0 && (() => {
-          // Calculate pagination
-          const totalCards = allCards.length;
-          const totalPages = Math.ceil(totalCards / cardsPerPage);
+        {/* All Minted Cards with Pagination and Search */}
+        {searchResult && (() => {
+          const { cards: currentCards, totalCount, hasMore } = searchResult;
+          const totalPages = Math.ceil(totalCount / cardsPerPage);
           const startIndex = (currentPage - 1) * cardsPerPage;
-          const endIndex = startIndex + cardsPerPage;
-          const currentCards = allCards.slice(startIndex, endIndex);
+          const endIndex = Math.min(startIndex + cardsPerPage, totalCount);
 
           return (
             <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold mb-3 sm:mb-4">
-                {t.allMinted} ({totalCards})
-              </h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold">
+                  {t.allMinted} ({totalCount})
+                </h2>
+
+                {/* Search Input */}
+                <div className="relative w-full sm:w-auto">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={t.searchPlaceholder || "Search by name or FID..."}
+                    className="w-full sm:w-64 px-4 py-2 pl-10 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice placeholder-vintage-ice/50 focus:outline-none focus:border-vintage-gold text-sm"
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-vintage-ice/50">🔍</span>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-vintage-ice/50 hover:text-vintage-ice text-sm"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {/* Cards Grid */}
+              {currentCards.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 {currentCards.map((card: any) => (
                   <Link
@@ -1151,6 +1233,20 @@ export default function FidPage() {
                   </Link>
                 ))}
               </div>
+              ) : (
+                <div className="text-center py-12 text-vintage-ice/60">
+                  <span className="text-4xl block mb-4">🔍</span>
+                  <p className="text-lg">{t.noCardsFound || "No cards found"}</p>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="mt-4 px-4 py-2 bg-vintage-gold/20 border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/30 transition-colors text-sm"
+                    >
+                      {t.clearSearch || "Clear search"}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
@@ -1229,9 +1325,11 @@ export default function FidPage() {
               )}
 
               {/* Page Info */}
+              {totalCount > 0 && (
               <div className="mt-4 text-center text-sm text-vintage-ice/70">
-                {t.pageOf} {currentPage} {t.of} {totalPages} • {t.showing} {startIndex + 1}-{Math.min(endIndex, totalCards)} {t.of} {totalCards} {t.cards}
+                {t.pageOf} {currentPage} {t.of} {totalPages} • {t.showing} {startIndex + 1}-{endIndex} {t.of} {totalCount} {t.cards}
               </div>
+              )}
             </div>
           );
         })()}
