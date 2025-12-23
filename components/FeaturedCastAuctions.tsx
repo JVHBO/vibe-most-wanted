@@ -420,7 +420,7 @@ export function FeaturedCastAuctions({
             <div className="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs">
               <span className="text-amber-400 font-bold">💡 Tip:</span>
               <span className="text-vintage-burnt-gold ml-1">Mint a VibeFID to get 2x coins on interactions!</span>
-              <Link href="/vibefid" className="text-amber-400 hover:text-amber-300 ml-1 underline">Mint now →</Link>
+              <Link href="/fid" className="text-amber-400 hover:text-amber-300 ml-1 underline">Mint now →</Link>
             </div>
           )}
 
