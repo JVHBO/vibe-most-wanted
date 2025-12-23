@@ -33,7 +33,7 @@ export default function FeaturedHistoryPage() {
               </svg>
             </Link>
             <h1 className="text-vintage-gold font-bold text-xl">
-              Featured Cast Hall of Fame
+              🎯 Wanted Cast Hall of Fame
             </h1>
           </div>
         </div>
@@ -80,10 +80,10 @@ export default function FeaturedHistoryPage() {
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
             <p className="text-vintage-ice text-lg">
-              No featured casts yet
+              No wanted casts yet
             </p>
             <p className="text-vintage-ice/60 text-sm mt-2">
-              Be the first to bid on a featured cast!
+              Be the first to bid on a wanted cast!
             </p>
           </div>
         ) : (

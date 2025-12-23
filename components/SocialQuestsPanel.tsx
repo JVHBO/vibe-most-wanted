@@ -334,8 +334,8 @@ export function SocialQuestsPanel({
         <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-purple-500/30 p-4">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-purple-300 font-bold text-sm flex items-center gap-2">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.8 8.2H5.2L3 9.4v7.8l3.2 3.2h9.6l3-3V9.4l-1-1.2zm-1.6 8.4l-1.6 1.6H8.4L6.8 16.6V11l1-1.2h8.4l1 1.2v5.6z"/><path d="M5.2 5.6L8.4 3.6h7.2l3.2 2H5.2z"/></svg>
-              Featured Cast
+              <span className="text-base">🎯</span>
+              Wanted Cast
             </h4>
             {featuredCasts.length > 1 && (
               <div className="flex gap-1">

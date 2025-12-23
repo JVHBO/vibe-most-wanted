@@ -742,6 +742,7 @@ export default defineSchema({
     equipped: v.boolean(), // Currently equipped in deck
     obtainedAt: v.number(), // Timestamp when first obtained
     lastUsed: v.optional(v.number()), // Last time used in game
+    sourcePackType: v.optional(v.string()), // Pack type this card came from (for burn value calculation)
   })
     .index("by_address", ["address"])
     .index("by_address_equipped", ["address", "equipped"])

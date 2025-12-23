@@ -47,10 +47,11 @@ const PACK_TYPES = {
   },
   boosted: {
     name: "Luck Boost Pack",
-    description: "1 card with elite odds",
+    description: "1 card with better odds",
     cards: 1,
-    price: 5000, // 5x basic price for elite odds on 1 card
-    rarityOdds: { Common: 60, Rare: 30, Epic: 8, Legendary: 2 }, // BOOST ODDS
+    price: 5000, // 5x basic price for better odds on 1 card
+    // BALANCED: 74/19/6/1 gives ~0% PnL (break-even)
+    rarityOdds: { Common: 74, Rare: 19, Epic: 6, Legendary: 1 },
   },
   mission: {
     name: "Mission Reward",
@@ -591,7 +592,8 @@ export const openPack = mutation({
         await ctx.db.patch(existingCard._id, {
           quantity: existingCard.quantity + 1,
         });
-        revealedCards.push({ ...card, isDuplicate: true, quantity: existingCard.quantity + 1 });
+        // Show as individual card in animation (isDuplicate only affects "NEW!" badge)
+        revealedCards.push({ ...card, isDuplicate: true, quantity: 1 });
       } else {
         // Add new card to inventory
         await ctx.db.insert("cardInventory", {
@@ -600,6 +602,7 @@ export const openPack = mutation({
           quantity: 1,
           equipped: false,
           obtainedAt: Date.now(),
+          sourcePackType: pack.packType, // Track pack origin for burn value
         });
         revealedCards.push({ ...card, isDuplicate: false, quantity: 1 });
       }
@@ -672,7 +675,8 @@ export const openAllPacks = mutation({
           await ctx.db.patch(existingCard._id, {
             quantity: existingCard.quantity + 1,
           });
-          allRevealedCards.push({ ...card, isDuplicate: true, quantity: existingCard.quantity + 1 });
+          // Show as individual card in animation (isDuplicate only affects "NEW!" badge)
+          allRevealedCards.push({ ...card, isDuplicate: true, quantity: 1 });
         } else {
           // Add new card to inventory
           await ctx.db.insert("cardInventory", {
@@ -681,6 +685,7 @@ export const openAllPacks = mutation({
             quantity: 1,
             equipped: false,
             obtainedAt: Date.now(),
+            sourcePackType: pack.packType, // Track pack origin for burn value
           });
           allRevealedCards.push({ ...card, isDuplicate: false, quantity: 1 });
         }
@@ -981,17 +986,28 @@ export const resetUserFreeCards = mutation({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Burn values based on rarity (percentage/multiplier of basic pack price 1000 VBMS)
- * Common: 20% = 200 VBMS
- * Rare: 110% = 1100 VBMS
- * Epic: 4x = 4000 VBMS
- * Legendary: 40x = 40000 VBMS
+ * Burn values based on PACK PRICE (not just rarity!)
+ * Cards from more expensive packs burn for more!
+ *
+ * Formula: burnValue = packPrice * rarityMultiplier * foilMultiplier
+ *
+ * Rarity multipliers (relative to pack price):
+ * - Common: 0.2x (20% of pack price)
+ * - Rare: 1.1x (110% of pack price)
+ * - Epic: 4x (400% of pack price)
+ * - Legendary: 40x (4000% of pack price)
+ *
+ * Example with Boosted pack (5000 VBMS) vs Basic (1000 VBMS):
+ * - Common Basic: 1000 * 0.2 = 200 VBMS
+ * - Common Boosted: 5000 * 0.2 = 1000 VBMS (5x more!)
  */
-const BURN_VALUES: Record<string, number> = {
-  Common: 200,      // 20% of pack price
-  Rare: 1100,       // 110% of pack price
-  Epic: 4000,       // 4x pack price
-  Legendary: 40000, // 40x pack price
+
+// Rarity multipliers (relative to pack price)
+const BURN_RARITY_MULTIPLIER: Record<string, number> = {
+  Common: 0.2,      // 20% of pack price
+  Rare: 1.1,        // 110% of pack price
+  Epic: 4.0,        // 4x pack price
+  Legendary: 40.0,  // 40x pack price
 };
 
 // Foil burn multipliers - foil cards are worth more when burned!
@@ -1001,11 +1017,31 @@ const BURN_FOIL_MULTIPLIER: Record<string, number> = {
   None: 1.0,      // Normal burn value
 };
 
-// Helper function to calculate burn value with foil bonus
-function calculateBurnValue(rarity: string, foil?: string): number {
-  const baseValue = BURN_VALUES[rarity] || 200;
+// Default pack price for cards without sourcePackType (legacy cards)
+const DEFAULT_PACK_PRICE = 1000; // Basic pack price
+
+// Helper function to get pack price
+function getPackPrice(packType?: string): number {
+  if (!packType) return DEFAULT_PACK_PRICE;
+  const pack = PACK_TYPES[packType as keyof typeof PACK_TYPES];
+  // For free packs (price 0), use basic pack price as minimum
+  return pack ? (pack.price > 0 ? pack.price : DEFAULT_PACK_PRICE) : DEFAULT_PACK_PRICE;
+}
+
+// Legacy BURN_VALUES for backwards compatibility (getBurnValues query)
+const BURN_VALUES: Record<string, number> = {
+  Common: 200,      // 20% of basic pack price (1000)
+  Rare: 1100,       // 110% of basic pack price
+  Epic: 4000,       // 4x basic pack price
+  Legendary: 40000, // 40x basic pack price
+};
+
+// Helper function to calculate burn value based on pack price
+function calculateBurnValue(rarity: string, foil?: string, sourcePackType?: string): number {
+  const packPrice = getPackPrice(sourcePackType);
+  const rarityMult = BURN_RARITY_MULTIPLIER[rarity] || 0.2;
   const foilMult = foil && foil !== "None" ? (BURN_FOIL_MULTIPLIER[foil] || 1.0) : 1.0;
-  return Math.round(baseValue * foilMult);
+  return Math.round(packPrice * rarityMult * foilMult);
 }
 
 /**
@@ -1031,8 +1067,8 @@ export const burnCard = mutation({
       throw new Error("Not your card");
     }
 
-    // Get burn value based on rarity and foil
-    const burnValue = calculateBurnValue(card.rarity, card.foil);
+    // Get burn value based on rarity, foil, and pack origin
+    const burnValue = calculateBurnValue(card.rarity, card.foil, card.sourcePackType);
 
     // Get player profile
     const profile = await ctx.db
@@ -1101,8 +1137,9 @@ export const burnMultipleCards = mutation({
     }
 
     let totalVBMS = 0;
-    const burnedCards: { rarity: string; count: number; vbms: number }[] = [];
-    const rarityCount: Record<string, number> = {};
+    const burnedCards: { rarity: string; count: number; vbms: number; packType?: string }[] = [];
+    // Track by rarity + foil + packType for accurate summary
+    const burnTracker: Record<string, { count: number; vbms: number; packType?: string }> = {};
 
     // Process each card
     for (const cardId of args.cardIds) {
@@ -1112,12 +1149,20 @@ export const burnMultipleCards = mutation({
       // Verify ownership
       if (card.address !== address) continue;
 
-      const burnValue = calculateBurnValue(card.rarity, card.foil);
+      // Calculate burn value with pack price
+      const burnValue = calculateBurnValue(card.rarity, card.foil, card.sourcePackType);
       totalVBMS += burnValue;
 
-      // Track by rarity (with foil info for logging)
-      const trackKey = card.foil && card.foil !== "None" ? `${card.rarity}_${card.foil}` : card.rarity;
-      rarityCount[trackKey] = (rarityCount[trackKey] || 0) + 1;
+      // Track by rarity + foil + packType for accurate summary
+      const foilPart = card.foil && card.foil !== "None" ? `_${card.foil}` : "";
+      const packPart = card.sourcePackType ? `_${card.sourcePackType}` : "";
+      const trackKey = `${card.rarity}${foilPart}${packPart}`;
+
+      if (!burnTracker[trackKey]) {
+        burnTracker[trackKey] = { count: 0, vbms: 0, packType: card.sourcePackType };
+      }
+      burnTracker[trackKey].count += 1;
+      burnTracker[trackKey].vbms += burnValue;
 
       // If card has quantity > 1, decrement instead of delete
       if (card.quantity > 1) {
@@ -1129,14 +1174,17 @@ export const burnMultipleCards = mutation({
       }
     }
 
-    // Build summary (trackKey can be "Rarity" or "Rarity_Foil")
-    for (const [trackKey, count] of Object.entries(rarityCount)) {
-      const [rarity, foil] = trackKey.includes("_") ? trackKey.split("_") : [trackKey, undefined];
-      const unitValue = calculateBurnValue(rarity, foil);
+    // Build summary from tracker
+    for (const [trackKey, data] of Object.entries(burnTracker)) {
+      // Extract just the rarity + foil part for display (without pack type)
+      const parts = trackKey.split("_");
+      const displayKey = parts.slice(0, parts[1] === "Prize" || parts[1] === "Standard" ? 2 : 1).join("_");
+
       burnedCards.push({
-        rarity: trackKey, // Show full key including foil
-        count,
-        vbms: unitValue * count,
+        rarity: displayKey,
+        count: data.count,
+        vbms: data.vbms,
+        packType: data.packType,
       });
     }
 
