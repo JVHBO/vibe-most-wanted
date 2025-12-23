@@ -410,6 +410,20 @@ export function FeaturedCastAuctions({
             </div>
           )}
 
+          {/* VIBE Badge 2x Boost Notice */}
+          {profile?.hasVibeBadge ? (
+            <div className="p-2 bg-yellow-500/10 border border-yellow-500/50 rounded-lg text-xs">
+              <span className="text-yellow-400 font-bold">✨ VIBE Badge Active!</span>
+              <span className="text-vintage-burnt-gold ml-1">You earn 2x coins (600) per interaction</span>
+            </div>
+          ) : (
+            <div className="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs">
+              <span className="text-amber-400 font-bold">💡 Tip:</span>
+              <span className="text-vintage-burnt-gold ml-1">Mint a VibeFID to get 2x coins on interactions!</span>
+              <Link href="/vibefid" className="text-amber-400 hover:text-amber-300 ml-1 underline">Mint now →</Link>
+            </div>
+          )}
+
           {/* RANKING: All active auctions with bids */}
           {activeAuctionsWithBids.length > 0 && (
             <div className="space-y-2">
