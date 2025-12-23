@@ -2888,7 +2888,7 @@ export default function TCGPage() {
       claim_vibe_badge: {
         icon: '/images/icons/achievement.svg',
         title: 'VIBE Badge',
-        description: '+20% bonus coins in Wanted Cast!',
+        description: '2x coins in Wanted Cast!',
       },
     };
 
@@ -5924,7 +5924,7 @@ export default function TCGPage() {
                                   {mission.missionType === 'claim_vibe_badge' ? (
                                     <>
                                       <span className="text-yellow-400 font-bold text-lg">✨ VIBE Badge</span>
-                                      <span className="text-vintage-burnt-gold text-sm">(+20% Wanted Cast)</span>
+                                      <span className="text-vintage-burnt-gold text-sm">(2x Wanted Cast)</span>
                                     </>
                                   ) : (
                                     <>

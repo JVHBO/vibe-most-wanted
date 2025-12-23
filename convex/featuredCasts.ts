@@ -73,8 +73,8 @@ export const removeFeaturedCast = mutation({
 });
 
 // Cast interaction reward amount
-const CAST_INTERACTION_REWARD = 500; // 500 TESTVBMS per interaction
-const VIBE_BADGE_BONUS_PERCENT = 20; // +20% bonus for VIBE badge holders
+const CAST_INTERACTION_REWARD = 300; // 300 TESTVBMS per interaction
+const VIBE_BADGE_MULTIPLIER = 2; // 2x bonus for VIBE badge holders (300 -> 600)
 
 // Get cast interaction progress for a player
 export const getCastInteractionProgress = query({
@@ -130,11 +130,11 @@ export const claimCastInteractionReward = mutation({
       throw new Error("Profile not found");
     }
 
-    // Calculate reward with VIBE badge bonus (+20%)
+    // Calculate reward with VIBE badge bonus (2x)
     let reward = CAST_INTERACTION_REWARD;
     const hasVibeBadge = profile.hasVibeBadge === true;
     if (hasVibeBadge) {
-      reward = Math.floor(reward * (1 + VIBE_BADGE_BONUS_PERCENT / 100));
+      reward = reward * VIBE_BADGE_MULTIPLIER;
     }
 
     // Add reward to balance
@@ -157,7 +157,7 @@ export const claimCastInteractionReward = mutation({
       claimedAt: Date.now(),
     });
 
-    console.log(`🎬 Cast ${interactionType} reward: ${reward} TESTVBMS for ${normalizedAddress}${hasVibeBadge ? ' (+20% VIBE bonus)' : ''}`);
+    console.log(`🎬 Cast ${interactionType} reward: ${reward} TESTVBMS for ${normalizedAddress}${hasVibeBadge ? ' (2x VIBE bonus)' : ''}`);
 
     return {
       success: true,
@@ -165,7 +165,7 @@ export const claimCastInteractionReward = mutation({
       newBalance,
       interactionType,
       hasVibeBadge,
-      bonusApplied: hasVibeBadge ? VIBE_BADGE_BONUS_PERCENT : 0,
+      bonusApplied: hasVibeBadge ? VIBE_BADGE_MULTIPLIER : 1,
     };
   },
 });
