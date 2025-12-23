@@ -383,7 +383,7 @@ export function FeaturedCastAuctions({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h5 className="text-amber-300 font-bold text-sm flex items-center gap-2">
-              <span>🔥</span> Featured Cast Auction
+              <span>🎯</span> Wanted Cast Auction
               <button
                 onClick={() => setShowHelp(!showHelp)}
                 className="text-vintage-burnt-gold hover:text-vintage-gold text-xs ml-1"

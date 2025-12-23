@@ -287,6 +287,62 @@ export const getFarcasterCardsPaginated = query({
 });
 
 /**
+ * Search Farcaster cards by username, displayName, or FID
+ * With pagination support
+ */
+export const searchFarcasterCards = query({
+  args: {
+    searchTerm: v.optional(v.string()),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 12, 50);
+    const offset = args.offset || 0;
+    const searchTerm = args.searchTerm?.toLowerCase().trim();
+
+    // Get all cards (ordered by most recent first)
+    const allCards = await ctx.db
+      .query("farcasterCards")
+      .order("desc")
+      .collect();
+
+    // Filter if search term provided
+    let filteredCards = allCards;
+    if (searchTerm && searchTerm.length > 0) {
+      // Check if search term is a number (FID search)
+      const isNumericSearch = /^\d+$/.test(searchTerm);
+
+      filteredCards = allCards.filter(card => {
+        if (isNumericSearch) {
+          // Search by FID (exact or partial match)
+          return card.fid.toString().includes(searchTerm);
+        } else {
+          // Search by username or displayName (case-insensitive)
+          return (
+            card.username.toLowerCase().includes(searchTerm) ||
+            card.displayName.toLowerCase().includes(searchTerm)
+          );
+        }
+      });
+    }
+
+    // Apply pagination
+    const paginatedCards = filteredCards.slice(offset, offset + limit);
+    const totalCount = filteredCards.length;
+    const hasMore = offset + limit < totalCount;
+
+    return {
+      cards: paginatedCards,
+      totalCount,
+      hasMore,
+      offset,
+      limit,
+    };
+  },
+});
+
+/**
  * Get Farcaster cards by rarity
  */
 export const getFarcasterCardsByRarity = query({

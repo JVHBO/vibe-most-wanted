@@ -17,6 +17,7 @@ interface Card {
   power: number;
   quantity: number;
   foil?: string;
+  sourcePackType?: string;
 }
 
 interface BurnCardsModalProps {
@@ -28,25 +29,42 @@ interface BurnCardsModalProps {
   onSuccess?: (result: { totalVBMS: number; cardsBurned: number }) => void;
 }
 
-const BURN_VALUES: Record<string, number> = {
-  Common: 200,
-  Rare: 1100,
-  Epic: 4000,
-  Legendary: 40000,
+// Pack prices for burn value calculation
+const PACK_PRICES: Record<string, number> = {
+  starter: 1000,    // Free packs use basic price
+  basic: 1000,
+  premium: 10000,
+  elite: 100000,
+  boosted: 5000,
+  mission: 1000,    // Free packs use basic price
+  achievement: 1000, // Free packs use basic price
+  dailyFree: 1000,  // Free packs use basic price
+};
+
+// Rarity multipliers (relative to pack price)
+const BURN_RARITY_MULTIPLIER: Record<string, number> = {
+  Common: 0.2,      // 20% of pack price
+  Rare: 1.1,        // 110% of pack price
+  Epic: 4.0,        // 4x pack price
+  Legendary: 40.0,  // 40x pack price
 };
 
 // Foil multipliers for burn value
 const BURN_FOIL_MULTIPLIER: Record<string, number> = {
-  Prize: 10.0,
-  Standard: 2.0,
+  Prize: 5.0,      // 5x burn value (nerfed from 10x)
+  Standard: 1.5,   // 1.5x burn value (nerfed from 2x)
   None: 1.0,
 };
 
-// Calculate burn value with foil bonus
-function calculateBurnValue(rarity: string, foil?: string): number {
-  const baseValue = BURN_VALUES[rarity] || 200;
+// Default pack price for legacy cards
+const DEFAULT_PACK_PRICE = 1000;
+
+// Calculate burn value based on pack price
+function calculateBurnValue(rarity: string, foil?: string, sourcePackType?: string): number {
+  const packPrice = sourcePackType ? (PACK_PRICES[sourcePackType] || DEFAULT_PACK_PRICE) : DEFAULT_PACK_PRICE;
+  const rarityMult = BURN_RARITY_MULTIPLIER[rarity] || 0.2;
   const foilMult = foil && foil !== "None" ? (BURN_FOIL_MULTIPLIER[foil] || 1.0) : 1.0;
-  return Math.round(baseValue * foilMult);
+  return Math.round(packPrice * rarityMult * foilMult);
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -77,13 +95,13 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
     return cards.filter(c => c.rarity === filter);
   }, [cards, filter]);
 
-  // Calculate total VBMS for selected cards (with foil bonus)
+  // Calculate total VBMS for selected cards (with foil bonus and pack price)
   const totalVBMS = useMemo(() => {
     let total = 0;
     for (const cardId of selectedCards) {
       const card = cards.find(c => c._id === cardId);
       if (card) {
-        total += calculateBurnValue(card.rarity, card.foil);
+        total += calculateBurnValue(card.rarity, card.foil, card.sourcePackType);
       }
     }
     return total;
@@ -218,13 +236,21 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
 
         {/* Burn Values Reference - Mobile Compact */}
         <div className="bg-black/30 px-3 py-2 border-b border-red-600/20">
-          <div className="flex items-center justify-between text-[10px] gap-1">
-            <span className="text-gray-400">C:<span className="text-green-400 font-bold">200</span></span>
-            <span className="text-blue-400">R:<span className="text-green-400 font-bold">1.1k</span></span>
-            <span className="text-purple-400">E:<span className="text-green-400 font-bold">4k</span></span>
-            <span className="text-yellow-400">L:<span className="text-green-400 font-bold">40k</span></span>
-            <span className="text-cyan-400">Std:<span className="text-green-400 font-bold">2x</span></span>
-            <span className="text-yellow-300">Prize:<span className="text-green-400 font-bold">10x</span></span>
+          <div className="flex flex-col gap-1 text-[10px]">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-white/50">Basic:</span>
+              <span className="text-gray-400">C:<span className="text-green-400 font-bold">200</span></span>
+              <span className="text-blue-400">R:<span className="text-green-400 font-bold">1.1k</span></span>
+              <span className="text-purple-400">E:<span className="text-green-400 font-bold">4k</span></span>
+              <span className="text-yellow-400">L:<span className="text-green-400 font-bold">40k</span></span>
+            </div>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-yellow-500/70">Luck🔥:</span>
+              <span className="text-gray-400">C:<span className="text-yellow-400 font-bold">1k</span></span>
+              <span className="text-blue-400">R:<span className="text-yellow-400 font-bold">5.5k</span></span>
+              <span className="text-purple-400">E:<span className="text-yellow-400 font-bold">20k</span></span>
+              <span className="text-yellow-400">L:<span className="text-yellow-400 font-bold">200k</span></span>
+            </div>
           </div>
         </div>
 
@@ -294,9 +320,10 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               {filteredCards.map((card) => {
                 const isSelected = selectedCards.has(card._id);
-                const burnValue = calculateBurnValue(card.rarity, card.foil);
+                const burnValue = calculateBurnValue(card.rarity, card.foil, card.sourcePackType);
                 const hasFoil = card.foil && card.foil !== "None";
                 const isLocked = isCardLocked(card._id);
+                const isBoosted = card.sourcePackType === "boosted" || card.sourcePackType === "elite" || card.sourcePackType === "premium";
 
                 return (
                   <div
@@ -356,8 +383,9 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
                         <div className={`text-xs font-bold ${RARITY_TEXT[card.rarity] || "text-gray-400"}`}>
                           {card.rarity} {hasFoil && <span className="text-cyan-400">({card.foil})</span>}
                         </div>
-                        <div className={`font-bold text-sm ${hasFoil ? "text-cyan-400" : "text-green-400"}`}>
+                        <div className={`font-bold text-sm ${isBoosted ? "text-yellow-400" : hasFoil ? "text-cyan-400" : "text-green-400"}`}>
                           +{burnValue.toLocaleString()} VBMS
+                          {isBoosted && <span className="text-[10px] ml-1">🔥</span>}
                         </div>
                       </div>
                     </div>

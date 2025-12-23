@@ -594,8 +594,8 @@ export const sendFeaturedCastNotification = internalAction({
       let sent = 0;
       let failed = 0;
 
-      const title = "🎬 New Featured Cast!";
-      const body = `Interact with @${castAuthor}'s cast to earn VBMS tokens! Like, recast or reply now 💰`;
+      const title = "🎯 New Wanted Cast!";
+      const body = `@${castAuthor} is now WANTED! Interact to earn VBMS tokens! 💰`;
       const targetUrl = warpcastUrl || "https://www.vibemostwanted.xyz";
 
       // 1️⃣ NEYNAR TOKENS → Send via Neynar API (Base App)

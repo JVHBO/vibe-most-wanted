@@ -1294,6 +1294,40 @@ export const cleanupOldRooms = internalMutation({
 });
 
 /**
+ * Clean up old/expired poker rooms (public - for admin API)
+ * Same logic as internal but callable from HTTP client
+ */
+export const cleanupOldRoomsPublic = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const rooms = await ctx.db.query("pokerRooms").take(50);
+
+    let deletedCount = 0;
+    let voiceCleanedCount = 0;
+    for (const room of rooms) {
+      if (room.expiresAt < now || (now - room.createdAt > 3600000)) {
+        const voiceParticipants = await ctx.db
+          .query("voiceParticipants")
+          .withIndex("by_room", (q) => q.eq("roomId", room.roomId))
+          .collect();
+
+        for (const p of voiceParticipants) {
+          await ctx.db.delete(p._id);
+          voiceCleanedCount++;
+        }
+
+        await ctx.db.delete(room._id);
+        deletedCount++;
+        console.log(`[cleanupOldRoomsPublic] Deleted expired/old room ${room.roomId}`);
+      }
+    }
+
+    return { deletedCount, voiceCleanedCount };
+  },
+});
+
+/**
  * Force delete room by player address (admin tool)
  */
 export const forceDeleteRoomByAddress = mutation({

@@ -89,7 +89,7 @@ export const metadata: Metadata = {
           "type": "launch_miniapp",
           "name": "VIBE MOST WANTED",
           "url": "https://www.vibemostwanted.xyz",
-          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
+          "splashImageUrl": "https://www.vibemostwanted.xyz/splash-200.png?v=3",
           "splashBackgroundColor": "#FFD700"
         }
       }
@@ -97,7 +97,7 @@ export const metadata: Metadata = {
     // Backward compatibility with old frame spec
     "fc:frame": JSON.stringify({
       "version": "next",
-      "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
+      "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2",
       "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
@@ -105,7 +105,7 @@ export const metadata: Metadata = {
           "type": "launch_miniapp",
           "name": "VIBE MOST WANTED",
           "url": "https://www.vibemostwanted.xyz",
-          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.png",
+          "splashImageUrl": "https://www.vibemostwanted.xyz/splash-200.png?v=3",
           "splashBackgroundColor": "#FFD700"
         }
       }

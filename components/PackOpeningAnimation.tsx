@@ -83,27 +83,63 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
 
   const handleShare = () => {
     const { counts, foilCounts } = getRarityCounts();
-    const rarityParts: string[] = [];
-    if (counts.Legendary > 0) rarityParts.push("\u{1F31F} " + counts.Legendary + " Legendary");
-    if (counts.Epic > 0) rarityParts.push("\u{1F49C} " + counts.Epic + " Epic");
-    if (counts.Rare > 0) rarityParts.push("\u{1F499} " + counts.Rare + " Rare");
-    if (counts.Common > 0) rarityParts.push("\u26AA " + counts.Common + " Common");
-    const foilParts: string[] = [];
-    if (foilCounts.Prize > 0) foilParts.push("\u2728 " + foilCounts.Prize + " Prize Foil");
-    if (foilCounts.Standard > 0) foilParts.push("\u2B50 " + foilCounts.Standard + " Standard Foil");
     const totalPower = displayCards.reduce((sum, card) => sum + (card.power || 0), 0);
     const totalCards = displayCards.length;
-    let castText = "Pack Opening - " + packType + "!\n";
-    castText += "\u{1F3AF} " + totalCards + " pulls\n\n";
-    castText += rarityParts.join("\n");
-    if (foilParts.length > 0) castText += "\n\n" + foilParts.join("\n");
-    castText += "\n\n\u26A1 Total Power: " + totalPower;
 
-    const shareUrl = "https://www.vibemostwanted.xyz/shop";
+    // Calculate PnL based on pack type
+    const packTypeKey = packType.toLowerCase().replace(' pack', '').replace(' ', '');
+    const packPrices: Record<string, number> = {
+      starter: 0, basic: 1000, premium: 10000, elite: 100000,
+      boosted: 5000, luckboost: 5000, lucky: 5000, mission: 0, achievement: 0, dailyfree: 0,
+    };
+    const burnRarityMult: Record<string, number> = { Common: 0.2, Rare: 1.1, Epic: 4.0, Legendary: 40.0 };
+    const foilMult: Record<string, number> = { Prize: 5.0, Standard: 1.5, None: 1.0 };
 
-    // Use warpcast.com compose URL (works in both browser and miniapp)
-    const farcasterUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(castText) + "&embeds[]=" + encodeURIComponent(shareUrl);
-    window.open(farcasterUrl, "_blank");
+    const packPrice = packPrices[packTypeKey] || 1000;
+    const effectivePrice = packPrice > 0 ? packPrice : 1000;
+    const cost = packPrice * totalCards;
+
+    // Calculate burn value
+    let burnValue = 0;
+    displayCards.forEach(card => {
+      const baseBurn = effectivePrice * (burnRarityMult[card.rarity] || 0.2);
+      const foilBonus = card.foil && card.foil !== 'None' ? (foilMult[card.foil] || 1.0) : 1.0;
+      burnValue += baseBurn * foilBonus;
+    });
+
+    // Calculate PnL
+    const pnl = cost > 0 ? ((burnValue - cost) / cost * 100) : 0;
+    const pnlText = cost > 0 ? (pnl >= 0 ? '+' + pnl.toFixed(0) + '%' : pnl.toFixed(0) + '%') : 'FREE';
+
+    // Build simple text (avoid complex unicode)
+    const rarityList: string[] = [];
+    if (counts.Legendary > 0) rarityList.push(counts.Legendary + ' Legendary');
+    if (counts.Epic > 0) rarityList.push(counts.Epic + ' Epic');
+    if (counts.Rare > 0) rarityList.push(counts.Rare + ' Rare');
+    if (counts.Common > 0) rarityList.push(counts.Common + ' Common');
+
+    let castText = 'Pack Opening - ' + packType + '!\n';
+    castText += totalCards + ' pulls: ' + rarityList.join(', ') + '\n';
+    castText += 'Power: ' + totalPower + ' | Burn: ' + Math.round(burnValue);
+    if (cost > 0) castText += ' | PnL: ' + pnlText;
+
+    // Build share URL with params for OG image
+    const shareParams = new URLSearchParams({
+      packType: packTypeKey,
+      legendary: String(counts.Legendary),
+      epic: String(counts.Epic),
+      rare: String(counts.Rare),
+      common: String(counts.Common),
+      totalPower: String(totalPower),
+      foilPrize: String(foilCounts.Prize),
+      foilStandard: String(foilCounts.Standard),
+      cards: String(totalCards),
+    });
+    const shareUrl = 'https://www.vibemostwanted.xyz/share/pack?' + shareParams.toString();
+
+    // Use warpcast.com compose URL
+    const farcasterUrl = 'https://warpcast.com/~/compose?text=' + encodeURIComponent(castText) + '&embeds[]=' + encodeURIComponent(shareUrl);
+    window.open(farcasterUrl, '_blank');
   };
 
   const rarityColors: Record<string, string> = {
@@ -197,13 +233,6 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
                       {!card.isDuplicate && (
                         <div className="absolute -top-1.5 -right-1.5 bg-green-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg z-10">
                           NEW!
-                        </div>
-                      )}
-
-                      {/* Duplicate Badge */}
-                      {card.isDuplicate && (
-                        <div className="absolute top-0.5 right-0.5 bg-vintage-burnt-gold/90 text-white text-[8px] font-bold px-1 py-0.5 rounded">
-                          x{card.quantity}
                         </div>
                       )}
 
