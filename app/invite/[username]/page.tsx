@@ -34,26 +34,32 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
     other: {
       // Farcaster miniapp format with embedded image
       'fc:miniapp': JSON.stringify({
-        version: '1',
+        version: 'next',
         imageUrl: imageUrl,
+        aspectRatio: '1.91:1',
         button: {
           title: 'JOIN US',
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
             url: launchUrl,
+            splashImageUrl: 'https://www.vibemostwanted.xyz/splash-200.png?v=3',
+            splashBackgroundColor: '#FFD700',
           },
         },
       }),
       'fc:frame': JSON.stringify({
-        version: '1',
+        version: 'next',
         imageUrl: imageUrl,
+        aspectRatio: '1.91:1',
         button: {
           title: 'JOIN US',
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
             url: launchUrl,
+            splashImageUrl: 'https://www.vibemostwanted.xyz/splash-200.png?v=3',
+            splashBackgroundColor: '#FFD700',
           },
         },
       }),
