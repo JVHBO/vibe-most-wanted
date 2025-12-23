@@ -448,11 +448,13 @@ export default function TCGPage() {
   // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
   const CARDS_PER_PAGE = isInFarcaster ? 12 : 24;
 
-  // 🎉 Victory Images - 3 tiers based on victory margin!
+  // 🎉 Victory Images - 5 screens!
   const VICTORY_IMAGES = [
-    '/victory-1.jpg', // Gigachad original (normal wins)
-    '/victory-2.jpg', // Musculoso sorrindo (overwhelming wins)
-    '/victory-3.jpg', // Golden victory (dominating wins)
+    '/victory-1.jpg',   // Gigachad
+    '/victory-2.jpg',   // Hearts
+    '/victory-3.jpg',   // Sensual
+    '/littlebird.mp4',  // Little Bird (video)
+    '/bom.jpg',         // Bom
   ];
   const [currentVictoryImage, setCurrentVictoryImage] = useState<string>(VICTORY_IMAGES[0]);
   const victoryAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -603,20 +605,27 @@ export default function TCGPage() {
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
   // Profile States
-  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'leaderboard' | 'missions' | 'shop' | 'inbox'>('game');
+  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'missions' | 'shop' | 'inbox'>('game');
 
-  // Check URL for view parameter (e.g., ?view=shop)
+  // Check URL for view parameter (e.g., ?view=shop) or attack parameter (e.g., ?attack=address)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get('view');
+      const attackParam = params.get('attack');
+
       if (viewParam === 'shop') {
         setCurrentView('shop');
         // Clean URL after setting view
         window.history.replaceState({}, '', window.location.pathname);
       }
+
+      // Handle attack parameter - redirect to leaderboard page
+      if (attackParam) {
+        router.push(`/leaderboard?attack=${attackParam}`);
+      }
     }
-  }, []);
+  }, [router]);
 
 // Scroll to top when view changes
   useEffect(() => {
@@ -628,12 +637,7 @@ export default function TCGPage() {
   const [profileUsername, setProfileUsername] = useState<string>('');
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   // REMOVED: Referral system disabled
-  const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
-  const [raidBossLeaderboard, setRaidBossLeaderboard] = useState<UserProfile[]>([]);
-  const [currentLeaderboardPage, setCurrentLeaderboardPage] = useState<number>(1);
-  const LEADERBOARD_PER_PAGE = 10;
-  // Removed: leaderboardCollection (unified leaderboard now)
-  // leaderboardTab removed - only using aura now
+  // Leaderboard moved to /leaderboard page
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -985,13 +989,14 @@ export default function TCGPage() {
 
   // 🎉 Show victory popup with RANDOM image selection
   const showVictory = () => {
-    // RANDOMLY select one of the 3 victory screens, avoiding consecutive duplicates
+    // RANDOMLY select one of the 5 victory screens, avoiding consecutive duplicates
     let randomIndex = Math.floor(Math.random() * VICTORY_IMAGES.length);
 
     // If we got the same index as last time AND we have more than 1 option, pick a different one
     if (randomIndex === lastVictoryIndexRef.current && VICTORY_IMAGES.length > 1) {
       // Pick a different random index
-      const availableIndices = [0, 1, 2].filter(i => i !== lastVictoryIndexRef.current);
+      const availableIndices = Array.from({ length: VICTORY_IMAGES.length }, (_, i) => i)
+        .filter(i => i !== lastVictoryIndexRef.current);
       randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
       devLog(`🔄 Avoided duplicate victory screen, changed from ${lastVictoryIndexRef.current} to ${randomIndex}`);
     }
@@ -1003,17 +1008,21 @@ export default function TCGPage() {
     devLog(`🎲 Random victory screen selected: ${victoryImage} (index: ${randomIndex})`);
 
     // Play audio based on which screen was selected
-    if (randomIndex === 1) {
+    if (randomIndex === 0) {
+      // victory-1.jpg - Play default win sound
+      if (soundEnabled) AudioManager.win();
+    } else if (randomIndex === 1) {
       // victory-2.jpg - Play Marvin audio
       const audio = new Audio('/marvin-victory.mp3');
       audio.volume = 0.5;
       audio.play().catch(err => devLog('Audio play failed:', err));
       victoryAudioRef.current = audio;
-    } else if (randomIndex === 0) {
-      // victory-1.jpg - Play default win sound
+    } else if (randomIndex === 4) {
+      // bom.jpg - Play default win sound
       if (soundEnabled) AudioManager.win();
     }
-    // victory-3.jpg audio plays automatically via GamePopups component
+    // victory-3.jpg (index 2) - audio plays automatically via GamePopups component
+    // littlebird.mp4 (index 3) - video has its own audio
 
     setCurrentVictoryImage(victoryImage);
 
@@ -1186,44 +1195,6 @@ export default function TCGPage() {
       devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
     } catch (error: any) {
       devError('Error claiming reward:', error);
-      if (soundEnabled) AudioManager.buttonError();
-    }
-  };
-
-  // Export all leaderboard data
-  const handleExportLeaderboard = () => {
-    try {
-      if (soundEnabled) AudioManager.buttonClick();
-
-      // Get ALL players from filtered leaderboard
-      const allPlayers = filteredLeaderboard.map((player, index) => ({
-        rank: index + 1,
-        username: player.username,
-        address: player.address,
-        aura: player.stats?.aura ?? 500,
-        power: player.stats?.totalPower || 0,
-        openedCards: player.stats?.openedCards || 0,
-        wins: (player.stats?.pveWins || 0) + (player.stats?.pvpWins || 0),
-        losses: (player.stats?.pveLosses || 0) + (player.stats?.pvpLosses || 0),
-      }));
-
-      // Create JSON blob
-      const jsonData = JSON.stringify(allPlayers, null, 2);
-      const blob = new Blob([jsonData], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      // Create download link
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `leaderboard-all-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      devLog('✓ Leaderboard exported successfully');
-    } catch (error) {
-      devError('✗ Error exporting leaderboard:', error);
       if (soundEnabled) AudioManager.buttonError();
     }
   };
@@ -3116,45 +3087,7 @@ export default function TCGPage() {
     }
   }, [address, nfts]); // Removed userProfile to prevent infinite loop
 
-  // Load leaderboard with 30-minute refresh (usando Convex agora! 🚀)
-  useEffect(() => {
-    const loadLeaderboard = async () => {
-      try {
-        console.log("🔵 [Leaderboard] Starting load...", Date.now());
-        const profiles = await ConvexProfileService.getLeaderboard();
-        console.log("🟢 [Leaderboard] Loaded profiles:", profiles?.length, Date.now());
-        setLeaderboard(profiles);
-      } catch (error) {
-        console.error("🔴 [Leaderboard] Error loading:", error);
-        setLeaderboard([]);
-      }
-    };
-
-    loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 30 * 60 * 1000); // 30 minutes (sem limites com Convex!)
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Load Raid Boss leaderboard with 5-minute refresh (updates more frequently for active battles)
-  useEffect(() => {
-    const loadRaidBossLeaderboard = async () => {
-      try {
-        console.log("🐉 [Raid Boss Leaderboard] Starting load...", Date.now());
-        const raidProfiles = await convex.query(api.raidBoss.getRaidBossLeaderboard);
-        console.log("🟢 [Raid Boss Leaderboard] Loaded profiles:", raidProfiles?.length, Date.now());
-        setRaidBossLeaderboard(raidProfiles as UserProfile[]);
-      } catch (error) {
-        console.error("🔴 [Raid Boss Leaderboard] Error loading:", error);
-        setRaidBossLeaderboard([]);
-      }
-    };
-
-    loadRaidBossLeaderboard();
-    const interval = setInterval(loadRaidBossLeaderboard, 5 * 60 * 1000); // 5 minutes (faster for raid boss battles)
-
-    return () => clearInterval(interval);
-  }, []);
+  // Leaderboard loading moved to /leaderboard page to reduce queries
 
   // Cache for collection-based power calculations
   const [collectionPowerCache, setCollectionPowerCache] = useState<Map<string, Map<string, number>>>(new Map());
@@ -3300,14 +3233,6 @@ export default function TCGPage() {
     }
     */
   }, [collectionPowerCache]);
-
-  // Unified leaderboard (already sorted by aura → power from backend)
-  // DO NOT ADD console.log HERE - causes infinite loop with MobileDebugConsole!
-  const filteredLeaderboard = useMemo(() => {
-    // Return collections leaderboard (aura-based)
-    if (!leaderboard || leaderboard.length === 0) return [];
-    return leaderboard;
-  }, [leaderboard]);
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
@@ -3848,6 +3773,7 @@ export default function TCGPage() {
         isPaused={isPaused}
         pause={pause}
         play={play}
+        disconnectWallet={disconnectWallet}
       />
 
       {/* Mecha Arena Modal */}
@@ -5103,18 +5029,6 @@ export default function TCGPage() {
                     </button>
                   )}
 
-                  {/* Disconnect Button */}
-                  <button
-                    onClick={disconnectWallet}
-                    className="px-3 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 text-vintage-gold rounded-lg border border-vintage-gold/50 font-modern font-semibold transition-all"
-                    title={t('disconnect')}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round"/>
-                      <path d="M16 17l5-5-5-5M21 12H9" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-
                   {/* VBMS Balance Display - Shows real on-chain balance */}
                   {address && userProfile && (
                     <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
@@ -5200,13 +5114,9 @@ export default function TCGPage() {
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
-                  setCurrentView('leaderboard');
+                  router.push('/leaderboard');
                 }}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
-                  currentView === 'leaderboard'
-                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
-                }`}
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
               >
                 {isInFarcaster ? (
                   <>
@@ -5861,527 +5771,6 @@ export default function TCGPage() {
           </>
           )}
 
-          {/* Leaderboard View */}
-          {currentView === 'leaderboard' && (
-            <div className="max-w-6xl mx-auto">
-              <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-3 md:p-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-4 md:mb-6">
-                  <div>
-                    <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3 mb-2">
-                      <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
-                      <button
-                        onClick={() => setShowLeaderboardRewardsModal(true)}
-                        className="ml-2 w-6 h-6 md:w-8 md:h-8 rounded-full bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/30 hover:border-vintage-gold transition text-sm md:text-base font-bold flex items-center justify-center"
-                        title="View Weekly Rewards"
-                      >
-                        ?
-                      </button>
-                    </h1>
-                    
-                    {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-2 items-center">
-                      {/* Defense Deck Button */}
-                      {userProfile && (
-                        <button
-                          onClick={() => {
-                            if (soundEnabled) AudioManager.buttonClick();
-                            setShowDefenseDeckModal(true);
-                          }}
-                          className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition flex items-center gap-1 ${
-                            userProfile.hasDefenseDeck
-                              ? 'bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/10 hover:border-vintage-gold'
-                              : 'bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500 animate-pulse'
-                          }`}
-                          title="Configure Defense Deck"
-                        >
-                          <span>🛡️</span> Defense Deck
-                          {userProfile.hasDefenseDeck && (
-                            <span className="ml-1 text-[10px] bg-green-600 text-white px-1 rounded-full">✓</span>
-                          )}
-                        </button>
-                      )}
-                      {/* Export Button */}
-                      <button
-                        onClick={handleExportLeaderboard}
-                        className="px-3 py-1 rounded-lg text-xs font-modern font-semibold transition bg-vintage-charcoal border border-green-500/50 text-green-400 hover:bg-green-500/10 hover:border-green-500 flex items-center gap-1"
-                        title="Export All Players to JSON"
-                      >
-                        <span>↓</span> Export
-                      </button>
-                    </div>
-                    
-                  </div>
-                  <div className="text-left md:text-right">
-                    {userProfile && (
-                      <div>
-                        <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold mb-0">
-                          ◈ <span className="hidden md:inline">Attacks Remaining:</span> <span className="text-vintage-neon-blue">{attacksRemaining}/{maxAttacks}</span>
-                        </p>
-                        <p className="text-[10px] text-vintage-burnt-gold ml-3">
-                          {(() => {
-                            const now = new Date();
-                            const tomorrow = new Date(now);
-                            tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-                            tomorrow.setUTCHours(0, 0, 0, 0);
-                            const diff = tomorrow.getTime() - now.getTime();
-                            const hours = Math.floor(diff / (1000 * 60 * 60));
-                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                            return `Resets in ${hours}h ${minutes}m (00:00 UTC)`;
-                          })()}
-                        </p>
-                      </div>
-                    )}
-                    </div>
-                </div>
-
-                {/* Defense Deck Warning Banner */}
-                {userProfile && !userProfile.hasDefenseDeck && (
-                  <div className="mb-4 p-3 md:p-4 bg-amber-500/20 border-2 border-amber-500/50 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3">
-                    <p className="text-amber-200 text-sm md:text-base text-center md:text-left">
-                      {t('leaderboardDefenseWarning')}
-                    </p>
-                    <button
-                      onClick={() => setShowDefenseDeckModal(true)}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg transition whitespace-nowrap text-sm"
-                    >
-                      {t('leaderboardDefenseSetup')}
-                    </button>
-                  </div>
-                )}
-
-                {/* Aura Leaderboard */}
-                    {filteredLeaderboard.length === 0 ? (
-                      <div className="text-center py-12">
-                        <p className="text-6xl mb-4">§</p>
-                        <p className="text-vintage-burnt-gold">{t('noProfile')}</p>
-                      </div>
-                    ) : (
-                  <div className="overflow-x-auto -mx-3 md:mx-0">
-                    <table className="w-full text-sm md:text-base">
-                      <thead>
-                        <tr className="border-b border-vintage-gold/20">
-                          <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
-                          <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
-                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">Aura</th>
-                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Opened</th>
-                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
-                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('wins')}</th>
-                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden lg:table-cell">{t('losses')}</th>
-                          <th className="text-center p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">Weekly Reward</th>
-                          <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredLeaderboard
-                          .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
-                          .map((profile, sliceIndex) => {
-                            const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
-                            return (
-                          <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
-                            <td className="p-1 md:p-3">
-                              <span className={`text-lg md:text-2xl font-bold ${
-                                index === 0 ? 'text-yellow-400' :
-                                index === 1 ? 'text-gray-300' :
-                                index === 2 ? 'text-orange-400' :
-                                'text-gray-500'
-                              }`}>
-                                #{index + 1}
-                              </span>
-                            </td>
-                            <td className="p-1 md:p-3">
-                              <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
-                                <div>
-                                  <div className="flex items-center gap-1 mb-1">
-                                    <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base truncate max-w-[100px] md:max-w-[150px]">{profile.username}</p>
-                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
-                                  </div>
-                                  <p className="text-[10px] md:text-xs text-vintage-burnt-gold font-mono hidden sm:block">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
-                                </div>
-                              </Link>
-                            </td>
-                            <td className="p-1 md:p-3 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.aura ?? 500).toLocaleString()}</td>
-                            <td className="p-1 md:p-3 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
-                            <td className="p-1 md:p-3 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
-                            <td className="p-1 md:p-3 text-right text-vintage-neon-blue font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0)}</td>
-                            <td className="p-1 md:p-3 text-right text-red-400 font-semibold text-sm md:text-base hidden lg:table-cell">{(profile.stats?.pveLosses || 0) + (profile.stats?.pvpLosses || 0)}</td>
-                            <td className="p-1 md:p-3 text-center">
-                                {/* Weekly Reward Claim Button (TOP 10 only) */}
-                                {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
-                                  const rank = index + 1;
-                                  let reward = 0;
-                                  if (rank === 1) reward = 1000;
-                                  else if (rank === 2) reward = 750;
-                                  else if (rank === 3) reward = 500;
-                                  else if (rank <= 10) reward = 300;
-
-                                  const canClaim = weeklyRewardEligibility?.eligible && weeklyRewardEligibility?.rank === rank;
-                                  const alreadyClaimed = weeklyRewardEligibility?.claimed;
-
-                                  if (alreadyClaimed) {
-                                    return (
-                                      <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
-                                        <div>✓ Claimed</div>
-                                        <div className="text-green-400">{reward} coins</div>
-                                      </div>
-                                    );
-                                  }
-
-                                  if (canClaim) {
-                                    return (
-                                      <button
-                                        onClick={() => {
-                                          if (soundEnabled) AudioManager.buttonClick();
-                                          handleClaimWeeklyLeaderboardReward();
-                                        }}
-                                        disabled={isClaimingWeeklyReward}
-                                        className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-modern font-bold text-xs md:text-sm transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        {isClaimingWeeklyReward ? '...' : `🎁 Claim ${reward}`}
-                                      </button>
-                                    );
-                                  }
-
-                                  return (
-                                    <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
-                                      <div>{reward} coins</div>
-                                      <div className="text-gray-500">Next week</div>
-                                    </div>
-                                  );
-                                })()}
-                                {index >= 10 && (
-                                  <div className="text-[10px] md:text-xs text-gray-500">-</div>
-                                )}
-                            </td>
-                            <td className="p-1 md:p-4 text-center">
-                              {profile.address.toLowerCase() !== address?.toLowerCase() && (
-                                <button
-                                  onClick={() => {
-                                    // Check attack limit
-                                    if (attacksRemaining <= 0) {
-                                      alert(`You have used all ${maxAttacks} attacks for today. Attacks reset at midnight UTC.`);
-                                      if (soundEnabled) AudioManager.buttonError();
-                                      return;
-                                    }
-                                    // Check if ATTACKER has defense deck (required to attack)
-                                    if (!userProfile?.hasDefenseDeck) {
-                                      alert('You need to set up your defense deck before attacking other players! Go to your profile to set it up.');
-                                      if (soundEnabled) AudioManager.buttonError();
-                                      return;
-                                    }
-                                    // Check if TARGET has defense deck
-                                    // Note: defenseDeck is excluded from leaderboard response for performance
-                                    // Use hasDefenseDeck flag instead (set by getLeaderboardLite)
-                                    if (!profile.hasDefenseDeck) {
-                                      alert(`${profile.username} doesn't have a full defense deck. Cannot attack.`);
-                                      if (soundEnabled) AudioManager.buttonError();
-                                      return;
-                                    }
-                                    // Open attack card selection
-                                    if (soundEnabled) AudioManager.buttonClick();
-                                    setTargetPlayer(profile);
-                                    setShowAttackCardSelection(true);
-                                    setAttackSelectedCards([]);
-                                  }}
-                                  disabled={!userProfile || !userProfile.hasDefenseDeck || attacksRemaining <= 0 || !profile.hasDefenseDeck}
-                                  className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-modern font-semibold text-xs md:text-sm transition-all ${
-                                    userProfile && userProfile.hasDefenseDeck && attacksRemaining > 0 && profile.hasDefenseDeck
-                                      ? 'bg-red-600 hover:bg-red-700 text-white hover:scale-105'
-                                      : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
-                                  }`}
-                                  title={
-                                    !userProfile
-                                      ? 'Connect your wallet and create a profile to attack'
-                                      : !userProfile.hasDefenseDeck
-                                        ? 'You need to set up your defense deck before attacking (go to Profile)'
-                                        : attacksRemaining <= 0
-                                          ? `No attacks remaining (${attacksRemaining}/${maxAttacks}). Resets at midnight UTC.`
-                                          : !profile.hasDefenseDeck
-                                            ? `${profile.username} doesn't have a defense deck`
-                                            : 'Click to attack!'
-                                  }
-                                >
-                                  †<span className="hidden sm:inline"> Attack</span>
-                                </button>
-                              )}
-                              {profile.address.toLowerCase() === address?.toLowerCase() && (
-                                <span className="text-[10px] md:text-xs text-vintage-burnt-gold">(You)</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                          })}
-                      </tbody>
-                    </table>
-
-                    {/* Pagination Controls - shows up to 1000 players (100 pages) */}
-                    {filteredLeaderboard.length > LEADERBOARD_PER_PAGE && (
-                      <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
-                        <button
-                          onClick={() => {
-                            setCurrentLeaderboardPage(Math.max(1, currentLeaderboardPage - 1));
-                            if (soundEnabled) AudioManager.buttonClick();
-                          }}
-                          disabled={currentLeaderboardPage === 1}
-                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
-                        >
-                          ← {t('previous')}
-                        </button>
-
-                        {/* Page numbers with ellipsis */}
-                        <div className="flex gap-1 md:gap-2">
-                          {(() => {
-                            const totalPages = Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE);
-                            const current = currentLeaderboardPage;
-                            const pages: (number | string)[] = [];
-
-                            if (totalPages <= 7) {
-                              // Show all pages if 7 or fewer
-                              for (let i = 1; i <= totalPages; i++) {
-                                pages.push(i);
-                              }
-                            } else {
-                              // Always show first page
-                              pages.push(1);
-
-                              // Show ellipsis or pages around current
-                              if (current > 3) {
-                                pages.push('ellipsis-start');
-                              }
-
-                              // Show current page ± 1
-                              for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
-                                pages.push(i);
-                              }
-
-                              // Show ellipsis before last page
-                              if (current < totalPages - 2) {
-                                pages.push('ellipsis-end');
-                              }
-
-                              // Always show last page
-                              pages.push(totalPages);
-                            }
-
-                            return pages.map((page, index) => {
-                              if (typeof page === 'string') {
-                                return (
-                                  <span key={page} className="px-2 py-2 text-vintage-burnt-gold text-sm md:text-base">
-                                    ...
-                                  </span>
-                                );
-                              }
-
-                              return (
-                                <button
-                                  key={page}
-                                  onClick={() => {
-                                    setCurrentLeaderboardPage(page);
-                                    if (soundEnabled) AudioManager.buttonClick();
-                                  }}
-                                  className={`px-2 md:px-3 py-2 rounded-lg font-semibold transition text-sm md:text-base ${
-                                    currentLeaderboardPage === page
-                                      ? 'bg-vintage-gold text-vintage-black border-2 border-vintage-gold'
-                                      : 'bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold'
-                                  }`}
-                                >
-                                  {page}
-                                </button>
-                              );
-                            });
-                          })()}
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            setCurrentLeaderboardPage(Math.min(Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
-                            if (soundEnabled) AudioManager.buttonClick();
-                          }}
-                          disabled={currentLeaderboardPage === Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE)}
-                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
-                        >
-                          {t('next')} →
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {/* Raid Boss Leaderboard */}
-                {false && (
-                  <>
-                    {filteredLeaderboard.length === 0 ? (
-                      <div className="text-center py-12">
-                        <p className="text-6xl mb-4">🐉</p>
-                        <p className="text-vintage-burnt-gold">No players have joined Raid Boss yet!</p>
-                      </div>
-                    ) : (
-                  <div className="overflow-x-auto -mx-3 md:mx-0">
-                    <table className="w-full text-sm md:text-base">
-                      <thead>
-                        <tr className="border-b border-vintage-gold/20">
-                          <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">#{/* {t('rank')} */}</th>
-                          <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
-                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">Total Damage</th>
-                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Bosses Killed</th>
-                          <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
-                          <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base"><span className="hidden sm:inline">Actions</span></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredLeaderboard
-                          .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
-                          .map((profile, sliceIndex) => {
-                            const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
-                            return (
-                          <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
-                            <td className="p-1 md:p-3">
-                              <span className={`text-lg md:text-2xl font-bold ${
-                                index === 0 ? 'text-yellow-400' :
-                                index === 1 ? 'text-gray-300' :
-                                index === 2 ? 'text-orange-400' :
-                                'text-gray-500'
-                              }`}>
-                                #{index + 1}
-                              </span>
-                            </td>
-                            <td className="p-1 md:p-3">
-                              <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
-                                <div>
-                                  <div className="flex items-center gap-1 mb-1">
-                                    <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base truncate max-w-[100px] md:max-w-[150px]">{profile.username}</p>
-                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
-                                  </div>
-                                  <p className="text-[10px] md:text-xs text-vintage-burnt-gold font-mono hidden sm:block">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
-                                </div>
-                              </Link>
-                            </td>
-                            {/* @ts-expect-error - raidBossDamage field is added dynamically */}
-                            <td className="p-1 md:p-3 text-right text-red-400 font-bold text-base md:text-xl">{(profile.stats?.raidBossDamage ?? 0).toLocaleString()} 💥</td>
-                            {/* @ts-expect-error - bossesKilled field is added dynamically */}
-                            <td className="p-1 md:p-3 text-right text-orange-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.bossesKilled || 0} 🐉</td>
-                            <td className="p-1 md:p-3 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
-                            <td className="p-1 md:p-4 text-center">
-                              {profile.address.toLowerCase() !== address?.toLowerCase() && (
-                                <Link
-                                  href={`/profile/${profile.username}`}
-                                  onClick={() => {
-                                    if (soundEnabled) AudioManager.buttonClick();
-                                  }}
-                                  className="inline-block px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-vintage-gold/20 border border-vintage-gold/50 hover:bg-vintage-gold/30 text-vintage-gold font-semibold text-xs md:text-sm transition-all hover:scale-105"
-                                >
-                                  <span className="hidden sm:inline">{t('viewProfile')}</span>
-                                  <span className="sm:hidden">View</span>
-                                </Link>
-                              )}
-                              {profile.address.toLowerCase() === address?.toLowerCase() && (
-                                <span className="text-[10px] md:text-xs text-vintage-burnt-gold">(You)</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                          })}
-                      </tbody>
-                    </table>
-
-                    {/* Pagination Controls */}
-                    {filteredLeaderboard.length > LEADERBOARD_PER_PAGE && (
-                      <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
-                        <button
-                          onClick={() => {
-                            setCurrentLeaderboardPage(Math.max(1, currentLeaderboardPage - 1));
-                            if (soundEnabled) AudioManager.buttonClick();
-                          }}
-                          disabled={currentLeaderboardPage === 1}
-                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
-                        >
-                          ← {t('previous')}
-                        </button>
-
-                        {/* Page numbers with ellipsis */}
-                        <div className="flex gap-1 md:gap-2">
-                          {(() => {
-                            const totalPages = Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE);
-                            const current = currentLeaderboardPage;
-                            const pages: (number | string)[] = [];
-
-                            if (totalPages <= 7) {
-                              // Show all pages if 7 or fewer
-                              for (let i = 1; i <= totalPages; i++) {
-                                pages.push(i);
-                              }
-                            } else {
-                              // Always show first page
-                              pages.push(1);
-
-                              // Show ellipsis or pages around current
-                              if (current > 3) {
-                                pages.push('ellipsis-start');
-                              }
-
-                              // Show current page ± 1
-                              for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
-                                pages.push(i);
-                              }
-
-                              // Show ellipsis before last page
-                              if (current < totalPages - 2) {
-                                pages.push('ellipsis-end');
-                              }
-
-                              // Always show last page
-                              pages.push(totalPages);
-                            }
-
-                            return pages.map((page, idx) => {
-                              if (typeof page === 'string') {
-                                return <span key={page} className="px-2 text-vintage-burnt-gold">...</span>;
-                              }
-
-                              return (
-                                <button
-                                  key={idx}
-                                  onClick={() => {
-                                    setCurrentLeaderboardPage(page);
-                                    if (soundEnabled) AudioManager.buttonClick();
-                                  }}
-                                  className={`px-2 md:px-3 py-2 rounded-lg font-semibold transition text-sm md:text-base ${
-                                    page === currentLeaderboardPage
-                                      ? 'bg-vintage-gold text-vintage-black'
-                                      : 'bg-vintage-charcoal border border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold'
-                                  }`}
-                                >
-                                  {page}
-                                </button>
-                              );
-                            });
-                          })()}
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            setCurrentLeaderboardPage(Math.min(Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
-                            if (soundEnabled) AudioManager.buttonClick();
-                          }}
-                          disabled={currentLeaderboardPage === Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE)}
-                          className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
-                        >
-                          {t('next')} →
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                    )}
-                  </>
-                )}
-
-                {/* Match History Section removed from leaderboard - only in profile page */}
-
-                {/* 🚨 SHAME LIST - Exploit Offenders */}
-                <div className="mt-8">
-                  <ShameList playerAddress={address} soundEnabled={soundEnabled} />
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* 🎯 Missions View */}
           {currentView === 'missions' && (

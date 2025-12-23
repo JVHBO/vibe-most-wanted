@@ -4,18 +4,12 @@
  * Modal for user settings including music, language, username, and Twitter connection
  */
 
-import Link from 'next/link';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { createPortal } from "react-dom";
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
-import { writeContract } from 'wagmi/actions';
-import { config } from '@/lib/wagmi';
-import { CONTRACTS, ERC20_ABI } from '@/lib/contracts';
-import { encodeFunctionData } from 'viem';
-import { sdk } from '@farcaster/miniapp-sdk';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
@@ -61,6 +55,8 @@ interface SettingsModalProps {
   isPaused: boolean;
   pause: () => void;
   play: () => void;
+  // Disconnect wallet
+  disconnectWallet?: () => void;
 }
 
 export function SettingsModal({
@@ -102,9 +98,9 @@ export function SettingsModal({
   isPaused,
   pause,
   play,
+  disconnectWallet,
 }: SettingsModalProps) {
   const { address: walletAddress } = useAccount();
-  const [isRevoking, setIsRevoking] = useState(false);
   const [customUrlInput, setCustomUrlInput] = useState(customMusicUrl || '');
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const updateCustomMusic = useMutation(api.profiles.updateCustomMusic);
@@ -161,66 +157,6 @@ export function SettingsModal({
         console.error('Failed to save custom music:', e);
         if (soundEnabled) AudioManager.buttonError();
       }
-    }
-  };
-
-  const handleRevokeApproval = async () => {
-    if (!walletAddress) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    const confirmed = confirm(
-      'Are you sure you want to revoke VBMS approval for PokerBattle contract?\n\n' +
-      'You will need to approve again to create or join battles.'
-    );
-
-    if (!confirmed) return;
-
-    setIsRevoking(true);
-    try {
-      // Detect iOS for alternative transaction method
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-      if (isIOS) {
-        // iOS: Use Farcaster SDK eth_sendTransaction
-        console.log('[SettingsModal] Using Farcaster SDK for iOS');
-        const provider = await sdk.wallet.getEthereumProvider();
-        if (!provider) {
-          throw new Error('No provider available');
-        }
-        const data = encodeFunctionData({
-          abi: ERC20_ABI,
-          functionName: 'approve',
-          args: [CONTRACTS.VBMSPokerBattle as `0x${string}`, BigInt(0)],
-        });
-
-        await provider.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: walletAddress as `0x${string}`,
-            to: CONTRACTS.VBMSToken as `0x${string}`,
-            data,
-          }],
-        });
-      } else {
-        // Non-iOS: Use standard writeContract
-        await writeContract(config, {
-          address: CONTRACTS.VBMSToken as `0x${string}`,
-          abi: ERC20_ABI,
-          functionName: 'approve',
-          args: [CONTRACTS.VBMSPokerBattle as `0x${string}`, BigInt(0)],
-        });
-      }
-
-      if (soundEnabled) AudioManager.buttonSuccess();
-      alert('VBMS approval revoked successfully!');
-    } catch (error: any) {
-      console.error('Error revoking approval:', error);
-      if (soundEnabled) AudioManager.buttonError();
-      alert('Failed to revoke approval: ' + (error.message || 'Unknown error'));
-    } finally {
-      setIsRevoking(false);
     }
   };
 
@@ -801,26 +737,32 @@ export function SettingsModal({
             </div>
           )}
 
-          {/* VBMS Revoke Approval */}
-          {walletAddress && (
-            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-red-500/50">
+          {/* Disconnect Wallet */}
+          {walletAddress && disconnectWallet && (
+            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl sm:text-3xl text-red-400">🔒</span>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-vintage-gold">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M16 17l5-5-5-5M21 12H9" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                   <div>
-                    <p className="font-modern font-bold text-vintage-gold">VBMS APPROVAL</p>
+                    <p className="font-modern font-bold text-vintage-gold">{t('disconnect')}</p>
                     <p className="text-xs text-vintage-burnt-gold">
-                      Revoke PokerBattle contract access
+                      {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
                     </p>
                   </div>
                 </div>
 
                 <button
-                  onClick={handleRevokeApproval}
-                  disabled={isRevoking}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-900/50 text-white rounded-lg text-sm font-modern font-semibold transition"
+                  onClick={() => {
+                    if (soundEnabled) AudioManager.buttonClick();
+                    disconnectWallet();
+                    onClose();
+                  }}
+                  className="px-4 py-2 bg-vintage-charcoal hover:bg-red-900/50 text-vintage-gold hover:text-red-400 border border-vintage-gold/50 hover:border-red-500/50 rounded-lg text-sm font-modern font-semibold transition"
                 >
-                  {isRevoking ? 'Revoking...' : 'Revoke'}
+                  {t('disconnect')}
                 </button>
               </div>
             </div>
