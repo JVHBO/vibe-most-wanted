@@ -7,25 +7,24 @@ import { query, mutation, internalQuery } from "./_generated/server";
 
 /**
  * Get all notification tokens (internal)
- * 🚀 BANDWIDTH FIX: Converted to internalQuery + limited to 500
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery (not public)
  */
 export const getAllTokens = internalQuery({
   args: {},
   handler: async (ctx) => {
-    // 🚀 BANDWIDTH FIX: Limit to 500 tokens max
-    const tokens = await ctx.db.query("notificationTokens").take(500);
+    // Get all tokens (no limit for internal use - currently ~1700 users)
+    const tokens = await ctx.db.query("notificationTokens").collect();
     return tokens;
   },
 });
 
 /**
  * Get all notification tokens (public - for external scripts)
- * Limited to 500 tokens max
  */
 export const getAllTokensPublic = query({
   args: {},
   handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").take(500);
+    const tokens = await ctx.db.query("notificationTokens").collect();
     return tokens;
   },
 });
