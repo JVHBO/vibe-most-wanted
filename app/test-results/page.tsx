@@ -9,6 +9,7 @@ const LOSS_CONFIGS = [
   { media: 'https://preview.redd.it/ceetrhas51441.jpg?width=640&crop=smart&auto=webp&s=90022f1d648fb5c0596063c2777c656b148b8d26', isVideo: false, name: 'Sad Pikachu' },
   { media: '/davyjones.mp4', isVideo: true, name: 'Davy Jones' },
   { media: '/derrotanumeronsei.mp4', isVideo: true, name: 'Derrota N6' },
+  { media: '/littlebird.mp4', isVideo: true, name: 'Little Bird' },
 ];
 
 export default function TestResultsPage() {
@@ -176,7 +177,7 @@ export default function TestResultsPage() {
 
         {/* Loss Tests */}
         <div className="bg-vintage-charcoal/50 rounded-xl p-6 border border-red-500/30">
-          <h2 className="text-2xl font-display text-red-400 mb-4">Loss Screens (3)</h2>
+          <h2 className="text-2xl font-display text-red-400 mb-4">Loss Screens (4)</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <button
               onClick={() => showLoss(undefined)}
