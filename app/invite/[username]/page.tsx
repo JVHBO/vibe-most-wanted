@@ -4,8 +4,11 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const { username } = await params;
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
+  // Cache-buster: use current hour to refresh every hour
+  const cacheBuster = Math.floor(Date.now() / 3600000);
+
   // Use Next.js opengraph-image route
-  const imageUrl = `${baseUrl}/invite/${encodeURIComponent(username)}/opengraph-image?v=2`;
+  const imageUrl = `${baseUrl}/invite/${encodeURIComponent(username)}/opengraph-image?v=${cacheBuster}`;
   const launchUrl = baseUrl; // No ref parameter - referral rewards disabled
 
   return {
