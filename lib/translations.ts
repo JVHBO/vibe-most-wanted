@@ -519,7 +519,15 @@ export const translations = {
     guideStep2: 'Resgate sua carta GRÁTIS diária na Loja',
     guideStep3: 'Negocie no Vibe Market com ETH',
     guideLTCCollections: 'Coleções LTC',
-    guideViewMarket: 'Ver tudo no Vibe Market →'
+    guideViewMarket: 'Ver tudo no Vibe Market →',
+    // VIBE Badge System
+    vibeBadgeActive: '✨ Badge VIBE Ativa!',
+    vibeBadgeBoost: 'Você ganha 2x moedas (600) por interação',
+    vibeBadgeTip: '💡 Dica:',
+    vibeBadgeMintTip: 'Minte um VibeFID para ganhar 2x moedas nas interações!',
+    vibeBadgeMintNow: 'Mintar agora →',
+    vibeBadgeTitle: 'Badge VIBE',
+    vibeBadgeDesc: '2x moedas no Wanted Cast!'
   },
   en: {
     title: 'Home',
@@ -1032,7 +1040,15 @@ export const translations = {
     guideStep2: 'Claim your daily FREE card in the Shop',
     guideStep3: 'Trade on Vibe Market with ETH',
     guideLTCCollections: 'LTC Collections',
-    guideViewMarket: 'View all on Vibe Market →'
+    guideViewMarket: 'View all on Vibe Market →',
+    // VIBE Badge System
+    vibeBadgeActive: '✨ VIBE Badge Active!',
+    vibeBadgeBoost: 'You earn 2x coins (600) per interaction',
+    vibeBadgeTip: '💡 Tip:',
+    vibeBadgeMintTip: 'Mint a VibeFID to get 2x coins on interactions!',
+    vibeBadgeMintNow: 'Mint now →',
+    vibeBadgeTitle: 'VIBE Badge',
+    vibeBadgeDesc: '2x coins in Wanted Cast!'
   },
   es: {
     title: 'Home',
@@ -1548,7 +1564,15 @@ export const translations = {
     guideStep2: 'Reclama tu carta GRATIS diaria en la Tienda',
     guideStep3: 'Intercambia en Vibe Market con ETH',
     guideLTCCollections: 'Colecciones LTC',
-    guideViewMarket: 'Ver todo en Vibe Market →'
+    guideViewMarket: 'Ver todo en Vibe Market →',
+    // VIBE Badge System
+    vibeBadgeActive: '✨ ¡Badge VIBE Activa!',
+    vibeBadgeBoost: 'Ganas 2x monedas (600) por interacción',
+    vibeBadgeTip: '💡 Consejo:',
+    vibeBadgeMintTip: '¡Mintea un VibeFID para obtener 2x monedas en interacciones!',
+    vibeBadgeMintNow: 'Mintear ahora →',
+    vibeBadgeTitle: 'Badge VIBE',
+    vibeBadgeDesc: '¡2x monedas en Wanted Cast!'
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -2065,7 +2089,15 @@ export const translations = {
     guideStep2: 'Shop mein apna daily FREE card claim karo',
     guideStep3: 'Vibe Market par ETH se trade karo',
     guideLTCCollections: 'LTC Collections',
-    guideViewMarket: 'Vibe Market par sab dekho →'
+    guideViewMarket: 'Vibe Market par sab dekho →',
+    // VIBE Badge System
+    vibeBadgeActive: '✨ VIBE Badge Active!',
+    vibeBadgeBoost: 'Aapko 2x coins (600) milte hain har interaction par',
+    vibeBadgeTip: '💡 Tip:',
+    vibeBadgeMintTip: 'VibeFID mint karo aur 2x coins pao interactions par!',
+    vibeBadgeMintNow: 'Abhi mint karo →',
+    vibeBadgeTitle: 'VIBE Badge',
+    vibeBadgeDesc: 'Wanted Cast mein 2x coins!'
   },
   ru: {
     title: 'Главная',
@@ -2578,7 +2610,15 @@ export const translations = {
     guideStep2: 'Получайте ежедневную БЕСПЛАТНУЮ карту в Магазине',
     guideStep3: 'Торгуйте на Vibe Market за ETH',
     guideLTCCollections: 'Коллекции LTC',
-    guideViewMarket: 'Смотреть всё на Vibe Market →'
+    guideViewMarket: 'Смотреть всё на Vibe Market →',
+    // VIBE Badge System
+    vibeBadgeActive: '✨ Значок VIBE активен!',
+    vibeBadgeBoost: 'Вы получаете 2x монет (600) за взаимодействие',
+    vibeBadgeTip: '💡 Совет:',
+    vibeBadgeMintTip: 'Создайте VibeFID, чтобы получать 2x монет за взаимодействия!',
+    vibeBadgeMintNow: 'Создать сейчас →',
+    vibeBadgeTitle: 'Значок VIBE',
+    vibeBadgeDesc: '2x монет в Wanted Cast!'
   },
   "zh-CN": {
     title: '首页',
@@ -3091,6 +3131,14 @@ export const translations = {
     guideStep2: '在商店领取每日免费卡牌',
     guideStep3: '在Vibe Market用ETH交易',
     guideLTCCollections: 'LTC系列',
-    guideViewMarket: '在Vibe Market查看全部 →'
+    guideViewMarket: '在Vibe Market查看全部 →',
+    // VIBE Badge System
+    vibeBadgeActive: '✨ VIBE徽章已激活！',
+    vibeBadgeBoost: '每次互动可获得2倍金币（600）',
+    vibeBadgeTip: '💡 提示：',
+    vibeBadgeMintTip: '铸造VibeFID即可获得2倍互动金币！',
+    vibeBadgeMintNow: '立即铸造 →',
+    vibeBadgeTitle: 'VIBE徽章',
+    vibeBadgeDesc: 'Wanted Cast 2倍金币！'
   }
 } as const;
