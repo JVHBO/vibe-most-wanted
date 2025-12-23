@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { MusicProvider } from "@/contexts/MusicContext";
 import { Web3Provider } from "@/contexts/Web3Provider";
 import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
+import { PlayerCardsProvider } from "@/contexts/PlayerCardsContext";
 import { FarcasterNotificationRegistration } from "@/components/FarcasterNotificationRegistration";
 import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -127,12 +128,14 @@ export default function RootLayout({
           <NeynarMiniAppProvider>
             <ConvexClientProvider>
               <Web3Provider>
-                <LanguageProvider>
-                  <MusicProvider>
-                    <FarcasterNotificationRegistration />
-                    {children}
-                  </MusicProvider>
-                </LanguageProvider>
+                <PlayerCardsProvider>
+                  <LanguageProvider>
+                    <MusicProvider>
+                      <FarcasterNotificationRegistration />
+                      {children}
+                    </MusicProvider>
+                  </LanguageProvider>
+                </PlayerCardsProvider>
               </Web3Provider>
             </ConvexClientProvider>
           </NeynarMiniAppProvider>

@@ -494,18 +494,33 @@ export default function FidPage() {
         setMintedSuccessfully(true);
         console.log('✅ Successfully recovered and saved mint data!');
       } catch (err: any) {
-        const errorMsg = err?.message || err?.data?.message || String(err);
-        console.error('❌ Failed to recover mint data:', errorMsg, err);
+        // 🔧 IMPROVED: Better error extraction from Convex errors
+        const errorMsg = err?.message || err?.data?.message || err?.data || String(err);
+        const errorStr = String(errorMsg).toLowerCase();
+        console.error('❌ Failed to recover mint data:', errorStr, err);
 
-        // If it's a duplicate error, card was already saved - clear localStorage
-        if (errorMsg.includes('already') || errorMsg.includes('duplicate') || errorMsg.includes('FID')) {
+        // 🔧 IMPROVED: More keywords to detect duplicate/existing card errors
+        const isDuplicateError =
+          errorStr.includes('already') ||
+          errorStr.includes('duplicate') ||
+          errorStr.includes('fid') ||
+          errorStr.includes('minted') ||
+          errorStr.includes('exists');
+
+        if (isDuplicateError) {
           console.log('ℹ️ Card already exists in Convex, clearing pending data');
           localStorage.removeItem('vibefid_pending_mint');
           setPendingMintData(null);
           setError(null);
           setMintedSuccessfully(true); // Show success since card exists
         } else {
-          setError(`Failed to save mint data: ${errorMsg.slice(0, 100)}`);
+          const cleanError = errorStr.slice(0, 100);
+          setError(`Failed to save mint data: ${cleanError}`);
+          // Clear localStorage after 5s to prevent stuck state
+          setTimeout(() => {
+            localStorage.removeItem('vibefid_pending_mint');
+            setPendingMintData(null);
+          }, 5000);
         }
       }
     };
