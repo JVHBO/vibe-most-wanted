@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo, memo, useRef } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ConvexProfileService, type UserProfile, type MatchHistory } from "../lib/convex-profile"; // ✨ Convex para Profiles
 import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
 import { sdk } from "@farcaster/miniapp-sdk";
@@ -322,6 +322,7 @@ export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
   const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume, customMusicUrl, setCustomMusicUrl, isCustomMusicLoading, customMusicError, playlist, setPlaylist, addToPlaylist, removeFromPlaylist, currentPlaylistIndex, skipToNext, skipToPrevious, currentTrackName, currentTrackThumbnail, isPaused, pause, play } = useMusic();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const playButtonsRef = useRef<HTMLDivElement>(null);
 
   // Wagmi hooks for wallet connection
@@ -1251,6 +1252,22 @@ export default function TCGPage() {
       return () => clearTimeout(timer);
     }
   }, [address, userProfile, defenseDeckWarningDismissed, nfts.length]);
+
+  // 🛡️ Handle setupDefense query parameter from leaderboard page
+  useEffect(() => {
+    const setupDefense = searchParams.get('setupDefense');
+    if (setupDefense === 'true' && address && userProfile && nfts.length >= 5) {
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(() => {
+        setShowDefenseDeckModal(true);
+        // Clear the query param from URL without reload
+        const url = new URL(window.location.href);
+        url.searchParams.delete('setupDefense');
+        window.history.replaceState({}, '', url.pathname);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, address, userProfile, nfts.length]);
 
   // Sync login bonus claimed status and show popup on login
   useEffect(() => {
@@ -2868,6 +2885,11 @@ export default function TCGPage() {
         title: 'VibeFID Collection',
         description: 'Own at least one VibeFID card!',
       },
+      claim_vibe_badge: {
+        icon: '/images/icons/achievement.svg',
+        title: 'VIBE Badge',
+        description: '+20% bonus coins in Wanted Cast!',
+      },
     };
 
     return missionData[missionType] || {
@@ -2908,7 +2930,13 @@ export default function TCGPage() {
         { type: 'streak_10', reward: 750, date: 'today' },
         { type: 'welcome_gift', reward: 500, date: 'once' },
         { type: 'vibefid_minted', reward: 5000, date: 'once' },
+        { type: 'claim_vibe_badge', reward: 0, date: 'once' }, // Badge reward, not coins
       ];
+
+      // Check VIBE badge eligibility (VibeFID holder check)
+      const vibeBadgeEligibility = await convex.query(api.missions.checkVibeBadgeEligibility, {
+        playerAddress: address,
+      });
 
       // Merge with existing missions from DB
       const completeMissionsList = allMissionTypes.map((missionDef) => {
@@ -2919,6 +2947,18 @@ export default function TCGPage() {
         if (existingMission) {
           return existingMission; // Return actual mission from DB
         } else {
+          // Special handling for VIBE badge mission
+          if (missionDef.type === 'claim_vibe_badge') {
+            return {
+              _id: `placeholder_${missionDef.type}`,
+              missionType: missionDef.type,
+              completed: vibeBadgeEligibility?.eligible || false, // Completed if eligible (has VibeFID)
+              claimed: vibeBadgeEligibility?.hasBadge || false,   // Claimed if already has badge
+              reward: missionDef.reward,
+              date: missionDef.date,
+            };
+          }
+
           // Return placeholder for locked mission
           return {
             _id: `placeholder_${missionDef.type}`,
@@ -2946,6 +2986,7 @@ export default function TCGPage() {
         { _id: 'placeholder_streak_10', missionType: 'streak_10', completed: false, claimed: false, reward: 750, date: 'today' },
         { _id: 'placeholder_welcome_gift', missionType: 'welcome_gift', completed: false, claimed: false, reward: 500, date: 'once' },
         { _id: 'placeholder_vibefid_minted', missionType: 'vibefid_minted', completed: false, claimed: false, reward: 5000, date: 'once' },
+        { _id: 'placeholder_claim_vibe_badge', missionType: 'claim_vibe_badge', completed: false, claimed: false, reward: 0, date: 'once' },
       ];
       setMissions(fallbackMissions);
     } finally {
@@ -2954,7 +2995,7 @@ export default function TCGPage() {
   };
 
   // Function to claim individual mission
-  const claimMission = async (missionId: string) => {
+  const claimMission = async (missionId: string, missionType?: string) => {
     if (!address) return;
 
     // Don't try to claim placeholder missions
@@ -2965,7 +3006,23 @@ export default function TCGPage() {
 
     setIsClaimingMission(missionId);
     try {
-      // Mark mission as claimed and send reward to inbox
+      // Special handling for VIBE badge claim
+      if (missionType === 'claim_vibe_badge') {
+        const result = await convex.mutation(api.missions.claimVibeBadge, {
+          playerAddress: address,
+        });
+
+        if (soundEnabled) AudioManager.buttonSuccess();
+        devLog('✅ VIBE Badge claimed:', result);
+
+        // Reload missions and profile to update UI
+        await loadMissions();
+        const updatedProfile = await ConvexProfileService.getProfile(address);
+        setUserProfile(updatedProfile);
+        return;
+      }
+
+      // Regular mission claim
       const result = await convex.mutation(api.missions.claimMission, {
         playerAddress: address,
         missionId: missionId as any,
@@ -5864,10 +5921,19 @@ export default function TCGPage() {
                                   {missionInfo.description}
                                 </p>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-vintage-gold font-bold text-lg">
-                                    +{mission.reward}
-                                  </span>
-                                  <span className="text-vintage-burnt-gold text-sm">$TESTVBMS</span>
+                                  {mission.missionType === 'claim_vibe_badge' ? (
+                                    <>
+                                      <span className="text-yellow-400 font-bold text-lg">✨ VIBE Badge</span>
+                                      <span className="text-vintage-burnt-gold text-sm">(+20% Wanted Cast)</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="text-vintage-gold font-bold text-lg">
+                                        +{mission.reward}
+                                      </span>
+                                      <span className="text-vintage-burnt-gold text-sm">$TESTVBMS</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
 
@@ -5879,7 +5945,7 @@ export default function TCGPage() {
                                   </div>
                                 ) : isCompleted ? (
                                   <button
-                                    onClick={() => claimMission(mission._id)}
+                                    onClick={() => claimMission(mission._id, mission.missionType)}
                                     disabled={isClaimingMission === mission._id}
                                     className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm md:text-base shadow-gold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                                   >

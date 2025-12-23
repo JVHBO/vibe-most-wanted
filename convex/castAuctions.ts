@@ -8,8 +8,18 @@ import { Id } from "./_generated/dataModel";
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Configuration
-const AUCTION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+const AUCTION_RESET_HOUR_UTC = 20; // 20:00 UTC = 17:00 Brasília - DAILY RESET TIME
 const FEATURE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours per position
+
+// Helper: Get the next daily reset time (20:00 UTC / 17:00 Brasília)
+function getNextResetTime(now: number = Date.now()): number {
+  const date = new Date(now);
+  date.setUTCHours(AUCTION_RESET_HOUR_UTC, 0, 0, 0);
+  if (date.getTime() <= now) {
+    date.setUTCDate(date.getUTCDate() + 1);
+  }
+  return date.getTime();
+}
 const MINIMUM_BID = 10000; // Minimum first bid: 10,000 VBMS
 const MAXIMUM_BID = 120000; // Maximum bid: 120,000 VBMS
 const BID_INCREMENT_PERCENT = 10; // Must bid at least 10% more than current
@@ -229,6 +239,38 @@ export const getPendingRefunds = query({
 });
 
 /**
+ * Get recent automatic refunds for a user (outbid within last 24h)
+ * Shows refunds that were already processed automatically
+ */
+export const getRecentRefunds = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+    const recentRefunds = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_bidder")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("bidderAddress"), normalizedAddress),
+          q.eq(q.field("status"), "refunded"),
+          q.gte(q.field("refundedAt"), oneDayAgo)
+        )
+      )
+      .collect();
+
+    const totalRefunded = recentRefunds.reduce((sum, bid) => sum + (bid.refundAmount || bid.bidAmount), 0);
+
+    return {
+      recentRefunds,
+      totalRefunded,
+      count: recentRefunds.length,
+    };
+  },
+});
+
+/**
  * Get all bidders for current auctions (for display)
  */
 export const getCurrentBidders = query({
@@ -322,7 +364,7 @@ export const placeBid = mutation({
       const auctionId = await ctx.db.insert("castAuctions", {
         slotNumber: args.slotNumber,
         auctionStartedAt: now,
-        auctionEndsAt: now + AUCTION_DURATION_MS,
+        auctionEndsAt: getNextResetTime(now),
         currentBid: 0,
         status: "bidding",
         createdAt: now,
@@ -567,7 +609,7 @@ export const placeBidWithVBMS = mutation({
         .filter((q) => q.eq(q.field("status"), "bidding"))
         .first();
 
-      const auctionEndsAt = existingAuction?.auctionEndsAt || (now + AUCTION_DURATION_MS);
+      const auctionEndsAt = existingAuction?.auctionEndsAt || getNextResetTime(now);
 
       const auctionId = await ctx.db.insert("castAuctions", {
         slotNumber: 0, // Not used anymore, kept for schema compatibility
@@ -851,7 +893,7 @@ export const initializeAuctions = mutation({
         await ctx.db.insert("castAuctions", {
           slotNumber: slot,
           auctionStartedAt: now,
-          auctionEndsAt: now + AUCTION_DURATION_MS,
+          auctionEndsAt: getNextResetTime(now),
           currentBid: 0,
           status: "bidding",
           createdAt: now,
@@ -1119,7 +1161,7 @@ export const finalizeAuction = internalMutation({
       await ctx.db.insert("castAuctions", {
         slotNumber: auction.slotNumber,
         auctionStartedAt: now,
-        auctionEndsAt: now + AUCTION_DURATION_MS,
+        auctionEndsAt: getNextResetTime(now),
         currentBid: 0,
         status: "bidding",
         createdAt: now,
@@ -1285,24 +1327,15 @@ export const completeFeaturedCast = internalMutation({
       status: "completed",
     });
 
-    // Deactivate the featured cast from featuredCasts table
-    const featuredOrder = 100 + auction.slotNumber;
-    const featuredCast = await ctx.db
-      .query("featuredCasts")
-      .withIndex("by_order")
-      .filter((q) => q.eq(q.field("order"), featuredOrder))
-      .first();
-
-    if (featuredCast) {
-      await ctx.db.patch(featuredCast._id, { active: false });
-    }
+    // NOTE: Featured casts stay active FOREVER until replaced by a new winner.
+    // The replacement happens in activateFeaturedCast when a new auction wins.
 
     // Start new auction for this slot
     const now = Date.now();
     await ctx.db.insert("castAuctions", {
       slotNumber: auction.slotNumber,
       auctionStartedAt: now,
-      auctionEndsAt: now + AUCTION_DURATION_MS,
+      auctionEndsAt: getNextResetTime(now),
       currentBid: 0,
       status: "bidding",
       createdAt: now,
@@ -1526,3 +1559,57 @@ export const testCreatePendingRefund = mutation({
   },
 });
 
+
+
+/**
+ * ADMIN: Update all bidding auctions to use the fixed reset time (20:00 UTC / 17:00 BRT)
+ */
+export const updateAuctionsToFixedTime = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const nextReset = getNextResetTime();
+
+    const auctions = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) => q.eq(q.field("status"), "bidding"))
+      .collect();
+
+    let updated = 0;
+    for (const auction of auctions) {
+      await ctx.db.patch(auction._id, { auctionEndsAt: nextReset });
+      updated++;
+    }
+
+    console.log();
+    return { updated, nextReset, nextResetISO: new Date(nextReset).toISOString() };
+  },
+});
+
+/**
+ * ADMIN: Clean duplicate auctions from history (remove raples duplicates)
+ */
+export const cleanDuplicateHistory = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const raplesCastHash = "0x01968929bb4411542a4075916604cf8802cba49b";
+    
+    // Find all completed raples auctions
+    const allCompleted = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) => q.eq(q.field("status"), "completed"))
+      .collect();
+    
+    const raplesAuctions = allCompleted.filter(a => a.castHash === raplesCastHash);
+    
+    // Delete all raples auctions (they're duplicates/errors)
+    let deleted = 0;
+    for (const auction of raplesAuctions) {
+      await ctx.db.delete(auction._id);
+      deleted++;
+    }
+    
+    return { deleted, total: raplesAuctions.length };
+  },
+});

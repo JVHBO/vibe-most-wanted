@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -17,8 +17,9 @@ import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal"
 import { HAND_SIZE } from "@/lib/config";
 import { devLog, devError } from "@/lib/utils/logger";
 import type { Card, CardRarity, CardFoil } from "@/lib/types/card";
-import type { CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, isSameCard, getCardUniqueId, type CollectionId } from "@/lib/collections/index";
 import FoilCardEffect from "@/components/FoilCardEffect";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { CardMedia } from "@/components/CardMedia";
 import { GamePopups } from "@/components/GamePopups";
 
@@ -108,6 +109,28 @@ export default function LeaderboardPage() {
 
   // Modal state
   const [showLeaderboardRewardsModal, setShowLeaderboardRewardsModal] = useState(false);
+  const [defenseWarningDismissed, setDefenseWarningDismissed] = useState(false);
+
+  // Defense Deck Modal state
+  const [showDefenseDeckModal, setShowDefenseDeckModal] = useState(false);
+  const [defenseDeckSortByPower, setDefenseDeckSortByPower] = useState(true);
+  const [defenseDeckCollection, setDefenseDeckCollection] = useState<CollectionId | 'all'>('all');
+  const [defenseSelectedCards, setDefenseSelectedCards] = useState<Card[]>([]);
+  const [isSavingDefenseDeck, setIsSavingDefenseDeck] = useState(false);
+
+  // Load dismissed state from localStorage
+  useEffect(() => {
+    const dismissed = localStorage.getItem('defenseWarningDismissed');
+    if (dismissed === 'true') {
+      setDefenseWarningDismissed(true);
+    }
+  }, []);
+
+  // Dismiss defense warning permanently
+  const handleDismissDefenseWarning = () => {
+    localStorage.setItem('defenseWarningDismissed', 'true');
+    setDefenseWarningDismissed(true);
+  };
 
   // GamePopups state
   const isInFarcaster = false; // Standalone leaderboard page is not in Farcaster
@@ -121,7 +144,6 @@ export default function LeaderboardPage() {
     '/bom.jpg',         // Bom
   ];
   const [currentVictoryImage, setCurrentVictoryImage] = useState<string>(VICTORY_IMAGES[0]);
-  const victoryAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastVictoryIndexRef = useRef<number>(-1);
   const [tieGifLoaded, setTieGifLoaded] = useState(true);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -134,17 +156,12 @@ export default function LeaderboardPage() {
 
   // Victory screen handlers
   const handleCloseVictoryScreen = () => {
-    // Stop victory audio if playing
-    if (victoryAudioRef.current) {
-      victoryAudioRef.current.pause();
-      victoryAudioRef.current.currentTime = 0;
-      victoryAudioRef.current = null;
-    }
+    // Audio is handled by GamePopups component (stops automatically when popup closes)
     setShowWinPopup(false);
     setLastBattleResult(null);
   };
 
-  // Show victory with random image and audio (like Home page)
+  // Show victory with random image (audio handled by GamePopups component)
   const showVictoryWithAudio = () => {
     // Randomly select one of the 5 victory screens, avoiding consecutive duplicates
     let randomIndex = Math.floor(Math.random() * VICTORY_IMAGES.length);
@@ -160,23 +177,8 @@ export default function LeaderboardPage() {
 
     devLog(`Victory screen selected: ${victoryImage} (index: ${randomIndex})`);
 
-    // Play audio based on which screen was selected
-    if (randomIndex === 0) {
-      // victory-1.jpg - Play default win sound
-      if (soundEnabled) AudioManager.win();
-    } else if (randomIndex === 1) {
-      // victory-2.jpg - Play Marvin audio
-      const audio = new Audio('/marvin-victory.mp3');
-      audio.volume = 0.5;
-      audio.play().catch(err => devLog('Audio play failed:', err));
-      victoryAudioRef.current = audio;
-    }
-    // victory-3.jpg (index 2) - audio plays automatically via GamePopups component
-    // littlebird.mp4 (index 3) - video has its own audio
-    // bom.jpg (index 4) - play default win sound
-    else if (randomIndex === 4) {
-      if (soundEnabled) AudioManager.win();
-    }
+    // NOTE: Audio is handled by GamePopups component via <audio autoPlay>
+    // Do NOT play audio here to avoid duplication
 
     setCurrentVictoryImage(victoryImage);
     setShowWinPopup(true);
@@ -198,7 +200,7 @@ export default function LeaderboardPage() {
 
       if (result.success) {
         setSuccessMessage(result.message);
-        setSharesRemaining(result.remaining);
+        setSharesRemaining(result.remaining ?? 0);
         // Refresh profile to update coins
         const updatedProfile = await ConvexProfileService.getProfile(address);
         if (updatedProfile) {
@@ -304,6 +306,68 @@ export default function LeaderboardPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Save defense deck
+  const saveDefenseDeck = useCallback(async () => {
+    if (!address || !userProfile || defenseSelectedCards.length !== HAND_SIZE) return;
+
+    setIsSavingDefenseDeck(true);
+    try {
+      const defenseDeckData = defenseSelectedCards.map(card => ({
+        tokenId: String(card.tokenId),
+        power: Number(card.power) || 0,
+        imageUrl: String(card.imageUrl),
+        name: card.name || `Card #${card.tokenId}`,
+        rarity: card.rarity || 'Common',
+        foil: card.foil && card.foil !== 'None' ? String(card.foil) : undefined,
+        collection: card.collection,
+      }));
+
+      await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
+
+      // Refresh profile
+      const updatedProfile = await ConvexProfileService.getProfile(address);
+      if (updatedProfile) {
+        setUserProfile(updatedProfile);
+      }
+
+      setShowDefenseDeckModal(false);
+      setDefenseSelectedCards([]);
+      AudioManager.buttonSuccess();
+    } catch (error: any) {
+      devError('Error saving defense deck:', error);
+      alert(`Error saving defense deck: ${error.message}`);
+    } finally {
+      setIsSavingDefenseDeck(false);
+    }
+  }, [address, userProfile, defenseSelectedCards, setUserProfile]);
+
+  // Select strongest cards for defense deck
+  const selectStrongestDefense = useCallback(() => {
+    const sorted = [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+    setDefenseSelectedCards(sorted.slice(0, HAND_SIZE));
+  }, [nfts]);
+
+  // Open defense deck modal
+  const handleOpenDefenseDeck = () => {
+    // Pre-load current defense deck if exists
+    if (userProfile?.defenseDeck && userProfile.defenseDeck.length > 0) {
+      const currentDeck = userProfile.defenseDeck
+        .map((deckCard: any) => {
+          // Find matching card in nfts
+          return nfts.find(nft =>
+            String(nft.tokenId) === String(deckCard.tokenId) &&
+            nft.collection === deckCard.collection
+          );
+        })
+        .filter((card): card is Card => card !== undefined);
+      setDefenseSelectedCards(currentDeck);
+    } else {
+      setDefenseSelectedCards([]);
+    }
+    setShowDefenseDeckModal(true);
+    if (soundEnabled) AudioManager.buttonClick();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-vintage-black via-vintage-charcoal to-vintage-black text-vintage-ice p-4">
       {/* Header */}
@@ -338,22 +402,20 @@ export default function LeaderboardPage() {
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-2 items-center">
                 {userProfile && (
-                  <Link
-                    href="/"
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                    }}
+                  <button
+                    onClick={handleOpenDefenseDeck}
+                    disabled={isLoadingCards || nfts.length < HAND_SIZE}
                     className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition flex items-center gap-1 ${
                       userProfile.hasDefenseDeck
                         ? 'bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/10 hover:border-vintage-gold'
                         : 'bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500 animate-pulse'
-                    }`}
+                    } ${isLoadingCards || nfts.length < HAND_SIZE ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <span>🛡️</span> Defense Deck
                     {userProfile.hasDefenseDeck && (
                       <span className="ml-1 text-[10px] bg-green-600 text-white px-1 rounded-full">✓</span>
                     )}
-                  </Link>
+                  </button>
                 )}
                 <button
                   onClick={handleExportLeaderboard}
@@ -395,17 +457,33 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Defense Deck Warning */}
-          {userProfile && !userProfile.hasDefenseDeck && (
-            <div className="mb-4 p-3 md:p-4 bg-amber-500/20 border-2 border-amber-500/50 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3">
-              <p className="text-amber-200 text-sm md:text-base text-center md:text-left">
+          {userProfile && !userProfile.hasDefenseDeck && !defenseWarningDismissed && (
+            <div className="mb-4 p-3 md:p-4 bg-amber-500/20 border-2 border-amber-500/50 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3 relative">
+              <button
+                onClick={handleDismissDefenseWarning}
+                className="absolute top-2 right-2 text-amber-400 hover:text-amber-200 text-lg font-bold"
+                title="Dismiss this warning"
+              >
+                ×
+              </button>
+              <p className="text-amber-200 text-sm md:text-base text-center md:text-left pr-6">
                 {t('leaderboardDefenseWarning')}
               </p>
-              <Link
-                href="/"
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg transition whitespace-nowrap text-sm"
-              >
-                {t('leaderboardDefenseSetup')}
-              </Link>
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={handleOpenDefenseDeck}
+                  disabled={isLoadingCards || nfts.length < HAND_SIZE}
+                  className={`px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg transition whitespace-nowrap text-sm ${isLoadingCards || nfts.length < HAND_SIZE ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isLoadingCards ? 'Loading...' : nfts.length < HAND_SIZE ? `Need ${HAND_SIZE} cards` : t('leaderboardDefenseSetup')}
+                </button>
+                <button
+                  onClick={handleDismissDefenseWarning}
+                  className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition whitespace-nowrap text-xs"
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
           )}
 
@@ -1069,6 +1147,211 @@ export default function LeaderboardPage() {
               <p className="text-xs text-vintage-burnt-gold">
                 Ranking based on Aura score. Rewards are claimable after each Sunday reset.
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Defense Deck Modal */}
+      {showDefenseDeckModal && (
+        <div
+          className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4"
+          onClick={() => setShowDefenseDeckModal(false)}
+        >
+          <div
+            className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex-shrink-0 p-4 border-b border-vintage-gold/30">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-display font-bold text-vintage-gold">
+                  🛡️ Defense Deck
+                </h2>
+                <button
+                  onClick={() => setShowDefenseDeckModal(false)}
+                  className="text-vintage-gold hover:text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-sm text-vintage-burnt-gold mt-1">
+                Select 5 cards to defend against attacks
+              </p>
+            </div>
+
+            {/* Controls Row: Collection Filter + Sort */}
+            <div className="flex-shrink-0 px-4 pt-3 flex flex-wrap items-center justify-center gap-2">
+              <select
+                value={defenseDeckCollection}
+                onChange={(e) => setDefenseDeckCollection(e.target.value as CollectionId | 'all')}
+                className="px-3 py-2 rounded-lg text-sm font-modern font-medium bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
+              >
+                <option value="all">All Collections</option>
+                <option value="vibe">VBMS</option>
+                <option value="viberotbangers">BANGER</option>
+                <option value="cumioh">CUMIO</option>
+                <option value="historyofcomputer">HSTR</option>
+                <option value="vibefx">VBFX</option>
+                <option value="baseballcabal">BBCL</option>
+                <option value="tarot">TRT</option>
+                <option value="teampothead">TMPT</option>
+                <option value="poorlydrawnpepes">PDP</option>
+                <option value="meowverse">MEOVV</option>
+                <option value="viberuto">VBRTO</option>
+                <option value="vibefid">VIBEFID</option>
+                <option value="americanfootball">AFCL</option>
+                <option value="gmvbrs">VBRS</option>
+                <option value="coquettish">COQ</option>
+                <option value="nothing">NOTHING</option>
+              </select>
+              <button
+                onClick={() => {
+                  setDefenseDeckSortByPower(!defenseDeckSortByPower);
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                  defenseDeckSortByPower
+                    ? 'bg-vintage-gold text-vintage-black'
+                    : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
+                }`}
+              >
+                {defenseDeckSortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+              </button>
+            </div>
+
+            {/* Selected Cards Preview */}
+            <div className="flex-shrink-0 p-4 bg-vintage-felt-green/30 border-b border-vintage-gold/20">
+              <div className="grid grid-cols-5 gap-2">
+                {defenseSelectedCards.map((c, i) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      setDefenseSelectedCards(defenseSelectedCards.filter((_, idx) => idx !== i));
+                      if (soundEnabled) AudioManager.buttonClick();
+                    }}
+                    className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold cursor-pointer hover:ring-red-500 transition-all group"
+                  >
+                    <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
+                    <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/30 flex items-center justify-center transition-all">
+                      <span className="opacity-0 group-hover:opacity-100 text-white text-2xl font-bold">×</span>
+                    </div>
+                  </div>
+                ))}
+                {[...Array(HAND_SIZE - defenseSelectedCards.length)].map((_, i) => (
+                  <div key={`e-${i}`} className="aspect-[2/3] rounded-xl border-2 border-dashed border-vintage-gold/40 flex items-center justify-center text-vintage-gold/50 bg-vintage-felt-green/30">
+                    <span className="text-2xl font-bold">+</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center mt-3">
+                <div className="text-vintage-gold font-modern">
+                  <span className="font-bold">{defenseSelectedCards.length}/{HAND_SIZE}</span> cards selected
+                </div>
+                <div className="flex gap-2">
+                  {nfts.length >= HAND_SIZE && defenseSelectedCards.length === 0 && (
+                    <button
+                      onClick={() => {
+                        selectStrongestDefense();
+                        if (soundEnabled) AudioManager.buttonSuccess();
+                      }}
+                      className="px-3 py-1 bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-gold/30 transition font-modern font-semibold"
+                    >
+                      Select Strongest
+                    </button>
+                  )}
+                  {defenseSelectedCards.length > 0 && (
+                    <button
+                      onClick={() => {
+                        setDefenseSelectedCards([]);
+                        if (soundEnabled) AudioManager.buttonClick();
+                      }}
+                      className="px-3 py-1 bg-vintage-black/50 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs hover:bg-vintage-black/70 transition font-modern"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Card Grid (Scrollable) */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {isLoadingCards ? (
+                <div className="flex items-center justify-center min-h-[200px]">
+                  <div className="text-center">
+                    <LoadingSpinner />
+                    <p className="text-vintage-gold/70 text-sm mt-2 font-modern">Loading cards...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                  {(() => {
+                    // Apply collection filter
+                    let filteredCards = defenseDeckCollection === 'all'
+                      ? nfts
+                      : filterCardsByCollections(nfts, [defenseDeckCollection as CollectionId]);
+                    // Apply power sort
+                    if (defenseDeckSortByPower) {
+                      filteredCards = [...filteredCards].sort((a, b) => (b.power || 0) - (a.power || 0));
+                    }
+                    return filteredCards;
+                  })().map((nft) => {
+                    const isSelected = defenseSelectedCards.some(c => isSameCard(c, nft));
+                    return (
+                      <div
+                        key={getCardUniqueId(nft)}
+                        onClick={() => {
+                          if (isSelected) {
+                            setDefenseSelectedCards(defenseSelectedCards.filter(c => !isSameCard(c, nft)));
+                          } else if (defenseSelectedCards.length < HAND_SIZE) {
+                            setDefenseSelectedCards([...defenseSelectedCards, nft]);
+                          }
+                          if (soundEnabled) AudioManager.selectCardByRarity(nft.rarity);
+                        }}
+                        className={`relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer transition-all ${
+                          isSelected
+                            ? 'ring-4 ring-vintage-gold shadow-gold scale-95 opacity-50'
+                            : 'hover:ring-2 hover:ring-vintage-gold/50 hover:scale-105'
+                        } ${defenseSelectedCards.length >= HAND_SIZE && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      >
+                        <CardMedia src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
+                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{nft.power}</div>
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-vintage-gold/30 flex items-center justify-center">
+                            <span className="text-white text-2xl font-bold">✓</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex-shrink-0 p-4 border-t border-vintage-gold/30 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDefenseDeckModal(false);
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className="flex-1 px-4 py-3 bg-vintage-red/80 hover:bg-vintage-red text-white rounded-lg font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveDefenseDeck}
+                disabled={defenseSelectedCards.length !== HAND_SIZE || isSavingDefenseDeck}
+                className={`flex-1 px-4 py-3 rounded-lg font-bold transition ${
+                  defenseSelectedCards.length === HAND_SIZE && !isSavingDefenseDeck
+                    ? 'bg-vintage-gold hover:bg-yellow-500 text-vintage-black'
+                    : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
+                }`}
+              >
+                {isSavingDefenseDeck ? 'Saving...' : defenseSelectedCards.length === HAND_SIZE ? 'Save Defense Deck' : `Select ${HAND_SIZE - defenseSelectedCards.length} more`}
+              </button>
             </div>
           </div>
         </div>
