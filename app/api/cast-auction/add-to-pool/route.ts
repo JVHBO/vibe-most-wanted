@@ -5,7 +5,11 @@ import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
 import { Id } from "@/convex/_generated/dataModel";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL not defined");
+  return new ConvexHttpClient(url);
+}
 
 // Contract addresses
 const VBMS_TOKEN = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
@@ -18,6 +22,7 @@ const POOL_ADDRESS = "0x062b914668f3fd35c3ae02e699cb82e1cf4be18b";
  */
 export async function POST(request: NextRequest) {
   try {
+    const convex = getConvexClient();
     const { txHash, address, auctionId, bidAmount } = await request.json();
 
     if (!txHash || !address || !auctionId || bidAmount === undefined) {

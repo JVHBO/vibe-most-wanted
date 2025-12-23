@@ -2,10 +2,18 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+// Create client lazily to avoid build-time initialization errors
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_CONVEX_URL is not defined");
+  }
+  return new ConvexHttpClient(url);
+}
 
 export async function POST() {
   try {
+    const convex = getConvexClient();
     // Get all active poker rooms
     const allRooms = await convex.query(api.pokerBattle.listAllRooms, {});
 
