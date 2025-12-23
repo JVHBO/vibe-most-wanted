@@ -22,19 +22,9 @@ export async function POST(request: NextRequest) {
     // Delete all old/expired rooms
     const result = await client.mutation(api.pokerBattle.cleanupOldRoomsPublic, {});
 
-    // List remaining rooms
-    const rooms = await client.query(api.pokerBattle.listAllRooms, {});
-
     return NextResponse.json({
       success: true,
-      deletedCount: result.deletedCount,
-      remainingRooms: rooms.length,
-      rooms: rooms.map((r: any) => ({
-        roomId: r.roomId,
-        status: r.status,
-        host: r.hostAddress,
-        guest: r.guestAddress || 'waiting'
-      }))
+      deletedCount: result.deletedCount
     });
   } catch (error: any) {
     return NextResponse.json({
