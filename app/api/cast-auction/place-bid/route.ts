@@ -4,7 +4,11 @@ import { api } from "@/convex/_generated/api";
 import { createPublicClient, http, parseAbi, formatEther } from "viem";
 import { base } from "viem/chains";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL not defined");
+  return new ConvexHttpClient(url);
+}
 
 // Contract addresses
 const VBMS_TOKEN = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
@@ -22,6 +26,7 @@ const transferEventAbi = parseAbi([
  */
 export async function POST(request: NextRequest) {
   try {
+    const convex = getConvexClient();
     const {
       txHash,
       address,
