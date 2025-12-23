@@ -86,7 +86,7 @@ export const BADGES: Record<BadgeType, Badge> = {
   vibe: {
     type: 'vibe',
     label: 'VIBE',
-    description: 'VibeFID Holder - +20% bonus coins in Wanted Cast',
+    description: 'VibeFID Holder - 2x coins in Wanted Cast',
     icon: '✨',
     color: 'bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-orange-500/30',
     borderColor: 'bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500',
