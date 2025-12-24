@@ -42,7 +42,7 @@ import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
 import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
-import { RaidBossModal } from "@/components/RaidBossModal";
+// RaidBossModal moved to /raid page
 import { PriceTicker } from "@/components/PriceTicker";
 import ShameList from "@/components/ShameList";
 import BannedScreen from "@/components/BannedScreen";
@@ -710,7 +710,7 @@ export default function TCGPage() {
   const [pokerMode, setPokerMode] = useState<'cpu' | 'pvp'>('pvp');
 
   // Raid Boss States
-  const [showRaidBoss, setShowRaidBoss] = useState<boolean>(false);
+  // Raid Boss moved to /raid page
 
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
@@ -4593,18 +4593,7 @@ export default function TCGPage() {
         />
       )}
 
-      {/* Raid Boss Modal */}
-      {showRaidBoss && address && (
-        <RaidBossModal
-          isOpen={showRaidBoss}
-          onClose={() => setShowRaidBoss(false)}
-          userAddress={address}
-          soundEnabled={soundEnabled}
-          t={t as (key: string, params?: Record<string, any>) => string}
-          allNfts={sortedNfts as Card[]}
-          isInFarcaster={isInFarcaster}
-        />
-      )}
+      {/* Raid Boss moved to /raid page */}
 
       {/* PvP Menu Modals (Game mode selection, PvP menu, Create/Join room, Auto-match) */}
       <PvPMenuModals
@@ -5761,35 +5750,47 @@ export default function TCGPage() {
                   )}
                 </div>
 
-                {/* 💀 BOSS RAID Button */}
+                {/* 💀 BOSS RAID Button - Link to /raid page */}
                 <div className="mb-4">
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setShowRaidBoss(true);
-                    }}
-                    disabled={!userProfile}
-                    className={`w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between ${
-                      userProfile
-                        ? 'bg-gradient-to-r from-red-600 via-orange-600 to-red-600 text-white hover:scale-105 shadow-lg shadow-red-500/50 border-2 border-orange-400/50'
-                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="8" r="5" />
-                        <path d="M9 8h.01M15 8h.01" strokeLinecap="round" />
-                        <path d="M9 11c1 1 5 1 6 0" />
-                        <path d="M12 13v4" />
-                        <path d="M8 21l4-4 4 4" />
-                      </svg>
-                      Boss Raid
-                      {hasExpiredRaidCards && (
-                        <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" title="Cards need refuel!" />
-                      )}
-                    </span>
-                    <span className="text-xl">▶</span>
-                  </button>
+                  {userProfile ? (
+                    <Link
+                      href="/raid"
+                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
+                      className="w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between bg-gradient-to-r from-red-600 via-orange-600 to-red-600 text-white hover:scale-105 shadow-lg shadow-red-500/50 border-2 border-orange-400/50"
+                    >
+                      <span className="flex items-center gap-2">
+                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="8" r="5" />
+                          <path d="M9 8h.01M15 8h.01" strokeLinecap="round" />
+                          <path d="M9 11c1 1 5 1 6 0" />
+                          <path d="M12 13v4" />
+                          <path d="M8 21l4-4 4 4" />
+                        </svg>
+                        Boss Raid
+                        {hasExpiredRaidCards && (
+                          <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" title="Cards need refuel!" />
+                        )}
+                      </span>
+                      <span className="text-xl">▶</span>
+                    </Link>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full px-6 py-3 rounded-xl font-display font-bold transition-all uppercase tracking-wide flex items-center justify-between bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20"
+                    >
+                      <span className="flex items-center gap-2">
+                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="8" r="5" />
+                          <path d="M9 8h.01M15 8h.01" strokeLinecap="round" />
+                          <path d="M9 11c1 1 5 1 6 0" />
+                          <path d="M12 13v4" />
+                          <path d="M8 21l4-4 4 4" />
+                        </svg>
+                        Boss Raid
+                      </span>
+                      <span className="text-xl">▶</span>
+                    </button>
+                  )}
                 </div>
 
                 <div ref={playButtonsRef} className="mt-6 space-y-4">

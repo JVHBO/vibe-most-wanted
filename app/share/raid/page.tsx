@@ -47,7 +47,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
-            url: baseUrl,
+            url: baseUrl + '/raid',
           },
         },
       }),
@@ -59,7 +59,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
-            url: baseUrl,
+            url: baseUrl + '/raid',
           },
         },
       }),
@@ -77,7 +77,7 @@ export default function ShareRaidPage() {
         <p className="text-vintage-burnt-gold mb-4">⚔️ Join the Raid Boss Battle!</p>
         <div className="animate-pulse text-6xl">🎮</div>
         <script dangerouslySetInnerHTML={{
-          __html: `setTimeout(() => { window.location.href = '/'; }, 2000);`
+          __html: `setTimeout(() => { window.location.href = '/raid'; }, 2000);`
         }} />
       </div>
     </div>
