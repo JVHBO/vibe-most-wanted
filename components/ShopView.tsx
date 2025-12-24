@@ -252,10 +252,6 @@ export function ShopView({ address }: ShopViewProps) {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-4xl md:text-5xl font-display font-bold text-vintage-gold mb-2">{t('shopSubtitle')}</h1>
-        <p className="text-vintage-ice/70">{t('shopDescription')}</p>
       {/* Custom Notification */}
       {notification && (
         <ShopNotification
@@ -264,7 +260,6 @@ export function ShopView({ address }: ShopViewProps) {
           onClose={() => setNotification(null)}
         />
       )}
-      </div>
 
       {/* Help Modal */}
       {showHelpModal && (
@@ -488,10 +483,10 @@ export function ShopView({ address }: ShopViewProps) {
             )}
           </button>
           <div className="grid grid-cols-4 gap-2 text-xs mt-3 text-center">
-            <div className="text-gray-400 bg-black/20 p-2 rounded">Common: <span className="text-green-400 font-bold">200</span></div>
-            <div className="text-blue-400 bg-black/20 p-2 rounded">Rare: <span className="text-green-400 font-bold">1.1k</span></div>
-            <div className="text-purple-400 bg-black/20 p-2 rounded">Epic: <span className="text-green-400 font-bold">4k</span></div>
-            <div className="text-yellow-400 bg-black/20 p-2 rounded">Leg: <span className="text-green-400 font-bold">40k</span></div>
+            <div className="text-gray-400 bg-black/20 p-2 rounded">Common: <span className="text-green-400 font-bold">{luckBoost ? '1k' : '200'}</span></div>
+            <div className="text-blue-400 bg-black/20 p-2 rounded">Rare: <span className="text-green-400 font-bold">{luckBoost ? '5.5k' : '1.1k'}</span></div>
+            <div className="text-purple-400 bg-black/20 p-2 rounded">Epic: <span className="text-green-400 font-bold">{luckBoost ? '20k' : '4k'}</span></div>
+            <div className="text-yellow-400 bg-black/20 p-2 rounded">Leg: <span className="text-green-400 font-bold">{luckBoost ? '200k' : '40k'}</span></div>
           </div>
         </div>
       </div>
