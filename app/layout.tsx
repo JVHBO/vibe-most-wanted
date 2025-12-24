@@ -81,33 +81,27 @@ export const metadata: Metadata = {
     "base:app_id": "6912770b47fdf84bd17202bc",
     // Farcaster Mini App Meta Tag (REQUIRED FOR DISCOVERY)
     "fc:miniapp": JSON.stringify({
-      "version": "next",
+      "version": "1",
       "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image",
-      "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
         "action": {
           "type": "launch_miniapp",
           "name": "VIBE MOST WANTED",
-          "url": "https://www.vibemostwanted.xyz",
-          "splashImageUrl": "https://www.vibemostwanted.xyz/splash-200.png?v=3",
-          "splashBackgroundColor": "#0C0C0C"
+          "url": "https://www.vibemostwanted.xyz"
         }
       }
     }),
     // Backward compatibility with old frame spec
     "fc:frame": JSON.stringify({
-      "version": "next",
+      "version": "1",
       "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image",
-      "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
         "action": {
           "type": "launch_miniapp",
           "name": "VIBE MOST WANTED",
-          "url": "https://www.vibemostwanted.xyz",
-          "splashImageUrl": "https://www.vibemostwanted.xyz/splash-200.png?v=3",
-          "splashBackgroundColor": "#0C0C0C"
+          "url": "https://www.vibemostwanted.xyz"
         }
       }
     }),
