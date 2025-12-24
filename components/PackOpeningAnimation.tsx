@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import sdk from '@farcaster/miniapp-sdk';
 
 interface PackOpeningAnimationProps {
   cards: any[];
@@ -16,8 +17,13 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
   const [stage, setStage] = useState<'opening' | 'revealing'>('opening');
   const [revealedCards, setRevealedCards] = useState<Set<number>>(new Set());
   const [shakingCard, setShakingCard] = useState<number | null>(null);
+  const [isInMiniApp, setIsInMiniApp] = useState(false);
 
   const displayCards = cards.slice(0, MAX_CARDS_PER_BATCH);
+
+  useEffect(() => {
+    sdk.isInMiniApp().then(setIsInMiniApp).catch(() => setIsInMiniApp(false));
+  }, []);
 
   useEffect(() => {
     const openingTimer = setTimeout(() => {
@@ -137,9 +143,20 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     });
     const shareUrl = 'https://www.vibemostwanted.xyz/share/pack?' + shareParams.toString();
 
-    // Use warpcast.com compose URL
-    const farcasterUrl = 'https://warpcast.com/~/compose?text=' + encodeURIComponent(castText) + '&embeds[]=' + encodeURIComponent(shareUrl);
-    window.open(farcasterUrl, '_blank');
+    // Use SDK composeCast when in miniapp, fallback to URL
+    if (isInMiniApp && sdk.actions?.composeCast) {
+      sdk.actions.composeCast({
+        text: castText,
+        embeds: [shareUrl],
+      }).catch(() => {
+        // Fallback to URL if SDK fails
+        const farcasterUrl = 'https://warpcast.com/~/compose?text=' + encodeURIComponent(castText) + '&embeds[]=' + encodeURIComponent(shareUrl);
+        window.open(farcasterUrl, '_blank');
+      });
+    } else {
+      const farcasterUrl = 'https://warpcast.com/~/compose?text=' + encodeURIComponent(castText) + '&embeds[]=' + encodeURIComponent(shareUrl);
+      window.open(farcasterUrl, '_blank');
+    }
   };
 
   const rarityColors: Record<string, string> = {
