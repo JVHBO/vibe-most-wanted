@@ -102,6 +102,7 @@ export interface UserProfile {
   fid?: string;
   farcasterFid?: number;
   userIndex?: number;
+  hasVibeBadge?: boolean; // VIBE badge for VibeFID holders (2x Wanted Cast)
   createdAt: number;
   lastUpdated: number;
 }
