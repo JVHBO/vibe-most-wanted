@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { shareToFarcaster } from '@/lib/share-utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import FoilCardEffect from './FoilCardEffect';
 import TypewriterText from './TypewriterText';
@@ -71,8 +72,7 @@ ${emoji} ${generatedTraits.rarity}
 
 🎮 Mint yours! @jvhbo`;
 
-    const farcasterShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-    window.open(farcasterShareUrl, '_blank');
+    shareToFarcaster(text, shareUrl);
   };
 
   // Get translations for current language
