@@ -432,6 +432,16 @@ export default function TCGPage() {
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
   const [skippedCardLoading, setSkippedCardLoading] = useState<boolean>(false);
+  
+  // Check sessionStorage on mount to skip loading if already loaded this session
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const alreadyLoaded = sessionStorage.getItem('vbms_cards_loaded') === 'true';
+      if (alreadyLoaded) {
+        setSkippedCardLoading(true);
+      }
+    }
+  }, []);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<any[]>([]);
   const [playerPower, setPlayerPower] = useState<number>(0);
@@ -1570,6 +1580,10 @@ export default function TCGPage() {
 
       setNfts([...deduplicated]);
       setStatus("loaded");
+      // Mark cards as loaded for this session (prevents loading screen on navigation)
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('vbms_cards_loaded', 'true');
+      }
       devLog('🎉 Cards loaded successfully (NFTs + FREE):', deduplicated.length);
 
       // Check if player has VibeFID and mark achievement
