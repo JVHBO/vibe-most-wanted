@@ -367,7 +367,7 @@ export function FeaturedCastAuctions({
     }, [endsAt]);
 
     return (
-      <span className={`font-mono ${timeLeft.includes("s") && !timeLeft.includes("m") ? "text-red-400 animate-pulse" : "text-amber-400"}`}>
+      <span className={`font-mono ${timeLeft.includes("s") && !timeLeft.includes("m") ? "text-red-400 animate-pulse" : "text-vintage-gold"}`}>
         {timeLeft}
       </span>
     );
@@ -382,11 +382,11 @@ export function FeaturedCastAuctions({
     ?.sort((a: AuctionDoc, b: AuctionDoc) => b.currentBid - a.currentBid) || [];
 
   return (
-    <div className="mt-3 border-t border-purple-500/20 pt-3">
+    <div className="mt-3 border-t border-vintage-gold/15 pt-3">
         {/* Cast Auction Form */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h5 className="text-amber-300 font-bold text-sm flex items-center gap-2">
+            <h5 className="text-vintage-gold font-bold text-sm flex items-center gap-2">
               <span>🎯</span> Wanted Cast Auction
               <button
                 onClick={() => setShowHelp(!showHelp)}
@@ -399,8 +399,8 @@ export function FeaturedCastAuctions({
 
           {/* Help tooltip */}
           {showHelp && (
-            <div className="p-2 bg-purple-900/30 border border-purple-500/50 rounded-lg text-xs text-vintage-cream">
-              <p className="font-bold text-purple-300 mb-1">How it works:</p>
+            <div className="p-2 bg-vintage-black/50 border border-vintage-gold/25 rounded-lg text-xs text-vintage-cream">
+              <p className="font-bold text-vintage-gold mb-1">How it works:</p>
               <ul className="list-disc list-inside space-y-1 text-vintage-burnt-gold">
                 <li>Bid real VBMS from your wallet</li>
                 <li>Min: 1,000 VBMS | Max: 120k VBMS</li>
@@ -412,15 +412,15 @@ export function FeaturedCastAuctions({
 
           {/* VIBE Badge 2x Boost Notice */}
           {profile?.hasVibeBadge ? (
-            <div className="p-2 bg-yellow-500/10 border border-yellow-500/50 rounded-lg text-xs">
-              <span className="text-yellow-400 font-bold">✨ VIBE Badge Active!</span>
+            <div className="p-2 bg-vintage-gold/10 border border-vintage-gold/40 rounded-lg text-xs">
+              <span className="text-vintage-gold font-bold">✨ VIBE Badge Active!</span>
               <span className="text-vintage-burnt-gold ml-1">You earn 2x coins (600) per interaction</span>
             </div>
           ) : (
-            <div className="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs">
-              <span className="text-amber-400 font-bold">💡 Tip:</span>
+            <div className="p-2 bg-vintage-gold/5 border border-vintage-gold/25 rounded-lg text-xs">
+              <span className="text-vintage-gold font-bold">💡 Tip:</span>
               <span className="text-vintage-burnt-gold ml-1">Mint a VibeFID to get 2x coins on interactions!</span>
-              <Link href="/fid" className="text-amber-400 hover:text-amber-300 ml-1 underline">Mint now →</Link>
+              <Link href="/fid" className="text-vintage-gold hover:text-vintage-gold ml-1 underline">Mint now →</Link>
             </div>
           )}
 
@@ -434,7 +434,7 @@ export function FeaturedCastAuctions({
                   <div key={auction._id} className="text-xs bg-vintage-charcoal/50 rounded-lg p-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className={`font-bold ${index === 0 ? 'text-amber-400' : 'text-vintage-gold'}`}>
+                        <span className={`font-bold ${index === 0 ? 'text-vintage-gold' : 'text-vintage-gold'}`}>
                           #{index + 1}
                         </span>
                         <span className="text-vintage-gold">
@@ -465,7 +465,7 @@ export function FeaturedCastAuctions({
                             });
                             if (soundEnabled) AudioManager.buttonClick();
                           }}
-                          className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded text-[10px] font-bold hover:bg-amber-500/30 transition-all"
+                          className="px-2 py-0.5 bg-vintage-gold/15 border border-vintage-gold/40 text-vintage-gold rounded text-[10px] font-bold hover:bg-vintage-gold/25 transition-all"
                         >
                           + Join
                         </button>
@@ -477,7 +477,7 @@ export function FeaturedCastAuctions({
                         href={auction.warpcastUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-purple-400 hover:text-purple-300 text-[10px] truncate block mt-1"
+                        className="text-vintage-gold hover:text-vintage-gold text-[10px] truncate block mt-1"
                       >
                         🔗 {auction.warpcastUrl}
                       </a>
@@ -515,21 +515,21 @@ export function FeaturedCastAuctions({
 
           {/* Pending Refunds (manual claim required) */}
           {pendingRefunds && pendingRefunds.totalRefund > 0 && (
-            <div className="p-3 bg-amber-900/40 border-2 border-amber-500/70 rounded-lg">
+            <div className="p-3 bg-vintage-gold/10 border-2 border-vintage-gold/50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-amber-300 font-bold text-sm flex items-center gap-2">
+                  <p className="text-vintage-gold font-bold text-sm flex items-center gap-2">
                     <span>💰</span> Pending Refund
                   </p>
-                  <p className="text-amber-200/80 text-xs mt-1">
-                    You have <span className="font-bold text-amber-300">{pendingRefunds.totalRefund.toLocaleString()} VBMS</span> to claim
+                  <p className="text-vintage-burnt-gold text-xs mt-1">
+                    You have <span className="font-bold text-vintage-gold">{pendingRefunds.totalRefund.toLocaleString()} VBMS</span> to claim
                     <span className="text-vintage-burnt-gold ml-1">({pendingRefunds.count} bid{pendingRefunds.count > 1 ? 's' : ''})</span>
                   </p>
                 </div>
                 <button
                   onClick={handleClaimRefund}
                   disabled={isClaimingRefund}
-                  className="px-4 py-2 bg-amber-500 text-black rounded-lg text-sm font-bold hover:bg-amber-400 disabled:opacity-50 transition-all"
+                  className="px-4 py-2 bg-vintage-gold text-black rounded-lg text-sm font-bold hover:bg-vintage-gold/90 disabled:opacity-50 transition-all"
                 >
                   {isClaimingRefund ? "Claiming..." : "Claim"}
                 </button>
@@ -608,15 +608,15 @@ export function FeaturedCastAuctions({
 
           {/* Pool Warning Banner */}
           {existingCastInfo && (
-            <div className="p-3 bg-amber-900/40 border-2 border-amber-500/70 rounded-lg mb-3">
-              <p className="text-amber-300 font-bold text-sm flex items-center gap-2">
+            <div className="p-3 bg-vintage-gold/10 border-2 border-vintage-gold/50 rounded-lg mb-3">
+              <p className="text-vintage-gold font-bold text-sm flex items-center gap-2">
                 <span>⚠️</span> This cast is already in the auction!
               </p>
-              <p className="text-amber-200/80 text-xs mt-1">
-                Your bid will be <span className="font-bold text-amber-300">JOINED with the existing bid</span>
+              <p className="text-vintage-burnt-gold text-xs mt-1">
+                Your bid will be <span className="font-bold text-vintage-gold">JOINED with the existing bid</span>
               </p>
               <div className="flex items-center justify-between mt-2 text-xs">
-                <span className="text-vintage-burnt-gold">Total Pool: <span className="text-amber-300 font-bold">{existingCastInfo.totalPool?.toLocaleString()} VBMS</span></span>
+                <span className="text-vintage-burnt-gold">Total Pool: <span className="text-vintage-gold font-bold">{existingCastInfo.totalPool?.toLocaleString()} VBMS</span></span>
                 <span className="text-vintage-burnt-gold">{existingCastInfo.contributorCount} contributor(s)</span>
               </div>
             </div>
@@ -639,7 +639,7 @@ export function FeaturedCastAuctions({
                 <button
                   onClick={handlePlaceBid}
                   disabled={isBidding || !bidAmount}
-                  className="px-6 py-2 bg-amber-500 text-black rounded-lg text-sm font-bold hover:bg-amber-400 disabled:opacity-50 transition-all"
+                  className="px-6 py-2 bg-vintage-gold text-black rounded-lg text-sm font-bold hover:bg-vintage-gold/90 disabled:opacity-50 transition-all"
                 >
                   {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : existingCastInfo ? "Join Bid" : "Bid"}
                 </button>
