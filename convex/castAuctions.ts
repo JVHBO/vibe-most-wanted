@@ -1447,14 +1447,14 @@ export const processAuctionLifecycle = internalMutation({
 
       if (i === 0) {
         // TOP 1 - WINNER
-        await ctx.runMutation(internal.castAuctions.finalizeAuction, {
+        await ctx.scheduler.runAfter(0, internal.castAuctions.finalizeAuction, {
           auctionId: auction._id,
         });
         winnerId = auction._id;
         console.log(`[CastAuction] 🏆 TOP 1 WINNER: ${auction.castHash} with ${auction.currentBid} VBMS`);
       } else {
         // LOSERS - Mark as lost and refund
-        await ctx.runMutation(internal.castAuctions.markAuctionLost, {
+        await ctx.scheduler.runAfter(1000, internal.castAuctions.markAuctionLostSafe, {
           auctionId: auction._id,
         });
         losersRefunded++;
@@ -1463,7 +1463,7 @@ export const processAuctionLifecycle = internalMutation({
 
     // 5. Handle auctions without bids (just complete them)
     for (const auction of auctionsWithoutBids) {
-      await ctx.runMutation(internal.castAuctions.finalizeAuction, {
+      await ctx.scheduler.runAfter(0, internal.castAuctions.finalizeAuction, {
         auctionId: auction._id,
       });
     }
@@ -1476,7 +1476,7 @@ export const processAuctionLifecycle = internalMutation({
       .collect();
 
     for (const auction of pendingFeatures) {
-      await ctx.runMutation(internal.castAuctions.activateFeaturedCast, {
+      await ctx.scheduler.runAfter(0, internal.castAuctions.activateFeaturedCast, {
         auctionId: auction._id,
       });
     }
@@ -1494,7 +1494,7 @@ export const processAuctionLifecycle = internalMutation({
       .collect();
 
     for (const auction of expiredFeatures) {
-      await ctx.runMutation(internal.castAuctions.completeFeaturedCast, {
+      await ctx.scheduler.runAfter(0, internal.castAuctions.completeFeaturedCast, {
         auctionId: auction._id,
       });
     }
@@ -1620,5 +1620,72 @@ export const cleanDuplicateHistory = mutation({
     }
     
     return { deleted, total: raplesAuctions.length };
+  },
+});
+
+
+/**
+ * Refund a single bid (used by scheduler)
+ */
+export const refundBid = internalMutation({
+  args: { bidId: v.id("castAuctionBids") },
+  handler: async (ctx, { bidId }) => {
+    const now = Date.now();
+    const bid = await ctx.db.get(bidId);
+    if (!bid || bid.status !== "active") return;
+    
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address")
+      .filter((q) => q.eq(q.field("address"), bid.bidderAddress.toLowerCase()))
+      .first();
+    
+    if (profile) {
+      await ctx.db.patch(profile._id, {
+        coins: (profile.coins || 0) + bid.bidAmount,
+      });
+    }
+    
+    await ctx.db.patch(bid._id, {
+      status: "refunded",
+      refundAmount: bid.bidAmount,
+      refundedAt: now,
+    });
+    
+    console.log(`[CastAuction] Refunded ${bid.bidderUsername}: ${bid.bidAmount} coins`);
+  },
+});
+
+/**
+ * Mark auction as lost and schedule refunds (bandwidth-safe)
+ */
+export const markAuctionLostSafe = internalMutation({
+  args: { auctionId: v.id("castAuctions") },
+  handler: async (ctx, { auctionId }) => {
+    const auction = await ctx.db.get(auctionId);
+    if (!auction || auction.status !== "bidding") return;
+
+    // Mark auction as completed (lost)
+    await ctx.db.patch(auctionId, {
+      status: "completed",
+    });
+
+    // Get all active bids
+    const bids = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_auction")
+      .filter((q) => q.eq(q.field("auctionId"), auctionId))
+      .take(50);
+
+    // Schedule each refund separately
+    for (let i = 0; i < bids.length; i++) {
+      if (bids[i].status === "active") {
+        await ctx.scheduler.runAfter(i * 200, internal.castAuctions.refundBid, {
+          bidId: bids[i]._id,
+        });
+      }
+    }
+
+    console.log(`[CastAuction] Auction LOST: ${auction.castHash} - scheduled ${bids.length} refunds`);
   },
 });
