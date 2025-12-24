@@ -7,6 +7,7 @@
 
 'use client';
 
+import { shareToFarcaster } from '@/lib/share-utils';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { useQuery, useMutation } from 'convex/react';
@@ -470,9 +471,8 @@ export function RaidBossModal({
     const castText = `⚔️ RAID BOSS BATTLE ⚔️\n\nMy Deck Power: ${deckPower.toLocaleString()}\nVs ${bossName}\nBoss HP: ${bossHp}%\n\nJoin the raid! 🎮\n\n@jvhbo`;
 
     const shareUrl = 'https://www.vibemostwanted.xyz/share/raid';
-    const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+    shareToFarcaster(castText, shareUrl);
 
-    window.open(farcasterUrl, '_blank');
     if (soundEnabled) AudioManager.buttonClick();
   };
 
