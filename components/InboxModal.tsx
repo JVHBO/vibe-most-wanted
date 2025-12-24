@@ -14,7 +14,7 @@ import { BUILDER_CODE, dataSuffix } from "@/lib/hooks/useWriteContractWithAttrib
 import Image from "next/image";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks";
 import { Z_INDEX } from "@/lib/z-index";
-import { useFarcasterContext } from "@/contexts/FarcasterContext";
+import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
 
 const NextImage = Image;
 
