@@ -22,7 +22,7 @@ import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
 import { ProgressBar } from "@/components/ProgressBar";
 import AchievementsView from "@/components/AchievementsView";
-import { ShopView } from "@/components/ShopView";
+// Shop moved to /shop page
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { TutorialModal } from "@/components/TutorialModal";
 import { SettingsModal } from "@/components/SettingsModal";
@@ -606,7 +606,7 @@ export default function TCGPage() {
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
   // Profile States
-  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'missions' | 'shop' | 'inbox'>('game');
+  const [currentView, setCurrentView] = useState<'game' | 'profile' | 'missions' | 'inbox'>('game');
 
   // Check URL for view parameter (e.g., ?view=shop) or attack parameter (e.g., ?attack=address)
   useEffect(() => {
@@ -616,9 +616,8 @@ export default function TCGPage() {
       const attackParam = params.get('attack');
 
       if (viewParam === 'shop') {
-        setCurrentView('shop');
-        // Clean URL after setting view
-        window.history.replaceState({}, '', window.location.pathname);
+        // Redirect to standalone shop page
+        router.push('/shop');
       }
 
       // Handle attack parameter - redirect to leaderboard page
@@ -2998,16 +2997,10 @@ export default function TCGPage() {
   const claimMission = async (missionId: string, missionType?: string) => {
     if (!address) return;
 
-    // Don't try to claim placeholder missions
-    if (missionId.startsWith('placeholder_')) {
-      if (soundEnabled) AudioManager.buttonError();
-      return;
-    }
-
-    setIsClaimingMission(missionId);
-    try {
-      // Special handling for VIBE badge claim
-      if (missionType === 'claim_vibe_badge') {
+    // Special handling for VIBE badge claim (before placeholder check because it uses placeholder ID)
+    if (missionType === 'claim_vibe_badge') {
+      setIsClaimingMission(missionId);
+      try {
         const result = await convex.mutation(api.missions.claimVibeBadge, {
           playerAddress: address,
         });
@@ -3019,9 +3012,24 @@ export default function TCGPage() {
         await loadMissions();
         const updatedProfile = await ConvexProfileService.getProfile(address);
         setUserProfile(updatedProfile);
-        return;
+      } catch (error: any) {
+        devError('Error claiming VIBE badge:', error);
+        if (soundEnabled) AudioManager.buttonError();
+        alert(error.message || 'Failed to claim VIBE badge');
+      } finally {
+        setIsClaimingMission(null);
       }
+      return;
+    }
 
+    // Don't try to claim placeholder missions (except VIBE badge which is handled above)
+    if (missionId.startsWith('placeholder_')) {
+      if (soundEnabled) AudioManager.buttonError();
+      return;
+    }
+
+    setIsClaimingMission(missionId);
+    try {
       // Regular mission claim
       const result = await convex.mutation(api.missions.claimMission, {
         playerAddress: address,
@@ -5071,7 +5079,7 @@ export default function TCGPage() {
                       )}
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-white">@{userProfile.username}</span>
-                        <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999)} size="sm" />
+                        <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
                       </div>
                     </Link>
                   ) : (
@@ -5187,16 +5195,12 @@ export default function TCGPage() {
                   </>
                 )}
               </button>
-              <button
+              <Link
+                href="/shop"
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
-                  setCurrentView('shop');
                 }}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
-                  currentView === 'shop'
-                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
-                }`}
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
               >
                 {isInFarcaster ? (
                   <>
@@ -5215,7 +5219,7 @@ export default function TCGPage() {
                     <span className="hidden sm:inline">Shop</span>
                   </>
                 )}
-              </button>
+              </Link>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
@@ -5471,10 +5475,10 @@ export default function TCGPage() {
                   <div className="text-center py-8 mb-6">
                     <p className="text-vintage-burnt-gold mb-4">You don't have any NFTs from this collection yet</p>
                     {selectedCollections[0] === 'nothing' ? (
-                      <button
+                      <Link
+                        href="/shop"
                         onClick={() => {
                           if (soundEnabled) AudioManager.buttonClick();
-                          setCurrentView('shop');
                         }}
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
@@ -5483,7 +5487,7 @@ export default function TCGPage() {
                           <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}</span>
                         </div>
-                      </button>
+                      </Link>
                     ) : COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
                       <Link
                         href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
@@ -5537,10 +5541,10 @@ export default function TCGPage() {
                      return collection?.marketplaceUrl;
                    })() && (
                     selectedCollections[0] === 'nothing' ? (
-                      <button
+                      <Link
+                        href="/shop"
                         onClick={() => {
                           if (soundEnabled) AudioManager.buttonClick();
-                          setCurrentView('shop');
                         }}
                         className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
@@ -5551,7 +5555,7 @@ export default function TCGPage() {
                             {COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}
                           </span>
                         </div>
-                      </button>
+                      </Link>
                     ) : COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
                       <Link
                         href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
@@ -5989,6 +5993,7 @@ export default function TCGPage() {
                   address={address}
                   userFid={userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined)}
                   soundEnabled={soundEnabled}
+                  hasVibeBadge={userProfile?.hasVibeBadge}
                   onRewardClaimed={(amount: number) => {
                     setSuccessMessage(`Claimed ${amount} $TESTVBMS!`);
                   }}
@@ -6009,7 +6014,7 @@ export default function TCGPage() {
           )}
 
           {/* 🏪 Shop View */}
-          {currentView === 'shop' && <ShopView address={address} />}
+          {/* Shop moved to /shop page */}
 
           {/* End content wrapper */}
           </div>

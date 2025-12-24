@@ -601,7 +601,7 @@ export default function ProfilePage() {
                   {profile.username}
                 </h1>
                 <div className="flex items-center gap-2">
-                  <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="md" />
+                  <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, profile.hasVibeBadge)} size="md" />
                 </div>
               </div>
               <div className="flex items-center gap-2 justify-center md:justify-start mb-2 max-w-full">
