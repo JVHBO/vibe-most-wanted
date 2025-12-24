@@ -15,7 +15,7 @@ export async function POST() {
   try {
     const convex = getConvexClient();
     // Get all active poker rooms
-    const allRooms = await convex.query(api.pokerBattle.listAllRooms, {});
+    const allRooms = await convex.query(api.pokerBattle.getPokerRooms, {});
 
     let totalDeleted = 0;
     const roomIds = new Set<string>();
