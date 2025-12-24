@@ -194,13 +194,13 @@ export function PveCardSelectionModal({
           </button>
         </div>
 
-        {/* Selected Deck Display */}
-        <div className="mb-4 bg-green-900/40 border-2 border-vintage-neon-blue/50 rounded-xl p-3 flex-shrink-0">
-          <div className={`grid gap-2 ${handSize === 10 ? 'grid-cols-5 md:grid-cols-10' : 'grid-cols-5'}`}>
+        {/* Selected Deck Display - Compact */}
+        <div className="mb-2 bg-green-900/40 border border-vintage-neon-blue/50 rounded-lg p-2 flex-shrink-0">
+          <div className="flex flex-wrap gap-1 justify-center">
             {Array.from({ length: handSize }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-[2/3] border-2 border-dashed border-vintage-neon-blue/50 rounded-lg flex flex-col items-center justify-center overflow-hidden relative"
+                className="w-8 h-12 sm:w-10 sm:h-14 border border-dashed border-vintage-neon-blue/50 rounded flex items-center justify-center overflow-hidden relative"
               >
                 {pveSelectedCards[i] ? (
                   <>
@@ -214,14 +214,14 @@ export function PveCardSelectionModal({
                     </div>
                   </>
                 ) : (
-                  <span className="text-vintage-neon-blue text-3xl">+</span>
+                  <span className="text-vintage-neon-blue text-lg">+</span>
                 )}
               </div>
             ))}
           </div>
-          <div className="mt-3 text-center">
+          <div className="mt-1 text-center">
             <p className="text-xs text-vintage-burnt-gold">Total Power</p>
-            <p className="text-2xl font-bold text-vintage-neon-blue">
+            <p className="text-lg font-bold text-vintage-neon-blue">
               {pveSelectedCardsPower.toLocaleString()}
             </p>
           </div>
@@ -303,7 +303,7 @@ export function PveCardSelectionModal({
           <button
             onClick={handleChooseDifficulty}
             disabled={pveSelectedCards.length !== handSize || jcNfts.length < handSize}
-            className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
+            className={`w-full px-4 py-2 rounded-lg font-display font-bold text-sm transition-all uppercase tracking-wide ${
               pveSelectedCards.length === handSize && jcNfts.length >= handSize
                 ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
                 : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
@@ -318,7 +318,7 @@ export function PveCardSelectionModal({
 
           <button
             onClick={handleCancel}
-            className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
+            className="w-full px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern text-sm transition"
           >
             Cancel
           </button>
