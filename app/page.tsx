@@ -69,7 +69,7 @@ import { CONTRACTS } from "@/lib/contracts";
 
 import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, isSameCard, type CollectionId } from "@/lib/collections/index";
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
-import { getImage, fetchNFTs } from "@/lib/nft/fetcher";
+import { getImage, fetchNFTs, clearAllNftCache } from "@/lib/nft/fetcher";
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 import type { Card } from "@/lib/types/card";
 import { RunawayEasterEgg } from "@/components/RunawayEasterEgg";
@@ -5273,7 +5273,7 @@ export default function TCGPage() {
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
               <p className="text-red-400 font-bold">✗ {t('error')}</p>
               <p className="text-red-300 text-sm mt-1">{errorMsg}</p>
-              <button onClick={loadNFTs} className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">{t('retryButton')}</button>
+              <button onClick={() => { clearAllNftCache(); loadNFTs(); }} className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">{t('retryButton')}</button>
             </div>
           )}
 
@@ -5339,7 +5339,7 @@ export default function TCGPage() {
                   {nfts.length > 0 && (
                     <div className="flex gap-2 flex-wrap">
                       <button
-                        onClick={loadNFTs}
+                        onClick={() => { clearAllNftCache(); loadNFTs(); }}
                         disabled={status === 'fetching'}
                         className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
                         title="Refresh cards and metadata"
