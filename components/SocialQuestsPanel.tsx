@@ -14,6 +14,7 @@ interface SocialQuestsPanelProps {
   userFid?: number;
   soundEnabled?: boolean;
   onRewardClaimed?: (amount: number) => void;
+  hasVibeBadge?: boolean;
 }
 
 export function SocialQuestsPanel({
@@ -21,7 +22,10 @@ export function SocialQuestsPanel({
   userFid,
   soundEnabled = true,
   onRewardClaimed,
+  hasVibeBadge = false,
 }: SocialQuestsPanelProps) {
+  // Cast interaction reward: 300 base, 600 with VIBE badge (2x)
+  const castInteractionReward = hasVibeBadge ? 600 : 300;
   const [verifying, setVerifying] = useState<string | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
@@ -443,7 +447,7 @@ export function SocialQuestsPanel({
                             <path d={icon} />
                           </svg>
                           <span className={`text-[10px] font-bold ${claimed ? "text-green-400" : `text-${color}-300`}`}>
-                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : "+500 $VBMS"}
+                            {isVerifying || isClaiming ? "..." : claimed ? "✓" : `+${castInteractionReward} $VBMS`}
                           </span>
                         </button>
                       );

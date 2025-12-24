@@ -552,7 +552,7 @@ export default function LeaderboardPage() {
                                 <div>
                                   <div className="flex items-center gap-1 mb-1">
                                     <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base truncate max-w-[100px] md:max-w-[150px]">{profile.username}</p>
-                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999)} size="xs" />
+                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, profile.hasVibeBadge)} size="xs" />
                                   </div>
                                   <p className="text-[10px] md:text-xs text-vintage-burnt-gold font-mono hidden sm:block">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
                                 </div>

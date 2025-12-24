@@ -169,3 +169,29 @@ export const claimCastInteractionReward = mutation({
     };
   },
 });
+
+// Admin: Reset cast interactions for a player (for testing)
+export const resetCastInteractions = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    // Get all interactions for this player
+    const interactions = await ctx.db
+      .query("castInteractions")
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
+      .collect();
+
+    // Delete all interactions
+    for (const interaction of interactions) {
+      await ctx.db.delete(interaction._id);
+    }
+
+    console.log(`🔄 Reset ${interactions.length} cast interactions for ${normalizedAddress}`);
+
+    return {
+      success: true,
+      deleted: interactions.length,
+    };
+  },
+});
