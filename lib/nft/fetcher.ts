@@ -23,7 +23,7 @@ const IMAGE_CACHE_TIME = 1000 * 60 * 60; // 1 hour
 
 // NFT response cache (persisted in sessionStorage)
 const NFT_CACHE_KEY = 'vbms_nft_cache';
-const NFT_CACHE_TIME = 1000 * 60 * 30; // 30 minutes
+const NFT_CACHE_TIME = 1000 * 60 * 5; // 5 minutes
 
 // Track if Alchemy API is blocked
 let alchemyBlocked = false;
@@ -69,6 +69,27 @@ function setNftCache(owner: string, contract: string, nfts: any[]): void {
 
 export function getAlchemyStatus(): { blocked: boolean; error: string | null } {
   return { blocked: alchemyBlocked, error: lastAlchemyError };
+}
+
+/**
+ * Clear all NFT cache entries
+ * Used when user explicitly refreshes to get fresh data
+ */
+export function clearAllNftCache(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith(NFT_CACHE_KEY)) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    console.log(`Cleared ${keysToRemove.length} NFT cache entries`);
+  } catch (e) {
+    console.warn('Failed to clear NFT cache:', e);
+  }
 }
 
 /**
