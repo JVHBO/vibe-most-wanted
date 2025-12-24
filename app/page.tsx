@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 // Updated: Removed warning banners
 import React, { useEffect, useState, useCallback, useMemo, memo, useRef } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ConvexProfileService, type UserProfile, type MatchHistory } from "../lib/convex-profile"; // ? Convex para Profiles
-import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ? Convex para PvP Rooms
+import { ConvexProfileService, type UserProfile, type MatchHistory } from "../lib/convex-profile"; // ✨ Convex para Profiles
+import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
 import { sdk } from "@farcaster/miniapp-sdk";
 import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
@@ -50,19 +50,19 @@ import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
-// ?? Performance-optimized hooks
+// 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
-// ?? BANDWIDTH FIX: Cached hooks for infrequent data
+// 🚀 BANDWIDTH FIX: Cached hooks for infrequent data
 import { useCachedDailyQuest } from "@/lib/convex-cache";
-// ?? Development logger (silent in production)
+// 📝 Development logger (silent in production)
 import { devLog, devError, devWarn } from "@/lib/utils/logger";
 import { openMarketplace } from "@/lib/marketplace-utils";
-// ?? Audio Manager
+// 🔊 Audio Manager
 import { AudioManager } from "@/lib/audio-manager";
-// ?? Loading Spinner
+// 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { CardLoadingScreen } from "@/components/CardLoadingScreen";
-// ?? VBMS Blockchain Contracts
+// 💎 VBMS Blockchain Contracts
 import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
 import { CONTRACTS } from "@/lib/contracts";
@@ -79,9 +79,9 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
 
-// ? Image caching moved to lib/nft/fetcher.ts
+// ✅ Image caching moved to lib/nft/fetcher.ts
 
-// ?? Avatar URL helper - Uses real Twitter profile pic when available
+// 🎨 Avatar URL helper - Uses real Twitter profile pic when available
 const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterProfileImageUrl?: string }): string | null => {
   // Handle different input types
   if (!twitterData) return null;
@@ -106,10 +106,10 @@ const getAvatarFallback = (): string => {
   return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23d4a017"><circle cx="12" cy="12" r="10"/></svg>';
 };
 
-// Tornar AudioManager global para persistir entre p�ginas
+// Tornar AudioManager global para persistir entre páginas
 
-// ? NFT attribute functions moved to lib/nft/attributes.ts
-// ? NFT fetching functions moved to lib/nft/fetcher.ts
+// ✅ NFT attribute functions moved to lib/nft/attributes.ts
+// ✅ NFT fetching functions moved to lib/nft/fetcher.ts
 
 /**
  * Fetch NFTs from all enabled collections
@@ -117,24 +117,24 @@ const getAvatarFallback = (): string => {
  */
 async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
   const enabledCollections = getEnabledCollections();
-  devLog('?? Fetching NFTs from', enabledCollections.length, 'enabled collections');
+  devLog('🎴 Fetching NFTs from', enabledCollections.length, 'enabled collections');
 
   const allNfts: any[] = [];
 
   for (const collection of enabledCollections) {
     try {
-      devLog(`?? Fetching from ${collection.displayName} (${collection.contractAddress})`);
+      devLog(`📡 Fetching from ${collection.displayName} (${collection.contractAddress})`);
       const nfts = await fetchNFTs(owner, collection.contractAddress, onProgress);
       // Tag each NFT with its collection
       const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
       allNfts.push(...tagged);
-      devLog(`? Found ${nfts.length} NFTs from ${collection.displayName}`);
+      devLog(`✓ Found ${nfts.length} NFTs from ${collection.displayName}`);
     } catch (error) {
-      devError(`? Failed to fetch from ${collection.displayName}:`, error);
+      devError(`✗ Failed to fetch from ${collection.displayName}:`, error);
     }
   }
 
-  devLog(`? Total NFTs from all collections: ${allNfts.length}`);
+  devLog(`✅ Total NFTs from all collections: ${allNfts.length}`);
   return allNfts;
 }
 
@@ -303,7 +303,7 @@ const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }:
             {/* Locked overlay for cards in raid deck */}
             {locked && (
               <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-30 rounded-lg">
-                <div className="text-3xl mb-1">??</div>
+                <div className="text-3xl mb-1">⚔️</div>
                 <div className="text-[10px] text-white font-bold bg-red-600/80 px-2 py-0.5 rounded">
                   IN RAID
                 </div>
@@ -335,7 +335,7 @@ export default function TCGPage() {
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false);
 
-  // ?? DEV MODE: Force admin wallet for testing
+  // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
   const address = DEV_WALLET_BYPASS
     ? '0xbb4c7d8b2e32c7c99d358be999377c208cce53c2'
@@ -345,22 +345,22 @@ export default function TCGPage() {
 
   // Query player's economy data
   const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
-  // ?? BANDWIDTH FIX: Daily quest changes once per day - use cached hook
+  // 🚀 BANDWIDTH FIX: Daily quest changes once per day - use cached hook
   const { quest: dailyQuest } = useCachedDailyQuest();
   const questProgress = useQuery(api.quests.getQuestProgress, address ? { address } : "skip");
 
-  // ?? Weekly Quests & Missions
+  // 🎯 Weekly Quests & Missions
   const weeklyProgress = useQuery(api.quests.getWeeklyProgress, address ? { address } : "skip");
 
-  // ?? Personal missions (VibeFID, welcome gift, etc.)
+  // 🎴 Personal missions (VibeFID, welcome gift, etc.)
   const playerMissions = useQuery(api.missions.getPlayerMissions, address ? { playerAddress: address } : "skip");
 
-  // ?? Ban check for exploiters
+  // 🚫 Ban check for exploiters
   const banCheck = useQuery(api.blacklist.checkBan, address ? { address } : "skip");
 
   // Debug logging for address changes
   useEffect(() => {
-    devLog('?? Address state:', {
+    devLog('🔍 Address state:', {
       wagmiAddress,
       finalAddress: address,
       isConnected,
@@ -373,7 +373,7 @@ export default function TCGPage() {
     const saveFarcasterProfile = async () => {
       if (!isInFarcaster || !wagmiAddress) return;
 
-      console.log('[Farcaster] ?? Saving address to localStorage:', wagmiAddress);
+      console.log('[Farcaster] 💾 Saving address to localStorage:', wagmiAddress);
       localStorage.setItem('connectedAddress', wagmiAddress.toLowerCase());
 
       // Save FID to profile
@@ -381,14 +381,14 @@ export default function TCGPage() {
         const context = await sdk?.context;
         const fid = context?.user?.fid;
         if (fid) {
-          devLog('?? Saving FID to profile:', fid);
+          devLog('📱 Saving FID to profile:', fid);
           const profile = await ConvexProfileService.getProfile(wagmiAddress);
           if (profile && (!profile.fid || profile.fid !== fid.toString())) {
             await ConvexProfileService.updateProfile(wagmiAddress, {
               fid: fid.toString(),
               farcasterFid: fid  // numeric FID for Social Quests
             });
-            devLog('? FID saved to profile');
+            devLog('✓ FID saved to profile');
           }
         }
       } catch (error) {
@@ -405,7 +405,7 @@ export default function TCGPage() {
       try {
         if (typeof window !== 'undefined') {
           await sdk.actions.ready();
-          devLog('? Farcaster SDK ready called');
+          devLog('✅ Farcaster SDK ready called');
         }
       } catch (error) {
         devError('Error calling Farcaster SDK ready:', error);
@@ -416,7 +416,7 @@ export default function TCGPage() {
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
-  const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padr�o 10%
+  const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [tutorialPage, setTutorialPage] = useState<number>(1);
   const TUTORIAL_PAGES = 4; // Total number of tutorial pages
@@ -432,7 +432,6 @@ export default function TCGPage() {
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
   const [skippedCardLoading, setSkippedCardLoading] = useState<boolean>(false);
-  const lastLoadedAddressRef = useRef<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<any[]>([]);
   const [playerPower, setPlayerPower] = useState<number>(0);
@@ -452,7 +451,7 @@ export default function TCGPage() {
   // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
   const CARDS_PER_PAGE = isInFarcaster ? 12 : 24;
 
-  // ?? Victory Images - 5 screens!
+  // 🎉 Victory Images - 5 screens!
   const VICTORY_IMAGES = [
     '/victory-1.jpg',   // Gigachad
     '/victory-2.jpg',   // Hearts
@@ -481,18 +480,18 @@ export default function TCGPage() {
   // Convex client for imperative queries
   const convex = useConvex();
 
-  // ?? Performance: Memoized NFT calculations (only recomputes when nfts change)
+  // 🚀 Performance: Memoized NFT calculations (only recomputes when nfts change)
   const totalNftPower = useTotalPower(nfts);
   const collectionPowers = usePowerByCollection(nfts); // Powers separated by collection for leaderboards
   const openedCardsCount = useMemo(() => nfts.filter(nft => !isUnrevealed(nft)).length, [nfts]);
   const unopenedCardsCount = useMemo(() => nfts.filter(nft => isUnrevealed(nft)).length, [nfts]);
   const nftTokenIds = useMemo(() => nfts.map(nft => nft.tokenId), [nfts]);
 
-  // ?? Performance: Memoized sorted NFTs (for auto-select and AI)
+  // 🚀 Performance: Memoized sorted NFTs (for auto-select and AI)
   const sortedNfts = useSortedByPower(nfts);
   const strongestNfts = useStrongestCards(nfts, HAND_SIZE);
 
-  // ?? Performance: Memoized JC NFTs (AI deck)
+  // 🚀 Performance: Memoized JC NFTs (AI deck)
   const sortedJcNfts = useSortedByPower(jcNfts);
   const strongestJcNfts = useStrongestCards(jcNfts, HAND_SIZE);
   const strongestJcNftsForPoker = useStrongestCards(jcNfts, 10); // Poker Battle needs 10 cards
@@ -500,7 +499,7 @@ export default function TCGPage() {
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
   const awardPvPCoins = useMutation(api.economy.awardPvPCoins);
-  const recordAttackResult = useMutation(api.economy.recordAttackResult); // ?? ATOMIC: Combines coins + match + profile update
+  const recordAttackResult = useMutation(api.economy.recordAttackResult); // ⚛️ ATOMIC: Combines coins + match + profile update
   const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
@@ -510,11 +509,11 @@ export default function TCGPage() {
   const awardPvPVBMS = useMutation(api.economyVBMS.awardPvPVBMS);
   const getVBMSBalance = useQuery(api.economyVBMS.getVBMSBalance, address ? { address } : "skip");
 
-  // PvP Entry Fee & Reward System (VBMS entry ? TESTVBMS inbox rewards)
+  // PvP Entry Fee & Reward System (VBMS entry → TESTVBMS inbox rewards)
   const useEntryFee = useMutation(api.pvp.useEntryFee);
   const sendPvPRewardToInbox = useMutation(api.pvp.sendPvPRewardToInbox);
 
-  // ?? VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
+  // 💎 VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
   const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useFarcasterVBMSBalance(address);
   const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const { createBattle, isPending: isCreatingBattle } = useCreateBattle();
@@ -522,17 +521,17 @@ export default function TCGPage() {
   const { finishBattle: finishVBMSBattle } = useFinishVBMSBattle();
   const { battleId: activeBattleId, refetch: refetchActiveBattle } = useActiveBattle(address as `0x${string}`);
 
-  // ?? Welcome Pack (enabled in miniapp too)
+  // 🎁 Welcome Pack (enabled in miniapp too)
   const hasReceivedWelcomePack = useQuery(
     api.welcomePack.hasReceivedWelcomePack,
     address ? { address } : "skip"
   );
   const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
 
-  // ?? Weekly Quests mutations
+  // 🎯 Weekly Quests mutations
   const claimWeeklyReward = useMutation(api.quests.claimWeeklyReward);
 
-  // ?? Weekly Leaderboard Rewards (skip in miniapp for performance)
+  // 🏅 Weekly Leaderboard Rewards (skip in miniapp for performance)
   const weeklyRewardEligibility = useQuery(
     api.quests.checkWeeklyRewardEligibility,
     (address && !isMiniappMode()) ? { address } : "skip"
@@ -540,14 +539,14 @@ export default function TCGPage() {
   const claimWeeklyLeaderboardReward = useMutation(api.quests.claimWeeklyLeaderboardReward);
   const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState<boolean>(false);
 
-  // ?? Coins Inbox Status
+  // 💰 Coins Inbox Status
   const inboxStatus = useQuery(api.coinsInbox.getInboxStatus, address ? { address } : "skip");
 
-  // ?? Daily Attempts System (PvE limits)
+  // 🎮 Daily Attempts System (PvE limits)
   const pveAttemptsData = useQuery(api.pokerCpu.getRemainingPveAttempts, address ? { address } : "skip");
   const consumePveAttempt = useMutation(api.pokerCpu.consumePveAttempt);
 
-  // ?? Defense Lock System - Get locked cards for Attack/PvP modes
+  // 🔒 Defense Lock System - Get locked cards for Attack/PvP modes
   const attackLockedCards = useQuery(
     api.profiles.getAvailableCards,
     address ? { address, mode: "attack" } : "skip"
@@ -557,7 +556,7 @@ export default function TCGPage() {
     address ? { address, mode: "pvp" } : "skip"
   );
 
-  // ?? Defense/Raid Lock System - Cards in raid cannot be used in defense and vice-versa
+  // 🔒 Defense/Raid Lock System - Cards in raid cannot be used in defense and vice-versa
   const defenseLockedCards = useQuery(
     api.profiles.getLockedCardsForDeckBuilding,
     address ? { address, mode: "defense" } : "skip"
@@ -567,7 +566,7 @@ export default function TCGPage() {
     [defenseLockedCards]
   );
 
-  // ?? Raid Deck Energy - Check for expired cards to show red dot on button
+  // 🔋 Raid Deck Energy - Check for expired cards to show red dot on button
   const raidDeckEnergy = useQuery(
     api.raidBoss.getPlayerRaidDeck,
     address ? { address } : "skip"
@@ -583,7 +582,7 @@ export default function TCGPage() {
   // Clean conflicting cards from defense deck on load
   const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
 
-  // ??? Defense Deck Warning - Show popup if player has no defense deck
+  // 🛡️ Defense Deck Warning - Show popup if player has no defense deck
   const [showDefenseDeckWarning, setShowDefenseDeckWarning] = useState<boolean>(false);
   const [defenseDeckWarningDismissed, setDefenseDeckWarningDismissed] = useState<boolean>(false);
 
@@ -723,7 +722,7 @@ export default function TCGPage() {
   // Raid Boss States
   const [showRaidBoss, setShowRaidBoss] = useState<boolean>(false);
 
-  // ?? Performance: Memoized battle card power totals (for UI display)
+  // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
   // VibeFID gets 10x power in leaderboard attacks
   const calculateLeaderboardAttackPower = (cards: any[]) => {
@@ -735,7 +734,7 @@ export default function TCGPage() {
   const attackSelectedCardsPower = calculateLeaderboardAttackPower(attackSelectedCards);
   const dealerCardsPower = calculateLeaderboardAttackPower(dealerCards); // VibeFID 10x applies to defender too
 
-  // ? PvP Preview States
+  // ✅ PvP Preview States
   const [showPvPPreview, setShowPvPPreview] = useState<boolean>(false);
   const [pvpPreviewData, setPvpPreviewData] = useState<any>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
@@ -832,7 +831,7 @@ export default function TCGPage() {
     }));
   }, []);
 
-  // Carregar estado da m�sica do localStorage na montagem
+  // Carregar estado da música do localStorage na montagem
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMusicEnabled = localStorage.getItem('musicEnabled');
@@ -841,7 +840,7 @@ export default function TCGPage() {
       if (savedMusicEnabled !== null) {
         const isEnabled = savedMusicEnabled === 'true';
         setMusicEnabled(isEnabled);
-        // ?? FIX: Also update the MusicContext state to prevent audio playing when muted
+        // 🔧 FIX: Also update the MusicContext state to prevent audio playing when muted
         setIsMusicEnabled(isEnabled);
       }
       if (savedMusicVolume !== null) {
@@ -849,7 +848,7 @@ export default function TCGPage() {
         setMusicVolume(volume);
         // Sincroniza o AudioManager.currentVolume imediatamente
         AudioManager.currentVolume = volume;
-        devLog(`?? Volume carregado do localStorage: ${volume} (${Math.round(volume * 100)}%)`);
+        devLog(`📦 Volume carregado do localStorage: ${volume} (${Math.round(volume * 100)}%)`);
       }
     }
   }, [setIsMusicEnabled]);
@@ -874,7 +873,7 @@ export default function TCGPage() {
   // Auto-connect Farcaster wallet in miniapp context (Nov 14 simple version)
   useEffect(() => {
     const initFarcasterWallet = async () => {
-      console.log('[Farcaster] ?? Initializing wallet connection...');
+      console.log('[Farcaster] 🔍 Initializing wallet connection...');
       try {
         console.log('[Farcaster] SDK check:', {
           hasSdk: !!sdk,
@@ -885,7 +884,7 @@ export default function TCGPage() {
         // CRITICAL: Don't use iframe detection - check if Farcaster SDK is ACTUALLY functional
         // The SDK only exists and works in real Farcaster miniapp context
         if (!sdk || typeof sdk.wallet === 'undefined' || !sdk.wallet.ethProvider) {
-          console.log('[Farcaster] ?? Not in Farcaster miniapp - SDK not available');
+          console.log('[Farcaster] ⚠️ Not in Farcaster miniapp - SDK not available');
           setIsInFarcaster(false);
           return;
         }
@@ -900,25 +899,25 @@ export default function TCGPage() {
           const context = await Promise.race([contextPromise, timeoutPromise]) as any;
 
           if (!context || !context.user || !context.user.fid) {
-            console.log('[Farcaster] ?? SDK present but invalid context - not in miniapp');
+            console.log('[Farcaster] ⚠️ SDK present but invalid context - not in miniapp');
             setIsInFarcaster(false);
             return;
           }
 
-          console.log('[Farcaster] ? Farcaster miniapp confirmed - FID:', context.user.fid);
+          console.log('[Farcaster] ✅ Farcaster miniapp confirmed - FID:', context.user.fid);
         } catch (contextError) {
-          console.log('[Farcaster] ?? Failed to get valid SDK context:', contextError);
+          console.log('[Farcaster] ⚠️ Failed to get valid SDK context:', contextError);
           setIsInFarcaster(false);
           return;
         }
 
-        console.log('[Farcaster] ? Enabling miniapp mode and connecting wallet');
+        console.log('[Farcaster] ✅ Enabling miniapp mode and connecting wallet');
         setIsInFarcaster(true);
         setIsCheckingFarcaster(true);
 
         try {
           // Find the Farcaster miniapp connector
-          console.log('[Farcaster] ?? Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
+          console.log('[Farcaster] 🔍 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
 
           // Try multiple possible connector IDs (case variations)
           const farcasterConnector = connectors.find((c) =>
@@ -928,38 +927,38 @@ export default function TCGPage() {
           );
 
           if (!farcasterConnector) {
-            console.error('[Farcaster] ? Farcaster connector not found in wagmi config');
+            console.error('[Farcaster] ❌ Farcaster connector not found in wagmi config');
             console.error('[Farcaster] Available connector IDs:', connectors.map(c => c.id));
 
             // Show user-friendly error
-            alert('?? Erro: Connector Farcaster n�o encontrado. Por favor, recarregue a p�gina.');
+            alert('⚠️ Erro: Connector Farcaster não encontrado. Por favor, recarregue a página.');
             setIsCheckingFarcaster(false);
             return;
           }
 
-          console.log('[Farcaster] ?? Connecting with Farcaster wagmi connector:', farcasterConnector.id);
+          console.log('[Farcaster] 📡 Connecting with Farcaster wagmi connector:', farcasterConnector.id);
 
           // Connect using wagmi - this will populate wagmiAddress automatically
           await connect({ connector: farcasterConnector });
 
-          console.log('[Farcaster] ? Connected successfully');
-          devLog('? Auto-connected Farcaster wallet via wagmi');
+          console.log('[Farcaster] ✅ Connected successfully');
+          devLog('✓ Auto-connected Farcaster wallet via wagmi');
 
-          // ? Save FID to profile for notifications
+          // ✓ Save FID to profile for notifications
           try {
             const context = await sdk.context;
             const fid = context?.user?.fid;
             if (fid) {
-              devLog('?? Farcaster FID detected:', fid);
+              devLog('📱 Farcaster FID detected:', fid);
             }
           } catch (fidError) {
             devLog('! Could not get FID:', fidError);
           }
         } catch (connectError: any) {
-          console.error('[Farcaster] ? Connection error:', connectError);
+          console.error('[Farcaster] ❌ Connection error:', connectError);
           // Handle authorization errors
           if (connectError?.message?.includes('not been authorized')) {
-            console.warn('[Farcaster] ?? Wallet not authorized - user needs to enable in Farcaster settings');
+            console.warn('[Farcaster] ⚠️ Wallet not authorized - user needs to enable in Farcaster settings');
             devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
           }
         } finally {
@@ -973,7 +972,7 @@ export default function TCGPage() {
     initFarcasterWallet();
   }, [connect, connectors]);
 
-  // ?? Handler to enable Farcaster notifications
+  // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
     try {
       if (!sdk || !sdk.actions || !isInFarcaster) {
@@ -982,25 +981,25 @@ export default function TCGPage() {
         return;
       }
 
-      devLog('?? Requesting Farcaster notification permissions...');
+      devLog('🔔 Requesting Farcaster notification permissions...');
       toast.loading('Requesting notification permissions...');
 
       const result = await sdk.actions.addMiniApp();
-      devLog('? Notification permission result:', result);
+      devLog('✓ Notification permission result:', result);
 
       toast.dismiss();
-      toast.success('Notifications enabled! ??');
+      toast.success('Notifications enabled! 🔔');
 
       if (soundEnabled) AudioManager.buttonClick();
     } catch (error) {
-      devError('? Error enabling notifications:', error);
+      devError('✗ Error enabling notifications:', error);
       toast.dismiss();
       toast.error('Failed to enable notifications');
       if (soundEnabled) AudioManager.buttonError();
     }
   };
 
-  // ?? Show victory popup with RANDOM image selection
+  // 🎉 Show victory popup with RANDOM image selection
   const showVictory = () => {
     // RANDOMLY select one of the 5 victory screens, avoiding consecutive duplicates
     let randomIndex = Math.floor(Math.random() * VICTORY_IMAGES.length);
@@ -1011,14 +1010,14 @@ export default function TCGPage() {
       const availableIndices = Array.from({ length: VICTORY_IMAGES.length }, (_, i) => i)
         .filter(i => i !== lastVictoryIndexRef.current);
       randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-      devLog(`?? Avoided duplicate victory screen, changed from ${lastVictoryIndexRef.current} to ${randomIndex}`);
+      devLog(`🔄 Avoided duplicate victory screen, changed from ${lastVictoryIndexRef.current} to ${randomIndex}`);
     }
 
     // Remember this index for next time
     lastVictoryIndexRef.current = randomIndex;
     const victoryImage = VICTORY_IMAGES[randomIndex];
 
-    devLog(`?? Random victory screen selected: ${victoryImage} (index: ${randomIndex})`);
+    devLog(`🎲 Random victory screen selected: ${victoryImage} (index: ${randomIndex})`);
 
     // Play audio based on which screen was selected
     if (randomIndex === 0) {
@@ -1043,7 +1042,7 @@ export default function TCGPage() {
     setShowWinPopup(true);
   };
 
-  // ?? Handler to close victory screen and stop audio
+  // 🎵 Handler to close victory screen and stop audio
   const handleCloseVictoryScreen = () => {
     // Stop victory audio if playing
     if (victoryAudioRef.current) {
@@ -1055,24 +1054,24 @@ export default function TCGPage() {
     // TESTVBMS already added - no modal
   };
 
-  // ?? Handler to close defeat screen
+  // 🎵 Handler to close defeat screen
   const handleCloseDefeatScreen = () => {
     setShowLossPopup(false);
     // TESTVBMS already added - no modal
   };
 
-  // ?? Handler to claim daily login bonus
+  // 💰 Handler to claim daily login bonus
   const handleClaimLoginBonus = async () => {
     if (!address || loginBonusClaimed || isClaimingBonus) return;
 
     try {
       setIsClaimingBonus(true);
-      devLog('?? Claiming login bonus...');
+      devLog('💰 Claiming login bonus...');
 
       const result = await claimLoginBonus({ address });
 
       if (result.awarded > 0) {
-        devLog(`? Login bonus claimed: +${result.awarded} $TESTVBMS`);
+        devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
         setLoginBonusClaimed(true);
         if (soundEnabled) AudioManager.buttonClick();
       } else {
@@ -1080,25 +1079,25 @@ export default function TCGPage() {
         if (soundEnabled) AudioManager.buttonError();
       }
     } catch (error) {
-      devError('? Error claiming login bonus:', error);
+      devError('✗ Error claiming login bonus:', error);
       if (soundEnabled) AudioManager.buttonError();
     } finally {
       setIsClaimingBonus(false);
     }
   };
 
-  // ?? Handler to claim daily bonus with blockchain TX
+  // 💎 Handler to claim daily bonus with blockchain TX
   const handleDailyClaimNow = async () => {
     if (!address || loginBonusClaimed) return;
 
     try {
-      devLog('?? Daily claim - creating and claiming mission...');
+      devLog('💎 Daily claim - creating and claiming mission...');
 
       // Step 1: Create the daily login mission
       const result = await claimLoginBonus({ address });
 
       if (result.reason?.includes('Mission created')) {
-        devLog('? Daily mission created');
+        devLog('✓ Daily mission created');
 
         // Step 2: Immediately claim all unclaimed missions (including the one just created)
         const claimResult = await convex.mutation(api.missions.claimAllMissions, {
@@ -1107,7 +1106,7 @@ export default function TCGPage() {
         });
 
         if (claimResult && claimResult.claimed > 0) {
-          devLog(`? Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} TESTVBMS)`);
+          devLog(`✅ Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} TESTVBMS)`);
           if (soundEnabled) AudioManager.buttonSuccess();
 
           // Refresh profile to show new balance
@@ -1118,7 +1117,7 @@ export default function TCGPage() {
         setLoginBonusClaimed(true);
       } else if (result.awarded > 0) {
         // Old flow - already paid
-        devLog(`? Login bonus claimed: +${result.awarded} $TESTVBMS`);
+        devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
         setLoginBonusClaimed(true);
         if (soundEnabled) AudioManager.buttonClick();
       } else {
@@ -1126,26 +1125,26 @@ export default function TCGPage() {
         if (soundEnabled) AudioManager.buttonError();
       }
     } catch (error) {
-      devError('? Error claiming daily bonus:', error);
+      devError('✗ Error claiming daily bonus:', error);
       if (soundEnabled) AudioManager.buttonError();
     }
   };
 
-  // ?? Handler to claim welcome pack
+  // 🎁 Handler to claim welcome pack
   const handleClaimWelcomePack = async () => {
     if (!address || isClaimingWelcomePack) return;
 
     try {
       setIsClaimingWelcomePack(true);
-      devLog('?? Claiming welcome pack...');
+      devLog('🎁 Claiming welcome pack...');
 
       const result = await claimWelcomePack({ address });
 
-      devLog('? Welcome pack claimed: 1 Basic Pack!');
+      devLog('✓ Welcome pack claimed: 1 Basic Pack!');
       setShowWelcomePackPopup(false);
       if (soundEnabled) AudioManager.buttonClick();
     } catch (error: any) {
-      devError('? Error claiming welcome pack:', error);
+      devError('✗ Error claiming welcome pack:', error);
       alert(error.message || 'Failed to claim welcome pack');
       if (soundEnabled) AudioManager.buttonError();
     } finally {
@@ -1153,20 +1152,20 @@ export default function TCGPage() {
     }
   };
 
-  // ?? Handler to claim daily quest reward
+  // 🎯 Handler to claim daily quest reward
   const handleClaimQuestReward = async () => {
     if (!address || isClaimingQuest) return;
 
     try {
       setIsClaimingQuest(true);
-      devLog('?? Claiming quest reward...');
+      devLog('🎯 Claiming quest reward...');
 
       const result = await claimQuestReward({ address });
 
-      devLog(`? Quest reward claimed: +${result.reward} $TESTVBMS`);
+      devLog(`✓ Quest reward claimed: +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
     } catch (error: any) {
-      devError('? Error claiming quest reward:', error);
+      devError('✗ Error claiming quest reward:', error);
       alert(error.message || 'Failed to claim quest reward');
       if (soundEnabled) AudioManager.buttonError();
     } finally {
@@ -1174,20 +1173,20 @@ export default function TCGPage() {
     }
   };
 
-  // ?? Handler to claim weekly leaderboard reward
+  // 🏅 Handler to claim weekly leaderboard reward
   const handleClaimWeeklyLeaderboardReward = async () => {
     if (!address || isClaimingWeeklyReward) return;
 
     try {
       setIsClaimingWeeklyReward(true);
-      devLog('?? Claiming weekly leaderboard reward...');
+      devLog('🏅 Claiming weekly leaderboard reward...');
 
       const result = await claimWeeklyLeaderboardReward({ address });
 
-      devLog(`? Weekly reward claimed: Rank #${result.rank} ? +${result.reward} $TESTVBMS`);
+      devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
     } catch (error: any) {
-      devError('? Error claiming weekly reward:', error);
+      devError('✗ Error claiming weekly reward:', error);
       alert(error.message || 'Failed to claim weekly reward');
       if (soundEnabled) AudioManager.buttonError();
     } finally {
@@ -1195,25 +1194,25 @@ export default function TCGPage() {
     }
   };
 
-  // ?? Handler to claim weekly quest reward
+  // 🎯 Handler to claim weekly quest reward
   const handleClaimWeeklyQuestReward = async (questId: string) => {
     if (!address) return;
 
     try {
-      devLog(`?? Claiming weekly quest reward: ${questId}...`);
+      devLog(`🎯 Claiming weekly quest reward: ${questId}...`);
 
       const result = await claimWeeklyReward({ address, questId });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog(`? Weekly quest reward claimed: ${questId} ? +${result.reward} $TESTVBMS`);
+      devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
     } catch (error: any) {
       devError('Error claiming reward:', error);
       if (soundEnabled) AudioManager.buttonError();
     }
   };
 
-  // Salvar estado da m�sica no localStorage e controlar reprodu��o
-  // ?? DISABLED: Now using MusicContext instead of AudioManager
+  // Salvar estado da música no localStorage e controlar reprodução
+  // ⚠️ DISABLED: Now using MusicContext instead of AudioManager
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('musicEnabled', isMusicEnabled.toString());
@@ -1223,7 +1222,7 @@ export default function TCGPage() {
     }
   }, [isMusicEnabled]);
 
-  // Atualiza e salva volume da m�sica quando musicVolume muda
+  // Atualiza e salva volume da música quando musicVolume muda
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('musicVolume', musicVolume.toString());
@@ -1231,14 +1230,14 @@ export default function TCGPage() {
     }
   }, [musicVolume]);
 
-  // ?? Show welcome pack popup if user hasn't received it (only AFTER profile is created)
+  // 🎁 Show welcome pack popup if user hasn't received it (only AFTER profile is created)
   useEffect(() => {
     if (address && userProfile && hasReceivedWelcomePack === false) {
       setShowWelcomePackPopup(true);
     }
   }, [address, userProfile, hasReceivedWelcomePack]);
 
-  // ??? Show defense deck warning if player has no defense deck set up
+  // 🛡️ Show defense deck warning if player has no defense deck set up
   useEffect(() => {
     console.log('[DEBUG] Defense deck check:', {
       hasAddress: !!address,
@@ -1265,7 +1264,7 @@ export default function TCGPage() {
     }
   }, [address, userProfile, defenseDeckWarningDismissed, nfts.length]);
 
-  // ??? Handle setupDefense query parameter from leaderboard page
+  // 🛡️ Handle setupDefense query parameter from leaderboard page
   useEffect(() => {
     const setupDefense = searchParams.get('setupDefense');
     if (setupDefense === 'true' && address && userProfile && nfts.length >= 5) {
@@ -1312,7 +1311,7 @@ export default function TCGPage() {
         // Clean up URL
         window.history.replaceState({}, '', '/');
         // Show success message
-        alert(`? Twitter connected: @${twitterConnected}`);
+        alert(`✓ Twitter connected: @${twitterConnected}`);
       }
     } else if (error === 'twitter_auth_failed') {
       if (window.opener) {
@@ -1320,7 +1319,7 @@ export default function TCGPage() {
         window.opener.postMessage({ type: 'twitter_error' }, window.location.origin);
         window.close();
       } else {
-        alert('? Failed to connect Twitter. Please try again.');
+        alert('✗ Failed to connect Twitter. Please try again.');
         window.history.replaceState({}, '', '/');
       }
     }
@@ -1331,18 +1330,18 @@ export default function TCGPage() {
       if (event.origin !== window.location.origin) return;
 
       if (event.data.type === 'twitter_connected') {
-        devLog('? Twitter connected via popup:', event.data.username);
+        devLog('✓ Twitter connected via popup:', event.data.username);
         if (address) {
           // Reload profile from Convex to get the updated Twitter handle
           ConvexProfileService.getProfile(address).then((profile) => {
             if (profile) {
               setUserProfile(profile);
-              devLog('? Profile reloaded with Twitter:', profile.twitter);
+              devLog('✓ Profile reloaded with Twitter:', profile.twitter);
             }
           });
         }
       } else if (event.data.type === 'twitter_error') {
-        alert('? Failed to connect Twitter. Please try again.');
+        alert('✗ Failed to connect Twitter. Please try again.');
       }
     };
 
@@ -1359,7 +1358,7 @@ export default function TCGPage() {
       // Fetch target player profile
       ConvexProfileService.getProfile(attackAddress).then((profile) => {
         if (profile) {
-          devLog('?? Opening attack modal for:', profile.username);
+          devLog('🎯 Opening attack modal for:', profile.username);
           setTargetPlayer(profile);
           setShowAttackCardSelection(true);
           setAttackSelectedCards([]);
@@ -1372,7 +1371,7 @@ export default function TCGPage() {
           window.history.replaceState({}, '', '/');
         }
       }).catch((err) => {
-        devError('? Error loading attack target profile:', err);
+        devError('✗ Error loading attack target profile:', err);
         // Clean up URL on error
         window.history.replaceState({}, '', '/');
       });
@@ -1407,7 +1406,7 @@ export default function TCGPage() {
     setDealerPower(0);
     setResult('');
     setDealerCards([]);
-    devLog('?? Desconectado');
+    devLog('🔌 Desconectado');
   }, [soundEnabled, disconnect]);
 
   const loadNFTs = useCallback(async () => {
@@ -1415,13 +1414,13 @@ export default function TCGPage() {
       devLog('! loadNFTs called but no address');
       return;
     }
-    devLog('?? Starting to load NFTs for address:', address);
+    devLog('🎴 Starting to load NFTs for address:', address);
     try {
       setStatus("fetching");
       setErrorMsg(null);
-      devLog('?? Fetching NFTs from all enabled collections...');
+      devLog('📡 Fetching NFTs from all enabled collections...');
       const raw = await fetchNFTsFromAllCollections(address);
-      devLog('? Received NFTs from all collections:', raw.length);
+      devLog('✓ Received NFTs from all collections:', raw.length);
 
       const METADATA_BATCH_SIZE = 50;
       const enrichedRaw = [];
@@ -1442,7 +1441,7 @@ export default function TCGPage() {
                 return { ...nft, metadata: metadata, raw: { ...nft.raw, metadata: metadata } };
               }
             } catch (error) {
-              devWarn(`?? Failed to refresh metadata for NFT #${nft.tokenId}:`, error);
+              devWarn(`⚠️ Failed to refresh metadata for NFT #${nft.tokenId}:`, error);
             }
             return nft;
           })
@@ -1461,7 +1460,7 @@ export default function TCGPage() {
 
       const filtered = enrichedRaw.length - revealed.length;
       setFilteredCount(filtered);
-      devLog(`?? NFT Stats: Total=${enrichedRaw.length}, Revealed=${revealed.length}, Filtered=${filtered}`);
+      devLog(`📊 NFT Stats: Total=${enrichedRaw.length}, Revealed=${revealed.length}, Filtered=${filtered}`);
 
 
       const IMAGE_BATCH_SIZE = 50;
@@ -1471,12 +1470,12 @@ export default function TCGPage() {
         const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
         const enriched = await Promise.all(
           batch.map(async (nft) => {
-            // ?? CRITICAL: Detect collection from contract address FIRST
+            // 🎯 CRITICAL: Detect collection from contract address FIRST
             let collection: CollectionId = 'vibe'; // default
             const contractAddr = nft?.contract?.address?.toLowerCase();
             const isVibeFID = contractAddr === getCollectionContract('vibefid')?.toLowerCase();
 
-            // ?? Get image URL - getImage handles VibeFID video detection automatically
+            // 🎬 Get image URL - getImage handles VibeFID video detection automatically
             let imageUrl: string;
             if (isVibeFID) {
               // VibeFID: Use getImage with 'vibefid' hint for video URL detection
@@ -1522,7 +1521,7 @@ export default function TCGPage() {
               ...nft,
               imageUrl,
               name: nft.title || nft.name || `Card #${nft.tokenId}`, // Add name for Card type compatibility
-              collection, // ?? ADD COLLECTION FIELD
+              collection, // 🎯 ADD COLLECTION FIELD
               rarity: findAttr(nft, 'rarity'),
               status: findAttr(nft, 'status'),
               wear: findAttr(nft, 'wear'),
@@ -1539,7 +1538,7 @@ export default function TCGPage() {
       // Load FREE cards from cardInventory
       try {
         const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
-        devLog('?? FREE cards loaded:', freeCards?.length || 0);
+        devLog('🆓 FREE cards loaded:', freeCards?.length || 0);
 
         if (freeCards && freeCards.length > 0) {
           const freeCardsFormatted = freeCards.map((card: any) => ({
@@ -1560,15 +1559,15 @@ export default function TCGPage() {
           processed.push(...freeCardsFormatted);
         }
       } catch (error) {
-        devWarn('?? Failed to load FREE cards:', error);
+        devWarn('⚠️ Failed to load FREE cards:', error);
       }
 
-      // ?? DEDUPLICATION: Remove duplicate cards (same collection + tokenId)
+      // 🔒 DEDUPLICATION: Remove duplicate cards (same collection + tokenId)
       const seenCards = new Set<string>();
       const deduplicated = processed.filter((card: any) => {
         const uniqueId = `${card.collection || 'vibe'}_${card.tokenId}`;
         if (seenCards.has(uniqueId)) {
-          devLog(`?? Removing duplicate card: ${uniqueId}`);
+          devLog(`⚠️ Removing duplicate card: ${uniqueId}`);
           return false;
         }
         seenCards.add(uniqueId);
@@ -1576,7 +1575,7 @@ export default function TCGPage() {
       });
 
       if (processed.length !== deduplicated.length) {
-        devLog(`?? Deduplication: ${processed.length} -> ${deduplicated.length} cards`);
+        devLog(`📊 Deduplication: ${processed.length} -> ${deduplicated.length} cards`);
       }
 
       setNfts([...deduplicated]);
@@ -1585,7 +1584,7 @@ export default function TCGPage() {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('cardsLoadedOnce', 'true');
       }
-      devLog('?? Cards loaded successfully (NFTs + FREE):', deduplicated.length);
+      devLog('🎉 Cards loaded successfully (NFTs + FREE):', deduplicated.length);
 
       // Check if player has VibeFID and mark achievement
       const hasVibeFID = processed.some((card: any) => card.collection === 'vibefid');
@@ -1594,13 +1593,13 @@ export default function TCGPage() {
           await convex.mutation(api.missions.markVibeFIDMinted, {
             playerAddress: address.toLowerCase(),
           });
-          devLog('? VibeFID achievement checked');
+          devLog('✅ VibeFID achievement checked');
         } catch (error) {
-          devWarn('?? Failed to mark VibeFID achievement:', error);
+          devWarn('⚠️ Failed to mark VibeFID achievement:', error);
         }
       }
     } catch (e: any) {
-      devLog('? Error loading NFTs:', e);
+      devLog('✗ Error loading NFTs:', e);
       setStatus("failed");
       setErrorMsg(e.message);
     }
@@ -1608,21 +1607,14 @@ export default function TCGPage() {
 
   useEffect(() => {
     if (address) {
-      // Skip if we already loaded for this address (prevents reload on navigation)
-      if (lastLoadedAddressRef.current === address && nfts.length > 0) {
-        devLog('?? NFTs already loaded for this address, skipping');
-        return;
-      }
-      devLog('?? Address changed, loading NFTs:', address);
-      setSkippedCardLoading(false); // Reset skip state for new address
-      lastLoadedAddressRef.current = address;
+      devLog('📦 Address changed, loading NFTs:', address);
       loadNFTs();
     }
   }, [address, loadNFTs]);
 
   const loadJCNFTs = useCallback(async () => {
     try {
-      devLog('? Loading JC deck from optimized static file...');
+      devLog('※ Loading JC deck from optimized static file...');
 
       // Load from optimized static endpoint (instant!)
       const res = await fetch('/api/jc-deck');
@@ -1633,7 +1625,7 @@ export default function TCGPage() {
       const data = await res.json();
       const cards = data.cards || [];
 
-      devLog(`? JC deck loaded instantly: ${cards.length} cards from ${data.source}`);
+      devLog(`✓ JC deck loaded instantly: ${cards.length} cards from ${data.source}`);
 
       // Map to expected format with normalized URLs
       const processed = cards.map((card: any) => ({
@@ -1657,13 +1649,13 @@ export default function TCGPage() {
       setJcNfts(processed);
       setJcNftsLoading(false);
 
-      devLog('? JC NFTs ready:', processed.length, 'cards');
+      devLog('✓ JC NFTs ready:', processed.length, 'cards');
       devLog(`   Legendary: ${processed.filter((c: any) => c.rarity === 'Legendary').length}`);
       devLog(`   Epic: ${processed.filter((c: any) => c.rarity === 'Epic').length}`);
       devLog(`   Rare: ${processed.filter((c: any) => c.rarity === 'Rare').length}`);
 
     } catch (e: any) {
-      devError('? Error loading JC NFTs from static file:', e);
+      devError('✗ Error loading JC NFTs from static file:', e);
       devLog('!  Falling back to live API...');
 
       // Fallback to original live API method
@@ -1694,10 +1686,10 @@ export default function TCGPage() {
         setJcNfts(processed);
         setJcNftsLoading(false);
         setJcLoadingProgress(null);
-        devLog('? JC NFTs loaded from live API:', processed.length, 'cards');
+        devLog('✓ JC NFTs loaded from live API:', processed.length, 'cards');
 
       } catch (fallbackError: any) {
-        devError('? Fallback also failed:', fallbackError);
+        devError('✗ Fallback also failed:', fallbackError);
         setJcNftsLoading(false);
       }
     }
@@ -1778,7 +1770,7 @@ export default function TCGPage() {
   }, [soundEnabled]);
 
   const selectStrongest = useCallback(() => {
-    // ?? Performance: Using pre-sorted memoized NFTs
+    // 🚀 Performance: Using pre-sorted memoized NFTs
     setSelectedCards(strongestNfts);
     if (soundEnabled) AudioManager.selectCard();
 
@@ -1865,7 +1857,7 @@ export default function TCGPage() {
         break;
     }
 
-    devLog(`?? AI ordered cards for ${difficulty}:`, orderedCards.map(c => `#${c.tokenId} (${c.power} PWR)`));
+    devLog(`🤖 AI ordered cards for ${difficulty}:`, orderedCards.map(c => `#${c.tokenId} (${c.power} PWR)`));
     return orderedCards;
   }, [jcNfts]);
 
@@ -1894,12 +1886,12 @@ export default function TCGPage() {
     // Use JC's deck for dealer cards
     const available = jcNfts;
 
-    devLog('?? BATTLE DEBUG:');
+    devLog('🎮 BATTLE DEBUG:');
     devLog('  JC available cards:', available.length);
     devLog('  JC deck loading status:', jcNftsLoading);
     devLog('  AI difficulty:', difficulty);
     if (available.length > 0) {
-      // ?? Performance: Use pre-sorted memoized array
+      // 🚀 Performance: Use pre-sorted memoized array
       devLog('  Top 5 strongest:', sortedJcNfts.slice(0, 5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
       devLog('  Bottom 5 weakest:', sortedJcNfts.slice(-5).map(c => ({ tokenId: c.tokenId, power: c.power, rarity: c.rarity })));
     }
@@ -1910,7 +1902,7 @@ export default function TCGPage() {
       // Auto-retry after 2 seconds if deck not loaded
       if (!jcNftsLoading) {
         setTimeout(() => {
-          devLog('?? Retrying battle after waiting for deck to load...');
+          devLog('🔄 Retrying battle after waiting for deck to load...');
           playHand(cards, difficulty); // Fix: pass parameters to preserve selected difficulty
         }, 2000);
       }
@@ -1921,10 +1913,10 @@ export default function TCGPage() {
       return;
     }
 
-    // ?? Performance: Use pre-sorted memoized array instead of sorting again
+    // 🚀 Performance: Use pre-sorted memoized array instead of sorting again
     const sorted = sortedJcNfts;
 
-    devLog('?? AI DECK SELECTION DEBUG:');
+    devLog('🎲 AI DECK SELECTION DEBUG:');
     devLog('  Available cards:', available.length);
     devLog('  Sorted top 5:', sorted.slice(0, 5).map(c => `#${c.tokenId} (${c.power} PWR)`));
     devLog('  Difficulty:', difficulty);
@@ -1961,7 +1953,7 @@ export default function TCGPage() {
           });
           pickedDealer = weakExpanded.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
         }
-        devLog('? GOOFY: 18-21 PWR');
+        devLog('∿ GOOFY: 18-21 PWR');
         devLog('  Available:', weak.length);
         devLog('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
         devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
@@ -1974,7 +1966,7 @@ export default function TCGPage() {
           return p === 60 || p === 72;
         });
         pickedDealer = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        devLog('� GOONER: 60-72 PWR');
+        devLog('† GOONER: 60-72 PWR');
         devLog('  Available:', medium.length);
         devLog('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
         devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
@@ -1984,7 +1976,7 @@ export default function TCGPage() {
         // GANGSTER (Level 4): Strong legendaries (150 PWR only, total 750)
         // Filter cards with exactly 150 power
         const cards150 = sorted.filter(c => (c.power || 0) === 150);
-        devLog('� GANGSTER DEBUG:');
+        devLog('‡ GANGSTER DEBUG:');
         devLog('  Total cards in sorted:', sorted.length);
         devLog('  Cards with 150 PWR:', cards150.length);
         if (cards150.length > 0) {
@@ -1994,7 +1986,7 @@ export default function TCGPage() {
         if (cards150.length >= HAND_SIZE) {
           // Randomize to add variety
           pickedDealer = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-          devLog('  ? Picked', HAND_SIZE, 'random cards from 150 PWR pool');
+          devLog('  ✓ Picked', HAND_SIZE, 'random cards from 150 PWR pool');
         } else {
           // Fallback: pick legendaries
           devLog('  ! Not enough 150 PWR cards, using legendaries fallback');
@@ -2005,7 +1997,7 @@ export default function TCGPage() {
           devLog('  Legendaries found:', legendaries.length);
           pickedDealer = legendaries.slice(0, HAND_SIZE);
         }
-        devLog('� GANGSTER FINAL:', pickedDealer.length, 'cards picked');
+        devLog('‡ GANGSTER FINAL:', pickedDealer.length, 'cards picked');
         devLog('  Cards:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
         devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
@@ -2013,8 +2005,8 @@ export default function TCGPage() {
       case 'gigachad':
         // GIGACHAD (Level 5): TOP 5 STRONGEST (always same cards, total ~855)
         pickedDealer = sorted.slice(0, HAND_SIZE);
-        devLog('� GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        devLog('� GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
+        devLog('§ GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
+        devLog('§ GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
         break;
     }
 
@@ -2035,7 +2027,7 @@ export default function TCGPage() {
         const opponentCard = orderedOpponentCards[currentRound - 1];
 
         if (!playerCard || !opponentCard) {
-          devError('? Missing cards for elimination round!');
+          devError('✗ Missing cards for elimination round!');
           return;
         }
 
@@ -2075,7 +2067,7 @@ export default function TCGPage() {
         setEliminationOpponentScore(newOpponentScore);
         setRoundResults([...roundResults, roundResult]);
 
-        devLog(`? Round ${currentRound} result:`, roundResult, `Score: ${newPlayerScore}-${newOpponentScore}`);
+        devLog(`✦ Round ${currentRound} result:`, roundResult, `Score: ${newPlayerScore}-${newOpponentScore}`);
 
         // Check if match is over
         setTimeout(() => {
@@ -2090,7 +2082,7 @@ export default function TCGPage() {
               // Unlock next difficulty
               const unlockedDiff = unlockNextDifficulty(difficulty);
               if (unlockedDiff) {
-                devLog(`?? Unlocked new difficulty: ${unlockedDiff.toUpperCase()}`);
+                devLog(`🔓 Unlocked new difficulty: ${unlockedDiff.toUpperCase()}`);
               }
             } else if (finalResult === 'loss') {
               setResult(t('dealerWins'));
@@ -2114,7 +2106,7 @@ export default function TCGPage() {
                   });
                   coinsEarned = reward?.awarded || 0;
                   if (coinsEarned > 0) {
-                    devLog(`?? Elimination Mode: Awarded ${coinsEarned} $TESTVBMS`, reward);
+                    devLog(`💰 Elimination Mode: Awarded ${coinsEarned} $TESTVBMS`, reward);
                   }
 
                   // Record match with coins earned
@@ -2135,11 +2127,11 @@ export default function TCGPage() {
 
                   ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
                 } catch (err) {
-                  devError('? Error awarding PvE coins (Elimination):', err);
+                  devError('✗ Error awarding PvE coins (Elimination):', err);
                 }
               }
 
-              // ? FIX: Set battle result BEFORE closing battle screen
+              // ✅ FIX: Set battle result BEFORE closing battle screen
               // This ensures the popup shows the correct coins earned
               setLastBattleResult({
                 result: finalResult,
@@ -2219,22 +2211,22 @@ export default function TCGPage() {
     }, 3500);
 
     setTimeout(() => {
-      devLog('?? RESULTADO:', { playerTotal, dealerTotal });
+      devLog('🎮 RESULTADO:', { playerTotal, dealerTotal });
 
       let matchResult: 'win' | 'loss' | 'tie';
 
       if (playerTotal > dealerTotal) {
-        devLog('? JOGADOR VENCEU!');
+        devLog('✓ JOGADOR VENCEU!');
         matchResult = 'win';
         setResult(t('playerWins'));
 
         // Unlock next difficulty on win
         const unlockedDiff = unlockNextDifficulty(difficulty);
         if (unlockedDiff) {
-          devLog(`?? Unlocked new difficulty: ${unlockedDiff.toUpperCase()}`);
+          devLog(`🔓 Unlocked new difficulty: ${unlockedDiff.toUpperCase()}`);
         }
       } else if (playerTotal < dealerTotal) {
-        devLog('? DEALER VENCEU!');
+        devLog('✗ DEALER VENCEU!');
         matchResult = 'loss';
         setResult(t('dealerWins'));
       } else {
@@ -2250,7 +2242,7 @@ export default function TCGPage() {
         if (userProfile && address) {
           try {
             // Calculate and send PvE reward to inbox
-            devLog(`?? PvE Difficulty: ${aiDifficulty}`); // Debug log
+            devLog(`🎯 PvE Difficulty: ${aiDifficulty}`); // Debug log
             const reward = await awardPvECoins({
               address,
               difficulty: aiDifficulty,
@@ -2260,7 +2252,7 @@ export default function TCGPage() {
             });
             coinsEarned = reward?.awarded || 0;
             if (coinsEarned > 0) {
-              devLog(`?? PvE ${aiDifficulty}: Awarded ${coinsEarned} $TESTVBMS`, reward);
+              devLog(`💰 PvE ${aiDifficulty}: Awarded ${coinsEarned} $TESTVBMS`, reward);
             }
 
             // Record match with coins earned
@@ -2282,11 +2274,11 @@ export default function TCGPage() {
             // Reload match history
             ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
           } catch (err) {
-            devError('? Error awarding PvE coins:', err);
+            devError('✗ Error awarding PvE coins:', err);
           }
         }
 
-        // ? FIX: Set battle result BEFORE closing battle screen
+        // ✅ FIX: Set battle result BEFORE closing battle screen
         // This ensures the popup shows the correct coins earned
         setLastBattleResult({
           result: matchResult,
@@ -2328,17 +2320,17 @@ export default function TCGPage() {
     if (!address || !userProfile || selectedCards.length !== HAND_SIZE) return;
 
     try {
-      // ? Verify profile exists in Convex first
-      devLog('?? Verifying profile exists...');
+      // ✓ Verify profile exists in Convex first
+      devLog('🔍 Verifying profile exists...');
       const existingProfile = await ConvexProfileService.getProfile(address);
       if (!existingProfile) {
-        devError('? Profile not found in Convex!');
+        devError('✗ Profile not found in Convex!');
         alert('Error: Your profile was not found. Please create a profile first.');
         return;
       }
-      devLog('? Profile verified:', existingProfile.username);
+      devLog('✓ Profile verified:', existingProfile.username);
 
-      // ? Validate all cards have required data
+      // ✓ Validate all cards have required data
       const invalidCards = selectedCards.filter(card =>
         !card.tokenId ||
         typeof card.power !== 'number' ||
@@ -2349,12 +2341,12 @@ export default function TCGPage() {
       );
 
       if (invalidCards.length > 0) {
-        devError('? Invalid cards detected:', invalidCards);
+        devError('✗ Invalid cards detected:', invalidCards);
         alert(`Error: ${invalidCards.length} card(s) have invalid data (missing image or power). Please refresh the page and try again.`);
         return;
       }
 
-      // ? MUDAN�A: Salvar objetos completos ao inv�s de apenas tokenIds
+      // ✓ MUDANÇA: Salvar objetos completos ao invés de apenas tokenIds
       const defenseDeckData = selectedCards.map(card => {
         const hasFoil = card.foil && card.foil !== 'None' && card.foil !== '';
         return {
@@ -2367,7 +2359,7 @@ export default function TCGPage() {
         };
       });
 
-      devLog('?? Saving defense deck:', {
+      devLog('💾 Saving defense deck:', {
         address,
         cardCount: defenseDeckData.length,
         cards: defenseDeckData.map(c => ({
@@ -2378,22 +2370,22 @@ export default function TCGPage() {
         }))
       });
 
-      // ? Try to save with retry logic
+      // ✓ Try to save with retry logic
       let saveSuccess = false;
       let lastError: any = null;
 
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
           setDefenseDeckSaveStatus(`Saving... (Attempt ${attempt}/3)`);
-          devLog(`?? Attempt ${attempt}/3 to save defense deck...`);
+          devLog(`📡 Attempt ${attempt}/3 to save defense deck...`);
           await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
-          devLog(`? Defense deck saved successfully on attempt ${attempt}`);
+          devLog(`✓ Defense deck saved successfully on attempt ${attempt}`);
           saveSuccess = true;
           setDefenseDeckSaveStatus('');
           break;
         } catch (err: any) {
           lastError = err;
-          devError(`? Attempt ${attempt}/3 failed:`, err);
+          devError(`✗ Attempt ${attempt}/3 failed:`, err);
 
           // If it's the last attempt, throw
           if (attempt === 3) {
@@ -2442,7 +2434,7 @@ export default function TCGPage() {
     [selectedCards]
   );
 
-  // ?? Performance: Filter by card type (FREE/NFT), collection, and sort
+  // 🚀 Performance: Filter by card type (FREE/NFT), collection, and sort
   const filteredAndSortedNfts = useMemo(() => {
     let filtered = nfts;
 
@@ -2458,7 +2450,7 @@ export default function TCGPage() {
       filtered = filterCardsByCollections(filtered, selectedCollections);
     }
 
-    // ?? Filter out cards that are in raid deck (except VibeFID which can be in both)
+    // 🔒 Filter out cards that are in raid deck (except VibeFID which can be in both)
     filtered = filtered.filter(card =>
       card.collection === 'vibefid' || !defenseLockedTokenIds.has(card.tokenId)
     );
@@ -2480,7 +2472,7 @@ export default function TCGPage() {
     setCurrentPage(1);
   }, [sortByPower, cardTypeFilter, nfts.length, CARDS_PER_PAGE]);
 
-  // ?? Sorted NFTs for attack modal (show locked cards but mark them)
+  // 🔒 Sorted NFTs for attack modal (show locked cards but mark them)
   const sortedAttackNfts = useMemo(() => {
     if (!sortAttackByPower) return nfts;
     return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
@@ -2506,16 +2498,16 @@ export default function TCGPage() {
     return cardsCopy;
   }, [nfts, pveSortByPower]);
 
-  // Convex Room Listener - Escuta mudan�as na sala em tempo real
+  // Convex Room Listener - Escuta mudanças na sala em tempo real
   useEffect(() => {
     if (pvpMode === 'inRoom' && roomCode) {
       // Reset battle flag when entering a new room to prevent stale state from previous battles
       pvpBattleStarted.current = false;
       pvpProcessedBattles.current.clear(); // Clear processed battles set for new room
-      devLog('?? Reset pvpBattleStarted to false for new room');
-      devLog('?? Convex listener started for room:', roomCode);
+      devLog('🔄 Reset pvpBattleStarted to false for new room');
+      devLog('🎧 Convex listener started for room:', roomCode);
 
-      let hasSeenRoom = false; // Flag para rastrear se j� vimos a sala pelo menos uma vez
+      let hasSeenRoom = false; // Flag para rastrear se já vimos a sala pelo menos uma vez
       let battleProcessing = false; // Local flag to prevent concurrent battle starts within same listener
 
       const unsubscribe = ConvexPvPService.watchRoom(roomCode, async (room) => {
@@ -2525,7 +2517,7 @@ export default function TCGPage() {
           const hostReady = !!room.hostCards && room.hostCards.length > 0;
           const guestReady = !!room.guestCards && room.guestCards.length > 0;
 
-          devLog('?? Room update received:', {
+          devLog('🔄 Room update received:', {
             hostReady,
             guestReady,
             roomStatus: room.status,
@@ -2535,7 +2527,7 @@ export default function TCGPage() {
           setCurrentRoom(room);
 
           // Se ambos os jogadores estiverem prontos, inicia a batalha
-          // S� inicia quando status � 'playing' (ap�s ambos submeterem cartas)
+          // Só inicia quando status é 'playing' (após ambos submeterem cartas)
           if (hostReady && guestReady && room.status === 'playing') {
             // Create unique battle ID to prevent duplicate processing
             const battleId = `${room.roomId}_${room.hostPower}_${room.guestPower}_${room.startedAt || Date.now()}`;
@@ -2550,7 +2542,7 @@ export default function TCGPage() {
             pvpProcessedBattles.current.add(battleId);
             pvpBattleStarted.current = true;
             battleProcessing = true;
-            devLog('? Ambos jogadores prontos! Iniciando batalha �nica:', battleId);
+            devLog('✓ Ambos jogadores prontos! Iniciando batalha única:', battleId);
 
             // Use pre-paid entry fee only for ranked matches (casual is free)
             const isRanked = room.mode === 'ranked' || room.mode === undefined; // Default to ranked for legacy rooms
@@ -2558,20 +2550,20 @@ export default function TCGPage() {
               try {
                 const feeResult = await useEntryFee({ address: address || '' });
                 if (feeResult.success) {
-                  devLog(`? PvP entry fee used: ${feeResult.amount} VBMS`);
+                  devLog(`✅ PvP entry fee used: ${feeResult.amount} VBMS`);
                 } else {
                   throw new Error('No valid entry fee found');
                 }
               } catch (error: any) {
-                devError('? Failed to use entry fee:', error);
+                devError('❌ Failed to use entry fee:', error);
                 toast.error(`No valid entry fee! Please pay 20 VBMS entry fee first.`);
                 return; // Stop battle if can't use entry fee
               }
             } else {
-              devLog('?? Casual match - free entry');
+              devLog('🎮 Casual match - free entry');
             }
 
-            // Determina quem � o jogador local e quem � o oponente
+            // Determina quem é o jogador local e quem é o oponente
             const isHost = room.hostAddress === address?.toLowerCase();
             const playerCards = isHost ? (room.hostCards || []) : (room.guestCards || []);
             const opponentCards = isHost ? (room.guestCards || []) : (room.hostCards || []);
@@ -2595,7 +2587,7 @@ export default function TCGPage() {
               }
             }
 
-            // Executa a batalha PvP com anima��es (igual PVE)
+            // Executa a batalha PvP com animações (igual PVE)
             setIsBattling(true);
             setShowBattleScreen(true);
             setBattlePhase('cards');
@@ -2656,7 +2648,7 @@ export default function TCGPage() {
 
                 if (userProfile && address) {
                   try {
-                    // ? Award TESTVBMS to inbox for ranked PvP winners
+                    // ✅ Award TESTVBMS to inbox for ranked PvP winners
                     if (isRanked && matchResult === 'win') {
                       // Ranked PvP Winner: Send TESTVBMS to inbox
                       const TESTVBMS_REWARD = 40; // 40 TESTVBMS reward for winning
@@ -2668,14 +2660,14 @@ export default function TCGPage() {
 
                       if (reward?.success) {
                         coinsEarned = TESTVBMS_REWARD;
-                        devLog(`?? PvP Win: ${TESTVBMS_REWARD} TESTVBMS sent to inbox`);
+                        devLog(`🏆 PvP Win: ${TESTVBMS_REWARD} TESTVBMS sent to inbox`);
                         toast.success(`Victory! ${TESTVBMS_REWARD} TESTVBMS sent to your inbox!`);
                       }
                     } else if (isRanked && matchResult !== 'win') {
                       // Ranked PvP Loser/Tie: No reward (VBMS stays in pool)
-                      devLog(`?? PvP ${matchResult}: VBMS entry fee stays in pool`);
+                      devLog(`💸 PvP ${matchResult}: VBMS entry fee stays in pool`);
                     } else {
-                      devLog('?? Casual match - no coins awarded');
+                      devLog('🎮 Casual match - no coins awarded');
                     }
 
                     // Record match with coins earned and entry fee paid
@@ -2695,7 +2687,7 @@ export default function TCGPage() {
 
                     ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
 
-                    // ?? Send notification to defender (opponent)
+                    // 🔔 Send notification to defender (opponent)
                     fetch('/api/notifications/send', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -2711,7 +2703,7 @@ export default function TCGPage() {
                       }),
                     }).catch(err => devError('Error sending notification:', err));
                   } catch (err) {
-                    devError('? Error awarding PvP coins:', err);
+                    devError('✗ Error awarding PvP coins:', err);
                   }
                 }
 
@@ -2752,16 +2744,16 @@ export default function TCGPage() {
                   // Reset battle flag immediately so player can start new match without waiting
                   pvpBattleStarted.current = false;
                   battleProcessing = false; // Also reset local flag
-                  devLog('?? Battle ended, reset pvpBattleStarted immediately');
-                  // Fecha a sala PVP e volta ao menu ap�s ver o resultado
+                  devLog('🔄 Battle ended, reset pvpBattleStarted immediately');
+                  // Fecha a sala PVP e volta ao menu após ver o resultado
                   setTimeout(async () => {
                     // Deleta a sala do Convex se for o host
                     if (currentRoom && roomCode && address && address.toLowerCase() === currentRoom.hostAddress) {
                       try {
                         await ConvexPvPService.leaveRoom(roomCode, address);
-                        devLog('? Room deleted after battle ended');
+                        devLog('✓ Room deleted after battle ended');
                       } catch (err) {
-                        devError('? Error deleting room:', err);
+                        devError('✗ Error deleting room:', err);
                       }
                     }
 
@@ -2778,7 +2770,7 @@ export default function TCGPage() {
             }, 3500);
           }
         } else {
-          // Sala n�o existe - s� volta ao menu se j� vimos a sala antes (foi deletada)
+          // Sala não existe - só volta ao menu se já vimos a sala antes (foi deletada)
           // Se nunca vimos, pode estar sendo criada ainda (race condition)
           if (hasSeenRoom) {
             devLog('! Sala foi deletada, voltando ao menu');
@@ -2797,14 +2789,14 @@ export default function TCGPage() {
     }
   }, [pvpMode, roomCode, address, soundEnabled]);
 
-  // Auto Match Listener - Detecta quando uma sala � criada para o jogador
+  // Auto Match Listener - Detecta quando uma sala é criada para o jogador
   useEffect(() => {
     if (pvpMode === 'autoMatch' && isSearching && address) {
-      devLog('?? Starting matchmaking listener for:', address);
+      devLog('🔍 Starting matchmaking listener for:', address);
 
       const unsubscribe = ConvexPvPService.watchMatchmaking(address, (roomCode) => {
         if (roomCode) {
-          devLog('? Match found! Room:', roomCode);
+          devLog('✓ Match found! Room:', roomCode);
           setRoomCode(roomCode);
           setPvpMode('inRoom');
           setIsSearching(false);
@@ -2815,9 +2807,9 @@ export default function TCGPage() {
         }
       });
 
-      // ConvexPvPService j� cuida do polling internamente, n�o precisa de heartbeat manual
+      // ConvexPvPService já cuida do polling internamente, não precisa de heartbeat manual
       return () => {
-        devLog('?? Stopping matchmaking listener');
+        devLog('🛑 Stopping matchmaking listener');
         unsubscribe();
       };
     }
@@ -2840,7 +2832,7 @@ export default function TCGPage() {
 
         // Only show create profile if profile is actually null (not exists in DB)
         if (!profile) {
-          devLog('?? New user detected - forcing profile creation');
+          devLog('🆕 New user detected - forcing profile creation');
           setShowCreateProfile(true);
         } else {
           setShowCreateProfile(false);
@@ -2995,7 +2987,7 @@ export default function TCGPage() {
       });
 
       setMissions(completeMissionsList);
-      devLog('?? Loaded missions:', completeMissionsList);
+      devLog('📋 Loaded missions:', completeMissionsList);
     } catch (error) {
       devError('Error loading missions:', error);
 
@@ -3030,7 +3022,7 @@ export default function TCGPage() {
         });
 
         if (soundEnabled) AudioManager.buttonSuccess();
-        devLog('? VIBE Badge claimed:', result);
+        devLog('✅ VIBE Badge claimed:', result);
 
         // Reload missions and profile to update UI
         await loadMissions();
@@ -3063,7 +3055,7 @@ export default function TCGPage() {
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      devLog('? Mission claimed:', result);
+      devLog('✅ Mission claimed:', result);
 
       // Reload missions and profile to update UI
       await loadMissions();
@@ -3091,7 +3083,7 @@ export default function TCGPage() {
 
       if (result && result.claimed > 0) {
         if (soundEnabled) AudioManager.buttonSuccess();
-        devLog(`? Claimed ${result.claimed} missions (+${result.totalReward} coins)`);
+        devLog(`✅ Claimed ${result.claimed} missions (+${result.totalReward} coins)`);
 
         // Reload missions and profile
         await loadMissions();
@@ -3123,15 +3115,15 @@ export default function TCGPage() {
   useEffect(() => {
     // Guard: Skip if update already in progress
     if (updateStatsInProgress.current) {
-      devLog('?? Stats update already in progress, skipping...');
+      devLog('⏸️ Stats update already in progress, skipping...');
       return;
     }
 
     if (address && userProfile && nfts.length > 0) {
       updateStatsInProgress.current = true;
 
-      // ?? Performance: Using pre-computed memoized values
-      devLog('?? Updating profile stats:', { totalCards: nfts.length, openedCards: openedCardsCount, totalPower: totalNftPower, tokenIds: nftTokenIds.length });
+      // 🚀 Performance: Using pre-computed memoized values
+      devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards: openedCardsCount, totalPower: totalNftPower, tokenIds: nftTokenIds.length });
 
       // Calculate collection-specific powers for leaderboard filtering
       const collectionPowers = nfts.reduce((acc, nft) => {
@@ -3153,7 +3145,7 @@ export default function TCGPage() {
         return acc;
       }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number; afclPower?: number; coqPower?: number });
 
-      devLog('?? Collection powers:', collectionPowers);
+      devLog('📊 Collection powers:', collectionPowers);
 
       // Update stats and reload profile to show updated values
       ConvexProfileService.updateStats(address, nfts.length, openedCardsCount, unopenedCardsCount, totalNftPower, nftTokenIds, collectionPowers)
@@ -3285,7 +3277,7 @@ export default function TCGPage() {
         if (response.status === 429 && retries < maxRetries) {
           // Exponential backoff: 1s, 2s, 4s
           const delay = Math.pow(2, retries) * 1000;
-          devLog(`? [Leaderboard] Rate limited for ${address.substring(0, 8)}..., retrying in ${delay}ms...`);
+          devLog(`⏳ [Leaderboard] Rate limited for ${address.substring(0, 8)}..., retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           retries++;
           continue;
@@ -3354,7 +3346,7 @@ export default function TCGPage() {
     } else {
       // New day detected - just set attacks to max locally
       // Let the backend handle the reset when user makes next attack
-      devLog('?? New day detected! Attacks reset to max.');
+      devLog('🆕 New day detected! Attacks reset to max.');
       setAttacksRemaining(maxAttacks);
     }
   }, [userProfile?.lastAttackDate, userProfile?.attacksToday, maxAttacks, address]);
@@ -3410,7 +3402,7 @@ export default function TCGPage() {
     setShowSettings(false);
   }, [currentView]);
 
-  // ?? Block banned exploiters from accessing the game
+  // 🚫 Block banned exploiters from accessing the game
   if (banCheck?.isBanned) {
     return (
       <BannedScreen
@@ -3534,13 +3526,13 @@ export default function TCGPage() {
             <div className="flex-shrink-0 p-4 border-b border-vintage-gold/30">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-display font-bold text-vintage-gold">
-                  ??? Defense Deck
+                  🛡️ Defense Deck
                 </h2>
                 <button
                   onClick={() => setShowDefenseDeckModal(false)}
                   className="text-vintage-gold hover:text-white text-2xl"
                 >
-                  �
+                  ×
                 </button>
               </div>
               <p className="text-sm text-vintage-burnt-gold mt-1">
@@ -3598,7 +3590,7 @@ export default function TCGPage() {
                     : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
                 }`}
               >
-                {defenseDeckSortByPower ? '? Sorted by Power' : '? Sort by Power'}
+                {defenseDeckSortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
               </button>
             </div>
 
@@ -3617,7 +3609,7 @@ export default function TCGPage() {
                     <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
                     <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
                     <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/30 flex items-center justify-center transition-all">
-                      <span className="opacity-0 group-hover:opacity-100 text-white text-2xl font-bold">�</span>
+                      <span className="opacity-0 group-hover:opacity-100 text-white text-2xl font-bold">×</span>
                     </div>
                   </div>
                 ))}
@@ -3702,7 +3694,7 @@ export default function TCGPage() {
                         <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{nft.power}</div>
                         {isSelected && (
                           <div className="absolute inset-0 bg-vintage-gold/30 flex items-center justify-center">
-                            <span className="text-white text-2xl font-bold">?</span>
+                            <span className="text-white text-2xl font-bold">✓</span>
                           </div>
                         )}
                       </div>
@@ -3758,13 +3750,13 @@ export default function TCGPage() {
             <div className="p-4 border-b border-vintage-gold/30">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-display font-bold text-vintage-gold">
-                  ?? Weekly Ranking Rewards
+                  🏆 Weekly Ranking Rewards
                 </h2>
                 <button
                   onClick={() => setShowLeaderboardRewardsModal(false)}
                   className="text-vintage-gold hover:text-white text-2xl"
                 >
-                  �
+                  ×
                 </button>
               </div>
               <p className="text-xs text-vintage-burnt-gold mt-1">
@@ -3776,7 +3768,7 @@ export default function TCGPage() {
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 rounded-lg border border-yellow-500/30">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">??</span>
+                  <span className="text-2xl">🥇</span>
                   <span className="font-bold text-yellow-400">1st Place</span>
                 </div>
                 <span className="font-mono font-bold text-yellow-300">1,000 coins</span>
@@ -3784,7 +3776,7 @@ export default function TCGPage() {
 
               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-400/20 to-gray-500/10 rounded-lg border border-gray-400/30">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">??</span>
+                  <span className="text-2xl">🥈</span>
                   <span className="font-bold text-gray-300">2nd Place</span>
                 </div>
                 <span className="font-mono font-bold text-gray-200">750 coins</span>
@@ -3792,7 +3784,7 @@ export default function TCGPage() {
 
               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-amber-600/20 to-amber-700/10 rounded-lg border border-amber-600/30">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">??</span>
+                  <span className="text-2xl">🥉</span>
                   <span className="font-bold text-amber-400">3rd Place</span>
                 </div>
                 <span className="font-mono font-bold text-amber-300">500 coins</span>
@@ -3800,7 +3792,7 @@ export default function TCGPage() {
 
               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-vintage-gold/10 to-vintage-gold/5 rounded-lg border border-vintage-gold/20">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">???</span>
+                  <span className="text-2xl">🎖️</span>
                   <span className="font-bold text-vintage-gold">4th - 10th Place</span>
                 </div>
                 <span className="font-mono font-bold text-vintage-burnt-gold">300 coins</span>
@@ -3917,11 +3909,11 @@ export default function TCGPage() {
             {battleMode === 'elimination' ? (
               <div className="text-center mb-6 md:mb-8">
                 <h2 className="text-2xl md:text-4xl font-bold text-purple-400 uppercase tracking-wider mb-2">
-                  ? ELIMINATION MODE
+                  ✦ ELIMINATION MODE
                 </h2>
                 <div className="flex items-center justify-center gap-4 md:gap-8 text-lg md:text-2xl font-bold">
                   <span className="text-cyan-400">Round {currentRound}/5</span>
-                  <span className="text-vintage-gold">�</span>
+                  <span className="text-vintage-gold">•</span>
                   <span className="text-cyan-400">You {eliminationPlayerScore}</span>
                   <span className="text-vintage-gold">-</span>
                   <span className="text-red-400">{eliminationOpponentScore} Opponent</span>
@@ -4199,7 +4191,7 @@ export default function TCGPage() {
                   'text-yellow-400'
                 }`}>
                   {battleMode === 'elimination' && currentRound <= 5
-                    ? (result === t('playerWins') ? '? ROUND WIN!' : result === t('dealerWins') ? '� ROUND LOST' : '~ ROUND TIE')
+                    ? (result === t('playerWins') ? '★ ROUND WIN!' : result === t('dealerWins') ? '† ROUND LOST' : '~ ROUND TIE')
                     : result
                   }
                 </div>
@@ -4227,14 +4219,14 @@ export default function TCGPage() {
         pveSelectedCardsPower={pveSelectedCardsPower}
       />
 
-      {/* ? PvP Preview Modal - Shows potential gains/losses before battle */}
+      {/* ✅ PvP Preview Modal - Shows potential gains/losses before battle */}
       {showPvPPreview && pvpPreviewData && targetPlayer && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300] p-2 sm:p-4 overflow-y-auto">
           <div className="bg-gradient-to-br from-vintage-charcoal via-vintage-black to-vintage-charcoal rounded-xl sm:rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-4 sm:p-6 md:p-8 shadow-2xl shadow-vintage-gold/30 my-4">
             {/* Header */}
             <div className="text-center mb-4 sm:mb-6">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-1 sm:mb-2">
-                ?? BATTLE PREVIEW
+                ⚔️ BATTLE PREVIEW
               </h2>
               <p className="text-xs sm:text-sm text-vintage-burnt-gold font-modern">
                 Potential gains and losses for this battle
@@ -4278,7 +4270,7 @@ export default function TCGPage() {
 
                   {pvpPreviewData.win.rankingBonus > 0 && (
                     <div className="flex justify-between text-yellow-300 font-medium">
-                      <span>? Ranking Bonus ({pvpPreviewData.win.rankingMultiplier.toFixed(1)}x):</span>
+                      <span>⭐ Ranking Bonus ({pvpPreviewData.win.rankingMultiplier.toFixed(1)}x):</span>
                       <span className="font-mono">+{pvpPreviewData.win.rankingBonus}</span>
                     </div>
                   )}
@@ -4292,7 +4284,7 @@ export default function TCGPage() {
 
                   {pvpPreviewData.win.streakBonus > 0 && (
                     <div className="flex justify-between text-purple-300 font-medium">
-                      <span>?? {pvpPreviewData.win.streakMessage}:</span>
+                      <span>🔥 {pvpPreviewData.win.streakMessage}:</span>
                       <span className="font-mono">+{pvpPreviewData.win.streakBonus}</span>
                     </div>
                   )}
@@ -4327,7 +4319,7 @@ export default function TCGPage() {
 
                   {pvpPreviewData.loss.penaltyReduction > 0 && (
                     <div className="flex justify-between text-orange-300 font-medium">
-                      <span>??? Penalty Reduced ({Math.round(pvpPreviewData.loss.rankingMultiplier * 100)}%):</span>
+                      <span>🛡️ Penalty Reduced ({Math.round(pvpPreviewData.loss.rankingMultiplier * 100)}%):</span>
                       <span className="font-mono">+{pvpPreviewData.loss.penaltyReduction}</span>
                     </div>
                   )}
@@ -4363,20 +4355,20 @@ export default function TCGPage() {
                     await payEntryFee({ address: address || '', mode: 'attack' });
                     devLog('Attack entry fee paid: 50 $TESTVBMS');
 
-                    // Setup battle (c�digo original continua aqui...)
-                    devLog('??????????????????????????????????');
-                    devLog(`? ATTACKING: ${targetPlayer.username}`);
-                    devLog(`??? Validating opponent's defense deck...`);
+                    // Setup battle (código original continua aqui...)
+                    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    devLog(`✦ ATTACKING: ${targetPlayer.username}`);
+                    devLog(`🛡️ Validating opponent's defense deck...`);
 
-                    // ? SECURITY: Validate defense deck against owned NFTs
+                    // ✅ SECURITY: Validate defense deck against owned NFTs
                     const validatedDeck = await ConvexProfileService.getValidatedDefenseDeck(targetPlayer.address);
 
                     if (validatedDeck.removedCards.length > 0) {
-                      devWarn(`?? Removed ${validatedDeck.removedCards.length} invalid cards from ${targetPlayer.username}'s defense deck (no longer owned)`);
+                      devWarn(`⚠️ Removed ${validatedDeck.removedCards.length} invalid cards from ${targetPlayer.username}'s defense deck (no longer owned)`);
                     }
 
                     if (!validatedDeck.isValid) {
-                      devWarn(`?? Could not validate ${targetPlayer.username}'s defense deck - using as-is`);
+                      devWarn(`⚠️ Could not validate ${targetPlayer.username}'s defense deck - using as-is`);
                     }
 
                     const defenderCards = validatedDeck.defenseDeck.map((card) => ({
@@ -4387,8 +4379,8 @@ export default function TCGPage() {
                       rarity: card.rarity,
                     }));
 
-                    devLog(`? Defense deck validated: ${defenderCards.length} valid cards`);
-                    devLog('??????????????????????????????????');
+                    devLog(`✅ Defense deck validated: ${defenderCards.length} valid cards`);
+                    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                     setSelectedCards(attackSelectedCards);
                     setDealerCards(defenderCards);
@@ -4436,7 +4428,7 @@ export default function TCGPage() {
 
                       if (userProfile && address) {
                         try {
-                          // ?? ATOMIC: Single transaction for coins + match + profile update
+                          // ⚛️ ATOMIC: Single transaction for coins + match + profile update
                           const result = await recordAttackResult({
                             playerAddress: address,
                             playerPower: playerTotal,
@@ -4453,10 +4445,10 @@ export default function TCGPage() {
 
                           coinsEarned = result.coinsAwarded || 0;
 
-                          devLog(`?? ATOMIC: Attack recorded successfully`);
-                          devLog(`?? Coins awarded: ${coinsEarned}`);
+                          devLog(`⚛️ ATOMIC: Attack recorded successfully`);
+                          devLog(`💰 Coins awarded: ${coinsEarned}`);
                           if (result.bonuses && result.bonuses.length > 0) {
-                            devLog(`?? Bonuses: ${result.bonuses.join(', ')}`);
+                            devLog(`🎁 Bonuses: ${result.bonuses.join(', ')}`);
                           }
 
                           // Update UI with returned profile (no separate getProfile call needed!)
@@ -4465,7 +4457,7 @@ export default function TCGPage() {
                             setAttacksRemaining(maxAttacks - (result.profile.attacksToday || 0));
                           }
                         } catch (error: any) {
-                          devError('?? ATOMIC: Error recording attack:', error);
+                          devError('⚛️ ATOMIC: Error recording attack:', error);
                         }
                       }
 
@@ -4481,10 +4473,10 @@ export default function TCGPage() {
                         opponentPfpUrl: targetPlayer.twitterProfileImageUrl,
                       });
 
-                      // ?? Send notification (outside atomic transaction - non-critical)
+                      // 🔔 Send notification (outside atomic transaction - non-critical)
                       if (address && userProfile) {
 
-                        // ?? Send notification to defender with coins info
+                        // 🔔 Send notification to defender with coins info
                         fetch('/api/notifications/send', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -4510,7 +4502,7 @@ export default function TCGPage() {
                       setTargetPlayer(null);
                       setAttackSelectedCards([]);
 
-                      // ?? Show victory/loss popup after closing
+                      // 🎯 Show victory/loss popup after closing
                       setTimeout(() => {
                         if (matchResult === 'win') {
                           showVictory();
@@ -4531,7 +4523,7 @@ export default function TCGPage() {
                 disabled={isAttacking}
                 className="flex-1 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-600 text-white rounded-lg sm:rounded-xl font-display font-bold text-sm sm:text-base md:text-xl shadow-lg transition-all uppercase tracking-wider border-2 border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isAttacking ? 'ATTACKING...' : '?? ATTACK'}
+                {isAttacking ? 'ATTACKING...' : '⚔️ ATTACK'}
               </button>
 
               <button
@@ -4680,7 +4672,7 @@ export default function TCGPage() {
                 <h2 className="text-xl md:text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
                 <p className="text-xs text-vintage-burnt-gold mt-1">{tutorialPage}/{TUTORIAL_PAGES}</p>
               </div>
-              <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-xl md:text-2xl transition">?</button>
+              <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-xl md:text-2xl transition">✕</button>
             </div>
 
             {/* Page Content - Max height with scroll for individual pages if needed */}
@@ -4724,7 +4716,7 @@ export default function TCGPage() {
                     {/* Poder Total */}
                     <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-neon-blue/30">
                       <h3 className="text-xl font-display font-bold text-vintage-neon-blue mb-3 flex items-center gap-2">
-                        <span className="text-2xl">?</span> {t('totalPowerInfo')}
+                        <span className="text-2xl">※</span> {t('totalPowerInfo')}
                       </h3>
                       <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-neon-blue/20">
                         <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('totalPowerInfoDesc')}</p>
@@ -4734,7 +4726,7 @@ export default function TCGPage() {
                     {/* Como o Poder Funciona */}
                     <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
                       <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
-                        <span className="text-2xl">?</span> {t('powerCalc')}
+                        <span className="text-2xl">※</span> {t('powerCalc')}
                       </h3>
                       <p className="mb-3 text-sm text-vintage-burnt-gold">{t('powerCalcDesc')}</p>
                       <div className="bg-vintage-black/50 p-4 rounded-lg space-y-3 text-sm border border-vintage-gold/20">
@@ -4757,10 +4749,10 @@ export default function TCGPage() {
                     <div className="bg-vintage-felt-green/20 p-4 rounded-xl border border-vintage-gold/30">
                       <div className="space-y-2 text-sm">
                         <p className="text-vintage-gold font-bold font-modern flex items-center gap-2">
-                          <span className="text-xl">?</span> {t('prizeFoil')}
+                          <span className="text-xl">★</span> {t('prizeFoil')}
                         </p>
                         <p className="text-vintage-neon-blue font-bold font-modern flex items-center gap-2">
-                          <span className="text-xl">?</span> {t('standardFoil')}
+                          <span className="text-xl">☆</span> {t('standardFoil')}
                         </p>
                       </div>
                     </div>
@@ -4768,14 +4760,14 @@ export default function TCGPage() {
                     {/* Exemplos */}
                     <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
                       <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                        <span className="text-2xl">�</span> {t('powerExamples')}
+                        <span className="text-2xl">§</span> {t('powerExamples')}
                       </h3>
                       <div className="bg-vintage-black/50 p-4 rounded-lg space-y-2 text-sm border border-vintage-gold/20">
-                        <p className="text-vintage-ice">� {t('exampleCommon')}</p>
-                        <p className="text-vintage-ice">� {t('exampleRare')}</p>
-                        <p className="text-vintage-ice">� {t('exampleLegendary')}</p>
+                        <p className="text-vintage-ice">• {t('exampleCommon')}</p>
+                        <p className="text-vintage-ice">• {t('exampleRare')}</p>
+                        <p className="text-vintage-ice">• {t('exampleLegendary')}</p>
                         <p className="text-vintage-gold font-bold text-base flex items-center gap-2">
-                          <span>�</span> {t('exampleMythic')}
+                          <span>•</span> {t('exampleMythic')}
                         </p>
                       </div>
                     </div>
@@ -4798,7 +4790,7 @@ export default function TCGPage() {
                     {/* Deck de Defesa */}
                     <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-burnt-gold/30">
                       <h3 className="text-xl font-display font-bold text-vintage-burnt-gold mb-3 flex items-center gap-2">
-                        <span className="text-2xl">?</span> {t('defenseDeckInfo')}
+                        <span className="text-2xl">◆</span> {t('defenseDeckInfo')}
                       </h3>
                       <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-burnt-gold/20">
                         <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('defenseDeckInfoDesc')}</p>
@@ -4813,7 +4805,7 @@ export default function TCGPage() {
                     {/* Sistema de Ataques */}
                     <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-red-500/30">
                       <h3 className="text-xl font-display font-bold text-red-400 mb-3 flex items-center gap-2">
-                        <span className="text-2xl">�</span> {t('attackSystemInfo')}
+                        <span className="text-2xl">†</span> {t('attackSystemInfo')}
                       </h3>
                       <div className="bg-vintage-black/50 p-4 rounded-lg border border-red-500/20">
                         <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('attackSystemInfoDesc')}</p>
@@ -4823,7 +4815,7 @@ export default function TCGPage() {
                     {/* Ranking Global */}
                     <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
                       <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                        <span className="text-2xl">?</span> {t('leaderboardInfo')}
+                        <span className="text-2xl">★</span> {t('leaderboardInfo')}
                       </h3>
                       <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
                         <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('leaderboardInfoDesc')}</p>
@@ -4851,7 +4843,7 @@ export default function TCGPage() {
                     : 'bg-vintage-charcoal border border-vintage-gold text-vintage-gold hover:bg-vintage-gold/20 hover:scale-105'
                 }`}
               >
-                ? <span className="hidden sm:inline">{t('previous') || 'Previous'}</span><span className="sm:hidden">Prev</span>
+                ← <span className="hidden sm:inline">{t('previous') || 'Previous'}</span><span className="sm:hidden">Prev</span>
               </button>
 
               {/* Page Indicators (Dots) */}
@@ -4877,7 +4869,7 @@ export default function TCGPage() {
                   }}
                   className="px-3 md:px-6 py-2 md:py-3 rounded-lg font-modern font-bold text-sm md:text-base bg-vintage-gold text-vintage-black hover:bg-vintage-gold-dark transition-all hover:scale-105"
                 >
-                  <span className="hidden sm:inline">{t('next') || 'Next'}</span><span className="sm:hidden">Next</span> ?
+                  <span className="hidden sm:inline">{t('next') || 'Next'}</span><span className="sm:hidden">Next</span> →
                 </button>
               ) : (
                 <div className="relative p-1 rounded-lg" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>
@@ -4886,7 +4878,7 @@ export default function TCGPage() {
                     className="px-4 md:px-8 py-2 md:py-3 rounded-lg font-display font-bold text-sm md:text-base transition-all hover:scale-[1.02]"
                     style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C'}}
                   >
-                    {t('understood')} ?
+                    {t('understood')} ♠
                   </button>
                 </div>
               )}
@@ -4945,7 +4937,7 @@ export default function TCGPage() {
               rel="noopener noreferrer"
               className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-purple-500 text-purple-300 hover:text-purple-100 bg-purple-900/30 hover:bg-purple-800/40 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-sm md:text-base"
             >
-              <span className="text-base md:text-lg">?</span> {t('tryMiniapp')}
+              <span className="text-base md:text-lg">♦</span> {t('tryMiniapp')}
             </a>
           )}
         </div>
@@ -4969,7 +4961,7 @@ export default function TCGPage() {
           <Link
             href="/docs"
             className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
-            title="Documenta��o"
+            title="Documentação"
           >
             <NextImage src="/images/icons/help.svg" alt="Help" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
           </Link>
@@ -4981,7 +4973,7 @@ export default function TCGPage() {
           {/* Show loading ONLY while actively checking for Farcaster */}
           {isCheckingFarcaster ? (
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
-              <div className="text-6xl mb-4 text-vintage-gold font-display animate-pulse">?</div>
+              <div className="text-6xl mb-4 text-vintage-gold font-display animate-pulse">♠</div>
               <div className="w-full px-6 py-4 bg-vintage-gold/20 text-vintage-gold rounded-xl border-2 border-vintage-gold/50 font-display font-semibold">
                 {t('loading')}...
               </div>
@@ -4989,7 +4981,7 @@ export default function TCGPage() {
           ) : (
             /* Show connect modal - different for Farcaster miniapp vs regular web */
             <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
-              <div className="text-6xl mb-4 text-vintage-gold font-display">?</div>
+              <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
               <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
               <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
 
@@ -5003,7 +4995,7 @@ export default function TCGPage() {
                         setIsCheckingFarcaster(true);
 
                         // Find and connect with Farcaster wagmi connector
-                        console.log('[Connect Button] ?? Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
+                        console.log('[Connect Button] 🔍 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
 
                         // Try multiple possible connector IDs (case variations)
                         const farcasterConnector = connectors.find((c) =>
@@ -5013,21 +5005,21 @@ export default function TCGPage() {
                         );
 
                         if (!farcasterConnector) {
-                          console.error('[Connect Button] ? Available connector IDs:', connectors.map(c => c.id));
+                          console.error('[Connect Button] ❌ Available connector IDs:', connectors.map(c => c.id));
                           throw new Error('Farcaster connector not found. Available: ' + connectors.map(c => c.id).join(', '));
                         }
 
-                        console.log('[Connect Button] ? Found connector:', farcasterConnector.id);
+                        console.log('[Connect Button] ✅ Found connector:', farcasterConnector.id);
 
                         await connect({ connector: farcasterConnector });
-                        devLog('? Connected Farcaster wallet via wagmi');
+                        devLog('✓ Connected Farcaster wallet via wagmi');
                       } catch (err: any) {
                         devError('Failed to connect Farcaster wallet:', err);
                         if (soundEnabled) AudioManager.buttonError();
 
                         // Show user-friendly error message
                         if (err?.message?.includes('not been authorized')) {
-                          alert('Por favor, autorize o acesso � carteira nas configura��es do Farcaster');
+                          alert('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
                         } else {
                           alert('Failed to connect Farcaster wallet. Please try again.');
                         }
@@ -5171,11 +5163,11 @@ export default function TCGPage() {
                 {isInFarcaster ? (
                   <>
                     <span className="text-[10px] font-bold whitespace-nowrap">{t('title')}</span>
-                    <span className="text-xl leading-none">?</span>
+                    <span className="text-xl leading-none">♠</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-base md:text-lg">?</span>
+                    <span className="text-base md:text-lg">♠</span>
                     <span className="hidden sm:inline">{t('title')}</span>
                   </>
                 )}
@@ -5217,11 +5209,11 @@ export default function TCGPage() {
                 {isInFarcaster ? (
                   <>
                     <span className="text-[9px] font-bold whitespace-nowrap">{t('leaderboard')}</span>
-                    <span className="text-xl leading-none">?</span>
+                    <span className="text-xl leading-none">♔</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-base md:text-lg">?</span>
+                    <span className="text-base md:text-lg">♔</span>
                     <span className="hidden sm:inline">{t('leaderboard')}</span>
                   </>
                 )}
@@ -5265,11 +5257,11 @@ export default function TCGPage() {
                 {isInFarcaster ? (
                   <>
                     <span className="text-[10px] font-bold whitespace-nowrap">Quests</span>
-                    <span className="text-xl leading-none">?</span>
+                    <span className="text-xl leading-none">◈</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-base md:text-lg">?</span>
+                    <span className="text-base md:text-lg">◈</span>
                     <span className="hidden sm:inline">Quests</span>
                   </>
                 )}
@@ -5293,7 +5285,7 @@ export default function TCGPage() {
 
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
-              <p className="text-red-400 font-bold">? {t('error')}</p>
+              <p className="text-red-400 font-bold">✗ {t('error')}</p>
               <p className="text-red-300 text-sm mt-1">{errorMsg}</p>
               <button onClick={loadNFTs} className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">{t('retryButton')}</button>
             </div>
@@ -5307,17 +5299,17 @@ export default function TCGPage() {
             <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-4 md:p-6 mb-6 shadow-gold">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl md:text-4xl">?</span>
+                  <span className="text-3xl md:text-4xl">◈</span>
                   <div>
                     <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold">DAILY QUEST</h3>
                     <p className="text-xs md:text-sm text-vintage-burnt-gold font-modern capitalize">
-                      {questProgress.quest.difficulty} � +{questProgress.quest.reward} $TESTVBMS
+                      {questProgress.quest.difficulty} • +{questProgress.quest.reward} $TESTVBMS
                     </p>
                   </div>
                 </div>
                 {questProgress.claimed ? (
                   <div className="px-3 md:px-4 py-1.5 md:py-2 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg font-modern font-semibold text-xs md:text-sm">
-                    ? {t('claimed')}
+                    ✓ {t('claimed')}
                   </div>
                 ) : questProgress.completed ? (
                   <button
@@ -5325,7 +5317,7 @@ export default function TCGPage() {
                     disabled={isClaimingQuest}
                     className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border-2 border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg font-modern font-semibold text-xs md:text-sm transition-all shadow-gold hover:scale-105"
                   >
-                    {isClaimingQuest ? '...' : `? ${t('questClaimReward', { reward: questProgress?.quest?.reward || 0 })}`}
+                    {isClaimingQuest ? '...' : `✦ ${t('questClaimReward', { reward: questProgress?.quest?.reward || 0 })}`}
                   </button>
                 ) : null}
               </div>
@@ -5353,7 +5345,7 @@ export default function TCGPage() {
               <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/50 p-6">
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
                   <h2 className="text-2xl font-display font-bold text-vintage-gold flex items-center gap-2">
-                    <span className="text-3xl">?</span>
+                    <span className="text-3xl">♦</span>
                     {t('yourNfts')}
                     {nfts.length > 0 && <span className="text-sm text-vintage-burnt-gold">({nfts.length})</span>}
                   </h2>
@@ -5366,7 +5358,7 @@ export default function TCGPage() {
                         className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
                         title="Refresh cards and metadata"
                       >
-                        ?
+                        ↻
                       </button>
                       <select
                         value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
@@ -5405,7 +5397,7 @@ export default function TCGPage() {
                             : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
                         }`}
                       >
-                        {sortByPower ? '? ' + t('sortByPower') : '? ' + t('sortDefault')}
+                        {sortByPower ? '↓ ' + t('sortByPower') : '⇄ ' + t('sortDefault')}
                       </button>
                       <button
                         onClick={() => setCardTypeFilter(cardTypeFilter === 'all' ? 'free' : cardTypeFilter === 'free' ? 'nft' : 'all')}
@@ -5415,7 +5407,7 @@ export default function TCGPage() {
                             : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
                         }`}
                       >
-                        {cardTypeFilter === 'all' ? '? All Cards' : cardTypeFilter === 'free' ? '? FREE Only' : '?? NFT Only'}
+                        {cardTypeFilter === 'all' ? '⊞ All Cards' : cardTypeFilter === 'free' ? '◈ FREE Only' : '🎴 NFT Only'}
                       </button>
                     </div>
                   )}
@@ -5430,7 +5422,7 @@ export default function TCGPage() {
 
                 {nfts.length === 0 && (status === 'loaded' || status === 'failed') && (
                   <div className="text-center py-12 px-4">
-                    <div className="text-6xl mb-4">??</div>
+                    <div className="text-6xl mb-4">🃏</div>
                     <h3 className="text-xl font-bold text-vintage-gold mb-2">{t('noCardsTitle')}</h3>
                     <p className="text-vintage-burnt-gold mb-6 max-w-md mx-auto">{t('noCardsExplain')}</p>
 
@@ -5452,7 +5444,7 @@ export default function TCGPage() {
                       style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                     >
                       <div className="flex items-center justify-center gap-2">
-                        <span className="text-xl">?</span>
+                        <span className="text-xl">◆</span>
                         <span>{t('buyPacksOnVibeMarket')}</span>
                       </div>
                     </button>
@@ -5463,7 +5455,7 @@ export default function TCGPage() {
                 {nfts.length > 0 && nfts.length < HAND_SIZE && (status === 'loaded' || status === 'failed') && (
                   <div className="mb-6 p-4 bg-amber-900/30 border border-amber-500/50 rounded-xl">
                     <div className="flex items-start gap-3">
-                      <span className="text-3xl">??</span>
+                      <span className="text-3xl">⚠️</span>
                       <div className="flex-1">
                         <h4 className="text-amber-300 font-bold mb-1">{t('notEnoughCardsTitle')}</h4>
                         <p className="text-amber-200/80 text-sm mb-3">
@@ -5486,7 +5478,7 @@ export default function TCGPage() {
                           style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                         >
                           <div className="flex items-center gap-2">
-                            <span>?</span>
+                            <span>◆</span>
                             <span>{t('buyPacksOnVibeMarket')}</span>
                           </div>
                         </button>
@@ -5515,7 +5507,7 @@ export default function TCGPage() {
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex items-center justify-center gap-2">
-                          <span className="text-base md:text-lg">?</span>
+                          <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}</span>
                         </div>
                       </Link>
@@ -5526,7 +5518,7 @@ export default function TCGPage() {
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex items-center justify-center gap-2">
-                          <span className="text-base md:text-lg">?</span>
+                          <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
                         </div>
                       </Link>
@@ -5540,7 +5532,7 @@ export default function TCGPage() {
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex items-center justify-center gap-2">
-                          <span className="text-base md:text-lg">?</span>
+                          <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
                         </div>
                       </button>
@@ -5581,7 +5573,7 @@ export default function TCGPage() {
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex flex-col items-center justify-center gap-2 text-center">
-                          <span className="text-2xl md:text-3xl">?</span>
+                          <span className="text-2xl md:text-3xl">◆</span>
                           <span className="text-xs md:text-sm leading-tight">
                             {COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}
                           </span>
@@ -5594,7 +5586,7 @@ export default function TCGPage() {
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex flex-col items-center justify-center gap-2 text-center">
-                          <span className="text-2xl md:text-3xl">?</span>
+                          <span className="text-2xl md:text-3xl">◆</span>
                           <span className="text-xs md:text-sm leading-tight">
                             {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
                           </span>
@@ -5610,7 +5602,7 @@ export default function TCGPage() {
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
                         <div className="flex flex-col items-center justify-center gap-2 text-center">
-                          <span className="text-2xl md:text-3xl">?</span>
+                          <span className="text-2xl md:text-3xl">◆</span>
                           <span className="text-xs md:text-sm leading-tight">
                             {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
                           </span>
@@ -5627,7 +5619,7 @@ export default function TCGPage() {
                       disabled={currentPage === 1}
                       className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg transition font-modern"
                     >
-                      ?
+                      ←
                     </button>
                     <span className="text-sm text-vintage-burnt-gold">
                       {currentPage} / {totalPages}
@@ -5637,7 +5629,7 @@ export default function TCGPage() {
                       disabled={currentPage === totalPages}
                       className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg transition font-modern"
                     >
-                      ?
+                      →
                     </button>
                   </div>
                 )}
@@ -5646,7 +5638,7 @@ export default function TCGPage() {
 
             <div className="order-1 lg:order-2">
               <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{boxShadow: '0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5)'}}>
-                {/* ?? POKER MODE Button */}
+                {/* 🎴 POKER MODE Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
@@ -5661,10 +5653,10 @@ export default function TCGPage() {
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <span className="text-2xl">?</span>
+                      <span className="text-2xl">♠</span>
                       Poker Battle
                     </span>
-                    <span className="text-xl">{modeMenuOpen === 'poker' ? '?' : '?'}</span>
+                    <span className="text-xl">{modeMenuOpen === 'poker' ? '▼' : '▶'}</span>
                   </button>
 
                   {/* Poker Submenu */}
@@ -5681,7 +5673,7 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 hover:border-purple-500/60"
                       >
-                        ? vs CPU
+                        ♣ vs CPU
                       </button>
 
                       {/* Poker vs Player */}
@@ -5694,13 +5686,13 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 hover:border-orange-500/60"
                       >
-                        ? vs Player
+                        ♥ vs Player
                       </button>
                     </div>
                   )}
                 </div>
 
-                {/* ?? MECHA ARENA Button */}
+                {/* 🤖 MECHA ARENA Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
@@ -5724,11 +5716,11 @@ export default function TCGPage() {
                       </svg>
                       Mecha Arena
                     </span>
-                    <span className="text-xl">?</span>
+                    <span className="text-xl">▶</span>
                   </button>
                 </div>
 
-                {/* ?? BATTLE AUTO MODE Button */}
+                {/* ⚔️ BATTLE AUTO MODE Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
@@ -5743,10 +5735,10 @@ export default function TCGPage() {
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <span className="text-2xl">?</span>
+                      <span className="text-2xl">♦</span>
                       Battle Auto
                     </span>
-                    <span className="text-xl">{modeMenuOpen === 'battle' ? '?' : '?'}</span>
+                    <span className="text-xl">{modeMenuOpen === 'battle' ? '▼' : '▶'}</span>
                   </button>
 
                   {/* Battle Submenu */}
@@ -5763,7 +5755,7 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 hover:border-blue-500/60"
                       >
-                        ? vs AI
+                        ♣ vs AI
                       </button>
 
                       {/* Battle vs Player */}
@@ -5777,13 +5769,13 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/30 hover:border-red-500/60"
                       >
-                        ? vs Player
+                        ♥ vs Player
                       </button>
                     </div>
                   )}
                 </div>
 
-                {/* ?? BOSS RAID Button */}
+                {/* 💀 BOSS RAID Button */}
                 <div className="mb-4">
                   <button
                     onClick={() => {
@@ -5810,14 +5802,14 @@ export default function TCGPage() {
                         <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" title="Cards need refuel!" />
                       )}
                     </span>
-                    <span className="text-xl">?</span>
+                    <span className="text-xl">▶</span>
                   </button>
                 </div>
 
                 <div ref={playButtonsRef} className="mt-6 space-y-4">
                   {dealerCards.length > 0 && !showBattleScreen && (
                     <div className="bg-gradient-to-br from-vintage-wine to-vintage-black backdrop-blur p-4 rounded-xl border-2 border-vintage-gold/50">
-                      <p className="text-xs font-modern font-semibold text-vintage-gold mb-3"><span className="text-lg">?</span> {t('dealerCards').toUpperCase()}</p>
+                      <p className="text-xs font-modern font-semibold text-vintage-gold mb-3"><span className="text-lg">♦</span> {t('dealerCards').toUpperCase()}</p>
                       <div className="grid grid-cols-5 gap-2 mb-3">
                         {dealerCards.map((c, i) => (
                           <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/30">
@@ -5829,7 +5821,7 @@ export default function TCGPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-vintage-burnt-gold">{t('dealerTotalPower')}</p>
-                        {/* ?? Performance: Use memoized power total */}
+                        {/* 🚀 Performance: Use memoized power total */}
                         <p className="text-2xl font-bold text-red-400">{dealerCardsPower}</p>
                       </div>
                     </div>
@@ -5837,13 +5829,13 @@ export default function TCGPage() {
 
                   {playerPower > 0 && (
                     <div className="bg-vintage-charcoal/80 backdrop-blur p-4 rounded-xl border-2 border-vintage-gold/30 space-y-3">
-                      <p className="text-xs font-semibold text-vintage-burnt-gold font-modern">� {t('lastResult')}</p>
+                      <p className="text-xs font-semibold text-vintage-burnt-gold font-modern">§ {t('lastResult')}</p>
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-xs text-vintage-burnt-gold">{t('you')}</p>
                           <p className="text-2xl font-bold text-blue-400">{playerPower}</p>
                         </div>
-                        <div className="text-2xl">?</div>
+                        <div className="text-2xl">✦</div>
                         <div className="text-right">
                           <p className="text-xs text-vintage-burnt-gold">{t('dealer')}</p>
                           <p className="text-2xl font-bold text-red-400">{dealerPower}</p>
@@ -5864,7 +5856,7 @@ export default function TCGPage() {
           )}
 
 
-          {/* ?? Missions View */}
+          {/* 🎯 Missions View */}
           {currentView === 'missions' && (
             <div className="max-w-6xl mx-auto space-y-6">
               {/* Toggle Buttons: Missions / Achievements */}
@@ -5880,7 +5872,7 @@ export default function TCGPage() {
                       : 'bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
                   }`}
                 >
-                  ? {t('missions')}
+                  ◈ {t('missions')}
                 </button>
                 <button
                   onClick={() => {
@@ -5906,7 +5898,7 @@ export default function TCGPage() {
               <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-4 md:p-8">
                 <div className="text-center mb-6">
                   <h1 className="text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-2">
-                    ?? Daily Missions
+                    🎁 Daily Missions
                   </h1>
                   <p className="text-vintage-burnt-gold font-modern text-sm md:text-base">
                     Complete missions and claim your rewards!
@@ -5919,7 +5911,7 @@ export default function TCGPage() {
                   </div>
                 ) : missions.length === 0 ? (
                   <div className="text-center py-20">
-                    <p className="text-2xl mb-4">??</p>
+                    <p className="text-2xl mb-4">🎯</p>
                     <p className="text-vintage-burnt-gold font-modern">
                       No missions available yet. Play some matches to unlock rewards!
                     </p>
@@ -5958,7 +5950,7 @@ export default function TCGPage() {
                                 <div className="flex items-center gap-2">
                                   {mission.missionType === 'claim_vibe_badge' ? (
                                     <>
-                                      <span className="text-yellow-400 font-bold text-lg">? VIBE Badge</span>
+                                      <span className="text-yellow-400 font-bold text-lg">✨ VIBE Badge</span>
                                       <span className="text-vintage-burnt-gold text-sm">(2x Wanted Cast)</span>
                                     </>
                                   ) : (
@@ -5976,7 +5968,7 @@ export default function TCGPage() {
                               <div className="flex-shrink-0">
                                 {isClaimed ? (
                                   <div className="px-4 py-2 bg-green-600/20 border-2 border-green-500 rounded-lg text-green-400 font-bold text-sm md:text-base whitespace-nowrap">
-                                    ? Claimed
+                                    ✓ Claimed
                                   </div>
                                 ) : isCompleted ? (
                                   <button
@@ -6006,7 +5998,7 @@ export default function TCGPage() {
                           disabled={isClaimingAll}
                           className="w-full px-8 py-4 bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-gold-dark hover:to-vintage-gold text-vintage-black rounded-xl font-display font-bold text-lg md:text-xl shadow-gold-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isClaimingAll ? 'Claiming All...' : `?? Claim All Rewards (${missions.filter((m) => m.completed && !m.claimed).length})`}
+                          {isClaimingAll ? 'Claiming All...' : `🎁 Claim All Rewards (${missions.filter((m) => m.completed && !m.claimed).length})`}
                         </button>
                       </div>
                     )}
@@ -6033,7 +6025,7 @@ export default function TCGPage() {
             </div>
           )}
 
-          {/* ?? Inbox/Claim View */}
+          {/* 💰 Inbox/Claim View */}
           {currentView === 'inbox' && inboxStatus && (
             <div className="max-w-2xl mx-auto">
               <CoinsInboxModal
@@ -6044,7 +6036,7 @@ export default function TCGPage() {
             </div>
           )}
 
-          {/* ?? Shop View */}
+          {/* 🏪 Shop View */}
           {/* Shop moved to /shop page */}
 
           {/* End content wrapper */}
@@ -6109,10 +6101,10 @@ export default function TCGPage() {
             try {
               if (address) {
                 await consumePveAttempt({ address });
-                console.log('? PvE attempt consumed successfully');
+                console.log('✅ PvE attempt consumed successfully');
               }
             } catch (error) {
-              console.error('? Failed to consume PvE attempt:', error);
+              console.error('❌ Failed to consume PvE attempt:', error);
               alert(error instanceof Error ? error.message : 'Failed to start battle. Please try again.');
               return; // Don't start battle if attempt consumption failed
             }
