@@ -98,10 +98,12 @@ export const getPlayerAuditSummary = query({
   handler: async (ctx, { playerAddress }) => {
     const normalizedAddress = playerAddress.toLowerCase();
 
+    // 🚀 BANDWIDTH FIX: Limit to last 5000 transactions (enough for summary)
     const logs = await ctx.db
       .query("coinAuditLog")
       .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
-      .collect();
+      .order("desc")
+      .take(5000);
 
     // Calculate totals
     const totalEarned = logs
@@ -187,11 +189,12 @@ export const getRecentSuspiciousActivity = query({
   handler: async (ctx, { hours = 24, minAmount = 5000 }) => {
     const cutoff = Date.now() - (hours * 60 * 60 * 1000);
 
+    // 🚀 BANDWIDTH FIX: Limit to 5000 logs for analysis
     const logs = await ctx.db
       .query("coinAuditLog")
       .withIndex("by_timestamp")
       .filter((q) => q.gte(q.field("timestamp"), cutoff))
-      .collect();
+      .take(5000);
 
     // Group by player
     const byPlayer: Record<string, typeof logs> = {};
@@ -295,11 +298,12 @@ export const getSecurityAlerts = query({
     const oneMinAgo = now - (60 * 1000);
 
     // Get recent logs
+    // 🚀 BANDWIDTH FIX: Limit to 3000 logs for hourly analysis
     const recentLogs = await ctx.db
       .query("coinAuditLog")
       .withIndex("by_timestamp")
       .filter((q) => q.gte(q.field("timestamp"), oneHourAgo))
-      .collect();
+      .take(3000);
 
     const alerts: Array<{
       severity: "critical" | "warning" | "info";
@@ -426,11 +430,12 @@ export const getFlaggedAccounts = query({
   handler: async (ctx) => {
     const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
+    // 🚀 BANDWIDTH FIX: Limit to 10000 logs for weekly analysis
     const recentLogs = await ctx.db
       .query("coinAuditLog")
       .withIndex("by_timestamp")
       .filter((q) => q.gte(q.field("timestamp"), oneWeekAgo))
-      .collect();
+      .take(10000);
 
     // Group by player
     const byPlayer: Record<string, typeof recentLogs> = {};
