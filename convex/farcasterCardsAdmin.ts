@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 
 /**
  * ADMIN: Manually add metadata for an already-minted NFT
@@ -132,7 +132,11 @@ export const updateCardTraits = mutation({
  * ADMIN: List ALL minted cards (no limit)
  * Used for cleanup scripts to compare against IPFS bucket
  */
-export const listAllMintedCards = query({
+/**
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery (not public)
+ * Use via: npx convex run farcasterCardsAdmin:listAllMintedCards --env-file .env.prod
+ */
+export const listAllMintedCards = internalQuery({
   args: {},
   handler: async (ctx) => {
     const cards = await ctx.db

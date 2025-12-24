@@ -303,9 +303,9 @@ export async function fetchNFTs(
   // Check cache first
   const cached = getNftCache(owner, contract);
 
-  // If Alchemy is known to be blocked and we have cache, use cache immediately
-  if (alchemyBlocked && cached && cached.length > 0) {
-    console.log(`📦 Using cached NFTs (Alchemy blocked): ${cached.length} cards`);
+  // OPTIMIZATION: Use cache FIRST to avoid API calls
+  if (cached && cached.length > 0) {
+    console.log(`📦 Using cached NFTs (saves API call): ${cached.length} cards`);
     if (onProgress) onProgress(1, cached.length);
     return cached;
   }

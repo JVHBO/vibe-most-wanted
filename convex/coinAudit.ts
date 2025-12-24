@@ -247,20 +247,23 @@ export const getRecentSuspiciousActivity = query({
 
 // ========== QUERY: Get All Audit Logs (Admin) ==========
 
+/**
+ * 🚀 BANDWIDTH FIX: Use .take() instead of .collect()
+ */
 export const getAllAuditLogs = query({
   args: {
     limit: v.optional(v.number()),
-    offset: v.optional(v.number()),
   },
-  handler: async (ctx, { limit = 100, offset = 0 }) => {
+  handler: async (ctx, { limit = 100 }) => {
+    // 🚀 BANDWIDTH FIX: Use .take() directly (more efficient)
     const logs = await ctx.db
       .query("coinAuditLog")
       .order("desc")
-      .collect();
+      .take(limit);
 
     return {
       total: logs.length,
-      logs: logs.slice(offset, offset + limit),
+      logs,
     };
   },
 });
