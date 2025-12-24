@@ -91,7 +91,7 @@ export const metadata: Metadata = {
           "name": "VIBE MOST WANTED",
           "url": "https://www.vibemostwanted.xyz",
           "splashImageUrl": "https://www.vibemostwanted.xyz/splash-200.png?v=3",
-          "splashBackgroundColor": "#FFD700"
+          "splashBackgroundColor": "#0C0C0C"
         }
       }
     }),
@@ -107,7 +107,7 @@ export const metadata: Metadata = {
           "name": "VIBE MOST WANTED",
           "url": "https://www.vibemostwanted.xyz",
           "splashImageUrl": "https://www.vibemostwanted.xyz/splash-200.png?v=3",
-          "splashBackgroundColor": "#FFD700"
+          "splashBackgroundColor": "#0C0C0C"
         }
       }
     }),
