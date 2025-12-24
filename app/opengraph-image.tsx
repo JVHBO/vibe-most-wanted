@@ -36,7 +36,7 @@ export default async function Image() {
           position: 'relative',
         }}
       >
-        {/* Background Cards - 5 cards spread across */}
+        {/* Background Cards - 5 cards spread across, solid with proper z-index */}
         <div
           style={{
             position: 'absolute',
@@ -45,20 +45,20 @@ export default async function Image() {
             right: 0,
             bottom: 0,
             display: 'flex',
-            opacity: 0.4,
           }}
         >
-          {/* Far left card */}
+          {/* Far left card - back layer */}
           <img
             src={`data:image/png;base64,${Buffer.from(card4).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: -80,
+              left: -60,
               top: '50%',
-              transform: 'translateY(-50%) rotate(-20deg)',
-              width: 280,
-              height: 400,
+              transform: 'translateY(-50%) rotate(-18deg)',
+              width: 240,
+              height: 340,
               objectFit: 'cover',
+              zIndex: 1,
             }}
           />
           {/* Left card */}
@@ -66,15 +66,16 @@ export default async function Image() {
             src={`data:image/png;base64,${Buffer.from(card1).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: 150,
+              left: 120,
               top: '50%',
-              transform: 'translateY(-50%) rotate(-10deg)',
-              width: 300,
-              height: 420,
+              transform: 'translateY(-50%) rotate(-8deg)',
+              width: 260,
+              height: 370,
               objectFit: 'cover',
+              zIndex: 2,
             }}
           />
-          {/* Center card */}
+          {/* Center card - front layer */}
           <img
             src={`data:image/png;base64,${Buffer.from(card2).toString('base64')}`}
             style={{
@@ -82,9 +83,10 @@ export default async function Image() {
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 320,
-              height: 450,
+              width: 280,
+              height: 400,
               objectFit: 'cover',
+              zIndex: 3,
             }}
           />
           {/* Right card */}
@@ -92,30 +94,32 @@ export default async function Image() {
             src={`data:image/png;base64,${Buffer.from(card3).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: 150,
+              right: 120,
               top: '50%',
-              transform: 'translateY(-50%) rotate(10deg)',
-              width: 300,
-              height: 420,
+              transform: 'translateY(-50%) rotate(8deg)',
+              width: 260,
+              height: 370,
               objectFit: 'cover',
+              zIndex: 2,
             }}
           />
-          {/* Far right card */}
+          {/* Far right card - back layer */}
           <img
             src={`data:image/png;base64,${Buffer.from(card5).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: -80,
+              right: -60,
               top: '50%',
-              transform: 'translateY(-50%) rotate(20deg)',
-              width: 280,
-              height: 400,
+              transform: 'translateY(-50%) rotate(18deg)',
+              width: 240,
+              height: 340,
               objectFit: 'cover',
+              zIndex: 1,
             }}
           />
         </div>
 
-        {/* Dark Overlay */}
+        {/* Dark Overlay - lighter to show cards better */}
         <div
           style={{
             position: 'absolute',
@@ -123,7 +127,8 @@ export default async function Image() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.6)',
+            background: 'rgba(0, 0, 0, 0.35)',
+            zIndex: 4,
           }}
         />
 
@@ -160,7 +165,7 @@ export default async function Image() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1,
+            zIndex: 10,
           }}
         >
           {/* Title */}
