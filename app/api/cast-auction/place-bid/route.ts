@@ -151,9 +151,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
+      ...result,
       success: true,
       bidAmount: transferAmountVBMS,
-      ...result,
     });
   } catch (error: any) {
     console.error("[PlaceBid] Error:", error);
