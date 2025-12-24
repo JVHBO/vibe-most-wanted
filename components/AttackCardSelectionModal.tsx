@@ -471,12 +471,12 @@ export function AttackCardSelectionModal({
         </div>
 
         {/* Selected Attack Deck Display */}
-        <div className="mb-4 bg-red-900/40 border-2 border-red-600/50 rounded-xl p-3 flex-shrink-0">
-          <div className={`grid gap-2 ${HAND_SIZE === 10 ? 'grid-cols-5 md:grid-cols-10' : 'grid-cols-5'}`}>
+        <div className="mb-2 bg-red-900/40 border border-red-600/50 rounded-lg p-2 flex-shrink-0">
+          <div className="flex flex-wrap gap-1 justify-center">
             {Array.from({ length: HAND_SIZE }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-[2/3] border-2 border-dashed border-red-600/50 rounded-lg flex flex-col items-center justify-center overflow-hidden relative"
+                className="w-8 h-12 sm:w-10 sm:h-14 border border-dashed border-red-600/50 rounded flex items-center justify-center overflow-hidden relative"
               >
                 {attackSelectedCards[i] ? (
                   <>
@@ -490,14 +490,14 @@ export function AttackCardSelectionModal({
                     </div>
                   </>
                 ) : (
-                  <span className="text-red-500 text-3xl">+</span>
+                  <span className="text-red-500 text-lg">+</span>
                 )}
               </div>
             ))}
           </div>
-          <div className="mt-3 text-center">
+          <div className="mt-1 text-center">
             <p className="text-xs text-vintage-burnt-gold">Attack Power</p>
-            <p className="text-2xl font-bold text-red-500">
+            <p className="text-lg font-bold text-red-500">
               {attackSelectedCardsPower.toLocaleString()}
             </p>
           </div>
@@ -610,7 +610,7 @@ export function AttackCardSelectionModal({
           <button
             onClick={handleAttack}
             disabled={attackSelectedCards.length !== HAND_SIZE || isAttacking}
-            className={`w-full px-6 py-4 rounded-xl font-display font-bold text-lg transition-all uppercase tracking-wide ${
+            className={`w-full px-4 py-2 rounded-lg font-display font-bold text-sm transition-all uppercase tracking-wide ${
               attackSelectedCards.length === HAND_SIZE && !isAttacking
                 ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/50 hover:scale-105'
                 : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
@@ -625,7 +625,7 @@ export function AttackCardSelectionModal({
 
           <button
             onClick={handleCancel}
-            className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-modern font-semibold transition"
+            className="w-full px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern text-sm transition"
           >
             Cancel
           </button>
