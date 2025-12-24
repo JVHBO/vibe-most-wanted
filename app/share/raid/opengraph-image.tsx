@@ -34,7 +34,11 @@ export default async function Image() {
       const data = await response.json();
       if (data.value) {
         bossName = data.value.name || 'Raid Boss';
-        bossImageUrl = data.value.imageUrl || bossImageUrl;
+        let imgUrl = data.value.imageUrl || bossImageUrl;
+        if (imgUrl && imgUrl.startsWith("/")) {
+          imgUrl = `https://www.vibemostwanted.xyz${imgUrl}`;
+        }
+        bossImageUrl = imgUrl;
         maxHp = data.value.maxHp || 1000000;
         currentHp = data.value.currentHp || maxHp;
         bossHp = Math.round((currentHp / maxHp) * 100);

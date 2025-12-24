@@ -333,18 +333,18 @@ export function SocialQuestsPanel({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {featuredCasts && featuredCasts.length > 0 && (
-        <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-purple-500/30 p-4">
+        <div className="bg-gradient-to-b from-vintage-charcoal/90 to-vintage-black/80 rounded-2xl border border-vintage-gold/20 p-5 backdrop-blur-sm shadow-lg">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-purple-300 font-bold text-sm flex items-center gap-2">
+            <h4 className="text-vintage-gold font-bold text-base tracking-wide flex items-center gap-2">
               <span className="text-base">🎯</span>
-              Wanted Cast
+              WANTED CAST
             </h4>
             {featuredCasts.length > 1 && (
               <div className="flex gap-1">
                 {featuredCasts.map((_: unknown, idx: number) => (
-                  <button key={idx} onClick={() => setCurrentCastIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentCastIndex ? "bg-purple-400" : "bg-purple-400/30 hover:bg-purple-400/50"}`} />
+                  <button key={idx} onClick={() => setCurrentCastIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentCastIndex ? "bg-vintage-gold" : "bg-vintage-gold/30 hover:bg-vintage-gold/50"}`} />
                 ))}
               </div>
             )}
@@ -354,11 +354,11 @@ export function SocialQuestsPanel({
             href={currentCast?.warpcastUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block rounded-lg bg-purple-900/20 border border-purple-500/30 hover:border-purple-500/50 transition-all overflow-hidden"
+            className="block rounded-lg bg-vintage-black/50 border border-vintage-gold/15 hover:border-vintage-gold/35 transition-all overflow-hidden"
           >
             {loadingCasts && !currentCastData ? (
               <div className="p-4 flex items-center justify-center">
-                <div className="animate-spin w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full" />
+                <div className="animate-spin w-5 h-5 border-2 border-vintage-gold border-t-transparent rounded-full" />
               </div>
             ) : currentCastData ? (
               <div className="p-3">
@@ -368,34 +368,34 @@ export function SocialQuestsPanel({
                     <img
                       src={currentCastData.author.pfp_url}
                       alt={currentCastData.author.username}
-                      className="w-8 h-8 rounded-full border border-purple-500/50"
+                      className="w-8 h-8 rounded-full border border-vintage-gold/30"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-purple-600/50 flex items-center justify-center">
-                      <span className="text-purple-200 text-xs font-bold">
+                    <div className="w-8 h-8 rounded-full bg-vintage-gold/20 flex items-center justify-center">
+                      <span className="text-vintage-cream text-xs font-bold">
                         {currentCastData.author.username?.charAt(0)?.toUpperCase() || "?"}
                       </span>
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-purple-200 font-bold text-sm truncate">
+                    <p className="text-vintage-cream font-bold text-sm truncate">
                       {currentCastData.author.display_name || currentCastData.author.username}
                     </p>
-                    <p className="text-purple-400/70 text-xs">
+                    <p className="text-vintage-burnt-gold text-xs">
                       @{currentCastData.author.username} · {formatTimeAgo(currentCastData.timestamp)}
                     </p>
                   </div>
-                  <svg className="w-4 h-4 text-purple-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17" /></svg>
+                  <svg className="w-4 h-4 text-vintage-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17L17 7M17 7H7M17 7V17" /></svg>
                 </div>
 
                 {/* Cast text */}
-                <p className="text-purple-100 text-sm mb-2 line-clamp-3 whitespace-pre-wrap">
+                <p className="text-vintage-ice text-sm mb-2 line-clamp-3 whitespace-pre-wrap">
                   {currentCastData.text}
                 </p>
 
                 {/* Cast image if present */}
                 {getCastImage(currentCastData) && (
-                  <div className="mt-2 rounded-lg overflow-hidden border border-purple-500/30">
+                  <div className="mt-2 rounded-lg overflow-hidden border border-vintage-gold/10">
                     <img
                       src={getCastImage(currentCastData)!}
                       alt="Cast embed"
@@ -405,7 +405,7 @@ export function SocialQuestsPanel({
                 )}
 
                 {/* Engagement stats */}
-                <div className="flex items-center gap-4 mt-2 text-purple-400/70 text-xs">
+                <div className="flex items-center gap-4 mt-2 text-vintage-burnt-gold text-xs">
                   <span className="flex items-center gap-1">
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     {currentCastData.reactions?.likes_count || 0}
@@ -421,7 +421,7 @@ export function SocialQuestsPanel({
                 </div>
                 {/* Cast Interaction Rewards */}
                 {userFid && (
-                  <div className="flex gap-2 mt-3 pt-3 border-t border-purple-500/30">
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-vintage-gold/10">
                     {[
                       { type: "like" as const, icon: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z", label: "Like", color: "pink" },
                       { type: "recast" as const, icon: "M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z", label: "Recast", color: "green" },
@@ -458,8 +458,8 @@ export function SocialQuestsPanel({
             ) : (
               <div className="p-3">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-purple-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.8 8.2H5.2L3 9.4v7.8l3.2 3.2h9.6l3-3V9.4l-1-1.2zm-1.6 8.4l-1.6 1.6H8.4L6.8 16.6V11l1-1.2h8.4l1 1.2v5.6z"/><path d="M5.2 5.6L8.4 3.6h7.2l3.2 2H5.2z"/></svg>
-                  <span className="text-purple-300 text-sm font-medium">View on Warpcast</span>
+                  <svg className="w-5 h-5 text-vintage-gold" viewBox="0 0 24 24" fill="currentColor"><path d="M18.8 8.2H5.2L3 9.4v7.8l3.2 3.2h9.6l3-3V9.4l-1-1.2zm-1.6 8.4l-1.6 1.6H8.4L6.8 16.6V11l1-1.2h8.4l1 1.2v5.6z"/><path d="M5.2 5.6L8.4 3.6h7.2l3.2 2H5.2z"/></svg>
+                  <span className="text-vintage-cream text-sm font-medium">View on Warpcast</span>
                 </div>
                 <p className="text-vintage-burnt-gold text-xs mt-2 truncate">{currentCast?.castHash}</p>
               </div>
@@ -476,16 +476,16 @@ export function SocialQuestsPanel({
         </div>
       )}
 
-      <div className="bg-vintage-charcoal/80 rounded-xl border-2 border-vintage-gold/30 p-4">
+      <div className="bg-gradient-to-b from-vintage-charcoal/90 to-vintage-black/80 rounded-2xl border border-vintage-gold/20 p-5 backdrop-blur-sm shadow-lg">
         <h4 className="text-vintage-gold font-bold text-sm mb-3 flex items-center gap-2">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>
-          Follow & Join
+          FOLLOW & JOIN
         </h4>
         <div className="space-y-2">{SOCIAL_QUESTS.map(renderQuest)}</div>
       </div>
       {!userFid && (
-        <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3">
-          <p className="text-yellow-400 text-xs text-center">Connect with Farcaster to auto-verify quests</p>
+        <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-xl p-4">
+          <p className="text-vintage-gold text-xs text-center">Connect with Farcaster to auto-verify quests</p>
         </div>
       )}
     </div>
