@@ -13,8 +13,8 @@ export const revalidate = 604800;
 export default async function Image() {
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
-  // Nothing pack in center
-  const packImage = fetch(`${baseUrl}/pack-cover.png`).then(res => res.arrayBuffer());
+  // Background image
+  const backgroundImg = fetch(`${baseUrl}/images/og-cards/background.jpg`).then(res => res.arrayBuffer());
 
   // VMW cards - all rarities
   const cardMythic = fetch(`${baseUrl}/images/raid-bosses/vibe/mythic.png`).then(res => res.arrayBuffer());
@@ -26,9 +26,30 @@ export default async function Image() {
   // Custom cards
   const card1 = fetch(`${baseUrl}/images/og-cards/card1.png`).then(res => res.arrayBuffer());
   const card2 = fetch(`${baseUrl}/images/og-cards/card2.png`).then(res => res.arrayBuffer());
+  const card3 = fetch(`${baseUrl}/images/og-cards/card3.png`).then(res => res.arrayBuffer());
+  const card4 = fetch(`${baseUrl}/images/og-cards/card4.png`).then(res => res.arrayBuffer());
+  const card5 = fetch(`${baseUrl}/images/og-cards/card5.png`).then(res => res.arrayBuffer());
 
-  const [pack, mythic, legendary, epic, rare, common, custom1, custom2] = await Promise.all([
-    packImage, cardMythic, cardLegendary, cardEpic, cardRare, cardCommon, card1, card2
+  // Extra VMW boss cards from different collections
+  const gmvbrsMythic = fetch(`${baseUrl}/images/raid-bosses/gmvbrs/mythic.png`).then(res => res.arrayBuffer());
+  const gmvbrsLegendary = fetch(`${baseUrl}/images/raid-bosses/gmvbrs/legendary.png`).then(res => res.arrayBuffer());
+  const afclMythic = fetch(`${baseUrl}/images/raid-bosses/afcl/mythic.png`).then(res => res.arrayBuffer());
+  const vibefidMythic = fetch(`${baseUrl}/images/raid-bosses/vibefid/mythic.png`).then(res => res.arrayBuffer());
+  const coquettishMythic = fetch(`${baseUrl}/images/raid-bosses/coquettish/mythic.png`).then(res => res.arrayBuffer());
+  const viberutoMythic = fetch(`${baseUrl}/images/raid-bosses/viberuto/mythic.png`).then(res => res.arrayBuffer());
+  const meowverseMythic = fetch(`${baseUrl}/images/raid-bosses/meowverse/mythic.png`).then(res => res.arrayBuffer());
+  const poorlyMythic = fetch(`${baseUrl}/images/raid-bosses/poorlydrawnpepes/mythic.png`).then(res => res.arrayBuffer());
+
+  const [
+    background,
+    mythic, legendary, epic, rare, common,
+    custom1, custom2, custom3, custom4, custom5,
+    gmvbrsM, gmvbrsL, afclM, vibefidM, coquettishM, viberutoM, meowverseM, poorlyM
+  ] = await Promise.all([
+    backgroundImg,
+    cardMythic, cardLegendary, cardEpic, cardRare, cardCommon,
+    card1, card2, card3, card4, card5,
+    gmvbrsMythic, gmvbrsLegendary, afclMythic, vibefidMythic, coquettishMythic, viberutoMythic, meowverseMythic, poorlyMythic
   ]);
 
   return new ImageResponse(
@@ -45,7 +66,21 @@ export default async function Image() {
           position: 'relative',
         }}
       >
-        {/* Background Cards - 7 cards + pack in center */}
+        {/* Background Image */}
+        <img
+          src={`data:image/jpeg;base64,${Buffer.from(background).toString('base64')}`}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        />
+
+        {/* Background Cards - spread across entire background */}
         <div
           style={{
             position: 'absolute',
@@ -56,100 +91,256 @@ export default async function Image() {
             display: 'flex',
           }}
         >
-          {/* Far left - Common */}
+          {/* TOP ROW - 6 cards */}
           <img
             src={`data:image/png;base64,${Buffer.from(common).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: -40,
-              top: '50%',
-              transform: 'translateY(-50%) rotate(-22deg)',
+              left: -30,
+              top: -100,
+              transform: 'rotate(-18deg)',
               width: 180,
-              height: 260,
+              height: 252,
               objectFit: 'cover',
               zIndex: 1,
             }}
           />
-          {/* Left 2 - Rare */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(custom3).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: 150,
+              top: -80,
+              transform: 'rotate(10deg)',
+              width: 170,
+              height: 238,
+              objectFit: 'cover',
+              zIndex: 1,
+            }}
+          />
           <img
             src={`data:image/png;base64,${Buffer.from(rare).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: 100,
-              top: '50%',
-              transform: 'translateY(-50%) rotate(-14deg)',
-              width: 200,
-              height: 285,
+              left: 340,
+              top: -90,
+              transform: 'rotate(-8deg)',
+              width: 175,
+              height: 245,
               objectFit: 'cover',
-              zIndex: 2,
+              zIndex: 1,
             }}
           />
-          {/* Left 3 - Epic */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(custom4).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: 340,
+              top: -85,
+              transform: 'rotate(12deg)',
+              width: 175,
+              height: 245,
+              objectFit: 'cover',
+              zIndex: 1,
+            }}
+          />
           <img
             src={`data:image/png;base64,${Buffer.from(epic).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: 220,
-              top: '50%',
-              transform: 'translateY(-50%) rotate(-7deg)',
-              width: 210,
-              height: 300,
+              right: 150,
+              top: -75,
+              transform: 'rotate(-6deg)',
+              width: 170,
+              height: 238,
               objectFit: 'cover',
-              zIndex: 3,
+              zIndex: 1,
             }}
           />
-          {/* Center - Nothing Pack */}
           <img
-            src={`data:image/png;base64,${Buffer.from(pack).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(gmvbrsM).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 220,
-              height: 220,
-              objectFit: 'contain',
-              zIndex: 5,
+              right: -30,
+              top: -100,
+              transform: 'rotate(15deg)',
+              width: 180,
+              height: 252,
+              objectFit: 'cover',
+              zIndex: 1,
             }}
           />
-          {/* Right 3 - Legendary */}
+
+          {/* MIDDLE LEFT - 3 cards */}
           <img
             src={`data:image/png;base64,${Buffer.from(legendary).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: 220,
-              top: '50%',
-              transform: 'translateY(-50%) rotate(7deg)',
-              width: 210,
-              height: 300,
-              objectFit: 'cover',
-              zIndex: 3,
-            }}
-          />
-          {/* Right 2 - Mythic */}
-          <img
-            src={`data:image/png;base64,${Buffer.from(mythic).toString('base64')}`}
-            style={{
-              position: 'absolute',
-              right: 100,
-              top: '50%',
-              transform: 'translateY(-50%) rotate(14deg)',
+              left: -80,
+              top: '25%',
+              transform: 'rotate(-22deg)',
               width: 200,
-              height: 285,
+              height: 280,
               objectFit: 'cover',
               zIndex: 2,
             }}
           />
-          {/* Far right - Custom 1 */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(afclM).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: 80,
+              top: '30%',
+              transform: 'rotate(-12deg)',
+              width: 190,
+              height: 266,
+              objectFit: 'cover',
+              zIndex: 2,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(mythic).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: 230,
+              top: '35%',
+              transform: 'rotate(-5deg)',
+              width: 210,
+              height: 294,
+              objectFit: 'cover',
+              zIndex: 3,
+            }}
+          />
+
+          {/* MIDDLE RIGHT - 3 cards */}
           <img
             src={`data:image/png;base64,${Buffer.from(custom1).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: -40,
-              top: '50%',
-              transform: 'translateY(-50%) rotate(22deg)',
+              right: 230,
+              top: '35%',
+              transform: 'rotate(5deg)',
+              width: 210,
+              height: 294,
+              objectFit: 'cover',
+              zIndex: 3,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(vibefidM).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: 80,
+              top: '30%',
+              transform: 'rotate(12deg)',
+              width: 190,
+              height: 266,
+              objectFit: 'cover',
+              zIndex: 2,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(coquettishM).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: -80,
+              top: '25%',
+              transform: 'rotate(22deg)',
+              width: 200,
+              height: 280,
+              objectFit: 'cover',
+              zIndex: 2,
+            }}
+          />
+
+          {/* BOTTOM ROW - 7 cards */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(viberutoM).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: -40,
+              bottom: -110,
+              transform: 'rotate(20deg)',
               width: 180,
-              height: 260,
+              height: 252,
+              objectFit: 'cover',
+              zIndex: 1,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(custom2).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: 130,
+              bottom: -95,
+              transform: 'rotate(-8deg)',
+              width: 175,
+              height: 245,
+              objectFit: 'cover',
+              zIndex: 1,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(meowverseM).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: 300,
+              bottom: -100,
+              transform: 'rotate(12deg)',
+              width: 170,
+              height: 238,
+              objectFit: 'cover',
+              zIndex: 1,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(custom5).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              bottom: -90,
+              transform: 'translateX(-50%) rotate(-3deg)',
+              width: 175,
+              height: 245,
+              objectFit: 'cover',
+              zIndex: 1,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(poorlyM).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: 300,
+              bottom: -100,
+              transform: 'rotate(-10deg)',
+              width: 170,
+              height: 238,
+              objectFit: 'cover',
+              zIndex: 1,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(gmvbrsL).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: 130,
+              bottom: -95,
+              transform: 'rotate(8deg)',
+              width: 175,
+              height: 245,
+              objectFit: 'cover',
+              zIndex: 1,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(legendary).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: -40,
+              bottom: -110,
+              transform: 'rotate(-18deg)',
+              width: 180,
+              height: 252,
               objectFit: 'cover',
               zIndex: 1,
             }}
@@ -164,7 +355,7 @@ export default async function Image() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.35)',
+            background: 'rgba(0, 0, 0, 0.40)',
             zIndex: 4,
           }}
         />
@@ -229,34 +420,6 @@ export default async function Image() {
             }}
           >
             MEME CARD GAME
-          </div>
-
-          {/* Play Now Button */}
-          <div
-            style={{
-              marginTop: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%)',
-              paddingLeft: 50,
-              paddingRight: 50,
-              paddingTop: 18,
-              paddingBottom: 18,
-              borderRadius: 50,
-              boxShadow: '0 8px 32px rgba(255, 165, 0, 0.4)',
-            }}
-          >
-            <div
-              style={{
-                fontSize: 32,
-                fontWeight: 800,
-                color: '#000000',
-                letterSpacing: '2px',
-              }}
-            >
-              PLAY NOW
-            </div>
           </div>
         </div>
       </div>
