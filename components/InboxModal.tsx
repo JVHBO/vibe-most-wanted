@@ -14,6 +14,7 @@ import { BUILDER_CODE, dataSuffix } from "@/lib/hooks/useWriteContractWithAttrib
 import Image from "next/image";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks";
 import { Z_INDEX } from "@/lib/z-index";
+import { useFarcasterContext } from "@/contexts/FarcasterContext";
 
 const NextImage = Image;
 
@@ -31,6 +32,10 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   const { address } = useAccount();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+
+  // 🔒 Get Farcaster context for FID verification
+  const farcasterContext = useFarcasterContext();
+  const userFid = farcasterContext.user?.fid;
 
   // Modal accessibility hooks
   useBodyScrollLock(true);
@@ -228,8 +233,15 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     setIsProcessing(true);
 
     try {
-      console.log('[InboxModal] Step 1: Getting signature...');
-      const result = await convertTESTVBMS({ address });
+      if (!userFid) {
+        toast.error("🔒 Farcaster authentication required");
+        setIsProcessing(false);
+        return;
+      }
+
+      console.log('[InboxModal] Step 1: Getting signature...', { address, fid: userFid });
+      // 🔒 SECURITY: Pass FID for server-side verification
+      const result = await convertTESTVBMS({ address, fid: userFid });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
