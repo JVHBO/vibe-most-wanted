@@ -3,7 +3,7 @@
  * Separated to avoid circular dependencies
  */
 import { v } from "convex/values";
-import { query, mutation, internalQuery } from "./_generated/server";
+import { query, mutation, internalQuery, internalMutation } from "./_generated/server";
 
 /**
  * Get all notification tokens (internal)
@@ -58,7 +58,7 @@ export const getAllTokensPaginated = internalQuery({
 /**
  * Get tip rotation state
  */
-export const getTipState = query({
+export const getTipState = internalQuery({
   args: {},
   handler: async (ctx) => {
     let tipState = await ctx.db.query("tipRotationState").first();
@@ -112,8 +112,9 @@ const NOTIFICATION_COOLDOWN = 6 * 60 * 60 * 1000; // 6 horas
 
 /**
  * Get last notification time for a user
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery (only used by internalAction)
  */
-export const getLastLowEnergyNotification = query({
+export const getLastLowEnergyNotification = internalQuery({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const notification = await ctx.db
@@ -126,8 +127,9 @@ export const getLastLowEnergyNotification = query({
 
 /**
  * Update last notification time
+ * 🚀 BANDWIDTH FIX: Converted to internalMutation (only used by internalAction)
  */
-export const updateLowEnergyNotification = mutation({
+export const updateLowEnergyNotification = internalMutation({
   args: { 
     address: v.string(),
     lowEnergyCount: v.number(),

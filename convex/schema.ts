@@ -1353,7 +1353,8 @@ export default defineSchema({
     .index("by_slot", ["slotNumber"])
     .index("by_status", ["status"])
     .index("by_slot_status", ["slotNumber", "status"])
-    .index("by_completed", ["status", "featureEndsAt"]),
+    .index("by_completed", ["status", "featureEndsAt"])
+    .index("by_castHash", ["castHash"]), // BANDWIDTH FIX: For checkExistingCast lookup
 
   // Cast Auction Bids - History of all bids placed
   castAuctionBids: defineTable({
