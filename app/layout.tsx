@@ -82,7 +82,7 @@ export const metadata: Metadata = {
     // Farcaster Mini App Meta Tag (REQUIRED FOR DISCOVERY)
     "fc:miniapp": JSON.stringify({
       "version": "next",
-      "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg",
+      "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image",
       "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
@@ -98,7 +98,7 @@ export const metadata: Metadata = {
     // Backward compatibility with old frame spec
     "fc:frame": JSON.stringify({
       "version": "next",
-      "imageUrl": "https://www.vibemostwanted.xyz/screenshot.jpg?v=2",
+      "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image",
       "aspectRatio": "1.91:1",
       "button": {
         "title": "Play Now",
