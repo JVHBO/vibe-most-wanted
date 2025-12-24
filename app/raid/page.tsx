@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RaidBossModal } from "@/components/RaidBossModal";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useMusic } from "@/contexts/MusicContext";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { PriceTicker } from "@/components/PriceTicker";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -17,9 +16,8 @@ export default function RaidPage() {
   const { address, isConnecting } = useAccount();
   const router = useRouter();
   const { t } = useLanguage();
-  const { isMusicEnabled } = useMusic();
   const { nfts } = usePlayerCards();
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [soundEnabled] = useState<boolean>(true); // Sound always enabled in raid
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -38,11 +36,6 @@ export default function RaidPage() {
     }
     checkFarcaster();
   }, []);
-
-  // Sync sound with music setting
-  useEffect(() => {
-    setSoundEnabled(isMusicEnabled);
-  }, [isMusicEnabled]);
 
   if (!isMounted) {
     return (
