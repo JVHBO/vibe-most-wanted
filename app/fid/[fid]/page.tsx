@@ -293,8 +293,8 @@ export default function FidCardPage() {
         newRarity: result.newRarity,
         oldPower: result.oldPower,
         newPower: result.newPower,
-        oldScore: result.oldScore || card.neynarScore,
-        newScore: result.newScore || neynarScoreData.score,
+        oldScore: card.neynarScore,
+        newScore: neynarScoreData.score,
         newBounty,
       });
 
