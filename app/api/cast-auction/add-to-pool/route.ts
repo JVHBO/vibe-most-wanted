@@ -120,9 +120,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
+      ...result,
       success: true,
       contribution: transferAmountVBMS,
-      ...result,
     });
   } catch (error: any) {
     console.error("[AddToPool] Error:", error);
