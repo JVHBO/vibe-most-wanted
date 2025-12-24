@@ -8,6 +8,39 @@
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
 const NEYNAR_API_BASE = 'https://api.neynar.com/v2';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🚀 BANDWIDTH FIX: In-memory cache for API responses
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+// Cache stores: key -> { data, expiresAt }
+const userCache = new Map<number, CacheEntry<any>>();
+const castCache = new Map<string, CacheEntry<any>>();
+
+// Cache TTLs (in milliseconds)
+const USER_CACHE_TTL = 10 * 60 * 1000; // 10 minutes - user profiles rarely change
+const CAST_CACHE_TTL = 60 * 60 * 1000; // 1 hour - cast content never changes
+
+// Helper to get from cache if not expired
+function getFromCache<T>(cache: Map<string | number, CacheEntry<T>>, key: string | number): T | null {
+  const entry = cache.get(key);
+  if (entry && entry.expiresAt > Date.now()) {
+    return entry.data;
+  }
+  // Expired or not found - delete if expired
+  if (entry) cache.delete(key);
+  return null;
+}
+
+// Helper to set in cache
+function setInCache<T>(cache: Map<string | number, CacheEntry<T>>, key: string | number, data: T, ttl: number): void {
+  cache.set(key, { data, expiresAt: Date.now() + ttl });
+}
+
 export interface NeynarUser {
   fid: number;
   username: string;
@@ -35,10 +68,17 @@ export interface NeynarUserResponse {
 
 /**
  * Fetch user data by FID
+ * 🚀 BANDWIDTH FIX: Uses 10-minute cache for user data
  */
 export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
   if (!NEYNAR_API_KEY) {
     throw new Error('NEYNAR_API_KEY is not configured');
+  }
+
+  // 🚀 BANDWIDTH FIX: Check cache first
+  const cached = getFromCache<NeynarUser>(userCache, fid);
+  if (cached) {
+    return cached;
   }
 
   try {
@@ -64,7 +104,10 @@ export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
       return null;
     }
 
-    return data.users[0];
+    const user = data.users[0];
+    // 🚀 BANDWIDTH FIX: Cache for 10 minutes
+    setInCache(userCache, fid, user, USER_CACHE_TTL);
+    return user;
   } catch (error) {
     console.error('Error fetching Neynar user:', error);
     return null;
@@ -231,6 +274,12 @@ export async function getCastByHash(castHash: string): Promise<NeynarCast | null
     return null;
   }
 
+  // 🚀 BANDWIDTH FIX: Check cache first
+  const cached = getFromCache<NeynarCast>(castCache, castHash);
+  if (cached) {
+    return cached;
+  }
+
   try {
     const response = await fetch(
       `${NEYNAR_API_BASE}/farcaster/cast?identifier=${castHash}&type=hash`,
@@ -254,7 +303,10 @@ export async function getCastByHash(castHash: string): Promise<NeynarCast | null
       return null;
     }
 
-    return data.cast as NeynarCast;
+    const cast = data.cast as NeynarCast;
+    // 🚀 BANDWIDTH FIX: Cache for 1 hour
+    setInCache(castCache, castHash, cast, CAST_CACHE_TTL);
+    return cast;
   } catch (error) {
     console.error('Error fetching Neynar cast:', error);
     return null;
@@ -270,6 +322,12 @@ export async function getCastByUrl(warpcastUrl: string): Promise<NeynarCast | nu
   if (!NEYNAR_API_KEY) {
     console.error('NEYNAR_API_KEY is not configured');
     return null;
+  }
+
+  // 🚀 BANDWIDTH FIX: Check cache first
+  const cached = getFromCache<NeynarCast>(castCache, warpcastUrl);
+  if (cached) {
+    return cached;
   }
 
   try {
@@ -295,7 +353,10 @@ export async function getCastByUrl(warpcastUrl: string): Promise<NeynarCast | nu
       return null;
     }
 
-    return data.cast as NeynarCast;
+    const cast = data.cast as NeynarCast;
+    // 🚀 BANDWIDTH FIX: Cache for 1 hour
+    setInCache(castCache, warpcastUrl, cast, CAST_CACHE_TTL);
+    return cast;
   } catch (error) {
     console.error('Error fetching Neynar cast by URL:', error);
     return null;

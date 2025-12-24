@@ -29,6 +29,22 @@ export const getTokenByFid = query({
 });
 
 /**
+ * Get notification token by FID (internal version)
+ * 🚀 BANDWIDTH FIX: For use by internalActions only
+ */
+export const getTokenByFidInternal = internalQuery({
+  args: { fid: v.string() },
+  handler: async (ctx, { fid }) => {
+    const token = await ctx.db
+      .query("notificationTokens")
+      .withIndex("by_fid", (q) => q.eq("fid", fid))
+      .first();
+
+    return token;
+  },
+});
+
+/**
  * Get all notification tokens (for internal use only)
  * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
  */
@@ -105,60 +121,6 @@ export const removeToken = mutation({
 
     console.log(`⚠️ No token found for FID ${fid}`);
     return false;
-  },
-});
-
-// ============================================================================
-// TIP ROTATION STATE HELPERS (for Actions)
-// ============================================================================
-
-/**
- * Get or create tip rotation state (query for Actions)
- */
-export const getTipState = query({
-  args: {},
-  handler: async (ctx) => {
-    let tipState = await ctx.db.query("tipRotationState").first();
-
-    if (!tipState) {
-      // Return default state if doesn't exist
-      return { currentTipIndex: 0, lastSentAt: Date.now(), _id: null };
-    }
-
-    return tipState;
-  },
-});
-
-/**
- * Initialize tip state if doesn't exist (mutation)
- */
-export const initTipState = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const existing = await ctx.db.query("tipRotationState").first();
-    if (existing) return existing._id;
-
-    const newId = await ctx.db.insert("tipRotationState", {
-      currentTipIndex: 0,
-      lastSentAt: Date.now(),
-    });
-    return newId;
-  },
-});
-
-/**
- * Update tip rotation state (mutation for Actions)
- */
-export const updateTipState = mutation({
-  args: {
-    tipStateId: v.id("tipRotationState"),
-    currentTipIndex: v.number(),
-  },
-  handler: async (ctx, { tipStateId, currentTipIndex }) => {
-    await ctx.db.patch(tipStateId, {
-      currentTipIndex,
-      lastSentAt: Date.now(),
-    });
   },
 });
 
@@ -253,7 +215,7 @@ export const sendLowEnergyNotifications = internalAction({
       console.log("⚡ Checking for low energy raid decks...");
 
       // Get all raid decks
-      const raidDecks = await ctx.runQuery(api.notifications.getAllRaidDecks);
+      const raidDecks = await ctx.runQuery(internal.notifications.getAllRaidDecks);
 
       if (!raidDecks || raidDecks.length === 0) {
         console.log("⚠️ No raid decks found");
@@ -293,7 +255,7 @@ export const sendLowEnergyNotifications = internalAction({
         try {
           // 👇 ADICIONE ESTE BLOCO DE VERIFICAÇÃO DE COOLDOWN
           const lastNotification = await ctx.runQuery(
-            api.notificationsHelpers.getLastLowEnergyNotification, 
+            internal.notificationsHelpers.getLastLowEnergyNotification, 
             { address: deck.address }
           );
 
@@ -306,7 +268,7 @@ export const sendLowEnergyNotifications = internalAction({
           // 👆 FIM DO BLOCO
 
           // Get player profile to find FID
-          const profile = await ctx.runQuery(api.notifications.getProfileByAddress, {
+          const profile = await ctx.runQuery(internal.notifications.getProfileByAddress, {
             address: deck.address,
           });
 
@@ -324,7 +286,7 @@ export const sendLowEnergyNotifications = internalAction({
           }
 
           // Get notification token
-          const tokenData = await ctx.runQuery(api.notifications.getTokenByFid, { fid });
+          const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, { fid });
 
           if (!tokenData) {
             console.log(`⚠️ No notification token for FID ${fid}`);
@@ -365,7 +327,7 @@ export const sendLowEnergyNotifications = internalAction({
               sent++;
               
               // 👇 ADICIONE ESTAS LINHAS
-              await ctx.runMutation(api.notificationsHelpers.updateLowEnergyNotification, {
+              await ctx.runMutation(internal.notificationsHelpers.updateLowEnergyNotification, {
                 address: deck.address,
                 lowEnergyCount: lowEnergyCards,
                 expiredCount: expiredCards,
@@ -418,8 +380,9 @@ export const getAllRaidDecks = internalQuery({
 
 /**
  * Get profile by address (for FID lookup)
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery (only used by internalActions)
  */
-export const getProfileByAddress = query({
+export const getProfileByAddress = internalQuery({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const profile = await ctx.db
@@ -805,7 +768,7 @@ export const sendPeriodicTip = internalAction({
       }
 
       // Get or create tip rotation state via query
-      let tipState = await ctx.runQuery(api.notificationsHelpers.getTipState);
+      let tipState = await ctx.runQuery(internal.notificationsHelpers.getTipState);
 
       // Initialize if needed
       if (!tipState._id) {
@@ -1214,7 +1177,7 @@ export const sendBossDefeatedNotifications = internalAction({
 
         try {
           // Get player profile to find FID
-          const profile = await ctx.runQuery(api.notifications.getProfileByAddress, {
+          const profile = await ctx.runQuery(internal.notifications.getProfileByAddress, {
             address,
           });
 
@@ -1232,7 +1195,7 @@ export const sendBossDefeatedNotifications = internalAction({
           }
 
           // Get notification token
-          const tokenData = await ctx.runQuery(api.notifications.getTokenByFid, { fid });
+          const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, { fid });
 
           if (!tokenData) {
             console.log("⚠️ No notification token for FID " + fid);

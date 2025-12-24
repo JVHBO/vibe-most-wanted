@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { uploadToFilebase } from '@/lib/filebase';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 /**
  * Upload NFT image to Filebase IPFS via S3-compatible API
+ * 🚀 BANDWIDTH FIX: Uses singleton S3Client
  *
  * Expects:
  * - FormData with 'image' field containing PNG blob
@@ -15,17 +16,6 @@ export const maxDuration = 60;
  */
 export async function POST(request: NextRequest) {
   try {
-    const accessKey = process.env.FILEBASE_ACCESS_KEY;
-    const secretKey = process.env.FILEBASE_SECRET_KEY;
-    const bucketName = process.env.FILEBASE_BUCKET_NAME || 'vibefid';
-
-    if (!accessKey || !secretKey) {
-      return NextResponse.json(
-        { error: 'Filebase credentials not configured' },
-        { status: 500 }
-      );
-    }
-
     const formData = await request.formData();
     const imageBlob = formData.get('image') as Blob;
 
@@ -40,52 +30,22 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await imageBlob.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Configure S3 client for Filebase
-    const s3Client = new S3Client({
-      endpoint: 'https://s3.filebase.com',
-      region: 'us-east-1',
-      credentials: {
-        accessKeyId: accessKey,
-        secretAccessKey: secretKey,
-      },
-      forcePathStyle: true, // Required for Filebase
-    });
-
     // Generate unique filename
     const timestamp = Date.now();
     const filename = `card-${timestamp}.png`;
 
-    // Upload to Filebase S3 bucket (automatically pins to IPFS)
-    const uploadCommand = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: filename,
-      Body: buffer,
-      ContentType: 'image/png',
-    });
+    // 🚀 BANDWIDTH FIX: Use singleton S3 client
+    const result = await uploadToFilebase(buffer, filename, 'image/png');
 
-    await s3Client.send(uploadCommand);
-
-    // Get CID from object metadata
-    const headCommand = new HeadObjectCommand({
-      Bucket: bucketName,
-      Key: filename,
-    });
-
-    const headResult = await s3Client.send(headCommand);
-    const cid = headResult.Metadata?.cid;
-
-    if (!cid) {
-      throw new Error('Failed to retrieve CID from uploaded file');
+    if (!result) {
+      throw new Error('Upload failed');
     }
 
-    // Use Filebase gateway - faster since file is hosted there
-    const ipfsUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
-
-    console.log(`✅ Image uploaded to IPFS via Filebase, CID: ${cid}`);
+    console.log(`✅ Image uploaded to IPFS via Filebase, CID: ${result.cid}`);
 
     return NextResponse.json({
-      ipfsUrl,
-      cid,
+      ipfsUrl: result.ipfsUrl,
+      cid: result.cid,
       success: true,
     });
 

@@ -38,13 +38,13 @@ const ANTI_SNIPE_EXTENSION_MS = 3 * 60 * 1000; // Add 3 minutes on late bids
 export const checkExistingCast = query({
   args: { castHash: v.string() },
   handler: async (ctx, { castHash }) => {
-    const auctions = await ctx.db
+    // 🚀 BANDWIDTH FIX: Use by_castHash index + filter instead of collect + find
+    const auction = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
+      .withIndex("by_castHash", (q) => q.eq("castHash", castHash))
       .filter((q) => q.eq(q.field("status"), "bidding"))
-      .collect();
+      .first();
 
-    const auction = auctions.find((a) => a.castHash === castHash);
     if (!auction) return null;
 
     const contributions = await ctx.db
@@ -84,11 +84,12 @@ export const checkExistingCast = query({
 export const getActiveAuctions = query({
   args: {},
   handler: async (ctx) => {
+    // 🚀 BANDWIDTH FIX: Limit to 50 auctions (more than enough for display)
     const auctions = await ctx.db
       .query("castAuctions")
       .withIndex("by_status")
       .filter((q) => q.eq(q.field("status"), "bidding"))
-      .collect();
+      .take(50);
 
     // Sort by pool size (highest first) - cast-based ranking
     return auctions.sort((a, b) => (b.currentBid || 0) - (a.currentBid || 0));
@@ -120,11 +121,12 @@ export const getAuctionForSlot = query({
 export const getWinningCasts = query({
   args: {},
   handler: async (ctx) => {
+    // 🚀 BANDWIDTH FIX: Only 2 slots exist, limit to 10 for safety
     const activeCasts = await ctx.db
       .query("castAuctions")
       .withIndex("by_status")
       .filter((q) => q.eq(q.field("status"), "active"))
-      .collect();
+      .take(10);
 
     return activeCasts
       .filter((a) => a.castHash && a.warpcastUrl)
@@ -189,17 +191,18 @@ export const getBidHistory = query({
 export const getAllAuctionStates = query({
   args: {},
   handler: async (ctx) => {
+    // 🚀 BANDWIDTH FIX: Limit both queries
     const bidding = await ctx.db
       .query("castAuctions")
       .withIndex("by_status")
       .filter((q) => q.eq(q.field("status"), "bidding"))
-      .collect();
+      .take(50);
 
     const active = await ctx.db
       .query("castAuctions")
       .withIndex("by_status")
       .filter((q) => q.eq(q.field("status"), "active"))
-      .collect();
+      .take(10);
 
     return {
       // Sort by pool size (highest first) - cast-based ranking
@@ -217,6 +220,7 @@ export const getPendingRefunds = query({
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
 
+    // 🚀 BANDWIDTH FIX: Limit to 100 pending refunds per user
     const pendingRefunds = await ctx.db
       .query("castAuctionBids")
       .withIndex("by_bidder")
@@ -226,7 +230,7 @@ export const getPendingRefunds = query({
           q.eq(q.field("status"), "pending_refund")
         )
       )
-      .collect();
+      .take(100);
 
     const totalRefund = pendingRefunds.reduce((sum, bid) => sum + (bid.refundAmount || bid.bidAmount), 0);
 
@@ -248,6 +252,7 @@ export const getRecentRefunds = query({
     const normalizedAddress = address.toLowerCase();
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
 
+    // 🚀 BANDWIDTH FIX: Limit to 50 recent refunds
     const recentRefunds = await ctx.db
       .query("castAuctionBids")
       .withIndex("by_bidder")
@@ -258,7 +263,7 @@ export const getRecentRefunds = query({
           q.gte(q.field("refundedAt"), oneDayAgo)
         )
       )
-      .collect();
+      .take(50);
 
     const totalRefunded = recentRefunds.reduce((sum, bid) => sum + (bid.refundAmount || bid.bidAmount), 0);
 
@@ -291,11 +296,12 @@ export const getCurrentBidders = query({
         .first();
       auctions = auction ? [auction] : [];
     } else {
+      // 🚀 BANDWIDTH FIX: Limit auctions fetched
       auctions = await ctx.db
         .query("castAuctions")
         .withIndex("by_status")
         .filter((q) => q.eq(q.field("status"), "bidding"))
-        .collect();
+        .take(50);
     }
 
     // Get all bids for these auctions
