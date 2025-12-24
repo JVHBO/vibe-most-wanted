@@ -12,15 +12,24 @@ export const revalidate = 604800;
 
 export default async function Image() {
   const baseUrl = 'https://www.vibemostwanted.xyz';
-  // Custom cards from og-cards folder
-  const cardImage1 = fetch(`${baseUrl}/images/og-cards/card1.png`).then(res => res.arrayBuffer());
-  const cardImage2 = fetch(`${baseUrl}/images/og-cards/card2.png`).then(res => res.arrayBuffer());
-  // Additional cards from vibe collection
-  const cardImage3 = fetch(`${baseUrl}/images/raid-bosses/vibe/legendary.png`).then(res => res.arrayBuffer());
-  const cardImage4 = fetch(`${baseUrl}/images/raid-bosses/vibe/epic.png`).then(res => res.arrayBuffer());
-  const cardImage5 = fetch(`${baseUrl}/images/raid-bosses/vibe/rare.png`).then(res => res.arrayBuffer());
 
-  const [card1, card2, card3, card4, card5] = await Promise.all([cardImage1, cardImage2, cardImage3, cardImage4, cardImage5]);
+  // Nothing pack in center
+  const packImage = fetch(`${baseUrl}/pack-cover.png`).then(res => res.arrayBuffer());
+
+  // VMW cards - all rarities
+  const cardMythic = fetch(`${baseUrl}/images/raid-bosses/vibe/mythic.png`).then(res => res.arrayBuffer());
+  const cardLegendary = fetch(`${baseUrl}/images/raid-bosses/vibe/legendary.png`).then(res => res.arrayBuffer());
+  const cardEpic = fetch(`${baseUrl}/images/raid-bosses/vibe/epic.png`).then(res => res.arrayBuffer());
+  const cardRare = fetch(`${baseUrl}/images/raid-bosses/vibe/rare.png`).then(res => res.arrayBuffer());
+  const cardCommon = fetch(`${baseUrl}/images/raid-bosses/vibe/common.png`).then(res => res.arrayBuffer());
+
+  // Custom cards
+  const card1 = fetch(`${baseUrl}/images/og-cards/card1.png`).then(res => res.arrayBuffer());
+  const card2 = fetch(`${baseUrl}/images/og-cards/card2.png`).then(res => res.arrayBuffer());
+
+  const [pack, mythic, legendary, epic, rare, common, custom1, custom2] = await Promise.all([
+    packImage, cardMythic, cardLegendary, cardEpic, cardRare, cardCommon, card1, card2
+  ]);
 
   return new ImageResponse(
     (
@@ -36,7 +45,7 @@ export default async function Image() {
           position: 'relative',
         }}
       >
-        {/* Background Cards - 5 cards spread across, solid with proper z-index */}
+        {/* Background Cards - 7 cards + pack in center */}
         <div
           style={{
             position: 'absolute',
@@ -47,72 +56,100 @@ export default async function Image() {
             display: 'flex',
           }}
         >
-          {/* Far left card - back layer */}
+          {/* Far left - Common */}
           <img
-            src={`data:image/png;base64,${Buffer.from(card4).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(common).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: -60,
+              left: -40,
               top: '50%',
-              transform: 'translateY(-50%) rotate(-18deg)',
-              width: 240,
-              height: 340,
+              transform: 'translateY(-50%) rotate(-22deg)',
+              width: 180,
+              height: 260,
               objectFit: 'cover',
               zIndex: 1,
             }}
           />
-          {/* Left card */}
+          {/* Left 2 - Rare */}
           <img
-            src={`data:image/png;base64,${Buffer.from(card1).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(rare).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: 120,
+              left: 100,
               top: '50%',
-              transform: 'translateY(-50%) rotate(-8deg)',
-              width: 260,
-              height: 370,
+              transform: 'translateY(-50%) rotate(-14deg)',
+              width: 200,
+              height: 285,
               objectFit: 'cover',
               zIndex: 2,
             }}
           />
-          {/* Center card - front layer */}
+          {/* Left 3 - Epic */}
           <img
-            src={`data:image/png;base64,${Buffer.from(card2).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(epic).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: 220,
+              top: '50%',
+              transform: 'translateY(-50%) rotate(-7deg)',
+              width: 210,
+              height: 300,
+              objectFit: 'cover',
+              zIndex: 3,
+            }}
+          />
+          {/* Center - Nothing Pack */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(pack).toString('base64')}`}
             style={{
               position: 'absolute',
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 280,
-              height: 400,
+              width: 220,
+              height: 220,
+              objectFit: 'contain',
+              zIndex: 5,
+            }}
+          />
+          {/* Right 3 - Legendary */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(legendary).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: 220,
+              top: '50%',
+              transform: 'translateY(-50%) rotate(7deg)',
+              width: 210,
+              height: 300,
               objectFit: 'cover',
               zIndex: 3,
             }}
           />
-          {/* Right card */}
+          {/* Right 2 - Mythic */}
           <img
-            src={`data:image/png;base64,${Buffer.from(card3).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(mythic).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: 120,
+              right: 100,
               top: '50%',
-              transform: 'translateY(-50%) rotate(8deg)',
-              width: 260,
-              height: 370,
+              transform: 'translateY(-50%) rotate(14deg)',
+              width: 200,
+              height: 285,
               objectFit: 'cover',
               zIndex: 2,
             }}
           />
-          {/* Far right card - back layer */}
+          {/* Far right - Custom 1 */}
           <img
-            src={`data:image/png;base64,${Buffer.from(card5).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(custom1).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: -60,
+              right: -40,
               top: '50%',
-              transform: 'translateY(-50%) rotate(18deg)',
-              width: 240,
-              height: 340,
+              transform: 'translateY(-50%) rotate(22deg)',
+              width: 180,
+              height: 260,
               objectFit: 'cover',
               zIndex: 1,
             }}
