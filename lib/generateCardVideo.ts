@@ -219,7 +219,7 @@ function drawFoilEffect(
   ctx.globalAlpha = foilType === 'Prize' ? 0.8 : 0.6; // INCREASED for visibility
 
   // Calculate animation progress (0 to 1)
-  const speed = foilType === 'Prize' ? 3 : 4; // Prize: 3s (fast & aggressive!), Standard: 4s
+  const speed = 3; // FIX: Both Prize and Standard use 3s cycle for smooth looping
   const progress = (frame % (30 * speed)) / (30 * speed);
 
   // Create gradient that shifts with animation
