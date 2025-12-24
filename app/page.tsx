@@ -629,16 +629,6 @@ export default function TCGPage() {
     }
   }, [router]);
 
-  // Sync sessionStorage for card loading state (prevents loading on navigation back)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const loaded = sessionStorage.getItem('cardsLoadedOnce') === 'true';
-      if (loaded) {
-        setSkippedCardLoading(true);
-      }
-    }
-  }, []);
-
 // Scroll to top when view changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1580,10 +1570,6 @@ export default function TCGPage() {
 
       setNfts([...deduplicated]);
       setStatus("loaded");
-      // Mark that cards were loaded this session (for navigation)
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('cardsLoadedOnce', 'true');
-      }
       devLog('🎉 Cards loaded successfully (NFTs + FREE):', deduplicated.length);
 
       // Check if player has VibeFID and mark achievement
