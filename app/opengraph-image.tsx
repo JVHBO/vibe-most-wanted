@@ -12,11 +12,15 @@ export const revalidate = 604800;
 
 export default async function Image() {
   const baseUrl = 'https://www.vibemostwanted.xyz';
-  const cardImage1 = fetch(`${baseUrl}/images/raid-bosses/vibe/rare.png`).then(res => res.arrayBuffer());
-  const cardImage2 = fetch(`${baseUrl}/images/raid-bosses/vibe/legendary.png`).then(res => res.arrayBuffer());
-  const cardImage3 = fetch(`${baseUrl}/images/raid-bosses/vibe/epic.png`).then(res => res.arrayBuffer());
+  // Custom cards from og-cards folder
+  const cardImage1 = fetch(`${baseUrl}/images/og-cards/card1.png`).then(res => res.arrayBuffer());
+  const cardImage2 = fetch(`${baseUrl}/images/og-cards/card2.png`).then(res => res.arrayBuffer());
+  // Additional cards from vibe collection
+  const cardImage3 = fetch(`${baseUrl}/images/raid-bosses/vibe/legendary.png`).then(res => res.arrayBuffer());
+  const cardImage4 = fetch(`${baseUrl}/images/raid-bosses/vibe/epic.png`).then(res => res.arrayBuffer());
+  const cardImage5 = fetch(`${baseUrl}/images/raid-bosses/vibe/rare.png`).then(res => res.arrayBuffer());
 
-  const [card1, card2, card3] = await Promise.all([cardImage1, cardImage2, cardImage3]);
+  const [card1, card2, card3, card4, card5] = await Promise.all([cardImage1, cardImage2, cardImage3, cardImage4, cardImage5]);
 
   return new ImageResponse(
     (
@@ -32,7 +36,7 @@ export default async function Image() {
           position: 'relative',
         }}
       >
-        {/* Background Cards */}
+        {/* Background Cards - 5 cards spread across */}
         <div
           style={{
             position: 'absolute',
@@ -41,21 +45,36 @@ export default async function Image() {
             right: 0,
             bottom: 0,
             display: 'flex',
-            opacity: 0.35,
+            opacity: 0.4,
           }}
         >
+          {/* Far left card */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(card4).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: -80,
+              top: '50%',
+              transform: 'translateY(-50%) rotate(-20deg)',
+              width: 280,
+              height: 400,
+              objectFit: 'cover',
+            }}
+          />
+          {/* Left card */}
           <img
             src={`data:image/png;base64,${Buffer.from(card1).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: -50,
+              left: 150,
               top: '50%',
-              transform: 'translateY(-50%) rotate(-12deg)',
-              width: 320,
-              height: 450,
+              transform: 'translateY(-50%) rotate(-10deg)',
+              width: 300,
+              height: 420,
               objectFit: 'cover',
             }}
           />
+          {/* Center card */}
           <img
             src={`data:image/png;base64,${Buffer.from(card2).toString('base64')}`}
             style={{
@@ -63,20 +82,34 @@ export default async function Image() {
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%)',
+              width: 320,
+              height: 450,
+              objectFit: 'cover',
+            }}
+          />
+          {/* Right card */}
+          <img
+            src={`data:image/png;base64,${Buffer.from(card3).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: 150,
+              top: '50%',
+              transform: 'translateY(-50%) rotate(10deg)',
               width: 300,
               height: 420,
               objectFit: 'cover',
             }}
           />
+          {/* Far right card */}
           <img
-            src={`data:image/png;base64,${Buffer.from(card3).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(card5).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: -50,
+              right: -80,
               top: '50%',
-              transform: 'translateY(-50%) rotate(12deg)',
-              width: 320,
-              height: 450,
+              transform: 'translateY(-50%) rotate(20deg)',
+              width: 280,
+              height: 400,
               objectFit: 'cover',
             }}
           />
@@ -154,6 +187,34 @@ export default async function Image() {
             }}
           >
             MEME CARD GAME
+          </div>
+
+          {/* Play Now Button */}
+          <div
+            style={{
+              marginTop: 40,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%)',
+              paddingLeft: 50,
+              paddingRight: 50,
+              paddingTop: 18,
+              paddingBottom: 18,
+              borderRadius: 50,
+              boxShadow: '0 8px 32px rgba(255, 165, 0, 0.4)',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 32,
+                fontWeight: 800,
+                color: '#000000',
+                letterSpacing: '2px',
+              }}
+            >
+              PLAY NOW
+            </div>
           </div>
         </div>
       </div>
