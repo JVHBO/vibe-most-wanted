@@ -3425,7 +3425,7 @@ export default function TCGPage() {
     <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
       {/* Card Loading Screen - shows while fetching NFTs */}
       <CardLoadingScreen
-        isLoading={status === 'fetching' && !skippedCardLoading && nfts.length === 0}
+        isLoading={!skippedCardLoading && nfts.length === 0 && status !== 'loaded'}
         onSkip={() => setSkippedCardLoading(true)}
         cardsLoaded={nfts.length}
       />
