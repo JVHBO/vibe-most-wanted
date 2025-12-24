@@ -71,7 +71,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
           action: {
             type: 'launch_miniapp',
             name: 'VIBE MOST WANTED',
-            url: baseUrl,
+            url: baseUrl + '/shop',
           },
         },
       }),
@@ -89,7 +89,7 @@ export default function SharePackPage() {
         <p className="text-vintage-burnt-gold mb-4">{"\u{1F3B4}"} Pack Opening!</p>
         <div className="animate-pulse text-6xl">{"\u{1F3B4}"}</div>
         <script dangerouslySetInnerHTML={{
-          __html: `setTimeout(() => { window.location.href = '/'; }, 2000);`
+          __html: `setTimeout(() => { window.location.href = '/shop'; }, 2000);`
         }} />
       </div>
     </div>
