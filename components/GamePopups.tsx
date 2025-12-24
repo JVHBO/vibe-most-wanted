@@ -16,6 +16,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { FarcasterIcon } from '@/components/PokerIcons';
 import { useMusic } from '@/contexts/MusicContext';
+import { shareToFarcaster } from '@/lib/share-utils';
 
 // Pre-generated random positions for victory-3 animation (avoid recalculating on each render)
 const VICTORY3_TONGUE_POSITIONS = Array.from({ length: 25 }, (_, i) => ({
@@ -390,43 +391,44 @@ export function GamePopups({
               >
                 <span>𝕏</span> {t('shareVictory')}
               </a>
-              <a
-                href={(() => {
-                  if (!lastBattleResult) return '#';
+              <button
+                onClick={() => {
+                  if (!lastBattleResult) return;
+                  if (soundEnabled) AudioManager.buttonSuccess();
+                  if (onShareClick) onShareClick('farcaster');
 
-                  // Generate matchId for share URL (format: result|playerPower|opponentPower|opponentName|playerName|type)
-                  // PFPs will be fetched from Convex by the OG image generator using usernames
                   const playerName = encodeURIComponent(userProfile?.username || 'Player');
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
                   const battleType = lastBattleResult.type || 'pve';
-
                   const matchId = `win|${lastBattleResult.playerPower}|${lastBattleResult.opponentPower}|${opponentName}|${playerName}|${battleType}`;
                   const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                   let castText = t('castVictory', { power: lastBattleResult.playerPower });
-
                   if (lastBattleResult.type === 'attack') {
-                    castText += `\n\nAttacked ${lastBattleResult.opponentName}!`;
+                    castText += `
+
+Attacked ${lastBattleResult.opponentName}!`;
                   } else if (lastBattleResult.type === 'defense') {
-                    castText += `\n\nDefended against ${lastBattleResult.opponentName}!`;
+                    castText += `
+
+Defended against ${lastBattleResult.opponentName}!`;
                   } else if (lastBattleResult.type === 'pvp') {
-                    castText += `\n\nDefeated ${lastBattleResult.opponentName}!`;
+                    castText += `
+
+Defeated ${lastBattleResult.opponentName}!`;
                   }
+                  castText += `
 
-                  castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}\n\n@jvhbo`;
+${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                })()}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonSuccess();
-                  if (onShareClick) onShareClick('farcaster');
+@jvhbo`;
+
+                  shareToFarcaster(castText, shareUrl);
                 }}
                 className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm shadow-gold transition-all hover:scale-105 flex items-center gap-1"
               >
                 <FarcasterIcon size={16} /> Cast
-              </a>
+              </button>
             </div>
             <button
               onClick={handleCloseVictoryScreen}
@@ -495,40 +497,43 @@ export function GamePopups({
               >
                 <span>𝕏</span> {t('shareDefeat')}
               </a>
-              <a
-                href={(() => {
-                  if (!lastBattleResult) return '#';
+              <button
+                onClick={() => {
+                  if (!lastBattleResult) return;
+                  if (soundEnabled) AudioManager.buttonSuccess();
 
-                  // Generate matchId for share URL (format: result|playerPower|opponentPower|opponentName|playerName|type)
-                  // PFPs will be fetched from Convex by the OG image generator using usernames
                   const playerName = encodeURIComponent(userProfile?.username || 'Player');
                   const opponentName = encodeURIComponent(lastBattleResult.opponentName || 'Opponent');
                   const battleType = lastBattleResult.type || 'pve';
-
                   const matchId = `loss|${lastBattleResult.playerPower}|${lastBattleResult.opponentPower}|${opponentName}|${playerName}|${battleType}`;
                   const shareUrl = `${window.location.origin}/share/${matchId}?v=${Date.now()}`;
 
                   let castText = t('castDefeat', { power: lastBattleResult.playerPower });
-
                   if (lastBattleResult.type === 'attack') {
-                    castText += `\n\nLost attacking ${lastBattleResult.opponentName}`;
+                    castText += `
+
+Lost attacking ${lastBattleResult.opponentName}`;
                   } else if (lastBattleResult.type === 'defense') {
-                    castText += `\n\nDefense failed against ${lastBattleResult.opponentName}`;
+                    castText += `
+
+Defense failed against ${lastBattleResult.opponentName}`;
                   } else if (lastBattleResult.type === 'pvp') {
-                    castText += `\n\nLost to ${lastBattleResult.opponentName}`;
+                    castText += `
+
+Lost to ${lastBattleResult.opponentName}`;
                   }
+                  castText += `
 
-                  castText += `\n\n${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}\n\n@jvhbo`;
+${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
 
-                  return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                })()}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => { if (soundEnabled) AudioManager.buttonSuccess(); }}
+@jvhbo`;
+
+                  shareToFarcaster(castText, shareUrl);
+                }}
                 className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg font-display font-bold text-sm shadow-gold transition-all hover:scale-105 flex items-center gap-1"
               >
                 <FarcasterIcon size={16} /> Cast
-              </a>
+              </button>
             </div>
             <button
               onClick={handleCloseDefeatScreen}

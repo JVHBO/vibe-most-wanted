@@ -61,6 +61,7 @@ import { openMarketplace } from "@/lib/marketplace-utils";
 import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { CardLoadingScreen } from "@/components/CardLoadingScreen";
 // 💎 VBMS Blockchain Contracts
 import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
@@ -430,6 +431,14 @@ export default function TCGPage() {
   const [jcLoadingProgress, setJcLoadingProgress] = useState<{page: number, cards: number} | null>(null);
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
+  const [skippedCardLoading, setSkippedCardLoading] = useState<boolean>(() => {
+    // Check if we already loaded cards this session (prevents loading on navigation)
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('cardsLoadedOnce') === 'true';
+    }
+    return false;
+  });
+  const lastLoadedAddressRef = useRef<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<any[]>([]);
   const [playerPower, setPlayerPower] = useState<number>(0);
@@ -1568,6 +1577,10 @@ export default function TCGPage() {
 
       setNfts([...deduplicated]);
       setStatus("loaded");
+      // Mark that cards were loaded this session (for navigation)
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('cardsLoadedOnce', 'true');
+      }
       devLog('🎉 Cards loaded successfully (NFTs + FREE):', deduplicated.length);
 
       // Check if player has VibeFID and mark achievement
@@ -1591,7 +1604,14 @@ export default function TCGPage() {
 
   useEffect(() => {
     if (address) {
+      // Skip if we already loaded for this address (prevents reload on navigation)
+      if (lastLoadedAddressRef.current === address && nfts.length > 0) {
+        devLog('📦 NFTs already loaded for this address, skipping');
+        return;
+      }
       devLog('📦 Address changed, loading NFTs:', address);
+      setSkippedCardLoading(false); // Reset skip state for new address
+      lastLoadedAddressRef.current = address;
       loadNFTs();
     }
   }, [address, loadNFTs]);
@@ -3399,6 +3419,16 @@ export default function TCGPage() {
 
   return (
     <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
+      {/* Card Loading Screen - shows while fetching NFTs */}
+      <CardLoadingScreen
+        isLoading={
+          (!isMounted && !skippedCardLoading && nfts.length === 0) ||
+          (status === 'fetching' && !skippedCardLoading && address !== undefined && nfts.length === 0)
+        }
+        onSkip={() => setSkippedCardLoading(true)}
+        cardsLoaded={nfts.length}
+      />
+
       {/* Ambient floating particles */}
       {isMounted && (
         <div className="fixed inset-0 pointer-events-none z-0">

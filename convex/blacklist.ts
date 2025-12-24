@@ -344,9 +344,13 @@ export const getShameStatus = query({
 /**
  * Get total shame counts for all exploiters
  */
+/**
+ * 🚀 BANDWIDTH FIX: Added limit (1000 max)
+ */
 export const getExploiterShameCounts = query({
   handler: async (ctx) => {
-    const allShames = await ctx.db.query("shameClicks").collect();
+    // 🚀 BANDWIDTH FIX: Limit to last 1000 shames
+    const allShames = await ctx.db.query("shameClicks").order("desc").take(1000);
 
     // Count shames per exploiter
     const shameCounts: Record<string, number> = {};

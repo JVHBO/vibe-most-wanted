@@ -19,9 +19,11 @@ export const getAllTokens = internalQuery({
 });
 
 /**
- * Get all notification tokens (public - for external scripts)
+ * Get all notification tokens (for external scripts)
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery (not public)
+ * Use via: npx convex run notificationsHelpers:getAllTokensPublic --env-file .env.prod
  */
-export const getAllTokensPublic = query({
+export const getAllTokensPublic = internalQuery({
   args: {},
   handler: async (ctx) => {
     const tokens = await ctx.db.query("notificationTokens").collect();
@@ -31,25 +33,24 @@ export const getAllTokensPublic = query({
 
 /**
  * Get ALL notification tokens with pagination (for broadcasts)
- * Use offset to get tokens beyond the first 500
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery + use .take() for efficiency
+ * Use via: npx convex run notificationsHelpers:getAllTokensPaginated --env-file .env.prod
  */
-export const getAllTokensPaginated = query({
+export const getAllTokensPaginated = internalQuery({
   args: {
-    offset: v.optional(v.number()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 500;
-    const offset = args.offset || 0;
-
-    // Get all tokens and apply offset/limit manually
-    // This is a one-time broadcast operation, not for regular use
-    const allTokens = await ctx.db.query("notificationTokens").collect();
+    
+    // 🚀 BANDWIDTH FIX: Use .take() instead of .collect()
+    // For broadcasts, we process in batches anyway
+    const tokens = await ctx.db.query("notificationTokens").take(limit);
 
     return {
-      tokens: allTokens.slice(offset, offset + limit),
-      total: allTokens.length,
-      hasMore: offset + limit < allTokens.length,
+      tokens,
+      count: tokens.length,
+      hasMore: tokens.length === limit,
     };
   },
 });

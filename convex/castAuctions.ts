@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
@@ -1034,13 +1034,16 @@ export const consolidateDuplicateBids = mutation({
 /**
  * Get all pending refund requests (Admin)
  */
-export const getAllRefundRequests = query({
+/**
+ * 🚀 BANDWIDTH FIX: Converted to internalQuery (admin only)
+ */
+export const getAllRefundRequests = internalQuery({
   args: {},
   handler: async (ctx) => {
     const requests = await ctx.db
       .query("castAuctionBids")
       .filter((q) => q.eq(q.field("status"), "refund_requested"))
-      .collect();
+      .take(200); // Limit results
 
     // Group by address
     const byAddress: Record<string, { total: number; bids: typeof requests }> = {};
