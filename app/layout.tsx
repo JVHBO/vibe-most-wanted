@@ -80,9 +80,10 @@ export const metadata: Metadata = {
     // Base.dev App ID (REQUIRED FOR ANALYTICS)
     "base:app_id": "6912770b47fdf84bd17202bc",
     // Farcaster Mini App Meta Tag (REQUIRED FOR DISCOVERY)
+    // v=3 cache bust for new OG image with background and more cards
     "fc:miniapp": JSON.stringify({
       "version": "1",
-      "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image",
+      "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image?v=3",
       "button": {
         "title": "Play Now",
         "action": {
@@ -95,7 +96,7 @@ export const metadata: Metadata = {
     // Backward compatibility with old frame spec
     "fc:frame": JSON.stringify({
       "version": "1",
-      "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image",
+      "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image?v=3",
       "button": {
         "title": "Play Now",
         "action": {
