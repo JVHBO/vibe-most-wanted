@@ -197,3 +197,213 @@ export const keepOnlyRecentActive = mutation({
     };
   },
 });
+
+/**
+ * Swap auction statuses - complete one auction and reactivate another
+ */
+export const swapAuctionStatus = mutation({
+  args: {
+    completeAuctionId: v.string(),
+    activateAuctionId: v.string()
+  },
+  handler: async (ctx, { completeAuctionId, activateAuctionId }) => {
+    const now = Date.now();
+    const FEATURE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+    // Complete the wrong winner
+    const wrongAuction = await ctx.db.get(completeAuctionId as Id<"castAuctions">);
+    if (wrongAuction) {
+      await ctx.db.patch(wrongAuction._id, { status: "completed" });
+      console.log(`[SWAP] Completed auction ${completeAuctionId}`);
+    }
+
+    // Reactivate the correct winner
+    const correctAuction = await ctx.db.get(activateAuctionId as Id<"castAuctions">);
+    if (correctAuction) {
+      await ctx.db.patch(correctAuction._id, {
+        status: "active",
+        featureStartsAt: now,
+        featureEndsAt: now + FEATURE_DURATION
+      });
+      console.log(`[SWAP] Activated auction ${activateAuctionId}`);
+    }
+
+    return { success: true, completed: completeAuctionId, activated: activateAuctionId };
+  },
+});
+
+/**
+ * Reactivate a single auction
+ */
+export const reactivateAuction = mutation({
+  args: { auctionId: v.string() },
+  handler: async (ctx, { auctionId }) => {
+    const now = Date.now();
+    const FEATURE_DURATION = 24 * 60 * 60 * 1000;
+    
+    const auction = await ctx.db.get(auctionId as Id<"castAuctions">);
+    if (!auction) throw new Error("Auction not found");
+    
+    await ctx.db.patch(auction._id, {
+      status: "active",
+      featureStartsAt: now,
+      featureEndsAt: now + FEATURE_DURATION
+    });
+    
+    console.log(`[ADMIN] Reactivated auction ${auctionId}`);
+    return { success: true };
+  },
+});
+
+/**
+ * Process refunds for a completed/lost auction
+ */
+export const processRefundsForAuction = mutation({
+  args: { auctionId: v.string() },
+  handler: async (ctx, { auctionId }) => {
+    const now = Date.now();
+    
+    const bids = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_auction")
+      .filter((q) => q.eq(q.field("auctionId"), auctionId as Id<"castAuctions">))
+      .collect();
+    
+    let refundedCount = 0;
+    let totalRefunded = 0;
+    
+    for (const bid of bids) {
+      if (bid.status === "active") {
+        const profile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address")
+          .filter((q) => q.eq(q.field("address"), bid.bidderAddress.toLowerCase()))
+          .first();
+        
+        if (profile) {
+          await ctx.db.patch(profile._id, {
+            coins: (profile.coins || 0) + bid.bidAmount,
+          });
+          refundedCount++;
+          totalRefunded += bid.bidAmount;
+        }
+        
+        await ctx.db.patch(bid._id, {
+          status: "refunded",
+          refundAmount: bid.bidAmount,
+          refundedAt: now,
+        });
+      }
+    }
+    
+    console.log(`[REFUND] Processed ${refundedCount} refunds totaling ${totalRefunded} coins`);
+    return { success: true, refundedCount, totalRefunded };
+  },
+});
+
+/**
+ * Refund a single bid by ID
+ */
+export const refundSingleBid = mutation({
+  args: { bidId: v.string() },
+  handler: async (ctx, { bidId }) => {
+    const now = Date.now();
+    const bid = await ctx.db.get(bidId as Id<"castAuctionBids">);
+    if (!bid) throw new Error("Bid not found");
+    if (bid.status !== "active") return { success: false, reason: "already refunded" };
+    
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address")
+      .filter((q) => q.eq(q.field("address"), bid.bidderAddress.toLowerCase()))
+      .first();
+    
+    if (profile) {
+      await ctx.db.patch(profile._id, {
+        coins: (profile.coins || 0) + bid.bidAmount,
+      });
+    }
+    
+    await ctx.db.patch(bid._id, {
+      status: "refunded",
+      refundAmount: bid.bidAmount,
+      refundedAt: now,
+    });
+    
+    console.log(`[REFUND] ${bid.bidderUsername}: ${bid.bidAmount} coins`);
+    return { success: true, username: bid.bidderUsername, amount: bid.bidAmount };
+  },
+});
+
+/**
+ * Reset featuredCasts to match current winners
+ */
+export const syncFeaturedCasts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    
+    // Get current active winners
+    const winners = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+    
+    // Sort by featureStartsAt (newest first)
+    winners.sort((a, b) => (b.featureStartsAt || 0) - (a.featureStartsAt || 0));
+    
+    // Take only top 2
+    const top2 = winners.slice(0, 2);
+    
+    // Delete all existing featuredCasts with order >= 100
+    const existingSlots = await ctx.db
+      .query("featuredCasts")
+      .filter((q) => q.gte(q.field("order"), 100))
+      .collect();
+    
+    for (const slot of existingSlots) {
+      await ctx.db.delete(slot._id);
+    }
+    
+    // Add top 2 winners
+    for (let i = 0; i < top2.length; i++) {
+      const auction = top2[i];
+      if (auction.castHash && auction.warpcastUrl) {
+        await ctx.db.insert("featuredCasts", {
+          castHash: auction.castHash,
+          warpcastUrl: auction.warpcastUrl,
+          order: 100 + i,
+          active: true,
+          addedAt: now,
+          auctionId: auction._id,
+        });
+      }
+    }
+    
+    console.log(`[SYNC] Synced ${top2.length} featured casts`);
+    return { success: true, synced: top2.map(a => a.castHash) };
+  },
+});
+
+/**
+ * Clear winner data from a lost auction
+ */
+export const clearLoserData = mutation({
+  args: { auctionId: v.string() },
+  handler: async (ctx, { auctionId }) => {
+    const auction = await ctx.db.get(auctionId as Id<"castAuctions">);
+    if (!auction) throw new Error("Auction not found");
+    
+    await ctx.db.patch(auction._id, {
+      winnerAddress: undefined,
+      winnerUsername: undefined,
+      winningBid: undefined,
+      featureStartsAt: undefined,
+      featureEndsAt: undefined,
+    });
+    
+    console.log(`[ADMIN] Cleared loser data from ${auctionId}`);
+    return { success: true };
+  },
+});
