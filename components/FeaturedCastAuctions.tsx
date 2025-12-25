@@ -454,6 +454,16 @@ export function FeaturedCastAuctions({
             </div>
           )}
 
+          {/* Timer - Tempo Restante do Leilão */}
+          {currentAuction && (
+            <div className="p-3 bg-vintage-charcoal/70 border border-vintage-gold/40 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-vintage-burnt-gold text-sm font-bold">⏱️ Tempo Restante:</span>
+                <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
+              </div>
+            </div>
+          )}
+
           {/* RANKING: All active auctions with bids */}
           {activeAuctionsWithBids.length > 0 && (
             <div className="space-y-2">
@@ -500,7 +510,6 @@ export function FeaturedCastAuctions({
                           + Join
                         </button>
                       </div>
-                      <CountdownTimer endsAt={auction.auctionEndsAt} />
                     </div>
                     {auction.warpcastUrl && (
                       <a
@@ -691,59 +700,64 @@ export function FeaturedCastAuctions({
           </div>
         </div>
 
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal - Fixed positioning for miniapp */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-display font-bold text-vintage-gold mb-4">
-              {t('castAuctionConfirmTitle')}
-            </h3>
+        <div
+          className="fixed inset-0 bg-black/90 z-[9999] overflow-y-auto"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-xl p-5 max-w-sm w-full shadow-2xl">
+              <h3 className="text-lg font-display font-bold text-vintage-gold mb-3 text-center">
+                {t('castAuctionConfirmTitle')}
+              </h3>
 
-            <p className="text-vintage-burnt-gold mb-3">
-              {t('castAuctionConfirmText')}
-            </p>
-
-            <div className="space-y-2 mb-4">
-              <p className="text-sm text-yellow-400">
-                {t('castAuctionWinWarning')}
+              <p className="text-vintage-burnt-gold mb-3 text-sm text-center">
+                {t('castAuctionConfirmText')}
               </p>
-              <p className="text-sm text-green-400">
-                {t('castAuctionLoseInfo')}
-              </p>
-            </div>
 
-            <div className="p-3 bg-cyan-900/30 border border-cyan-500/30 rounded-lg mb-6">
-              <p className="text-sm text-cyan-300">
-                {t('castAuctionTip')}
-              </p>
-            </div>
+              <div className="space-y-2 mb-3 text-xs">
+                <p className="text-yellow-400">
+                  ⚠️ {t('castAuctionWinWarning')}
+                </p>
+                <p className="text-green-400">
+                  ✅ {t('castAuctionLoseInfo')}
+                </p>
+              </div>
 
-            <div className="bg-vintage-black/50 rounded-lg p-3 mb-6">
-              <p className="text-vintage-cream text-sm">
-                <span className="text-vintage-burnt-gold">Valor:</span>{' '}
-                <span className="font-bold text-vintage-gold">{parseInt(bidAmount).toLocaleString()} VBMS</span>
-              </p>
-            </div>
+              <div className="p-2 bg-cyan-900/30 border border-cyan-500/30 rounded-lg mb-4">
+                <p className="text-xs text-cyan-300">
+                  💡 {t('castAuctionTip')}
+                </p>
+              </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowConfirmModal(false);
-                  if (soundEnabled) AudioManager.buttonClick();
-                }}
-                className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-cream rounded-lg font-bold hover:bg-vintage-charcoal/80 transition-all"
-              >
-                {t('castAuctionCancelBtn')}
-              </button>
-              <button
-                onClick={() => {
-                  setShowConfirmModal(false);
-                  handlePlaceBid();
-                }}
-                className="flex-1 px-4 py-3 bg-vintage-gold text-black rounded-lg font-bold hover:bg-vintage-gold/90 transition-all"
-              >
-                {t('castAuctionConfirmBtn')}
-              </button>
+              <div className="bg-vintage-black/50 rounded-lg p-3 mb-4 text-center">
+                <p className="text-vintage-cream">
+                  <span className="text-vintage-burnt-gold text-sm">Valor:</span>{' '}
+                  <span className="font-bold text-vintage-gold text-lg">{parseInt(bidAmount).toLocaleString()} VBMS</span>
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    if (soundEnabled) AudioManager.buttonClick();
+                  }}
+                  className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-cream rounded-lg font-bold hover:bg-vintage-charcoal/80 transition-all text-sm"
+                >
+                  {t('castAuctionCancelBtn')}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    handlePlaceBid();
+                  }}
+                  className="flex-1 px-4 py-3 bg-vintage-gold text-black rounded-lg font-bold hover:bg-vintage-gold/90 transition-all text-sm"
+                >
+                  {t('castAuctionConfirmBtn')}
+                </button>
+              </div>
             </div>
           </div>
         </div>
