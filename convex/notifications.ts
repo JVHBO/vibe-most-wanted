@@ -322,18 +322,17 @@ export const sendLowEnergyNotifications = internalAction({
 
          if (response.ok) {
             const result = await response.json();
-            if (!result.invalidTokens?.includes(tokenData.token) &&
-                !result.rateLimitedTokens?.includes(tokenData.token)) {
+            const data = result.result || result;
+            if (data.successfulTokens?.includes(tokenData.token) ||
+                (!data.invalidTokens?.includes(tokenData.token) && !data.rateLimitedTokens?.includes(tokenData.token))) {
               sent++;
-              
-              // 👇 ADICIONE ESTAS LINHAS
+
               await ctx.runMutation(internal.notificationsHelpers.updateLowEnergyNotification, {
                 address: deck.address,
                 lowEnergyCount: lowEnergyCards,
                 expiredCount: expiredCards,
               });
-              // 👆 FIM DAS LINHAS ADICIONADAS
-              
+
               console.log(`✅ Sent low energy notification to FID ${fid}`);
             } else {
               failed++;
@@ -488,10 +487,13 @@ export const sendDailyLoginReminder = internalAction({
 
             if (response.ok) {
               const result = await response.json();
-              if (!result.invalidTokens?.includes(tokenData.token) && !result.rateLimitedTokens?.includes(tokenData.token)) {
+              const data = result.result || result;
+              if (data.successfulTokens?.includes(tokenData.token)) {
                 sent++;
-              } else {
+              } else if (data.invalidTokens?.includes(tokenData.token) || data.rateLimitedTokens?.includes(tokenData.token)) {
                 failed++;
+              } else {
+                sent++;
               }
             } else {
               failed++;
@@ -606,7 +608,15 @@ export const sendFeaturedCastNotification = internalAction({
       // 2️⃣ OTHER TOKENS → Send via old method (Warpcast)
       if (otherTokens.length > 0) {
         console.log(`📬 Sending to ${otherTokens.length} Warpcast users via token API...`);
-        const DELAY_MS = 100;
+        const DELAY_MS = 50; // Reduced delay for faster processing
+
+        // Log first 3 sample tokens for debugging
+        console.log(`📋 Sample Warpcast URLs:`, otherTokens.slice(0, 3).map(t => t.url));
+
+        let warpcastSent = 0;
+        let warpcastFailed = 0;
+        let httpErrors = 0;
+        let exceptions = 0;
 
         for (let i = 0; i < otherTokens.length; i++) {
           const tokenData = otherTokens[i];
@@ -627,22 +637,63 @@ export const sendFeaturedCastNotification = internalAction({
 
             if (response.ok) {
               const result = await response.json();
-              if (!result.invalidTokens?.includes(tokenData.token) && !result.rateLimitedTokens?.includes(tokenData.token)) {
+              // Log first few responses for debugging
+              if (i < 5) {
+                console.log(`📨 Response for FID ${tokenData.fid}:`, JSON.stringify(result).slice(0, 200));
+              }
+
+              // API returns { result: { successfulTokens, invalidTokens, rateLimitedTokens } }
+              const data = result.result || result;
+
+              // Check if token was successful
+              const isSuccess = data.successfulTokens?.includes(tokenData.token);
+              const isInvalid = data.invalidTokens?.includes(tokenData.token);
+              const isRateLimited = data.rateLimitedTokens?.includes(tokenData.token);
+
+              if (isSuccess) {
                 sent++;
-              } else {
+                warpcastSent++;
+              } else if (isInvalid || isRateLimited) {
                 failed++;
+                warpcastFailed++;
+              } else {
+                // Not in any list - check if arrays exist and are empty
+                if (data.successfulTokens && data.successfulTokens.length === 0) {
+                  // Empty success array = failed
+                  failed++;
+                  warpcastFailed++;
+                } else if (!data.successfulTokens && !data.invalidTokens) {
+                  // Old API format without result wrapper - assume success if 200 OK
+                  sent++;
+                  warpcastSent++;
+                } else {
+                  // Unknown state - count as failed to be safe
+                  failed++;
+                  warpcastFailed++;
+                }
               }
             } else {
               failed++;
+              httpErrors++;
+              if (httpErrors <= 5) {
+                const errorText = await response.text();
+                console.log(`❌ HTTP ${response.status} for FID ${tokenData.fid} (URL: ${tokenData.url}): ${errorText.slice(0, 200)}`);
+              }
             }
-          } catch (error) {
+          } catch (error: any) {
             failed++;
+            exceptions++;
+            if (exceptions <= 3) {
+              console.log(`❌ Exception for FID ${tokenData.fid}: ${error?.message || error}`);
+            }
           }
 
           if (i < otherTokens.length - 1) {
             await new Promise(resolve => setTimeout(resolve, DELAY_MS));
           }
         }
+
+        console.log(`📊 Warpcast breakdown: ${warpcastSent} sent, ${warpcastFailed} failed, ${httpErrors} HTTP errors, ${exceptions} exceptions`);
       }
 
       console.log(`📊 Featured cast notification: ${sent} sent, ${failed} failed`);
