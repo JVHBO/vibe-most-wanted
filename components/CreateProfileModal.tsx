@@ -146,8 +146,15 @@ export function CreateProfileModal({
             </p>
             <p className="text-center text-red-300 text-xs mt-2">
               Account creation requires Farcaster authentication.
-              Please open this app in the Farcaster miniapp to create an account.
             </p>
+            <a
+              href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-center rounded-lg font-semibold text-sm transition-all"
+            >
+              📱 Open in Farcaster Miniapp
+            </a>
           </div>
         ) : (
           <p className="text-center text-vintage-burnt-gold mb-6 text-sm">
@@ -180,10 +187,15 @@ export function CreateProfileModal({
               </p>
             </div>
           ) : (
-            <div className="text-center py-4">
-              <p className="text-gray-400 text-sm">
-                Open this app in Farcaster to continue
-              </p>
+            <div className="text-center py-2">
+              <a
+                href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-purple-300 text-sm underline"
+              >
+                Open in Farcaster Miniapp →
+              </a>
             </div>
           )}
 
