@@ -186,18 +186,7 @@ export function CreateProfileModal({
                 ✓ Your profile will be created with this Farcaster account
               </p>
             </div>
-          ) : (
-            <div className="text-center py-2">
-              <a
-                href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-400 hover:text-purple-300 text-sm underline"
-              >
-                Open in Farcaster Miniapp →
-              </a>
-            </div>
-          )}
+          ) : null}
 
           {/* Language Selector */}
           <div>
