@@ -130,7 +130,7 @@ export const getLastLowEnergyNotification = internalQuery({
  * 🚀 BANDWIDTH FIX: Converted to internalMutation (only used by internalAction)
  */
 export const updateLowEnergyNotification = internalMutation({
-  args: { 
+  args: {
     address: v.string(),
     lowEnergyCount: v.number(),
     expiredCount: v.number(),
@@ -157,5 +157,76 @@ export const updateLowEnergyNotification = internalMutation({
         expiredCount,
       });
     }
+  },
+});
+
+// ============================================================================
+// CLEANUP STALE TOKENS
+// ============================================================================
+
+/**
+ * Clean up stale notification tokens with deprecated URLs
+ * Use: npx convex run notificationsHelpers:cleanupStaleTokens --env-file .env.prod
+ */
+export const cleanupStaleTokens = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const tokens = await ctx.db.query("notificationTokens").collect();
+
+    let deletedOldUrl = 0;
+    let deletedInvalidFormat = 0;
+
+    for (const token of tokens) {
+      // Delete tokens with old deprecated URL
+      if (token.url.includes("/v1/notify")) {
+        await ctx.db.delete(token._id);
+        deletedOldUrl++;
+        console.log(`🗑️ Deleted stale token for FID ${token.fid} (old URL)`);
+      }
+      // Delete tokens with invalid format (not UUID)
+      else if (token.token && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token.token)) {
+        await ctx.db.delete(token._id);
+        deletedInvalidFormat++;
+        console.log(`🗑️ Deleted invalid token for FID ${token.fid} (bad format)`);
+      }
+    }
+
+    console.log(`🧹 Cleanup complete: ${deletedOldUrl} old URL tokens, ${deletedInvalidFormat} invalid format tokens deleted`);
+    return { deletedOldUrl, deletedInvalidFormat, total: deletedOldUrl + deletedInvalidFormat };
+  },
+});
+
+/**
+ * Get stats about notification tokens (for debugging)
+ */
+export const getTokenStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const tokens = await ctx.db.query("notificationTokens").collect();
+
+    const stats = {
+      total: tokens.length,
+      neynar: 0,
+      warpcastNew: 0,
+      warpcastOld: 0,
+      invalidFormat: 0,
+    };
+
+    for (const token of tokens) {
+      if (token.url.includes("neynar")) {
+        stats.neynar++;
+      } else if (token.url.includes("/v1/frame-notifications")) {
+        stats.warpcastNew++;
+      } else if (token.url.includes("/v1/notify")) {
+        stats.warpcastOld++;
+      }
+
+      // Check UUID format
+      if (token.token && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token.token)) {
+        stats.invalidFormat++;
+      }
+    }
+
+    return stats;
   },
 });
