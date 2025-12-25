@@ -703,12 +703,18 @@ export function FeaturedCastAuctions({
               {t('castAuctionConfirmText')}
             </p>
 
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2 mb-4">
               <p className="text-sm text-yellow-400">
                 {t('castAuctionWinWarning')}
               </p>
               <p className="text-sm text-green-400">
                 {t('castAuctionLoseInfo')}
+              </p>
+            </div>
+
+            <div className="p-3 bg-cyan-900/30 border border-cyan-500/30 rounded-lg mb-6">
+              <p className="text-sm text-cyan-300">
+                {t('castAuctionTip')}
               </p>
             </div>
 
