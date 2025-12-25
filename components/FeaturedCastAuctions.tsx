@@ -11,6 +11,7 @@ import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS";
 import { useWaitForTransactionReceipt } from "wagmi";
 import { parseEther } from "viem";
 import { CONTRACTS } from "@/lib/contracts";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type AuctionDoc = Doc<"castAuctions">;
 type BidDoc = Doc<"castAuctionBids">;
@@ -46,8 +47,10 @@ export function FeaturedCastAuctions({
   soundEnabled = true,
   onBidPlaced,
 }: FeaturedCastAuctionsProps) {
+  const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [castUrl, setCastUrl] = useState("");
   const [bidAmount, setBidAmount] = useState("");
   const [castPreview, setCastPreview] = useState<CastPreview | null>(null);
@@ -305,6 +308,33 @@ export function FeaturedCastAuctions({
       setBidStep("idle");
       setPendingBidData(null);
     }
+  };
+
+  // Show confirmation modal before bidding
+  const handleBidClick = () => {
+    if (!castPreview || !bidAmount) return;
+
+    const amount = parseInt(bidAmount);
+    const minimum = existingCastInfo ? 1000 : getMinimumBid();
+
+    if (isNaN(amount) || amount < minimum) {
+      setError(`Minimum ${existingCastInfo ? 'contribution' : 'bid'} is ${minimum.toLocaleString()} VBMS`);
+      return;
+    }
+
+    if (amount > MAX_BID) {
+      setError(`Maximum bid is ${MAX_BID.toLocaleString()} VBMS`);
+      return;
+    }
+
+    if (amount > userBalance) {
+      setError(`Insufficient VBMS. You have ${userBalance.toLocaleString()} VBMS in wallet`);
+      return;
+    }
+
+    // Show confirmation modal
+    setShowConfirmModal(true);
+    if (soundEnabled) AudioManager.buttonClick();
   };
 
   // Handle refund claim
@@ -637,7 +667,7 @@ export function FeaturedCastAuctions({
                   className="flex-1 px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-cream text-sm focus:border-vintage-gold focus:outline-none"
                 />
                 <button
-                  onClick={handlePlaceBid}
+                  onClick={handleBidClick}
                   disabled={isBidding || !bidAmount}
                   className="px-6 py-2 bg-vintage-gold text-black rounded-lg text-sm font-bold hover:bg-vintage-gold/90 disabled:opacity-50 transition-all"
                 >
@@ -660,6 +690,58 @@ export function FeaturedCastAuctions({
             </Link>
           </div>
         </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-display font-bold text-vintage-gold mb-4">
+              {t('castAuctionConfirmTitle')}
+            </h3>
+
+            <p className="text-vintage-burnt-gold mb-3">
+              {t('castAuctionConfirmText')}
+            </p>
+
+            <div className="space-y-2 mb-6">
+              <p className="text-sm text-yellow-400">
+                {t('castAuctionWinWarning')}
+              </p>
+              <p className="text-sm text-green-400">
+                {t('castAuctionLoseInfo')}
+              </p>
+            </div>
+
+            <div className="bg-vintage-black/50 rounded-lg p-3 mb-6">
+              <p className="text-vintage-cream text-sm">
+                <span className="text-vintage-burnt-gold">Valor:</span>{' '}
+                <span className="font-bold text-vintage-gold">{parseInt(bidAmount).toLocaleString()} VBMS</span>
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-cream rounded-lg font-bold hover:bg-vintage-charcoal/80 transition-all"
+              >
+                {t('castAuctionCancelBtn')}
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  handlePlaceBid();
+                }}
+                className="flex-1 px-4 py-3 bg-vintage-gold text-black rounded-lg font-bold hover:bg-vintage-gold/90 transition-all"
+              >
+                {t('castAuctionConfirmBtn')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
