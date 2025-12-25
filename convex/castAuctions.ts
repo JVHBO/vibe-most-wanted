@@ -140,6 +140,7 @@ export const getWinningCasts = query({
 export const getAuctionHistory = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 50 }) => {
+    // Get completed auctions
     const completed = await ctx.db
       .query("castAuctions")
       .withIndex("by_status")
@@ -147,8 +148,21 @@ export const getAuctionHistory = query({
       .order("desc")
       .take(limit);
 
-    // Only return auctions that had winners
-    return completed.filter((a) => a.winnerAddress && a.winningBid);
+    // Get active auctions (already have winners, still being featured)
+    const active = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .order("desc")
+      .take(limit);
+
+    // Combine and filter for those with winners
+    const allAuctions = [...active, ...completed]
+      .filter((a) => a.winnerAddress && a.winningBid)
+      .sort((a, b) => (b.featureStartsAt || b._creationTime) - (a.featureStartsAt || a._creationTime))
+      .slice(0, limit);
+
+    return allAuctions;
   },
 });
 

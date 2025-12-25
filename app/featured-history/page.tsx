@@ -4,11 +4,52 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 type AuctionDoc = Doc<"castAuctions">;
 
+interface CastEngagement {
+  likes: number;
+  recasts: number;
+  replies: number;
+}
+
 export default function FeaturedHistoryPage() {
   const history = useQuery(api.castAuctions.getAuctionHistory, { limit: 100 });
+  const [engagements, setEngagements] = useState<Record<string, CastEngagement>>({});
+
+  // Fetch engagement data for all casts
+  useEffect(() => {
+    if (!history || history.length === 0) return;
+
+    const fetchEngagements = async () => {
+      const newEngagements: Record<string, CastEngagement> = {};
+
+      for (const auction of history) {
+        if (!auction.warpcastUrl || engagements[auction.castHash || '']) continue;
+
+        try {
+          const response = await fetch(`/api/cast-by-url?url=${encodeURIComponent(auction.warpcastUrl)}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.cast) {
+              newEngagements[auction.castHash || auction._id] = {
+                likes: data.cast.reactions?.likes_count || data.cast.reactions?.likes || 0,
+                recasts: data.cast.reactions?.recasts_count || data.cast.reactions?.recasts || 0,
+                replies: data.cast.replies?.count || 0,
+              };
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch cast engagement:', e);
+        }
+      }
+
+      setEngagements(prev => ({ ...prev, ...newEngagements }));
+    };
+
+    fetchEngagements();
+  }, [history]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
@@ -132,14 +173,20 @@ export default function FeaturedHistoryPage() {
                       </div>
                     </div>
 
-                    {/* Winning Bid */}
+                    {/* Winning Bid + Status */}
                     <div className="text-right">
                       <p className="text-vintage-gold font-bold text-lg">
                         {auction.winningBid?.toLocaleString()} VBMS
                       </p>
-                      <p className="text-vintage-ice/60 text-xs">
-                        Slot {auction.slotNumber + 1}
-                      </p>
+                      {auction.status === "active" ? (
+                        <span className="inline-block px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
+                          🔴 LIVE
+                        </span>
+                      ) : (
+                        <p className="text-vintage-ice/60 text-xs">
+                          Completed
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -149,6 +196,21 @@ export default function FeaturedHistoryPage() {
                       <p className="text-vintage-ice text-sm line-clamp-2">
                         "{auction.castText}"
                       </p>
+                    </div>
+                  )}
+
+                  {/* Engagement Stats */}
+                  {engagements[auction.castHash || auction._id] && (
+                    <div className="flex items-center gap-4 mb-3 text-xs">
+                      <span className="flex items-center gap-1 text-red-400">
+                        ❤️ {engagements[auction.castHash || auction._id].likes}
+                      </span>
+                      <span className="flex items-center gap-1 text-green-400">
+                        🔄 {engagements[auction.castHash || auction._id].recasts}
+                      </span>
+                      <span className="flex items-center gap-1 text-blue-400">
+                        💬 {engagements[auction.castHash || auction._id].replies}
+                      </span>
                     </div>
                   )}
 
