@@ -1254,13 +1254,15 @@ export function PokerBattleTable({
             ? (isHost ? room.hostAddress : room.guestAddress)
             : (isHost ? room.guestAddress : room.hostAddress);
 
-          resolveRoundBetsMutation({
-            roomId,
-            roundNumber: currentRound,
-            winnerAddress,
-          }).catch((error) => {
-            console.error('[PokerBattle] Failed to resolve round bets:', error);
-          });
+          if (winnerAddress) {
+            resolveRoundBetsMutation({
+              roomId,
+              roundNumber: currentRound,
+              winnerAddress,
+            }).catch((error) => {
+              console.error('[PokerBattle] Failed to resolve round bets:', error);
+            });
+          }
         }
 
         // Hide message and check win condition after delay
