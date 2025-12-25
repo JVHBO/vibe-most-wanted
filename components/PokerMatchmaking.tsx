@@ -866,7 +866,7 @@ export function PokerMatchmaking({
                 AVAILABLE ROOMS
               </h3>
               <div className="text-sm text-vintage-burnt-gold font-modern">
-                {availableRooms?.length | 0} rooms active
+                {availableRooms?.length ?? 0} rooms active
               </div>
             </div>
 
