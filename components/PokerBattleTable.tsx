@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useConvex } from "convex/react";
+import { useQuery, useMutation, useAction, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -165,7 +165,7 @@ export function PokerBattleTable({
   // PvE and PvP claim mutations
   const sendPveRewardToInbox = useMutation(api.vbmsClaim.sendPveRewardToInbox);
   const sendPvpRewardToInbox = useMutation(api.vbmsClaim.sendPvpRewardToInbox);
-  const claimPveRewardNow = useMutation(api.vbmsClaim.claimPveRewardNow);
+  const claimPveRewardNow = useAction(api.vbmsClaim.claimPveRewardNow);
   const recordImmediateClaim = useMutation(api.vbmsClaim.recordImmediateClaim);
 
   // VBMS Battle finalization hook
