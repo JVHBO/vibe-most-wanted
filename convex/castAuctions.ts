@@ -47,14 +47,11 @@ export const checkExistingCast = query({
 
     if (!auction) return null;
 
+    // 🚀 BANDWIDTH FIX: Use compound index instead of filter
     const contributions = await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_auction")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("auctionId"), auction._id),
-          q.eq(q.field("status"), "active")
-        )
+      .withIndex("by_auction_status", (q) =>
+        q.eq("auctionId", auction._id).eq("status", "active")
       )
       .take(100); // 🔒 SECURITY: Limit to prevent DoS
 

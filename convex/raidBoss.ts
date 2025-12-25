@@ -179,18 +179,15 @@ export const getTopContributors = query({
 
     const limit = args.limit || 100; // Show all contributors (up to 100)
 
-    // Fetch all contributors for this boss
-    const allContributors = await ctx.db
+    // 🚀 BANDWIDTH FIX: Use by_boss index (includes damageDealt) with order desc
+    // Avoids fetching all contributors and sorting in memory
+    const topContributors = await ctx.db
       .query("raidContributions")
-      .withIndex("by_boss_player", (q) => q.eq("bossIndex", boss.bossIndex))
-      .collect();
+      .withIndex("by_boss", (q) => q.eq("bossIndex", boss.bossIndex))
+      .order("desc") // Order by damageDealt descending (from index)
+      .take(limit);
 
-    // Sort by damage dealt (descending) and return top N
-    const sorted = allContributors
-      .sort((a, b) => b.damageDealt - a.damageDealt)
-      .slice(0, limit);
-
-    return sorted;
+    return topContributors;
   },
 });
 
