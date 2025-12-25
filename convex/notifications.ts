@@ -656,6 +656,69 @@ export const sendFeaturedCastNotification = internalAction({
 });
 
 /**
+ * 🏆 Send notification to the WINNER of a cast auction
+ */
+export const sendWinnerNotification = internalAction({
+  args: {
+    winnerFid: v.number(),
+    winnerUsername: v.string(),
+    bidAmount: v.number(),
+    castAuthor: v.string(),
+  },
+  handler: async (ctx, { winnerFid, winnerUsername, bidAmount, castAuthor }) => {
+    if (!process.env.NEYNAR_API_KEY) {
+      console.error("❌ NEYNAR_API_KEY not set for winner notification");
+      return { sent: false, error: "NEYNAR_API_KEY not set" };
+    }
+
+    // Generate proper UUID v4 format
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+
+    const title = "🏆 Your Cast Won!";
+    const body = `Congrats @${winnerUsername}! Your bid of ${bidAmount.toLocaleString()} VBMS won! @${castAuthor} is now WANTED!`;
+
+    const payload = {
+      target_fids: [winnerFid],
+      notification: {
+        title,
+        body,
+        target_url: "https://www.vibemostwanted.xyz",
+        uuid
+      }
+    };
+
+    console.log(`🏆 Sending winner notification to FID ${winnerFid} (@${winnerUsername})...`);
+
+    try {
+      const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        console.log(`✅ Winner notification sent to @${winnerUsername}`);
+        return { sent: true };
+      } else {
+        const errorText = await response.text();
+        console.error(`❌ Failed to send winner notification: ${errorText}`);
+        return { sent: false, error: errorText };
+      }
+    } catch (error: any) {
+      console.error("❌ Error sending winner notification:", error);
+      return { sent: false, error: error.message };
+    }
+  },
+});
+
+/**
  * TEST: Send notification to a SINGLE FID via Neynar only (for debugging Base App)
  */
 export const testNeynarNotification = internalAction({
