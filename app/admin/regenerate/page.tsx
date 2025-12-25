@@ -31,6 +31,22 @@ function RegenerateContent() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
 
+  // Check if running on localhost
+  const isLocalhost = typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  // Block access if not localhost
+  if (!isLocalhost) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-8 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4 text-red-500">🚫 Access Denied</h1>
+          <p className="text-gray-400">This page is only accessible on localhost.</p>
+        </div>
+      </div>
+    );
+  }
+
   // Get card params from URL
   const cardParams: CardParams | null = searchParams.get('fid') ? {
     fid: parseInt(searchParams.get('fid') || '0'),
