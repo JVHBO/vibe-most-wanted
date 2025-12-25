@@ -1381,22 +1381,24 @@ export function PokerBattleTable({
               ? (isHost ? room.hostAddress : room.guestAddress)
               : (isHost ? room.guestAddress : room.hostAddress);
 
-            // Set winner address for spectator bet feedback
-            setLastRoundWinnerAddress(winnerAddress);
-            setShowBetResult(true);
+            if (winnerAddress) {
+              // Set winner address for spectator bet feedback
+              setLastRoundWinnerAddress(winnerAddress);
+              setShowBetResult(true);
 
-            resolveRoundBetsMutation({
-              roomId,
-              roundNumber: currentRound,
-              winnerAddress,
-            }).catch((error) => {
-              console.error('[PokerBattle] PvP Mode - Failed to resolve round bets:', error);
-            });
+              resolveRoundBetsMutation({
+                roomId,
+                roundNumber: currentRound,
+                winnerAddress,
+              }).catch((error) => {
+                console.error('[PokerBattle] PvP Mode - Failed to resolve round bets:', error);
+              });
 
-            // Hide bet result after 3 seconds
-            setTimeout(() => {
-              setShowBetResult(false);
-            }, 3000);
+              // Hide bet result after 3 seconds
+              setTimeout(() => {
+                setShowBetResult(false);
+              }, 3000);
+            }
           }
 
           // Add to round history
