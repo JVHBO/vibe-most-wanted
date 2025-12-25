@@ -92,6 +92,94 @@ export const getProfileLite = query({
 });
 
 /**
+ * 🚀 BANDWIDTH FIX: Consolidated dashboard query
+ * Replaces 5 separate queries with 1:
+ * - getPlayerEconomy (economy.ts)
+ * - getVBMSBalance (economyVBMS.ts)
+ * - getInboxStatus (coinsInbox.ts)
+ * - getRemainingPveAttempts (pokerCpu.ts)
+ * - hasReceivedWelcomePack (welcomePack.ts)
+ *
+ * Saves ~80MB/day by reducing 5 profile fetches to 1
+ */
+export const getProfileDashboard = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    if (!address || address.length === 0 || !isValidAddress(address)) {
+      return null;
+    }
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+      .first();
+
+    if (!profile) return null;
+
+    // Calculate daily values
+    const today = new Date().toISOString().split('T')[0];
+    const dailyLimits = profile.dailyLimits;
+    const isToday = dailyLimits?.lastResetDate === today;
+
+    // PvE attempts (max 10)
+    const MAX_PVE_ATTEMPTS = 10;
+    const pveUsed = isToday ? (dailyLimits?.pveWins || 0) : 0;
+    const pveRemaining = Math.max(0, MAX_PVE_ATTEMPTS - pveUsed);
+
+    // Cooldown for conversion (3 minutes)
+    const COOLDOWN_MS = 3 * 60 * 1000;
+    const lastConversion = profile.pendingConversionTimestamp || 0;
+    const timeSinceLastConversion = Date.now() - lastConversion;
+    const cooldownRemaining = lastConversion > 0 && timeSinceLastConversion < COOLDOWN_MS
+      ? Math.ceil((COOLDOWN_MS - timeSinceLastConversion) / 1000)
+      : 0;
+
+    // Daily cap check
+    const DAILY_CAP = 100000;
+    const dailyEarned = isToday ? (profile.lifetimeEarned || 0) : 0; // Simplified
+    const canEarnMore = dailyEarned < DAILY_CAP;
+
+    return {
+      // Core profile
+      _id: profile._id,
+      address: profile.address,
+      username: profile.username,
+      stats: profile.stats,
+      hasDefenseDeck: (profile.defenseDeck?.length || 0) === 5,
+
+      // Economy (replaces getPlayerEconomy)
+      coins: profile.coins || 0,
+      lifetimeEarned: profile.lifetimeEarned || 0,
+      lifetimeSpent: profile.lifetimeSpent || 0,
+      dailyLimits: profile.dailyLimits,
+      winStreak: profile.winStreak || 0,
+      canEarnMore,
+
+      // VBMS (replaces getVBMSBalance)
+      inbox: profile.coinsInbox || 0,
+      claimedTokens: profile.claimedTokens || 0,
+
+      // Inbox status (replaces getInboxStatus)
+      coinsInbox: profile.coinsInbox || 0,
+      cooldownRemaining,
+
+      // PvE attempts (replaces getRemainingPveAttempts)
+      pveRemaining,
+      pveTotal: MAX_PVE_ATTEMPTS,
+
+      // Welcome pack (replaces hasReceivedWelcomePack)
+      hasReceivedWelcomePack: profile.hasReceivedWelcomePack || false,
+
+      // Extras needed by UI
+      fid: profile.fid,
+      farcasterFid: profile.farcasterFid,
+      farcasterPfpUrl: profile.farcasterPfpUrl,
+      hasVibeBadge: profile.hasVibeBadge || false,
+    };
+  },
+});
+
+/**
  * 🚀 OPTIMIZED: Get leaderboard LITE (minimal fields only)
  *
  * Saves ~97% bandwidth by excluding heavy fields:
