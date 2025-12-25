@@ -12,12 +12,11 @@ import { ethers } from "ethers";
 // ========== HELPERS ==========
 
 function generateNonce(): string {
-  // Generate bytes32 nonce (64 hex characters)
-  const timestamp = Date.now().toString(16).padStart(16, '0');
-  const random1 = Math.random().toString(16).substring(2).padStart(16, '0');
-  const random2 = Math.random().toString(16).substring(2).padStart(16, '0');
-  const random3 = Math.random().toString(16).substring(2).padStart(16, '0');
-  return `0x${timestamp}${random1}${random2}${random3}`.substring(0, 66); // 0x + 64 chars
+  // 🔒 SECURITY FIX: Use crypto.randomUUID() instead of Math.random()
+  // Math.random() is predictable and can enable replay attacks
+  const uuid1 = crypto.randomUUID().replace(/-/g, ''); // 32 hex chars
+  const uuid2 = crypto.randomUUID().replace(/-/g, ''); // 32 hex chars
+  return `0x${uuid1}${uuid2}`.substring(0, 66); // 0x + 64 chars = bytes32
 }
 
 async function signClaimMessage(

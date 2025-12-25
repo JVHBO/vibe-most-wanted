@@ -483,7 +483,7 @@ const WEEKLY_QUESTS = {
     name: "Attack Master",
     description: "Win 20 attacks",
     target: 20,
-    reward: 300, // TODO: Ajustar valores depois
+    reward: 300, // Weekly attack wins reward
     icon: "🏆",
   },
   totalMatches: {

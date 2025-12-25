@@ -274,7 +274,8 @@ export const removeBlacklistedDefenseDecks = internalMutation({
 
 // ========== ADMIN: Remove Defense Decks from Blacklisted Players (PUBLIC for admin use) ==========
 
-export const adminRemoveBlacklistedDefenseDecks = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const adminRemoveBlacklistedDefenseDecks = internalMutation({
   args: {},
   handler: async (ctx) => {
     let removedCount = 0;
@@ -319,11 +320,11 @@ export const getShameStatus = query({
   handler: async (ctx, { playerAddress }) => {
     const normalizedAddress = playerAddress.toLowerCase();
 
-    // Get all shame records for this player
+    // Get all shame records for this player (max 10 per player)
     const shameRecords = await ctx.db
       .query("shameClicks")
       .withIndex("by_shamer", (q: any) => q.eq("shamerAddress", normalizedAddress))
-      .collect();
+      .take(20); // 🔒 SECURITY: Limit (max should be 10 per MAX_SHAMES_PER_PLAYER)
 
     const totalShamesGiven = shameRecords.length;
     const remainingShames = Math.max(0, MAX_SHAMES_PER_PLAYER - totalShamesGiven);
@@ -395,11 +396,11 @@ export const shameExploiter = mutation({
       throw new Error("Exploiters cannot participate in shaming");
     }
 
-    // Count total shames by this player
+    // Count total shames by this player (max 10 per player)
     const playerShames = await ctx.db
       .query("shameClicks")
       .withIndex("by_shamer", (q: any) => q.eq("shamerAddress", normalizedPlayer))
-      .collect();
+      .take(20); // 🔒 SECURITY: Limit (max should be 10 per MAX_SHAMES_PER_PLAYER)
 
     if (playerShames.length >= MAX_SHAMES_PER_PLAYER) {
       throw new Error(`You've reached the maximum of ${MAX_SHAMES_PER_PLAYER} shames`);

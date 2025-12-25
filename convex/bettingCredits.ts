@@ -138,13 +138,24 @@ export const placeBetWithCredits = mutation({
       balance: credits.balance - amount,
     });
 
+    // Get usernames from profiles
+    const bettorProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+    const betOnNormalized = betOn.toLowerCase();
+    const betOnProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", betOnNormalized))
+      .first();
+
     // Create bet record
     await ctx.db.insert("pokerBets", {
       roomId,
       bettor: normalizedAddress,
-      bettorUsername: "", // TODO: Get from profile
-      betOn,
-      betOnUsername: "", // TODO: Get from profile
+      bettorUsername: bettorProfile?.username || "",
+      betOn: betOnNormalized,
+      betOnUsername: betOnProfile?.username || "",
       amount,
       token: "VBMS",
       status: "active",

@@ -243,7 +243,8 @@ export const resetFreeCards = internalMutation({
 /**
  * DEBUG: Check how many FREE cards exist
  */
-export const debugCountFreeCards = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const debugCountFreeCards = internalMutation({
   args: {},
   handler: async (ctx) => {
     const allCards = await ctx.db.query("cardInventory").take(100);
@@ -263,7 +264,8 @@ export const debugCountFreeCards = mutation({
 /**
  * ADMIN: Delete FREE cards for a specific username and give compensation pack
  */
-export const resetUserFreeCards = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const resetUserFreeCards = internalMutation({
   args: { username: v.string() },
   handler: async (ctx, { username }) => {
     // Find user profile by username
@@ -282,11 +284,11 @@ export const resetUserFreeCards = mutation({
     const address = profile.address;
     console.log("🔍 Found profile:", { username, address });
 
-    // Get user's cards
+    // Get user's cards (limit to prevent DoS)
     const userCards = await ctx.db
       .query("cardInventory")
       .withIndex("by_address", (q) => q.eq("address", address))
-      .collect();
+      .take(1000); // 🔒 SECURITY: Limit to prevent DoS
 
     console.log("🎴 User has", userCards.length, "cards");
 
@@ -335,7 +337,8 @@ export const resetUserFreeCards = mutation({
  * PUBLIC: Execute the reset FREE cards operation
  * This is a public wrapper to call the internal mutation
  */
-export const executeResetFreeCards = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const executeResetFreeCards = internalMutation({
   args: {},
   handler: async (ctx) => {
     // Call the internal mutation directly
@@ -392,7 +395,8 @@ export const executeResetFreeCards = mutation({
  * Move all coinsInbox to coins for all profiles
  * Admin function to fix coinsInbox not being claimed
  */
-export const claimAllCoinsInboxForAll = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const claimAllCoinsInboxForAll = internalMutation({
   handler: async (ctx) => {
     const profiles = await ctx.db.query("profiles").take(100);
     
@@ -426,7 +430,8 @@ export const claimAllCoinsInboxForAll = mutation({
  * Move all inbox to coins for all profiles
  * Admin function to fix raid rewards that went to inbox instead of coins
  */
-export const moveInboxToCoinsForAll = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const moveInboxToCoinsForAll = internalMutation({
   handler: async (ctx) => {
     const profiles = await ctx.db.query("profiles").take(100);
     
@@ -460,7 +465,8 @@ export const moveInboxToCoinsForAll = mutation({
 /**
  * Reset social quest progress for a specific address
  */
-export const resetSocialQuestProgress = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const resetSocialQuestProgress = internalMutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
@@ -468,7 +474,7 @@ export const resetSocialQuestProgress = mutation({
     const progress = await ctx.db
       .query("socialQuestProgress")
       .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
-      .collect();
+      .take(100); // 🔒 SECURITY: Limit to prevent DoS
 
     for (const p of progress) {
       await ctx.db.delete(p._id);
@@ -486,10 +492,11 @@ export const resetSocialQuestProgress = mutation({
 /**
  * Reset all daily free claims so everyone can claim again
  */
-export const resetDailyFreeClaims = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const resetDailyFreeClaims = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const claims = await ctx.db.query("dailyFreeClaims").collect();
+    const claims = await ctx.db.query("dailyFreeClaims").take(5000); // 🔒 SECURITY: Limit to prevent DoS
     for (const claim of claims) {
       await ctx.db.delete(claim._id);
     }
@@ -501,7 +508,8 @@ export const resetDailyFreeClaims = mutation({
 /**
  * Set test referrals for an address (for testing referral rewards)
  */
-export const setTestReferrals = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const setTestReferrals = internalMutation({
   args: {
     address: v.string(),
     count: v.number(),
@@ -579,7 +587,8 @@ const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number; amoun
  * ADMIN: Remove defense decks from blacklisted exploiter accounts
  * They cannot use defense decks anymore
  */
-export const removeBlacklistedDefenseDecks = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const removeBlacklistedDefenseDecks = internalMutation({
   args: {},
   handler: async (ctx) => {
     let removedCount = 0;
@@ -615,7 +624,8 @@ export const removeBlacklistedDefenseDecks = mutation({
  * Clean ALL voice participants - emergency cleanup
  * Use when there are stale/ghost voice entries
  */
-export const cleanupAllVoice = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const cleanupAllVoice = internalMutation({
   args: {},
   handler: async (ctx) => {
     const allParticipants = await ctx.db
@@ -635,12 +645,13 @@ export const cleanupAllVoice = mutation({
  * 🚀 BANDWIDTH FIX: Backfill hasFullDefenseDeck field for all profiles
  * This enables efficient leaderboard queries using compound index
  */
-export const backfillHasFullDefenseDeck = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const backfillHasFullDefenseDeck = internalMutation({
   args: {},
   handler: async (ctx) => {
     console.log("🚀 Starting hasFullDefenseDeck backfill migration...");
 
-    const profiles = await ctx.db.query("profiles").collect();
+    const profiles = await ctx.db.query("profiles").take(5000); // 🔒 SECURITY: Limit to prevent DoS
 
     let updatedWithDeck = 0;
     let updatedWithoutDeck = 0;
@@ -688,7 +699,8 @@ export const backfillHasFullDefenseDeck = mutation({
  * DRY RUN: Count old records that would be deleted
  * Use this FIRST to see what would be affected before running actual cleanup
  */
-export const countOldRecordsForCleanup = mutation({
+// 🔒 SECURITY FIX: Changed from mutation to internalMutation
+export const countOldRecordsForCleanup = internalMutation({
   args: {
     daysOld: v.optional(v.number()),
   },
