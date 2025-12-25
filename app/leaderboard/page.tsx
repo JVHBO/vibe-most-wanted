@@ -735,16 +735,16 @@ export default function LeaderboardPage() {
               <p className="text-sm text-vintage-burnt-gold">Attacking: <span className="text-vintage-neon-blue font-bold">{targetPlayer.username}</span></p>
             </div>
 
-            {/* Rankings */}
+            {/* Aura Comparison */}
             <div className="flex justify-between items-center mb-6 p-4 bg-vintage-black/50 rounded-xl border border-vintage-gold/30">
               <div className="text-center flex-1">
-                <p className="text-xs text-vintage-burnt-gold mb-1">YOUR RANK</p>
-                <p className="text-2xl font-bold text-cyan-400">#{pvpPreviewData.playerRank || '?'}</p>
+                <p className="text-xs text-vintage-burnt-gold mb-1">YOUR AURA</p>
+                <p className="text-2xl font-bold text-cyan-400">{pvpPreviewData.playerAura || '?'}</p>
               </div>
               <div className="text-vintage-gold text-xl">VS</div>
               <div className="text-center flex-1">
-                <p className="text-xs text-vintage-burnt-gold mb-1">OPPONENT RANK</p>
-                <p className="text-2xl font-bold text-orange-400">#{pvpPreviewData.opponentRank || '?'}</p>
+                <p className="text-xs text-vintage-burnt-gold mb-1">OPPONENT AURA</p>
+                <p className="text-2xl font-bold text-orange-400">{pvpPreviewData.opponentAura || '?'}</p>
               </div>
             </div>
 
