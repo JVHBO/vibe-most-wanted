@@ -4233,16 +4233,16 @@ export default function TCGPage() {
               </p>
             </div>
 
-            {/* Rankings */}
+            {/* Aura Comparison */}
             <div className="flex justify-between items-center mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 md:p-4 bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/30">
               <div className="text-center flex-1">
-                <p className="text-[10px] sm:text-xs text-vintage-burnt-gold font-modern mb-0.5 sm:mb-1">YOUR RANK</p>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-cyan-400">#{pvpPreviewData.playerRank}</p>
+                <p className="text-[10px] sm:text-xs text-vintage-burnt-gold font-modern mb-0.5 sm:mb-1">YOUR AURA</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-cyan-400">{pvpPreviewData.playerAura}</p>
               </div>
               <div className="text-vintage-gold text-lg sm:text-xl md:text-2xl">VS</div>
               <div className="text-center flex-1">
-                <p className="text-[10px] sm:text-xs text-vintage-burnt-gold font-modern mb-0.5 sm:mb-1">OPPONENT RANK</p>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-red-400">#{pvpPreviewData.opponentRank}</p>
+                <p className="text-[10px] sm:text-xs text-vintage-burnt-gold font-modern mb-0.5 sm:mb-1">OPPONENT AURA</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-red-400">{pvpPreviewData.opponentAura}</p>
               </div>
             </div>
 

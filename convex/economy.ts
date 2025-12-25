@@ -799,14 +799,17 @@ export const awardPvPCoins = mutation({
       return { awarded: 0, reason: "Daily PvP match limit reached" };
     }
 
-    // ✅ Calculate ranking bonus if opponent provided
-    let playerRank = 999;
-    let opponentRank = 999;
+    // ✅ Calculate aura-based bonus if opponent provided (OPTIMIZED - 1 query instead of 200)
     let rankingMultiplier = 1.0;
+    let opponentAura = 500;
     if (opponentAddress) {
-      playerRank = await getOpponentRanking(ctx, address);
-      opponentRank = await getOpponentRanking(ctx, opponentAddress);
-      rankingMultiplier = calculateRankingMultiplier(playerRank, opponentRank, won);
+      const opponentProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", opponentAddress.toLowerCase()))
+        .first();
+      const playerAura = profile.stats?.aura ?? 500;
+      opponentAura = opponentProfile?.stats?.aura ?? 500;
+      rankingMultiplier = calculateAuraMultiplier(playerAura, opponentAura, won);
     }
 
     // Update win streak
@@ -821,10 +824,10 @@ export const awardPvPCoins = mutation({
       const boostedBase = language ? applyLanguageBoost(PVP_WIN_REWARD, language) : PVP_WIN_REWARD;
       totalReward = Math.round(boostedBase * rankingMultiplier); // ✅ Apply ranking multiplier
 
-      // ✅ Add ranking bonus message
+      // ✅ Add aura bonus message
       if (rankingMultiplier > 1.0 && opponentAddress) {
         const bonusAmount = totalReward - PVP_WIN_REWARD;
-        bonuses.push(`Rank #${opponentRank} Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
+        bonuses.push(`Strong Opponent Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
       }
 
       // Create first PvP match mission (player must claim manually)
@@ -933,7 +936,7 @@ export const awardPvPCoins = mutation({
         awarded: totalReward,
         bonuses,
         winStreak: newStreak,
-        opponentRank, // ✅ Include opponent rank in response
+        opponentAura, // ✅ Include opponent aura in response
         rankingMultiplier, // ✅ Include multiplier in response
       };
     } else {
@@ -951,7 +954,7 @@ export const awardPvPCoins = mutation({
       // ✅ Add penalty reduction message
       if (rankingMultiplier < 1.0 && opponentAddress) {
         const reduction = Math.abs(penalty - basePenalty);
-        bonuses.push(`Rank #${opponentRank} Penalty Reduced -${reduction} (${(rankingMultiplier * 100).toFixed(0)}% penalty)`);
+        bonuses.push(`Strong Opponent Penalty Reduced -${reduction} (${(rankingMultiplier * 100).toFixed(0)}% penalty)`);
       }
 
       await ctx.db.patch(profile!._id, {
@@ -988,7 +991,7 @@ export const awardPvPCoins = mutation({
         awarded: penalty, // Negative value (reduced if high-rank opponent)
         bonuses, // ✅ Now includes penalty reduction message
         winStreak: newStreak,
-        opponentRank, // ✅ Include opponent rank in response
+        opponentAura, // ✅ Include opponent aura in response
         rankingMultiplier, // ✅ Include multiplier in response
         dailyEarned: calculateDailyEarned(profile),
         remaining: DAILY_CAP - calculateDailyEarned(profile),
@@ -1431,11 +1434,16 @@ export const recordAttackResult = mutation({
     // Note: No daily cap check for attack mode - 5 attacks/day limit is enough
     // Daily cap only applies to PvE (which has 30 wins/day limit)
 
-    // ===== STEP 2: Calculate ranking bonus =====
-    const playerRank = await getOpponentRanking(ctx, normalizedPlayerAddress);
-    const opponentRank = await getOpponentRanking(ctx, normalizedOpponentAddress);
+    // ===== STEP 2: Calculate aura-based bonus (OPTIMIZED - 1 query instead of 200) =====
+    const opponentProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
+      .first();
+
+    const playerAura = profile.stats?.aura ?? 500;
+    const opponentAura = opponentProfile?.stats?.aura ?? 500;
     const won = args.result === 'win';
-    const rankingMultiplier = calculateRankingMultiplier(playerRank, opponentRank, won);
+    const rankingMultiplier = calculateAuraMultiplier(playerAura, opponentAura, won);
 
     // ===== STEP 2.5: Check for revenge match =====
     // Revenge = opponent previously defeated this player
@@ -1475,10 +1483,10 @@ export const recordAttackResult = mutation({
         totalReward = rewardBeforeRevenge;
       }
 
-      // Add ranking bonus message
+      // Add aura bonus message
       if (rankingMultiplier > 1.0) {
         const bonusAmount = rewardBeforeRevenge - PVP_WIN_REWARD;
-        bonuses.push(`Rank #${opponentRank} Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
+        bonuses.push(`Strong Opponent Bonus +${bonusAmount} (${rankingMultiplier.toFixed(1)}x)`);
       }
 
       // Create first PvP match mission (player must claim manually)
@@ -1547,7 +1555,7 @@ export const recordAttackResult = mutation({
       // Add penalty reduction message
       if (rankingMultiplier < 1.0) {
         const reduction = Math.abs(penalty - basePenalty);
-        bonuses.push(`Rank #${opponentRank} Penalty Reduced -${reduction} (${(rankingMultiplier * 100).toFixed(0)}% penalty)`);
+        bonuses.push(`Strong Opponent Penalty Reduced -${reduction} (${(rankingMultiplier * 100).toFixed(0)}% penalty)`);
       }
 
       const currentCoins = profile.coins || 0;
@@ -1841,7 +1849,7 @@ export const recordAttackResult = mutation({
       coinsAwarded: totalReward,
       bonuses,
       winStreak: newStreak,
-      opponentRank,
+      opponentAura,
       rankingMultiplier,
       profile: profileWithDefenseDeck, // Return updated profile with hasDefenseDeck computed
       dailyEarned: calculateDailyEarned(profileWithDefenseDeck!),
