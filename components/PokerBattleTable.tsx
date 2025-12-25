@@ -551,8 +551,8 @@ export function PokerBattleTable({
           // Sync server state to local BEFORE resolving (for Round 2+)
           const myCard = isHost ? hostSelectedCard : guestSelectedCard;
           const opCard = isHost ? guestSelectedCard : hostSelectedCard;
-          const myAct = isHost ? hostAction : guestAction;
-          const opAct = isHost ? guestAction : hostAction;
+          const myAct = (isHost ? hostAction : guestAction) as CardAction;
+          const opAct = (isHost ? guestAction : hostAction) as CardAction;
 
           console.log('[PokerBattle] Syncing from server', {
             hasLocalPlayerCard: !!playerSelectedCard,
