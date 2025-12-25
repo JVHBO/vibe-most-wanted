@@ -1332,7 +1332,20 @@ export const activateFeaturedCast = internalMutation({
       });
     } catch (notifError) {
       console.error(`[CastAuction] ⚠️ Failed to schedule notification:`, notifError);
-      // Don't fail the whole operation for notification errors
+    }
+
+    // 🏆 Send notification to the WINNER specifically
+    if (auction.bidderFid) {
+      try {
+        await ctx.scheduler.runAfter(500, internal.notifications.sendWinnerNotification, {
+          winnerFid: auction.bidderFid,
+          winnerUsername: auction.bidderUsername || "winner",
+          bidAmount: auction.currentBid || 0,
+          castAuthor: auction.castAuthorUsername || "unknown",
+        });
+      } catch (winnerNotifError) {
+        console.error(`[CastAuction] ⚠️ Failed to send winner notification:`, winnerNotifError);
+      }
     }
   },
 });
