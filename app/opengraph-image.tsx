@@ -30,26 +30,43 @@ export default async function Image() {
   const card4 = fetch(`${baseUrl}/images/og-cards/card4.png`).then(res => res.arrayBuffer());
   const card5 = fetch(`${baseUrl}/images/og-cards/card5.png`).then(res => res.arrayBuffer());
 
-  // Extra VMW boss cards from different collections
+  // Extra VMW boss cards from different collections - MYTHICS
   const gmvbrsMythic = fetch(`${baseUrl}/images/raid-bosses/gmvbrs/mythic.png`).then(res => res.arrayBuffer());
-  const gmvbrsLegendary = fetch(`${baseUrl}/images/raid-bosses/gmvbrs/legendary.png`).then(res => res.arrayBuffer());
-  const afclMythic = fetch(`${baseUrl}/images/raid-bosses/afcl/mythic.png`).then(res => res.arrayBuffer());
+  const tarotMythic = fetch(`${baseUrl}/images/raid-bosses/tarot/mythic.png`).then(res => res.arrayBuffer());
   const vibefidMythic = fetch(`${baseUrl}/images/raid-bosses/vibefid/mythic.png`).then(res => res.arrayBuffer());
-  const coquettishMythic = fetch(`${baseUrl}/images/raid-bosses/coquettish/mythic.png`).then(res => res.arrayBuffer());
-  const viberutoMythic = fetch(`${baseUrl}/images/raid-bosses/viberuto/mythic.png`).then(res => res.arrayBuffer());
   const meowverseMythic = fetch(`${baseUrl}/images/raid-bosses/meowverse/mythic.png`).then(res => res.arrayBuffer());
   const poorlyMythic = fetch(`${baseUrl}/images/raid-bosses/poorlydrawnpepes/mythic.png`).then(res => res.arrayBuffer());
+  const teampotMythic = fetch(`${baseUrl}/images/raid-bosses/teampothead/mythic.png`).then(res => res.arrayBuffer());
+  const vibefxMythic = fetch(`${baseUrl}/images/raid-bosses/vibefx/mythic.png`).then(res => res.arrayBuffer());
+  const cumiohMythic = fetch(`${baseUrl}/images/raid-bosses/cumioh/mythic.png`).then(res => res.arrayBuffer());
+  const viberotMythic = fetch(`${baseUrl}/images/raid-bosses/viberotbangers/mythic.png`).then(res => res.arrayBuffer());
+  const historyMythic = fetch(`${baseUrl}/images/raid-bosses/historyofcomputer/mythic.png`).then(res => res.arrayBuffer());
+  // LEGENDARIES
+  const gmvbrsLegendary = fetch(`${baseUrl}/images/raid-bosses/gmvbrs/legendary.png`).then(res => res.arrayBuffer());
+  const tarotLegendary = fetch(`${baseUrl}/images/raid-bosses/tarot/legendary.png`).then(res => res.arrayBuffer());
+  const vibefidLegendary = fetch(`${baseUrl}/images/raid-bosses/vibefid/legendary.png`).then(res => res.arrayBuffer());
+  const cumiohLegendary = fetch(`${baseUrl}/images/raid-bosses/cumioh/legendary.png`).then(res => res.arrayBuffer());
+  // EPICS
+  const gmvbrsEpic = fetch(`${baseUrl}/images/raid-bosses/gmvbrs/epic.png`).then(res => res.arrayBuffer());
+  const meowverseEpic = fetch(`${baseUrl}/images/raid-bosses/meowverse/epic.png`).then(res => res.arrayBuffer());
+  const tarotEpic = fetch(`${baseUrl}/images/raid-bosses/tarot/epic.png`).then(res => res.arrayBuffer());
 
   const [
     background,
     mythic, legendary, epic, rare, common,
     custom1, custom2, custom3, custom4, custom5,
-    gmvbrsM, gmvbrsL, afclM, vibefidM, coquettishM, viberutoM, meowverseM, poorlyM
+    gmvbrsM, tarotM, vibefidM, meowverseM, poorlyM,
+    teampotM, vibefxM, cumiohM, viberotM, historyM,
+    gmvbrsL, tarotL, vibefidL, cumiohL,
+    gmvbrsE, meowverseE, tarotE
   ] = await Promise.all([
     backgroundImg,
     cardMythic, cardLegendary, cardEpic, cardRare, cardCommon,
     card1, card2, card3, card4, card5,
-    gmvbrsMythic, gmvbrsLegendary, afclMythic, vibefidMythic, coquettishMythic, viberutoMythic, meowverseMythic, poorlyMythic
+    gmvbrsMythic, tarotMythic, vibefidMythic, meowverseMythic, poorlyMythic,
+    teampotMythic, vibefxMythic, cumiohMythic, viberotMythic, historyMythic,
+    gmvbrsLegendary, tarotLegendary, vibefidLegendary, cumiohLegendary,
+    gmvbrsEpic, meowverseEpic, tarotEpic
   ]);
 
   return new ImageResponse(
@@ -171,13 +188,13 @@ export default async function Image() {
             }}
           />
 
-          {/* MIDDLE LEFT - 3 cards */}
+          {/* MIDDLE LEFT - 4 cards */}
           <img
             src={`data:image/png;base64,${Buffer.from(legendary).toString('base64')}`}
             style={{
               position: 'absolute',
               left: -80,
-              top: '25%',
+              top: '20%',
               transform: 'rotate(-22deg)',
               width: 200,
               height: 280,
@@ -186,11 +203,24 @@ export default async function Image() {
             }}
           />
           <img
-            src={`data:image/png;base64,${Buffer.from(afclM).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(cumiohM).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: 80,
-              top: '30%',
+              left: -50,
+              top: '55%',
+              transform: 'rotate(-15deg)',
+              width: 185,
+              height: 259,
+              objectFit: 'cover',
+              zIndex: 2,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(tarotM).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              left: 100,
+              top: '28%',
               transform: 'rotate(-12deg)',
               width: 190,
               height: 266,
@@ -202,7 +232,7 @@ export default async function Image() {
             src={`data:image/png;base64,${Buffer.from(mythic).toString('base64')}`}
             style={{
               position: 'absolute',
-              left: 230,
+              left: 260,
               top: '35%',
               transform: 'rotate(-5deg)',
               width: 210,
@@ -212,12 +242,12 @@ export default async function Image() {
             }}
           />
 
-          {/* MIDDLE RIGHT - 3 cards */}
+          {/* MIDDLE RIGHT - 4 cards */}
           <img
             src={`data:image/png;base64,${Buffer.from(custom1).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: 230,
+              right: 260,
               top: '35%',
               transform: 'rotate(5deg)',
               width: 210,
@@ -230,8 +260,8 @@ export default async function Image() {
             src={`data:image/png;base64,${Buffer.from(vibefidM).toString('base64')}`}
             style={{
               position: 'absolute',
-              right: 80,
-              top: '30%',
+              right: 100,
+              top: '28%',
               transform: 'rotate(12deg)',
               width: 190,
               height: 266,
@@ -240,11 +270,24 @@ export default async function Image() {
             }}
           />
           <img
-            src={`data:image/png;base64,${Buffer.from(coquettishM).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(tarotL).toString('base64')}`}
+            style={{
+              position: 'absolute',
+              right: -50,
+              top: '55%',
+              transform: 'rotate(15deg)',
+              width: 185,
+              height: 259,
+              objectFit: 'cover',
+              zIndex: 2,
+            }}
+          />
+          <img
+            src={`data:image/png;base64,${Buffer.from(historyM).toString('base64')}`}
             style={{
               position: 'absolute',
               right: -80,
-              top: '25%',
+              top: '20%',
               transform: 'rotate(22deg)',
               width: 200,
               height: 280,
@@ -255,7 +298,7 @@ export default async function Image() {
 
           {/* BOTTOM ROW - 7 cards */}
           <img
-            src={`data:image/png;base64,${Buffer.from(viberutoM).toString('base64')}`}
+            src={`data:image/png;base64,${Buffer.from(teampotM).toString('base64')}`}
             style={{
               position: 'absolute',
               left: -40,
