@@ -299,41 +299,68 @@ export const searchFarcasterCards = query({
   handler: async (ctx, args) => {
     const limit = Math.min(args.limit || 12, 50);
     const offset = args.offset || 0;
-    const searchTerm = args.searchTerm?.toLowerCase().trim();
+    const searchTerm = args.searchTerm?.trim();
 
-    // Get all cards (ordered by most recent first)
-    const allCards = await ctx.db
-      .query("farcasterCards")
-      .order("desc")
-      .collect();
+    // 🚀 BANDWIDTH FIX: Use search index instead of .collect() + filter
+    // Previously fetched ALL cards (~30MB), now uses indexed search
 
-    // Filter if search term provided
-    let filteredCards = allCards;
-    if (searchTerm && searchTerm.length > 0) {
+    let cards;
+    let totalCount = 0;
+
+    if (!searchTerm || searchTerm.length === 0) {
+      // No search term - get recent cards with pagination
+      // Use .take() with offset simulation via skip
+      const allRecent = await ctx.db
+        .query("farcasterCards")
+        .order("desc")
+        .take(offset + limit + 1); // +1 to check hasMore
+
+      cards = allRecent.slice(offset, offset + limit);
+      totalCount = allRecent.length > offset + limit ? offset + limit + 1 : allRecent.length;
+    } else {
       // Check if search term is a number (FID search)
       const isNumericSearch = /^\d+$/.test(searchTerm);
 
-      filteredCards = allCards.filter(card => {
-        if (isNumericSearch) {
-          // Search by FID (exact or partial match)
-          return card.fid.toString().includes(searchTerm);
+      if (isNumericSearch) {
+        // FID search - use exact match with index
+        const fid = parseInt(searchTerm, 10);
+        const exactMatch = await ctx.db
+          .query("farcasterCards")
+          .withIndex("by_fid", (q) => q.eq("fid", fid))
+          .first();
+
+        if (exactMatch) {
+          cards = [exactMatch];
+          totalCount = 1;
         } else {
-          // Search by username or displayName (case-insensitive)
-          return (
-            card.username.toLowerCase().includes(searchTerm) ||
-            card.displayName.toLowerCase().includes(searchTerm)
+          // Partial FID match - need to scan but limit results
+          const recentCards = await ctx.db
+            .query("farcasterCards")
+            .order("desc")
+            .take(500); // Limit scan to 500 cards
+
+          const filtered = recentCards.filter(card =>
+            card.fid.toString().includes(searchTerm)
           );
+          cards = filtered.slice(offset, offset + limit);
+          totalCount = filtered.length;
         }
-      });
+      } else {
+        // Username search - use search index
+        const searchResults = await ctx.db
+          .query("farcasterCards")
+          .withSearchIndex("search_username", (q) => q.search("username", searchTerm))
+          .take(offset + limit + 50); // Get extra for better totalCount estimate
+
+        cards = searchResults.slice(offset, offset + limit);
+        totalCount = searchResults.length;
+      }
     }
 
-    // Apply pagination
-    const paginatedCards = filteredCards.slice(offset, offset + limit);
-    const totalCount = filteredCards.length;
-    const hasMore = offset + limit < totalCount;
+    const hasMore = totalCount > offset + limit;
 
     return {
-      cards: paginatedCards,
+      cards,
       totalCount,
       hasMore,
       offset,

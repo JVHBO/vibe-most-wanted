@@ -1167,9 +1167,10 @@ export const recordTESTVBMSConversion = mutation({
   },
   handler: async (ctx, { address, amount, txHash }) => {
     // 🔒 SECURITY: Check if this txHash was already recorded (prevent double recording)
+    // 🚀 BANDWIDTH FIX: Use index instead of .filter()
     const existingClaim = await ctx.db
       .query("claimHistory")
-      .filter((q) => q.eq(q.field("txHash"), txHash))
+      .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
       .first();
 
     if (existingClaim) {
