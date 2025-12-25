@@ -1291,6 +1291,17 @@ export const activateFeaturedCast = internalMutation({
 
     // FIRST: Add/update in featuredCasts table (before changing status)
     if (existingFeatured) {
+      // Mark the OLD auction as completed (it's being replaced)
+      if (existingFeatured.auctionId) {
+        const oldAuction = await ctx.db.get(existingFeatured.auctionId);
+        if (oldAuction && oldAuction.status === "active") {
+          await ctx.db.patch(existingFeatured.auctionId, {
+            status: "completed",
+          });
+          console.log(`[CastAuction] 🔄 Marked old auction ${existingFeatured.auctionId} as completed`);
+        }
+      }
+
       // Update existing slot (oldest one)
       await ctx.db.patch(existingFeatured._id, {
         castHash: auction.castHash,
@@ -1595,7 +1606,45 @@ export const testCreatePendingRefund = mutation({
   },
 });
 
+/**
+ * ADMIN: Clean up orphan auctions (active but not in featuredCasts)
+ */
+export const cleanupOrphanAuctions = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all active auctions
+    const activeAuctions = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status")
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
 
+    // Get all featured casts
+    const featuredCasts = await ctx.db
+      .query("featuredCasts")
+      .withIndex("by_active")
+      .filter((q) => q.eq(q.field("active"), true))
+      .collect();
+
+    const featuredAuctionIds = featuredCasts.map(f => f.auctionId).filter(Boolean);
+
+    // Find orphans (active but not in featured)
+    const orphans = activeAuctions.filter(a => !featuredAuctionIds.includes(a._id));
+
+    let cleanedCount = 0;
+    for (const orphan of orphans) {
+      await ctx.db.patch(orphan._id, { status: "completed" });
+      console.log(`[Cleanup] Marked orphan auction ${orphan._id} (@${orphan.castAuthorUsername}) as completed`);
+      cleanedCount++;
+    }
+
+    return {
+      activeCount: activeAuctions.length,
+      featuredCount: featuredCasts.length,
+      orphansFixed: cleanedCount,
+    };
+  },
+});
 
 /**
  * ADMIN: Update all bidding auctions to use the fixed reset time (20:00 UTC / 17:00 BRT)
