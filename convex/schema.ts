@@ -481,7 +481,8 @@ export default defineSchema({
     ),
   })
     .index("by_player", ["playerAddress", "timestamp"])
-    .index("by_timestamp", ["timestamp"]),
+    .index("by_timestamp", ["timestamp"])
+    .index("by_txHash", ["txHash"]), // 🚀 BANDWIDTH FIX: For duplicate txHash check
 
   // Claim Analytics (track player behavior)
   claimAnalytics: defineTable({
@@ -855,7 +856,11 @@ export default defineSchema({
     .index("by_address_equipped", ["address", "equipped"])
     .index("by_rarity", ["rarity"])
     .index("by_score", ["neynarScore"])
-    .index("by_contract", ["contractAddress"]),
+    .index("by_contract", ["contractAddress"])
+    .searchIndex("search_username", {
+      searchField: "username",
+      filterFields: ["rarity"],
+    }), // 🚀 BANDWIDTH FIX: Full-text search for username
 
   // Neynar Score History (track score changes over time)
   neynarScoreHistory: defineTable({

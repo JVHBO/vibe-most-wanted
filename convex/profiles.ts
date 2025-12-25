@@ -124,11 +124,11 @@ export const getLeaderboardLite = query({
         .withIndex("by_type", (q) => q.eq("type", "full_leaderboard"))
         .first();
 
-      // 🚀 BANDWIDTH FIX: Increased cache TTL from 5 to 12 minutes
-      // Cron updates every 10 min, so 12 min ensures overlap
+      // 🚀 BANDWIDTH FIX: Cache TTL > cron interval to avoid cache misses
+      // Cron updates every 30 min, TTL is 35 min for overlap
       if (cache && cache.data && cache.data.length > 0) {
         const cacheAge = Date.now() - cache.updatedAt;
-        const cacheMaxAge = 12 * 60 * 1000; // 12 minutes (was 5)
+        const cacheMaxAge = 35 * 60 * 1000; // 35 minutes (cron runs every 30min)
 
         if (cacheAge < cacheMaxAge) {
           // Return cached data (already formatted correctly)
