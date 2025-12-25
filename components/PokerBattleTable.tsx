@@ -622,9 +622,12 @@ export function PokerBattleTable({
       return;
     }
 
+    // Capture value to preserve type narrowing inside callback
+    const bettingWindowEndsAt = room.gameState.bettingWindowEndsAt;
+
     const updateTimer = () => {
       const now = Date.now();
-      const remaining = Math.max(0, Math.ceil((room.gameState.bettingWindowEndsAt - now) / 1000));
+      const remaining = Math.max(0, Math.ceil((bettingWindowEndsAt - now) / 1000));
       setTimeRemaining(remaining);
     };
 
