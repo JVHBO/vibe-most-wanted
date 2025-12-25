@@ -39,27 +39,27 @@ crons.hourly(
   internal.notifications.sendLowEnergyNotifications
 );
 
-// 🚀 Top 10 Leaderboard cache update (every 10 minutes) - was 5 minutes
+// 🚀 Top 10 Leaderboard cache update (every 30 minutes) - was 10 minutes
 // Reduces bandwidth by ~95% for checkWeeklyRewardEligibility
 crons.interval(
   "update leaderboard cache",
-  { minutes: 10 },
+  { minutes: 30 },
   internal.quests.updateLeaderboardCache
 );
 
-// 🚀 FULL Leaderboard cache update (every 3 minutes)
+// 🚀 FULL Leaderboard cache update (every 30 minutes) - was 10 minutes
 // Reduces bandwidth by ~99% for getLeaderboardLite (saves ~1.4GB/month)
 crons.interval(
   "update full leaderboard cache",
-  { minutes: 10 }, // optimized from 3 min
+  { minutes: 30 },
   internal.profiles.updateLeaderboardFullCache
 );
 
-// 🎯 Cast Auction lifecycle (every 2 minutes) - optimized from 1 min
+// 🎯 Cast Auction lifecycle (every 5 minutes) - was 2 minutes
 // Processes: bidding -> pending_feature -> active -> completed
 crons.interval(
   "process cast auctions",
-  { minutes: 2 },
+  { minutes: 5 },
   internal.castAuctions.processAuctionLifecycle
 );
 
