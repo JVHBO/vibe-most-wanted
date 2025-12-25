@@ -343,8 +343,19 @@ export default function TCGPage() {
 
   // Debug bypass (removed console.log for production)
 
-  // Query player's economy data
-  const playerEconomy = useQuery(api.economy.getPlayerEconomy, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Consolidated dashboard query (replaces 5 separate queries)
+  const profileDashboard = useQuery(api.profiles.getProfileDashboard, address ? { address } : "skip");
+
+  // Derived values for backward compatibility
+  const playerEconomy = profileDashboard ? {
+    coins: profileDashboard.coins,
+    lifetimeEarned: profileDashboard.lifetimeEarned,
+    lifetimeSpent: profileDashboard.lifetimeSpent,
+    dailyLimits: profileDashboard.dailyLimits,
+    winStreak: profileDashboard.winStreak,
+    canEarnMore: profileDashboard.canEarnMore,
+  } : null;
+
   // 🚀 BANDWIDTH FIX: Daily quest changes once per day - use cached hook
   const { quest: dailyQuest } = useCachedDailyQuest();
   const questProgress = useQuery(api.quests.getQuestProgress, address ? { address } : "skip");
@@ -517,7 +528,13 @@ export default function TCGPage() {
   // VBMS Economy mutations (PvP with real VBMS)
   const chargeVBMSEntryFee = useMutation(api.economyVBMS.chargeVBMSEntryFee);
   const awardPvPVBMS = useMutation(api.economyVBMS.awardPvPVBMS);
-  const getVBMSBalance = useQuery(api.economyVBMS.getVBMSBalance, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Use profileDashboard instead of separate query
+  const getVBMSBalance = profileDashboard ? {
+    inbox: profileDashboard.inbox,
+    claimedTokens: profileDashboard.claimedTokens,
+    canPlayPvP: profileDashboard.inbox >= 5, // VBMS_ENTRY_FEES.pvp = 5
+    minimumRequired: 5,
+  } : null;
 
   // PvP Entry Fee & Reward System (VBMS entry → TESTVBMS inbox rewards)
   const useEntryFee = useMutation(api.pvp.useEntryFee);
@@ -532,10 +549,8 @@ export default function TCGPage() {
   const { battleId: activeBattleId, refetch: refetchActiveBattle } = useActiveBattle(address as `0x${string}`);
 
   // 🎁 Welcome Pack (enabled in miniapp too)
-  const hasReceivedWelcomePack = useQuery(
-    api.welcomePack.hasReceivedWelcomePack,
-    address ? { address } : "skip"
-  );
+  // 🚀 BANDWIDTH FIX: Use profileDashboard instead of separate query
+  const hasReceivedWelcomePack = profileDashboard?.hasReceivedWelcomePack ?? undefined;
   const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
 
   // 🎯 Weekly Quests mutations
@@ -550,10 +565,21 @@ export default function TCGPage() {
   const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState<boolean>(false);
 
   // 💰 Coins Inbox Status
-  const inboxStatus = useQuery(api.coinsInbox.getInboxStatus, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Use profileDashboard instead of separate query
+  const inboxStatus = profileDashboard ? {
+    coinsInbox: profileDashboard.coinsInbox,
+    coins: profileDashboard.coins,
+    inbox: profileDashboard.inbox,
+    lifetimeEarned: profileDashboard.lifetimeEarned,
+    cooldownRemaining: profileDashboard.cooldownRemaining,
+  } : null;
 
   // 🎮 Daily Attempts System (PvE limits)
-  const pveAttemptsData = useQuery(api.pokerCpu.getRemainingPveAttempts, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Use profileDashboard instead of separate query
+  const pveAttemptsData = profileDashboard ? {
+    remaining: profileDashboard.pveRemaining,
+    total: profileDashboard.pveTotal,
+  } : null;
   const consumePveAttempt = useMutation(api.pokerCpu.consumePveAttempt);
 
   // 🔒 Defense Lock System - Get locked cards for Attack/PvP modes
