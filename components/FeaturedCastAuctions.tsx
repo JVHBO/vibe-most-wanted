@@ -454,11 +454,11 @@ export function FeaturedCastAuctions({
             </div>
           )}
 
-          {/* Timer - Tempo Restante do Leilão */}
+          {/* Timer - Time Remaining */}
           {currentAuction && (
             <div className="p-3 bg-vintage-charcoal/70 border border-vintage-gold/40 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-vintage-burnt-gold text-sm font-bold">⏱️ Tempo Restante:</span>
+                <span className="text-vintage-burnt-gold text-sm font-bold">{t('castAuctionTimeRemaining')}</span>
                 <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
               </div>
             </div>

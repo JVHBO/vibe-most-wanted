@@ -499,6 +499,7 @@ export const translations = {
     castAuctionConfirmText: 'Você entende que:',
     castAuctionConfirmBtn: 'Sim, fazer lance',
     castAuctionCancelBtn: 'Cancelar',
+    castAuctionTimeRemaining: '⏱️ Tempo Restante:',
     // Guide translations
     guideNotEnoughTitle: 'Você precisa de mais cartas!',
     guidePokerName: 'Poker Battle',
@@ -1027,6 +1028,7 @@ export const translations = {
     castAuctionConfirmText: 'You understand that:',
     castAuctionConfirmBtn: 'Yes, place bid',
     castAuctionCancelBtn: 'Cancel',
+    castAuctionTimeRemaining: '⏱️ Time Remaining:',
     // Guide translations
     guideNotEnoughTitle: 'You Need More Cards!',
     guidePokerName: 'Poker Battle',
@@ -1558,6 +1560,7 @@ export const translations = {
     castAuctionConfirmText: 'Entiendes que:',
     castAuctionConfirmBtn: 'Sí, ofertar',
     castAuctionCancelBtn: 'Cancelar',
+    castAuctionTimeRemaining: '⏱️ Tiempo Restante:',
     // Guide translations
     guideNotEnoughTitle: '¡Necesitas más cartas!',
     guidePokerName: 'Poker Battle',
@@ -2090,6 +2093,7 @@ export const translations = {
     castAuctionConfirmText: 'Aap samajhte ho ki:',
     castAuctionConfirmBtn: 'Haan, bid karo',
     castAuctionCancelBtn: 'Cancel',
+    castAuctionTimeRemaining: '⏱️ Samay Baaki:',
     // Guide translations
     guideNotEnoughTitle: 'Aapko aur cards chahiye!',
     guidePokerName: 'Poker Battle',
@@ -2618,6 +2622,7 @@ export const translations = {
     castAuctionConfirmText: 'Вы понимаете что:',
     castAuctionConfirmBtn: 'Да, сделать ставку',
     castAuctionCancelBtn: 'Отмена',
+    castAuctionTimeRemaining: '⏱️ Осталось:',
     // Guide translations
     guideNotEnoughTitle: 'Вам нужно больше карт!',
     guidePokerName: 'Poker Battle',
@@ -3146,6 +3151,7 @@ export const translations = {
     castAuctionConfirmText: '你明白：',
     castAuctionConfirmBtn: '是的，出价',
     castAuctionCancelBtn: '取消',
+    castAuctionTimeRemaining: '⏱️ 剩余时间:',
     // Guide translations
     guideNotEnoughTitle: '你需要更多卡牌！',
     guidePokerName: 'Poker Battle',
