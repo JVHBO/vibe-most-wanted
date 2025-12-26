@@ -234,7 +234,6 @@ export function FeaturedCastAuctions({
             setCastPreview(null);
             setExistingCastInfo(null);
             // Form stays visible
-            if (soundEnabled) AudioManager.win();
             onBidPlaced?.(pendingBidData.amount);
             refetchBalance();
           } else {
@@ -350,7 +349,6 @@ export function FeaturedCastAuctions({
     try {
       await requestRefundMutation({ address });
       setSuccess(`Claimed ${pendingRefunds.totalRefund.toLocaleString()} coins!`);
-      if (soundEnabled) AudioManager.win();
     } catch (e: any) {
       setError(e.message || "Failed to request refund");
       if (soundEnabled) AudioManager.buttonError();

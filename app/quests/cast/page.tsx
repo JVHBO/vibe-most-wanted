@@ -5,7 +5,6 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { AudioManager } from "@/lib/audio-manager";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { FeaturedCastAuctions } from "@/components/FeaturedCastAuctions";
 import type { NeynarCast } from "@/lib/neynar";
@@ -136,7 +135,6 @@ export default function CastQuestsPage() {
       });
 
       if (result.success) {
-        AudioManager.win();
         setCastInteractionProgress(prev => ({
           ...prev,
           [currentCast.castHash]: {
