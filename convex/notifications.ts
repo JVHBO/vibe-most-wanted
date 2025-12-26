@@ -530,9 +530,10 @@ export const sendFeaturedCastNotification = internalAction({
   args: {
     castAuthor: v.string(),
     warpcastUrl: v.string(),
+    winnerUsername: v.optional(v.string()),
   },
   // @ts-ignore
-  handler: async (ctx, { castAuthor, warpcastUrl }) => {
+  handler: async (ctx, { castAuthor, warpcastUrl, winnerUsername }) => {
     try {
       // Use internal query (not api) since getAllTokens is internalQuery
       const tokens = await ctx.runQuery(internal.notificationsHelpers.getAllTokens);
@@ -551,7 +552,9 @@ export const sendFeaturedCastNotification = internalAction({
       let failed = 0;
 
       const title = "🎯 New Wanted Cast!";
-      const body = `@${castAuthor} is now WANTED! Interact to earn VBMS tokens! 💰`;
+      const body = winnerUsername
+        ? `@${winnerUsername} won the auction! @${castAuthor} is now WANTED! Interact to earn VBMS 💰`
+        : `@${castAuthor} is now WANTED! Interact to earn VBMS tokens! 💰`;
       const targetUrl = warpcastUrl || "https://www.vibemostwanted.xyz";
 
       // 1️⃣ NEYNAR TOKENS → Send via Neynar API (Base App)
