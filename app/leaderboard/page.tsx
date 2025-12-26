@@ -441,12 +441,21 @@ export default function LeaderboardPage() {
                 onClick={handleOpenDefenseDeck}
                 disabled={isLoadingCards || nfts.length < HAND_SIZE}
                 className={`px-3 py-2 rounded text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 ${
-                  userProfile.hasDefenseDeck
+                  isLoadingCards
+                    ? 'bg-black/50 border border-vintage-gold/30 text-vintage-burnt-gold/50'
+                    : userProfile.hasDefenseDeck
                     ? 'bg-black/50 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50'
                     : 'bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30'
                 }`}
               >
-                Defense {userProfile.hasDefenseDeck && <span className="text-green-400">✓</span>}
+                {isLoadingCards ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-vintage-gold/30 border-t-vintage-gold rounded-full animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>Defense {userProfile.hasDefenseDeck && <span className="text-green-400">✓</span>}</>
+                )}
               </button>
             )}
           </div>
@@ -464,9 +473,16 @@ export default function LeaderboardPage() {
               <button
                 onClick={handleOpenDefenseDeck}
                 disabled={isLoadingCards || nfts.length < HAND_SIZE}
-                className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-400 font-bold rounded transition text-xs uppercase tracking-wide whitespace-nowrap"
+                className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-400 font-bold rounded transition text-xs uppercase tracking-wide whitespace-nowrap flex items-center gap-1.5"
               >
-                Set Defense
+                {isLoadingCards ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Set Defense'
+                )}
               </button>
               <button onClick={handleDismissDefenseWarning} className="text-amber-500/50 hover:text-amber-400 text-lg leading-none">&times;</button>
             </div>
@@ -714,7 +730,12 @@ export default function LeaderboardPage() {
           <div className="bg-black/60 backdrop-blur-sm rounded-lg border border-vintage-gold/20 px-4 py-2.5 flex items-center justify-between gap-4 text-xs">
             {/* Your Rank */}
             <div className="flex items-center gap-2">
-              {userRank ? (
+              {isLoadingCards ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 border-2 border-vintage-gold/30 border-t-vintage-gold rounded-full animate-spin" />
+                  <span className="text-vintage-burnt-gold">Loading cards...</span>
+                </div>
+              ) : userRank ? (
                 <>
                   <span className="text-vintage-burnt-gold uppercase tracking-wide">Rank</span>
                   <span className="text-base font-bold text-vintage-gold">#{userRank}</span>
