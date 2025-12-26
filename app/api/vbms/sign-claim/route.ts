@@ -3,10 +3,43 @@
  *
  * Signs a claim message for VBMS token distribution
  * Used by convertTESTVBMStoVBMS mutation in Convex
+ *
+ * SECURITY FEATURES:
+ * - Rate limiting (1 request per address per 10 seconds)
+ * - Input validation (address format, amount bounds)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
+
+// Rate limiting: track last request time per address
+const rateLimitMap = new Map<string, number>();
+const RATE_LIMIT_MS = 10000; // 10 seconds between requests
+
+// Amount bounds (in VBMS, not wei)
+const MIN_CLAIM_AMOUNT = 100; // 100 VBMS minimum
+const MAX_CLAIM_AMOUNT = 100000; // 100k VBMS maximum
+
+function checkRateLimit(address: string): boolean {
+  const now = Date.now();
+  const lastRequest = rateLimitMap.get(address.toLowerCase());
+
+  if (lastRequest && now - lastRequest < RATE_LIMIT_MS) {
+    return false; // Rate limited
+  }
+
+  rateLimitMap.set(address.toLowerCase(), now);
+
+  // Cleanup old entries (keep map small)
+  if (rateLimitMap.size > 1000) {
+    const cutoff = now - RATE_LIMIT_MS * 2;
+    for (const [key, time] of rateLimitMap.entries()) {
+      if (time < cutoff) rateLimitMap.delete(key);
+    }
+  }
+
+  return true;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +50,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required fields: address, amount, and nonce' },
         { status: 400 }
+      );
+    }
+
+    // SECURITY: Input validation - check address format
+    if (!ethers.isAddress(address)) {
+      console.warn('⚠️ Invalid address format:', address);
+      return NextResponse.json(
+        { error: 'Invalid address format' },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Input validation - check amount bounds
+    const amountNum = Number(amount);
+    if (isNaN(amountNum) || amountNum < MIN_CLAIM_AMOUNT || amountNum > MAX_CLAIM_AMOUNT) {
+      console.warn('⚠️ Invalid amount:', amount);
+      return NextResponse.json(
+        { error: `Amount must be between ${MIN_CLAIM_AMOUNT} and ${MAX_CLAIM_AMOUNT} VBMS` },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Rate limiting
+    if (!checkRateLimit(address)) {
+      console.warn('⚠️ Rate limited:', address);
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait 10 seconds.' },
+        { status: 429 }
       );
     }
 
