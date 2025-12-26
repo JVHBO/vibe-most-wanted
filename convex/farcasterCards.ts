@@ -491,7 +491,8 @@ export const resetCardRarity = internalMutation({
  * Upgrade card rarity based on new Neynar score
  * Keeps all traits (foil, wear, suit, rank) but updates rarity and power
  */
-export const upgradeCardRarity = internalMutation({
+// Note: Called from frontend /fid/[fid]/page.tsx
+export const upgradeCardRarity = mutation({
   args: {
     fid: v.number(),
     newNeynarScore: v.number(),
@@ -584,7 +585,8 @@ export const getRecentFarcasterCards = query({
  * Update card images after upgrade
  * Used when regenerating video/image with new rarity/power/bounty values
  */
-export const updateCardImages = internalMutation({
+// Note: Called from frontend /fid/[fid]/page.tsx
+export const updateCardImages = mutation({
   args: {
     fid: v.number(),
     imageUrl: v.string(), // Video URL (MP4/WebM)
