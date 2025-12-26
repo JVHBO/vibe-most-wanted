@@ -15,6 +15,42 @@ import { Id } from "./_generated/dataModel";
 import { internal, api } from "./_generated/api";
 import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
 
+/**
+ * 🔒 SECURITY FIX: Cryptographic shuffle using crypto.getRandomValues()
+ * Math.random() is predictable and can be exploited for game manipulation
+ * Fisher-Yates shuffle with crypto-secure random
+ */
+function cryptoShuffle<T>(array: T[]): T[] {
+  const result = [...array];
+  const randomBytes = new Uint32Array(result.length);
+  crypto.getRandomValues(randomBytes);
+
+  for (let i = result.length - 1; i > 0; i--) {
+    // Use crypto-secure random to pick swap index
+    const j = randomBytes[i] % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+/**
+ * 🔒 SECURITY FIX: Crypto-secure random integer
+ */
+function cryptoRandomInt(max: number): number {
+  const randomBytes = new Uint32Array(1);
+  crypto.getRandomValues(randomBytes);
+  return randomBytes[0] % max;
+}
+
+/**
+ * 🔒 SECURITY FIX: Crypto-secure random float [0, 1)
+ */
+function cryptoRandomFloat(): number {
+  const randomBytes = new Uint32Array(1);
+  crypto.getRandomValues(randomBytes);
+  return randomBytes[0] / (0xFFFFFFFF + 1);
+}
+
 // Create a new poker room
 export const createPokerRoom = mutation({
   args: {
@@ -29,23 +65,42 @@ export const createPokerRoom = mutation({
     const normalizedAddress = args.address.toLowerCase();
 
     // ✅ VALIDAÇÃO MELHORADA: Verificar se player já tem sala ativa
-    const existingRoom = await ctx.db
+    // 🚀 PERFORMANCE FIX: Use indexes instead of full table scan
+    const activeStatuses = ["waiting", "ready", "in-progress"];
+
+    // Check as host using by_host index
+    const roomAsHost = await ctx.db
       .query("pokerRooms")
+      .withIndex("by_host", (q) => q.eq("hostAddress", normalizedAddress))
       .filter((q) =>
-        q.or(
-          q.eq(q.field("hostAddress"), normalizedAddress),
-          q.eq(q.field("guestAddress"), normalizedAddress)
+        q.and(
+          q.or(
+            q.eq(q.field("status"), "waiting"),
+            q.eq(q.field("status"), "ready"),
+            q.eq(q.field("status"), "in-progress")
+          ),
+          q.gt(q.field("expiresAt"), now)
         )
       )
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("status"), "waiting"),
-          q.eq(q.field("status"), "ready"),
-          q.eq(q.field("status"), "in-progress")
-        )
-      )
-      .filter((q) => q.gt(q.field("expiresAt"), now))
       .first();
+
+    // Check as guest using by_guest index
+    const roomAsGuest = !roomAsHost ? await ctx.db
+      .query("pokerRooms")
+      .withIndex("by_guest", (q) => q.eq("guestAddress", normalizedAddress))
+      .filter((q) =>
+        q.and(
+          q.or(
+            q.eq(q.field("status"), "waiting"),
+            q.eq(q.field("status"), "ready"),
+            q.eq(q.field("status"), "in-progress")
+          ),
+          q.gt(q.field("expiresAt"), now)
+        )
+      )
+      .first() : null;
+
+    const existingRoom = roomAsHost || roomAsGuest;
 
     if (existingRoom) {
       // Player já tem uma sala ativa - fornecer informações úteis
@@ -1297,7 +1352,7 @@ export const cleanupOldRooms = internalMutation({
  * Clean up old/expired poker rooms (public - for admin API)
  * Same logic as internal but callable from HTTP client
  */
-export const cleanupOldRoomsPublic = mutation({
+export const cleanupOldRoomsPublic = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
@@ -1330,7 +1385,7 @@ export const cleanupOldRoomsPublic = mutation({
 /**
  * Force delete room by player address (admin tool)
  */
-export const forceDeleteRoomByAddress = mutation({
+export const forceDeleteRoomByAddress = internalMutation({
   args: {
     address: v.string(),
   },
@@ -1376,7 +1431,7 @@ export const forceDeleteRoomByAddress = mutation({
 /**
  * Force delete a stuck poker room (admin tool)
  */
-export const forceDeleteRoom = mutation({
+export const forceDeleteRoom = internalMutation({
   args: {
     roomId: v.string(), // roomId is a string in pokerRooms table
   },
@@ -1451,7 +1506,7 @@ function generateCpuPokerDeck(collection: string) {
   if (!cards || cards.length < 10) {
     // Fallback to gmvbrs if collection doesn't have enough cards
     const fallbackCards = COLLECTION_CARDS["gmvbrs"] || [];
-    const shuffled = [...fallbackCards].sort(() => Math.random() - 0.5);
+    const shuffled = cryptoShuffle(fallbackCards);
     return shuffled.slice(0, 10).map((card) => ({
       tokenId: card.tokenId,
       name: card.name,
@@ -1463,7 +1518,7 @@ function generateCpuPokerDeck(collection: string) {
     }));
   }
 
-  const shuffled = [...cards].sort(() => Math.random() - 0.5);
+  const shuffled = cryptoShuffle(cards);
   return shuffled.slice(0, 10).map((card) => ({
     tokenId: card.tokenId,
     name: card.name,
@@ -1488,10 +1543,10 @@ export const createCpuVsCpuRoom = mutation({
     const now = Date.now();
 
     // Check if there's already an active CPU vs CPU room for this collection
+    // 🚀 PERF: Use compound index for isCpuVsCpu + cpuCollection
     const existingRoom = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("isCpuVsCpu"), true))
-      .filter((q) => q.eq(q.field("cpuCollection"), collection))
+      .withIndex("by_cpu_collection", (q) => q.eq("isCpuVsCpu", true).eq("cpuCollection", collection))
       .filter((q) =>
         q.or(
           q.eq(q.field("status"), "waiting"),
@@ -1506,7 +1561,7 @@ export const createCpuVsCpuRoom = mutation({
     }
 
     // Generate random CPU names
-    const shuffledNames = [...CPU_BATTLE_NAMES].sort(() => Math.random() - 0.5);
+    const shuffledNames = cryptoShuffle(CPU_BATTLE_NAMES);
     const cpu1 = shuffledNames[0];
     const cpu2 = shuffledNames[1];
 
@@ -1588,9 +1643,10 @@ export const createCpuVsCpuRoom = mutation({
 export const getCpuVsCpuRooms = query({
   args: {},
   handler: async (ctx) => {
+    // 🚀 PERF: Use index for isCpuVsCpu, then filter status
     const rooms = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("isCpuVsCpu"), true))
+      .withIndex("by_cpu_collection", (q) => q.eq("isCpuVsCpu", true))
       .filter((q) =>
         q.or(
           q.eq(q.field("status"), "waiting"),
@@ -1688,7 +1744,7 @@ export const cpuMakeMove = internalMutation({
       }
 
       // CPU strategy: pick a random card (could be improved with AI later)
-      const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+      const randomCard = availableCards[cryptoRandomInt(availableCards.length)];
 
       // Update game state with selected card (tokenId must be number for schema)
       const tokenIdNum = typeof randomCard.tokenId === 'string' ? parseInt(randomCard.tokenId, 10) : randomCard.tokenId;
@@ -1700,7 +1756,7 @@ export const cpuMakeMove = internalMutation({
       // CPU strategy: 50% BOOST, 25% SHIELD, 10% DOUBLE, 15% PASS
       // More aggressive to avoid ties
       const currentBoostCoins = isHost ? (room.hostBoostCoins ?? 1500) : (room.guestBoostCoins ?? 1500);
-      const actionRoll = Math.random();
+      const actionRoll = cryptoRandomFloat();
       let cpuAction: "BOOST" | "SHIELD" | "DOUBLE" | "PASS";
 
       if (actionRoll < 0.50 && currentBoostCoins >= 100) {
@@ -1777,7 +1833,7 @@ export const cpuMakeMove = internalMutation({
 /**
  * Shorten betting window when first bet is placed in CPU vs CPU
  */
-export const shortenBettingWindow = mutation({
+export const shortenBettingWindow = internalMutation({
   args: {
     roomId: v.string(),
   },
@@ -2192,12 +2248,13 @@ export const cpuRestartGame = internalMutation({
 /**
  * ADMIN: Force reset all CPU vs CPU rooms (for bug fixes)
  */
-export const forceResetAllCpuRooms = mutation({
+export const forceResetAllCpuRooms = internalMutation({
   args: {},
   handler: async (ctx) => {
+    // 🚀 PERF: Use index for isCpuVsCpu
     const rooms = await ctx.db
       .query("pokerRooms")
-      .filter((q) => q.eq(q.field("isCpuVsCpu"), true))
+      .withIndex("by_cpu_collection", (q) => q.eq("isCpuVsCpu", true))
       .collect();
 
     console.log(`🔄 Force resetting ${rooms.length} CPU rooms...`);

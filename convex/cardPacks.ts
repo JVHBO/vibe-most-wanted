@@ -9,8 +9,24 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalQuery } from "./_generated/server";
+import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+
+/**
+ * 🔒 SECURITY FIX: Crypto-secure random functions
+ * Math.random() is predictable and can be exploited
+ */
+function cryptoRandomFloat(): number {
+  const randomBytes = new Uint32Array(1);
+  crypto.getRandomValues(randomBytes);
+  return randomBytes[0] / (0xFFFFFFFF + 1);
+}
+
+function cryptoRandomInt(max: number): number {
+  const randomBytes = new Uint32Array(1);
+  crypto.getRandomValues(randomBytes);
+  return randomBytes[0] % max;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PACK DEFINITIONS
@@ -98,7 +114,7 @@ const VARIANTS = {
  */
 function rollRarity(odds: Record<string, number>): string {
   const total = Object.values(odds).reduce((a, b) => a + b, 0);
-  let roll = Math.random() * total;
+  let roll = cryptoRandomFloat() * total;
 
   for (const [rarity, chance] of Object.entries(odds)) {
     roll -= chance;
@@ -171,7 +187,7 @@ function generateRandomCard(rarity: string) {
   // Pick random card image from the rarity pool
   const rarityLower = rarity.toLowerCase();
   const imageCount = CARD_IMAGES[rarityLower as keyof typeof CARD_IMAGES] || 1;
-  const imageIndex = Math.floor(Math.random() * imageCount);
+  const imageIndex = cryptoRandomInt(imageCount);
 
   // Roll foil type
   const foil = rollRarity(FOIL_ODDS);
@@ -312,8 +328,9 @@ export const getLockedFreeCardIds = query({
 
 /**
  * Get total FREE cards statistics
+ * 🚀 PERF: Changed to internalQuery - full table scan should not be public
  */
-export const getFreeCardsStats = query({
+export const getFreeCardsStats = internalQuery({
   args: {},
   handler: async (ctx) => {
     const allCards = await ctx.db.query("cardInventory").collect();
@@ -372,7 +389,7 @@ export const debugAllCards = internalQuery({
 /**
  * MIGRATION: Normalize all addresses to lowercase in cardInventory
  */
-export const normalizeCardAddresses = mutation({
+export const normalizeCardAddresses = internalMutation({
   args: {},
   handler: async (ctx) => {
     const allCards = await ctx.db.query("cardInventory").collect();
@@ -448,10 +465,10 @@ export const buyPack = mutation({
     });
 
     // Give packs to player
+    // 🚀 PERF: Use compound index instead of filter
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), args.packType))
+      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", args.packType))
       .first();
 
     if (existingPack) {
@@ -512,10 +529,10 @@ export const buyPackWithVBMS = mutation({
     }
 
     // Give packs to player (stored as actualPackType for correct odds)
+    // 🚀 PERF: Use compound index instead of filter
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), actualPackType))
+      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", actualPackType))
       .first();
 
     if (existingPack) {
@@ -726,10 +743,10 @@ export const awardPack = mutation({
     }
 
     // Find existing pack
+    // 🚀 PERF: Use compound index
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), args.packType))
+      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", args.packType))
       .first();
 
     if (existingPack) {
@@ -764,10 +781,10 @@ export const giveStarterPack = mutation({
     const address = args.address.toLowerCase();
 
     // Check if player already got starter pack
+    // 🚀 PERF: Use compound index
     const existingStarter = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), "starter"))
+      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", "starter"))
       .first();
 
     if (existingStarter) {
@@ -818,10 +835,10 @@ export const rewardProfileShare = mutation({
     }
 
     // Award FREE pack
+    // 🚀 PERF: Use compound index
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), "basic"))
+      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", "basic"))
       .first();
 
     if (existingPack) {
@@ -858,7 +875,7 @@ export const rewardProfileShare = mutation({
  * ADMIN: Fix existing FREE card image URLs with proper encoding
  * Corrects old URLs without %20 encoding to properly encoded URLs
  */
-export const updateAllCardImages = mutation({
+export const updateAllCardImages = internalMutation({
   args: {},
   handler: async (ctx) => {
     const newImageMapping: Record<string, string[]> = {
@@ -885,7 +902,7 @@ export const updateAllCardImages = mutation({
 
         if (needsUpdate) {
           // Pick a random new image for this rarity
-          const randomIndex = Math.floor(Math.random() * newImages.length);
+          const randomIndex = cryptoRandomInt(newImages.length);
           const newImageFile = newImages[randomIndex];
           const newImageUrl = `/cards/${rarity}/${encodeURIComponent(newImageFile)}`;
 
@@ -913,7 +930,7 @@ export const updateAllCardImages = mutation({
 /**
  * ADMIN: Delete FREE cards for a specific username and give compensation pack
  */
-export const resetUserFreeCards = mutation({
+export const resetUserFreeCards = internalMutation({
   args: { username: v.string() },
   handler: async (ctx, { username }) => {
     // Find user profile by username
@@ -949,10 +966,10 @@ export const resetUserFreeCards = mutation({
     console.log("🗑️ Deleted", deletedCount, "cards");
 
     // Give compensation pack
+    // 🚀 PERF: Use compound index
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), "basic"))
+      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", "basic"))
       .first();
 
     if (existingPack) {
@@ -1266,10 +1283,10 @@ export const buyPackWithLuckBoost = mutation({
     // Create packs with special type for boosted
     const packType = args.boosted ? "elite" : "basic";
 
+    // 🚀 PERF: Use compound index
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), packType))
+      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", packType))
       .first();
 
     if (existingPack) {
@@ -1360,10 +1377,10 @@ export const claimDailyFreePack = mutation({
     }
 
     // Give pack to player (uses basic pack type for opening)
+    // 🚀 PERF: Use compound index
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .filter((q) => q.eq(q.field("packType"), "basic"))
+      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", "basic"))
       .first();
 
     if (existingPack) {
@@ -1406,7 +1423,7 @@ export const claimDailyFreePack = mutation({
 /**
  * ADMIN: Reset all daily free claims so everyone can claim again
  */
-export const adminResetDailyFreeClaims = mutation({
+export const adminResetDailyFreeClaims = internalMutation({
   args: {},
   handler: async (ctx) => {
     const claims = await ctx.db.query("dailyFreeClaims").collect();
@@ -1421,7 +1438,7 @@ export const adminResetDailyFreeClaims = mutation({
  * ADMIN: Restore cards from backup data
  * Used to restore cards with normalized addresses and proper URLs
  */
-export const restoreCards = mutation({
+export const restoreCards = internalMutation({
   args: {
     cards: v.array(v.object({
       address: v.string(),

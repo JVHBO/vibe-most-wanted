@@ -1096,7 +1096,7 @@ export const incrementStatSecure = mutation({
  * Run once to clean legacy data from Firebase migration
  * 🚀 BANDWIDTH FIX: Process in batches of 100
  */
-export const cleanOldDefenseDecks = mutation({
+export const cleanOldDefenseDecks = internalMutation({
   args: {},
   handler: async (ctx) => {
     // 🚀 BANDWIDTH FIX: Process in batches instead of loading all
@@ -1599,7 +1599,7 @@ export const countLegacyFidProfiles = query({
  * Migrate legacy profiles from fid (string) to farcasterFid (number)
  * Run this once to fix all legacy profiles
  */
-export const migrateLegacyFidProfiles = mutation({
+export const migrateLegacyFidProfiles = internalMutation({
   args: {},
   handler: async (ctx) => {
     const profiles = await ctx.db.query("profiles").collect();

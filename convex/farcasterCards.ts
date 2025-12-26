@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 /**
@@ -390,7 +390,7 @@ export const getFarcasterCardsByRarity = query({
  * Delete all old VibeFID cards from previous contracts
  * (cards without contractAddress or with old contract addresses)
  */
-export const deleteAllOldVibeFIDCards = mutation({
+export const deleteAllOldVibeFIDCards = internalMutation({
   args: {},
   handler: async (ctx) => {
     const VIBEFID_CURRENT_CONTRACT = "0x60274A138d026E3cB337B40567100FdEC3127565";
@@ -425,7 +425,7 @@ export const deleteAllOldVibeFIDCards = mutation({
  * Delete specific orphan cards by Doc ID (for cleanup)
  * SAFE: Only deletes cards you explicitly specify
  */
-export const deleteOrphanCardById = mutation({
+export const deleteOrphanCardById = internalMutation({
   args: {
     docId: v.id("farcasterCards"),
   },
@@ -457,7 +457,7 @@ export const deleteOrphanCardById = mutation({
 /**
  * DEV ONLY: Reset card rarity for testing
  */
-export const resetCardRarity = mutation({
+export const resetCardRarity = internalMutation({
   args: {
     fid: v.number(),
     rarity: v.string(),
@@ -491,7 +491,7 @@ export const resetCardRarity = mutation({
  * Upgrade card rarity based on new Neynar score
  * Keeps all traits (foil, wear, suit, rank) but updates rarity and power
  */
-export const upgradeCardRarity = mutation({
+export const upgradeCardRarity = internalMutation({
   args: {
     fid: v.number(),
     newNeynarScore: v.number(),
@@ -569,16 +569,12 @@ export const getRecentFarcasterCards = query({
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
 
-    // Get all cards (mixed contracts)
-    // After running deleteAllOldVibeFIDCards, only current contract cards will remain
-    const allCards = await ctx.db
+    // 🚀 PERF: Use .order("desc").take() instead of .collect() + sort + slice
+    // This avoids loading the entire table into memory
+    const sortedCards = await ctx.db
       .query("farcasterCards")
-      .collect();
-
-    // Sort by _creationTime in descending order (newest first)
-    const sortedCards = allCards
-      .sort((a, b) => b._creationTime - a._creationTime)
-      .slice(0, limit);
+      .order("desc") // Orders by _creationTime descending
+      .take(limit);
 
     return sortedCards;
   },
@@ -588,7 +584,7 @@ export const getRecentFarcasterCards = query({
  * Update card images after upgrade
  * Used when regenerating video/image with new rarity/power/bounty values
  */
-export const updateCardImages = mutation({
+export const updateCardImages = internalMutation({
   args: {
     fid: v.number(),
     imageUrl: v.string(), // Video URL (MP4/WebM)
