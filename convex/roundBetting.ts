@@ -10,7 +10,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 // Odds configuration (can be adjusted)
 const ODDS_CONFIG = {
@@ -207,7 +207,7 @@ export const placeBetOnRound = mutation({
     // Check if this is a CPU vs CPU room - if so, shorten betting window
     if (room?.isCpuVsCpu) {
       // Call shortenBettingWindow mutation
-      await ctx.runMutation(api.pokerBattle.shortenBettingWindow, { roomId });
+      await ctx.runMutation(internal.pokerBattle.shortenBettingWindow, { roomId });
     }
 
     // Get bettor's username for chat message
