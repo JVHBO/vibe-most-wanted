@@ -2,11 +2,41 @@
  * API Route: Sign Farcaster Card Mint
  *
  * Verifies FID ownership and signs EIP-712 message for minting
+ *
+ * SECURITY FEATURES:
+ * - FID ownership verification via Neynar API
+ * - Rate limiting (1 request per address per 10 seconds)
+ * - EIP-712 typed data signing
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import { getUserByFid } from '@/lib/neynar';
+
+// Rate limiting: track last request time per address
+const rateLimitMap = new Map<string, number>();
+const RATE_LIMIT_MS = 10000; // 10 seconds between requests
+
+function checkRateLimit(address: string): boolean {
+  const now = Date.now();
+  const lastRequest = rateLimitMap.get(address.toLowerCase());
+
+  if (lastRequest && now - lastRequest < RATE_LIMIT_MS) {
+    return false; // Rate limited
+  }
+
+  rateLimitMap.set(address.toLowerCase(), now);
+
+  // Cleanup old entries (keep map small)
+  if (rateLimitMap.size > 1000) {
+    const cutoff = now - RATE_LIMIT_MS * 2;
+    for (const [key, time] of rateLimitMap.entries()) {
+      if (time < cutoff) rateLimitMap.delete(key);
+    }
+  }
+
+  return true;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +47,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required fields: address, fid, and ipfsURI' },
         { status: 400 }
+      );
+    }
+
+    // SECURITY: Rate limiting
+    if (!checkRateLimit(address)) {
+      console.warn('⚠️ Rate limited:', address);
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait 10 seconds.' },
+        { status: 429 }
       );
     }
 
@@ -33,20 +72,24 @@ export async function POST(request: NextRequest) {
 
     // 2. Verify ownership: check if connected address owns the FID
     const normalizedAddress = address.toLowerCase();
-    const verifiedAddresses = user.verified_addresses.eth_addresses.map(a => a.toLowerCase());
+    const verifiedAddresses = user.verified_addresses.eth_addresses.map((a: string) => a.toLowerCase());
 
-    // TESTING MODE: Ownership check disabled for testing
-    // if (!verifiedAddresses.includes(normalizedAddress)) {
-    //   return NextResponse.json({
-    //     error: 'You do not own this FID',
-    //     fid,
-    //     yourAddress: address,
-    //     fidOwners: user.verified_addresses.eth_addresses,
-    //   }, { status: 403 });
-    // }
+    // SECURITY: Verify the connected wallet owns this FID
+    if (!verifiedAddresses.includes(normalizedAddress)) {
+      console.error('❌ FID ownership verification failed:', {
+        fid,
+        claimedAddress: address,
+        fidOwners: user.verified_addresses.eth_addresses,
+      });
+      return NextResponse.json({
+        error: 'You do not own this FID. Connect with a wallet that is verified on your Farcaster account.',
+        fid,
+        yourAddress: address,
+        fidOwners: user.verified_addresses.eth_addresses,
+      }, { status: 403 });
+    }
 
-    console.log('⚠️ TESTING MODE: Ownership verification bypassed');
-    console.log('✅ Signature generated for FID', fid);
+    console.log('✅ FID ownership verified:', { fid, address });
 
     // 3. Get signer private key from environment
     const SIGNER_PRIVATE_KEY = process.env.VBMS_SIGNER_PRIVATE_KEY;
