@@ -237,8 +237,9 @@ export const getVoiceParticipants = query({
 
 /**
  * Clean up voice participants when room is deleted
+ * Note: Called from API route for admin cleanup
  */
-export const cleanupRoomVoice = internalMutation({
+export const cleanupRoomVoice = mutation({
   args: {
     roomId: v.string(),
   },
@@ -266,8 +267,9 @@ export const cleanupRoomVoice = internalMutation({
 /**
  * Clean up stale voice participants (older than 30 minutes)
  * Call this periodically to avoid showing ghost participants
+ * Note: Called from API route for admin cleanup
  */
-export const cleanupStaleVoiceParticipants = internalMutation({
+export const cleanupStaleVoiceParticipants = mutation({
   args: {},
   handler: async (ctx) => {
     const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
