@@ -7,7 +7,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 
 /**
  * Voice participant - represents someone in the voice channel
@@ -84,12 +84,18 @@ export const markSignalsProcessed = mutation({
   },
   handler: async (ctx, { signalIds }) => {
     // Mark all signals as processed
+    let processed = 0;
     for (const id of signalIds) {
-      await ctx.db.patch(id, { processed: true });
+      try {
+        await ctx.db.patch(id, { processed: true });
+        processed++;
+      } catch (err) {
+        console.error(`[VoiceChat] Failed to mark signal ${id} as processed:`, err);
+      }
     }
 
-    console.log(`[VoiceChat] Marked ${signalIds.length} signals as processed`);
-    return { success: true };
+    console.log(`[VoiceChat] Marked ${processed}/${signalIds.length} signals as processed`);
+    return { success: true, processed };
   },
 });
 
@@ -97,7 +103,7 @@ export const markSignalsProcessed = mutation({
  * Clean up old signals (older than 5 minutes)
  * Call this periodically to avoid database bloat
  */
-export const cleanupOldSignals = mutation({
+export const cleanupOldSignals = internalMutation({
   args: {},
   handler: async (ctx) => {
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
@@ -109,12 +115,18 @@ export const cleanupOldSignals = mutation({
       .collect();
 
     // Delete them
+    let deleted = 0;
     for (const signal of oldSignals) {
-      await ctx.db.delete(signal._id);
+      try {
+        await ctx.db.delete(signal._id);
+        deleted++;
+      } catch (err) {
+        console.error(`[VoiceChat] Failed to delete signal ${signal._id}:`, err);
+      }
     }
 
-    console.log(`[VoiceChat] Cleaned up ${oldSignals.length} old signals`);
-    return { deleted: oldSignals.length };
+    console.log(`[VoiceChat] Cleaned up ${deleted}/${oldSignals.length} old signals`);
+    return { deleted };
   },
 });
 
@@ -226,7 +238,7 @@ export const getVoiceParticipants = query({
 /**
  * Clean up voice participants when room is deleted
  */
-export const cleanupRoomVoice = mutation({
+export const cleanupRoomVoice = internalMutation({
   args: {
     roomId: v.string(),
   },
@@ -236,12 +248,18 @@ export const cleanupRoomVoice = mutation({
       .withIndex("by_room", (q) => q.eq("roomId", roomId))
       .collect();
 
+    let deleted = 0;
     for (const p of participants) {
-      await ctx.db.delete(p._id);
+      try {
+        await ctx.db.delete(p._id);
+        deleted++;
+      } catch (err) {
+        console.error(`[VoiceChat] Failed to delete participant ${p._id}:`, err);
+      }
     }
 
-    console.log(`[VoiceChat] Cleaned up ${participants.length} voice participants for room ${roomId}`);
-    return { deleted: participants.length };
+    console.log(`[VoiceChat] Cleaned up ${deleted}/${participants.length} voice participants for room ${roomId}`);
+    return { deleted };
   },
 });
 
@@ -249,7 +267,7 @@ export const cleanupRoomVoice = mutation({
  * Clean up stale voice participants (older than 30 minutes)
  * Call this periodically to avoid showing ghost participants
  */
-export const cleanupStaleVoiceParticipants = mutation({
+export const cleanupStaleVoiceParticipants = internalMutation({
   args: {},
   handler: async (ctx) => {
     const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
@@ -261,30 +279,42 @@ export const cleanupStaleVoiceParticipants = mutation({
       .collect();
 
     // Delete them
+    let deleted = 0;
     for (const p of staleParticipants) {
-      await ctx.db.delete(p._id);
+      try {
+        await ctx.db.delete(p._id);
+        deleted++;
+      } catch (err) {
+        console.error(`[VoiceChat] Failed to delete stale participant ${p._id}:`, err);
+      }
     }
 
-    console.log(`[VoiceChat] Cleaned up ${staleParticipants.length} stale voice participants`);
-    return { deleted: staleParticipants.length };
+    console.log(`[VoiceChat] Cleaned up ${deleted}/${staleParticipants.length} stale voice participants`);
+    return { deleted };
   },
 });
 
 /**
  * Clean ALL voice participants - emergency cleanup
  */
-export const cleanupAllVoiceParticipants = mutation({
+export const cleanupAllVoiceParticipants = internalMutation({
   args: {},
   handler: async (ctx) => {
     const allParticipants = await ctx.db
       .query("voiceParticipants")
       .collect();
 
+    let deleted = 0;
     for (const p of allParticipants) {
-      await ctx.db.delete(p._id);
+      try {
+        await ctx.db.delete(p._id);
+        deleted++;
+      } catch (err) {
+        console.error(`[VoiceChat] Failed to delete participant ${p._id}:`, err);
+      }
     }
 
-    console.log(`[VoiceChat] Emergency cleanup: removed ${allParticipants.length} voice participants`);
-    return { deleted: allParticipants.length };
+    console.log(`[VoiceChat] Emergency cleanup: removed ${deleted}/${allParticipants.length} voice participants`);
+    return { deleted };
   },
 });

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 
 /**
  * PVP ROOMS - QUERIES & MUTATIONS
@@ -305,7 +305,7 @@ export const leaveRoom = mutation({
 /**
  * Cleanup old rooms (older than 5 minutes)
  */
-export const cleanupOldRooms = mutation({
+export const cleanupOldRooms = internalMutation({
   args: {},
   handler: async (ctx) => {
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
@@ -525,7 +525,7 @@ export const cancelMatchmaking = mutation({
 /**
  * Cleanup old matchmaking entries (older than 1 minute)
  */
-export const cleanupMatchmaking = mutation({
+export const cleanupMatchmaking = internalMutation({
   args: {},
   handler: async (ctx) => {
     const oneMinuteAgo = Date.now() - 60 * 1000;

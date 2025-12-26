@@ -23,44 +23,50 @@ export const resetProfiles = internalMutation({
     console.log(`📊 Found ${profiles.length} profiles to reset`);
 
     let resetCount = 0;
+    let errorCount = 0;
     for (const profile of profiles) {
-      const today = new Date().toISOString().split('T')[0];
+      try {
+        const today = new Date().toISOString().split('T')[0];
 
-      await ctx.db.patch(profile._id, {
-        coins: 0,
-        lifetimeEarned: 0,
-        lifetimeSpent: 0,
-        stats: {
-          totalPower: 0,
-          totalCards: 0,
-          openedCards: 0,
-          unopenedCards: 0,
-          pveWins: 0,
-          pveLosses: 0,
-          pvpWins: 0,
-          pvpLosses: 0,
-          attackWins: 0,
-          attackLosses: 0,
-          defenseWins: 0,
-          defenseLosses: 0,
-        },
-        dailyLimits: {
-          pveWins: 0,
-          pvpMatches: 0,
-          lastResetDate: today,
-          firstPveBonus: false,
-          firstPvpBonus: false,
-          loginBonus: false,
-          streakBonus: false,
-        },
-        winStreak: 0,
-        lastWinTimestamp: 0,
-        attacksToday: 0,
-        rematchesToday: 0,
-        lastUpdated: Date.now(),
-      });
+        await ctx.db.patch(profile._id, {
+          coins: 0,
+          lifetimeEarned: 0,
+          lifetimeSpent: 0,
+          stats: {
+            totalPower: 0,
+            totalCards: 0,
+            openedCards: 0,
+            unopenedCards: 0,
+            pveWins: 0,
+            pveLosses: 0,
+            pvpWins: 0,
+            pvpLosses: 0,
+            attackWins: 0,
+            attackLosses: 0,
+            defenseWins: 0,
+            defenseLosses: 0,
+          },
+          dailyLimits: {
+            pveWins: 0,
+            pvpMatches: 0,
+            lastResetDate: today,
+            firstPveBonus: false,
+            firstPvpBonus: false,
+            loginBonus: false,
+            streakBonus: false,
+          },
+          winStreak: 0,
+          lastWinTimestamp: 0,
+          attacksToday: 0,
+          rematchesToday: 0,
+          lastUpdated: Date.now(),
+        });
 
-      resetCount++;
+        resetCount++;
+      } catch (err) {
+        console.error(`Failed to reset profile ${profile.address}:`, err);
+        errorCount++;
+      }
     }
 
     console.log(`✅ Reset ${resetCount} profiles`);
@@ -84,7 +90,11 @@ export const deleteMatchesBatch = internalMutation({
     }
 
     for (const match of matches) {
-      await ctx.db.delete(match._id);
+      try {
+        await ctx.db.delete(match._id);
+      } catch (err) {
+        console.error(`Failed to delete match ${match._id}:`, err);
+      }
     }
 
     // Check how many remain
@@ -108,7 +118,11 @@ export const deleteQuestProgress = internalMutation({
     const questProgress = await ctx.db.query("questProgress").take(100);
 
     for (const progress of questProgress) {
-      await ctx.db.delete(progress._id);
+      try {
+        await ctx.db.delete(progress._id);
+      } catch (err) {
+        console.error(`Failed to delete quest progress ${progress._id}:`, err);
+      }
     }
 
     console.log(`✅ Deleted ${questProgress.length} quest progress records`);
@@ -197,37 +211,45 @@ export const resetFreeCards = internalMutation({
     // Delete all cards
     let deletedCount = 0;
     for (const card of allCards) {
-      await ctx.db.delete(card._id);
-      deletedCount++;
+      try {
+        await ctx.db.delete(card._id);
+        deletedCount++;
+      } catch (err) {
+        console.error(`Failed to delete card ${card._id}:`, err);
+      }
     }
     console.log(`🗑️ Deleted ${deletedCount} cards`);
 
     // Give new pack to each player
     let packsGiven = 0;
     for (const address of uniqueAddresses) {
-      // Check if player already has a pack
-      const existingPack = await ctx.db
-        .query("cardPacks")
-        .withIndex("by_address", (q) => q.eq("address", address))
-        .filter((q) => q.eq(q.field("packType"), "basic"))
-        .first();
+      try {
+        // Check if player already has a pack
+        const existingPack = await ctx.db
+          .query("cardPacks")
+          .withIndex("by_address", (q) => q.eq("address", address))
+          .filter((q) => q.eq(q.field("packType"), "basic"))
+          .first();
 
-      if (existingPack) {
-        // Increment existing pack
-        await ctx.db.patch(existingPack._id, {
-          unopened: existingPack.unopened + 1,
-        });
-      } else {
-        // Create new pack
-        await ctx.db.insert("cardPacks", {
-          address,
-          packType: "basic",
-          unopened: 1,
-          sourceId: "reset_compensation",
-          earnedAt: Date.now(),
-        });
+        if (existingPack) {
+          // Increment existing pack
+          await ctx.db.patch(existingPack._id, {
+            unopened: existingPack.unopened + 1,
+          });
+        } else {
+          // Create new pack
+          await ctx.db.insert("cardPacks", {
+            address,
+            packType: "basic",
+            unopened: 1,
+            sourceId: "reset_compensation",
+            earnedAt: Date.now(),
+          });
+        }
+        packsGiven++;
+      } catch (err) {
+        console.error(`Failed to give pack to ${address}:`, err);
       }
-      packsGiven++;
     }
     console.log(`🎁 Gave ${packsGiven} compensation packs`);
 

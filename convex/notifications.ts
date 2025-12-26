@@ -560,12 +560,8 @@ export const sendFeaturedCastNotification = internalAction({
         console.log(`📱 Sending to ${neynarFids.length} Base App users via Neynar API...`);
 
         try {
-          // Generate proper UUID v4 format for notification (required by Neynar API)
-          const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-          });
+          // 🔒 SECURITY FIX: Use crypto.randomUUID() instead of Math.random()
+          const uuid = crypto.randomUUID();
 
           const neynarPayload = {
             target_fids: neynarFids,
@@ -722,12 +718,8 @@ export const sendWinnerNotification = internalAction({
       return { sent: false, error: "NEYNAR_API_KEY not set" };
     }
 
-    // Generate proper UUID v4 format
-    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
+    // 🔒 SECURITY FIX: Use crypto.randomUUID() instead of Math.random()
+    const uuid = crypto.randomUUID();
 
     const title = "🏆 Your Cast Won!";
     const body = `Congrats @${winnerUsername}! Your bid of ${bidAmount.toLocaleString()} VBMS won! @${castAuthor} is now WANTED!`;
@@ -783,12 +775,8 @@ export const testNeynarNotification = internalAction({
       return { error: "NEYNAR_API_KEY not set" };
     }
 
-    // Generate proper UUID v4 format
-    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
+    // 🔒 SECURITY FIX: Use crypto.randomUUID() instead of Math.random()
+    const uuid = crypto.randomUUID();
 
     const payload = {
       target_fids: [fid],

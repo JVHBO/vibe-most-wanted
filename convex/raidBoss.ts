@@ -10,6 +10,15 @@ import { internal } from "./_generated/api";
 import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
 import type { CardRarity } from "../lib/types/card";
 
+/**
+ * 🔒 SECURITY FIX: Crypto-secure random for critical hits
+ */
+function cryptoRandomFloat(): number {
+  const randomBytes = new Uint32Array(1);
+  crypto.getRandomValues(randomBytes);
+  return randomBytes[0] / (0xFFFFFFFF + 1);
+}
+
 // Constants
 const ENTRY_FEE = 5; // 5 VBMS to set raid deck (5 regular + 1 VibeFID special)
 const REFUEL_COST_PER_CARD = 1; // 1 VBMS per card
@@ -740,7 +749,7 @@ export const processAutoAttacks = internalMutation({
 
           // 🎯 CRITICAL HIT SYSTEM (VibeFID: 30% chance, Others: 15% chance)
           const criticalHitChance = isVibeFID ? 0.30 : 0.15; // VibeFID has 2x crit chance!
-          const isCriticalHit = Math.random() < criticalHitChance;
+          const isCriticalHit = cryptoRandomFloat() < criticalHitChance;
           if (isCriticalHit) {
             cardPower = Math.floor(cardPower * 2); // 2x damage on crit
             console.log(`💥 CRITICAL HIT! Card ${cardEnergy.tokenId} dealt ${cardPower} damage (2x multiplier)`);
@@ -1109,7 +1118,7 @@ export const getAllContributions = internalQuery({
  * Manually distribute rewards for a boss (admin function)
  * Use this when boss was defeated but rewards weren't distributed
  */
-export const manualDistributeRewards = mutation({
+export const manualDistributeRewards = internalMutation({
   args: { bossIndex: v.number() },
   handler: async (ctx, { bossIndex }) => {
     // Get all contributions for this boss

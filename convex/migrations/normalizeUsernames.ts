@@ -9,9 +9,9 @@
  * Run with: npx convex run migrations/normalizeUsernames:migrate --prod
  */
 
-import { mutation } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 
-export const migrate = mutation({
+export const migrate = internalMutation({
   args: {},
   handler: async (ctx) => {
     console.log("🔄 Starting username normalization migration...");

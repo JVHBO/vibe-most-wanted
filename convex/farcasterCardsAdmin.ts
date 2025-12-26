@@ -1,11 +1,11 @@
 import { v } from "convex/values";
-import { mutation, query, internalQuery } from "./_generated/server";
+import { internalMutation, query, internalQuery } from "./_generated/server";
 
 /**
  * ADMIN: Manually add metadata for an already-minted NFT
  * Use this when NFT was minted on-chain but Convex save failed
  */
-export const addMintedCardMetadata = mutation({
+export const addMintedCardMetadata = internalMutation({
   args: {
     // Farcaster Data
     fid: v.number(),
@@ -92,7 +92,7 @@ export const addMintedCardMetadata = mutation({
 /**
  * ADMIN: Update card traits and images for existing card
  */
-export const updateCardTraits = mutation({
+export const updateCardTraits = internalMutation({
   args: {
     fid: v.number(),
     foil: v.optional(v.string()),

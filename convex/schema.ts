@@ -441,7 +441,8 @@ export default defineSchema({
     claimedAt: v.optional(v.number()),
   })
     .index("by_player_date", ["playerAddress", "date"])
-    .index("by_player_type", ["playerAddress", "missionType"]),
+    .index("by_player_type", ["playerAddress", "missionType"])
+    .index("by_player_date_type", ["playerAddress", "date", "missionType"]), // 🚀 PERF: Compound for mission lookups
 
   // Security: Nonces for replay attack prevention
   nonces: defineTable({
@@ -520,7 +521,7 @@ export default defineSchema({
     // Blockchain Integration
     blockchainBattleId: v.optional(v.number()), // ID from smart contract
 
-    // CPU vs CPU Mode
+    // CPU vs CPU Mode - 🚀 PERF: indexed below for efficient CPU arena queries
     isCpuVsCpu: v.optional(v.boolean()), // If true, both players are CPUs
     cpuCollection: v.optional(v.string()), // Collection for CPU decks (e.g., "gmvbrs")
 
@@ -595,7 +596,8 @@ export default defineSchema({
     .index("by_host", ["hostAddress"])
     .index("by_guest", ["guestAddress"])
     .index("by_token_ante", ["token", "ante", "status"]) // For auto-match filtering
-    .index("by_room_id", ["roomId"]), // 🚀 BANDWIDTH FIX: Index for room lookups
+    .index("by_room_id", ["roomId"]) // 🚀 BANDWIDTH FIX: Index for room lookups
+    .index("by_cpu_collection", ["isCpuVsCpu", "cpuCollection", "status"]), // 🚀 PERF: CPU arena filtering
 
   // Poker Chat Messages (for in-match communication)
   pokerChatMessages: defineTable({
@@ -720,7 +722,8 @@ export default defineSchema({
     expiresAt: v.optional(v.number()), // Optional expiration (for limited events)
   })
     .index("by_address", ["address"])
-    .index("by_address_unopened", ["address", "unopened"]),
+    .index("by_address_unopened", ["address", "unopened"])
+    .index("by_address_packType", ["address", "packType"]), // 🚀 PERF: Compound index for packType filtering
 
   // Card Inventory (Free cards from packs)
   cardInventory: defineTable({
