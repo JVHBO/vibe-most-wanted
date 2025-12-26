@@ -289,7 +289,7 @@ export function ShopView({ address }: ShopViewProps) {
             <div className={`bg-vintage-charcoal/50 border ${luckBoost ? 'border-yellow-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all`}>
 
               {/* Pack Header with Image */}
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-4 mb-3">
                 <img src="/pack-cover.png" alt="Pack" className={`w-16 h-16 object-contain ${luckBoost ? 'animate-pulse' : ''}`} />
                 <div className="flex-1">
                   <h3 className="text-xl font-display font-bold text-vintage-gold">
@@ -300,6 +300,13 @@ export function ShopView({ address }: ShopViewProps) {
                 <div className={`px-3 py-1 rounded-full text-xs font-bold ${luckBoost ? 'bg-yellow-500 text-black' : 'bg-vintage-gold/20 text-vintage-gold'}`}>
                   {luckBoost ? 'BOOSTED' : 'BASIC'}
                 </div>
+              </div>
+
+              {/* Nothing Card Warning */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-3">
+                <p className="text-amber-300/80 text-xs text-center">
+                  Nothing cards are ~40% weaker than LTC collectible cards
+                </p>
               </div>
 
               {/* Drop Rates - Compact Grid */}
@@ -450,25 +457,25 @@ export function ShopView({ address }: ShopViewProps) {
             </button>
           </div>
 
-          {/* Burn Values Info - Compact */}
+          {/* Burn Values Info - Compact - Changes with Luck Pack */}
           <div className="max-w-sm mx-auto">
             <p className="text-xs text-vintage-ice/40 text-center mb-2">Burn Values (VBMS)</p>
             <div className="grid grid-cols-4 gap-1 text-xs text-center">
-              <div className="bg-vintage-charcoal/30 rounded p-2">
+              <div className={`rounded p-2 ${luckBoost ? 'bg-yellow-500/10' : 'bg-vintage-charcoal/30'}`}>
                 <span className="text-vintage-ice/50 block">Common</span>
-                <span className="text-green-400 font-bold">200</span>
+                <span className="text-green-400 font-bold">{luckBoost ? '1k' : '200'}</span>
               </div>
-              <div className="bg-vintage-charcoal/30 rounded p-2">
+              <div className={`rounded p-2 ${luckBoost ? 'bg-yellow-500/10' : 'bg-vintage-charcoal/30'}`}>
                 <span className="text-blue-400/70 block">Rare</span>
-                <span className="text-green-400 font-bold">1.1k</span>
+                <span className="text-green-400 font-bold">{luckBoost ? '5.5k' : '1.1k'}</span>
               </div>
-              <div className="bg-vintage-charcoal/30 rounded p-2">
+              <div className={`rounded p-2 ${luckBoost ? 'bg-yellow-500/10' : 'bg-vintage-charcoal/30'}`}>
                 <span className="text-purple-400/70 block">Epic</span>
-                <span className="text-green-400 font-bold">4k</span>
+                <span className="text-green-400 font-bold">{luckBoost ? '20k' : '4k'}</span>
               </div>
-              <div className="bg-vintage-charcoal/30 rounded p-2">
+              <div className={`rounded p-2 ${luckBoost ? 'bg-yellow-500/10' : 'bg-vintage-charcoal/30'}`}>
                 <span className="text-yellow-400/70 block">Legend</span>
-                <span className="text-green-400 font-bold">40k</span>
+                <span className="text-green-400 font-bold">{luckBoost ? '200k' : '40k'}</span>
               </div>
             </div>
           </div>
