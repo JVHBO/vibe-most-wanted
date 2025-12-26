@@ -62,8 +62,8 @@ export const checkExistingCast = query({
       currentBid: auction.currentBid,
       totalPool: auction.currentBid,
       contributorCount: contributions.length,
-      // 🔒 PRIVACY: Only return count, not individual contributor details
-      contributors: contributions.slice(0, 10).map((c) => ({
+      contributors: contributions.map((c) => ({
+        address: c.bidderAddress,
         username: c.bidderUsername,
         amount: c.bidAmount,
       })),
@@ -84,8 +84,7 @@ export const getActiveAuctions = query({
     // 🚀 BANDWIDTH FIX: Limit to 50 auctions (more than enough for display)
     const auctions = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "bidding"))
+      .withIndex("by_status", (q) => q.eq("status", "bidding"))
       .take(50);
 
     // Sort by pool size (highest first) - cast-based ranking
@@ -121,8 +120,7 @@ export const getWinningCasts = query({
     // 🚀 BANDWIDTH FIX: Only 2 slots exist, limit to 10 for safety
     const activeCasts = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .take(10);
 
     return activeCasts
@@ -140,16 +138,14 @@ export const getAuctionHistory = query({
     // Get completed auctions
     const completed = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "completed"))
+      .withIndex("by_status", (q) => q.eq("status", "completed"))
       .order("desc")
       .take(limit);
 
     // Get active auctions (already have winners, still being featured)
     const active = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .order("desc")
       .take(limit);
 
@@ -173,8 +169,7 @@ export const getMyBids = query({
 
     return await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_bidder")
-      .filter((q) => q.eq(q.field("bidderAddress"), normalizedAddress))
+      .withIndex("by_bidder", (q) => q.eq("bidderAddress", normalizedAddress))
       .order("desc")
       .take(50);
   },
@@ -188,8 +183,7 @@ export const getBidHistory = query({
   handler: async (ctx, { auctionId }) => {
     return await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_auction")
-      .filter((q) => q.eq(q.field("auctionId"), auctionId))
+      .withIndex("by_auction", (q) => q.eq("auctionId", auctionId))
       .order("desc")
       .take(20);
   },
@@ -205,14 +199,12 @@ export const getAllAuctionStates = query({
     // 🚀 BANDWIDTH FIX: Limit both queries
     const bidding = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "bidding"))
+      .withIndex("by_status", (q) => q.eq("status", "bidding"))
       .take(50);
 
     const active = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .take(10);
 
     return {
@@ -234,13 +226,8 @@ export const getPendingRefunds = query({
     // 🚀 BANDWIDTH FIX: Limit to 100 pending refunds per user
     const pendingRefunds = await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_bidder")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("bidderAddress"), normalizedAddress),
-          q.eq(q.field("status"), "pending_refund")
-        )
-      )
+      .withIndex("by_bidder", (q) => q.eq("bidderAddress", normalizedAddress))
+      .filter((q) => q.eq(q.field("status"), "pending_refund"))
       .take(100);
 
     const totalRefund = pendingRefunds.reduce((sum, bid) => sum + (bid.refundAmount || bid.bidAmount), 0);
@@ -266,10 +253,9 @@ export const getRecentRefunds = query({
     // 🚀 BANDWIDTH FIX: Limit to 50 recent refunds
     const recentRefunds = await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_bidder")
+      .withIndex("by_bidder", (q) => q.eq("bidderAddress", normalizedAddress))
       .filter((q) =>
         q.and(
-          q.eq(q.field("bidderAddress"), normalizedAddress),
           q.eq(q.field("status"), "refunded"),
           q.gte(q.field("refundedAt"), oneDayAgo)
         )
@@ -310,26 +296,32 @@ export const getCurrentBidders = query({
       // 🚀 BANDWIDTH FIX: Limit auctions fetched
       auctions = await ctx.db
         .query("castAuctions")
-        .withIndex("by_status")
-        .filter((q) => q.eq(q.field("status"), "bidding"))
+        .withIndex("by_status", (q) => q.eq("status", "bidding"))
         .take(50);
     }
 
-    // Get all bids for these auctions
-    const allBids = [];
-    for (const auction of auctions) {
-      const bids = await ctx.db
-        .query("castAuctionBids")
-        .withIndex("by_auction")
-        .filter((q) => q.eq(q.field("auctionId"), auction._id))
-        .order("desc")
-        .take(10);
+    // 🚀 PERFORMANCE FIX: Batch load all bids instead of N+1 queries
+    const auctionIds = new Set(auctions.map(a => a._id));
+    const auctionMap = new Map(auctions.map(a => [a._id, a]));
 
-      allBids.push(...bids.map(bid => ({
+    // Load all bids for all auctions in parallel
+    const bidPromises = auctions.map(auction =>
+      ctx.db
+        .query("castAuctionBids")
+        .withIndex("by_auction", (q) => q.eq("auctionId", auction._id))
+        .order("desc")
+        .take(10)
+    );
+    const bidsPerAuction = await Promise.all(bidPromises);
+
+    // Flatten and enrich bids
+    const allBids = bidsPerAuction.flatMap((bids, idx) => {
+      const auction = auctions[idx];
+      return bids.map(bid => ({
         ...bid,
         isWinning: bid.status === "active" && bid.bidAmount === auction.currentBid,
-      })));
-    }
+      }));
+    });
 
     return allBids.sort((a, b) => b.bidAmount - a.bidAmount);
   },
@@ -414,8 +406,7 @@ export const placeBid = mutation({
     // 5. Get bidder profile and check balance
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address")
-      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     console.log(`[PlaceBid DEBUG] Address: ${normalizedAddress}, Profile found: ${!!profile}, Username: ${profile?.username}`);
@@ -472,8 +463,7 @@ export const placeBid = mutation({
         // Refund to previous bidder's coins (TESTVBMS)
         const prevBidderProfile = await ctx.db
           .query("profiles")
-          .withIndex("by_address")
-          .filter((q) => q.eq(q.field("address"), previousBid.bidderAddress))
+          .withIndex("by_address", (q) => q.eq("address", previousBid.bidderAddress))
           .first();
 
         if (prevBidderProfile) {
@@ -596,8 +586,7 @@ export const placeBidWithVBMS = mutation({
     // 3. Get bidder profile
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address")
-      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     if (!profile) {
@@ -622,8 +611,7 @@ export const placeBidWithVBMS = mutation({
       // Find existing bidding auction to get the end time, or create new cycle
       const existingAuction = await ctx.db
         .query("castAuctions")
-        .withIndex("by_status")
-        .filter((q) => q.eq(q.field("status"), "bidding"))
+        .withIndex("by_status", (q) => q.eq("status", "bidding"))
         .first();
 
       const auctionEndsAt = existingAuction?.auctionEndsAt || getNextResetTime(now);
@@ -791,8 +779,7 @@ export const addToPool = mutation({
     // 3. Get bidder profile
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address")
-      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     console.log(`[AddToPool DEBUG] Address: ${normalizedAddress}, Profile found: ${!!profile}, Username: ${profile?.username}`);
@@ -889,7 +876,7 @@ export const addToPool = mutation({
 /**
  * Initialize auctions for all 2 slots (run once on deployment)
  */
-export const initializeAuctions = mutation({
+export const initializeAuctions = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
@@ -934,13 +921,8 @@ export const requestRefund = mutation({
 
     const pendingRefunds = await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_bidder")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("bidderAddress"), normalizedAddress),
-          q.eq(q.field("status"), "pending_refund")
-        )
-      )
+      .withIndex("by_bidder", (q) => q.eq("bidderAddress", normalizedAddress))
+      .filter((q) => q.eq(q.field("status"), "pending_refund"))
       .collect();
 
     if (pendingRefunds.length === 0) {
@@ -953,8 +935,7 @@ export const requestRefund = mutation({
     // Get user profile and credit coins directly
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address")
-      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     if (!profile) {
@@ -1121,13 +1102,8 @@ export const processRefundBatch = mutation({
 
     const requests = await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_bidder")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("bidderAddress"), normalizedAddress),
-          q.eq(q.field("status"), "refund_requested")
-        )
-      )
+      .withIndex("by_bidder", (q) => q.eq("bidderAddress", normalizedAddress))
+      .filter((q) => q.eq(q.field("status"), "refund_requested"))
       .collect();
 
     if (requests.length === 0) {
@@ -1410,33 +1386,36 @@ export const markAuctionLost = internalMutation({
     // Refund all bids immediately (credit coins back to users)
     const bids = await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_auction")
-      .filter((q) => q.eq(q.field("auctionId"), auctionId))
+      .withIndex("by_auction", (q) => q.eq("auctionId", auctionId))
       .collect();
 
+    // 🚀 PERFORMANCE FIX: Batch load all profiles before the loop
+    const activeBids = bids.filter(b => b.status === "active");
+    const uniqueAddresses = [...new Set(activeBids.map(b => b.bidderAddress.toLowerCase()))];
+    const profilePromises = uniqueAddresses.map(addr =>
+      ctx.db.query("profiles").withIndex("by_address", (q) => q.eq("address", addr)).first()
+    );
+    const profiles = await Promise.all(profilePromises);
+    const profileMap = new Map(
+      profiles.filter(Boolean).map(p => [p!.address.toLowerCase(), p!])
+    );
+
     let refundedCount = 0;
-    for (const bid of bids) {
-      if (bid.status === "active") {
-        // Credit coins back to user immediately
-        const bidderProfile = await ctx.db
-          .query("profiles")
-          .withIndex("by_address")
-          .filter((q) => q.eq(q.field("address"), bid.bidderAddress.toLowerCase()))
-          .first();
+    for (const bid of activeBids) {
+      const bidderProfile = profileMap.get(bid.bidderAddress.toLowerCase());
 
-        if (bidderProfile) {
-          await ctx.db.patch(bidderProfile._id, {
-            coins: (bidderProfile.coins || 0) + bid.bidAmount,
-          });
-          refundedCount++;
-        }
-
-        await ctx.db.patch(bid._id, {
-          status: "refunded",
-          refundAmount: bid.bidAmount,
-          refundedAt: now,
+      if (bidderProfile) {
+        await ctx.db.patch(bidderProfile._id, {
+          coins: (bidderProfile.coins || 0) + bid.bidAmount,
         });
+        refundedCount++;
       }
+
+      await ctx.db.patch(bid._id, {
+        status: "refunded",
+        refundAmount: bid.bidAmount,
+        refundedAt: now,
+      });
     }
 
     console.log(
@@ -1506,8 +1485,7 @@ export const processAuctionLifecycle = internalMutation({
     // 6. Activate pending features (pending_feature -> active)
     const pendingFeatures = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "pending_feature"))
+      .withIndex("by_status", (q) => q.eq("status", "pending_feature"))
       .collect();
 
     for (const auction of pendingFeatures) {
@@ -1547,7 +1525,7 @@ export const processAuctionLifecycle = internalMutation({
 /**
  * TEST: Create a pending_refund bid for testing claim button
  */
-export const testCreatePendingRefund = mutation({
+export const testCreatePendingRefund = internalMutation({
   args: { address: v.string(), amount: v.number() },
   handler: async (ctx, { address, amount }) => {
     const normalizedAddress = address.toLowerCase();
@@ -1556,8 +1534,7 @@ export const testCreatePendingRefund = mutation({
     // Get or create a test auction
     let testAuction = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "bidding"))
+      .withIndex("by_status", (q) => q.eq("status", "bidding"))
       .first();
 
     if (!testAuction) {
@@ -1577,8 +1554,7 @@ export const testCreatePendingRefund = mutation({
     // Get profile
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address")
-      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     // Create a pending_refund bid
@@ -1606,21 +1582,19 @@ export const testCreatePendingRefund = mutation({
 /**
  * ADMIN: Clean up orphan auctions (active but not in featuredCasts)
  */
-export const cleanupOrphanAuctions = mutation({
+export const cleanupOrphanAuctions = internalMutation({
   args: {},
   handler: async (ctx) => {
     // Get all active auctions
     const activeAuctions = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
     // Get all featured casts
     const featuredCasts = await ctx.db
       .query("featuredCasts")
-      .withIndex("by_active")
-      .filter((q) => q.eq(q.field("active"), true))
+      .withIndex("by_active", (q) => q.eq("active", true))
       .collect();
 
     const featuredAuctionIds = featuredCasts.map(f => f.auctionId).filter(Boolean);
@@ -1646,15 +1620,14 @@ export const cleanupOrphanAuctions = mutation({
 /**
  * ADMIN: Update all bidding auctions to use the fixed reset time (20:00 UTC / 17:00 BRT)
  */
-export const updateAuctionsToFixedTime = mutation({
+export const updateAuctionsToFixedTime = internalMutation({
   args: {},
   handler: async (ctx) => {
     const nextReset = getNextResetTime();
 
     const auctions = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "bidding"))
+      .withIndex("by_status", (q) => q.eq("status", "bidding"))
       .collect();
 
     let updated = 0;
@@ -1671,7 +1644,7 @@ export const updateAuctionsToFixedTime = mutation({
 /**
  * ADMIN: Clean duplicate auctions from history (remove raples duplicates)
  */
-export const cleanDuplicateHistory = mutation({
+export const cleanDuplicateHistory = internalMutation({
   args: {},
   handler: async (ctx) => {
     const raplesCastHash = "0x01968929bb4411542a4075916604cf8802cba49b";
@@ -1679,8 +1652,7 @@ export const cleanDuplicateHistory = mutation({
     // Find all completed raples auctions
     const allCompleted = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "completed"))
+      .withIndex("by_status", (q) => q.eq("status", "completed"))
       .collect();
     
     const raplesAuctions = allCompleted.filter(a => a.castHash === raplesCastHash);
@@ -1709,22 +1681,21 @@ export const refundBid = internalMutation({
     
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address")
-      .filter((q) => q.eq(q.field("address"), bid.bidderAddress.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", bid.bidderAddress.toLowerCase()))
       .first();
-    
+
     if (profile) {
       await ctx.db.patch(profile._id, {
         coins: (profile.coins || 0) + bid.bidAmount,
       });
     }
-    
+
     await ctx.db.patch(bid._id, {
       status: "refunded",
       refundAmount: bid.bidAmount,
       refundedAt: now,
     });
-    
+
     console.log(`[CastAuction] Refunded ${bid.bidderUsername}: ${bid.bidAmount} coins`);
   },
 });
@@ -1746,8 +1717,7 @@ export const markAuctionLostSafe = internalMutation({
     // Get all active bids
     const bids = await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_auction")
-      .filter((q) => q.eq(q.field("auctionId"), auctionId))
+      .withIndex("by_auction", (q) => q.eq("auctionId", auctionId))
       .take(50);
 
     // Schedule each refund separately

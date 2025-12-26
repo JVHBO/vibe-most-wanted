@@ -15,6 +15,15 @@ import { api } from "./_generated/api";
 import { normalizeAddress } from "./utils";
 import { logTransaction } from "./coinsInbox";
 
+/**
+ * 🔒 SECURITY FIX: Crypto-secure random for quest selection
+ */
+function cryptoRandomInt(max: number): number {
+  const randomBytes = new Uint32Array(1);
+  crypto.getRandomValues(randomBytes);
+  return randomBytes[0] % max;
+}
+
 // Quest pool with 10 different quest types
 const QUEST_POOL = [
   {
@@ -116,7 +125,7 @@ export const getDailyQuest = query({
 /**
  * Generate today's daily quest (called by cron or first player of the day)
  */
-export const generateDailyQuest = mutation({
+export const generateDailyQuest = internalMutation({
   args: {},
   handler: async (ctx) => {
     const today = new Date().toISOString().split('T')[0];
@@ -133,7 +142,7 @@ export const generateDailyQuest = mutation({
     }
 
     // Pick random quest from pool
-    const randomIndex = Math.floor(Math.random() * QUEST_POOL.length);
+    const randomIndex = cryptoRandomInt(QUEST_POOL.length);
     const questTemplate = QUEST_POOL[randomIndex];
 
     // Create quest

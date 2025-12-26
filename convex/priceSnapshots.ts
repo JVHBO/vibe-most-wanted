@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
@@ -106,7 +106,7 @@ export const getRecentSnapshots = query({
 });
 
 // Admin: Insert snapshot with custom date (for backfilling historical data)
-export const insertHistoricalSnapshot = mutation({
+export const insertHistoricalSnapshot = internalMutation({
   args: {
     date: v.string(),
     prices: v.array(v.object({

@@ -8,9 +8,9 @@
  * After: getLeaderboardLite fetches only top N with .take() (~5MB)
  */
 
-import { mutation } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 
-export const backfillHasFullDefenseDeck = mutation({
+export const backfillHasFullDefenseDeck = internalMutation({
   args: {},
   handler: async (ctx) => {
     console.log("🚀 Starting hasFullDefenseDeck backfill migration...");

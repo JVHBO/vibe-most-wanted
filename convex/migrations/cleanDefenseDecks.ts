@@ -8,9 +8,9 @@
  * Users will need to re-set their defense decks.
  */
 
-import { mutation } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 
-export const cleanOldDefenseDecks = mutation({
+export const cleanOldDefenseDecks = internalMutation({
   args: {},
   handler: async (ctx) => {
     const profiles = await ctx.db.query("profiles").collect();

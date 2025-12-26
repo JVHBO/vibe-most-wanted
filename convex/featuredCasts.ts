@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // Get all active featured casts
@@ -7,8 +7,7 @@ export const getActiveCasts = query({
   handler: async (ctx) => {
     const casts = await ctx.db
       .query("featuredCasts")
-      .withIndex("by_active")
-      .filter((q) => q.eq(q.field("active"), true))
+      .withIndex("by_active", (q) => q.eq("active", true))
       .collect();
 
     // Sort by order
@@ -17,8 +16,8 @@ export const getActiveCasts = query({
 });
 
 
-// Set a featured cast (admin only - add check later)
-export const setFeaturedCast = mutation({
+// Set a featured cast (admin only)
+export const setFeaturedCast = internalMutation({
   args: {
     castHash: v.string(),
     warpcastUrl: v.string(),
@@ -26,10 +25,10 @@ export const setFeaturedCast = mutation({
   },
   handler: async (ctx, args) => {
     // Check if there's already a cast at this order
+    // 🚀 PERFORMANCE FIX: Use index correctly
     const existing = await ctx.db
       .query("featuredCasts")
-      .withIndex("by_order")
-      .filter((q) => q.eq(q.field("order"), args.order))
+      .withIndex("by_order", (q) => q.eq("order", args.order))
       .first();
 
     if (existing) {
@@ -54,16 +53,15 @@ export const setFeaturedCast = mutation({
   },
 });
 
-// Remove a featured cast
-export const removeFeaturedCast = mutation({
+// Remove a featured cast (admin only)
+export const removeFeaturedCast = internalMutation({
   args: {
     order: v.number(),
   },
   handler: async (ctx, args) => {
     const cast = await ctx.db
       .query("featuredCasts")
-      .withIndex("by_order")
-      .filter((q) => q.eq(q.field("order"), args.order))
+      .withIndex("by_order", (q) => q.eq("order", args.order))
       .first();
 
     if (cast) {
@@ -171,7 +169,7 @@ export const claimCastInteractionReward = mutation({
 });
 
 // Admin: Reset cast interactions for a player (for testing)
-export const resetCastInteractions = mutation({
+export const resetCastInteractions = internalMutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();

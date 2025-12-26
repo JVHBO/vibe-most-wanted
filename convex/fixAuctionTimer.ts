@@ -1,4 +1,4 @@
-import { mutation, internalMutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
@@ -7,7 +7,7 @@ import { Id } from "./_generated/dataModel";
  * Force end an auction by setting its end time to now
  * This will make the cron pick it up on next run
  */
-export const forceEndAuction = mutation({
+export const forceEndAuction = internalMutation({
   args: { auctionId: v.string() },
   handler: async (ctx, { auctionId }) => {
     const auction = await ctx.db.get(auctionId as Id<"castAuctions">);
@@ -27,7 +27,7 @@ export const forceEndAuction = mutation({
 /**
  * Manually add a cast to featuredCasts from an active auction
  */
-export const addMissingFeaturedCast = mutation({
+export const addMissingFeaturedCast = internalMutation({
   args: { auctionId: v.string() },
   handler: async (ctx, { auctionId }) => {
     const auction = await ctx.db.get(auctionId as Id<"castAuctions">);
@@ -103,7 +103,7 @@ export const addMissingFeaturedCast = mutation({
 /**
  * Force process auction lifecycle NOW (for testing)
  */
-export const forceProcessLifecycle = mutation({
+export const forceProcessLifecycle = internalMutation({
   args: {},
   handler: async (ctx) => {
     await ctx.scheduler.runAfter(0, internal.castAuctions.processAuctionLifecycle, {});
@@ -114,7 +114,7 @@ export const forceProcessLifecycle = mutation({
 /**
  * Clean up empty bidding auctions and complete old active auctions
  */
-export const cleanupAuctions = mutation({
+export const cleanupAuctions = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
@@ -124,13 +124,8 @@ export const cleanupAuctions = mutation({
     // 1. Delete empty bidding auctions (no bids, no cast data)
     const emptyAuctions = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("status"), "bidding"),
-          q.eq(q.field("currentBid"), 0)
-        )
-      )
+      .withIndex("by_status", (q) => q.eq("status", "bidding"))
+      .filter((q) => q.eq(q.field("currentBid"), 0))
       .collect();
 
     for (const auction of emptyAuctions) {
@@ -143,13 +138,8 @@ export const cleanupAuctions = mutation({
     // 2. Complete active auctions that have expired
     const expiredActive = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("status"), "active"),
-          q.lte(q.field("featureEndsAt"), now)
-        )
-      )
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .filter((q) => q.lte(q.field("featureEndsAt"), now))
       .collect();
 
     for (const auction of expiredActive) {
@@ -170,13 +160,12 @@ export const cleanupAuctions = mutation({
 /**
  * Keep only the most recent N active auctions, complete the rest
  */
-export const keepOnlyRecentActive = mutation({
+export const keepOnlyRecentActive = internalMutation({
   args: { keepCount: v.number() },
   handler: async (ctx, { keepCount }) => {
     const activeAuctions = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
     // Sort by featureStartsAt descending (most recent first)
@@ -201,7 +190,7 @@ export const keepOnlyRecentActive = mutation({
 /**
  * Swap auction statuses - complete one auction and reactivate another
  */
-export const swapAuctionStatus = mutation({
+export const swapAuctionStatus = internalMutation({
   args: {
     completeAuctionId: v.string(),
     activateAuctionId: v.string()
@@ -235,7 +224,7 @@ export const swapAuctionStatus = mutation({
 /**
  * Reactivate a single auction
  */
-export const reactivateAuction = mutation({
+export const reactivateAuction = internalMutation({
   args: { auctionId: v.string() },
   handler: async (ctx, { auctionId }) => {
     const now = Date.now();
@@ -258,15 +247,14 @@ export const reactivateAuction = mutation({
 /**
  * Process refunds for a completed/lost auction
  */
-export const processRefundsForAuction = mutation({
+export const processRefundsForAuction = internalMutation({
   args: { auctionId: v.string() },
   handler: async (ctx, { auctionId }) => {
     const now = Date.now();
     
     const bids = await ctx.db
       .query("castAuctionBids")
-      .withIndex("by_auction")
-      .filter((q) => q.eq(q.field("auctionId"), auctionId as Id<"castAuctions">))
+      .withIndex("by_auction", (q) => q.eq("auctionId", auctionId as Id<"castAuctions">))
       .collect();
     
     let refundedCount = 0;
@@ -276,8 +264,7 @@ export const processRefundsForAuction = mutation({
       if (bid.status === "active") {
         const profile = await ctx.db
           .query("profiles")
-          .withIndex("by_address")
-          .filter((q) => q.eq(q.field("address"), bid.bidderAddress.toLowerCase()))
+          .withIndex("by_address", (q) => q.eq("address", bid.bidderAddress.toLowerCase()))
           .first();
         
         if (profile) {
@@ -304,7 +291,7 @@ export const processRefundsForAuction = mutation({
 /**
  * Refund a single bid by ID
  */
-export const refundSingleBid = mutation({
+export const refundSingleBid = internalMutation({
   args: { bidId: v.string() },
   handler: async (ctx, { bidId }) => {
     const now = Date.now();
@@ -314,22 +301,21 @@ export const refundSingleBid = mutation({
     
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address")
-      .filter((q) => q.eq(q.field("address"), bid.bidderAddress.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", bid.bidderAddress.toLowerCase()))
       .first();
-    
+
     if (profile) {
       await ctx.db.patch(profile._id, {
         coins: (profile.coins || 0) + bid.bidAmount,
       });
     }
-    
+
     await ctx.db.patch(bid._id, {
       status: "refunded",
       refundAmount: bid.bidAmount,
       refundedAt: now,
     });
-    
+
     console.log(`[REFUND] ${bid.bidderUsername}: ${bid.bidAmount} coins`);
     return { success: true, username: bid.bidderUsername, amount: bid.bidAmount };
   },
@@ -338,7 +324,7 @@ export const refundSingleBid = mutation({
 /**
  * Reset featuredCasts to match current winners
  */
-export const syncFeaturedCasts = mutation({
+export const syncFeaturedCasts = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
@@ -346,8 +332,7 @@ export const syncFeaturedCasts = mutation({
     // Get current active winners
     const winners = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
     
     // Sort by featureStartsAt (newest first)
@@ -389,7 +374,7 @@ export const syncFeaturedCasts = mutation({
 /**
  * Clear winner data from a lost auction
  */
-export const clearLoserData = mutation({
+export const clearLoserData = internalMutation({
   args: { auctionId: v.string() },
   handler: async (ctx, { auctionId }) => {
     const auction = await ctx.db.get(auctionId as Id<"castAuctions">);

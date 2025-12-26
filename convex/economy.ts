@@ -203,7 +203,7 @@ function calculateDailyEarned(profile: any): number {
  * Reset daily limits (called at midnight UTC)
  * 🚀 BANDWIDTH FIX: Process in batches instead of loading all profiles
  */
-export const resetDailyLimits = mutation({
+export const resetDailyLimits = internalMutation({
   args: {},
   handler: async (ctx) => {
     const today = new Date().toISOString().split('T')[0];
@@ -1368,6 +1368,15 @@ export const recordAttackResult = mutation({
     skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins (for wins only)
   },
   handler: async (ctx, args) => {
+    // 🛡️ VALIDATION: Check address format
+    const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+    if (!addressRegex.test(args.playerAddress)) {
+      throw new Error("Invalid player address format");
+    }
+    if (!addressRegex.test(args.opponentAddress)) {
+      throw new Error("Invalid opponent address format");
+    }
+
     const normalizedPlayerAddress = args.playerAddress.toLowerCase();
     const normalizedOpponentAddress = args.opponentAddress.toLowerCase();
 

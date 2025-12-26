@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 
 export const getActiveCollections = query({
   args: {},
@@ -18,7 +18,7 @@ export const getAllCollections = query({
   },
 });
 
-export const addCollection = mutation({
+export const addCollection = internalMutation({
   args: {
     collectionId: v.string(),
     name: v.string(),
@@ -46,7 +46,7 @@ export const addCollection = mutation({
   },
 });
 
-export const removeCollection = mutation({
+export const removeCollection = internalMutation({
   args: {
     collectionId: v.string(),
   },
@@ -65,7 +65,7 @@ export const removeCollection = mutation({
   },
 });
 
-export const toggleCollection = mutation({
+export const toggleCollection = internalMutation({
   args: {
     collectionId: v.string(),
   },
@@ -87,7 +87,7 @@ export const toggleCollection = mutation({
   },
 });
 
-export const initializeCollections = mutation({
+export const initializeCollections = internalMutation({
   args: {},
   handler: async (ctx) => {
     const existing = await ctx.db.query("nftCollections").first();
