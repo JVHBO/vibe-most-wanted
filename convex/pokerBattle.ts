@@ -1386,7 +1386,8 @@ export const cleanupOldRoomsPublic = mutation({
 /**
  * Force delete room by player address (admin tool)
  */
-export const forceDeleteRoomByAddress = internalMutation({
+// Note: Called from frontend PokerMatchmaking.tsx
+export const forceDeleteRoomByAddress = mutation({
   args: {
     address: v.string(),
   },
