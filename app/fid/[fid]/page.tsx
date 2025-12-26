@@ -33,6 +33,9 @@ export default function FidCardPage() {
   const devUser = isLocalhost ? { fid: fid, username: 'test' } : null;
   const effectiveUser = farcasterContext.user || devUser;
 
+  // Check if viewing own card (only owner can upgrade)
+  const isOwnCard = effectiveUser?.fid === fid;
+
   // Fetch all cards for this FID
   const fidCards = useQuery(api.farcasterCards.getFarcasterCardsByFid, { fid });
 
@@ -167,8 +170,9 @@ export default function FidCardPage() {
     }
   };
 
-  // Check if upgrade is available
+  // Check if upgrade is available (only for card owner)
   const canUpgrade = () => {
+    if (!isOwnCard) return false; // Only card owner can upgrade
     if (!card || !neynarScoreData) return false;
     const rarityOrder = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
     const currentRarityIndex = rarityOrder.indexOf(card.rarity);
@@ -187,8 +191,9 @@ export default function FidCardPage() {
     }
   };
 
-  // Handle upgrade with animation and video regeneration
+  // Handle upgrade with animation and video regeneration (only for card owner)
   const handleUpgrade = async () => {
+    if (!isOwnCard) return; // Security check: only owner can upgrade
     if (!card || !neynarScoreData || !canUpgrade()) return;
 
     AudioManager.buttonClick();
@@ -567,8 +572,8 @@ export default function FidCardPage() {
                   {isRefreshingMetadata ? '🔄 Refreshing...' : metadataRefreshed ? '✅ Metadata Updated!' : '🔄 Refresh OpenSea Metadata'}
                 </button>
 
-                {/* Check Your Neynar Score Button */}
-                {farcasterContext.user && (
+                {/* Check Your Neynar Score Button - Only show for card owner */}
+                {isOwnCard && farcasterContext.user && (
                   <button
                     onClick={handleCheckNeynarScore}
                     disabled={loading}
