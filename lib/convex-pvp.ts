@@ -337,7 +337,7 @@ export class ConvexPvPService {
     devLog("🧹 Cleaning up old rooms...");
 
     try {
-      const deleted = await getConvex().mutation(api.rooms.cleanupOldRooms, {});
+      const deleted = await getConvex().mutation(api.rooms.cleanupOldRoomsPublic, {});
 
       if (deleted > 0) {
         devLog(`✅ Deleted ${deleted} old rooms`);

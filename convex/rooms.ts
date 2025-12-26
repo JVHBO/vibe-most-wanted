@@ -329,6 +329,33 @@ export const cleanupOldRooms = internalMutation({
   },
 });
 
+/**
+ * Public version of cleanupOldRooms for client-side calls
+ */
+export const cleanupOldRoomsPublic = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+
+    const oldRooms = await ctx.db
+      .query("rooms")
+      .filter((q) => q.lt(q.field("createdAt"), fiveMinutesAgo))
+      .collect();
+
+    let deleted = 0;
+    for (const room of oldRooms) {
+      await ctx.db.delete(room._id);
+      deleted++;
+    }
+
+    if (deleted > 0) {
+      console.log(`✅ Cleaned up ${deleted} old rooms (public)`);
+    }
+
+    return deleted;
+  },
+});
+
 // ============================================================================
 // MATCHMAKING
 // ============================================================================
