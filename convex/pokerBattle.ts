@@ -1351,8 +1351,9 @@ export const cleanupOldRooms = internalMutation({
 /**
  * Clean up old/expired poker rooms (public - for admin API)
  * Same logic as internal but callable from HTTP client
+ * Note: Protected by CRON_SECRET in API route
  */
-export const cleanupOldRoomsPublic = internalMutation({
+export const cleanupOldRoomsPublic = mutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
