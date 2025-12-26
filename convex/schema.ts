@@ -1293,6 +1293,8 @@ export default defineSchema({
     data: v.array(v.object({
       address: v.string(),
       username: v.string(),
+      twitterProfileImageUrl: v.optional(v.string()),
+      farcasterPfpUrl: v.optional(v.string()),
       aura: v.number(),
       totalPower: v.number(),
       vibePower: v.number(),

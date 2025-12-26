@@ -123,6 +123,46 @@ export const getDailyQuest = query({
 });
 
 /**
+ * Ensure daily quest exists (public - can be called from frontend)
+ * Idempotent - safe to call multiple times
+ */
+export const ensureDailyQuest = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const today = new Date().toISOString().split('T')[0];
+
+    // Check if quest already exists
+    const existing = await ctx.db
+      .query("dailyQuests")
+      .withIndex("by_date", (q) => q.eq("date", today))
+      .first();
+
+    if (existing) {
+      return existing;
+    }
+
+    // Pick random quest from pool
+    const randomIndex = cryptoRandomInt(QUEST_POOL.length);
+    const questTemplate = QUEST_POOL[randomIndex];
+
+    // Create quest
+    const questId = await ctx.db.insert("dailyQuests", {
+      date: today,
+      type: questTemplate.type,
+      description: questTemplate.description,
+      requirement: questTemplate.requirement,
+      reward: questTemplate.reward,
+      difficulty: questTemplate.difficulty,
+      createdAt: Date.now(),
+    });
+
+    const quest = await ctx.db.get(questId);
+    console.log("✅ Generated daily quest:", questTemplate.type, "for", today);
+    return quest;
+  },
+});
+
+/**
  * Generate today's daily quest (called by cron or first player of the day)
  */
 export const generateDailyQuest = internalMutation({
@@ -197,20 +237,9 @@ export const getQuestProgress = query({
       };
     }
 
-    // Calculate progress from today's matches
-    const todayStart = new Date(today).getTime();
-    const todayEnd = todayStart + 24 * 60 * 60 * 1000;
-
-    const matches = await ctx.db
-      .query("matches")
-      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.gte(q.field("timestamp"), todayStart),
-          q.lt(q.field("timestamp"), todayEnd)
-        )
-      )
-      .collect();
+    // Return 0 progress for now - matches query disabled temporarily
+    // TODO: Re-enable after indexes are stable
+    const matches: any[] = [];
 
     // Calculate progress based on quest type
     let currentProgress = 0;
@@ -356,7 +385,7 @@ export const claimQuestReward = mutation({
           q.lt(q.field("timestamp"), todayEnd)
         )
       )
-      .collect();
+      .take(100);
 
     // Verify completion (simplified check)
     let isCompleted = false;

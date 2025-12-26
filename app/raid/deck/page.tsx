@@ -23,6 +23,7 @@ import {
   type CollectionId,
   type Card,
 } from '@/lib/collections/index';
+import { isSameCard, findCard, getCardKey } from '@/lib/nft';
 import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
 import { CONTRACTS } from '@/lib/contracts';
 import { parseEther } from 'viem';
@@ -101,17 +102,24 @@ export default function RaidDeckPage() {
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
   const setRaidDeck = useMutation(api.raidBoss.setRaidDeck);
 
-  // Get locked cards
+  // Get locked cards - uses collection:tokenId format for proper comparison
   const lockedCardsData = useQuery(
     api.profiles.getLockedCardsForDeckBuilding,
     address ? { address: address.toLowerCase(), mode: "raid" as const } : "skip"
   );
-  const lockedTokenIds = new Set(lockedCardsData?.lockedTokenIds || []);
+  // Convert to Set of card keys (collection:tokenId) for accurate comparison
+  const lockedCardKeys = new Set(lockedCardsData?.lockedTokenIds || []);
 
-  // Sort and filter cards
+  // Filter cards - exclude vibefid from main selection (shown in step 2)
+  // Note: Unopened cards are already filtered by PlayerCardsContext
+  const revealedCards = (availableCards || []).filter(card => {
+    if (!showVibeFIDStep && card.collection === 'vibefid') return false;
+    return true;
+  });
+
   const sortedCards = sortByPower
-    ? sortCardsByPower((availableCards || []).filter(card => showVibeFIDStep || card.collection !== 'vibefid'), false)
-    : (availableCards || []).filter(card => showVibeFIDStep || card.collection !== 'vibefid');
+    ? sortCardsByPower(revealedCards, false)
+    : revealedCards;
 
   const filteredCards = useMemo(() => {
     if (selectedCollections.length === 0) return sortedCards;
@@ -119,6 +127,7 @@ export default function RaidDeckPage() {
   }, [sortedCards, selectedCollections]);
 
   const vibeFIDCards = useMemo(() => {
+    // Note: Unopened cards are already filtered by PlayerCardsContext
     return (availableCards || []).filter(card => card.collection === 'vibefid');
   }, [availableCards]);
 
@@ -151,10 +160,11 @@ export default function RaidDeckPage() {
 
   const totalBasePower = selectedCards.reduce((sum: number, card) => sum + card.power, 0);
 
-  // Check if card is locked
+  // Check if card is locked - uses collection:tokenId for accurate comparison
   const isCardLocked = (card: NFT): boolean => {
     if (card.collection === 'vibefid') return false;
-    return lockedTokenIds.has(card.tokenId);
+    // Use getCardKey to properly identify card across collections
+    return lockedCardKeys.has(getCardKey(card));
   };
 
   const handleCardClick = (card: NFT) => {
@@ -163,10 +173,12 @@ export default function RaidDeckPage() {
       return;
     }
 
-    const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
+    // Use findCard to check by BOTH tokenId AND collection
+    const isSelected = findCard(selectedCards, card);
 
     if (isSelected) {
-      setSelectedCards((prev) => prev.filter((c) => c.tokenId !== card.tokenId));
+      // Use isSameCard to filter by BOTH tokenId AND collection
+      setSelectedCards((prev) => prev.filter((c) => !isSameCard(c, card)));
       if (soundEnabled) {
         AudioManager.deselectCard();
         AudioManager.hapticFeedback('light');
@@ -290,12 +302,12 @@ export default function RaidDeckPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             onClick={handleCancel}
-            className="px-4 py-2 bg-vintage-black hover:bg-red-600/20 text-red-400 border border-red-600/50 rounded-lg font-bold text-sm transition"
+            className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
           >
-            ← Back
+            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> Back
           </button>
-          <h1 className="text-xl md:text-2xl font-display font-bold text-vintage-gold">
-            {showVibeFIDStep ? 'Add VibeFID Card?' : 'Build Your Raid Deck'}
+          <h1 className="text-lg md:text-2xl font-display font-bold text-vintage-gold whitespace-nowrap">
+            {showVibeFIDStep ? 'VibeFID Card?' : 'Raid Deck'}
           </h1>
           <div className="w-20" /> {/* Spacer */}
         </div>
@@ -352,7 +364,8 @@ export default function RaidDeckPage() {
               <h3 className="text-sm font-bold text-vintage-gold mb-2">Select VibeFID Card (Optional)</h3>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
                 {vibeFIDCards.map((card) => {
-                  const isSelected = selectedVibeFID?.tokenId === card.tokenId;
+                  // Use isSameCard for proper collection + tokenId comparison
+                  const isSelected = selectedVibeFID ? isSameCard(selectedVibeFID, card) : false;
                   return (
                     <div
                       key={card.tokenId}
@@ -574,9 +587,9 @@ export default function RaidDeckPage() {
               <div className="flex-1 flex items-center justify-center">
                 <LoadingSpinner />
               </div>
-            ) : (availableCards || []).length < DECK_SIZE ? (
+            ) : revealedCards.length < DECK_SIZE ? (
               <NotEnoughCardsGuide
-                currentCards={(availableCards || []).length}
+                currentCards={revealedCards.length}
                 requiredCards={DECK_SIZE}
                 gameMode="raid"
                 onClose={() => router.push('/raid')}
@@ -586,12 +599,13 @@ export default function RaidDeckPage() {
               <div className="flex-1 overflow-y-auto mb-4">
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-2">
                   {paginatedCards.map((card) => {
-                    const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
+                    // Use findCard for proper collection + tokenId comparison
+                    const isSelected = findCard(selectedCards, card);
                     const locked = isCardLocked(card);
                     const buff = getCardBuff(card);
                     return (
                       <button
-                        key={card.tokenId}
+                        key={getCardKey(card)}
                         onClick={() => handleCardClick(card)}
                         disabled={locked}
                         title={locked ? "This card is in your Defense Deck" : undefined}
