@@ -279,7 +279,6 @@ export function SocialQuestsPanel({
       });
 
       if (result.success) {
-        if (soundEnabled) AudioManager.win();
         onRewardClaimed?.(result.reward);
 
         setCastInteractionProgress(prev => ({
