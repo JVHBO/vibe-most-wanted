@@ -326,10 +326,12 @@ export async function fetchNFTs(
 
   // OPTIMIZATION: Use cache FIRST to avoid API calls
   if (cached && cached.length > 0) {
-    console.log(`📦 Using cached NFTs (saves API call): ${cached.length} cards`);
+    console.log(`📦 Using cached NFTs for ${contract.slice(0, 10)}...: ${cached.length} cards`);
     if (onProgress) onProgress(1, cached.length);
     return cached;
   }
+
+  console.log(`🔄 Fetching fresh NFTs for ${contract.slice(0, 10)}... (no cache)`)
 
   let allNfts: any[] = [];
   let pageKey: string | undefined = undefined;
