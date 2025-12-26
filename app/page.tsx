@@ -5445,8 +5445,8 @@ export default function TCGPage() {
             <WantedCast soundEnabled={soundEnabled} />
           </div>
 
-          {/* LEGACY LAYOUT - Only shown for desktop when no mode menu is open (will be removed in future) */}
-          <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${isInFarcaster ? 'hidden' : ''}`}>
+          {/* LEGACY LAYOUT - HIDDEN (replaced by new compact layout above) */}
+          <div className="hidden">
             <div className="lg:col-span-2 order-2 lg:order-1">
               <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/50 p-6">
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
