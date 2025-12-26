@@ -5434,6 +5434,7 @@ export default function TCGPage() {
             <CardsPreview
               cards={nfts}
               soundEnabled={soundEnabled}
+              loading={status === 'fetching'}
               onViewAll={() => {
                 if (soundEnabled) AudioManager.buttonClick();
                 setShowMyCardsModal(true);

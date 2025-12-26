@@ -238,21 +238,63 @@ export default function ProfilePage() {
         // ✅ Profile is loaded - show page immediately
         setLoading(false);
 
-        // Carrega NFTs do jogador usando o fetcher unificado (OTIMIZADO)
+        // Carrega NFTs do jogador usando a MESMA lógica da home page
         setLoadingNFTs(true);
         try {
           devLog('🔍 Fetching NFTs for address:', address);
           devLog('📊 Expected cards from profile:', profileData.stats?.totalCards || 0);
 
-          // ✅ Use the unified, optimized fetcher
-          const { fetchAndProcessNFTs } = await import('@/lib/nft/fetcher');
+          // ✅ Use the SAME approach as home page (fetchNFTsFromAllCollections + processing)
+          const { fetchNFTsFromAllCollections, processNFTsToCards } = await import('@/lib/nft');
+          const { api } = await import('@/convex/_generated/api');
+          const { ConvexHttpClient } = await import('convex/browser');
 
-          // ✅ Load NFTs for collection display (defense deck data is already in profile)
-          // ⚠️ IMPORTANT: Increased maxPages from 8 to 20 to ensure all cards are loaded
-          // Some players have many unopened cards, causing revealed cards to be spread across many pages
-          const enriched = await fetchAndProcessNFTs(address, {
-            maxPages: 20, // ✅ Increased to ensure we load ALL cards (profile stats has totalCards count)
-            refreshMetadata: forceMetadataRefresh, // ✅ Force refresh when user clicks refresh button
+          const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || '';
+          const convex = new ConvexHttpClient(convexUrl);
+
+          // Step 1: Fetch NFTs from all collections (same as home)
+          const raw = await fetchNFTsFromAllCollections(address);
+          devLog('📊 Raw NFTs fetched:', raw.length);
+
+          // Step 2: Process to cards (filters unopened, enriches metadata)
+          const nftCards = await processNFTsToCards(raw);
+          devLog('📊 NFT cards after processing:', nftCards.length);
+
+          // Step 3: Load FREE cards from Convex (same as home page!)
+          let allCards = [...nftCards];
+          try {
+            const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
+            devLog('🆓 FREE cards loaded:', freeCards?.length || 0);
+
+            if (freeCards && freeCards.length > 0) {
+              const freeCardsFormatted = freeCards.map((card: any) => ({
+                tokenId: card.cardId,
+                name: card.name || `FREE ${card.rarity} Card`,
+                imageUrl: card.imageUrl,
+                rarity: card.rarity,
+                wear: card.wear,
+                foil: card.foil || 'None',
+                power: card.power,
+                badgeType: card.badgeType,
+                isFreeCard: true,
+                collection: 'nothing',
+              }));
+              allCards.push(...freeCardsFormatted);
+            }
+          } catch (freeError) {
+            devWarn('⚠️ Failed to load FREE cards:', freeError);
+          }
+
+          // Step 4: Deduplicate
+          const seenCards = new Set<string>();
+          const enriched = allCards.filter((card: any) => {
+            const uniqueId = `${card.collection || 'vibe'}_${card.tokenId}`;
+            if (seenCards.has(uniqueId)) {
+              devLog(`⚠️ Removing duplicate card: ${uniqueId}`);
+              return false;
+            }
+            seenCards.add(uniqueId);
+            return true;
           });
 
           devLog('✅ NFTs fully enriched:', enriched.length);
