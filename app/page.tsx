@@ -123,6 +123,7 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
   devLog('🎴 Fetching NFTs from', enabledCollections.length, 'enabled collections');
 
   const allNfts: any[] = [];
+  const collectionCounts: Record<string, number> = {};
 
   for (const collection of enabledCollections) {
     try {
@@ -131,11 +132,17 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
       // Tag each NFT with its collection
       const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
       allNfts.push(...tagged);
+      collectionCounts[collection.displayName] = nfts.length;
       devLog(`✓ Found ${nfts.length} NFTs from ${collection.displayName}`);
     } catch (error) {
+      collectionCounts[collection.displayName] = -1; // Mark as failed
       devError(`✗ Failed to fetch from ${collection.displayName}:`, error);
     }
   }
+
+  // Log summary for debugging inconsistencies
+  console.log('📊 CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
+  console.log(`📊 Total raw NFTs: ${allNfts.length}`);
 
   devLog(`✅ Total NFTs from all collections: ${allNfts.length}`);
   return allNfts;
@@ -1652,6 +1659,13 @@ export default function TCGPage() {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('vbms_cards_loaded', 'true');
       }
+      // DETAILED LOGGING for debugging inconsistency
+      console.log('📊 FINAL CARD COUNT SUMMARY:');
+      console.log(`   Raw from collections: ${raw.length}`);
+      console.log(`   After metadata refresh: ${enrichedRaw.length}`);
+      console.log(`   After unopened filter: ${revealed.length} (filtered ${filtered})`);
+      console.log(`   After image processing + FREE: ${processed.length}`);
+      console.log(`   After deduplication: ${deduplicated.length}`);
       devLog('🎉 Cards loaded successfully (NFTs + FREE):', deduplicated.length);
 
       // Check if player has VibeFID and mark achievement
