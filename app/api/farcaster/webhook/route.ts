@@ -6,7 +6,39 @@ import { api } from '@/convex/_generated/api';
  * Webhook endpoint para receber eventos do Farcaster miniapp
  * Aceita tanto payloads assinados (SDK) quanto simples (fallback)
  * IMPORTANTE: Responde em < 10 segundos (requisito do Base app)
+ *
+ * SECURITY FEATURES:
+ * - Rate limiting per FID (prevents spam)
+ *
+ * NOTE: Farcaster webhooks use "JSON Farcaster Signature" verified via Neynar.
+ * Full signature verification would require @farcaster/miniapp-node library.
+ * Current implementation focuses on rate limiting to prevent abuse.
  */
+
+// Rate limiting per FID
+const rateLimitMap = new Map<string, number>();
+const RATE_LIMIT_MS = 5000; // 5 seconds between requests per FID
+
+function checkRateLimit(fid: string): boolean {
+  const now = Date.now();
+  const lastRequest = rateLimitMap.get(fid);
+
+  if (lastRequest && now - lastRequest < RATE_LIMIT_MS) {
+    return false;
+  }
+
+  rateLimitMap.set(fid, now);
+
+  // Cleanup old entries
+  if (rateLimitMap.size > 1000) {
+    const cutoff = now - RATE_LIMIT_MS * 2;
+    for (const [key, time] of rateLimitMap.entries()) {
+      if (time < cutoff) rateLimitMap.delete(key);
+    }
+  }
+
+  return true;
+}
 export async function POST(request: NextRequest) {
   const requestJson = await request.json();
 
@@ -26,6 +58,9 @@ export async function POST(request: NextRequest) {
   // Formato 2: Payload do SDK { header, payload, signature } - precisa decode
   else if (requestJson.header && requestJson.payload && requestJson.signature) {
     try {
+      // NOTE: Signature verification via @farcaster/miniapp-node would go here
+      // Currently relying on rate limiting for spam prevention
+
       // Decode base64 header (contém FID)
       const headerStr = Buffer.from(requestJson.header, 'base64').toString('utf8');
       const header = JSON.parse(headerStr);
@@ -64,6 +99,12 @@ export async function POST(request: NextRequest) {
   }
 
   console.log('✅ Parsed event:', event, 'FID:', fid);
+
+  // SECURITY: Rate limiting per FID
+  if (fid && !checkRateLimit(fid.toString())) {
+    console.warn('⚠️ Rate limited FID:', fid);
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
 
   // Processar em background
   if (fid) {
