@@ -1,78 +1,44 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useMutation } from "convex/react";
+import { useAccount } from "wagmi";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { createPortal } from "react-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useRouter } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
-
-interface Card {
-  _id: Id<"cardInventory">;
-  name?: string;
-  suit?: string;
-  rank?: string;
-  imageUrl: string;
-  rarity: string;
-  power: number;
-  quantity: number;
-  foil?: string;
-  sourcePackType?: string;
-}
-
-interface BurnCardsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  cards: Card[];
-  address: string;
-  lockedCardIds?: string[];
-  onSuccess?: (result: { totalVBMS: number; cardsBurned: number }) => void;
-}
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 // Pack prices for burn value calculation
 const PACK_PRICES: Record<string, number> = {
-  starter: 1000,    // Free packs use basic price
+  starter: 1000,
   basic: 1000,
   premium: 10000,
   elite: 100000,
   boosted: 5000,
-  mission: 1000,    // Free packs use basic price
-  achievement: 1000, // Free packs use basic price
-  dailyFree: 1000,  // Free packs use basic price
+  mission: 1000,
+  achievement: 1000,
+  dailyFree: 1000,
 };
 
-// Rarity multipliers (relative to pack price)
 const BURN_RARITY_MULTIPLIER: Record<string, number> = {
-  Common: 0.2,      // 20% of pack price
-  Rare: 1.1,        // 110% of pack price
-  Epic: 4.0,        // 4x pack price
-  Legendary: 40.0,  // 40x pack price
+  Common: 0.2,
+  Rare: 1.1,
+  Epic: 4.0,
+  Legendary: 40.0,
 };
 
-// Foil multipliers for burn value
 const BURN_FOIL_MULTIPLIER: Record<string, number> = {
-  Prize: 5.0,      // 5x burn value (nerfed from 10x)
-  Standard: 1.5,   // 1.5x burn value (nerfed from 2x)
+  Prize: 5.0,
+  Standard: 1.5,
   None: 1.0,
 };
 
-// Default pack price for legacy cards
-const DEFAULT_PACK_PRICE = 1000;
-
-// Calculate burn value based on pack price
 function calculateBurnValue(rarity: string, foil?: string, sourcePackType?: string): number {
-  const packPrice = sourcePackType ? (PACK_PRICES[sourcePackType] || DEFAULT_PACK_PRICE) : DEFAULT_PACK_PRICE;
+  const packPrice = sourcePackType ? (PACK_PRICES[sourcePackType] || 1000) : 1000;
   const rarityMult = BURN_RARITY_MULTIPLIER[rarity] || 0.2;
   const foilMult = foil && foil !== "None" ? (BURN_FOIL_MULTIPLIER[foil] || 1.0) : 1.0;
   return Math.round(packPrice * rarityMult * foilMult);
 }
-
-const RARITY_COLORS: Record<string, string> = {
-  Common: "border-gray-500/50 bg-gray-900/30",
-  Rare: "border-blue-500/50 bg-blue-900/30",
-  Epic: "border-purple-500/50 bg-purple-900/30",
-  Legendary: "border-yellow-500/50 bg-yellow-900/30",
-};
 
 const RARITY_TEXT: Record<string, string> = {
   Common: "text-gray-400",
@@ -81,25 +47,29 @@ const RARITY_TEXT: Record<string, string> = {
   Legendary: "text-yellow-400",
 };
 
-export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds = [], onSuccess }: BurnCardsModalProps) {
-  const { t } = useLanguage();
+export default function BurnCardsPage() {
+  const router = useRouter();
+  const { address, isConnecting } = useAccount();
+
+  const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
+  const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip") || [];
+  const burnMultipleCards = useMutation(api.cardPacks.burnMultipleCards);
+
   const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
   const [isBurning, setIsBurning] = useState(false);
   const [filter, setFilter] = useState<string>("all");
 
-  const burnMultipleCards = useMutation(api.cardPacks.burnMultipleCards);
+  const cards = playerCards || [];
 
-  // Filter cards
   const filteredCards = useMemo(() => {
     if (filter === "all") return cards;
-    return cards.filter(c => c.rarity === filter);
+    return cards.filter((c: any) => c.rarity === filter);
   }, [cards, filter]);
 
-  // Calculate total VBMS for selected cards (with foil bonus and pack price)
   const totalVBMS = useMemo(() => {
     let total = 0;
     for (const cardId of selectedCards) {
-      const card = cards.find(c => c._id === cardId);
+      const card = cards.find((c: any) => c._id === cardId);
       if (card) {
         total += calculateBurnValue(card.rarity, card.foil, card.sourcePackType);
       }
@@ -107,32 +77,15 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
     return total;
   }, [selectedCards, cards]);
 
-  // Count by rarity
-  const rarityCounts = useMemo(() => {
-    const counts: Record<string, number> = { Common: 0, Rare: 0, Epic: 0, Legendary: 0 };
-    for (const cardId of selectedCards) {
-      const card = cards.find(c => c._id === cardId);
-      if (card) {
-        counts[card.rarity] = (counts[card.rarity] || 0) + 1;
-      }
-    }
-    return counts;
-  }, [selectedCards, cards]);
-
-  // Helper to check if card is locked (in use)
   const isCardLocked = (cardId: string) => lockedCardIds.includes(cardId);
 
   const toggleCard = (cardId: string) => {
-    // Prevent selecting locked cards
     if (isCardLocked(cardId)) return;
-
     const newSelected = new Set(selectedCards);
     if (newSelected.has(cardId)) {
       newSelected.delete(cardId);
-    } else {
-      if (newSelected.size < 50) {
-        newSelected.add(cardId);
-      }
+    } else if (newSelected.size < 50) {
+      newSelected.add(cardId);
     }
     setSelectedCards(newSelected);
   };
@@ -140,63 +93,43 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
   const selectAll = () => {
     const newSelected = new Set<string>();
     filteredCards
-      .filter(card => !isCardLocked(card._id))
+      .filter((card: any) => !isCardLocked(card._id))
       .slice(0, 50)
-      .forEach(card => {
-        newSelected.add(card._id);
-      });
+      .forEach((card: any) => newSelected.add(card._id));
     setSelectedCards(newSelected);
   };
 
-  const selectNone = () => {
-    setSelectedCards(new Set());
-  };
+  const selectNone = () => setSelectedCards(new Set());
 
   const selectByRarity = (rarity: string) => {
     const newSelected = new Set<string>();
     cards
-      .filter(c => c.rarity === rarity && !isCardLocked(c._id))
+      .filter((card: any) => card.rarity === rarity && !isCardLocked(card._id))
       .slice(0, 50)
-      .forEach(card => {
-        newSelected.add(card._id);
-      });
+      .forEach((card: any) => newSelected.add(card._id));
     setSelectedCards(newSelected);
   };
 
-  // Smart select: Cards without foil (safe to burn) - skip locked
-  const selectNoFoil = () => {
-    const newSelected = new Set<string>();
+  const addToSelection = (rarity: string) => {
+    const newSelected = new Set(selectedCards);
     cards
-      .filter(c => (!c.foil || c.foil === "None") && !isCardLocked(c._id))
-      .slice(0, 50)
-      .forEach(card => newSelected.add(card._id));
-    setSelectedCards(newSelected);
-  };
-
-  // Smart select: Lowest power cards first - skip locked
-  const selectLowestPower = () => {
-    const newSelected = new Set<string>();
-    [...cards]
-      .filter(c => !isCardLocked(c._id))
-      .sort((a, b) => a.power - b.power)
-      .slice(0, 50)
-      .forEach(card => newSelected.add(card._id));
+      .filter((card: any) => card.rarity === rarity && !isCardLocked(card._id))
+      .forEach((card: any) => {
+        if (newSelected.size < 50) newSelected.add(card._id);
+      });
     setSelectedCards(newSelected);
   };
 
   const handleBurn = async () => {
-    if (selectedCards.size === 0) return;
-
+    if (selectedCards.size === 0 || !address) return;
     setIsBurning(true);
     try {
-      const result = await burnMultipleCards({
+      await burnMultipleCards({
         address,
         cardIds: Array.from(selectedCards) as Id<"cardInventory">[],
       });
-
-      onSuccess?.({ totalVBMS: result.totalVBMS, cardsBurned: result.cardsBurned });
       setSelectedCards(new Set());
-      onClose();
+      router.push("/shop");
     } catch (error) {
       console.error("Burn error:", error);
     } finally {
@@ -204,24 +137,41 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
     }
   };
 
-  if (!isOpen || typeof window === 'undefined') return null;
+  if (isConnecting) {
+    return (
+      <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
-  return createPortal(
-    <div className="fixed inset-0 z-[100] bg-vintage-deep-black overflow-hidden">
+  if (!address) {
+    return (
+      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-red-950/30 via-vintage-deep-black to-black" />
+        <div className="relative z-10 flex items-center justify-center h-full">
+          <div className="text-center">
+            <h2 className="text-3xl font-display font-bold text-red-400 mb-4">BURN CARDS</h2>
+            <p className="text-vintage-ice/70">Connect wallet to access</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-red-950/30 via-vintage-deep-black to-black" />
 
       {/* TOP HUD */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-vintage-charcoal/80 border-b border-red-500/30">
+      <div className="absolute top-0 left-0 right-0 z-20 p-3 bg-vintage-charcoal/80 border-b border-red-500/30 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <button
-            onClick={onClose}
-            className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors"
+            onClick={() => router.push("/shop")}
+            className="group px-3 py-2 bg-black/50 hover:bg-red-500/10 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="font-display text-sm">Back</span>
+            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> Shop
           </button>
 
           <h1 className="text-xl font-display font-bold text-red-400">BURN CARDS</h1>
@@ -233,11 +183,10 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
       </div>
 
       {/* FILTER BAR */}
-      <div className="absolute top-14 left-0 right-0 z-10 px-3 py-2 bg-vintage-charcoal/60 border-b border-red-500/20">
+      <div className="absolute top-14 left-0 right-0 z-20 px-3 py-2 bg-vintage-charcoal/60 border-b border-red-500/20 backdrop-blur-sm">
         <div className="flex items-center gap-2 overflow-x-auto">
-          {/* Rarity filters */}
           {["all", "Common", "Rare", "Epic", "Legendary"].map((f) => {
-            const count = f === "all" ? cards.length : cards.filter(c => c.rarity === f).length;
+            const count = f === "all" ? cards.length : cards.filter((c: any) => c.rarity === f).length;
             if (count === 0 && f !== "all") return null;
             const colors: Record<string, string> = {
               all: "border-red-500 text-red-400",
@@ -263,12 +212,11 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
 
           <div className="w-px h-5 bg-red-500/30 mx-1" />
 
-          {/* Quick select */}
           <button
             onClick={selectAll}
             className="px-3 py-1 rounded-full text-xs font-bold border border-red-500/30 text-red-400 whitespace-nowrap"
           >
-            Select All
+            All
           </button>
           <button
             onClick={selectNone}
@@ -276,6 +224,42 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
           >
             Clear
           </button>
+
+          <div className="w-px h-5 bg-red-500/30 mx-1" />
+
+          {/* Quick select by rarity */}
+          {cards.filter((c: any) => c.rarity === "Common").length > 0 && (
+            <button
+              onClick={() => selectByRarity("Common")}
+              className="px-2 py-1 rounded-full text-xs font-bold border border-gray-500/30 text-gray-400 whitespace-nowrap"
+            >
+              +C
+            </button>
+          )}
+          {cards.filter((c: any) => c.rarity === "Rare").length > 0 && (
+            <button
+              onClick={() => selectByRarity("Rare")}
+              className="px-2 py-1 rounded-full text-xs font-bold border border-blue-500/30 text-blue-400 whitespace-nowrap"
+            >
+              +R
+            </button>
+          )}
+          {cards.filter((c: any) => c.rarity === "Epic").length > 0 && (
+            <button
+              onClick={() => selectByRarity("Epic")}
+              className="px-2 py-1 rounded-full text-xs font-bold border border-purple-500/30 text-purple-400 whitespace-nowrap"
+            >
+              +E
+            </button>
+          )}
+          {cards.filter((c: any) => c.rarity === "Legendary").length > 0 && (
+            <button
+              onClick={() => selectByRarity("Legendary")}
+              className="px-2 py-1 rounded-full text-xs font-bold border border-yellow-500/30 text-yellow-400 whitespace-nowrap"
+            >
+              +L
+            </button>
+          )}
         </div>
       </div>
 
@@ -284,7 +268,7 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
         <div className="relative z-10 px-3 py-2">
           {filteredCards.length > 0 ? (
             <div className="grid grid-cols-2 gap-3">
-              {filteredCards.map((card) => {
+              {filteredCards.map((card: any) => {
                 const isSelected = selectedCards.has(card._id);
                 const burnValue = calculateBurnValue(card.rarity, card.foil, card.sourcePackType);
                 const hasFoil = card.foil && card.foil !== "None";
@@ -305,14 +289,13 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
                     }`}
                   >
                     <div className="flex gap-3 p-2">
-                      {/* Card Image - Larger */}
+                      {/* Card Image */}
                       <div className="relative w-20 h-28 flex-shrink-0 rounded-lg overflow-hidden">
                         <img
                           src={card.imageUrl}
                           alt={card.name || "Card"}
                           className="w-full h-full object-cover"
                         />
-                        {/* Selection indicator */}
                         {isSelected && (
                           <div className="absolute inset-0 bg-red-500/30 flex items-center justify-center">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -361,7 +344,6 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
       {/* BOTTOM BAR */}
       <div className="absolute bottom-0 left-0 right-0 z-10 bg-vintage-charcoal/95 border-t border-red-500/30">
         <div className="flex items-center justify-between p-3 gap-3">
-          {/* Selected count */}
           <div className="text-left">
             <p className="text-xs text-vintage-ice/50">Selected</p>
             <p className="text-lg font-display font-bold text-white">
@@ -369,7 +351,6 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
             </p>
           </div>
 
-          {/* Total VBMS */}
           <div className="text-center flex-1">
             <p className="text-xs text-vintage-ice/50">You'll receive</p>
             <p className="text-xl font-display font-bold text-green-400">
@@ -377,7 +358,6 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
             </p>
           </div>
 
-          {/* Burn button */}
           <button
             onClick={handleBurn}
             disabled={selectedCards.size === 0 || isBurning}
@@ -391,7 +371,6 @@ export function BurnCardsModal({ isOpen, onClose, cards, address, lockedCardIds 
           </button>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }

@@ -51,6 +51,7 @@ export function FeaturedCastAuctions({
   const [isExpanded, setIsExpanded] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showBidModal, setShowBidModal] = useState(false);
   const [castUrl, setCastUrl] = useState("");
   const [bidAmount, setBidAmount] = useState("");
   const [castPreview, setCastPreview] = useState<CastPreview | null>(null);
@@ -147,7 +148,7 @@ export function FeaturedCastAuctions({
           body: JSON.stringify({ castHash: data.cast.hash }),
         });
         const existingData = await existingCheck.json();
-        
+
         if (existingData.exists) {
           setExistingCastInfo(existingData);
         } else {
@@ -158,6 +159,8 @@ export function FeaturedCastAuctions({
         setExistingCastInfo(null);
       }
 
+      // Open bid modal after loading cast
+      setShowBidModal(true);
       if (soundEnabled) AudioManager.buttonClick();
     } catch (e) {
       setError("Failed to validate cast");
@@ -412,26 +415,46 @@ export function FeaturedCastAuctions({
     ?.sort((a: AuctionDoc, b: AuctionDoc) => b.currentBid - a.currentBid) || [];
 
   return (
-    <div className="mt-3 border-t border-vintage-gold/15 pt-3">
-        {/* Cast Auction Form */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h5 className="text-vintage-gold font-bold text-sm flex items-center gap-2">
-              <span>🎯</span> Wanted Cast Auction
-              <button
-                onClick={() => setShowHelp(!showHelp)}
-                className="text-vintage-burnt-gold hover:text-vintage-gold text-xs ml-1"
-              >
-                ?
-              </button>
-            </h5>
-          </div>
+    <div className="bg-vintage-charcoal/40 border border-vintage-gold/20 rounded-lg p-3 space-y-2">
+        {/* Cast Auction Header */}
+        <div className="flex items-center justify-between">
+          <span className="text-vintage-gold font-bold text-sm">Cast Auction</span>
+          {currentAuction && (
+            <span className="text-xs text-vintage-ice">
+              <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
+            </span>
+          )}
+        </div>
+
+          {/* VIBE Badge Status */}
+          {profile?.hasVibeBadge ? (
+            <div className="p-2 bg-vintage-gold/15 border border-vintage-gold/50 rounded-lg text-xs flex items-center justify-between">
+              <div>
+                <span className="text-vintage-gold font-bold">VIBE Badge Active</span>
+                <span className="text-vintage-ice ml-2">2x coins (600) per interaction</span>
+              </div>
+            </div>
+          ) : (
+            <div className="p-2 bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-lg text-xs flex items-center justify-between">
+              <div>
+                <span className="text-vintage-ice">Get 2x coins with VibeFID</span>
+              </div>
+              <Link href="/fid" className="text-vintage-gold hover:text-vintage-gold/80 font-bold">Mint</Link>
+            </div>
+          )}
+
+          {/* Help button */}
+          <button
+            onClick={() => setShowHelp(!showHelp)}
+            className="w-full text-left text-xs text-vintage-ice/60 hover:text-vintage-ice"
+          >
+            {showHelp ? '▼ Hide info' : '▶ How it works'}
+          </button>
 
           {/* Help tooltip */}
           {showHelp && (
-            <div className="p-2 bg-vintage-black/50 border border-vintage-gold/25 rounded-lg text-xs text-vintage-cream">
-              <p className="font-bold text-vintage-gold mb-1">How it works:</p>
-              <ul className="list-disc list-inside space-y-1 text-vintage-burnt-gold">
+            <div className="p-2 bg-vintage-black/50 border border-vintage-gold/25 rounded-lg text-xs text-vintage-ice">
+              <ul className="list-disc list-inside space-y-1 text-vintage-ice/80">
                 <li>Bid real VBMS from your wallet</li>
                 <li>Min: 1,000 VBMS | Max: 120k VBMS</li>
                 <li>Multiple bids on same cast join the pool</li>
@@ -440,44 +463,21 @@ export function FeaturedCastAuctions({
             </div>
           )}
 
-          {/* VIBE Badge 2x Boost Notice */}
-          {profile?.hasVibeBadge ? (
-            <div className="p-2 bg-vintage-gold/10 border border-vintage-gold/40 rounded-lg text-xs">
-              <span className="text-vintage-gold font-bold">✨ VIBE Badge Active!</span>
-              <span className="text-vintage-burnt-gold ml-1">You earn 2x coins (600) per interaction</span>
-            </div>
-          ) : (
-            <div className="p-2 bg-vintage-gold/5 border border-vintage-gold/25 rounded-lg text-xs">
-              <span className="text-vintage-gold font-bold">💡 Tip:</span>
-              <span className="text-vintage-burnt-gold ml-1">Mint a VibeFID to get 2x coins on interactions!</span>
-              <Link href="/fid" className="text-vintage-gold hover:text-vintage-gold ml-1 underline">Mint now →</Link>
-            </div>
-          )}
-
-          {/* Timer - Time Remaining */}
-          {currentAuction && (
-            <div className="p-3 bg-vintage-charcoal/70 border border-vintage-gold/40 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-vintage-burnt-gold text-sm font-bold">{t('castAuctionTimeRemaining')}</span>
-                <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
-              </div>
-            </div>
-          )}
-
           {/* RANKING: All active auctions with bids */}
           {activeAuctionsWithBids.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-vintage-burnt-gold text-[10px] font-bold">🏆 Active Bids Ranking:</p>
+            <div>
+              <p className="text-vintage-ice text-[10px] font-bold mb-1">Active Bids:</p>
+              <div className="max-h-40 overflow-y-auto space-y-1">
               {activeAuctionsWithBids.map((auction: AuctionDoc, index: number) => {
                 const biddersForAuction = currentBidders?.filter((b: BidDoc) => b.auctionId === auction._id) || [];
                 return (
-                  <div key={auction._id} className="text-xs bg-vintage-charcoal/50 rounded-lg p-2">
+                  <div key={auction._id} className="text-xs bg-vintage-black/40 rounded-lg p-2 text-vintage-ice">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className={`font-bold ${index === 0 ? 'text-vintage-gold' : 'text-vintage-gold'}`}>
+                        <span className={`font-bold ${index === 0 ? 'text-vintage-gold' : 'text-vintage-ice'}`}>
                           #{index + 1}
                         </span>
-                        <span className="text-vintage-gold">
+                        <span className="text-vintage-gold font-bold">
                           {auction.currentBid.toLocaleString()} VBMS
                         </span>
                         <button
@@ -505,7 +505,7 @@ export function FeaturedCastAuctions({
                             });
                             if (soundEnabled) AudioManager.buttonClick();
                           }}
-                          className="px-2 py-0.5 bg-vintage-gold/15 border border-vintage-gold/40 text-vintage-gold rounded text-[10px] font-bold hover:bg-vintage-gold/25 transition-all"
+                          className="px-2 py-0.5 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold rounded text-[10px] font-bold hover:bg-vintage-gold/30 transition-all"
                         >
                           + Join
                         </button>
@@ -516,9 +516,9 @@ export function FeaturedCastAuctions({
                         href={auction.warpcastUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-vintage-gold hover:text-vintage-gold text-[10px] truncate block mt-1"
+                        className="text-vintage-ice hover:text-vintage-gold text-[10px] truncate block mt-1"
                       >
-                        🔗 {auction.warpcastUrl}
+                        {auction.warpcastUrl}
                       </a>
                     )}
                     {/* Bidders for this auction */}
@@ -527,7 +527,7 @@ export function FeaturedCastAuctions({
                         {biddersForAuction.map((bid: any) => (
                           <span
                             key={bid._id}
-                            className="px-1.5 py-0.5 bg-vintage-charcoal border border-vintage-gold/30 rounded text-[10px] text-vintage-gold"
+                            className="px-1.5 py-0.5 bg-vintage-gold/20 border border-vintage-gold/40 rounded text-[10px] text-vintage-ice font-medium"
                           >
                             @{bid.bidderUsername}: {bid.bidAmount.toLocaleString()}
                           </span>
@@ -537,6 +537,7 @@ export function FeaturedCastAuctions({
                   </div>
                 );
               })}
+              </div>
             </div>
           )}
 
@@ -554,60 +555,35 @@ export function FeaturedCastAuctions({
 
           {/* Pending Refunds (manual claim required) */}
           {pendingRefunds && pendingRefunds.totalRefund > 0 && (
-            <div className="p-3 bg-vintage-gold/10 border-2 border-vintage-gold/50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-vintage-gold font-bold text-sm flex items-center gap-2">
-                    <span>💰</span> Pending Refund
-                  </p>
-                  <p className="text-vintage-burnt-gold text-xs mt-1">
-                    You have <span className="font-bold text-vintage-gold">{pendingRefunds.totalRefund.toLocaleString()} VBMS</span> to claim
-                    <span className="text-vintage-burnt-gold ml-1">({pendingRefunds.count} bid{pendingRefunds.count > 1 ? 's' : ''})</span>
+            <div className="p-2 bg-vintage-gold/15 border border-vintage-gold/50 rounded-lg">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-vintage-gold font-bold text-xs">Pending Refund</p>
+                  <p className="text-vintage-ice text-[10px]">
+                    {pendingRefunds.totalRefund.toLocaleString()} VBMS
                   </p>
                 </div>
                 <button
                   onClick={handleClaimRefund}
                   disabled={isClaimingRefund}
-                  className="px-4 py-2 bg-vintage-gold text-black rounded-lg text-sm font-bold hover:bg-vintage-gold/90 disabled:opacity-50 transition-all"
+                  className="px-3 py-1.5 bg-vintage-gold text-black rounded text-xs font-bold hover:bg-vintage-gold/90 disabled:opacity-50"
                 >
-                  {isClaimingRefund ? "Claiming..." : "Claim"}
+                  {isClaimingRefund ? "..." : "Claim"}
                 </button>
-              </div>
-            </div>
-          )}
-
-          {/* Recent Automatic Refunds (already credited) */}
-          {recentRefunds && recentRefunds.count > 0 && !dismissedRefunds && (
-            <div className="p-3 bg-green-900/40 border-2 border-green-500/50 rounded-lg relative">
-              <button
-                onClick={() => setDismissedRefunds(true)}
-                className="absolute top-2 right-2 text-green-400 hover:text-green-200 text-lg"
-                title="Dismiss"
-              >
-                ×
-              </button>
-              <div className="pr-6">
-                <p className="text-green-300 font-bold text-sm flex items-center gap-2">
-                  <span>✅</span> Refunded (Last 24h)
-                </p>
-                <p className="text-green-200/80 text-xs mt-1">
-                  You were outbid and received <span className="font-bold text-green-300">{recentRefunds.totalRefunded.toLocaleString()} VBMS</span> back
-                  <span className="text-vintage-burnt-gold ml-1">({recentRefunds.count} bid{recentRefunds.count > 1 ? 's' : ''} refunded automatically)</span>
-                </p>
               </div>
             </div>
           )}
 
           {/* Cast URL Input */}
           <div>
-            <label className="text-xs text-vintage-burnt-gold mb-1 block">Cast URL</label>
+            <label className="text-xs text-vintage-ice mb-1 block">Cast URL</label>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={castUrl}
                 onChange={(e) => setCastUrl(e.target.value)}
                 placeholder="https://farcaster.xyz/user/0x..."
-                className="flex-1 px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-cream text-sm focus:border-vintage-gold focus:outline-none"
+                className="flex-1 px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice text-sm focus:border-vintage-gold focus:outline-none"
               />
               <button
                 onClick={handleValidateCast}
@@ -619,75 +595,6 @@ export function FeaturedCastAuctions({
             </div>
           </div>
 
-          {/* Cast Preview */}
-          {castPreview && (
-            <div className="p-3 bg-vintage-charcoal/50 border border-vintage-gold/20 rounded-lg">
-              <div className="flex items-start gap-3">
-                {castPreview.author.pfpUrl && (
-                  <img
-                    src={castPreview.author.pfpUrl}
-                    alt={castPreview.author.username}
-                    className="w-8 h-8 rounded-full"
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-vintage-gold font-bold text-sm">
-                    {castPreview.author.displayName}
-                  </p>
-                  <p className="text-vintage-burnt-gold text-xs">
-                    @{castPreview.author.username}
-                  </p>
-                  <p className="text-vintage-cream text-sm mt-1 line-clamp-2">
-                    {castPreview.text}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Pool Warning Banner */}
-          {existingCastInfo && (
-            <div className="p-3 bg-vintage-gold/10 border-2 border-vintage-gold/50 rounded-lg mb-3">
-              <p className="text-vintage-gold font-bold text-sm flex items-center gap-2">
-                <span>⚠️</span> This cast is already in the auction!
-              </p>
-              <p className="text-vintage-burnt-gold text-xs mt-1">
-                Your bid will be <span className="font-bold text-vintage-gold">JOINED with the existing bid</span>
-              </p>
-              <div className="flex items-center justify-between mt-2 text-xs">
-                <span className="text-vintage-burnt-gold">Total Pool: <span className="text-vintage-gold font-bold">{existingCastInfo.totalPool?.toLocaleString()} VBMS</span></span>
-                <span className="text-vintage-burnt-gold">{existingCastInfo.contributorCount} contributor(s)</span>
-              </div>
-            </div>
-          )}
-
-          {/* Bid Amount */}
-          {castPreview && (
-            <div>
-              <label className="text-xs text-vintage-burnt-gold mb-1 block">
-                {existingCastInfo ? 'Join Bid' : 'Bid Amount'} (min: {existingCastInfo ? '1,000' : getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()} VBMS)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  placeholder={getMinimumBid().toLocaleString()}
-                  className="flex-1 px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-cream text-sm focus:border-vintage-gold focus:outline-none"
-                />
-                <button
-                  onClick={handleBidClick}
-                  disabled={isBidding || !bidAmount}
-                  className="px-6 py-2 bg-vintage-gold text-black rounded-lg text-sm font-bold hover:bg-vintage-gold/90 disabled:opacity-50 transition-all"
-                >
-                  {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : existingCastInfo ? "Join Bid" : "Bid"}
-                </button>
-              </div>
-              <p className="text-xs text-vintage-burnt-gold mt-1">
-                Wallet: {userBalance.toLocaleString()} VBMS
-              </p>
-            </div>
-          )}
 
           {/* Link to history */}
           <div className="text-center">
@@ -695,10 +602,128 @@ export function FeaturedCastAuctions({
               href="/featured-history"
               className="text-xs text-vintage-gold/60 hover:text-vintage-gold"
             >
-              View past winners →
+              View past winners
             </Link>
           </div>
+
+      {/* Bid Modal - Cast Preview + Bid Form */}
+      {showBidModal && castPreview && (
+        <div
+          className="fixed inset-0 bg-black/90 z-[9998] overflow-y-auto"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-xl p-4 max-w-sm w-full shadow-2xl">
+              {/* Close button */}
+              <button
+                onClick={() => {
+                  setShowBidModal(false);
+                  setCastPreview(null);
+                  setExistingCastInfo(null);
+                  setBidAmount("");
+                  if (soundEnabled) AudioManager.buttonClick();
+                }}
+                className="absolute top-3 right-3 text-vintage-ice hover:text-vintage-gold text-xl"
+              >
+                x
+              </button>
+
+              <h3 className="text-lg font-bold text-vintage-gold mb-3 text-center">Place Bid</h3>
+
+              {/* Cast Preview */}
+              <div className="p-3 bg-vintage-black/50 border border-vintage-gold/20 rounded-lg mb-3">
+                <div className="flex items-start gap-3">
+                  {castPreview.author.pfpUrl && (
+                    <img
+                      src={castPreview.author.pfpUrl}
+                      alt={castPreview.author.username}
+                      className="w-10 h-10 rounded-full"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-vintage-gold font-bold text-sm">
+                      {castPreview.author.displayName}
+                    </p>
+                    <p className="text-vintage-ice text-xs">
+                      @{castPreview.author.username}
+                    </p>
+                    <p className="text-vintage-ice text-sm mt-1 line-clamp-3">
+                      {castPreview.text}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pool Warning Banner */}
+              {existingCastInfo && (
+                <div className="p-2 bg-yellow-900/20 border border-yellow-500/40 rounded-lg mb-3">
+                  <p className="text-yellow-400 font-bold text-xs">Cast already in auction</p>
+                  <p className="text-vintage-ice text-[10px] mt-0.5">
+                    Pool: {existingCastInfo.totalPool?.toLocaleString()} VBMS ({existingCastInfo.contributorCount} bidder{existingCastInfo.contributorCount > 1 ? 's' : ''})
+                  </p>
+                </div>
+              )}
+
+              {/* Error/Success */}
+              {error && (
+                <div className="p-2 bg-red-900/30 border border-red-500/50 rounded-lg text-red-400 text-xs mb-3">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="p-2 bg-green-900/30 border border-green-500/50 rounded-lg text-green-400 text-xs mb-3">
+                  {success}
+                </div>
+              )}
+
+              {/* Bid Amount */}
+              <div className="mb-3">
+                <label className="text-xs text-vintage-ice mb-1 block">
+                  {existingCastInfo ? 'Join Bid' : 'Bid Amount'} (min: {existingCastInfo ? '1,000' : getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()})
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    placeholder={getMinimumBid().toLocaleString()}
+                    className="flex-1 px-3 py-2 bg-vintage-black border border-vintage-gold/30 rounded-lg text-vintage-ice text-sm focus:border-vintage-gold focus:outline-none"
+                  />
+                </div>
+                <p className="text-xs text-vintage-ice mt-1">
+                  Wallet: <span className="text-vintage-gold">{userBalance.toLocaleString()}</span> VBMS
+                </p>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowBidModal(false);
+                    setCastPreview(null);
+                    setExistingCastInfo(null);
+                    setBidAmount("");
+                    if (soundEnabled) AudioManager.buttonClick();
+                  }}
+                  className="flex-1 px-4 py-3 bg-vintage-black border border-vintage-gold/30 text-vintage-ice rounded-lg font-bold hover:bg-vintage-charcoal transition-all text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBidModal(false);
+                    handleBidClick();
+                  }}
+                  disabled={isBidding || !bidAmount}
+                  className="flex-1 px-4 py-3 bg-vintage-gold text-black rounded-lg font-bold hover:bg-vintage-gold/90 disabled:opacity-50 transition-all text-sm"
+                >
+                  {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : existingCastInfo ? "Join" : "Bid"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
 
       {/* Confirmation Modal - Fixed positioning for miniapp */}
       {showConfirmModal && (
@@ -712,28 +737,28 @@ export function FeaturedCastAuctions({
                 {t('castAuctionConfirmTitle')}
               </h3>
 
-              <p className="text-vintage-burnt-gold mb-3 text-sm text-center">
+              <p className="text-vintage-ice mb-3 text-sm text-center">
                 {t('castAuctionConfirmText')}
               </p>
 
               <div className="space-y-2 mb-3 text-xs">
                 <p className="text-yellow-400">
-                  ⚠️ {t('castAuctionWinWarning')}
+                  {t('castAuctionWinWarning')}
                 </p>
                 <p className="text-green-400">
-                  ✅ {t('castAuctionLoseInfo')}
+                  {t('castAuctionLoseInfo')}
                 </p>
               </div>
 
               <div className="p-2 bg-cyan-900/30 border border-cyan-500/30 rounded-lg mb-4">
                 <p className="text-xs text-cyan-300">
-                  💡 {t('castAuctionTip')}
+                  {t('castAuctionTip')}
                 </p>
               </div>
 
               <div className="bg-vintage-black/50 rounded-lg p-3 mb-4 text-center">
-                <p className="text-vintage-cream">
-                  <span className="text-vintage-burnt-gold text-sm">Valor:</span>{' '}
+                <p className="text-vintage-ice">
+                  <span className="text-vintage-ice text-sm">Valor:</span>{' '}
                   <span className="font-bold text-vintage-gold text-lg">{parseInt(bidAmount).toLocaleString()} VBMS</span>
                 </p>
               </div>
@@ -744,7 +769,7 @@ export function FeaturedCastAuctions({
                     setShowConfirmModal(false);
                     if (soundEnabled) AudioManager.buttonClick();
                   }}
-                  className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-cream rounded-lg font-bold hover:bg-vintage-charcoal/80 transition-all text-sm"
+                  className="flex-1 px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-ice rounded-lg font-bold hover:bg-vintage-charcoal/80 transition-all text-sm"
                 >
                   {t('castAuctionCancelBtn')}
                 </button>

@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Raid Boss Full-Screen Page
+ * Raid Boss Game-Style Screen
  *
- * 3-section layout:
- * - Central: Boss card with HP bar and rotation
- * - Bottom: Player's raid deck
- * - Sidebar: Leaderboard (top 10)
+ * Full-screen boss image background
+ * Boss info overlay on top
+ * Subtle deck bar at bottom
+ * No scrolling - game feel
  */
 
 import { shareToFarcaster } from '@/lib/share-utils';
@@ -21,7 +21,6 @@ import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { CardReplacementModal } from '@/components/CardReplacementModal';
 import { DamageNumber } from '@/components/DamageNumber';
-import { PriceTicker } from '@/components/PriceTicker';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePlayerCards } from '@/contexts/PlayerCardsContext';
 import type { Card } from '@/lib/types/card';
@@ -56,12 +55,6 @@ export default function RaidPage() {
   const [replacingVibeFID, setReplacingVibeFID] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
-  // Boss carousel drag state
-  const bossScrollRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-
   // Visual attack animation states
   const [damageNumbers, setDamageNumbers] = useState<Array<{
     id: string;
@@ -73,6 +66,13 @@ export default function RaidPage() {
   const [bossIsHit, setBossIsHit] = useState(false);
   const [attackingCardIndex, setAttackingCardIndex] = useState<number | null>(null);
   const [energyTick, setEnergyTick] = useState(0);
+
+  // Carousel drag scroll
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [hasDragged, setHasDragged] = useState(false); // Track if user actually dragged
+  const [dragStartX, setDragStartX] = useState(0);
+  const [scrollStartX, setScrollStartX] = useState(0);
 
   // VBMS transfer
   const farcasterTransfer = useFarcasterTransferVBMS();
@@ -158,6 +158,16 @@ export default function RaidPage() {
     return () => clearInterval(energyInterval);
   }, [playerDeck, isMounted]);
 
+  // Auto-scroll carousel to current boss
+  useEffect(() => {
+    if (!currentBoss || !carouselRef.current) return;
+    const bossIndex = currentBoss.bossIndex;
+    // Each boss item is ~28px wide (w-7) + 4px gap
+    const itemWidth = 32;
+    const scrollPosition = Math.max(0, bossIndex * itemWidth - 100); // Center-ish
+    carouselRef.current.scrollLeft = scrollPosition;
+  }, [currentBoss?.bossIndex]);
+
   // Visual attack animation
   useEffect(() => {
     if (!playerDeck?.deck || !currentBoss || !isMounted) return;
@@ -180,8 +190,8 @@ export default function RaidPage() {
       setTimeout(() => setBossIsHit(false), 400);
 
       const damageId = `dmg-${Date.now()}-${Math.random()}`;
-      const randomX = 45 + Math.random() * 10;
-      const randomY = 30 + Math.random() * 20;
+      const randomX = 30 + Math.random() * 40;
+      const randomY = 30 + Math.random() * 30;
 
       setDamageNumbers(prev => [...prev, {
         id: damageId,
@@ -214,15 +224,40 @@ export default function RaidPage() {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Carousel drag handlers
+  const handleDragStart = (clientX: number) => {
+    if (!carouselRef.current) return;
+    setIsDragging(true);
+    setHasDragged(false);
+    setDragStartX(clientX);
+    setScrollStartX(carouselRef.current.scrollLeft);
+  };
+
+  const handleDragMove = (clientX: number) => {
+    if (!isDragging || !carouselRef.current) return;
+    const delta = dragStartX - clientX;
+    // Only consider it a drag if moved more than 5px
+    if (Math.abs(delta) > 5) {
+      setHasDragged(true);
+    }
+    carouselRef.current.scrollLeft = scrollStartX + delta;
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    // Reset hasDragged after a short delay to allow click handler to check it
+    setTimeout(() => setHasDragged(false), 100);
+  };
+
   const hpPercentage = useMemo(() => {
     if (!currentBoss) return 0;
     return (currentBoss.currentHp / currentBoss.maxHp) * 100;
   }, [currentBoss]);
 
   const getHpBarColor = (percentage: number) => {
-    if (percentage > 50) return 'bg-green-500';
-    if (percentage > 25) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (percentage > 50) return 'bg-vintage-gold';
+    if (percentage > 25) return 'bg-amber-500';
+    return 'bg-orange-600';
   };
 
   // Handlers
@@ -408,29 +443,10 @@ export default function RaidPage() {
     }
   };
 
-  // Carousel handlers
-  const handleBossMouseDown = (e: React.MouseEvent) => {
-    if (!bossScrollRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - bossScrollRef.current.offsetLeft);
-    setScrollLeft(bossScrollRef.current.scrollLeft);
-  };
-
-  const handleBossMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !bossScrollRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - bossScrollRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    bossScrollRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleBossMouseUp = () => setIsDragging(false);
-  const handleBossMouseLeave = () => setIsDragging(false);
-
   // Loading states
   if (!isMounted || isConnecting) {
     return (
-      <div className="min-h-screen bg-vintage-deep-black flex items-center justify-center">
+      <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -438,17 +454,14 @@ export default function RaidPage() {
 
   if (!address) {
     return (
-      <div className="min-h-screen bg-vintage-deep-black text-white">
-        <PriceTicker />
-        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
-          <div className="text-center">
-            <div className="text-6xl mb-4">💀</div>
-            <h1 className="text-2xl font-display font-bold text-vintage-gold mb-4">Boss Raid</h1>
-            <p className="text-vintage-burnt-gold text-lg mb-6">Connect your wallet to access Boss Raid</p>
-            <Link href="/" className="inline-block px-6 py-3 bg-vintage-gold text-vintage-black rounded-lg font-bold hover:bg-vintage-ice transition-colors">
-              Go to Home
-            </Link>
-          </div>
+      <div className="fixed inset-0 bg-vintage-deep-black text-white flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="text-8xl mb-6">💀</div>
+          <h1 className="text-3xl font-display font-bold text-vintage-gold mb-4">Boss Raid</h1>
+          <p className="text-vintage-burnt-gold text-lg mb-6">Connect your wallet to access Boss Raid</p>
+          <Link href="/" className="inline-block px-6 py-3 bg-vintage-gold text-vintage-black rounded-lg font-bold hover:bg-vintage-ice transition-colors">
+            Go to Home
+          </Link>
         </div>
       </div>
     );
@@ -459,10 +472,11 @@ export default function RaidPage() {
     ? playerDeck?.deck.find((card: NFT) => card.tokenId === replacingCardTokenId)
     : null;
 
-  return (
-    <div className="min-h-screen bg-vintage-deep-black flex flex-col">
-      <PriceTicker />
+  // Get boss description from collection
+  const bossCollection = currentBoss?.collection ? COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS] : null;
 
+  return (
+    <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
       {/* Card Replacement Modal */}
       <CardReplacementModal
         isOpen={!!replacingCardTokenId}
@@ -492,32 +506,84 @@ export default function RaidPage() {
         isVibeFIDMode={true}
       />
 
-      {/* Header */}
-      <div className="flex-shrink-0 bg-vintage-charcoal border-b-2 border-red-600/30 p-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      {/* Boss Background - Full Screen */}
+      {currentBoss && (
+        <div className={`absolute inset-0 ${bossIsHit ? 'animate-boss-hit' : ''}`}>
+          <CardMedia
+            src={currentBoss.imageUrl}
+            alt={currentBoss.name}
+            className="w-full h-full object-contain opacity-70"
+          />
+          {/* Dark gradient overlay - lighter on sides */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
+
+          {/* Damage Numbers */}
+          {damageNumbers.map((dmg) => (
+            <DamageNumber
+              key={dmg.id}
+              damage={dmg.damage}
+              isCritical={dmg.isCritical}
+              x={dmg.x}
+              y={dmg.y}
+              onComplete={() => removeDamageNumber(dmg.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Top HUD - Compact header */}
+      <div className="absolute top-0 left-0 right-0 z-10 p-3 pointer-events-none">
+        <div className="flex items-center justify-between pointer-events-auto">
+          {/* Left - Back */}
           <button
             onClick={() => router.push('/')}
-            className="px-3 py-2 bg-vintage-black hover:bg-red-600/20 text-red-400 border border-red-600/50 rounded-lg font-bold text-sm transition"
+            className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/30 rounded font-bold text-xs transition uppercase tracking-wide"
           >
-            ← Home
+            ← Back
           </button>
-          <h1 className="text-xl md:text-2xl font-display font-bold text-red-500">{t('raidBossTitle')}</h1>
+
+          {/* Center - Boss Name & Description */}
+          {currentBoss && (() => {
+            const bossCard = currentBoss.collection ? getBossCard(currentBoss.collection as any, currentBoss.rarity as any) : null;
+            return (
+              <div className="text-center max-w-xs">
+                <p className="text-vintage-gold/60 text-[9px] font-bold uppercase tracking-wider">
+                  {currentBoss.rarity}
+                </p>
+                <h1 className="text-base font-display font-bold text-vintage-gold drop-shadow-lg">
+                  {currentBoss.name}
+                </h1>
+                {bossCard?.description && (
+                  <p className="text-vintage-burnt-gold/70 text-[10px] mt-0.5 line-clamp-2">
+                    {bossCard.description}
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Right - Action buttons row */}
           <div className="flex items-center gap-2">
             {unclaimedRewards && unclaimedRewards.totalUnclaimed > 0 && (
               <button
                 onClick={handleClaimRewards}
-                className="w-10 h-10 rounded-full bg-green-600/80 hover:bg-green-600 border-2 border-green-400 flex items-center justify-center text-white font-bold transition-all hover:scale-110 animate-pulse relative"
-                title={`Claim ${unclaimedRewards.totalUnclaimed} TESTVBMS`}
+                className="px-3 py-1.5 bg-green-600/80 hover:bg-green-600 text-white border border-green-500/50 rounded font-bold text-xs transition uppercase tracking-wide animate-pulse relative"
               >
-                🎁
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                Claim
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                   {unclaimedRewards.count}
                 </span>
               </button>
             )}
             <button
+              onClick={() => router.push('/raid/leaderboard?boss=current')}
+              className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/30 rounded font-bold text-xs transition uppercase tracking-wide"
+            >
+              Rank
+            </button>
+            <button
               onClick={() => setShowHelp(true)}
-              className="w-10 h-10 rounded-full bg-red-600/20 hover:bg-red-600/40 border-2 border-red-500 flex items-center justify-center text-red-400 font-bold transition-all hover:scale-110"
+              className="w-8 h-8 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold/60 border border-vintage-gold/20 rounded flex items-center justify-center font-bold text-xs transition"
             >
               ?
             </button>
@@ -525,398 +591,247 @@ export default function RaidPage() {
         </div>
       </div>
 
-      {/* Main Content - 3 Section Layout */}
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 gap-4">
-        {/* Left/Center: Boss + Deck */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Boss Section */}
-          {!currentBoss ? (
-            <div className="flex-1 flex items-center justify-center">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto">
-              {/* Boss Card & HP */}
-              <div className="mb-4 bg-vintage-black/50 rounded-xl p-4 border-2 border-red-600/30">
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                  <div className={`w-40 h-56 md:w-48 md:h-72 flex-shrink-0 relative rounded-xl overflow-hidden border-4 border-red-600 shadow-neon ${bossIsHit ? 'animate-boss-hit' : ''}`}>
-                    <CardMedia src={currentBoss.imageUrl} alt={currentBoss.name} className="w-full h-full object-cover" />
-                    <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
-                      {currentBoss.rarity}
-                    </div>
-                    {damageNumbers.map((dmg) => (
-                      <DamageNumber
-                        key={dmg.id}
-                        damage={dmg.damage}
-                        isCritical={dmg.isCritical}
-                        x={dmg.x}
-                        y={dmg.y}
-                        onComplete={() => removeDamageNumber(dmg.id)}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="flex-1 w-full">
-                    <h3 className="text-2xl font-display font-bold text-vintage-neon-blue mb-2">{currentBoss.name}</h3>
-                    <div className="flex items-center gap-3 mb-4">
-                      <p className="text-vintage-burnt-gold text-sm">
-                        {currentBoss.collection?.toUpperCase() || 'UNKNOWN'} - {currentBoss.rarity}
-                      </p>
-                      {currentBoss.collection && COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS]?.marketplaceUrl && (
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (soundEnabled) AudioManager.buttonClick();
-                            await openMarketplace(
-                              COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS].marketplaceUrl!,
-                              sdk,
-                              isInFarcaster
-                            );
-                          }}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 rounded-full text-white text-xs font-bold transition-all shadow-lg cursor-pointer"
-                        >
-                          🛒 {COLLECTIONS[currentBoss.collection as keyof typeof COLLECTIONS].buttonText || 'BUY PACKS'}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* HP Bar */}
-                    <div className="mb-2">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-red-400 font-bold">HP</span>
-                        <span className="text-vintage-neon-blue font-bold">
-                          {currentBoss.currentHp.toLocaleString()} / {currentBoss.maxHp.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="w-full h-8 bg-vintage-black rounded-lg overflow-hidden border-2 border-red-600/50">
-                        <div
-                          className={`h-full ${getHpBarColor(hpPercentage)} transition-all duration-1000 flex items-center justify-center`}
-                          style={{ width: `${hpPercentage}%` }}
-                        >
-                          <span className="text-white font-bold text-xs drop-shadow-lg">
-                            {hpPercentage.toFixed(1)}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {hasDeck && timeUntilNextAttack > 0 && (
-                      <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-3 mt-3">
-                        <p className="text-red-400 text-sm font-bold text-center">
-                          ⏱️ Next Auto-Attack in: {formatTime(timeUntilNextAttack)}
-                        </p>
-                      </div>
-                    )}
-
-                    {hasDeck && timeUntilNextAttack === 0 && (
-                      <div className="bg-green-900/40 border border-green-500/50 rounded-lg p-3 mt-3 animate-pulse">
-                        <p className="text-green-400 text-sm font-bold text-center">
-                          ⚡ Cards Ready to Attack!
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Boss Rotation */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-display font-bold text-vintage-gold">
-                    {t('raidRotationTitle')} ({BOSS_ROTATION_ORDER.length})
-                  </h3>
-                  <button
-                    onClick={() => router.push('/raid/leaderboard')}
-                    className="px-3 py-1 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded text-xs font-bold transition"
-                  >
-                    View Full Leaderboard →
-                  </button>
-                </div>
+      {/* HP Bar - Top below header */}
+      {currentBoss && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-md">
+          <div className="bg-black/50 backdrop-blur-sm rounded-xl p-2 border border-vintage-gold/20">
+            <div className="flex items-center gap-2">
+              <span className="text-vintage-gold text-xs">💛</span>
+              <div className="flex-1 h-4 bg-black/60 rounded-full overflow-hidden border border-vintage-gold/30">
                 <div
-                  ref={bossScrollRef}
-                  onMouseDown={handleBossMouseDown}
-                  onMouseMove={handleBossMouseMove}
-                  onMouseUp={handleBossMouseUp}
-                  onMouseLeave={handleBossMouseLeave}
-                  className={`overflow-x-auto overflow-y-hidden pb-2 scrollbar-thin scrollbar-thumb-vintage-gold scrollbar-track-gray-800 ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+                  className={`h-full ${getHpBarColor(hpPercentage)} transition-all duration-1000 relative`}
+                  style={{ width: `${hpPercentage}%` }}
                 >
-                  <div className="flex gap-2 pb-2">
-                    {Array.from({ length: BOSS_ROTATION_ORDER.length }, (_, i) => {
-                      const collectionId = BOSS_ROTATION_ORDER[i];
-                      const rarity = BOSS_RARITY_ORDER[i];
-                      const boss = getBossCard(collectionId, rarity);
-                      const collection = COLLECTIONS[collectionId];
-
-                      if (!boss || !collection) return null;
-
-                      const isCurrent = i === currentBoss.bossIndex;
-                      const isPrevious = i < currentBoss.bossIndex;
-                      const isNext = i === currentBoss.bossIndex + 1;
-
-                      return (
-                        <div
-                          key={i}
-                          className={`flex-shrink-0 w-32 bg-vintage-black/50 rounded-lg p-2 border ${
-                            isCurrent
-                              ? 'border-yellow-400 shadow-lg shadow-yellow-400/50'
-                              : isPrevious
-                              ? 'border-vintage-gold/30'
-                              : isNext
-                              ? 'border-vintage-neon-blue/30'
-                              : 'border-gray-700'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1 mb-1">
-                            <div className={`w-10 h-14 flex-shrink-0 relative rounded overflow-hidden border ${
-                              isCurrent ? 'border-yellow-400' : isPrevious ? 'border-vintage-gold/50 opacity-70' : 'border-gray-600'
-                            }`}>
-                              <CardMedia
-                                src={boss.imageUrl}
-                                alt={boss.name}
-                                className={`w-full h-full object-cover ${isPrevious && !isCurrent ? 'grayscale' : ''}`}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-[10px] font-bold truncate ${
-                                isCurrent ? 'text-yellow-400' : isPrevious ? 'text-vintage-gold' : 'text-vintage-neon-blue'
-                              }`}>
-                                {boss.name}
-                              </p>
-                              <p className="text-[8px] text-gray-400">
-                                {isCurrent ? 'CURRENT' : isPrevious ? 'DEFEATED' : isNext ? 'NEXT' : `#${i + 1}`}
-                              </p>
-                            </div>
-                          </div>
-                          {isPrevious && !isCurrent && (
-                            <button
-                              onClick={() => router.push(`/raid/leaderboard?boss=${i}`)}
-                              className="w-full px-1 py-0.5 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded text-[8px] font-bold transition"
-                            >
-                              View Results
-                            </button>
-                          )}
-                          {isCurrent && (
-                            <button
-                              onClick={() => router.push('/raid/leaderboard?boss=current')}
-                              className="w-full px-1 py-0.5 bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-400 border border-yellow-400/50 rounded text-[8px] font-bold transition"
-                            >
-                              Leaderboard
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] drop-shadow-lg">
+                    {hpPercentage.toFixed(0)}%
+                  </span>
                 </div>
               </div>
-
-              {/* Player's Deck Section */}
-              {hasDeck ? (
-                <div className="bg-vintage-black/50 rounded-xl p-4 border-2 border-vintage-neon-blue/30">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-display font-bold text-vintage-neon-blue">
-                      {t('raidBossYourDeck', { power: playerDeck.deckPower.toLocaleString() })}
-                    </h3>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleRefuelAll}
-                        disabled={isRefueling}
-                        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition disabled:opacity-50"
-                      >
-                        {isRefueling ? '...' : t('raidBossRefuelAll')}
-                      </button>
-                      <button
-                        onClick={handleShare}
-                        className="px-3 py-1.5 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-lg font-bold text-sm transition"
-                      >
-                        Share
-                      </button>
-                    </div>
-                  </div>
-
-                  {refuelError && (
-                    <div className="bg-red-900/50 border border-red-500 rounded-lg p-2 mb-3 text-sm text-red-200">
-                      {refuelError}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {playerDeck.deck.slice(0, 5).map((card: NFT, index: number) => {
-                      const cardEnergy = playerDeck.cardEnergy?.[index];
-                      const now = Date.now();
-                      if (!cardEnergy) return null;
-                      const hasEnergy = cardEnergy.energyExpiresAt === 0 || now < cardEnergy.energyExpiresAt;
-                      const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
-                        common: 12 * 60 * 60 * 1000, rare: 1 * 24 * 60 * 60 * 1000,
-                        epic: 2 * 24 * 60 * 60 * 1000, legendary: 4 * 24 * 60 * 60 * 1000,
-                        mythic: 5 * 24 * 60 * 60 * 1000, vibefid: 0,
-                      };
-                      let energyPercent = 100;
-                      if (cardEnergy.energyExpiresAt !== 0) {
-                        const rarity = card.rarity?.toLowerCase() || 'common';
-                        const fullDuration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
-                        const remaining = Math.max(0, cardEnergy.energyExpiresAt - now);
-                        energyPercent = fullDuration > 0 ? Math.min(100, (remaining / fullDuration) * 100) : 0;
-                      }
-                      const hasCollectionBuff = currentBoss && card.collection && card.collection === currentBoss.collection;
-                      const isVibeFID = card.collection === 'vibefid';
-
-                      return (
-                        <div key={card.tokenId} className="relative">
-                          <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 ${
-                            hasCollectionBuff ? 'border-yellow-400 shadow-lg shadow-yellow-400/60 animate-pulse-glow' : 'border-red-600/50'
-                          } relative ${attackingCardIndex === index ? 'animate-card-attack' : ''}`}>
-                            <CardMedia src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
-                            <div className={`absolute top-1 left-1 text-white text-xs px-1 rounded font-bold ${hasCollectionBuff ? 'bg-yellow-500' : 'bg-red-600'}`}>
-                              {isVibeFID ? Math.floor(card.power * 10) : hasCollectionBuff ? Math.floor(card.power * 2) : card.power}
-                            </div>
-                            {hasCollectionBuff && (
-                              <div className="absolute top-1 right-1 bg-yellow-400 text-black text-[10px] px-1 rounded font-bold">2x</div>
-                            )}
-                            <button
-                              onClick={() => {
-                                setReplacingCardTokenId(card.tokenId);
-                                if (soundEnabled) AudioManager.buttonClick();
-                              }}
-                              disabled={isRefueling}
-                              className="absolute bottom-1 right-1 bg-orange-600 hover:bg-orange-700 text-white text-[10px] px-1 py-0.5 rounded font-bold transition disabled:opacity-50"
-                            >
-                              🔄
-                            </button>
-                            {!hasEnergy && (
-                              <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center gap-1 p-1">
-                                <span className="text-red-400 text-sm">⚡</span>
-                                <button
-                                  onClick={() => handleRefuelCard(card.tokenId)}
-                                  disabled={isRefueling}
-                                  className="w-full px-1 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-[10px] font-bold transition disabled:opacity-50"
-                                >
-                                  Refuel
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                          <div className="mt-1 h-1.5 bg-vintage-black rounded overflow-hidden">
-                            <div
-                              className={`h-full ${!hasEnergy ? 'bg-red-600' : energyPercent > 50 ? 'bg-green-400' : energyPercent > 25 ? 'bg-yellow-400' : 'bg-orange-400'}`}
-                              style={{ width: `${energyPercent}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {/* VibeFID Card */}
-                    {playerDeck.vibefidCard && (() => {
-                      const card = playerDeck.vibefidCard;
-                      const vibefidIndex = 5;
-                      const hasCollectionBuff = currentBoss && card.collection && card.collection === currentBoss.collection;
-                      return (
-                        <div key={card.tokenId} className="relative">
-                          <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 ${
-                            hasCollectionBuff ? 'border-yellow-400 shadow-lg shadow-yellow-400/60' : 'border-purple-400'
-                          } relative ${attackingCardIndex === vibefidIndex ? 'animate-card-attack' : ''}`}>
-                            <CardMedia src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
-                            <div className="absolute top-1 left-1 bg-purple-600 text-white text-xs px-1 rounded font-bold">
-                              {Math.floor(card.power * 10)}
-                            </div>
-                            <div className="absolute bottom-1 left-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[8px] px-1 py-0.5 rounded font-bold animate-pulse">
-                              10x
-                            </div>
-                            <button
-                              onClick={() => setReplacingVibeFID(true)}
-                              className="absolute bottom-1 right-1 bg-orange-600 hover:bg-orange-700 text-white text-[10px] px-1 py-0.5 rounded font-bold transition"
-                            >
-                              🔄
-                            </button>
-                          </div>
-                          <div className="mt-1 h-1.5 bg-vintage-black rounded overflow-hidden">
-                            <div className="h-full bg-purple-400" style={{ width: '100%' }} />
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Player Contribution */}
-                  {playerContribution && (
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="bg-vintage-charcoal/50 rounded-lg p-2 text-center">
-                        <p className="text-red-400 text-xs">{t('raidBossDamageDealt')}</p>
-                        <p className="text-vintage-neon-blue font-bold">{playerContribution.damageDealt.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-vintage-charcoal/50 rounded-lg p-2 text-center">
-                        <p className="text-red-400 text-xs">{t('raidBossAttacks')}</p>
-                        <p className="text-vintage-neon-blue font-bold">{playerContribution.attackCount}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-red-600/20 border-2 border-red-600/50 rounded-xl p-6 text-center">
-                  <h3 className="text-xl font-display font-bold text-red-400 mb-2">{t('raidBossJoinRaid')}</h3>
-                  <p className="text-vintage-burnt-gold mb-4">{t('raidBossJoinDesc')}</p>
-                  <button
-                    onClick={() => router.push('/raid/deck')}
-                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all uppercase shadow-lg"
-                  >
-                    {t('raidBossSetDeck')}
-                  </button>
-                </div>
-              )}
+              <span className="text-vintage-gold/70 text-[10px] font-mono">
+                {(currentBoss.currentHp / 1000).toFixed(0)}k
+              </span>
             </div>
-          )}
-        </div>
-
-        {/* Right Sidebar: Leaderboard */}
-        <div className="lg:w-80 flex-shrink-0 bg-vintage-charcoal/50 rounded-xl border border-vintage-gold/30 p-4 overflow-y-auto">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-display font-bold text-vintage-gold">Top 10</h3>
-            <button
-              onClick={() => router.push('/raid/leaderboard?boss=current')}
-              className="text-vintage-gold text-xs hover:underline"
-            >
-              View All →
-            </button>
           </div>
 
-          {!topContributors ? (
-            <div className="flex items-center justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : topContributors.length === 0 ? (
-            <p className="text-vintage-burnt-gold text-sm text-center py-4">No contributors yet</p>
-          ) : (
-            <div className="space-y-2">
-              {topContributors.map((contributor: { address: string; username: string; damageDealt: number; attackCount: number }, index: number) => {
-                const isUser = contributor.address === address?.toLowerCase();
-                return (
-                  <div
-                    key={contributor.address}
-                    className={`p-2 rounded-lg ${isUser ? 'bg-vintage-neon-blue/20 border border-vintage-neon-blue/50' : 'bg-vintage-black/30'}`}
+          {/* Dots Indicator - Boss rotation position */}
+          <div className="mt-3 flex items-center justify-center gap-1">
+            {/* Show groups of 10 dots with current boss highlighted */}
+            {(() => {
+              const totalBosses = BOSS_ROTATION_ORDER.length;
+              const currentIdx = currentBoss.bossIndex;
+              // Show 15 dots centered around current boss
+              const visibleCount = 15;
+              const halfVisible = Math.floor(visibleCount / 2);
+              let startIdx = Math.max(0, currentIdx - halfVisible);
+              let endIdx = Math.min(totalBosses, startIdx + visibleCount);
+              // Adjust if we're near the end
+              if (endIdx === totalBosses) {
+                startIdx = Math.max(0, totalBosses - visibleCount);
+              }
+
+              return (
+                <>
+                  {startIdx > 0 && (
+                    <span className="text-vintage-gold/40 text-[8px] mr-1">...</span>
+                  )}
+                  {BOSS_ROTATION_ORDER.slice(startIdx, endIdx).map((_, i) => {
+                    const idx = startIdx + i;
+                    const isCurrent = idx === currentIdx;
+                    const isPast = idx < currentIdx;
+
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          if (isPast) router.push(`/raid/leaderboard?boss=${idx}`);
+                          else if (isCurrent) router.push('/raid/leaderboard?boss=current');
+                        }}
+                        className={`rounded-full transition-all ${
+                          isCurrent
+                            ? 'w-3 h-3 bg-vintage-gold shadow-lg shadow-vintage-gold/50'
+                            : isPast
+                            ? 'w-2 h-2 bg-vintage-gold/40 hover:bg-vintage-gold/60'
+                            : 'w-2 h-2 bg-white/20 hover:bg-white/30'
+                        }`}
+                        title={`Boss #${idx + 1}`}
+                      />
+                    );
+                  })}
+                  {endIdx < totalBosses && (
+                    <span className="text-vintage-gold/40 text-[8px] ml-1">...</span>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          <div className="text-center text-vintage-gold/50 text-[9px] mt-1">
+            Boss {currentBoss.bossIndex + 1} / {BOSS_ROTATION_ORDER.length}
+          </div>
+        </div>
+      )}
+
+      {/* Bottom - Deck Bar */}
+      <div className="absolute bottom-0 left-0 right-0 z-10">
+        {/* Error Message */}
+        {refuelError && (
+          <div className="mx-4 mb-2 bg-red-900/80 backdrop-blur-sm border border-red-500 rounded-lg p-2 text-sm text-red-200 text-center">
+            {refuelError}
+          </div>
+        )}
+
+        {/* Deck Cards */}
+        <div className="bg-gradient-to-t from-black via-black/90 to-transparent pt-8 pb-4 px-4">
+          {hasDeck ? (
+            <div className="max-w-2xl mx-auto">
+              {/* Deck Power & Actions */}
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-vintage-gold font-bold text-sm">
+                  {playerDeck.deckPower.toLocaleString()} PWR
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleRefuelAll}
+                    disabled={isRefueling}
+                    className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition disabled:opacity-50 uppercase tracking-wide"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-bold ${
-                        index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-400' : index === 2 ? 'text-amber-600' : 'text-vintage-burnt-gold/50'
-                      }`}>
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                      </span>
-                      <span className={`text-sm font-bold truncate flex-1 ${isUser ? 'text-vintage-neon-blue' : 'text-vintage-burnt-gold'}`}>
-                        {contributor.username}
-                        {isUser && <span className="text-xs ml-1">(You)</span>}
-                      </span>
+                    {isRefueling ? '...' : 'Refuel'}
+                  </button>
+                  <button
+                    onClick={() => router.push('/raid/deck')}
+                    className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
+                  >
+                    Edit Deck
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
+                  >
+                    Share
+                  </button>
+                </div>
+              </div>
+
+              {/* Cards Row */}
+              <div className="flex justify-center gap-2">
+                {/* Regular Cards */}
+                {playerDeck.deck.slice(0, 5).map((card: NFT, index: number) => {
+                  const cardEnergy = playerDeck.cardEnergy?.[index];
+                  const now = Date.now();
+                  if (!cardEnergy) return null;
+                  const hasEnergy = cardEnergy.energyExpiresAt === 0 || now < cardEnergy.energyExpiresAt;
+                  const ENERGY_DURATION_BY_RARITY: Record<string, number> = {
+                    common: 12 * 60 * 60 * 1000, rare: 1 * 24 * 60 * 60 * 1000,
+                    epic: 2 * 24 * 60 * 60 * 1000, legendary: 4 * 24 * 60 * 60 * 1000,
+                    mythic: 5 * 24 * 60 * 60 * 1000, vibefid: 0,
+                  };
+                  let energyPercent = 100;
+                  if (cardEnergy.energyExpiresAt !== 0) {
+                    const rarity = card.rarity?.toLowerCase() || 'common';
+                    const fullDuration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
+                    const remaining = Math.max(0, cardEnergy.energyExpiresAt - now);
+                    energyPercent = fullDuration > 0 ? Math.min(100, (remaining / fullDuration) * 100) : 0;
+                  }
+                  const hasCollectionBuff = currentBoss && card.collection && card.collection === currentBoss.collection;
+
+                  return (
+                    <div
+                      key={card.tokenId}
+                      className={`relative ${attackingCardIndex === index ? 'animate-card-attack' : ''}`}
+                    >
+                      <div
+                        className={`w-12 h-16 sm:w-14 sm:h-20 rounded-lg overflow-hidden border-2 ${
+                          hasCollectionBuff ? 'border-yellow-400 shadow-lg shadow-yellow-400/60' : hasEnergy ? 'border-white/30' : 'border-red-500/50'
+                        } relative cursor-pointer hover:scale-110 transition-transform`}
+                        onClick={() => {
+                          if (!hasEnergy) {
+                            handleRefuelCard(card.tokenId);
+                          } else {
+                            setReplacingCardTokenId(card.tokenId);
+                          }
+                          if (soundEnabled) AudioManager.buttonClick();
+                        }}
+                      >
+                        <CardMedia src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
+
+                        {/* Power Badge */}
+                        <div className={`absolute top-0.5 left-0.5 text-white text-[10px] px-1 rounded font-bold ${hasCollectionBuff ? 'bg-yellow-500' : 'bg-black/70'}`}>
+                          {hasCollectionBuff ? Math.floor(card.power * 2) : card.power}
+                        </div>
+
+                        {/* Collection Buff */}
+                        {hasCollectionBuff && (
+                          <div className="absolute top-0.5 right-0.5 bg-yellow-400 text-black text-[8px] px-0.5 rounded font-bold">
+                            2x
+                          </div>
+                        )}
+
+                        {/* No Energy Overlay */}
+                        {!hasEnergy && (
+                          <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+                            <span className="text-red-400 text-lg">⚡</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Energy Bar */}
+                      <div className="mt-0.5 h-1 bg-black/50 rounded overflow-hidden">
+                        <div
+                          className={`h-full ${!hasEnergy ? 'bg-red-600' : energyPercent > 50 ? 'bg-green-400' : energyPercent > 25 ? 'bg-yellow-400' : 'bg-orange-400'}`}
+                          style={{ width: `${energyPercent}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-vintage-neon-blue text-xs font-bold">
-                        {contributor.damageDealt.toLocaleString()}
-                      </span>
-                      <span className="text-vintage-burnt-gold/50 text-xs">
-                        {contributor.attackCount} attacks
-                      </span>
+                  );
+                })}
+
+                {/* VibeFID Card */}
+                {playerDeck.vibefidCard && (() => {
+                  const card = playerDeck.vibefidCard;
+                  const vibefidIndex = 5;
+                  return (
+                    <div
+                      key={card.tokenId}
+                      className={`relative ${attackingCardIndex === vibefidIndex ? 'animate-card-attack' : ''}`}
+                    >
+                      <div
+                        className="w-12 h-16 sm:w-14 sm:h-20 rounded-lg overflow-hidden border-2 border-purple-400 shadow-lg shadow-purple-400/40 relative cursor-pointer hover:scale-110 transition-transform"
+                        onClick={() => {
+                          setReplacingVibeFID(true);
+                          if (soundEnabled) AudioManager.buttonClick();
+                        }}
+                      >
+                        <CardMedia src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
+
+                        {/* Power Badge */}
+                        <div className="absolute top-0.5 left-0.5 bg-purple-600 text-white text-[10px] px-1 rounded font-bold">
+                          {Math.floor(card.power * 10)}
+                        </div>
+
+                        {/* 10x Multiplier */}
+                        <div className="absolute bottom-0.5 left-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[8px] px-1 py-0.5 rounded font-bold">
+                          10x
+                        </div>
+                      </div>
+
+                      {/* Infinite Energy */}
+                      <div className="mt-0.5 h-1 bg-purple-400 rounded" />
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })()}
+              </div>
+            </div>
+          ) : (
+            /* No Deck - Join CTA */
+            <div className="max-w-md mx-auto text-center">
+              <p className="text-vintage-burnt-gold mb-3 text-sm">
+                Set up your raid deck to attack the boss!
+              </p>
+              <button
+                onClick={() => router.push('/raid/deck')}
+                className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all uppercase shadow-lg text-lg"
+              >
+                ⚔️ Set Raid Deck
+              </button>
             </div>
           )}
         </div>
@@ -929,30 +844,26 @@ export default function RaidPage() {
           onClick={() => setShowHelp(false)}
         >
           <div
-            className="bg-vintage-charcoal rounded-lg border-2 border-red-600 max-w-md w-full p-4 shadow-neon max-h-[90vh] overflow-y-auto"
+            className="bg-vintage-charcoal rounded-xl border-2 border-red-600 max-w-md w-full p-5 shadow-neon"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-display font-bold text-red-400 mb-3">{t('raidBossHelp')}</h2>
+            <h2 className="text-xl font-display font-bold text-red-400 mb-4 text-center">{t('raidBossHelp')}</h2>
             <div className="space-y-3 text-vintage-burnt-gold font-modern text-sm">
-              <div>
+              <div className="bg-black/30 rounded-lg p-3">
                 <h3 className="text-red-400 font-bold mb-1">{t('raidBossHelpGlobal')}</h3>
-                <p className="text-xs">{t('raidBossHelpGlobalDesc')}</p>
+                <p className="text-xs opacity-80">{t('raidBossHelpGlobalDesc')}</p>
               </div>
-              <div>
+              <div className="bg-black/30 rounded-lg p-3">
                 <h3 className="text-red-400 font-bold mb-1">{t('raidBossHelpSetDeck')}</h3>
-                <p className="text-xs">{t('raidBossHelpSetDeckDesc')}</p>
+                <p className="text-xs opacity-80">{t('raidBossHelpSetDeckDesc')}</p>
               </div>
-              <div>
-                <h3 className="text-red-400 font-bold mb-1">{t('raidBossHelpEnergy')}</h3>
-                <p className="text-xs">{t('raidBossHelpEnergyDesc')}</p>
-              </div>
-              <div>
+              <div className="bg-black/30 rounded-lg p-3">
                 <h3 className="text-red-400 font-bold mb-1">{t('raidBossHelpBuffs')}</h3>
-                <p className="text-xs">{t('raidBossHelpBuffsDesc')}</p>
+                <p className="text-xs opacity-80">{t('raidBossHelpBuffsDesc')}</p>
               </div>
-              <div>
+              <div className="bg-black/30 rounded-lg p-3">
                 <h3 className="text-red-400 font-bold mb-1">{t('raidBossHelpRewards')}</h3>
-                <p className="text-xs">{t('raidBossHelpRewardsDesc')}</p>
+                <p className="text-xs opacity-80">{t('raidBossHelpRewardsDesc')}</p>
               </div>
             </div>
             <button
@@ -960,10 +871,20 @@ export default function RaidPage() {
                 if (soundEnabled) AudioManager.buttonClick();
                 setShowHelp(false);
               }}
-              className="w-full mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition"
+              className="w-full mt-5 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition text-lg"
             >
               {t('raidBossHelpGotIt')}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {!currentBoss && (
+        <div className="absolute inset-0 bg-vintage-deep-black flex items-center justify-center z-20">
+          <div className="text-center">
+            <LoadingSpinner />
+            <p className="text-vintage-burnt-gold mt-4">Loading Boss...</p>
           </div>
         </div>
       )}

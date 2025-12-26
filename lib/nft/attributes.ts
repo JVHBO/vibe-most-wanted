@@ -152,3 +152,51 @@ export function normalizeUrl(url: string): string {
   u = u.replace(/^http:\/\//i, 'https://');
   return u;
 }
+
+/**
+ * UNIVERSAL: Check if a card is revealed
+ * Works with both:
+ * - Raw NFT objects (from Alchemy API)
+ * - Processed Card objects (from PlayerCardsContext)
+ *
+ * Use this function everywhere in the codebase for consistency!
+ */
+export function isCardRevealed(card: any): boolean {
+  if (!card) return false;
+
+  // Check if it's a processed Card (has rarity as direct property)
+  if (typeof card.rarity === 'string') {
+    const rarity = card.rarity.toLowerCase();
+
+    // Unrevealed rarities
+    if (rarity === 'unopened' || rarity === '' || rarity === 'unknown') {
+      return false;
+    }
+
+    // Check for valid rarity
+    const validRarities = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+    if (validRarities.some(r => rarity.includes(r))) {
+      // Also check for valid image
+      if (card.imageUrl) {
+        const img = card.imageUrl.toLowerCase();
+        if (img.includes('placeholder') || img.includes('unrevealed')) {
+          return false;
+        }
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // It's a raw NFT - use the existing isUnrevealed logic (inverted)
+  return !isUnrevealed(card);
+}
+
+/**
+ * Filter an array of cards/NFTs to only include revealed ones
+ * Works with both raw NFTs and processed Cards
+ */
+export function filterRevealedCards<T>(cards: T[]): T[] {
+  return cards.filter(card => isCardRevealed(card));
+}

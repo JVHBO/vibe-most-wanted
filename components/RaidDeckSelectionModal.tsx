@@ -197,11 +197,17 @@ export function RaidDeckSelectionModal({
 
   const totalBasePower = selectedCards.reduce((sum: number, card) => sum + card.power, 0);
 
+  // Helper: Get unique card key (collection:tokenId format)
+  const getCardKey = (card: { tokenId: string; collection?: string }): string => {
+    return `${card.collection || 'default'}:${card.tokenId}`;
+  };
+
   // Check if card is locked (in defense deck)
   const isCardLocked = (card: NFT): boolean => {
     // VibeFID cards are never locked
     if (card.collection === 'vibefid') return false;
-    return lockedTokenIds.has(card.tokenId);
+    // Use collection:tokenId format for proper comparison
+    return lockedTokenIds.has(getCardKey(card));
   };
 
   const handleCardClick = (card: NFT) => {
@@ -211,10 +217,12 @@ export function RaidDeckSelectionModal({
       return;
     }
 
-    const isSelected = selectedCards.find((c) => c.tokenId === card.tokenId);
+    // Use collection:tokenId for proper comparison
+    const cardKey = getCardKey(card);
+    const isSelected = selectedCards.find((c) => getCardKey(c) === cardKey);
 
     if (isSelected) {
-      setSelectedCards((prev) => prev.filter((c) => c.tokenId !== card.tokenId));
+      setSelectedCards((prev) => prev.filter((c) => getCardKey(c) !== cardKey));
       if (soundEnabled) {
         AudioManager.deselectCard();
         AudioManager.hapticFeedback('light');

@@ -368,308 +368,397 @@ export default function LeaderboardPage() {
     if (soundEnabled) AudioManager.buttonClick();
   };
 
+  // Calculate time until reset
+  const getTimeUntilReset = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(0, 0, 0, 0);
+    const diff = tomorrow.getTime() - now.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
+  // Get user's rank
+  const userRank = useMemo(() => {
+    if (!address || !filteredLeaderboard.length) return null;
+    const idx = filteredLeaderboard.findIndex(p => p.address.toLowerCase() === address.toLowerCase());
+    return idx >= 0 ? idx + 1 : null;
+  }, [address, filteredLeaderboard]);
+
+  // Top 3 for podium
+  const top3 = filteredLeaderboard.slice(0, 3);
+  // Rankings 4+ for list
+  const rankings4Plus = filteredLeaderboard.slice(3);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-vintage-black via-vintage-charcoal to-vintage-black text-vintage-ice p-4">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto mb-4">
-        <Link
-          href="/"
-          onClick={() => AudioManager.buttonClick()}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors text-sm"
-        >
-          <span>←</span>
-          <span>Home</span>
-        </Link>
-      </div>
+    <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-3 md:p-8">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-4 md:mb-6">
-            <div>
-              <h1 className="text-2xl md:text-4xl font-bold text-yellow-400 flex items-center gap-2 md:gap-3 mb-2">
-                <span className="text-2xl md:text-4xl">★</span> {t('leaderboard')}
-                <button
-                  onClick={() => setShowLeaderboardRewardsModal(true)}
-                  className="ml-2 w-6 h-6 md:w-8 md:h-8 rounded-full bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/30 hover:border-vintage-gold transition text-sm md:text-base font-bold flex items-center justify-center"
-                  title="View Weekly Rewards"
-                >
-                  ?
-                </button>
-              </h1>
+      {/* ===== TOP HUD ===== */}
+      <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          {/* Left: Back button */}
+          <Link
+            href="/"
+            onClick={() => AudioManager.buttonClick()}
+            className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+          >
+            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">&larr;</span> Back
+          </Link>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2 items-center">
-                {userProfile && (
-                  <button
-                    onClick={handleOpenDefenseDeck}
-                    disabled={isLoadingCards || nfts.length < HAND_SIZE}
-                    className={`px-3 py-1 rounded-lg text-xs font-modern font-semibold transition flex items-center gap-1 ${
-                      userProfile.hasDefenseDeck
-                        ? 'bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/10 hover:border-vintage-gold'
-                        : 'bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500 animate-pulse'
-                    } ${isLoadingCards || nfts.length < HAND_SIZE ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <span>🛡️</span> Defense Deck
-                    {userProfile.hasDefenseDeck && (
-                      <span className="ml-1 text-[10px] bg-green-600 text-white px-1 rounded-full">✓</span>
-                    )}
-                  </button>
-                )}
-                <button
-                  onClick={handleExportLeaderboard}
-                  className="px-3 py-1 rounded-lg text-xs font-modern font-semibold transition bg-vintage-charcoal border border-green-500/50 text-green-400 hover:bg-green-500/10 hover:border-green-500 flex items-center gap-1"
-                >
-                  <span>↓</span> Export
-                </button>
-              </div>
-            </div>
-
-            {/* Attacks Info */}
-            <div className="text-left md:text-right">
-              {/* Cards loading indicator */}
-              {address && (
-                <p className="text-[10px] text-vintage-burnt-gold mb-1">
-                  {isLoadingCards ? '⏳ Loading cards...' : `🎴 ${nfts.length} cards`}
-                </p>
-              )}
-              {userProfile && (
-                <div>
-                  <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold mb-0">
-                    ⚔️ Attacks: <span className="text-vintage-neon-blue">{attacksRemaining}/{maxAttacks}</span>
-                  </p>
-                  <p className="text-[10px] text-vintage-burnt-gold ml-3">
-                    {(() => {
-                      const now = new Date();
-                      const tomorrow = new Date(now);
-                      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-                      tomorrow.setUTCHours(0, 0, 0, 0);
-                      const diff = tomorrow.getTime() - now.getTime();
-                      const hours = Math.floor(diff / (1000 * 60 * 60));
-                      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                      return `Resets in ${hours}h ${minutes}m`;
-                    })()}
-                  </p>
-                </div>
-              )}
-            </div>
+          {/* Center: Title */}
+          <div className="flex items-center gap-2">
+            <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
+              Leaderboard
+            </h1>
+            <button
+              onClick={() => setShowLeaderboardRewardsModal(true)}
+              className="w-5 h-5 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50 text-xs font-bold flex items-center justify-center transition-all"
+            >
+              ?
+            </button>
           </div>
 
-          {/* Defense Deck Warning */}
-          {userProfile && !userProfile.hasDefenseDeck && !defenseWarningDismissed && (
-            <div className="mb-4 p-3 md:p-4 bg-amber-500/20 border-2 border-amber-500/50 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3 relative">
+          {/* Right: Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Weekly Reward Claim Button */}
+            {weeklyRewardEligibility?.eligible && (
               <button
-                onClick={handleDismissDefenseWarning}
-                className="absolute top-2 right-2 text-amber-400 hover:text-amber-200 text-lg font-bold"
-                title="Dismiss this warning"
+                onClick={handleClaimWeeklyLeaderboardReward}
+                disabled={isClaimingWeeklyReward}
+                className="px-3 py-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 hover:border-green-400 rounded text-green-400 text-xs font-bold uppercase tracking-wide transition-all"
               >
-                ×
+                {isClaimingWeeklyReward ? '...' : 'Claim Reward'}
               </button>
-              <p className="text-amber-200 text-sm md:text-base text-center md:text-left pr-6">
-                {t('leaderboardDefenseWarning')}
-              </p>
-              <div className="flex gap-2 items-center">
-                <button
-                  onClick={handleOpenDefenseDeck}
-                  disabled={isLoadingCards || nfts.length < HAND_SIZE}
-                  className={`px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg transition whitespace-nowrap text-sm ${isLoadingCards || nfts.length < HAND_SIZE ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isLoadingCards ? 'Loading...' : nfts.length < HAND_SIZE ? `Need ${HAND_SIZE} cards` : t('leaderboardDefenseSetup')}
-                </button>
-                <button
-                  onClick={handleDismissDefenseWarning}
-                  className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition whitespace-nowrap text-xs"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Cards Status Banner */}
-          {address && (
-            <div className={`mb-4 p-2 rounded-lg text-center text-sm ${
-              isLoadingCards ? 'bg-yellow-500/20 text-yellow-300' :
-              nfts.length > 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
-            }`}>
-              {isLoadingCards ? (
-                <span>⏳ Loading your cards... Please wait</span>
-              ) : nfts.length > 0 ? (
-                <span>✅ {nfts.length} cards ready for battle!</span>
-              ) : (
-                <span>❌ No cards found. Go to Home to get some cards!</span>
-              )}
+            {/* Defense Deck Button */}
+            {userProfile && (
+              <button
+                onClick={handleOpenDefenseDeck}
+                disabled={isLoadingCards || nfts.length < HAND_SIZE}
+                className={`px-3 py-2 rounded text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 ${
+                  userProfile.hasDefenseDeck
+                    ? 'bg-black/50 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50'
+                    : 'bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30'
+                }`}
+              >
+                Defense {userProfile.hasDefenseDeck && <span className="text-green-400">✓</span>}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ===== MAIN SCROLLABLE CONTENT ===== */}
+      <div className="absolute inset-0 pt-16 pb-24 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4">
+
+          {/* Defense Warning (if needed) */}
+          {userProfile && !userProfile.hasDefenseDeck && !defenseWarningDismissed && (
+            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between gap-3">
+              <p className="text-amber-300/80 text-xs flex-1">{t('leaderboardDefenseWarning')}</p>
+              <button
+                onClick={handleOpenDefenseDeck}
+                disabled={isLoadingCards || nfts.length < HAND_SIZE}
+                className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-400 font-bold rounded transition text-xs uppercase tracking-wide whitespace-nowrap"
+              >
+                Set Defense
+              </button>
+              <button onClick={handleDismissDefenseWarning} className="text-amber-500/50 hover:text-amber-400 text-lg leading-none">&times;</button>
             </div>
           )}
 
           {/* Loading State */}
           {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-6xl mb-4 animate-spin">⟳</p>
-              <p className="text-vintage-burnt-gold">Loading leaderboard...</p>
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-center">
+                <div className="w-8 h-8 border-2 border-vintage-gold/30 border-t-vintage-gold rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-vintage-burnt-gold text-sm">Loading...</p>
+              </div>
             </div>
           ) : filteredLeaderboard.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-6xl mb-4">§</p>
-              <p className="text-vintage-burnt-gold">{t('noProfile')}</p>
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-vintage-gold text-2xl font-bold">#</span>
+                </div>
+                <p className="text-vintage-burnt-gold text-sm">{t('noProfile')}</p>
+              </div>
             </div>
           ) : (
             <>
-              {/* Leaderboard Table */}
-              <div className="overflow-x-auto -mx-3 md:mx-0">
-                <table className="w-full text-sm md:text-base">
-                  <thead>
-                    <tr className="border-b border-vintage-gold/20">
-                      <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">#</th>
-                      <th className="text-left p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('player')}</th>
-                      <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">Aura</th>
-                      <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base hidden md:table-cell">Opened</th>
-                      <th className="text-right p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">{t('power')}</th>
-                      <th className="text-center p-1 md:p-3 text-vintage-burnt-gold font-semibold text-xs md:text-base">Reward</th>
-                      <th className="text-center p-1 md:p-4 text-vintage-burnt-gold font-semibold text-xs md:text-base">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLeaderboard
-                      .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
-                      .map((profile, sliceIndex) => {
-                        const index = (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
-                        return (
-                          <tr key={profile.address} className={`border-b border-vintage-gold/10 hover:bg-vintage-gold/10 transition ${profile.address === address ? 'bg-vintage-gold/20' : ''}`}>
-                            <td className="p-1 md:p-3">
-                              <span className={`text-lg md:text-2xl font-bold ${
-                                index === 0 ? 'text-yellow-400' :
-                                index === 1 ? 'text-gray-300' :
-                                index === 2 ? 'text-orange-400' :
-                                'text-gray-500'
-                              }`}>
-                                #{index + 1}
-                              </span>
-                            </td>
-                            <td className="p-1 md:p-3">
-                              <Link href={`/profile/${profile.username}`} className="block hover:scale-105 transition-transform">
-                                <div>
-                                  <div className="flex items-center gap-1 mb-1">
-                                    <p className="font-bold text-vintage-neon-blue hover:text-cyan-300 transition-colors text-xs md:text-base truncate max-w-[100px] md:max-w-[150px]">{profile.username}</p>
-                                    <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, profile.hasVibeBadge)} size="xs" />
-                                  </div>
-                                  <p className="text-[10px] md:text-xs text-vintage-burnt-gold font-mono hidden sm:block">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</p>
-                                </div>
-                              </Link>
-                            </td>
-                            <td className="p-1 md:p-3 text-right text-purple-400 font-bold text-base md:text-xl">{(profile.stats?.aura ?? 500).toLocaleString()}</td>
-                            <td className="p-1 md:p-3 text-right text-green-400 font-bold text-sm md:text-base hidden md:table-cell">{profile.stats?.openedCards || 0}</td>
-                            <td className="p-1 md:p-3 text-right text-yellow-400 font-bold text-base md:text-xl">{(profile.stats?.totalPower || 0).toLocaleString()}</td>
-                            <td className="p-1 md:p-3 text-center">
-                              {index < 10 && profile.address.toLowerCase() === address?.toLowerCase() && (() => {
-                                const rank = index + 1;
-                                let reward = 0;
-                                if (rank === 1) reward = 1000;
-                                else if (rank === 2) reward = 750;
-                                else if (rank === 3) reward = 500;
-                                else if (rank <= 10) reward = 300;
+              {/* ===== PODIUM SECTION (Top 3) ===== */}
+              <div className="mb-8 pt-4">
+                <div className="flex items-end justify-center gap-4 md:gap-8">
+                  {/* 2nd Place */}
+                  {top3[1] && (
+                    <div className="flex flex-col items-center w-24 md:w-28">
+                      <div className="w-8 h-8 rounded-full bg-gray-500/30 border-2 border-gray-400 flex items-center justify-center text-gray-300 font-bold text-sm mb-2">
+                        2
+                      </div>
+                      <div className="w-14 h-14 md:w-18 md:h-18 rounded-full overflow-hidden border-2 border-gray-400/50 bg-gray-800 mb-2">
+                        {(top3[1].twitterProfileImageUrl || top3[1].farcasterPfpUrl) ? (
+                          <img src={top3[1].twitterProfileImageUrl || top3[1].farcasterPfpUrl} alt={top3[1].username} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-lg text-gray-400 font-bold">
+                            {top3[1].username.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <Link href={`/profile/${top3[1].username}`} className="text-xs font-bold text-gray-300 hover:text-white truncate max-w-full mb-1">
+                        {top3[1].username}
+                      </Link>
+                      <p className="text-sm font-bold text-purple-400">{(top3[1].stats?.aura ?? 500).toLocaleString()}</p>
+                      <p className="text-[10px] text-vintage-burnt-gold mb-2">{(top3[1].stats?.totalPower || 0).toLocaleString()} PWR</p>
+                      {top3[1].address.toLowerCase() !== address?.toLowerCase() && (
+                        <button
+                          onClick={() => handleAttackClick(top3[1])}
+                          disabled={attacksRemaining <= 0 || !top3[1].hasDefenseDeck || isLoadingCards || nfts.length === 0}
+                          className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
+                            attacksRemaining > 0 && top3[1].hasDefenseDeck && !isLoadingCards && nfts.length > 0
+                              ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
+                              : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
+                          }`}
+                        >
+                          Attack
+                        </button>
+                      )}
+                    </div>
+                  )}
 
-                                const canClaim = weeklyRewardEligibility?.eligible && weeklyRewardEligibility?.rank === rank;
-                                const alreadyClaimed = weeklyRewardEligibility?.claimed;
+                  {/* 1st Place (center, bigger) */}
+                  {top3[0] && (
+                    <div className="flex flex-col items-center w-28 md:w-36 -mt-6">
+                      <div className="w-10 h-10 rounded-full bg-vintage-gold/20 border-2 border-vintage-gold flex items-center justify-center text-vintage-gold font-bold text-lg mb-2 shadow-[0_0_15px_rgba(255,215,0,0.3)]">
+                        1
+                      </div>
+                      <div className="w-18 h-18 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-vintage-gold/70 bg-vintage-gold/10 mb-2 shadow-[0_0_20px_rgba(255,215,0,0.2)]">
+                        {(top3[0].twitterProfileImageUrl || top3[0].farcasterPfpUrl) ? (
+                          <img src={top3[0].twitterProfileImageUrl || top3[0].farcasterPfpUrl} alt={top3[0].username} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-2xl text-vintage-gold font-bold">
+                            {top3[0].username.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <Link href={`/profile/${top3[0].username}`} className="text-sm md:text-base font-bold text-vintage-gold hover:text-yellow-300 truncate max-w-full mb-1">
+                        {top3[0].username}
+                      </Link>
+                      <p className="text-lg md:text-xl font-bold text-purple-400">{(top3[0].stats?.aura ?? 500).toLocaleString()}</p>
+                      <p className="text-xs text-vintage-burnt-gold mb-2">{(top3[0].stats?.totalPower || 0).toLocaleString()} PWR</p>
+                      {top3[0].address.toLowerCase() !== address?.toLowerCase() && (
+                        <button
+                          onClick={() => handleAttackClick(top3[0])}
+                          disabled={attacksRemaining <= 0 || !top3[0].hasDefenseDeck || isLoadingCards || nfts.length === 0}
+                          className={`px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wide transition ${
+                            attacksRemaining > 0 && top3[0].hasDefenseDeck && !isLoadingCards && nfts.length > 0
+                              ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
+                              : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
+                          }`}
+                        >
+                          Attack
+                        </button>
+                      )}
+                    </div>
+                  )}
 
-                                if (alreadyClaimed) {
-                                  return (
-                                    <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
-                                      <div>✓ Claimed</div>
-                                      <div className="text-green-400">{reward}</div>
-                                    </div>
-                                  );
-                                }
-
-                                if (canClaim) {
-                                  return (
-                                    <button
-                                      onClick={() => {
-                                        if (soundEnabled) AudioManager.buttonClick();
-                                        handleClaimWeeklyLeaderboardReward();
-                                      }}
-                                      disabled={isClaimingWeeklyReward}
-                                      className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xs md:text-sm transition-all hover:scale-105 disabled:opacity-50"
-                                    >
-                                      {isClaimingWeeklyReward ? '...' : `🎁 ${reward}`}
-                                    </button>
-                                  );
-                                }
-
-                                return (
-                                  <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
-                                    <div>{reward}</div>
-                                  </div>
-                                );
-                              })()}
-                              {index < 10 && profile.address.toLowerCase() !== address?.toLowerCase() && (
-                                <div className="text-[10px] md:text-xs text-vintage-burnt-gold">
-                                  {index === 0 ? '1000' : index === 1 ? '750' : index === 2 ? '500' : '300'}
-                                </div>
-                              )}
-                              {index >= 10 && (
-                                <div className="text-[10px] md:text-xs text-gray-500">-</div>
-                              )}
-                            </td>
-                            <td className="p-1 md:p-4 text-center">
-                              {profile.address.toLowerCase() !== address?.toLowerCase() && (
-                                <button
-                                  onClick={() => handleAttackClick(profile)}
-                                  disabled={attacksRemaining <= 0 || !profile.hasDefenseDeck || isLoadingCards || nfts.length === 0}
-                                  className={`inline-block px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-semibold text-xs md:text-sm transition-all ${
-                                    attacksRemaining > 0 && profile.hasDefenseDeck && !isLoadingCards && nfts.length > 0
-                                      ? 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white hover:scale-105'
-                                      : 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
-                                  }`}
-                                  title={isLoadingCards || nfts.length === 0 ? 'Loading cards...' : !profile.hasDefenseDeck ? 'No defense deck' : attacksRemaining <= 0 ? 'No attacks left' : 'Attack this player'}
-                                >
-                                  {isLoadingCards || nfts.length === 0 ? '⏳ Loading...' : '⚔️ Attack'}
-                                </button>
-                              )}
-                              {profile.address.toLowerCase() === address?.toLowerCase() && (
-                                <span className="text-[10px] md:text-xs text-vintage-burnt-gold">(You)</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+                  {/* 3rd Place */}
+                  {top3[2] && (
+                    <div className="flex flex-col items-center w-24 md:w-28">
+                      <div className="w-8 h-8 rounded-full bg-orange-500/20 border-2 border-orange-500/50 flex items-center justify-center text-orange-400 font-bold text-sm mb-2">
+                        3
+                      </div>
+                      <div className="w-14 h-14 md:w-18 md:h-18 rounded-full overflow-hidden border-2 border-orange-500/40 bg-orange-900/20 mb-2">
+                        {(top3[2].twitterProfileImageUrl || top3[2].farcasterPfpUrl) ? (
+                          <img src={top3[2].twitterProfileImageUrl || top3[2].farcasterPfpUrl} alt={top3[2].username} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-lg text-orange-400 font-bold">
+                            {top3[2].username.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <Link href={`/profile/${top3[2].username}`} className="text-xs font-bold text-orange-400 hover:text-orange-300 truncate max-w-full mb-1">
+                        {top3[2].username}
+                      </Link>
+                      <p className="text-sm font-bold text-purple-400">{(top3[2].stats?.aura ?? 500).toLocaleString()}</p>
+                      <p className="text-[10px] text-vintage-burnt-gold mb-2">{(top3[2].stats?.totalPower || 0).toLocaleString()} PWR</p>
+                      {top3[2].address.toLowerCase() !== address?.toLowerCase() && (
+                        <button
+                          onClick={() => handleAttackClick(top3[2])}
+                          disabled={attacksRemaining <= 0 || !top3[2].hasDefenseDeck || isLoadingCards || nfts.length === 0}
+                          className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
+                            attacksRemaining > 0 && top3[2].hasDefenseDeck && !isLoadingCards && nfts.length > 0
+                              ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
+                              : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
+                          }`}
+                        >
+                          Attack
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Pagination */}
-              {filteredLeaderboard.length > LEADERBOARD_PER_PAGE && (
-                <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => {
-                      setCurrentLeaderboardPage(Math.max(1, currentLeaderboardPage - 1));
-                      if (soundEnabled) AudioManager.buttonClick();
-                    }}
-                    disabled={currentLeaderboardPage === 1}
-                    className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
-                  >
-                    ← {t('previous')}
-                  </button>
+              {/* ===== RANKINGS LIST (#4+) ===== */}
+              {rankings4Plus.length > 0 && (
+                <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
+                  <div className="p-3 border-b border-vintage-gold/20">
+                    <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-wide">Rankings</h3>
+                  </div>
+                  <div className="divide-y divide-vintage-gold/10">
+                    {rankings4Plus
+                      .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
+                      .map((profile, sliceIndex) => {
+                        const rank = 4 + (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
+                        const isYou = profile.address.toLowerCase() === address?.toLowerCase();
+                        return (
+                          <div
+                            key={profile.address}
+                            className={`flex items-center gap-3 p-3 hover:bg-vintage-gold/5 transition ${isYou ? 'bg-vintage-gold/10' : ''}`}
+                          >
+                            {/* Rank */}
+                            <div className="w-10 text-center">
+                              <span className="text-lg font-bold text-gray-500">#{rank}</span>
+                            </div>
 
-                  <span className="text-vintage-gold">
-                    {currentLeaderboardPage} / {Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE)}
-                  </span>
+                            {/* Avatar */}
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-vintage-charcoal border border-vintage-gold/30 flex-shrink-0">
+                              {(profile.twitterProfileImageUrl || profile.farcasterPfpUrl) ? (
+                                <img src={profile.twitterProfileImageUrl || profile.farcasterPfpUrl} alt={profile.username} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-sm text-vintage-burnt-gold">
+                                  {profile.username.substring(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
 
-                  <button
-                    onClick={() => {
-                      setCurrentLeaderboardPage(Math.min(Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
-                      if (soundEnabled) AudioManager.buttonClick();
-                    }}
-                    disabled={currentLeaderboardPage === Math.ceil(filteredLeaderboard.length / LEADERBOARD_PER_PAGE)}
-                    className="px-3 md:px-4 py-2 bg-vintage-charcoal border-2 border-vintage-gold/50 hover:border-vintage-gold disabled:border-vintage-gold/20 disabled:text-vintage-burnt-gold text-vintage-gold rounded-lg font-semibold transition text-sm md:text-base"
-                  >
-                    {t('next')} →
-                  </button>
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <Link href={`/profile/${profile.username}`} className="flex items-center gap-1">
+                                <span className="font-bold text-vintage-neon-blue hover:text-cyan-300 text-sm truncate">
+                                  {profile.username}
+                                </span>
+                                {isYou && <span className="text-xs text-vintage-gold">(You)</span>}
+                                <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, profile.hasVibeBadge)} size="xs" />
+                              </Link>
+                            </div>
+
+                            {/* Aura */}
+                            <div className="text-right min-w-[60px]">
+                              <p className="text-purple-400 font-bold text-sm">{(profile.stats?.aura ?? 500).toLocaleString()}</p>
+                              <p className="text-[10px] text-vintage-burnt-gold">{(profile.stats?.totalPower || 0).toLocaleString()} PWR</p>
+                            </div>
+
+                            {/* Attack */}
+                            {!isYou && (
+                              <button
+                                onClick={() => handleAttackClick(profile)}
+                                disabled={attacksRemaining <= 0 || !profile.hasDefenseDeck || isLoadingCards || nfts.length === 0}
+                                className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
+                                  attacksRemaining > 0 && profile.hasDefenseDeck && !isLoadingCards && nfts.length > 0
+                                    ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
+                                    : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
+                                }`}
+                              >
+                                Attack
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  {/* Pagination */}
+                  {rankings4Plus.length > LEADERBOARD_PER_PAGE && (
+                    <div className="p-3 border-t border-vintage-gold/20 flex items-center justify-center gap-3">
+                      <button
+                        onClick={() => {
+                          setCurrentLeaderboardPage(Math.max(1, currentLeaderboardPage - 1));
+                          if (soundEnabled) AudioManager.buttonClick();
+                        }}
+                        disabled={currentLeaderboardPage === 1}
+                        className="px-3 py-1.5 bg-transparent border border-vintage-gold/30 text-vintage-gold rounded text-xs font-bold disabled:opacity-30 hover:bg-vintage-gold/10 transition"
+                      >
+                        ← Prev
+                      </button>
+                      <span className="text-vintage-gold text-sm">
+                        {currentLeaderboardPage} / {Math.ceil(rankings4Plus.length / LEADERBOARD_PER_PAGE)}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setCurrentLeaderboardPage(Math.min(Math.ceil(rankings4Plus.length / LEADERBOARD_PER_PAGE), currentLeaderboardPage + 1));
+                          if (soundEnabled) AudioManager.buttonClick();
+                        }}
+                        disabled={currentLeaderboardPage >= Math.ceil(rankings4Plus.length / LEADERBOARD_PER_PAGE)}
+                        className="px-3 py-1.5 bg-transparent border border-vintage-gold/30 text-vintage-gold rounded text-xs font-bold disabled:opacity-30 hover:bg-vintage-gold/10 transition"
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </>
           )}
+        </div>
+      </div>
+
+      {/* ===== BOTTOM STATS BAR ===== */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black via-black/90 to-transparent pt-6 pb-3 px-3">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-black/60 backdrop-blur-sm rounded-lg border border-vintage-gold/20 px-4 py-2.5 flex items-center justify-between gap-4 text-xs">
+            {/* Your Rank */}
+            <div className="flex items-center gap-2">
+              {userRank ? (
+                <>
+                  <span className="text-vintage-burnt-gold uppercase tracking-wide">Rank</span>
+                  <span className="text-base font-bold text-vintage-gold">#{userRank}</span>
+                </>
+              ) : address ? (
+                <span className="text-vintage-burnt-gold">Not ranked</span>
+              ) : (
+                <span className="text-vintage-burnt-gold">Connect wallet</span>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="hidden sm:block w-px h-4 bg-vintage-gold/20" />
+
+            {/* Power */}
+            {userProfile && (
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="text-vintage-burnt-gold uppercase tracking-wide">Power</span>
+                <span className="font-bold text-vintage-gold">{(userProfile.stats?.totalPower || 0).toLocaleString()}</span>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="w-px h-4 bg-vintage-gold/20" />
+
+            {/* Attacks */}
+            {userProfile && (
+              <div className="flex items-center gap-2">
+                <span className="text-vintage-burnt-gold uppercase tracking-wide">Attacks</span>
+                <span className={`font-bold ${attacksRemaining > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {attacksRemaining}/{maxAttacks}
+                </span>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="hidden md:block w-px h-4 bg-vintage-gold/20" />
+
+            {/* Reset Timer */}
+            <div className="hidden md:flex items-center gap-2">
+              <span className="text-vintage-burnt-gold uppercase tracking-wide">Reset</span>
+              <span className="text-vintage-gold">{getTimeUntilReset()}</span>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -6,46 +6,12 @@ import { useConvex, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { devLog, devError } from '@/lib/utils/logger';
 import { getEnabledCollections } from '@/lib/collections/index';
-import { findAttr, calcPower } from '@/lib/nft/attributes';
-import { getImage, fetchNFTs } from '@/lib/nft/fetcher';
-import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import { fetchNFTsFromAllCollections, processNFTsToCards, getCardKey } from '@/lib/nft';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { HAND_SIZE, getMaxAttacks } from '@/lib/config';
 import type { Card, CardRarity, CardFoil } from '@/lib/types/card';
 import type { CollectionId } from '@/lib/collections/index';
-
-/**
- * Fetch NFTs from all enabled collections
- */
-async function fetchNFTsFromAllCollections(owner: string): Promise<any[]> {
-  const enabledCollections = getEnabledCollections();
-  console.log('🎴 [Context] Fetching from', enabledCollections.length, 'collections');
-
-  const allNfts: any[] = [];
-
-  for (const collection of enabledCollections) {
-    // Skip collections without contract address
-    if (!collection.contractAddress) {
-      console.log(`⏭️ Skipping ${collection.displayName} - no contract`);
-      continue;
-    }
-
-    try {
-      console.log(`📡 Fetching ${collection.displayName}...`);
-      const nfts = await fetchNFTs(owner, collection.contractAddress);
-      const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
-      allNfts.push(...tagged);
-      console.log(`✓ ${collection.displayName}: ${nfts.length} NFTs`);
-    } catch (error) {
-      console.error(`✗ ${collection.displayName} failed:`, error);
-      // Continue with other collections
-    }
-  }
-
-  console.log(`✅ [Context] Total NFTs: ${allNfts.length}`);
-  return allNfts;
-}
 
 // Avatar URL helper
 const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterProfileImageUrl?: string }): string | null => {
@@ -165,7 +131,7 @@ interface PlayerCardsContextType {
   attackLockedCards: { lockedTokenIds: string[] } | null;
 
   // Helper functions
-  isCardLocked: (tokenId: string, mode: 'attack' | 'pvp') => boolean;
+  isCardLocked: (card: { tokenId: string; collection?: string }, mode: 'attack' | 'pvp') => boolean;
   getAvatarUrl: (data: any) => string | null;
   showVictory: () => void;
 
@@ -233,7 +199,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
   // Mutations
   const payAttackEntryFee = useMutation(api.economy.payEntryFee);
 
-  // Load NFTs function
+  // Load NFTs function - usa módulo centralizado @/lib/nft
   const loadNFTs = useCallback(async () => {
     if (!address) {
       console.log('! [Context] loadNFTs called but no address');
@@ -258,35 +224,9 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       setStatus('fetching');
       setErrorMsg(null);
 
+      // Usa funções centralizadas do @/lib/nft
       const raw = await fetchNFTsFromAllCollections(address);
-      console.log('[Context] Raw NFTs fetched:', raw.length);
-
-      // Process NFTs with metadata
-      const processed: Card[] = [];
-
-      for (const nft of raw) {
-        try {
-          const name = nft.name || nft.title || `#${nft.tokenId}`;
-          const rarity = findAttr(nft, 'Rarity') || findAttr(nft, 'rarity') || 'Common';
-          const foil = findAttr(nft, 'Foil') || findAttr(nft, 'foil') || 'None';
-          const power = calcPower(nft);
-
-          const rawImageUrl = await getImage(nft, nft.collection);
-          const imageUrl = rawImageUrl ? (convertIpfsUrl(rawImageUrl) || rawImageUrl) : '/placeholder.png';
-
-          processed.push({
-            tokenId: nft.tokenId,
-            name,
-            imageUrl,
-            rarity: rarity as CardRarity,
-            foil: foil as CardFoil,
-            power,
-            collection: nft.collection as CollectionId,
-          });
-        } catch (e) {
-          devError('Error processing NFT:', nft.tokenId, e);
-        }
-      }
+      const processed = await processNFTsToCards(raw); // Já filtra unopened!
 
       // Deduplicate
       const seen = new Set<string>();
@@ -297,7 +237,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         return true;
       });
 
-      // Load FREE cards from cardInventory (same as page.tsx)
+      // Load FREE cards from cardInventory
       try {
         const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
         console.log('🆓 FREE cards loaded:', freeCards?.length || 0);
@@ -329,7 +269,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       setErrorMsg(error instanceof Error ? error.message : 'Failed to load cards');
       setStatus('error');
     }
-  }, [address, status, nfts.length]);
+  }, [address, status, nfts.length, convex]);
 
   // Force reload (ignores cache)
   const forceReloadNFTs = useCallback(async () => {
@@ -410,17 +350,18 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     return calculateLeaderboardAttackPower(attackSelectedCards);
   }, [attackSelectedCards]);
 
-  // Helper: Check if card is locked
-  const isCardLocked = useCallback((tokenId: string, mode: 'attack' | 'pvp') => {
+  // Helper: Check if card is locked - now takes card object for proper collection+tokenId comparison
+  const isCardLocked = useCallback((card: { tokenId: string; collection?: string }, mode: 'attack' | 'pvp') => {
     // VibeFID cards are never locked
-    const card = nfts.find(n => n.tokenId === tokenId);
     if (card?.collection === 'vibefid') return false;
 
     if (mode === 'attack') {
-      return attackLockedCards?.lockedTokenIds?.includes(tokenId) || false;
+      // Use getCardKey for proper collection:tokenId comparison
+      const cardKey = getCardKey(card);
+      return attackLockedCards?.lockedTokenIds?.includes(cardKey) || false;
     }
     return false;
-  }, [nfts, attackLockedCards]);
+  }, [attackLockedCards]);
 
   // Helper: Show victory
   const showVictory = useCallback(() => {

@@ -38,7 +38,7 @@ interface PvPInRoomModalProps {
   setCurrentRoom: Dispatch<SetStateAction<GameRoom | null>>;
   setSelectedCards: Dispatch<SetStateAction<Card[]>>;
   setIsConfirmingCards: Dispatch<SetStateAction<boolean>>;
-  isCardLocked: (tokenId: string, mode: 'attack' | 'pvp') => boolean;
+  isCardLocked: (card: { tokenId: string; collection?: string }, mode: 'attack' | 'pvp') => boolean;
 
   // Translation
   t: any;
@@ -169,7 +169,8 @@ export function PvPInRoomModal({
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto p-2">
                     {sortedNfts.map((nft) => {
                       const isSelected = selectedCards.some((c: any) => isSameCard(c, nft));
-                      const isLocked = isCardLocked(nft.tokenId, 'pvp');
+                      // Use card object for proper collection+tokenId comparison
+                      const isLocked = isCardLocked(nft, 'pvp');
                       return (
                         <div
                           key={getCardUniqueId(nft)}

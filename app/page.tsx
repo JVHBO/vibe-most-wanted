@@ -47,6 +47,8 @@ import { PriceTicker } from "@/components/PriceTicker";
 import ShameList from "@/components/ShameList";
 import BannedScreen from "@/components/BannedScreen";
 import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
+// New Home Components
+import { HomeHeader, BottomNavigation, GameGrid, CardsPreview, WantedCast } from "@/components/home";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
@@ -67,8 +69,9 @@ import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, us
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
 import { CONTRACTS } from "@/lib/contracts";
 
-import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, isSameCard, type CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index";
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
+import { isSameCard, findCard, getCardKey } from "@/lib/nft";
 import { getImage, fetchNFTs, clearAllNftCache } from "@/lib/nft/fetcher";
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 import type { Card } from "@/lib/types/card";
@@ -733,6 +736,9 @@ export default function TCGPage() {
   // Leaderboard Rewards Info Modal
   const [showLeaderboardRewardsModal, setShowLeaderboardRewardsModal] = useState<boolean>(false);
 
+  // My Cards Modal (for miniapp)
+  const [showMyCardsModal, setShowMyCardsModal] = useState<boolean>(false);
+
   // Attack States
   const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
   const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
@@ -1234,6 +1240,42 @@ export default function TCGPage() {
     } catch (error: any) {
       devError('Error claiming reward:', error);
       if (soundEnabled) AudioManager.buttonError();
+    }
+  };
+
+  // Handler for game mode selection from GameGrid
+  type GameMode = 'poker-cpu' | 'poker-pvp' | 'battle-ai' | 'battle-pvp' | 'mecha' | 'raid';
+  const handleGameModeSelect = (mode: GameMode) => {
+    if (!userProfile) {
+      setShowCreateProfile(true);
+      return;
+    }
+    if (soundEnabled) AudioManager.buttonClick();
+
+    switch (mode) {
+      case 'poker-cpu':
+        setPokerMode('cpu');
+        setTempSelectedDifficulty(pokerCpuDifficulty);
+        setIsDifficultyModalOpen(true);
+        break;
+      case 'poker-pvp':
+        setPokerMode('pvp');
+        setShowPokerBattle(true);
+        break;
+      case 'battle-ai':
+        setShowPveCardSelection(true);
+        setPveSelectedCards([]);
+        break;
+      case 'battle-pvp':
+        setGameMode('pvp');
+        setPvpMode('pvpMenu');
+        break;
+      case 'mecha':
+        setShowCpuArena(true);
+        break;
+      case 'raid':
+        router.push('/raid');
+        break;
     }
   };
 
@@ -1759,17 +1801,20 @@ export default function TCGPage() {
 
   const handleSelectCard = useCallback((card: any) => {
     // Check if card is locked (in raid deck) - VibeFID cards are exempt
-    const isLockedInRaid = card.collection !== 'vibefid' && defenseLockedTokenIds.has(card.tokenId);
+    // Use getCardKey for proper collection+tokenId comparison
+    const isLockedInRaid = card.collection !== 'vibefid' && defenseLockedTokenIds.has(getCardKey(card));
     if (isLockedInRaid) {
       if (soundEnabled) AudioManager.buttonError();
       return;
     }
 
     setSelectedCards(prev => {
-      const isSelected = prev.find(c => c.tokenId === card.tokenId);
+      // Use findCard for proper collection+tokenId comparison
+      const isSelected = findCard(prev, card);
       if (isSelected) {
         if (soundEnabled) AudioManager.deselectCard();
-        return prev.filter(c => c.tokenId !== card.tokenId);
+        // Use isSameCard for proper collection+tokenId comparison
+        return prev.filter(c => !isSameCard(c, card));
       } else if (prev.length < HAND_SIZE) {
         if (soundEnabled) AudioManager.selectCard();
         const newSelection = [...prev, card];
@@ -2477,8 +2522,9 @@ export default function TCGPage() {
     }
 
     // 🔒 Filter out cards that are in raid deck (except VibeFID which can be in both)
+    // Use getCardKey for proper collection:tokenId comparison
     filtered = filtered.filter(card =>
-      card.collection === 'vibefid' || !defenseLockedTokenIds.has(card.tokenId)
+      card.collection === 'vibefid' || !defenseLockedTokenIds.has(getCardKey(card))
     );
 
     // Apply sort
@@ -2505,13 +2551,15 @@ export default function TCGPage() {
   }, [nfts, sortAttackByPower]);
 
   // Helper to check if card is locked - VibeFID cards are exempt (can be used anywhere)
-  const isCardLocked = (tokenId: string, mode: 'attack' | 'pvp') => {
+  // Now takes a card object for proper collection+tokenId comparison
+  const isCardLocked = (card: { tokenId: string; collection?: string }, mode: 'attack' | 'pvp') => {
     // VibeFID cards are never locked - they can be used in attack even if in defense deck
-    const card = nfts.find(n => n.tokenId === tokenId);
     if (card?.collection === 'vibefid') return false;
 
     const lockedCards = mode === 'attack' ? attackLockedCards : pvpLockedCards;
-    return (lockedCards?.lockedTokenIds as string[] | undefined)?.includes(tokenId) || false;
+    // Use getCardKey for proper collection+tokenId comparison
+    const cardKey = getCardKey(card);
+    return (lockedCards?.lockedTokenIds as string[] | undefined)?.includes(cardKey) || false;
   };
 
   // Sorted NFTs for PvE modal (PvE allows defense cards - NO lock)
@@ -3762,6 +3810,74 @@ export default function TCGPage() {
         </div>
       )}
 
+      {/* My Cards Modal (for miniapp) */}
+      {showMyCardsModal && (
+        <div
+          className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-2"
+          onClick={() => setShowMyCardsModal(false)}
+        >
+          <div
+            className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold/50 w-full max-h-[90vh] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex-shrink-0 p-3 border-b border-vintage-gold/30">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-display font-bold text-vintage-gold">
+                  My Cards ({nfts.length})
+                </h2>
+                <button
+                  onClick={() => setShowMyCardsModal(false)}
+                  className="text-vintage-gold hover:text-white text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Cards Grid */}
+            <div className="flex-1 overflow-y-auto p-3">
+              {nfts.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {nfts.map((nft) => (
+                    <div
+                      key={getCardUniqueId(nft)}
+                      className={`aspect-[2/3] rounded-lg overflow-hidden border-2 ${
+                        nft.rarity === 'Mythic' ? 'border-pink-400' :
+                        nft.rarity === 'Legendary' ? 'border-yellow-400' :
+                        nft.rarity === 'Epic' ? 'border-purple-400' :
+                        nft.rarity === 'Rare' ? 'border-blue-400' :
+                        'border-vintage-gold/30'
+                      }`}
+                    >
+                      <CardMedia
+                        src={nft.imageUrl || ''}
+                        alt={nft.name || 'Card'}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <span className="text-vintage-gold/50 text-sm">No cards yet</span>
+                  <Link
+                    href="/shop"
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      setShowMyCardsModal(false);
+                    }}
+                    className="mt-4 px-4 py-2 bg-vintage-gold text-vintage-black rounded-lg font-semibold text-sm"
+                  >
+                    Get Cards
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Leaderboard Rewards Modal */}
       {showLeaderboardRewardsModal && (
         <div
@@ -3899,6 +4015,8 @@ export default function TCGPage() {
         soundEnabled={soundEnabled}
         t={t}
       />
+
+      {/* Game Mode Selection - Now handled directly by GameGrid */}
 
       {/* REMOVED: Referrals Modal - System disabled */}
 
@@ -4902,7 +5020,7 @@ export default function TCGPage() {
         </div>
       )}
 
-      <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-2 mb-0 p-2' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-deep-black border-2 border-vintage-gold rounded-lg shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isInFarcaster ? 'mt-[40px]' : ''}`}>
+      <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-2 mb-0 p-2' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isInFarcaster ? 'mt-[40px]' : ''}`}>
         {!isInFarcaster && (
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
@@ -4919,8 +5037,7 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               window.location.href = '/dex';
             }}
-            className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
-            style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
+            className="px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
           >
             <div className="flex items-center justify-center gap-2">
               <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
@@ -4935,8 +5052,7 @@ export default function TCGPage() {
                 if (soundEnabled) AudioManager.buttonClick();
                 window.location.href = '/fid';
               }}
-              className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-purple-400 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
-              style={{background: 'linear-gradient(145deg, #9333ea, #7c3aed)'}}
+              className="px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
             >
               <div className="flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M257.778 155.556H742.222V844.444H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.444H257.778V155.556Z" /><path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.444H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z" /><path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.444H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z" /></svg> <span className="hidden md:inline">MINT YOUR VIBEFID</span><span className="md:hidden">Mint VibeFID</span>
@@ -4950,7 +5066,7 @@ export default function TCGPage() {
               href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-purple-500 text-purple-300 hover:text-purple-100 bg-purple-900/30 hover:bg-purple-800/40 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-sm md:text-base"
+              className="px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 text-purple-300 hover:text-purple-100 bg-purple-900/50 hover:bg-purple-800/60 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-sm md:text-base"
             >
               <span className="text-base md:text-lg">♦</span> {t('tryMiniapp')}
             </a>
@@ -4965,7 +5081,7 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               setShowSettings(true);
             }}
-            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base"
+            className="bg-vintage-charcoal/80 border border-vintage-gold/30 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/10 transition font-bold text-sm md:text-base"
             title={t('settings')}
           >
             <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
@@ -4975,7 +5091,7 @@ export default function TCGPage() {
 
           <Link
             href="/docs"
-            className="bg-vintage-deep-black border-2 border-vintage-gold text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/20 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
+            className="bg-vintage-charcoal/80 border border-vintage-gold/30 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/10 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
             title="Documentação"
           >
             <NextImage src="/images/icons/help.svg" alt="Help" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
@@ -5093,7 +5209,7 @@ export default function TCGPage() {
       ) : (
         <>
           <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`}>
-            <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30 shadow-gold`}>
+            <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30`}>
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
                 <div className="flex items-center gap-2">
                   {/* Profile Button */}
@@ -5101,7 +5217,7 @@ export default function TCGPage() {
                     <Link
                       href={`/profile/${userProfile.username}`}
                       onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-vintage-gold/50 rounded-lg transition"
+                      className="flex items-center gap-2 px-4 py-2 bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/40 rounded-lg transition"
                     >
                       {userProfile.twitter ? (
                         <img
@@ -5126,7 +5242,7 @@ export default function TCGPage() {
                         if (soundEnabled) AudioManager.buttonClick();
                         setShowCreateProfile(true);
                       }}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold"
+                      className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold/80 text-vintage-black rounded-lg text-sm font-semibold"
                     >
                       {t('createProfile')}
                     </button>
@@ -5134,7 +5250,7 @@ export default function TCGPage() {
 
                   {/* VBMS Balance Display - Shows real on-chain balance */}
                   {address && userProfile && (
-                    <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+                    <div className="bg-vintage-gold/10 border border-vintage-gold/40 px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-2">
                       <span className="text-vintage-gold text-xl md:text-2xl font-bold">$</span>
                       <div className="flex flex-col">
                         <span className="text-vintage-gold font-display font-bold text-xs md:text-sm leading-none">
@@ -5163,7 +5279,7 @@ export default function TCGPage() {
 
           {/* Navigation Tabs */}
           <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom' : 'mb-3 md:mb-6 relative z-40'}>
-            <div className={`bg-vintage-charcoal backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/50 ${isInFarcaster ? 'p-1' : 'p-2'} flex gap-1`}>
+            <div className={`bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 ${isInFarcaster ? 'p-1' : 'p-2'} flex gap-1`}>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
@@ -5171,7 +5287,7 @@ export default function TCGPage() {
                 }}
                 className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'game'
-                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                    ? 'bg-vintage-gold text-vintage-black'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
@@ -5194,7 +5310,7 @@ export default function TCGPage() {
                 }}
                 className={`relative flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'inbox'
-                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
+                    ? 'bg-vintage-gold text-vintage-black'
                     : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
                 }`}
               >
@@ -5258,16 +5374,12 @@ export default function TCGPage() {
                   </>
                 )}
               </Link>
-              <button
+              <Link
+                href="/quests"
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
-                  setCurrentView('missions');
                 }}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} relative ${
-                  hasClaimableMissions ? 'border-green-500 animate-notification-pulse' : currentView === 'missions'
-                    ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
-                }`}
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} relative bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
               >
                 {isInFarcaster ? (
                   <>
@@ -5281,18 +5393,18 @@ export default function TCGPage() {
                   </>
                 )}
                 {hasClaimableMissions && (
-                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-3 h-3 animate-pulse" />
+                  <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3 animate-pulse border border-vintage-gold" />
                 )}
-              </button>
+              </Link>
             </div>
           </div>
 
           {/* Content wrapper with padding for fixed bars in miniapp */}
-          <div className={isInFarcaster ? 'pt-4 pb-[75px]' : ''}>
+          <div className={isInFarcaster ? 'pt-1 pb-[75px]' : ''}>
 
           {/* Price Ticker - Miniapp only */}
           {isInFarcaster && (
-            <div className="flex justify-center mb-1 px-2">
+            <div className="flex justify-center mb-2 px-2">
               <PriceTicker />
             </div>
           )}
@@ -5309,53 +5421,31 @@ export default function TCGPage() {
           {/* Game View */}
           {currentView === 'game' && (
           <>
-          {/* Daily Quest Card */}
-          {address && userProfile && questProgress && questProgress.quest && (
-            <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 p-4 md:p-6 mb-6 shadow-gold">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl md:text-4xl">◈</span>
-                  <div>
-                    <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold">DAILY QUEST</h3>
-                    <p className="text-xs md:text-sm text-vintage-burnt-gold font-modern capitalize">
-                      {questProgress.quest.difficulty} • +{questProgress.quest.reward} $TESTVBMS
-                    </p>
-                  </div>
-                </div>
-                {questProgress.claimed ? (
-                  <div className="px-3 md:px-4 py-1.5 md:py-2 bg-vintage-black/50 text-vintage-burnt-gold border border-vintage-gold/20 rounded-lg font-modern font-semibold text-xs md:text-sm">
-                    ✓ {t('claimed')}
-                  </div>
-                ) : questProgress.completed ? (
-                  <button
-                    onClick={handleClaimQuestReward}
-                    disabled={isClaimingQuest}
-                    className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black border-2 border-vintage-gold hover:from-vintage-gold-dark hover:to-vintage-burnt-gold rounded-lg font-modern font-semibold text-xs md:text-sm transition-all shadow-gold hover:scale-105"
-                  >
-                    {isClaimingQuest ? '...' : `✦ ${t('questClaimReward', { reward: questProgress?.quest?.reward || 0 })}`}
-                  </button>
-                ) : null}
-              </div>
+          {/* NEW HOME DESIGN v2 - Compact, no scroll, no emojis */}
+          <div className="flex flex-col gap-2 px-2">
+            {/* Game Grid - 6 game mode buttons */}
+            <GameGrid
+              soundEnabled={soundEnabled}
+              disabled={!userProfile}
+              onSelect={handleGameModeSelect}
+            />
 
-              <p className="text-vintage-ice font-modern text-sm md:text-base mb-3">
-                {questProgress.quest.description}
-              </p>
+            {/* Cards Preview - Mini cards row */}
+            <CardsPreview
+              cards={nfts}
+              soundEnabled={soundEnabled}
+              onViewAll={() => {
+                if (soundEnabled) AudioManager.buttonClick();
+                setShowMyCardsModal(true);
+              }}
+            />
 
-              {!questProgress.claimed && (
-                <ProgressBar
-                  current={questProgress.progress}
-                  target={questProgress.quest.requirement.count || 1}
-                  showPercentage={true}
-                  showNumbers={true}
-                  size="md"
-                  variant="gold"
-                  animate={true}
-                />
-              )}
-            </div>
-          )}
+            {/* Wanted Cast - Link to cast quests */}
+            <WantedCast soundEnabled={soundEnabled} />
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* LEGACY LAYOUT - Only shown for desktop when no mode menu is open (will be removed in future) */}
+          <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${isInFarcaster ? 'hidden' : ''}`}>
             <div className="lg:col-span-2 order-2 lg:order-1">
               <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/50 p-6">
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
@@ -5558,7 +5648,8 @@ export default function TCGPage() {
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
                   {displayNfts.map((nft) => {
                     // Check if card is locked (in raid deck) - VibeFID cards are exempt
-                    const isLockedInRaid = nft.collection !== 'vibefid' && defenseLockedTokenIds.has(nft.tokenId);
+                    // Use getCardKey for proper collection:tokenId comparison
+                    const isLockedInRaid = nft.collection !== 'vibefid' && defenseLockedTokenIds.has(getCardKey(nft));
                     return (
                     <NFTCard
                       key={getCardUniqueId(nft)}
