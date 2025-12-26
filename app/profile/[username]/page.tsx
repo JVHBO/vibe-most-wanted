@@ -261,7 +261,7 @@ export default function ProfilePage() {
           devLog('📊 NFT cards after processing:', nftCards.length);
 
           // Step 3: Load FREE cards from Convex (same as home page!)
-          let allCards = [...nftCards];
+          let allCards: any[] = [...nftCards];
           try {
             const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
             devLog('🆓 FREE cards loaded:', freeCards?.length || 0);
@@ -277,7 +277,7 @@ export default function ProfilePage() {
                 power: card.power,
                 badgeType: card.badgeType,
                 isFreeCard: true,
-                collection: 'nothing',
+                collection: 'nothing' as const,
               }));
               allCards.push(...freeCardsFormatted);
             }
