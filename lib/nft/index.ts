@@ -1,20 +1,135 @@
 /**
- * NFT Utilities Barrel Export
+ * NFT MODULE - Sistema centralizado para busca e filtro de NFTs
  *
- * Centralized exports for NFT-related utilities
+ * IMPORTE DAQUI EM TODO LUGAR!
+ *
+ * Uso:
+ *   import { fetchPlayerCards, filterUnopened, isRevealed } from '@/lib/nft';
  */
 
-// Attribute parsing and calculations
-export {
-  findAttr,
-  isUnrevealed,
-  calcPower,
-  normalizeUrl,
-} from "./attributes";
+// Re-export de card-filter (includes isSameCard, findCard, hasCard, getCardKey)
+export * from './card-filter';
 
-// NFT fetching and image handling
-export {
-  getImage,
-  fetchNFTs,
-  getAlchemyStatus,
-} from "./fetcher";
+// Re-export funções de attributes
+export { findAttr, calcPower, normalizeUrl, isUnrevealed } from './attributes';
+
+// Re-export funções de fetcher
+export { getImage, fetchNFTs, getAlchemyStatus } from './fetcher';
+
+import { fetchNFTs, getImage } from './fetcher';
+import { findAttr, calcPower } from './attributes';
+import { filterUnopened } from './card-filter';
+import { getEnabledCollections, type CollectionId } from '@/lib/collections/index';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import type { Card, CardRarity, CardFoil } from '@/lib/types/card';
+
+/**
+ * Busca NFTs de todas as coleções habilitadas para um endereço
+ */
+export async function fetchNFTsFromAllCollections(owner: string): Promise<any[]> {
+  const enabledCollections = getEnabledCollections();
+  console.log('🎴 [NFT] Fetching from', enabledCollections.length, 'collections');
+
+  const allNfts: any[] = [];
+
+  for (const collection of enabledCollections) {
+    if (!collection.contractAddress) {
+      console.log(`⏭️ Skipping ${collection.displayName} - no contract`);
+      continue;
+    }
+
+    try {
+      console.log(`📡 Fetching ${collection.displayName}...`);
+      const nfts = await fetchNFTs(owner, collection.contractAddress);
+      const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+      allNfts.push(...tagged);
+      console.log(`✓ ${collection.displayName}: ${nfts.length} NFTs`);
+    } catch (error) {
+      console.error(`✗ ${collection.displayName} failed:`, error);
+    }
+  }
+
+  console.log(`✅ [NFT] Total NFTs: ${allNfts.length}`);
+  return allNfts;
+}
+
+/**
+ * Processa NFTs raw em Cards utilizáveis
+ * Já filtra cards unopened automaticamente
+ * LÓGICA IDÊNTICA À HOME PAGE!
+ */
+export async function processNFTsToCards(rawNfts: any[]): Promise<Card[]> {
+  const processed: (Card & { status?: string })[] = [];
+
+  for (const nft of rawNfts) {
+    try {
+      const name = nft.name || nft.title || `#${nft.tokenId}`;
+      const rarity = findAttr(nft, 'Rarity') || findAttr(nft, 'rarity') || 'Common';
+      const status = findAttr(nft, 'Status') || findAttr(nft, 'status') || '';
+      const foil = findAttr(nft, 'Foil') || findAttr(nft, 'foil') || 'None';
+      const power = calcPower(nft);
+
+      const rawImageUrl = await getImage(nft, nft.collection);
+      const imageUrl = rawImageUrl ? (convertIpfsUrl(rawImageUrl) || rawImageUrl) : '/placeholder.png';
+
+      processed.push({
+        tokenId: nft.tokenId,
+        name,
+        imageUrl,
+        rarity: rarity as CardRarity,
+        status, // Para filtro de unopened
+        foil: foil as CardFoil,
+        power,
+        collection: nft.collection as CollectionId,
+      });
+    } catch (e) {
+      console.error('Error processing NFT:', nft.tokenId, e);
+    }
+  }
+
+  // Filtra unopened - LÓGICA IDÊNTICA À HOME PAGE!
+  // Checa rarity !== 'unopened' && status !== 'unopened'
+  const revealed = filterUnopened(processed);
+  console.log(`📊 [NFT] Processed: ${processed.length} → ${revealed.length} revealed`);
+
+  return revealed;
+}
+
+/**
+ * Busca e processa cards de um jogador (tudo em um)
+ * Retorna cards já filtrados e prontos para uso
+ */
+export async function fetchPlayerCards(address: string): Promise<Card[]> {
+  const raw = await fetchNFTsFromAllCollections(address);
+  const cards = await processNFTsToCards(raw);
+
+  // Deduplica
+  const seen = new Set<string>();
+  const deduplicated = cards.filter(card => {
+    const key = `${card.collection || 'default'}-${card.tokenId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return deduplicated;
+}
+
+/**
+ * Conta cards revelados e não revelados de uma lista de NFTs raw
+ */
+export function countRevealedUnopened(rawNfts: any[]): { revealed: number; unopened: number } {
+  let revealed = 0;
+  let unopened = 0;
+
+  for (const nft of rawNfts) {
+    const rarity = (findAttr(nft, 'rarity') || '').toLowerCase();
+    if (rarity === 'unopened') {
+      unopened++;
+    } else {
+      revealed++;
+    }
+  }
+
+  return { revealed, unopened };
+}

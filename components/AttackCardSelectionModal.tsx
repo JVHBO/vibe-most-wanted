@@ -71,7 +71,7 @@ interface AttackCardSelectionModalProps {
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
 
   // Functions
-  isCardLocked: (tokenId: string, mode: 'attack' | 'pvp') => boolean;
+  isCardLocked: (card: { tokenId: string; collection?: string }, mode: 'attack' | 'pvp') => boolean;
   payEntryFee: (params: { address: string; mode: 'attack' | 'pvp' }) => Promise<any>;
   recordAttackResult: (params: any) => Promise<any>;
   showVictory: () => void;
@@ -513,7 +513,8 @@ export function AttackCardSelectionModal({
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-4">
               {paginatedCards.map((nft) => {
                 const isSelected = attackSelectedCards.find(c => isSameCard(c, nft));
-                const isLocked = isCardLocked(nft.tokenId, 'attack');
+                // Use card object for proper collection+tokenId comparison
+                const isLocked = isCardLocked(nft, 'attack');
                 return (
                   <button
                     key={getCardUniqueId(nft)}

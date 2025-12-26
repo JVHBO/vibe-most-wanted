@@ -19,6 +19,7 @@ import { filterCardsByCollections, COLLECTIONS, type CollectionId, getCardUnique
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/nft/attributes';
+import { isSameCard, findCard, getCardKey } from '@/lib/nft';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -1524,13 +1525,15 @@ export default function ProfilePage() {
               {nfts
                 .filter(nft => nft.rarity && nft.rarity.toLowerCase() !== 'unopened')
                 .map((nft) => {
-                const isSelected = attackSelectedCards.find(c => c.tokenId === nft.tokenId);
+                // Use findCard for proper collection+tokenId comparison
+                const isSelected = findCard(attackSelectedCards, nft);
                 return (
                   <div
-                    key={nft.tokenId}
+                    key={getCardKey(nft)}
                     onClick={() => {
                       if (isSelected) {
-                        setAttackSelectedCards(prev => prev.filter(c => c.tokenId !== nft.tokenId));
+                        // Use isSameCard for proper collection+tokenId comparison
+                        setAttackSelectedCards(prev => prev.filter(c => !isSameCard(c, nft)));
                       } else if (attackSelectedCards.length < 5) {
                         setAttackSelectedCards(prev => [...prev, nft]);
                       }

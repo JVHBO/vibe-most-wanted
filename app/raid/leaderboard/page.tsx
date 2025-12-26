@@ -40,16 +40,16 @@ function PlayerRaidDeckView({
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-xl border-2 border-purple-600 max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6"
+        className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-display font-bold text-purple-400">
+          <h2 className="text-xl font-display font-bold text-vintage-gold">
             {playerUsername}'s Raid Team
           </h2>
           <button
             onClick={onClose}
-            className="text-vintage-burnt-gold hover:text-red-400 text-2xl"
+            className="text-vintage-burnt-gold hover:text-vintage-gold text-2xl"
           >
             ×
           </button>
@@ -57,7 +57,7 @@ function PlayerRaidDeckView({
 
         {playerDeck === undefined ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent mx-auto mb-2"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-vintage-gold border-t-transparent mx-auto mb-2"></div>
             <p className="text-vintage-burnt-gold">Loading deck...</p>
           </div>
         ) : playerDeck === null ? (
@@ -70,34 +70,34 @@ function PlayerRaidDeckView({
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="bg-purple-600/20 border border-purple-600/50 rounded-lg p-3 text-center">
-                <p className="text-purple-400 text-xs font-bold">Deck Power</p>
+              <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
+                <p className="text-vintage-gold text-xs font-bold">Deck Power</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.deckPower?.toLocaleString() || 0}
                 </p>
               </div>
-              <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-3 text-center">
-                <p className="text-red-400 text-xs font-bold">Total Damage</p>
+              <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
+                <p className="text-amber-500 text-xs font-bold">Total Damage</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.totalDamageDealt?.toLocaleString() || 0}
                 </p>
               </div>
-              <div className="bg-yellow-600/20 border border-yellow-600/50 rounded-lg p-3 text-center">
-                <p className="text-yellow-400 text-xs font-bold">Bosses Killed</p>
+              <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
+                <p className="text-green-400 text-xs font-bold">Bosses Killed</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.bossesKilled || 0}
                 </p>
               </div>
             </div>
 
-            <h3 className="text-lg font-bold text-vintage-burnt-gold mb-3">
+            <h3 className="text-lg font-bold text-vintage-gold mb-3">
               Attack Deck ({playerDeck.deck?.length || 0}/5)
             </h3>
             <div className="grid grid-cols-5 gap-2 mb-4">
               {playerDeck.deck?.map((card: any, index: number) => (
                 <div
                   key={card.tokenId || index}
-                  className="relative bg-vintage-black rounded-lg overflow-hidden border-2 border-purple-600/50"
+                  className="relative bg-vintage-black rounded-lg overflow-hidden border-2 border-vintage-gold/50"
                 >
                   <CardMedia
                     src={card.imageUrl}
@@ -105,7 +105,7 @@ function PlayerRaidDeckView({
                     className="w-full aspect-[2/3] object-cover"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
-                    <p className="text-vintage-burnt-gold text-xs text-center font-bold">
+                    <p className="text-vintage-gold text-xs text-center font-bold">
                       {card.power}
                     </p>
                   </div>
@@ -115,9 +115,9 @@ function PlayerRaidDeckView({
                 (_, index) => (
                   <div
                     key={`empty-${index}`}
-                    className="aspect-[2/3] bg-vintage-black/50 rounded-lg border-2 border-dashed border-purple-600/30 flex items-center justify-center"
+                    className="aspect-[2/3] bg-vintage-black/50 rounded-lg border-2 border-dashed border-vintage-gold/30 flex items-center justify-center"
                   >
-                    <span className="text-purple-600/50 text-2xl">?</span>
+                    <span className="text-vintage-gold/50 text-2xl">?</span>
                   </div>
                 )
               )}
@@ -125,19 +125,19 @@ function PlayerRaidDeckView({
 
             {playerDeck.vibefidCard && (
               <>
-                <h3 className="text-lg font-bold text-cyan-400 mb-3">
+                <h3 className="text-lg font-bold text-purple-400 mb-3">
                   VibeFID Card (Bonus Slot)
                 </h3>
                 <div className="flex justify-center mb-4">
-                  <div className="relative w-24 bg-vintage-black rounded-lg overflow-hidden border-2 border-cyan-500">
+                  <div className="relative w-24 bg-vintage-black rounded-lg overflow-hidden border-2 border-purple-500">
                     <CardMedia
                       src={playerDeck.vibefidCard.imageUrl}
                       alt={playerDeck.vibefidCard.name}
                       className="w-full aspect-[2/3] object-cover"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
-                      <p className="text-cyan-400 text-xs text-center font-bold">
-                        {((playerDeck.vibefidCard.power || 0) * 10).toLocaleString()} <span className="text-purple-400">(10x)</span>
+                      <p className="text-purple-400 text-xs text-center font-bold">
+                        {((playerDeck.vibefidCard.power || 0) * 10).toLocaleString()} <span className="text-vintage-gold">(10x)</span>
                       </p>
                     </div>
                   </div>
@@ -149,7 +149,7 @@ function PlayerRaidDeckView({
 
         <button
           onClick={onClose}
-          className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold transition"
+          className="w-full px-4 py-3 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold transition"
         >
           Close
         </button>
@@ -201,37 +201,37 @@ function CurrentBossLeaderboard({
     <>
       <div className="max-w-4xl mx-auto">
         {/* Boss Info Header */}
-        <div className="bg-red-600/20 border border-red-600/50 rounded-xl p-4 mb-6">
+        <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-xl p-4 mb-6">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-20 h-28 flex-shrink-0">
               <CardMedia
                 src={currentBoss.imageUrl}
                 alt={currentBoss.name}
-                className="w-full h-full object-cover rounded-lg border-2 border-red-600"
+                className="w-full h-full object-cover rounded-lg border-2 border-vintage-gold"
               />
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-display font-bold text-red-400">
+              <h2 className="text-2xl font-display font-bold text-vintage-gold">
                 {currentBoss.name}
               </h2>
               <p className="text-vintage-burnt-gold text-sm">
                 {currentBoss.rarity} Boss • Currently Active
               </p>
               <div className="mt-2">
-                <div className="w-full h-3 bg-vintage-black rounded-full overflow-hidden">
+                <div className="w-full h-3 bg-vintage-black rounded-full overflow-hidden border border-vintage-gold/30">
                   <div
-                    className="h-full bg-gradient-to-r from-green-500 to-red-500 transition-all duration-1000"
+                    className="h-full bg-gradient-to-r from-vintage-gold to-amber-500 transition-all duration-1000"
                     style={{ width: `${(currentBoss.currentHp / currentBoss.maxHp) * 100}%` }}
                   />
                 </div>
                 <p className="text-xs text-vintage-burnt-gold mt-1">
-                  {currentBoss.currentHp.toLocaleString()} / {currentBoss.maxHp.toLocaleString()} HP
+                  💛 {currentBoss.currentHp.toLocaleString()} / {currentBoss.maxHp.toLocaleString()} HP
                 </p>
               </div>
             </div>
           </div>
           <div className="text-center">
-            <p className="text-red-400 font-bold">
+            <p className="text-vintage-gold font-bold">
               Reward Pool: {REWARD_POOL.toLocaleString()} $TESTVBMS
             </p>
             <p className="text-vintage-burnt-gold text-xs mt-1">
@@ -241,9 +241,9 @@ function CurrentBossLeaderboard({
         </div>
 
         {/* Total Damage */}
-        <div className="bg-vintage-charcoal/50 rounded-lg p-4 mb-6 text-center">
+        <div className="bg-vintage-charcoal/50 rounded-lg p-4 mb-6 text-center border border-vintage-gold/20">
           <span className="text-vintage-burnt-gold text-sm">Total Community Damage</span>
-          <p className="text-vintage-neon-blue font-bold text-2xl">
+          <p className="text-vintage-gold font-bold text-2xl">
             {totalDamage.toLocaleString()}
           </p>
         </div>
@@ -260,8 +260,8 @@ function CurrentBossLeaderboard({
                 key={contributor.address}
                 className={`bg-vintage-black/50 rounded-lg p-4 border ${
                   isUser
-                    ? "border-vintage-neon-blue shadow-lg shadow-vintage-neon-blue/20"
-                    : "border-red-600/30"
+                    ? "border-vintage-gold shadow-lg shadow-vintage-gold/20"
+                    : "border-vintage-gold/20"
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
@@ -276,7 +276,7 @@ function CurrentBossLeaderboard({
                     <span className="text-vintage-burnt-gold font-bold">
                       {contributor.username}
                       {isUser && (
-                        <span className="text-vintage-neon-blue ml-2">(You)</span>
+                        <span className="text-vintage-gold ml-2">(You)</span>
                       )}
                     </span>
                   </div>
@@ -285,7 +285,7 @@ function CurrentBossLeaderboard({
                       if (soundEnabled) AudioManager.buttonClick();
                       setSelectedPlayer({ address: contributor.address, username: contributor.username });
                     }}
-                    className="px-3 py-1 bg-purple-600/80 hover:bg-purple-600 text-white text-sm rounded font-bold transition"
+                    className="px-3 py-1 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 text-sm rounded font-bold transition"
                   >
                     View Team
                   </button>
@@ -294,16 +294,16 @@ function CurrentBossLeaderboard({
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-vintage-burnt-gold text-sm">Damage</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-vintage-neon-blue font-bold">
+                    <span className="text-vintage-gold font-bold">
                       {contributor.damageDealt.toLocaleString()}
                     </span>
-                    <span className="text-red-400 text-xs">({contributionPercent.toFixed(2)}%)</span>
+                    <span className="text-amber-500 text-xs">({contributionPercent.toFixed(2)}%)</span>
                   </div>
                 </div>
 
                 <div className="w-full h-2 bg-vintage-black rounded overflow-hidden mb-3">
                   <div
-                    className="h-full bg-gradient-to-r from-vintage-neon-blue to-vintage-gold transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-vintage-gold to-amber-500 transition-all duration-500"
                     style={{ width: `${Math.min(contributionPercent, 100)}%` }}
                   />
                 </div>
@@ -388,12 +388,12 @@ function HistoricalBossLeaderboard({
             <img
               src={bossHistory.imageUrl}
               alt={bossHistory.name}
-              className="w-full h-full object-cover rounded-lg border-2 border-red-600"
+              className="w-full h-full object-cover rounded-lg border-2 border-vintage-gold"
             />
           </div>
 
           <div className="flex-1">
-            <h2 className="text-xl font-display font-bold text-red-400 mb-1">
+            <h2 className="text-xl font-display font-bold text-vintage-gold mb-1">
               {bossHistory.name}
             </h2>
             <div className="flex items-center gap-2 mb-2">
@@ -406,31 +406,31 @@ function HistoricalBossLeaderboard({
               }`}>
                 {bossHistory.rarity}
               </span>
-              <span className="text-vintage-ice/70 text-xs">
+              <span className="text-vintage-burnt-gold/70 text-xs">
                 Boss #{bossIndex}
               </span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
               <div>
-                <span className="text-vintage-ice/70">HP:</span>
-                <span className="text-red-400 font-bold ml-1">
+                <span className="text-vintage-burnt-gold/70">HP:</span>
+                <span className="text-vintage-gold font-bold ml-1">
                   {bossHistory.maxHp.toLocaleString()}
                 </span>
               </div>
               <div>
-                <span className="text-vintage-ice/70">Duration:</span>
-                <span className="text-vintage-neon-blue font-bold ml-1">
+                <span className="text-vintage-burnt-gold/70">Duration:</span>
+                <span className="text-amber-500 font-bold ml-1">
                   {formatDuration(bossHistory.duration)}
                 </span>
               </div>
               <div>
-                <span className="text-vintage-ice/70">Players:</span>
+                <span className="text-vintage-burnt-gold/70">Players:</span>
                 <span className="text-vintage-gold font-bold ml-1">
                   {bossHistory.totalPlayers}
                 </span>
               </div>
               <div>
-                <span className="text-vintage-ice/70">Attacks:</span>
+                <span className="text-vintage-burnt-gold/70">Attacks:</span>
                 <span className="text-green-400 font-bold ml-1">
                   {bossHistory.totalAttacks.toLocaleString()}
                 </span>
@@ -439,9 +439,9 @@ function HistoricalBossLeaderboard({
           </div>
         </div>
 
-        <div className="mt-4 bg-red-600/20 border border-red-600/50 rounded-lg p-3 text-center">
-          <p className="text-red-400 font-bold text-sm">DEFEATED</p>
-          <p className="text-vintage-ice/70 text-xs">
+        <div className="mt-4 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
+          <p className="text-vintage-gold font-bold text-sm">DEFEATED</p>
+          <p className="text-vintage-burnt-gold/70 text-xs">
             {new Date(bossHistory.defeatedAt).toLocaleString()}
           </p>
         </div>
@@ -449,25 +449,25 @@ function HistoricalBossLeaderboard({
 
       {/* User Performance */}
       {userContribution && (
-        <div className="p-4 bg-vintage-neon-blue/10 border-b-2 border-vintage-neon-blue/30">
-          <h3 className="text-vintage-neon-blue font-display font-bold mb-3 text-center">
+        <div className="p-4 bg-vintage-gold/10 border-b-2 border-vintage-gold/30">
+          <h3 className="text-vintage-gold font-display font-bold mb-3 text-center">
             Your Performance
           </h3>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="bg-vintage-charcoal/50 rounded-lg p-3">
-              <p className="text-vintage-ice/70 text-xs mb-1">Rank</p>
+              <p className="text-vintage-burnt-gold/70 text-xs mb-1">Rank</p>
               <p className="text-vintage-gold font-bold text-xl">
                 {userRank === 0 ? '🥇' : userRank === 1 ? '🥈' : userRank === 2 ? '🥉' : `#${userRank + 1}`}
               </p>
             </div>
             <div className="bg-vintage-charcoal/50 rounded-lg p-3">
-              <p className="text-vintage-ice/70 text-xs mb-1">Damage</p>
-              <p className="text-red-400 font-bold text-lg">
+              <p className="text-vintage-burnt-gold/70 text-xs mb-1">Damage</p>
+              <p className="text-vintage-gold font-bold text-lg">
                 {userContribution.damage.toLocaleString()}
               </p>
             </div>
             <div className="bg-vintage-charcoal/50 rounded-lg p-3">
-              <p className="text-vintage-ice/70 text-xs mb-1">Reward</p>
+              <p className="text-vintage-burnt-gold/70 text-xs mb-1">Reward</p>
               <p className="text-green-400 font-bold text-lg">
                 +{userContribution.reward}
               </p>
@@ -495,7 +495,7 @@ function HistoricalBossLeaderboard({
                 key={contributor.address}
                 className={`p-4 rounded-lg transition-all ${
                   isUser
-                    ? 'bg-vintage-neon-blue/20 border-2 border-vintage-neon-blue/50'
+                    ? 'bg-vintage-gold/20 border-2 border-vintage-gold/50'
                     : 'bg-vintage-charcoal/50 border border-vintage-gold/20'
                 }`}
               >
@@ -509,27 +509,27 @@ function HistoricalBossLeaderboard({
                           ? 'text-gray-300'
                           : index === 2
                           ? 'text-orange-400'
-                          : 'text-red-400'
+                          : 'text-vintage-burnt-gold/50'
                       }`}
                     >
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                     </span>
-                    <span className="text-vintage-gold font-bold">
+                    <span className="text-vintage-burnt-gold font-bold">
                       {contributor.username}
                       {isUser && (
-                        <span className="text-vintage-neon-blue ml-1 text-sm">(You)</span>
+                        <span className="text-vintage-gold ml-1 text-sm">(You)</span>
                       )}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-vintage-ice/70 text-xs">Damage</span>
+                  <span className="text-vintage-burnt-gold/70 text-xs">Damage</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-red-400 font-bold">
+                    <span className="text-vintage-gold font-bold">
                       {contributor.damage.toLocaleString()}
                     </span>
-                    <span className="text-vintage-ice/50 text-xs">
+                    <span className="text-amber-500 text-xs">
                       ({contributionPercent.toFixed(2)}%)
                     </span>
                   </div>
@@ -537,13 +537,13 @@ function HistoricalBossLeaderboard({
 
                 <div className="w-full h-2 bg-vintage-black rounded overflow-hidden mb-2">
                   <div
-                    className="h-full bg-gradient-to-r from-red-600 to-orange-500 transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-vintage-gold to-amber-500 transition-all duration-500"
                     style={{ width: `${contributionPercent}%` }}
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-vintage-ice/70 text-xs">Reward</span>
+                  <span className="text-vintage-burnt-gold/70 text-xs">Reward</span>
                   <span className="text-green-400 font-bold">
                     +{contributor.reward.toLocaleString()} $TESTVBMS
                   </span>
@@ -553,8 +553,8 @@ function HistoricalBossLeaderboard({
           })}
         </div>
 
-        <div className="mt-4 bg-green-600/20 border border-green-600/50 rounded-lg p-3 text-center">
-          <p className="text-green-400 font-bold">
+        <div className="mt-4 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
+          <p className="text-vintage-gold font-bold">
             Total Rewards Distributed: {bossHistory.topContributors.reduce((sum: number, c: { reward: number }) => sum + c.reward, 0).toLocaleString()} $TESTVBMS
           </p>
         </div>
@@ -625,12 +625,12 @@ function LeaderboardContent() {
               if (soundEnabled) AudioManager.buttonNav();
               router.push('/raid');
             }}
-            className="px-4 py-2 bg-vintage-black hover:bg-red-600/20 text-red-400 border border-red-600/50 rounded-lg font-bold text-sm transition"
+            className="px-4 py-2 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold text-sm transition"
           >
-            ← Back to Raid
+            ← Back
           </button>
           <h1 className="text-xl md:text-2xl font-display font-bold text-vintage-gold">
-            {isCurrentBoss ? 'Current Boss Leaderboard' : `Boss #${bossIndex} Leaderboard`}
+            {isCurrentBoss ? 'Leaderboard' : `Boss #${bossIndex}`}
           </h1>
           <div className="w-24" />
         </div>

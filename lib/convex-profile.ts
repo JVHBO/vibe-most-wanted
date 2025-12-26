@@ -101,6 +101,7 @@ export interface UserProfile {
   twitterProfileImageUrl?: string;
   fid?: string;
   farcasterFid?: number;
+  farcasterPfpUrl?: string;
   userIndex?: number;
   hasVibeBadge?: boolean; // VIBE badge for VibeFID holders (2x Wanted Cast)
   createdAt: number;

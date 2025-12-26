@@ -223,6 +223,8 @@ export const getLeaderboardLite = query({
           return cache.data.slice(0, limit).map(p => ({
             address: p.address,
             username: p.username,
+            twitterProfileImageUrl: p.twitterProfileImageUrl,
+            farcasterPfpUrl: p.farcasterPfpUrl,
             stats: {
               aura: p.aura,
               totalPower: p.totalPower,
@@ -314,6 +316,8 @@ export const updateLeaderboardFullCache = internalMutation({
         return {
           address,
           username: p.username || "unknown",
+          twitterProfileImageUrl: p.twitterProfileImageUrl,
+          farcasterPfpUrl: p.farcasterPfpUrl,
           aura: blacklisted ? -punishment : (p.stats?.aura ?? 500),
           totalPower: blacklisted ? -punishment : (p.stats?.totalPower || 0),
           vibePower: blacklisted ? 0 : (p.stats?.vibePower || 0),
@@ -598,6 +602,30 @@ export const upsertProfile = mutation({
       console.log(`🚫 [SECURITY] Blocked legacy account creation for ${address} - must use Farcaster`);
       throw new Error("🔒 Account creation requires Farcaster authentication. Please use the miniapp.");
     }
+  },
+});
+
+/**
+ * Update Farcaster PFP for a profile
+ */
+export const updateFarcasterPfp = mutation({
+  args: {
+    address: v.string(),
+    farcasterPfpUrl: v.string(),
+  },
+  handler: async (ctx, { address, farcasterPfpUrl }) => {
+    const normalizedAddress = normalizeAddress(address);
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    await ctx.db.patch(profile._id, { farcasterPfpUrl });
+    return { success: true };
   },
 });
 
@@ -1175,7 +1203,7 @@ export const getAvailableCards = query({
       return { lockedTokenIds: [], isLockEnabled: false };
     }
 
-    // Extract token IDs from defense deck
+    // Extract token IDs from defense deck using collection:tokenId format
     // EXCEPTION: VibeFID cards are NOT locked - they can be used in both attack and defense
     const lockedTokenIds: string[] = [];
     for (const card of profile.defenseDeck) {
@@ -1184,9 +1212,12 @@ export const getAvailableCards = query({
         if (card.collection === 'vibefid') {
           continue;
         }
-        lockedTokenIds.push(card.tokenId);
+        // Use collection:tokenId format for proper comparison
+        const cardKey = `${card.collection || 'default'}:${card.tokenId}`;
+        lockedTokenIds.push(cardKey);
       } else if (typeof card === 'string') {
-        lockedTokenIds.push(card);
+        // Legacy format - assume default collection
+        lockedTokenIds.push(`default:${card}`);
       }
     }
 
@@ -1227,9 +1258,14 @@ export const getLockedCardsForDeckBuilding = query({
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
+    // CRITICAL: Use collection:tokenId format to distinguish same tokenId across collections
     const lockedTokenIds: string[] = [];
     const lockedByRaid: string[] = [];
     const lockedByDefense: string[] = [];
+
+    // Helper to create unique card key
+    const getCardKey = (card: { tokenId: string; collection?: string }) =>
+      `${card.collection || 'default'}:${card.tokenId}`;
 
     if (mode === "defense") {
       // When building defense deck, raid cards are locked
@@ -1237,14 +1273,16 @@ export const getLockedCardsForDeckBuilding = query({
         for (const card of raidDeck.deck) {
           // VibeFID cards are exempt
           if (card.collection === 'vibefid') continue;
-          lockedTokenIds.push(card.tokenId);
-          lockedByRaid.push(card.tokenId);
+          const cardKey = getCardKey(card);
+          lockedTokenIds.push(cardKey);
+          lockedByRaid.push(cardKey);
         }
       }
       // Also check VibeFID slot
       if (raidDeck?.vibefidCard && raidDeck.vibefidCard.collection !== 'vibefid') {
-        lockedTokenIds.push(raidDeck.vibefidCard.tokenId);
-        lockedByRaid.push(raidDeck.vibefidCard.tokenId);
+        const cardKey = getCardKey(raidDeck.vibefidCard);
+        lockedTokenIds.push(cardKey);
+        lockedByRaid.push(cardKey);
       }
     } else if (mode === "raid") {
       // When building raid deck, defense cards are locked
@@ -1253,11 +1291,13 @@ export const getLockedCardsForDeckBuilding = query({
           if (typeof card === 'object' && card !== null && 'tokenId' in card) {
             // VibeFID cards are exempt
             if (card.collection === 'vibefid') continue;
-            lockedTokenIds.push(card.tokenId);
-            lockedByDefense.push(card.tokenId);
+            const cardKey = getCardKey(card);
+            lockedTokenIds.push(cardKey);
+            lockedByDefense.push(cardKey);
           } else if (typeof card === 'string') {
-            lockedTokenIds.push(card);
-            lockedByDefense.push(card);
+            // Legacy format: just tokenId (assume default collection)
+            lockedTokenIds.push(`default:${card}`);
+            lockedByDefense.push(`default:${card}`);
           }
         }
       }
@@ -1304,28 +1344,33 @@ export const cleanConflictingDefenseCards = mutation({
       return { cleaned: 0, removed: [] };
     }
 
-    // Get all raid card token IDs (excluding VibeFID)
-    const raidTokenIds = new Set<string>();
+    // Helper: Get unique card key (collection:tokenId format)
+    const getCardKey = (card: { tokenId: string; collection?: string }): string => {
+      return `${card.collection || 'default'}:${card.tokenId}`;
+    };
+
+    // Get all raid card keys (excluding VibeFID) using collection:tokenId format
+    const raidCardKeys = new Set<string>();
     for (const card of raidDeck.deck) {
       if (card.collection !== 'vibefid') {
-        raidTokenIds.add(card.tokenId);
+        raidCardKeys.add(getCardKey(card));
       }
     }
     if (raidDeck.vibefidCard && raidDeck.vibefidCard.collection !== 'vibefid') {
-      raidTokenIds.add(raidDeck.vibefidCard.tokenId);
+      raidCardKeys.add(getCardKey(raidDeck.vibefidCard));
     }
 
     // Filter defense deck to remove conflicting cards
     const removedCards: string[] = [];
     const cleanedDefenseDeck = profile.defenseDeck.filter((card) => {
-      let tokenId: string;
+      let cardKey: string;
       let collection: string | undefined;
 
       if (typeof card === 'object' && card !== null && 'tokenId' in card) {
-        tokenId = card.tokenId;
+        cardKey = getCardKey(card);
         collection = card.collection;
       } else if (typeof card === 'string') {
-        tokenId = card;
+        cardKey = `default:${card}`;
       } else {
         return true; // Keep unknown formats
       }
@@ -1335,9 +1380,9 @@ export const cleanConflictingDefenseCards = mutation({
         return true;
       }
 
-      // Remove if in raid deck
-      if (raidTokenIds.has(tokenId)) {
-        removedCards.push(tokenId);
+      // Remove if in raid deck (using collection:tokenId comparison)
+      if (raidCardKeys.has(cardKey)) {
+        removedCards.push(cardKey);
         return false;
       }
 
