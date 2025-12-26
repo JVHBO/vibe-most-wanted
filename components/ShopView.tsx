@@ -295,7 +295,7 @@ export function ShopView({ address }: ShopViewProps) {
                   <h3 className="text-xl font-display font-bold text-vintage-gold">
                     {luckBoost ? 'Lucky Pack' : 'Basic Pack'}
                   </h3>
-                  <p className="text-vintage-ice/60 text-xs">1 Nothing card per pack</p>
+                  <p className="text-vintage-ice/60 text-xs">1 FREE card per pack</p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-bold ${luckBoost ? 'bg-yellow-500 text-black' : 'bg-vintage-gold/20 text-vintage-gold'}`}>
                   {luckBoost ? 'BOOSTED' : 'BASIC'}
@@ -513,7 +513,7 @@ export function ShopView({ address }: ShopViewProps) {
             <div className="space-y-4 text-sm">
               <div>
                 <h4 className="font-bold text-vintage-gold mb-1">Basic Pack</h4>
-                <p className="text-vintage-ice/70 text-xs">1,000 VBMS per pack. Contains 1 Nothing card with random rarity.</p>
+                <p className="text-vintage-ice/70 text-xs">1,000 VBMS per pack. Contains 1 FREE card with random rarity.</p>
               </div>
 
               <div>

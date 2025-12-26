@@ -69,11 +69,10 @@ const dexTranslations = {
     buyWarningTitle: "How Buy Works",
     buyWarningText1: "When you buy VBMS, the following happens automatically:",
     buyWarningStep1: "1. Purchase pack(s) from vibe.market bonding curve",
-    buyWarningStep2: "2. Pack is opened and converted to VBMS tokens",
+    buyWarningStep2: "2. Pack is sold (closed) and converted to VBMS tokens",
     buyWarningStep3: "3. VBMS tokens are sent to your wallet",
     buyWarningNote: "This is all done in a single transaction via our router contract.",
     buyWarningFees: "Fees: ~3.75% on purchase (built into bonding curve price)",
-    buyWarningCards: "Each pack includes 1 Nothing card (non-NFT). Nothing cards are ~40% weaker than regular game cards.",
     buyWarningConfirm: "I Understand, Proceed",
     buyWarningCancel: "Cancel",
     // Zazza credits
@@ -128,11 +127,10 @@ const dexTranslations = {
     buyWarningTitle: "Como Funciona a Compra",
     buyWarningText1: "Quando você compra VBMS, acontece automaticamente:",
     buyWarningStep1: "1. Compra pack(s) da bonding curve do vibe.market",
-    buyWarningStep2: "2. Pack é aberto e convertido em tokens VBMS",
+    buyWarningStep2: "2. Pack é vendido (fechado) e convertido em tokens VBMS",
     buyWarningStep3: "3. Tokens VBMS são enviados para sua carteira",
     buyWarningNote: "Tudo isso é feito em uma única transação via nosso contrato router.",
     buyWarningFees: "Taxas: ~3.75% na compra (embutido no preço da bonding curve)",
-    buyWarningCards: "Cada pack inclui 1 carta Nothing (não-NFT). Cartas Nothing são ~40% mais fracas que cartas normais do jogo.",
     buyWarningConfirm: "Entendi, Continuar",
     buyWarningCancel: "Cancelar",
     // Zazza credits
@@ -191,7 +189,6 @@ const dexTranslations = {
     buyWarningStep3: "3. Los tokens VBMS se envían a tu cartera",
     buyWarningNote: "Todo esto se hace en una sola transacción via nuestro contrato router.",
     buyWarningFees: "Tarifas: ~3.75% en compra (incluido en el precio de la bonding curve)",
-    buyWarningCards: "Cada pack incluye 1 carta Nothing (no-NFT). Las cartas Nothing son ~40% más débiles que las cartas normales.",
     buyWarningConfirm: "Entendido, Continuar",
     buyWarningCancel: "Cancelar",
     // Zazza credits
@@ -250,7 +247,6 @@ const dexTranslations = {
     buyWarningStep3: "3. VBMS टोकन आपके वॉलेट में भेजे गए",
     buyWarningNote: "यह सब हमारे राउटर कॉन्ट्रैक्ट के माध्यम से एक ही लेनदेन में किया जाता है।",
     buyWarningFees: "शुल्क: खरीद पर ~3.75% (बॉन्डिंग कर्व मूल्य में शामिल)",
-    buyWarningCards: "प्रत्येक पैक में 1 Nothing कार्ड (गैर-NFT) शामिल है। Nothing कार्ड सामान्य गेम कार्ड से ~40% कमजोर हैं।",
     buyWarningConfirm: "समझ गया, आगे बढ़ें",
     buyWarningCancel: "रद्द करें",
     // Zazza credits
@@ -309,7 +305,6 @@ const dexTranslations = {
     buyWarningStep3: "3. Токены VBMS отправляются в ваш кошелек",
     buyWarningNote: "Все это делается в одной транзакции через наш роутер-контракт.",
     buyWarningFees: "Комиссия: ~3.75% при покупке (включена в цену bonding curve)",
-    buyWarningCards: "Каждый пакет включает 1 карту Nothing (не NFT). Карты Nothing на ~40% слабее обычных игровых карт.",
     buyWarningConfirm: "Понятно, продолжить",
     buyWarningCancel: "Отмена",
     // Zazza credits
@@ -368,7 +363,6 @@ const dexTranslations = {
     buyWarningStep3: "3. VBMS代币发送到您的钱包",
     buyWarningNote: "所有这些都通过我们的路由合约在一次交易中完成。",
     buyWarningFees: "费用：购买时约3.75%（包含在联合曲线价格中）",
-    buyWarningCards: "每个卡包包含1张Nothing卡（非NFT）。Nothing卡比普通游戏卡弱约40%。",
     buyWarningConfirm: "我理解，继续",
     buyWarningCancel: "取消",
     // Zazza credits
@@ -911,13 +905,6 @@ export default function DexPage() {
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-3">
               <p className="text-yellow-300 text-xs font-medium">
                 💸 {t.buyWarningFees}
-              </p>
-            </div>
-
-            {/* Cards Info */}
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-6">
-              <p className="text-red-300 text-xs font-medium">
-                🃏 {t.buyWarningCards}
               </p>
             </div>
 
