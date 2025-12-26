@@ -61,9 +61,21 @@ const dexTranslations = {
     back: "Back",
     // Fees
     feeBreakdown: "Fee Breakdown",
-    buyFee: "Buy: ~10% bonding curve spread",
-    sellFee: "Sell: ~5% protocol fee",
+    buyFee: "Buy: ~3.75%",
+    sellFee: "Sell: ~7%",
+    totalFee: "Total: ~10.5%",
     protocolNote: "Fees built into bonding curve pricing",
+    // Buy Warning Modal
+    buyWarningTitle: "How Buy Works",
+    buyWarningText1: "When you buy VBMS, the following happens automatically:",
+    buyWarningStep1: "1. Purchase pack(s) from vibe.market bonding curve",
+    buyWarningStep2: "2. Pack is opened and converted to VBMS tokens",
+    buyWarningStep3: "3. VBMS tokens are sent to your wallet",
+    buyWarningNote: "This is all done in a single transaction via our router contract.",
+    buyWarningFees: "Fees: ~3.75% on purchase (built into bonding curve price)",
+    buyWarningCards: "Each pack includes 1 Nothing card (non-NFT). Nothing cards are ~40% weaker than regular game cards.",
+    buyWarningConfirm: "I Understand, Proceed",
+    buyWarningCancel: "Cancel",
     // Zazza credits
     zazzaCredit: "Built with help from",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -108,9 +120,21 @@ const dexTranslations = {
     back: "Voltar",
     // Fees
     feeBreakdown: "Taxas",
-    buyFee: "Compra: ~10% spread bonding curve",
-    sellFee: "Venda: ~5% taxa de protocolo",
+    buyFee: "Compra: ~3.75%",
+    sellFee: "Venda: ~7%",
+    totalFee: "Total: ~10.5%",
     protocolNote: "Taxas embutidas no preço da bonding curve",
+    // Buy Warning Modal
+    buyWarningTitle: "Como Funciona a Compra",
+    buyWarningText1: "Quando você compra VBMS, acontece automaticamente:",
+    buyWarningStep1: "1. Compra pack(s) da bonding curve do vibe.market",
+    buyWarningStep2: "2. Pack é aberto e convertido em tokens VBMS",
+    buyWarningStep3: "3. Tokens VBMS são enviados para sua carteira",
+    buyWarningNote: "Tudo isso é feito em uma única transação via nosso contrato router.",
+    buyWarningFees: "Taxas: ~3.75% na compra (embutido no preço da bonding curve)",
+    buyWarningCards: "Cada pack inclui 1 carta Nothing (não-NFT). Cartas Nothing são ~40% mais fracas que cartas normais do jogo.",
+    buyWarningConfirm: "Entendi, Continuar",
+    buyWarningCancel: "Cancelar",
     // Zazza credits
     zazzaCredit: "Construído com ajuda de",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -155,9 +179,21 @@ const dexTranslations = {
     back: "Volver",
     // Fees
     feeBreakdown: "Desglose de tarifas",
-    buyFee: "Compra: ~10% spread bonding curve",
-    sellFee: "Venta: ~5% tarifa de protocolo",
+    buyFee: "Compra: ~3.75%",
+    sellFee: "Venta: ~7%",
+    totalFee: "Total: ~10.5%",
     protocolNote: "Tarifas incluidas en el precio de la bonding curve",
+    // Buy Warning Modal
+    buyWarningTitle: "Cómo Funciona la Compra",
+    buyWarningText1: "Cuando compras VBMS, sucede automáticamente:",
+    buyWarningStep1: "1. Compra pack(s) de la bonding curve de vibe.market",
+    buyWarningStep2: "2. El pack se abre y convierte en tokens VBMS",
+    buyWarningStep3: "3. Los tokens VBMS se envían a tu cartera",
+    buyWarningNote: "Todo esto se hace en una sola transacción via nuestro contrato router.",
+    buyWarningFees: "Tarifas: ~3.75% en compra (incluido en el precio de la bonding curve)",
+    buyWarningCards: "Cada pack incluye 1 carta Nothing (no-NFT). Las cartas Nothing son ~40% más débiles que las cartas normales.",
+    buyWarningConfirm: "Entendido, Continuar",
+    buyWarningCancel: "Cancelar",
     // Zazza credits
     zazzaCredit: "Construido con ayuda de",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -202,9 +238,21 @@ const dexTranslations = {
     back: "वापस",
     // Fees
     feeBreakdown: "शुल्क विवरण",
-    buyFee: "खरीद: ~10% बॉन्डिंग कर्व स्प्रेड",
-    sellFee: "बिक्री: ~5% प्रोटोकॉल शुल्क",
+    buyFee: "खरीद: ~3.75%",
+    sellFee: "बिक्री: ~7%",
+    totalFee: "कुल: ~10.5%",
     protocolNote: "बॉन्डिंग कर्व मूल्य में शुल्क शामिल",
+    // Buy Warning Modal
+    buyWarningTitle: "खरीद कैसे काम करती है",
+    buyWarningText1: "जब आप VBMS खरीदते हैं, स्वचालित रूप से होता है:",
+    buyWarningStep1: "1. vibe.market बॉन्डिंग कर्व से पैक खरीदें",
+    buyWarningStep2: "2. पैक खोला और VBMS टोकन में परिवर्तित",
+    buyWarningStep3: "3. VBMS टोकन आपके वॉलेट में भेजे गए",
+    buyWarningNote: "यह सब हमारे राउटर कॉन्ट्रैक्ट के माध्यम से एक ही लेनदेन में किया जाता है।",
+    buyWarningFees: "शुल्क: खरीद पर ~3.75% (बॉन्डिंग कर्व मूल्य में शामिल)",
+    buyWarningCards: "प्रत्येक पैक में 1 Nothing कार्ड (गैर-NFT) शामिल है। Nothing कार्ड सामान्य गेम कार्ड से ~40% कमजोर हैं।",
+    buyWarningConfirm: "समझ गया, आगे बढ़ें",
+    buyWarningCancel: "रद्द करें",
     // Zazza credits
     zazzaCredit: "की मदद से बनाया गया",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -249,9 +297,21 @@ const dexTranslations = {
     back: "Назад",
     // Fees
     feeBreakdown: "Комиссии",
-    buyFee: "Покупка: ~10% спред bonding curve",
-    sellFee: "Продажа: ~5% комиссия протокола",
+    buyFee: "Покупка: ~3.75%",
+    sellFee: "Продажа: ~7%",
+    totalFee: "Всего: ~10.5%",
     protocolNote: "Комиссии включены в цену bonding curve",
+    // Buy Warning Modal
+    buyWarningTitle: "Как работает покупка",
+    buyWarningText1: "Когда вы покупаете VBMS, автоматически происходит:",
+    buyWarningStep1: "1. Покупка пакета из bonding curve vibe.market",
+    buyWarningStep2: "2. Пакет открывается и конвертируется в токены VBMS",
+    buyWarningStep3: "3. Токены VBMS отправляются в ваш кошелек",
+    buyWarningNote: "Все это делается в одной транзакции через наш роутер-контракт.",
+    buyWarningFees: "Комиссия: ~3.75% при покупке (включена в цену bonding curve)",
+    buyWarningCards: "Каждый пакет включает 1 карту Nothing (не NFT). Карты Nothing на ~40% слабее обычных игровых карт.",
+    buyWarningConfirm: "Понятно, продолжить",
+    buyWarningCancel: "Отмена",
     // Zazza credits
     zazzaCredit: "Создано при помощи",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -296,9 +356,21 @@ const dexTranslations = {
     back: "返回",
     // Fees
     feeBreakdown: "费用明细",
-    buyFee: "购买: ~10% 联合曲线价差",
-    sellFee: "出售: ~5% 协议费",
+    buyFee: "购买: ~3.75%",
+    sellFee: "出售: ~7%",
+    totalFee: "总计: ~10.5%",
     protocolNote: "费用已包含在联合曲线定价中",
+    // Buy Warning Modal
+    buyWarningTitle: "购买如何运作",
+    buyWarningText1: "当您购买VBMS时，会自动发生以下操作：",
+    buyWarningStep1: "1. 从vibe.market联合曲线购买卡包",
+    buyWarningStep2: "2. 卡包被打开并转换为VBMS代币",
+    buyWarningStep3: "3. VBMS代币发送到您的钱包",
+    buyWarningNote: "所有这些都通过我们的路由合约在一次交易中完成。",
+    buyWarningFees: "费用：购买时约3.75%（包含在联合曲线价格中）",
+    buyWarningCards: "每个卡包包含1张Nothing卡（非NFT）。Nothing卡比普通游戏卡弱约40%。",
+    buyWarningConfirm: "我理解，继续",
+    buyWarningCancel: "取消",
     // Zazza credits
     zazzaCredit: "在以下帮助下构建",
     zazzaMiniapp: "Poorly Drawn Binders",
@@ -338,6 +410,8 @@ export default function DexPage() {
   // Language dropdown state
   const [showLangDropdown, setShowLangDropdown] = useState(false);
 
+  // Buy warning modal state
+  const [showBuyWarning, setShowBuyWarning] = useState(false);
 
   const handleBuyClick = () => {
     setMode("buy");
@@ -394,11 +468,21 @@ export default function DexPage() {
     ? BigInt(ethBalance.value) >= priceWei
     : false;
 
-  // Handle swap
+  // Handle swap button click - show warning for buy, direct swap for sell
+  const handleSwapButtonClick = () => {
+    if (mode === "buy") {
+      setShowBuyWarning(true);
+    } else {
+      handleSwap();
+    }
+  };
+
+  // Handle actual swap execution
   const handleSwap = async () => {
     try {
       if (mode === "buy") {
         if (!priceWei || packCount < 1) return;
+        setShowBuyWarning(false);
         await buyVBMS(packCount, priceWei);
       } else {
         if (!sellAmount || parseFloat(sellAmount) <= 0) return;
@@ -715,7 +799,7 @@ export default function DexPage() {
               </button>
             ) : (
               <button
-                onClick={handleSwap}
+                onClick={handleSwapButtonClick}
                 disabled={
                   isLoading ||
                   (mode === "buy" && (!hasEnoughEth || packCount < 1)) ||
@@ -745,6 +829,8 @@ export default function DexPage() {
             <span className="text-green-400">{t.buyFee}</span>
             <span className="text-vintage-gold/30">|</span>
             <span className="text-red-400">{t.sellFee}</span>
+            <span className="text-vintage-gold/30">|</span>
+            <span className="text-yellow-400 font-bold">{t.totalFee}</span>
           </div>
         </div>
 
@@ -776,6 +862,83 @@ export default function DexPage() {
           </p>
         </div>
       </div>
+
+      {/* Buy Warning Modal */}
+      {showBuyWarning && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-vintage-deep-black border-2 border-yellow-500/50 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            {/* Warning Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                <span className="text-4xl">⚠️</span>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-xl font-bold text-yellow-400 text-center mb-4">
+              {t.buyWarningTitle}
+            </h3>
+
+            {/* Description */}
+            <p className="text-vintage-ice/80 text-sm mb-4">
+              {t.buyWarningText1}
+            </p>
+
+            {/* Steps */}
+            <div className="space-y-2 mb-4">
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-green-400">📦</span>
+                <span className="text-vintage-ice/90">{t.buyWarningStep1}</span>
+              </div>
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-blue-400">🔄</span>
+                <span className="text-vintage-ice/90">{t.buyWarningStep2}</span>
+              </div>
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-purple-400">💰</span>
+                <span className="text-vintage-ice/90">{t.buyWarningStep3}</span>
+              </div>
+            </div>
+
+            {/* Note */}
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+              <p className="text-blue-300 text-xs">
+                ℹ️ {t.buyWarningNote}
+              </p>
+            </div>
+
+            {/* Fees */}
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-3">
+              <p className="text-yellow-300 text-xs font-medium">
+                💸 {t.buyWarningFees}
+              </p>
+            </div>
+
+            {/* Cards Info */}
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-6">
+              <p className="text-red-300 text-xs font-medium">
+                🃏 {t.buyWarningCards}
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBuyWarning(false)}
+                className="flex-1 py-3 px-4 rounded-xl border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 transition font-medium"
+              >
+                {t.buyWarningCancel}
+              </button>
+              <button
+                onClick={handleSwap}
+                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-400 hover:to-green-500 transition font-bold"
+              >
+                {t.buyWarningConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
