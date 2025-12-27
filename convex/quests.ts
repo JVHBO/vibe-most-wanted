@@ -76,13 +76,6 @@ const QUEST_POOL = [
     difficulty: "hard",
   },
   {
-    type: "low_power_win",
-    description: "Win a PvE battle with max 300 power",
-    requirement: { count: 1, maxPower: 300 },
-    reward: 200,
-    difficulty: "medium",
-  },
-  {
     type: "complete_5_battles",
     description: "Complete 5 battles (any mode)",
     requirement: { count: 5 },
