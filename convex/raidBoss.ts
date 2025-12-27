@@ -598,6 +598,49 @@ export const setRaidDeck = mutation({
 });
 
 /**
+ * Clear raid deck but keep damage stats
+ * Player can remove all cards from raid to use them elsewhere
+ * Damage dealt and bosses killed are preserved
+ */
+export const clearRaidDeck = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const address = args.address.toLowerCase();
+
+    // Get player's raid deck
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!raidDeck) {
+      throw new Error("Player has no raid deck");
+    }
+
+    // Clear deck but preserve damage stats
+    await ctx.db.patch(raidDeck._id, {
+      deck: [],
+      vibefidCard: undefined,
+      deckPower: 0,
+      cardEnergy: [],
+      entryFeePaid: false, // Allow new entry (will need to pay again)
+      lastUpdated: Date.now(),
+      // NOTE: totalDamageDealt and bossesKilled are NOT cleared
+    });
+
+    console.log(`🗑️ Raid deck cleared for ${address} (damage preserved: ${raidDeck.totalDamageDealt})`);
+
+    return {
+      success: true,
+      damagePreserved: raidDeck.totalDamageDealt,
+      bossesKilledPreserved: raidDeck.bossesKilled,
+    };
+  },
+});
+
+/**
  * Refuel card energy (costs 1 VBMS per card, or 4 VBMS for all 5)
  */
 export const refuelCards = mutation({
