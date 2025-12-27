@@ -506,8 +506,9 @@ export default function DexPage() {
   const isLoading = mode === "buy" ? buyLoading : sellLoading;
   const currentTxHash = mode === "buy" ? buyTxHash : sellTxHash;
 
-  // Estimated VBMS for packs (100k per pack)
-  const estimatedVBMS = packCount * 100000;
+  // Estimated VBMS for packs (100k per pack, minus 3.75% buy fee)
+  const BUY_FEE = 0.0375; // 3.75% fee on buy
+  const estimatedVBMS = Math.floor(packCount * 100000 * (1 - BUY_FEE)); // ~96,250 per pack after fees
 
   // Current language option
   const currentLangOption = languageOptions.find((l) => l.code === lang) || languageOptions[0];
