@@ -140,14 +140,28 @@ export function useDailyClaimInfo(address?: `0x${string}`) {
   // getDailyClaimInfo returns (uint256 remaining, uint256 resetTime)
   const result = data as [bigint, bigint] | undefined;
 
+  // 🔒 IMPORTANT: If contract call fails, don't assume a high fallback value!
+  // This prevents users from trying to claim more than their actual remaining limit.
+  // Fallback to 0 to force UI to show "loading" or prevent claims until data loads.
+  const hasValidData = result && result[0] !== undefined;
+
+  // Site limit is 500k (lower than contract's 750k for safety margin)
+  const SITE_DAILY_LIMIT = BigInt('500000000000000000000000'); // 500k in wei
+  const SITE_DAILY_LIMIT_FORMATTED = '500000';
+
+  // Cap the remaining value to site limit (user shouldn't see more than they can claim via site)
+  const contractRemaining = hasValidData ? result[0] : BigInt(0);
+  const cappedRemaining = contractRemaining > SITE_DAILY_LIMIT ? SITE_DAILY_LIMIT : contractRemaining;
+
   return {
-    remaining: result ? formatEther(result[0]) : '100000',
-    remainingRaw: result ? result[0] : BigInt('100000000000000000000000'),
-    resetTime: result ? Number(result[1]) : Math.floor(Date.now() / 1000) + 86400,
-    dailyLimit: '500000', // 500k VBMS daily limit (constant from contract)
+    remaining: hasValidData ? formatEther(cappedRemaining) : '0',
+    remainingRaw: hasValidData ? cappedRemaining : BigInt(0),
+    resetTime: hasValidData ? Number(result[1]) : Math.floor(Date.now() / 1000) + 86400,
+    dailyLimit: SITE_DAILY_LIMIT_FORMATTED, // Site limit (lower than contract's 750k for safety)
     isLoading,
     refetch,
     error,
+    hasError: !!error || !hasValidData,
   };
 }
 

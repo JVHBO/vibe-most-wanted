@@ -196,8 +196,8 @@ export default function QuestsPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-charcoal/50" />
         <div className="relative z-10 flex items-center justify-center h-full">
           <div className="text-center">
-            <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">QUESTS</h2>
-            <p className="text-vintage-ice/70">Connect wallet to access</p>
+            <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">{t('questsTitle')}</h2>
+            <p className="text-vintage-ice/70">{t('questsConnectWallet')}</p>
           </div>
         </div>
       </div>
@@ -213,13 +213,13 @@ export default function QuestsPage() {
       <div className="absolute top-0 left-0 right-0 z-10 p-3">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push("/")}
             className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-ice hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> Back
+            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> {t('questsHome')}
           </button>
 
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider">QUESTS</h1>
+          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
 
           <div className="w-20" />
         </div>
@@ -231,13 +231,13 @@ export default function QuestsPage() {
           <button
             className="flex-1 py-2 px-3 rounded-lg font-bold text-sm transition-all bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold"
           >
-            Missions
+            {t('questsMissions')}
           </button>
           <button
             onClick={() => router.push("/quests/cast")}
             className="flex-1 py-2 px-3 rounded-lg font-bold text-sm transition-all bg-vintage-charcoal/30 border border-vintage-gold/20 text-vintage-ice/70"
           >
-            Wanted Casts
+            {t('questsWantedCasts')}
           </button>
         </div>
       </div>
@@ -251,7 +251,7 @@ export default function QuestsPage() {
               {/* Personal Missions (Welcome, VibeFID, etc) */}
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-vintage-gold text-xs font-bold">PERSONAL MISSIONS</p>
+                  <p className="text-vintage-gold text-xs font-bold">{t('questsPersonalMissions')}</p>
                   {missions.some(m => m.completed && !m.claimed) && (
                     <button
                       onClick={async () => {
@@ -352,7 +352,7 @@ export default function QuestsPage() {
 
               {/* Social Quests */}
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
-                <p className="text-vintage-gold text-xs font-bold mb-2">SOCIAL QUESTS</p>
+                <p className="text-vintage-gold text-xs font-bold mb-2">{t('questsSocialQuests')}</p>
                 <div className="space-y-2">
                   {SOCIAL_QUESTS.map((quest) => {
                     const status = getQuestStatus(quest);
@@ -386,14 +386,14 @@ export default function QuestsPage() {
                           <div className="flex items-center gap-2">
                             <span className="text-vintage-gold font-bold text-xs">+{quest.reward}</span>
                             {status === "claimed" ? (
-                              <span className="text-green-400 text-[10px]">Done</span>
+                              <span className="text-green-400 text-[10px]">{t('questsDone')}</span>
                             ) : status === "completed" ? (
                               <button
                                 onClick={() => handleClaimSocial(quest)}
                                 disabled={isClaimingSocial}
                                 className="px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px]"
                               >
-                                {isClaimingSocial ? "..." : "Claim"}
+                                {isClaimingSocial ? "..." : t('questsClaim')}
                               </button>
                             ) : (
                               <button
@@ -401,7 +401,7 @@ export default function QuestsPage() {
                                 disabled={isVerifying}
                                 className="px-2 py-1 rounded bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold font-bold text-[10px]"
                               >
-                                {isVerifying ? "..." : visitedQuests.has(quest.id) ? "Verify" : "Go"}
+                                {isVerifying ? "..." : visitedQuests.has(quest.id) ? t('questsVerify') : t('questsGo')}
                               </button>
                             )}
                           </div>
@@ -411,7 +411,7 @@ export default function QuestsPage() {
                   })}
                 </div>
                 {!userFid && (
-                  <p className="text-vintage-ice/50 text-[10px] text-center mt-2">Connect Farcaster to auto-verify</p>
+                  <p className="text-vintage-ice/50 text-[10px] text-center mt-2">{t('questsConnectFarcaster')}</p>
                 )}
               </div>
             </div>

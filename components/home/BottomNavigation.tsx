@@ -54,12 +54,12 @@ export function BottomNavigation({
           {isInFarcaster ? (
             <>
               <span className="text-xl leading-none">♠</span>
-              <span className="text-[9px] font-bold">Home</span>
+              <span className="text-[9px] font-bold">{t('navHome')}</span>
             </>
           ) : (
             <>
               <span className="text-lg">♠</span>
-              <span className="hidden sm:inline">Home</span>
+              <span className="hidden sm:inline">{t('navHome')}</span>
             </>
           )}
         </button>
@@ -74,13 +74,13 @@ export function BottomNavigation({
           )}
           {isInFarcaster ? (
             <>
-              <Image src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5" />
-              <span className="text-[9px] font-bold">Claim</span>
+              <Image src="/images/icons/inbox.svg" alt={t('navClaim')} width={20} height={20} className="w-5 h-5" />
+              <span className="text-[9px] font-bold">{t('navClaim')}</span>
             </>
           ) : (
             <>
-              <Image src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5" />
-              <span className="hidden sm:inline">Claim</span>
+              <Image src="/images/icons/inbox.svg" alt={t('navClaim')} width={20} height={20} className="w-5 h-5" />
+              <span className="hidden sm:inline">{t('navClaim')}</span>
             </>
           )}
         </button>
@@ -94,7 +94,7 @@ export function BottomNavigation({
           {isInFarcaster ? (
             <>
               <span className="text-xl leading-none">♔</span>
-              <span className="text-[9px] font-bold">Rank</span>
+              <span className="text-[9px] font-bold">{t('navRank')}</span>
             </>
           ) : (
             <>
@@ -117,7 +117,7 @@ export function BottomNavigation({
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
-              <span className="text-[9px] font-bold">Shop</span>
+              <span className="text-[9px] font-bold">{t('navShop')}</span>
             </>
           ) : (
             <>
@@ -126,7 +126,7 @@ export function BottomNavigation({
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
-              <span className="hidden sm:inline">Shop</span>
+              <span className="hidden sm:inline">{t('navShop')}</span>
             </>
           )}
         </Link>
@@ -143,12 +143,12 @@ export function BottomNavigation({
           {isInFarcaster ? (
             <>
               <span className="text-xl leading-none">◈</span>
-              <span className="text-[9px] font-bold">Quests</span>
+              <span className="text-[9px] font-bold">{t('navQuests')}</span>
             </>
           ) : (
             <>
               <span className="text-lg">◈</span>
-              <span className="hidden sm:inline">Quests</span>
+              <span className="hidden sm:inline">{t('navQuests')}</span>
             </>
           )}
         </Link>

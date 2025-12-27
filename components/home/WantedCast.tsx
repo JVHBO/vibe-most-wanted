@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface WantedCastProps {
   soundEnabled: boolean;
@@ -15,11 +16,13 @@ const MegaphoneIcon = () => (
 );
 
 export function WantedCast({ soundEnabled }: WantedCastProps) {
+  const { t } = useLanguage();
+
   return (
     <Link
       href="/quests/cast"
       onClick={() => soundEnabled && AudioManager.buttonClick()}
-      className="block bg-vintage-charcoal/80 backdrop-blur-sm rounded-xl border border-vintage-gold/30 px-4 py-3 hover:border-vintage-gold/50 hover:bg-vintage-charcoal transition-all"
+      className="tour-wanted-cast block bg-vintage-charcoal/80 backdrop-blur-sm rounded-xl border border-vintage-gold/30 px-4 py-3 hover:border-vintage-gold/50 hover:bg-vintage-charcoal transition-all"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -28,10 +31,10 @@ export function WantedCast({ soundEnabled }: WantedCastProps) {
           </div>
           <div>
             <span className="text-vintage-gold font-display font-bold text-sm">
-              WANTED CAST
+              {t('wantedCastTitle')}
             </span>
             <p className="text-vintage-burnt-gold text-[10px] font-modern">
-              Earn coins by interacting
+              {t('wantedCastDesc')}
             </p>
           </div>
         </div>

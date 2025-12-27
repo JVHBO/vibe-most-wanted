@@ -125,8 +125,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const { balance: vbmsWalletBalance } = useFarcasterVBMSBalance(address);
 
   // Get daily claim limits from contract
-  const { remaining: dailyRemaining, resetTime, isLoading: isLoadingLimits } = useDailyClaimInfo(address as `0x${string}` | undefined);
+  const { remaining: dailyRemaining, resetTime, isLoading: isLoadingLimits, hasError: hasLimitError } = useDailyClaimInfo(address as `0x${string}` | undefined);
   const dailyRemainingNum = parseFloat(dailyRemaining);
+  const canCheckLimit = !isLoadingLimits && !hasLimitError && dailyRemainingNum > 0;
 
   // Calculate time until reset
   const getResetTimeString = () => {
@@ -214,10 +215,12 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const selectedAmount = parseInt(convertAmount) || 0;
 
   // Check if conversion would exceed daily limit or balance
-  const exceedsDailyLimit = selectedAmount > dailyRemainingNum;
+  const exceedsDailyLimit = canCheckLimit && selectedAmount > dailyRemainingNum;
   const exceedsBalance = selectedAmount > testvbmsBalance;
   const isOnCooldown = cooldown > 0;
-  const canConvertTESTVBMS = selectedAmount >= 100 && !isProcessing && !exceedsDailyLimit && !exceedsBalance && !isOnCooldown;
+  const limitUnavailable = !isLoadingLimits && (hasLimitError || dailyRemainingNum === 0);
+  // Block conversion if: limit exceeded, balance exceeded, on cooldown, or limit data unavailable
+  const canConvertTESTVBMS = selectedAmount >= 100 && !isProcessing && !exceedsDailyLimit && !exceedsBalance && !isOnCooldown && !limitUnavailable;
 
   // Claim inbox → adiciona ao saldo TESTVBMS (instant, no gas)
   const handleClaimInbox = async () => {
@@ -244,7 +247,27 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
   // Convert TESTVBMS saldo → VBMS blockchain tokens
   const handleConvertTESTVBMS = async () => {
+    // 📊 Log conversion attempt details for debugging
+    console.log('[CoinsInboxModal] 🔄 Conversion attempt:', {
+      address,
+      userFid,
+      selectedAmount,
+      testvbmsBalance,
+      dailyRemaining,
+      dailyRemainingNum,
+      isLoadingLimits,
+      hasLimitError,
+      limitUnavailable,
+      exceedsDailyLimit,
+      exceedsBalance,
+      isOnCooldown,
+      cooldown,
+      canConvertTESTVBMS,
+      useFarcasterSDK,
+    });
+
     if (!address) {
+      console.error('[CoinsInboxModal] ❌ No address connected');
       toast.error("Conecte sua carteira");
       return;
     }
@@ -252,17 +275,26 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     // 🔒 SECURITY: Require FID for conversion
     if (!userFid) {
       toast.error("🔒 Farcaster authentication required. Please use the miniapp.");
-      console.error('[CoinsInboxModal] No FID available for conversion');
+      console.error('[CoinsInboxModal] ❌ No FID available for conversion');
       return;
     }
 
     if (!canConvertTESTVBMS) {
       if (selectedAmount < 100) {
+        console.warn('[CoinsInboxModal] ⚠️ Amount too low:', selectedAmount);
         toast.error("Mínimo de 100 coins para converter");
       } else if (exceedsBalance) {
+        console.warn('[CoinsInboxModal] ⚠️ Exceeds balance:', { selectedAmount, testvbmsBalance });
         toast.error("Valor maior que seu saldo");
       } else if (exceedsDailyLimit) {
-        toast.error("Valor excede o limite diário");
+        console.warn('[CoinsInboxModal] ⚠️ Exceeds daily limit:', { selectedAmount, dailyRemainingNum });
+        toast.error(`Valor excede o limite diário (restante: ${Math.floor(dailyRemainingNum).toLocaleString()})`);
+      } else if (limitUnavailable) {
+        console.warn('[CoinsInboxModal] ⚠️ Daily limit unavailable:', { hasLimitError, dailyRemainingNum });
+        toast.error("Limite diário indisponível. Tente novamente em alguns segundos.");
+      } else if (isOnCooldown) {
+        console.warn('[CoinsInboxModal] ⚠️ On cooldown:', cooldown);
+        toast.error(`Aguarde ${Math.ceil(cooldown / 60)} minutos para converter novamente`);
       }
       return;
     }
@@ -330,9 +362,39 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       }, 1500);
 
     } catch (error: any) {
-      console.error('[CoinsInboxModal] Error converting TESTVBMS:', error);
+      // 📊 Detailed error logging
+      console.error('[CoinsInboxModal] ❌ Conversion FAILED:', {
+        error: error.message,
+        errorCode: error.code,
+        errorData: error.data,
+        stack: error.stack,
+        attemptedAmount: selectedAmount,
+        dailyRemaining: dailyRemainingNum,
+        address,
+        useFarcasterSDK,
+      });
+
       toast.dismiss("conversion-wait");
-      toast.error(error.message || "Erro ao converter coins");
+
+      // Parse error message for user-friendly display
+      let userMessage = "Erro ao converter coins";
+      const errMsg = error.message?.toLowerCase() || '';
+
+      if (errMsg.includes('daily') || errMsg.includes('limit')) {
+        userMessage = "Limite diário excedido no contrato. Aguarde o reset.";
+      } else if (errMsg.includes('insufficient') || errMsg.includes('balance')) {
+        userMessage = "Saldo insuficiente no pool do contrato.";
+      } else if (errMsg.includes('signature') || errMsg.includes('sign')) {
+        userMessage = "Assinatura cancelada ou inválida.";
+      } else if (errMsg.includes('rejected') || errMsg.includes('denied')) {
+        userMessage = "Transação rejeitada pelo usuário.";
+      } else if (errMsg.includes('nonce')) {
+        userMessage = "Nonce já usado. Tente novamente.";
+      } else if (error.message) {
+        userMessage = error.message;
+      }
+
+      toast.error(userMessage);
 
       // Show recovery option after 5 minutes
       toast.info("Se a TX falhou, você pode recuperar seus coins em 5 minutos clicando no botão 'Recuperar'", {
@@ -422,10 +484,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               <NextImage src="/images/icons/convert.svg" alt="Convert" width={32} height={32} className="w-8 h-8" />
             </div>
             <h2 className="text-3xl font-display font-bold text-vintage-gold mb-2">
-              CONVERT
+              {t('convertTitle')}
             </h2>
             <p className="text-sm text-vintage-gold/70">
-              COINS → VBMS
+              {t('convertSubtitle')}
             </p>
           </div>
         </div>
@@ -436,13 +498,13 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <NextImage src="/images/icons/coins.svg" alt="Coins" width={24} height={24} className="w-6 h-6" />
-                <span className="text-xs font-bold text-green-300 uppercase">COINS</span>
+                <span className="text-xs font-bold text-green-300 uppercase">{t('convertCoins')}</span>
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-green-100">
                   {testvbmsBalance.toLocaleString()}
                 </div>
-                <div className="text-xs text-green-300/50">to convert</div>
+                <div className="text-xs text-green-300/50">{t('convertToConvert')}</div>
               </div>
             </div>
           </div>
@@ -452,13 +514,13 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           {/* Daily Claim Limits - Compact Display */}
           <div className="bg-vintage-deep-black/60 border border-vintage-gold/20 rounded-lg p-3 mb-3">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-vintage-gold/60">Daily Limit Remaining:</span>
+              <span className="text-vintage-gold/60">{t('convertDailyLimit')}</span>
               <span className={`font-bold ${exceedsDailyLimit ? 'text-red-400' : 'text-green-400'}`}>
                 {isLoadingLimits ? '...' : `${Number(dailyRemaining).toLocaleString()} VBMS`}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs mt-1">
-              <span className="text-vintage-gold/40">Resets in:</span>
+              <span className="text-vintage-gold/40">{t('convertResetsIn')}</span>
               <span className="text-vintage-gold/60">{getResetTimeString()}</span>
             </div>
             {exceedsDailyLimit && testvbmsBalance >= 100 && (
@@ -469,6 +531,11 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             {isOnCooldown && (
               <div className="mt-2 p-2 bg-orange-500/20 border border-orange-500/40 rounded text-xs text-orange-300 text-center">
                 ⏳ Cooldown: {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, '0')} until next conversion
+              </div>
+            )}
+            {limitUnavailable && (
+              <div className="mt-2 p-2 bg-yellow-500/20 border border-yellow-500/40 rounded text-xs text-yellow-300 text-center">
+                ⚠️ Daily limit reached or unavailable. Try again later or wait for reset.
               </div>
             )}
           </div>
@@ -482,7 +549,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               <>
                 {/* Amount Input */}
                 <div className="space-y-2">
-                  <label className="text-xs text-vintage-gold/70">Amount to convert:</label>
+                  <label className="text-xs text-vintage-gold/70">{t('convertAmountLabel')}</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
@@ -497,7 +564,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                       onClick={() => setConvertAmount(Math.min(testvbmsBalance, dailyRemainingNum).toString())}
                       className="px-3 py-2 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold rounded-lg text-xs font-bold hover:bg-vintage-gold/30 transition-all"
                     >
-                      MAX
+                      {t('convertMax')}
                     </button>
                   </div>
                   {exceedsBalance && (
@@ -519,7 +586,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                   <div className="relative flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <NextImage src="/images/icons/convert.svg" alt="Convert" width={16} height={16} className="w-4 h-4" />
-                      <span>Convert {selectedAmount > 0 ? selectedAmount.toLocaleString() : '0'} → VBMS</span>
+                      <span>{t('convertButton')} {selectedAmount > 0 ? selectedAmount.toLocaleString() : '0'} → VBMS</span>
                     </span>
                     <span className="text-xs opacity-80 bg-black/20 px-2 py-0.5 rounded">Gas</span>
                   </div>
@@ -528,7 +595,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             ) : (
               <div className="text-center py-3">
                 <p className="text-vintage-gold/60 text-xs">
-                  Minimum 100 COINS required to convert
+                  {t('convertMinRequired')}
                 </p>
               </div>
             )
@@ -536,9 +603,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             // BROWSER: Show disabled message with miniapp redirect
             <div className="bg-purple-950/30 border-2 border-purple-800/50 rounded-xl p-6 text-center">
               <div className="text-4xl mb-3">📱</div>
-              <h3 className="text-purple-400 font-bold text-lg mb-2">USE MINIAPP TO CLAIM</h3>
+              <h3 className="text-purple-400 font-bold text-lg mb-2">{t('convertUseMiniapp')}</h3>
               <p className="text-purple-400/70 text-sm mb-3">
-                COINS → VBMS conversion is only available in the Farcaster miniapp for security.
+                {t('convertMiniappOnly')}
               </p>
               <a
                 href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
@@ -546,7 +613,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                 rel="noopener noreferrer"
                 className="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-lg transition-all"
               >
-                Open Miniapp →
+                {t('convertOpenMiniapp')}
               </a>
               {testvbmsBalance > 0 && (
                 <div className="mt-4 bg-vintage-black/50 rounded-lg p-3">
@@ -564,7 +631,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
               disabled={isProcessing}
               className="w-full text-xs py-2 px-3 rounded-lg bg-orange-900/30 hover:bg-orange-900/50 border border-orange-500/30 text-orange-300/80 hover:text-orange-200 transition-all disabled:opacity-50"
             >
-              🔄 Recover Failed TX (after 5 min)
+              {t('convertRecoverFailed')}
             </button>
           )}
 

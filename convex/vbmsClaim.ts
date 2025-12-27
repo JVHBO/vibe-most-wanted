@@ -1074,6 +1074,14 @@ export const convertTESTVBMStoVBMS = action({
     signature: string;
     message: string;
   }> => {
+    // 📊 Log conversion attempt
+    console.log(`[VBMS] 🔄 Conversion attempt:`, {
+      address,
+      fid,
+      requestedAmount: amount,
+      timestamp: new Date().toISOString(),
+    });
+
     // 🔒 SECURITY: FID is required
     if (!fid || fid <= 0) {
       console.log(`[VBMS] ⛔ BLOCKED - No valid FID provided for ${address}`);
@@ -1085,7 +1093,19 @@ export const convertTESTVBMStoVBMS = action({
 
     // Get profile and validate via internal mutation (includes FID verification)
     // Pass nonce so it gets stored in pendingNonce for double-spend protection
-    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address, fid, amount, nonce });
+    let result;
+    try {
+      result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address, fid, amount, nonce });
+      console.log(`[VBMS] ✅ Internal mutation success:`, { claimAmount: result.claimAmount });
+    } catch (error: any) {
+      console.error(`[VBMS] ❌ Internal mutation FAILED:`, {
+        address,
+        fid,
+        requestedAmount: amount,
+        error: error.message,
+      });
+      throw error;
+    }
 
     // Generate signature for blockchain claim
     let signature: string;
@@ -1119,7 +1139,8 @@ export const convertTESTVBMStoVBMS = action({
 
 // Conversion cooldown (3 minutes)
 const CONVERSION_COOLDOWN_MS = 3 * 60 * 1000;
-// Claim limits (500k max per claim - must match contract's maxClaimAmount)
+// Claim limits - LOWER than contract to have buffer
+// Contract dailyClaimLimit: 750k, but site uses 500k for safety margin
 const MAX_CLAIM_AMOUNT = 500_000;
 const MIN_CLAIM_AMOUNT = 100;
 
@@ -1132,6 +1153,15 @@ export const convertTESTVBMSInternal = internalMutation({
     nonce: v.string(), // 🔒 Store for on-chain verification (anti double-spend)
   },
   handler: async (ctx, { address, fid, amount, nonce }): Promise<{ claimAmount: number }> => {
+    // 📊 Log internal conversion details
+    console.log(`[VBMS Internal] Processing conversion:`, {
+      address,
+      fid,
+      requestedAmount: amount,
+      maxAllowed: MAX_CLAIM_AMOUNT,
+      minRequired: MIN_CLAIM_AMOUNT,
+    });
+
     // 🚫 BLACKLIST CHECK - Block exploiters from claiming
     if (isBlacklisted(address)) {
       const info = getBlacklistInfo(address);
@@ -1140,6 +1170,15 @@ export const convertTESTVBMSInternal = internalMutation({
     }
 
     const profile = await getProfile(ctx, address);
+
+    // 📊 Log profile state
+    console.log(`[VBMS Internal] Profile state:`, {
+      coins: profile.coins || 0,
+      farcasterFid: profile.farcasterFid,
+      profileFid: profile.fid,
+      lastClaimTimestamp: profile.lastClaimTimestamp,
+      pendingConversion: profile.pendingConversion || 0,
+    });
 
     // 🔒 SECURITY: Verify FID matches the profile
     // This prevents direct API calls with fake/stolen FIDs
@@ -1253,8 +1292,9 @@ export const recordTESTVBMSConversion = mutation({
     const profile = await getProfile(ctx, address);
 
     // Update profile - clear pending conversion, update claimed tokens
+    // NOTE: Do NOT touch coins here - they were already deducted in convertTESTVBMSInternal
     await ctx.db.patch(profile._id, {
-      coins: 0, // Ensure coins stay at 0
+      // coins is NOT touched here - already correctly set in convertTESTVBMSInternal
       pendingConversion: 0, // Clear pending
       pendingConversionTimestamp: undefined,
       pendingNonce: undefined, // 🔒 Clear nonce after successful claim

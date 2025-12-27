@@ -57,6 +57,9 @@ interface SettingsModalProps {
   play: () => void;
   // Disconnect wallet
   disconnectWallet?: () => void;
+  // Tutorial reset
+  onResetTutorial?: () => void;
+  onResetGuidedTour?: () => void;
 }
 
 export function SettingsModal({
@@ -99,6 +102,8 @@ export function SettingsModal({
   pause,
   play,
   disconnectWallet,
+  onResetTutorial,
+  onResetGuidedTour,
 }: SettingsModalProps) {
   const { address: walletAddress } = useAccount();
   const [customUrlInput, setCustomUrlInput] = useState(customMusicUrl || '');
@@ -705,6 +710,48 @@ export function SettingsModal({
               </div>
             )}
           </div>
+
+          {/* Tutorial Reset */}
+          {(onResetTutorial || onResetGuidedTour) && (
+            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl sm:text-3xl text-vintage-gold">📖</span>
+                <div>
+                  <p className="font-modern font-bold text-vintage-gold">TUTORIAL</p>
+                  <p className="text-xs text-vintage-burnt-gold">
+                    {t('tutorialResetDesc') || 'Rewatch the onboarding tutorials'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                {onResetTutorial && (
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      onResetTutorial();
+                      onClose();
+                    }}
+                    className="flex-1 px-3 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-lg text-xs font-modern font-semibold transition"
+                  >
+                    {t('tutorialResetFull') || 'Full Tutorial'}
+                  </button>
+                )}
+                {onResetGuidedTour && (
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      onResetGuidedTour();
+                      onClose();
+                    }}
+                    className="flex-1 px-3 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded-lg text-xs font-modern font-semibold transition"
+                  >
+                    {t('tutorialResetTour') || 'Quick Tour'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Twitter/X Connection */}
           {userProfile && (
