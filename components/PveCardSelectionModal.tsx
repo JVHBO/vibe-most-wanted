@@ -126,7 +126,7 @@ export function PveCardSelectionModal({
       >
         {/* Header */}
         <h2 className="text-2xl md:text-3xl font-display font-bold text-center mb-2 text-vintage-neon-blue flex-shrink-0">
-          BUILD YOUR DECK
+          {t('deckBuilderTitle')}
         </h2>
 
         {/* Loading state */}
@@ -153,7 +153,7 @@ export function PveCardSelectionModal({
         {/* Counter */}
         <div className="text-center mb-2 flex-shrink-0">
           <p className="text-vintage-burnt-gold text-sm sm:text-base font-modern">
-            Select {handSize} cards ({pveSelectedCards.length}/{handSize})
+            {t('deckBuilderSelectCards').replace('5', String(handSize))} ({pveSelectedCards.length}/{handSize})
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export function PveCardSelectionModal({
             }}
             className="px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
           >
-            <option value="all">All Collections</option>
+            <option value="all">{t('deckBuilderAllCollections')}</option>
             {getEnabledCollections().map(col => (
               <option key={col.id} value={col.id}>{col.displayName}</option>
             ))}
@@ -190,7 +190,7 @@ export function PveCardSelectionModal({
                 : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
             }`}
           >
-            {pveSortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+            {pveSortByPower ? t('deckBuilderSortedByPower') : t('deckBuilderSortByPower')}
           </button>
         </div>
 
@@ -220,7 +220,7 @@ export function PveCardSelectionModal({
             ))}
           </div>
           <div className="mt-1 text-center">
-            <p className="text-xs text-vintage-burnt-gold">Total Power</p>
+            <p className="text-xs text-vintage-burnt-gold">{t('deckBuilderTotalPower')}</p>
             <p className="text-lg font-bold text-vintage-neon-blue">
               {pveSelectedCardsPower.toLocaleString()}
             </p>
@@ -310,17 +310,17 @@ export function PveCardSelectionModal({
             }`}
           >
             {jcNfts.length < handSize
-              ? 'Loading opponent deck...'
+              ? t('loadingDealerDeck')
               : pveSelectedCards.length === handSize
-              ? 'CHOOSE DIFFICULTY'
-              : `SELECT ${handSize - pveSelectedCards.length} MORE`}
+              ? t('chooseDifficulty')
+              : t('deckBuilderSelectMore').replace('{count}', String(handSize - pveSelectedCards.length))}
           </button>
 
           <button
             onClick={handleCancel}
             className="w-full px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern text-sm transition"
           >
-            Cancel
+            {t('cancel')}
           </button>
         </div>
         </>
