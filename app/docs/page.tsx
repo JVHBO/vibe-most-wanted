@@ -19,6 +19,8 @@ function LanguageSelector() {
     { code: 'zh-CN', label: '中文' },
     { code: 'ru', label: 'Русский' },
     { code: 'hi', label: 'हिन्दी' },
+    { code: 'id', label: 'Indonesia' },
+    { code: 'fr', label: 'Français' },
   ];
 
   const currentLang = languages.find(l => l.code === lang) || languages[0];

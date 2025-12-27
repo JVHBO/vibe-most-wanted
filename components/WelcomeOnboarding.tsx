@@ -17,6 +17,8 @@ const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string 
   { value: 'hi', label: 'HI', flag: '🇮🇳' },
   { value: 'ru', label: 'RU', flag: '🇷🇺' },
   { value: 'zh-CN', label: 'ZH', flag: '🇨🇳' },
+  { value: 'id', label: 'ID', flag: '🇮🇩' },
+  { value: 'fr', label: 'FR', flag: '🇫🇷' },
 ];
 
 interface WelcomeOnboardingProps {

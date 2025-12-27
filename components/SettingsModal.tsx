@@ -351,22 +351,28 @@ export function SettingsModal({
               className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
             >
               <option value="en" className="bg-vintage-charcoal text-vintage-ice">
-                English
+                🇺🇸 English
               </option>
               <option value="pt-BR" className="bg-vintage-charcoal text-vintage-ice">
-                Português
+                🇧🇷 Português
               </option>
               <option value="es" className="bg-vintage-charcoal text-vintage-ice">
-                Español
+                🇪🇸 Español
               </option>
               <option value="hi" className="bg-vintage-charcoal text-vintage-ice">
-                हिन्दी
+                🇮🇳 हिन्दी
               </option>
               <option value="ru" className="bg-vintage-charcoal text-vintage-ice">
-                Русский
+                🇷🇺 Русский
               </option>
               <option value="zh-CN" className="bg-vintage-charcoal text-vintage-ice">
-                简体中文
+                🇨🇳 简体中文
+              </option>
+              <option value="id" className="bg-vintage-charcoal text-vintage-ice">
+                🇮🇩 Indonesia
+              </option>
+              <option value="fr" className="bg-vintage-charcoal text-vintage-ice">
+                🇫🇷 Français
               </option>
             </select>
             {/* 🇨🇳 Chinese Language Boost Warning */}

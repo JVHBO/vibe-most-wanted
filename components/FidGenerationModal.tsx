@@ -9,6 +9,7 @@ import { CardMedia } from './CardMedia';
 import { generateCriminalBackstory } from '@/lib/generateCriminalBackstory';
 import type { CriminalBackstoryData } from '@/lib/generateCriminalBackstory';
 import { fidTranslations } from '@/lib/fidTranslations';
+import type { SupportedLanguage } from '@/lib/translations';
 import { AudioManager } from '@/lib/audio-manager';
 
 interface FidGenerationModalProps {
@@ -22,7 +23,7 @@ interface FidGenerationModalProps {
   isMinting: boolean;
   isMintedSuccessfully?: boolean;
   fid?: number;
-  onShare?: (lang: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN') => void;
+  onShare?: (lang: SupportedLanguage) => void;
   username?: string;
   walletAddress?: string;
   onConnectWallet?: () => void;

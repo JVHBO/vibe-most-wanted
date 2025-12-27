@@ -1,4 +1,12 @@
 module.exports = {
+  webpack: (config) => {
+    // Fix for MetaMask SDK trying to import React Native modules
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      '@react-native-async-storage/async-storage': false,
+    };
+    return config;
+  },
   async headers() {
     return [
       {

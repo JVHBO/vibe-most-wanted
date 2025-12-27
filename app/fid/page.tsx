@@ -20,6 +20,7 @@ import { useMusic } from "@/contexts/MusicContext";
 import type { CriminalBackstoryData } from "@/lib/generateCriminalBackstory";
 import { VIBEFID_POWER_CONFIG } from "@/lib/collections";
 import { fidTranslations } from "@/lib/fidTranslations";
+import type { SupportedLanguage } from "@/lib/translations";
 import FidGenerationModal from "@/components/FidGenerationModal";
 import FidAboutTraitsModal from "@/components/FidAboutTraitsModal";
 import { useRouter } from "next/navigation";
@@ -630,7 +631,7 @@ export default function FidPage() {
     userFid ? { fid: userFid } : "skip"
   );
 
-  const handleShare = async (currentLang: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN') => {
+  const handleShare = async (currentLang: SupportedLanguage) => {
     if (!previewImage || !userData || !generatedTraits) return;
 
     try {

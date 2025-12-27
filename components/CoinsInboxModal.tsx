@@ -42,6 +42,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const [showHistory, setShowHistory] = useState(false);
   const [cooldown, setCooldown] = useState(inboxStatus.cooldownRemaining || 0);
   const [convertAmount, setConvertAmount] = useState("");
+  const [pendingConversion, setPendingConversion] = useState<{ amount: number; timestamp: number } | null>(null);
 
   // 🔒 Get Farcaster context for FID verification
   const farcasterContext = useFarcasterContext();
@@ -119,7 +120,25 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
   const recoverFailedConversion = useAction(api.vbmsClaim.recoverFailedConversion);
+  const getPendingConversion = useAction(api.vbmsClaim.getPendingConversionInfo);
   const { claimVBMS } = useClaimVBMS();
+
+  // 🔄 Check for pending conversions on mount
+  useEffect(() => {
+    if (!address) return;
+    const checkPending = async () => {
+      try {
+        const pending = await getPendingConversion({ address });
+        if (pending && pending.amount > 0) {
+          setPendingConversion({ amount: pending.amount, timestamp: pending.timestamp });
+          console.log('[CoinsInboxModal] Found pending conversion:', pending);
+        }
+      } catch (error) {
+        console.log('[CoinsInboxModal] No pending conversion found');
+      }
+    };
+    checkPending();
+  }, [address, getPendingConversion]);
 
   // Get VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)
   const { balance: vbmsWalletBalance } = useFarcasterVBMSBalance(address);
@@ -386,8 +405,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         userMessage = "Saldo insuficiente no pool do contrato.";
       } else if (errMsg.includes('signature') || errMsg.includes('sign')) {
         userMessage = "Assinatura cancelada ou inválida.";
-      } else if (errMsg.includes('rejected') || errMsg.includes('denied')) {
-        userMessage = "Transação rejeitada pelo usuário.";
+      } else if (errMsg.includes('rejected') || errMsg.includes('denied') || errMsg.includes('user denied') || errMsg.includes('user rejected')) {
+        userMessage = "Transação cancelada pelo usuário.";
       } else if (errMsg.includes('nonce')) {
         userMessage = "Nonce já usado. Tente novamente.";
       } else if (error.message) {
@@ -396,11 +415,15 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
       toast.error(userMessage);
 
-      // Show recovery option after 5 minutes
-      toast.info("Se a TX falhou, você pode recuperar seus coins em 5 minutos clicando no botão 'Recuperar'", {
-        duration: 10000,
-      });
+      // 🔄 Set pending conversion state for recovery UI
+      setPendingConversion({ amount: selectedAmount, timestamp: Date.now() });
 
+      // Show recovery instructions prominently - use translated text
+      toast.warning(`⚠️ ${t('convertPendingTitle')}. ${t('convertPendingWait')} 2 min.`, {
+        duration: 15000,
+      });
+    } finally {
+      // 🔒 ALWAYS reset processing state
       setIsProcessing(false);
     }
   };
@@ -417,16 +440,48 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     try {
       const result = await recoverFailedConversion({ address });
       toast.success(`✅ Recuperados ${result.recoveredAmount.toLocaleString()} coins!`);
+      setPendingConversion(null); // Clear pending state
 
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (error: any) {
       console.error('[CoinsInboxModal] Error recovering TESTVBMS:', error);
-      toast.error(error.message || "Erro ao recuperar coins");
+      const errMsg = error.message?.toLowerCase() || '';
+      if (errMsg.includes('wait') || errMsg.includes('seconds')) {
+        // Show remaining time
+        toast.info(error.message);
+      } else if (errMsg.includes('blockchain') || errMsg.includes('already claimed')) {
+        // Conversion was successful on-chain, just clear pending
+        toast.success("✅ Sua conversão já foi processada com sucesso no blockchain!");
+        setPendingConversion(null);
+      } else {
+        toast.error(error.message || "Erro ao recuperar coins");
+      }
+    } finally {
       setIsProcessing(false);
     }
   };
+
+  // Calculate recovery time remaining
+  const [recoveryTimeRemaining, setRecoveryTimeRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!pendingConversion) {
+      setRecoveryTimeRemaining(null);
+      return;
+    }
+
+    const updateRemaining = () => {
+      const twoMinutesAfter = pendingConversion.timestamp + 2 * 60 * 1000;
+      const remaining = twoMinutesAfter - Date.now();
+      setRecoveryTimeRemaining(remaining <= 0 ? 0 : Math.ceil(remaining / 1000));
+    };
+
+    updateRemaining();
+    const timer = setInterval(updateRemaining, 1000);
+    return () => clearInterval(timer);
+  }, [pendingConversion]);
 
   // SSR check
   if (typeof window === 'undefined') return null;
@@ -624,8 +679,37 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             </div>
           )}
 
-          {/* Recovery button for failed conversions - only in miniapp */}
-          {useFarcasterSDK && (
+          {/* 🚨 Pending Conversion Alert - Show prominently when there's a pending conversion */}
+          {pendingConversion && pendingConversion.amount > 0 && useFarcasterSDK && (
+            <div className="bg-amber-900/40 border-2 border-amber-500/60 rounded-xl p-4 animate-pulse">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">⚠️</span>
+                <h4 className="text-amber-300 font-bold text-sm">{t('convertPendingTitle')}</h4>
+              </div>
+              <p className="text-amber-200/80 text-xs mb-3">
+                {t('convertPendingDesc').replace('{amount}', pendingConversion.amount.toLocaleString())}
+              </p>
+              {recoveryTimeRemaining !== null && recoveryTimeRemaining > 0 ? (
+                <div className="text-center">
+                  <span className="text-amber-400 text-xs">
+                    ⏳ {t('convertPendingWait')} {Math.floor(recoveryTimeRemaining / 60)}:{String(recoveryTimeRemaining % 60).padStart(2, '0')} {t('convertPendingToRecover')}
+                  </span>
+                </div>
+              ) : (
+                <button
+                  onClick={handleRecoverConversion}
+                  disabled={isProcessing}
+                  className="w-full py-2.5 px-4 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <span>🔄</span>
+                  <span>{t('convertRecoverNow').replace('{amount}', pendingConversion.amount.toLocaleString())}</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Recovery button for failed conversions - only in miniapp (smaller version when no pending) */}
+          {useFarcasterSDK && !pendingConversion && (
             <button
               onClick={handleRecoverConversion}
               disabled={isProcessing}

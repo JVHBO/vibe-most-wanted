@@ -65,13 +65,15 @@ export function generateCriminalBackstory(
     // Convert to Date object if it's a string (from localStorage/JSON)
     const createdAtDate = data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt);
 
-    const monthNames = {
+    const monthNames: Record<string, string[]> = {
       'en': ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
       'pt-BR': ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
       'es': ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
       'hi': ["जनवरी", "फरवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"],
       'ru': ["Января", "Февраля", "Марта", "Апреля", "Мая", "Июня", "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"],
       'zh-CN': ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+      'id': ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"],
+      'fr': ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
     };
 
     const months = monthNames[lang] || monthNames['en'];
@@ -115,10 +117,30 @@ export function generateCriminalBackstory(
   const story = storyParts.join(' ');
 
   // Associates (followers)
-  const associates = `${data.followerCount.toLocaleString()} ${lang === 'en' ? 'known accomplices' : lang === 'pt-BR' ? 'cúmplices conhecidos' : lang === 'es' ? 'cómplices conocidos' : lang === 'hi' ? 'ज्ञात सहयोगी' : lang === 'ru' ? 'известных сообщников' : '已知同伙'}`;
+  const associatesLabels: Record<SupportedLanguage, string> = {
+    'en': 'known accomplices',
+    'pt-BR': 'cúmplices conhecidos',
+    'es': 'cómplices conocidos',
+    'hi': 'ज्ञात सहयोगी',
+    'ru': 'известных сообщников',
+    'zh-CN': '已知同伙',
+    'id': 'kaki tangan yang dikenal',
+    'fr': 'complices connus',
+  };
+  const associates = `${data.followerCount.toLocaleString()} ${associatesLabels[lang] || associatesLabels['en']}`;
 
   // Last seen (Farcaster region)
-  const lastSeen = lang === 'en' ? 'Farcaster Network' : lang === 'pt-BR' ? 'Rede Farcaster' : lang === 'es' ? 'Red Farcaster' : lang === 'hi' ? 'Farcaster नेटवर्क' : lang === 'ru' ? 'Сеть Farcaster' : 'Farcaster 网络';
+  const lastSeenLabels: Record<SupportedLanguage, string> = {
+    'en': 'Farcaster Network',
+    'pt-BR': 'Rede Farcaster',
+    'es': 'Red Farcaster',
+    'hi': 'Farcaster नेटवर्क',
+    'ru': 'Сеть Farcaster',
+    'zh-CN': 'Farcaster 网络',
+    'id': 'Jaringan Farcaster',
+    'fr': 'Réseau Farcaster',
+  };
+  const lastSeen = lastSeenLabels[lang] || lastSeenLabels['en'];
 
   return {
     wantedFor: crimeType,
