@@ -16,6 +16,7 @@ import { isBlacklisted, getBlacklistInfo } from "./blacklist";
 
 /**
  * Get a profile by wallet address
+ * Supports multi-wallet: checks linked addresses FIRST, then primary address
  */
 export const getProfile = query({
   args: { address: v.string() },
@@ -25,10 +26,29 @@ export const getProfile = query({
       return null;
     }
 
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+    const normalizedAddress = normalizeAddress(address);
+
+    // 🔗 MULTI-WALLET: Check addressLinks FIRST (takes priority over orphaned profiles)
+    const addressLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
+
+    let profile;
+
+    if (addressLink) {
+      // This address is linked to another profile - use the primary
+      profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", addressLink.primaryAddress))
+        .first();
+    } else {
+      // Not a linked address, try to find by primary address
+      profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+        .first();
+    }
 
     if (!profile) return null;
 
@@ -58,10 +78,29 @@ export const getProfileLite = query({
       return null;
     }
 
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+    const normalizedAddress = normalizeAddress(address);
+
+    // 🔗 MULTI-WALLET: Check addressLinks FIRST (takes priority over orphaned profiles)
+    const addressLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
+
+    let profile;
+
+    if (addressLink) {
+      // This address is linked to another profile - use the primary
+      profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", addressLink.primaryAddress))
+        .first();
+    } else {
+      // Not a linked address, try to find by primary address
+      profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+        .first();
+    }
 
     if (!profile) return null;
 
@@ -444,16 +483,35 @@ export const upsertProfileFromFarcaster = mutation({
     // NOTE: Legacy fid (string) fallback removed - was causing full table scans
     // All profiles should have farcasterFid by now. If not, run migration script.
 
+    // 🔗 MULTI-WALLET: If FID exists with different address, LINK the new wallet
     if (existingByFid && existingByFid.address !== address) {
-      // FID already linked to different address - update the address
-      console.log(`⚠️ FID ${args.fid} changing address from ${existingByFid.address} to ${address}`);
-      await ctx.db.patch(existingByFid._id, {
-        address,
-        username,
-        farcasterDisplayName: args.displayName,
-        farcasterPfpUrl: args.pfpUrl,
-        lastUpdated: now,
-      });
+      // Check if this address is already linked
+      const existingLink = await ctx.db
+        .query("addressLinks")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .first();
+
+      if (!existingLink) {
+        // Link the new address to the existing profile
+        await ctx.db.insert("addressLinks", {
+          address,
+          primaryAddress: existingByFid.address,
+          linkedAt: now,
+        });
+
+        // Update the profile's linkedAddresses array
+        const currentLinked = existingByFid.linkedAddresses || [];
+        if (!currentLinked.includes(address)) {
+          await ctx.db.patch(existingByFid._id, {
+            linkedAddresses: [...currentLinked, address],
+            lastUpdated: now,
+          });
+        }
+
+        console.log(`🔗 MULTI-WALLET: Linked ${address} to existing profile @${existingByFid.username} (FID ${args.fid})`);
+      }
+
+      // Return the existing profile
       return existingByFid._id;
     }
 
@@ -542,6 +600,419 @@ export const upsertProfileFromFarcaster = mutation({
 
     console.log(`🆕 New profile created for FID ${args.fid} (@${username}) at ${address} - Welcome pack given!`);
     return newId;
+  },
+});
+
+/**
+ * 🔗 MULTI-WALLET: Manually link a new wallet address to an existing profile
+ * Used by the "Connect Wallet" button in the profile settings
+ *
+ * @param primaryAddress - The current (primary) wallet address
+ * @param newAddress - The new wallet address to link
+ * @param fid - Farcaster FID for authentication
+ */
+export const linkWallet = mutation({
+  args: {
+    primaryAddress: v.string(),
+    newAddress: v.string(),
+    fid: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Validate FID
+    if (!args.fid || args.fid <= 0) {
+      throw new Error("🔒 Valid Farcaster FID required");
+    }
+
+    // Validate addresses
+    if (!isValidAddress(args.primaryAddress) || !isValidAddress(args.newAddress)) {
+      throw new Error("Invalid address format");
+    }
+
+    const primaryAddress = normalizeAddress(args.primaryAddress);
+    const newAddress = normalizeAddress(args.newAddress);
+    const now = Date.now();
+
+    // Check if primary address and new address are the same
+    if (primaryAddress === newAddress) {
+      throw new Error("Cannot link wallet to itself");
+    }
+
+    // Get the profile by primary address
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Verify the FID matches
+    if (profile.farcasterFid !== args.fid) {
+      throw new Error("🔒 FID mismatch - unauthorized");
+    }
+
+    // Check if new address already belongs to another profile
+    const existingProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", newAddress))
+      .first();
+
+    if (existingProfile && existingProfile._id !== profile._id) {
+      throw new Error("This wallet already has a profile. Cannot link.");
+    }
+
+    // Check if already linked
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", newAddress))
+      .first();
+
+    if (existingLink) {
+      if (existingLink.primaryAddress === primaryAddress) {
+        return { success: true, message: "Wallet already linked" };
+      } else {
+        throw new Error("This wallet is already linked to another profile");
+      }
+    }
+
+    // Create the link
+    await ctx.db.insert("addressLinks", {
+      address: newAddress,
+      primaryAddress,
+      linkedAt: now,
+    });
+
+    // Update the profile's linkedAddresses array
+    const currentLinked = profile.linkedAddresses || [];
+    if (!currentLinked.includes(newAddress)) {
+      await ctx.db.patch(profile._id, {
+        linkedAddresses: [...currentLinked, newAddress],
+        lastUpdated: now,
+      });
+    }
+
+    console.log(`🔗 MANUAL LINK: ${newAddress} linked to @${profile.username} (FID ${args.fid})`);
+    return { success: true, message: "Wallet linked successfully" };
+  },
+});
+
+/**
+ * 🔗 Get all linked addresses for a profile
+ */
+export const getLinkedAddresses = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    if (!address || !isValidAddress(address)) {
+      return { primary: null, linked: [] };
+    }
+
+    const normalizedAddress = normalizeAddress(address);
+
+    // First check if this is a primary address
+    let profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    // If not found, check if it's a linked address
+    if (!profile) {
+      const link = await ctx.db
+        .query("addressLinks")
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+        .first();
+
+      if (link) {
+        profile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q) => q.eq("address", link.primaryAddress))
+          .first();
+      }
+    }
+
+    if (!profile) {
+      return { primary: null, linked: [] };
+    }
+
+    return {
+      primary: profile.address,
+      linked: profile.linkedAddresses || [],
+    };
+  },
+});
+
+// ============================================================================
+// 🔗 WALLET LINK CODE SYSTEM
+// Secure way to link wallets across devices using temporary codes
+// ============================================================================
+
+/**
+ * 🔗 Generate a link code for a wallet WITHOUT FID
+ * The wallet that wants to be linked generates a code
+ * Then the FID owner uses that code to add this wallet
+ *
+ * INVERSE FLOW:
+ * 1. New wallet (no profile) generates code
+ * 2. User goes to Farcaster (has FID/profile) and enters code
+ * 3. FID profile links the new wallet
+ */
+export const generateLinkCode = mutation({
+  args: { walletAddress: v.string() },
+  handler: async (ctx, { walletAddress }) => {
+    if (!isValidAddress(walletAddress)) {
+      throw new Error("Endereço inválido");
+    }
+
+    const normalizedAddress = normalizeAddress(walletAddress);
+
+    // Check if this wallet already has a profile or is linked
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (existingLink) {
+      throw new Error("Esta wallet já está linkada a um perfil");
+    }
+
+    const existingProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (existingProfile) {
+      throw new Error("Esta wallet já tem um perfil");
+    }
+
+    // Delete any existing codes for this wallet
+    const existingCodes = await ctx.db
+      .query("walletLinkCodes")
+      .withIndex("by_profile", (q) => q.eq("profileAddress", normalizedAddress))
+      .collect();
+
+    for (const code of existingCodes) {
+      await ctx.db.delete(code._id);
+    }
+
+    // Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const now = Date.now();
+    const expiresAt = now + 30 * 1000; // 30 seconds
+
+    await ctx.db.insert("walletLinkCodes", {
+      code,
+      profileAddress: normalizedAddress, // This is the wallet that wants to be linked
+      createdAt: now,
+      expiresAt,
+      used: false,
+    });
+
+    return { code, expiresAt };
+  },
+});
+
+/**
+ * 🔗 Use a link code to add a wallet to your profile
+ * Called by the FID owner to link a new wallet to their profile
+ *
+ * INVERSE FLOW:
+ * - The CODE contains the wallet address that wants to be linked
+ * - The fidOwnerAddress is the profile that will receive the linked wallet
+ */
+export const useLinkCode = mutation({
+  args: {
+    code: v.string(),
+    fidOwnerAddress: v.string(), // The wallet of the FID owner (has profile)
+  },
+  handler: async (ctx, { code, fidOwnerAddress }) => {
+    if (!isValidAddress(fidOwnerAddress)) {
+      throw new Error("Endereço inválido");
+    }
+
+    const normalizedFidOwner = normalizeAddress(fidOwnerAddress);
+
+    // Get the FID owner's profile (resolve links if needed)
+    const ownerLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedFidOwner))
+      .first();
+
+    const primaryAddress = ownerLink?.primaryAddress || normalizedFidOwner;
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Você precisa ter um perfil para linkar wallets");
+    }
+
+    // Find the code
+    const linkCode = await ctx.db
+      .query("walletLinkCodes")
+      .withIndex("by_code", (q) => q.eq("code", code))
+      .first();
+
+    if (!linkCode) {
+      throw new Error("Código inválido");
+    }
+
+    if (linkCode.used) {
+      throw new Error("Código já foi usado");
+    }
+
+    if (Date.now() > linkCode.expiresAt) {
+      await ctx.db.delete(linkCode._id);
+      throw new Error("Código expirado");
+    }
+
+    // The wallet to link is stored in profileAddress field of the code
+    const walletToLink = linkCode.profileAddress;
+
+    // Can't link to the same wallet
+    if (primaryAddress === walletToLink) {
+      throw new Error("Não pode linkar a mesma wallet");
+    }
+
+    // Check if wallet is already linked somewhere
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", walletToLink))
+      .first();
+
+    if (existingLink) {
+      await ctx.db.patch(linkCode._id, { used: true });
+      if (existingLink.primaryAddress === primaryAddress) {
+        return { success: true, message: "Wallet já está linkada ao seu perfil" };
+      } else {
+        throw new Error("Esta wallet já está linkada a outro perfil");
+      }
+    }
+
+    // Link the wallet!
+    await ctx.db.insert("addressLinks", {
+      address: walletToLink,
+      primaryAddress: primaryAddress,
+      linkedAt: Date.now(),
+    });
+
+    // Update profile's linkedAddresses array
+    const currentLinked = profile.linkedAddresses || [];
+    if (!currentLinked.includes(walletToLink)) {
+      await ctx.db.patch(profile._id, {
+        linkedAddresses: [...currentLinked, walletToLink],
+      });
+    }
+
+    // Mark code as used
+    await ctx.db.patch(linkCode._id, { used: true });
+
+    return {
+      success: true,
+      message: "Wallet linkada com sucesso!",
+      profileUsername: profile.username,
+      linkedWallet: walletToLink,
+    };
+  },
+});
+
+/**
+ * 🔗 Unlink a wallet from profile
+ * Can only be called from a wallet connected to the profile (primary or linked)
+ */
+export const unlinkWallet = mutation({
+  args: {
+    primaryAddress: v.string(), // The wallet making the request (must be primary)
+    addressToUnlink: v.string(), // The wallet to remove
+  },
+  handler: async (ctx, { primaryAddress, addressToUnlink }) => {
+    if (!isValidAddress(primaryAddress) || !isValidAddress(addressToUnlink)) {
+      throw new Error("Endereço inválido");
+    }
+
+    const normalizedPrimary = normalizeAddress(primaryAddress);
+    const normalizedUnlink = normalizeAddress(addressToUnlink);
+
+    // Can't unlink the primary address
+    if (normalizedPrimary === normalizedUnlink) {
+      throw new Error("Não pode deslinkar a wallet principal");
+    }
+
+    // Verify the primary address owns the profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedPrimary))
+      .first();
+
+    if (!profile) {
+      throw new Error("Perfil não encontrado");
+    }
+
+    // Check if the address to unlink is actually linked
+    const linkedAddresses = profile.linkedAddresses || [];
+    if (!linkedAddresses.includes(normalizedUnlink)) {
+      throw new Error("Esta wallet não está linkada ao perfil");
+    }
+
+    // Remove from addressLinks table
+    const addressLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedUnlink))
+      .first();
+
+    if (addressLink) {
+      await ctx.db.delete(addressLink._id);
+    }
+
+    // Remove from profile's linkedAddresses array
+    const updatedLinked = linkedAddresses.filter((addr: string) => addr !== normalizedUnlink);
+    await ctx.db.patch(profile._id, {
+      linkedAddresses: updatedLinked,
+    });
+
+    return {
+      success: true,
+      message: "Wallet deslinkada com sucesso!",
+      unlinkedAddress: normalizedUnlink,
+    };
+  },
+});
+
+/**
+ * Get active link code for a profile (if any)
+ */
+export const getActiveLinkCode = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    if (!isValidAddress(address)) {
+      return null;
+    }
+
+    const normalizedAddress = normalizeAddress(address);
+
+    // Get primary address
+    const link = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    const primaryAddress = link?.primaryAddress || normalizedAddress;
+
+    // Find active code
+    const code = await ctx.db
+      .query("walletLinkCodes")
+      .withIndex("by_profile", (q) => q.eq("profileAddress", primaryAddress))
+      .first();
+
+    if (!code || code.used || Date.now() > code.expiresAt) {
+      return null;
+    }
+
+    return {
+      code: code.code,
+      expiresAt: code.expiresAt,
+    };
   },
 });
 

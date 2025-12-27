@@ -147,6 +147,9 @@ export default defineSchema({
     farcasterDisplayName: v.optional(v.string()), // Farcaster display name
     farcasterPfpUrl: v.optional(v.string()), // Farcaster profile picture URL
 
+    // Multi-Wallet Support
+    linkedAddresses: v.optional(v.array(v.string())), // Secondary wallet addresses linked to this profile
+
     // Share Incentives
     dailyShares: v.optional(v.number()), // Shares today (resets daily)
     lastShareDate: v.optional(v.string()), // ISO date YYYY-MM-DD
@@ -1488,4 +1491,41 @@ export default defineSchema({
   })
     .index("by_address", ["address", "claimedAt"])
     .index("by_tier", ["tier"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // MULTI-WALLET ADDRESS LINKS (Reverse lookup for linked addresses)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Address Links - Maps secondary addresses to their primary profile
+  // Used for efficient lookup when user connects with a linked wallet
+  addressLinks: defineTable({
+    address: v.string(), // Secondary wallet address (lowercase)
+    primaryAddress: v.string(), // Primary profile address (lowercase)
+    linkedAt: v.number(), // When this address was linked
+  })
+    .index("by_address", ["address"])
+    .index("by_primary", ["primaryAddress"]),
+
+  // 🔒 Active Sessions - Prevents using same account on multiple devices
+  // Only one active session per profile allowed at a time
+  activeSessions: defineTable({
+    profileAddress: v.string(), // Primary profile address (lowercase)
+    sessionId: v.string(), // Unique session identifier (UUID)
+    deviceInfo: v.optional(v.string()), // User agent or device identifier
+    connectedAt: v.number(), // When session started
+    lastHeartbeat: v.number(), // Last activity timestamp (for cleanup)
+  })
+    .index("by_profile", ["profileAddress"])
+    .index("by_session", ["sessionId"]),
+
+  // 🔗 Wallet Link Codes - Temporary codes to link wallets across devices
+  walletLinkCodes: defineTable({
+    code: v.string(), // 6-digit code
+    profileAddress: v.string(), // Primary profile address (lowercase)
+    createdAt: v.number(), // When code was generated
+    expiresAt: v.number(), // When code expires (5 minutes)
+    used: v.boolean(), // If code was already used
+  })
+    .index("by_code", ["code"])
+    .index("by_profile", ["profileAddress"]),
 });
