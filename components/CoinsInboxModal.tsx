@@ -258,7 +258,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
     if (!canConvertTESTVBMS) {
       if (selectedAmount < 100) {
-        toast.error("Mínimo de 100 TESTVBMS para converter");
+        toast.error("Mínimo de 100 coins para converter");
       } else if (exceedsBalance) {
         toast.error("Valor maior que seu saldo");
       } else if (exceedsDailyLimit) {
@@ -323,7 +323,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       });
 
       toast.dismiss("conversion-wait");
-      toast.success(`✅ ${result.amount.toLocaleString()} TESTVBMS convertidos para VBMS!`);
+      toast.success(`✅ ${result.amount.toLocaleString()} coins convertidos para VBMS!`);
 
       setTimeout(() => {
         onClose();
@@ -332,10 +332,10 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     } catch (error: any) {
       console.error('[CoinsInboxModal] Error converting TESTVBMS:', error);
       toast.dismiss("conversion-wait");
-      toast.error(error.message || "Erro ao converter TESTVBMS");
+      toast.error(error.message || "Erro ao converter coins");
 
       // Show recovery option after 5 minutes
-      toast.info("Se a TX falhou, você pode recuperar seus TESTVBMS em 5 minutos clicando no botão 'Recuperar'", {
+      toast.info("Se a TX falhou, você pode recuperar seus coins em 5 minutos clicando no botão 'Recuperar'", {
         duration: 10000,
       });
 
@@ -354,14 +354,14 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
     try {
       const result = await recoverFailedConversion({ address });
-      toast.success(`✅ Recuperados ${result.recoveredAmount.toLocaleString()} TESTVBMS!`);
+      toast.success(`✅ Recuperados ${result.recoveredAmount.toLocaleString()} coins!`);
 
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (error: any) {
       console.error('[CoinsInboxModal] Error recovering TESTVBMS:', error);
-      toast.error(error.message || "Erro ao recuperar TESTVBMS");
+      toast.error(error.message || "Erro ao recuperar coins");
       setIsProcessing(false);
     }
   };
