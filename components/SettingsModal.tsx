@@ -127,6 +127,18 @@ export function SettingsModal({
   const useLinkCodeMutation = useMutation(api.profiles.useLinkCode);
   const unlinkWalletMutation = useMutation(api.profiles.unlinkWallet);
 
+  // 🔀 MERGE ACCOUNT: Old accounts (no FID) can merge into FID accounts
+  const [showMergeCode, setShowMergeCode] = useState(false);
+  const [generatedMergeCode, setGeneratedMergeCode] = useState<string | null>(null);
+  const [mergeCodeExpiresAt, setMergeCodeExpiresAt] = useState<number | null>(null);
+  const [isGeneratingMerge, setIsGeneratingMerge] = useState(false);
+  const [mergeError, setMergeError] = useState<string | null>(null);
+  const [mergeCodeInput, setMergeCodeInput] = useState('');
+  const [isMerging, setIsMerging] = useState(false);
+  const [mergeSuccess, setMergeSuccess] = useState<string | null>(null);
+  const generateMergeCodeMutation = useMutation(api.profiles.generateMergeCode);
+  const useMergeCodeMutation = useMutation(api.profiles.useMergeCode);
+
   // 🔗 MULTI-WALLET: Detect wallet change and auto-link
   useEffect(() => {
     // If we're in linking mode and wallet changed to a different address
@@ -226,6 +238,62 @@ export function SettingsModal({
       devError('Failed to unlink wallet:', error);
       alert(error.message || 'Erro ao deslinkar wallet');
     }
+  };
+
+  // 🔀 Generate merge code (for old accounts without FID)
+  const handleGenerateMergeCode = async () => {
+    if (!walletAddress) return;
+
+    setIsGeneratingMerge(true);
+    setMergeError(null);
+
+    try {
+      const result = await generateMergeCodeMutation({
+        walletAddress: walletAddress,
+      });
+      setGeneratedMergeCode(result.code);
+      setMergeCodeExpiresAt(result.expiresAt);
+      if (soundEnabled) AudioManager.buttonSuccess();
+      devLog('🔀 Generated merge code:', result.code);
+    } catch (error: any) {
+      setMergeError(error.message || 'Erro ao gerar código');
+      if (soundEnabled) AudioManager.buttonError();
+      devError('Failed to generate merge code:', error);
+    } finally {
+      setIsGeneratingMerge(false);
+    }
+  };
+
+  // 🔀 Use merge code (for FID accounts to absorb old accounts)
+  const handleUseMergeCode = async () => {
+    if (!walletAddress || isMerging || mergeCodeInput.length !== 6) return;
+
+    setIsMerging(true);
+    setMergeError(null);
+
+    try {
+      const result = await useMergeCodeMutation({
+        code: mergeCodeInput,
+        fidOwnerAddress: walletAddress,
+      });
+      setMergeSuccess(result.message);
+      setMergeCodeInput('');
+      if (soundEnabled) AudioManager.buttonSuccess();
+      devLog('🔀 Merged account:', result.mergedUsername);
+    } catch (error: any) {
+      setMergeError(error.message || 'Erro ao mergear conta');
+      if (soundEnabled) AudioManager.buttonError();
+      devError('Failed to merge account:', error);
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
+  // Get merge code time remaining
+  const getMergeCodeTimeRemaining = () => {
+    if (!mergeCodeExpiresAt) return null;
+    const remaining = Math.max(0, Math.floor((mergeCodeExpiresAt - Date.now()) / 1000));
+    return `${remaining}s`;
   };
 
   // 🔗 MULTI-WALLET: Get linked addresses
@@ -984,6 +1052,136 @@ export function SettingsModal({
                     <p className="text-green-400 text-xs text-center mt-2">{linkCodeSuccess}</p>
                   )}
                 </div>
+              )}
+
+              {/* 🔀 MERGE ACCOUNT - For FID accounts to absorb old accounts */}
+              {hasFarcaster && (
+                <div className="mt-3 pt-3 border-t border-vintage-gold/20">
+                  <p className="text-vintage-burnt-gold text-xs mb-3">
+                    🔀 Mergear conta antiga (sem FID) na sua conta:
+                  </p>
+
+                  {/* Merge Code Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={mergeCodeInput}
+                      onChange={(e) => {
+                        setMergeCodeInput(e.target.value.replace(/\D/g, ''));
+                        setMergeError(null);
+                      }}
+                      placeholder="000000"
+                      className="flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-orange-500/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-orange-500 focus:outline-none"
+                    />
+                    <button
+                      onClick={handleUseMergeCode}
+                      disabled={isMerging || mergeCodeInput.length !== 6}
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isMerging ? '...' : '🔀 Merge'}
+                    </button>
+                  </div>
+
+                  {/* Error */}
+                  {mergeError && (
+                    <p className="text-red-400 text-xs text-center mt-2">{mergeError}</p>
+                  )}
+
+                  {/* Success */}
+                  {mergeSuccess && (
+                    <p className="text-green-400 text-xs text-center mt-2">{mergeSuccess}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 🔀 MERGE ACCOUNT - For OLD accounts (no FID) to generate merge code */}
+          {userProfile && !hasFarcaster && walletAddress && (
+            <div className="bg-orange-900/30 border border-orange-500/50 p-3 sm:p-5 rounded-xl">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">🔀</span>
+                <p className="font-modern font-bold text-orange-400">MERGE CONTA</p>
+              </div>
+              <p className="text-orange-300 text-xs mb-4">
+                Sua conta não tem FID. Gere um código para mergear esta conta em uma conta com Farcaster.
+              </p>
+
+              {showMergeCode ? (
+                generatedMergeCode ? (
+                  <div>
+                    <p className="text-center text-orange-300 text-xs mb-3">
+                      Digite este código na conta com FID:
+                    </p>
+                    <p className="text-4xl font-mono font-bold text-center text-orange-400 tracking-[0.3em] my-4">
+                      {generatedMergeCode}
+                    </p>
+                    <p className="text-vintage-burnt-gold text-xs text-center mb-3">
+                      Expira em: {getMergeCodeTimeRemaining() || '...'}
+                    </p>
+                    <p className="text-red-400 text-xs text-center mb-3">
+                      ⚠️ ATENÇÃO: Após merge, esta conta será APAGADA!
+                    </p>
+
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => {
+                          setShowMergeCode(false);
+                          setGeneratedMergeCode(null);
+                          setMergeCodeExpiresAt(null);
+                          setMergeError(null);
+                        }}
+                        className="flex-1 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-sm"
+                      >
+                        {t('cancel')}
+                      </button>
+                      <button
+                        onClick={handleGenerateMergeCode}
+                        className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm"
+                      >
+                        🔄 Novo Código
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <button
+                      onClick={handleGenerateMergeCode}
+                      disabled={isGeneratingMerge}
+                      className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isGeneratingMerge ? (
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                      ) : (
+                        '🔀'
+                      )}
+                      Gerar Código de Merge
+                    </button>
+                    {mergeError && (
+                      <p className="text-red-400 text-xs text-center mt-2">{mergeError}</p>
+                    )}
+                    <button
+                      onClick={() => {
+                        setShowMergeCode(false);
+                        setMergeError(null);
+                      }}
+                      className="w-full mt-2 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-sm"
+                    >
+                      {t('cancel')}
+                    </button>
+                  </div>
+                )
+              ) : (
+                <button
+                  onClick={() => {
+                    setShowMergeCode(true);
+                    if (soundEnabled) AudioManager.buttonNav();
+                  }}
+                  className="w-full px-4 py-3 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-500/50 text-orange-400 rounded-lg font-semibold text-sm transition-all"
+                >
+                  🔀 Quero mergear minha conta
+                </button>
               )}
             </div>
           )}
