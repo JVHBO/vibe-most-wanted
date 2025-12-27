@@ -22,8 +22,8 @@ const imageUrlCache = new Map<string, { url: string; timestamp: number }>();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60; // 1 hour
 
 // NFT response cache (persisted in sessionStorage)
-const NFT_CACHE_KEY = 'vbms_nft_cache';
-const NFT_CACHE_TIME = 1000 * 60 * 5; // 5 minutes
+const NFT_CACHE_KEY = 'vbms_nft_cache_v2'; // v2 to invalidate old caches
+const NFT_CACHE_TIME = 1000 * 60 * 2; // 2 minutes (reduced from 5)
 
 // Track if Alchemy API is blocked
 let alchemyBlocked = false;
@@ -34,9 +34,10 @@ interface NftCacheEntry {
   contract: string;
   nfts: any[];
   timestamp: number;
+  paginationComplete: boolean; // NEW: Track if all pages were fetched
 }
 
-function getNftCache(owner: string, contract: string): any[] | null {
+function getNftCache(owner: string, contract: string): { nfts: any[]; complete: boolean } | null {
   if (typeof window === 'undefined') return null;
   try {
     const cached = sessionStorage.getItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
@@ -46,13 +47,19 @@ function getNftCache(owner: string, contract: string): any[] | null {
       sessionStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
       return null;
     }
-    return entry.nfts;
+    // Only return cache if pagination was complete, otherwise force refresh
+    if (!entry.paginationComplete) {
+      console.log(`⚠️ Cache exists but pagination was incomplete - forcing refresh`);
+      sessionStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+      return null;
+    }
+    return { nfts: entry.nfts, complete: entry.paginationComplete };
   } catch {
     return null;
   }
 }
 
-function setNftCache(owner: string, contract: string, nfts: any[]): void {
+function setNftCache(owner: string, contract: string, nfts: any[], paginationComplete: boolean): void {
   if (typeof window === 'undefined') return;
   try {
     const entry: NftCacheEntry = {
@@ -60,8 +67,10 @@ function setNftCache(owner: string, contract: string, nfts: any[]): void {
       contract,
       nfts,
       timestamp: Date.now(),
+      paginationComplete,
     };
     sessionStorage.setItem(`${NFT_CACHE_KEY}_${owner}_${contract}`, JSON.stringify(entry));
+    console.log(`💾 Cached ${nfts.length} NFTs (pagination complete: ${paginationComplete})`);
   } catch (e) {
     console.warn('⚠️ Failed to cache NFTs:', e);
   }
@@ -321,14 +330,13 @@ export async function fetchNFTs(
   const contract = contractAddress || CONTRACT_ADDRESS;
   if (!contract) throw new Error("Contract address não configurado");
 
-  // Check cache first
+  // Check cache first - only use if pagination was complete
   const cached = getNftCache(owner, contract);
 
-  // OPTIMIZATION: Use cache FIRST to avoid API calls
-  if (cached && cached.length > 0) {
-    console.log(`📦 Using cached NFTs for ${contract.slice(0, 10)}...: ${cached.length} cards`);
-    if (onProgress) onProgress(1, cached.length);
-    return cached;
+  if (cached && cached.nfts.length > 0 && cached.complete) {
+    console.log(`📦 Using cached NFTs for ${contract.slice(0, 10)}...: ${cached.nfts.length} cards (pagination complete)`);
+    if (onProgress) onProgress(1, cached.nfts.length);
+    return cached.nfts;
   }
 
   console.log(`🔄 Fetching fresh NFTs for ${contract.slice(0, 10)}... (no cache)`)
@@ -391,19 +399,23 @@ export async function fetchNFTs(
       pageKey = json.pageKey;
     } while (pageKey && pageCount < maxPages);
 
-    // Cache successful results
+    // Pagination is complete when there's no more pageKey
+    const paginationComplete = !pageKey;
+
+    // Cache successful results with pagination status
     if (allNfts.length > 0) {
-      setNftCache(owner, contract, allNfts);
+      setNftCache(owner, contract, allNfts, paginationComplete);
+      console.log(`✅ Fetched ${allNfts.length} NFTs in ${pageCount} page(s), pagination complete: ${paginationComplete}`);
     }
 
     return allNfts;
 
   } catch (error: any) {
-    // If we have cached data, use it as fallback
-    if (cached && cached.length > 0) {
-      console.warn(`⚠️ Alchemy failed, using cached data: ${cached.length} cards`);
-      if (onProgress) onProgress(1, cached.length);
-      return cached;
+    // If we have cached data, use it as fallback (even if incomplete)
+    if (cached && cached.nfts && cached.nfts.length > 0) {
+      console.warn(`⚠️ Alchemy failed, using cached data: ${cached.nfts.length} cards`);
+      if (onProgress) onProgress(1, cached.nfts.length);
+      return cached.nfts;
     }
 
     // For VibeFID contract, try Convex fallback
@@ -412,8 +424,8 @@ export async function fetchNFTs(
       console.log('🔄 Trying VibeFID Convex fallback...');
       const convexCards = await fetchVibeFIDFromConvex(owner);
       if (convexCards.length > 0) {
-        // Cache the result
-        setNftCache(owner, contract, convexCards);
+        // Cache the result (VibeFID from Convex is always complete)
+        setNftCache(owner, contract, convexCards, true);
         if (onProgress) onProgress(1, convexCards.length);
         return convexCards;
       }

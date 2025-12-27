@@ -51,7 +51,7 @@ export default function RaidDeckPage() {
   const router = useRouter();
   const { address, isConnecting } = useAccount();
   const { t } = useLanguage();
-  const { nfts: availableCards } = usePlayerCards();
+  const { nfts: availableCards, isLoading: isLoadingCards } = usePlayerCards();
   const [soundEnabled] = useState<boolean>(true);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -74,13 +74,17 @@ export default function RaidDeckPage() {
 
   // Track when cards have finished loading
   useEffect(() => {
-    if (availableCards !== undefined) {
+    // Only mark as loaded when context has finished loading
+    if (!isLoadingCards) {
       const timer = setTimeout(() => {
         setCardsLoaded(true);
       }, 500);
       return () => clearTimeout(timer);
+    } else {
+      // Reset to loading state when cards are being fetched
+      setCardsLoaded(false);
     }
-  }, [availableCards]);
+  }, [isLoadingCards]);
 
   // Calculate dynamic cost based on selected cards
   const totalCost = useMemo(() => {
