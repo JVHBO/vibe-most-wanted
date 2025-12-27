@@ -1367,10 +1367,10 @@ export const recoverFailedConversion = action({
       throw new Error("No pending conversion to recover");
     }
 
-    // Check time constraint
-    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    if (profileInfo.pendingTimestamp > fiveMinutesAgo) {
-      const waitSeconds = Math.ceil((profileInfo.pendingTimestamp - fiveMinutesAgo) / 1000);
+    // Check time constraint (2 minutes)
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+    if (profileInfo.pendingTimestamp > twoMinutesAgo) {
+      const waitSeconds = Math.ceil((profileInfo.pendingTimestamp - twoMinutesAgo) / 1000);
       throw new Error(`Please wait ${waitSeconds} seconds before recovering. This prevents abuse.`);
     }
 
@@ -1414,6 +1414,28 @@ export const getRecoveryInfo = internalQuery({
       pendingTimestamp: profile.pendingConversionTimestamp || 0,
       pendingNonce: profile.pendingNonce || null,
       currentCoins: profile.coins || 0,
+    };
+  },
+});
+
+// Public action to get pending conversion info (for UI)
+export const getPendingConversionInfo = action({
+  args: { address: v.string() },
+  handler: async (ctx, { address }): Promise<{ amount: number; timestamp: number; canRecover: boolean }> => {
+    const info = await ctx.runQuery(internal.vbmsClaim.getRecoveryInfo, { address });
+
+    if (info.pendingAmount === 0) {
+      return { amount: 0, timestamp: 0, canRecover: false };
+    }
+
+    // Can recover after 2 minutes
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+    const canRecover = info.pendingTimestamp <= twoMinutesAgo;
+
+    return {
+      amount: info.pendingAmount,
+      timestamp: info.pendingTimestamp,
+      canRecover,
     };
   },
 });
