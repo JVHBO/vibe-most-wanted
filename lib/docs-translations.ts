@@ -1,6 +1,6 @@
 // Translations for the /docs page
 
-export type DocsSupportedLanguage = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN';
+export type DocsSupportedLanguage = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr';
 
 export const docsTranslations = {
   "pt-BR": {
@@ -1364,6 +1364,468 @@ export const docsTranslations = {
     vibeFIDBenefit1: "⚡ 力量加成: 所有卡牌+10%力量",
     vibeFIDBenefit2: "♾️ 无限能量: 战斗无能量限制",
     vibeFIDBenefit3: "🃏 无卡组限制: 在卡组中使用任何卡牌",
+  },
+  "id": {
+    // Navigation
+    backToGame: "Kembali ke Game",
+    documentation: "Dokumentasi",
+    subtitle: "Panduan lengkap Vibe Most Wanted - Semua yang perlu kamu ketahui",
+    sections: "Bagian",
+
+    // Section titles
+    economy: "Ekonomi",
+    battles: "Pertempuran",
+    achievements: "Prestasi",
+    quests: "Misi",
+    cards: "Kartu",
+    faq: "FAQ",
+
+    // Economy section
+    economyTitle: "Sistem Ekonomi",
+    economyIntro: "Vibe Most Wanted adalah koleksi Liquid Trading Cards (LTC) di Vibe Market, terinspirasi kartu Most Wanted Irak. Game ini punya dua mata uang: TESTVBMS (koin in-game dari bermain) dan $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Saat ini presale - beli/jual $VBMS melalui DEX in-app.",
+
+    howToEarnCoins: "Cara Dapat Koin",
+    earnPve: "PvE (Pemain vs AI)",
+    earnPveDesc: "Sampai 30 menang/hari. Kesulitan: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
+    earnPvp: "PvP (Pemain vs Pemain)",
+    earnPvpDesc: "Menang: +100 koin (bonus rank). Kalah: -20 koin. Seri: 0 koin",
+    earnAttack: "Mode Serangan",
+    earnAttackDesc: "Sampai 5 serangan/hari. Menang mencuri poin kehormatan lawan. GRATIS!",
+    earnAchievements: "Prestasi",
+    earnAchievementsDesc: "63 prestasi tersedia total 302.300 koin",
+    earnQuests: "Misi Harian dan Mingguan",
+    earnQuestsDesc: "Selesaikan tujuan untuk dapat koin ekstra",
+
+    dailyLimit: "Batas Harian",
+    dailyLimitDesc: "Kamu bisa dapat maksimal 1.500 koin per hari (PvE + PvP + Prestasi)",
+
+    entryFees: "Biaya Masuk",
+    entryFeeAttack: "Mode Serangan: GRATIS!",
+    entryFeePvp: "PvP: 20 koin per pertandingan",
+    entryFeePve: "PvE: Gratis (tanpa biaya)",
+
+    // Battles section
+    battlesTitle: "Sistem Pertempuran",
+    battlesIntro: "Pilih dari 3 mode pertempuran, masing-masing dengan aturan dan hadiah sendiri.",
+
+    pveMode: "PvE - Pemain vs AI",
+    pveModeDesc: "Lawan AI (Dealer) di 5 level kesulitan. Tanpa biaya masuk. Batas 30 menang per hari untuk dapat koin.",
+    pveDifficulties: "Kesulitan",
+    pveGey: "GEY (+2 koin)",
+    pveTop: "GOOFY (+5 koin)",
+    pveG: "GOONER (+10 koin)",
+    pveMid: "GANGSTER (+20 koin)",
+    pveGigachad: "GIGACHAD (+40 koin)",
+
+    pvpMode: "PvP - Pemain vs Pemain",
+    pvpModeDesc: "Pertempuran real-time dengan pemain lain. Buat atau gabung ruangan. Biaya masuk: 20 koin.",
+    pvpRewards: "Hadiah PvP",
+    pvpWin: "Menang: +100 koin (bonus jika lawan lebih tinggi)",
+    pvpLoss: "Kalah: -20 koin (dikurangi jika lawan lebih kuat)",
+    pvpTie: "Seri: 0 koin",
+
+    attackMode: "Mode Serangan",
+    attackModeDesc: "Serang pemain papan peringkat untuk mencuri poin kehormatan mereka. Batas 5 serangan per hari. GRATIS!",
+    attackHow: "Cara Kerja",
+    attackStep1: "Pilih lawan dari papan peringkat",
+    attackStep2: "5 kartumu vs deck pertahanan lawan",
+    attackStep3: "Menang mencuri poin, kalah tidak biaya ekstra koin",
+
+    // Achievements section
+    achievementsTitle: "Sistem Prestasi",
+    achievementsIntro: "63 prestasi tersedia yang memberi hadiah untuk mengumpulkan kartu langka dan menyelesaikan tujuan.",
+    totalRewards: "Total Hadiah: 302.300 koin",
+    achievementCount: "63 prestasi",
+
+    rarityAchievements: "Prestasi Kelangkaan",
+    rarityDesc: "Kumpulkan kartu berbagai kelangkaan (Common, Rare, Epic, Legendary, Mythic)",
+    rarityCount: "27 prestasi kelangkaan",
+
+    wearAchievements: "Prestasi Kondisi",
+    wearDesc: "Kumpulkan kartu berbagai kondisi (Pristine, Mint, Lightly Played, Moderately Played, Heavily Played)",
+    wearCount: "18 prestasi kondisi",
+
+    foilAchievements: "Prestasi Foil",
+    foilDesc: "Kumpulkan kartu foil kilau spesial",
+    foilCount: "6 prestasi kartu foil",
+
+    progressiveAchievements: "Prestasi Progresif",
+    progressiveDesc: "48 prestasi berdasarkan milestone koleksi (10, 25, 50, 100 kartu)",
+
+    // Quests section
+    questsTitle: "Sistem Misi",
+    questsIntro: "Selesaikan misi harian dan mingguan untuk dapat koin ekstra.",
+
+    dailyQuests: "Misi Harian",
+    dailyQuestsDesc: "Reset setiap hari pukul 00:00 UTC",
+    dailyQuest1: "Benteng Pertahanan: +100 koin untuk menang 1 pertahanan PvP",
+
+    weeklyQuests: "Misi Mingguan",
+    weeklyQuestsDesc: "Reset setiap Senin pukul 00:00 UTC",
+    weeklyQuest1: "Total Pertandingan: Main 50 pertandingan (PvE, PvP, Serangan) - 500 koin",
+    weeklyQuest2: "Menang Serangan: Menang 10 serangan - 800 koin",
+    weeklyQuest3: "Menang Pertahanan: Berhasil pertahanan 5 kali - 300 koin",
+    weeklyQuest4: "Streak PvE: Menang 10 pertandingan PvE berturut-turut - 1.000 koin",
+
+    weeklyRewards: "Hadiah Mingguan",
+    weeklyRewardsDesc: "Otomatis dibagikan setiap Minggu pukul 00:00 UTC berdasarkan ranking total power kamu",
+    weeklyTier1: "Peringkat 1: 1.000 koin",
+    weeklyTier2: "Peringkat 2: 750 koin",
+    weeklyTier3: "Peringkat 3: 500 koin",
+    weeklyTier4: "Peringkat 4-10: 300 koin masing-masing",
+
+    // Cards section
+    cardsTitle: "Sistem Kartu",
+    cardsIntro: "Vibe Most Wanted menggunakan Liquid Trading Cards (LTC) - paradigma baru dalam koleksi digital. Berbeda dengan NFT tradisional, LTC bisa diperdagangkan instan dengan likuiditas terjamin. Setiap kartu punya atribut unik yang menentukan kekuatan pertempuran.",
+
+    cardAttributes: "Atribut Kartu",
+    cardRarity: "Kelangkaan",
+    cardRarityDesc: "Common (5), Rare (20), Epic (80), Legendary (240), Mythic (800) - nilai power dasar",
+    cardWear: "Kondisi",
+    cardWearDesc: "Pristine (×1.8), Mint (×1.4), Lightly Played (×1.0), Moderately Played (×1.0), Heavily Played (×1.0)",
+    cardFoil: "Foil",
+    cardFoilDesc: "Prize Foil (×15), Standard Foil (×2.5), No Foil (×1.0) - pengali power",
+
+    powerCalculation: "Perhitungan Power",
+    powerFormula: "Power = Power Dasar × Pengali Foil × Pengali Kondisi",
+    powerExample: "Contoh: Mythic (800) × Prize Foil (15.0) × Pristine (1.8) = 21.600 power",
+
+    defenseDeck: "Deck Pertahanan",
+    defenseDeckDesc: "Atur 5 kartu terbaikmu untuk pertahanan saat pemain lain menyerang. Update kapan dapat kartu lebih kuat!",
+
+    featuredCollections: "Koleksi Unggulan",
+    featuredCollectionsDesc: "Kolaborasi dengan kreator Vibe Market. Kartu-kartu ini bisa digunakan seperti kartu Vibe Most Wanted, mengikuti sistem perhitungan power yang sama.",
+
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "Kartu non-NFT yang bisa dibeli dengan $VBMS dan juga dibakar untuk pulihkan sebagian nilai.",
+
+    // FAQ section
+    faqTitle: "Pertanyaan Umum",
+
+    faq1Q: "Apakah saya harus bayar untuk main?",
+    faq1A: "Tidak! PvE dan Serangan sepenuhnya gratis. PvP punya biaya masuk kecil (20 koin) yang bisa kamu dapat dari main PvE.",
+
+    faq2Q: "Bagaimana cara dapat lebih banyak kartu?",
+    faq2A: "Beli pack di Vibe Market atau buka pack yang belum dibuka. Kamu juga bisa tukar kartu dengan pemain lain.",
+
+    faq3Q: "Bisa kehilangan koin?",
+    faq3A: "Di PvE, kamu tidak kehilangan koin. Di PvP, kamu kehilangan 20 koin jika kalah (lebih sedikit jika lawan jauh lebih baik). Mode Serangan GRATIS!",
+
+    faq4Q: "Berapa lama satu pertandingan?",
+    faq4A: "PvE: instan. PvP: 1-3 menit. Serangan: instan.",
+
+    faq5Q: "Apa itu ranking total power?",
+    faq5A: "Total power kamu adalah jumlah power dari 5 kartu terkuatmu. Nilai ini menentukan posisi papan peringkat dan berapa banyak yang bisa kamu dapat di hadiah mingguan.",
+
+    faq6Q: "Bisa menyerang pemain yang sama beberapa kali?",
+    faq6A: "Ya, tapi kamu hanya punya 5 serangan per hari total, jadi gunakan dengan bijak!",
+
+    faq7Q: "Bagaimana cara kerja prestasi?",
+    faq7A: "Prestasi otomatis terbuka saat kamu memenuhi kriteria (kumpulkan kartu tertentu). Kamu perlu klik 'Klaim' untuk terima koin.",
+
+    faq8Q: "Apa yang terjadi jika saya tidak pertahankan serangan?",
+    faq8A: "Deck pertahananmu otomatis bertempur untukmu. Atur 5 kartu terbaikmu di deck pertahanan!",
+
+    // Poker Battle section
+    pokerBattle: "Poker Battle",
+    pokerIntro: "Main poker lawan CPU atau pemain lain menggunakan taruhan VBMS.",
+    pokerStakes: "Taruhan",
+    pokerRules: "Aturan",
+    pokerRule1: "Best of 5 ronde - Pertama menang 4 ronde menang pertandingan",
+    pokerRule2: "Pemenang ambil 95% pot (5% biaya house)",
+    pokerRule3: "Diamankan blockchain (kontrak VBMS di Base)",
+    pokerRule4: "Pertandingan PvP live - kedua pemain main bersamaan",
+
+    // Mecha Arena section
+    mechaArena: "🤖 Arena Mecha",
+    mechaIntro: "Tonton pertempuran CPU vs CPU dan taruhan hasilnya! Saksikan pertempuran kartu epik antara lawan AI.",
+    mechaHowItWorks: "Cara Kerja",
+    mechaStep1: "Pilih dari 13 koleksi arena berbeda",
+    mechaStep2: "Dua CPU bertarung otomatis menggunakan kartu dari koleksi itu",
+    mechaStep3: "Deposit VBMS untuk dapat kredit taruhan",
+    mechaStep4: "Taruhan di setiap ronde (1-7) dengan odds bertambah",
+    mechaStep5: "Pembayaran instan saat ronde selesai",
+    mechaBettingOdds: "Odds Taruhan",
+    mechaRounds13: "Ronde 1-3: odds 1.5x",
+    mechaRounds45: "Ronde 4-5: odds 1.8x",
+    mechaRounds67: "Ronde 6-7: odds 2.0x",
+    mechaTieBet: "Taruhan Seri: odds 3.5x",
+    mechaDailyBoost: "🔥 Boost Harian",
+    mechaDailyBoostDesc: "Setiap hari, satu koleksi arena dapat bonus odds +0.5x! Cari badge HOT.",
+    mechaCollections: "Koleksi",
+
+    // Raid Boss section
+    raidBoss: "👹 Raid Boss",
+    raidBossIntro: "Bekerja sama dengan pemain lain untuk kalahkan bos kuat dan dapat hadiah eksklusif!",
+    raidHowItWorks: "Cara Kerja",
+    raidStep1: "Bos muncul sesuai jadwal rotasi",
+    raidStep2: "Pilih kartu dari koleksimu untuk menyerang",
+    raidStep3: "Berikan damage berdasarkan power kartumu",
+    raidStep4: "Berkontribusi pada usaha komunitas",
+    raidStep5: "Dapat hadiah berdasarkan kontribusi damage",
+    raidRewards: "Hadiah",
+    raidReward1: "Koin TESTVBMS berdasarkan damage yang diberikan",
+    raidReward2: "Hadiah bonus untuk kontributor teratas",
+    raidReward3: "Prestasi spesial untuk kalahkan bos",
+    raidTips: "Tips",
+    raidTip1: "Gunakan kartu power tinggi untuk damage maksimal",
+    raidTip2: "Kartu dari koleksi bos memberikan damage ekstra",
+    raidTip3: "Koordinasi dengan pemain lain untuk kill lebih cepat",
+
+    // VibeFID section
+    vibeFID: "🆔 VibeFID",
+    vibeFIDIntro: "VibeFID adalah kartu NFT unik berdasarkan identitas Farcaster kamu. Neynar Score (engagement dan reputasi Farcaster) menentukan kelangkaan kartu, sedangkan nomor FID menentukan traits visual.",
+    vibeFIDHowItWorks: "Cara Kerja",
+    vibeFIDStep1: "Hubungkan akun Farcaster kamu",
+    vibeFIDStep2: "Neynar Score menentukan kelangkaan kartu (berdasarkan followers, casts, reactions)",
+    vibeFIDStep3: "Nomor FID menentukan suit, foil, dan traits kondisi",
+    vibeFIDStep4: "Bayar 0.0004 ETH untuk mint kartu VibeFID unik di Base",
+    vibeFIDNeynarScore: "Neynar Score → Kelangkaan",
+    vibeFIDMythic: "Mythic (≥ 0.99): 800 power dasar - Top 1% pengguna Farcaster",
+    vibeFIDLegendary: "Legendary (≥ 0.90): 240 power dasar - Top 10%",
+    vibeFIDEpic: "Epic (≥ 0.79): 80 power dasar - Top 21%",
+    vibeFIDRare: "Rare (≥ 0.70): 20 power dasar - Top 30%",
+    vibeFIDCommon: "Common (< 0.70): 5 power dasar",
+    vibeFIDTraits: "FID → Traits",
+    vibeFIDOG: "≤ 5,000 (OG): Prize Foil + kondisi Pristine terjamin",
+    vibeFIDTier2: "5,001 - 20,000: Peluang tinggi untuk Prize Foil",
+    vibeFIDTier3: "20,001 - 100,000: Peluang campuran untuk traits langka",
+    vibeFIDTier4: "> 100,000: Distribusi trait standar",
+    vibeFIDBenefits: "Manfaat Pemilik VibeFID",
+    vibeFIDBenefit1: "⚡ Boost Power: Kartu VibeFID dapat bonus pengali power di pertempuran",
+    vibeFIDBenefit2: "♾️ Energi Tak Terbatas: Kartu VibeFID tidak pernah kehabisan energi - selalu siap bertempur",
+    vibeFIDBenefit3: "🃏 Tanpa Batasan Deck: Bisa digunakan di deck manapun tanpa batasan koleksi",
+  },
+  "fr": {
+    // Navigation
+    backToGame: "Retour au Jeu",
+    documentation: "Documentation",
+    subtitle: "Guide complet de Vibe Most Wanted - Tout ce que vous devez savoir",
+    sections: "Sections",
+
+    // Section titles
+    economy: "Économie",
+    battles: "Combats",
+    achievements: "Succès",
+    quests: "Quêtes",
+    cards: "Cartes",
+    faq: "FAQ",
+
+    // Economy section
+    economyTitle: "Système Économique",
+    economyIntro: "Vibe Most Wanted est une collection de Liquid Trading Cards (LTC) sur Vibe Market, inspirée des cartes Most Wanted irakiennes. Le jeu a deux devises : TESTVBMS (monnaie in-game gagnée en jouant) et $VBMS (token blockchain). 100 000 $VBMS = 1 pack. Actuellement en prévente - achetez/vendez $VBMS via le DEX in-app.",
+
+    howToEarnCoins: "Comment Gagner des Pièces",
+    earnPve: "PvE (Joueur vs IA)",
+    earnPveDesc: "Jusqu'à 30 victoires/jour. Difficultés : GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
+    earnPvp: "PvP (Joueur vs Joueur)",
+    earnPvpDesc: "Victoire : +100 pièces (bonus de rang). Défaite : -20 pièces. Égalité : 0 pièce",
+    earnAttack: "Mode Attaque",
+    earnAttackDesc: "Jusqu'à 5 attaques/jour. Victoire vole les points d'honneur de l'adversaire. GRATUIT !",
+    earnAchievements: "Succès",
+    earnAchievementsDesc: "63 succès disponibles totalisant 302 300 pièces",
+    earnQuests: "Quêtes Quotidiennes et Hebdomadaires",
+    earnQuestsDesc: "Complétez des objectifs pour gagner des pièces supplémentaires",
+
+    dailyLimit: "Limite Quotidienne",
+    dailyLimitDesc: "Vous pouvez gagner un maximum de 1 500 pièces par jour (PvE + PvP + Succès)",
+
+    entryFees: "Frais d'Entrée",
+    entryFeeAttack: "Mode Attaque : GRATUIT !",
+    entryFeePvp: "PvP : 20 pièces par match",
+    entryFeePve: "PvE : Gratuit (pas de frais)",
+
+    // Battles section
+    battlesTitle: "Système de Combat",
+    battlesIntro: "Choisissez parmi 3 modes de combat, chacun avec ses propres règles et récompenses.",
+
+    pveMode: "PvE - Joueur vs IA",
+    pveModeDesc: "Combattez l'IA (Dealer) sur 5 niveaux de difficulté. Pas de frais d'entrée. Limite de 30 victoires par jour pour gagner des pièces.",
+    pveDifficulties: "Difficultés",
+    pveGey: "GEY (+2 pièces)",
+    pveTop: "GOOFY (+5 pièces)",
+    pveG: "GOONER (+10 pièces)",
+    pveMid: "GANGSTER (+20 pièces)",
+    pveGigachad: "GIGACHAD (+40 pièces)",
+
+    pvpMode: "PvP - Joueur vs Joueur",
+    pvpModeDesc: "Combats en temps réel contre d'autres joueurs. Créez ou rejoignez des salons. Frais d'entrée : 20 pièces.",
+    pvpRewards: "Récompenses PvP",
+    pvpWin: "Victoire : +100 pièces (bonus si adversaire mieux classé)",
+    pvpLoss: "Défaite : -20 pièces (réduit si adversaire plus fort)",
+    pvpTie: "Égalité : 0 pièce",
+
+    attackMode: "Mode Attaque",
+    attackModeDesc: "Attaquez les joueurs du classement pour voler leurs points d'honneur. Limite de 5 attaques par jour. GRATUIT !",
+    attackHow: "Comment ça marche",
+    attackStep1: "Choisissez un adversaire dans le classement",
+    attackStep2: "Vos 5 cartes contre le deck défensif de l'adversaire",
+    attackStep3: "Victoire vole des points, défaite ne coûte pas de pièces supplémentaires",
+
+    // Achievements section
+    achievementsTitle: "Système de Succès",
+    achievementsIntro: "63 succès disponibles qui vous récompensent pour collecter des cartes rares et accomplir des objectifs.",
+    totalRewards: "Récompenses Totales : 302 300 pièces",
+    achievementCount: "63 succès",
+
+    rarityAchievements: "Succès de Rareté",
+    rarityDesc: "Collectez des cartes de différentes raretés (Common, Rare, Epic, Legendary, Mythic)",
+    rarityCount: "27 succès de rareté",
+
+    wearAchievements: "Succès d'Usure",
+    wearDesc: "Collectez des cartes dans différentes conditions (Pristine, Mint, Lightly Played, Moderately Played, Heavily Played)",
+    wearCount: "18 succès d'usure",
+
+    foilAchievements: "Succès Foil",
+    foilDesc: "Collectez des cartes foil brillantes spéciales",
+    foilCount: "6 succès de cartes foil",
+
+    progressiveAchievements: "Succès Progressifs",
+    progressiveDesc: "48 succès basés sur les étapes de collection (10, 25, 50, 100 cartes)",
+
+    // Quests section
+    questsTitle: "Système de Quêtes",
+    questsIntro: "Complétez des quêtes quotidiennes et hebdomadaires pour gagner des pièces supplémentaires.",
+
+    dailyQuests: "Quêtes Quotidiennes",
+    dailyQuestsDesc: "Réinitialisées chaque jour à minuit UTC",
+    dailyQuest1: "Forteresse de Défense : +100 pièces pour 1 victoire en défense PvP",
+
+    weeklyQuests: "Quêtes Hebdomadaires",
+    weeklyQuestsDesc: "Réinitialisées chaque lundi à 00:00 UTC",
+    weeklyQuest1: "Matchs Totaux : Jouez 50 matchs (PvE, PvP, Attaque) - 500 pièces",
+    weeklyQuest2: "Victoires en Attaque : Gagnez 10 attaques - 800 pièces",
+    weeklyQuest3: "Victoires en Défense : Défendez avec succès 5 fois - 300 pièces",
+    weeklyQuest4: "Série PvE : Gagnez 10 matchs PvE d'affilée - 1 000 pièces",
+
+    weeklyRewards: "Récompenses Hebdomadaires",
+    weeklyRewardsDesc: "Distribuées automatiquement chaque dimanche à 00:00 UTC selon votre classement de puissance totale",
+    weeklyTier1: "1ère Place : 1 000 pièces",
+    weeklyTier2: "2ème Place : 750 pièces",
+    weeklyTier3: "3ème Place : 500 pièces",
+    weeklyTier4: "4ème-10ème Place : 300 pièces chacun",
+
+    // Cards section
+    cardsTitle: "Système de Cartes",
+    cardsIntro: "Vibe Most Wanted utilise des Liquid Trading Cards (LTC) - un nouveau paradigme dans les collections numériques. Contrairement aux NFTs traditionnels, les LTCs peuvent être échangés instantanément avec une liquidité garantie. Chaque carte a des attributs uniques qui déterminent sa puissance de combat.",
+
+    cardAttributes: "Attributs de Carte",
+    cardRarity: "Rareté",
+    cardRarityDesc: "Common (5), Rare (20), Epic (80), Legendary (240), Mythic (800) - valeurs de puissance de base",
+    cardWear: "Condition d'Usure",
+    cardWearDesc: "Pristine (×1.8), Mint (×1.4), Lightly Played (×1.0), Moderately Played (×1.0), Heavily Played (×1.0)",
+    cardFoil: "Foil",
+    cardFoilDesc: "Prize Foil (×15), Standard Foil (×2.5), No Foil (×1.0) - multiplicateurs de puissance",
+
+    powerCalculation: "Calcul de Puissance",
+    powerFormula: "Puissance = Puissance de Base × Multiplicateur Foil × Multiplicateur Usure",
+    powerExample: "Exemple : Mythic (800) × Prize Foil (15.0) × Pristine (1.8) = 21 600 puissance",
+
+    defenseDeck: "Deck de Défense",
+    defenseDeckDesc: "Configurez vos 5 meilleures cartes pour vous défendre quand d'autres joueurs vous attaquent. Mettez à jour dès que vous obtenez des cartes plus fortes !",
+
+    featuredCollections: "Collections en Vedette",
+    featuredCollectionsDesc: "Collaborations avec les créateurs de Vibe Market. Ces cartes peuvent être utilisées comme les cartes Vibe Most Wanted, suivant le même système de calcul de puissance.",
+
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "Cartes non-NFT achetables avec $VBMS et pouvant être brûlées pour récupérer une partie de la valeur.",
+
+    // FAQ section
+    faqTitle: "Questions Fréquentes",
+
+    faq1Q: "Dois-je payer pour jouer ?",
+    faq1A: "Non ! PvE et Attaque sont entièrement gratuits. Le PvP a un petit frais d'entrée (20 pièces) que vous pouvez gagner en jouant au PvE.",
+
+    faq2Q: "Comment obtenir plus de cartes ?",
+    faq2A: "Achetez des packs sur Vibe Market ou ouvrez vos packs non ouverts. Vous pouvez aussi échanger des cartes avec d'autres joueurs.",
+
+    faq3Q: "Puis-je perdre des pièces ?",
+    faq3A: "En PvE, vous ne perdez pas de pièces. En PvP, vous perdez 20 pièces si vous perdez (moins si l'adversaire est bien meilleur). Le Mode Attaque est GRATUIT !",
+
+    faq4Q: "Combien de temps dure un match ?",
+    faq4A: "PvE : instantané. PvP : 1-3 minutes. Attaque : instantané.",
+
+    faq5Q: "Qu'est-ce que le classement de puissance totale ?",
+    faq5A: "Votre puissance totale est la somme de la puissance de vos 5 cartes les plus fortes. Cette valeur détermine votre position au classement et combien vous pouvez gagner en récompenses hebdomadaires.",
+
+    faq6Q: "Puis-je attaquer le même joueur plusieurs fois ?",
+    faq6A: "Oui, mais vous n'avez que 5 attaques par jour au total, utilisez-les judicieusement !",
+
+    faq7Q: "Comment fonctionnent les succès ?",
+    faq7A: "Les succès sont automatiquement débloqués quand vous remplissez les critères (collectez certaines cartes). Vous devez cliquer 'Réclamer' pour recevoir les pièces.",
+
+    faq8Q: "Que se passe-t-il si je ne défends pas une attaque ?",
+    faq8A: "Votre deck de défense combat automatiquement pour vous. Configurez vos 5 meilleures cartes dans le deck de défense !",
+
+    // Poker Battle section
+    pokerBattle: "Poker Battle",
+    pokerIntro: "Jouez au poker contre le CPU ou d'autres joueurs avec des mises VBMS.",
+    pokerStakes: "Mises",
+    pokerRules: "Règles",
+    pokerRule1: "Meilleur des 5 rounds - Le premier à gagner 4 rounds gagne le match",
+    pokerRule2: "Le gagnant prend 95% du pot (5% de frais de maison)",
+    pokerRule3: "Sécurisé par blockchain (contrat VBMS sur Base)",
+    pokerRule4: "Les matchs PvP sont en direct - les deux joueurs jouent simultanément",
+
+    // Mecha Arena section
+    mechaArena: "🤖 Arène Mecha",
+    mechaIntro: "Regardez des combats CPU vs CPU et pariez sur le résultat ! Assistez à des combats de cartes épiques entre adversaires IA.",
+    mechaHowItWorks: "Comment ça marche",
+    mechaStep1: "Choisissez parmi 13 collections d'arène différentes",
+    mechaStep2: "Deux CPUs combattent automatiquement avec les cartes de cette collection",
+    mechaStep3: "Déposez des VBMS pour obtenir des crédits de paris",
+    mechaStep4: "Pariez sur chaque round (1-7) avec des cotes croissantes",
+    mechaStep5: "Paiements instantanés quand les rounds se résolvent",
+    mechaBettingOdds: "Cotes de Paris",
+    mechaRounds13: "Rounds 1-3 : cotes 1.5x",
+    mechaRounds45: "Rounds 4-5 : cotes 1.8x",
+    mechaRounds67: "Rounds 6-7 : cotes 2.0x",
+    mechaTieBet: "Pari Égalité : cotes 3.5x",
+    mechaDailyBoost: "🔥 Boost Quotidien",
+    mechaDailyBoostDesc: "Chaque jour, une collection d'arène obtient +0.5x bonus de cotes ! Cherchez le badge HOT.",
+    mechaCollections: "Collections",
+
+    // Raid Boss section
+    raidBoss: "👹 Raid Boss",
+    raidBossIntro: "Faites équipe avec d'autres joueurs pour vaincre des boss puissants et gagner des récompenses exclusives !",
+    raidHowItWorks: "Comment ça marche",
+    raidStep1: "Les boss apparaissent selon un calendrier rotatif",
+    raidStep2: "Sélectionnez des cartes de votre collection pour attaquer",
+    raidStep3: "Infligez des dégâts basés sur la puissance de vos cartes",
+    raidStep4: "Contribuez à l'effort communautaire",
+    raidStep5: "Gagnez des récompenses basées sur votre contribution en dégâts",
+    raidRewards: "Récompenses",
+    raidReward1: "Pièces TESTVBMS basées sur les dégâts infligés",
+    raidReward2: "Récompenses bonus pour les meilleurs contributeurs",
+    raidReward3: "Succès spéciaux pour avoir vaincu des boss",
+    raidTips: "Conseils",
+    raidTip1: "Utilisez des cartes à haute puissance pour un maximum de dégâts",
+    raidTip2: "Les cartes de la collection du boss infligent des dégâts supplémentaires",
+    raidTip3: "Coordonnez-vous avec d'autres joueurs pour des kills plus rapides",
+
+    // VibeFID section
+    vibeFID: "🆔 VibeFID",
+    vibeFIDIntro: "VibeFID est une carte NFT unique basée sur votre identité Farcaster. Votre Score Neynar (engagement et réputation Farcaster) détermine la rareté de votre carte, tandis que votre numéro FID détermine les traits visuels.",
+    vibeFIDHowItWorks: "Comment ça marche",
+    vibeFIDStep1: "Connectez votre compte Farcaster",
+    vibeFIDStep2: "Votre Score Neynar détermine la rareté de la carte (basé sur followers, casts, réactions)",
+    vibeFIDStep3: "Votre numéro FID détermine les traits de couleur, foil et usure",
+    vibeFIDStep4: "Payez 0.0004 ETH pour mint votre carte VibeFID unique sur Base",
+    vibeFIDNeynarScore: "Score Neynar → Rareté",
+    vibeFIDMythic: "Mythic (≥ 0.99) : 800 puissance de base - Top 1% des utilisateurs Farcaster",
+    vibeFIDLegendary: "Legendary (≥ 0.90) : 240 puissance de base - Top 10%",
+    vibeFIDEpic: "Epic (≥ 0.79) : 80 puissance de base - Top 21%",
+    vibeFIDRare: "Rare (≥ 0.70) : 20 puissance de base - Top 30%",
+    vibeFIDCommon: "Common (< 0.70) : 5 puissance de base",
+    vibeFIDTraits: "FID → Traits",
+    vibeFIDOG: "≤ 5,000 (OG) : Prize Foil + condition Pristine garantis",
+    vibeFIDTier2: "5,001 - 20,000 : Haute chance pour Prize Foil",
+    vibeFIDTier3: "20,001 - 100,000 : Chances mixtes pour traits rares",
+    vibeFIDTier4: "> 100,000 : Distribution standard des traits",
+    vibeFIDBenefits: "Avantages des Détenteurs VibeFID",
+    vibeFIDBenefit1: "⚡ Boost de Puissance : Les cartes VibeFID reçoivent des multiplicateurs de puissance bonus en combat",
+    vibeFIDBenefit2: "♾️ Énergie Infinie : Votre carte VibeFID ne manque jamais d'énergie - toujours prête à combattre",
+    vibeFIDBenefit3: "🃏 Sans Restriction de Deck : Peut être utilisée dans n'importe quel deck sans restriction de collection",
   },
 };
 
