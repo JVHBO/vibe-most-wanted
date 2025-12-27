@@ -109,6 +109,7 @@ export default defineSchema({
     lastDebtSettlement: v.optional(v.number()), // Last time debt was settled
     pendingConversion: v.optional(v.number()), // TESTVBMS being converted to VBMS (for recovery)
     pendingConversionTimestamp: v.optional(v.number()), // When conversion was initiated
+    pendingNonce: v.optional(v.string()), // 🔒 Nonce used for pending conversion (for on-chain verification)
 
     // Daily Limits for Economy
     dailyLimits: v.optional(v.object({

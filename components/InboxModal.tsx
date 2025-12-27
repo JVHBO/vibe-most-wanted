@@ -275,7 +275,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
       console.log('[InboxModal] Step 5: Conversion complete!');
       toast.dismiss("conversion-wait");
-      toast.success(`✅ ${result.amount.toLocaleString()} TESTVBMS convertidos para VBMS!`);
+      toast.success(`✅ ${result.amount.toLocaleString()} coins convertidos para VBMS!`);
 
       setTimeout(() => {
         onClose();

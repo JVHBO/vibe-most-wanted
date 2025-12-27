@@ -131,6 +131,7 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
         )}
         <span className="text-vintage-burnt-gold font-bold">{currentPrice?.displayName} Pack:</span>
         <span className="text-vintage-gold font-mono">{currentPrice?.priceUsd}</span>
+        <span className="text-green-400 text-xs font-semibold animate-pulse">• BUY HERE</span>
         {/* Price direction indicator */}
         {priceDirection !== 'neutral' && (
           <span className={`flex items-center gap-0.5 ${priceDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>

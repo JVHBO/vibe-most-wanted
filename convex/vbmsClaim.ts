@@ -9,7 +9,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, action, internalMutation, internalAction } from "./_generated/server";
+import { mutation, query, action, internalMutation, internalAction, internalQuery } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { createAuditLog } from "./coinAudit";
@@ -148,6 +148,61 @@ export const signClaimMessage = internalAction({
       throw new Error(`Failed to sign claim message: ${error.message}`);
     }
   }
+});
+
+// ========== INTERNAL ACTION: Check if nonce was used on-chain ==========
+// 🔒 SECURITY: Prevents double-spend by verifying on-chain before allowing recovery
+
+const VBMS_POOL_TROLL_ADDRESS = "0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b";
+const BASE_RPC_URL = "https://mainnet.base.org";
+
+export const checkNonceUsedOnChain = internalAction({
+  args: {
+    nonce: v.string(),
+  },
+  handler: async (ctx, { nonce }): Promise<boolean> => {
+    try {
+      // usedNonces(bytes32) function selector: 0xfeb61724
+      // Encode the call data: function selector + nonce (already bytes32 format)
+      const nonceHex = nonce.startsWith('0x') ? nonce : `0x${nonce}`;
+      const paddedNonce = nonceHex.slice(2).padStart(64, '0');
+      const callData = `0xfeb61724${paddedNonce}`;
+
+      const response = await fetch(BASE_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_call',
+          params: [{
+            to: VBMS_POOL_TROLL_ADDRESS,
+            data: callData,
+          }, 'latest']
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        console.error(`[OnChain Check] RPC error:`, data.error);
+        // On error, be conservative - assume nonce WAS used (block recovery)
+        return true;
+      }
+
+      // Result is 0x...0001 if true (used), 0x...0000 if false (not used)
+      const result = data.result;
+      const isUsed = result && result !== '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+      console.log(`[OnChain Check] Nonce ${nonce.slice(0, 10)}... used: ${isUsed}`);
+
+      return isUsed;
+    } catch (error: any) {
+      console.error(`[OnChain Check] Error checking nonce:`, error);
+      // On error, be conservative - assume nonce WAS used (block recovery)
+      return true;
+    }
+  },
 });
 
 // ========== ACTION: Claim Battle Rewards Now (Immediate) ==========
@@ -1025,16 +1080,31 @@ export const convertTESTVBMStoVBMS = action({
       throw new Error("🔒 Farcaster authentication required. Please use the miniapp to claim.");
     }
 
+    // 🔒 Generate nonce FIRST so we can store it for on-chain verification
+    const nonce = generateNonce();
+
     // Get profile and validate via internal mutation (includes FID verification)
-    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address, fid, amount });
+    // Pass nonce so it gets stored in pendingNonce for double-spend protection
+    const result = await ctx.runMutation(internal.vbmsClaim.convertTESTVBMSInternal, { address, fid, amount, nonce });
 
     // Generate signature for blockchain claim
-    const nonce = generateNonce();
-    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
-      address,
-      amount: result.claimAmount,
-      nonce
-    });
+    let signature: string;
+
+    try {
+      signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+        address,
+        amount: result.claimAmount,
+        nonce
+      });
+    } catch (signError: any) {
+      // 🚨 CRITICAL: If signing fails, restore coins immediately!
+      console.error(`[VBMS] ❌ Signature failed for ${address}, restoring ${result.claimAmount} coins:`, signError);
+      await ctx.runMutation(internal.vbmsClaim.restoreCoinsOnSignFailure, {
+        address,
+        amount: result.claimAmount
+      });
+      throw new Error(`Signature generation failed. Your ${result.claimAmount} coins have been restored. Please try again.`);
+    }
 
     console.log(`💱 ${address} (FID: ${fid}) converting ${result.claimAmount} TESTVBMS → VBMS (nonce: ${nonce})`);
 
@@ -1049,7 +1119,7 @@ export const convertTESTVBMStoVBMS = action({
 
 // Conversion cooldown (3 minutes)
 const CONVERSION_COOLDOWN_MS = 3 * 60 * 1000;
-// Claim limits (500k max per claim)
+// Claim limits (500k max per claim - must match contract's maxClaimAmount)
 const MAX_CLAIM_AMOUNT = 500_000;
 const MIN_CLAIM_AMOUNT = 100;
 
@@ -1059,8 +1129,9 @@ export const convertTESTVBMSInternal = internalMutation({
     address: v.string(),
     fid: v.number(), // 🔒 Required for FID verification
     amount: v.optional(v.number()),
+    nonce: v.string(), // 🔒 Store for on-chain verification (anti double-spend)
   },
-  handler: async (ctx, { address, fid, amount }): Promise<{ claimAmount: number }> => {
+  handler: async (ctx, { address, fid, amount, nonce }): Promise<{ claimAmount: number }> => {
     // 🚫 BLACKLIST CHECK - Block exploiters from claiming
     if (isBlacklisted(address)) {
       const info = getBlacklistInfo(address);
@@ -1119,10 +1190,12 @@ export const convertTESTVBMSInternal = internalMutation({
 
     // 🔒 SECURITY FIX: Deduct claim amount IMMEDIATELY to prevent multiple signature generation exploit
     // Keep remaining balance if user has more than max claim amount
+    // Store nonce for on-chain verification during recovery (anti double-spend)
     await ctx.db.patch(profile._id, {
       coins: remainingBalance, // Keep any amount over 100k
       pendingConversion: claimAmount, // Track pending conversion for recovery if needed
       pendingConversionTimestamp: Date.now(),
+      pendingNonce: nonce, // 🔒 Store nonce to verify on-chain before allowing recovery
     });
 
     // 🔒 AUDIT LOG - Track TESTVBMS → VBMS conversion initiation
@@ -1184,6 +1257,7 @@ export const recordTESTVBMSConversion = mutation({
       coins: 0, // Ensure coins stay at 0
       pendingConversion: 0, // Clear pending
       pendingConversionTimestamp: undefined,
+      pendingNonce: undefined, // 🔒 Clear nonce after successful claim
       claimedTokens: (profile.claimedTokens || 0) + amount,
       lastClaimTimestamp: Date.now(),
     });
@@ -1234,35 +1308,159 @@ export const recordTESTVBMSConversion = mutation({
 
 /**
  * Recover failed TESTVBMS conversion
- * If the blockchain TX failed, restore pendingConversion back to coins
+ * 🔒 SECURITY: Now verifies on-chain that nonce was NOT used before allowing recovery
+ * This prevents double-spend attacks where attacker claims on-chain then recovers coins
  */
-export const recoverFailedConversion = mutation({
+export const recoverFailedConversion = action({
   args: {
     address: v.string(),
   },
-  handler: async (ctx, { address }) => {
-    const profile = await getProfile(ctx, address);
+  handler: async (ctx, { address }): Promise<{
+    success: boolean;
+    recoveredAmount: number;
+    newCoinsBalance: number;
+  }> => {
+    // First, get profile info via query to check pending state
+    const profileInfo = await ctx.runQuery(internal.vbmsClaim.getRecoveryInfo, { address });
 
-    const pendingAmount = profile.pendingConversion || 0;
-    // FIX: Use pendingConversionTimestamp, NOT lastClaimTimestamp!
-    const pendingTimestamp = profile.pendingConversionTimestamp || 0;
-
-    if (pendingAmount === 0) {
+    if (profileInfo.pendingAmount === 0) {
       throw new Error("No pending conversion to recover");
     }
 
-    // Only allow recovery after 5 minutes (to prevent abuse)
+    // Check time constraint
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    if (pendingTimestamp > fiveMinutesAgo) {
-      const waitSeconds = Math.ceil((pendingTimestamp - fiveMinutesAgo) / 1000);
+    if (profileInfo.pendingTimestamp > fiveMinutesAgo) {
+      const waitSeconds = Math.ceil((profileInfo.pendingTimestamp - fiveMinutesAgo) / 1000);
       throw new Error(`Please wait ${waitSeconds} seconds before recovering. This prevents abuse.`);
     }
 
-    // Restore coins
+    // 🔒 CRITICAL SECURITY CHECK: Verify nonce was NOT used on-chain
+    if (profileInfo.pendingNonce) {
+      const nonceUsedOnChain = await ctx.runAction(internal.vbmsClaim.checkNonceUsedOnChain, {
+        nonce: profileInfo.pendingNonce
+      });
+
+      if (nonceUsedOnChain) {
+        // 🚨 DOUBLE-SPEND ATTEMPT DETECTED!
+        console.error(`🚨 [SECURITY] DOUBLE-SPEND BLOCKED! Address ${address} tried to recover after claiming on-chain. Nonce: ${profileInfo.pendingNonce}`);
+
+        // Clear the pending state but DON'T restore coins (they already got VBMS)
+        await ctx.runMutation(internal.vbmsClaim.clearPendingWithoutRestore, { address });
+
+        throw new Error("🚫 Recovery blocked: This conversion was already claimed on the blockchain. Your VBMS tokens are in your wallet.");
+      }
+    }
+
+    // Nonce was NOT used on-chain - safe to restore coins
+    const result = await ctx.runMutation(internal.vbmsClaim.executeRecovery, {
+      address,
+      amount: profileInfo.pendingAmount,
+      currentCoins: profileInfo.currentCoins,
+    });
+
+    console.log(`🔄 ${address} recovered ${profileInfo.pendingAmount} TESTVBMS from failed conversion (on-chain verified)`);
+
+    return result;
+  },
+});
+
+// Internal query to get recovery info
+export const getRecoveryInfo = internalQuery({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const profile = await getProfile(ctx, address);
+    return {
+      pendingAmount: profile.pendingConversion || 0,
+      pendingTimestamp: profile.pendingConversionTimestamp || 0,
+      pendingNonce: profile.pendingNonce || null,
+      currentCoins: profile.coins || 0,
+    };
+  },
+});
+
+// Internal mutation to execute the actual recovery
+export const executeRecovery = internalMutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    currentCoins: v.number(),
+  },
+  handler: async (ctx, { address, amount, currentCoins }) => {
+    const profile = await getProfile(ctx, address);
+
+    const newBalance = currentCoins + amount;
+
     await ctx.db.patch(profile._id, {
-      coins: (profile.coins || 0) + pendingAmount,
+      coins: newBalance,
       pendingConversion: 0,
       pendingConversionTimestamp: undefined,
+      pendingNonce: undefined,
+    });
+
+    await createAuditLog(
+      ctx,
+      address,
+      "recover",
+      amount,
+      0,
+      newBalance,
+      "recoverFailedConversion",
+      undefined,
+      { reason: "Recovered failed TESTVBMS conversion (on-chain verified)" }
+    );
+
+    return {
+      success: true,
+      recoveredAmount: amount,
+      newCoinsBalance: newBalance,
+    };
+  },
+});
+
+// Internal mutation to clear pending without restoring (for blocked double-spend attempts)
+export const clearPendingWithoutRestore = internalMutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const profile = await getProfile(ctx, address);
+
+    await ctx.db.patch(profile._id, {
+      pendingConversion: 0,
+      pendingConversionTimestamp: undefined,
+      pendingNonce: undefined,
+    });
+
+    await createAuditLog(
+      ctx,
+      address,
+      "recover", // Using "recover" type - actual blocking logged in reason
+      profile.pendingConversion || 0,
+      0,
+      profile.coins || 0,
+      "clearPendingWithoutRestore",
+      undefined,
+      { reason: "🚨 DOUBLE-SPEND BLOCKED - nonce already used on-chain, coins NOT restored" }
+    );
+  },
+});
+
+/**
+ * 🚨 INTERNAL: Restore coins when signature generation fails
+ * Called automatically by convertTESTVBMStoVBMS if signClaimMessage throws
+ */
+export const restoreCoinsOnSignFailure = internalMutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+  },
+  handler: async (ctx, { address, amount }) => {
+    const profile = await getProfile(ctx, address);
+
+    // Restore coins and clear pending (including nonce)
+    await ctx.db.patch(profile._id, {
+      coins: (profile.coins || 0) + amount,
+      pendingConversion: 0,
+      pendingConversionTimestamp: undefined,
+      pendingNonce: undefined, // 🔒 Clear nonce
     });
 
     // Audit log
@@ -1270,21 +1468,15 @@ export const recoverFailedConversion = mutation({
       ctx,
       address,
       "recover",
-      pendingAmount,
+      amount,
       0,
-      (profile.coins || 0) + pendingAmount,
-      "recoverFailedConversion",
+      (profile.coins || 0) + amount,
+      "restoreCoinsOnSignFailure",
       undefined,
-      { reason: "Recovered failed TESTVBMS conversion" }
+      { reason: "Signature generation failed - coins auto-restored" }
     );
 
-    console.log(`🔄 ${address} recovered ${pendingAmount} TESTVBMS from failed conversion`);
-
-    return {
-      success: true,
-      recoveredAmount: pendingAmount,
-      newCoinsBalance: (profile.coins || 0) + pendingAmount,
-    };
+    console.log(`🔄 [AUTO-RESTORE] ${address} - Restored ${amount} coins after signature failure`);
   },
 });
 

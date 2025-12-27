@@ -346,7 +346,7 @@ export function GamePopups({
               {/* PvP Inbox Reminder */}
               {lastBattleResult?.type === 'pvp' && lastBattleResult?.coinsEarned && lastBattleResult.coinsEarned > 0 && (
                 <p className="text-sm text-green-400 font-semibold mt-1 animate-bounce">
-                  📬 Check inbox to claim TESTVBMS!
+                  📬 Check inbox to claim coins!
                 </p>
               )}
             </div>
