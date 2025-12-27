@@ -1169,7 +1169,7 @@ export default function FidPage() {
             <div className="bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/50 p-3 sm:p-4 md:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold">
-                  {t.allMinted} ({totalCount})
+                  {t.allMinted}
                 </h2>
 
                 {/* Search Input */}
