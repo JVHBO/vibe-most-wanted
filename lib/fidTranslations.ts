@@ -1829,4 +1829,279 @@ export const fidTranslations = {
     crimeTypeActive: 'Membre actif du syndicat du crime',
     crimeTypeRecruit: 'Nouvelle recrue dans les activités illicites',
   },
+  "ja": {
+    // Password screen
+    fidAccessTitle: '🔒 VibeFIDアクセス',
+    fidAccessDesc: 'VibeFIDミントシステムにアクセスするにはパスワードを入力してください',
+    enterPassword: 'パスワードを入力',
+    incorrectPassword: '❌ パスワードが違います',
+    unlock: 'ロック解除',
+
+    // Main page
+    fidPageTitle: 'VibeFID',
+    fidPageDesc: 'Farcasterプロフィールからプレイ可能なカードを作成',
+    home: 'ホーム',
+    mintYourCard: 'VibeFIDカードをミント',
+    transformProfile: 'Farcasterプロフィールをプレイ可能なカードに変換 • 価格: 0.0003 ETH',
+    allMinted: 'すべてミント済み',
+    connectFarcasterToMint: '🔗 Farcasterを接続してミント',
+    connectedAs: '接続中',
+    enterFid: 'Farcaster FIDを入力',
+    fetch: '取得',
+    loading: '読み込み中...',
+
+    // User info
+    bio: '自己紹介',
+    noBio: '自己紹介なし',
+    fid: 'FID',
+    score: 'スコア',
+    followers: 'フォロワー',
+    rarity: 'レアリティ',
+    cardRange: 'カード範囲',
+    powerBadge: '⚡ パワーバッジ',
+
+    // Actions
+    generatePreview: 'カードプレビューを生成',
+    generating: '生成中...',
+    mintCard: 'カードをミント',
+    mintMyCard: 'VibeFIDカードをミント',
+    minting: 'ミント中...',
+    connectToMint: 'ウォレットを接続してミント',
+    mintPrice: 'ミント価格',
+    checkNeynarScore: '📊 Neynarスコアを確認',
+    generatingScore: 'スコア画像を生成中...',
+    neynarScoreTitle: 'あなたのNeynarスコア',
+    currentScore: '現在のスコア',
+
+    // Pagination
+    previous: '← 前へ',
+    next: '次へ →',
+    pageOf: 'ページ',
+    of: '/',
+    showing: '表示中',
+    cards: '枚',
+
+    // Search
+    searchPlaceholder: '名前またはFIDで検索...',
+    noCardsFound: 'カードが見つかりません',
+    clearSearch: '検索をクリア',
+
+    // Card preview
+    cardPreview: 'カードプレビュー',
+    generatedTraits: '生成された特性',
+    card: 'カード',
+    foil: 'フォイル',
+    wear: '使用感',
+    power: 'パワー',
+
+    // My cards
+    myCards: '私のFarcasterカード',
+    cardsCount: '{count}枚',
+    share: '共有',
+
+    // Your card section
+    yourCard: 'あなたのVibeFIDカード',
+    alreadyMinted: 'ミント済みカードがあります！',
+    viewMyCard: 'カードを見る',
+    checkEvolution: '進化を確認',
+
+    // Success modal
+    vibeFidMinted: 'VibeFIDミント完了！',
+    mintSuccess: '🎉',
+    viewOnBaseScan: 'BaseScanで見る',
+    shareToFarcaster: 'Farcasterで共有',
+
+    // Criminal backstory
+    criminalRecord: '犯罪記録',
+    wantedFor: '指名手配：',
+    knownAssociates: '既知の関係者',
+    dateOfCrime: '犯罪日',
+    dangerLevel: '危険度',
+    lastSeen: '最後の目撃情報',
+    warningCaution: '⚠️ 警告: 極めて注意して接近すること',
+    viewCard: 'カードを見る →',
+    yourVibeFidCard: 'あなたのVibeFIDカード',
+    cardStats: 'カード統計',
+    back: '← 戻る',
+    viewOnMarketplace: 'マーケットプレイスで見る',
+    mintToReveal: 'ミントして完全なカードを公開',
+
+    // About Traits Modal
+    aboutTraits: 'VibeFIDトレイトについて',
+    aboutTraitsIntro: 'VibeFIDカードにはユニークなトレイトがあります。すべてのトレイトは',
+    deterministic: '決定論的',
+    deterministicExplain: '- あなたのFIDは常に同じトレイトを取得します！',
+    fidAndScore: 'FID & Neynarスコア',
+    fidExplanation: 'あなた固有のFarcaster ID。これにより',
+    fidTraits: 'スート、フォイル、使用感',
+    fidAlgorithm: 'がアルゴリズムで決まります！',
+    neynarScoreLabel: 'Neynarスコア:',
+    neynarScoreExplanation: 'エンゲージメントを測定。スコアが高いほど =',
+    rarerCards: 'レアなカード',
+    withMorePower: 'より多くのパワー付き！',
+    proTip: 'プロのヒント:',
+    proTipText: 'Farcasterでより活発に活動して、より良いカードを手に入れよう！',
+    rarityTitle: 'レアリティ',
+    rarityDesc: 'Neynarスコアに基づく。',
+    basePower: '基本パワー',
+    foilTitle: 'フォイルタイプ',
+    foilDesc: 'FIDに基づいてランダムに割り当て！',
+    wearTitle: '使用感',
+    wearDesc: 'ランダム。良いほど強い！',
+    powerCalculationTitle: 'パワー計算',
+    powerFormula: 'パワー =',
+    basePowerLabel: '基本',
+    foilLabel: 'フォイル',
+    wearLabel: '使用感',
+    example: '例:',
+    cardAndSuitTitle: 'カード & スート',
+    suitLabel: 'スート',
+    suitExplanation: 'FIDに基づく。',
+    rankLabel: 'ランク',
+    rankExplanation: 'レアリティに基づく。',
+    bountyTitle: '賞金',
+    bountyFormula: 'あなたの賞金 =',
+    powerMultiplier: 'パワー × 10',
+    gotIt: '了解！',
+    prizeFoil: 'プライズフォイル',
+    standardFoil: 'スタンダードフォイル',
+    noFoil: 'なし',
+    pristine: '新品同様',
+    mint: 'ミント',
+    lightlyPlayed: '軽度使用',
+    moderatelyPlayed: '中度使用',
+    heavilyPlayed: '高度使用',
+    chance: '確率',
+    powerWord: 'パワー',
+
+    // About Traits Modal - Detailed
+    aboutTraitsModalTitle: 'VibeFIDについて',
+    aboutTraitsModalIntro: 'VibeFIDカードはFIDとNeynarスコアによって決定されるユニークなトレイトを持っています。',
+    howItWorks: '仕組み',
+    vibeFidBenefits: 'VibeFIDの特典',
+    vibeFidBenefitsIntro: 'VibeFIDカードにはVibe Most Wantedで特別な特典があります:',
+    powerBoost: 'パワーブースト',
+    powerBoostDesc: 'VibeFIDカードは戦闘でボーナスパワー倍率を獲得',
+    infiniteEnergy: '無限エナジー',
+    infiniteEnergyDesc: 'エナジーが減らない - 常に戦闘準備OK',
+    noDeckRestriction: 'デッキ制限なし',
+    noDeckRestrictionDesc: '攻撃デッキ（レイド）と防御デッキで同時に使用可能 - 制限なし！',
+    neynarScoreSection: 'Neynarスコア → レアリティ',
+    neynarScoreDescription: 'Neynarスコア（Farcasterエンゲージメント）がカードのレアリティを決定:',
+    scoreRange: 'スコア',
+    fidSection: 'FID → フォイル & 使用感',
+    fidDescription: 'FIDがフォイルと使用感のトレイトを決定。低いFID（初期採用者）ほど有利！',
+    fidRange: 'FID範囲',
+    foilChances: 'フォイル確率',
+    wearChances: '使用感確率',
+    powerMultipliers: 'パワー倍率',
+    foilMultipliers: 'フォイル倍率',
+    wearMultipliers: '使用感倍率',
+    mythic: 'ミシック',
+    legendary: 'レジェンダリー',
+    epic: 'エピック',
+    rare: 'レア',
+    common: 'コモン',
+
+    // Evolution modal
+    evolutionTitle: '🔄 進化チェック',
+    evolutionDesc: 'Neynarスコアが向上していれば、カードがより高いレアリティに進化する可能性があります！',
+    checkEvolutionNow: '今すぐ進化を確認',
+    checking: '確認中...',
+    noEvolutionAvailable: '進化はまだ利用できません',
+    noEvolutionDesc: 'カードの進化には高いNeynarスコアが必要です。Farcasterで活動を続けてスコアを上げましょう！',
+    evolutionAvailable: '進化可能！',
+    evolveNow: '今すぐ進化',
+    oldRarity: '旧レアリティ',
+    newRarity: '新レアリティ',
+    oldPower: '旧パワー',
+    newPower: '新パワー',
+    scoreDelta: 'スコア変化',
+    newBounty: '新賞金',
+    evolutionComplete: '進化完了！',
+    evolutionSuccess: 'カードが正常に進化しました！',
+    close: '閉じる',
+
+    // Score history
+    scoreHistory: 'スコア履歴',
+    noScoreHistory: 'まだスコア履歴がありません',
+    latestScore: '最新スコア',
+
+    // Rarity
+    rarityCommon: 'コモン',
+    rarityRare: 'レア',
+    rarityEpic: 'エピック',
+    rarityLegendary: 'レジェンダリー',
+    rarityMythic: 'ミシック',
+
+    // Wear
+    wearPristine: '新品同様',
+    wearMint: 'ミント',
+    wearLightlyPlayed: '軽度使用',
+    wearModeratelyPlayed: '中度使用',
+    wearHeavilyPlayed: '高度使用',
+
+    // Foil
+    foilPrize: 'プライズ',
+    foilStandard: 'スタンダード',
+    foilNone: 'なし',
+
+    // Cast share
+    shareCardTitle: 'カードを共有',
+    shareCardDesc: 'Farcasterで共有',
+    shareCardButton: 'Farcasterで共有',
+
+    // Language
+    language: '言語',
+
+    // Evolution
+    evolutionCheckButton: '📊 進化チェック',
+    evolutionModalTitle: '✨ カード進化',
+    evolutionModalDesc: 'Neynarスコアをチェックして、カードがより高いレアリティに進化するか確認しましょう！',
+    oldScore: '旧スコア',
+    newScore: '新スコア',
+    regeneratingImages: '画像を再生成中...',
+    regeneratingImagesDesc: 'カードの外観を新しいレアリティで更新中...',
+    evolutionCompleteTitle: '🎉 進化完了！',
+    evolutionCompleteDesc: 'カードは正常に進化しました！',
+    noEvolutionTitle: '進化不可',
+    noEvolutionAvailableDesc: '現在のスコアでは進化できません。Farcasterで活動してスコアを上げましょう！',
+    refreshMetadata: 'OpenSeaを更新',
+    refreshMetadataComplete: '✓ メタデータ更新完了',
+
+    // Backstory
+    backstoryTitle: '犯罪バックストーリー',
+    bounty: '賞金',
+
+    // Story templates
+    criminalStory1: [
+      '{date}に犯罪活動を開始し、地下コミュニティで急速に悪名を高めた。',
+      '{date}に犯罪の道を歩み始め、違法な帝国を築き上げた。',
+    ],
+    criminalStory2: [
+      'デジタル地下世界に{followers}人の共犯者を持つネットワークを持ち、{username}は最も恐れられる人物の一人となった。',
+    ],
+    criminalStory3: [
+      '{bio}で知られるこの犯罪者は極めて危険であり、慎重に接近する必要がある。',
+    ],
+    criminalStory4: [
+      '当局は生死を問わず逮捕に${bounty}の報奨金を提示している。',
+    ],
+    criminalStory5: [
+      'Farcaster地域で活動が確認され、混乱の痕跡を残している。',
+    ],
+
+    // Danger levels
+    dangerExtreme: '極度 - 直接対決を避けること',
+    dangerHigh: '高 - 援軍が必要',
+    dangerMedium: '中 - 注意して接近',
+    dangerLow: '低 - 逮捕可能',
+
+    // Crime types
+    crimeTypeFounder: 'ハイレベル犯罪組織の創設者',
+    crimeTypeEarly: 'サイバー犯罪のパイオニア',
+    crimeTypeEstablished: '確立されたギャングリーダー',
+    crimeTypeActive: '犯罪シンジケートの現役メンバー',
+    crimeTypeRecruit: '違法活動の新規リクルート',
+  },
 };

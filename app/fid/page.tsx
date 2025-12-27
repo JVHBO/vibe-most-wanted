@@ -957,6 +957,9 @@ export default function FidPage() {
           <option value="hi">🇮🇳</option>
           <option value="ru">🇷🇺</option>
           <option value="zh-CN">🇨🇳</option>
+          <option value="id">🇮🇩</option>
+          <option value="fr">🇫🇷</option>
+          <option value="ja">🇯🇵</option>
         </select>
       </div>
 
@@ -1392,6 +1395,9 @@ export default function FidPage() {
                   <option value="hi">🇮🇳 हिन्दी</option>
                   <option value="ru">🇷🇺 Русский</option>
                   <option value="zh-CN">🇨🇳 中文</option>
+                  <option value="id">🇮🇩 Bahasa</option>
+                  <option value="fr">🇫🇷 Français</option>
+                  <option value="ja">🇯🇵 日本語</option>
                 </select>
               </div>
 
