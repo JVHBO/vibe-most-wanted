@@ -111,7 +111,7 @@ export default function DifficultyModal({
         {/* Title */}
         <div className="mb-4 md:mb-6 flex-shrink-0">
           <h2 className="text-lg md:text-3xl font-bold text-vintage-gold font-display text-center drop-shadow-lg uppercase tracking-wider">
-            <span className="text-vintage-neon-blue">▸</span> SELECT YOUR DIFFICULTY <span className="text-vintage-neon-blue">◂</span>
+            <span className="text-vintage-neon-blue">▸</span> {t('selectYourDifficulty')} <span className="text-vintage-neon-blue">◂</span>
           </h2>
 
           {/* Daily Attempts Counter */}
@@ -128,13 +128,13 @@ export default function DifficultyModal({
                     hasAttemptsLeft ? 'text-vintage-gold' : 'text-red-400'
                   }`}>
                     {hasAttemptsLeft
-                      ? `${remainingAttempts}/${totalAttempts} Daily Attempts Left`
-                      : 'No Attempts Left Today'
+                      ? t('dailyAttemptsLeft').replace('{remaining}', String(remainingAttempts)).replace('{total}', String(totalAttempts))
+                      : t('noAttemptsLeft')
                     }
                   </div>
                   {!hasAttemptsLeft && (
                     <div className="text-vintage-burnt-gold text-xs md:text-sm font-modern">
-                      Come back tomorrow for more attempts!
+                      {t('comeBackTomorrow')}
                     </div>
                   )}
                 </div>
