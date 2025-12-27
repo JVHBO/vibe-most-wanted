@@ -8,10 +8,12 @@ import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { createPortal } from "react-dom";
-import { useState } from 'react';
-import { useAccount } from 'wagmi';
-import { useMutation } from 'convex/react';
+import { useState, useEffect, useRef } from 'react';
+import { useAccount, useDisconnect } from 'wagmi';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -100,11 +102,143 @@ export function SettingsModal({
   play,
   disconnectWallet,
 }: SettingsModalProps) {
-  const { address: walletAddress } = useAccount();
+  const { address: walletAddress, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const [customUrlInput, setCustomUrlInput] = useState(customMusicUrl || '');
   const [playlistUrlInput, setPlaylistUrlInput] = useState('');
   const updateCustomMusic = useMutation(api.profiles.updateCustomMusic);
   const updateMusicPlaylist = useMutation(api.profiles.updateMusicPlaylist);
+  const linkWalletMutation = useMutation(api.profiles.linkWallet);
+
+  // 🔗 MULTI-WALLET: Link wallet state
+  const [isLinkingWallet, setIsLinkingWallet] = useState(false);
+  const [linkingFromAddress, setLinkingFromAddress] = useState<string | null>(null);
+  const [linkSuccess, setLinkSuccess] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const previousAddressRef = useRef<string | null>(null);
+
+  // 🔗 LINK CODE: FID users enter codes to link wallets (INVERTED FLOW)
+  const farcasterContext = useFarcasterContext();
+  const hasFarcaster = !!farcasterContext.user?.fid;
+  const [linkCodeInput, setLinkCodeInput] = useState('');
+  const [isLinkingByCode, setIsLinkingByCode] = useState(false);
+  const [linkCodeError, setLinkCodeError] = useState<string | null>(null);
+  const [linkCodeSuccess, setLinkCodeSuccess] = useState<string | null>(null);
+  const useLinkCodeMutation = useMutation(api.profiles.useLinkCode);
+  const unlinkWalletMutation = useMutation(api.profiles.unlinkWallet);
+
+  // 🔗 MULTI-WALLET: Detect wallet change and auto-link
+  useEffect(() => {
+    // If we're in linking mode and wallet changed to a different address
+    if (linkingFromAddress && walletAddress && isConnected) {
+      const newAddr = walletAddress.toLowerCase();
+      const oldAddr = linkingFromAddress.toLowerCase();
+
+      if (newAddr !== oldAddr) {
+        // Auto-link the new wallet
+        devLog('🔗 Auto-linking wallet:', newAddr, 'to profile:', oldAddr);
+        linkWalletMutation({
+          address: oldAddr,
+          newWalletAddress: newAddr,
+        })
+          .then(() => {
+            setLinkSuccess(true);
+            setLinkError(null);
+            setIsLinkingWallet(false);
+            setLinkingFromAddress(null);
+            if (soundEnabled) AudioManager.buttonSuccess();
+          })
+          .catch((err) => {
+            devError('Failed to link wallet:', err);
+            setLinkError(err.message || 'Erro ao linkar wallet');
+            setLinkSuccess(false);
+            if (soundEnabled) AudioManager.buttonError();
+          });
+      }
+    }
+  }, [walletAddress, isConnected, linkingFromAddress, linkWalletMutation, soundEnabled]);
+
+  // Start linking process
+  const handleStartLinking = () => {
+    if (!walletAddress) return;
+    if (soundEnabled) AudioManager.buttonClick();
+
+    // Store current address before disconnecting
+    const primaryAddr = linkedAddresses?.primary || walletAddress;
+    setLinkingFromAddress(primaryAddr.toLowerCase());
+    setIsLinkingWallet(true);
+    setLinkSuccess(false);
+    setLinkError(null);
+
+    // Disconnect to allow connecting new wallet
+    disconnect();
+  };
+
+  // Cancel linking
+  const handleCancelLinking = () => {
+    setIsLinkingWallet(false);
+    setLinkingFromAddress(null);
+    setLinkError(null);
+  };
+
+  // 🔗 Use link code to add a wallet (INVERTED FLOW)
+  const handleUseLinkCode = async () => {
+    if (!walletAddress || isLinkingByCode || linkCodeInput.length !== 6) return;
+
+    setIsLinkingByCode(true);
+    setLinkCodeError(null);
+
+    try {
+      const result = await useLinkCodeMutation({
+        code: linkCodeInput,
+        fidOwnerAddress: walletAddress,
+      });
+      setLinkCodeSuccess(result.message);
+      setLinkCodeInput('');
+      if (soundEnabled) AudioManager.buttonSuccess();
+      devLog('🔗 Linked wallet via code:', result.linkedWallet);
+    } catch (error: any) {
+      setLinkCodeError(error.message || 'Erro ao linkar wallet');
+      if (soundEnabled) AudioManager.buttonError();
+      devError('Failed to use link code:', error);
+    } finally {
+      setIsLinkingByCode(false);
+    }
+  };
+
+  // Handle unlink wallet
+  const handleUnlinkWallet = async (addressToUnlink: string) => {
+    if (!walletAddress) return;
+
+    const confirmed = confirm(t('unlinkConfirm'));
+    if (!confirmed) return;
+
+    try {
+      const primaryAddr = linkedAddresses?.primary || walletAddress;
+      await unlinkWalletMutation({
+        primaryAddress: primaryAddr,
+        addressToUnlink: addressToUnlink,
+      });
+      if (soundEnabled) AudioManager.buttonSuccess();
+      devLog('🔗 Unlinked wallet:', addressToUnlink);
+    } catch (error: any) {
+      if (soundEnabled) AudioManager.buttonError();
+      devError('Failed to unlink wallet:', error);
+      alert(error.message || 'Erro ao deslinkar wallet');
+    }
+  };
+
+  // 🔗 MULTI-WALLET: Get linked addresses
+  const linkedAddresses = useQuery(
+    api.profiles.getLinkedAddresses,
+    walletAddress ? { address: walletAddress } : "skip"
+  );
+
+  // Handle show link wallet instructions
+  const handleShowLinkInstructions = () => {
+    if (soundEnabled) AudioManager.buttonClick();
+    setIsLinkingWallet(true);
+  };
 
   // Detect if running in miniapp via desktop browser (has audio restrictions)
   const isInMiniappBrowser = typeof window !== 'undefined' &&
@@ -741,6 +875,113 @@ export function SettingsModal({
                   {t('vibeMarketEasterEgg')}
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* 🔗 Linked Wallets Section - Always show if wallet connected */}
+          {walletAddress && (
+            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+              <div className="flex items-center gap-3 mb-3">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-vintage-gold">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div>
+                  <p className="font-modern font-bold text-vintage-gold">{t('linkedWallets')}</p>
+                  <p className="text-xs text-vintage-burnt-gold">
+                    {t('linkedWalletsDesc')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {/* Primary wallet */}
+                {linkedAddresses?.primary ? (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-400">●</span>
+                    <span className="text-vintage-gold font-mono">
+                      {linkedAddresses.primary.slice(0, 6)}...{linkedAddresses.primary.slice(-4)}
+                    </span>
+                    <span className="text-xs text-vintage-burnt-gold">{t('linkedWalletPrimary')}</span>
+                    {walletAddress?.toLowerCase() === linkedAddresses.primary && (
+                      <span className="text-xs bg-vintage-gold/20 text-vintage-gold px-2 py-0.5 rounded">{t('linkedWalletCurrent')}</span>
+                    )}
+                  </div>
+                ) : (
+                  /* Show current wallet if no profile yet */
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-400">●</span>
+                    <span className="text-vintage-gold font-mono">
+                      {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    </span>
+                    <span className="text-xs bg-vintage-gold/20 text-vintage-gold px-2 py-0.5 rounded">{t('linkedWalletCurrent')}</span>
+                  </div>
+                )}
+
+                {/* Linked wallets */}
+                {linkedAddresses?.linked?.map((addr: string, i: number) => (
+                  <div key={addr} className="flex items-center gap-2 text-sm">
+                    <span className="text-blue-400">●</span>
+                    <span className="text-vintage-gold font-mono">
+                      {addr.slice(0, 6)}...{addr.slice(-4)}
+                    </span>
+                    <span className="text-xs text-vintage-burnt-gold">{t('linkedWalletLinked')}</span>
+                    {walletAddress?.toLowerCase() === addr && (
+                      <span className="text-xs bg-vintage-gold/20 text-vintage-gold px-2 py-0.5 rounded">{t('linkedWalletCurrent')}</span>
+                    )}
+                    {/* Unlink button - only show for FID owners */}
+                    {hasFarcaster && (
+                      <button
+                        onClick={() => handleUnlinkWallet(addr)}
+                        className="ml-auto text-red-400 hover:text-red-300 text-xs px-2 py-0.5 border border-red-400/30 rounded hover:border-red-400/50 transition"
+                      >
+                        {t('unlinkWallet')}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* 🔗 Enter Link Code (Only for Farcaster users - INVERTED FLOW) */}
+              {hasFarcaster && (
+                <div className="mt-3 pt-3 border-t border-vintage-gold/20">
+                  <p className="text-vintage-burnt-gold text-xs mb-3">
+                    {t('enterLinkCodeHere')}
+                  </p>
+
+                  {/* Code Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={linkCodeInput}
+                      onChange={(e) => {
+                        setLinkCodeInput(e.target.value.replace(/\D/g, ''));
+                        setLinkCodeError(null);
+                      }}
+                      placeholder="000000"
+                      className="flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-vintage-gold/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-green-500 focus:outline-none"
+                    />
+                    <button
+                      onClick={handleUseLinkCode}
+                      disabled={isLinkingByCode || linkCodeInput.length !== 6}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLinkingByCode ? '...' : t('linkButton')}
+                    </button>
+                  </div>
+
+                  {/* Error */}
+                  {linkCodeError && (
+                    <p className="text-red-400 text-xs text-center mt-2">{linkCodeError}</p>
+                  )}
+
+                  {/* Success */}
+                  {linkCodeSuccess && (
+                    <p className="text-green-400 text-xs text-center mt-2">{linkCodeSuccess}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
