@@ -53,7 +53,7 @@ export default function AchievementsView({
       const result = await claimAchievement(achievementId);
 
       if (result && onSuccess) {
-        onSuccess(`✅ ${result.reward} TESTVBMS added!`);
+        onSuccess(`✅ ${result.reward} coins added!`);
       }
     } catch (error) {
       console.error('[Achievement] Failed to claim:', error);
@@ -91,7 +91,7 @@ export default function AchievementsView({
 
       // Show success message
       if (successCount > 0 && totalReward > 0 && onSuccess) {
-        onSuccess(`✅ ${totalReward} TESTVBMS added from ${successCount} achievements!`);
+        onSuccess(`✅ ${totalReward} coins added from ${successCount} achievements!`);
       }
     } finally {
       setIsClaiming(false);
