@@ -5,7 +5,6 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { useCachedDailyQuest } from "@/lib/convex-cache";
 import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -15,15 +14,6 @@ export default function QuestsPage() {
   const router = useRouter();
   const { address, isConnecting } = useAccount();
   const { t } = useLanguage();
-
-  // Daily Quest
-  const { quest: dailyQuest, refresh: refreshDailyQuest } = useCachedDailyQuest();
-  const questProgress = useQuery(
-    api.quests.getQuestProgress,
-    address ? { address: address.toLowerCase() } : "skip"
-  );
-  const claimDailyReward = useMutation(api.quests.claimQuestReward);
-  const ensureDailyQuest = useMutation(api.quests.ensureDailyQuest);
 
   // Social Quests
   const socialQuestProgress = useQuery(
@@ -42,7 +32,6 @@ export default function QuestsPage() {
   const userFid = profile?.fid;
 
   // State
-  const [isClaiming, setIsClaiming] = useState(false);
   const [verifying, setVerifying] = useState<string | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
@@ -81,15 +70,11 @@ export default function QuestsPage() {
     { type: 'claim_vibe_badge', reward: 0, date: 'once', titleKey: 'mission_vibe_badge', descKey: 'mission_vibe_badge_desc' },
   ];
 
-  // Initialize missions and daily quest on mount
+  // Initialize missions on mount
   useEffect(() => {
     if (!address) return;
     const init = async () => {
       try {
-        // Ensure daily quest exists
-        await ensureDailyQuest({});
-        refreshDailyQuest();
-
         // Ensure missions exist
         await ensureWelcomeGift({ playerAddress: address.toLowerCase() });
         await markDailyLogin({ playerAddress: address.toLowerCase() });
@@ -139,21 +124,6 @@ export default function QuestsPage() {
     setIsLoadingMissions(false);
   }, [personalMissions, vibeBadgeEligibility]);
 
-
-
-  // Daily Quest handlers
-  const handleClaimDaily = async () => {
-    if (!questProgress || questProgress.claimed || isClaiming || !address) return;
-    setIsClaiming(true);
-    try {
-      await claimDailyReward({ address: address.toLowerCase() });
-      AudioManager.win();
-    } catch (error) {
-      console.error("Failed to claim:", error);
-    } finally {
-      setIsClaiming(false);
-    }
-  };
 
   // Social Quest handlers
   const verifyQuest = async (quest: SocialQuest) => {
@@ -234,11 +204,6 @@ export default function QuestsPage() {
     );
   }
 
-  const dailyProgress = questProgress?.progress || 0;
-  const dailyTarget = dailyQuest?.requirement?.count || 1;
-  const dailyCompleted = dailyProgress >= dailyTarget;
-  const canClaimDaily = dailyCompleted && !questProgress?.claimed;
-
   return (
     <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
       {/* Background */}
@@ -283,52 +248,6 @@ export default function QuestsPage() {
 
           {/* Missions */}
           <div className="flex-1 overflow-y-auto space-y-3 max-h-[calc(100vh-180px)]">
-              {/* Daily Quest */}
-              <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
-                <p className="text-vintage-gold text-xs font-bold mb-2">DAILY QUEST</p>
-                {dailyQuest ? (
-                  <>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-vintage-ice font-semibold text-sm truncate">{dailyQuest.description}</p>
-                        <p className="text-xs text-vintage-ice/60">{dailyQuest.difficulty}</p>
-                      </div>
-                      <span className="text-vintage-gold font-bold text-sm">+{dailyQuest.reward}</span>
-                    </div>
-
-                    {/* Progress bar */}
-                    <div className="mb-2">
-                      <div className="w-full bg-vintage-black border border-vintage-gold/30 rounded-full h-2 overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-300 ${dailyCompleted ? "bg-green-500" : "bg-vintage-gold"}`}
-                          style={{ width: `${Math.min((dailyProgress / dailyTarget) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-vintage-ice/60 mt-1 text-right">{dailyProgress}/{dailyTarget}</p>
-                    </div>
-
-                    {/* Claim button */}
-                    {questProgress?.claimed ? (
-                      <span className="text-green-400 text-xs font-bold">Claimed</span>
-                    ) : canClaimDaily ? (
-                      <button
-                        onClick={handleClaimDaily}
-                        disabled={isClaiming}
-                        className="w-full bg-vintage-gold text-black font-bold py-2 px-4 rounded-lg text-sm disabled:opacity-50"
-                      >
-                        {isClaiming ? "..." : "Claim"}
-                      </button>
-                    ) : null}
-                  </>
-                ) : dailyQuest === undefined ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin w-5 h-5 border-2 border-vintage-gold border-t-transparent rounded-full" />
-                  </div>
-                ) : (
-                  <p className="text-vintage-ice/50 text-xs text-center py-2">No daily quest available</p>
-                )}
-              </div>
-
               {/* Personal Missions (Welcome, VibeFID, etc) */}
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">

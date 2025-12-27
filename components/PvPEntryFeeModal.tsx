@@ -119,7 +119,7 @@ export function PvPEntryFeeModal({
                 • VBMS goes to pool (locked)
               </p>
               <p className="text-vintage-ice/70 text-xs mb-1">
-                • Winner receives TESTVBMS in inbox
+                • Winner receives coins in inbox
               </p>
               <p className="text-vintage-ice/70 text-xs">
                 • Loser's VBMS stays in pool

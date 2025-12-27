@@ -1269,27 +1269,27 @@ export function RaidBossModal({
                     <tr className="border-b border-red-600/20">
                       <td className="py-1 px-2 text-gray-400">Common</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">10M</td>
-                      <td className="text-right py-1 px-2 text-green-400">1,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">1,000 coins</td>
                     </tr>
                     <tr className="border-b border-red-600/20">
                       <td className="py-1 px-2 text-blue-400">Rare</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">50M</td>
-                      <td className="text-right py-1 px-2 text-green-400">5,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">5,000 coins</td>
                     </tr>
                     <tr className="border-b border-red-600/20">
                       <td className="py-1 px-2 text-purple-400">Epic</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">250M</td>
-                      <td className="text-right py-1 px-2 text-green-400">25,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">25,000 coins</td>
                     </tr>
                     <tr className="border-b border-red-600/20">
                       <td className="py-1 px-2 text-orange-400">Legendary</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">1B</td>
-                      <td className="text-right py-1 px-2 text-green-400">100,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">100,000 coins</td>
                     </tr>
                     <tr>
                       <td className="py-1 px-2 text-red-400">Mythic</td>
                       <td className="text-right py-1 px-2 text-vintage-neon-blue">5B</td>
-                      <td className="text-right py-1 px-2 text-green-400">500,000 $TESTVBMS</td>
+                      <td className="text-right py-1 px-2 text-green-400">500,000 coins</td>
                     </tr>
                   </tbody>
                 </table>

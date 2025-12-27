@@ -1793,32 +1793,8 @@ export function PokerBattleTable({
     }
   }, [phase, playerScore, opponentScore, isSpectatorMode, soundEnabled, gameOverShown]);
 
-  // Play victory music for special victories (with cleanup to prevent duplicates)
-  useEffect(() => {
-    // Only play victory music if: won, has ante, not spectator, and special victory
-    if (phase === 'game-over' && gameOverShown && selectedAnte !== 0 && !isSpectatorMode && playerScore > opponentScore && soundEnabled) {
-      // Use the already selected victory image to determine audio
-      const victoryConfig = VICTORY_CONFIGS.find(v => v.image === currentVictoryImage) || VICTORY_CONFIGS[0];
-
-      if (victoryConfig.audio && !victoryAudioRef.current) {
-        console.log('[PokerBattle] 🎵 Playing victory music:', victoryConfig.audio);
-        const audio = new Audio(victoryConfig.audio);
-        audio.loop = false; // Play once, don't loop
-        audio.volume = 0.5; // Set volume to 50% to avoid being too loud
-        audio.play().catch(err => console.error('[PokerBattle] Failed to play victory music:', err));
-        victoryAudioRef.current = audio;
-      }
-    }
-
-    // Cleanup: Stop and remove audio when component unmounts or phase changes
-    return () => {
-      if (victoryAudioRef.current) {
-        console.log('[PokerBattle] 🔇 Stopping victory music');
-        victoryAudioRef.current.pause();
-        victoryAudioRef.current = null;
-      }
-    };
-  }, [phase, gameOverShown, selectedAnte, isSpectatorMode, playerScore, opponentScore, soundEnabled, currentVictoryImage]);
+  // NOTE: Victory music is now handled by GamePopups component via <audio autoPlay>
+  // This prevents duplicate audio playback
 
   // Show spectator entry modal when entering spectator mode (regardless of game state)
   useEffect(() => {
@@ -1973,10 +1949,10 @@ export function PokerBattleTable({
             difficulty
           })
             .then((result) => {
-              console.log('[PokerBattle] ✅ TESTVBMS sent to inbox (PvE):', result);
+              console.log('[PokerBattle] ✅ coins sent to inbox (PvE):', result);
               setBattleFinalized(true);
 
-              toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
+              toast.success(`Victory! ${rewardAmount} coins sent to inbox!`, {
                 description: 'Check your inbox to claim',
                 duration: 5000,
               });
@@ -1996,10 +1972,10 @@ export function PokerBattleTable({
             amount: rewardAmount
           })
             .then((result) => {
-              console.log('[PokerBattle] ✅ TESTVBMS sent to inbox (PvP):', result);
+              console.log('[PokerBattle] ✅ coins sent to inbox (PvP):', result);
               setBattleFinalized(true);
 
-              toast.success(`Victory! ${rewardAmount} TESTVBMS sent to inbox!`, {
+              toast.success(`Victory! ${rewardAmount} coins sent to inbox!`, {
                 description: 'Check your inbox to claim',
                 duration: 5000,
               });
