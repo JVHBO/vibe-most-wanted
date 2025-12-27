@@ -59,6 +59,7 @@ const LANGUAGE_MUSIC: Record<SupportedLanguage, string> = {
   'zh-CN': getMusicPath('zh-cn'),
   'id': getMusicPath('id'),
   'fr': getMusicPath('fr'),
+  'ja': getMusicPath('ja'),
 };
 
 // Volume normalization multipliers - adjust these to make all tracks sound equal at 100%
