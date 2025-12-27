@@ -898,9 +898,9 @@ export default function TCGPage() {
     if (typeof window === 'undefined') return;
     if (!address || !userProfile) return; // Wait until user is logged in
 
-    const tutorialSeen = localStorage.getItem('tutorialSeen');
+    const tutorialSeen = localStorage.getItem('tutorialSeenV2');
     if (!tutorialSeen) {
-      // Show tutorial for this user (first time)
+      // Show tutorial for this user (first time) - V2 resets for all users
       setShowTutorial(true);
     }
   }, [address, userProfile]);
@@ -4011,7 +4011,7 @@ export default function TCGPage() {
         onResetTutorial={() => {
           // Reset tutorial in localStorage and show the welcome + guided tour
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('tutorialSeen');
+            localStorage.removeItem('tutorialSeenV2');
           }
           setShowTutorial(true);
         }}
@@ -5985,7 +5985,7 @@ export default function TCGPage() {
               setShowGuidedTour(false);
               // Mark tutorial as seen after completing the tour
               if (typeof window !== 'undefined') {
-                localStorage.setItem('tutorialSeen', 'true');
+                localStorage.setItem('tutorialSeenV2', 'true');
               }
             }}
             soundEnabled={soundEnabled}

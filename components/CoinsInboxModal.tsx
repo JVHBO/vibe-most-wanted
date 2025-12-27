@@ -118,7 +118,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const claimInboxAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
-  const recoverFailedConversion = useMutation(api.vbmsClaim.recoverFailedConversion);
+  const recoverFailedConversion = useAction(api.vbmsClaim.recoverFailedConversion);
   const { claimVBMS } = useClaimVBMS();
 
   // Get VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)

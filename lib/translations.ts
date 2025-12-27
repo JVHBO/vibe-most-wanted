@@ -395,7 +395,7 @@ export const translations = {
     tourSettingsTitle: 'Configurações',
     tourSettingsDesc: 'Personalize sua experiência: mude idioma, toque músicas do YouTube e crie sua playlist! Conecte suas contas sociais também.',
     tourReadyTitle: 'Você está Pronto!',
-    tourReadyDesc: 'É isso! Você ganhou 100 coins de boas-vindas! Vá no Shop para resgatar seu PACK GRÁTIS. Comece com Poker vs CPU para aprender o básico. Boa sorte, Criminoso! 🎴',
+    tourReadyDesc: 'É isso! Você ganhou 100 coins + 1 PACK GRÁTIS! Vá no Shop para abrir seu pack. Comece com Poker vs CPU para aprender o básico. Boa sorte, Criminoso! 🎴',
     // Shop translations
     shopTitle: 'Loja de Cartas',
     shopSubtitle: 'NOTHING SHOP',
@@ -1127,7 +1127,7 @@ export const translations = {
     tourSettingsTitle: 'Settings',
     tourSettingsDesc: 'Customize your experience: change language, play YouTube music and create your playlist! Connect your social accounts too.',
     tourReadyTitle: "You're Ready!",
-    tourReadyDesc: "That's it! You got 100 welcome coins! Go to the Shop to claim your FREE PACK. Start with Poker vs CPU to learn the basics. Good luck, Criminal! 🎴",
+    tourReadyDesc: "That's it! You got 100 coins + 1 FREE PACK! Go to the Shop to open your pack. Start with Poker vs CPU to learn the basics. Good luck, Criminal! 🎴",
 
     shopTitle: 'Card Shop',
     shopSubtitle: 'NOTHING SHOP',
@@ -1859,7 +1859,7 @@ export const translations = {
     tourSettingsTitle: 'Configuración',
     tourSettingsDesc: '¡Personaliza tu experiencia: cambia idioma, reproduce música de YouTube y crea tu playlist! Conecta tus cuentas sociales también.',
     tourReadyTitle: '¡Estás Listo!',
-    tourReadyDesc: '¡Eso es todo! ¡Ganaste 100 monedas de bienvenida! Ve al Shop para reclamar tu PACK GRATIS. Empieza con Poker vs CPU para aprender lo básico. ¡Buena suerte, Criminal! 🎴',
+    tourReadyDesc: '¡Eso es todo! ¡Ganaste 100 monedas + 1 PACK GRATIS! Ve al Shop para abrir tu pack. Empieza con Poker vs CPU para aprender lo básico. ¡Buena suerte, Criminal! 🎴',
 
     shopTitle: 'Tienda de Cartas',
     shopSubtitle: 'NOTHING SHOP',
@@ -2592,7 +2592,7 @@ export const translations = {
     tourSettingsTitle: 'सेटिंग्स',
     tourSettingsDesc: 'अपना अनुभव कस्टमाइज़ करें: भाषा बदलें, YouTube म्यूज़िक चलाएं और अपनी प्लेलिस्ट बनाएं! सोशल अकाउंट भी कनेक्ट करें।',
     tourReadyTitle: 'आप तैयार हैं!',
-    tourReadyDesc: 'बस इतना ही! आपको 100 वेलकम सिक्के मिले! अपना मुफ्त पैक पाने के लिए Shop जाएं। बेसिक्स सीखने के लिए Poker vs CPU से शुरू करें। शुभकामनाएँ, क्रिमिनल! 🎴',
+    tourReadyDesc: 'बस इतना ही! आपको 100 सिक्के + 1 मुफ्त पैक मिला! अपना पैक खोलने के लिए Shop जाएं। बेसिक्स सीखने के लिए Poker vs CPU से शुरू करें। शुभकामनाएँ, क्रिमिनल! 🎴',
 
     shopTitle: 'कार्ड शॉप',
     shopSubtitle: 'NOTHING SHOP',
@@ -3321,7 +3321,7 @@ export const translations = {
     tourSettingsTitle: 'Настройки',
     tourSettingsDesc: 'Настрой опыт: смени язык, включи музыку с YouTube и создай свой плейлист! Подключи социальные аккаунты тоже.',
     tourReadyTitle: 'Ты Готов!',
-    tourReadyDesc: 'Вот и всё! Ты получил 100 приветственных монет! Иди в Shop чтобы забрать свой БЕСПЛАТНЫЙ ПАК. Начни с Покера vs CPU чтобы изучить основы. Удачи, Преступник! 🎴',
+    tourReadyDesc: 'Вот и всё! Ты получил 100 монет + 1 БЕСПЛАТНЫЙ ПАК! Иди в Shop чтобы открыть свой пак. Начни с Покера vs CPU чтобы изучить основы. Удачи, Преступник! 🎴',
 
     shopTitle: 'Магазин Карт',
     shopSubtitle: 'NOTHING SHOP',
@@ -4050,7 +4050,7 @@ export const translations = {
     tourSettingsTitle: '设置',
     tourSettingsDesc: '自定义体验：更改语言、播放YouTube音乐并创建播放列表！也可以连接社交账户。',
     tourReadyTitle: '准备就绪！',
-    tourReadyDesc: '就是这样！你获得了100欢迎金币！去商店领取你的免费卡包。从扑克vs电脑开始学习基础。祝好运，罪犯！🎴',
+    tourReadyDesc: '就是这样！你获得了100金币 + 1个免费卡包！去商店打开你的卡包。从扑克vs电脑开始学习基础。祝好运，罪犯！🎴',
 
     shopTitle: '卡牌商店',
     shopSubtitle: 'NOTHING SHOP',
