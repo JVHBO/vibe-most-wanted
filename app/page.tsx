@@ -4008,17 +4008,6 @@ export default function TCGPage() {
         pause={pause}
         play={play}
         disconnectWallet={disconnectWallet}
-        onResetTutorial={() => {
-          // Reset tutorial in localStorage and show the welcome + guided tour
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('tutorialSeenV2');
-          }
-          setShowTutorial(true);
-        }}
-        onResetGuidedTour={() => {
-          // Show just the guided tour (for users who want to skip welcome)
-          setShowGuidedTour(true);
-        }}
       />
 
       {/* Mecha Arena Modal */}
