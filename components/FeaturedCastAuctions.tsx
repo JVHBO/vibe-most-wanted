@@ -416,7 +416,7 @@ export function FeaturedCastAuctions({
     <div className="bg-vintage-charcoal/40 border border-vintage-gold/20 rounded-lg p-3 space-y-2">
         {/* Cast Auction Header */}
         <div className="flex items-center justify-between">
-          <span className="text-vintage-gold font-bold text-sm">Cast Auction</span>
+          <span className="text-vintage-gold font-bold text-sm">{t('castAuctionHeader')}</span>
           {currentAuction && (
             <span className="text-xs text-vintage-ice">
               <CountdownTimer endsAt={currentAuction.auctionEndsAt} />
@@ -428,16 +428,16 @@ export function FeaturedCastAuctions({
           {profile?.hasVibeBadge ? (
             <div className="p-2 bg-vintage-gold/15 border border-vintage-gold/50 rounded-lg text-xs flex items-center justify-between">
               <div>
-                <span className="text-vintage-gold font-bold">VIBE Badge Active</span>
-                <span className="text-vintage-ice ml-2">2x coins (600) per interaction</span>
+                <span className="text-vintage-gold font-bold">{t('castAuctionVibeBadgeActive')}</span>
+                <span className="text-vintage-ice ml-2">{t('castAuctionBadgeBonus')}</span>
               </div>
             </div>
           ) : (
             <div className="p-2 bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-lg text-xs flex items-center justify-between">
               <div>
-                <span className="text-vintage-ice">Get 2x coins with VibeFID</span>
+                <span className="text-vintage-ice">{t('castAuctionGetBadge')}</span>
               </div>
-              <Link href="/fid" className="text-vintage-gold hover:text-vintage-gold/80 font-bold">Mint</Link>
+              <Link href="/fid" className="text-vintage-gold hover:text-vintage-gold/80 font-bold">{t('castAuctionMintBadge')}</Link>
             </div>
           )}
 
@@ -446,17 +446,17 @@ export function FeaturedCastAuctions({
             onClick={() => setShowHelp(!showHelp)}
             className="w-full text-left text-xs text-vintage-ice/60 hover:text-vintage-ice"
           >
-            {showHelp ? '▼ Hide info' : '▶ How it works'}
+            {showHelp ? t('castAuctionHideInfo') : t('castAuctionHowItWorks')}
           </button>
 
           {/* Help tooltip */}
           {showHelp && (
             <div className="p-2 bg-vintage-black/50 border border-vintage-gold/25 rounded-lg text-xs text-vintage-ice">
               <ul className="list-disc list-inside space-y-1 text-vintage-ice/80">
-                <li>Bid real VBMS from your wallet</li>
-                <li>Min: 1,000 VBMS | Max: 120k VBMS</li>
-                <li>Multiple bids on same cast join the pool</li>
-                <li>Highest pool wins the featured slot</li>
+                <li>{t('castAuctionHelp1')}</li>
+                <li>{t('castAuctionHelp2')}</li>
+                <li>{t('castAuctionHelp3')}</li>
+                <li>{t('castAuctionHelp4')}</li>
               </ul>
             </div>
           )}
@@ -464,7 +464,7 @@ export function FeaturedCastAuctions({
           {/* RANKING: All active auctions with bids */}
           {activeAuctionsWithBids.length > 0 && (
             <div>
-              <p className="text-vintage-ice text-[10px] font-bold mb-1">Active Bids:</p>
+              <p className="text-vintage-ice text-[10px] font-bold mb-1">{t('castAuctionActiveBids')}</p>
               <div className="max-h-40 overflow-y-auto space-y-1">
               {activeAuctionsWithBids.map((auction: AuctionDoc, index: number) => {
                 const biddersForAuction = currentBidders?.filter((b: BidDoc) => b.auctionId === auction._id) || [];
@@ -506,7 +506,7 @@ export function FeaturedCastAuctions({
                           }}
                           className="px-2 py-0.5 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold rounded text-[10px] font-bold hover:bg-vintage-gold/30 transition-all"
                         >
-                          + Join
+                          {t('castAuctionJoin')}
                         </button>
                       </div>
                     </div>
@@ -557,7 +557,7 @@ export function FeaturedCastAuctions({
             <div className="p-2 bg-vintage-gold/15 border border-vintage-gold/50 rounded-lg">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-vintage-gold font-bold text-xs">Pending Refund</p>
+                  <p className="text-vintage-gold font-bold text-xs">{t('castAuctionPendingRefund')}</p>
                   <p className="text-vintage-ice text-[10px]">
                     {pendingRefunds.totalRefund.toLocaleString()} VBMS
                   </p>
@@ -567,7 +567,7 @@ export function FeaturedCastAuctions({
                   disabled={isClaimingRefund}
                   className="px-3 py-1.5 bg-vintage-gold text-black rounded text-xs font-bold hover:bg-vintage-gold/90 disabled:opacity-50"
                 >
-                  {isClaimingRefund ? "..." : "Claim"}
+                  {isClaimingRefund ? "..." : t('castAuctionClaim')}
                 </button>
               </div>
             </div>
@@ -575,7 +575,7 @@ export function FeaturedCastAuctions({
 
           {/* Cast URL Input */}
           <div>
-            <label className="text-xs text-vintage-ice mb-1 block">Cast URL</label>
+            <label className="text-xs text-vintage-ice mb-1 block">{t('castAuctionCastUrl')}</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -589,7 +589,7 @@ export function FeaturedCastAuctions({
                 disabled={isValidating || !castUrl.trim()}
                 className="px-4 py-2 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold hover:bg-vintage-gold/30 disabled:opacity-50 transition-all"
               >
-                {isValidating ? "..." : "Load"}
+                {isValidating ? "..." : t('castAuctionLoad')}
               </button>
             </div>
           </div>
@@ -601,7 +601,7 @@ export function FeaturedCastAuctions({
               href="/featured-history"
               className="text-xs text-vintage-gold/60 hover:text-vintage-gold"
             >
-              View past winners
+              {t('castAuctionViewHistory')}
             </Link>
           </div>
 
@@ -627,7 +627,7 @@ export function FeaturedCastAuctions({
                 x
               </button>
 
-              <h3 className="text-lg font-bold text-vintage-gold mb-3 text-center">Place Bid</h3>
+              <h3 className="text-lg font-bold text-vintage-gold mb-3 text-center">{t('castAuctionPlaceBid')}</h3>
 
               {/* Cast Preview */}
               <div className="p-3 bg-vintage-black/50 border border-vintage-gold/20 rounded-lg mb-3">
@@ -656,9 +656,9 @@ export function FeaturedCastAuctions({
               {/* Pool Warning Banner */}
               {existingCastInfo && (
                 <div className="p-2 bg-yellow-900/20 border border-yellow-500/40 rounded-lg mb-3">
-                  <p className="text-yellow-400 font-bold text-xs">Cast already in auction</p>
+                  <p className="text-yellow-400 font-bold text-xs">{t('castAuctionAlreadyInAuction')}</p>
                   <p className="text-vintage-ice text-[10px] mt-0.5">
-                    Pool: {existingCastInfo.totalPool?.toLocaleString()} VBMS ({existingCastInfo.contributorCount} bidder{existingCastInfo.contributorCount > 1 ? 's' : ''})
+                    {t('castAuctionPool')}: {existingCastInfo.totalPool?.toLocaleString()} VBMS ({existingCastInfo.contributorCount} {existingCastInfo.contributorCount > 1 ? t('castAuctionBidders') : t('castAuctionBidder')})
                   </p>
                 </div>
               )}
@@ -678,7 +678,7 @@ export function FeaturedCastAuctions({
               {/* Bid Amount */}
               <div className="mb-3">
                 <label className="text-xs text-vintage-ice mb-1 block">
-                  {existingCastInfo ? 'Join Bid' : 'Bid Amount'} (min: {existingCastInfo ? '1,000' : getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()})
+                  {existingCastInfo ? t('castAuctionJoinBid') : t('castAuctionBidAmountLabel')} (min: {existingCastInfo ? '1,000' : getMinimumBid().toLocaleString()} | max: {MAX_BID.toLocaleString()})
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -690,7 +690,7 @@ export function FeaturedCastAuctions({
                   />
                 </div>
                 <p className="text-xs text-vintage-ice mt-1">
-                  Wallet: <span className="text-vintage-gold">{userBalance.toLocaleString()}</span> VBMS
+                  {t('castAuctionWallet')}: <span className="text-vintage-gold">{userBalance.toLocaleString()}</span> VBMS
                 </p>
               </div>
 
@@ -706,7 +706,7 @@ export function FeaturedCastAuctions({
                   }}
                   className="flex-1 px-4 py-3 bg-vintage-black border border-vintage-gold/30 text-vintage-ice rounded-lg font-bold hover:bg-vintage-charcoal transition-all text-sm"
                 >
-                  Cancel
+                  {t('castAuctionCancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -716,7 +716,7 @@ export function FeaturedCastAuctions({
                   disabled={isBidding || !bidAmount}
                   className="flex-1 px-4 py-3 bg-vintage-gold text-black rounded-lg font-bold hover:bg-vintage-gold/90 disabled:opacity-50 transition-all text-sm"
                 >
-                  {bidStep === "transferring" ? "Sending..." : bidStep === "verifying" ? "Verifying..." : existingCastInfo ? "Join" : "Bid"}
+                  {bidStep === "transferring" ? t('castAuctionSending') : bidStep === "verifying" ? t('castAuctionVerifying') : existingCastInfo ? t('castAuctionJoin') : t('castAuctionBid')}
                 </button>
               </div>
             </div>

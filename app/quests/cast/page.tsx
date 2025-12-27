@@ -8,10 +8,12 @@ import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { FeaturedCastAuctions } from "@/components/FeaturedCastAuctions";
 import type { NeynarCast } from "@/lib/neynar";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function CastQuestsPage() {
   const router = useRouter();
   const { address, isConnecting } = useAccount();
+  const { t } = useLanguage();
 
   // Featured Casts
   const featuredCasts = useQuery(api.featuredCasts.getActiveCasts);
@@ -165,8 +167,8 @@ export default function CastQuestsPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-charcoal/50" />
         <div className="relative z-10 flex items-center justify-center h-full">
           <div className="text-center">
-            <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">WANTED CASTS</h2>
-            <p className="text-vintage-ice/70">Connect wallet to access</p>
+            <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">{t('questsWantedCasts')}</h2>
+            <p className="text-vintage-ice/70">{t('questsConnectWallet')}</p>
           </div>
         </div>
       </div>
@@ -185,13 +187,13 @@ export default function CastQuestsPage() {
       <div className="absolute top-0 left-0 right-0 z-10 p-3">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push("/")}
             className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-ice hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> Back
+            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> {t('questsHome')}
           </button>
 
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider">QUESTS</h1>
+          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
 
           <div className="w-20" />
         </div>
@@ -204,12 +206,12 @@ export default function CastQuestsPage() {
             onClick={() => router.push("/quests")}
             className="flex-1 py-2 px-3 rounded-lg font-bold text-sm transition-all bg-vintage-charcoal/30 border border-vintage-gold/20 text-vintage-ice/70"
           >
-            Missions
+            {t('questsMissions')}
           </button>
           <button
             className="flex-1 py-2 px-3 rounded-lg font-bold text-sm transition-all bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold"
           >
-            Wanted Casts
+            {t('questsWantedCasts')}
           </button>
         </div>
       </div>
@@ -255,7 +257,7 @@ export default function CastQuestsPage() {
                     rel="noopener noreferrer"
                     className="text-vintage-gold hover:text-vintage-gold/80 text-xs"
                   >
-                    View
+                    {t('questsView')}
                   </a>
                 </div>
 
@@ -328,7 +330,7 @@ export default function CastQuestsPage() {
                             </svg>
                           )}
                           <span className={`font-bold ${claimed ? "text-green-400" : "text-vintage-gold"}`}>
-                            {isVerifyingThis || isClaimingThis ? "..." : claimed ? "Done" : `+${castInteractionReward}`}
+                            {isVerifyingThis || isClaimingThis ? "..." : claimed ? t('questsDone') : `+${castInteractionReward}`}
                           </span>
                         </button>
                       );
@@ -349,7 +351,7 @@ export default function CastQuestsPage() {
 
             {!userFid && (
               <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
-                <p className="text-vintage-gold text-xs text-center">Connect Farcaster to earn</p>
+                <p className="text-vintage-gold text-xs text-center">{t('questsConnectFarcasterEarn')}</p>
               </div>
             )}
           </div>

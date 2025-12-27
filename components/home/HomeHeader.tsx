@@ -40,7 +40,7 @@ export function HomeHeader({
   const { t } = useLanguage();
 
   return (
-    <div className={`${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100]' : 'mb-3 md:mb-4'}`}>
+    <div className={`tour-header ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100]' : 'mb-3 md:mb-4'}`}>
       <div className={`bg-vintage-charcoal/90 backdrop-blur-lg p-2 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30`}>
         <div className="flex items-center justify-between gap-2">
           {/* Left: Profile */}
@@ -113,7 +113,7 @@ export function HomeHeader({
                 if (soundEnabled) AudioManager.buttonClick();
                 onSettingsClick();
               }}
-              className="p-2 bg-vintage-black/50 hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition"
+              className="tour-settings-btn p-2 bg-vintage-black/50 hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition"
               title="Settings"
             >
               <svg className="w-5 h-5 text-vintage-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

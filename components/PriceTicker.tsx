@@ -6,6 +6,7 @@ import { useEffect, useState, memo } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { openMarketplace } from '@/lib/marketplace-utils';
 import { isMiniappMode } from '@/lib/utils/miniapp';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Collection cover images (from Mecha Arena)
 const COLLECTION_COVERS: Record<string, string> = {
@@ -50,6 +51,7 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
   const { prices, isLoading } = useCollectionPrices();
   // 🚀 BANDWIDTH FIX: Use cached hook (prices change once per day, not real-time)
   const { prices: yesterdayPrices } = useCachedYesterdayPrices();
+  const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const isInFarcaster = isMiniappMode();
@@ -70,7 +72,7 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
   if (isLoading) {
     return (
       <div className={`h-[52px] flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
-        <span className="text-vintage-burnt-gold text-xs animate-pulse">Loading prices...</span>
+        <span className="text-vintage-burnt-gold text-xs animate-pulse">{t('tickerLoading')}</span>
       </div>
     );
   }
@@ -78,7 +80,7 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
   if (prices.length === 0) {
     return (
       <div className={`h-[52px] flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
-        <span className="text-vintage-burnt-gold text-xs">Fetching prices...</span>
+        <span className="text-vintage-burnt-gold text-xs">{t('tickerFetching')}</span>
       </div>
     );
   }
@@ -116,35 +118,35 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
   return (
     <button
       onClick={handleClick}
-      className={`overflow-hidden h-[52px] py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold transition-colors cursor-pointer transform-gpu isolate ${className}`}
+      className={`tour-price-ticker overflow-hidden h-[52px] py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold transition-colors cursor-pointer transform-gpu isolate ${className}`}
       title={`Buy ${currentPrice?.displayName} Packs`}
     >
       <div
-        className={`flex items-center justify-center gap-3 text-sm ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`flex items-center justify-center gap-2 text-xs whitespace-nowrap ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       >
         {coverUrl && (
           <img
             src={coverUrl}
             alt={currentPrice?.displayName}
-            className="w-7 h-7 rounded-lg object-cover"
+            className="w-6 h-6 rounded-lg object-cover flex-shrink-0"
           />
         )}
-        <span className="text-vintage-burnt-gold font-bold">{currentPrice?.displayName} Pack:</span>
+        <span className="text-vintage-burnt-gold font-bold truncate max-w-[100px]">{currentPrice?.displayName}</span>
         <span className="text-vintage-gold font-mono">{currentPrice?.priceUsd}</span>
-        <span className="text-green-400 text-xs font-semibold animate-pulse">• BUY HERE</span>
+        <span className="text-green-400 font-semibold animate-pulse flex-shrink-0">• {t('tickerBuyHere')}</span>
         {/* Price direction indicator */}
         {priceDirection !== 'neutral' && (
-          <span className={`flex items-center gap-0.5 ${priceDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+          <span className={`flex items-center gap-0.5 flex-shrink-0 ${priceDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
             {priceDirection === 'up' ? (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             ) : (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             )}
-            <span className="text-xs font-semibold">{percentChange.toFixed(1)}%</span>
+            <span className="font-semibold">{percentChange.toFixed(1)}%</span>
           </span>
         )}
       </div>

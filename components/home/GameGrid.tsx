@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type GameMode = 'poker-cpu' | 'poker-pvp' | 'battle-ai' | 'battle-pvp' | 'mecha' | 'raid';
 
@@ -52,12 +53,13 @@ const SkullIcon = () => (
   </svg>
 );
 
-const gameModes: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string }[] = [
+// Game mode configurations with translation keys
+const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; sublabelKey: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string }[] = [
   {
     id: 'poker-cpu',
     icon: <SpadeIcon />,
-    label: 'POKER',
-    sublabel: 'vs CPU',
+    labelKey: 'gamePoker',
+    sublabelKey: 'homeVsCpu',
     cards: 10,
     iconColor: 'text-vintage-gold',
     accentColor: 'hover:border-vintage-gold/50',
@@ -65,8 +67,8 @@ const gameModes: { id: GameMode; icon: React.ReactNode; label: string; sublabel:
   {
     id: 'poker-pvp',
     icon: <DiamondIcon />,
-    label: 'POKER',
-    sublabel: 'vs Player',
+    labelKey: 'gamePoker',
+    sublabelKey: 'homeVsPlayer',
     cards: 10,
     iconColor: 'text-vintage-gold',
     accentColor: 'hover:border-vintage-gold/50',
@@ -74,8 +76,8 @@ const gameModes: { id: GameMode; icon: React.ReactNode; label: string; sublabel:
   {
     id: 'battle-ai',
     icon: <RobotIcon />,
-    label: 'BATTLE',
-    sublabel: 'vs AI',
+    labelKey: 'gameBattle',
+    sublabelKey: 'homeVsAI',
     cards: 5,
     iconColor: 'text-cyan-400',
     accentColor: 'hover:border-cyan-400/50',
@@ -83,8 +85,8 @@ const gameModes: { id: GameMode; icon: React.ReactNode; label: string; sublabel:
   {
     id: 'battle-pvp',
     icon: <VsPlayersIcon />,
-    label: 'BATTLE',
-    sublabel: 'vs Player',
+    labelKey: 'gameBattle',
+    sublabelKey: 'homeVsPlayer',
     cards: 5,
     iconColor: 'text-orange-400',
     accentColor: 'hover:border-orange-400/50',
@@ -92,8 +94,8 @@ const gameModes: { id: GameMode; icon: React.ReactNode; label: string; sublabel:
   {
     id: 'mecha',
     icon: <MechaIcon />,
-    label: 'MECHA',
-    sublabel: 'bet VBMS',
+    labelKey: 'gameMecha',
+    sublabelKey: 'homeBetVbms',
     cards: null,
     iconColor: 'text-green-400',
     accentColor: 'hover:border-green-400/50',
@@ -101,9 +103,9 @@ const gameModes: { id: GameMode; icon: React.ReactNode; label: string; sublabel:
   {
     id: 'raid',
     icon: <SkullIcon />,
-    label: 'RAID',
-    sublabel: 'Boss',
-    cards: '5 + 1 cards',
+    labelKey: 'gameRaid',
+    sublabelKey: 'homeBoss',
+    cards: 'home5Plus1Cards',
     iconColor: 'text-red-400',
     accentColor: 'hover:border-red-400/50',
     isLink: true,
@@ -112,6 +114,8 @@ const gameModes: { id: GameMode; icon: React.ReactNode; label: string; sublabel:
 ];
 
 export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
+  const { t } = useLanguage();
+
   const handleClick = (mode: GameMode) => {
     if (disabled) return;
     if (soundEnabled) AudioManager.buttonClick();
@@ -120,20 +124,20 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
 
   return (
     <div className="grid grid-cols-3 gap-2 px-1">
-      {gameModes.map((mode) => {
+      {gameModeConfigs.map((mode) => {
         const buttonContent = (
           <>
             <div className={mode.iconColor}>{mode.icon}</div>
             <div className="flex flex-col items-center">
               <span className="text-vintage-gold font-display font-bold text-xs leading-tight">
-                {mode.label}
+                {t(mode.labelKey as any)}
               </span>
               <span className="text-vintage-burnt-gold text-[10px] font-modern leading-tight">
-                {mode.sublabel}
+                {t(mode.sublabelKey as any)}
               </span>
               {mode.cards !== null && (
                 <span className="text-vintage-burnt-gold/70 text-[9px] font-modern">
-                  {typeof mode.cards === 'string' ? mode.cards : `${mode.cards} cards`}
+                  {typeof mode.cards === 'string' ? t(mode.cards as any) : `${mode.cards} ${t('gameCards')}`}
                 </span>
               )}
             </div>
