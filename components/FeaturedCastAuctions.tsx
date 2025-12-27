@@ -501,6 +501,7 @@ export function FeaturedCastAuctions({
                               reactions: { likes: 0, recasts: 0 },
                               replies: 0,
                             });
+                            setShowBidModal(true);
                             if (soundEnabled) AudioManager.buttonClick();
                           }}
                           className="px-2 py-0.5 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold rounded text-[10px] font-bold hover:bg-vintage-gold/30 transition-all"
