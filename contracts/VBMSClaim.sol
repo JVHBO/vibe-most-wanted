@@ -38,8 +38,8 @@ contract VBMSClaim is Ownable, ReentrancyGuard, Pausable {
     /// @notice Minimum claim amount (100 VBMS com 18 decimais)
     uint256 public constant MIN_CLAIM_AMOUNT = 100 * 10**18;
 
-    /// @notice Maximum claim amount por transação (100,000 VBMS)
-    uint256 public constant MAX_CLAIM_AMOUNT = 100_000 * 10**18;
+    /// @notice Maximum claim amount por transação (pode ser alterado pelo owner)
+    uint256 public maxClaimAmount = 500_000 * 10**18;
 
     /// @notice 🔒 DAILY CAP: Máximo que um jogador pode claimar por dia
     /// @dev Previne exploits onde jogador drena pool inteira
