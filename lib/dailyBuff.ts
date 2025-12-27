@@ -11,7 +11,6 @@
 export const ARENA_COLLECTIONS = [
   "gmvbrs",
   "vibe",
-  "coquettish",
   "viberuto",
   "meowverse",
   "poorlydrawnpepes",

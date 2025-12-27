@@ -28,7 +28,6 @@ const COLLECTION_COVERS: Record<string, string> = {
   gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/d0de7e9fa12eadb1ea2204e67d43e166',
   vibe: 'https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f',
   americanfootball: 'https://nft-cdn.alchemy.com/base-mainnet/5c023b39577f02927478fbd60c26d75e',
-  coquettish: 'https://i2c.seadn.io/base/0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea/c428d7158e42cae9b29202d3f56d47/f1c428d7158e42cae9b29202d3f56d47.png?w=350',
   viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/ec58759f6df558aa4193d58ae9b0e74f',
   meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/16a8f93f75def1a771cca7e417b5d05e',
   poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/96282462557a81c42fad965a48c34f4c',
@@ -53,7 +52,6 @@ function getCardBack(collection?: string): string {
 const COLLECTION_DISPLAY_NAMES: Record<string, string> = {
   gmvbrs: 'GMVBRS',
   vibe: 'Vibe',
-  coquettish: 'Coquettish',
   viberuto: 'Viberuto',
   meowverse: 'Meowverse',
   poorlydrawnpepes: 'Poorly Drawn Pepes',

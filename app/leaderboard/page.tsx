@@ -1312,7 +1312,6 @@ export default function LeaderboardPage() {
                 <option value="vibefid">VIBEFID</option>
                 <option value="americanfootball">AFCL</option>
                 <option value="gmvbrs">VBRS</option>
-                <option value="coquettish">COQ</option>
                 <option value="nothing">NOTHING</option>
               </select>
               <button

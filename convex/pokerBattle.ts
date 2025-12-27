@@ -1682,7 +1682,6 @@ export const getAvailableCollections = query({
     return [
       "gmvbrs",
       "vibe",
-      "coquettish",
       "viberuto",
       "meowverse",
       "poorlydrawnpepes",

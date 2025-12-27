@@ -22,7 +22,6 @@ const QUEST_REWARDS: Record<string, number> = {
   follow_jayabs: 500,
   follow_degencummunist: 500,
   follow_smolemaru: 500,
-  follow_satoshinaka: 500,
   follow_denkurhq: 500,
   follow_zazza: 500,
   follow_loground: 500,

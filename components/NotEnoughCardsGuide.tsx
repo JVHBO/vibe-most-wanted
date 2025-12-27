@@ -19,7 +19,6 @@ const COLLECTION_MARKETPLACE: Record<string, string> = {
   vibe: 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
   gmvbrs: 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
   viberuto: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
-  coquettish: 'https://vibechain.com/market/coquettish-1?ref=XCLR1DJ6LQTT',
   meowverse: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
   poorlydrawnpepes: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
   teampothead: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',

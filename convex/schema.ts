@@ -36,7 +36,7 @@ export default defineSchema({
       vbrsPower: v.optional(v.number()),
       vibefidPower: v.optional(v.number()),
       afclPower: v.optional(v.number()),
-      coqPower: v.optional(v.number()),
+      coqPower: v.optional(v.number()), // DEPRECATED: kept for backward compatibility
 
       // PvE Stats
       pveWins: v.number(),

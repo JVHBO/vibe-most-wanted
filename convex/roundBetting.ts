@@ -23,7 +23,7 @@ const ODDS_CONFIG = {
 
 // Daily Buff System - One collection gets buffed odds each day
 const ARENA_COLLECTIONS = [
-  "gmvbrs", "vibe", "coquettish", "viberuto", "meowverse",
+  "gmvbrs", "vibe", "viberuto", "meowverse",
   "poorlydrawnpepes", "teampothead", "tarot", "americanfootball",
   "vibefid", "baseballcabal", "vibefx", "historyofcomputer",
 ] as const;
