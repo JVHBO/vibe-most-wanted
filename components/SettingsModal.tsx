@@ -369,7 +369,7 @@ export function SettingsModal({
                 🇨🇳 简体中文
               </option>
               <option value="id" className="bg-vintage-charcoal text-vintage-ice">
-                🇮🇩 Indonesia
+                🇮🇩 Bahasa
               </option>
               <option value="fr" className="bg-vintage-charcoal text-vintage-ice">
                 🇫🇷 Français

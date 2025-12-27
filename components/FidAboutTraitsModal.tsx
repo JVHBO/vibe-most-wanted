@@ -50,7 +50,7 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
             <option value="hi">🇮🇳 हिन्दी</option>
             <option value="ru">🇷🇺 Русский</option>
             <option value="zh-CN">🇨🇳 中文</option>
-            <option value="id">🇮🇩 Indonesia</option>
+            <option value="id">🇮🇩 Bahasa</option>
             <option value="fr">🇫🇷 Français</option>
           </select>
         </div>

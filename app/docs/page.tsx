@@ -19,7 +19,7 @@ function LanguageSelector() {
     { code: 'zh-CN', label: '中文' },
     { code: 'ru', label: 'Русский' },
     { code: 'hi', label: 'हिन्दी' },
-    { code: 'id', label: 'Indonesia' },
+    { code: 'id', label: 'Bahasa' },
     { code: 'fr', label: 'Français' },
   ];
 
