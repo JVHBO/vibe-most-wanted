@@ -508,6 +508,9 @@ export function SettingsModal({
               <option value="fr" className="bg-vintage-charcoal text-vintage-ice">
                 🇫🇷 Français
               </option>
+              <option value="ja" className="bg-vintage-charcoal text-vintage-ice">
+                🇯🇵 日本語
+              </option>
             </select>
             {/* 🇨🇳 Chinese Language Boost Warning */}
             {lang === 'zh-CN' && (
