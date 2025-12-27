@@ -57,6 +57,8 @@ const LANGUAGE_MUSIC: Record<SupportedLanguage, string> = {
   'hi': getMusicPath('hi'),
   'ru': getMusicPath('ru'),
   'zh-CN': getMusicPath('zh-cn'),
+  'id': getMusicPath('id'),
+  'fr': getMusicPath('fr'),
 };
 
 // Volume normalization multipliers - adjust these to make all tracks sound equal at 100%
@@ -69,6 +71,8 @@ const VOLUME_NORMALIZATION: Record<string, number> = {
   'hi': 0.85,       // Slightly quieter (adjust based on actual file)
   'ru': 1.0,        // Adjust if needed
   'zh-cn': 1.0,     // Adjust if needed
+  'id': 1.0,        // Indonesian - Rungkad (mean: -13.8dB, close to reference)
+  'fr': 1.8,        // French - Le Festin (mean: -19.1dB, 6dB quieter - boosted)
   'custom': 1.0,    // Custom music
 };
 

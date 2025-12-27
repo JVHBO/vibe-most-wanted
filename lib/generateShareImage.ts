@@ -10,12 +10,13 @@
 import type { CriminalBackstoryData } from './generateCriminalBackstory';
 import { generateCriminalBackstory } from './generateCriminalBackstory';
 import { fidTranslations } from './fidTranslations';
+import type { SupportedLanguage } from './translations';
 
 interface ShareImageParams {
   cardImageDataUrl: string; // Base64 data URL of the card PNG
   backstoryData: CriminalBackstoryData;
   displayName: string;
-  lang?: 'en' | 'pt-BR' | 'es' | 'hi' | 'ru' | 'zh-CN'; // Language for backstory (defaults to 'en')
+  lang?: SupportedLanguage; // Language for backstory (defaults to 'en')
 }
 
 export async function generateShareImage(params: ShareImageParams): Promise<string> {
