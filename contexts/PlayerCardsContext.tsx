@@ -6,7 +6,7 @@ import { useConvex, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { devLog, devError } from '@/lib/utils/logger';
 import { getEnabledCollections } from '@/lib/collections/index';
-import { fetchNFTsFromAllCollections, processNFTsToCards, getCardKey } from '@/lib/nft';
+import { fetchNFTsFromAllCollections, fetchNFTsFromMultipleWallets, processNFTsToCards, getCardKey } from '@/lib/nft';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { HAND_SIZE, getMaxAttacks } from '@/lib/config';
@@ -200,6 +200,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
   const payAttackEntryFee = useMutation(api.economy.payEntryFee);
 
   // Load NFTs function - usa módulo centralizado @/lib/nft
+  // 🔗 MULTI-WALLET: Busca NFTs de todas as wallets linkadas
   const loadNFTs = useCallback(async () => {
     if (!address) {
       console.log('! [Context] loadNFTs called but no address');
@@ -224,8 +225,26 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       setStatus('fetching');
       setErrorMsg(null);
 
-      // Usa funções centralizadas do @/lib/nft
-      const raw = await fetchNFTsFromAllCollections(address);
+      // 🔗 MULTI-WALLET: Get all linked addresses
+      let allAddresses = [address];
+      try {
+        const linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
+        if (linkedData?.primary) {
+          // Build array of all addresses: primary + linked
+          allAddresses = [linkedData.primary, ...(linkedData.linked || [])];
+          // Remove duplicates and ensure current address is included
+          allAddresses = [...new Set([...allAddresses, address])];
+        }
+        console.log(`🔗 [Context] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
+      } catch (error) {
+        console.warn('⚠️ Failed to get linked addresses, using current only:', error);
+      }
+
+      // Fetch NFTs from all wallets
+      const raw = allAddresses.length > 1
+        ? await fetchNFTsFromMultipleWallets(allAddresses)
+        : await fetchNFTsFromAllCollections(address);
+
       const processed = await processNFTsToCards(raw); // Já filtra unopened!
 
       // Deduplicate
@@ -237,13 +256,19 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         return true;
       });
 
-      // Load FREE cards from cardInventory
+      // 🔗 MULTI-WALLET: Load FREE cards from cardInventory for ALL wallets
       try {
-        const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
-        console.log('🆓 FREE cards loaded:', freeCards?.length || 0);
+        let allFreeCards: any[] = [];
+        for (const walletAddr of allAddresses) {
+          const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address: walletAddr });
+          if (freeCards && freeCards.length > 0) {
+            allFreeCards.push(...freeCards);
+          }
+        }
+        console.log('🆓 FREE cards loaded from all wallets:', allFreeCards.length);
 
-        if (freeCards && freeCards.length > 0) {
-          const freeCardsFormatted = freeCards.map((card: any) => ({
+        if (allFreeCards.length > 0) {
+          const freeCardsFormatted = allFreeCards.map((card: any) => ({
             tokenId: card.cardId,
             name: card.name || `FREE ${card.rarity} Card`,
             imageUrl: card.imageUrl,
@@ -253,7 +278,16 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
             collection: 'nothing' as CollectionId,
             isFreeCard: true,
           }));
-          deduplicated.push(...freeCardsFormatted);
+
+          // Deduplicate free cards
+          const seenFree = new Set<string>();
+          const uniqueFreeCards = freeCardsFormatted.filter((card: any) => {
+            if (seenFree.has(card.tokenId)) return false;
+            seenFree.add(card.tokenId);
+            return true;
+          });
+
+          deduplicated.push(...uniqueFreeCards);
         }
       } catch (error) {
         console.warn('⚠️ Failed to load FREE cards:', error);
@@ -279,6 +313,18 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     // Wait a tick then load
     setTimeout(() => loadNFTs(), 0);
   }, [address, loadNFTs]);
+
+  // 🔗 Reset state when address changes (for wallet switching)
+  const previousAddressRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (address && previousAddressRef.current && address.toLowerCase() !== previousAddressRef.current.toLowerCase()) {
+      console.log('[Context] 🔄 Address changed, resetting cards state');
+      setNfts([]);
+      setStatus('idle');
+      setAttackSelectedCards([]);
+    }
+    previousAddressRef.current = address;
+  }, [address]);
 
   // Auto-load when address changes
   useEffect(() => {
