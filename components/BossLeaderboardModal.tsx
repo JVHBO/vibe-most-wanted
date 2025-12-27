@@ -285,7 +285,7 @@ export function BossLeaderboardModal({
                   <div className="flex items-center justify-between">
                     <span className="text-vintage-ice/70 text-xs">Reward</span>
                     <span className="text-green-400 font-bold">
-                      +{contributor.reward.toLocaleString()} $TESTVBMS
+                      +{contributor.reward.toLocaleString()} coins
                     </span>
                   </div>
                 </div>
@@ -296,7 +296,7 @@ export function BossLeaderboardModal({
           {/* Total Rewards */}
           <div className="mt-4 bg-green-600/20 border border-green-600/50 rounded-lg p-3 text-center">
             <p className="text-green-400 font-bold">
-              Total Rewards Distributed: {bossHistory.topContributors.reduce((sum: number, c: { reward: number }) => sum + c.reward, 0).toLocaleString()} $TESTVBMS
+              Total Rewards Distributed: {bossHistory.topContributors.reduce((sum: number, c: { reward: number }) => sum + c.reward, 0).toLocaleString()} coins
             </p>
           </div>
         </div>

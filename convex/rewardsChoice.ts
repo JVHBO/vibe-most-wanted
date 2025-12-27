@@ -96,7 +96,7 @@ export const processRewardChoice = mutation({
       console.log('[processRewardChoice] Checking balance:', { currentCoins, amount });
 
       if (currentCoins < amount) {
-        const error = `Saldo insuficiente. Você tem ${currentCoins} TESTVBMS, precisa de ${amount}`;
+        const error = `Saldo insuficiente. Você tem ${currentCoins} coins, precisa de ${amount}`;
         console.error('[processRewardChoice]', error);
         throw new Error(error);
       }
@@ -141,7 +141,7 @@ export const processRewardChoice = mutation({
         nonce: nonce,
         signature: signature,
         newCoinsBalance: newCoinsBalance,
-        message: `💳 ${amount} TESTVBMS convertidos para VBMS! Assine a transação.`,
+        message: `💳 ${amount} coins convertidos para VBMS! Assine a transação.`,
       };
     } else {
       // CLAIM LATER: Keep in TESTVBMS (do nothing, just close modal)
@@ -150,7 +150,7 @@ export const processRewardChoice = mutation({
         choice: "claim_later",
         amount: amount,
         coinsBalance: profile.coins || 0,
-        message: `📥 ${amount} TESTVBMS guardados! Converta depois quando quiser.`,
+        message: `📥 ${amount} coins guardados! Converta depois quando quiser.`,
       };
     }
   },

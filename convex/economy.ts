@@ -1167,7 +1167,7 @@ export const claimShareBonus = mutation({
 
     return {
       success: true,
-      message: `+${shareReward} $TESTVBMS for sharing! Share daily for more rewards!`,
+      message: `+${shareReward} coins for sharing! Share daily for more rewards!`,
       awarded: shareReward,
       newBalance: newCoins,
     };
@@ -1223,7 +1223,7 @@ export const payEntryFee = mutation({
 
     // Check if player has enough coins
     if (currentCoins < fee) {
-      throw new Error(`Insufficient funds. Need ${fee} $TESTVBMS but only have ${currentCoins}`);
+      throw new Error(`Insufficient funds. Need ${fee} coins but only have ${currentCoins}`);
     }
 
     // Deduct fee
