@@ -54,6 +54,8 @@ export default function RaidPage() {
   const [replacingCardTokenId, setReplacingCardTokenId] = useState<string | null>(null);
   const [replacingVibeFID, setReplacingVibeFID] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isClearingDeck, setIsClearingDeck] = useState(false);
 
   // Visual attack animation states
   const [damageNumbers, setDamageNumbers] = useState<Array<{
@@ -83,6 +85,7 @@ export default function RaidPage() {
   const replaceCardMutation = useMutation(api.raidBoss.replaceCard);
   const initializeBossMutation = useMutation(api.raidBoss.initializeRaidBoss);
   const claimRewardsMutation = useMutation(api.raidBoss.claimRaidRewards);
+  const clearRaidDeckMutation = useMutation(api.raidBoss.clearRaidDeck);
 
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
   const playerDeck = useQuery(api.raidBoss.getPlayerRaidDeck, address ? {
@@ -443,6 +446,24 @@ export default function RaidPage() {
     }
   };
 
+  // Clear entire raid deck (preserves damage stats)
+  const handleClearDeck = async () => {
+    if (!address || isClearingDeck) return;
+    setIsClearingDeck(true);
+    try {
+      await clearRaidDeckMutation({
+        address: address.toLowerCase(),
+      });
+      setShowClearConfirm(false);
+      if (soundEnabled) AudioManager.buttonSuccess();
+    } catch (error: any) {
+      console.error('Error clearing deck:', error);
+      if (soundEnabled) AudioManager.hapticFeedback('heavy');
+    } finally {
+      setIsClearingDeck(false);
+    }
+  };
+
   // Loading states
   if (!isMounted || isConnecting) {
     return (
@@ -505,6 +526,37 @@ export default function RaidPage() {
         currentDeckTokenIds={playerDeck?.vibefidCard ? [playerDeck.vibefidCard.tokenId] : []}
         isVibeFIDMode={true}
       />
+
+      {/* Clear Deck Confirmation Modal */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-vintage-charcoal border-2 border-red-500/50 rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-xl font-bold text-red-400 mb-3">Clear Raid Deck?</h3>
+            <p className="text-vintage-burnt-gold text-sm mb-4">
+              This will remove all cards from your raid deck. Your damage stats and boss kills will be preserved.
+            </p>
+            <p className="text-vintage-gold text-xs mb-4">
+              You'll need to pay the entry fee again to set a new deck.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                disabled={isClearingDeck}
+                className="flex-1 px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded font-bold transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearDeck}
+                disabled={isClearingDeck}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-bold transition disabled:opacity-50"
+              >
+                {isClearingDeck ? 'Clearing...' : 'Clear Deck'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Boss Background - Full Screen */}
       {currentBoss && (
@@ -707,6 +759,12 @@ export default function RaidPage() {
                     className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
                   >
                     Share
+                  </button>
+                  <button
+                    onClick={() => setShowClearConfirm(true)}
+                    className="px-3 py-1.5 bg-transparent hover:bg-red-900/50 text-red-400 border border-red-500/50 rounded font-bold text-xs transition uppercase tracking-wide"
+                  >
+                    Clear
                   </button>
                 </div>
               </div>
