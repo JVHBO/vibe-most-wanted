@@ -61,10 +61,20 @@ export default function BurnCardsPage() {
 
   const cards = playerCards || [];
 
+  // Calculate total quantity (including stacked duplicates)
+  const totalQuantity = useMemo(() => {
+    return cards.reduce((sum: number, card: any) => sum + (card.quantity || 1), 0);
+  }, [cards]);
+
   const filteredCards = useMemo(() => {
     if (filter === "all") return cards;
     return cards.filter((c: any) => c.rarity === filter);
   }, [cards, filter]);
+
+  // Calculate filtered quantity
+  const filteredQuantity = useMemo(() => {
+    return filteredCards.reduce((sum: number, card: any) => sum + (card.quantity || 1), 0);
+  }, [filteredCards]);
 
   const totalVBMS = useMemo(() => {
     let total = 0;
@@ -177,7 +187,10 @@ export default function BurnCardsPage() {
           <h1 className="text-xl font-display font-bold text-red-400">BURN CARDS</h1>
 
           <div className="text-right">
-            <p className="text-xs text-vintage-ice/50">{cards.length} cards</p>
+            <p className="text-xs text-vintage-ice/50">{totalQuantity} cards</p>
+            {totalQuantity !== cards.length && (
+              <p className="text-[10px] text-vintage-ice/30">({cards.length} stacks)</p>
+            )}
           </div>
         </div>
       </div>
@@ -296,6 +309,12 @@ export default function BurnCardsPage() {
                           alt={card.name || "Card"}
                           className="w-full h-full object-cover"
                         />
+                        {/* Quantity badge for stacked cards */}
+                        {card.quantity > 1 && (
+                          <div className="absolute top-1 right-1 bg-vintage-gold text-vintage-black text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                            x{card.quantity}
+                          </div>
+                        )}
                         {isSelected && (
                           <div className="absolute inset-0 bg-red-500/30 flex items-center justify-center">
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -326,6 +345,9 @@ export default function BurnCardsPage() {
                         <p className="text-lg font-display font-bold text-green-400 mt-1">
                           +{burnValue.toLocaleString()}
                         </p>
+                        {card.quantity > 1 && (
+                          <p className="text-[10px] text-vintage-ice/40">burns 1 of {card.quantity}</p>
+                        )}
                       </div>
                     </div>
                   </div>

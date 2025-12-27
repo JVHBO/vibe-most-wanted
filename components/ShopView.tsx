@@ -27,12 +27,14 @@ export function ShopView({ address }: ShopViewProps) {
   const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
   const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip");
   const dailyFreeStatus = useQuery(api.cardPacks.canClaimDailyFree, address ? { address } : "skip");
+  const hasReceivedWelcomePack = useQuery(api.welcomePack.hasReceivedWelcomePack, address ? { address } : "skip");
 
   // Mutations
   const openPack = useMutation(api.cardPacks.openPack);
   const openAllPacks = useMutation(api.cardPacks.openAllPacks);
   const buyPackWithLuckBoost = useMutation(api.cardPacks.buyPackWithLuckBoost);
   const claimDailyFree = useMutation(api.cardPacks.claimDailyFreePack);
+  const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
 
   // VBMS Blockchain hooks
   const { address: walletAddress } = useAccount();
@@ -50,6 +52,7 @@ export function ShopView({ address }: ShopViewProps) {
   const [luckBoost, setLuckBoost] = useState(false); // Elite odds for 5x price
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [claimingDaily, setClaimingDaily] = useState(false);
+  const [claimingWelcome, setClaimingWelcome] = useState(false);
   const [showPacksModal, setShowPacksModal] = useState(false);
   const [openQuantities, setOpenQuantities] = useState<Record<string, number>>({});
 
@@ -219,6 +222,27 @@ export function ShopView({ address }: ShopViewProps) {
     }
   };
 
+  // Handle welcome pack claim
+  const handleClaimWelcomePack = async () => {
+    if (!address || claimingWelcome) return;
+
+    setClaimingWelcome(true);
+    try {
+      await claimWelcomePack({ address });
+      setNotification({
+        type: 'success',
+        message: t('shopWelcomePackClaimed')
+      });
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.message || "Failed to claim welcome pack"
+      });
+    } finally {
+      setClaimingWelcome(false);
+    }
+  };
+
   // Format time remaining
   const formatTimeRemaining = (ms: number) => {
     const hours = Math.floor(ms / (1000 * 60 * 60));
@@ -261,20 +285,20 @@ export function ShopView({ address }: ShopViewProps) {
       {/* TOP HUD */}
       <div className="absolute top-0 left-0 right-0 z-10 p-3">
         <div className="flex items-center justify-between">
-          {/* Back button */}
+          {/* Back button - always go to home, not browser history */}
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push("/")}
             className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> Back
+            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> {t('shopHome')}
           </button>
 
           {/* Title - centered */}
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider">SHOP</h1>
+          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider">{t('shopTitle')}</h1>
 
           {/* Balance */}
           <div className="text-right">
-            <p className="text-xs text-vintage-ice/60">Balance</p>
+            <p className="text-xs text-vintage-ice/60">{t('shopBalance')}</p>
             <p className="text-sm font-display font-bold text-purple-400">{parseFloat(vbmsBalance).toLocaleString()} VBMS</p>
           </div>
         </div>
@@ -283,6 +307,28 @@ export function ShopView({ address }: ShopViewProps) {
       {/* MAIN CONTENT */}
       <div className="absolute inset-0 pt-14 pb-16 overflow-hidden flex flex-col">
         <div className="relative z-10 px-4 py-2 flex-1 flex flex-col justify-center">
+
+          {/* Welcome Gift Banner - Shows if user hasn't claimed */}
+          {hasReceivedWelcomePack === false && (
+            <div className="max-w-sm mx-auto mb-4">
+              <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-4 animate-pulse">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-3xl">🎁</span>
+                  <div>
+                    <h3 className="text-lg font-display font-bold text-green-400">{t('shopWelcomeGift')}</h3>
+                    <p className="text-green-300/70 text-xs">{t('shopWelcomeGiftDesc')}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleClaimWelcomePack}
+                  disabled={claimingWelcome}
+                  className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-display font-bold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-green-500/30"
+                >
+                  {claimingWelcome ? '...' : t('shopClaimWelcome')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Pack Purchase Card - Compact */}
           <div className="max-w-sm mx-auto mb-4">
@@ -293,19 +339,19 @@ export function ShopView({ address }: ShopViewProps) {
                 <img src="/pack-cover.png" alt="Pack" className={`w-16 h-16 object-contain ${luckBoost ? 'animate-pulse' : ''}`} />
                 <div className="flex-1">
                   <h3 className="text-xl font-display font-bold text-vintage-gold">
-                    {luckBoost ? 'Lucky Pack' : 'Basic Pack'}
+                    {luckBoost ? t('shopLuckyPack') : t('shopBasicPack')}
                   </h3>
                   <p className="text-vintage-ice/60 text-xs">1 Nothing card per pack</p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-bold ${luckBoost ? 'bg-yellow-500 text-black' : 'bg-vintage-gold/20 text-vintage-gold'}`}>
-                  {luckBoost ? 'BOOSTED' : 'BASIC'}
+                  {luckBoost ? t('shopBoosted') : t('shopBasic')}
                 </div>
               </div>
 
               {/* Nothing Card Warning */}
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-3">
                 <p className="text-amber-300/80 text-xs text-center">
-                  Nothing cards are ~40% weaker than LTC collectible cards
+                  {t('shopNothingCardWarning')}
                 </p>
               </div>
 
@@ -334,8 +380,8 @@ export function ShopView({ address }: ShopViewProps) {
               {/* Luck Boost Toggle - Inline */}
               <div className="flex items-center justify-between bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 mb-3">
                 <div>
-                  <p className="text-yellow-400 font-bold text-sm">Luck Boost</p>
-                  <p className="text-vintage-ice/50 text-xs">5x price, better odds</p>
+                  <p className="text-yellow-400 font-bold text-sm">{t('shopLuckBoost')}</p>
+                  <p className="text-vintage-ice/50 text-xs">{t('shopLuckBoostDesc')}</p>
                 </div>
                 <button
                   onClick={() => setLuckBoost(!luckBoost)}
@@ -379,7 +425,7 @@ export function ShopView({ address }: ShopViewProps) {
                       disabled={claimingDaily}
                       className="w-full h-10 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-display font-bold rounded-lg transition-all disabled:opacity-50"
                     >
-                      {claimingDaily ? "..." : "FREE"}
+                      {claimingDaily ? "..." : t('shopFree')}
                     </button>
                   ) : (
                     <button
@@ -432,7 +478,7 @@ export function ShopView({ address }: ShopViewProps) {
                 <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
                 <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
               </svg>
-              <span>Open {totalUnopenedPacks > 0 ? `(${totalUnopenedPacks})` : ''}</span>
+              <span>{t('shopOpenPacks')} {totalUnopenedPacks > 0 ? `(${totalUnopenedPacks})` : ''}</span>
             </button>
 
             {/* Burn Cards Button - Navigate to burn page */}
@@ -453,7 +499,7 @@ export function ShopView({ address }: ShopViewProps) {
                 <line x1="10" y1="11" x2="10" y2="17" />
                 <line x1="14" y1="11" x2="14" y2="17" />
               </svg>
-              <span>Burn {playerCards && playerCards.length > 0 ? `(${playerCards.length})` : ''}</span>
+              <span>{t('shopBurnCards')} {playerCards && playerCards.length > 0 ? `(${playerCards.length})` : ''}</span>
             </button>
           </div>
 

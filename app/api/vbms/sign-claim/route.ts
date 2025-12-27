@@ -17,8 +17,9 @@ const rateLimitMap = new Map<string, number>();
 const RATE_LIMIT_MS = 10000; // 10 seconds between requests
 
 // Amount bounds (in VBMS, not wei)
+// MUST match Convex backend limits in vbmsClaim.ts
 const MIN_CLAIM_AMOUNT = 100; // 100 VBMS minimum
-const MAX_CLAIM_AMOUNT = 100000; // 100k VBMS maximum
+const MAX_CLAIM_AMOUNT = 500000; // 500k VBMS maximum (contract has 750k, site uses 500k for buffer)
 
 function checkRateLimit(address: string): boolean {
   const now = Date.now();

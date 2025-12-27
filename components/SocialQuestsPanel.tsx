@@ -8,6 +8,7 @@ import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
 import type { NeynarCast } from "@/lib/neynar";
 import { FeaturedCastAuctions } from "./FeaturedCastAuctions";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SocialQuestsPanelProps {
   address: string;
@@ -24,6 +25,7 @@ export function SocialQuestsPanel({
   onRewardClaimed,
   hasVibeBadge = false,
 }: SocialQuestsPanelProps) {
+  const { t } = useLanguage();
   // Cast interaction reward: 300 base, 600 with VIBE badge (2x)
   const castInteractionReward = hasVibeBadge ? 600 : 300;
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -193,14 +195,14 @@ export function SocialQuestsPanel({
           <div className="flex items-center gap-2">
             <span className="text-vintage-gold font-bold text-sm whitespace-nowrap">+{quest.reward}</span>
             {status === "claimed" ? (
-              <span className="px-3 py-1.5 rounded-lg bg-green-600/20 text-green-400 text-xs font-bold">Claimed</span>
+              <span className="px-3 py-1.5 rounded-lg bg-green-600/20 text-green-400 text-xs font-bold">{t('socialQuestClaimed')}</span>
             ) : status === "completed" ? (
               <button onClick={() => handleClaim(quest)} disabled={isClaiming} className="px-3 py-1.5 rounded-lg bg-vintage-gold text-vintage-black font-bold text-xs hover:bg-vintage-gold/90 transition-all disabled:opacity-50">
-                {isClaiming ? "..." : "Claim"}
+                {isClaiming ? "..." : t('socialQuestClaim')}
               </button>
             ) : (
               <button onClick={() => verifyQuest(quest)} disabled={isVerifying} className="px-3 py-1.5 rounded-lg bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold font-bold text-xs hover:bg-vintage-gold/10 transition-all disabled:opacity-50">
-                {isVerifying ? "..." : visitedQuests.has(quest.id) ? "Verify" : "Go"}
+                {isVerifying ? "..." : visitedQuests.has(quest.id) ? t('socialQuestVerify') : t('socialQuestGo')}
               </button>
             )}
           </div>
@@ -338,7 +340,7 @@ export function SocialQuestsPanel({
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-vintage-gold font-bold text-base tracking-wide flex items-center gap-2">
               <span className="text-base">🎯</span>
-              WANTED CAST
+              {t('socialQuestWantedCast')}
             </h4>
             {featuredCasts.length > 1 && (
               <div className="flex gap-1">
@@ -422,10 +424,10 @@ export function SocialQuestsPanel({
                 {userFid && (
                   <div className="flex gap-2 mt-3 pt-3 border-t border-vintage-gold/10">
                     {[
-                      { type: "like" as const, icon: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z", label: "Like", color: "pink" },
-                      { type: "recast" as const, icon: "M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z", label: "Recast", color: "green" },
-                      { type: "reply" as const, icon: "M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z", label: "Reply", color: "blue" },
-                    ].map(({ type, icon, label, color }) => {
+                      { type: "like" as const, icon: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z", labelKey: "socialQuestLike" as const, color: "pink" },
+                      { type: "recast" as const, icon: "M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z", labelKey: "socialQuestRecast" as const, color: "green" },
+                      { type: "reply" as const, icon: "M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z", labelKey: "socialQuestReply" as const, color: "blue" },
+                    ].map(({ type, icon, labelKey, color }) => {
                       const progress = castInteractionProgress[currentCast?.castHash || ""];
                       const claimed = progress?.[type === "like" ? "liked" : type === "recast" ? "recasted" : "replied"];
                       const isVerifying = verifyingInteraction === `${type}-${currentCast?.castHash}`;
@@ -458,7 +460,7 @@ export function SocialQuestsPanel({
               <div className="p-3">
                 <div className="flex items-center gap-2">
                   <svg className="w-5 h-5 text-vintage-gold" viewBox="0 0 24 24" fill="currentColor"><path d="M18.8 8.2H5.2L3 9.4v7.8l3.2 3.2h9.6l3-3V9.4l-1-1.2zm-1.6 8.4l-1.6 1.6H8.4L6.8 16.6V11l1-1.2h8.4l1 1.2v5.6z"/><path d="M5.2 5.6L8.4 3.6h7.2l3.2 2H5.2z"/></svg>
-                  <span className="text-vintage-cream text-sm font-medium">View on Warpcast</span>
+                  <span className="text-vintage-cream text-sm font-medium">{t('socialQuestViewWarpcast')}</span>
                 </div>
                 <p className="text-vintage-burnt-gold text-xs mt-2 truncate">{currentCast?.castHash}</p>
               </div>
@@ -478,13 +480,13 @@ export function SocialQuestsPanel({
       <div className="bg-gradient-to-b from-vintage-charcoal/90 to-vintage-black/80 rounded-2xl border border-vintage-gold/20 p-5 backdrop-blur-sm shadow-lg">
         <h4 className="text-vintage-gold font-bold text-sm mb-3 flex items-center gap-2">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>
-          FOLLOW & JOIN
+          {t('socialQuestFollowJoin')}
         </h4>
         <div className="space-y-2">{SOCIAL_QUESTS.map(renderQuest)}</div>
       </div>
       {!userFid && (
         <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-xl p-4">
-          <p className="text-vintage-gold text-xs text-center">Connect with Farcaster to auto-verify quests</p>
+          <p className="text-vintage-gold text-xs text-center">{t('socialQuestConnectFarcaster')}</p>
         </div>
       )}
     </div>

@@ -526,7 +526,21 @@ export const upsertProfileFromFarcaster = mutation({
       completedAt: now,
     });
 
-    console.log(`🆕 New profile created for FID ${args.fid} (@${username}) at ${address}`);
+    // 🎁 AUTO WELCOME PACK: Give 1 Basic Pack to new users automatically
+    await ctx.db.insert("cardPacks", {
+      address,
+      packType: "basic",
+      unopened: 1,
+      sourceId: "welcome_pack_auto",
+      earnedAt: now,
+    });
+
+    // Mark welcome pack as received on the profile
+    await ctx.db.patch(newId, {
+      hasReceivedWelcomePack: true,
+    });
+
+    console.log(`🆕 New profile created for FID ${args.fid} (@${username}) at ${address} - Welcome pack given!`);
     return newId;
   },
 });

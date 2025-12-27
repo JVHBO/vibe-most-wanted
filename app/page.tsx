@@ -25,6 +25,8 @@ import AchievementsView from "@/components/AchievementsView";
 // Shop moved to /shop page
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { TutorialModal } from "@/components/TutorialModal";
+// WelcomeOnboarding removed - now using only GuidedTour for onboarding
+import { GuidedTour, DEFAULT_TOUR_STEPS, type TourStep } from "@/components/GuidedTour";
 import { SettingsModal } from "@/components/SettingsModal";
 // REMOVED: Referrals system disabled
 import { CpuArenaModal } from "@/components/CpuArenaModal";
@@ -439,8 +441,7 @@ export default function TCGPage() {
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
-  const [tutorialPage, setTutorialPage] = useState<number>(1);
-  const TUTORIAL_PAGES = 4; // Total number of tutorial pages
+  const [showGuidedTour, setShowGuidedTour] = useState<boolean>(false);
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
   const [cardTypeFilter, setCardTypeFilter] = useState<'all' | 'free' | 'nft'>('all');
@@ -3435,12 +3436,6 @@ export default function TCGPage() {
     }
   }, [userProfile?.lastAttackDate, userProfile?.attacksToday, maxAttacks, address]);
 
-  // Reset tutorial page when tutorial closes
-  useEffect(() => {
-    if (!showTutorial) {
-      setTutorialPage(1);
-    }
-  }, [showTutorial]);
 
   // Clean conflicting cards from defense deck on initial load
   // (cards that are now in raid deck should be removed from defense)
@@ -4013,6 +4008,17 @@ export default function TCGPage() {
         pause={pause}
         play={play}
         disconnectWallet={disconnectWallet}
+        onResetTutorial={() => {
+          // Reset tutorial in localStorage and show the welcome + guided tour
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('tutorialSeen');
+          }
+          setShowTutorial(true);
+        }}
+        onResetGuidedTour={() => {
+          // Show just the guided tour (for users who want to skip welcome)
+          setShowGuidedTour(true);
+        }}
       />
 
       {/* Mecha Arena Modal */}
@@ -4806,228 +4812,7 @@ export default function TCGPage() {
         t={t}
       />
 
-      {showTutorial && (
-        <div className="fixed inset-x-0 top-0 bottom-20 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-1 md:p-3" onClick={() => setShowTutorial(false)}>
-          <div className={`bg-vintage-deep-black rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-3 md:p-8 shadow-[0_0_40px_rgba(255,215,0,0.4)] ${isInFarcaster ? 'max-h-[calc(100vh-240px)]' : 'max-h-[calc(100vh-100px)]'} flex flex-col`} onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-3 md:mb-6 flex-shrink-0">
-              <div>
-                <h2 className="text-xl md:text-3xl font-display font-bold text-vintage-gold" style={{textShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>{t('tutorialTitle')}</h2>
-                <p className="text-xs text-vintage-burnt-gold mt-1">{tutorialPage}/{TUTORIAL_PAGES}</p>
-              </div>
-              <button onClick={() => setShowTutorial(false)} className="text-vintage-burnt-gold hover:text-vintage-gold text-xl md:text-2xl transition">✕</button>
-            </div>
-
-            {/* Page Content - Max height with scroll for individual pages if needed */}
-            <div className="overflow-y-auto flex-1 min-h-0">
-              <div className="space-y-3 md:space-y-6 text-vintage-ice">
-                {/* PAGE 1: Welcome + Need Cards + How to Play */}
-                {tutorialPage === 1 && (
-                  <>
-                    {/* Precisa de Cartas? */}
-                    <div className="relative p-1 rounded-xl" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 20px rgba(255, 215, 0, 0.4)', animation: 'pulse 2s ease-in-out infinite'}}>
-                      <div className="bg-vintage-black/90 p-3 md:p-5 rounded-lg">
-                        <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
-                          <span className="text-xl md:text-2xl">$</span> {t('needCards')}
-                        </h3>
-                        <p className="mb-3 md:mb-4 text-sm md:text-base text-vintage-burnt-gold">{t('needCardsDesc')}</p>
-                        <button
-                          onClick={() => openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster)}
-                          className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-modern font-bold text-sm md:text-base transition-all hover:scale-105 cursor-pointer"
-                          style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}
-                        >
-                          {t('buyCards')} $
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Como Jogar */}
-                    <div className="bg-vintage-charcoal/50 p-3 md:p-5 rounded-xl border border-vintage-gold/30">
-                      <h3 className="text-lg md:text-xl font-display font-bold text-vintage-gold mb-2 md:mb-3 flex items-center gap-2">
-                        <span className="text-xl md:text-2xl">?</span> {t('howToPlay')}
-                      </h3>
-                      <div className="bg-vintage-black/50 p-3 md:p-4 rounded-lg border border-vintage-gold/20">
-                        <p className="whitespace-pre-line text-xs md:text-sm leading-relaxed text-vintage-ice">{t('howToPlayDesc')}</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* PAGE 2: Power System */}
-                {tutorialPage === 2 && (
-                  <>
-                    {/* Poder Total */}
-                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-neon-blue/30">
-                      <h3 className="text-xl font-display font-bold text-vintage-neon-blue mb-3 flex items-center gap-2">
-                        <span className="text-2xl">※</span> {t('totalPowerInfo')}
-                      </h3>
-                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-neon-blue/20">
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('totalPowerInfoDesc')}</p>
-                      </div>
-                    </div>
-
-                    {/* Como o Poder Funciona */}
-                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
-                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-2 flex items-center gap-2">
-                        <span className="text-2xl">※</span> {t('powerCalc')}
-                      </h3>
-                      <p className="mb-3 text-sm text-vintage-burnt-gold">{t('powerCalcDesc')}</p>
-                      <div className="bg-vintage-black/50 p-4 rounded-lg space-y-3 text-sm border border-vintage-gold/20">
-                        <div>
-                          <p className="text-vintage-gold font-bold font-modern">{t('rarityBase')}</p>
-                          <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('rarityValues')}</p>
-                        </div>
-                        <div>
-                          <p className="text-vintage-gold font-bold font-modern">{t('wearMultiplier')}</p>
-                          <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('wearValues')}</p>
-                        </div>
-                        <div>
-                          <p className="text-vintage-gold font-bold font-modern">{t('foilMultiplier')}</p>
-                          <p className="ml-4 text-vintage-burnt-gold text-xs mt-1">{t('foilValues')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Foil Types */}
-                    <div className="bg-vintage-felt-green/20 p-4 rounded-xl border border-vintage-gold/30">
-                      <div className="space-y-2 text-sm">
-                        <p className="text-vintage-gold font-bold font-modern flex items-center gap-2">
-                          <span className="text-xl">★</span> {t('prizeFoil')}
-                        </p>
-                        <p className="text-vintage-neon-blue font-bold font-modern flex items-center gap-2">
-                          <span className="text-xl">☆</span> {t('standardFoil')}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Exemplos */}
-                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
-                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                        <span className="text-2xl">§</span> {t('powerExamples')}
-                      </h3>
-                      <div className="bg-vintage-black/50 p-4 rounded-lg space-y-2 text-sm border border-vintage-gold/20">
-                        <p className="text-vintage-ice">• {t('exampleCommon')}</p>
-                        <p className="text-vintage-ice">• {t('exampleRare')}</p>
-                        <p className="text-vintage-ice">• {t('exampleLegendary')}</p>
-                        <p className="text-vintage-gold font-bold text-base flex items-center gap-2">
-                          <span>•</span> {t('exampleMythic')}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* PAGE 3: Economy + Defense */}
-                {tutorialPage === 3 && (
-                  <>
-                    {/* Sistema de Moedas / Economy */}
-                    <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-5 rounded-xl border border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
-                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                        <span className="text-2xl">$</span> {t('economyInfo')}
-                      </h3>
-                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('economyInfoDesc')}</p>
-                      </div>
-                    </div>
-
-                    {/* Deck de Defesa */}
-                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-burnt-gold/30">
-                      <h3 className="text-xl font-display font-bold text-vintage-burnt-gold mb-3 flex items-center gap-2">
-                        <span className="text-2xl">◆</span> {t('defenseDeckInfo')}
-                      </h3>
-                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-burnt-gold/20">
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('defenseDeckInfoDesc')}</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* PAGE 4: Attack + Leaderboard */}
-                {tutorialPage === 4 && (
-                  <>
-                    {/* Sistema de Ataques */}
-                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-red-500/30">
-                      <h3 className="text-xl font-display font-bold text-red-400 mb-3 flex items-center gap-2">
-                        <span className="text-2xl">†</span> {t('attackSystemInfo')}
-                      </h3>
-                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-red-500/20">
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('attackSystemInfoDesc')}</p>
-                      </div>
-                    </div>
-
-                    {/* Ranking Global */}
-                    <div className="bg-vintage-charcoal/50 p-5 rounded-xl border border-vintage-gold/30">
-                      <h3 className="text-xl font-display font-bold text-vintage-gold mb-3 flex items-center gap-2">
-                        <span className="text-2xl">★</span> {t('leaderboardInfo')}
-                      </h3>
-                      <div className="bg-vintage-black/50 p-4 rounded-lg border border-vintage-gold/20">
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-vintage-ice">{t('leaderboardInfoDesc')}</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="mt-3 md:mt-6 pt-3 border-t border-vintage-gold/20 flex items-center justify-between gap-2 md:gap-4 flex-shrink-0">
-              {/* Previous Button */}
-              <button
-                onClick={() => {
-                  if (tutorialPage > 1) {
-                    setTutorialPage(tutorialPage - 1);
-                    if (soundEnabled) AudioManager.buttonClick();
-                  }
-                }}
-                disabled={tutorialPage === 1}
-                className={`px-3 md:px-6 py-2 md:py-3 rounded-lg font-modern font-bold text-sm md:text-base transition-all ${
-                  tutorialPage === 1
-                    ? 'bg-vintage-black/30 text-vintage-burnt-gold/30 cursor-not-allowed border border-vintage-gold/10'
-                    : 'bg-vintage-charcoal border border-vintage-gold text-vintage-gold hover:bg-vintage-gold/20 hover:scale-105'
-                }`}
-              >
-                ← <span className="hidden sm:inline">{t('previous') || 'Previous'}</span><span className="sm:hidden">Prev</span>
-              </button>
-
-              {/* Page Indicators (Dots) */}
-              <div className="flex gap-2">
-                {Array.from({ length: TUTORIAL_PAGES }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-2 rounded-full transition-all ${
-                      i + 1 === tutorialPage
-                        ? 'w-8 bg-vintage-gold'
-                        : 'w-2 bg-vintage-gold/30'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Next / Done Button */}
-              {tutorialPage < TUTORIAL_PAGES ? (
-                <button
-                  onClick={() => {
-                    setTutorialPage(tutorialPage + 1);
-                    if (soundEnabled) AudioManager.buttonClick();
-                  }}
-                  className="px-3 md:px-6 py-2 md:py-3 rounded-lg font-modern font-bold text-sm md:text-base bg-vintage-gold text-vintage-black hover:bg-vintage-gold-dark transition-all hover:scale-105"
-                >
-                  <span className="hidden sm:inline">{t('next') || 'Next'}</span><span className="sm:hidden">Next</span> →
-                </button>
-              ) : (
-                <div className="relative p-1 rounded-lg" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227, #FFD700)', boxShadow: '0 0 15px rgba(255, 215, 0, 0.5)'}}>
-                  <button
-                    onClick={() => setShowTutorial(false)}
-                    className="px-4 md:px-8 py-2 md:py-3 rounded-lg font-display font-bold text-sm md:text-base transition-all hover:scale-[1.02]"
-                    style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)', color: '#0C0C0C'}}
-                  >
-                    {t('understood')} ♠
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Old inline tutorial removed - Now using WelcomeOnboarding component */}
 
       <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-2 mb-0 p-2' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isInFarcaster ? 'mt-[40px]' : ''}`}>
         {!isInFarcaster && (
@@ -5046,7 +4831,7 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               window.location.href = '/dex';
             }}
-            className="px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
+            className="tour-dex-btn px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
           >
             <div className="flex items-center justify-center gap-2">
               <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
@@ -5061,12 +4846,12 @@ export default function TCGPage() {
                 if (soundEnabled) AudioManager.buttonClick();
                 window.location.href = '/fid';
               }}
-              className="px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
+              className="tour-vibefid-btn px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
             >
               <div className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4" viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M257.778 155.556H742.222V844.444H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.444H257.778V155.556Z" /><path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.444H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z" /><path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.444H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z" /></svg> <span className="hidden md:inline">MINT YOUR VIBEFID</span><span className="md:hidden">Mint VibeFID</span>
+                <svg className="w-4 h-4" viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M257.778 155.556H742.222V844.444H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.444H257.778V155.556Z" /><path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.444H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z" /><path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.444H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z" /></svg> {t('vibefidMint')}
               </div>
-              <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">or check your neynar score</span>
+              <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
             </button>
           )}
 
@@ -5090,7 +4875,7 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               setShowSettings(true);
             }}
-            className="bg-vintage-charcoal/80 border border-vintage-gold/30 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/10 transition font-bold text-sm md:text-base"
+            className="tour-settings-btn bg-vintage-charcoal/80 border border-vintage-gold/30 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/10 transition font-bold text-sm md:text-base"
             title={t('settings')}
           >
             <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
@@ -5288,7 +5073,7 @@ export default function TCGPage() {
 
           {/* Navigation Tabs */}
           <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom' : 'mb-3 md:mb-6 relative z-40'}>
-            <div className={`bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 ${isInFarcaster ? 'p-1' : 'p-2'} flex gap-1`}>
+            <div className={`tour-nav-bar bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 ${isInFarcaster ? 'p-1' : 'p-2'} flex gap-1`}>
               <button
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
@@ -5433,22 +5218,26 @@ export default function TCGPage() {
           {/* NEW HOME DESIGN v2 - Compact, no scroll, no emojis */}
           <div className="flex flex-col gap-2 px-2">
             {/* Game Grid - 6 game mode buttons */}
-            <GameGrid
-              soundEnabled={soundEnabled}
-              disabled={!userProfile}
-              onSelect={handleGameModeSelect}
-            />
+            <div className="tour-game-grid">
+              <GameGrid
+                soundEnabled={soundEnabled}
+                disabled={!userProfile}
+                onSelect={handleGameModeSelect}
+              />
+            </div>
 
             {/* Cards Preview - Mini cards row */}
-            <CardsPreview
-              cards={nfts}
-              soundEnabled={soundEnabled}
-              loading={status === 'fetching'}
-              onViewAll={() => {
-                if (soundEnabled) AudioManager.buttonClick();
-                setShowMyCardsModal(true);
-              }}
-            />
+            <div className="tour-cards-section">
+              <CardsPreview
+                cards={nfts}
+                soundEnabled={soundEnabled}
+                loading={status === 'fetching'}
+                onViewAll={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setShowMyCardsModal(true);
+                }}
+              />
+            </div>
 
             {/* Wanted Cast - Link to cast quests */}
             <WantedCast soundEnabled={soundEnabled} />
@@ -5769,7 +5558,7 @@ export default function TCGPage() {
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-2xl">♠</span>
-                      Poker Battle
+                      {t('homePokerBattle')}
                     </span>
                     <span className="text-xl">{modeMenuOpen === 'poker' ? '▼' : '▶'}</span>
                   </button>
@@ -5788,7 +5577,7 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 hover:border-purple-500/60"
                       >
-                        ♣ vs CPU
+                        ♣ {t('homeVsCpu')}
                       </button>
 
                       {/* Poker vs Player */}
@@ -5801,7 +5590,7 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 hover:border-orange-500/60"
                       >
-                        ♥ vs Player
+                        ♥ {t('homeVsPlayer')}
                       </button>
                     </div>
                   )}
@@ -5829,7 +5618,7 @@ export default function TCGPage() {
                         <path d="M12 11V7" />
                         <circle cx="12" cy="5" r="2" />
                       </svg>
-                      Mecha Arena
+                      {t('homeMechaArena')}
                     </span>
                     <span className="text-xl">▶</span>
                   </button>
@@ -5851,7 +5640,7 @@ export default function TCGPage() {
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-2xl">♦</span>
-                      Battle Auto
+                      {t('homeBattleAuto')}
                     </span>
                     <span className="text-xl">{modeMenuOpen === 'battle' ? '▼' : '▶'}</span>
                   </button>
@@ -5870,7 +5659,7 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 hover:border-blue-500/60"
                       >
-                        ♣ vs AI
+                        ♣ {t('homeVsAI')}
                       </button>
 
                       {/* Battle vs Player */}
@@ -5884,7 +5673,7 @@ export default function TCGPage() {
                         }}
                         className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/30 hover:border-red-500/60"
                       >
-                        ♥ vs Player
+                        ♥ {t('homeVsPlayer')}
                       </button>
                     </div>
                   )}
@@ -5906,7 +5695,7 @@ export default function TCGPage() {
                           <path d="M12 13v4" />
                           <path d="M8 21l4-4 4 4" />
                         </svg>
-                        Boss Raid
+                        {t('homeBossRaid')}
                         {hasExpiredRaidCards && (
                           <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" title="Cards need refuel!" />
                         )}
@@ -5926,7 +5715,7 @@ export default function TCGPage() {
                           <path d="M12 13v4" />
                           <path d="M8 21l4-4 4 4" />
                         </svg>
-                        Boss Raid
+                        {t('homeBossRaid')}
                       </span>
                       <span className="text-xl">▶</span>
                     </button>
@@ -6188,17 +5977,19 @@ export default function TCGPage() {
             }}
           />
 
-          {/* Tutorial Modal - Shows for all players once */}
-          <TutorialModal
-            isOpen={showTutorial}
-            onClose={() => {
+          {/* Guided Tour - Interactive tour highlighting UI elements */}
+          <GuidedTour
+            isOpen={showTutorial || showGuidedTour}
+            onComplete={() => {
               setShowTutorial(false);
-              // Mark tutorial as seen in localStorage
+              setShowGuidedTour(false);
+              // Mark tutorial as seen after completing the tour
               if (typeof window !== 'undefined') {
                 localStorage.setItem('tutorialSeen', 'true');
               }
             }}
             soundEnabled={soundEnabled}
+            steps={DEFAULT_TOUR_STEPS}
           />
 
         </>
