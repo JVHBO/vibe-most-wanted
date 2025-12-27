@@ -59,7 +59,6 @@ const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   vibe: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
   gmvbrs: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
   viberuto: '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f',
-  coquettish: '0xcdc74eeedc5ede1ef6033f22e8f0401af5b561ea',
   meowverse: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150',
   poorlydrawnpepes: '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8',
   teampothead: '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea',
@@ -76,7 +75,6 @@ const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] =
   { id: 'vibe', displayName: 'Vibe Most Wanted', emoji: '🎭' },
   { id: 'gmvbrs', displayName: 'GM VBRS', emoji: '🌅' },
   { id: 'viberuto', displayName: 'Viberuto', emoji: '🍥' },
-  { id: 'coquettish', displayName: 'Coquettish', emoji: '💋' },
   { id: 'meowverse', displayName: 'Meowverse', emoji: '🐱' },
   { id: 'poorlydrawnpepes', displayName: 'Poorly Drawn Pepes', emoji: '🐸' },
   { id: 'teampothead', displayName: 'Team Pothead', emoji: '🌿' },
@@ -154,7 +152,6 @@ export function useCollectionPrices() {
   const vibe = usePrice(COLLECTION_CONTRACTS.vibe);
   const gmvbrs = usePrice(COLLECTION_CONTRACTS.gmvbrs);
   const viberuto = usePrice(COLLECTION_CONTRACTS.viberuto);
-  const coquettish = usePrice(COLLECTION_CONTRACTS.coquettish);
   const meowverse = usePrice(COLLECTION_CONTRACTS.meowverse);
   const poorlydrawnpepes = usePrice(COLLECTION_CONTRACTS.poorlydrawnpepes);
   const teampothead = usePrice(COLLECTION_CONTRACTS.teampothead);
@@ -175,7 +172,7 @@ export function useCollectionPrices() {
   const cumiohPool = usePoolPrice(UNISWAP_V3_POOLS.cumioh?.pool, UNISWAP_V3_POOLS.cumioh?.isToken0Weth);
 
   const priceData: Record<string, { priceWei: bigint | undefined; priceEth: string; isLoading: boolean }> = {
-    vibe, gmvbrs, viberuto, coquettish, meowverse, poorlydrawnpepes,
+    vibe, gmvbrs, viberuto, meowverse, poorlydrawnpepes,
     teampothead, tarot, americanfootball, baseballcabal, vibefx, historyofcomputer, cumioh, viberotbangers,
   };
 

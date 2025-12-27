@@ -44,8 +44,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'vibe',             // 1. Rare
   'vibefid',          // 2. Epic
   'americanfootball', // 3. Legendary
-  'coquettish',       // 4. Mythic
-  'viberuto',         // 5. Common
+  'viberuto',         // 4. Common
   'meowverse',        // 6. Rare
   'poorlydrawnpepes', // 7. Epic
   'teampothead',      // 8. Legendary
@@ -60,8 +59,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'vibe',             // 16. Common
   'vibefid',          // 17. Rare
   'americanfootball', // 18. Epic
-  'coquettish',       // 19. Legendary
-  'viberuto',         // 20. Mythic
+  'viberuto',         // 19. Mythic
   'meowverse',        // 21. Common
   'poorlydrawnpepes', // 22. Rare
   'teampothead',      // 23. Epic
@@ -76,8 +74,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'vibe',             // 31. Mythic
   'vibefid',          // 32. Common
   'americanfootball', // 33. Rare
-  'coquettish',       // 34. Epic
-  'viberuto',         // 35. Legendary
+  'viberuto',         // 34. Legendary
   'meowverse',        // 36. Mythic
   'poorlydrawnpepes', // 37. Common
   'teampothead',      // 38. Rare
@@ -92,8 +89,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'vibe',             // 46. Legendary
   'vibefid',          // 47. Mythic
   'americanfootball', // 48. Common
-  'coquettish',       // 49. Rare
-  'viberuto',         // 50. Epic
+  'viberuto',         // 49. Epic
   'meowverse',        // 51. Legendary
   'poorlydrawnpepes', // 52. Mythic
   'teampothead',      // 53. Common
@@ -108,8 +104,7 @@ export const BOSS_ROTATION_ORDER: CollectionId[] = [
   'vibe',             // 61. Epic
   'vibefid',          // 62. Legendary
   'americanfootball', // 63. Mythic
-  'coquettish',       // 64. Common
-  'viberuto',         // 65. Rare
+  'viberuto',         // 64. Rare
   'meowverse',        // 66. Epic
   'poorlydrawnpepes', // 67. Legendary
   'teampothead',      // 68. Mythic
@@ -127,8 +122,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Rare',      // 1. vibe
   'Epic',      // 2. vibefid
   'Legendary', // 3. americanfootball
-  'Mythic',    // 4. coquettish
-  'Common',    // 5. viberuto
+  'Common',    // 4. viberuto
   'Rare',      // 6. meowverse
   'Epic',      // 7. poorlydrawnpepes
   'Legendary', // 8. teampothead
@@ -143,8 +137,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Common',    // 16. vibe
   'Rare',      // 17. vibefid
   'Epic',      // 18. americanfootball
-  'Legendary', // 19. coquettish
-  'Mythic',    // 20. viberuto
+  'Mythic',    // 19. viberuto
   'Common',    // 21. meowverse
   'Rare',      // 22. poorlydrawnpepes
   'Epic',      // 23. teampothead
@@ -159,8 +152,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Mythic',    // 31. vibe
   'Common',    // 32. vibefid
   'Rare',      // 33. americanfootball
-  'Epic',      // 34. coquettish
-  'Legendary', // 35. viberuto
+  'Legendary', // 34. viberuto
   'Mythic',    // 36. meowverse
   'Common',    // 37. poorlydrawnpepes
   'Rare',      // 38. teampothead
@@ -175,8 +167,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Legendary', // 46. vibe
   'Mythic',    // 47. vibefid
   'Common',    // 48. americanfootball
-  'Rare',      // 49. coquettish
-  'Epic',      // 50. viberuto
+  'Epic',      // 49. viberuto
   'Legendary', // 51. meowverse
   'Mythic',    // 52. poorlydrawnpepes
   'Common',    // 53. teampothead
@@ -191,8 +182,7 @@ export const BOSS_RARITY_ORDER: CardRarity[] = [
   'Epic',      // 61. vibe
   'Legendary', // 62. vibefid
   'Mythic',    // 63. americanfootball
-  'Common',    // 64. coquettish
-  'Rare',      // 65. viberuto
+  'Rare',      // 64. viberuto
   'Epic',      // 66. meowverse
   'Legendary', // 67. poorlydrawnpepes
   'Mythic',    // 68. teampothead
@@ -431,71 +421,6 @@ export const AFCL_BOSSES: Record<CardRarity, BossCard> = {
     description: 'The Greatest Of All Time - unmatched perfection',
   },
 };
-
-
- 
-
-/**
-
- * Coquettish Boss Cards
-
- */
-
-export const COQUETTISH_BOSSES: Record<CardRarity, BossCard> = {
-  Common: {
-    tokenId: 'coquettish-boss-common',
-    collection: 'coquettish',
-    name: 'Flirty Charmer',
-    rarity: 'Common',
-    power: 15,
-    imageUrl: '/images/raid-bosses/coquettish/common.png',
-    hp: BOSS_HP_BY_RARITY.common,
-    description: 'A playful trickster with irresistible charm',
-    },
-    Rare: {
-    tokenId: 'coquettish-boss-rare',
-    collection: 'coquettish',
-    name: 'Seductive Vixen',
-    rarity: 'Rare',
-    power: 20,
-    imageUrl: '/images/raid-bosses/coquettish/rare.png',
-    hp: BOSS_HP_BY_RARITY.rare,
-    description: 'Enchanting beauty that captivates all who dare challenge',
-    },
-    Epic: {
-    tokenId: 'coquettish-boss-epic',
-    collection: 'coquettish',
-    name: 'Enchanting Temptress',
-    rarity: 'Epic',
-    power: 80,
-    imageUrl: '/images/raid-bosses/coquettish/epic.png',
-    hp: BOSS_HP_BY_RARITY.epic,
-    description: 'Bewitching power that leaves opponents spellbound',
-    },
-    Legendary: {
-    tokenId: 'coquettish-boss-legendary',
-    collection: 'coquettish',
-    name: 'Alluring Siren',
-    rarity: 'Legendary',
-    power: 240,
-    imageUrl: '/images/raid-bosses/coquettish/legendary.png',
-    hp: BOSS_HP_BY_RARITY.legendary,
-    description: 'Legendary seductress whose beauty is matched only by her strength',
-    },
-    Mythic: {
-    tokenId: 'coquettish-boss-mythic',
-    collection: 'coquettish',
-    name: 'Divine Seductress',
-    rarity: 'Mythic',
-    power: 800,
-    imageUrl: '/images/raid-bosses/coquettish/mythic.png',
-    hp: BOSS_HP_BY_RARITY.mythic,
-    description: 'The ultimate embodiment of allure and power combined',
-    },
-
-};
-
-
 
 /**
  * Viberuto Boss Cards
@@ -1076,8 +1001,6 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
   vibe: VBMS_BOSSES,
   vibefid: VIBEFID_BOSSES,
   americanfootball: AFCL_BOSSES,
-  coquettish: COQUETTISH_BOSSES,
-
   viberuto: VIBERUTO_BOSSES,
 
   meowverse: MEOWVERSE_BOSSES,

@@ -143,30 +143,18 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     url: 'https://warpcast.com/~/channel/fidmfers',
   },
 
-  // Coquettish
-  {
-    id: 'follow_satoshinaka',
-    type: 'follow',
-    target: 'satoshinaka',
-    targetFid: 203754,
-    displayName: 'Follow @satoshinaka',
-    description: 'Follow Coquettish creator',
-    reward: 500,
-    icon: '',
-    url: 'https://warpcast.com/satoshinaka',
-    collection: 'coquettish',
-  },
+  // Meowverse
   {
     id: 'follow_denkurhq',
     type: 'follow',
     target: 'denkurhq',
     targetFid: 439094,
     displayName: 'Follow @denkurhq',
-    description: 'Follow Coquettish co-creator',
+    description: 'Follow Meowverse creator',
     reward: 500,
     icon: '',
     url: 'https://warpcast.com/denkurhq',
-    collection: 'coquettish',
+    collection: 'meowverse',
   },
 
   // Poorly Drawn Pepes
