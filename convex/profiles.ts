@@ -980,6 +980,196 @@ export const unlinkWallet = mutation({
 });
 
 /**
+ * 🔀 MERGE PROFILE FLOW
+ * For OLD accounts (with profile but NO FID) to merge into a FID account
+ *
+ * Flow:
+ * 1. Old account (no FID) generates merge code
+ * 2. FID account enters code
+ * 3. Old account's wallet is linked to FID account
+ * 4. Old profile is deleted
+ */
+
+/**
+ * Generate merge code for an old account (has profile, no FID)
+ * This allows the user to merge their old account into a FID account
+ */
+export const generateMergeCode = mutation({
+  args: { walletAddress: v.string() },
+  handler: async (ctx, { walletAddress }) => {
+    if (!isValidAddress(walletAddress)) {
+      throw new Error("Endereço inválido");
+    }
+
+    const normalizedAddress = normalizeAddress(walletAddress);
+
+    // Check if this wallet has a profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Esta wallet não tem um perfil para mergear");
+    }
+
+    // Check if profile already has FID - if so, they should use link code instead
+    if (profile.farcasterFid) {
+      throw new Error("Este perfil já tem FID. Use 'Linkar Wallet' ao invés de merge.");
+    }
+
+    // Delete any existing merge codes for this wallet
+    const existingCodes = await ctx.db
+      .query("walletLinkCodes")
+      .withIndex("by_profile", (q) => q.eq("profileAddress", normalizedAddress))
+      .collect();
+
+    for (const code of existingCodes) {
+      await ctx.db.delete(code._id);
+    }
+
+    // Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const now = Date.now();
+    const expiresAt = now + 60 * 1000; // 60 seconds for merge (more time needed)
+
+    await ctx.db.insert("walletLinkCodes", {
+      code,
+      profileAddress: normalizedAddress,
+      createdAt: now,
+      expiresAt,
+      used: false,
+    });
+
+    return {
+      code,
+      expiresAt,
+      profileToMerge: profile.username,
+    };
+  },
+});
+
+/**
+ * Use merge code to absorb an old account into a FID account
+ * - Links the old wallet to the FID profile
+ * - Deletes the old profile
+ */
+export const useMergeCode = mutation({
+  args: {
+    code: v.string(),
+    fidOwnerAddress: v.string(),
+  },
+  handler: async (ctx, { code, fidOwnerAddress }) => {
+    if (!isValidAddress(fidOwnerAddress)) {
+      throw new Error("Endereço inválido");
+    }
+
+    const normalizedFidOwner = normalizeAddress(fidOwnerAddress);
+
+    // Get the FID owner's profile (resolve links if needed)
+    const ownerLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedFidOwner))
+      .first();
+
+    const primaryAddress = ownerLink?.primaryAddress || normalizedFidOwner;
+
+    const fidProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
+      .first();
+
+    if (!fidProfile) {
+      throw new Error("Você precisa ter um perfil para fazer merge");
+    }
+
+    if (!fidProfile.farcasterFid) {
+      throw new Error("Seu perfil precisa ter FID para absorver outra conta");
+    }
+
+    // Find the code
+    const mergeCode = await ctx.db
+      .query("walletLinkCodes")
+      .withIndex("by_code", (q) => q.eq("code", code))
+      .first();
+
+    if (!mergeCode) {
+      throw new Error("Código inválido");
+    }
+
+    if (mergeCode.used) {
+      throw new Error("Código já foi usado");
+    }
+
+    if (Date.now() > mergeCode.expiresAt) {
+      await ctx.db.delete(mergeCode._id);
+      throw new Error("Código expirado");
+    }
+
+    const oldWalletAddress = mergeCode.profileAddress;
+
+    // Can't merge with yourself
+    if (primaryAddress === oldWalletAddress) {
+      throw new Error("Não pode mergear consigo mesmo");
+    }
+
+    // Get the old profile to merge
+    const oldProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", oldWalletAddress))
+      .first();
+
+    if (!oldProfile) {
+      throw new Error("Perfil antigo não encontrado");
+    }
+
+    // Check if old wallet is already linked somewhere else
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", oldWalletAddress))
+      .first();
+
+    if (existingLink && existingLink.primaryAddress !== primaryAddress) {
+      throw new Error("Esta wallet já está linkada a outro perfil");
+    }
+
+    // === MERGE PROCESS ===
+
+    // 1. Link the old wallet to the FID profile
+    if (!existingLink) {
+      await ctx.db.insert("addressLinks", {
+        address: oldWalletAddress,
+        primaryAddress: primaryAddress,
+        linkedAt: Date.now(),
+      });
+    }
+
+    // 2. Update FID profile's linkedAddresses
+    const currentLinked = fidProfile.linkedAddresses || [];
+    if (!currentLinked.includes(oldWalletAddress)) {
+      await ctx.db.patch(fidProfile._id, {
+        linkedAddresses: [...currentLinked, oldWalletAddress],
+      });
+    }
+
+    // 3. Delete the old profile
+    const oldUsername = oldProfile.username;
+    await ctx.db.delete(oldProfile._id);
+
+    // 4. Mark code as used
+    await ctx.db.patch(mergeCode._id, { used: true });
+
+    return {
+      success: true,
+      message: `Conta @${oldUsername} foi mergeada com sucesso!`,
+      mergedUsername: oldUsername,
+      mergedWallet: oldWalletAddress,
+      newProfile: fidProfile.username,
+    };
+  },
+});
+
+/**
  * Get active link code for a profile (if any)
  */
 export const getActiveLinkCode = query({
