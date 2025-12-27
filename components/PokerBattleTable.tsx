@@ -2337,7 +2337,7 @@ export function PokerBattleTable({
         {phase === 'deck-building' && !isSpectatorMode && (
           <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-2 sm:p-4 md:p-6 h-full flex flex-col overflow-hidden">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-vintage-gold mb-2 sm:mb-3 text-center flex-shrink-0">
-              BUILD YOUR DECK
+              {t('deckBuilderTitle')}
             </h2>
 
             {/* Not enough cards warning */}
@@ -2356,7 +2356,7 @@ export function PokerBattleTable({
             <>
             <div className="flex flex-col sm:flex-row items-center justify-between mb-2 sm:mb-4 gap-2 flex-shrink-0">
               <p className="text-vintage-burnt-gold text-center text-sm sm:text-base">
-                Select 10 cards ({selectedDeck.length}/10)
+                {t('pokerSelectCards').replace('{selected}', String(selectedDeck.length))}
               </p>
               <button
                 onClick={() => {
@@ -2369,7 +2369,7 @@ export function PokerBattleTable({
                     : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
                 }`}
               >
-                {sortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+                {sortByPower ? t('deckBuilderSortedByPower') : t('deckBuilderSortByPower')}
               </button>
             </div>
 
@@ -2466,7 +2466,7 @@ export function PokerBattleTable({
                       : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
                   }`}
                 >
-                  ← Prev
+                  {t('deckBuilderPrevPage')}
                 </button>
                 <span className="text-vintage-gold font-bold text-xs sm:text-base">
                   {currentPage + 1}/{totalPages}
@@ -2480,7 +2480,7 @@ export function PokerBattleTable({
                       : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
                   }`}
                 >
-                  Next →
+                  {t('deckBuilderNextPage')}
                 </button>
               </div>
             )}
@@ -2495,7 +2495,7 @@ export function PokerBattleTable({
                   : 'bg-gray-600 text-gray-400 cursor-not-allowed'
               }`}
             >
-              {selectedDeck.length === 10 ? 'START GAME' : `SELECT ${10 - selectedDeck.length} MORE`}
+              {selectedDeck.length === 10 ? t('pokerStartGame') : t('deckBuilderSelectMore').replace('{count}', String(10 - selectedDeck.length))}
             </button>
             </>
             )}
