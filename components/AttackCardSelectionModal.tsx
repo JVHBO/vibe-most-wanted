@@ -8,6 +8,7 @@
 import { Dispatch, SetStateAction, useState, useMemo } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
 import { CardMedia } from '@/components/CardMedia';
@@ -131,6 +132,7 @@ export function AttackCardSelectionModal({
   api,
   maxAttacks,
 }: AttackCardSelectionModalProps) {
+  const { t } = useLanguage();
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const CARDS_PER_PAGE = 50;
@@ -448,7 +450,7 @@ export function AttackCardSelectionModal({
             }}
             className="px-3 py-1.5 rounded-lg text-xs font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
           >
-            <option value="all">All Collections</option>
+            <option value="all">{t('deckBuilderAllCollections')}</option>
             {getEnabledCollections().map(col => (
               <option key={col.id} value={col.id}>{col.displayName}</option>
             ))}
@@ -466,7 +468,7 @@ export function AttackCardSelectionModal({
                 : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
             }`}
           >
-            {sortAttackByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+            {sortAttackByPower ? t('deckBuilderSortedByPower') : t('deckBuilderSortByPower')}
           </button>
         </div>
 
@@ -628,7 +630,7 @@ export function AttackCardSelectionModal({
             onClick={handleCancel}
             className="w-full px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern text-sm transition"
           >
-            Cancel
+            {t('cancel')}
           </button>
         </div>
       </div>

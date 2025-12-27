@@ -544,7 +544,7 @@ export function RaidDeckSelectionModal({
             }}
             className="px-2 py-1 rounded-lg text-[10px] font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
           >
-            <option value="all">All Collections</option>
+            <option value="all">{translate('deckBuilderAllCollections')}</option>
             {getEnabledCollections().map(col => (
               <option key={col.id} value={col.id}>{col.displayName}</option>
             ))}
@@ -562,7 +562,7 @@ export function RaidDeckSelectionModal({
                 : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
             }`}
           >
-            {sortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+            {sortByPower ? translate('deckBuilderSortedByPower') : translate('deckBuilderSortByPower')}
           </button>
         </div>
 
