@@ -331,6 +331,8 @@ export const translations = {
     deckBuilderCancel: 'Cancelar',
     deckBuilderPrevPage: '← Ant',
     deckBuilderNextPage: 'Próx →',
+    pokerSelectCards: 'Selecione 10 cartas ({selected}/10)',
+    pokerStartGame: 'INICIAR JOGO',
     // Tutorial Modal
     tutorialWelcome: 'Bem-vindo ao Vibe Most Wanted!',
     tutorialWelcomeDesc: 'Um jogo de cartas NFT onde você coleciona, batalha e sobe no ranking. Vamos mostrar como funciona!',
@@ -1082,6 +1084,8 @@ export const translations = {
     deckBuilderCancel: 'Cancel',
     deckBuilderPrevPage: '← Prev',
     deckBuilderNextPage: 'Next →',
+    pokerSelectCards: 'Select 10 cards ({selected}/10)',
+    pokerStartGame: 'START GAME',
     // Tutorial Modal
     tutorialWelcome: 'Welcome to Vibe Most Wanted!',
     tutorialWelcomeDesc: 'An NFT card game where you collect, battle, and climb the ranking. Let us show you how it works!',
@@ -1833,6 +1837,8 @@ export const translations = {
     deckBuilderCancel: 'Cancelar',
     deckBuilderPrevPage: '← Ant',
     deckBuilderNextPage: 'Sig →',
+    pokerSelectCards: 'Selecciona 10 cartas ({selected}/10)',
+    pokerStartGame: 'INICIAR JUEGO',
     // Tutorial Modal
     tutorialWelcome: '¡Bienvenido a Vibe Most Wanted!',
     tutorialWelcomeDesc: 'Un juego de cartas NFT donde coleccionas, batallas y subes en el ranking. ¡Te mostramos cómo funciona!',
@@ -2585,6 +2591,8 @@ export const translations = {
     deckBuilderCancel: 'रद्द करें',
     deckBuilderPrevPage: '← पिछला',
     deckBuilderNextPage: 'अगला →',
+    pokerSelectCards: '10 कार्ड चुनें ({selected}/10)',
+    pokerStartGame: 'गेम शुरू करें',
     // Tutorial Modal
     tutorialWelcome: 'Vibe Most Wanted में आपका स्वागत है!',
     tutorialWelcomeDesc: 'एक NFT कार्ड गेम जहां आप कलेक्ट करते हैं, बैटल करते हैं और रैंकिंग में ऊपर जाते हैं। हम आपको दिखाते हैं कैसे!',
@@ -3333,6 +3341,8 @@ export const translations = {
     deckBuilderCancel: 'Отмена',
     deckBuilderPrevPage: '← Назад',
     deckBuilderNextPage: 'Далее →',
+    pokerSelectCards: 'Выберите 10 карт ({selected}/10)',
+    pokerStartGame: 'НАЧАТЬ ИГРУ',
     // Tutorial Modal
     tutorialWelcome: 'Добро пожаловать в Vibe Most Wanted!',
     tutorialWelcomeDesc: 'NFT карточная игра, где вы собираете, сражаетесь и поднимаетесь в рейтинге. Покажем как это работает!',
@@ -4081,6 +4091,8 @@ export const translations = {
     deckBuilderCancel: '取消',
     deckBuilderPrevPage: '← 上一页',
     deckBuilderNextPage: '下一页 →',
+    pokerSelectCards: '选择10张卡牌 ({selected}/10)',
+    pokerStartGame: '开始游戏',
     // Tutorial Modal
     tutorialWelcome: '欢迎来到 Vibe Most Wanted！',
     tutorialWelcomeDesc: '一款NFT卡牌游戏，收集卡牌、战斗并提升排名。让我们告诉你怎么玩！',
@@ -4823,6 +4835,8 @@ export const translations = {
     deckBuilderCancel: 'Batal',
     deckBuilderPrevPage: '← Sebelum',
     deckBuilderNextPage: 'Berikut →',
+    pokerSelectCards: 'Pilih 10 kartu ({selected}/10)',
+    pokerStartGame: 'MULAI PERMAINAN',
     tutorialWelcome: 'Selamat Datang di Vibe Most Wanted!',
     tutorialWelcomeDesc: 'Game kartu NFT di mana kamu mengumpulkan, bertarung, dan naik peringkat. Mari kami tunjukkan caranya!',
     tutorialCollectCards: 'Kumpulkan kartu VIBE yang kuat',
@@ -5545,6 +5559,8 @@ export const translations = {
     deckBuilderCancel: 'Annuler',
     deckBuilderPrevPage: '← Préc',
     deckBuilderNextPage: 'Suiv →',
+    pokerSelectCards: 'Sélectionnez 10 cartes ({selected}/10)',
+    pokerStartGame: 'COMMENCER LA PARTIE',
     tutorialWelcome: 'Bienvenue dans Vibe Most Wanted !',
     tutorialWelcomeDesc: 'Un jeu de cartes NFT où vous collectionnez, combattez et grimpez dans le classement. Laissez-nous vous montrer comment ça marche !',
     tutorialCollectCards: 'Collectionnez des cartes VIBE puissantes',

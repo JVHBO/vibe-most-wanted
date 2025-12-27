@@ -537,7 +537,9 @@ export const awardPvECoins = mutation({
       v.literal("es"),
       v.literal("hi"),
       v.literal("ru"),
-      v.literal("zh-CN")
+      v.literal("zh-CN"),
+      v.literal("id"),
+      v.literal("fr")
     )),
     skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins
   },
@@ -1363,7 +1365,9 @@ export const recordAttackResult = mutation({
       v.literal("es"),
       v.literal("hi"),
       v.literal("ru"),
-      v.literal("zh-CN")
+      v.literal("zh-CN"),
+      v.literal("id"),
+      v.literal("fr")
     )),
     skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins (for wins only)
   },
