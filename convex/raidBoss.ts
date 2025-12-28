@@ -5,10 +5,32 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
 import type { CardRarity } from "../lib/types/card";
+
+/**
+ * 🔗 MULTI-WALLET: Resolve primary address for linked wallets
+ * Returns the primary address if this address is linked, otherwise returns the address itself
+ */
+async function resolvePrimaryAddress(ctx: QueryCtx | MutationCtx, address: string): Promise<string> {
+  const normalizedAddress = address.toLowerCase();
+
+  // Check if this address is linked to another profile
+  const link = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (link) {
+    // This is a linked address - return the primary
+    return link.primaryAddress;
+  }
+
+  // Not a linked address - return as-is
+  return normalizedAddress;
+}
 
 /**
  * 🔒 SECURITY FIX: Crypto-secure random for critical hits
@@ -130,15 +152,19 @@ export const initializeRaidBoss = mutation({
 
 /**
  * Get player's raid deck and energy status
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const getPlayerRaidDeck = query({
   args: {
     address: v.string(),
   },
   handler: async (ctx, args) => {
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const primaryAddress = await resolvePrimaryAddress(ctx, args.address);
+
     const raidDeck = await ctx.db
       .query("raidAttacks")
-      .withIndex("by_address", (q) => q.eq("address", args.address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
       .first();
 
     return raidDeck;
@@ -147,12 +173,16 @@ export const getPlayerRaidDeck = query({
 
 /**
  * Get player's contribution to current boss
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const getPlayerContribution = query({
   args: {
     address: v.string(),
   },
   handler: async (ctx, args) => {
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const primaryAddress = await resolvePrimaryAddress(ctx, args.address);
+
     const boss = await ctx.db
       .query("raidBoss")
       .filter((q) => q.eq(q.field("status"), "active"))
@@ -163,7 +193,7 @@ export const getPlayerContribution = query({
     const contribution = await ctx.db
       .query("raidContributions")
       .withIndex("by_boss_player", (q) =>
-        q.eq("bossIndex", boss.bossIndex).eq("address", args.address.toLowerCase())
+        q.eq("bossIndex", boss.bossIndex).eq("address", primaryAddress)
       )
       .first();
 
@@ -284,6 +314,7 @@ export const getRaidBossLeaderboard = query({
 /**
  * Replace a card in the raid deck (costs VBMS based on new card rarity)
  * Common: 1 VBMS, Rare: 3, Epic: 5, Legendary: 10, Mythic: 15, VibeFID: 50
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const replaceCard = mutation({
   args: {
@@ -303,7 +334,8 @@ export const replaceCard = mutation({
     isVibeFID: v.optional(v.boolean()), // If true, replacing VibeFID card
   },
   handler: async (ctx, args) => {
-    const address = args.address.toLowerCase();
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const address = await resolvePrimaryAddress(ctx, args.address);
 
     // Get player's raid deck
     const raidDeck = await ctx.db
@@ -446,6 +478,10 @@ export const replaceCard = mutation({
  * Cost = sum of card rarities (Common:1, Rare:3, Epic:5, Legendary:10, Mythic:15, VibeFID:50)
  * Can have 5 regular cards OR 5 regular + 1 VibeFID (6th slot)
  */
+/**
+ * Set raid deck for a player
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
+ */
 export const setRaidDeck = mutation({
   args: {
     address: v.string(),
@@ -471,7 +507,8 @@ export const setRaidDeck = mutation({
     txHash: v.string(), // VBMS payment transaction hash
   },
   handler: async (ctx, args) => {
-    const address = args.address.toLowerCase();
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const address = await resolvePrimaryAddress(ctx, args.address);
 
     // 🚀 Fetch username for caching (avoids N+1 in leaderboard)
     const profile = await ctx.db
@@ -601,13 +638,15 @@ export const setRaidDeck = mutation({
  * Clear raid deck but keep damage stats
  * Player can remove all cards from raid to use them elsewhere
  * Damage dealt and bosses killed are preserved
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const clearRaidDeck = mutation({
   args: {
     address: v.string(),
   },
   handler: async (ctx, args) => {
-    const address = args.address.toLowerCase();
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const address = await resolvePrimaryAddress(ctx, args.address);
 
     // Get player's raid deck
     const raidDeck = await ctx.db
@@ -642,6 +681,7 @@ export const clearRaidDeck = mutation({
 
 /**
  * Refuel card energy (costs 1 VBMS per card, or 4 VBMS for all 5)
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const refuelCards = mutation({
   args: {
@@ -650,7 +690,8 @@ export const refuelCards = mutation({
     txHash: v.string(), // VBMS payment transaction hash
   },
   handler: async (ctx, args) => {
-    const address = args.address.toLowerCase();
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const address = await resolvePrimaryAddress(ctx, args.address);
 
     // Get player's raid deck
     const raidDeck = await ctx.db
@@ -1224,15 +1265,19 @@ export const manualDistributeRewards = internalMutation({
 
 /**
  * Get any player's raid deck by address (for viewing from leaderboard)
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const getPlayerRaidDeckByAddress = query({
   args: {
     address: v.string(),
   },
   handler: async (ctx, args) => {
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const primaryAddress = await resolvePrimaryAddress(ctx, args.address);
+
     const raidDeck = await ctx.db
       .query("raidAttacks")
-      .withIndex("by_address", (q) => q.eq("address", args.address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
       .first();
 
     if (!raidDeck) return null;
@@ -1240,7 +1285,7 @@ export const getPlayerRaidDeckByAddress = query({
     // Get player profile for username
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", args.address.toLowerCase()))
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
       .first();
 
     return {
@@ -1252,6 +1297,49 @@ export const getPlayerRaidDeckByAddress = query({
       totalDamageDealt: raidDeck.totalDamageDealt,
       bossesKilled: raidDeck.bossesKilled,
       cardEnergy: raidDeck.cardEnergy,
+    };
+  },
+});
+
+/**
+ * 🧹 CLEANUP: Delete raid data for a wallet being linked/merged
+ * Called when a wallet is linked to a primary profile
+ */
+export const cleanupLinkedWalletRaidData = mutation({
+  args: {
+    linkedAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const address = args.linkedAddress.toLowerCase();
+
+    // Find and delete raid deck for this address
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (raidDeck) {
+      await ctx.db.delete(raidDeck._id);
+      console.log(`🧹 Deleted raid deck for linked wallet: ${address}`);
+    }
+
+    // Find and delete all contributions for this address
+    const contributions = await ctx.db
+      .query("raidContributions")
+      .filter((q) => q.eq(q.field("address"), address))
+      .collect();
+
+    for (const contribution of contributions) {
+      await ctx.db.delete(contribution._id);
+    }
+
+    if (contributions.length > 0) {
+      console.log(`🧹 Deleted ${contributions.length} contributions for linked wallet: ${address}`);
+    }
+
+    return {
+      deletedRaidDeck: !!raidDeck,
+      deletedContributions: contributions.length,
     };
   },
 });
