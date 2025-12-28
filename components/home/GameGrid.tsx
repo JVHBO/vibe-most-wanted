@@ -77,7 +77,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
     id: 'mecha',
     icon: <MechaIcon />,
     label: 'Mecha Arena',
-    sublabel: '',
+    sublabel: 'Bet VBMS',
     cards: null,
     iconColor: 'text-green-400',
     accentColor: 'hover:border-green-400/50',
