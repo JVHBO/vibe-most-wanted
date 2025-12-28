@@ -1,6 +1,6 @@
 // Translations for the /docs page
 
-export type DocsSupportedLanguage = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr';
+export type DocsSupportedLanguage = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr' | 'ja';
 
 export const docsTranslations = {
   "pt-BR": {

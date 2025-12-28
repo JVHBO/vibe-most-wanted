@@ -73,6 +73,8 @@ export const fidTranslations = {
     myCards: 'Minhas Cartas Farcaster',
     cardsCount: '{count} cartas',
     share: 'Compartilhar',
+    download: 'Download',
+    selectLanguageForShare: 'Selecione o idioma para a imagem:',
 
     // Your card section
     yourCard: 'Sua Carta VibeFID',
@@ -98,6 +100,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Sua Carta VibeFID',
     cardStats: 'Estatísticas da Carta',
     back: '← Voltar',
+    cancel: 'Cancelar',
     mintToReveal: 'Mintar para Revelar Carta Completa',
 
     // About Traits Modal
@@ -309,6 +312,8 @@ export const fidTranslations = {
     myCards: 'My Farcaster Cards',
     cardsCount: '{count} cards',
     share: 'Share',
+    download: 'Download',
+    selectLanguageForShare: 'Select language for share image:',
 
     // Your card section
     yourCard: 'Your VibeFID Card',
@@ -334,6 +339,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Your VibeFID Card',
     cardStats: 'Card Stats',
     back: '← Back',
+    cancel: 'Cancel',
     mintToReveal: 'Mint to Reveal Full Card',
 
     // About Traits Modal
@@ -545,6 +551,8 @@ export const fidTranslations = {
     myCards: 'Mis Cartas Farcaster',
     cardsCount: '{count} cartas',
     share: 'Compartir',
+    download: 'Descargar',
+    selectLanguageForShare: 'Selecciona el idioma para la imagen:',
 
     // Your card section
     yourCard: 'Tu Carta VibeFID',
@@ -570,6 +578,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Tu Carta VibeFID',
     cardStats: 'Estadísticas de la Carta',
     back: '← Atrás',
+    cancel: 'Cancelar',
     mintToReveal: 'Mintear para Revelar Carta Completa',
 
     // About Traits Modal
@@ -781,6 +790,8 @@ export const fidTranslations = {
     myCards: 'मेरे Farcaster कार्ड',
     cardsCount: '{count} कार्ड',
     share: 'साझा करें',
+    download: 'डाउनलोड',
+    selectLanguageForShare: 'शेयर इमेज के लिए भाषा चुनें:',
 
     // Your card section
     yourCard: 'आपका VibeFID कार्ड',
@@ -806,6 +817,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'आपका VibeFID कार्ड',
     cardStats: 'कार्ड आंकड़े',
     back: '← वापस',
+    cancel: 'रद्द करें',
     mintToReveal: 'पूर्ण कार्ड प्रकट करने के लिए मिंट करें',
 
     // About Traits Modal
@@ -1017,6 +1029,8 @@ export const fidTranslations = {
     myCards: 'Мои Карты Farcaster',
     cardsCount: '{count} карт',
     share: 'Поделиться',
+    download: 'Скачать',
+    selectLanguageForShare: 'Выберите язык для изображения:',
 
     // Your card section
     yourCard: 'Ваша Карта VibeFID',
@@ -1042,6 +1056,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Ваша карта VibeFID',
     cardStats: 'Статистика карты',
     back: '← Назад',
+    cancel: 'Отмена',
     mintToReveal: 'Минтить, чтобы показать полную карту',
 
     // About Traits Modal
@@ -1253,6 +1268,8 @@ export const fidTranslations = {
     myCards: '我的 Farcaster 卡片',
     cardsCount: '{count} 张卡片',
     share: '分享',
+    download: '下载',
+    selectLanguageForShare: '选择分享图片的语言:',
 
     // Your card section
     yourCard: '你的 VibeFID 卡片',
@@ -1278,6 +1295,7 @@ export const fidTranslations = {
     yourVibeFidCard: '你的 VibeFID 卡片',
     cardStats: '卡片属性',
     back: '← 返回',
+    cancel: '取消',
     mintToReveal: '铸造以显示完整卡片',
 
     // About Traits Modal
@@ -1489,6 +1507,8 @@ export const fidTranslations = {
     myCards: 'Kartu Farcaster Saya',
     cardsCount: '{count} kartu',
     share: 'Bagikan',
+    download: 'Unduh',
+    selectLanguageForShare: 'Pilih bahasa untuk gambar:',
 
     // Your card section
     yourCard: 'Kartu VibeFID Kamu',
@@ -1514,6 +1534,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Kartu VibeFID Kamu',
     cardStats: 'Statistik Kartu',
     back: '← Kembali',
+    cancel: 'Batal',
     mintToReveal: 'Mint untuk Mengungkap Kartu Lengkap',
 
     // About Traits Modal
@@ -1694,6 +1715,8 @@ export const fidTranslations = {
     myCards: 'Mes Cartes Farcaster',
     cardsCount: '{count} cartes',
     share: 'Partager',
+    download: 'Télécharger',
+    selectLanguageForShare: 'Sélectionnez la langue pour l\'image:',
 
     // Your card section
     yourCard: 'Votre Carte VibeFID',
@@ -1719,6 +1742,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'Votre Carte VibeFID',
     cardStats: 'Stats de la Carte',
     back: '← Retour',
+    cancel: 'Annuler',
     mintToReveal: 'Mintez pour Révéler la Carte Complète',
 
     // About Traits Modal
@@ -1898,6 +1922,8 @@ export const fidTranslations = {
     myCards: '私のFarcasterカード',
     cardsCount: '{count}枚',
     share: '共有',
+    download: 'ダウンロード',
+    selectLanguageForShare: '画像の言語を選択:',
 
     // Your card section
     yourCard: 'あなたのVibeFIDカード',
@@ -1923,6 +1949,7 @@ export const fidTranslations = {
     yourVibeFidCard: 'あなたのVibeFIDカード',
     cardStats: 'カード統計',
     back: '← 戻る',
+    cancel: 'キャンセル',
     viewOnMarketplace: 'マーケットプレイスで見る',
     mintToReveal: 'ミントして完全なカードを公開',
 

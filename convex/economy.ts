@@ -539,7 +539,8 @@ export const awardPvECoins = mutation({
       v.literal("ru"),
       v.literal("zh-CN"),
       v.literal("id"),
-      v.literal("fr")
+      v.literal("fr"),
+      v.literal("ja")
     )),
     skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins
   },
@@ -738,7 +739,10 @@ export const awardPvPCoins = mutation({
       v.literal("es"),
       v.literal("hi"),
       v.literal("ru"),
-      v.literal("zh-CN")
+      v.literal("zh-CN"),
+      v.literal("id"),
+      v.literal("fr"),
+      v.literal("ja")
     )),
   },
   handler: async (ctx, { address, won, opponentAddress, language }) => {
@@ -1367,7 +1371,8 @@ export const recordAttackResult = mutation({
       v.literal("ru"),
       v.literal("zh-CN"),
       v.literal("id"),
-      v.literal("fr")
+      v.literal("fr"),
+      v.literal("ja")
     )),
     skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins (for wins only)
   },
