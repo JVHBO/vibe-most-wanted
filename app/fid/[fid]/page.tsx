@@ -20,6 +20,8 @@ import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
 import { fidTranslations } from '@/lib/fidTranslations';
 import { generateFarcasterCardImage } from '@/lib/generateFarcasterCard';
 import { generateCardVideo } from '@/lib/generateCardVideo';
+import { generateShareImage } from '@/lib/generateShareImage';
+import { convertIpfsToDataUrl } from '@/lib/ipfs-url-converter';
 
 export default function FidCardPage() {
   const params = useParams();
@@ -102,24 +104,66 @@ export default function FidCardPage() {
 
   // Handle share with selected language
   const handleShareWithLanguage = async (selectedLang: typeof lang) => {
-    if (!card) return;
+    if (!card || !backstory) return;
 
-    // Close modal immediately - no generation needed, API does it dynamically!
-    setShowShareModal(false);
+    try {
+      setShowShareModal(false);
+      setRegenerationStatus('Generating share image...');
 
-    // Use share page with lang param - API generates image on-the-fly with Edge caching
-    const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}?lang=${selectedLang}&v=${Date.now()}`;
+      // Convert card image IPFS URL to data URL
+      const cardImageUrl = card.cardImageUrl || card.imageUrl;
+      const cardImageDataUrl = await convertIpfsToDataUrl(cardImageUrl);
 
-    const rarityEmojiMap: Record<string, string> = {
-      'Mythic': '👑', 'Legendary': '⚡', 'Epic': '💎', 'Rare': '🔥', 'Common': '⭐'
-    };
-    const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
-    const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
-    const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
-    const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${correctPower} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn coins\n\n🎮 Mint yours! @jvhbo`;
+      // Generate share image with selected language
+      const shareImageDataUrl = await generateShareImage({
+        cardImageDataUrl,
+        backstoryData: backstory,
+        displayName: card.displayName || card.username,
+        lang: selectedLang,
+      });
 
-    // Embed share page with lang param (miniapp button + dynamic image generation)
-    window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`, '_blank');
+      // Upload to Filebase
+      const uploadResponse = await fetch('/api/upload-nft-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageData: shareImageDataUrl,
+          filename: `vibefid-share-${card.fid}-${selectedLang}.png`,
+        }),
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload share image');
+      }
+
+      const { imageUrl: shareImageUrl } = await uploadResponse.json();
+
+      // Update card with share image URL
+      await updateCardImages({
+        fid: card.fid,
+        shareImageUrl,
+      });
+
+      // Build cast text
+      const rarityEmojiMap: Record<string, string> = {
+        'Mythic': '👑', 'Legendary': '⚡', 'Epic': '💎', 'Rare': '🔥', 'Common': '⭐'
+      };
+      const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
+      const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
+      const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
+      const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${correctPower} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn coins\n\n🎮 Mint yours! @jvhbo`;
+
+      // Share page URL for miniapp button
+      const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}?lang=${selectedLang}&v=${Date.now()}`;
+
+      // Open Warpcast compose with share page (has miniapp button + OG image from Filebase)
+      window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`, '_blank');
+      setRegenerationStatus('');
+    } catch (error) {
+      console.error('Share failed:', error);
+      setRegenerationStatus('');
+      alert('Failed to generate share image. Please try again.');
+    }
   };
 
   // Refresh OpenSea metadata
