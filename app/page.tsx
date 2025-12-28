@@ -1259,7 +1259,7 @@ export default function TCGPage() {
   };
 
   // Handler for game mode selection from GameGrid
-  type GameMode = 'poker-cpu' | 'poker-pvp' | 'battle-ai' | 'battle-pvp' | 'mecha' | 'raid';
+  type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid';
   const handleGameModeSelect = (mode: GameMode) => {
     if (!userProfile) {
       setShowCreateProfile(true);
@@ -1273,17 +1273,9 @@ export default function TCGPage() {
         setTempSelectedDifficulty(pokerCpuDifficulty);
         setIsDifficultyModalOpen(true);
         break;
-      case 'poker-pvp':
-        setPokerMode('pvp');
-        setShowPokerBattle(true);
-        break;
       case 'battle-ai':
         setShowPveCardSelection(true);
         setPveSelectedCards([]);
-        break;
-      case 'battle-pvp':
-        setGameMode('pvp');
-        setPvpMode('pvpMenu');
         break;
       case 'mecha':
         setShowCpuArena(true);
@@ -3882,11 +3874,11 @@ export default function TCGPage() {
       {/* My Cards Modal (for miniapp) */}
       {showMyCardsModal && (
         <div
-          className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-2"
+          className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-2 pt-14 pb-20"
           onClick={() => setShowMyCardsModal(false)}
         >
           <div
-            className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold/50 w-full max-h-[90vh] flex flex-col shadow-2xl"
+            className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold/50 w-full max-h-full flex flex-col shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
