@@ -90,7 +90,7 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
               <button
                 key={`${price.id}-${idx}`}
                 onClick={() => handleClick(price.id, price.displayName)}
-                className="inline-flex items-center gap-1 px-3 text-[10px] hover:bg-vintage-gold/20 transition-colors h-6"
+                className="inline-flex items-center gap-0.5 px-1.5 text-[10px] hover:bg-vintage-gold/20 transition-colors h-6"
               >
                 <span className="text-vintage-burnt-gold/80">{price.emoji}</span>
                 <span className="text-vintage-burnt-gold font-medium">{price.displayName}</span>
@@ -145,7 +145,7 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
           }
         }
         .animate-ticker {
-          animation: ticker 30s linear infinite;
+          animation: ticker 10s linear infinite;
         }
         .animate-ticker:hover {
           animation-play-state: paused;

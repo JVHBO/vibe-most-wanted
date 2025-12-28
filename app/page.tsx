@@ -1632,7 +1632,7 @@ export default function TCGPage() {
               status: findAttr(nft, 'status'),
               wear: findAttr(nft, 'wear'),
               foil: findAttr(nft, 'foil'),
-              power: calcPower(nft),
+              power: calcPower(nft, isVibeFID),
               badgeType: 'NFT', // Explicitly mark as NFT (not FREE_CARD)
               isFreeCard: false, // Explicitly mark as not a free card
             };
@@ -4860,7 +4860,7 @@ export default function TCGPage() {
 
       {/* Old inline tutorial removed - Now using WelcomeOnboarding component */}
 
-      <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-2 mb-0 p-2' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isInFarcaster ? 'mt-[40px]' : ''}`}>
+      <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-1 mb-0 p-1.5 w-full max-w-[304px] mx-auto' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isInFarcaster ? 'mt-[60px]' : ''}`}>
         {!isInFarcaster && (
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
@@ -4877,7 +4877,7 @@ export default function TCGPage() {
               if (soundEnabled) AudioManager.buttonClick();
               window.location.href = '/dex';
             }}
-            className="tour-dex-btn px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
+            className="tour-dex-btn px-3 md:px-6 py-3 md:py-3 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
           >
             <div className="flex items-center justify-center gap-2">
               <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
@@ -4892,7 +4892,7 @@ export default function TCGPage() {
                 if (soundEnabled) AudioManager.buttonClick();
                 window.location.href = '/fid';
               }}
-              className="tour-vibefid-btn px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-1 text-sm md:text-base cursor-pointer"
+              className="tour-vibefid-btn px-3 md:px-6 py-3 md:py-3 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
             >
               <div className="flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M257.778 155.556H742.222V844.444H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.444H257.778V155.556Z" /><path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.444H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z" /><path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.444H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z" /></svg> {t('vibefidMint')}
@@ -5239,17 +5239,16 @@ export default function TCGPage() {
             </div>
           </div>
 
-          {/* Content wrapper with padding for fixed bars in miniapp */}
-          <div className={isInFarcaster ? 'pt-1 pb-[75px]' : ''}>
+          {/* Content wrapper */}
+          <div className={isInFarcaster ? 'pb-[60px]' : ''}>
 
-          {/* Price Ticker - Miniapp only */}
+          {/* Price Ticker - TOP */}
           {isInFarcaster && (
-            <div className="flex flex-col items-center mb-2 px-2">
-              <PriceTicker />
-              <AllCollectionsButton className="mt-1" />
+            <div className="flex flex-col items-center py-1 w-full max-w-[304px] mx-auto mt-2">
+              <PriceTicker className="w-full" />
+              <AllCollectionsButton className="mt-3" />
             </div>
           )}
-
 
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
@@ -5262,33 +5261,62 @@ export default function TCGPage() {
           {/* Game View */}
           {currentView === 'game' && (
           <>
-          {/* NEW HOME DESIGN v2 - Compact, no scroll, no emojis */}
-          <div className="flex flex-col gap-2 px-2">
-            {/* Game Grid - 6 game mode buttons */}
-            <div className="tour-game-grid">
-              <GameGrid
-                soundEnabled={soundEnabled}
-                disabled={!userProfile}
-                onSelect={handleGameModeSelect}
-              />
+          {/* GAME BUTTONS - EXACT CENTER */}
+          {isInFarcaster ? (
+            <>
+              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs px-2 z-10">
+                <div className="tour-game-grid">
+                  <GameGrid
+                    soundEnabled={soundEnabled}
+                    disabled={!userProfile}
+                    onSelect={handleGameModeSelect}
+                  />
+                </div>
+              </div>
+              {/* CARDS - BELOW CENTER */}
+              <div className="fixed top-[65%] left-1/2 -translate-x-1/2 w-full max-w-xs px-2 z-10">
+                <div className="tour-cards-section">
+                  <CardsPreview
+                    cards={nfts}
+                    soundEnabled={soundEnabled}
+                    loading={status === 'fetching'}
+                    onViewAll={() => {
+                      if (soundEnabled) AudioManager.buttonClick();
+                      setShowMyCardsModal(true);
+                    }}
+                  />
+                </div>
+              </div>
+              {/* WANTED CAST - SAME GAP AS GAMEMODE TO CARDS */}
+              <div className="fixed top-[78%] left-1/2 -translate-x-1/2 w-full max-w-xs px-2 z-10">
+                <WantedCast soundEnabled={soundEnabled} />
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center px-2">
+              <div className="tour-game-grid w-full max-w-xs">
+                <GameGrid
+                  soundEnabled={soundEnabled}
+                  disabled={!userProfile}
+                  onSelect={handleGameModeSelect}
+                />
+              </div>
+              <div className="tour-cards-section w-full max-w-xs mt-4">
+                <CardsPreview
+                  cards={nfts}
+                  soundEnabled={soundEnabled}
+                  loading={status === 'fetching'}
+                  onViewAll={() => {
+                    if (soundEnabled) AudioManager.buttonClick();
+                    setShowMyCardsModal(true);
+                  }}
+                />
+              </div>
+              <div className="mt-2 w-full max-w-xs">
+                <WantedCast soundEnabled={soundEnabled} />
+              </div>
             </div>
-
-            {/* Cards Preview - Mini cards row */}
-            <div className="tour-cards-section">
-              <CardsPreview
-                cards={nfts}
-                soundEnabled={soundEnabled}
-                loading={status === 'fetching'}
-                onViewAll={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                  setShowMyCardsModal(true);
-                }}
-              />
-            </div>
-
-            {/* Wanted Cast - Link to cast quests */}
-            <WantedCast soundEnabled={soundEnabled} />
-          </div>
+          )}
 
           {/* LEGACY LAYOUT - HIDDEN (replaced by new compact layout above) */}
           <div className="hidden">
