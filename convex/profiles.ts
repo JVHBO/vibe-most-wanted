@@ -797,6 +797,30 @@ export const getLinkedAddresses = query({
   },
 });
 
+/**
+ * 🔗 Check if two addresses belong to the same user (primary or linked)
+ * Used to prevent self-attacks on leaderboard when using linked wallets
+ */
+export const isSameUser = query({
+  args: { address1: v.string(), address2: v.string() },
+  handler: async (ctx, { address1, address2 }) => {
+    if (!address1 || !address2) return false;
+
+    const normalized1 = normalizeAddress(address1);
+    const normalized2 = normalizeAddress(address2);
+
+    // Same address = same user
+    if (normalized1 === normalized2) return true;
+
+    // Resolve both to primary addresses
+    const primary1 = await resolvePrimaryAddress(ctx, normalized1);
+    const primary2 = await resolvePrimaryAddress(ctx, normalized2);
+
+    // Same primary = same user
+    return primary1 === primary2;
+  },
+});
+
 // ============================================================================
 // 🔗 WALLET LINK CODE SYSTEM
 // Secure way to link wallets across devices using temporary codes
