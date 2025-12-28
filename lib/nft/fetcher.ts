@@ -489,7 +489,7 @@ export async function fetchAndProcessNFTs(
       const rarity = findAttr(nft, 'rarity');
       const wear = findAttr(nft, 'wear');
       const foil = findAttr(nft, 'foil');
-      const power = calcPower(nft);
+      const power = calcPower(nft, isVibeFID);
 
       // Skip unopened cards
       if (isUnrevealed(nft)) {
