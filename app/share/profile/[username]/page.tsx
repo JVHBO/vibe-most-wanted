@@ -9,13 +9,13 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const imageUrl = `${baseUrl}/share/profile/${encodeURIComponent(username)}/opengraph-image?v=3`;
 
   return {
-    title: `${username}'s Profile - VIBE Most Wanted`,
-    description: `Check out ${username}'s profile on VIBE Most Wanted!`,
+    title: `${username}'s Profile - $VBMS`,
+    description: `Check out ${username}'s profile on $VBMS!`,
     openGraph: {
       title: `${username}'s Profile`,
-      description: `Check out ${username}'s profile on VIBE Most Wanted!`,
+      description: `Check out ${username}'s profile on $VBMS!`,
       type: 'website',
-      siteName: 'VIBE Most Wanted',
+      siteName: '$VBMS',
       images: [
         {
           url: imageUrl,
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
     twitter: {
       card: 'summary_large_image',
       title: `${username}'s Profile`,
-      description: `Check out ${username}'s profile on VIBE Most Wanted!`,
+      description: `Check out ${username}'s profile on $VBMS!`,
       images: [imageUrl],
     },
     other: {
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
           title: 'View Profile',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: baseUrl,
           },
         },
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
           title: 'View Profile',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: baseUrl,
           },
         },
@@ -73,7 +73,7 @@ export default async function ProfileSharePage({ params }: { params: Promise<{ u
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
       <div className="text-center">
         <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
-          VIBE MOST WANTED
+          $VBMS
         </h1>
         <p className="text-vintage-burnt-gold mb-4">Redirecting to {sanitizedUsername}&apos;s profile...</p>
         <div className="animate-pulse text-6xl">🎮</div>

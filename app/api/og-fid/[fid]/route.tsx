@@ -144,7 +144,7 @@ export async function GET(
 
           {/* Branding */}
           <div style={{ color: '#FFD700', fontSize: 18, fontWeight: 700, marginTop: 32 }}>
-            VIBE MOST WANTED
+            $VBMS
           </div>
         </div>
       ),

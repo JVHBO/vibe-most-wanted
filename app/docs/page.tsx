@@ -296,7 +296,7 @@ export default function DocsPage() {
                 <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mt-4 sm:mt-6">{t("mechaCollections")}</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🌅 GM VBRS</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎭 Vibe Most Wanted</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎭 $VBMS</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">💋 Coquettish</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🍥 Viberuto</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐱 Meowverse</span>

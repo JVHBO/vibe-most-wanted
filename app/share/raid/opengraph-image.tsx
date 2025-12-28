@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'Raid Boss Battle - VIBE Most Wanted';
+export const alt = 'Raid Boss Battle - $VBMS';
 export const size = {
   width: 1200,
   height: 800,
@@ -287,7 +287,7 @@ export default async function Image() {
                 marginTop: '20px',
               }}
             >
-              VIBE MOST WANTED
+              $VBMS
             </div>
           </div>
         </div>

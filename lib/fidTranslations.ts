@@ -158,7 +158,7 @@ export const fidTranslations = {
 
     // VibeFID Benefits
     vibeFidBenefits: 'Benefícios VibeFID',
-    vibeFidBenefitsIntro: 'Cartas VibeFID têm vantagens especiais no Vibe Most Wanted:',
+    vibeFidBenefitsIntro: 'Cartas VibeFID têm vantagens especiais no $VBMS:',
     powerBoost: 'Boost de Poder',
     powerBoostDesc: 'Cartas VibeFID recebem multiplicadores de poder bônus em batalhas',
     infiniteEnergy: 'Energia Infinita',
@@ -410,7 +410,7 @@ export const fidTranslations = {
 
     // VibeFID Benefits
     vibeFidBenefits: 'VibeFID Benefits',
-    vibeFidBenefitsIntro: 'VibeFID cards have special advantages in Vibe Most Wanted:',
+    vibeFidBenefitsIntro: 'VibeFID cards have special advantages in $VBMS:',
     powerBoost: 'Power Boost',
     powerBoostDesc: 'VibeFID cards receive bonus power multipliers in battles',
     infiniteEnergy: 'Infinite Energy',
@@ -662,7 +662,7 @@ export const fidTranslations = {
 
     // VibeFID Benefits
     vibeFidBenefits: 'Beneficios VibeFID',
-    vibeFidBenefitsIntro: 'Las cartas VibeFID tienen ventajas especiales en Vibe Most Wanted:',
+    vibeFidBenefitsIntro: 'Las cartas VibeFID tienen ventajas especiales en $VBMS:',
     powerBoost: 'Boost de Poder',
     powerBoostDesc: 'Las cartas VibeFID reciben multiplicadores de poder de bonificación en batallas',
     infiniteEnergy: 'Energía Infinita',
@@ -914,7 +914,7 @@ export const fidTranslations = {
 
     // VibeFID Benefits
     vibeFidBenefits: 'VibeFID लाभ',
-    vibeFidBenefitsIntro: 'VibeFID कार्ड में Vibe Most Wanted में विशेष फायदे हैं:',
+    vibeFidBenefitsIntro: 'VibeFID कार्ड में $VBMS में विशेष फायदे हैं:',
     powerBoost: 'पावर बूस्ट',
     powerBoostDesc: 'VibeFID कार्ड को युद्धों में बोनस पावर गुणक मिलते हैं',
     infiniteEnergy: 'अनंत ऊर्जा',
@@ -1166,7 +1166,7 @@ export const fidTranslations = {
 
     // VibeFID Benefits
     vibeFidBenefits: 'Преимущества VibeFID',
-    vibeFidBenefitsIntro: 'Карты VibeFID имеют особые преимущества в Vibe Most Wanted:',
+    vibeFidBenefitsIntro: 'Карты VibeFID имеют особые преимущества в $VBMS:',
     powerBoost: 'Усиление Силы',
     powerBoostDesc: 'Карты VibeFID получают бонусные множители силы в битвах',
     infiniteEnergy: 'Бесконечная Энергия',
@@ -1418,7 +1418,7 @@ export const fidTranslations = {
 
     // VibeFID Benefits
     vibeFidBenefits: 'VibeFID 优势',
-    vibeFidBenefitsIntro: 'VibeFID 卡片在 Vibe Most Wanted 中具有特殊优势：',
+    vibeFidBenefitsIntro: 'VibeFID 卡片在 $VBMS 中具有特殊优势：',
     powerBoost: '力量提升',
     powerBoostDesc: 'VibeFID 卡片在战斗中获得额外力量乘数',
     infiniteEnergy: '无限能量',
@@ -1668,7 +1668,7 @@ export const fidTranslations = {
     aboutTraitsModalIntro: 'Kartu VibeFID memiliki sifat unik yang ditentukan oleh FID dan Skor Neynar kamu.',
     howItWorks: 'Cara Kerja',
     vibeFidBenefits: 'Keuntungan VibeFID',
-    vibeFidBenefitsIntro: 'Kartu VibeFID memiliki keuntungan khusus di Vibe Most Wanted:',
+    vibeFidBenefitsIntro: 'Kartu VibeFID memiliki keuntungan khusus di $VBMS:',
     powerBoost: 'Boost Kekuatan',
     powerBoostDesc: 'Kartu VibeFID mendapat bonus pengali kekuatan dalam pertempuran',
     infiniteEnergy: 'Energi Tak Terbatas',
@@ -1889,7 +1889,7 @@ export const fidTranslations = {
     aboutTraitsModalIntro: 'Les cartes VibeFID ont des traits uniques déterminés par votre FID et Score Neynar.',
     howItWorks: 'Comment Ça Marche',
     vibeFidBenefits: 'Avantages VibeFID',
-    vibeFidBenefitsIntro: 'Les cartes VibeFID ont des avantages spéciaux dans Vibe Most Wanted:',
+    vibeFidBenefitsIntro: 'Les cartes VibeFID ont des avantages spéciaux dans $VBMS:',
     powerBoost: 'Boost de Puissance',
     powerBoostDesc: 'Les cartes VibeFID reçoivent des multiplicateurs de puissance bonus en combat',
     infiniteEnergy: 'Énergie Infinie',
@@ -2110,7 +2110,7 @@ export const fidTranslations = {
     aboutTraitsModalIntro: 'VibeFIDカードはFIDとNeynarスコアによって決定されるユニークなトレイトを持っています。',
     howItWorks: '仕組み',
     vibeFidBenefits: 'VibeFIDの特典',
-    vibeFidBenefitsIntro: 'VibeFIDカードにはVibe Most Wantedで特別な特典があります:',
+    vibeFidBenefitsIntro: 'VibeFIDカードには$VBMSで特別な特典があります:',
     powerBoost: 'パワーブースト',
     powerBoostDesc: 'VibeFIDカードは戦闘でボーナスパワー倍率を獲得',
     infiniteEnergy: '無限エナジー',

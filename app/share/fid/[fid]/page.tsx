@@ -18,13 +18,13 @@ export async function generateMetadata({
   const imageUrl = `${baseUrl}/share/fid/${fid}/opengraph-image${cacheBust}`;
 
   return {
-    title: `VibeFID Card #${fid} - VIBE Most Wanted`,
-    description: `Check out this VibeFID card on VIBE Most Wanted!`,
+    title: `VibeFID Card #${fid} - $VBMS`,
+    description: `Check out this VibeFID card on $VBMS!`,
     openGraph: {
       title: `VibeFID Card #${fid}`,
-      description: `Check out this VibeFID card on VIBE Most Wanted!`,
+      description: `Check out this VibeFID card on $VBMS!`,
       type: 'website',
-      siteName: 'VIBE Most Wanted',
+      siteName: '$VBMS',
       images: [
         {
           url: imageUrl,
@@ -37,7 +37,7 @@ export async function generateMetadata({
     twitter: {
       card: 'summary_large_image',
       title: `VibeFID Card #${fid}`,
-      description: `Check out this VibeFID card on VIBE Most Wanted!`,
+      description: `Check out this VibeFID card on $VBMS!`,
       images: [imageUrl],
     },
     other: {
@@ -49,7 +49,7 @@ export async function generateMetadata({
           title: 'Mint Your Card',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: `${baseUrl}/fid/${fid}`,
           },
         },
@@ -61,7 +61,7 @@ export async function generateMetadata({
           title: 'Mint Your Card',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: `${baseUrl}/fid/${fid}`,
           },
         },

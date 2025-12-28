@@ -117,7 +117,7 @@ export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
 /**
  * Calculate card rarity based on Neynar User Score
  *
- * Using Vibe Most Wanted collection trait names (5 rarities):
+ * Using $VBMS collection trait names (5 rarities):
  * - Common: ≤ 0.69
  * - Rare: 0.70 - 0.78
  * - Epic: 0.79 - 0.89

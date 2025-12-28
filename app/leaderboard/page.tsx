@@ -99,6 +99,7 @@ export default function LeaderboardPage() {
     getAvatarUrl,
     showVictory,
     payEntryFee,
+    forceReloadNFTs,
     isLoading: isLoadingCards,
   } = usePlayerCards();
 
@@ -830,6 +831,7 @@ export default function LeaderboardPage() {
         recordAttackResult={recordAttackResult}
         showVictory={showVictory}
         getAvatarUrl={getAvatarUrl}
+        forceReloadNFTs={forceReloadNFTs}
         convex={convex}
         api={api}
         maxAttacks={maxAttacks}

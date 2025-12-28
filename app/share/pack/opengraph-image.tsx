@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'Pack Opening - VIBE Most Wanted';
+export const alt = 'Pack Opening - $VBMS';
 export const size = {
   width: 1200,
   height: 630,
@@ -83,7 +83,7 @@ export default async function Image() {
             }}
           >
             <span style={{ fontSize: '28px', fontWeight: 700, color: 'rgba(255, 215, 0, 0.8)', display: 'flex' }}>
-              VIBE MOST WANTED
+              $VBMS
             </span>
           </div>
         </div>
