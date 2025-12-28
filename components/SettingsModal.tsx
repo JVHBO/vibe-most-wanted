@@ -157,12 +157,13 @@ export function SettingsModal({
       const newAddr = walletAddress.toLowerCase();
       const oldAddr = linkingFromAddress.toLowerCase();
 
-      if (newAddr !== oldAddr) {
+      if (newAddr !== oldAddr && farcasterContext.user?.fid) {
         // Auto-link the new wallet
         devLog('🔗 Auto-linking wallet:', newAddr, 'to profile:', oldAddr);
         linkWalletMutation({
-          address: oldAddr,
-          newWalletAddress: newAddr,
+          primaryAddress: oldAddr,
+          newAddress: newAddr,
+          fid: farcasterContext.user.fid,
         })
           .then(() => {
             setLinkSuccess(true);
@@ -179,7 +180,7 @@ export function SettingsModal({
           });
       }
     }
-  }, [walletAddress, isConnected, linkingFromAddress, linkWalletMutation, soundEnabled]);
+  }, [walletAddress, isConnected, linkingFromAddress, linkWalletMutation, soundEnabled, farcasterContext.user?.fid]);
 
   // Start linking process
   const handleStartLinking = () => {
