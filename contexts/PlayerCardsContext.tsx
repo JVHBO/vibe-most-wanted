@@ -226,14 +226,16 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       setErrorMsg(null);
 
       // 🔗 MULTI-WALLET: Get all linked addresses
-      let allAddresses = [address];
+      let allAddresses = [address.toLowerCase()];
       try {
         const linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
         if (linkedData?.primary) {
-          // Build array of all addresses: primary + linked
-          allAddresses = [linkedData.primary, ...(linkedData.linked || [])];
-          // Remove duplicates and ensure current address is included
-          allAddresses = [...new Set([...allAddresses, address])];
+          // Build array of all addresses: primary + linked (all lowercase for proper deduplication)
+          const primaryLower = linkedData.primary.toLowerCase();
+          const linkedLower = (linkedData.linked || []).map((a: string) => a.toLowerCase());
+          allAddresses = [primaryLower, ...linkedLower];
+          // Remove duplicates and ensure current address is included (case-insensitive)
+          allAddresses = [...new Set([...allAddresses, address.toLowerCase()])];
         }
         console.log(`🔗 [Context] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
       } catch (error) {

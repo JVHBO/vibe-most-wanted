@@ -119,7 +119,8 @@ export function SettingsModal({
 
   // 🔗 LINK CODE: FID users enter codes to link wallets (INVERTED FLOW)
   const farcasterContext = useFarcasterContext();
-  const hasFarcaster = !!farcasterContext.user?.fid;
+  // Check both: Farcaster SDK context (in miniapp) OR userProfile.farcasterFid (on website)
+  const hasFarcaster = !!farcasterContext.user?.fid || !!userProfile?.farcasterFid;
   const [linkCodeInput, setLinkCodeInput] = useState('');
   const [isLinkingByCode, setIsLinkingByCode] = useState(false);
   const [linkCodeError, setLinkCodeError] = useState<string | null>(null);
@@ -129,6 +130,7 @@ export function SettingsModal({
 
   // 🔀 MERGE ACCOUNT: Old accounts (no FID) can merge into FID accounts
   const [showMergeCode, setShowMergeCode] = useState(false);
+  const [showMergeWarning, setShowMergeWarning] = useState(false); // Warning modal before generating code
   const [generatedMergeCode, setGeneratedMergeCode] = useState<string | null>(null);
   const [mergeCodeExpiresAt, setMergeCodeExpiresAt] = useState<number | null>(null);
   const [isGeneratingMerge, setIsGeneratingMerge] = useState(false);
@@ -483,7 +485,7 @@ export function SettingsModal({
               <div className="flex items-center gap-3">
                 <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
                 <div>
-                  <p className="font-modern font-bold text-vintage-gold">MUSIC</p>
+                  <p className="font-modern font-bold text-vintage-gold">{t('settingsMusic')}</p>
                   <p className="text-xs text-vintage-burnt-gold">
                     {musicEnabled ? t('musicOn') : t('musicOff')}
                   </p>
@@ -509,7 +511,7 @@ export function SettingsModal({
             {musicEnabled && (
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-vintage-burnt-gold font-modern">VOLUME</span>
+                  <span className="text-sm text-vintage-burnt-gold font-modern">{t('settingsVolume')}</span>
                   <span className="text-sm text-vintage-gold font-bold">
                     {Math.round(musicVolume * 100)}%
                   </span>
@@ -530,10 +532,7 @@ export function SettingsModal({
               <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
                 <p className="text-sm text-yellow-300 font-modern flex items-center gap-2">
                   <span className="text-lg">⚠️</span>
-                  <span>
-                    Custom music may not work in this mode due to browser restrictions.
-                    Use the mobile app or access the site directly for full audio support.
-                  </span>
+                  <span>{t('musicDesktopWarning')}</span>
                 </p>
               </div>
             )}
@@ -585,7 +584,7 @@ export function SettingsModal({
               <div className="mt-3 p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
                 <p className="text-sm text-red-300 font-modern font-semibold flex items-center gap-2">
                   <span className="text-lg">🇨🇳</span>
-                  <span>+5% Social Credit Boost on all coin rewards!</span>
+                  <span>{t('chineseBoostMessage')}</span>
                 </p>
               </div>
             )}
@@ -595,7 +594,7 @@ export function SettingsModal({
           <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
             <div className="flex items-center gap-3 mb-3">
               <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
-              <p className="font-modern font-bold text-vintage-gold">BACKGROUND MUSIC</p>
+              <p className="font-modern font-bold text-vintage-gold">{t('settingsBackgroundMusic')}</p>
             </div>
             <select
               onChange={(e) => {
@@ -607,26 +606,26 @@ export function SettingsModal({
               className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
             >
               <option value="default" className="bg-vintage-charcoal text-vintage-ice">
-                Default Music
+                {t('musicModeDefault')}
               </option>
               <option value="language" className="bg-vintage-charcoal text-vintage-ice">
-                Language Music
+                {t('musicModeLanguage')}
               </option>
               <option value="custom" className="bg-vintage-charcoal text-vintage-ice">
-                Custom URL (Single)
+                {t('musicModeCustom')}
               </option>
               <option value="playlist" className="bg-vintage-charcoal text-vintage-ice">
-                🎵 Playlist (Multiple URLs)
+                {t('musicModePlaylist')}
               </option>
             </select>
             <p className="text-xs text-vintage-burnt-gold mt-2 font-modern">
               {musicMode === 'default'
-                ? 'Playing default background music'
+                ? t('musicDescDefault')
                 : musicMode === 'language'
-                ? 'Playing music based on selected language'
+                ? t('musicDescLanguage')
                 : musicMode === 'playlist'
-                ? `Playlist: ${currentTrackName || `Track ${currentPlaylistIndex + 1}`} (${currentPlaylistIndex + 1}/${playlist.length})`
-                : 'Playing your custom music'}
+                ? `${t('playlistNowPlaying')}: ${currentTrackName || `Track ${currentPlaylistIndex + 1}`} (${currentPlaylistIndex + 1}/${playlist.length})`
+                : t('musicDescCustom')}
             </p>
 
             {/* Custom URL Input - shown when custom mode selected */}
@@ -634,10 +633,10 @@ export function SettingsModal({
               <div className="mt-4 space-y-3">
                 <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3">
                   <p className="text-vintage-gold text-xs font-modern font-semibold mb-1">
-                    SUPPORTED FORMATS
+                    {t('musicSupportedFormats')}
                   </p>
                   <p className="text-vintage-burnt-gold text-xs">
-                    YouTube URL (audio only) or direct audio URL (.mp3, .wav, .ogg)
+                    {t('musicFormatsDesc')}
                   </p>
                 </div>
 
@@ -646,7 +645,7 @@ export function SettingsModal({
                     type="url"
                     value={customUrlInput}
                     onChange={(e) => setCustomUrlInput(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=... or audio URL"
+                    placeholder={t('musicUrlPlaceholder')}
                     className="flex-1 bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 focus:border-vintage-gold focus:outline-none font-modern text-sm placeholder:text-vintage-burnt-gold/50"
                   />
                   <button
@@ -654,7 +653,7 @@ export function SettingsModal({
                     disabled={isCustomMusicLoading}
                     className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark disabled:bg-vintage-gold/50 text-vintage-black rounded-lg font-modern font-semibold transition"
                   >
-                    {isCustomMusicLoading ? '...' : 'Set'}
+                    {isCustomMusicLoading ? '...' : t('musicSetButton')}
                   </button>
                 </div>
 
@@ -662,7 +661,7 @@ export function SettingsModal({
                 {isCustomMusicLoading && (
                   <div className="flex items-center gap-2 text-vintage-burnt-gold text-sm">
                     <div className="animate-spin w-4 h-4 border-2 border-vintage-gold border-t-transparent rounded-full" />
-                    <span>Loading music...</span>
+                    <span>{t('musicLoading')}</span>
                   </div>
                 )}
 
@@ -681,7 +680,7 @@ export function SettingsModal({
                     <p className="text-sm text-green-300 font-modern flex items-center gap-2">
                       <span className="text-lg">{isYouTubeUrl(customMusicUrl) ? '▶' : '♫'}</span>
                       <span className="truncate">
-                        {isYouTubeUrl(customMusicUrl) ? 'YouTube audio playing' : 'Audio playing'}
+                        {isYouTubeUrl(customMusicUrl) ? t('musicYouTubePlaying') : t('musicAudioPlaying')}
                       </span>
                     </p>
                   </div>
@@ -701,7 +700,7 @@ export function SettingsModal({
                     }}
                     className="w-full px-4 py-2 bg-vintage-black hover:bg-red-900/30 text-vintage-gold border border-vintage-gold/30 hover:border-red-500/50 rounded-lg font-modern text-sm transition"
                   >
-                    Clear Custom Music
+                    {t('musicClearCustom')}
                   </button>
                 )}
               </div>
@@ -712,10 +711,10 @@ export function SettingsModal({
               <div className="mt-4 space-y-3">
                 <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3">
                   <p className="text-purple-400 text-xs font-modern font-semibold mb-1">
-                    🎵 PLAYLIST MODE
+                    {t('playlistMode')}
                   </p>
                   <p className="text-vintage-burnt-gold text-xs">
-                    Add multiple URLs. 1 track = loops. Multiple tracks = plays in sequence. Saved to your account.
+                    {t('playlistModeDesc')}
                   </p>
                 </div>
 
@@ -725,7 +724,7 @@ export function SettingsModal({
                     type="url"
                     value={playlistUrlInput}
                     onChange={(e) => setPlaylistUrlInput(e.target.value)}
-                    placeholder="Paste audio URL or YouTube link"
+                    placeholder={t('playlistUrlPlaceholder')}
                     className="flex-1 bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 focus:border-purple-500 focus:outline-none font-modern text-sm placeholder:text-vintage-burnt-gold/50"
                   />
                   <button
@@ -755,7 +754,7 @@ export function SettingsModal({
                     }}
                     className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-modern font-semibold transition"
                   >
-                    Add
+                    {t('playlistAddButton')}
                   </button>
                 </div>
 
@@ -767,7 +766,7 @@ export function SettingsModal({
                       {currentTrackThumbnail ? (
                         <img
                           src={currentTrackThumbnail}
-                          alt="Now playing"
+                          alt={t('playlistNowPlaying')}
                           className="w-16 h-12 object-cover rounded-lg shadow-lg"
                         />
                       ) : (
@@ -777,9 +776,9 @@ export function SettingsModal({
                       )}
                       {/* Track Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-purple-300 text-xs uppercase tracking-wide">Now Playing</p>
+                        <p className="text-purple-300 text-xs uppercase tracking-wide">{t('playlistNowPlaying')}</p>
                         <p className="text-vintage-gold font-bold text-sm truncate">{currentTrackName}</p>
-                        <p className="text-vintage-ice/60 text-xs">Track {currentPlaylistIndex + 1} of {playlist.length}</p>
+                        <p className="text-vintage-ice/60 text-xs">{t('playlistTrackOf').replace('{current}', String(currentPlaylistIndex + 1)).replace('{total}', String(playlist.length))}</p>
                       </div>
                       {/* Play/Pause */}
                       <button
@@ -800,7 +799,7 @@ export function SettingsModal({
                 {playlist.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-vintage-gold text-sm font-bold">{playlist.length} track{playlist.length !== 1 ? 's' : ''}</span>
+                      <span className="text-vintage-gold text-sm font-bold">{playlist.length} {t('playlistTracks')}</span>
                       <div className="flex gap-2">
                         {playlist.length > 1 && (
                           <button
@@ -810,7 +809,7 @@ export function SettingsModal({
                             }}
                             className="px-3 py-1 bg-vintage-black hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30 rounded text-sm"
                           >
-                            ◀ Prev
+                            {t('playlistPrev')}
                           </button>
                         )}
                         <button
@@ -824,7 +823,7 @@ export function SettingsModal({
                           }}
                           className="px-3 py-1 bg-vintage-black hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30 rounded text-sm"
                         >
-                          {isPaused ? '▶ Play' : '⏸ Pause'}
+                          {isPaused ? t('playlistPlay') : t('playlistPause')}
                         </button>
                         {playlist.length > 1 && (
                           <button
@@ -834,7 +833,7 @@ export function SettingsModal({
                             }}
                             className="px-3 py-1 bg-vintage-black hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30 rounded text-sm"
                           >
-                            Next ▶
+                            {t('playlistNext')}
                           </button>
                         )}
                       </div>
@@ -855,8 +854,8 @@ export function SettingsModal({
                           </span>
                           <span className="flex-1 text-vintage-ice text-xs truncate">
                             {url.includes('youtube') || url.includes('youtu.be')
-                              ? '🎬 YouTube'
-                              : '🎵 Audio'}: {url.split('/').pop()?.substring(0, 30) || url.substring(0, 30)}
+                              ? t('playlistYouTube')
+                              : t('playlistAudio')}: {url.split('/').pop()?.substring(0, 30) || url.substring(0, 30)}
                           </span>
                           <button
                             onClick={async () => {
@@ -889,7 +888,7 @@ export function SettingsModal({
                 {/* Empty state */}
                 {playlist.length === 0 && (
                   <div className="text-center py-4 text-vintage-burnt-gold/50 text-sm">
-                    No tracks added yet. Add some URLs above!
+                    {t('playlistEmpty')}
                   </div>
                 )}
 
@@ -910,7 +909,7 @@ export function SettingsModal({
                     }}
                     className="w-full px-4 py-2 bg-vintage-black hover:bg-red-900/30 text-vintage-gold border border-vintage-gold/30 hover:border-red-500/50 rounded-lg font-modern text-sm transition"
                   >
-                    Clear Playlist
+                    {t('playlistClear')}
                   </button>
                 )}
               </div>
@@ -925,9 +924,9 @@ export function SettingsModal({
                 <div className="flex items-center gap-3">
                   <span className="text-2xl sm:text-3xl text-vintage-gold">𝕏</span>
                   <div>
-                    <p className="font-modern font-bold text-vintage-gold">X / TWITTER</p>
+                    <p className="font-modern font-bold text-vintage-gold">{t('settingsTwitter')}</p>
                     <p className="text-xs text-vintage-burnt-gold">
-                      {userProfile.twitter ? `@${userProfile.twitter}` : 'Not connected'}
+                      {userProfile.twitter ? `@${userProfile.twitter}` : t('settingsNotConnected')}
                     </p>
                   </div>
                 </div>
@@ -936,7 +935,7 @@ export function SettingsModal({
                   onClick={handleTwitterConnect}
                   className="px-4 py-2 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-lg text-sm font-modern font-semibold transition flex items-center gap-2"
                 >
-                  <span>𝕏</span> {userProfile.twitter ? 'Reconnect' : 'Connect'}
+                  <span>𝕏</span> {userProfile.twitter ? t('settingsReconnect') : t('settingsConnectTwitter')}
                 </button>
               </div>
 
@@ -1058,7 +1057,7 @@ export function SettingsModal({
               {hasFarcaster && (
                 <div className="mt-3 pt-3 border-t border-vintage-gold/20">
                   <p className="text-vintage-burnt-gold text-xs mb-3">
-                    🔀 Mergear conta antiga (sem FID) na sua conta:
+                    {t('mergeOldAccountLabel')}
                   </p>
 
                   {/* Merge Code Input */}
@@ -1079,7 +1078,7 @@ export function SettingsModal({
                       disabled={isMerging || mergeCodeInput.length !== 6}
                       className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isMerging ? '...' : '🔀 Merge'}
+                      {isMerging ? '...' : t('mergeButton')}
                     </button>
                   </div>
 
@@ -1102,26 +1101,26 @@ export function SettingsModal({
             <div className="bg-orange-900/30 border border-orange-500/50 p-3 sm:p-5 rounded-xl">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">🔀</span>
-                <p className="font-modern font-bold text-orange-400">MERGE CONTA</p>
+                <p className="font-modern font-bold text-orange-400">{t('mergeAccountTitle')}</p>
               </div>
               <p className="text-orange-300 text-xs mb-4">
-                Sua conta não tem FID. Gere um código para mergear esta conta em uma conta com Farcaster.
+                {t('mergeAccountNoFidDesc')}
               </p>
 
               {showMergeCode ? (
                 generatedMergeCode ? (
                   <div>
                     <p className="text-center text-orange-300 text-xs mb-3">
-                      Digite este código na conta com FID:
+                      {t('mergeEnterCodePrompt')}
                     </p>
                     <p className="text-4xl font-mono font-bold text-center text-orange-400 tracking-[0.3em] my-4">
                       {generatedMergeCode}
                     </p>
                     <p className="text-vintage-burnt-gold text-xs text-center mb-3">
-                      Expira em: {getMergeCodeTimeRemaining() || '...'}
+                      {t('mergeExpiresIn')} {getMergeCodeTimeRemaining() || '...'}
                     </p>
                     <p className="text-red-400 text-xs text-center mb-3">
-                      ⚠️ ATENÇÃO: Após merge, esta conta será APAGADA!
+                      {t('mergeWarning')}
                     </p>
 
                     <div className="flex gap-2 mt-4">
@@ -1140,14 +1139,62 @@ export function SettingsModal({
                         onClick={handleGenerateMergeCode}
                         className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm"
                       >
-                        🔄 Novo Código
+                        {t('mergeNewCode')}
+                      </button>
+                    </div>
+                  </div>
+                ) : showMergeWarning ? (
+                  // 🔔 MERGE WARNING MODAL - Shows what will be lost/kept
+                  <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
+                    <h3 className="text-lg font-bold text-red-400 mb-3">{t('mergeWarningTitle')}</h3>
+
+                    <div className="mb-3">
+                      <p className="text-red-300 font-semibold text-sm mb-2">{t('mergeWhatYouLose')}</p>
+                      <ul className="text-xs text-red-200 space-y-1 ml-2">
+                        <li>{t('mergeCoinsLose')}</li>
+                        <li>{t('mergeAchievementsLose')}</li>
+                        <li>{t('mergeMissionsLose')}</li>
+                        <li>{t('mergeReferralsLose')}</li>
+                      </ul>
+                    </div>
+
+                    <div className="mb-3">
+                      <p className="text-green-300 font-semibold text-sm mb-2">{t('mergeWhatYouKeep')}</p>
+                      <ul className="text-xs text-green-200 space-y-1 ml-2">
+                        <li>{t('mergeCardsKeep')}</li>
+                        <li>{t('mergeVbmsNote')}</li>
+                        <li>{t('mergeWalletLink')}</li>
+                      </ul>
+                    </div>
+
+                    <p className="text-yellow-400 text-xs mb-4">{t('mergeAccountDeletedAfter')}</p>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setShowMergeWarning(false);
+                          handleGenerateMergeCode();
+                        }}
+                        disabled={isGeneratingMerge}
+                        className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50"
+                      >
+                        {isGeneratingMerge ? '...' : t('mergeConfirmGenerate')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowMergeWarning(false);
+                          setShowMergeCode(false);
+                        }}
+                        className="px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-sm"
+                      >
+                        {t('cancel')}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div>
                     <button
-                      onClick={handleGenerateMergeCode}
+                      onClick={() => setShowMergeWarning(true)}
                       disabled={isGeneratingMerge}
                       className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                     >
@@ -1156,7 +1203,7 @@ export function SettingsModal({
                       ) : (
                         '🔀'
                       )}
-                      Gerar Código de Merge
+                      {t('mergeGenerateCode')}
                     </button>
                     {mergeError && (
                       <p className="text-red-400 text-xs text-center mt-2">{mergeError}</p>
@@ -1180,7 +1227,7 @@ export function SettingsModal({
                   }}
                   className="w-full px-4 py-3 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-500/50 text-orange-400 rounded-lg font-semibold text-sm transition-all"
                 >
-                  🔀 Quero mergear minha conta
+                  {t('mergeWantToMerge')}
                 </button>
               )}
             </div>
