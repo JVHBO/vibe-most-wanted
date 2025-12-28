@@ -9,12 +9,13 @@ export async function generateMetadata({
   searchParams: Promise<{ lang?: string; v?: string }>;
 }): Promise<Metadata> {
   const { fid } = await params;
-  const { lang = 'en' } = await searchParams;
+  const { lang = 'en', v } = await searchParams;
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
-  // Use dynamic API for share image with language support
-  // The API generates the image on-the-fly with Edge caching
-  const imageUrl = `${baseUrl}/api/share-image/${fid}?lang=${lang}`;
+  // Use opengraph-image route which fetches shareImageUrl from IPFS
+  // Cache bust with v parameter from URL
+  const cacheBust = v ? `?v=${v}` : '';
+  const imageUrl = `${baseUrl}/share/fid/${fid}/opengraph-image${cacheBust}`;
 
   return {
     title: `VibeFID Card #${fid} - VIBE Most Wanted`,
@@ -27,8 +28,8 @@ export async function generateMetadata({
       images: [
         {
           url: imageUrl,
-          width: 500,
-          height: 700,
+          width: 1200,
+          height: 800,
           alt: `VibeFID Card #${fid}`,
         },
       ],

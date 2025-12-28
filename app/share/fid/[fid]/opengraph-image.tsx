@@ -3,8 +3,8 @@ import { ImageResponse } from 'next/og';
 export const runtime = 'edge';
 export const alt = 'VibeFID Card - VIBE Most Wanted';
 export const size = {
-  width: 500,
-  height: 700,
+  width: 1200,
+  height: 800,
 };
 export const contentType = 'image/png';
 
@@ -36,7 +36,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
         const data = await response.json();
         if (data.value) {
           cardData = data.value;
-          console.log(`[OG Image] Card found! cardImageUrl: ${cardData.cardImageUrl ? 'YES' : 'NO'}`);
+          console.log(`[OG Image] Card found! shareImageUrl: ${cardData.shareImageUrl ? 'YES' : 'NO'}, cardImageUrl: ${cardData.cardImageUrl ? 'YES' : 'NO'}`);
         } else {
           console.log(`[OG Image] Card not found in database`);
         }
@@ -47,13 +47,14 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
       console.error('[OG Image] Failed to fetch card data:', e);
     }
 
-    // If card has saved PNG, return it
-    if (cardData?.cardImageUrl) {
+    // If card has saved share image, return it (priority: shareImageUrl > cardImageUrl)
+    const savedImageUrl = cardData?.shareImageUrl || cardData?.cardImageUrl;
+    if (savedImageUrl) {
       try {
         // Convert IPFS URL if needed - try multiple gateways for reliability
-        let imageUrl = cardData.cardImageUrl;
+        let imageUrl = savedImageUrl;
 
-        console.log(`[OG Image] Original cardImageUrl: ${imageUrl}`);
+        console.log(`[OG Image] Original imageUrl: ${imageUrl}`);
 
         // Extract CID from any IPFS URL format
         let cid = '';
@@ -111,7 +112,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
         // Continue to fallback below
       }
     } else {
-      console.log('[OG Image] No cardImageUrl, using placeholder');
+      console.log('[OG Image] No shareImageUrl or cardImageUrl, using placeholder');
     }
 
     // Fallback: Generate card from Convex data (no IPFS needed)
