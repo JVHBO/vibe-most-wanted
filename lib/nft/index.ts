@@ -105,7 +105,8 @@ export async function processNFTsToCards(rawNfts: any[]): Promise<Card[]> {
       const rarity = findAttr(nft, 'Rarity') || findAttr(nft, 'rarity') || 'Common';
       const status = findAttr(nft, 'Status') || findAttr(nft, 'status') || '';
       const foil = findAttr(nft, 'Foil') || findAttr(nft, 'foil') || 'None';
-      const power = calcPower(nft);
+      const isVibeFID = nft.collection === 'vibefid';
+      const power = calcPower(nft, isVibeFID);
 
       const rawImageUrl = await getImage(nft, nft.collection);
       const imageUrl = rawImageUrl ? (convertIpfsUrl(rawImageUrl) || rawImageUrl) : '/placeholder.png';

@@ -43,8 +43,8 @@ export function BottomNavigation({
   const inactiveClass = 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30';
 
   return (
-    <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom' : 'mb-3 md:mb-4'}>
-      <div className={`bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 p-1.5 flex gap-1`}>
+    <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom px-2' : 'mb-3 md:mb-4'}>
+      <div className={`bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2 max-w-[304px] mx-auto' : 'rounded-xl border-2'} border-vintage-gold/30 p-1.5 flex gap-1`}>
 
         {/* Home */}
         <button
