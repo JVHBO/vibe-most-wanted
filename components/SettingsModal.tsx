@@ -121,12 +121,22 @@ export function SettingsModal({
   const farcasterContext = useFarcasterContext();
   // Check both: Farcaster SDK context (in miniapp) OR userProfile.farcasterFid (on website)
   const hasFarcaster = !!farcasterContext.user?.fid || !!userProfile?.farcasterFid;
+  const [unifiedCodeInput, setUnifiedCodeInput] = useState('');
+  const [isProcessingCode, setIsProcessingCode] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [codeSuccess, setCodeSuccess] = useState<string | null>(null);
+  const useUnifiedCodeMutation = useMutation(api.profiles.useUnifiedCode);
+  const unlinkWalletMutation = useMutation(api.profiles.unlinkWallet);
+
+  // Legacy mutations (kept for backwards compatibility but unified handles both)
+  const useLinkCodeMutation = useMutation(api.profiles.useLinkCode);
+  const useMergeCodeMutation = useMutation(api.profiles.useMergeCode);
+
+  // Legacy state (for backwards compat in some UI parts)
   const [linkCodeInput, setLinkCodeInput] = useState('');
   const [isLinkingByCode, setIsLinkingByCode] = useState(false);
   const [linkCodeError, setLinkCodeError] = useState<string | null>(null);
   const [linkCodeSuccess, setLinkCodeSuccess] = useState<string | null>(null);
-  const useLinkCodeMutation = useMutation(api.profiles.useLinkCode);
-  const unlinkWalletMutation = useMutation(api.profiles.unlinkWallet);
 
   // 🔀 MERGE ACCOUNT: Old accounts (no FID) can merge into FID accounts
   const [showMergeCode, setShowMergeCode] = useState(false);
@@ -139,7 +149,6 @@ export function SettingsModal({
   const [isMerging, setIsMerging] = useState(false);
   const [mergeSuccess, setMergeSuccess] = useState<string | null>(null);
   const generateMergeCodeMutation = useMutation(api.profiles.generateMergeCode);
-  const useMergeCodeMutation = useMutation(api.profiles.useMergeCode);
 
   // 🔗 MULTI-WALLET: Detect wallet change and auto-link
   useEffect(() => {
@@ -195,7 +204,42 @@ export function SettingsModal({
     setLinkError(null);
   };
 
-  // 🔗 Use link code to add a wallet (INVERTED FLOW)
+  // 🔗 UNIFIED: Use any code (link or merge) - auto-detects
+  const handleUseUnifiedCode = async () => {
+    if (!walletAddress || isProcessingCode || unifiedCodeInput.length !== 6) return;
+
+    setIsProcessingCode(true);
+    setCodeError(null);
+    setCodeSuccess(null);
+
+    try {
+      const result = await useUnifiedCodeMutation({
+        code: unifiedCodeInput,
+        fidOwnerAddress: walletAddress,
+      });
+
+      // Show appropriate success message based on operation type
+      if (result.type === 'merge') {
+        setCodeSuccess(`🔀 ${result.message}`);
+      } else if (result.type === 'link') {
+        setCodeSuccess(`🔗 ${result.message}`);
+      } else {
+        setCodeSuccess(result.message);
+      }
+
+      setUnifiedCodeInput('');
+      if (soundEnabled) AudioManager.buttonSuccess();
+      devLog('✅ Code processed:', result.type, result);
+    } catch (error: any) {
+      setCodeError(error.message || 'Erro ao processar código');
+      if (soundEnabled) AudioManager.buttonError();
+      devError('Failed to process code:', error);
+    } finally {
+      setIsProcessingCode(false);
+    }
+  };
+
+  // 🔗 Use link code to add a wallet (INVERTED FLOW) - LEGACY, kept for backwards compat
   const handleUseLinkCode = async () => {
     if (!walletAddress || isLinkingByCode || linkCodeInput.length !== 6) return;
 
@@ -1012,84 +1056,44 @@ export function SettingsModal({
                 ))}
               </div>
 
-              {/* 🔗 Enter Link Code (Only for Farcaster users - INVERTED FLOW) */}
+              {/* 🔗 UNIFIED: Enter Code to Link/Merge (Only for Farcaster users) */}
               {hasFarcaster && (
                 <div className="mt-3 pt-3 border-t border-vintage-gold/20">
                   <p className="text-vintage-burnt-gold text-xs mb-3">
-                    {t('enterLinkCodeHere')}
+                    {t('enterCodeToLinkOrMerge') || 'Enter 6-digit code to link wallet or merge account'}
                   </p>
 
-                  {/* Code Input */}
+                  {/* Unified Code Input */}
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       maxLength={6}
-                      value={linkCodeInput}
+                      value={unifiedCodeInput}
                       onChange={(e) => {
-                        setLinkCodeInput(e.target.value.replace(/\D/g, ''));
-                        setLinkCodeError(null);
+                        setUnifiedCodeInput(e.target.value.replace(/\D/g, ''));
+                        setCodeError(null);
+                        setCodeSuccess(null);
                       }}
                       placeholder="000000"
-                      className="w-full sm:flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-vintage-gold/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-green-500 focus:outline-none"
+                      className="w-full sm:flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-vintage-gold/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-vintage-gold focus:outline-none"
                     />
                     <button
-                      onClick={handleUseLinkCode}
-                      disabled={isLinkingByCode || linkCodeInput.length !== 6}
-                      className="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleUseUnifiedCode}
+                      disabled={isProcessingCode || unifiedCodeInput.length !== 6}
+                      className="w-full sm:w-auto px-4 py-2 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
-                      {isLinkingByCode ? '...' : t('linkButton')}
+                      {isProcessingCode ? '...' : (t('useCodeButton') || 'Use Code')}
                     </button>
                   </div>
 
                   {/* Error */}
-                  {linkCodeError && (
-                    <p className="text-red-400 text-xs text-center mt-2">{linkCodeError}</p>
+                  {codeError && (
+                    <p className="text-red-400 text-xs text-center mt-2">{codeError}</p>
                   )}
 
                   {/* Success */}
-                  {linkCodeSuccess && (
-                    <p className="text-green-400 text-xs text-center mt-2">{linkCodeSuccess}</p>
-                  )}
-                </div>
-              )}
-
-              {/* 🔀 MERGE ACCOUNT - For FID accounts to absorb old accounts */}
-              {hasFarcaster && (
-                <div className="mt-3 pt-3 border-t border-vintage-gold/20">
-                  <p className="text-vintage-burnt-gold text-xs mb-3">
-                    {t('mergeOldAccountLabel')}
-                  </p>
-
-                  {/* Merge Code Input */}
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={mergeCodeInput}
-                      onChange={(e) => {
-                        setMergeCodeInput(e.target.value.replace(/\D/g, ''));
-                        setMergeError(null);
-                      }}
-                      placeholder="000000"
-                      className="w-full sm:flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-orange-500/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-orange-500 focus:outline-none"
-                    />
-                    <button
-                      onClick={handleUseMergeCode}
-                      disabled={isMerging || mergeCodeInput.length !== 6}
-                      className="w-full sm:w-auto px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isMerging ? '...' : t('mergeButton')}
-                    </button>
-                  </div>
-
-                  {/* Error */}
-                  {mergeError && (
-                    <p className="text-red-400 text-xs text-center mt-2">{mergeError}</p>
-                  )}
-
-                  {/* Success */}
-                  {mergeSuccess && (
-                    <p className="text-green-400 text-xs text-center mt-2">{mergeSuccess}</p>
+                  {codeSuccess && (
+                    <p className="text-green-400 text-xs text-center mt-2">{codeSuccess}</p>
                   )}
                 </div>
               )}

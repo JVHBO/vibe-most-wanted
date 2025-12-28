@@ -1148,7 +1148,7 @@ export default function FidPage() {
                 <a
                   href={(() => {
                     const shareUrl = 'https://www.vibemostwanted.xyz/fid';
-                    const castText = `📊 My Neynar Score: ${neynarScoreData.score.toFixed(3)}\n${neynarScoreData.rarity} Rarity\n\n🎴 Check your score and mint your VibeFID card! @jvhbo`;
+                    const castText = `📊 ${t.neynarScoreShare}: ${neynarScoreData.score.toFixed(3)}\n${neynarScoreData.rarity} ${t.neynarScoreRarity}\n\n🎴 ${t.neynarScoreCheckMint}`;
                     return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                   })()}
                   target="_blank"

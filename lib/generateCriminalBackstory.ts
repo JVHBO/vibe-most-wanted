@@ -106,11 +106,14 @@ export function generateCriminalBackstory(
   };
 
   // Build story from templates with random variants
+  const followerCount = data.followerCount ?? 0;
+  const bounty = data.bounty ?? 0;
+
   const storyParts = [
-    getRandomVariant(t.criminalStory1).replace('{date}', dateOfCrime).replace('{username}', `@${data.username}`),
-    getRandomVariant(t.criminalStory2).replace('{followers}', data.followerCount.toLocaleString()).replace('{username}', `@${data.username}`),
+    getRandomVariant(t.criminalStory1).replace('{date}', dateOfCrime).replace('{username}', `@${data.username || 'unknown'}`),
+    getRandomVariant(t.criminalStory2).replace('{followers}', followerCount.toLocaleString()).replace('{username}', `@${data.username || 'unknown'}`),
     getRandomVariant(t.criminalStory3).replace('{bio}', data.bio || t.noBio),
-    getRandomVariant(t.criminalStory4).replace('{bounty}', data.bounty.toLocaleString()),
+    getRandomVariant(t.criminalStory4).replace('{bounty}', bounty.toLocaleString()),
     getRandomVariant(t.criminalStory5),
   ];
 
@@ -128,7 +131,7 @@ export function generateCriminalBackstory(
     'fr': 'complices connus',
     'ja': '既知の共犯者',
   };
-  const associates = `${data.followerCount.toLocaleString()} ${associatesLabels[lang] || associatesLabels['en']}`;
+  const associates = `${followerCount.toLocaleString()} ${associatesLabels[lang] || associatesLabels['en']}`;
 
   // Last seen (Farcaster region)
   const lastSeenLabels: Record<SupportedLanguage, string> = {

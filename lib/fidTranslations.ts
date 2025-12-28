@@ -241,6 +241,19 @@ export const fidTranslations = {
     crimeTypeEstablished: 'Líder de gangue estabelecida',
     crimeTypeActive: 'Membro ativo de sindicato do crime',
     crimeTypeRecruit: 'Recruta recente em atividades ilícitas',
+
+    // Share text
+    shareTextMinted: 'Acabei de mintar meu VibeFID!',
+    shareTextPower: 'Poder',
+    shareTextPlayPoker: 'Jogue Poker Battles',
+    shareTextFightPvE: 'Lute em PvE',
+    shareTextEarnCoins: 'Ganhe coins',
+    shareTextMintYours: 'Minte o seu!',
+
+    // Neynar Score share
+    neynarScoreShare: 'Minha Pontuação Neynar',
+    neynarScoreRarity: 'Raridade',
+    neynarScoreCheckMint: 'Confira sua pontuação e minte sua carta VibeFID!',
   },
 
   "en": {
@@ -480,6 +493,19 @@ export const fidTranslations = {
     crimeTypeEstablished: 'Leader of established gang',
     crimeTypeActive: 'Active member of crime syndicate',
     crimeTypeRecruit: 'Recent recruit in illicit activities',
+
+    // Share text
+    shareTextMinted: 'Just minted my VibeFID!',
+    shareTextPower: 'Power',
+    shareTextPlayPoker: 'Play Poker Battles',
+    shareTextFightPvE: 'Fight in PvE',
+    shareTextEarnCoins: 'Earn coins',
+    shareTextMintYours: 'Mint yours!',
+
+    // Neynar Score share
+    neynarScoreShare: 'My Neynar Score',
+    neynarScoreRarity: 'Rarity',
+    neynarScoreCheckMint: 'Check your score and mint your VibeFID card!',
   },
 
   "es": {
@@ -719,6 +745,19 @@ export const fidTranslations = {
     crimeTypeEstablished: 'Líder de banda establecida',
     crimeTypeActive: 'Miembro activo del sindicato del crimen',
     crimeTypeRecruit: 'Recluta reciente en actividades ilícitas',
+
+    // Share text
+    shareTextMinted: '¡Acabo de mintear mi VibeFID!',
+    shareTextPower: 'Poder',
+    shareTextPlayPoker: 'Juega Poker Battles',
+    shareTextFightPvE: 'Lucha en PvE',
+    shareTextEarnCoins: 'Gana coins',
+    shareTextMintYours: '¡Mintea el tuyo!',
+
+    // Neynar Score share
+    neynarScoreShare: 'Mi Puntuación Neynar',
+    neynarScoreRarity: 'Rareza',
+    neynarScoreCheckMint: '¡Consulta tu puntuación y mintea tu carta VibeFID!',
   },
 
   "hi": {
@@ -958,6 +997,19 @@ export const fidTranslations = {
     crimeTypeEstablished: 'स्थापित गिरोह के नेता',
     crimeTypeActive: 'अपराध सिंडिकेट के सक्रिय सदस्य',
     crimeTypeRecruit: 'अवैध गतिविधियों में हाल ही में भर्ती',
+
+    // Share text
+    shareTextMinted: 'मैंने अभी अपना VibeFID मिंट किया!',
+    shareTextPower: 'पावर',
+    shareTextPlayPoker: 'पोकर बैटल्स खेलें',
+    shareTextFightPvE: 'PvE में लड़ें',
+    shareTextEarnCoins: 'कॉइन्स कमाएं',
+    shareTextMintYours: 'अपना मिंट करें!',
+
+    // Neynar Score share
+    neynarScoreShare: 'मेरी Neynar स्कोर',
+    neynarScoreRarity: 'दुर्लभता',
+    neynarScoreCheckMint: 'अपना स्कोर देखें और अपना VibeFID कार्ड मिंट करें!',
   },
 
   "ru": {
@@ -1197,6 +1249,19 @@ export const fidTranslations = {
     crimeTypeEstablished: 'Лидер устоявшейся банды',
     crimeTypeActive: 'Активный член преступного синдиката',
     crimeTypeRecruit: 'Недавний новобранец в незаконной деятельности',
+
+    // Share text
+    shareTextMinted: 'Только что сминтил свой VibeFID!',
+    shareTextPower: 'Сила',
+    shareTextPlayPoker: 'Играй в Poker Battles',
+    shareTextFightPvE: 'Сражайся в PvE',
+    shareTextEarnCoins: 'Зарабатывай коины',
+    shareTextMintYours: 'Сминти свой!',
+
+    // Neynar Score share
+    neynarScoreShare: 'Мой счёт Neynar',
+    neynarScoreRarity: 'Редкость',
+    neynarScoreCheckMint: 'Проверь свой счёт и сминти свою карту VibeFID!',
   },
 
   "zh-CN": {
@@ -1436,6 +1501,19 @@ export const fidTranslations = {
     crimeTypeEstablished: '成熟帮派领导者',
     crimeTypeActive: '犯罪集团活跃成员',
     crimeTypeRecruit: '非法活动新招募成员',
+
+    // Share text
+    shareTextMinted: '刚铸造了我的 VibeFID！',
+    shareTextPower: '力量',
+    shareTextPlayPoker: '玩扑克对战',
+    shareTextFightPvE: 'PvE 战斗',
+    shareTextEarnCoins: '赚取金币',
+    shareTextMintYours: '铸造你的！',
+
+    // Neynar Score share
+    neynarScoreShare: '我的 Neynar 分数',
+    neynarScoreRarity: '稀有度',
+    neynarScoreCheckMint: '查看你的分数并铸造你的 VibeFID 卡！',
   },
 
   "id": {
@@ -1644,6 +1722,19 @@ export const fidTranslations = {
     crimeTypeEstablished: 'Pemimpin geng mapan',
     crimeTypeActive: 'Anggota aktif sindikat kejahatan',
     crimeTypeRecruit: 'Rekrut baru dalam aktivitas ilegal',
+
+    // Share text
+    shareTextMinted: 'Baru saja mint VibeFID saya!',
+    shareTextPower: 'Power',
+    shareTextPlayPoker: 'Main Poker Battles',
+    shareTextFightPvE: 'Bertarung di PvE',
+    shareTextEarnCoins: 'Dapatkan koin',
+    shareTextMintYours: 'Mint milikmu!',
+
+    // Neynar Score share
+    neynarScoreShare: 'Skor Neynar Saya',
+    neynarScoreRarity: 'Kelangkaan',
+    neynarScoreCheckMint: 'Cek skor kamu dan mint kartu VibeFID kamu!',
   },
 
   "fr": {
@@ -1852,6 +1943,19 @@ export const fidTranslations = {
     crimeTypeEstablished: 'Chef de gang établi',
     crimeTypeActive: 'Membre actif du syndicat du crime',
     crimeTypeRecruit: 'Nouvelle recrue dans les activités illicites',
+
+    // Share text
+    shareTextMinted: 'Je viens de mint mon VibeFID !',
+    shareTextPower: 'Puissance',
+    shareTextPlayPoker: 'Joue au Poker Battles',
+    shareTextFightPvE: 'Combat en PvE',
+    shareTextEarnCoins: 'Gagne des coins',
+    shareTextMintYours: 'Mint le tien !',
+
+    // Neynar Score share
+    neynarScoreShare: 'Mon Score Neynar',
+    neynarScoreRarity: 'Rareté',
+    neynarScoreCheckMint: 'Vérifie ton score et mint ta carte VibeFID !',
   },
   "ja": {
     // Password screen
@@ -2130,5 +2234,18 @@ export const fidTranslations = {
     crimeTypeEstablished: '確立されたギャングリーダー',
     crimeTypeActive: '犯罪シンジケートの現役メンバー',
     crimeTypeRecruit: '違法活動の新規リクルート',
+
+    // Share text
+    shareTextMinted: 'VibeFIDをミントしました！',
+    shareTextPower: 'パワー',
+    shareTextPlayPoker: 'ポーカーバトルをプレイ',
+    shareTextFightPvE: 'PvEで戦う',
+    shareTextEarnCoins: 'コインを稼ぐ',
+    shareTextMintYours: 'ミントしよう！',
+
+    // Neynar Score share
+    neynarScoreShare: '私のNeynarスコア',
+    neynarScoreRarity: 'レアリティ',
+    neynarScoreCheckMint: 'スコアをチェックしてVibeFIDカードをミントしよう！',
   },
 };

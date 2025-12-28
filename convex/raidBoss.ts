@@ -1304,8 +1304,9 @@ export const getPlayerRaidDeckByAddress = query({
 /**
  * 🧹 CLEANUP: Delete raid data for a wallet being linked/merged
  * Called when a wallet is linked to a primary profile
+ * INTERNAL: Called from profiles.ts during link/merge operations
  */
-export const cleanupLinkedWalletRaidData = mutation({
+export const cleanupLinkedWalletRaidData = internalMutation({
   args: {
     linkedAddress: v.string(),
   },
