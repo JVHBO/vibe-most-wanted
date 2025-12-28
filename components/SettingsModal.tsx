@@ -1020,7 +1020,7 @@ export function SettingsModal({
                   </p>
 
                   {/* Code Input */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       maxLength={6}
@@ -1030,12 +1030,12 @@ export function SettingsModal({
                         setLinkCodeError(null);
                       }}
                       placeholder="000000"
-                      className="flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-vintage-gold/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-green-500 focus:outline-none"
+                      className="w-full sm:flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-vintage-gold/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-green-500 focus:outline-none"
                     />
                     <button
                       onClick={handleUseLinkCode}
                       disabled={isLinkingByCode || linkCodeInput.length !== 6}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLinkingByCode ? '...' : t('linkButton')}
                     </button>
@@ -1061,7 +1061,7 @@ export function SettingsModal({
                   </p>
 
                   {/* Merge Code Input */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       maxLength={6}
@@ -1071,12 +1071,12 @@ export function SettingsModal({
                         setMergeError(null);
                       }}
                       placeholder="000000"
-                      className="flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-orange-500/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-orange-500 focus:outline-none"
+                      className="w-full sm:flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-orange-500/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-orange-500 focus:outline-none"
                     />
                     <button
                       onClick={handleUseMergeCode}
                       disabled={isMerging || mergeCodeInput.length !== 6}
-                      className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isMerging ? '...' : t('mergeButton')}
                     </button>
