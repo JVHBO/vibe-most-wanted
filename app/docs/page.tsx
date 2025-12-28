@@ -297,7 +297,6 @@ export default function DocsPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🌅 GM VBRS</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎭 $VBMS</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">💋 Coquettish</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🍥 Viberuto</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐱 Meowverse</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐸 Poorly Drawn Pepes</span>
@@ -308,6 +307,8 @@ export default function DocsPage() {
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">⚾ Baseball Cabal</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">✨ Vibe FX</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">💻 History of Computer</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🍜 Cumioh</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎸 Vibe Rot Bangers</span>
                 </div>
               </div>
             </div>
