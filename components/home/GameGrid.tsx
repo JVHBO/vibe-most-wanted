@@ -77,7 +77,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
     id: 'mecha',
     icon: <MechaIcon />,
     label: 'Mecha Arena',
-    sublabel: 'Bet VBMS',
+    sublabel: 'homeBetVbms',
     cards: null,
     iconColor: 'text-green-400',
     accentColor: 'hover:border-green-400/50',
@@ -116,7 +116,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
               </span>
               {mode.sublabel && (
                 <span className="text-vintage-burnt-gold text-[10px] font-modern leading-tight">
-                  {mode.sublabel}
+                  {t(mode.sublabel as any)}
                 </span>
               )}
               {mode.cards !== null && (
