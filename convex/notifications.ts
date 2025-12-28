@@ -61,7 +61,17 @@ export const getAllTokens = internalQuery({
 // ============================================================================
 
 /**
+ * Determine platform from notification URL
+ */
+function getPlatformFromUrl(url: string): string {
+  if (url.includes("neynar")) return "neynar";
+  return "warpcast";
+}
+
+/**
  * Save or update notification token for a user
+ * 🔧 FIX: Now supports multiple tokens per FID (one per platform)
+ * User can receive notifications on BOTH Warpcast and Base App
  */
 export const saveToken = mutation({
   args: {
@@ -71,32 +81,63 @@ export const saveToken = mutation({
   },
   handler: async (ctx, { fid, token, url }) => {
     const now = Date.now();
+    const platform = getPlatformFromUrl(url);
 
-    // Check if token already exists
+    // 🔧 FIX: Check if token exists for this FID + PLATFORM combo
+    // This allows one token per platform (warpcast + neynar can coexist)
     const existing = await ctx.db
       .query("notificationTokens")
-      .withIndex("by_fid", (q) => q.eq("fid", fid))
+      .withIndex("by_fid_platform", (q) => q.eq("fid", fid).eq("platform", platform))
       .first();
 
     if (existing) {
-      // Update existing token
+      // Update existing token for this platform
       await ctx.db.patch(existing._id, {
         token,
         url,
+        platform,
         lastUpdated: now,
       });
-      console.log(`✅ Updated notification token for FID ${fid}`);
+      console.log(`✅ Updated ${platform} notification token for FID ${fid}`);
       return existing._id;
     } else {
-      // Create new token
+      // Check if there's an OLD token without platform field (migration)
+      const legacyToken = await ctx.db
+        .query("notificationTokens")
+        .withIndex("by_fid", (q) => q.eq("fid", fid))
+        .filter((q) => q.eq(q.field("platform"), undefined))
+        .first();
+
+      if (legacyToken) {
+        // Migrate legacy token: add platform field
+        const legacyPlatform = getPlatformFromUrl(legacyToken.url);
+        await ctx.db.patch(legacyToken._id, { platform: legacyPlatform });
+        console.log(`🔄 Migrated legacy token for FID ${fid} to platform ${legacyPlatform}`);
+
+        // If same platform, update it
+        if (legacyPlatform === platform) {
+          await ctx.db.patch(legacyToken._id, {
+            token,
+            url,
+            platform,
+            lastUpdated: now,
+          });
+          console.log(`✅ Updated ${platform} notification token for FID ${fid}`);
+          return legacyToken._id;
+        }
+        // If different platform, create new entry (fall through)
+      }
+
+      // Create new token for this platform
       const newId = await ctx.db.insert("notificationTokens", {
         fid,
         token,
         url,
+        platform,
         createdAt: now,
         lastUpdated: now,
       });
-      console.log(`✅ Created notification token for FID ${fid}`);
+      console.log(`✅ Created ${platform} notification token for FID ${fid}`);
       return newId;
     }
   },
